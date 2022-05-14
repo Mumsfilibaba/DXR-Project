@@ -37,17 +37,17 @@ CMacApplication::CMacApplication()
     PlatformKeyMapping::Initialize();
     
     // Init the default macOS menu
-    NSMenu* MenuBar = [[NSMenu alloc] init];
+    NSMenu* MenuBar = [NSMenu new];
     NSMenuItem* AppMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
     
-    NSMenu* AppMenu = [[NSMenu alloc] init];
+    NSMenu* AppMenu = [NSMenu new];
     AppMenuItem.submenu = AppMenu;
     
     [AppMenu addItemWithTitle:@"DXR-Engine" action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
     [AppMenu addItem: [NSMenuItem separatorItem]];
     
     // Engine menu item
-    NSMenu* ServiceMenu = [[NSMenu alloc] init];
+    NSMenu* ServiceMenu = [NSMenu new];
     [AppMenu addItemWithTitle:@"Services" action:nil keyEquivalent:@""].submenu = ServiceMenu;
     [AppMenu addItem:[NSMenuItem separatorItem]];
     [AppMenu addItemWithTitle:@"Hide DXR-Engine" action:@selector(hide:) keyEquivalent:@"h"];

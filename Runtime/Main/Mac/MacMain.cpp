@@ -52,7 +52,7 @@ int main(int NumArgs, const char** Args)
     UNREFERENCED_VARIABLE(Args);
     
     [NSApplication sharedApplication];
-    [NSApplication sharedApplication].delegate = [[CCocoaAppDelegate alloc] init];;
+    [NSApplication sharedApplication].delegate = [CCocoaAppDelegate new];
     
     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     [NSApplication sharedApplication].presentationOptions = NSApplicationPresentationDefault;

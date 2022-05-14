@@ -218,8 +218,8 @@ void CMacConsoleWindow::SetColor(EConsoleColor Color)
             [ConsoleColor release];
         }
         
-        NSMutableArray* Colors     = [[NSMutableArray alloc] init];
-        NSMutableArray* Attributes = [[NSMutableArray alloc] init];
+        NSMutableArray* Colors     = [NSMutableArray new];
+        NSMutableArray* Attributes = [NSMutableArray new];
         [Attributes addObject:NSForegroundColorAttributeName];
         [Attributes addObject:NSBackgroundColorAttributeName];
 

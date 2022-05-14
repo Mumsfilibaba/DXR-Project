@@ -75,12 +75,16 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
             WindowHandle.title = InTitle.GetNSString();
         }
         
+        // Set a default background
+        NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
+        
         // Setting this to no disables any notifications about the window closing. Not documented.
         [WindowHandle setReleasedWhenClosed:NO];
         [WindowHandle setAcceptsMouseMovedEvents:YES];
         [WindowHandle setRestorable:NO];
         [WindowHandle setHasShadow: YES];
         [WindowHandle setDelegate:WindowHandle];
+        [WindowHandle setBackgroundColor:BackGroundColor];
         
         if (!InStyle.IsMinimizable())
         {

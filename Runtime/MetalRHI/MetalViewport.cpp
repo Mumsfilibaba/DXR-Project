@@ -30,7 +30,8 @@
 // CMetalViewport
 
 CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIViewportInitializer& Initializer)
-    : CRHIViewport(Initializer)
+    : CMetalObject(InDeviceContext)
+    , CRHIViewport(Initializer)
     , BackBuffer(nullptr)
 {
     MakeMainThreadCall(^
@@ -43,7 +44,7 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIV
         Frame.origin.x    = 0;
         Frame.origin.y    = 0;
         
-        CMetalWindowView* MetalView = [[CMetalWindowView alloc] initWithFrame:Frame];
+        MetalView = [[CMetalWindowView alloc] initWithFrame:Frame];
         [MetalView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [MetalView setWantsLayer:YES];
         
@@ -65,6 +66,7 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIV
         [MetalLayer removeAllAnimations];
 
         [MetalView setLayer:MetalLayer];
+        [MetalView retain];
         
         WindowHandle.contentView = MetalView;
         [WindowHandle makeFirstResponder:MetalView];
@@ -75,9 +77,51 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIV
     BackBuffer = dbg_new CMetalTexture2D(InDeviceContext, BackBufferInitializer);
 }
 
+CMetalViewport::~CMetalViewport()
+{
+    NSSafeRelease(MetalView);
+}
+
 bool CMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
 {
-    Width  = uint16(InWidth);
-    Height = uint16(InHeight);
+    if ((Width != InWidth) || (Height != InHeight))
+    {
+        MakeMainThreadCall(^
+        {
+            CAMetalLayer* MetalLayer = (CAMetalLayer*)MetalView.layer;
+            MetalLayer.drawableSize = CGSizeMake(InWidth, InHeight);
+        }, true);
+        
+        Width  = uint16(InWidth);
+        Height = uint16(InHeight);
+    }
+    
+    return true;
+}
+
+bool CMetalViewport::Present(bool bVerticalSync)
+{
+    UNREFERENCED_VARIABLE(bVerticalSync);
+    
+    id<MTLCommandQueue>  Queue  = GetDeviceContext()->GetMTLCommandQueue();
+    id<MTLCommandBuffer> Buffer = [Queue commandBuffer];
+    
+    CAMetalLayer*   MetalLayer = (CAMetalLayer*)MetalView.layer;
+    id<MTLDrawable> CurrentDrawable = nil;
+    
+    if (MetalLayer)
+    {
+        MetalLayer.displaySyncEnabled = bVerticalSync;
+        CurrentDrawable = [MetalLayer nextDrawable];
+    }
+    
+    if (CurrentDrawable)
+    {
+        [Buffer presentDrawable:CurrentDrawable];
+    }
+       
+    [Buffer commit];
+    [Buffer waitUntilCompleted];
+    
     return true;
 }

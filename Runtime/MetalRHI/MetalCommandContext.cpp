@@ -74,7 +74,7 @@ void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& Rend
     
     const CIntVector3 Extent = RTVTexture ? RTVTexture->GetExtent() : DSVTexture->GetExtent();
     
-    RenderPassDescriptor = [[MTLRenderPassDescriptor alloc] init];
+    RenderPassDescriptor = [MTLRenderPassDescriptor new];
     RenderPassDescriptor.renderTargetWidth        = Extent.x;
     RenderPassDescriptor.renderTargetHeight       = Extent.y;
     RenderPassDescriptor.defaultRasterSampleCount = 1;

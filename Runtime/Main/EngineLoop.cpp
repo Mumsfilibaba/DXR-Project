@@ -92,6 +92,8 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
+    LOG_INFO("IsDebuggerAttached=%s", PlatformMisc::IsDebuggerPresent() ? "true" : "false");
+    
     // TODO: Use a separate profiler for booting the engine
     CFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
@@ -250,6 +252,7 @@ bool CEngineLoop::Release()
 
     GRenderer.Release();
 
+    // Release the Application. Protect against failed initialization where the global pointer was never initialized
     if (CCanvasApplication::IsInitialized())
     {
         CCanvasApplication::Get().SetRenderer(nullptr);

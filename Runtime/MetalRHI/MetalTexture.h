@@ -19,6 +19,10 @@ public:
     
     CMetalShaderResourceView* GetMetalShaderResourceView() const { return ShaderResourceView.Get(); }
     
+    void SetMTLTexture(id<MTLTexture> InTexture) { Texture = InTexture; }
+    
+    void SetMTLDrawable<
+    
     id<MTLTexture> GetMTLTexture() const { return Texture; }
     
 private:

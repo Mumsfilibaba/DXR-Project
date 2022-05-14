@@ -22,12 +22,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalViewport
 
-class CMetalViewport : public CRHIViewport
+class CMetalViewport : public CMetalObject, public CRHIViewport
 {
 public:
     
     CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIViewportInitializer& Initializer);
-    ~CMetalViewport() = default;
+    ~CMetalViewport();
 
 public:
 
@@ -36,12 +36,14 @@ public:
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
 
-    virtual bool Present(bool bVerticalSync) override final { return true; }
+    // TODO: This needs to be a command for Vulkan and Metal since we can be using the texture and present will change the resource
+    virtual bool Present(bool bVerticalSync) override final;
 
     virtual CRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
 private:
     TSharedRef<CMetalTexture2D> BackBuffer;
+    CMetalWindowView*           MetalView;
 };
 
 #pragma clang diagnostic pop
