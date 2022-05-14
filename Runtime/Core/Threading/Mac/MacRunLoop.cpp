@@ -155,6 +155,5 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
         }
     }
     
-    
     Block_release(CopiedBlock);
 }
