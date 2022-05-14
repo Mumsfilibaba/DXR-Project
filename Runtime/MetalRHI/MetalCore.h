@@ -198,7 +198,7 @@ CONSTEXPR MTLPixelFormat ConvertFormat(EFormat Format)
         case EFormat::R16G16_Sint:           return MTLPixelFormatRG16Sint;
     
         case EFormat::R32_Typeless:          return MTLPixelFormatR32Float;
-        case EFormat::D32_Float:             return MTLPixelFormatR32Float;
+        case EFormat::D32_Float:             return MTLPixelFormatDepth32Float;
         case EFormat::R32_Float:             return MTLPixelFormatR32Float;
         case EFormat::R32_Uint:              return MTLPixelFormatR32Uint;
         case EFormat::R32_Sint:              return MTLPixelFormatR32Sint;

@@ -68,36 +68,46 @@ void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& Rend
     Check(RenderPassDescriptor == nil);
     
     CopyContext.FinishContext();
-    
-    // All textures must have the same size
-    const CRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[0];
-    
-    CRHITexture* RTVTexture = RenderTargetView.Texture;
-    CRHITexture* DSVTexture = RenderPassInitializer.DepthStencilView.Texture;
-    METAL_ERROR_COND(RTVTexture != nullptr || DSVTexture != nullptr, "A RenderPass needs a valid RenderTargetView or DepthStencilView");
+
+    CMetalTexture* DSVTexture = GetMetalTexture(RenderPassInitializer.DepthStencilView.Texture);
+    METAL_ERROR_COND((RenderPassInitializer.NumRenderTargets > 0) || (DSVTexture != nullptr), "A RenderPass needs a valid RenderTargetView or DepthStencilView");
     
     RenderPassDescriptor = [MTLRenderPassDescriptor new];
     RenderPassDescriptor.defaultRasterSampleCount = 1;
+    RenderPassDescriptor.renderTargetArrayLength  = 1;
     
-    CMetalTexture*  Texture  = GetMetalTexture(RTVTexture);
-    CMetalViewport* Viewport = Texture ? Texture->GetViewport() : nullptr;
-    if (Viewport)
+    for (uint32 Index = 0; Index < RenderPassInitializer.NumRenderTargets; ++Index)
     {
-        MTLRenderPassColorAttachmentDescriptor* Attachment = RenderPassDescriptor.colorAttachments[0];
-        Attachment.texture            = Viewport->GetDrawableTexture();
-        Attachment.loadAction         = ConvertAttachmentLoadAction(RenderTargetView.LoadAction);
-        Attachment.clearColor         = MTLClearColorMake(RenderTargetView.ClearValue.R, RenderTargetView.ClearValue.G, RenderTargetView.ClearValue.B, RenderTargetView.ClearValue.A);
-        Attachment.level              = RenderTargetView.MipLevel;
-        Attachment.slice              = RenderTargetView.ArrayIndex;
-        Attachment.storeActionOptions = MTLStoreActionOptionNone;
-        Attachment.storeAction        = ConvertAttachmentStoreAction(RenderTargetView.StoreAction);
+        const CRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[Index];
+        
+        CMetalTexture*  RTVTexture = GetMetalTexture(RenderTargetView.Texture);
+        CMetalViewport* Viewport   = RTVTexture ? RTVTexture->GetViewport() : nullptr;
+        
+        MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[Index];
+        ColorAttachment.texture            = Viewport ? Viewport->GetDrawableTexture() : RTVTexture->GetMTLTexture();
+        ColorAttachment.loadAction         = ConvertAttachmentLoadAction(RenderTargetView.LoadAction);
+        ColorAttachment.clearColor         = MTLClearColorMake(RenderTargetView.ClearValue.R, RenderTargetView.ClearValue.G, RenderTargetView.ClearValue.B, RenderTargetView.ClearValue.A);
+        ColorAttachment.level              = RenderTargetView.MipLevel;
+        ColorAttachment.slice              = RenderTargetView.ArrayIndex;
+        ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
+        ColorAttachment.storeAction        = ConvertAttachmentStoreAction(RenderTargetView.StoreAction);
     }
-    else
+
+    if (DSVTexture)
     {
-        const CIntVector3 Extent = RTVTexture ? RTVTexture->GetExtent() : DSVTexture->GetExtent();
-        RenderPassDescriptor.renderTargetWidth  = Extent.x;
-        RenderPassDescriptor.renderTargetHeight = Extent.y;
+        const CRHIDepthStencilView& DepthStencilView = RenderPassInitializer.DepthStencilView;
+        
+        MTLRenderPassDepthAttachmentDescriptor* DepthAttachment = RenderPassDescriptor.depthAttachment;
+        DepthAttachment.texture            = DSVTexture->GetMTLTexture();
+        DepthAttachment.loadAction         = ConvertAttachmentLoadAction(DepthStencilView.LoadAction);
+        DepthAttachment.clearDepth         = DepthStencilView.ClearValue.Depth;
+        DepthAttachment.level              = DepthStencilView.MipLevel;
+        DepthAttachment.slice              = DepthStencilView.ArrayIndex;
+        DepthAttachment.storeActionOptions = MTLStoreActionOptionNone;
+        DepthAttachment.storeAction        = ConvertAttachmentStoreAction(DepthStencilView.StoreAction);
     }
+    
+    // TODO: Stencil Attachment
 
     Check(RenderPassDescriptor != nil);
     GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
