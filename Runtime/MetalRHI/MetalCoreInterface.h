@@ -97,9 +97,14 @@ public:
 
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
 
+public:
+    
+    CMetalDeviceContext* GetDeviceContext() const { return DeviceContext; }
+    
 private:
     
-    
+    template<typename MetalTextureType, typename InitializerType>
+    MetalTextureType* CreateTexture(const InitializerType& Initializer);
     
 	CMetalDeviceContext*  DeviceContext;
     CMetalCommandContext* CommandContext;

@@ -26,19 +26,6 @@ public:
 
     static CD3D12CoreInterface* CreateD3D12Instance();
 
-    FORCEINLINE CD3D12Device* GetDevice() const { return Device.Get(); }
-
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap() const { return ResourceOfflineDescriptorHeap; }
-
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap() const { return RenderTargetOfflineDescriptorHeap; }
-
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap() const { return DepthStencilOfflineDescriptorHeap; }
-
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap() const { return SamplerOfflineDescriptorHeap; }
-
-    FORCEINLINE TSharedRef<CD3D12ComputePipelineState> GetGenerateMipsPipelineTexure2D() const { return GenerateMipsTex2D_PSO; }
-
-    FORCEINLINE TSharedRef<CD3D12ComputePipelineState> GetGenerateMipsPipelineTexureCube() const { return GenerateMipsTexCube_PSO; }
 
 public:
 
@@ -105,6 +92,22 @@ public:
     virtual void RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport) const override final;
 
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
+
+public:
+
+    FORCEINLINE CD3D12Device* GetDevice() const { return Device.Get(); }
+
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap() const { return ResourceOfflineDescriptorHeap; }
+
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap() const { return RenderTargetOfflineDescriptorHeap; }
+
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap() const { return DepthStencilOfflineDescriptorHeap; }
+
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap() const { return SamplerOfflineDescriptorHeap; }
+
+    FORCEINLINE TSharedRef<CD3D12ComputePipelineState> GetGenerateMipsPipelineTexure2D() const { return GenerateMipsTex2D_PSO; }
+
+    FORCEINLINE TSharedRef<CD3D12ComputePipelineState> GetGenerateMipsPipelineTexureCube() const { return GenerateMipsTexCube_PSO; }
 
 private:
 

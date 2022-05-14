@@ -2,8 +2,9 @@
 #include "RHITypes.h"
 #include "RHIResourceBase.h"
 
-#include "Core/Templates/EnumUtilities.h"
+#include "Core/Math/IntVector3.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Templates/EnumUtilities.h"
 
 #if defined(COMPILER_MSVC)
     #pragma warning(push)
@@ -417,6 +418,8 @@ public:
 
     virtual String GetName() const { return ""; }
 
+public:
+    
     bool IsMultiSampled() const { return (GetNumSamples() > 1); }
 
     ETextureUsageFlags GetFlags() const { return UsageFlags; }

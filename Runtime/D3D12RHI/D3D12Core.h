@@ -203,7 +203,7 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RHI conversion functions 
 
-inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
+CONSTEXPR D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
     if ((Flags & EBufferUsageFlags::AllowUAV) != EBufferUsageFlags::None)
@@ -214,7 +214,7 @@ inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
     return Result;
 }
 
-inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
+CONSTEXPR D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
     if ((Flag & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None)
@@ -228,16 +228,16 @@ inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
     if ((Flag & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None)
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-        if ((Flag & ETextureUsageFlags::AllowSRV) == ETextureUsageFlags::None)
-        {
-            Result |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-        }
+    }
+    if ((Flag & ETextureUsageFlags::AllowSRV) == ETextureUsageFlags::None)
+    {
+        Result |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
     }
 
     return Result;
 }
 
-inline DXGI_FORMAT ConvertFormat(EFormat Format)
+CONSTEXPR DXGI_FORMAT ConvertFormat(EFormat Format)
 {
     switch (Format)
     {
@@ -314,11 +314,12 @@ inline DXGI_FORMAT ConvertFormat(EFormat Format)
         case EFormat::R8_Uint:               return DXGI_FORMAT_R8_UINT;
         case EFormat::R8_Snorm:              return DXGI_FORMAT_R8_SNORM;
         case EFormat::R8_Sint:               return DXGI_FORMAT_R8_SINT;
+        
         default:                             return DXGI_FORMAT_UNKNOWN;
     }
 }
 
-inline D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass InputClassification)
+CONSTEXPR D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass InputClassification)
 {
     switch (InputClassification)
     {
@@ -329,7 +330,7 @@ inline D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass Inpu
     return D3D12_INPUT_CLASSIFICATION();
 }
 
-inline D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMask)
+CONSTEXPR D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMask)
 {
     switch (DepthWriteMask)
     {
@@ -340,7 +341,7 @@ inline D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMa
     return D3D12_DEPTH_WRITE_MASK();
 }
 
-inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
+CONSTEXPR D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -357,7 +358,7 @@ inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFun
     return D3D12_COMPARISON_FUNC();
 }
 
-inline D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
+CONSTEXPR D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
@@ -374,7 +375,7 @@ inline D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
     return D3D12_STENCIL_OP();
 }
 
-inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilStateFace& DepthStencilOp)
+CONSTEXPR D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilStateFace& DepthStencilOp)
 {
     return
     {
@@ -385,7 +386,7 @@ inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilState
     };
 }
 
-inline D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
+CONSTEXPR D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
 {
     switch (CullMode)
     {
@@ -395,7 +396,7 @@ inline D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
     }
 }
 
-inline D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
+CONSTEXPR D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
 {
     switch (FillMode)
     {
@@ -406,7 +407,7 @@ inline D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
     return D3D12_FILL_MODE();
 }
 
-inline D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
+CONSTEXPR D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
 {
     switch (BlendOp)
     {
@@ -420,7 +421,7 @@ inline D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
     return D3D12_BLEND_OP();
 }
 
-inline D3D12_BLEND ConvertBlend(EBlendType  Blend)
+CONSTEXPR D3D12_BLEND ConvertBlend(EBlendType  Blend)
 {
     switch (Blend)
     {
@@ -446,7 +447,7 @@ inline D3D12_BLEND ConvertBlend(EBlendType  Blend)
     return D3D12_BLEND();
 }
 
-inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
+CONSTEXPR D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
 {
     switch (LogicOp)
     {
@@ -471,7 +472,7 @@ inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
     return D3D12_LOGIC_OP();
 }
 
-inline uint8 ConvertRenderTargetWriteState(const SRenderTargetWriteState& RenderTargetWriteState)
+CONSTEXPR uint8 ConvertRenderTargetWriteState(const SRenderTargetWriteState& RenderTargetWriteState)
 {
     uint8 RenderTargetWriteMask = 0;
     if (RenderTargetWriteState.WriteAll())
@@ -501,7 +502,7 @@ inline uint8 ConvertRenderTargetWriteState(const SRenderTargetWriteState& Render
     return RenderTargetWriteMask;
 }
 
-inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopologyType PrimitiveTopologyType)
+CONSTEXPR D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopologyType PrimitiveTopologyType)
 {
     switch (PrimitiveTopologyType)
     {
@@ -515,7 +516,7 @@ inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopo
     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 }
 
-inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
+CONSTEXPR D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
 {
     switch (PrimitiveTopology)
     {
@@ -530,7 +531,7 @@ inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology Prim
     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 }
 
-inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess ResourceState)
+CONSTEXPR D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
@@ -555,7 +556,7 @@ inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess ResourceState)
     return D3D12_RESOURCE_STATES();
 }
 
-inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
+CONSTEXPR D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
@@ -569,7 +570,7 @@ inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
     return D3D12_TEXTURE_ADDRESS_MODE();
 }
 
-inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
+CONSTEXPR D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
@@ -596,7 +597,7 @@ inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
     return D3D12_FILTER();
 }
 
-inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
+CONSTEXPR D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
@@ -612,7 +613,7 @@ inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
     return D3D12_SHADING_RATE();
 }
 
-inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags InFlags)
+CONSTEXPR D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags InFlags)
 {
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
     if ((InFlags & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)
@@ -631,7 +632,7 @@ inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationSt
     return Flags;
 }
 
-inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(ERayTracingInstanceFlags InFlags)
+CONSTEXPR D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(ERayTracingInstanceFlags InFlags)
 {
     D3D12_RAYTRACING_INSTANCE_FLAGS Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
     if ((InFlags & ERayTracingInstanceFlags::CullDisable) != ERayTracingInstanceFlags::None)

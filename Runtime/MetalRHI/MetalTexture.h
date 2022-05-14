@@ -17,13 +17,19 @@ public:
      
     CMetalTexture(CMetalDeviceContext* InDeviceContext)
         : CMetalObject(InDeviceContext)
+        , Texture(nil)
         , Viewport(nullptr)
         , ShaderResourceView(nullptr)
     { }
     
+    ~CMetalTexture()
+    {
+        NSSafeRelease(Texture);
+    }
+    
 public:
     
-    void SetMTLTexture(id<MTLTexture> InTexture) { Texture = InTexture; }
+    void SetMTLTexture(id<MTLTexture> InTexture) { Texture = [InTexture retain]; }
     
     void SetViewport(CMetalViewport* InViewport) { Viewport = InViewport; }
     
@@ -34,8 +40,7 @@ public:
     CMetalShaderResourceView* GetMetalShaderResourceView() const { return ShaderResourceView.Get(); }
 
 private:
-    id<MTLTexture> Texture;
-    
+    id<MTLTexture>  Texture;
     CMetalViewport* Viewport;
     
     TSharedRef<CMetalShaderResourceView> ShaderResourceView;

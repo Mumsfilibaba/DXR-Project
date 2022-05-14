@@ -365,6 +365,8 @@ public:
 
     virtual String GetName() const { return ""; }
 
+public:
+    
     EBufferUsageFlags GetFlags() const { return Flags; }
 
 private:
