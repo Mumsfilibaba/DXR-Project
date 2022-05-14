@@ -1,6 +1,8 @@
 #pragma once
 #include "CocoaConsoleWindow.h"
 
+#include "Core/Threading/Platform/CriticalSection.h"
+
 #include "CoreApplication/Generic/GenericConsoleWindow.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -17,28 +19,30 @@ public:
 
 	static CMacConsoleWindow* CreateMacConsole();
 	
-	int32 GetLineCount() const;
-	
-	void OnWindowDidClose();
-
 public:
 
-	/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-	// CGenericConsoleWindow Interface
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CGenericConsoleWindow Interface
 
-	virtual void Show(bool bShow) override final;
+    virtual void Show(bool bShow) override final;
 
-	virtual void Print(const String& Message) override final;
-	
-	virtual void PrintLine(const String& Message) override final;
+    virtual void Print(const String& Message) override final;
+    
+    virtual void PrintLine(const String& Message) override final;
 
-	virtual void Clear() override final;
+    virtual void Clear() override final;
 
-	virtual void SetTitle(const String& Title) override final;
-	
-	virtual void SetColor(EConsoleColor Color) override final;
+    virtual void SetTitle(const String& Title) override final;
+    
+    virtual void SetColor(EConsoleColor Color) override final;
     
     virtual bool IsVisible() const override final;
+
+public:
+    
+    int32 GetLineCount() const;
+    
+    void OnWindowDidClose();
 	
 private:
 
@@ -50,8 +54,10 @@ private:
 	
 	void AppendStringAndScroll(NSString* String);
 	
-    CCocoaConsoleWindow* WindowHandle;
-	NSTextView*          TextView;
-	NSScrollView*        ScrollView;
-	NSDictionary*        ConsoleColor;
+    CCocoaConsoleWindow*     WindowHandle;
+    mutable CCriticalSection WindowCS;
+
+    NSTextView*              TextView;
+	NSScrollView*            ScrollView;
+	NSDictionary*            ConsoleColor;
 };

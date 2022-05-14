@@ -46,7 +46,12 @@ void CMacApplicationMisc::PumpMessages(bool bUntilEmpty)
             break;
         }
         
-        [NSApp sendEvent:Event];
+        // Prevent to send event from invalid windows
+        if ([Event windowNumber] == 0 || [Event window] != nil)
+        {
+            [NSApp sendEvent:Event];
+        }
+        
     } while (bUntilEmpty);
 }
 

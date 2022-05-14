@@ -80,11 +80,11 @@
 // Dynamic Lib Export and import
 
 #ifndef MODULE_EXPORT
-    #define MODULE_EXPORT
+    #define MODULE_EXPORT __attribute__((visibility("default")))
 #endif
 
 #ifndef MODULE_IMPORT
-    #define MODULE_IMPORT
+    #define MODULE_IMPORT __attribute__((visibility("default")))
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

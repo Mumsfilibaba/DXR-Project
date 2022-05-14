@@ -53,12 +53,12 @@ public:
      * 
      * @param Task: A taskID to wait for
      */
-    void WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting = false);
+    void WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting = true);
 
     /**
      * @brief: Wait for all queued up tasks to be dispatched and finish 
      */
-    void WaitForAll(bool bUseThisThreadWhileWaiting = false);
+    void WaitForAll(bool bUseThisThreadWhileWaiting = true);
 
     /**
      * @brief: Release the DispatchQueue 

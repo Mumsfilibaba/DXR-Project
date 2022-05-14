@@ -44,11 +44,7 @@ public:
     FORCEINLINE bool Wait(TScopedLock<CCriticalSection>& Lock) noexcept
     {
         pthread_mutex_t* Mutex = Lock.GetLock().GetPlatformHandle();
-        int Result = pthread_cond_wait(&ConditionVariable, Mutex);
-
-        // TODO: Handle error
-        Check(Result == 0);
-        return (Result == 0);
+        return (pthread_cond_wait(&ConditionVariable, Mutex) == 0);
     }
 
     FORCEINLINE PlatformHandle GetPlatformHandle() 

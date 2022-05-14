@@ -20,28 +20,29 @@ public:
         , BlockLock()
         , Blocks()
     {
-        CFRunLoopSourceContext SourceContext;
-        CMemory::Memzero(&SourceContext);
+        CFRetain(RunLoop);
         
+        CFRunLoopSourceContext SourceContext = CFRunLoopSourceContext();
         SourceContext.info     = reinterpret_cast<void*>(this);
         SourceContext.version  = 0;
         SourceContext.perform  = &CMacRunLoopSource::Perform;
         
         Source = CFRunLoopSourceCreate(nullptr, 0, &SourceContext);
-        CFStringRef RunLoopModeName = (CFStringRef)RunLoopMode;
-        CFRunLoopAddSource(RunLoop, Source, RunLoopModeName);
+        CFRunLoopAddSource(RunLoop, Source, (CFStringRef)RunLoopMode);
     }
     
     ~CMacRunLoopSource()
     {
+        CFRunLoopRemoveSource(RunLoop, Source, (CFStringRef)RunLoopMode);
         CFRelease(Source);
+        
+        CFRelease(RunLoop);
     }
     
     void ScheduleBlock(dispatch_block_t Block)
     {
         dispatch_block_t CopyBlock = Block_copy(Block);
 
-        // Add block and signal source to perform next runloop iteration
         {
             TScopedLock Lock(BlockLock);
             Blocks.Push(CopyBlock);
@@ -56,9 +57,7 @@ public:
         TArray<dispatch_block_t> CopiedBlocks;
         {
             TScopedLock Lock(BlockLock);
-            
-            CopiedBlocks = TArray<dispatch_block_t>(Blocks);
-            Blocks.Clear();
+            CopiedBlocks.Swap(Blocks);
         }
         
         // Execute all blocks
@@ -131,10 +130,11 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
 
         if (bWaitUntilFinished)
         {
-            dispatch_semaphore_t WaitSemaphore = dispatch_semaphore_create(0);
+            __block dispatch_semaphore_t WaitSemaphore = dispatch_semaphore_create(0);
             
             dispatch_block_t WaitableBlock = Block_copy(^
             {
+                
                 CopiedBlock();
                 dispatch_semaphore_signal(WaitSemaphore);
             });
@@ -144,10 +144,11 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
             do
             {
                 GMainThread->WakeUp();
-                GMainThread->RunInMode((CFStringRef)NSDefaultRunLoopMode);
+                // GMainThread->RunInMode((CFStringRef)NSDefaultRunLoopMode);
             } while (dispatch_semaphore_wait(WaitSemaphore, dispatch_time(0, 100000ull)));
             
             Block_release(WaitableBlock);
+            dispatch_release(WaitSemaphore);
         }
         else
         {

@@ -28,290 +28,40 @@ protected:
     virtual ~CCanvasApplication();
 
 public:
-
-    /**
-     * @brief: Creates a standard main application 
-     * 
-     * @return: Returns true if the creation was successful
-     */
-    static bool CreateApplication();
-
-    /**
-     * @brief: Initializes the singleton from an existing application - Used for classes inheriting from CCanvasApplication
-     * 
-     * @param InApplication: Existing application
-     * @return: Returns true if the initialization was successful
-     */
-    static bool CreateApplication(const TSharedPtr<CCanvasApplication>& InApplication);
-
-    /** 
-     * @brief: Releases the global application instance 
-     */
-    static void Release();
-
-    /** 
-     * @return: Returns a reference to the CCanvasApplication 
-     */
-    static FORCEINLINE CCanvasApplication& Get() 
-    { 
-        return *Instance; 
-    }
-
-    /**
-     * @return: Returns true if the InterfaceApplication is initialized 
-     */
-    static FORCEINLINE bool IsInitialized() 
-    { 
-        return Instance.IsValid();
-    }
-
-public:
-
-    /**
-     * @brief: Delegate for when the application is about to exit 
-     */
+    
     DECLARE_EVENT(CExitEvent, CCanvasApplication, int32);
     CExitEvent GetExitEvent() const { return ExitEvent; }
-
-    /** 
-     * @brief: Delegate for when the application gets a new main-viewport 
-     */
+    
     DECLARE_EVENT(CMainViewportChange, CCanvasApplication, const TSharedRef<CGenericWindow>&);
     CMainViewportChange GetMainViewportChange() const { return MainViewportChange; }
 
 public:
 
     /**
-     * @brief: Creates a new window 
-     * 
-     * @return: Returns the newly created window
+     * @brief: Creates a standard main application
      */
-    TSharedRef<CGenericWindow> CreateWindow();
+    static bool CreateApplication();
 
     /**
-     * @brief: Tick and update the InterfaceApplication
-     * 
-     * @param DeltaTime: Time between this and the previous update
+     * @brief: Initializes the singleton from an existing application - Used for classes inheriting from CCanvasApplication
      */
-    void Tick(CTimestamp DeltaTime);
+    static bool CreateApplication(const TSharedPtr<CCanvasApplication>& InApplication);
 
     /**
-     * @brief: Check if the application is currently running
-     *
-     * @return: Returns true if the application is running
+     * @brief: Releases the global application instance
      */
-    bool IsRunning() const { return bIsRunning; }
-    
-    /**
-     * @brief: Set the current cursor type 
-     * 
-     * @param Cursor: Cursor to set
-     */
-    void SetCursor(ECursor Cursor);
+    static void Release();
 
     /**
-     * @brief: Set the global cursor position
-     * 
-     * @param Position: New position to the cursor
+     * @return: Returns a reference to the CCanvasApplication
      */
-    void SetCursorPos(const CIntVector2& Position);
+    static FORCEINLINE CCanvasApplication& Get() { return *Instance; }
 
     /**
-     * @brief: Set the cursor position relative to a window
-     *
-     * @param RelativeWindow: Window that the position should be relative to
-     * @param Position: New position to the cursor
+     * @return: Returns true if the CCanvasApplication is initialized
      */
-    void SetCursorPos(const TSharedRef<CGenericWindow>& RelativeWindow, const CIntVector2& Position);
+    static FORCEINLINE bool IsInitialized() { return Instance.IsValid(); }
 
-    /**
-     * @brief: Retrieve the current global cursor position
-     *
-     * @return: Returns the cursor position
-     */
-    CIntVector2 GetCursorPos() const;
-
-    /**
-     * @brief: Retrieve the current cursor position relative to a window
-     *
-     * @param RelativeWindow: Window that the position should be relative to
-     * @return: Returns the global cursor position
-     */
-    CIntVector2 GetCursorPos(const TSharedRef<CGenericWindow>& RelativeWindow) const;
-
-    /**
-     * @brief: Set the visibility of the cursor 
-     * 
-     * @param bIsVisible: Should the cursor be visible or not
-     */
-    void ShowCursor(bool bIsVisible);
-
-    /**
-     * @brief: Check the cursor visibility
-     *
-     * @return: Returns true if the cursor is visible
-     */
-    bool IsCursorVisibile() const;
-
-    /**
-     * @brief: Check if the PlatformApplication supports high-precision mouse movement
-     *
-     * @return: Returns true if high-precision mouse movement is supported
-     */
-    bool SupportsHighPrecisionMouse() const { return PlatformApplication->SupportsHighPrecisionMouse();  }
-
-    /**
-     * @brief: Enables high-precision mouse movement for a certain window
-     *
-     * @param Window: Window to enable high-precision mouse movement for
-     * @return: Returns true if the window now uses high-precision mouse movement
-     */
-    bool EnableHighPrecisionMouseForWindow(const TSharedRef<CGenericWindow>& Window)
-    { 
-        return PlatformApplication->EnableHighPrecisionMouseForWindow(Window); 
-    }
-
-    /**
-     * @brief: Sets the window that should have keyboard focus 
-     * 
-     * @param CaptureWindow: Window that should have keyboard focus
-     */
-    void SetCapture(const TSharedRef<CGenericWindow>& CaptureWindow);
-
-    /**
-     * @brief: Sets the window that should be the active window
-     *
-     * @param ActiveWindow: Window that should be the active window
-     */
-    void SetActiveWindow(const TSharedRef<CGenericWindow>& ActiveWindow);
-
-    /**
-     * @brief: Retrieves the window that currently has the keyboard focus, can return nullptr
-     *
-     * @return: Returns the window that currently has the keyboard focus
-     */
-    TSharedRef<CGenericWindow> GetCapture() const { return PlatformApplication->GetCapture();  }
-
-    /**
-      * @brief: Retrieves the window that is currently active
-      *
-      * @return: Returns the currently active window
-      */
-    TSharedRef<CGenericWindow> GetActiveWindow() const { return PlatformApplication->GetActiveWindow(); }
-
-    /**
-     * @brief: Retrieves the window under the cursor
-     *
-     * @return: Returns the window that currently is under the cursor
-     */
-    TSharedRef<CGenericWindow> GetWindowUnderCursor() const { return PlatformApplication->GetActiveWindow(); }
-
-    /**
-     * @brief: Adds a InputHandler to the application, which gets processed before the main viewport
-     *
-     * @param NewInputHandler: InputHandler to add
-     * @param Priority: Priority of the InputHandler
-     */
-    void AddInputHandler(const TSharedPtr<CInputHandler>& NewInputHandler, uint32 Priority);
-
-    /**
-     * @brief: Removes a InputHandler from the application 
-     * 
-     * @param InputHandler: InputHandler to remove
-     */
-    void RemoveInputHandler(const TSharedPtr<CInputHandler>& InputHandler);
-
-    /**
-     * @brief: Registers the main window of the application 
-     * 
-     * @param NewMainViewport: Viewport to be the new main-viewport
-     */
-    void RegisterMainViewport(const TSharedRef<CGenericWindow>& NewMainViewport);
-
-    /**
-     * @brief:  Sets the interface renderer 
-     * 
-     * @param NewRenderer: New renderer for the InterfaceApplication
-     */
-    void SetRenderer(const TSharedRef<ICanvasRenderer>& NewRenderer);
-
-    /**
-     * @brief: Register a interface window 
-     * 
-     * @param NewWindow: Window to add that should be drawn the next frame
-     */
-    void AddWindow(const TSharedRef<CCanvasWindow>& NewWindow);
-
-    /**
-     * @brief: Removes a interface window
-     *
-     * @param NewWindow: Window to remove
-     */
-    void RemoveWindow(const TSharedRef<CCanvasWindow>& Window);
-
-    /**
-     * @brief: Draws a string in the viewport during the current frame, the strings are reset every frame 
-     * 
-     * @param NewString: String to start drawing
-     */
-    void DrawString(const String& NewString);
-
-    /**
-     * @brief: Draw all InterfaceWindows
-     * 
-     * @param InCommandList: CommandList to submit draw-commands into
-     */
-    void DrawWindows(class CRHICommandList& InCommandList);
-
-    /**
-     * @brief: Sets the platform application used to dispatch messages from the platform
-     * 
-     * @param InPlatformApplication: New PlatformApplication
-     */
-    void SetPlatformApplication(const TSharedPtr<CGenericApplication>& InPlatformApplication);
-
-    /**
-     * @brief: Adds a WindowMessageHandler to the application, which gets processed before the application module 
-     * 
-     * @param NewWindowMessageHandler: WindowMessageHandler to add
-     * @param Priority: Priority of the InputHandler
-     */
-    void AddWindowMessageHandler(const TSharedPtr<CWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority);
-
-    /**
-     * @brief: Removes a WindowMessageHandler from the application
-     *
-     * @param WindowMessageHandler: WindowMessageHandler to remove
-     */
-    void RemoveWindowMessageHandler(const TSharedPtr<CWindowMessageHandler>& WindowMessageHandler);
-
-    /**
-     * @brief: Retrieve the native application
-     *
-     * @return: Returns the PlatformApplication
-     */
-    TSharedPtr<CGenericApplication> GetPlatformApplication() const { return PlatformApplication; }
-
-    /**
-     * @brief: Retrieve the renderer for the Application
-     *
-     * @return: Returns the renderer
-     */
-    TSharedRef<ICanvasRenderer> GetRenderer() const { return Renderer; }
-
-    /**
-     * @brief:  Retrieve the window registered as the main viewport
-     *
-     * @return: Returns the main viewport
-     */
-    TSharedRef<CGenericWindow> GetMainViewport() const { return MainViewport; }
-
-    /**
-     * @brief: Retrieve the cursor interface
-     *
-     * @return: Returns the cursor interface
-     */
-    TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->GetCursor(); }
 
 public:
 
@@ -319,22 +69,197 @@ public:
     // CGenericApplicationMessageHandler Interface
 
     virtual void HandleKeyReleased(EKey KeyCode, SModifierKeyState ModierKeyState) override;
+    
     virtual void HandleKeyPressed(EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState) override;
+    
     virtual void HandleKeyChar(uint32 Character) override;
 
     virtual void HandleMouseMove(int32 x, int32 y) override;
+    
     virtual void HandleMouseReleased(EMouseButton Button, SModifierKeyState ModierKeyState) override;
+    
     virtual void HandleMousePressed(EMouseButton Button, SModifierKeyState ModierKeyState) override;
+    
     virtual void HandleMouseScrolled(float HorizontalDelta, float VerticalDelta) override;
 
     virtual void HandleWindowResized(const TSharedRef<CGenericWindow>& Window, uint32 Width, uint32 Height) override;
+    
     virtual void HandleWindowMoved(const TSharedRef<CGenericWindow>& Window, int32 x, int32 y) override;
+    
     virtual void HandleWindowFocusChanged(const TSharedRef<CGenericWindow>& Window, bool HasFocus) override;
+    
     virtual void HandleWindowMouseLeft(const TSharedRef<CGenericWindow>& Window) override;
+    
     virtual void HandleWindowMouseEntered(const TSharedRef<CGenericWindow>& Window) override;
+    
     virtual void HandleWindowClosed(const TSharedRef<CGenericWindow>& Window) override;
 
     virtual void HandleApplicationExit(int32 ExitCode) override;
+    
+public:
+
+    /**
+     * @return: Returns the newly created window
+     */
+    TSharedRef<CGenericWindow> CreateWindow();
+
+    /**
+     * @brief: Tick and update the CCanvasApplication
+     */
+    void Tick(CTimestamp DeltaTime);
+
+    /**
+     * @return: Returns true if the application is running
+     */
+    bool IsRunning() const { return bIsRunning; }
+    
+    /**
+     * @param Cursor: Cursor to set
+     */
+    void SetCursor(ECursor Cursor);
+
+    /**
+     * @brief: Set the global cursor position
+     */
+    void SetCursorPos(const CIntVector2& Position);
+
+    /**
+     * @brief: Set the cursor position relative to a window
+     */
+    void SetCursorPos(const TSharedRef<CGenericWindow>& RelativeWindow, const CIntVector2& Position);
+
+    /**
+     * @return: Returns  the current global cursor position
+     */
+    CIntVector2 GetCursorPos() const;
+
+    /**
+     * @return: Returns the current cursor position relative to a window
+     */
+    CIntVector2 GetCursorPos(const TSharedRef<CGenericWindow>& RelativeWindow) const;
+
+    /**
+     * @brief: Set the visibility of the cursor
+     */
+    void ShowCursor(bool bIsVisible);
+
+    /**
+     * @return: Returns true if the cursor is visible
+     */
+    bool IsCursorVisibile() const;
+
+    /**
+     * @return: Returns true if high-precision mouse movement is supported
+     */
+    bool SupportsHighPrecisionMouse() const { return PlatformApplication->SupportsHighPrecisionMouse();  }
+
+    /**
+     * @brief: Enables high-precision mouse movement for a certain window
+     */
+    bool EnableHighPrecisionMouseForWindow(const TSharedRef<CGenericWindow>& Window)
+    { 
+        return PlatformApplication->EnableHighPrecisionMouseForWindow(Window); 
+    }
+
+    /**
+     * @brief: Sets the window that should have keyboard focus
+     */
+    void SetCapture(const TSharedRef<CGenericWindow>& CaptureWindow);
+
+    /**
+     * @brief: Sets the window that should be the active window
+     */
+    void SetActiveWindow(const TSharedRef<CGenericWindow>& ActiveWindow);
+
+    /**
+     * @return: Returns the window that currently has the keyboard focus
+     */
+    TSharedRef<CGenericWindow> GetCapture() const { return PlatformApplication->GetCapture();  }
+
+    /**
+     * @return: Returns the window that is currently active
+     */
+    TSharedRef<CGenericWindow> GetActiveWindow() const { return PlatformApplication->GetActiveWindow(); }
+
+    /**
+     * @return: Returns the window that currently is under the cursor
+     */
+    TSharedRef<CGenericWindow> GetWindowUnderCursor() const { return PlatformApplication->GetActiveWindow(); }
+
+    /**
+     * @brief: Adds a InputHandler to the application, which gets processed before the main viewport
+     */
+    void AddInputHandler(const TSharedPtr<CInputHandler>& NewInputHandler, uint32 Priority);
+
+    /**
+     * @brief: Removes a InputHandler from the application
+     */
+    void RemoveInputHandler(const TSharedPtr<CInputHandler>& InputHandler);
+
+    /**
+     * @brief: Registers the main window of the application
+     */
+    void RegisterMainViewport(const TSharedRef<CGenericWindow>& NewMainViewport);
+
+    /**
+     * @brief:  Sets the interface renderer
+     */
+    void SetRenderer(const TSharedRef<ICanvasRenderer>& NewRenderer);
+
+    /**
+     * @brief: Register a window to add that should be drawn the next frame
+     */
+    void AddWindow(const TSharedRef<CCanvasWindow>& NewWindow);
+
+    /**
+     * @brief: Removes a window
+     */
+    void RemoveWindow(const TSharedRef<CCanvasWindow>& Window);
+
+    /**
+     * @brief: Draws a string in the viewport during the current frame, the strings are reset every frame
+     */
+    void DrawString(const String& NewString);
+
+    /**
+     * @brief: Draw all InterfaceWindows
+     */
+    void DrawWindows(class CRHICommandList& InCommandList);
+
+    /**
+     * @brief: Sets the platform application used to dispatch messages from the platform
+     */
+    void SetPlatformApplication(const TSharedPtr<CGenericApplication>& InPlatformApplication);
+
+    /**
+     * @brief: Adds a WindowMessageHandler to the application, which gets processed before the application module
+     */
+    void AddWindowMessageHandler(const TSharedPtr<CWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority);
+
+    /**
+     * @brief: Removes a WindowMessageHandler from the application
+     */
+    void RemoveWindowMessageHandler(const TSharedPtr<CWindowMessageHandler>& WindowMessageHandler);
+
+    /**
+     * @return: Returns the PlatformApplication
+     */
+    TSharedPtr<CGenericApplication> GetPlatformApplication() const { return PlatformApplication; }
+
+    /**
+     * @return: Returns the renderer for the Application
+     */
+    TSharedRef<ICanvasRenderer> GetRenderer() const { return Renderer; }
+
+    /**
+     * @return: Returns the window registered as the main viewport
+     */
+    TSharedRef<CGenericWindow> GetMainViewport() const { return MainViewport; }
+
+    /**
+     * @return: Returns the cursor interface
+     */
+    TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->GetCursor(); }
 
 public:
 
@@ -380,7 +305,9 @@ protected:
     bool CreateContext();
 
     void HandleKeyEvent(const SKeyEvent& KeyEvent);
+    
     void HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEvent);
+    
     void HandleWindowFrameMouseEvent(const SWindowFrameMouseEvent& WindowFrameMouseEvent);
 
     void RenderStrings();

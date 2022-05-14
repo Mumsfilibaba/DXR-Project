@@ -137,11 +137,12 @@ void CMacApplication::Tick(float)
 
 void CMacApplication::SetActiveWindow(const TSharedRef<CGenericWindow>& Window)
 {
+	__block TSharedRef<CMacWindow> MacWindow = StaticCastSharedRef<CMacWindow>(Window);
     MakeMainThreadCall(^
     {
-		CCocoaWindow* CocoaWindow = static_cast<CMacWindow*>(Window.Get())->GetWindowHandle();
+		CCocoaWindow* CocoaWindow = MacWindow->GetWindowHandle();
         [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
-    }, true);
+    }, false);
 }
 
 TSharedRef<CGenericWindow> CMacApplication::GetActiveWindow() const

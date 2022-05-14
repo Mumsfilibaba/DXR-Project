@@ -3,6 +3,7 @@
 #include "CocoaConsoleWindow.h"
 
 #include "Core/Mac/Mac.h"
+#include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Mac/MacRunLoop.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -97,8 +98,6 @@ void CMacConsoleWindow::CreateConsole()
                     PlatformApplicationMisc::PumpMessages(true);
                 } while(WindowHandle && ![WindowHandle isVisible]);
             }
-            
-            
         }, true);
     }
 }
@@ -131,6 +130,8 @@ void CMacConsoleWindow::DestroyResources()
 
 void CMacConsoleWindow::Show(bool bShow)
 {
+    TScopedLock Lock(WindowCS);
+    
 	if (IsVisible() != bShow)
 	{
 		if (bShow)
@@ -145,7 +146,7 @@ void CMacConsoleWindow::Show(bool bShow)
 }
 
 void CMacConsoleWindow::Print(const String& Message)
-{  
+{
     if (WindowHandle)
     {
         MakeMainThreadCall(^
@@ -206,48 +207,47 @@ void CMacConsoleWindow::SetTitle(const String& InTitle)
 
 void CMacConsoleWindow::SetColor(EConsoleColor Color)
 {
+    TScopedLock Lock(WindowCS);
+    
     if (WindowHandle)
     {
-        MakeMainThreadCall(^
+        SCOPED_AUTORELEASE_POOL();
+        
+        if (ConsoleColor)
         {
-			SCOPED_AUTORELEASE_POOL();
-			
-			if (ConsoleColor)
-			{
-				[ConsoleColor release];
-			}
-			
-			NSMutableArray* Colors     = [[NSMutableArray alloc] init];
-			NSMutableArray* Attributes = [[NSMutableArray alloc] init];
-			[Attributes addObject:NSForegroundColorAttributeName];
-			[Attributes addObject:NSBackgroundColorAttributeName];
+            [ConsoleColor release];
+        }
+        
+        NSMutableArray* Colors     = [[NSMutableArray alloc] init];
+        NSMutableArray* Attributes = [[NSMutableArray alloc] init];
+        [Attributes addObject:NSForegroundColorAttributeName];
+        [Attributes addObject:NSBackgroundColorAttributeName];
 
-			// Add foreground Color
-			if (Color == EConsoleColor::White)
-			{
-				[Colors addObject:[NSColor colorWithSRGBRed:0.85f green:0.85f blue:0.85f alpha:1.0f]];
-			}
-			else if (Color == EConsoleColor::Red)
-			{
-				[Colors addObject:[NSColor colorWithSRGBRed:0.85f green:0.0f blue:0.0f alpha:1.0f]];
-			}
-			else if (Color == EConsoleColor::Green)
-			{
-				[Colors addObject:[NSColor colorWithSRGBRed:0.0f green:0.85f blue:0.0f alpha:1.0f]];
-			}
-			else if (Color == EConsoleColor::Yellow)
-			{
-				[Colors addObject:[NSColor colorWithSRGBRed:0.85f green:0.85f blue:0.0f alpha:1.0f]];
-			}
-			
-			// Add background Color
-			[Colors addObject:[NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f]];
-			
-			ConsoleColor = [[NSDictionary alloc] initWithObjects:Colors forKeys:Attributes];
+        // Add foreground Color
+        if (Color == EConsoleColor::White)
+        {
+            [Colors addObject:[NSColor colorWithSRGBRed:0.85f green:0.85f blue:0.85f alpha:1.0f]];
+        }
+        else if (Color == EConsoleColor::Red)
+        {
+            [Colors addObject:[NSColor colorWithSRGBRed:0.85f green:0.0f blue:0.0f alpha:1.0f]];
+        }
+        else if (Color == EConsoleColor::Green)
+        {
+            [Colors addObject:[NSColor colorWithSRGBRed:0.0f green:0.85f blue:0.0f alpha:1.0f]];
+        }
+        else if (Color == EConsoleColor::Yellow)
+        {
+            [Colors addObject:[NSColor colorWithSRGBRed:0.85f green:0.85f blue:0.0f alpha:1.0f]];
+        }
+        
+        // Add background Color
+        [Colors addObject:[NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f]];
+        
+        ConsoleColor = [[NSDictionary alloc] initWithObjects:Colors forKeys:Attributes];
 
-			[Colors release];
-			[Attributes release];
-        }, true);
+        [Colors release];
+        [Attributes release];
     }
 }
 
@@ -300,7 +300,11 @@ void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
 			// TODO: CVar
 			const NSUInteger MaxLineCount = 196;
 			
-			NSAttributedString* AttributedString = [[NSAttributedString alloc] initWithString:String attributes:ConsoleColor];
+            NSAttributedString* AttributedString = nil;
+            {
+                TScopedLock Lock(WindowCS);
+                AttributedString = [[NSAttributedString alloc] initWithString:String attributes:ConsoleColor];
+            }
 				
 			NSTextStorage* Storage = TextView.textStorage;
 			[Storage beginEditing];

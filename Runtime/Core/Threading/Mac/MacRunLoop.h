@@ -3,9 +3,10 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Interface for creating the Mac main-thread runloop which enables us to run blocks of code on the 
-// main-thread from other threads
+/**
+ * Interface for creating the Mac main-thread runloop which enables us to run blocks of code on the
+ * main-thread from other threads
+ */
 
 /** @brief: Create the MainThread's RunLoop */
 CORE_API bool RegisterMainRunLoop();

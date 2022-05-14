@@ -18,7 +18,7 @@ public:
     FORCEINLINE CMacCriticalSection()
         : Mutex()
     {
-        /* Create a critical section that is recursive, in order to have parity with winapi CriticalSection */
+        // Create a critical section that is recursive, in order to have parity with WinApi CriticalSection
         pthread_mutexattr_t MutexAttributes;
         pthread_mutexattr_init(&MutexAttributes);
         pthread_mutexattr_settype(&MutexAttributes, PTHREAD_MUTEX_RECURSIVE);
