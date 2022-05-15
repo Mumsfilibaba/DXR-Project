@@ -72,14 +72,14 @@ public:
     virtual void SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex) override final { }
     virtual void SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) override final { }
 
-    virtual void UpdateBuffer(CRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) override final { }
-    virtual void UpdateTexture2D(CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) override final { }
+    virtual void UpdateBuffer(CRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) override final { }
+    virtual void UpdateTexture2D(CRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) override final { }
 
-    virtual void ResolveTexture(CRHITexture* Destination, CRHITexture* Source) override final { }
+    virtual void ResolveTexture(CRHITexture* Dst, CRHITexture* Src) override final { }
 
-    virtual void CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo) override final { }
-    virtual void CopyTexture(CRHITexture* Destination, CRHITexture* Source) override final { }
-    virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo) override final { }
+    virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo) override final { }
+    virtual void CopyTexture(CRHITexture* Dst, CRHITexture* Src) override final { }
+    virtual void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo) override final { }
 
     virtual void DestroyResource(class IRHIResource* Resource) override final { }
 

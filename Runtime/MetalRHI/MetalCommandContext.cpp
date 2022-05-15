@@ -219,27 +219,27 @@ void CMetalCommandContext::SetSamplerStates(CRHIShader* Shader, CRHISamplerState
 {
 }
 
-void CMetalCommandContext::UpdateBuffer(CRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
+void CMetalCommandContext::UpdateBuffer(CRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
 {
 }
 
-void CMetalCommandContext::UpdateTexture2D(CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
+void CMetalCommandContext::UpdateTexture2D(CRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
 {
 }
 
-void CMetalCommandContext::ResolveTexture(CRHITexture* Destination, CRHITexture* Source)
+void CMetalCommandContext::ResolveTexture(CRHITexture* Dst, CRHITexture* Src)
 {
 }
 
-void CMetalCommandContext::CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo)
+void CMetalCommandContext::CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo)
 {
 }
 
-void CMetalCommandContext::CopyTexture(CRHITexture* Destination, CRHITexture* Source)
+void CMetalCommandContext::CopyTexture(CRHITexture* Dst, CRHITexture* Src)
 {
 }
 
-void CMetalCommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo)
+void CMetalCommandContext::CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo)
 {
 }
 
