@@ -271,6 +271,13 @@ void CMetalCommandContext::SetRayTracingBindings( CRHIRayTracingScene* RayTracin
 
 void CMetalCommandContext::GenerateMips(CRHITexture* Texture)
 {
+    CMetalTexture* MetalTexture = GetMetalTexture(Texture);
+    Check(MetalTexture != nullptr);
+    
+    CopyContext.StartContext(CommandBuffer);
+    
+    id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
+    [CopyEncoder generateMipmapsForTexture:MetalTexture->GetMTLTexture()];
 }
 
 void CMetalCommandContext::TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)

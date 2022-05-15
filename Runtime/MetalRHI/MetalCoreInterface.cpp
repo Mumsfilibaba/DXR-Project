@@ -113,7 +113,24 @@ MetalTextureType* CMetalCoreInterface::CreateTexture(const InitializerType& Init
     }
     
     NewTexture->SetMTLTexture(NewMTLTexture);
-
+    
+    // TODO: Fix upload for other resources than Texture2D
+    constexpr bool bIsTexture2D = TIsSame<MetalTextureType, CMetalTexture2D>::Value;
+    
+    if constexpr (bIsTexture2D)
+    {
+        CRHITextureDataInitializer* InitialData = Initializer.InitialData;
+        if (InitialData)
+        {
+            MTLRegion Region;
+            Region.origin = { 0, 0, 0 };
+            Region.size   = { NSUInteger(Extent.x), NSUInteger(Extent.y), 1 };
+            
+            const NSUInteger BytesPerRow = NSUInteger(Extent.x) * GetByteStrideFromFormat(Initializer.Format);
+            // [NewMTLTexture replaceRegion:Region mipmapLevel:0 withBytes:InitialData->TextureData bytesPerRow:BytesPerRow];
+        }
+    }
+    
     return NewTexture.ReleaseOwnership();
 }
 
