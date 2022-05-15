@@ -33,6 +33,8 @@ typedef TSharedRef<class CRHIRayCallableShader>     RHIRayCallableShaderRef;
 
 enum class EShaderStage : uint8
 {
+    Unknown         = 0,
+    
     // Graphics
     Vertex          = 1,
     Hull            = 2,
@@ -51,7 +53,7 @@ enum class EShaderStage : uint8
     RayClosestHit   = 11,
     RayMiss         = 12,
     RayIntersection = 13,
-    RayCallable     = 14
+    RayCallable     = 14,
 };
 
 inline const char* ToString(EShaderStage ShaderStage)

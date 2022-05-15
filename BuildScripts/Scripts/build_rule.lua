@@ -260,16 +260,6 @@ function CBuildRules(InName)
             -- Add ForceIncludes
             forceincludes(self.ForceIncludes)
 
-            -- Add System Includes
-            printf('    Num SystemIncludes=%d', #self.SystemIncludes)
-            if #self.SystemIncludes > 0 then
-                PrintTableWithEndLine('    Using SystemInclude \'%s\'', self.SystemIncludes)
-            else
-                printf('')
-            end
-
-            sysincludedirs(self.SystemIncludes)
-
             -- Add Module Defines
             printf('    Num Defines=%d', #self.Defines)
             if #self.Defines > 0 then

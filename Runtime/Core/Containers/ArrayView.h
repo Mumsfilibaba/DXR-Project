@@ -89,18 +89,7 @@ public:
      *
      * @return: Returns a reference to the first element of the view
      */
-    FORCEINLINE ElementType& FirstElement() noexcept
-    {
-        Check(IsEmpty());
-        return Data()[0];
-    }
-
-    /**
-     * @brief: Retrieve the first element of the view
-     *
-     * @return: Returns a reference to the first element of the view
-     */
-    FORCEINLINE const ElementType& FirstElement() const noexcept
+    FORCEINLINE ElementType& FirstElement() const noexcept
     {
         Check(IsEmpty());
         return Data()[0];
@@ -111,18 +100,7 @@ public:
      *
      * @return: Returns a reference to the last element of the view
      */
-    FORCEINLINE ElementType& LastElement() noexcept
-    {
-        Check(IsEmpty());
-        return Data()[ViewSize - 1];
-    }
-
-    /**
-     * @brief: Retrieve the last element of the array
-     *
-     * @return: Returns a reference to the last element of the view
-     */
-    FORCEINLINE const ElementType& LastElement() const noexcept
+    FORCEINLINE ElementType& LastElement() const noexcept
     {
         Check(IsEmpty());
         return Data()[ViewSize - 1];
@@ -134,19 +112,7 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    FORCEINLINE ElementType& At(SizeType Index) noexcept
-    {
-        Check(Index < ViewSize);
-        return Data()[Index];
-    }
-
-    /**
-     * @brief: Retrieve a element at a certain index of the view
-     *
-     * @param Index: Index of the element to retrieve
-     * @return: A reference to the element at the index
-     */
-    FORCEINLINE const ElementType& At(SizeType Index) const noexcept
+    FORCEINLINE ElementType& At(SizeType Index) const noexcept
     {
         Check(Index < ViewSize);
         return Data()[Index];
@@ -182,7 +148,7 @@ public:
      */
     FORCEINLINE SizeType LastElementIndex() const noexcept
     {
-        return ViewSize > 0 ? ViewSize - 1 : 0;
+        return (ViewSize > 0) ? (ViewSize - 1) : 0;
     }
 
     /**
@@ -210,17 +176,7 @@ public:
      *
      * @return: Returns a pointer to the data of the view
      */
-    FORCEINLINE ElementType* Data() noexcept
-    {
-        return View;
-    }
-
-    /**
-     * @brief: Retrieve the data of the view
-     *
-     * @return: Returns a pointer to the data of the view
-     */
-    FORCEINLINE const ElementType* Data() const noexcept
+    FORCEINLINE ElementType* Data() const noexcept
     {
         return View;
     }

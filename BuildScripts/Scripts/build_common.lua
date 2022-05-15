@@ -97,7 +97,7 @@ function TableAppendUniqueElementMultiple(Elements, Table)
 end
 
 -- Global variable that stores all created modules
-GModules = {}
+GModules = { }
 
 function GetModule(ModuleName)
     if GModules ~= nil then
@@ -121,7 +121,7 @@ function AddModule(ModuleName, Module)
 end
 
 -- Global variable that stores all created targets
-GTargets = {}
+GTargets = { }
 
 function GetTarget(TargetName)
     if GTargets ~= nil then
@@ -181,7 +181,7 @@ function GetExternalDependenciesFolderPath()
 end
 
 -- Make path relative to dependency folder
-function MakeExternalDependencyPath(Path)
+function CreateExternalDependencyPath(Path)
     return GetExternalDependenciesFolderPath() .. '/' .. Path
 end
 

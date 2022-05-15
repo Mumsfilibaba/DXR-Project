@@ -17,13 +17,6 @@ SandboxProject.AddModuleDependencies(
 })
 
 if BuildWithXcode() then
-    SandboxProject.AddFrameWorks(
-    {
-        'Cocoa',
-        'AppKit',
-        'MetalKit'
-    })
-
     SandboxProject.AddModuleDependencies(
     { 
         'MetalRHI'

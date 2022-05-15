@@ -1,4 +1,3 @@
-#pragma once
 #include "Main/EngineLoop.h"
 
 #include "Core/Core.h"

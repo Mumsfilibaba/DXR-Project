@@ -1,4 +1,7 @@
 #pragma once
+//#define __EMULATE_UUID (1)
+#include <dxc/dxcapi.h>
+
 #include "RHIModule.h"
 #include "RHIShader.h"
 
@@ -16,6 +19,7 @@ enum class EShaderModel
     SM_6_3 = 6,
     SM_6_4 = 7,
     SM_6_5 = 8,
+    SM_6_6 = 9,
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -36,6 +40,100 @@ struct SShaderDefine
     String Define;
     String Value;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CShaderCompileRequest
+
+class CShaderCompileRequest
+{
+public:
+    
+    CShaderCompileRequest()
+        : EntryPoint()
+        , ShaderModel(EShaderModel::Unknown)
+        , ShaderStage(EShaderStage::Unknown)
+        , Defines()
+    { }
+    
+    CShaderCompileRequest( const String& InEntryPoint
+                                 , EShaderModel InShaderModel
+                                 , EShaderStage InShaderStage
+                                 , const TArrayView<SShaderDefine>& InDefines)
+        : EntryPoint(InEntryPoint)
+        , ShaderModel(InShaderModel)
+        , ShaderStage(InShaderStage)
+        , Defines(InDefines)
+    { }
+    
+    String                    EntryPoint;
+    
+    EShaderModel              ShaderModel;
+    EShaderStage              ShaderStage;
+    
+    TArrayView<SShaderDefine> Defines;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CShaderFromFileCompileRequest
+
+class CShaderFromFileCompileRequest
+{
+public:
+    
+    CShaderFromFileCompileRequest()
+        : Filename()
+        , EntryPoint()
+        , ShaderModel(EShaderModel::Unknown)
+        , ShaderStage(EShaderStage::Unknown)
+        , Defines()
+    { }
+    
+    CShaderFromFileCompileRequest( const String& InFilename
+                                 , const String& InEntryPoint
+                                 , EShaderModel InShaderModel
+                                 , EShaderStage InShaderStage
+                                 , const TArrayView<SShaderDefine>& InDefines)
+        : Filename(InFilename)
+        , EntryPoint(InEntryPoint)
+        , ShaderModel(InShaderModel)
+        , ShaderStage(InShaderStage)
+        , Defines(InDefines)
+    { }
+    
+    String                    Filename;
+    String                    EntryPoint;
+    
+    EShaderModel              ShaderModel;
+    EShaderStage              ShaderStage;
+    
+    TArrayView<SShaderDefine> Defines;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CShaderCompiler
+
+class RHI_API CShaderCompiler
+{
+private:
+    CShaderCompiler();
+    ~CShaderCompiler();
+    
+public:
+    
+    static bool Initialize();
+    
+    static void Release();
+    
+    static bool CompileFromFile(const CShaderFromFileCompileRequest& CompileRequest, TArray<uint8>& OutByteCode);
+    
+    static bool Compile();
+    
+private:
+    struct IDxcCompiler* Compiler;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* DEPRECATED */
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IRHIShaderCompiler
@@ -65,3 +163,4 @@ public:
         return GShaderCompiler->CompileShader(ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
 };
+

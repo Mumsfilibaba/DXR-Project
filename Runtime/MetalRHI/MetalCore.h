@@ -7,6 +7,7 @@
 #include "RHI/RHIResourceViews.h"
 
 #include <Metal/Metal.h>
+#include <QuartzCore/QuartzCore.h>
 
 #if MONOLITHIC_BUILD
     #define METAL_RHI_API
