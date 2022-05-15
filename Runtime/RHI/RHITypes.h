@@ -286,14 +286,7 @@ CONSTEXPR uint32 GetCubeFaceIndex(ECubeFace CubeFace)
 
 CONSTEXPR ECubeFace GetCubeFaceFromIndex(uint32 Index)
 {
-    if (Index > GetCubeFaceIndex(ECubeFace::NegZ))
-    {
-        return static_cast<ECubeFace>(-1);
-    }
-    else
-    {
-        return static_cast<ECubeFace>(Index);
-    }
+    return (Index > GetCubeFaceIndex(ECubeFace::NegZ)) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

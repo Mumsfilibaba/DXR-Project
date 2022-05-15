@@ -77,6 +77,18 @@ public:
     virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
 
     virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override { return GetMetalUnorderedAccessView(); }
+    
+    virtual void SetName(const String& InName) override final
+    {
+        @autoreleasepool
+        {
+            id<MTLTexture> TextureHandle = GetMTLTexture();
+            if (TextureHandle)
+            {
+                TextureHandle.label = InName.GetNSString();
+            }
+        }
+    }
 
 private:
     TSharedRef<CMetalUnorderedAccessView> UnorderedAccessView;
@@ -106,6 +118,18 @@ public:
     virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
 
     virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    
+    virtual void SetName(const String& InName) override final
+    {
+        @autoreleasepool
+        {
+            id<MTLTexture> TextureHandle = GetMTLTexture();
+            if (TextureHandle)
+            {
+                TextureHandle.label = InName.GetNSString();
+            }
+        }
+    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -132,6 +156,18 @@ public:
     virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
 
     virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    
+    virtual void SetName(const String& InName) override final
+    {
+        @autoreleasepool
+        {
+            id<MTLTexture> TextureHandle = GetMTLTexture();
+            if (TextureHandle)
+            {
+                TextureHandle.label = InName.GetNSString();
+            }
+        }
+    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -158,6 +194,18 @@ public:
     virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
 
     virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    
+    virtual void SetName(const String& InName) override final
+    {
+        @autoreleasepool
+        {
+            id<MTLTexture> TextureHandle = GetMTLTexture();
+            if (TextureHandle)
+            {
+                TextureHandle.label = InName.GetNSString();
+            }
+        }
+    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -184,6 +232,18 @@ public:
     virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
 
     virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    
+    virtual void SetName(const String& InName) override final
+    {
+        @autoreleasepool
+        {
+            id<MTLTexture> TextureHandle = GetMTLTexture();
+            if (TextureHandle)
+            {
+                TextureHandle.label = InName.GetNSString();
+            }
+        }
+    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

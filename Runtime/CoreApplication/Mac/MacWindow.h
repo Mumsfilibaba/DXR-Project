@@ -22,8 +22,6 @@ public:
 
 	static CMacWindow* CreateMacWindow(CMacApplication* InApplication);
 
-    CCocoaWindow* GetWindowHandle() const { return WindowHandle; }
-
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -63,6 +61,12 @@ public:
 
     virtual void* GetPlatformHandle() const override final { return reinterpret_cast<void*>(WindowHandle); }
 
+public:
+    
+    CCocoaWindow* GetWindowHandle() const { return WindowHandle; }
+
+    CMacApplication* GetApplication() const { return Application; }
+    
 private:
     CMacApplication* Application;
     CCocoaWindow*    WindowHandle;

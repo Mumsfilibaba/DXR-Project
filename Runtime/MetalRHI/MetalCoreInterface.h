@@ -106,6 +106,9 @@ private:
     template<typename MetalTextureType, typename InitializerType>
     MetalTextureType* CreateTexture(const InitializerType& Initializer);
     
+    template<typename MetalBufferType, typename InitializerType>
+    MetalBufferType* CreateBuffer(const InitializerType& Initializer);
+    
 	CMetalDeviceContext*  DeviceContext;
     CMetalCommandContext* CommandContext;
 };

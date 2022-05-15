@@ -106,7 +106,8 @@ MetalTextureType* CMetalCoreInterface::CreateTexture(const InitializerType& Init
     TextureDescriptor.storageMode        = MTLStorageModePrivate;
     TextureDescriptor.hazardTrackingMode = MTLHazardTrackingModeDefault;
     
-    id<MTLTexture> NewMTLTexture = [GetDeviceContext()->GetMTLDevice() newTextureWithDescriptor:TextureDescriptor];
+    id<MTLDevice>  Device = GetDeviceContext()->GetMTLDevice();
+    id<MTLTexture> NewMTLTexture = [Device newTextureWithDescriptor:TextureDescriptor];
     if (!NewMTLTexture)
     {
         return nullptr;
@@ -126,8 +127,35 @@ MetalTextureType* CMetalCoreInterface::CreateTexture(const InitializerType& Init
             Region.origin = { 0, 0, 0 };
             Region.size   = { NSUInteger(Extent.x), NSUInteger(Extent.y), 1 };
             
-            const NSUInteger BytesPerRow = NSUInteger(Extent.x) * GetByteStrideFromFormat(Initializer.Format);
-            // [NewMTLTexture replaceRegion:Region mipmapLevel:0 withBytes:InitialData->TextureData bytesPerRow:BytesPerRow];
+            @autoreleasepool
+            {
+                id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:InitialData->Size options:MTLResourceOptionCPUCacheModeDefault];
+                CMemory::Memcpy(StagingBuffer.contents, InitialData->TextureData, InitialData->Size);
+                
+                id<MTLCommandQueue>       CommandQueue  = GetDeviceContext()->GetMTLCommandQueue();
+                id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
+                id<MTLBlitCommandEncoder> CopyEncoder   = [CommandBuffer blitCommandEncoder];
+                
+                const NSUInteger BytesPerRow = NSUInteger(Extent.x) * GetByteStrideFromFormat(Initializer.Format);
+                
+                [CopyEncoder copyFromBuffer:StagingBuffer
+                               sourceOffset:0
+                          sourceBytesPerRow:BytesPerRow
+                        sourceBytesPerImage:0
+                                 sourceSize:Region.size
+                                  toTexture:NewMTLTexture
+                           destinationSlice:0
+                           destinationLevel:0
+                          destinationOrigin:Region.origin];
+                
+                [CopyEncoder endEncoding];
+
+                // TODO: we do not want to wait here
+                [CommandBuffer commit];
+                [CommandBuffer waitUntilCompleted];
+            
+                [StagingBuffer release];
+            }
         }
     }
     
@@ -141,22 +169,84 @@ CRHISamplerState* CMetalCoreInterface::RHICreateSamplerState(const CRHISamplerSt
 
 CRHIVertexBuffer* CMetalCoreInterface::RHICreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
 {
-    return dbg_new TMetalBuffer<CMetalVertexBuffer>(Initializer);
+    return CreateBuffer<CMetalVertexBuffer>(Initializer);
 }
 
 CRHIIndexBuffer* CMetalCoreInterface::RHICreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
 {
-    return dbg_new TMetalBuffer<CMetalIndexBuffer>(Initializer);
+    return CreateBuffer<CMetalIndexBuffer>(Initializer);
 }
 
 CRHIGenericBuffer* CMetalCoreInterface::RHICreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
 {
-    return dbg_new TMetalBuffer<CMetalGenericBuffer>(Initializer);
+    return CreateBuffer<CMetalGenericBuffer>(Initializer);
 }
 
 CRHIConstantBuffer* CMetalCoreInterface::RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
 {
-    return dbg_new TMetalBuffer<CMetalConstantBuffer>(Initializer);
+    return CreateBuffer<CMetalConstantBuffer>(Initializer);
+}
+
+template<typename MetalBufferType, typename InitializerType>
+MetalBufferType* CMetalCoreInterface::CreateBuffer(const InitializerType& Initializer)
+{
+    TSharedRef<MetalBufferType> NewBuffer = dbg_new MetalBufferType(GetDeviceContext(), Initializer);
+    
+    MTLResourceOptions ResourceOptions = MTLResourceHazardTrackingModeDefault;
+    if (Initializer.IsDynamic())
+    {
+        ResourceOptions |= MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache;
+    }
+    else
+    {
+        ResourceOptions |= MTLResourceStorageModePrivate | MTLResourceCPUCacheModeWriteCombined;
+    }
+    
+    id<MTLDevice> Device       = GetDeviceContext()->GetMTLDevice();
+    id<MTLBuffer> NewMTLBuffer = [Device newBufferWithLength:NewBuffer->GetSize() options:ResourceOptions];
+    if (!NewMTLBuffer)
+    {
+        return nullptr;
+    }
+    
+    NewBuffer->SetMTLBuffer(NewMTLBuffer);
+    
+    CRHIBufferDataInitializer* InitialData = Initializer.InitialData;
+    if (InitialData)
+    {
+        if (Initializer.IsDynamic())
+        {
+            CMemory::Memcpy(NewMTLBuffer.contents, InitialData->BufferData, InitialData->Size);
+        }
+        else
+        {
+            @autoreleasepool
+            {
+                id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:InitialData->Size options:MTLResourceOptionCPUCacheModeDefault];
+                CMemory::Memcpy(StagingBuffer.contents, InitialData->BufferData, InitialData->Size);
+                
+                id<MTLCommandQueue>       CommandQueue  = GetDeviceContext()->GetMTLCommandQueue();
+                id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
+                id<MTLBlitCommandEncoder> CopyEncoder   = [CommandBuffer blitCommandEncoder];
+                
+                [CopyEncoder copyFromBuffer:StagingBuffer
+                               sourceOffset:0
+                                   toBuffer:NewMTLBuffer
+                          destinationOffset:0
+                                       size:InitialData->Size];
+                
+                [CopyEncoder endEncoding];
+
+                // TODO: we do not want to wait here
+                [CommandBuffer commit];
+                [CommandBuffer waitUntilCompleted];
+            
+                [StagingBuffer release];
+            }
+        }
+    }
+    
+    return NewBuffer.ReleaseOwnership();
 }
 
 CRHIRayTracingScene* CMetalCoreInterface::RHICreateRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
