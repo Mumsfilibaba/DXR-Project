@@ -1,5 +1,6 @@
 #include "MetalCommandContext.h"
 #include "MetalDeviceContext.h"
+#include "MetalBuffer.h"
 #include "MetalTexture.h"
 #include "MetalViewport.h"
 
@@ -233,10 +234,40 @@ void CMetalCommandContext::ResolveTexture(CRHITexture* Dst, CRHITexture* Src)
 
 void CMetalCommandContext::CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo)
 {
+    CMetalBuffer* MetalDst = GetMetalBuffer(Dst);
+    CMetalBuffer* MetalSrc = GetMetalBuffer(Src);
+    
+    Check(CommandBuffer != nil);
+    Check(MetalDst      != nullptr);
+    Check(MetalSrc      != nullptr);
+    
+    CopyContext.StartContext(CommandBuffer);
+    
+    id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
+    [CopyEncoder copyFromBuffer:MetalSrc->GetMTLBuffer()
+                   sourceOffset:CopyInfo.SourceOffset
+                       toBuffer:MetalDst->GetMTLBuffer()
+              destinationOffset:CopyInfo.DestinationOffset
+                           size:CopyInfo.SizeInBytes];
+    
+    CopyContext.FinishContext();
 }
 
 void CMetalCommandContext::CopyTexture(CRHITexture* Dst, CRHITexture* Src)
 {
+    CMetalTexture* MetalDst = GetMetalTexture(Dst);
+    CMetalTexture* MetalSrc = GetMetalTexture(Src);
+    
+    Check(CommandBuffer != nil);
+    Check(MetalDst      != nullptr);
+    Check(MetalSrc      != nullptr);
+    
+    CopyContext.StartContext(CommandBuffer);
+    
+    id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
+    [CopyEncoder copyFromTexture:MetalSrc->GetMTLTexture() toTexture:MetalDst->GetMTLTexture()];
+    
+    CopyContext.FinishContext();
 }
 
 void CMetalCommandContext::CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo)
