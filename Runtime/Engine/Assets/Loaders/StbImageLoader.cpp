@@ -150,7 +150,7 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const String& Filename)
         Image->bIsLoaded = true;
     };
 
-    SAsyncTask NewTask;
+    CAsyncTask NewTask;
     NewTask.Delegate.BindLambda(LoadImageAsync);
 
     CAsyncTaskManager::Get().Dispatch(NewTask);

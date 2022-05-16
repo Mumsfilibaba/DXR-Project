@@ -10,10 +10,12 @@
 typedef int64 DispatchID;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SAsyncTask
+// CAsyncTask
 
-struct SAsyncTask
+class CAsyncTask
 {
+public:
+
     DECLARE_DELEGATE(CTaskDelegate);
     CTaskDelegate Delegate;
 };
@@ -46,7 +48,7 @@ public:
      * @param NewTask: A new task to dispatch when a worker thread is available
      * @return: Returns a dispatch ID that can be waited for
      */
-    DispatchID Dispatch(const SAsyncTask& NewTask);
+    DispatchID Dispatch(const CAsyncTask& NewTask);
 
     /**
      * @brief: Wait for a specific task 
@@ -69,13 +71,13 @@ private:
 
     static void WorkThread();
 
-    bool PopDispatch(SAsyncTask& OutTask);
+    bool PopDispatch(CAsyncTask& OutTask);
 
     void KillWorkers();
 
     TArray<TSharedRef<CGenericThread>> WorkerThreads;
 
-    TArray<SAsyncTask> Queue;
+    TArray<CAsyncTask> Queue;
     CCriticalSection   QueueMutex;
 
     CConditionVariable WakeCondition;

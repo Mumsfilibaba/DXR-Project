@@ -3,40 +3,38 @@
 
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
 
-// TODO: Use print line instead of print
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Logging macros
 
-#define LOG_ERROR(...)                                                                  \
-    do                                                                                  \
-    {                                                                                   \
-        if (NErrorDevice::GConsoleWindow)                                               \
-        {                                                                               \
-            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Red);                 \
+#define LOG_ERROR(...)                                                                    \
+    do                                                                                    \
+    {                                                                                     \
+        if (NErrorDevice::GConsoleWindow)                                                 \
+        {                                                                                 \
+            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Red);                   \
             NErrorDevice::GConsoleWindow->PrintLine(String::CreateFormated(__VA_ARGS__)); \
-            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White);               \
-        }                                                                               \
+            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White);                 \
+        }                                                                                 \
     } while (false)
 
-#define LOG_WARNING(...)                                                                \
-    do                                                                                  \
-    {                                                                                   \
-        if (NErrorDevice::GConsoleWindow)                                               \
-        {                                                                               \
-            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Yellow);              \
+#define LOG_WARNING(...)                                                                  \
+    do                                                                                    \
+    {                                                                                     \
+        if (NErrorDevice::GConsoleWindow)                                                 \
+        {                                                                                 \
+            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Yellow);                \
             NErrorDevice::GConsoleWindow->PrintLine(String::CreateFormated(__VA_ARGS__)); \
-            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White);               \
-        }                                                                               \
+            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White);                 \
+        }                                                                                 \
     } while (false)
 
-#define LOG_INFO(...)                                                                   \
-    do                                                                                  \
-    {                                                                                   \
-        if (NErrorDevice::GConsoleWindow)                                               \
-        {                                                                               \
-            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Green);               \
+#define LOG_INFO(...)                                                                     \
+    do                                                                                    \
+    {                                                                                     \
+        if (NErrorDevice::GConsoleWindow)                                                 \
+        {                                                                                 \
+            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Green);                 \
             NErrorDevice::GConsoleWindow->PrintLine(String::CreateFormated(__VA_ARGS__)); \
-            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White);               \
-        }                                                                               \
+            NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White);                 \
+        }                                                                                 \
     } while (false)

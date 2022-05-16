@@ -1,5 +1,4 @@
 #pragma once
-//#define __EMULATE_UUID (1)
 #include <dxc/dxcapi.h>
 
 #include "RHIModule.h"
@@ -8,7 +7,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EShaderModel
 
-enum class EShaderModel
+enum class EShaderModel : uint8
 {
     Unknown = 0,
     SM_5_0 = 1,
@@ -23,16 +22,26 @@ enum class EShaderModel
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EShaderOutputLanguage
+
+enum class EShaderOutputLanguage : uint8
+{
+    Unknown = 0,
+    HLSL    = 1, // DXIL for D3D12RHI
+    MSL     = 2, // Metal Shading Language for MetalRHI
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SShaderDefine
 
 struct SShaderDefine
 {
-    FORCEINLINE SShaderDefine(const String& InDefine)
+    SShaderDefine(const String& InDefine)
         : Define(InDefine)
         , Value()
     { }
 
-    FORCEINLINE SShaderDefine(const String& InDefine, const String& InValue)
+    SShaderDefine(const String& InDefine, const String& InValue)
         : Define(InDefine)
         , Value(InValue)
     { }
@@ -42,26 +51,35 @@ struct SShaderDefine
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShaderCompileRequest
+// CShaderCompileInfo
 
-class CShaderCompileRequest
+class CShaderCompileInfo
 {
 public:
     
-    CShaderCompileRequest()
+    CShaderCompileInfo()
         : EntryPoint()
         , ShaderModel(EShaderModel::Unknown)
         , ShaderStage(EShaderStage::Unknown)
+        , OutputLanguage(EShaderOutputLanguage::Unknown)
         , Defines()
     { }
     
-    CShaderCompileRequest( const String& InEntryPoint
-                                 , EShaderModel InShaderModel
-                                 , EShaderStage InShaderStage
-                                 , const TArrayView<SShaderDefine>& InDefines)
+    CShaderCompileInfo( const String& InEntryPoint
+                      , EShaderModel InShaderModel
+                      , EShaderStage InShaderStage
+                      , const TArrayView<SShaderDefine>& InDefines
+#if PLATFORM_WINDOWS
+                      , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::HLSL)
+#elif PLATFORM_MAC
+                      , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::MSL)
+#else
+                      , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::Unknown)
+#endif
         : EntryPoint(InEntryPoint)
         , ShaderModel(InShaderModel)
         , ShaderStage(InShaderStage)
+        , OutputLanguage(InOutputLanguage)
         , Defines(InDefines)
     { }
     
@@ -69,42 +87,7 @@ public:
     
     EShaderModel              ShaderModel;
     EShaderStage              ShaderStage;
-    
-    TArrayView<SShaderDefine> Defines;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShaderFromFileCompileRequest
-
-class CShaderFromFileCompileRequest
-{
-public:
-    
-    CShaderFromFileCompileRequest()
-        : Filename()
-        , EntryPoint()
-        , ShaderModel(EShaderModel::Unknown)
-        , ShaderStage(EShaderStage::Unknown)
-        , Defines()
-    { }
-    
-    CShaderFromFileCompileRequest( const String& InFilename
-                                 , const String& InEntryPoint
-                                 , EShaderModel InShaderModel
-                                 , EShaderStage InShaderStage
-                                 , const TArrayView<SShaderDefine>& InDefines)
-        : Filename(InFilename)
-        , EntryPoint(InEntryPoint)
-        , ShaderModel(InShaderModel)
-        , ShaderStage(InShaderStage)
-        , Defines(InDefines)
-    { }
-    
-    String                    Filename;
-    String                    EntryPoint;
-    
-    EShaderModel              ShaderModel;
-    EShaderStage              ShaderStage;
+    EShaderOutputLanguage     OutputLanguage;
     
     TArrayView<SShaderDefine> Defines;
 };
@@ -114,22 +97,22 @@ public:
 
 class RHI_API CShaderCompiler
 {
-private:
-    CShaderCompiler();
-    ~CShaderCompiler();
-    
 public:
     
-    static bool Initialize();
+    // TODO: Retrieve this from the ProjectManager -> Can do this with IEngineService
+    static bool Initialize(const char* AssetFolderPath);
     
     static void Release();
     
-    static bool CompileFromFile(const CShaderFromFileCompileRequest& CompileRequest, TArray<uint8>& OutByteCode);
+    static bool CompileFromFile(const String& Filename, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     
-    static bool Compile();
+    static bool CompileFromSource(const String& ShaderSource, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     
 private:
-    struct IDxcCompiler* Compiler;
+    static void*                 DXCLibrary;
+    static DxcCreateInstanceProc DxcCreateInstanceFunc;
+    
+    static String                AssetFolderPath;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

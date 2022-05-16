@@ -15,14 +15,14 @@
 // Macro for implementing a new engine module based on monolithic or dynamic build
 
 #if MONOLITHIC_BUILD
-#define IMPLEMENT_ENGINE_MODULE( ModuleClassType, ModuleName )                                                                  \
+#define IMPLEMENT_ENGINE_MODULE( ModuleClassType, ModuleName )                                                                      \
     /* Self registering object for static modules */                                                                                \
     static TStaticModuleInitializer<ModuleClassType> GModuleInitializer( #ModuleName );                                             \
                                                                                                                                     \
     /* This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
     extern "C" void LinkModule_##ModuleName() { }
 #else
-#define IMPLEMENT_ENGINE_MODULE( ModuleClassType, ModuleName )                                                                  \
+#define IMPLEMENT_ENGINE_MODULE( ModuleClassType, ModuleName )                                                                      \
     extern "C"                                                                                                                      \
     {                                                                                                                               \
         MODULE_EXPORT IEngineModule* LoadEngineModule()                                                                             \
@@ -70,7 +70,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CModuleManager
 
-typedef PlatformLibrary::PlatformHandle PlatformModule;
+typedef void* PlatformModule;
 
 class CORE_API CModuleManager
 {

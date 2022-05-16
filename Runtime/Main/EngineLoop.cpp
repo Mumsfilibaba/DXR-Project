@@ -28,6 +28,8 @@
 #include "Renderer/Renderer.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
+#include "RHI/RHIShaderCompiler.h"
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // LoadCoreModules
 
@@ -98,8 +100,9 @@ bool CEngineLoop::PreInitialize()
     CFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
 
-	const String ProjectLocation = String(ENGINE_LOCATION) + String("/") + String(PROJECT_NAME);
-    if (!CProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr()))
+	const String ProjectLocation     = String(ENGINE_LOCATION) + String("/") + String(PROJECT_NAME);
+    const String AssetFolderLocation = String(ENGINE_LOCATION) + String("/Assets");
+    if (!CProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr(), AssetFolderLocation.CStr()))
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
         return false;
@@ -127,6 +130,13 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
+   // Initialize the shadercompiler before RHI since RHI might need to compile shaders
+    if (!CShaderCompiler::Initialize(CProjectManager::GetAssetPath()))
+    {
+        PlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
+        return false;
+    }
+        
     // TODO: Decide this via command line
     ERHIInstanceType RenderApi =
 #if PLATFORM_MACOS

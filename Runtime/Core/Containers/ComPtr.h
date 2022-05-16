@@ -1,14 +1,10 @@
 #pragma once
-
-#if PLATFORM_WINDOWS
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/IsConvertible.h"
 #include "Core/Templates/IsNullptr.h"
 
-#include <Unknwn.h>
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* TComPtr - Helper class when using ref-counted com-objects  */
+// TComPtr
 
 template<typename T>
 class TComPtr
@@ -301,7 +297,7 @@ public:
      */
     FORCEINLINE ElementType& operator*() const noexcept
     {
-        return Dereference();
+        return *Ptr;
     }
 
     /**
@@ -489,5 +485,3 @@ FORCEINLINE TComPtr<T> MakeComPtr(U* InRefCountedObject)
 
     return nullptr;
 }
-
-#endif

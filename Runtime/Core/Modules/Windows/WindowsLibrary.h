@@ -10,31 +10,29 @@ class CWindowsLibrary final : public CGenericLibrary
 {
 public:
 
-    typedef HMODULE PlatformHandle;
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CGenericLibrary Interface
 
-    static FORCEINLINE PlatformHandle LoadDynamicLib(const char* LibraryName)
+    static FORCEINLINE void* LoadDynamicLib(const char* LibraryName)
     {
-        String RealName = GetRealName(LibraryName);
-        return LoadLibraryA(RealName.CStr());
+        const String RealName = GetRealName(LibraryName);
+        return reinterpret_cast<void*>(LoadLibraryA(RealName.CStr()));
     }
 
-    static FORCEINLINE PlatformHandle GetLoadedHandle(const char* LibraryName)
+    static FORCEINLINE void* GetLoadedHandle(const char* LibraryName)
     {
-        String RealName = GetRealName(LibraryName);
-        return GetModuleHandleA(RealName.CStr());
+        const String RealName = GetRealName(LibraryName);
+        return reinterpret_cast<void*>(GetModuleHandleA(RealName.CStr()));
     }
 
-    static FORCEINLINE void FreeDynamicLib(PlatformHandle LibraryHandle)
+    static FORCEINLINE void FreeDynamicLib(void* LibraryHandle)
     {
-        FreeLibrary(LibraryHandle);
+        FreeLibrary(reinterpret_cast<HANDLE>(LibraryHandle));
     }
 
-    static FORCEINLINE void* LoadSymbolAddress(const char* SymbolName, PlatformHandle LibraryHandle)
+    static FORCEINLINE void* LoadSymbolAddress(const char* SymbolName, void* LibraryHandle)
     {
-        return GetProcAddress(LibraryHandle, SymbolName);
+        return GetProcAddress(reinterpret_cast<HANDLE>(LibraryHandle), SymbolName);
     }
 
     static FORCEINLINE const char* GetDynamicLibExtension()
@@ -53,7 +51,7 @@ public:
     }
 
     template<typename SymbolType>
-    static FORCEINLINE SymbolType LoadSymbolAddress(const char* SymbolName, PlatformHandle LibraryHandle)
+    static FORCEINLINE SymbolType LoadSymbolAddress(const char* SymbolName, void* LibraryHandle)
     {
         return reinterpret_cast<SymbolType>(LoadSymbolAddress(SymbolName, LibraryHandle));
     }

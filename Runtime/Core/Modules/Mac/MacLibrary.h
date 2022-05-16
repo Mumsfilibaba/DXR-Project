@@ -14,12 +14,10 @@ class CMacLibrary final : public CGenericLibrary
 {
 public:
     
-    typedef void* PlatformHandle;
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CGenericLibrary Interface
 
-    static FORCEINLINE PlatformHandle LoadDynamicLib(const char* LibraryName) 
+    static FORCEINLINE void* LoadDynamicLib(const char* LibraryName)
     {
         String RealName = GetRealName(LibraryName);
 
@@ -33,7 +31,7 @@ public:
         return dlopen(LibraryNameWithExtension, Mode);
     }
 
-    static FORCEINLINE PlatformHandle GetLoadedHandle(const char* LibraryName) 
+    static FORCEINLINE void* GetLoadedHandle(const char* LibraryName)
     { 
         String RealName = GetRealName(LibraryName);
 
@@ -43,7 +41,7 @@ public:
         const int32 Mode = RTLD_NOW | RTLD_NOLOAD;
 #endif
         const char* LibraryNameWithExtension = RealName.CStr();
-        PlatformHandle Handle = dlopen(LibraryNameWithExtension, Mode);
+        void* Handle = dlopen(LibraryNameWithExtension, Mode);
         
         // Handle is ref-counted so release the new ref-count in order to have parity with windows
         if (Handle)
@@ -54,12 +52,12 @@ public:
         return Handle;
     }
 
-    static FORCEINLINE void FreeDynamicLib(PlatformHandle LibraryHandle)
+    static FORCEINLINE void FreeDynamicLib(void* LibraryHandle)
     {
         dlclose(LibraryHandle);
     }
 
-    static FORCEINLINE void* LoadSymbolAddress(const char* SymbolName, PlatformHandle LibraryHandle) 
+    static FORCEINLINE void* LoadSymbolAddress(const char* SymbolName, void* LibraryHandle)
     { 
         return dlsym(LibraryHandle, SymbolName);
     }
@@ -81,7 +79,7 @@ public:
     }
 
     template<typename T>
-    static FORCEINLINE T LoadSymbolAddress(const char* SymbolName, PlatformHandle LibraryHandle) 
+    static FORCEINLINE T LoadSymbolAddress(const char* SymbolName, void* LibraryHandle)
     { 
         return reinterpret_cast<T>(LoadSymbolAddress(SymbolName, LibraryHandle));
     }

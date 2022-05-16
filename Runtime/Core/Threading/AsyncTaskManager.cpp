@@ -19,7 +19,7 @@ CAsyncTaskManager::~CAsyncTaskManager()
     KillWorkers();
 }
 
-bool CAsyncTaskManager::PopDispatch(SAsyncTask& OutTask)
+bool CAsyncTaskManager::PopDispatch(CAsyncTask& OutTask)
 {
     TScopedLock<CCriticalSection> Lock(QueueMutex);
 
@@ -50,7 +50,7 @@ void CAsyncTaskManager::WorkThread()
     CAsyncTaskManager& AsyncTaskManager = CAsyncTaskManager::Get();
     while (AsyncTaskManager.bIsRunning)
     {
-        SAsyncTask CurrentTask;
+        CAsyncTask CurrentTask;
 
         if (!Instance.PopDispatch(CurrentTask))
         {
@@ -104,12 +104,12 @@ bool CAsyncTaskManager::Initialize()
     return true;
 }
 
-DispatchID CAsyncTaskManager::Dispatch(const SAsyncTask& NewTask)
+DispatchID CAsyncTaskManager::Dispatch(const CAsyncTask& NewTask)
 {
     if (WorkerThreads.IsEmpty())
     {
         // Execute task on main-thread
-        SAsyncTask MainThreadTask = NewTask;
+        CAsyncTask MainThreadTask = NewTask;
         MainThreadTask.Delegate.ExecuteIfBound();
 
         // Make sure that both fences is incremented
@@ -135,7 +135,7 @@ void CAsyncTaskManager::WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting
     {
         if (bUseThisThreadWhileWaiting)
         {
-            SAsyncTask CurrentTask;
+            CAsyncTask CurrentTask;
 
             if (Instance.PopDispatch(CurrentTask))
             {

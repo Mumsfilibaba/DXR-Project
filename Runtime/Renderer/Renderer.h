@@ -130,11 +130,11 @@ private:
     CRHICommandList BasePassCmdList;
     CRHICommandList MainCmdList;
 
-    SAsyncTask PointShadowTask;
-    SAsyncTask DirShadowTask;
-    SAsyncTask PrePassTask;
-    SAsyncTask BasePassTask;
-    SAsyncTask RayTracingTask;
+    CAsyncTask PointShadowTask;
+    CAsyncTask DirShadowTask;
+    CAsyncTask PrePassTask;
+    CAsyncTask BasePassTask;
+    CAsyncTask RayTracingTask;
 
     CDeferredRenderer             DeferredRenderer;
     CShadowMapRenderer            ShadowMapRenderer;
