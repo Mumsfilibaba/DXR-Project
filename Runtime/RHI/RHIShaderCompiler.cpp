@@ -24,6 +24,55 @@ enum class EDXCPart
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Convert the Shader-enums
+
+static LPCWSTR GetShaderStageString(EShaderStage Stage)
+{
+    switch (Stage)
+    {
+        // Compute
+        case EShaderStage::Compute:       return L"cs";
+
+        // Graphics
+        case EShaderStage::Vertex:        return L"vs";
+        case EShaderStage::Hull:          return L"hs";
+        case EShaderStage::Domain:        return L"ds";
+        case EShaderStage::Geometry:      return L"gs";
+        case EShaderStage::Pixel:         return L"ps";
+
+        // New Graphics Pipeline
+        case EShaderStage::Mesh:          return L"ms";
+        case EShaderStage::Amplification: return L"as";
+
+        // Ray tracing
+        case EShaderStage::RayGen:
+        case EShaderStage::RayAnyHit:
+        case EShaderStage::RayClosestHit:
+        case EShaderStage::RayMiss:       return L"lib";
+    }
+
+    return L"xxx";
+}
+
+static LPCWSTR GetShaderModelString(EShaderModel Model)
+{
+    switch (Model)
+    {
+        case EShaderModel::SM_5_0: return L"5_0";
+        case EShaderModel::SM_5_1: return L"5_1";
+        case EShaderModel::SM_6_0: return L"6_0";
+        case EShaderModel::SM_6_1: return L"6_1";
+        case EShaderModel::SM_6_2: return L"6_2";
+        case EShaderModel::SM_6_3: return L"6_3";
+        case EShaderModel::SM_6_4: return L"6_4";
+        case EShaderModel::SM_6_5: return L"6_5";
+        case EShaderModel::SM_6_6: return L"6_6";
+    }
+
+    return L"0_0";
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CShaderCompiler
 
 void*                 CShaderCompiler::DXCLibrary            = nullptr;
@@ -70,23 +119,146 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     WString WideFilePath   = CharToWide(AssetFolderPath + '/' + Filename);
     WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
-    TComPtr<IDxcLibrary> Library;
-
-    HRESULT Result = DxcCreateInstanceFunc(CLSID_DxcLibrary, IID_PPV_ARGS(&Library));
-    if (FAILED(Result))
+    TComPtr<IDxcCompiler> Compiler;
+    HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
+    if (FAILED(hResult))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to create DxLibrary");
+        LOG_ERROR("[CShaderCompiler]: FAILED to create Compiler");
         return false;
     }
 
+    TComPtr<IDxcLibrary> Library;
+    hResult = DxcCreateInstanceFunc(CLSID_DxcLibrary, IID_PPV_ARGS(&Library));
+    if (FAILED(hResult))
+    {
+        LOG_ERROR("[CShaderCompiler]: FAILED to create Library");
+        return false;
+    }
+
+    TComPtr<IDxcIncludeHandler> IncludeHandler;
+    hResult = Library->CreateIncludeHandler(&IncludeHandler);
+    if (FAILED(hResult))
+    {
+        LOG_ERROR("[CShaderCompiler]: FAILED to create IncludeHandler");
+        return false;
+    }
+    
     TComPtr<IDxcBlobEncoding> SourceBlob;
-    Result = Library->CreateBlobFromFile(WideFilePath.CStr(), nullptr, &SourceBlob);
-    if (FAILED(Result))
+    hResult = Library->CreateBlobFromFile(WideFilePath.CStr(), nullptr, &SourceBlob);
+    if (FAILED(hResult))
     {
         LOG_ERROR("[CShaderCompiler]: FAILED to create Source Data");
         CDebug::DebugBreak();
         return false;
     }
+    
+    // Add compile arguments
+    TArray<LPCWSTR> CompileArgs =
+    {
+        L"-O3", // Optimization level 3
+    };
+    
+    if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
+    {
+        CompileArgs.Emplace(L"-spirv");
+    }
+    
+    // Convert defines
+    TArray<WString>   StrBuff;
+    TArray<DxcDefine> DxcDefines;
+    
+    TArrayView<SShaderDefine> Defines = CompileInfo.Defines;
+    if (!Defines.IsEmpty())
+    {
+        StrBuff.Reserve(Defines.Size() * 2);
+        DxcDefines.Reserve(Defines.Size());
+
+        for (const SShaderDefine& Define : Defines)
+        {
+            const WString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
+            const WString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
+            DxcDefines.Push({ WideDefine.CStr(), WideValue.CStr() });
+        }
+    }
+    
+    // Retrieve the shader target
+    const LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
+    const LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
+
+    constexpr uint32 BufferLength = sizeof("xxx_x_x");
+    
+    WCHAR TargetProfile[BufferLength];
+    WStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    
+    TComPtr<IDxcOperationResult> Result;
+    hResult = Compiler->Compile( SourceBlob.Get()
+                               , WideFilePath.CStr()
+                               , WideEntrypoint.CStr()
+                               , TargetProfile
+                               , CompileArgs.Data()
+                               , CompileArgs.Size()
+                               , DxcDefines.Data()
+                               , DxcDefines.Size()
+                               , IncludeHandler.Get()
+                               , &Result);
+    if (FAILED(hResult))
+    {
+        LOG_ERROR("[CShaderCompiler]: FAILED to Compile");
+        CDebug::DebugBreak();
+        return false;
+    }
+
+    if (FAILED(Result->GetStatus(&hResult)))
+    {
+        LOG_ERROR("[CShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
+        CDebug::DebugBreak();
+        return false;
+    }
+
+    TComPtr<IDxcBlobEncoding> PrintBlob;
+    TComPtr<IDxcBlobEncoding> PrintBlob8;
+    if (SUCCEEDED(Result->GetErrorBuffer(&PrintBlob)))
+    {
+        Library->GetBlobAsUtf8(PrintBlob.Get(), &PrintBlob8);
+    }
+
+    if (FAILED(hResult))
+    {
+        if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
+        {
+            LOG_ERROR("[CShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+        }
+        else
+        {
+            LOG_ERROR("[CShaderCompiler]: FAILED to compile with. Unknown ERROR.");
+        }
+
+        return false;
+    }
+    
+    if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
+    {
+        String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
+        LOG_INFO("[CShaderCompiler]: Successfully compiled shader '%s' with the following output: %s", Filename.CStr(), Output.CStr());
+    }
+    else
+    {
+        LOG_INFO("[CShaderCompiler]: Successfully compiled shader '%s'.", Filename.CStr());
+    }
+
+    TComPtr<IDxcBlob> CompiledBlob;
+    if (FAILED(Result->GetResult(&CompiledBlob)))
+    {
+        LOG_ERROR("[CShaderCompiler]: FAILED to retrieve result");
+        return false;
+    }
+
+    const uint32 BlobSize = uint32(CompiledBlob->GetBufferSize());
+    OutByteCode.Resize(BlobSize);
+
+    LOG_INFO("[CShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
+
+    CMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
     
     return true;
 }

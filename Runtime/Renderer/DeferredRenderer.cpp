@@ -49,7 +49,8 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             { "ENABLE_NORMAL_MAPPING",   "1" },
         };
 
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/GeometryPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+        CShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
+        if (!CShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -62,7 +63,8 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/GeometryPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+        CompileInfo = CShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
+        if (!CShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -74,7 +76,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             CDebug::DebugBreak();
             return false;
         }
-
 
         CRHIDepthStencilStateInitializer DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
@@ -135,7 +136,8 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
     // PrePass
     {
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/PrePass.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex, TArrayView<SShaderDefine>());
+        if (!CShaderCompiler::CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;

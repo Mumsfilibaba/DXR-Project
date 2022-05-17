@@ -72,7 +72,9 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         })*";
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileShader(VSSource, "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+
+    CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex, TArrayView<SShaderDefine>());
+    if (!CShaderCompiler::CompileFromSource(VSSource, CompileInfo, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -103,7 +105,8 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
             return OutColor;
         })*";
 
-    if (!CRHIShaderCompiler::CompileShader(PSSource, "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    CompileInfo = CShaderCompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, TArrayView<SShaderDefine>());
+    if (!CShaderCompiler::CompileFromSource(PSSource, CompileInfo, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;

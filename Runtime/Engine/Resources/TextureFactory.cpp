@@ -28,7 +28,9 @@ bool CTextureFactory::Init()
 {
     // Compile and create shader
     TArray<uint8> Code;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/CubeMapGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+
+    CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, TArrayView<SShaderDefine>());
+    if (!CShaderCompiler::CompileFromFile("Shaders/CubeMapGen.hlsl", CompileInfo, Code))
     {
         return false;
     }
@@ -66,7 +68,7 @@ CRHITexture2D* CTextureFactory::LoadFromImage2D(SImage2D* InImage, uint32 Create
     }
 
     const uint8* Pixels = InImage->Image.Get();
-    uint32  Width = InImage->Width;
+    uint32  Width  = InImage->Width;
     uint32  Height = InImage->Height;
     EFormat Format = InImage->Format;
 

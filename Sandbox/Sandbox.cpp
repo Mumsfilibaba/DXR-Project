@@ -423,7 +423,7 @@ void CSandbox::Tick(CTimestamp DeltaTime)
 {
     CApplicationModule::Tick(DeltaTime);
 
-    LOG_INFO("Tick: %f", DeltaTime.AsMilliSeconds());
+    // LOG_INFO("Tick: %f", DeltaTime.AsMilliSeconds());
 
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
