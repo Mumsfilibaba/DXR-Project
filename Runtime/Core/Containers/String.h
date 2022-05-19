@@ -13,7 +13,7 @@
 // Config
 
 #define STRING_USE_INLINE_ALLOCATOR (1)
-#define STRING_FORMAT_BUFFER_SIZE   (256)
+#define STRING_FORMAT_BUFFER_SIZE   (512)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Allocator type
@@ -387,7 +387,7 @@ public:
      * @param Format: Formatted string to replace the string with
      * @param ArgList: Argument list filled with arguments for the formatted string
      */
-    FORCEINLINE void FormatArgs(const CharType* Format, va_list ArgsList) noexcept
+    inline void FormatArgs(const CharType* Format, va_list ArgsList) noexcept
     {
         CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
         SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
@@ -395,7 +395,19 @@ public:
         CharType* DynamicBuffer = nullptr;
         CharType* WrittenString = Buffer;
 
-        SizeType WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, ArgsList);
+        SizeType WrittenChars = 0;
+
+        // Remember to copy the args since the arglist is consumed
+        {
+            va_list CopiedArgs;
+            va_copy(CopiedArgs, ArgsList);
+            
+            WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
+            
+            va_end(CopiedArgs);
+        }
+        
+        // In case the buffer size is to small, increase the buffer size with a dynamic allocation until we have enough space
         while ((WrittenChars > BufferSize) || (WrittenChars == -1))
         {
             BufferSize += BufferSize;
@@ -403,7 +415,12 @@ public:
             DynamicBuffer = reinterpret_cast<CharType*>(CMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
 
-            WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, ArgsList);
+            va_list CopiedArgs;
+            va_copy(CopiedArgs, ArgsList);
+            
+            WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
+            
+            va_end(CopiedArgs);
         }
 
         int32 WrittenLength = StringUtils::Length(WrittenString);
@@ -436,7 +453,7 @@ public:
      * @param Format: Formatted string to append
      * @param ArgList: Argument-list for the formatted string
      */
-    FORCEINLINE void AppendFormatArgs(const CharType* Format, va_list ArgsList) noexcept
+    inline void AppendFormatArgs(const CharType* Format, va_list ArgsList) noexcept
     {
         CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
         SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
@@ -444,7 +461,19 @@ public:
         CharType* DynamicBuffer = nullptr;
         CharType* WrittenString = Buffer;
 
-        SizeType WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, ArgsList);
+        SizeType WrittenChars = 0;
+
+        // Remember to copy the args since the arglist is consumed
+        {
+            va_list CopiedArgs;
+            va_copy(CopiedArgs, ArgsList);
+            
+            WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
+            
+            va_end(CopiedArgs);
+        }
+        
+        // In case the buffer size is to small, increase the buffer size with a dynamic allocation until we have enough space
         while ((WrittenChars > BufferSize) || (WrittenChars == -1))
         {
             BufferSize += BufferSize;
@@ -452,7 +481,12 @@ public:
             DynamicBuffer = reinterpret_cast<CharType*>(CMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
 
-            WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, ArgsList);
+            va_list CopiedArgs;
+            va_copy(CopiedArgs, ArgsList);
+            
+            WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
+            
+            va_end(CopiedArgs);
         }
 
         Characters.Pop();

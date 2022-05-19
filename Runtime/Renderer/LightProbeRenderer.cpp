@@ -14,9 +14,13 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
     }
 
     TArray<uint8> Code;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    
     {
-        LOG_ERROR("Failed to compile IrradianceGen Shader");
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!CShaderCompiler::CompileFromFile("Shaders/IrradianceGen.hlsl", CompileInfo, Code))
+        {
+            LOG_ERROR("Failed to compile IrradianceGen Shader");
+        }
     }
 
     IrradianceGenShader = RHICreateComputeShader(Code);
@@ -35,9 +39,12 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         IrradianceGenPSO->SetName("IrradianceGen PSO");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
-        LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!CShaderCompiler::CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", CompileInfo, Code))
+        {
+            LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
+        }
     }
 
     SpecularIrradianceGenShader = RHICreateComputeShader(Code);
@@ -56,13 +63,13 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         SpecularIrradianceGenPSO->SetName("Specular IrradianceGen PSO");
     }
 
-    CRHISamplerStateInitializer CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::Wrap;
-    CreateInfo.AddressV = ESamplerMode::Wrap;
-    CreateInfo.AddressW = ESamplerMode::Wrap;
-    CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
+    CRHISamplerStateInitializer SamplerInitializer;
+    SamplerInitializer.AddressU = ESamplerMode::Wrap;
+    SamplerInitializer.AddressV = ESamplerMode::Wrap;
+    SamplerInitializer.AddressW = ESamplerMode::Wrap;
+    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    FrameResources.IrradianceSampler = RHICreateSamplerState(CreateInfo);
+    FrameResources.IrradianceSampler = RHICreateSamplerState(SamplerInitializer);
     if (!FrameResources.IrradianceSampler)
     {
         return false;

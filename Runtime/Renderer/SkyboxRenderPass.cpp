@@ -81,10 +81,14 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     }
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Skybox.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        if (!CShaderCompiler::CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     SkyboxVertexShader = RHICreateVertexShader(ShaderCode);
@@ -94,10 +98,13 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Skybox.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        if (!CShaderCompiler::CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     SkyboxPixelShader = RHICreatePixelShader(ShaderCode);
@@ -107,10 +114,10 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CRHIRasterizerStateInitializer RasterizerStateInfo;
-    RasterizerStateInfo.CullMode = ECullMode::None;
+    CRHIRasterizerStateInitializer RasterizerInitializer;
+    RasterizerInitializer.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
     if (!RasterizerState)
     {
         CDebug::DebugBreak();
@@ -138,18 +145,18 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CRHIGraphicsPipelineStateInitializer PipelineStateInitializer;
-    PipelineStateInitializer.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
-    PipelineStateInitializer.BlendState                             = BlendState.Get();
-    PipelineStateInitializer.DepthStencilState                      = DepthStencilState.Get();
-    PipelineStateInitializer.RasterizerState                        = RasterizerState.Get();
-    PipelineStateInitializer.ShaderState.VertexShader               = SkyboxVertexShader.Get();
-    PipelineStateInitializer.ShaderState.PixelShader                = SkyboxPixelShader.Get();
-    PipelineStateInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
-    PipelineStateInitializer.PipelineFormats.NumRenderTargets       = 1;
-    PipelineStateInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+    CRHIGraphicsPipelineStateInitializer PSOInitializer;
+    PSOInitializer.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
+    PSOInitializer.BlendState                             = BlendState.Get();
+    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
+    PSOInitializer.RasterizerState                        = RasterizerState.Get();
+    PSOInitializer.ShaderState.VertexShader               = SkyboxVertexShader.Get();
+    PSOInitializer.ShaderState.PixelShader                = SkyboxPixelShader.Get();
+    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
+    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
+    PSOInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
 
-    PipelineState = RHICreateGraphicsPipelineState(PipelineStateInitializer);
+    PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
     {
         CDebug::DebugBreak();

@@ -73,11 +73,13 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
 
     TArray<uint8> ShaderCode;
 
-    CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex, TArrayView<SShaderDefine>());
-    if (!CShaderCompiler::CompileFromSource(VSSource, CompileInfo, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        if (!CShaderCompiler::CompileFromSource(VSSource, CompileInfo, ShaderCode))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     TSharedRef<CRHIVertexShader> VShader = RHICreateVertexShader(ShaderCode);
@@ -105,11 +107,13 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
             return OutColor;
         })*";
 
-    CompileInfo = CShaderCompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, TArrayView<SShaderDefine>());
-    if (!CShaderCompiler::CompileFromSource(PSSource, CompileInfo, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        if (!CShaderCompiler::CompileFromSource(PSSource, CompileInfo, ShaderCode))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     PShader = RHICreatePixelShader(ShaderCode);

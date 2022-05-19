@@ -28,13 +28,13 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        CRHISamplerStateInitializer CreateInfo;
-        CreateInfo.AddressU = ESamplerMode::Clamp;
-        CreateInfo.AddressV = ESamplerMode::Clamp;
-        CreateInfo.AddressW = ESamplerMode::Clamp;
-        CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
+        CRHISamplerStateInitializer SamplerInitializer;
+        SamplerInitializer.AddressU = ESamplerMode::Clamp;
+        SamplerInitializer.AddressV = ESamplerMode::Clamp;
+        SamplerInitializer.AddressW = ESamplerMode::Clamp;
+        SamplerInitializer.Filter   = ESamplerFilter::MinMagMipPoint;
 
-        FrameResources.GBufferSampler = RHICreateSamplerState(CreateInfo);
+        FrameResources.GBufferSampler = RHICreateSamplerState(SamplerInitializer);
         if (!FrameResources.GBufferSampler)
         {
             return false;
@@ -77,12 +77,12 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        CRHIDepthStencilStateInitializer DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
-        DepthStencilStateInfo.bDepthEnable   = true;
-        DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
+        CRHIDepthStencilStateInitializer DepthStencilInitializer;
+        DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
+        DepthStencilInitializer.bDepthEnable   = true;
+        DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> GeometryDepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+        TSharedRef<CRHIDepthStencilState> GeometryDepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
         if (!GeometryDepthStencilState)
         {
             CDebug::DebugBreak();
@@ -99,30 +99,30 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        CRHIBlendStateInitializer BlendStateInfo;
+        CRHIBlendStateInitializer BlendStateInitializer;
 
-        TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+        TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
             CDebug::DebugBreak();
             return false;
         }
 
-        CRHIGraphicsPipelineStateInitializer PipelineStateInfo;
-        PipelineStateInfo.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.BlendState                             = BlendState.Get();
-        PipelineStateInfo.DepthStencilState                      = GeometryDepthStencilState.Get();
-        PipelineStateInfo.RasterizerState                        = GeometryRasterizerState.Get();
-        PipelineStateInfo.ShaderState.VertexShader               = BaseVertexShader.Get();
-        PipelineStateInfo.ShaderState.PixelShader                = BasePixelShader.Get();
-        PipelineStateInfo.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[1] = FrameResources.NormalFormat;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[2] = EFormat::R8G8B8A8_Unorm;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[3] = FrameResources.ViewNormalFormat;
-        PipelineStateInfo.PipelineFormats.NumRenderTargets       = 4;
+        CRHIGraphicsPipelineStateInitializer PSOInitializer;
+        PSOInitializer.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
+        PSOInitializer.BlendState                             = BlendState.Get();
+        PSOInitializer.DepthStencilState                      = GeometryDepthStencilState.Get();
+        PSOInitializer.RasterizerState                        = GeometryRasterizerState.Get();
+        PSOInitializer.ShaderState.VertexShader               = BaseVertexShader.Get();
+        PSOInitializer.ShaderState.PixelShader                = BasePixelShader.Get();
+        PSOInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[1] = FrameResources.NormalFormat;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[2] = EFormat::R8G8B8A8_Unorm;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[3] = FrameResources.ViewNormalFormat;
+        PSOInitializer.PipelineFormats.NumRenderTargets       = 4;
 
-        PipelineState = RHICreateGraphicsPipelineState(PipelineStateInfo);
+        PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!PipelineState)
         {
             CDebug::DebugBreak();
@@ -136,7 +136,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
     // PrePass
     {
-        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex, TArrayView<SShaderDefine>());
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
         if (!CShaderCompiler::CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
@@ -150,12 +150,12 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        CRHIDepthStencilStateInitializer DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::Less;
-        DepthStencilStateInfo.bDepthEnable   = true;
-        DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
+        CRHIDepthStencilStateInitializer DepthStencil;
+        DepthStencil.DepthFunc      = EComparisonFunc::Less;
+        DepthStencil.bDepthEnable   = true;
+        DepthStencil.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencil);
         if (!DepthStencilState)
         {
             CDebug::DebugBreak();
@@ -181,15 +181,15 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        CRHIGraphicsPipelineStateInitializer PipelineStateInfo;
-        PipelineStateInfo.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.BlendState                         = BlendState.Get();
-        PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
-        PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
-        PipelineStateInfo.ShaderState.VertexShader           = PrePassVertexShader.Get();
-        PipelineStateInfo.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
+        CRHIGraphicsPipelineStateInitializer PSOInitializer;
+        PSOInitializer.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
+        PSOInitializer.BlendState                         = BlendState.Get();
+        PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
+        PSOInitializer.RasterizerState                    = RasterizerState.Get();
+        PSOInitializer.ShaderState.VertexShader           = PrePassVertexShader.Get();
+        PSOInitializer.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
 
-        PrePassPipelineState = RHICreateGraphicsPipelineState(PipelineStateInfo);
+        PrePassPipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!PrePassPipelineState)
         {
             CDebug::DebugBreak();
@@ -231,23 +231,26 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         FrameResources.IntegrationLUT->SetName("IntegrationLUT");
     }
 
-    CRHISamplerStateInitializer CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::Clamp;
-    CreateInfo.AddressV = ESamplerMode::Clamp;
-    CreateInfo.AddressW = ESamplerMode::Clamp;
-    CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
+    CRHISamplerStateInitializer SamplerInitializer;
+    SamplerInitializer.AddressU = ESamplerMode::Clamp;
+    SamplerInitializer.AddressV = ESamplerMode::Clamp;
+    SamplerInitializer.AddressW = ESamplerMode::Clamp;
+    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipPoint;
 
-    FrameResources.IntegrationLUTSampler = RHICreateSamplerState(CreateInfo);
+    FrameResources.IntegrationLUTSampler = RHICreateSamplerState(SamplerInitializer);
     if (!FrameResources.IntegrationLUTSampler)
     {
         CDebug::DebugBreak();
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/BRDFIntegationGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!CShaderCompiler::CompileFromFile("Shaders/BRDFIntegationGen.hlsl", CompileInfo, ShaderCode))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     TSharedRef<CRHIComputeShader> CShader = RHICreateComputeShader(ShaderCode);
@@ -258,10 +261,10 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        CRHIComputePipelineStateInitializer PipelineStateInfo;
-        PipelineStateInfo.Shader = CShader.Get();
+        CRHIComputePipelineStateInitializer PSOInitializer;
+        PSOInitializer.Shader = CShader.Get();
 
-        TSharedRef<CRHIComputePipelineState> BRDF_PipelineState = RHICreateComputePipelineState(PipelineStateInfo);
+        TSharedRef<CRHIComputePipelineState> BRDF_PipelineState = RHICreateComputePipelineState(PSOInitializer);
         if (!BRDF_PipelineState)
         {
             CDebug::DebugBreak();
@@ -299,7 +302,8 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!CShaderCompiler::CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -312,10 +316,10 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        CRHIComputePipelineStateInitializer DeferredLightPassCreateInfo;
-        DeferredLightPassCreateInfo.Shader = TiledLightShader.Get();
+        CRHIComputePipelineStateInitializer DeferredLightPassInitializer;
+        DeferredLightPassInitializer.Shader = TiledLightShader.Get();
 
-        TiledLightPassPSO = RHICreateComputePipelineState(DeferredLightPassCreateInfo);
+        TiledLightPassPSO = RHICreateComputePipelineState(DeferredLightPassInitializer);
         if (!TiledLightPassPSO)
         {
             CDebug::DebugBreak();
@@ -329,7 +333,8 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             SShaderDefine("DRAW_TILE_DEBUG", "1")
         };
 
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DeferredLightPass.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
+        if (!CShaderCompiler::CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -342,10 +347,10 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        CRHIComputePipelineStateInitializer DeferredLightPassCreateInfo;
-        DeferredLightPassCreateInfo.Shader = TiledLightDebugShader.Get();
+        CRHIComputePipelineStateInitializer DeferredLightPassInitializer;
+        DeferredLightPassInitializer.Shader = TiledLightDebugShader.Get();
 
-        TiledLightPassPSODebug = RHICreateComputePipelineState(DeferredLightPassCreateInfo);
+        TiledLightPassPSODebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
         if (!TiledLightPassPSODebug)
         {
             CDebug::DebugBreak();
@@ -358,7 +363,8 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DepthReduction.hlsl", "ReductionMainInital", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        CShaderCompileInfo CompileInfo("ReductionMainInital", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!CShaderCompiler::CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -383,7 +389,8 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DepthReduction.hlsl", "ReductionMain", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        CShaderCompileInfo CompileInfo("ReductionMain", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!CShaderCompiler::CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -396,10 +403,10 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        CRHIComputePipelineStateInitializer PipelineStateInfo;
-        PipelineStateInfo.Shader = ReduceDepthShader.Get();
+        CRHIComputePipelineStateInitializer PSOInitializer;
+        PSOInitializer.Shader = ReduceDepthShader.Get();
 
-        ReduceDepthPSO = RHICreateComputePipelineState(PipelineStateInfo);
+        ReduceDepthPSO = RHICreateComputePipelineState(PSOInitializer);
         if (!ReduceDepthPSO)
         {
             CDebug::DebugBreak();

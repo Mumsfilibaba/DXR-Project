@@ -90,7 +90,6 @@ void CMacConsoleWindow::CreateConsole()
             [WindowHandle setOpaque:YES];
             [WindowHandle makeKeyAndOrderFront:WindowHandle];
 
-            
             if(!MacApplication)
             {
                 do
@@ -298,7 +297,7 @@ void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
 			SCOPED_AUTORELEASE_POOL();
 			
 			// TODO: CVar
-			const NSUInteger MaxLineCount = 196;
+			const NSUInteger MaxLineCount = 512;
 			
             NSAttributedString* AttributedString = nil;
             {

@@ -920,10 +920,14 @@ void CRenderer::OnWindowResize(const SWindowResizeEvent& Event)
 bool CRenderer::InitBoundingBoxDebugPass()
 {
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        if (!CShaderCompiler::CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     AABBVertexShader = RHICreateVertexShader(ShaderCode);
@@ -933,10 +937,13 @@ bool CRenderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        if (!CShaderCompiler::CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     AABBPixelShader = RHICreatePixelShader(ShaderCode);
@@ -958,12 +965,12 @@ bool CRenderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
-    DepthStencilStateInfo.bDepthEnable   = false;
-    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
+    CRHIDepthStencilStateInitializer DepthStencilInitializer;
+    DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
+    DepthStencilInitializer.bDepthEnable   = false;
+    DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
         CDebug::DebugBreak();
@@ -989,19 +996,19 @@ bool CRenderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    CRHIGraphicsPipelineStateInitializer PSOProperties;
-    PSOProperties.BlendState                             = BlendState.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.VertexInputLayout                      = InputLayoutState.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.ShaderState.VertexShader               = AABBVertexShader.Get();
-    PSOProperties.ShaderState.PixelShader                = AABBPixelShader.Get();
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Line;
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = Resources.RenderTargetFormat;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
+    CRHIGraphicsPipelineStateInitializer PSOInitializer;
+    PSOInitializer.BlendState                             = BlendState.Get();
+    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
+    PSOInitializer.VertexInputLayout                      = InputLayoutState.Get();
+    PSOInitializer.RasterizerState                        = RasterizerState.Get();
+    PSOInitializer.ShaderState.VertexShader               = AABBVertexShader.Get();
+    PSOInitializer.ShaderState.PixelShader                = AABBPixelShader.Get();
+    PSOInitializer.PrimitiveTopologyType                  = EPrimitiveTopologyType::Line;
+    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = Resources.RenderTargetFormat;
+    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
+    PSOInitializer.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
 
-    AABBDebugPipelineState = RHICreateGraphicsPipelineState(PSOProperties);
+    AABBDebugPipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!AABBDebugPipelineState)
     {
         CDebug::DebugBreak();
@@ -1077,7 +1084,7 @@ bool CRenderer::InitAA()
 {
     TArray<uint8> ShaderCode;
     
-    CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex, TArrayView<SShaderDefine>());
+    CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
     if (!CShaderCompiler::CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
     {
         CDebug::DebugBreak();
@@ -1091,7 +1098,7 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    CompileInfo = CShaderCompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, TArrayView<SShaderDefine>());
+    CompileInfo = CShaderCompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
     if (!CShaderCompiler::CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
     {
         CDebug::DebugBreak();
@@ -1168,10 +1175,13 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        if (!CShaderCompiler::CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     FXAAShader = RHICreatePixelShader(ShaderCode);
@@ -1199,10 +1209,13 @@ bool CRenderer::InitAA()
         SShaderDefine("ENABLE_DEBUG", "(1)")
     };
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
+        if (!CShaderCompiler::CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     FXAADebugShader = RHICreatePixelShader(ShaderCode);
@@ -1250,10 +1263,14 @@ bool CRenderer::InitShadingImage()
     }
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ShadingImage.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+    
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!CShaderCompiler::CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     ShadingRateShader = RHICreateComputeShader(ShaderCode);

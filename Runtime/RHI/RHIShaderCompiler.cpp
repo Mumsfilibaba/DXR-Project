@@ -239,7 +239,9 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
     {
         String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        LOG_INFO("[CShaderCompiler]: Successfully compiled shader '%s' with the following output: %s", Filename.CStr(), Output.CStr());
+        
+        const char* RawFilename = Filename.CStr();
+        LOG_INFO("[CShaderCompiler]: Successfully compiled shader '%s' with the following output: %s", RawFilename, Output.CStr());
     }
     else
     {

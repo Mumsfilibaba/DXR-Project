@@ -68,7 +68,7 @@ public:
     CShaderCompileInfo( const String& InEntryPoint
                       , EShaderModel InShaderModel
                       , EShaderStage InShaderStage
-                      , const TArrayView<SShaderDefine>& InDefines
+                      , const TArrayView<SShaderDefine>& InDefines = TArrayView<SShaderDefine>()
 #if PLATFORM_WINDOWS
                       , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::HLSL)
 #elif PLATFORM_MAC

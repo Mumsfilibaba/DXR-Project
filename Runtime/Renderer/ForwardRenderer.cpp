@@ -22,7 +22,9 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     };
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    
+    CShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
+    if (!CShaderCompiler::CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -35,7 +37,8 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    CompileInfo = CShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
+    if (!CShaderCompiler::CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -48,12 +51,12 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
-    DepthStencilStateInfo.bDepthEnable   = true;
-    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
+    CRHIDepthStencilStateInitializer DepthStencilInitializer;
+    DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
+    DepthStencilInitializer.bDepthEnable   = true;
+    DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
         CDebug::DebugBreak();
@@ -70,28 +73,28 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CRHIBlendStateInitializer BlendStateInfo( { SRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero) }, false , false);
+    CRHIBlendStateInitializer BlendStateInitializer( { SRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero) }, false , false);
 
-    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
         CDebug::DebugBreak();
         return false;
     }
 
-    CRHIGraphicsPipelineStateInitializer PSOProperties;
-    PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PShader.Get();
-    PSOProperties.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.BlendState                             = BlendState.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
+    CRHIGraphicsPipelineStateInitializer PSOInitializer;
+    PSOInitializer.ShaderState.VertexShader               = VShader.Get();
+    PSOInitializer.ShaderState.PixelShader                = PShader.Get();
+    PSOInitializer.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
+    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
+    PSOInitializer.BlendState                             = BlendState.Get();
+    PSOInitializer.RasterizerState                        = RasterizerState.Get();
+    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
+    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
+    PSOInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+    PSOInitializer.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
 
-    PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
+    PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
     {
         CDebug::DebugBreak();

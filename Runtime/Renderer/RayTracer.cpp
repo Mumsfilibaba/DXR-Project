@@ -15,10 +15,14 @@
 bool CRayTracer::Init(SFrameResources& Resources)
 {
     TArray<uint8> Code;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/RayGen.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code))
+    
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_3, EShaderStage::RayGen);
+        if (!CShaderCompiler::CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     RayGenShader = RHICreateRayGenShader(Code);
@@ -28,10 +32,13 @@ bool CRayTracer::Init(SFrameResources& Resources)
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code))
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_3, EShaderStage::RayClosestHit);
+        if (!CShaderCompiler::CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     RayClosestHitShader = RHICreateRayClosestHitShader(Code);
@@ -41,10 +48,13 @@ bool CRayTracer::Init(SFrameResources& Resources)
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Miss.hlsl", "Miss", nullptr, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code))
     {
-        CDebug::DebugBreak();
-        return false;
+        CShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_3, EShaderStage::RayMiss);
+        if (!CShaderCompiler::CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
     }
 
     RayMissShader = RHICreateRayMissShader(Code);
@@ -54,15 +64,15 @@ bool CRayTracer::Init(SFrameResources& Resources)
         return false;
     }
 
-    CRHIRayTracingPipelineStateInitializer Initializer;
-    Initializer.RayGenShaders           = { RayGenShader.Get() };
-    Initializer.MissShaders             = { RayMissShader.Get() };
-    Initializer.HitGroups               = { CRHIRayTracingHitGroupInitializer("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
-    Initializer.MaxRecursionDepth       = 4;
-    Initializer.MaxAttributeSizeInBytes = sizeof(SRayIntersectionAttributes);
-    Initializer.MaxPayloadSizeInBytes   = sizeof(SRayPayload);
+    CRHIRayTracingPipelineStateInitializer PSOInitializer;
+    PSOInitializer.RayGenShaders           = { RayGenShader.Get() };
+    PSOInitializer.MissShaders             = { RayMissShader.Get() };
+    PSOInitializer.HitGroups               = { CRHIRayTracingHitGroupInitializer("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
+    PSOInitializer.MaxRecursionDepth       = 4;
+    PSOInitializer.MaxAttributeSizeInBytes = sizeof(SRayIntersectionAttributes);
+    PSOInitializer.MaxPayloadSizeInBytes   = sizeof(SRayPayload);
 
-    Pipeline = RHICreateRayTracingPipelineState(Initializer);
+    Pipeline = RHICreateRayTracingPipelineState(PSOInitializer);
     if (!Pipeline)
     {
         CDebug::DebugBreak();
