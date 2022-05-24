@@ -225,11 +225,15 @@ CONSTEXPR D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     }
-    if ((Flag & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None)
+
+    const bool bAllowDSV = (Flag & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None;
+    if (bAllowDSV)
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
     }
-    if ((Flag & ETextureUsageFlags::AllowSRV) == ETextureUsageFlags::None)
+
+    const bool bAllowSRV = (Flag & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None;
+    if (bAllowDSV && !bAllowSRV)
     {
         Result |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
     }
