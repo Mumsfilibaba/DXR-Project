@@ -1084,11 +1084,13 @@ bool CRenderer::InitAA()
 {
     TArray<uint8> ShaderCode;
     
-    CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
-    if (!CShaderCompiler::CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+		CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
+		if (!CShaderCompiler::CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
+		{
+			CDebug::DebugBreak();
+			return false;
+		}
     }
 
     TSharedRef<CRHIVertexShader> VShader = RHICreateVertexShader(ShaderCode);
@@ -1098,11 +1100,13 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    CompileInfo = CShaderCompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
-    if (!CShaderCompiler::CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+		CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
+		if (!CShaderCompiler::CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
+		{
+			CDebug::DebugBreak();
+			return false;
+		}
     }
 
     PostShader = RHICreatePixelShader(ShaderCode);

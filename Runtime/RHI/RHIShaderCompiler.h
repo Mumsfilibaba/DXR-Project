@@ -1,4 +1,10 @@
 #pragma once
+
+// TODO: Check if this could be avoided
+#if PLATFORM_WINDOWS
+    #include <Unknwn.h>
+#endif
+
 #include <dxc/dxcapi.h>
 
 #include "RHIModule.h"

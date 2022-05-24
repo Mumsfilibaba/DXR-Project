@@ -118,10 +118,14 @@ bool CD3D12CoreInterface::Initialize(bool bEnableDebug)
 
     // Init GenerateMips Shaders and pipeline states 
     TArray<uint8> Code;
-    if (!GD3D12ShaderCompiler->CompileFromFile("../Runtime/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+
     {
-        D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
-        return false;
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!CShaderCompiler::CompileFromFile("Shaders/GenerateMipsTex2D.hlsl", CompileInfo, Code))
+        {
+            D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
+            return false;
+        }
     }
 
     TSharedRef<CD3D12ComputeShader> Shader = dbg_new CD3D12ComputeShader(GetDevice(), Code);
@@ -142,9 +146,13 @@ bool CD3D12CoreInterface::Initialize(bool bEnableDebug)
         GenerateMipsTex2D_PSO->SetName("GenerateMipsTex2D Gen PSO");
     }
 
-    if (!GD3D12ShaderCompiler->CompileFromFile("../Runtime/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
-        D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
+        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!CShaderCompiler::CompileFromFile("Shaders/GenerateMipsTexCube.hlsl", CompileInfo, Code))
+        {
+            D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
+            return false;
+        }
     }
 
     Shader = dbg_new CD3D12ComputeShader(GetDevice(), Code);

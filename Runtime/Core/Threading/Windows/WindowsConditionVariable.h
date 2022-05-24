@@ -4,8 +4,7 @@
 #include "Core/Logging/Log.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Generic/GenericConditionVariable.h"
-
-#include "CoreApplication/Platform/PlatformMisc.h"
+#include "Core/Platform/PlatformMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CWindowsConditionVariable

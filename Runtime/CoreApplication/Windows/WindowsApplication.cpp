@@ -63,7 +63,7 @@ CWindowsApplication::CWindowsApplication(HINSTANCE InInstanceHandle)
     : CGenericApplication(TSharedPtr<ICursor>(CWindowsCursor::CreateWindowsCursor()))
     , Windows()
     , Messages()
-    , MessagesCriticalSection()
+    , MessagesCS()
     , WindowsMessageListeners()
     , bIsTrackingMouse(false)
     , InstanceHandle(InInstanceHandle)
@@ -210,12 +210,12 @@ void CWindowsApplication::Tick(float)
     }
 }
 
-bool CWindowsApplication::EnableRawMouse(const TSharedRef<CGenericWindow>& Window)
+bool CWindowsApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<CGenericWindow>& Window)
 {
     if (Window)
     {
-        TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>(Window);
-        return RegisterRawInputDevices(WindowsWindow->GetHandle());
+        TSharedRef<CWindowsWindow> WindowsWindow = StaticCastSharedRef<CWindowsWindow>(Window);
+        return RegisterRawInputDevices(WindowsWindow->GetWindowHandle());
     }
     else
     {
@@ -227,9 +227,9 @@ void CWindowsApplication::SetCapture(const TSharedRef<CGenericWindow>& Window)
 {
     if (Window)
     {
-        TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>(Window);
+        TSharedRef<CWindowsWindow> WindowsWindow = StaticCastSharedRef<CWindowsWindow>(Window);
 
-        HWND hCapture = WindowsWindow->GetHandle();
+        HWND hCapture = WindowsWindow->GetWindowHandle();
         if (WindowsWindow->IsValid())
         {
             ::SetCapture(hCapture);
@@ -243,9 +243,9 @@ void CWindowsApplication::SetCapture(const TSharedRef<CGenericWindow>& Window)
 
 void CWindowsApplication::SetActiveWindow(const TSharedRef<CGenericWindow>& Window)
 {
-    TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>(Window);
+    TSharedRef<CWindowsWindow> WindowsWindow = StaticCastSharedRef<CWindowsWindow>(Window);
 
-    HWND hActiveWindow = WindowsWindow->GetHandle();
+    HWND hActiveWindow = WindowsWindow->GetWindowHandle();
     if (WindowsWindow->IsValid())
     {
         ::SetActiveWindow(hActiveWindow);

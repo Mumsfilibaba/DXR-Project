@@ -1,9 +1,9 @@
 #include "WindowsWindow.h"
 
 #include "Core/Logging/Log.h"
+#include "Core/Platform/PlatformMisc.h"
 
 #include "CoreApplication/Platform/PlatformApplication.h"
-#include "CoreApplication/Platform/PlatformMisc.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

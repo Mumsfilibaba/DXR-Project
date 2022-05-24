@@ -65,7 +65,7 @@ void CWindowsCursor::SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 
     {
         TSharedRef<CWindowsWindow> WinWindow = MakeSharedRef<CWindowsWindow>(RelativeWindow);
 
-        HWND hRelative = WinWindow->GetHandle();
+        HWND hRelative = WinWindow->GetWindowHandle();
         if (!ClientToScreen(hRelative, &CursorPos))
         {
             return;
@@ -87,7 +87,7 @@ void CWindowsCursor::GetPosition(CGenericWindow* RelativeWindow, int32& OutX, in
     {
         TSharedRef<CWindowsWindow> WinRelative = MakeSharedRef<CWindowsWindow>(RelativeWindow);
 
-        HWND Relative = WinRelative->GetHandle();
+        HWND Relative = WinRelative->GetWindowHandle();
         if (!ScreenToClient(Relative, &CursorPos))
         {
             return;
