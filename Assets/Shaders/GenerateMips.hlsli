@@ -80,7 +80,8 @@ float3 ApplySRGBCurve(float3 x)
     //return x < 0.0031308 ? 12.92 * x : 1.055 * pow(abs(x), 1.0 / 2.4) - 0.055;
 
     // This is cheaper but nearly equivalent
-    return x < 0.0031308f ? 12.92f * x : 1.13005f * sqrt(abs(x - 0.00228f)) - 0.13448f * x + 0.005719f;
+    const bool3 bResult = (x < 0.0031308f);
+    return any(bResult) ? (12.92f * x) : (1.13005f * sqrt(abs(x - 0.00228f)) - 0.13448f * x + 0.005719f);
 }
 
 float4 PackColor(float4 Linear)
@@ -97,29 +98,29 @@ float4 PackColor(float4 Linear)
 static const float3x3 RotateUV[6] =
 {
     // +X
-    float3x3(	 0,  0, 1,
-                 0, -1, 0,
-                -1,  0, 0),
+    float3x3( 0,  0, 1,
+              0, -1, 0,
+             -1,  0, 0),
     // -X
-    float3x3(	0,  0, -1,
-                0, -1,  0,
-                1,  0,  0),
+    float3x3( 0,  0, -1,
+              0, -1,  0,
+              1,  0,  0),
     // +Y
-    float3x3(	1, 0, 0,
-                0, 0, 1,
-                0, 1, 0),
+    float3x3( 1, 0, 0,
+              0, 0, 1,
+              0, 1, 0),
     // -Y
-    float3x3(	1,  0,  0,
-                0,  0, -1,
-                0, -1,  0),
+    float3x3( 1,  0,  0,
+              0,  0, -1,
+              0, -1,  0),
     // +Z
-    float3x3(	1,  0, 0,
-                0, -1, 0,
-                0,  0, 1),
+    float3x3( 1,  0, 0,
+              0, -1, 0,
+              0,  0, 1),
     // -Z
-    float3x3(	-1,  0,  0,
-                 0, -1,  0,
-                 0,  0, -1)
+    float3x3(-1,  0,  0,
+              0, -1,  0,
+              0,  0, -1)
 };
 #endif
 

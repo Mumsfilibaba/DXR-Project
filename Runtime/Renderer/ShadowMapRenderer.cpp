@@ -43,7 +43,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
         {
             CShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
-            if (!CShaderCompiler::CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            if (!CShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 CDebug::DebugBreak();
                 return false;
@@ -59,7 +59,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
         {
             CShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
-            if (!CShaderCompiler::CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            if (!CShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 CDebug::DebugBreak();
                 return false;
@@ -148,7 +148,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
         {
             CShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
-            if (!CShaderCompiler::CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            if (!CShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 CDebug::DebugBreak();
                 return false;
@@ -223,7 +223,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
     {
         {
             CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-            if (!CShaderCompiler::CompileFromFile("Shaders/CascadeMatrixGen.hlsl", CompileInfo, ShaderCode))
+            if (!CShaderCompiler::Get().CompileFromFile("Shaders/CascadeMatrixGen.hlsl", CompileInfo, ShaderCode))
             {
                 CDebug::DebugBreak();
                 return false;
@@ -330,7 +330,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
     {
         {
             CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-            if (!CShaderCompiler::CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
+            if (!CShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
             {
                 CDebug::DebugBreak();
                 return false;

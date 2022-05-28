@@ -382,6 +382,8 @@ private:
     CD3D12DescriptorCache        DescriptorCache;
     CD3D12ResourceBarrierBatcher BarrierBatcher;
 
+    class CD3D12Texture* CurrentShadingRateTexture = nullptr;
+
     bool bIsReady            : 1;
     bool bIsCapturing        : 1;
     bool bIsRenderPassActive : 1;

@@ -1,5 +1,3 @@
-#include "CoreApplication/Windows/WindowsWindow.h"
-
 #include "D3D12CommandList.h"
 #include "D3D12CommandQueue.h"
 #include "D3D12CommandAllocator.h"
@@ -17,6 +15,8 @@
 #include "D3D12Viewport.h"
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12TimestampQuery.h"
+
+#include "CoreApplication/Windows/WindowsWindow.h"
 
 CD3D12CoreInterface* GD3D12Instance = nullptr;
 
@@ -121,7 +121,7 @@ bool CD3D12CoreInterface::Initialize(bool bEnableDebug)
 
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::CompileFromFile("Shaders/GenerateMipsTex2D.hlsl", CompileInfo, Code))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTex2D.hlsl", CompileInfo, Code))
         {
             D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
             return false;
@@ -148,7 +148,7 @@ bool CD3D12CoreInterface::Initialize(bool bEnableDebug)
 
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::CompileFromFile("Shaders/GenerateMipsTexCube.hlsl", CompileInfo, Code))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTexCube.hlsl", CompileInfo, Code))
         {
             D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
             return false;

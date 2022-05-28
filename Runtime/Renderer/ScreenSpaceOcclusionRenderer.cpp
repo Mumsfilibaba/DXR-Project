@@ -33,7 +33,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::CompileFromFile("Shaders/SSAO.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/SSAO.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -156,7 +156,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
-        if (!CShaderCompiler::CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -191,7 +191,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
-        if (!CShaderCompiler::CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;

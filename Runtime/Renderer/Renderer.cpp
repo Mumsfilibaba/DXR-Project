@@ -923,7 +923,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     
     {
         CShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
-        if (!CShaderCompiler::CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -939,7 +939,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
 
     {
         CShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
-        if (!CShaderCompiler::CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -1086,7 +1086,7 @@ bool CRenderer::InitAA()
     
     {
 		CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
-		if (!CShaderCompiler::CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
+		if (!CShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
 		{
 			CDebug::DebugBreak();
 			return false;
@@ -1102,7 +1102,7 @@ bool CRenderer::InitAA()
 
     {
 		CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
-		if (!CShaderCompiler::CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
+		if (!CShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
 		{
 			CDebug::DebugBreak();
 			return false;
@@ -1181,7 +1181,7 @@ bool CRenderer::InitAA()
 
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
-        if (!CShaderCompiler::CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -1215,7 +1215,7 @@ bool CRenderer::InitAA()
 
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
-        if (!CShaderCompiler::CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -1270,7 +1270,7 @@ bool CRenderer::InitShadingImage()
     
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;

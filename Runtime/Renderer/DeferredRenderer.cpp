@@ -50,7 +50,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         };
 
         CShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
-        if (!CShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -64,7 +64,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         }
 
         CompileInfo = CShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
-        if (!CShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -137,7 +137,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     // PrePass
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
-        if (!CShaderCompiler::CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -246,7 +246,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::CompileFromFile("Shaders/BRDFIntegationGen.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/BRDFIntegationGen.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -303,7 +303,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -334,7 +334,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         };
 
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
-        if (!CShaderCompiler::CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -364,7 +364,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
     {
         CShaderCompileInfo CompileInfo("ReductionMainInital", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -390,7 +390,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
     {
         CShaderCompileInfo CompileInfo("ReductionMain", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;

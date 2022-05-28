@@ -345,37 +345,75 @@ bool CD3D12Device::Initialize()
     }
 
     // Choose adapter
-    TComPtr<IDXGIAdapter1> TempAdapter;
-    for (uint32 ID = 0; DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters1(ID, &TempAdapter); ID++)
+    const D3D_FEATURE_LEVEL TestFeatureLevels[] =
     {
-        DXGI_ADAPTER_DESC1 Desc;
-        if (FAILED(TempAdapter->GetDesc1(&Desc)))
-        {
-            D3D12_ERROR("[CD3D12Device]: FAILED to retrieve DXGI_ADAPTER_DESC1");
-            return false;
-        }
+        D3D_FEATURE_LEVEL_12_2,
+        D3D_FEATURE_LEVEL_12_1,
+        D3D_FEATURE_LEVEL_12_0,
+        D3D_FEATURE_LEVEL_11_1,
+        D3D_FEATURE_LEVEL_11_0,
+    };
 
-        if (Desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-        {
-            continue;
-        }
+    D3D_FEATURE_LEVEL BestFeatureLevel = D3D_FEATURE_LEVEL_11_0;
+    SIZE_T            BestVideoMem     = 0;
 
-        if (SUCCEEDED(ND3D12Functions::D3D12CreateDevice(TempAdapter.Get(), MinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+    TComPtr<IDXGIAdapter1> FinalAdapter;
+
+    {
+        TComPtr<IDXGIAdapter1> TempAdapter;
+        for (uint32 ID = 0; DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters1(ID, &TempAdapter); ID++)
         {
-            AdapterID = ID;
-            D3D12_INFO("[CD3D12Device]: Direct3D Adapter (%u): %ls", AdapterID, Desc.Description);
-            break;
+            DXGI_ADAPTER_DESC1 Desc;
+            if (FAILED(TempAdapter->GetDesc1(&Desc)))
+            {
+                D3D12_ERROR("[CD3D12Device]: FAILED to retrieve DXGI_ADAPTER_DESC1");
+                return false;
+            }
+        
+            if (Desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+            {
+                continue;
+            }
+
+            for (D3D_FEATURE_LEVEL Level : TestFeatureLevels)
+            {
+                if (Level < BestFeatureLevel)
+                {
+                    break;
+                }
+
+                if (SUCCEEDED(ND3D12Functions::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr)))
+                {
+                    // Here it is probably better to have something else to find the best GPU
+                    if (Level >= BestFeatureLevel && Desc.DedicatedVideoMemory > BestVideoMem)
+                    {
+                        D3D12_INFO("[CD3D12Device]: Suitable Direct3D Adapter (%u): %ls", ID, Desc.Description);
+                 
+                        AdapterID        = ID;
+                        BestFeatureLevel = Level;
+                        BestVideoMem     = Desc.DedicatedVideoMemory;
+                        FinalAdapter     = TempAdapter;
+                        break;
+                    }
+                }
+            }
         }
     }
 
-    if (!TempAdapter)
+    DXGI_ADAPTER_DESC1 AdapterDesc;
+    if (!FinalAdapter)
     {
         D3D12_ERROR("[CD3D12Device]: FAILED to retrieve adapter");
         return false;
     }
     else
     {
-        Adapter = TempAdapter;
+        Adapter = FinalAdapter;
+        if (FAILED(Adapter->GetDesc1(&AdapterDesc)))
+        {
+            D3D12_ERROR("[CD3D12Device]: FAILED to retrieve DXGI_ADAPTER_DESC1");
+            return false;
+        }
     }
 
     // Create Device
@@ -386,7 +424,7 @@ bool CD3D12Device::Initialize()
     }
     else
     {
-        D3D12_INFO("[CD3D12Device]: Created Device");
+        D3D12_INFO("[CD3D12Device]: Created Device for adapter '%ls'", AdapterDesc.Description);
     }
 
     // Configure debug device (if active).
@@ -432,7 +470,9 @@ bool CD3D12Device::Initialize()
         ArrayCount(SupportedFeatureLevels), SupportedFeatureLevels, D3D_FEATURE_LEVEL_11_0
     };
 
-    HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
+    HRESULT Result = Device->CheckFeatureSupport( D3D12_FEATURE_FEATURE_LEVELS
+                                                , &FeatureLevels
+                                                , sizeof(FeatureLevels));
     if (SUCCEEDED(Result))
     {
         ActiveFeatureLevel = FeatureLevels.MaxSupportedFeatureLevel;

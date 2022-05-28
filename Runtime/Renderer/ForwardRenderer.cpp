@@ -24,7 +24,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     TArray<uint8> ShaderCode;
     
     CShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
-    if (!CShaderCompiler::CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
+    if (!CShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -38,7 +38,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     }
 
     CompileInfo = CShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
-    if (!CShaderCompiler::CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
+    if (!CShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
