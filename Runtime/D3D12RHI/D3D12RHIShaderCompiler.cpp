@@ -461,14 +461,14 @@ bool CD3D12RHIShaderCompiler::InternalGetReflection(const TComPtr<IDxcBlob>& Sha
     Result = DxReflection->FindFirstPartKind(DFCC_DXIL, &PartIndex);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[CD3D12RHIShaderCompiler]: Were not able to get reflect of shader");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: Were not able to get reflection of shader");
         return false;
     }
 
     Result = DxReflection->GetPartReflection(PartIndex, iid, ppvObject);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[CD3D12RHIShaderCompiler]: Were not able to get reflect of shader");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: Were not able to get reflection of shader");
         return false;
     }
 

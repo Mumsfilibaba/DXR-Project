@@ -79,7 +79,7 @@ public:
                       , EShaderStage InShaderStage
                       , const TArrayView<SShaderDefine>& InDefines = TArrayView<SShaderDefine>()
 #if PLATFORM_WINDOWS
-                      , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::HLSL)
+                      , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::MSL)
 #elif PLATFORM_MAC
                       , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::MSL)
 #else
@@ -127,14 +127,19 @@ public:
     
     bool CompileFromSource(const String& ShaderSource, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
-    bool ConvertSpirvToMetalShader(TArray<uint8>& OutByteCode);
-    
 private:
+
+    static void ErrorCallback(void* Userdata, const char* Error);
+
+    bool ConvertSpirvToMetalShader(TArray<uint8>& OutByteCode);
+
+    bool DumpContentToFile(const TArray<uint8>& OutByteCode, const String& Filename);
+
     String CreateArgString(const TArrayView<LPCWSTR> Args);
 
-    void*                 DXCLibrary;
+    void*                 DXCLib;
     DxcCreateInstanceProc DxcCreateInstanceFunc;
-    
+
     String                AssetPath;
 
     static TOptional<CShaderCompiler> Instance;

@@ -4,6 +4,8 @@
 #include "Core/Threading/AsyncTaskManager.h"
 #include "Core/Modules/Platform/PlatformLibrary.h"
 
+#include <spirv_cross_c.h>
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EDXCPart
 
@@ -156,18 +158,18 @@ private:
 TOptional<CShaderCompiler> CShaderCompiler::Instance;
 
 CShaderCompiler::CShaderCompiler(const char* InAssetPath)
-    : DXCLibrary(nullptr)
+    : DXCLib(nullptr)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
 { 
-    DXCLibrary = PlatformLibrary::LoadDynamicLib("dxcompiler");
-    if (!DXCLibrary)
+    DXCLib = PlatformLibrary::LoadDynamicLib("dxcompiler");
+    if (!DXCLib)
     {
         LOG_ERROR("Failed to load 'dxcompiler'");
         return;
     }
 
-    DxcCreateInstanceFunc = PlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DXCLibrary);
+    DxcCreateInstanceFunc = PlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
     if (!DxcCreateInstanceFunc)
     {
         LOG_ERROR("Failed to load 'DxcCreateInstance'");
@@ -177,10 +179,10 @@ CShaderCompiler::CShaderCompiler(const char* InAssetPath)
 
 CShaderCompiler::~CShaderCompiler()
 {
-    if (DXCLibrary)
+    if (DXCLib)
     {
-        PlatformLibrary::FreeDynamicLib(DXCLibrary);
-        DXCLibrary = nullptr;
+        PlatformLibrary::FreeDynamicLib(DXCLib);
+        DXCLib = nullptr;
     }
 
     DxcCreateInstanceFunc = nullptr;
@@ -189,7 +191,7 @@ CShaderCompiler::~CShaderCompiler()
 bool CShaderCompiler::Initialize(const char* InAssetFolderPath)
 {
     Instance.Emplace(InAssetFolderPath);
-    return (Instance->DXCLibrary != nullptr) && (Instance->DxcCreateInstanceFunc != nullptr);
+    return (Instance->DXCLib != nullptr) && (Instance->DxcCreateInstanceFunc != nullptr);
 }
 
 void CShaderCompiler::Release()
@@ -362,6 +364,17 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
 
     CMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
     
+    // Convert SPIRV into MSL
+    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+    {
+        if (!ConvertSpirvToMetalShader(OutByteCode))
+        {
+            return false;
+        }
+
+        return DumpContentToFile(OutByteCode, AssetPath + '/' + Filename + ".msl");
+    }
+
     return true;
 }
 
@@ -439,9 +452,9 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
 
     WCHAR TargetProfile[BufferLength];
     WStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
-	
+    
     // Use the asset-folder as base for the shader-files
-	const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+    const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
     TComPtr<IDxcBlob>            SourceBlob = dbg_new CShaderBlob(ShaderSource.Data(), ShaderSource.SizeInBytes());
     TComPtr<IDxcOperationResult> Result;
@@ -514,24 +527,104 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
 
     CMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 
+    // Convert SPIRV into MSL
+    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+    {
+        if (!ConvertSpirvToMetalShader(OutByteCode))
+        {
+            return false;
+        }
+    }
+
     return true;
+}
+
+void CShaderCompiler::ErrorCallback(void* Userdata, const char* Error)
+{
+    UNREFERENCED_VARIABLE(Userdata);
+
+    LOG_ERROR("[SPIRV-Cross Error] %s", Error);
 }
 
 bool CShaderCompiler::ConvertSpirvToMetalShader(TArray<uint8>& OutByteCode)
 {
-    TArray<uint8> NewShader;
+    if (OutByteCode.IsEmpty())
+    {
+        return true;
+    }
 
+    spvc_context Context = nullptr;
+    spvc_result Result = spvc_context_create(&Context);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("Failed to create SpvcContext");
+        return false;
+    }
 
+    spvc_context_set_error_callback(Context, CShaderCompiler::ErrorCallback, reinterpret_cast<void*>(this));
+
+    constexpr uint32 ElementSize = sizeof(unsigned int) / sizeof(uint8);
+
+    spvc_compiler CompilerMSL = nullptr;
+
+    {
+        spvc_parsed_ir ParsedRepresentation = nullptr;
+
+        const uint32 WordCount = OutByteCode.Size() / ElementSize;
+        Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.Data()), WordCount, &ParsedRepresentation);
+        if (Result != SPVC_SUCCESS)
+        {
+            LOG_ERROR("Failed to parse Spirv");
+            return false;
+        }
+
+        Result = spvc_context_create_compiler(Context, SPVC_BACKEND_MSL, ParsedRepresentation, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &CompilerMSL);
+        if (Result != SPVC_SUCCESS)
+        {
+            LOG_ERROR("Failed to create MSL compiler");
+            return false;
+        }
+    }
+
+    const char* MSLSource = nullptr;
+    Result =  spvc_compiler_compile(CompilerMSL, &MSLSource);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("Failed to create MSL");
+        return false;
+    }
+
+    const uint32 SourceLength = CStringUtils::Length(MSLSource);
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const char));
+
+    spvc_context_destroy(Context);
+
+    OutByteCode.Swap(NewShader);
+    return true;
+}
+
+bool CShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename)
+{
+    FILE* Output = fopen(Filename.CStr(), "w");
+    if (!Output)
+    {
+        LOG_ERROR("Failed to open file '%s'", Filename.CStr());
+        return false;
+    }
+
+    fwrite(ByteCode.Data(), ByteCode.Size(), sizeof(uint8), Output);
+
+    fclose(Output);
     return true;
 }
 
 String CShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
 {
-	WString WArgumentsString;
-	for (LPCWSTR Arg : Args)
-	{
-		WArgumentsString += Arg + ' ';
-	}
+    WString WArgumentsString;
+    for (LPCWSTR Arg : Args)
+    {
+        WArgumentsString += Arg + ' ';
+    }
 
-	return WideToChar(WArgumentsString);
+    return WideToChar(WArgumentsString);
 }
