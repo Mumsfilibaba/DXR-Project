@@ -84,7 +84,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     
     {
         CShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
-        if (!CShaderCompiler::CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -100,7 +100,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
 
     {
         CShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
-        if (!CShaderCompiler::CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;

@@ -27,12 +27,12 @@ public:
 
     static FORCEINLINE void FreeDynamicLib(void* LibraryHandle)
     {
-        FreeLibrary(reinterpret_cast<HANDLE>(LibraryHandle));
+        FreeLibrary(reinterpret_cast<HMODULE>(LibraryHandle));
     }
 
     static FORCEINLINE void* LoadSymbolAddress(const char* SymbolName, void* LibraryHandle)
     {
-        return GetProcAddress(reinterpret_cast<HANDLE>(LibraryHandle), SymbolName);
+        return GetProcAddress(reinterpret_cast<HMODULE>(LibraryHandle), SymbolName);
     }
 
     static FORCEINLINE const char* GetDynamicLibExtension()

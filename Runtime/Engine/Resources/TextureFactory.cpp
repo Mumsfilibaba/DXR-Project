@@ -30,7 +30,7 @@ bool CTextureFactory::Init()
     TArray<uint8> Code;
 
     CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-    if (!CShaderCompiler::CompileFromFile("Shaders/CubeMapGen.hlsl", CompileInfo, Code))
+    if (!CShaderCompiler::Get().CompileFromFile("Shaders/CubeMapGen.hlsl", CompileInfo, Code))
     {
         return false;
     }

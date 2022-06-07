@@ -7,3 +7,6 @@
 [submodule "Dependencies/OpenFBX"]
 	path = Dependencies/OpenFBX
 	url = https://github.com/Mumsfilibaba/OpenFBX
+[submodule "Dependencies/SPIRV-Cross"]
+	path = Dependencies/SPIRV-Cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross

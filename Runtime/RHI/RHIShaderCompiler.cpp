@@ -1,8 +1,13 @@
 #include "RHIShaderCompiler.h"
 
+#include "Core/Containers/ComPtr.h"
 #include "Core/Threading/AsyncTaskManager.h"
 #include "Core/Modules/Platform/PlatformLibrary.h"
-#include "Core/Containers/ComPtr.h"
+
+#include <spirv_cross_c.h>
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EDXCPart
 
 enum class EDXCPart
 {
@@ -73,51 +78,139 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CShaderBlob
+
+class CShaderBlob : public IDxcBlob
+{
+public:
+
+    CShaderBlob(LPCVOID InData, SIZE_T InSize)
+        : Data(nullptr)
+        , Size(InSize)
+        , References(1)
+    {
+        Data = CMemory::Malloc(Size);
+        CMemory::Memcpy(Data, InData, Size);
+    }
+
+    ~CShaderBlob()
+    {
+        CMemory::Free(Data);
+    }
+
+    virtual LPVOID GetBufferPointer() override
+    {
+        return Data;
+    }
+
+    virtual SIZE_T GetBufferSize() override
+    {
+        return Size;
+    }
+
+    virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject)
+    {
+        if (!ppvObject)
+        {
+            return E_INVALIDARG;
+        }
+
+        *ppvObject = nullptr;
+
+        // TODO: Could be ID3DBlob as well possibly, however, should not be needed for now
+        if (Riid == __uuidof(IUnknown) || Riid == __uuidof(IDxcBlob))
+        {
+            *ppvObject = reinterpret_cast<LPVOID>(this);
+            AddRef();
+            return NOERROR;
+        }
+
+        return E_NOINTERFACE;
+    }
+
+    virtual ULONG AddRef()
+    {
+        _InterlockedIncrement(&References);
+        return References;
+    }
+
+    virtual ULONG Release()
+    {
+        ULONG NumRefs = _InterlockedDecrement(&References);
+        if (NumRefs == 0)
+        {
+            delete this;
+        }
+
+        return NumRefs;
+    }
+
+private:
+    LPVOID Data;
+    SIZE_T Size;
+
+    ULONG  References;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CShaderCompiler
 
-void*                 CShaderCompiler::DXCLibrary            = nullptr;
-DxcCreateInstanceProc CShaderCompiler::DxcCreateInstanceFunc = nullptr;
+TOptional<CShaderCompiler> CShaderCompiler::Instance;
 
-String                CShaderCompiler::AssetFolderPath;
-
-bool CShaderCompiler::Initialize(const char* InAssetFolderPath)
-{
-    DXCLibrary = PlatformLibrary::LoadDynamicLib("dxcompiler");
-    if (!DXCLibrary)
+CShaderCompiler::CShaderCompiler(const char* InAssetPath)
+    : DXCLib(nullptr)
+    , DxcCreateInstanceFunc(nullptr)
+    , AssetPath(InAssetPath)
+{ 
+    DXCLib = PlatformLibrary::LoadDynamicLib("dxcompiler");
+    if (!DXCLib)
     {
         LOG_ERROR("Failed to load 'dxcompiler'");
-        return false;
+        return;
     }
-        
-    DxcCreateInstanceFunc = PlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DXCLibrary);
+
+    DxcCreateInstanceFunc = PlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
     if (!DxcCreateInstanceFunc)
     {
         LOG_ERROR("Failed to load 'DxcCreateInstance'");
-        return false;
+        return;
     }
-    
-    AssetFolderPath = String(InAssetFolderPath);
-    return true;
+}
+
+CShaderCompiler::~CShaderCompiler()
+{
+    if (DXCLib)
+    {
+        PlatformLibrary::FreeDynamicLib(DXCLib);
+        DXCLib = nullptr;
+    }
+
+    DxcCreateInstanceFunc = nullptr;
+}
+
+bool CShaderCompiler::Initialize(const char* InAssetFolderPath)
+{
+    Instance.Emplace(InAssetFolderPath);
+    return (Instance->DXCLib != nullptr) && (Instance->DxcCreateInstanceFunc != nullptr);
 }
 
 void CShaderCompiler::Release()
 {
-    if (DXCLibrary)
-    {
-        PlatformLibrary::FreeDynamicLib(DXCLibrary);
-        DXCLibrary = nullptr;
-    }
-    
-    DxcCreateInstanceFunc = nullptr;
+    Instance.Reset();
+}
+
+CShaderCompiler& CShaderCompiler::Get()
+{
+    Check(Instance.HasValue());
+    return Instance.GetValue();
 }
 
 bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     OutByteCode.Clear();
 
-    // Use the assetfolder as base for the shaderfiles
-    WString WideFilePath   = CharToWide(AssetFolderPath + '/' + Filename);
-    WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+    // Use the asset-folder as base for the shader-files
+    WString WideFilePath   = CharToWide(AssetPath + '/' + Filename);
 
     TComPtr<IDxcCompiler> Compiler;
     HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
@@ -155,13 +248,22 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     // Add compile arguments
     TArray<LPCWSTR> CompileArgs =
     {
-        L"-O3", // Optimization level 3
+        L"-HV 2021" // Use HLSL 2021
     };
+
+    // Optimization level 3
+    if (CompileInfo.bOptimize)
+    {
+        CompileArgs.Emplace(L"-O3");
+    }
     
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
         CompileArgs.Emplace(L"-spirv");
     }
+
+    // Create a single string for printing all the shader arguments
+    const String ArgumentsString = CreateArgString(CompileArgs.CreateView());
     
     // Convert defines
     TArray<WString>   StrBuff;
@@ -182,14 +284,16 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     }
     
     // Retrieve the shader target
-    const LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
-    const LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
+    LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
+    LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
 
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     
     WCHAR TargetProfile[BufferLength];
     WStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
+    const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+
     TComPtr<IDxcOperationResult> Result;
     hResult = Compiler->Compile( SourceBlob.Get()
                                , WideFilePath.CStr()
@@ -238,14 +342,12 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     
     if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
     {
-        String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        
-        const char* RawFilename = Filename.CStr();
-        LOG_INFO("[CShaderCompiler]: Successfully compiled shader '%s' with the following output: %s", RawFilename, Output.CStr());
+        const String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
+        LOG_INFO("[CShaderCompiler]: Successfully compiled shader '%s', with arguments '%s' and with the following output: %s", Filename.CStr(), ArgumentsString.CStr(), Output.CStr());
     }
     else
     {
-        LOG_INFO("[CShaderCompiler]: Successfully compiled shader '%s'.", Filename.CStr());
+        LOG_INFO("[CShaderCompiler]: Successfully compiled shader '%s', with arguments '%s'.", Filename.CStr(), ArgumentsString.CStr());
     }
 
     TComPtr<IDxcBlob> CompiledBlob;
@@ -262,10 +364,267 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
 
     CMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
     
+    // Convert SPIRV into MSL
+    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+    {
+        if (!ConvertSpirvToMetalShader(OutByteCode))
+        {
+            return false;
+        }
+
+        return DumpContentToFile(OutByteCode, AssetPath + '/' + Filename + ".msl");
+    }
+
     return true;
 }
 
 bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
+    OutByteCode.Clear();
+
+    TComPtr<IDxcCompiler> Compiler;
+    HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
+    if (FAILED(hResult))
+    {
+        LOG_ERROR("[CShaderCompiler]: FAILED to create Compiler");
+        return false;
+    }
+
+    TComPtr<IDxcLibrary> Library;
+    hResult = DxcCreateInstanceFunc(CLSID_DxcLibrary, IID_PPV_ARGS(&Library));
+    if (FAILED(hResult))
+    {
+        LOG_ERROR("[CShaderCompiler]: FAILED to create Library");
+        return false;
+    }
+
+    TComPtr<IDxcIncludeHandler> IncludeHandler;
+    hResult = Library->CreateIncludeHandler(&IncludeHandler);
+    if (FAILED(hResult))
+    {
+        LOG_ERROR("[CShaderCompiler]: FAILED to create IncludeHandler");
+        return false;
+    }
+
+    // Add compile arguments
+    TArray<LPCWSTR> CompileArgs =
+    {
+        L"-HV 2021" // Use HLSL 2021
+    };
+
+    // Optimization level 3
+    if (CompileInfo.bOptimize)
+    {
+        CompileArgs.Emplace(L"-O3");
+    }
+
+    if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
+    {
+        CompileArgs.Emplace(L"-spirv");
+    }
+
+    // Create a single string for printing all the shader arguments
+    const String ArgumentsString = CreateArgString(CompileArgs.CreateView());
+
+    // Convert defines
+    TArray<WString>   StrBuff;
+    TArray<DxcDefine> DxcDefines;
+
+    TArrayView<SShaderDefine> Defines = CompileInfo.Defines;
+    if (!Defines.IsEmpty())
+    {
+        StrBuff.Reserve(Defines.Size() * 2);
+        DxcDefines.Reserve(Defines.Size());
+
+        for (const SShaderDefine& Define : Defines)
+        {
+            const WString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
+            const WString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
+            DxcDefines.Push({ WideDefine.CStr(), WideValue.CStr() });
+        }
+    }
+
+    // Retrieve the shader target
+    const LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
+    const LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
+
+    constexpr uint32 BufferLength = sizeof("xxx_x_x");
+
+    WCHAR TargetProfile[BufferLength];
+    WStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    
+    // Use the asset-folder as base for the shader-files
+    const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+
+    TComPtr<IDxcBlob>            SourceBlob = dbg_new CShaderBlob(ShaderSource.Data(), ShaderSource.SizeInBytes());
+    TComPtr<IDxcOperationResult> Result;
+    hResult = Compiler->Compile( SourceBlob.Get()
+                               , nullptr
+                               , WideEntrypoint.CStr()
+                               , TargetProfile
+                               , CompileArgs.Data()
+                               , CompileArgs.Size()
+                               , DxcDefines.Data()
+                               , DxcDefines.Size()
+                               , IncludeHandler.Get()
+                               , &Result);
+    if (FAILED(hResult))
+    {
+        LOG_ERROR("[CShaderCompiler]: FAILED to Compile");
+        CDebug::DebugBreak();
+        return false;
+    }
+
+    if (FAILED(Result->GetStatus(&hResult)))
+    {
+        LOG_ERROR("[CShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
+        CDebug::DebugBreak();
+        return false;
+    }
+
+    TComPtr<IDxcBlobEncoding> PrintBlob;
+    TComPtr<IDxcBlobEncoding> PrintBlob8;
+    if (SUCCEEDED(Result->GetErrorBuffer(&PrintBlob)))
+    {
+        Library->GetBlobAsUtf8(PrintBlob.Get(), &PrintBlob8);
+    }
+
+    if (FAILED(hResult))
+    {
+        if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
+        {
+            LOG_ERROR("[CShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+        }
+        else
+        {
+            LOG_ERROR("[CShaderCompiler]: FAILED to compile with. Unknown ERROR.");
+        }
+
+        return false;
+    }
+
+    if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
+    {
+        const String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
+        LOG_INFO("[CShaderCompiler]: Successfully compiled shader from source, with arguments '%s' and with the following output: %s", ArgumentsString.CStr(), Output.CStr());
+    }
+    else
+    {
+        LOG_INFO("[CShaderCompiler]: Successfully compiled shader from source, with arguments '%s'.", ArgumentsString.CStr());
+    }
+
+    TComPtr<IDxcBlob> CompiledBlob;
+    if (FAILED(Result->GetResult(&CompiledBlob)))
+    {
+        LOG_ERROR("[CShaderCompiler]: FAILED to retrieve result");
+        return false;
+    }
+
+    const uint32 BlobSize = uint32(CompiledBlob->GetBufferSize());
+    OutByteCode.Resize(BlobSize);
+
+    LOG_INFO("[CShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
+
+    CMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
+
+    // Convert SPIRV into MSL
+    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+    {
+        if (!ConvertSpirvToMetalShader(OutByteCode))
+        {
+            return false;
+        }
+    }
+
     return true;
+}
+
+void CShaderCompiler::ErrorCallback(void* Userdata, const char* Error)
+{
+    UNREFERENCED_VARIABLE(Userdata);
+
+    LOG_ERROR("[SPIRV-Cross Error] %s", Error);
+}
+
+bool CShaderCompiler::ConvertSpirvToMetalShader(TArray<uint8>& OutByteCode)
+{
+    if (OutByteCode.IsEmpty())
+    {
+        return true;
+    }
+
+    spvc_context Context = nullptr;
+    spvc_result Result = spvc_context_create(&Context);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("Failed to create SpvcContext");
+        return false;
+    }
+
+    spvc_context_set_error_callback(Context, CShaderCompiler::ErrorCallback, reinterpret_cast<void*>(this));
+
+    constexpr uint32 ElementSize = sizeof(unsigned int) / sizeof(uint8);
+
+    spvc_compiler CompilerMSL = nullptr;
+
+    {
+        spvc_parsed_ir ParsedRepresentation = nullptr;
+
+        const uint32 WordCount = OutByteCode.Size() / ElementSize;
+        Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.Data()), WordCount, &ParsedRepresentation);
+        if (Result != SPVC_SUCCESS)
+        {
+            LOG_ERROR("Failed to parse Spirv");
+            return false;
+        }
+
+        Result = spvc_context_create_compiler(Context, SPVC_BACKEND_MSL, ParsedRepresentation, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &CompilerMSL);
+        if (Result != SPVC_SUCCESS)
+        {
+            LOG_ERROR("Failed to create MSL compiler");
+            return false;
+        }
+    }
+
+    const char* MSLSource = nullptr;
+    Result =  spvc_compiler_compile(CompilerMSL, &MSLSource);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("Failed to create MSL");
+        return false;
+    }
+
+    const uint32 SourceLength = CStringUtils::Length(MSLSource);
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const char));
+
+    spvc_context_destroy(Context);
+
+    OutByteCode.Swap(NewShader);
+    return true;
+}
+
+bool CShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename)
+{
+    FILE* Output = fopen(Filename.CStr(), "w");
+    if (!Output)
+    {
+        LOG_ERROR("Failed to open file '%s'", Filename.CStr());
+        return false;
+    }
+
+    fwrite(ByteCode.Data(), ByteCode.Size(), sizeof(uint8), Output);
+
+    fclose(Output);
+    return true;
+}
+
+String CShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
+{
+    WString WArgumentsString;
+    for (LPCWSTR Arg : Args)
+    {
+        WArgumentsString += Arg + ' ';
+    }
+
+    return WideToChar(WArgumentsString);
 }

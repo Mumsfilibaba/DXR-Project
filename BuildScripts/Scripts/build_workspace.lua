@@ -308,6 +308,91 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
                 runtime  'Release'
                 optimize 'Full'
             filter {}
+
+        -- SPIRV-Cross Project
+        project 'SPIRV-Cross'
+            printf('    Generating dependecy SPIRV-Cross')
+
+            kind('StaticLib')
+            warnings('Off')
+            intrinsics('On')
+            editandcontinue('Off')
+            language('C++')
+            cppdialect('C++17')
+            systemversion('latest')
+            architecture('x64')
+            exceptionhandling('Off')
+            rtti('Off')
+            floatingpoint('Fast')
+            vectorextensions('SSE2')
+            characterset('Ascii')
+            flags(
+            { 
+                'MultiProcessorCompile',
+                'NoIncrementalLink',
+            })
+            
+            location(SolutionsFolderPath .. '/Dependencies/SPIRV-Cross')
+        
+            -- Locations
+            targetdir(ExternalDependecyPath .. '/Build/bin/SPIRV-Cross/' .. GetOutputPath())
+            objdir(ExternalDependecyPath .. '/Build/bin-int/SPIRV-Cross/' .. GetOutputPath())
+
+            -- Files
+            files 
+            {
+                (ExternalDependecyPath .. '/SPIRV-Cross/GLSL.std.450.h'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv.h'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cross_c.h'),
+
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cfg.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_common.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cpp.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cross.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cross_containers.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cross_error_handling.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cross_parsed_ir.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cross_util.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_glsl.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_hlsl.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_msl.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_parser.hpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_reflect.hpp'),
+
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cfg.cpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cpp.cpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cross.cpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cross_c.cpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cross_parsed_ir.cpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_cross_util.cpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_glsl.cpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_hlsl.cpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_msl.cpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_parser.cpp'),
+                (ExternalDependecyPath .. '/SPIRV-Cross/spirv_reflect.cpp'),
+            }
+
+            -- Defines 
+            defines
+            {
+                'SPIRV_CROSS_C_API_MSL=(1)',
+                'SPIRV_CROSS_C_API_HLSL=(1)',
+                'SPIRV_CROSS_C_API_GLSL=(1)',
+            }
+
+            -- Configurations 
+            filter 'configurations:Debug or Release'
+                symbols  'on'
+                runtime  'Release'
+                optimize 'Full'
+            filter {}
+            
+            filter 'configurations:Production'
+                symbols  'off'
+                runtime  'Release'
+                optimize 'Full'
+            filter {}
     group ""
 
     -- Generate projects from targets

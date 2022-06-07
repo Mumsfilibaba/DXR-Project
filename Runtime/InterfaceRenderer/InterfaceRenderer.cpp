@@ -75,7 +75,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
 
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
-        if (!CShaderCompiler::CompileFromSource(VSSource, CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromSource(VSSource, CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -109,7 +109,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
 
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
-        if (!CShaderCompiler::CompileFromSource(PSSource, CompileInfo, ShaderCode))
+        if (!CShaderCompiler::Get().CompileFromSource(PSSource, CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;

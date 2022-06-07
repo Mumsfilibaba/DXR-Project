@@ -18,7 +18,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
     
     {
         CShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_3, EShaderStage::RayGen);
-        if (!CShaderCompiler::CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
         {
             CDebug::DebugBreak();
             return false;
@@ -34,7 +34,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
 
     {
         CShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_3, EShaderStage::RayClosestHit);
-        if (!CShaderCompiler::CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
         {
             CDebug::DebugBreak();
             return false;
@@ -50,7 +50,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
 
     {
         CShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_3, EShaderStage::RayMiss);
-        if (!CShaderCompiler::CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
         {
             CDebug::DebugBreak();
             return false;

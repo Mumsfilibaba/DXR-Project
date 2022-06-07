@@ -17,7 +17,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
     
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::CompileFromFile("Shaders/IrradianceGen.hlsl", CompileInfo, Code))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/IrradianceGen.hlsl", CompileInfo, Code))
         {
             LOG_ERROR("Failed to compile IrradianceGen Shader");
         }
@@ -41,7 +41,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
 
     {
         CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", CompileInfo, Code))
+        if (!CShaderCompiler::Get().CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", CompileInfo, Code))
         {
             LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
         }

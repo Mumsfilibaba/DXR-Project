@@ -97,7 +97,7 @@ CD3D12RenderTargetView* CD3D12Texture::GetOrCreateRTV(const CRHIRenderTargetView
 
     CD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
 
-    TSharedRef<CD3D12RenderTargetView> D3D12View = dbg_new CD3D12RenderTargetView(GetDevice(), D3D12CoreInterface->GetRenderTargetOfflineDescriptorHeap());
+    D3D12RenderTargetViewRef D3D12View = dbg_new CD3D12RenderTargetView(GetDevice(), D3D12CoreInterface->GetRenderTargetOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -110,7 +110,7 @@ CD3D12RenderTargetView* CD3D12Texture::GetOrCreateRTV(const CRHIRenderTargetView
     else
     {
         RenderTargetViews[Subresource] = D3D12View;
-        return D3D12View.ReleaseOwnership();
+        return D3D12View.Get();
     }
 }
 
@@ -192,7 +192,7 @@ CD3D12DepthStencilView* CD3D12Texture::GetOrCreateDSV(const CRHIDepthStencilView
 
     CD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
 
-    TSharedRef<CD3D12DepthStencilView> D3D12View = dbg_new CD3D12DepthStencilView(GetDevice(), D3D12CoreInterface->GetDepthStencilOfflineDescriptorHeap());
+    D3D12DepthStencilViewRef D3D12View = dbg_new CD3D12DepthStencilView(GetDevice(), D3D12CoreInterface->GetDepthStencilOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -205,6 +205,6 @@ CD3D12DepthStencilView* CD3D12Texture::GetOrCreateDSV(const CRHIDepthStencilView
     else
     {
         DepthStencilViews[Subresource] = D3D12View;
-        return D3D12View.ReleaseOwnership();
+        return D3D12View.Get();
     }
 }

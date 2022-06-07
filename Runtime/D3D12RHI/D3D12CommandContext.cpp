@@ -476,8 +476,10 @@ void CD3D12CommandContext::BeginRenderPass(const CRHIRenderPassInitializer& Rend
         CommandList.RSSetShadingRateImage(D3D12Texture->GetD3D12Resource()->GetResource());
 
         CmdBatch->AddInUseResource(ShadingRateTexture);
+
+        CurrentShadingRateTexture = D3D12Texture;
     }
-    else
+    else if (CurrentShadingRateTexture)
     {
         CommandList.RSSetShadingRateImage(nullptr);
 
@@ -490,6 +492,8 @@ void CD3D12CommandContext::BeginRenderPass(const CRHIRenderPassInitializer& Rend
         };
 
         CommandList.RSSetShadingRate(D3D12ShadingRate, Combiners);
+
+        CurrentShadingRateTexture = nullptr;
     }
 
     bIsRenderPassActive = true;
@@ -1384,7 +1388,7 @@ void CD3D12CommandContext::Flush()
         return;
     }
 
-    Fence.WaitForValue(FenceValue);
+    Fence.WaitForValue(NewFenceValue);
 
     for (CD3D12CommandBatch& Batch : CmdBatches)
     {
@@ -1432,4 +1436,6 @@ void CD3D12CommandContext::InternalClearState()
     CurrentPrimitiveTolpology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 
     bIsRenderPassActive = false;
+
+    CurrentShadingRateTexture = nullptr;
 }

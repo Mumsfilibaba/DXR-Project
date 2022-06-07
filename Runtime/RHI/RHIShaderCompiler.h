@@ -1,8 +1,16 @@
 #pragma once
+
+// TODO: Check if this could be avoided
+#if PLATFORM_WINDOWS
+    #include <Unknwn.h>
+#endif
+
 #include <dxc/dxcapi.h>
 
 #include "RHIModule.h"
 #include "RHIShader.h"
+
+#include "Core/Containers/Optional.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EShaderModel
@@ -58,11 +66,12 @@ class CShaderCompileInfo
 public:
     
     CShaderCompileInfo()
-        : EntryPoint()
-        , ShaderModel(EShaderModel::Unknown)
+        : ShaderModel(EShaderModel::Unknown)
         , ShaderStage(EShaderStage::Unknown)
         , OutputLanguage(EShaderOutputLanguage::Unknown)
+        , bOptimize(true)
         , Defines()
+        , EntryPoint()
     { }
     
     CShaderCompileInfo( const String& InEntryPoint
@@ -76,20 +85,23 @@ public:
 #else
                       , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::Unknown)
 #endif
-        : EntryPoint(InEntryPoint)
-        , ShaderModel(InShaderModel)
+        : ShaderModel(InShaderModel)
         , ShaderStage(InShaderStage)
         , OutputLanguage(InOutputLanguage)
+        , bOptimize(true)
         , Defines(InDefines)
+        , EntryPoint(InEntryPoint)
     { }
-    
-    String                    EntryPoint;
     
     EShaderModel              ShaderModel;
     EShaderStage              ShaderStage;
     EShaderOutputLanguage     OutputLanguage;
     
+    bool                      bOptimize;
+
     TArrayView<SShaderDefine> Defines;
+
+    String                    EntryPoint;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -98,21 +110,39 @@ public:
 class RHI_API CShaderCompiler
 {
 public:
+    CShaderCompiler(const char* InAssestPath);
+    ~CShaderCompiler();
+
+public:
     
-    // TODO: Retrieve this from the ProjectManager -> Can do this with IEngineService
     static bool Initialize(const char* AssetFolderPath);
     
     static void Release();
     
-    static bool CompileFromFile(const String& Filename, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    static CShaderCompiler& Get();
+
+public:
+
+    bool CompileFromFile(const String& Filename, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     
-    static bool CompileFromSource(const String& ShaderSource, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-    
+    bool CompileFromSource(const String& ShaderSource, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+
 private:
-    static void*                 DXCLibrary;
-    static DxcCreateInstanceProc DxcCreateInstanceFunc;
-    
-    static String                AssetFolderPath;
+
+    static void ErrorCallback(void* Userdata, const char* Error);
+
+    bool ConvertSpirvToMetalShader(TArray<uint8>& OutByteCode);
+
+    bool DumpContentToFile(const TArray<uint8>& OutByteCode, const String& Filename);
+
+    String CreateArgString(const TArrayView<LPCWSTR> Args);
+
+    void*                 DXCLib;
+    DxcCreateInstanceProc DxcCreateInstanceFunc;
+
+    String                AssetPath;
+
+    static TOptional<CShaderCompiler> Instance;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

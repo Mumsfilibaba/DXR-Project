@@ -9,7 +9,7 @@
 
 #include "CoreApplication/Generic/GenericApplication.h"
 
-#define ENABLE_DPI_AWARENESS (0)
+#define ENABLE_DPI_AWARENESS (1)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SWindowsMessage
@@ -82,9 +82,9 @@ public:
 
     virtual void Tick(float Delta) override final;
 
-    virtual bool SupportsRawMouse() const override final { return true; }
+	virtual bool SupportsHighPrecisionMouse() const override final { return false; }
 
-    virtual bool EnableRawMouse(const TSharedRef<CGenericWindow>& Window) override final;
+    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<CGenericWindow>& Window) override final;
 
     virtual void SetCapture(const TSharedRef<CGenericWindow>& Window) override final;
 
@@ -137,7 +137,7 @@ private:
     CCriticalSection                   MessagesCS;
 
     TArray<TSharedRef<CWindowsWindow>> Windows;
-    CCriticalSection                   WindowsCS;
+    mutable CCriticalSection           WindowsCS;
 
     TArray<TSharedRef<CWindowsWindow>> ClosedWindows;
     CCriticalSection                   ClosedWindowsCS;
@@ -147,7 +147,7 @@ private:
     HINSTANCE InstanceHandle;
 
     TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
-    CCriticalSection                            WindowsMessageListenersCS;
+    mutable CCriticalSection                    WindowsMessageListenersCS;
 };
 
 extern CWindowsApplication* WindowsApplication;
