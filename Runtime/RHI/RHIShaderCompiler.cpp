@@ -368,7 +368,7 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     // Convert SPIRV into MSL
     if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
     {
-        if (!ConvertSpirvToMetalShader(OutByteCode))
+        if (!ConvertSpirvToMetalShader(CompileInfo.EntryPoint, OutByteCode))
         {
             return false;
         }
@@ -531,7 +531,7 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
     // Convert SPIRV into MSL
     if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
     {
-        if (!ConvertSpirvToMetalShader(OutByteCode))
+        if (!ConvertSpirvToMetalShader(CompileInfo.EntryPoint, OutByteCode))
         {
             return false;
         }
@@ -547,11 +547,11 @@ void CShaderCompiler::ErrorCallback(void* Userdata, const char* Error)
     LOG_ERROR("[SPIRV-Cross Error] %s", Error);
 }
 
-bool CShaderCompiler::ConvertSpirvToMetalShader(TArray<uint8>& OutByteCode)
+bool CShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TArray<uint8>& OutByteCode)
 {
-    if (OutByteCode.IsEmpty())
+    if (OutByteCode.IsEmpty() || Entrypoint.IsEmpty())
     {
-        return true;
+        return false;
     }
 
     spvc_context Context = nullptr;
@@ -595,8 +595,12 @@ bool CShaderCompiler::ConvertSpirvToMetalShader(TArray<uint8>& OutByteCode)
         return false;
     }
 
+    // Start by adding the entrypoint to the shader, which is needed when we create native shader objects
+    const String Comment = "// " + Entrypoint + "\n\n";
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.Data()), Comment.Length() * sizeof(const char));
+
     const uint32 SourceLength = CStringUtils::Length(MSLSource);
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const char));
+    NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const char));
 
     spvc_context_destroy(Context);
 

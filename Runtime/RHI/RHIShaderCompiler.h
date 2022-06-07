@@ -80,7 +80,7 @@ public:
                       , const TArrayView<SShaderDefine>& InDefines = TArrayView<SShaderDefine>()
 #if PLATFORM_WINDOWS
                       , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::HLSL)
-#elif PLATFORM_MAC
+#elif PLATFORM_MACOS
                       , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::MSL)
 #else
                       , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::Unknown)
@@ -131,7 +131,7 @@ private:
 
     static void ErrorCallback(void* Userdata, const char* Error);
 
-    bool ConvertSpirvToMetalShader(TArray<uint8>& OutByteCode);
+    bool ConvertSpirvToMetalShader(const String& Entrypoint, TArray<uint8>& OutByteCode);
 
     bool DumpContentToFile(const TArray<uint8>& OutByteCode, const String& Filename);
 

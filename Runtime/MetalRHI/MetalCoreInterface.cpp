@@ -286,6 +286,26 @@ CRHIComputeShader* CMetalCoreInterface::RHICreateComputeShader(const TArray<uint
 
 CRHIVertexShader* CMetalCoreInterface::RHICreateVertexShader(const TArray<uint8>& ShaderCode)
 {
+    @autoreleasepool
+    {
+        NSError* Error = nil;
+        
+        String SourceString(reinterpret_cast<const char*>(ShaderCode.Data()), ShaderCode.Size());
+        
+        NSString* Source = SourceString.GetNSString();
+        Check(Source != nil);
+        
+        id<MTLLibrary> Library = [GetDeviceContext()->GetMTLDevice() newLibraryWithSource:Source options:nil error:&Error];
+        Check(Library != nil);
+        
+        // Retrieve the entrypoint
+        const auto Length = NMath::Max(SourceString.Find('\n') - 3, 0);
+        NSString* EntryPoint = String(SourceString.CStr() + 3, Length).GetNSString();
+        
+        id<MTLFunction> Function = [Library newFunctionWithName:EntryPoint];
+        Check(Function != nil);
+    }
+    
     return dbg_new TMetalShader<CRHIVertexShader>();
 }
 
