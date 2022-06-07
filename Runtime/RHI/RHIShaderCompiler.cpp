@@ -2,6 +2,7 @@
 
 #include "Core/Containers/ComPtr.h"
 #include "Core/Threading/AsyncTaskManager.h"
+#include "Core/Threading/Platform/PlatformInterlocked.h"
 #include "Core/Modules/Platform/PlatformLibrary.h"
 
 #include <spirv_cross_c.h>
@@ -122,7 +123,7 @@ public:
         {
             *ppvObject = reinterpret_cast<LPVOID>(this);
             AddRef();
-            return NOERROR;
+            return S_OK;
         }
 
         return E_NOINTERFACE;
@@ -130,13 +131,13 @@ public:
 
     virtual ULONG AddRef()
     {
-        _InterlockedIncrement(&References);
-        return References;
+        PlatformInterlocked::InterlockedIncrement(&References);
+        return static_cast<ULONG>(References);
     }
 
     virtual ULONG Release()
     {
-        ULONG NumRefs = _InterlockedDecrement(&References);
+        ULONG NumRefs = static_cast<ULONG>(PlatformInterlocked::InterlockedDecrement(&References));
         if (NumRefs == 0)
         {
             delete this;
@@ -149,7 +150,7 @@ private:
     LPVOID Data;
     SIZE_T Size;
 
-    ULONG  References;
+    int32  References;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
