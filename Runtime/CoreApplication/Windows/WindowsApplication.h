@@ -9,7 +9,7 @@
 
 #include "CoreApplication/Generic/GenericApplication.h"
 
-#define ENABLE_DPI_AWARENESS (0)
+#define ENABLE_DPI_AWARENESS (1)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SWindowsMessage

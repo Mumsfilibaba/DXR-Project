@@ -126,8 +126,12 @@ public:
     bool CompileFromFile(const String& Filename, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     
     bool CompileFromSource(const String& ShaderSource, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+
+    bool ConvertSpirvToMetalShader(TArray<uint8>& OutByteCode);
     
 private:
+    String CreateArgString(const TArrayView<LPCWSTR> Args);
+
     void*                 DXCLibrary;
     DxcCreateInstanceProc DxcCreateInstanceFunc;
     

@@ -1388,7 +1388,7 @@ void CD3D12CommandContext::Flush()
         return;
     }
 
-    Fence.WaitForValue(FenceValue);
+    Fence.WaitForValue(NewFenceValue);
 
     for (CD3D12CommandBatch& Batch : CmdBatches)
     {

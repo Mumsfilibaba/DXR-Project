@@ -121,13 +121,16 @@ bool CD3D12Viewport::Init()
     return true;
 }
 
+#pragma optimize("", off)
+
 bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 {
-    // TODO: Make sure that we release the old surfaces
-
     if ((InWidth != Width || InHeight != Height) && (InWidth > 0) && (InHeight > 0))
     {
         CmdContext->ClearState();
+
+        CD3D12Resource* Resource = BackBuffers[0]->GetD3D12Resource();
+        UNREFERENCED_VARIABLE(Resource);
 
         BackBuffers.Clear();
 

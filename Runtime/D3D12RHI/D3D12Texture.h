@@ -12,6 +12,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedef
 
+typedef TSharedRef<class CD3D12Texture>      D3D12TextureRef;
+
 typedef TSharedRef<CD3D12RenderTargetView>   D3D12RenderTargetViewRef;
 typedef TSharedRef<CD3D12DepthStencilView>   D3D12DepthStencilViewRef;
 typedef TSharedRef<CD3D12ShaderResourceView> D3D12ShaderResourceViewRef;
@@ -28,6 +30,16 @@ public:
 
     CD3D12RenderTargetView* GetOrCreateRTV(const CRHIRenderTargetView& RTVInitializer);
     CD3D12DepthStencilView* GetOrCreateDSV(const CRHIDepthStencilView& DSVInitializer);
+
+    void DestroyRTVs()
+    {
+        RenderTargetViews.Clear();
+    }
+
+	void DestroyDSVs()
+	{
+        DepthStencilViews.Clear();
+	}
 
     void SetShaderResourceView(CD3D12ShaderResourceView* InShaderResourceView) 
     { 

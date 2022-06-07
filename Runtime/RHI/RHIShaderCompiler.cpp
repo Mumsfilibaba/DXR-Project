@@ -1,8 +1,11 @@
 #include "RHIShaderCompiler.h"
 
+#include "Core/Containers/ComPtr.h"
 #include "Core/Threading/AsyncTaskManager.h"
 #include "Core/Modules/Platform/PlatformLibrary.h"
-#include "Core/Containers/ComPtr.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EDXCPart
 
 enum class EDXCPart
 {
@@ -110,12 +113,12 @@ public:
             return E_INVALIDARG;
         }
 
-        *ppvObject = NULL;
+        *ppvObject = nullptr;
 
         // TODO: Could be ID3DBlob as well possibly, however, should not be needed for now
         if (Riid == __uuidof(IUnknown) || Riid == __uuidof(IDxcBlob))
         {
-            *ppvObject = (LPVOID)this;
+            *ppvObject = reinterpret_cast<LPVOID>(this);
             AddRef();
             return NOERROR;
         }
@@ -258,13 +261,7 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     }
 
     // Create a single string for printing all the shader arguments
-    WString WArgumentsString;
-    for (LPCWSTR Arg : CompileArgs)
-    {
-        WArgumentsString += Arg + ' ';
-    }
-
-    const String ArgumentsString = WideToChar(WArgumentsString);
+    const String ArgumentsString = CreateArgString(CompileArgs.CreateView());
     
     // Convert defines
     TArray<WString>   StrBuff;
@@ -285,8 +282,8 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     }
     
     // Retrieve the shader target
-    const LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
-    const LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
+    LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
+    LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
 
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     
@@ -414,13 +411,7 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
     }
 
     // Create a single string for printing all the shader arguments
-    WString WArgumentsString;
-    for (LPCWSTR Arg : CompileArgs)
-    {
-        WArgumentsString += Arg + ' ';
-    }
-
-    const String ArgumentsString = WideToChar(WArgumentsString);
+    const String ArgumentsString = CreateArgString(CompileArgs.CreateView());
 
     // Convert defines
     TArray<WString>   StrBuff;
@@ -524,4 +515,23 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
     CMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 
     return true;
+}
+
+bool CShaderCompiler::ConvertSpirvToMetalShader(TArray<uint8>& OutByteCode)
+{
+    TArray<uint8> NewShader;
+
+
+    return true;
+}
+
+String CShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
+{
+	WString WArgumentsString;
+	for (LPCWSTR Arg : Args)
+	{
+		WArgumentsString += Arg + ' ';
+	}
+
+	return WideToChar(WArgumentsString);
 }
