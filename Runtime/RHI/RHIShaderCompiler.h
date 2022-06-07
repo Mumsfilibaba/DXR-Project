@@ -79,7 +79,7 @@ public:
                       , EShaderStage InShaderStage
                       , const TArrayView<SShaderDefine>& InDefines = TArrayView<SShaderDefine>()
 #if PLATFORM_WINDOWS
-                      , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::MSL)
+                      , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::HLSL)
 #elif PLATFORM_MAC
                       , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::MSL)
 #else
