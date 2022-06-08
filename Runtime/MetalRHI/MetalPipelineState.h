@@ -1,4 +1,6 @@
 #pragma once
+#include "MetalObject.h"
+
 #include "RHI/RHIResources.h"
 
 #include "Core/Utilities/StringUtilities.h"
@@ -9,12 +11,15 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalInputLayoutState
 
-class CMetalInputLayoutState : public CRHIVertexInputLayout
+class CMetalInputLayoutState : public CRHIVertexInputLayout, public CMetalObject
 {
 public:
 
     CMetalInputLayoutState()  = default;
     ~CMetalInputLayoutState() = default;
+    
+private:
+
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

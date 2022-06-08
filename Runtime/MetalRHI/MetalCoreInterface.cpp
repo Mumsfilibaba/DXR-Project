@@ -281,32 +281,12 @@ CRHIUnorderedAccessView* CMetalCoreInterface::RHICreateUnorderedAccessView(const
 
 CRHIComputeShader* CMetalCoreInterface::RHICreateComputeShader(const TArray<uint8>& ShaderCode)
 {
-    return dbg_new TMetalShader<CMetalComputeShader>();
+    return dbg_new CMetalComputeShader(GetDeviceContext(), ShaderCode);
 }
 
 CRHIVertexShader* CMetalCoreInterface::RHICreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    @autoreleasepool
-    {
-        NSError* Error = nil;
-        
-        String SourceString(reinterpret_cast<const char*>(ShaderCode.Data()), ShaderCode.Size());
-        
-        NSString* Source = SourceString.GetNSString();
-        Check(Source != nil);
-        
-        id<MTLLibrary> Library = [GetDeviceContext()->GetMTLDevice() newLibraryWithSource:Source options:nil error:&Error];
-        Check(Library != nil);
-        
-        // Retrieve the entrypoint
-        const auto Length = NMath::Max(SourceString.Find('\n') - 3, 0);
-        NSString* EntryPoint = String(SourceString.CStr() + 3, Length).GetNSString();
-        
-        id<MTLFunction> Function = [Library newFunctionWithName:EntryPoint];
-        Check(Function != nil);
-    }
-    
-    return dbg_new TMetalShader<CRHIVertexShader>();
+    return dbg_new CMetalVertexShader(GetDeviceContext(), ShaderCode);
 }
 
 CRHIHullShader* CMetalCoreInterface::RHICreateHullShader(const TArray<uint8>& ShaderCode)
@@ -336,27 +316,27 @@ CRHIAmplificationShader* CMetalCoreInterface::RHICreateAmplificationShader(const
 
 CRHIPixelShader* CMetalCoreInterface::RHICreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    return dbg_new TMetalShader<CRHIPixelShader>();
+    return dbg_new CMetalPixelShader(GetDeviceContext(), ShaderCode);
 }
 
 CRHIRayGenShader* CMetalCoreInterface::RHICreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    return dbg_new TMetalShader<CRHIRayGenShader>();
+    return dbg_new CMetalRayGenShader(GetDeviceContext(), ShaderCode);
 }
 
 CRHIRayAnyHitShader* CMetalCoreInterface::RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    return dbg_new TMetalShader<CRHIRayAnyHitShader>();
+    return dbg_new CMetalRayAnyHitShader(GetDeviceContext(), ShaderCode);
 }
 
 CRHIRayClosestHitShader* CMetalCoreInterface::RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    return dbg_new TMetalShader<CRHIRayClosestHitShader>();
+    return dbg_new CMetalRayClosestHitShader(GetDeviceContext(), ShaderCode);
 }
 
 CRHIRayMissShader* CMetalCoreInterface::RHICreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    return dbg_new TMetalShader<CRHIRayMissShader>();
+    return dbg_new CMetalRayMissShader(GetDeviceContext(), ShaderCode);
 }
 
 CRHIDepthStencilState* CMetalCoreInterface::RHICreateDepthStencilState(const CRHIDepthStencilStateInitializer& Initializer)
