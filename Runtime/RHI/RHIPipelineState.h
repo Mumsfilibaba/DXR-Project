@@ -82,7 +82,7 @@ struct SDepthStencilStateFace
     SDepthStencilStateFace()
         : StencilFailOp(EStencilOp::Keep)
         , StencilDepthFailOp(EStencilOp::Keep)
-        , StencilPassOp(EStencilOp::Keep)
+        , StencilDepthPassOp(EStencilOp::Keep)
         , StencilFunc(EComparisonFunc::Always)
     { }
 
@@ -92,7 +92,7 @@ struct SDepthStencilStateFace
                           , EComparisonFunc InStencilFunc)
         : StencilFailOp(InStencilFailOp)
         , StencilDepthFailOp(InStencilDepthFailOp)
-        , StencilPassOp(InStencilPassOp)
+        , StencilDepthPassOp(InStencilPassOp)
         , StencilFunc(InStencilFunc)
     { }
 
@@ -100,7 +100,7 @@ struct SDepthStencilStateFace
     {
         uint64 Hash = ToUnderlying(StencilFailOp);
         HashCombine(Hash, ToUnderlying(StencilDepthFailOp));
-        HashCombine(Hash, ToUnderlying(StencilPassOp));
+        HashCombine(Hash, ToUnderlying(StencilDepthPassOp));
         HashCombine(Hash, ToUnderlying(StencilFunc));
         return Hash;
     }
@@ -109,7 +109,7 @@ struct SDepthStencilStateFace
     {
         return (StencilFailOp      == RHS.StencilFailOp) 
             && (StencilDepthFailOp == RHS.StencilDepthFailOp)
-            && (StencilPassOp      == RHS.StencilPassOp)
+            && (StencilDepthPassOp      == RHS.StencilDepthPassOp)
             && (StencilFunc        == RHS.StencilFunc);
     }
 
@@ -120,7 +120,7 @@ struct SDepthStencilStateFace
 
     EStencilOp      StencilFailOp;
     EStencilOp      StencilDepthFailOp;
-    EStencilOp      StencilPassOp;
+    EStencilOp      StencilDepthPassOp;
     EComparisonFunc StencilFunc;
 };
 

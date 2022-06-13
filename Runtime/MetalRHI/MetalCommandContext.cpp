@@ -3,6 +3,7 @@
 #include "MetalBuffer.h"
 #include "MetalTexture.h"
 #include "MetalViewport.h"
+#include "MetalPipelineState.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -15,7 +16,6 @@ CMetalCommandContext::CMetalCommandContext(CMetalDeviceContext* InDeviceContext)
     , IRHICommandContext()
     , CommandBuffer(nil)
     , GraphicsEncoder(nil)
-    , RenderPassDescriptor(nil)
 { }
 
 CMetalCommandContext* CMetalCommandContext::CreateMetalContext(CMetalDeviceContext* InDeviceContext)
@@ -40,6 +40,7 @@ void CMetalCommandContext::FinishContext()
     [CommandBuffer commit];
     [CommandBuffer waitUntilCompleted];
     [CommandBuffer release];
+    
     CommandBuffer = nil;
 }
 
@@ -65,15 +66,14 @@ void CMetalCommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView
 
 void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer)
 {
-    Check(GraphicsEncoder      == nil);
-    Check(RenderPassDescriptor == nil);
+    Check(GraphicsEncoder == nil);
     
     CopyContext.FinishContext();
 
     CMetalTexture* DSVTexture = GetMetalTexture(RenderPassInitializer.DepthStencilView.Texture);
     METAL_ERROR_COND((RenderPassInitializer.NumRenderTargets > 0) || (DSVTexture != nullptr), "A RenderPass needs a valid RenderTargetView or DepthStencilView");
     
-    RenderPassDescriptor = [MTLRenderPassDescriptor new];
+    MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
     RenderPassDescriptor.defaultRasterSampleCount = 1;
     RenderPassDescriptor.renderTargetArrayLength  = 1;
     
@@ -112,19 +112,16 @@ void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& Rend
 
     Check(RenderPassDescriptor != nil);
     GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
+    
+    NSRelease(RenderPassDescriptor);
 }
 
 void CMetalCommandContext::EndRenderPass()
 {
-    Check(GraphicsEncoder      != nil);
-    Check(RenderPassDescriptor != nil);
+    Check(GraphicsEncoder != nil);
         
     [GraphicsEncoder endEncoding];
-    [GraphicsEncoder release];
-    GraphicsEncoder = nil;
-
-    [RenderPassDescriptor release];
-    RenderPassDescriptor = nil;
+    NSRelease(GraphicsEncoder);
 }
 
 void CMetalCommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
@@ -178,6 +175,12 @@ void CMetalCommandContext::SetPrimitiveTopology(EPrimitiveTopology PrimitveTopol
 
 void CMetalCommandContext::SetGraphicsPipelineState(CRHIGraphicsPipelineState* PipelineState)
 {
+    /*CMetalGraphicsPipelineState* MetalPipelineState = static_cast<CMetalGraphicsPipelineState*>(PipelineState);
+    Check(GraphicsEncoder    != nil);
+    Check(MetalPipelineState != nil);
+    
+    CMetalDepthStencilState* DepthStencilState = MetalPipelineState->GetMetalDepthStencilState();
+    [GraphicsEncoder setDepthStencilState:DepthStencilState->GetMTLDepthStencilState()];*/
 }
 
 void CMetalCommandContext::SetComputePipelineState(CRHIComputePipelineState* PipelineState)
@@ -305,6 +308,9 @@ void CMetalCommandContext::GenerateMips(CRHITexture* Texture)
     CMetalTexture* MetalTexture = GetMetalTexture(Texture);
     Check(MetalTexture != nullptr);
     
+    // Cannot call generatemips inside of a RenderPass
+    Check(GraphicsEncoder == nil);
+    
     CopyContext.StartContext(CommandBuffer);
     
     id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
@@ -329,18 +335,22 @@ void CMetalCommandContext::UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)
 
 void CMetalCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 {
+    Check(GraphicsEncoder != nil);
 }
 
 void CMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
+    Check(GraphicsEncoder != nil);
 }
 
 void CMetalCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
+    Check(GraphicsEncoder != nil);
 }
 
 void CMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
+    Check(GraphicsEncoder != nil);
 }
 
 void CMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
@@ -367,6 +377,8 @@ void CMetalCommandContext::Flush()
 
 void CMetalCommandContext::InsertMarker(const String& Message)
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     id<MTLCommandEncoder> Encoder = nil;
     if (GraphicsEncoder)
     {

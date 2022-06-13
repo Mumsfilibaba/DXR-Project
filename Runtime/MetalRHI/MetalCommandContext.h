@@ -167,10 +167,11 @@ public:
     
 private:
     id<MTLCommandBuffer>        CommandBuffer;
+    
     id<MTLRenderCommandEncoder> GraphicsEncoder;
+    
     CMetalCopyCommandContext    CopyContext;
     
-    MTLRenderPassDescriptor*    RenderPassDescriptor;
 };
 
 #pragma clang diagnostic pop

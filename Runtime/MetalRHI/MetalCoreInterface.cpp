@@ -341,12 +341,12 @@ CRHIRayMissShader* CMetalCoreInterface::RHICreateRayMissShader(const TArray<uint
 
 CRHIDepthStencilState* CMetalCoreInterface::RHICreateDepthStencilState(const CRHIDepthStencilStateInitializer& Initializer)
 {
-    return dbg_new CMetalDepthStencilState();
+    return dbg_new CMetalDepthStencilState(GetDeviceContext(), Initializer);
 }
 
 CRHIRasterizerState* CMetalCoreInterface::RHICreateRasterizerState(const CRHIRasterizerStateInitializer& Initializer)
 {
-    return dbg_new CMetalRasterizerState();
+    return dbg_new CMetalRasterizerState(GetDeviceContext(), Initializer);
 }
 
 CRHIBlendState* CMetalCoreInterface::RHICreateBlendState(const CRHIBlendStateInitializer& Initializer)
@@ -356,12 +356,12 @@ CRHIBlendState* CMetalCoreInterface::RHICreateBlendState(const CRHIBlendStateIni
 
 CRHIVertexInputLayout* CMetalCoreInterface::RHICreateVertexInputLayout(const CRHIVertexInputLayoutInitializer& Initializer)
 {
-    return dbg_new CMetalInputLayoutState();
+    return dbg_new CMetalInputLayoutState(GetDeviceContext(), Initializer);
 }
 
 CRHIGraphicsPipelineState* CMetalCoreInterface::RHICreateGraphicsPipelineState(const CRHIGraphicsPipelineStateInitializer& Initializer)
 {
-    return dbg_new CMetalGraphicsPipelineState();
+    return dbg_new CMetalGraphicsPipelineState(GetDeviceContext(), Initializer);
 }
 
 CRHIComputePipelineState* CMetalCoreInterface::RHICreateComputePipelineState(const CRHIComputePipelineStateInitializer& Initializer)

@@ -12,7 +12,9 @@ public:
 
     CMetalObject(CMetalDeviceContext* InDeviceContext)
         : DeviceContext(InDeviceContext)
-    { }
+    {
+        Check(DeviceContext != nullptr);
+    }
 
     ~CMetalObject() = default;
 

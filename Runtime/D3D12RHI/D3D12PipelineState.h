@@ -14,15 +14,15 @@ class CD3D12VertexInputLayout : public CRHIVertexInputLayout, public CD3D12Devic
 {
 public:
 
-    CD3D12VertexInputLayout(CD3D12Device* InDevice, const CRHIVertexInputLayoutInitializer& CreateInfo)
+    CD3D12VertexInputLayout(CD3D12Device* InDevice, const CRHIVertexInputLayoutInitializer& Initializer)
         : CRHIVertexInputLayout()
         , CD3D12DeviceChild(InDevice)
         , SemanticNames()
         , ElementDesc()
         , Desc()
     {
-        SemanticNames.Reserve(CreateInfo.Elements.Size());
-        for (const SVertexInputElement& Element : CreateInfo.Elements)
+        SemanticNames.Reserve(Initializer.Elements.Size());
+        for (const SVertexInputElement& Element : Initializer.Elements)
         {
             D3D12_INPUT_ELEMENT_DESC D3D12Element;
             D3D12Element.SemanticName         = SemanticNames.Emplace(Element.Semantic).CStr();
@@ -118,7 +118,7 @@ public:
     CD3D12GraphicsPipelineState(CD3D12Device* InDevice);
     ~CD3D12GraphicsPipelineState() = default;
 
-    bool Init(const CRHIGraphicsPipelineStateInitializer& CreateInfo);
+    bool Init(const CRHIGraphicsPipelineStateInitializer& Initializer);
 
     virtual void SetName(const String& InName) override final
     {
@@ -192,7 +192,7 @@ public:
     CD3D12RayTracingPipelineState(CD3D12Device* InDevice);
     ~CD3D12RayTracingPipelineState() = default;
 
-    bool Init(const CRHIRayTracingPipelineStateInitializer& CreateInfo);
+    bool Init(const CRHIRayTracingPipelineStateInitializer& Initializer);
 
     virtual void SetName(const String& InName) override
     {
