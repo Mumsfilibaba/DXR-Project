@@ -53,6 +53,31 @@ void CMetalCommandContext::EndTimeStamp(CRHITimestampQuery* Profiler, uint32 Ind
 
 void CMetalCommandContext::ClearRenderTargetView(const CRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
 {
+    SCOPED_AUTORELEASE_POOL();
+    
+    CMetalTexture*  RTVTexture = GetMetalTexture(RenderTargetView.Texture);
+    CMetalViewport* Viewport   = RTVTexture ? RTVTexture->GetViewport() : nullptr;
+    
+    MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
+    
+    MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[0];
+    ColorAttachment.texture            = Viewport ? Viewport->GetDrawableTexture() : RTVTexture->GetMTLTexture();
+    ColorAttachment.loadAction         = ConvertAttachmentLoadAction(RenderTargetView.LoadAction);
+    ColorAttachment.clearColor         = MTLClearColorMake(RenderTargetView.ClearValue.R, RenderTargetView.ClearValue.G, RenderTargetView.ClearValue.B, RenderTargetView.ClearValue.A);
+    ColorAttachment.level              = RenderTargetView.MipLevel;
+    ColorAttachment.slice              = RenderTargetView.ArrayIndex;
+    ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
+    ColorAttachment.storeAction        = ConvertAttachmentStoreAction(RenderTargetView.StoreAction);
+    
+    if(!GraphicsEncoder)
+    {
+        GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
+    }
+    
+    NSRelease(RenderPassDescriptor);
+    
+    [GraphicsEncoder endEncoding];
+    GraphicsEncoder = nil;
 }
 
 void CMetalCommandContext::ClearDepthStencilView(const CRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
@@ -128,8 +153,6 @@ void CMetalCommandContext::EndRenderPass()
 
 void CMetalCommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
 {
-    Check(GraphicsEncoder != nil);
-    
     MTLViewport Viewport;
     Viewport.width   = Width;
     Viewport.height  = Height;
@@ -138,15 +161,13 @@ void CMetalCommandContext::SetViewport(float Width, float Height, float MinDepth
     Viewport.znear   = MinDepth;
     Viewport.zfar    = MaxDepth;
     
-    [GraphicsEncoder setViewport:Viewport];
+    CurrentViewport = Viewport;
 }
 
 void CMetalCommandContext::SetScissorRect(float Width, float Height, float x, float y)
 {
     // TODO: ImGui is screwing something up here
-    /*Check(GraphicsEncoder != nil);
-    
-    // Ensure that the size is correct;
+    /*// Ensure that the size is correct;
     Width  = Width - x;
     Height = Height - y;
     
@@ -165,10 +186,23 @@ void CMetalCommandContext::SetBlendFactor(const TStaticArray<float, 4>& Color)
 
 void CMetalCommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
 {
+    for (uint32 BufferIndex = 0; BufferIndex < BufferCount; ++BufferIndex)
+    {
+        const uint32 Index = BufferSlot + BufferIndex;
+        
+        CurrentVertexOffsets[Index] = 0;
+
+        CMetalVertexBuffer* Buffer = static_cast<CMetalVertexBuffer*>(VertexBuffers[Index]);
+        CurrentVertexBuffers[Index] = Buffer ? Buffer->GetMTLBuffer() : nil;
+        
+    }
+    
+    CurrentVertexBufferRange = NSMakeRange(NMath::Min<uint32>(BufferSlot, CurrentVertexBufferRange.location), NMath::Max<uint32>(BufferCount, CurrentVertexBufferRange.length));
 }
 
 void CMetalCommandContext::SetIndexBuffer(CRHIIndexBuffer* IndexBuffer)
 {
+    CurrentIndexBuffer = MakeSharedRef<CMetalIndexBuffer>(IndexBuffer);
 }
 
 void CMetalCommandContext::SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
@@ -177,12 +211,7 @@ void CMetalCommandContext::SetPrimitiveTopology(EPrimitiveTopology PrimitveTopol
 
 void CMetalCommandContext::SetGraphicsPipelineState(CRHIGraphicsPipelineState* PipelineState)
 {
-    /*CMetalGraphicsPipelineState* MetalPipelineState = static_cast<CMetalGraphicsPipelineState*>(PipelineState);
-    Check(GraphicsEncoder    != nil);
-    Check(MetalPipelineState != nil);
-    
-    CMetalDepthStencilState* DepthStencilState = MetalPipelineState->GetMetalDepthStencilState();
-    [GraphicsEncoder setDepthStencilState:DepthStencilState->GetMTLDepthStencilState()];*/
+    CurrentGraphicsPipeline = MakeSharedRef<CMetalGraphicsPipelineState>(PipelineState);
 }
 
 void CMetalCommandContext::SetComputePipelineState(CRHIComputePipelineState* PipelineState)
@@ -335,24 +364,80 @@ void CMetalCommandContext::UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)
 {
 }
 
+void CMetalCommandContext::PrepareForDraw()
+{
+    Check(GraphicsEncoder != nil);
+    
+    [GraphicsEncoder setViewport:CurrentViewport];
+    
+    if (CurrentGraphicsPipeline)
+    {
+        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.Data()
+                                  offsets:CurrentVertexOffsets.Data()
+                                withRange:CurrentVertexBufferRange];
+
+        CMetalDepthStencilState* DepthStencilState = CurrentGraphicsPipeline->GetMetalDepthStencilState();
+        Check(DepthStencilState != nullptr);
+        
+        [GraphicsEncoder setDepthStencilState:DepthStencilState->GetMTLDepthStencilState()];
+        [GraphicsEncoder setRenderPipelineState:CurrentGraphicsPipeline->GetMTLPipelineState()];
+    }
+}
+
 void CMetalCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 {
     Check(GraphicsEncoder != nil);
+    
+    PrepareForDraw();
+    
+    [GraphicsEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:StartVertexLocation vertexCount:VertexCount];
 }
 
 void CMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
     Check(GraphicsEncoder != nil);
+    
+    PrepareForDraw();
+    
+    Check(CurrentIndexBuffer != nullptr);
+    [GraphicsEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+                                indexCount:IndexCount
+                                 indexType:(CurrentIndexBuffer->GetFormat() == EIndexFormat::uint32) ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16
+                               indexBuffer:CurrentIndexBuffer->GetMTLBuffer()
+                         indexBufferOffset:CurrentIndexBuffer->GetStride() * StartIndexLocation
+                             instanceCount:1
+                                baseVertex:BaseVertexLocation
+                              baseInstance:0];
 }
 
 void CMetalCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
     Check(GraphicsEncoder != nil);
+    
+    PrepareForDraw();
+    
+    [GraphicsEncoder drawPrimitives:MTLPrimitiveTypeTriangle
+                        vertexStart:StartVertexLocation
+                        vertexCount:VertexCountPerInstance
+                      instanceCount:InstanceCount
+                       baseInstance:StartInstanceLocation];
 }
 
 void CMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
     Check(GraphicsEncoder != nil);
+    
+    PrepareForDraw();
+    
+    Check(CurrentIndexBuffer != nullptr);
+    [GraphicsEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+                                indexCount:IndexCountPerInstance
+                                 indexType:(CurrentIndexBuffer->GetFormat() == EIndexFormat::uint32) ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16
+                               indexBuffer:CurrentIndexBuffer->GetMTLBuffer()
+                         indexBufferOffset:CurrentIndexBuffer->GetStride() * StartIndexLocation
+                             instanceCount:InstanceCount
+                                baseVertex:BaseVertexLocation
+                              baseInstance:StartInstanceLocation];
 }
 
 void CMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
@@ -365,6 +450,16 @@ void CMetalCommandContext::DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTra
 
 void CMetalCommandContext::ClearState()
 {
+    CMemory::Memzero(&CurrentViewport);
+    
+    CurrentIndexBuffer      = nullptr;
+    CurrentGraphicsPipeline = nullptr;
+    
+    CurrentVertexBuffers.Fill(nil);
+    CurrentVertexOffsets.Memzero();
+    CurrentVertexBufferRange.location = 0;
+    CurrentVertexBufferRange.length   = 0;
+    
     Flush();
 }
 

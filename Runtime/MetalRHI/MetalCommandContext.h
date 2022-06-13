@@ -1,5 +1,6 @@
 #pragma once
-#include "MetalObject.h"
+#include "MetalPipelineState.h"
+#include "MetalBuffer.h"
 
 #include "RHI/IRHICommandContext.h"
 
@@ -166,9 +167,22 @@ public:
     virtual void* GetRHIBaseCommandList() override final { return reinterpret_cast<void*>(CommandBuffer); }
     
 private:
+    void PrepareForDraw();
+    
     id<MTLCommandBuffer>        CommandBuffer;
     
+    // RenderEncoder
     id<MTLRenderCommandEncoder> GraphicsEncoder;
+    MTLViewport                 CurrentViewport;
+    
+    // VertexBuffer- state
+    TStaticArray<id<MTLBuffer>, kRHIMaxVertexBuffers> CurrentVertexBuffers;
+    TStaticArray<NSUInteger   , kRHIMaxVertexBuffers> CurrentVertexOffsets;
+    NSRange CurrentVertexBufferRange;
+    
+    // PipelineState
+    TSharedRef<CMetalIndexBuffer>           CurrentIndexBuffer;
+    TSharedRef<CMetalGraphicsPipelineState> CurrentGraphicsPipeline;
     
     CMetalCopyCommandContext    CopyContext;
     

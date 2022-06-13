@@ -31,7 +31,7 @@ public:
             D3D12Element.InputSlot            = Element.InputSlot;
             D3D12Element.AlignedByteOffset    = Element.ByteOffset;
             D3D12Element.InputSlotClass       = ConvertVertexInputClass(Element.InputClass);
-            D3D12Element.InstanceDataStepRate = Element.InstanceStepRate;
+            D3D12Element.InstanceDataStepRate = (Element.InputClass == EVertexInputClass::Vertex) ? 0 : Element.InstanceStepRate;
             ElementDesc.Emplace(D3D12Element);
         }
 

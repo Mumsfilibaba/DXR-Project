@@ -1,5 +1,6 @@
 #pragma once
-#include "MetalObject.h"
+#include "MetalDeviceContext.h"
+#include "MetalShader.h"
 
 #include "RHI/RHIResources.h"
 
@@ -26,16 +27,17 @@ public:
             VertexDescriptor.attributes[Index].format      = ConvertVertexFormat(Element.Format);
             VertexDescriptor.attributes[Index].offset      = Element.ByteOffset;
             VertexDescriptor.attributes[Index].bufferIndex = Element.InputSlot;
-            VertexDescriptor.layouts[Index].stride         = GetByteStrideFromFormat(Element.Format);
-            VertexDescriptor.layouts[Index].stepFunction   = ConvertVertexInputClass(Element.InputClass);
-            VertexDescriptor.layouts[Index].stepRate       = Element.InstanceStepRate;
+            
+            VertexDescriptor.layouts[Element.InputSlot].stride       = Element.VertexStride;
+            VertexDescriptor.layouts[Element.InputSlot].stepFunction = ConvertVertexInputClass(Element.InputClass);
+            VertexDescriptor.layouts[Element.InputSlot].stepRate     = (Element.InputClass == EVertexInputClass::Vertex) ? 1 : Element.InstanceStepRate;
         }
     }
     
     ~CMetalInputLayoutState() = default;
     
 public:
-    MTLVertexDescriptor* GetVertexDescriptor() const { return VertexDescriptor; }
+    MTLVertexDescriptor* GetMTLVertexDescriptor() const { return VertexDescriptor; }
     
 private:
 
@@ -147,9 +149,41 @@ public:
         , BlendState(nullptr)
         , DepthStencilState(nullptr)
         , RasterizerState(nullptr)
+        , PipelineState(nil)
     {
+        SCOPED_AUTORELEASE_POOL();
+        
         DepthStencilState = MakeSharedRef<CMetalDepthStencilState>(Initializer.DepthStencilState);
         Check(DepthStencilState != nullptr);
+        
+        MTLRenderPipelineDescriptor* Descriptor = [MTLRenderPipelineDescriptor new];
+        if (CMetalShader* VertexShader = GetMetalShader(Initializer.ShaderState.VertexShader))
+        {
+            Descriptor.vertexFunction = VertexShader->GetMTLFunction();
+        }
+
+        if (CMetalShader* PixelShader = GetMetalShader(Initializer.ShaderState.PixelShader))
+        {
+            Descriptor.fragmentFunction = PixelShader->GetMTLFunction();
+        }
+        
+        for (uint32 Index = 0; Index < Initializer.PipelineFormats.NumRenderTargets; ++Index)
+        {
+            Descriptor.colorAttachments[Index].pixelFormat = ConvertFormat(Initializer.PipelineFormats.RenderTargetFormats[Index]);
+        }
+        
+        Descriptor.depthAttachmentPixelFormat = ConvertFormat(Initializer.PipelineFormats.DepthStencilFormat);
+        
+        CMetalInputLayoutState* InputLayout = static_cast<CMetalInputLayoutState*>(Initializer.VertexInputLayout);
+        Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
+
+        NSError* Error = nil;
+        PipelineState = [DeviceContext->GetMTLDevice() newRenderPipelineStateWithDescriptor:Descriptor error:&Error];
+        
+        const String ErrorString([Error localizedDescription]);
+        METAL_ERROR_COND(PipelineState != nil, "[MetalRHI] Failed to created pipeline state, error %s", ErrorString.CStr());
+        
+        NSRelease(Descriptor);
     }
     
     ~CMetalGraphicsPipelineState() = default;
@@ -171,10 +205,14 @@ public:
     
     CMetalRasterizerState* GetMetalRasterizerState() const { return RasterizerState.Get(); }
     
+    id<MTLRenderPipelineState> GetMTLPipelineState() const { return PipelineState; }
+    
 private:
     TSharedRef<CMetalBlendState>        BlendState;
     TSharedRef<CMetalDepthStencilState> DepthStencilState;
     TSharedRef<CMetalRasterizerState>   RasterizerState;
+    
+    id<MTLRenderPipelineState>          PipelineState;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

@@ -731,6 +731,7 @@ struct SVertexInputElement
         : Semantic("")
         , SemanticIndex(0)
         , Format(EFormat::Unknown)
+        , VertexStride(0)
         , InputSlot(0)
         , ByteOffset(0)
         , InputClass(EVertexInputClass::Vertex)
@@ -740,6 +741,7 @@ struct SVertexInputElement
     SVertexInputElement( const String& InSemantic
                        , uint32 InSemanticIndex
                        , EFormat InFormat
+                       , uint16 InVertexStride
                        , uint32 InInputSlot
                        , uint32 InByteOffset
                        , EVertexInputClass InInputClass
@@ -747,6 +749,7 @@ struct SVertexInputElement
         : Semantic(InSemantic)
         , SemanticIndex(InSemanticIndex)
         , Format(InFormat)
+        , VertexStride(InVertexStride)
         , InputSlot(InInputSlot)
         , ByteOffset(InByteOffset)
         , InputClass(InInputClass)
@@ -758,6 +761,7 @@ struct SVertexInputElement
         return (Semantic         == RHS.Semantic)
             && (SemanticIndex    == RHS.SemanticIndex)
             && (Format           == RHS.Format)
+            && (VertexStride     == RHS.VertexStride)
             && (InputSlot        == RHS.InputSlot)
             && (ByteOffset       == RHS.ByteOffset)
             && (InputClass       == RHS.InputClass)
@@ -772,6 +776,7 @@ struct SVertexInputElement
     String            Semantic;
     uint32            SemanticIndex;
     EFormat           Format;
+    uint16            VertexStride;
     uint32            InputSlot;
     uint32            ByteOffset;
     EVertexInputClass InputClass;
