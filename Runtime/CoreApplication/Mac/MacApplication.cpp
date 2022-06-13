@@ -106,6 +106,8 @@ TSharedRef<CGenericWindow> CMacApplication::CreateWindow()
 
 void CMacApplication::Tick(float)
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     PlatformApplicationMisc::PumpMessages(true);
 	
 	TArray<SDeferredMacEvent> ProcessableEvents;
@@ -197,6 +199,8 @@ void CMacApplication::CloseWindow(const TSharedRef<CMacWindow>& Window)
 
 void CMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 {
+    SCOPED_AUTORELEASE_POOL();
+    
 	if (EventOrNotificationObject)
 	{
 		SDeferredMacEvent NewDeferredEvent;
@@ -253,6 +257,8 @@ void CMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 
 void CMacApplication::ProcessDeferredEvent(const SDeferredMacEvent& Event)
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(Event.Window);
 	
 	if (Event.NotificationName)

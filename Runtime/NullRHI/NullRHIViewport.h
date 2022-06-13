@@ -21,7 +21,10 @@ public:
     CNullRHIViewport(const CRHIViewportInitializer& Initializer)
         : CRHIViewport(Initializer)
         , BackBuffer(nullptr)
-    { 
+    {
+        
+        
+        
         CRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
         BackBuffer = dbg_new TNullRHITexture<CNullRHITexture2D>(BackBufferInitializer);
     }

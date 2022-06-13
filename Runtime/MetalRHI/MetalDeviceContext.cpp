@@ -19,9 +19,9 @@ CMetalDeviceContext::~CMetalDeviceContext()
 
 CMetalDeviceContext* CMetalDeviceContext::CreateContext(CMetalCoreInterface* InCoreInterface)
 {
-    METAL_ERROR_COND(InCoreInterface != nullptr);
-    
     SCOPED_AUTORELEASE_POOL();
+    
+    METAL_ERROR_COND(InCoreInterface != nullptr);
     
     NSArray<id<MTLDevice>>* AvailableDevices = MTLCopyAllDevices();
         

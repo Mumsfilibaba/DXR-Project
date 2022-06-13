@@ -38,7 +38,6 @@ void CMetalCommandContext::FinishContext()
     CopyContext.FinishContext();
     
     [CommandBuffer commit];
-    [CommandBuffer waitUntilCompleted];
     [CommandBuffer release];
     
     CommandBuffer = nil;
@@ -66,6 +65,8 @@ void CMetalCommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView
 
 void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer)
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     Check(GraphicsEncoder == nil);
     
     CopyContext.FinishContext();
@@ -112,6 +113,7 @@ void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& Rend
 
     Check(RenderPassDescriptor != nil);
     GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
+    [GraphicsEncoder retain];
     
     NSRelease(RenderPassDescriptor);
 }

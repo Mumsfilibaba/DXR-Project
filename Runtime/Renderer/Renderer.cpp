@@ -71,7 +71,11 @@ CRenderer::CRenderer()
 
 bool CRenderer::Init()
 {
-    CRHIViewportInitializer ViewportInitializer(GEngine->MainWindow->GetPlatformHandle(), EFormat::R8G8B8A8_Unorm, EFormat::Unknown, 0, 0);
+    CRHIViewportInitializer ViewportInitializer( GEngine->MainWindow->GetPlatformHandle()
+                                               , EFormat::R8G8B8A8_Unorm
+                                               , EFormat::Unknown
+                                               , GEngine->MainWindow->GetWidth()
+                                               , GEngine->MainWindow->GetHeight());
 
     Resources.MainWindowViewport = RHICreateViewport(ViewportInitializer);
     if (!Resources.MainWindowViewport)

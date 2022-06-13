@@ -6,6 +6,6 @@
 // CMacPlatformMisc
 
 void CMacPlatformMisc::OutputDebugString(const String& Message)
-{ 
+{
     NSLog(@"%s\n", Message.CStr());
 }

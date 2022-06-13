@@ -212,11 +212,12 @@ void CMacWindow::ToggleFullscreen()
 
 void CMacWindow::SetTitle(const String& InTitle)
 {
-	SCOPED_AUTORELEASE_POOL();
 
-	if (StyleParams.IsTitled())
-	{
-		NSString* Title = InTitle.GetNSString();
+    if (StyleParams.IsTitled())
+    {
+        SCOPED_AUTORELEASE_POOL();
+
+        NSString* Title = InTitle.GetNSString();
 		MakeMainThreadCall(^
 		{
 			WindowHandle.title = Title;
@@ -228,6 +229,8 @@ void CMacWindow::GetTitle(String& OutTitle)
 {
     if (StyleParams.IsTitled())
     {
+        SCOPED_AUTORELEASE_POOL();
+        
         NSString* Title = WindowHandle.title;
         OutTitle.Reset(Title.UTF8String, Title.length);
     }
