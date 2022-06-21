@@ -8,12 +8,23 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EShaderVisibility
+
+enum EShaderVisibility
+{
+    ShaderVisibility_Compute  = 0,
+    ShaderVisibility_Vertex   = 1,
+    ShaderVisibility_Pixel    = 2,
+    ShaderVisibility_Count    = ShaderVisibility_Pixel + 1
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalShader
 
 class CMetalShader : public CMetalObject
 {
 public:
-    CMetalShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode);
+    CMetalShader(CMetalDeviceContext* InDevice, EShaderVisibility InVisibility, const TArray<uint8>& InCode);
     ~CMetalShader();
 
 public:
@@ -22,8 +33,15 @@ public:
 
     id<MTLFunction> GetMTLFunction() const { return Function; }
 
+    EShaderVisibility GetVisbility() const { return Visbility; }
+
 protected:
-    id<MTLLibrary>  Library;
+    id<MTLLibrary>    Library;
+    NSString*         FunctionName;
+
+    EShaderVisibility Visbility;
+    
+    // TODO: Release after use, high memory usage to keep this
     id<MTLFunction> Function;
 };
 
@@ -36,7 +54,7 @@ public:
 
     CMetalVertexShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
         : CRHIVertexShader()
-        , CMetalShader(InDevice, InCode)
+        , CMetalShader(InDevice, ShaderVisibility_Vertex, InCode)
     { }
 
 public:
@@ -58,7 +76,7 @@ public:
 
     CMetalPixelShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
         : CRHIPixelShader()
-        , CMetalShader(InDevice, InCode)
+        , CMetalShader(InDevice, ShaderVisibility_Pixel, InCode)
     { }
 
 public:
@@ -78,14 +96,14 @@ class CMetalRayTracingShader : public CMetalShader
 {
 public:
     CMetalRayTracingShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
-        : CMetalShader(InDevice, InCode)
+        : CMetalShader(InDevice, ShaderVisibility_Compute, InCode)
     { }
 
 public:
 
     static bool GetRayTracingShaderReflection(class CMetalRayTracingShader* Shader);
     
-    FORCEINLINE const String& GetIdentifier() const { return Identifier; }
+    const String& GetIdentifier() const { return Identifier; }
 
 protected:
     String Identifier;
@@ -188,7 +206,7 @@ public:
 
     CMetalComputeShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
         : CRHIComputeShader()
-        , CMetalShader(InDevice, InCode)
+        , CMetalShader(InDevice, ShaderVisibility_Compute, InCode)
         , ThreadGroupXYZ(1, 1, 1)
     { }
 

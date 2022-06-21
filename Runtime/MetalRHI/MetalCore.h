@@ -334,3 +334,26 @@ CONSTEXPR MTLStencilOperation ConvertStencilOp(EStencilOp StencilOp)
         default:                  return MTLStencilOperation(-1);
     }
 }
+
+CONSTEXPR MTLPrimitiveType ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
+{
+    switch (PrimitiveTopology)
+    {
+        case EPrimitiveTopology::PointList:     return MTLPrimitiveTypePoint;
+        case EPrimitiveTopology::LineList:      return MTLPrimitiveTypeLine;
+        case EPrimitiveTopology::LineStrip:     return MTLPrimitiveTypeLineStrip;
+        case EPrimitiveTopology::TriangleList:  return MTLPrimitiveTypeTriangle;
+        case EPrimitiveTopology::TriangleStrip: return MTLPrimitiveTypeTriangleStrip;
+        default:                                return MTLPrimitiveType(-1);
+    }
+}
+
+CONSTEXPR MTLTriangleFillMode ConvertFillMode(EFillMode FillMode)
+{
+    switch (FillMode)
+    {
+        case EFillMode::WireFrame: return MTLTriangleFillModeLines;
+        case EFillMode::Solid:     return MTLTriangleFillModeFill;
+        default:                   return MTLTriangleFillMode(-1);
+    }
+}

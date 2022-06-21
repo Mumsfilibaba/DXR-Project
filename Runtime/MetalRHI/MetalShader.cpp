@@ -3,9 +3,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalShader
 
-CMetalShader::CMetalShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
+CMetalShader::CMetalShader(CMetalDeviceContext* InDevice, EShaderVisibility InVisibility, const TArray<uint8>& InCode)
     : CMetalObject(InDevice)
     , Library(nil)
+    , FunctionName(nil)
+    , Visbility(InVisibility)
     , Function(nil)
 {
     @autoreleasepool
@@ -23,6 +25,7 @@ CMetalShader::CMetalShader(CMetalDeviceContext* InDevice, const TArray<uint8>& I
         // Retrieve the entrypoint
         const auto Length = NMath::Max(SourceString.Find('\n') - 3, 0);
         NSString* EntryPoint = String(SourceString.CStr() + 3, Length).GetNSString();
+        FunctionName = [EntryPoint retain];
         
         Function = [Library newFunctionWithName:EntryPoint];
         Check(Function != nil);
@@ -32,5 +35,6 @@ CMetalShader::CMetalShader(CMetalDeviceContext* InDevice, const TArray<uint8>& I
 CMetalShader::~CMetalShader()
 {
     NSSafeRelease(Library);
+    NSSafeRelease(FunctionName);
     NSSafeRelease(Function);
 }

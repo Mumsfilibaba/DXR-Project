@@ -373,7 +373,7 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
             return false;
         }
 
-        return DumpContentToFile(OutByteCode, AssetPath + '/' + Filename + ".msl");
+        return DumpContentToFile(OutByteCode, AssetPath + '/' + Filename + "_" + ToString(CompileInfo.ShaderStage) + ".metal");
     }
 
     return true;

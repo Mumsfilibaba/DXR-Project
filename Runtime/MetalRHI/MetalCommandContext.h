@@ -1,6 +1,8 @@
 #pragma once
 #include "MetalPipelineState.h"
 #include "MetalBuffer.h"
+#include "MetalViews.h"
+#include "MetalSamplerState.h"
 
 #include "RHI/IRHICommandContext.h"
 
@@ -183,8 +185,24 @@ private:
     // PipelineState
     TSharedRef<CMetalIndexBuffer>           CurrentIndexBuffer;
     TSharedRef<CMetalGraphicsPipelineState> CurrentGraphicsPipeline;
+    MTLPrimitiveType                        CurrentPrimitiveType;
     
-    CMetalCopyCommandContext    CopyContext;
+    // Resources
+    enum
+    {
+        kMaxSRVs            = 16,
+        kMaxUAVs            = 16,
+        kMaxConstantBuffers = 16,
+        kMaxSamplerStates   = 16,
+    };
+    
+    TStaticArray<TSharedRef<CMetalSamplerState>       , kMaxSamplerStates>   CurrentSamplerStates[ShaderVisibility_Count];
+    TStaticArray<TSharedRef<CMetalShaderResourceView> , kMaxSRVs>            CurrentSRVs[ShaderVisibility_Count];
+    TStaticArray<TSharedRef<CMetalUnorderedAccessView>, kMaxUAVs>            CurrentUAVs[ShaderVisibility_Count];
+    TStaticArray<TSharedRef<CMetalConstantBuffer>     , kMaxConstantBuffers> CurrentConstantBuffers[ShaderVisibility_Count];
+    
+    // Contexts
+    CMetalCopyCommandContext CopyContext;
     
 };
 

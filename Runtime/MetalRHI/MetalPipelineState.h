@@ -113,6 +113,8 @@ public:
 
     CMetalRasterizerState(CMetalDeviceContext* DeviceContext, const CRHIRasterizerStateInitializer& Initializer)
         : CMetalObject(DeviceContext)
+        , FillMode(ConvertFillMode(Initializer.FillMode))
+        , FrontFaceWinding(Initializer.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
     {
     }
 
@@ -121,9 +123,12 @@ public:
 public:
 
     MTLTriangleFillMode GetMTLFillMode() const { return FillMode; }
+    
+    MTLWinding GetMTLFrontFaceWinding() const { return FrontFaceWinding; }
 
 private:
     MTLTriangleFillMode FillMode;
+    MTLWinding          FrontFaceWinding;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -156,6 +161,9 @@ public:
         DepthStencilState = MakeSharedRef<CMetalDepthStencilState>(Initializer.DepthStencilState);
         Check(DepthStencilState != nullptr);
         
+        RasterizerState = MakeSharedRef<CMetalRasterizerState>(Initializer.RasterizerState);
+        Check(RasterizerState != nullptr);
+        
         MTLRenderPipelineDescriptor* Descriptor = [MTLRenderPipelineDescriptor new];
         if (CMetalShader* VertexShader = GetMetalShader(Initializer.ShaderState.VertexShader))
         {
@@ -178,7 +186,10 @@ public:
         Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
 
         NSError* Error = nil;
-        PipelineState = [DeviceContext->GetMTLDevice() newRenderPipelineStateWithDescriptor:Descriptor error:&Error];
+        PipelineState = [DeviceContext->GetMTLDevice() newRenderPipelineStateWithDescriptor:Descriptor
+                                                                                    options:MTLPipelineOptionArgumentInfo
+                                                                                 reflection:&PipelineReflection
+                                                                                      error:&Error];
         
         const String ErrorString([Error localizedDescription]);
         METAL_ERROR_COND(PipelineState != nil, "[MetalRHI] Failed to created pipeline state, error %s", ErrorString.CStr());
@@ -186,7 +197,11 @@ public:
         NSRelease(Descriptor);
     }
     
-    ~CMetalGraphicsPipelineState() = default;
+    ~CMetalGraphicsPipelineState()
+    {
+        NSSafeRelease(PipelineState);
+        NSSafeRelease(PipelineReflection);
+    }
 
 public:
 
@@ -213,6 +228,7 @@ private:
     TSharedRef<CMetalRasterizerState>   RasterizerState;
     
     id<MTLRenderPipelineState>          PipelineState;
+    MTLRenderPipelineReflection*        PipelineReflection;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
