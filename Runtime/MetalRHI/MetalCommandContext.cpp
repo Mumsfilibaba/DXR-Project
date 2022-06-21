@@ -470,7 +470,7 @@ void CMetalCommandContext::PrepareForDraw()
         [GraphicsEncoder setRenderPipelineState:CurrentGraphicsPipeline->GetMTLPipelineState()];
         
         // Vertex-Shader stage
-        //[GraphicsEncoder setVertex]
+        // [GraphicsEncoder set]
 
     }
 }
