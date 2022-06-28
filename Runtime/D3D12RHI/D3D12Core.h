@@ -21,29 +21,53 @@
 
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
 
+// Windows 10 1507 
+#if (NTDDI_WIN10 && (WDK_NTDDI_VERSION >= NTDDI_WIN10))
+    #define WIN10_BUILD_10240 (1)
+#endif
+// Windows 10 1511 (November Update)
+#if (NTDDI_WIN10_TH2 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_TH2))
+    #define WIN10_BUILD_10586 (1)
+#endif
+// Windows 10 1607 (Anniversary Update)
+#if (NTDDI_WIN10_RS1 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS1))
+    #define WIN10_BUILD_14393 (1)
+#endif
+// Windows 10 1703 (Creators Update)
 #if (NTDDI_WIN10_RS2 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS2))
     #define WIN10_BUILD_15063 (1)
 #endif
+// Windows 10 1709 (Fall Creators Update)
 #if (NTDDI_WIN10_RS3 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS3))
     #define WIN10_BUILD_16299 (1)
 #endif
+// Windows 10 1803 (April 2018 Update)
 #if (NTDDI_WIN10_RS4 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS4))
     #define WIN10_BUILD_17134 (1)
 #endif
+// Windows 10 1809 (October 2018 Update)
 #if (NTDDI_WIN10_RS5 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS5))
     #define WIN10_BUILD_17763 (1)
 #endif
+// Windows 10 1903 (May 2019 Update)
 #if (NTDDI_WIN10_19H1 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_19H1))
     #define WIN10_BUILD_18362 (1)
 #endif
+// Windows 10 2004 (May 2020 Update)
 #if (NTDDI_WIN10_VB && (WDK_NTDDI_VERSION >= NTDDI_WIN10_VB))
     #define WIN10_BUILD_19041 (1)
 #endif
+// Windows 10 2104
 #if (NTDDI_WIN10_FE && (WDK_NTDDI_VERSION >= NTDDI_WIN10_FE))
     #define WIN10_BUILD_20348 (1)
 #endif
+// Windows 11 21H2
 #if (NTDDI_WIN10_CO && (WDK_NTDDI_VERSION >= NTDDI_WIN10_CO))
-    #define WIN10_BUILD_22000 (1)
+    #define WIN11_BUILD_22000 (1)
+#endif
+// Windows 11 22H2
+#if (NTDDI_WIN10_NI && (WDK_NTDDI_VERSION >= NTDDI_WIN10_NI))
+    #define WIN10_BUILD_22621 (1)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -356,7 +380,7 @@ CONSTEXPR D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass I
         case EVertexInputClass::Vertex:   return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
     }
 
-    return D3D12_INPUT_CLASSIFICATION();
+    return D3D12_INPUT_CLASSIFICATION(-1);
 }
 
 CONSTEXPR D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMask)
@@ -367,7 +391,7 @@ CONSTEXPR D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWrit
         case EDepthWriteMask::All:  return D3D12_DEPTH_WRITE_MASK_ALL;
     }
 
-    return D3D12_DEPTH_WRITE_MASK();
+    return D3D12_DEPTH_WRITE_MASK(-1);
 }
 
 CONSTEXPR D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
@@ -384,7 +408,7 @@ CONSTEXPR D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc Comparison
         case EComparisonFunc::Always:       return D3D12_COMPARISON_FUNC_ALWAYS;
     }
 
-    return D3D12_COMPARISON_FUNC();
+    return D3D12_COMPARISON_FUNC(-1);
 }
 
 CONSTEXPR D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
@@ -401,10 +425,10 @@ CONSTEXPR D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
         case EStencilOp::Decr:    return D3D12_STENCIL_OP_DECR;
     }
 
-    return D3D12_STENCIL_OP();
+    return D3D12_STENCIL_OP(-1);
 }
 
-CONSTEXPR D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilStateFace& DepthStencilOp)
+inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilStateFace& DepthStencilOp)
 {
     return
     {

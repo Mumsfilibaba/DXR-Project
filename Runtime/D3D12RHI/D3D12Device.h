@@ -3,15 +3,17 @@
 
 #include "Core/Containers/SharedRef.h"
 
-#include <dxgi1_6.h>
-
 #include <DXProgrammableCapture.h>
+
+#if WIN10_BUILD_17134
+    #include <dxgi1_6.h>
+#endif
 
 class CD3D12OfflineDescriptorHeap;
 class CD3D12OnlineDescriptorHeap;
 class CD3D12ComputePipelineState;
 class CD3D12RootSignature;
-class CD3D12CoreInterface;
+class FD3D12CoreInterface;
 
 #define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
 #define D3D12_ENABLE_PIX_MARKERS              (1)
@@ -19,10 +21,11 @@ class CD3D12CoreInterface;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedef
 
-class CD3D12Device;
+class FD3D12Device;
 class FD3D12Adapter;
+class FD3D12CoreInterface;
 
-typedef CD3D12Device FD3D12Device;
+typedef FD3D12Device FD3D12Device;
 
 typedef TSharedRef<FD3D12Device>  D3D12DeviceRef;
 typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
@@ -34,33 +37,123 @@ typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Adapter
+// FD3D12AdapterInitializer
 
-class FD3D12Adapter : public CD3D12RefCounted
+struct FD3D12AdapterInitializer
 {
-public:
-    static FD3D12Adapter* Create();
+    FD3D12AdapterInitializer()
+        : bEnableDebugLayer(false)
+        , bEnableGPUValidation(false)
+        , bEnableDRED(false)
+        , bEnablePIX(false)
+        , bPreferDGPU(true)
+    { }
 
-    FD3D12Device* CreateDevice();
+    FD3D12AdapterInitializer( bool bInEnableDebugLayer
+                            , bool bInEnableGPUValidation
+                            , bool bInEnableDRED
+                            , bool bInEnablePIX
+                            , bool bInPreferDGPU)
+        : bEnableDebugLayer(bInEnableDebugLayer)
+        , bEnableGPUValidation(bInEnableGPUValidation)
+        , bEnableDRED(bInEnableDRED)
+        , bEnablePIX(bInEnablePIX)
+        , bPreferDGPU(bInPreferDGPU)
+    { }
 
-private:
-    FD3D12Adapter();
-    ~FD3D12Adapter();
-    // Factories
-    TComPtr<IDXGIFactory2> Factory;
+    bool operator==(const FD3D12AdapterInitializer& RHS) const
+    {
+        return (bEnableDebugLayer    == RHS.bEnableDebugLayer)
+            && (bEnableGPUValidation == RHS.bEnableGPUValidation)
+            && (bEnableDRED          == RHS.bEnableDRED)
+            && (bEnablePIX           == RHS.bEnablePIX)
+            && (bPreferDGPU          == RHS.bPreferDGPU);
+    }
 
-    // Adapters
-    TComPtr<IDXGIAdapter1> Adapter;
+    bool operator!=(const FD3D12AdapterInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    /** @brief: Enable the D3D12 Debug-Layer, without this enabled, GBV and DRED doesn't work */
+    bool bEnableDebugLayer : 1;
+    /** @brief: Enable GPU Based Validation (GBV) */
+    bool bEnableGPUValidation : 1;
+    /** @brief: Enable Enhanced Device-Lost tracking (DRED) */
+    bool bEnableDRED : 1;
+    /** @brief: Enable PIX */
+    bool bEnablePIX : 1;
+    /** @brief: Prefer High-Performance GPU (Dedicated GPU) */
+    bool bPreferDGPU : 1;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Device
+// FD3D12Adapter
 
-class CD3D12Device : public CD3D12RefCounted
+class FD3D12Adapter : public FD3D12RefCounted
 {
 public:
-    CD3D12Device(CD3D12CoreInterface* InCoreInterface, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
-    ~CD3D12Device();
+
+    FD3D12Adapter(FD3D12CoreInterface* InCoreInterface, const FD3D12AdapterInitializer& InInitializer)
+        : FD3D12RefCounted()
+        , Initializer(InInitializer)
+        , AdapterIndex(0)
+        , bAllowTearing(false)
+        , CoreInterface(InCoreInterface)
+        , Factory(nullptr)
+#if WIN10_BUILD_17134
+        , Factory6(nullptr)
+#endif
+        , Adapter(nullptr)
+    { }
+
+    ~FD3D12Adapter() = default;
+
+public:
+
+    bool Initialize();
+
+    FD3D12Device*            CreateDevice();
+
+    FD3D12AdapterInitializer GetInitializer()   const { return Initializer; }
+    uint32                   GetAdapterIndex()  const { return AdapterIndex; }
+    
+    bool                     AllowTearing()     const { return bAllowTearing; }
+
+    FD3D12CoreInterface*     GetCoreInterface() const { return CoreInterface; }
+
+    IDXGIAdapter1* GetDXGIAdapter()  const { return Adapter.Get(); }
+    IDXGIFactory2* GetDXGIFactory()  const { return Factory.Get(); }
+    IDXGIFactory5* GetDXGIFactory5() const { return Factory5.Get(); }
+#if WIN10_BUILD_17134
+    IDXGIFactory6* GetDXGIFactory6() const { return Factory6.Get(); }
+#endif
+
+private:
+    FD3D12AdapterInitializer Initializer;
+    uint32                   AdapterIndex;
+    
+    bool                     bAllowTearing;
+
+    FD3D12CoreInterface*         CoreInterface;
+
+    TComPtr<IDXGIAdapter1>       Adapter;
+    TComPtr<IDXGIFactory2>       Factory;
+    TComPtr<IDXGIFactory5>       Factory5;
+#if WIN10_BUILD_17134
+    TComPtr<IDXGIFactory6>       Factory6;
+#endif
+    TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12Device
+
+class FD3D12Device : public FD3D12RefCounted
+{
+public:
+    FD3D12Device(FD3D12CoreInterface* InCoreInterface, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
+    ~FD3D12Device();
 
     bool Initialize();
 
@@ -68,7 +161,7 @@ public:
 
     String GetAdapterName() const;
 
-    FORCEINLINE CD3D12CoreInterface* GetCoreInterface() const { return CoreInterface; }
+    FORCEINLINE FD3D12CoreInterface* GetCoreInterface() const { return CoreInterface; }
 
     FORCEINLINE ID3D12Device* GetD3D12Device() const { return Device.Get(); }
 
@@ -189,7 +282,7 @@ public:
     }
 
 private:
-    class CD3D12CoreInterface*   CoreInterface;
+    class FD3D12CoreInterface*   CoreInterface;
 
     TComPtr<IDXGIFactory2>       Factory;
     TComPtr<IDXGIAdapter1>       Adapter;

@@ -11,7 +11,7 @@ class CD3D12SamplerState : public CRHISamplerState, public CD3D12DeviceChild
 {
 public:
 
-    CD3D12SamplerState(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap)
+    CD3D12SamplerState(FD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap)
         : CRHISamplerState()
         , CD3D12DeviceChild(InDevice)
         , OfflineHeap(InOfflineHeap)

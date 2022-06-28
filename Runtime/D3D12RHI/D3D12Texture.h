@@ -25,7 +25,7 @@ class CD3D12Texture : public CD3D12DeviceChild
 {
 public:
 
-    CD3D12Texture(CD3D12Device* InDevice);
+    CD3D12Texture(FD3D12Device* InDevice);
     ~CD3D12Texture() = default;
 
     CD3D12RenderTargetView* GetOrCreateRTV(const CRHIRenderTargetView& RTVInitializer);
@@ -73,7 +73,7 @@ class CD3D12Texture2D : public CRHITexture2D, public CD3D12Texture
 {
 public:
     
-    explicit CD3D12Texture2D(CD3D12Device* InDevice, const CRHITexture2DInitializer& Initializer)
+    explicit CD3D12Texture2D(FD3D12Device* InDevice, const CRHITexture2DInitializer& Initializer)
         : CRHITexture2D(Initializer)
         , CD3D12Texture(InDevice)
         , UnorderedAccessView(nullptr)
@@ -124,7 +124,7 @@ class CD3D12Texture2DArray : public CRHITexture2DArray, public CD3D12Texture
 {
 public:
 
-    explicit CD3D12Texture2DArray(CD3D12Device* InDevice, const CRHITexture2DArrayInitializer& Initializer)
+    explicit CD3D12Texture2DArray(FD3D12Device* InDevice, const CRHITexture2DArrayInitializer& Initializer)
         : CRHITexture2DArray(Initializer)
         , CD3D12Texture(InDevice)
     { }
@@ -159,7 +159,7 @@ class CD3D12TextureCube : public CRHITextureCube, public CD3D12Texture
 {
 public:
 
-    explicit CD3D12TextureCube(CD3D12Device* InDevice, const CRHITextureCubeInitializer& Initializer)
+    explicit CD3D12TextureCube(FD3D12Device* InDevice, const CRHITextureCubeInitializer& Initializer)
         : CRHITextureCube(Initializer)
         , CD3D12Texture(InDevice)
     { }
@@ -194,7 +194,7 @@ class CD3D12TextureCubeArray : public CRHITextureCubeArray, public CD3D12Texture
 {
 public:
     
-    explicit CD3D12TextureCubeArray(CD3D12Device* InDevice, const CRHITextureCubeArrayInitializer& Initializer)
+    explicit CD3D12TextureCubeArray(FD3D12Device* InDevice, const CRHITextureCubeArrayInitializer& Initializer)
         : CRHITextureCubeArray(Initializer)
         , CD3D12Texture(InDevice)
     { }
@@ -229,7 +229,7 @@ class CD3D12Texture3D final : public CRHITexture3D, public CD3D12Texture
 {
 public:
 
-    explicit CD3D12Texture3D(CD3D12Device* InDevice, const CRHITexture3DInitializer& Initializer)
+    explicit CD3D12Texture3D(FD3D12Device* InDevice, const CRHITexture3DInitializer& Initializer)
         : CRHITexture3D(Initializer)
         , CD3D12Texture(InDevice)
     { }

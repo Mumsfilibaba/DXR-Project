@@ -281,7 +281,7 @@ private:
 class CD3D12DescriptorCache : public CD3D12DeviceChild
 {
 public:
-    CD3D12DescriptorCache(CD3D12Device* Device);
+    CD3D12DescriptorCache(FD3D12Device* Device);
     ~CD3D12DescriptorCache();
 
     bool Init();

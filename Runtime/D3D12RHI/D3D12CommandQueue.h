@@ -10,7 +10,7 @@ class CD3D12CommandQueue : public CD3D12DeviceChild
 {
 public:
 
-    FORCEINLINE CD3D12CommandQueue(CD3D12Device* InDevice)
+    FORCEINLINE CD3D12CommandQueue(FD3D12Device* InDevice)
         : CD3D12DeviceChild(InDevice)
         , Queue(nullptr)
         , Desc()

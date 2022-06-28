@@ -15,7 +15,7 @@ class CD3D12CommandList : public CD3D12DeviceChild
 {
 public:
 
-    FORCEINLINE CD3D12CommandList(CD3D12Device* InDevice)
+    FORCEINLINE CD3D12CommandList(FD3D12Device* InDevice)
         : CD3D12DeviceChild(InDevice)
         , CmdList(nullptr)
         , CmdList5(nullptr)

@@ -11,7 +11,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RayTracingGeometry
 
-CD3D12AccelerationStructure::CD3D12AccelerationStructure(CD3D12Device* InDevice)
+CD3D12AccelerationStructure::CD3D12AccelerationStructure(FD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
     , ResultBuffer(nullptr)
     , ScratchBuffer(nullptr)
@@ -20,7 +20,7 @@ CD3D12AccelerationStructure::CD3D12AccelerationStructure(CD3D12Device* InDevice)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RayTracingGeometry
 
-CD3D12RayTracingGeometry::CD3D12RayTracingGeometry(CD3D12Device* InDevice, const CRHIRayTracingGeometryInitializer& Initializer)
+CD3D12RayTracingGeometry::CD3D12RayTracingGeometry(FD3D12Device* InDevice, const CRHIRayTracingGeometryInitializer& Initializer)
     : CRHIRayTracingGeometry(Initializer)
     , CD3D12AccelerationStructure(InDevice)
     , VertexBuffer(nullptr)
@@ -152,7 +152,7 @@ bool CD3D12RayTracingGeometry::Build(CD3D12CommandContext& CmdContext, CD3D12Ver
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RayTracingScene
 
-CD3D12RayTracingScene::CD3D12RayTracingScene(CD3D12Device* InDevice, const CRHIRayTracingSceneInitializer& Initializer)
+CD3D12RayTracingScene::CD3D12RayTracingScene(FD3D12Device* InDevice, const CRHIRayTracingSceneInitializer& Initializer)
     : CRHIRayTracingScene(Initializer)
     , CD3D12AccelerationStructure(InDevice)
     , InstanceBuffer(nullptr)
@@ -220,7 +220,7 @@ bool CD3D12RayTracingScene::Build(CD3D12CommandContext& CmdContext, const TArray
         SrvDesc.Shader4ComponentMapping                  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
 
-        CD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
+        FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
 
         View = dbg_new CD3D12ShaderResourceView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap(), this);
         if (!View->AllocateHandle())
@@ -474,7 +474,7 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE CD3D12RayTracingScene::GetMissShaderT
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12ShaderBindingTableBuilder 
 
-CD3D12ShaderBindingTableBuilder::CD3D12ShaderBindingTableBuilder(CD3D12Device* InDevice)
+CD3D12ShaderBindingTableBuilder::CD3D12ShaderBindingTableBuilder(FD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
 {
     Reset();

@@ -15,17 +15,16 @@
 class CD3D12CommandContext;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12CoreInterface
+// FD3D12CoreInterface
 
-class CD3D12CoreInterface : public CRHICoreInterface
+class FD3D12CoreInterface : public CRHICoreInterface
 {
-    CD3D12CoreInterface();
-    ~CD3D12CoreInterface();
+    FD3D12CoreInterface();
+    ~FD3D12CoreInterface();
 
 public:
 
-    static CD3D12CoreInterface* CreateD3D12Instance();
-
+    static FD3D12CoreInterface* CreateD3D12Instance();
 
 public:
 
@@ -95,7 +94,7 @@ public:
 
 public:
 
-    FORCEINLINE CD3D12Device* GetDevice() const { return Device.Get(); }
+    FORCEINLINE FD3D12Device* GetDevice() const { return Device.Get(); }
 
     FORCEINLINE CD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap() const { return ResourceOfflineDescriptorHeap; }
 
@@ -117,7 +116,8 @@ private:
     template<typename D3D12BufferType, typename InitializerType>
     D3D12BufferType* CreateBuffer(const InitializerType& Initializer);
 
-    D3D12DeviceRef               Device;
+    FD3D12AdapterRef             Adapter;
+    FD3D12DeviceRef              Device;
     
     CD3D12CommandContext*        DirectCmdContext;
     

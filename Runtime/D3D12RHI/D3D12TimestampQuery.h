@@ -10,7 +10,7 @@ class CD3D12TimestampQuery : public CRHITimestampQuery, public CD3D12DeviceChild
 {
 public:
 
-    CD3D12TimestampQuery(CD3D12Device* InDevice);
+    CD3D12TimestampQuery(FD3D12Device* InDevice);
     ~CD3D12TimestampQuery() = default;
 
     virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const override final;
@@ -30,7 +30,7 @@ public:
         return QueryHeap.Get();
     }
 
-    static CD3D12TimestampQuery* Create(CD3D12Device* InDevice);
+    static CD3D12TimestampQuery* Create(FD3D12Device* InDevice);
 
 private:
 

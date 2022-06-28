@@ -5,7 +5,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHITimestampQuery
 
-CD3D12TimestampQuery::CD3D12TimestampQuery(CD3D12Device* InDevice)
+CD3D12TimestampQuery::CD3D12TimestampQuery(FD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
     , CRHITimestampQuery()
     , QueryHeap(nullptr)
@@ -95,7 +95,7 @@ void CD3D12TimestampQuery::ResolveQueries(class CD3D12CommandContext& CmdContext
     }
 }
 
-CD3D12TimestampQuery* CD3D12TimestampQuery::Create(CD3D12Device* InDevice)
+CD3D12TimestampQuery* CD3D12TimestampQuery::Create(FD3D12Device* InDevice)
 {
     TSharedRef<CD3D12TimestampQuery> NewProfiler = dbg_new CD3D12TimestampQuery(InDevice);
 

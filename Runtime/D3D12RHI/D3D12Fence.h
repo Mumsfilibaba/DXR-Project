@@ -8,7 +8,7 @@
 class CD3D12Fence : public CD3D12DeviceChild
 {
 public:
-    FORCEINLINE CD3D12Fence(CD3D12Device* InDevice)
+    FORCEINLINE CD3D12Fence(FD3D12Device* InDevice)
         : CD3D12DeviceChild(InDevice)
         , Fence(nullptr)
         , Event(0)

@@ -85,7 +85,7 @@ struct SD3D12ShaderParameter
 class CD3D12Shader : public CD3D12DeviceChild
 {
 public:
-    CD3D12Shader(CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility ShaderVisibility);
+    CD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility ShaderVisibility);
     ~CD3D12Shader();
 
 public:
@@ -168,7 +168,7 @@ class CD3D12VertexShader : public CRHIVertexShader, public CD3D12Shader
 {
 public:
 
-    CD3D12VertexShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12VertexShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIVertexShader()
         , CD3D12Shader(InDevice, InCode, ShaderVisibility_Vertex)
     { }
@@ -194,7 +194,7 @@ class CD3D12PixelShader : public CRHIPixelShader, public CD3D12Shader
 {
 public:
 
-    CD3D12PixelShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12PixelShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIPixelShader()
         , CD3D12Shader(InDevice, InCode, ShaderVisibility_Pixel)
     { }
@@ -219,7 +219,7 @@ public:
 class CD3D12RayTracingShader : public CD3D12Shader
 {
 public:
-    CD3D12RayTracingShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12RayTracingShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CD3D12Shader(InDevice, InCode, ShaderVisibility_All)
     { }
 
@@ -240,7 +240,7 @@ class CD3D12RayGenShader : public CRHIRayGenShader, public CD3D12RayTracingShade
 {
 public:
 
-    CD3D12RayGenShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12RayGenShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayGenShader()
         , CD3D12RayTracingShader(InDevice, InCode)
     { }
@@ -266,7 +266,7 @@ class CD3D12RayAnyHitShader : public CRHIRayAnyHitShader, public CD3D12RayTracin
 {
 public:
     
-    CD3D12RayAnyHitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12RayAnyHitShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayAnyHitShader()
         , CD3D12RayTracingShader(InDevice, InCode)
     { }
@@ -292,7 +292,7 @@ class CD3D12RayClosestHitShader : public CRHIRayClosestHitShader, public CD3D12R
 {
 public:
     
-    CD3D12RayClosestHitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12RayClosestHitShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayClosestHitShader()
         , CD3D12RayTracingShader(InDevice, InCode)
     { }
@@ -318,7 +318,7 @@ class CD3D12RayMissShader : public CRHIRayMissShader, public CD3D12RayTracingSha
 {
 public:
 
-    CD3D12RayMissShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12RayMissShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayMissShader()
         , CD3D12RayTracingShader(InDevice, InCode)
     { }
@@ -344,7 +344,7 @@ class CD3D12ComputeShader : public CRHIComputeShader, public CD3D12Shader
 {
 public:
 
-    CD3D12ComputeShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12ComputeShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIComputeShader()
         , CD3D12Shader(InDevice, InCode, ShaderVisibility_All)
         , ThreadGroupXYZ(0, 0, 0)

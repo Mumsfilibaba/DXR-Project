@@ -14,7 +14,7 @@ class CD3D12DescriptorHeap : public CD3D12DeviceChild, public CRefCounted
 {
 public:
 
-    CD3D12DescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE Type, uint32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
+    CD3D12DescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE Type, uint32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
     ~CD3D12DescriptorHeap() = default;
 
     bool Init();
@@ -120,7 +120,7 @@ class CD3D12OfflineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
 
 public:
 
-    CD3D12OfflineDescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
+    CD3D12OfflineDescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
     ~CD3D12OfflineDescriptorHeap() = default;
 
     bool Init();
@@ -158,7 +158,7 @@ private:
 class CD3D12OnlineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
 {
 public:
-    CD3D12OnlineDescriptorHeap(CD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
+    CD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
     ~CD3D12OnlineDescriptorHeap() = default;
 
     bool Init();

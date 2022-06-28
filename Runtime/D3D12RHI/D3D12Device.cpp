@@ -74,7 +74,7 @@ static const char* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // DeviceRemovedHandler
 
-void D3D12DeviceRemovedHandlerRHI(CD3D12Device* Device)
+void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 {
     Check(Device != nullptr);
 
@@ -144,9 +144,243 @@ void D3D12DeviceRemovedHandlerRHI(CD3D12Device* Device)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Device
+// FD3D12Adapter
 
-CD3D12Device::CD3D12Device(CD3D12CoreInterface* InCoreInterface, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED)
+bool FD3D12Adapter::Initialize()
+{
+    if (Initializer.bEnableDebugLayer)
+    {
+        TComPtr<ID3D12Debug> DebugInterface;
+        if (FAILED(FD3D12Library::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
+        {
+            D3D12_ERROR("[FD3D12Adapter]: FAILED to enable DebugLayer");
+            return false;
+        }
+        else
+        {
+            DebugInterface->EnableDebugLayer();
+        }
+
+        if (Initializer.bEnableDRED)
+        {
+            TComPtr<ID3D12DeviceRemovedExtendedDataSettings> DredSettings;
+            if (SUCCEEDED(FD3D12Library::D3D12GetDebugInterface(IID_PPV_ARGS(&DredSettings))))
+            {
+                DredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+                DredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+            }
+            else
+            {
+                D3D12_ERROR("[FD3D12Adapter]: FAILED to enable DRED");
+            }
+        }
+
+        if (Initializer.bEnableGPUValidation)
+        {
+            TComPtr<ID3D12Debug1> DebugInterface1;
+            if (FAILED(DebugInterface.GetAs(&DebugInterface1)))
+            {
+                D3D12_ERROR("[FD3D12Adapter]: FAILED to enable GPU- Validation");
+                return false;
+            }
+            else
+            {
+                DebugInterface1->SetEnableGPUBasedValidation(true);
+            }
+        }
+
+#if WIN10_BUILD_20348
+        {
+            TComPtr<ID3D12Debug5> DebugInterface5;
+            if (FAILED(DebugInterface.GetAs(&DebugInterface5)))
+            {
+                D3D12_ERROR("[FD3D12Adapter]: FAILED to enable auto-naming of objects");
+            }
+            else
+            {
+                DebugInterface5->SetEnableAutoName(true);
+            }
+        }
+#endif
+
+        TComPtr<IDXGIInfoQueue> InfoQueue;
+        if (SUCCEEDED(FD3D12Library::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
+        {
+            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
+            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
+        }
+        else
+        {
+            D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve InfoQueue");
+        }
+
+        if (Initializer.bEnablePIX)
+        {
+            TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
+            if (SUCCEEDED(FD3D12Library::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
+            {
+                DXGraphicsAnalysis = TempGraphicsAnalysis;
+            }
+            else
+            {
+                D3D12_INFO("[FD3D12Adapter]: PIX is not connected to the application");
+            }
+        }
+    }
+
+    // Create factory
+    if (FAILED(FD3D12Library::CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
+    {
+        D3D12_ERROR("[FD3D12Adapter]: FAILED to create factory");
+        return false;
+    }
+    else
+    {
+        if (FAILED(Factory.GetAs(&Factory5)))
+        {
+            D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve IDXGIFactory5");
+            return false;
+        }
+        else
+        {
+            HRESULT hResult = Factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &bAllowTearing, sizeof(bAllowTearing));
+            if (SUCCEEDED(hResult))
+            {
+                if (bAllowTearing)
+                {
+                    D3D12_INFO("[FD3D12Adapter]: Tearing is supported");
+                }
+                else
+                {
+                    D3D12_INFO("[FD3D12Adapter]: Tearing is NOT supported");
+                }
+            }
+        }
+    }
+
+    // Choose adapter
+    D3D_FEATURE_LEVEL BestFeatureLevel = D3D_FEATURE_LEVEL_11_0;
+    
+    const D3D_FEATURE_LEVEL TestFeatureLevels[] =
+    {
+        D3D_FEATURE_LEVEL_12_2,
+        D3D_FEATURE_LEVEL_12_1,
+        D3D_FEATURE_LEVEL_12_0,
+        D3D_FEATURE_LEVEL_11_1,
+        D3D_FEATURE_LEVEL_11_0,
+    };
+
+    TComPtr<IDXGIAdapter1> FinalAdapter;
+
+#if !WIN10_BUILD_17134
+    {
+        SIZE_T BestVideoMem = 0;
+        
+        TComPtr<IDXGIAdapter1> TempAdapter;
+        for (uint32 Index = 0; DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters1(Index, &TempAdapter); Index++)
+        {
+            DXGI_ADAPTER_DESC1 Desc;
+            if (FAILED(TempAdapter->GetDesc1(&Desc)))
+            {
+                D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve DXGI_ADAPTER_DESC1");
+                return false;
+            }
+
+            if (Desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+            {
+                continue;
+            }
+
+            for (D3D_FEATURE_LEVEL Level : TestFeatureLevels)
+            {
+                if (Level < BestFeatureLevel)
+                {
+                    break;
+                }
+
+                if (SUCCEEDED(FD3D12Library::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr)))
+                {
+                    // Here it is probably better to have something else to find the best GPU
+                    if (Level >= BestFeatureLevel && Desc.DedicatedVideoMemory > BestVideoMem)
+                    {
+                        D3D12_INFO("[FD3D12Adapter]: Suitable Direct3D Adapter (%u): %ls", Index, Desc.Description);
+
+                        AdapterIndex     = Index;
+                        BestFeatureLevel = Level;
+                        BestVideoMem     = Desc.DedicatedVideoMemory;
+                        FinalAdapter     = TempAdapter;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+#else
+    {
+        HRESULT Result = Factory.GetAs<IDXGIFactory6>(Factory6.GetAddressOf());
+        D3D12_ERROR_COND(SUCCEEDED(Result), "[FD3D12Adapter]: Failed to Query IDXGIFactory6");
+
+        const DXGI_GPU_PREFERENCE GPUPreference = Initializer.bPreferDGPU ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED;
+
+        TComPtr<IDXGIAdapter1> TempAdapter;
+        for (uint32 Index = 0; DXGI_ERROR_NOT_FOUND != Factory6->EnumAdapterByGpuPreference(Index, GPUPreference, IID_PPV_ARGS(&TempAdapter)); Index++)
+        {
+            DXGI_ADAPTER_DESC1 Desc;
+            if (FAILED(TempAdapter->GetDesc1(&Desc)))
+            {
+                D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve DXGI_ADAPTER_DESC1");
+                return false;
+            }
+
+            if (Desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+            {
+                continue;
+            }
+
+            for (D3D_FEATURE_LEVEL Level : TestFeatureLevels)
+            {
+                if (Level < BestFeatureLevel)
+                {
+                    break;
+                }
+
+                if (SUCCEEDED(FD3D12Library::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr)))
+                {
+                    D3D12_INFO("[FD3D12Adapter]: Suitable Direct3D Adapter (%u): %ls", Index, Desc.Description);
+
+                    AdapterIndex     = Index;
+                    BestFeatureLevel = Level;
+                    FinalAdapter     = TempAdapter;
+                    break;
+                }
+            }
+        }
+    }
+#endif
+
+    DXGI_ADAPTER_DESC1 AdapterDesc;
+    if (!FinalAdapter)
+    {
+        D3D12_ERROR("[CD3D12Device]: FAILED to retrieve adapter");
+        return false;
+    }
+    else
+    {
+        Adapter = FinalAdapter;
+        if (FAILED(Adapter->GetDesc1(&AdapterDesc)))
+        {
+            D3D12_ERROR("[CD3D12Device]: FAILED to retrieve DXGI_ADAPTER_DESC1");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12Device
+
+FD3D12Device::FD3D12Device(FD3D12CoreInterface* InCoreInterface, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED)
     : CoreInterface(InCoreInterface)
     , Factory(nullptr)
     , Adapter(nullptr)
@@ -157,7 +391,7 @@ CD3D12Device::CD3D12Device(CD3D12CoreInterface* InCoreInterface, bool bInEnableD
     , bEnableDRED(bInEnableDRED)
 { }
 
-CD3D12Device::~CD3D12Device()
+FD3D12Device::~FD3D12Device()
 {
     if (bEnableDebugLayer)
     {
@@ -188,7 +422,7 @@ CD3D12Device::~CD3D12Device()
     D3D12Lib = 0;
 }
 
-bool CD3D12Device::Initialize()
+bool FD3D12Device::Initialize()
 {
     DXGILib = LoadLibrary("dxgi.dll");
     if (!DXGILib)
@@ -459,6 +693,7 @@ bool CD3D12Device::Initialize()
 
     const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
     {
+        D3D_FEATURE_LEVEL_12_2,
         D3D_FEATURE_LEVEL_12_1,
         D3D_FEATURE_LEVEL_12_0,
         D3D_FEATURE_LEVEL_11_1,
@@ -502,7 +737,7 @@ bool CD3D12Device::Initialize()
         Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
         if (SUCCEEDED(Result))
         {
-            VariableShadingRateTier = Features6.VariableShadingRateTier;
+            VariableShadingRateTier     = Features6.VariableShadingRateTier;
             VariableShadingRateTileSize = Features6.ShadingRateImageTileSize;
         }
     }
@@ -515,7 +750,7 @@ bool CD3D12Device::Initialize()
         Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
         if (SUCCEEDED(Result))
         {
-            MeshShaderTier = Features7.MeshShaderTier;
+            MeshShaderTier      = Features7.MeshShaderTier;
             SamplerFeedBackTier = Features7.SamplerFeedbackTier;
         }
     }
@@ -523,7 +758,7 @@ bool CD3D12Device::Initialize()
     return true;
 }
 
-int32 CD3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
+int32 FD3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
 {
     D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data;
     CMemory::Memzero(&Data);
@@ -542,7 +777,7 @@ int32 CD3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount
     return static_cast<uint32>(Data.NumQualityLevels - 1);
 }
 
-String CD3D12Device::GetAdapterName() const
+String FD3D12Device::GetAdapterName() const
 {
     DXGI_ADAPTER_DESC Desc;
     Adapter->GetDesc(&Desc);

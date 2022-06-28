@@ -74,7 +74,7 @@ class CD3D12RootSignature : public CD3D12DeviceChild, public CRefCounted
 {
 public:
 
-    CD3D12RootSignature(CD3D12Device* InDevice);
+    CD3D12RootSignature(FD3D12Device* InDevice);
     ~CD3D12RootSignature() = default;
 
     bool Initialize(const SD3D12RootSignatureResourceCount& RootSignatureInfo);
@@ -126,7 +126,7 @@ private:
 class CD3D12RootSignatureCache : public CD3D12DeviceChild
 {
 public:
-    CD3D12RootSignatureCache(CD3D12Device* Device);
+    CD3D12RootSignatureCache(FD3D12Device* Device);
     ~CD3D12RootSignatureCache();
 
     static CD3D12RootSignatureCache& Get();

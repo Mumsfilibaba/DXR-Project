@@ -8,7 +8,7 @@ class CD3D12CommandAllocator : public CD3D12DeviceChild
 {
 public:
 
-    FORCEINLINE CD3D12CommandAllocator(CD3D12Device* InDevice)
+    FORCEINLINE CD3D12CommandAllocator(FD3D12Device* InDevice)
         : CD3D12DeviceChild(InDevice)
         , Allocator(nullptr)
     { }

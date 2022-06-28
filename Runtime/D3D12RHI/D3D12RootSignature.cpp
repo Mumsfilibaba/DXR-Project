@@ -273,7 +273,7 @@ void CD3D12RootSignatureDescHelper::InsertRootUAV(D3D12_SHADER_VISIBILITY Shader
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RootSignature
 
-CD3D12RootSignature::CD3D12RootSignature(CD3D12Device* InDevice)
+CD3D12RootSignature::CD3D12RootSignature(FD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
     , RootSignature(nullptr)
     , RootParameterMap()
@@ -395,7 +395,7 @@ bool CD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 
 CD3D12RootSignatureCache* CD3D12RootSignatureCache::Instance = nullptr;
 
-CD3D12RootSignatureCache::CD3D12RootSignatureCache(CD3D12Device* InDevice)
+CD3D12RootSignatureCache::CD3D12RootSignatureCache(FD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
     , RootSignatures()
     , ResourceCounts()

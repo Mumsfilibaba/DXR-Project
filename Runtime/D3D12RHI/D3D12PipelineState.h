@@ -14,7 +14,7 @@ class CD3D12VertexInputLayout : public CRHIVertexInputLayout, public CD3D12Devic
 {
 public:
 
-    CD3D12VertexInputLayout(CD3D12Device* InDevice, const CRHIVertexInputLayoutInitializer& CreateInfo)
+    CD3D12VertexInputLayout(FD3D12Device* InDevice, const CRHIVertexInputLayoutInitializer& CreateInfo)
         : CRHIVertexInputLayout()
         , CD3D12DeviceChild(InDevice)
         , SemanticNames()
@@ -59,7 +59,7 @@ class CD3D12DepthStencilState : public CRHIDepthStencilState, public CD3D12Devic
 {
 public:
     
-    CD3D12DepthStencilState(CD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
+    CD3D12DepthStencilState(FD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
         : CRHIDepthStencilState()
         , CD3D12DeviceChild(InDevice)
         , Desc(InDesc)
@@ -78,7 +78,7 @@ class CD3D12RasterizerState : public CRHIRasterizerState, public CD3D12DeviceChi
 {
 public:
 
-    CD3D12RasterizerState(CD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
+    CD3D12RasterizerState(FD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
         : CRHIRasterizerState()
         , CD3D12DeviceChild(InDevice)
         , Desc(InDesc)
@@ -97,7 +97,7 @@ class CD3D12BlendState : public CRHIBlendState, public CD3D12DeviceChild
 {
 public:
 
-    CD3D12BlendState(CD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
+    CD3D12BlendState(FD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
         : CRHIBlendState()
         , CD3D12DeviceChild(InDevice)
         , Desc(InDesc)
@@ -115,7 +115,7 @@ private:
 class CD3D12GraphicsPipelineState : public CRHIGraphicsPipelineState, public CD3D12DeviceChild
 {
 public:
-    CD3D12GraphicsPipelineState(CD3D12Device* InDevice);
+    CD3D12GraphicsPipelineState(FD3D12Device* InDevice);
     ~CD3D12GraphicsPipelineState() = default;
 
     bool Init(const CRHIGraphicsPipelineStateInitializer& CreateInfo);
@@ -148,7 +148,7 @@ class CD3D12ComputePipelineState : public CRHIComputePipelineState, public CD3D1
 {
 public:
 
-    CD3D12ComputePipelineState(CD3D12Device* InDevice, const TSharedRef<CD3D12ComputeShader>& InShader);
+    CD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<CD3D12ComputeShader>& InShader);
     ~CD3D12ComputePipelineState() = default;
 
     bool Init();
@@ -189,7 +189,7 @@ struct SRayTracingShaderIdentifer
 class CD3D12RayTracingPipelineState : public CRHIRayTracingPipelineState, public CD3D12DeviceChild
 {
 public:
-    CD3D12RayTracingPipelineState(CD3D12Device* InDevice);
+    CD3D12RayTracingPipelineState(FD3D12Device* InDevice);
     ~CD3D12RayTracingPipelineState() = default;
 
     bool Init(const CRHIRayTracingPipelineStateInitializer& CreateInfo);

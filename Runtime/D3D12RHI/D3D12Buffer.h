@@ -11,7 +11,7 @@ class CD3D12Buffer : public CD3D12DeviceChild
 {
 public:
 
-    CD3D12Buffer(CD3D12Device* InDevice)
+    CD3D12Buffer(FD3D12Device* InDevice)
         : CD3D12DeviceChild(InDevice)
         , Resource(nullptr)
     { }
@@ -33,7 +33,7 @@ class CD3D12VertexBuffer : public CRHIVertexBuffer, public CD3D12Buffer
 {
 public:
 
-    CD3D12VertexBuffer(CD3D12Device* InDevice, const CRHIVertexBufferInitializer& Initializer)
+    CD3D12VertexBuffer(FD3D12Device* InDevice, const CRHIVertexBufferInitializer& Initializer)
         : CRHIVertexBuffer(Initializer)
         , CD3D12Buffer(InDevice)
         , View()
@@ -87,7 +87,7 @@ class CD3D12IndexBuffer : public CRHIIndexBuffer, public CD3D12Buffer
 {
 public:
 
-    CD3D12IndexBuffer(CD3D12Device* InDevice, const CRHIIndexBufferInitializer& Initializer)
+    CD3D12IndexBuffer(FD3D12Device* InDevice, const CRHIIndexBufferInitializer& Initializer)
         : CRHIIndexBuffer(Initializer)
         , CD3D12Buffer(InDevice)
         , View()
@@ -146,7 +146,7 @@ class CD3D12ConstantBuffer : public CRHIConstantBuffer, public CD3D12Buffer
 {
 public:
 
-    CD3D12ConstantBuffer(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap, const CRHIConstantBufferInitializer& Initializer)
+    CD3D12ConstantBuffer(FD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap, const CRHIConstantBufferInitializer& Initializer)
         : CRHIConstantBuffer(Initializer)
         , CD3D12Buffer(InDevice)
         , View(InDevice, InOfflineHeap)
@@ -215,7 +215,7 @@ class CD3D12GenericBuffer : public CRHIGenericBuffer, public CD3D12Buffer
 {
 public:
     
-    CD3D12GenericBuffer(CD3D12Device* InDevice, const CRHIGenericBufferInitializer& Initializer)
+    CD3D12GenericBuffer(FD3D12Device* InDevice, const CRHIGenericBufferInitializer& Initializer)
         : CRHIGenericBuffer(Initializer)
         , CD3D12Buffer(InDevice)
     { }

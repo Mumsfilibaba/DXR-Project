@@ -5,7 +5,7 @@
 
 #include "RHI/RHIResourceViews.h"
 
-class CD3D12Device;
+class FD3D12Device;
 class CD3D12OfflineDescriptorHeap;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -14,7 +14,7 @@ class CD3D12OfflineDescriptorHeap;
 class CD3D12View : public CD3D12DeviceChild
 {
 public:
-    CD3D12View(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    CD3D12View(FD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
     virtual ~CD3D12View();
 
     bool AllocateHandle();
@@ -40,7 +40,7 @@ protected:
 class CD3D12ConstantBufferView : public CD3D12View
 {
 public:
-    CD3D12ConstantBufferView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    CD3D12ConstantBufferView(FD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
     ~CD3D12ConstantBufferView() = default;
 
     bool CreateView(CD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
@@ -57,7 +57,7 @@ private:
 class CD3D12ShaderResourceView : public CRHIShaderResourceView, public CD3D12View
 {
 public:
-    CD3D12ShaderResourceView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource);
+    CD3D12ShaderResourceView(FD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource);
     ~CD3D12ShaderResourceView() = default;
 
     bool CreateView(CD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
@@ -74,7 +74,7 @@ private:
 class CD3D12UnorderedAccessView : public CRHIUnorderedAccessView, public CD3D12View
 {
 public:
-    CD3D12UnorderedAccessView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource);
+    CD3D12UnorderedAccessView(FD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource);
     ~CD3D12UnorderedAccessView() = default;
 
     bool CreateView(CD3D12Resource* InCounterResource, CD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
@@ -91,10 +91,10 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RenderTargetView
 
-class CD3D12RenderTargetView : public CD3D12RefCounted, public CD3D12View
+class CD3D12RenderTargetView : public FD3D12RefCounted, public CD3D12View
 {
 public:
-    CD3D12RenderTargetView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    CD3D12RenderTargetView(FD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
     ~CD3D12RenderTargetView() = default;
 
     bool CreateView(CD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
@@ -108,10 +108,10 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12DepthStencilView
 
-class CD3D12DepthStencilView : public CD3D12RefCounted, public CD3D12View
+class CD3D12DepthStencilView : public FD3D12RefCounted, public CD3D12View
 {
 public:
-    CD3D12DepthStencilView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    CD3D12DepthStencilView(FD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
     ~CD3D12DepthStencilView() = default;
 
     bool CreateView(CD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);

@@ -8,7 +8,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12DescriptorCache
 
-CD3D12DescriptorCache::CD3D12DescriptorCache(CD3D12Device* InDevice)
+CD3D12DescriptorCache::CD3D12DescriptorCache(FD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
     , NullCBV(nullptr)
     , NullSRV(nullptr)
@@ -31,7 +31,7 @@ CD3D12DescriptorCache::~CD3D12DescriptorCache()
 
 bool CD3D12DescriptorCache::Init()
 {
-    CD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
+    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
     
     D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
     CMemory::Memzero(&CBVDesc);

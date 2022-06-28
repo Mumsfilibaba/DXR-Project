@@ -32,7 +32,7 @@ struct SD3D12UploadAllocation
 class CD3D12GPUResourceUploader : public CD3D12DeviceChild
 {
 public:
-    CD3D12GPUResourceUploader(CD3D12Device* InDevice);
+    CD3D12GPUResourceUploader(FD3D12Device* InDevice);
     ~CD3D12GPUResourceUploader() = default;
 
     bool Reserve(uint32 InSizeInBytes);
@@ -68,7 +68,7 @@ private:
 class CD3D12CommandBatch
 {
 public:
-    CD3D12CommandBatch(CD3D12Device* InDevice);
+    CD3D12CommandBatch(FD3D12Device* InDevice);
     ~CD3D12CommandBatch() = default;
 
     bool Initialize();
@@ -138,7 +138,7 @@ public:
         return OnlineSamplerDescriptorHeap.Get();
     }
 
-    CD3D12Device*                          Device = nullptr;
+    FD3D12Device*                          Device = nullptr;
     
     uint64                                 AssignedFenceValue = 0;
 
@@ -208,14 +208,14 @@ class CD3D12CommandContext : public IRHICommandContext, public CD3D12DeviceChild
 {
 private:
 
-    friend class CD3D12CoreInterface;
+    friend class FD3D12CoreInterface;
 
-    CD3D12CommandContext(CD3D12Device* InDevice);
+    CD3D12CommandContext(FD3D12Device* InDevice);
     ~CD3D12CommandContext();
 
 public:
 
-    static CD3D12CommandContext* CreateD3D12CommandContext(CD3D12Device* InDevice);
+    static CD3D12CommandContext* CreateD3D12CommandContext(FD3D12Device* InDevice);
 
     void UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
 

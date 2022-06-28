@@ -65,7 +65,7 @@ void CD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12GPUResourceUploader
 
-CD3D12GPUResourceUploader::CD3D12GPUResourceUploader(CD3D12Device* InDevice)
+CD3D12GPUResourceUploader::CD3D12GPUResourceUploader(FD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
     , MappedMemory(nullptr)
     , SizeInBytes(0)
@@ -161,7 +161,7 @@ SD3D12UploadAllocation CD3D12GPUResourceUploader::LinearAllocate(uint32 InSizeIn
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12CommandBatch
 
-CD3D12CommandBatch::CD3D12CommandBatch(CD3D12Device* InDevice)
+CD3D12CommandBatch::CD3D12CommandBatch(FD3D12Device* InDevice)
     : Device(InDevice)
     , CmdAllocator(InDevice)
     , GpuResourceUploader(InDevice)
@@ -197,7 +197,7 @@ bool CD3D12CommandBatch::Initialize()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RHICommandContext
 
-CD3D12CommandContext* CD3D12CommandContext::CreateD3D12CommandContext(CD3D12Device* InDevice)
+CD3D12CommandContext* CD3D12CommandContext::CreateD3D12CommandContext(FD3D12Device* InDevice)
 {
     CD3D12CommandContext* NewContext = dbg_new CD3D12CommandContext(InDevice);
     if (NewContext && NewContext->Initialize())
@@ -211,7 +211,7 @@ CD3D12CommandContext* CD3D12CommandContext::CreateD3D12CommandContext(CD3D12Devi
     }
 }
 
-CD3D12CommandContext::CD3D12CommandContext(CD3D12Device* InDevice)
+CD3D12CommandContext::CD3D12CommandContext(FD3D12Device* InDevice)
     : IRHICommandContext()
     , CD3D12DeviceChild(InDevice)
     , CommandQueue(InDevice)
@@ -1159,7 +1159,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     
     FlushResourceBarriers();
 
-    CD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
+    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
     if (bIsTextureCube)
     {
         TSharedRef<CD3D12ComputePipelineState> PipelineState = D3D12CoreInterface->GetGenerateMipsPipelineTexureCube();

@@ -9,7 +9,7 @@ IMPLEMENT_ENGINE_MODULE(CD3D12Module, D3D12RHI);
 
 CRHICoreInterface* CD3D12Module::CreateInterface()
 {
-    return CD3D12CoreInterface::CreateD3D12Instance();
+    return FD3D12CoreInterface::CreateD3D12Instance();
 }
 
 IRHIShaderCompiler* CD3D12Module::CreateCompiler()

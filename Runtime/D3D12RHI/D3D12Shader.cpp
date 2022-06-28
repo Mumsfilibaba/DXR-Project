@@ -38,7 +38,7 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12Shader
 
-CD3D12Shader::CD3D12Shader(CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility)
+CD3D12Shader::CD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility)
     : CD3D12DeviceChild(InDevice)
     , ByteCode()
     , Visibility(InVisibility)

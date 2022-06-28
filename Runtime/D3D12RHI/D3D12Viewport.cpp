@@ -7,7 +7,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12Viewport
 
-CD3D12Viewport::CD3D12Viewport(CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, const CRHIViewportInitializer& Initializer)
+CD3D12Viewport::CD3D12Viewport(FD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, const CRHIViewportInitializer& Initializer)
     : CD3D12DeviceChild(InDevice)
     , CRHIViewport(Initializer)
     , Hwnd(reinterpret_cast<HWND>(Initializer.WindowHandle))

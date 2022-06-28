@@ -4,7 +4,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12Resource
 
-CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource)
+CD3D12Resource::CD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource)
     : CRefCounted()
     , CD3D12DeviceChild(InDevice)
     , Resource(InNativeResource)
@@ -14,7 +14,7 @@ CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resou
     , Address(0)
 { }
 
-CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
+CD3D12Resource::CD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
     : CRefCounted()
     , CD3D12DeviceChild(InDevice)
     , Resource(nullptr)

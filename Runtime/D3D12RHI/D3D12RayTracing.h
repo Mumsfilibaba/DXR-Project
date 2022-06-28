@@ -25,7 +25,7 @@ struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) SD3D12ShaderBinding
 class CD3D12ShaderBindingTableBuilder : public CD3D12DeviceChild
 {
 public:
-    CD3D12ShaderBindingTableBuilder(CD3D12Device* InDevice);
+    CD3D12ShaderBindingTableBuilder(FD3D12Device* InDevice);
     ~CD3D12ShaderBindingTableBuilder() = default;
 
     void PopulateEntry( CD3D12RayTracingPipelineState* PipelineState
@@ -64,7 +64,7 @@ class CD3D12AccelerationStructure : public CD3D12DeviceChild
 {
 public:
 
-    CD3D12AccelerationStructure(CD3D12Device* InDevice);
+    CD3D12AccelerationStructure(FD3D12Device* InDevice);
     ~CD3D12AccelerationStructure() = default;
     
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
@@ -88,7 +88,7 @@ protected:
 class CD3D12RayTracingGeometry : public CRHIRayTracingGeometry, public CD3D12AccelerationStructure
 {
 public:
-    CD3D12RayTracingGeometry(CD3D12Device* InDevice, const CRHIRayTracingGeometryInitializer& Initializer);
+    CD3D12RayTracingGeometry(FD3D12Device* InDevice, const CRHIRayTracingGeometryInitializer& Initializer);
     ~CD3D12RayTracingGeometry() = default;
 
     bool Build(class CD3D12CommandContext& CmdContext, CD3D12VertexBuffer* InVertexBuffer, CD3D12IndexBuffer* InIndexBuffer, bool bUpdate);
@@ -127,7 +127,7 @@ class CD3D12RayTracingScene : public CRHIRayTracingScene, public CD3D12Accelerat
 {
 public:
 
-    CD3D12RayTracingScene(CD3D12Device* InDevice, const CRHIRayTracingSceneInitializer& Initializer);
+    CD3D12RayTracingScene(FD3D12Device* InDevice, const CRHIRayTracingSceneInitializer& Initializer);
     ~CD3D12RayTracingScene() = default;
 
     bool Build(class CD3D12CommandContext& CmdContext, const TArrayView<const CRHIRayTracingGeometryInstance>& InInstances, bool bUpdate);
