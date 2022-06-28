@@ -71,7 +71,7 @@ public:
     CD3D12CommandBatch(CD3D12Device* InDevice);
     ~CD3D12CommandBatch() = default;
 
-    bool Init();
+    bool Initialize();
 
     bool Reset()
     {

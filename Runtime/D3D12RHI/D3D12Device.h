@@ -19,12 +19,39 @@ class CD3D12CoreInterface;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedef
 
-typedef TSharedRef<class CD3D12Device> D3D12DeviceRef;
+class CD3D12Device;
+class FD3D12Adapter;
+
+typedef CD3D12Device FD3D12Device;
+
+typedef TSharedRef<FD3D12Device>  D3D12DeviceRef;
+typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
+typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12DeviceRemovedHandlerRHI
 
-void D3D12DeviceRemovedHandlerRHI(class CD3D12Device* Device);
+void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device);
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12Adapter
+
+class FD3D12Adapter : public CD3D12RefCounted
+{
+public:
+    static FD3D12Adapter* Create();
+
+    FD3D12Device* CreateDevice();
+
+private:
+    FD3D12Adapter();
+    ~FD3D12Adapter();
+    // Factories
+    TComPtr<IDXGIFactory2> Factory;
+
+    // Adapters
+    TComPtr<IDXGIAdapter1> Adapter;
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12Device

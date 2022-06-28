@@ -9,8 +9,6 @@
 
 #include <dxcapi.h>
 
-#define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
-
 #if MONOLITHIC_BUILD
     #define D3D12_RHI_API
 #else
@@ -19,6 +17,33 @@
     #else
         #define D3D12_RHI_API MODULE_IMPORT
     #endif
+#endif
+
+#define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
+
+#if (NTDDI_WIN10_RS2 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS2))
+    #define WIN10_BUILD_15063 (1)
+#endif
+#if (NTDDI_WIN10_RS3 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS3))
+    #define WIN10_BUILD_16299 (1)
+#endif
+#if (NTDDI_WIN10_RS4 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS4))
+    #define WIN10_BUILD_17134 (1)
+#endif
+#if (NTDDI_WIN10_RS5 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS5))
+    #define WIN10_BUILD_17763 (1)
+#endif
+#if (NTDDI_WIN10_19H1 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_19H1))
+    #define WIN10_BUILD_18362 (1)
+#endif
+#if (NTDDI_WIN10_VB && (WDK_NTDDI_VERSION >= NTDDI_WIN10_VB))
+    #define WIN10_BUILD_19041 (1)
+#endif
+#if (NTDDI_WIN10_FE && (WDK_NTDDI_VERSION >= NTDDI_WIN10_FE))
+    #define WIN10_BUILD_20348 (1)
+#endif
+#if (NTDDI_WIN10_CO && (WDK_NTDDI_VERSION >= NTDDI_WIN10_CO))
+    #define WIN10_BUILD_22000 (1)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

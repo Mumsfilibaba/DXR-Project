@@ -170,7 +170,7 @@ CD3D12CommandBatch::CD3D12CommandBatch(CD3D12Device* InDevice)
     , Resources()
 { }
 
-bool CD3D12CommandBatch::Init()
+bool CD3D12CommandBatch::Initialize()
 {
     // TODO: Do not have D3D12_COMMAND_LIST_TYPE_DIRECT directly
     if (!CmdAllocator.Init(D3D12_COMMAND_LIST_TYPE_DIRECT))
@@ -240,7 +240,7 @@ bool CD3D12CommandContext::Initialize()
     for (uint32 Index = 0; Index < D3D12_NUM_BACK_BUFFERS; ++Index)
     {
         CD3D12CommandBatch& Batch = CmdBatches.Emplace(GetDevice());
-        if (!Batch.Init())
+        if (!Batch.Initialize())
         {
             D3D12_ERROR("Failed to initialize D3D12CommandBatch");
             return false;
