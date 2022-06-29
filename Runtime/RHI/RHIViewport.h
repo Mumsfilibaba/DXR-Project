@@ -68,12 +68,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIViewport
 
-class FRHIViewport : public CRHIResource
+class FRHIViewport : public FRHIResource
 {
 protected:
     
     explicit FRHIViewport(const FRHIViewportInitializer& Initializer)
-        : CRHIResource()
+        : FRHIResource()
         , Width(Initializer.Width)
         , Height(Initializer.Height)
         , Format(Initializer.ColorFormat)

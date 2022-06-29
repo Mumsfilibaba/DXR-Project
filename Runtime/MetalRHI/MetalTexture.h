@@ -173,13 +173,13 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalTextureCubeArray
 
-class CMetalTextureCubeArray : public CMetalTexture, public CRHITextureCubeArray
+class CMetalTextureCubeArray : public CMetalTexture, public FRHITextureCubeArray
 {
 public:
     
-    CMetalTextureCubeArray(CMetalDeviceContext* InDeviceContext, const CRHITextureCubeArrayInitializer& Initializer)
+    CMetalTextureCubeArray(CMetalDeviceContext* InDeviceContext, const FRHITextureCubeArrayInitializer& Initializer)
         : CMetalTexture(InDeviceContext)
-        , CRHITextureCubeArray(Initializer)
+        , FRHITextureCubeArray(Initializer)
     { }
     
 public:

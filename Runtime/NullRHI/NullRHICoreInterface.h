@@ -63,7 +63,7 @@ public:
         return dbg_new TNullRHITexture<CNullRHITextureCube>(Initializer);
     }
 
-    virtual CRHITextureCubeArray* RHICreateTextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer) override final
+    virtual FRHITextureCubeArray* RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer) override final
     {
         return dbg_new TNullRHITexture<CNullRHITextureCubeArray>(Initializer);
     }
@@ -78,7 +78,7 @@ public:
         return dbg_new CNullRHISamplerState();
     }
 
-    virtual CRHIVertexBuffer* RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer) override final
+    virtual FRHIVertexBuffer* RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer) override final
     {
         return dbg_new TNullRHIBuffer<CNullRHIVertexBuffer>(Initializer);
     }

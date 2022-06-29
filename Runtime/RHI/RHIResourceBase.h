@@ -5,17 +5,17 @@
 #include "Core/Threading/AtomicInt.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIResource
+// FRHIResource
 
-class RHI_API CRHIResource : public IRHIResource
+class RHI_API FRHIResource : public IRHIResource
 {
 protected:
 
-    CRHIResource()
+    FRHIResource()
         : StrongReferences(1)
     { }
 
-    virtual ~CRHIResource() = default;
+    virtual ~FRHIResource() = default;
 
 public:
 

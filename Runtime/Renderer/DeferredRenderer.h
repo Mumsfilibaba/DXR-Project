@@ -19,9 +19,9 @@ public:
 
     void Release();
 
-    void RenderPrePass(CRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene);
-    void RenderBasePass(CRHICommandList& CmdList, const SFrameResources& FrameResources);
-    void RenderDeferredTiledLightPass(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
+    void RenderPrePass(FRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene);
+    void RenderBasePass(FRHICommandList& CmdList, const SFrameResources& FrameResources);
+    void RenderDeferredTiledLightPass(FRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
 
     bool ResizeResources(SFrameResources& FrameResources);
 

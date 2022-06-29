@@ -32,7 +32,7 @@ void CMaterial::Init()
     Sampler = GEngine->BaseMaterialSampler;
 }
 
-void CMaterial::BuildBuffer(CRHICommandList& CmdList)
+void CMaterial::BuildBuffer(FRHICommandList& CmdList)
 {
     CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
     CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(SMaterialDesc), &Properties);

@@ -61,12 +61,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHITextureCubeArray
 
-class CNullRHITextureCubeArray : public CRHITextureCubeArray
+class CNullRHITextureCubeArray : public FRHITextureCubeArray
 {
 public:
     
-    CNullRHITextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer)
-        : CRHITextureCubeArray(Initializer)
+    CNullRHITextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer)
+        : FRHITextureCubeArray(Initializer)
     { }
 };
 

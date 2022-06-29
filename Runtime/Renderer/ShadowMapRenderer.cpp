@@ -362,7 +362,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
     return true;
 }
 
-void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene)
+void CShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene)
 {
     //PointLightFrame++;
     //if (PointLightFrame > 6)
@@ -399,7 +399,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
             {
                 const uint32 ArrayIndex = (Cube * kRHINumCubeFaces) + Face;
 
-                CRHIRenderPassInitializer RenderPass;
+                FRHIRenderPassInitializer RenderPass;
                 RenderPass.DepthStencilView = FRHIDepthStencilView(LightSetup.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
 
                 CmdList.BeginRenderPass(RenderPass);
@@ -480,7 +480,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
 }
 
-void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene)
+void CShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene)
 {
     // Generate matrices for directional light
     {
@@ -540,7 +540,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
         SPerCascade PerCascadeData;
         for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
         {
-            CRHIRenderPassInitializer RenderPass;
+            FRHIRenderPassInitializer RenderPass;
             RenderPass.DepthStencilView = FRHIDepthStencilView(LightSetup.ShadowMapCascades[i].Get());
 
             CmdList.BeginRenderPass(RenderPass);
@@ -588,7 +588,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
     }
 }
 
-void CShadowMapRenderer::RenderShadowMasks(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources)
+void CShadowMapRenderer::RenderShadowMasks(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources)
 {
     // Generate Directional Shadow Mask
     {
@@ -616,7 +616,7 @@ void CShadowMapRenderer::RenderShadowMasks(CRHICommandList& CmdList, const SLigh
 
         CmdList.SetSamplerState(DirectionalShadowMaskShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 0);
 
-        const CIntVector3 ThreadGroupXYZ = DirectionalShadowMaskShader->GetThreadGroupXYZ();
+        const FIntVector3 ThreadGroupXYZ = DirectionalShadowMaskShader->GetThreadGroupXYZ();
         const uint32 ThreadsX = NMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetWidth(), ThreadGroupXYZ.x);
         const uint32 ThreadsY = NMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y);
         CmdList.Dispatch(ThreadsX, ThreadsY, 1);
@@ -678,9 +678,9 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
         return false;
     }
 
-    const CTextureClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
+    const FTextureClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
 
-    CRHITextureCubeArrayInitializer PointLightInitializer( LightSetup.ShadowMapFormat
+    FRHITextureCubeArrayInitializer PointLightInitializer( LightSetup.ShadowMapFormat
                                                          , LightSetup.PointLightShadowSize
                                                          , LightSetup.MaxPointLightShadows
                                                          , 1

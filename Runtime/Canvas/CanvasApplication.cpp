@@ -486,7 +486,7 @@ void CCanvasApplication::DrawString(const String& NewString)
     DebugStrings.Emplace(NewString);
 }
 
-void CCanvasApplication::DrawWindows(CRHICommandList& CommandList)
+void CCanvasApplication::DrawWindows(FRHICommandList& CommandList)
 {
     // NOTE: Renderer is not forced to be valid 
     if (Renderer)

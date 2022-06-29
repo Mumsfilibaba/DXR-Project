@@ -54,7 +54,7 @@ bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D1
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12ShaderResourceView
 
-FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource)
+FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource)
     : FRHIShaderResourceView(InResource)
     , FD3D12View(InDevice, InHeap)
     , Desc()
@@ -80,7 +80,7 @@ bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D1
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12UnorderedAccessView
 
-FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource)
+FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource)
     : FRHIUnorderedAccessView(InResource)
     , FD3D12View(InDevice, InHeap)
     , Desc()

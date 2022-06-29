@@ -33,7 +33,7 @@ public:
      * 
      * @param InCommandList: CommandList to record all draw-commands to
      */
-    virtual void Render(class CRHICommandList& InCommandlist) = 0;
+    virtual void Render(class FRHICommandList& InCommandlist) = 0;
 
 };
 

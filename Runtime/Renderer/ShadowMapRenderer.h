@@ -72,13 +72,13 @@ public:
     void Release();
 
      /** @brief: Render Point light shadows */
-    void RenderPointLightShadows(CRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene);
+    void RenderPointLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene);
 
      /** @brief: Render Directional light shadows */
-    void RenderDirectionalLightShadows(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene);
+    void RenderDirectionalLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene);
 
      /** @brief: Render ShadowMasks */
-    void RenderShadowMasks(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources);
+    void RenderShadowMasks(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources);
 
      /** @brief: Resize the resources that are dependent on the viewport */
     bool ResizeResources(uint32 Width, uint32 Height, SLightSetup& LightSetup);

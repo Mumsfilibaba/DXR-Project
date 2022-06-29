@@ -11,23 +11,23 @@
 #define DECLARE_RHICOMMAND_CLASS(RHICommandName) class RHICommandName final : public TRHICommand<RHICommandName>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommand
+// FRHICommand
 
-class CRHICommand
+class FRHICommand
 {
 public:
-    virtual ~CRHICommand() = default;
+    virtual ~FRHICommand() = default;
 
     virtual void ExecuteAndRelease(IRHICommandContext& CommandContext) = 0;
 
-    CRHICommand* NextCommand = nullptr;
+    FRHICommand* NextCommand = nullptr;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TRHICommand
 
 template<typename CommandType>
-class TRHICommand : public CRHICommand
+class TRHICommand : public FRHICommand
 {
 public:
     TRHICommand() = default;
@@ -42,12 +42,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandBeginTimeStamp
+// FRHICommandBeginTimeStamp
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandBeginTimeStamp)
+DECLARE_RHICOMMAND_CLASS(FRHICommandBeginTimeStamp)
 {
 public:
-    FORCEINLINE CRHICommandBeginTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
+    FORCEINLINE FRHICommandBeginTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
     { }
@@ -62,12 +62,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandEndTimeStamp
+// FRHICommandEndTimeStamp
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandEndTimeStamp)
+DECLARE_RHICOMMAND_CLASS(FRHICommandEndTimeStamp)
 {
 public:
-    FORCEINLINE CRHICommandEndTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
+    FORCEINLINE FRHICommandEndTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
     { }
@@ -82,12 +82,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandClearRenderTargetView
+// FRHICommandClearRenderTargetView
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandClearRenderTargetView)
+DECLARE_RHICOMMAND_CLASS(FRHICommandClearRenderTargetView)
 {
 public:
-    FORCEINLINE CRHICommandClearRenderTargetView(const FRHIRenderTargetView& InRenderTargetView, const TStaticArray<float, 4>&InClearColor)
+    FORCEINLINE FRHICommandClearRenderTargetView(const FRHIRenderTargetView& InRenderTargetView, const TStaticArray<float, 4>&InClearColor)
         : RenderTargetView(InRenderTargetView)
         , ClearColor(InClearColor)
     { }
@@ -102,12 +102,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandClearDepthStencilView
+// FRHICommandClearDepthStencilView
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandClearDepthStencilView)
+DECLARE_RHICOMMAND_CLASS(FRHICommandClearDepthStencilView)
 {
 public:
-    FORCEINLINE CRHICommandClearDepthStencilView(const FRHIDepthStencilView& InDepthStencilView, const float InDepth, const uint8 InStencil)
+    FORCEINLINE FRHICommandClearDepthStencilView(const FRHIDepthStencilView& InDepthStencilView, const float InDepth, const uint8 InStencil)
         : DepthStencilView(InDepthStencilView)
         , Depth(InDepth)
         , Stencil(InStencil)
@@ -124,12 +124,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandClearUnorderedAccessViewFloat
+// FRHICommandClearUnorderedAccessViewFloat
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandClearUnorderedAccessViewFloat)
+DECLARE_RHICOMMAND_CLASS(FRHICommandClearUnorderedAccessViewFloat)
 {
 public:
-    FORCEINLINE CRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const TStaticArray<float, 4>&InClearColor)
+    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const TStaticArray<float, 4>&InClearColor)
         : UnorderedAccessView(InUnorderedAccessView)
         , ClearColor(InClearColor)
     { }
@@ -144,13 +144,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandBeginRenderPass
+// FRHICommandBeginRenderPass
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandBeginRenderPass)
+DECLARE_RHICOMMAND_CLASS(FRHICommandBeginRenderPass)
 {
 public:
 
-    CRHICommandBeginRenderPass(const CRHIRenderPassInitializer& InRenderPassInitializer)
+    FRHICommandBeginRenderPass(const FRHIRenderPassInitializer& InRenderPassInitializer)
         : RenderPassInitializer(InRenderPassInitializer)
     { }
 
@@ -159,17 +159,17 @@ public:
         CommandContext.BeginRenderPass(RenderPassInitializer);
     }
 
-    CRHIRenderPassInitializer RenderPassInitializer;
+    FRHIRenderPassInitializer RenderPassInitializer;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandEndRenderPass
+// FRHICommandEndRenderPass
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandEndRenderPass)
+DECLARE_RHICOMMAND_CLASS(FRHICommandEndRenderPass)
 {
 public:
 
-    CRHICommandEndRenderPass() = default;
+    FRHICommandEndRenderPass() = default;
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -178,12 +178,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetViewport
+// FRHICommandSetViewport
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetViewport)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetViewport)
 {
 public:
-    FORCEINLINE CRHICommandSetViewport(float InWidth, float InHeight, float InMinDepth, float InMaxDepth, float InX, float InY)
+    FORCEINLINE FRHICommandSetViewport(float InWidth, float InHeight, float InMinDepth, float InMaxDepth, float InX, float InY)
         : Width(InWidth)
         , Height(InHeight)
         , MinDepth(InMinDepth)
@@ -206,12 +206,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetScissorRect
+// FRHICommandSetScissorRect
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetScissorRect)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetScissorRect)
 {
 public:
-    FORCEINLINE CRHICommandSetScissorRect(float InWidth, float InHeight, float InX, float InY)
+    FORCEINLINE FRHICommandSetScissorRect(float InWidth, float InHeight, float InX, float InY)
         : Width(InWidth)
         , Height(InHeight)
         , x(InX)
@@ -230,12 +230,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetBlendFactor
+// FRHICommandSetBlendFactor
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetBlendFactor)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetBlendFactor)
 {
 public:
-    FORCEINLINE CRHICommandSetBlendFactor(const TStaticArray<float, 4>&InColor)
+    FORCEINLINE FRHICommandSetBlendFactor(const TStaticArray<float, 4>&InColor)
         : Color(InColor)
     { }
 
@@ -248,12 +248,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetVertexBuffers
+// FRHICommandSetVertexBuffers
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetVertexBuffers)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetVertexBuffers)
 {
 public:
-    FORCEINLINE CRHICommandSetVertexBuffers(CRHIVertexBuffer* const* InVertexBuffers, uint32 InVertexBufferCount, uint32 InStartSlot)
+    FORCEINLINE FRHICommandSetVertexBuffers(FRHIVertexBuffer* const* InVertexBuffers, uint32 InVertexBufferCount, uint32 InStartSlot)
         : VertexBuffers(InVertexBuffers)
         , VertexBufferCount(InVertexBufferCount)
         , StartSlot(InStartSlot)
@@ -264,18 +264,18 @@ public:
         CommandContext.SetVertexBuffers(VertexBuffers, VertexBufferCount, StartSlot);
     }
 
-    CRHIVertexBuffer* const* VertexBuffers;
+    FRHIVertexBuffer* const* VertexBuffers;
     uint32                   VertexBufferCount;
     uint32                   StartSlot;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetIndexBuffer
+// FRHICommandSetIndexBuffer
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetIndexBuffer)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetIndexBuffer)
 {
 public:
-    FORCEINLINE CRHICommandSetIndexBuffer(FRHIIndexBuffer* InIndexBuffer)
+    FORCEINLINE FRHICommandSetIndexBuffer(FRHIIndexBuffer* InIndexBuffer)
         : IndexBuffer(InIndexBuffer)
     { }
 
@@ -288,12 +288,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetPrimitiveTopology
+// FRHICommandSetPrimitiveTopology
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetPrimitiveTopology)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetPrimitiveTopology)
 {
 public:
-    FORCEINLINE CRHICommandSetPrimitiveTopology(EPrimitiveTopology InPrimitiveTopologyType)
+    FORCEINLINE FRHICommandSetPrimitiveTopology(EPrimitiveTopology InPrimitiveTopologyType)
         : PrimitiveTopologyType(InPrimitiveTopologyType)
     { }
 
@@ -306,12 +306,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetGraphicsPipelineState
+// FRHICommandSetGraphicsPipelineState
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetGraphicsPipelineState)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetGraphicsPipelineState)
 {
 public:
-    FORCEINLINE CRHICommandSetGraphicsPipelineState(FRHIGraphicsPipelineState* InPipelineState)
+    FORCEINLINE FRHICommandSetGraphicsPipelineState(FRHIGraphicsPipelineState* InPipelineState)
         : PipelineState(InPipelineState)
     { }
 
@@ -324,12 +324,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetComputePipelineState
+// FRHICommandSetComputePipelineState
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetComputePipelineState)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetComputePipelineState)
 {
 public:
-    FORCEINLINE CRHICommandSetComputePipelineState(FRHIComputePipelineState* InPipelineState)
+    FORCEINLINE FRHICommandSetComputePipelineState(FRHIComputePipelineState* InPipelineState)
         : PipelineState(InPipelineState)
     { }
 
@@ -342,12 +342,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSet32BitShaderConstants
+// FRHICommandSet32BitShaderConstants
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSet32BitShaderConstants)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSet32BitShaderConstants)
 {
 public:
-    FORCEINLINE CRHICommandSet32BitShaderConstants(FRHIShader* InShader, const void* InShader32BitConstants, uint32 InNum32BitConstants)
+    FORCEINLINE FRHICommandSet32BitShaderConstants(FRHIShader* InShader, const void* InShader32BitConstants, uint32 InNum32BitConstants)
         : Shader(InShader)
         , Shader32BitConstants(InShader32BitConstants)
         , Num32BitConstants(InNum32BitConstants)
@@ -364,12 +364,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetShaderResourceView
+// FRHICommandSetShaderResourceView
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetShaderResourceView)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetShaderResourceView)
 {
 public:
-    FORCEINLINE CRHICommandSetShaderResourceView(FRHIShader* InShader, FRHIShaderResourceView* InShaderResourceView, uint32 InParameterIndex)
+    FORCEINLINE FRHICommandSetShaderResourceView(FRHIShader* InShader, FRHIShaderResourceView* InShaderResourceView, uint32 InParameterIndex)
         : Shader(InShader)
         , ShaderResourceView(InShaderResourceView)
         , ParameterIndex(InParameterIndex)
@@ -386,12 +386,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetShaderResourceViews
+// FRHICommandSetShaderResourceViews
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetShaderResourceViews)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetShaderResourceViews)
 {
 public:
-    FORCEINLINE CRHICommandSetShaderResourceViews( FRHIShader* InShader
+    FORCEINLINE FRHICommandSetShaderResourceViews( FRHIShader* InShader
                                                  , FRHIShaderResourceView* const* InShaderResourceViews
                                                  , uint32 InNumShaderResourceViews
                                                  , uint32 InStartParameterIndex)
@@ -413,12 +413,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetUnorderedAccessView
+// FRHICommandSetUnorderedAccessView
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetUnorderedAccessView)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetUnorderedAccessView)
 {
 public:
-    FORCEINLINE CRHICommandSetUnorderedAccessView(FRHIShader* InShader, FRHIUnorderedAccessView* InUnorderedAccessView, uint32 InParameterIndex)
+    FORCEINLINE FRHICommandSetUnorderedAccessView(FRHIShader* InShader, FRHIUnorderedAccessView* InUnorderedAccessView, uint32 InParameterIndex)
         : Shader(InShader)
         , UnorderedAccessView(InUnorderedAccessView)
         , ParameterIndex(InParameterIndex)
@@ -435,12 +435,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetUnorderedAccessViews
+// FRHICommandSetUnorderedAccessViews
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetUnorderedAccessViews)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetUnorderedAccessViews)
 {
 public:
-    FORCEINLINE CRHICommandSetUnorderedAccessViews( FRHIShader* InShader
+    FORCEINLINE FRHICommandSetUnorderedAccessViews( FRHIShader* InShader
                                                   , FRHIUnorderedAccessView* const* InUnorderedAccessViews
                                                   , uint32 InNumUnorderedAccessViews
                                                   , uint32 InStartParameterIndex)
@@ -462,12 +462,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetConstantBuffer
+// FRHICommandSetConstantBuffer
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetConstantBuffer)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetConstantBuffer)
 {
 public:
-    FORCEINLINE CRHICommandSetConstantBuffer(FRHIShader* InShader, FRHIConstantBuffer* InConstantBuffer, uint32 InParameterIndex)
+    FORCEINLINE FRHICommandSetConstantBuffer(FRHIShader* InShader, FRHIConstantBuffer* InConstantBuffer, uint32 InParameterIndex)
         : Shader(InShader)
         , ConstantBuffer(InConstantBuffer)
         , ParameterIndex(InParameterIndex)
@@ -484,12 +484,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetConstantBuffers
+// FRHICommandSetConstantBuffers
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetConstantBuffers)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetConstantBuffers)
 {
 public:
-    FORCEINLINE CRHICommandSetConstantBuffers( FRHIShader* InShader
+    FORCEINLINE FRHICommandSetConstantBuffers( FRHIShader* InShader
                                              , FRHIConstantBuffer* const* InConstantBuffers
                                              , uint32 InNumConstantBuffers
                                              , uint32 InStartParameterIndex)
@@ -511,12 +511,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetSamplerState
+// FRHICommandSetSamplerState
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetSamplerState)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetSamplerState)
 {
 public:
-    FORCEINLINE CRHICommandSetSamplerState(FRHIShader* InShader, FRHISamplerState* InSamplerState, uint32 InParameterIndex)
+    FORCEINLINE FRHICommandSetSamplerState(FRHIShader* InShader, FRHISamplerState* InSamplerState, uint32 InParameterIndex)
         : Shader(InShader)
         , SamplerState(InSamplerState)
         , ParameterIndex(InParameterIndex)
@@ -533,12 +533,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetSamplerStates
+// FRHICommandSetSamplerStates
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetSamplerStates)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetSamplerStates)
 {
 public:
-    FORCEINLINE CRHICommandSetSamplerStates(FRHIShader* InShader, FRHISamplerState* const* InSamplerStates, uint32 InNumSamplerStates, uint32 InStartParameterIndex)
+    FORCEINLINE FRHICommandSetSamplerStates(FRHIShader* InShader, FRHISamplerState* const* InSamplerStates, uint32 InNumSamplerStates, uint32 InStartParameterIndex)
         : Shader(InShader)
         , SamplerStates(InSamplerStates)
         , NumSamplerStates(InNumSamplerStates)
@@ -557,12 +557,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandUpdateBuffer
+// FRHICommandUpdateBuffer
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandUpdateBuffer)
+DECLARE_RHICOMMAND_CLASS(FRHICommandUpdateBuffer)
 {
 public:
-    FORCEINLINE CRHICommandUpdateBuffer(FRHIBuffer* InDst, uint32 InDstOffset, uint32 InSize, const void* InSrcData)
+    FORCEINLINE FRHICommandUpdateBuffer(FRHIBuffer* InDst, uint32 InDstOffset, uint32 InSize, const void* InSrcData)
         : Dst(InDst)
         , DstOffset(InDstOffset)
         , Size(InSize)
@@ -581,12 +581,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandUpdateTexture2D
+// FRHICommandUpdateTexture2D
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandUpdateTexture2D)
+DECLARE_RHICOMMAND_CLASS(FRHICommandUpdateTexture2D)
 {
 public:
-    FORCEINLINE CRHICommandUpdateTexture2D(FRHITexture2D* InDst, uint16 InWidth, uint16 InHeight, uint16 InMipLevel, const void* InSrcData)
+    FORCEINLINE FRHICommandUpdateTexture2D(FRHITexture2D* InDst, uint16 InWidth, uint16 InHeight, uint16 InMipLevel, const void* InSrcData)
         : Dst(InDst)
         , Width(InWidth)
         , Height(InHeight)
@@ -607,12 +607,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandResolveTexture
+// FRHICommandResolveTexture
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandResolveTexture)
+DECLARE_RHICOMMAND_CLASS(FRHICommandResolveTexture)
 {
 public:
-    FORCEINLINE CRHICommandResolveTexture(FRHITexture* InDst, FRHITexture* InSrc)
+    FORCEINLINE FRHICommandResolveTexture(FRHITexture* InDst, FRHITexture* InSrc)
         : Dst(InDst)
         , Src(InSrc)
     { }
@@ -627,12 +627,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandResolveTexture
+// FRHICommandResolveTexture
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandCopyBuffer)
+DECLARE_RHICOMMAND_CLASS(FRHICommandCopyBuffer)
 {
 public:
-    FORCEINLINE CRHICommandCopyBuffer(FRHIBuffer* InDst, FRHIBuffer* InSrc, const SRHICopyBufferInfo& InCopyBufferInfo)
+    FORCEINLINE FRHICommandCopyBuffer(FRHIBuffer* InDst, FRHIBuffer* InSrc, const FRHICopyBufferInfo& InCopyBufferInfo)
         : Dst(InDst)
         , Src(InSrc)
         , CopyBufferInfo(InCopyBufferInfo)
@@ -645,16 +645,16 @@ public:
 
     FRHIBuffer*        Dst;
     FRHIBuffer*        Src;
-    SRHICopyBufferInfo CopyBufferInfo;
+    FRHICopyBufferInfo CopyBufferInfo;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandCopyTexture
+// FRHICommandCopyTexture
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandCopyTexture)
+DECLARE_RHICOMMAND_CLASS(FRHICommandCopyTexture)
 {
 public:
-    FORCEINLINE CRHICommandCopyTexture(FRHITexture* InDestination, FRHITexture* InSource)
+    FORCEINLINE FRHICommandCopyTexture(FRHITexture* InDestination, FRHITexture* InSource)
         : Destination(InDestination)
         , Source(InSource)
     { }
@@ -669,12 +669,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandCopyTextureRegion
+// FRHICommandCopyTextureRegion
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandCopyTextureRegion)
+DECLARE_RHICOMMAND_CLASS(FRHICommandCopyTextureRegion)
 {
 public:
-    FORCEINLINE CRHICommandCopyTextureRegion(FRHITexture* InDst, FRHITexture* InSrc, const SRHICopyTextureInfo& InCopyInfo)
+    FORCEINLINE FRHICommandCopyTextureRegion(FRHITexture* InDst, FRHITexture* InSrc, const FRHICopyTextureInfo& InCopyInfo)
         : Dst(InDst)
         , Src(InSrc)
         , CopyInfo(InCopyInfo)
@@ -687,16 +687,16 @@ public:
 
     FRHITexture*        Dst;
     FRHITexture*        Src;
-    SRHICopyTextureInfo CopyInfo;
+    FRHICopyTextureInfo CopyInfo;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandDestroyResource
+// FRHICommandDestroyResource
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandDestroyResource)
+DECLARE_RHICOMMAND_CLASS(FRHICommandDestroyResource)
 {
 public:
-    FORCEINLINE CRHICommandDestroyResource(IRHIResource* InResource)
+    FORCEINLINE FRHICommandDestroyResource(IRHIResource* InResource)
         : Resource(InResource)
     { }
 
@@ -709,12 +709,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandDiscardContents
+// FRHICommandDiscardContents
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandDiscardContents)
+DECLARE_RHICOMMAND_CLASS(FRHICommandDiscardContents)
 {
 public:
-    FORCEINLINE CRHICommandDiscardContents(FRHITexture* InTexture)
+    FORCEINLINE FRHICommandDiscardContents(FRHITexture* InTexture)
         : Texture(InTexture)
     { }
 
@@ -727,13 +727,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandBuildRayTracingGeometry
+// FRHICommandBuildRayTracingGeometry
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandBuildRayTracingGeometry)
+DECLARE_RHICOMMAND_CLASS(FRHICommandBuildRayTracingGeometry)
 {
 public:
-    FORCEINLINE CRHICommandBuildRayTracingGeometry( FRHIRayTracingGeometry* InGeometry
-                                                  , CRHIVertexBuffer* InVertexBuffer
+    FORCEINLINE FRHICommandBuildRayTracingGeometry( FRHIRayTracingGeometry* InGeometry
+                                                  , FRHIVertexBuffer* InVertexBuffer
                                                   , FRHIIndexBuffer* InIndexBuffer
                                                   , bool bInUpdate)
         : Geometry(InGeometry)
@@ -748,18 +748,18 @@ public:
     }
 
     FRHIRayTracingGeometry* Geometry;
-    CRHIVertexBuffer*       VertexBuffer;
+    FRHIVertexBuffer*       VertexBuffer;
     FRHIIndexBuffer*        IndexBuffer; 
     bool                    bUpdate;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandBuildRayTracingScene
+// FRHICommandBuildRayTracingScene
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandBuildRayTracingScene)
+DECLARE_RHICOMMAND_CLASS(FRHICommandBuildRayTracingScene)
 {
 public:
-    FORCEINLINE CRHICommandBuildRayTracingScene( FRHIRayTracingScene* InScene
+    FORCEINLINE FRHICommandBuildRayTracingScene( FRHIRayTracingScene* InScene
                                                , const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances
                                                , bool bInUpdate)
         : Scene(InScene)
@@ -779,12 +779,12 @@ public:
 
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetRayTracingBindings
+// FRHICommandSetRayTracingBindings
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetRayTracingBindings)
+DECLARE_RHICOMMAND_CLASS(FRHICommandSetRayTracingBindings)
 {
 public:
-    FORCEINLINE CRHICommandSetRayTracingBindings( FRHIRayTracingScene* InRayTracingScene
+    FORCEINLINE FRHICommandSetRayTracingBindings( FRHIRayTracingScene* InRayTracingScene
                                                 , FRHIRayTracingPipelineState* InPipelineState
                                                 , const FRayTracingShaderResources* InGlobalResource
                                                 , const FRayTracingShaderResources* InRayGenLocalResources
@@ -821,12 +821,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandGenerateMips
+// FRHICommandGenerateMips
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandGenerateMips)
+DECLARE_RHICOMMAND_CLASS(FRHICommandGenerateMips)
 {
 public:
-    FORCEINLINE CRHICommandGenerateMips(FRHITexture* InTexture)
+    FORCEINLINE FRHICommandGenerateMips(FRHITexture* InTexture)
         : Texture(InTexture)
     { }
 
@@ -839,12 +839,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandTransitionTexture
+// FRHICommandTransitionTexture
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandTransitionTexture)
+DECLARE_RHICOMMAND_CLASS(FRHICommandTransitionTexture)
 {
 public:
-    FORCEINLINE CRHICommandTransitionTexture(FRHITexture* InTexture, EResourceAccess InBeforeState, EResourceAccess InAfterState)
+    FORCEINLINE FRHICommandTransitionTexture(FRHITexture* InTexture, EResourceAccess InBeforeState, EResourceAccess InAfterState)
         : Texture(InTexture)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
@@ -861,12 +861,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandTransitionBuffer
+// FRHICommandTransitionBuffer
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandTransitionBuffer)
+DECLARE_RHICOMMAND_CLASS(FRHICommandTransitionBuffer)
 {
 public:
-    FORCEINLINE CRHICommandTransitionBuffer(FRHIBuffer* InBuffer, EResourceAccess InBeforeState, EResourceAccess InAfterState)
+    FORCEINLINE FRHICommandTransitionBuffer(FRHIBuffer* InBuffer, EResourceAccess InBeforeState, EResourceAccess InAfterState)
         : Buffer(InBuffer)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
@@ -883,12 +883,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandUnorderedAccessTextureBarrier
+// FRHICommandUnorderedAccessTextureBarrier
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandUnorderedAccessTextureBarrier)
+DECLARE_RHICOMMAND_CLASS(FRHICommandUnorderedAccessTextureBarrier)
 {
 public:
-    FORCEINLINE CRHICommandUnorderedAccessTextureBarrier(FRHITexture* InTexture)
+    FORCEINLINE FRHICommandUnorderedAccessTextureBarrier(FRHITexture* InTexture)
         : Texture(InTexture)
     { }
 
@@ -901,12 +901,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandUnorderedAccessBufferBarrier
+// FRHICommandUnorderedAccessBufferBarrier
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandUnorderedAccessBufferBarrier)
+DECLARE_RHICOMMAND_CLASS(FRHICommandUnorderedAccessBufferBarrier)
 {
 public:
-    FORCEINLINE CRHICommandUnorderedAccessBufferBarrier(FRHIBuffer* InBuffer)
+    FORCEINLINE FRHICommandUnorderedAccessBufferBarrier(FRHIBuffer* InBuffer)
         : Buffer(InBuffer)
     { }
 
@@ -919,12 +919,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandDraw
+// FRHICommandDraw
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandDraw)
+DECLARE_RHICOMMAND_CLASS(FRHICommandDraw)
 {
 public:
-    FORCEINLINE CRHICommandDraw(uint32 InVertexCount, uint32 InStartVertexLocation)
+    FORCEINLINE FRHICommandDraw(uint32 InVertexCount, uint32 InStartVertexLocation)
         : VertexCount(InVertexCount)
         , StartVertexLocation(InStartVertexLocation)
     { }
@@ -939,12 +939,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandDrawIndexed
+// FRHICommandDrawIndexed
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandDrawIndexed)
+DECLARE_RHICOMMAND_CLASS(FRHICommandDrawIndexed)
 {
 public:
-    FORCEINLINE CRHICommandDrawIndexed(uint32 InIndexCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation)
+    FORCEINLINE FRHICommandDrawIndexed(uint32 InIndexCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation)
         : IndexCount(InIndexCount)
         , StartIndexLocation(InStartIndexLocation)
         , BaseVertexLocation(InBaseVertexLocation)
@@ -961,12 +961,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandDrawInstanced
+// FRHICommandDrawInstanced
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandDrawInstanced)
+DECLARE_RHICOMMAND_CLASS(FRHICommandDrawInstanced)
 {
 public:
-    FORCEINLINE CRHICommandDrawInstanced(uint32 InVertexCountPerInstance, uint32 InInstanceCount, uint32 InStartVertexLocation, uint32 InStartInstanceLocation)
+    FORCEINLINE FRHICommandDrawInstanced(uint32 InVertexCountPerInstance, uint32 InInstanceCount, uint32 InStartVertexLocation, uint32 InStartInstanceLocation)
         : VertexCountPerInstance(InVertexCountPerInstance)
         , InstanceCount(InInstanceCount)
         , StartVertexLocation(InStartVertexLocation)
@@ -985,12 +985,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandDrawIndexedInstanced
+// FRHICommandDrawIndexedInstanced
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandDrawIndexedInstanced)
+DECLARE_RHICOMMAND_CLASS(FRHICommandDrawIndexedInstanced)
 {
 public:
-    FORCEINLINE CRHICommandDrawIndexedInstanced(uint32 InIndexCountPerInstance
+    FORCEINLINE FRHICommandDrawIndexedInstanced(uint32 InIndexCountPerInstance
                                                 , uint32 InInstanceCount
                                                 , uint32 InStartIndexLocation
                                                 , uint32 InBaseVertexLocation
@@ -1015,12 +1015,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandDispatch
+// FRHICommandDispatch
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandDispatch)
+DECLARE_RHICOMMAND_CLASS(FRHICommandDispatch)
 {
 public:
-    FORCEINLINE CRHICommandDispatch(uint32 InThreadGroupCountX, uint32 InThreadGroupCountY, uint32 InThreadGroupCountZ)
+    FORCEINLINE FRHICommandDispatch(uint32 InThreadGroupCountX, uint32 InThreadGroupCountY, uint32 InThreadGroupCountZ)
         : ThreadGroupCountX(InThreadGroupCountX)
         , ThreadGroupCountY(InThreadGroupCountY)
         , ThreadGroupCountZ(InThreadGroupCountZ)
@@ -1037,12 +1037,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandDispatchRays
+// FRHICommandDispatchRays
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandDispatchRays)
+DECLARE_RHICOMMAND_CLASS(FRHICommandDispatchRays)
 {
 public:
-    FORCEINLINE CRHICommandDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
+    FORCEINLINE FRHICommandDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
         : Scene(InScene)
         , PipelineState(InPipelineState)
         , Width(InWidth)
@@ -1063,12 +1063,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandInsertMarker
+// FRHICommandInsertMarker
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandInsertMarker)
+DECLARE_RHICOMMAND_CLASS(FRHICommandInsertMarker)
 {
 public:
-    FORCEINLINE CRHICommandInsertMarker(const String& InMarker)
+    FORCEINLINE FRHICommandInsertMarker(const String& InMarker)
         : Marker(InMarker)
     { }
 
@@ -1083,13 +1083,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandDebugBreak
+// FRHICommandDebugBreak
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandDebugBreak)
+DECLARE_RHICOMMAND_CLASS(FRHICommandDebugBreak)
 {
 public:
 
-    CRHICommandDebugBreak() = default;
+    FRHICommandDebugBreak() = default;
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1099,13 +1099,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandBeginExternalCapture
+// FRHICommandBeginExternalCapture
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandBeginExternalCapture)
+DECLARE_RHICOMMAND_CLASS(FRHICommandBeginExternalCapture)
 {
 public:
 
-    CRHICommandBeginExternalCapture() = default;
+    FRHICommandBeginExternalCapture() = default;
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1114,13 +1114,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandEndExternalCapture
+// FRHICommandEndExternalCapture
 
-DECLARE_RHICOMMAND_CLASS(CRHICommandEndExternalCapture)
+DECLARE_RHICOMMAND_CLASS(FRHICommandEndExternalCapture)
 {
 public:
 
-    CRHICommandEndExternalCapture() = default;
+    FRHICommandEndExternalCapture() = default;
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {

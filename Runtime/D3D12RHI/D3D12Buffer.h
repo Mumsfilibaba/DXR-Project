@@ -29,12 +29,12 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12VertexBuffer
 
-class FD3D12VertexBuffer : public CRHIVertexBuffer, public FD3D12Buffer
+class FD3D12VertexBuffer : public FRHIVertexBuffer, public FD3D12Buffer
 {
 public:
 
     FD3D12VertexBuffer(FD3D12Device* InDevice, const FRHIVertexBufferInitializer& Initializer)
-        : CRHIVertexBuffer(Initializer)
+        : FRHIVertexBuffer(Initializer)
         , FD3D12Buffer(InDevice)
         , View()
     { }
@@ -42,7 +42,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIVertexBuffer Interface
+    // FRHIVertexBuffer Interface
 
     virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<FD3D12Buffer*>(this)); }
 

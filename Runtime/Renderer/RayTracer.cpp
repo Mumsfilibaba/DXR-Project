@@ -105,7 +105,7 @@ void CRayTracer::Release()
     RayClosestHitShader.Reset();
 }
 
-void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources, const CScene& Scene)
+void CRayTracer::PreRender(FRHICommandList& CmdList, SFrameResources& Resources, const CScene& Scene)
 {
     UNREFERENCED_VARIABLE(Scene);
 

@@ -63,7 +63,7 @@ void CMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
 {
 }
 
-void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer)
+void CMetalCommandContext::BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer)
 {
     Check(GraphicsEncoder      == nil);
     Check(RenderPassDescriptor == nil);
@@ -164,7 +164,7 @@ void CMetalCommandContext::SetBlendFactor(const TStaticArray<float, 4>& Color)
 {
 }
 
-void CMetalCommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
+void CMetalCommandContext::SetVertexBuffers(FRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
 {
 }
 
@@ -232,7 +232,7 @@ void CMetalCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
 }
 
-void CMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo)
+void CMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo)
 {
     CMetalBuffer* MetalDst = GetMetalBuffer(Dst);
     CMetalBuffer* MetalSrc = GetMetalBuffer(Src);
@@ -270,7 +270,7 @@ void CMetalCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     CopyContext.FinishContext();
 }
 
-void CMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo)
+void CMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo)
 {
 }
 
@@ -282,7 +282,7 @@ void CMetalCommandContext::DiscardContents(class FRHITexture* Texture)
 {
 }
 
-void CMetalCommandContext::BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)
+void CMetalCommandContext::BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)
 {
 }
 

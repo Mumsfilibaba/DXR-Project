@@ -256,7 +256,7 @@ bool CEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
-    CRHICommandQueue::Get().WaitForGPU();
+    FRHICommandQueue::Get().WaitForGPU();
 
     CGPUProfiler::Release();
 

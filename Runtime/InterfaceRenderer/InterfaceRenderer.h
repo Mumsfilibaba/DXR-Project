@@ -28,7 +28,7 @@ public:
     virtual void EndTick() override final;
 
      /** @brief: Render all the UI for this frame */
-    virtual void Render(class CRHICommandList& Commandlist) override final;
+    virtual void Render(class FRHICommandList& Commandlist) override final;
 
 private:
 
@@ -41,7 +41,7 @@ private:
     TSharedRef<FRHIGraphicsPipelineState> PipelineState;
     TSharedRef<FRHIGraphicsPipelineState> PipelineStateNoBlending;
     TSharedRef<FRHIPixelShader>           PShader;
-    TSharedRef<CRHIVertexBuffer>          VertexBuffer;
+    TSharedRef<FRHIVertexBuffer>          VertexBuffer;
     TSharedRef<FRHIIndexBuffer>           IndexBuffer;
     TSharedRef<FRHISamplerState>          PointSampler;
 };

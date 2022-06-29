@@ -13,7 +13,7 @@ public:
     FD3D12TimestampQuery(FD3D12Device* InDevice);
     ~FD3D12TimestampQuery() = default;
 
-    virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const override final;
+    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final;
 
     virtual uint64 GetFrequency() const override final
     {
@@ -41,7 +41,7 @@ private:
     TSharedRef<FD3D12Resource>      WriteResource;
 
     TArray<TSharedRef<FD3D12Resource>> ReadResources;
-    TArray<SRHITimestamp> TimeQueries;
+    TArray<FRHITimestamp> TimeQueries;
 
     UINT64 Frequency;
 };

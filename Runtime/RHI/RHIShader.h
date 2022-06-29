@@ -81,7 +81,7 @@ inline const char* ToString(EShaderStage ShaderStage)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIShader
 
-class FRHIShader : public CRHIResource
+class FRHIShader : public FRHIResource
 {
 protected:
 
@@ -122,7 +122,7 @@ protected:
 public:
 
     /** @return: Returns a vector with the number of threads in each dimension */
-    virtual CIntVector3 GetThreadGroupXYZ() const = 0;
+    virtual FIntVector3 GetThreadGroupXYZ() const = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

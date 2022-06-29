@@ -16,7 +16,7 @@ class CNullRHIShaderResourceView : public FRHIShaderResourceView
 {
 public:
 
-    explicit CNullRHIShaderResourceView(CRHIResource* InResource)
+    explicit CNullRHIShaderResourceView(FRHIResource* InResource)
         : FRHIShaderResourceView(InResource)
     { }
 
@@ -30,7 +30,7 @@ class CNullRHIUnorderedAccessView : public FRHIUnorderedAccessView
 {
 public:
 
-    explicit CNullRHIUnorderedAccessView(CRHIResource* InResource)
+    explicit CNullRHIUnorderedAccessView(FRHIResource* InResource)
         : FRHIUnorderedAccessView(InResource)
     { }
 

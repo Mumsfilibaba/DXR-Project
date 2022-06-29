@@ -86,7 +86,7 @@ void CLightProbeRenderer::Release()
     SpecularIrradianceGenShader.Reset();
 }
 
-void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources)
+void CLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources)
 {
     const uint32 IrradianceMapSize = static_cast<uint32>(LightSetup.IrradianceMap->GetWidth());
 
@@ -100,7 +100,7 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
     CmdList.SetUnorderedAccessView(IrradianceGenShader.Get(), LightSetup.IrradianceMapUAV.Get(), 0);
 
     {
-        const CIntVector3 ThreadCount = IrradianceGenShader->GetThreadGroupXYZ();
+        const FIntVector3 ThreadCount = IrradianceGenShader->GetThreadGroupXYZ();
         const uint32 ThreadWidth  = NMath::DivideByMultiple(IrradianceMapSize, ThreadCount.x);
         const uint32 ThreadHeight = NMath::DivideByMultiple(IrradianceMapSize, ThreadCount.y);
         CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
@@ -126,7 +126,7 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
         CmdList.SetUnorderedAccessView(SpecularIrradianceGenShader.Get(), LightSetup.SpecularIrradianceMapUAVs[Mip].Get(), 0);
 
         {
-            const CIntVector3 ThreadCount = SpecularIrradianceGenShader->GetThreadGroupXYZ();
+            const FIntVector3 ThreadCount = SpecularIrradianceGenShader->GetThreadGroupXYZ();
             const uint32 ThreadWidth  = NMath::DivideByMultiple(Width, ThreadCount.x);
             const uint32 ThreadHeight = NMath::DivideByMultiple(Width, ThreadCount.y);
             CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);

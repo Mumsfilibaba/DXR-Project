@@ -16,7 +16,7 @@ FD3D12TimestampQuery::FD3D12TimestampQuery(FD3D12Device* InDevice)
 {
 }
 
-void FD3D12TimestampQuery::GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const
+void FD3D12TimestampQuery::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const
 {
     if (Index >= (uint32)TimeQueries.Size())
     {
@@ -123,7 +123,7 @@ FD3D12TimestampQuery* FD3D12TimestampQuery::Create(FD3D12Device* InDevice)
     Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
     Desc.Format             = DXGI_FORMAT_UNKNOWN;
     Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(SRHITimestamp);
+    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FRHITimestamp);
     Desc.Height             = 1;
     Desc.DepthOrArraySize   = 1;
     Desc.MipLevels          = 1;
@@ -164,7 +164,7 @@ bool FD3D12TimestampQuery::AllocateReadResource()
     Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
     Desc.Format             = DXGI_FORMAT_UNKNOWN;
     Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(SRHITimestamp);
+    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FRHITimestamp);
     Desc.Height             = 1;
     Desc.DepthOrArraySize   = 1;
     Desc.MipLevels          = 1;

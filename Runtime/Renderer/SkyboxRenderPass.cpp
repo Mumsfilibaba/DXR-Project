@@ -17,7 +17,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
 {
     SkyboxMesh = CMeshFactory::CreateSphere(1);
 
-    CRHIBufferDataInitializer VertexData(SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes());
+    FRHIBufferDataInitializer VertexData(SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes());
 
     FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, SkyboxMesh.Vertices.Size(), sizeof(SVertex), EResourceAccess::VertexAndConstantBuffer, &VertexData);
     SkyboxVertexBuffer = RHICreateVertexBuffer(VBInitializer);
@@ -30,7 +30,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         SkyboxVertexBuffer->SetName("Skybox VertexBuffer");
     }
 
-    CRHIBufferDataInitializer IndexData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
+    FRHIBufferDataInitializer IndexData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
 
     FRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint32, SkyboxMesh.Indices.Size(), EResourceAccess::IndexBuffer, &IndexData);
     SkyboxIndexBuffer = RHICreateIndexBuffer(IBInitializer);
@@ -170,7 +170,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     return true;
 }
 
-void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene)
+void CSkyboxRenderPass::Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
 
@@ -182,7 +182,7 @@ void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& 
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
 
 
-    CRHIRenderPassInitializer RenderPass;
+    FRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
     RenderPass.NumRenderTargets = 1;
     RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);

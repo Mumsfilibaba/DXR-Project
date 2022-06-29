@@ -2,9 +2,9 @@
 #include "RHIResourceBase.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHITimestamp
+// FRHITimestamp
 
-struct SRHITimestamp
+struct FRHITimestamp
 {
     uint64 Begin;
     uint64 End;
@@ -13,7 +13,7 @@ struct SRHITimestamp
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITimestampQuery
 
-class FRHITimestampQuery : public CRHIResource
+class FRHITimestampQuery : public FRHIResource
 {
 protected:
 
@@ -28,7 +28,7 @@ public:
      * @param OutQuery: Structure to store the timestamp in
      * @param Index: Index of the query to retrieve 
      */
-    virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const = 0;
+    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const = 0;
 
     /**
      * @brief: Get the frequency of the queue that the query where used on 

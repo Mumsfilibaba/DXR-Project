@@ -201,10 +201,10 @@ public:
 
     virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<CMetalShader*>(this)); }
 
-    virtual CIntVector3 GetThreadGroupXYZ() const override final { return ThreadGroupXYZ; }
+    virtual FIntVector3 GetThreadGroupXYZ() const override final { return ThreadGroupXYZ; }
 
 protected:
-    CIntVector3 ThreadGroupXYZ;
+    FIntVector3 ThreadGroupXYZ;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

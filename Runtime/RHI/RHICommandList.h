@@ -19,14 +19,14 @@ class FRHIShader;
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCommandAllocator
+// FCommandAllocator
 
-class RHI_API CCommandAllocator
+class RHI_API FCommandAllocator
 {
 public:
 
-    CCommandAllocator(uint32 StartSize = 4096);
-    ~CCommandAllocator();
+    FCommandAllocator(uint32 StartSize = 4096);
+    ~FCommandAllocator();
 
     void* Allocate(uint64 SizeInBytes, uint64 Alignment = STANDARD_ALIGNMENT);
 
@@ -70,9 +70,9 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandQueue
+// FRHICommandQueue
 
-class RHI_API CRHICommandQueue
+class RHI_API FRHICommandQueue
 {
 public:
 
@@ -81,14 +81,14 @@ public:
      * 
      * @return: Returns the instance of the RHICommandQueue
      */
-    static CRHICommandQueue& Get();
+    static FRHICommandQueue& Get();
 
     /**
      * @brief: Execute a single RHICommandList
      * 
      * @param CmdList: CommandList to execute
      */
-    void ExecuteCommandList(class CRHICommandList& CmdList);
+    void ExecuteCommandList(class FRHICommandList& CmdList);
 
     /**
      * @brief: Execute multiple RHICommandLists
@@ -96,7 +96,7 @@ public:
      * @param CmdLists: CommandLists to execute
      * @param NumCmdLists: Number of CommandLists to execute
      */
-    void ExecuteCommandLists(class CRHICommandList* const* CmdLists, uint32 NumCmdLists);
+    void ExecuteCommandLists(class FRHICommandList* const* CmdLists, uint32 NumCmdLists);
 
     /**
      * @brief: Wait for the GPU to finish all submitted operations
@@ -156,11 +156,11 @@ public:
 
 private:
 
-    CRHICommandQueue();
-    ~CRHICommandQueue() = default;
+    FRHICommandQueue();
+    ~FRHICommandQueue() = default;
 
     /** Internal function for executing the CommandList */
-    void InternalExecuteCommandList(class CRHICommandList& CmdList);
+    void InternalExecuteCommandList(class FRHICommandList& CmdList);
 
     FORCEINLINE void ResetStatistics()
     {
@@ -176,22 +176,22 @@ private:
     uint32              NumDispatchCalls;
     uint32              NumCommands;
 
-    static CRHICommandQueue Instance;
+    static FRHICommandQueue Instance;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandList
+// FRHICommandList
 
-class CRHICommandList
+class FRHICommandList
 {
-    friend class CRHICommandQueue;
+    friend class FRHICommandQueue;
 
 public:
 
     /**
      * @brief: Default constructor
      */
-    CRHICommandList()
+    FRHICommandList()
         : CmdAllocator()
         , FirstCommand(nullptr)
         , LastCommand(nullptr)
@@ -203,7 +203,7 @@ public:
     /**
      * @brief: Destructor
      */
-    ~CRHICommandList()
+    ~FRHICommandList()
     {
         Reset();
     }
@@ -216,7 +216,7 @@ public:
      */
     void BeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
     {
-        InsertCommand<CRHICommandBeginTimeStamp>(TimestampQuery, Index);
+        InsertCommand<FRHICommandBeginTimeStamp>(TimestampQuery, Index);
     }
 
     /**
@@ -227,7 +227,7 @@ public:
      */
     void EndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
     {
-        InsertCommand<CRHICommandEndTimeStamp>(TimestampQuery, Index);
+        InsertCommand<FRHICommandEndTimeStamp>(TimestampQuery, Index);
     }
 
     /**
@@ -239,7 +239,7 @@ public:
     void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
     {
         Check(RenderTargetView.Texture != nullptr);
-        InsertCommand<CRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
+        InsertCommand<FRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
 
     /**
@@ -251,7 +251,7 @@ public:
     void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
     {
         Check(DepthStencilView.Texture != nullptr);
-        InsertCommand<CRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
+        InsertCommand<FRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
     }
 
     /**
@@ -263,17 +263,17 @@ public:
     void ClearUnorderedAccessView(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor)
     {
         Check(UnorderedAccessView != nullptr);
-        InsertCommand<CRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
+        InsertCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
 
     /**
      * @brief: Begin a RenderPass
      */
-    void BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer)
+    void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer)
     {
         Check(bIsRenderPassActive == false);
 
-        InsertCommand<CRHICommandBeginRenderPass>(RenderPassInitializer);
+        InsertCommand<FRHICommandBeginRenderPass>(RenderPassInitializer);
         bIsRenderPassActive = true;
     }
 
@@ -284,7 +284,7 @@ public:
     {
         Check(bIsRenderPassActive == true);
 
-        InsertCommand<CRHICommandEndRenderPass>();
+        InsertCommand<FRHICommandEndRenderPass>();
         bIsRenderPassActive = false;
     }
 
@@ -300,7 +300,7 @@ public:
      */
     void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
     {
-        InsertCommand<CRHICommandSetViewport>(Width, Height, MinDepth, MaxDepth, x, y);
+        InsertCommand<FRHICommandSetViewport>(Width, Height, MinDepth, MaxDepth, x, y);
     }
 
     /**
@@ -313,7 +313,7 @@ public:
      */
     void SetScissorRect(float Width, float Height, float x, float y)
     {
-        InsertCommand<CRHICommandSetScissorRect>(Width, Height, x, y);
+        InsertCommand<FRHICommandSetScissorRect>(Width, Height, x, y);
     }
 
     /**
@@ -323,7 +323,7 @@ public:
      */
     void SetBlendFactor(const TStaticArray<float, 4>& Color)
     {
-        InsertCommand<CRHICommandSetBlendFactor>(Color);
+        InsertCommand<FRHICommandSetBlendFactor>(Color);
     }
 
     /**
@@ -333,7 +333,7 @@ public:
      * @param VertexBufferCount: Number of VertexBuffers in the array
      * @param BufferSlot: Slot to start bind the array to
      */
-    void SetVertexBuffers(CRHIVertexBuffer* const* InVertexBuffers, uint32 NumVertexBuffers, uint32 BufferSlot)
+    void SetVertexBuffers(FRHIVertexBuffer* const* InVertexBuffers, uint32 NumVertexBuffers, uint32 BufferSlot)
     {
         bool bNeedsBinding = false;
         for (uint32 Index = 0; Index < NumVertexBuffers; ++Index)
@@ -349,7 +349,7 @@ public:
 
         if (bNeedsBinding)
         {
-            CRHIVertexBuffer** TempVertexBuffers = CmdAllocator.Allocate<CRHIVertexBuffer*>(NumVertexBuffers);
+            FRHIVertexBuffer** TempVertexBuffers = CmdAllocator.Allocate<FRHIVertexBuffer*>(NumVertexBuffers);
             if (InVertexBuffers)
             {
                 FMemory::MemcpyTyped(TempVertexBuffers, InVertexBuffers, NumVertexBuffers);
@@ -359,7 +359,7 @@ public:
                 FMemory::Memzero(TempVertexBuffers, NumVertexBuffers);
             }
 
-            InsertCommand<CRHICommandSetVertexBuffers>(TempVertexBuffers, NumVertexBuffers, BufferSlot);
+            InsertCommand<FRHICommandSetVertexBuffers>(TempVertexBuffers, NumVertexBuffers, BufferSlot);
         }
     }
 
@@ -370,7 +370,7 @@ public:
      */
     void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer)
     {
-        InsertCommand<CRHICommandSetIndexBuffer>(IndexBuffer);
+        InsertCommand<FRHICommandSetIndexBuffer>(IndexBuffer);
     }
 
     /**
@@ -380,7 +380,7 @@ public:
      */
     void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
     {
-        InsertCommand<CRHICommandSetPrimitiveTopology>(PrimitveTopologyType);
+        InsertCommand<FRHICommandSetPrimitiveTopology>(PrimitveTopologyType);
     }
 
     /**
@@ -390,7 +390,7 @@ public:
      */
     void SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)
     {
-        InsertCommand<CRHICommandSetGraphicsPipelineState>(PipelineState);
+        InsertCommand<FRHICommandSetGraphicsPipelineState>(PipelineState);
     }
 
     /**
@@ -400,7 +400,7 @@ public:
      */
     void SetComputePipelineState(FRHIComputePipelineState* PipelineState)
     {
-        InsertCommand<CRHICommandSetComputePipelineState>(PipelineState);
+        InsertCommand<FRHICommandSetComputePipelineState>(PipelineState);
     }
 
     /**
@@ -417,7 +417,7 @@ public:
         void* Shader32BitConstantsMemory = CmdAllocator.Allocate(Num32BitConstantsInBytes, 1);
         FMemory::Memcpy(Shader32BitConstantsMemory, Shader32BitConstants, Num32BitConstantsInBytes);
 
-        InsertCommand<CRHICommandSet32BitShaderConstants>(Shader, Shader32BitConstantsMemory, Num32BitConstants);
+        InsertCommand<FRHICommandSet32BitShaderConstants>(Shader, Shader32BitConstantsMemory, Num32BitConstants);
     }
 
     /**
@@ -429,7 +429,7 @@ public:
      */
     void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
     {
-        InsertCommand<CRHICommandSetShaderResourceView>(Shader, ShaderResourceView, ParameterIndex);
+        InsertCommand<FRHICommandSetShaderResourceView>(Shader, ShaderResourceView, ParameterIndex);
     }
 
     /**
@@ -453,7 +453,7 @@ public:
             FMemory::Memzero(TempShaderResourceViews, NumShaderResourceViews);
         }
 
-        InsertCommand<CRHICommandSetShaderResourceViews>(Shader, TempShaderResourceViews, NumShaderResourceViews, ParameterIndex);
+        InsertCommand<FRHICommandSetShaderResourceViews>(Shader, TempShaderResourceViews, NumShaderResourceViews, ParameterIndex);
     }
 
     /**
@@ -465,7 +465,7 @@ public:
      */
     void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
     {
-        InsertCommand<CRHICommandSetUnorderedAccessView>(Shader, UnorderedAccessView, ParameterIndex);
+        InsertCommand<FRHICommandSetUnorderedAccessView>(Shader, UnorderedAccessView, ParameterIndex);
     }
 
     /**
@@ -489,7 +489,7 @@ public:
             FMemory::Memzero(TempUnorderedAccessViews, NumUnorderedAccessViews);
         }
 
-        InsertCommand<CRHICommandSetUnorderedAccessViews>(Shader, TempUnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
+        InsertCommand<FRHICommandSetUnorderedAccessViews>(Shader, TempUnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
     }
 
     /**
@@ -501,7 +501,7 @@ public:
      */
     void SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
     {
-        InsertCommand<CRHICommandSetConstantBuffer>(Shader, ConstantBuffer, ParameterIndex);
+        InsertCommand<FRHICommandSetConstantBuffer>(Shader, ConstantBuffer, ParameterIndex);
     }
 
     /**
@@ -525,7 +525,7 @@ public:
             FMemory::Memzero(TempConstantBuffers, NumConstantBuffers);
         }
 
-        InsertCommand<CRHICommandSetConstantBuffers>(Shader, TempConstantBuffers, NumConstantBuffers, ParameterIndex);
+        InsertCommand<FRHICommandSetConstantBuffers>(Shader, TempConstantBuffers, NumConstantBuffers, ParameterIndex);
     }
 
     /**
@@ -537,7 +537,7 @@ public:
      */
     void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
     {
-        InsertCommand<CRHICommandSetSamplerState>(Shader, SamplerState, ParameterIndex);
+        InsertCommand<FRHICommandSetSamplerState>(Shader, SamplerState, ParameterIndex);
     }
 
     /**
@@ -561,7 +561,7 @@ public:
             FMemory::Memzero(TempSamplerStates, NumSamplerStates);
         }
 
-        InsertCommand<CRHICommandSetSamplerStates>(Shader, TempSamplerStates, NumSamplerStates, ParameterIndex);
+        InsertCommand<FRHICommandSetSamplerStates>(Shader, TempSamplerStates, NumSamplerStates, ParameterIndex);
     }
 
     /**
@@ -577,7 +577,7 @@ public:
         void* TempSourceData = CmdAllocator.Allocate(SizeInBytes);
         FMemory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
-        InsertCommand<CRHICommandUpdateBuffer>(Dst, DestinationOffsetInBytes, SizeInBytes, TempSourceData);
+        InsertCommand<FRHICommandUpdateBuffer>(Dst, DestinationOffsetInBytes, SizeInBytes, TempSourceData);
     }
 
     /**
@@ -596,7 +596,7 @@ public:
         void* TempSourceData = CmdAllocator.Allocate(SizeInBytes);
         FMemory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
-        InsertCommand<CRHICommandUpdateTexture2D>(Dst, Width, Height, MipLevel, TempSourceData);
+        InsertCommand<FRHICommandUpdateTexture2D>(Dst, Width, Height, MipLevel, TempSourceData);
     }
 
     /**
@@ -607,7 +607,7 @@ public:
      */
     void ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     {
-        InsertCommand<CRHICommandResolveTexture>(Dst, Src);
+        InsertCommand<FRHICommandResolveTexture>(Dst, Src);
     }
 
     /**
@@ -617,9 +617,9 @@ public:
      * @param Src: Source buffer to copy from
      * @param CopyInfo: Information about the copy operation
      */
-    void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo)
+    void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo)
     {
-        InsertCommand<CRHICommandCopyBuffer>(Dst, Src, CopyInfo);
+        InsertCommand<FRHICommandCopyBuffer>(Dst, Src, CopyInfo);
     }
 
     /**
@@ -630,7 +630,7 @@ public:
      */
     void CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     {
-        InsertCommand<CRHICommandCopyTexture>(Dst, Src);
+        InsertCommand<FRHICommandCopyTexture>(Dst, Src);
     }
 
     /**
@@ -640,9 +640,9 @@ public:
      * @param Src: Source texture
      * @param CopyTextureInfo: Information about the copy operation
      */
-    void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo)
+    void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo)
     {
-        InsertCommand<CRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
+        InsertCommand<FRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
     }
 
     /**
@@ -652,7 +652,7 @@ public:
      */
     void DestroyResource(IRHIResource* Resource)
     {
-        InsertCommand<CRHICommandDestroyResource>(Resource);
+        InsertCommand<FRHICommandDestroyResource>(Resource);
     }
 
     /**
@@ -662,7 +662,7 @@ public:
      */
     void DiscardContents(FRHITexture* Texture)
     {
-        InsertCommand<CRHICommandDiscardContents>(Texture);
+        InsertCommand<FRHICommandDiscardContents>(Texture);
     }
 
     /**
@@ -673,10 +673,10 @@ public:
      * @param IndexBuffer: IndexBuffer to build Geometry of
      * @param bUpdate: True if the build should be an update, false if it should build from the ground up
      */
-    void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)
+    void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)
     {
         Check((Geometry != nullptr) && (!bUpdate || (bUpdate && (Geometry->GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)));
-        InsertCommand<CRHICommandBuildRayTracingGeometry>(Geometry, VertexBuffer, IndexBuffer, bUpdate);
+        InsertCommand<FRHICommandBuildRayTracingGeometry>(Geometry, VertexBuffer, IndexBuffer, bUpdate);
     }
 
     /**
@@ -689,7 +689,7 @@ public:
     void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
     {
         Check((Scene != nullptr) && (!bUpdate || (bUpdate && (Scene->GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)));
-        InsertCommand<CRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);
+        InsertCommand<FRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);
     }
 
     // TODO: Refactor
@@ -701,7 +701,7 @@ public:
                               , const FRayTracingShaderResources* HitGroupResources
                               , uint32 NumHitGroupResources)
     {
-        InsertCommand<CRHICommandSetRayTracingBindings>(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
+        InsertCommand<FRHICommandSetRayTracingBindings>(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
 
     /**
@@ -712,7 +712,7 @@ public:
     void GenerateMips(FRHITexture* Texture)
     {
         Check(Texture != nullptr);
-        InsertCommand<CRHICommandGenerateMips>(Texture);
+        InsertCommand<FRHICommandGenerateMips>(Texture);
     }
 
     /**
@@ -726,7 +726,7 @@ public:
     {
         if (BeforeState != AfterState)
         {
-            InsertCommand<CRHICommandTransitionTexture>(Texture, BeforeState, AfterState);
+            InsertCommand<FRHICommandTransitionTexture>(Texture, BeforeState, AfterState);
         }
         else
         {
@@ -747,7 +747,7 @@ public:
 
         if (BeforeState != AfterState)
         {
-            InsertCommand<CRHICommandTransitionBuffer>(Buffer, BeforeState, AfterState);
+            InsertCommand<FRHICommandTransitionBuffer>(Buffer, BeforeState, AfterState);
         }
         else
         {
@@ -763,7 +763,7 @@ public:
     void UnorderedAccessTextureBarrier(FRHITexture* Texture)
     {
         Check(Texture != nullptr);
-        InsertCommand<CRHICommandUnorderedAccessTextureBarrier>(Texture);
+        InsertCommand<FRHICommandUnorderedAccessTextureBarrier>(Texture);
     }
 
     /**
@@ -774,7 +774,7 @@ public:
     void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
     {
         Check(Buffer != nullptr);
-        InsertCommand<CRHICommandUnorderedAccessBufferBarrier>(Buffer);
+        InsertCommand<FRHICommandUnorderedAccessBufferBarrier>(Buffer);
     }
 
     /**
@@ -785,7 +785,7 @@ public:
      */
     void Draw(uint32 VertexCount, uint32 StartVertexLocation)
     {
-        InsertCommand<CRHICommandDraw>(VertexCount, StartVertexLocation);
+        InsertCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);
         NumDrawCalls++;
     }
 
@@ -798,7 +798,7 @@ public:
      */
     void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
     {
-        InsertCommand<CRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
+        InsertCommand<FRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
         NumDrawCalls++;
     }
 
@@ -812,7 +812,7 @@ public:
      */
     void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
     {
-        InsertCommand<CRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+        InsertCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
         NumDrawCalls++;
     }
 
@@ -827,7 +827,7 @@ public:
      */
     void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
     {
-        InsertCommand<CRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+        InsertCommand<FRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
         NumDrawCalls++;
     }
 
@@ -840,7 +840,7 @@ public:
      */
     void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
     {
-        InsertCommand<CRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+        InsertCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
         NumDispatchCalls++;
     }
 
@@ -855,7 +855,7 @@ public:
      */
     void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
     {
-        InsertCommand<CRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
+        InsertCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
     }
 
     /**
@@ -865,7 +865,7 @@ public:
      */
     void InsertMarker(const String& Marker)
     {
-        InsertCommand<CRHICommandInsertMarker>(Marker);
+        InsertCommand<FRHICommandInsertMarker>(Marker);
     }
     
     /**
@@ -873,7 +873,7 @@ public:
      */
     void DebugBreak()
     {
-        InsertCommand<CRHICommandDebugBreak>();
+        InsertCommand<FRHICommandDebugBreak>();
     }
 
     /**
@@ -881,7 +881,7 @@ public:
      */
     void BeginExternalCapture()
     {
-        InsertCommand<CRHICommandBeginExternalCapture>();
+        InsertCommand<FRHICommandBeginExternalCapture>();
     }
 
     /**
@@ -889,7 +889,7 @@ public:
      */
     void EndExternalCapture()
     {
-        InsertCommand<CRHICommandEndExternalCapture>();
+        InsertCommand<FRHICommandEndExternalCapture>();
     }
 
     /**
@@ -899,12 +899,12 @@ public:
     {
         if (FirstCommand != nullptr)
         {
-            CRHICommand* Command = FirstCommand;
+            FRHICommand* Command = FirstCommand;
             while (Command != nullptr)
             {
-                CRHICommand* PreviousCommand = Command;
+                FRHICommand* PreviousCommand = Command;
                 Command = Command->NextCommand;
-                PreviousCommand->~CRHICommand();
+                PreviousCommand->~FRHICommand();
             }
 
             FirstCommand = nullptr;
@@ -974,10 +974,10 @@ private:
 
 private:
 
-    CCommandAllocator CmdAllocator;
+    FCommandAllocator CmdAllocator;
 
-    CRHICommand*      FirstCommand;
-    CRHICommand*      LastCommand;
+    FRHICommand*      FirstCommand;
+    FRHICommand*      LastCommand;
 
     uint32            NumDrawCalls     = 0;
     uint32            NumDispatchCalls = 0;
@@ -985,5 +985,5 @@ private:
 
     bool              bIsRenderPassActive = false;
 
-    TStaticArray<CRHIVertexBuffer*, kRHIMaxVertexBuffers> VertexBuffers;
+    TStaticArray<FRHIVertexBuffer*, kRHIMaxVertexBuffers> VertexBuffers;
 };

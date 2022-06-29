@@ -204,7 +204,7 @@ bool CRenderer::Init()
 
     LightProbeRenderer.RenderSkyLightProbe(MainCmdList, LightSetup, Resources);
 
-    CRHICommandQueue::Get().ExecuteCommandList(MainCmdList);
+    FRHICommandQueue::Get().ExecuteCommandList(MainCmdList);
 
     CCanvasApplication& Application = CCanvasApplication::Get();
 
@@ -363,7 +363,7 @@ void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
     }
 }
 
-void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
+void CRenderer::PerformFXAA(FRHICommandList& InCmdList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin FXAA");
 
@@ -380,7 +380,7 @@ void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
     Settings.Width  = static_cast<float>(Resources.BackBuffer->GetWidth());
     Settings.Height = static_cast<float>(Resources.BackBuffer->GetHeight());
 
-    CRHIRenderPassInitializer RenderPass;
+    FRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
     RenderPass.RenderTargets[0].ClearValue = CFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPass.NumRenderTargets            = 1;
@@ -410,13 +410,13 @@ void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End FXAA");
 }
 
-void CRenderer::PerformBackBufferBlit(CRHICommandList& InCmdList)
+void CRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin Draw BackBuffer");
 
     TRACE_SCOPE("Draw to BackBuffer");
 
-    CRHIRenderPassInitializer RenderPass;
+    FRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
     RenderPass.RenderTargets[0].ClearValue = CFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPass.NumRenderTargets            = 1;
@@ -435,7 +435,7 @@ void CRenderer::PerformBackBufferBlit(CRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End Draw BackBuffer");
 }
 
-void CRenderer::PerformAABBDebugPass(CRHICommandList& InCmdList)
+void CRenderer::PerformAABBDebugPass(FRHICommandList& InCmdList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin DebugPass");
 
@@ -773,7 +773,7 @@ void CRenderer::Tick(const CScene& Scene)
         }
 #endif
 
-        CRHIRenderPassInitializer RenderPass;
+        FRHIRenderPassInitializer RenderPass;
         RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
         RenderPass.NumRenderTargets = 1;
 
@@ -801,7 +801,7 @@ void CRenderer::Tick(const CScene& Scene)
     {
         TRACE_SCOPE("ExecuteCommandList");
 
-        CRHICommandList* CmdLists[9] =
+        FRHICommandList* CmdLists[9] =
         {
             &PreShadowsCmdList,
             &PointShadowCmdList,
@@ -814,11 +814,11 @@ void CRenderer::Tick(const CScene& Scene)
             &MainCmdList
         };
 
-        CRHICommandQueue::Get().ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
+        FRHICommandQueue::Get().ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
 
-        FrameStatistics.NumDrawCalls      = CRHICommandQueue::Get().GetNumDrawCalls();
-        FrameStatistics.NumDispatchCalls  = CRHICommandQueue::Get().GetNumDispatchCalls();
-        FrameStatistics.NumRenderCommands = CRHICommandQueue::Get().GetNumCommands();
+        FrameStatistics.NumDrawCalls      = FRHICommandQueue::Get().GetNumDrawCalls();
+        FrameStatistics.NumDispatchCalls  = FRHICommandQueue::Get().GetNumDispatchCalls();
+        FrameStatistics.NumRenderCommands = FRHICommandQueue::Get().GetNumCommands();
     }
 
     {
@@ -829,7 +829,7 @@ void CRenderer::Tick(const CScene& Scene)
 
 void CRenderer::Release()
 {
-    CRHICommandQueue::Get().WaitForGPU();
+    FRHICommandQueue::Get().WaitForGPU();
 
     PreShadowsCmdList.Reset();
     PointShadowCmdList.Reset();
@@ -1032,7 +1032,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         CVector3(-0.5f,  0.5f, -0.5f)
     };
 
-    CRHIBufferDataInitializer VertexData(Vertices.Data(), Vertices.SizeInBytes());
+    FRHIBufferDataInitializer VertexData(Vertices.Data(), Vertices.SizeInBytes());
 
     FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, Vertices.Size(), sizeof(CVector3), EResourceAccess::Common, &VertexData);
     AABBVertexBuffer = RHICreateVertexBuffer(VBInitializer);
@@ -1063,7 +1063,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         2, 7,
     };
 
-    CRHIBufferDataInitializer IndexData(Indices.Data(), Indices.SizeInBytes());
+    FRHIBufferDataInitializer IndexData(Indices.Data(), Indices.SizeInBytes());
 
     FRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint16, Indices.Size(), EResourceAccess::Common, &IndexData);
     AABBIndexBuffer = RHICreateIndexBuffer(IBInitializer);

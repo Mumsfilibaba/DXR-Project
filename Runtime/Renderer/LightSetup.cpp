@@ -84,7 +84,7 @@ bool SLightSetup::Init()
     return true;
 }
 
-void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
+void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
 {
     PointLightsPosRad.Clear();
     PointLightsData.Clear();

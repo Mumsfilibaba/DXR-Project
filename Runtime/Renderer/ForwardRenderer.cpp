@@ -111,7 +111,7 @@ void CForwardRenderer::Release()
     PShader.Reset();
 }
 
-void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup)
+void CForwardRenderer::Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup)
 {
     // Forward Pass
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin ForwardPass");
@@ -128,7 +128,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
-    CRHIRenderPassInitializer RenderPass;
+    FRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
     RenderPass.NumRenderTargets = 1;
     RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);

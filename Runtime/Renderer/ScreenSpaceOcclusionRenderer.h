@@ -17,7 +17,7 @@ public:
     bool Init(SFrameResources& FrameResources);
     void Release();
 
-    void Render(CRHICommandList& CmdList, SFrameResources& FrameResources);
+    void Render(FRHICommandList& CmdList, SFrameResources& FrameResources);
 
     bool ResizeResources(SFrameResources& FrameResources);
 

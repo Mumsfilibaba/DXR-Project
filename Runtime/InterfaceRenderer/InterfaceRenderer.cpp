@@ -264,7 +264,7 @@ void CInterfaceRenderer::EndTick()
     ImGui::EndFrame();
 }
 
-void CInterfaceRenderer::Render(CRHICommandList& CmdList)
+void CInterfaceRenderer::Render(FRHICommandList& CmdList)
 {
     // Render ImgGui draw data
     ImGui::Render();

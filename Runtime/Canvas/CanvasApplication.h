@@ -224,7 +224,7 @@ public:
     /**
      * @brief: Draw all InterfaceWindows
      */
-    void DrawWindows(class CRHICommandList& InCommandList);
+    void DrawWindows(class FRHICommandList& InCommandList);
 
     /**
      * @brief: Sets the platform application used to dispatch messages from the platform

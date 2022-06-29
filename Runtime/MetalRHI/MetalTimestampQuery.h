@@ -13,9 +13,9 @@ public:
     CMetalTimestampQuery() = default;
     ~CMetalTimestampQuery() = default;
 
-    virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const override final
+    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final
     {
-        OutQuery = SRHITimestamp();
+        OutQuery = FRHITimestamp();
     }
 
     virtual uint64 GetFrequency() const override final

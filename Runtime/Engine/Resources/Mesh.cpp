@@ -15,7 +15,7 @@ bool CMesh::Init(const SMeshData& Data)
 
     const EBufferUsageFlags BufferFlags = bRTOn ? (EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default) : EBufferUsageFlags::Default;
 
-    CRHIBufferDataInitializer InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
+    FRHIBufferDataInitializer InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
     
     FRHIVertexBufferInitializer VBInitializer(BufferFlags, VertexCount, sizeof(SVertex), EResourceAccess::VertexAndConstantBuffer, &InitialData);
     VertexBuffer = RHICreateVertexBuffer(VBInitializer);
@@ -40,11 +40,11 @@ bool CMesh::Init(const SMeshData& Data)
             NewIndicies.Emplace(uint16(Index));
         }
 
-        InitialData = CRHIBufferDataInitializer(NewIndicies.Data(), NewIndicies.SizeInBytes());
+        InitialData = FRHIBufferDataInitializer(NewIndicies.Data(), NewIndicies.SizeInBytes());
     }
     else
     {
-        InitialData = CRHIBufferDataInitializer(Data.Indices.Data(), Data.Indices.SizeInBytes());
+        InitialData = FRHIBufferDataInitializer(Data.Indices.Data(), Data.Indices.SizeInBytes());
     }
 
     FRHIIndexBufferInitializer IndexBufferInitializer(BufferFlags, IndexFormat, IndexCount, EResourceAccess::IndexBuffer, &InitialData);
@@ -90,7 +90,7 @@ bool CMesh::Init(const SMeshData& Data)
     return true;
 }
 
-bool CMesh::BuildAccelerationStructure(CRHICommandList& CmdList)
+bool CMesh::BuildAccelerationStructure(FRHICommandList& CmdList)
 {
     CmdList.BuildRayTracingGeometry(RTGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), true);
     return true;

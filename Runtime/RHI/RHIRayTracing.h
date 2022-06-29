@@ -172,7 +172,7 @@ public:
         , IndexBuffer(nullptr)
     { }
 
-    FRHIRayTracingGeometryInitializer(CRHIVertexBuffer* InVertexBuffer, FRHIIndexBuffer* InIndexBuffer, EAccelerationStructureBuildFlags InFlags)
+    FRHIRayTracingGeometryInitializer(FRHIVertexBuffer* InVertexBuffer, FRHIIndexBuffer* InIndexBuffer, EAccelerationStructureBuildFlags InFlags)
         : CRHIAccelerationStructureInitializer(InFlags)
         , VertexBuffer(InVertexBuffer)
         , IndexBuffer(InIndexBuffer)
@@ -190,7 +190,7 @@ public:
         return !(*this == RHS);
     }
 
-    CRHIVertexBuffer* VertexBuffer;
+    FRHIVertexBuffer* VertexBuffer;
     FRHIIndexBuffer*  IndexBuffer;
 };
 
@@ -227,12 +227,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIAccelerationStructure
 
-class CRHIAccelerationStructure : public CRHIResource
+class CRHIAccelerationStructure : public FRHIResource
 {
 protected:
 
     explicit CRHIAccelerationStructure(const CRHIAccelerationStructureInitializer& Initializer)
-        : CRHIResource()
+        : FRHIResource()
         , Flags(Initializer.Flags)
     { }
 

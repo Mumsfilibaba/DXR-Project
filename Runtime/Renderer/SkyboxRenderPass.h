@@ -17,7 +17,7 @@ public:
 
     bool Init(SFrameResources& FrameResources);
 
-    void Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene);
+    void Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene);
 
     void Release();
 
@@ -25,7 +25,7 @@ private:
     TSharedRef<FRHIGraphicsPipelineState> PipelineState;
     TSharedRef<FRHIVertexShader> SkyboxVertexShader;
     TSharedRef<FRHIPixelShader>  SkyboxPixelShader;
-    TSharedRef<CRHIVertexBuffer> SkyboxVertexBuffer;
+    TSharedRef<FRHIVertexBuffer> SkyboxVertexBuffer;
     TSharedRef<FRHIIndexBuffer>  SkyboxIndexBuffer;
     TSharedRef<FRHISamplerState> SkyboxSampler;
 

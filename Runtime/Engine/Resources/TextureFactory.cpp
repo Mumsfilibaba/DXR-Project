@@ -16,7 +16,7 @@ struct TextureFactoryData
 {
     TSharedRef<FRHIComputePipelineState> PanoramaPSO;
     TSharedRef<FRHIComputeShader>        ComputeShader;
-    CRHICommandList CmdList;
+    FRHICommandList CmdList;
 };
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -142,7 +142,7 @@ FRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
 
     Check(RowPitch > 0);
 
-    CRHITextureDataInitializer InitalData(Pixels, Format, Width, Height);
+    FRHITextureDataInitializer InitalData(Pixels, Format, Width, Height);
 
     FRHITexture2DInitializer Initializer(Format, Width, Height, NumMips, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::PixelShaderResource, &InitalData);
     TSharedRef<FRHITexture2D> Texture = RHICreateTexture2D(Initializer);
@@ -154,12 +154,12 @@ FRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
 
     if (GenerateMips)
     {
-        CRHICommandList& CmdList = GlobalFactoryData.CmdList;
+        FRHICommandList& CmdList = GlobalFactoryData.CmdList;
         CmdList.TransitionTexture(Texture.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
         CmdList.GenerateMips(Texture.Get());
         CmdList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-        CRHICommandQueue::Get().ExecuteCommandList(CmdList);
+        FRHICommandQueue::Get().ExecuteCommandList(CmdList);
     }
 
     return Texture.ReleaseOwnership();
@@ -203,7 +203,7 @@ FRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* Pa
         return nullptr;
     }
 
-    CRHICommandList& CmdList = GlobalFactoryData.CmdList;
+    FRHICommandList& CmdList = GlobalFactoryData.CmdList;
 
     CmdList.TransitionTexture(PanoramaSource, EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
     CmdList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
@@ -240,7 +240,7 @@ FRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* Pa
 
     CmdList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-    CRHICommandQueue::Get().ExecuteCommandList(CmdList);
+    FRHICommandQueue::Get().ExecuteCommandList(CmdList);
 
     return Texture.ReleaseOwnership();
 }

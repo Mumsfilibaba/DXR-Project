@@ -341,12 +341,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIResourceView
 
-class CRHIResourceView : public CRHIResource
+class CRHIResourceView : public FRHIResource
 {
 protected:
 
-    explicit CRHIResourceView(CRHIResource* InResource)
-        : CRHIResource()
+    explicit CRHIResourceView(FRHIResource* InResource)
+        : FRHIResource()
         , Resource(InResource)
     { }
 
@@ -354,10 +354,10 @@ protected:
 
 public:
 
-    CRHIResource* GetResource() const { return Resource; }
+    FRHIResource* GetResource() const { return Resource; }
 
 protected:
-    CRHIResource* Resource;
+    FRHIResource* Resource;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -367,7 +367,7 @@ class FRHIShaderResourceView : public CRHIResourceView
 {
 protected:
 
-    explicit FRHIShaderResourceView(CRHIResource* InResource)
+    explicit FRHIShaderResourceView(FRHIResource* InResource)
         : CRHIResourceView(InResource)
     { }
 
@@ -385,7 +385,7 @@ class FRHIUnorderedAccessView : public CRHIResourceView
 {
 protected:
 
-    explicit FRHIUnorderedAccessView(CRHIResource* InResource)
+    explicit FRHIUnorderedAccessView(FRHIResource* InResource)
         : CRHIResourceView(InResource)
     { }
 

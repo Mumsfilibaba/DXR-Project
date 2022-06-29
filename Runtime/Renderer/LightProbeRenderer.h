@@ -17,7 +17,7 @@ public:
 
     void Release();
 
-    void RenderSkyLightProbe(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& Resources);
+    void RenderSkyLightProbe(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& Resources);
 
 private:
     bool CreateSkyLightResources(SLightSetup& LightSetup);

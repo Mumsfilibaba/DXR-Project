@@ -427,7 +427,7 @@ void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
     CommandList.ClearUnorderedAccessViewFloat(OnlineHandle_GPU, D3D12UnorderedAccessView, ClearColor.Elements);
 }
 
-void FD3D12CommandContext::BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer)
+void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer)
 {
     D3D12_ERROR_COND(bIsRenderPassActive == false, "A RenderPass is already active");
 
@@ -549,7 +549,7 @@ void FD3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTop
     }
 }
 
-void FD3D12CommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
+void FD3D12CommandContext::SetVertexBuffers(FRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
 {
     D3D12_ERROR_COND(BufferSlot + BufferCount < D3D12_MAX_VERTEX_BUFFER_SLOTS, "Trying to set a VertexBuffer to an invalid slot");
 
@@ -827,7 +827,7 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture2D* Destination, uint32 Wi
     }
 }
 
-void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Destination, FRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo)
+void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Destination, FRHIBuffer* Source, const FRHICopyBufferInfo& CopyInfo)
 {
     D3D12_ERROR_COND(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 
@@ -855,7 +855,7 @@ void FD3D12CommandContext::CopyTexture(FRHITexture* Destination, FRHITexture* So
     CmdBatch->AddInUseResource(Source);
 }
 
-void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Destination, FRHITexture* Source, const SRHICopyTextureInfo& CopyInfo)
+void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Destination, FRHITexture* Source, const FRHICopyTextureInfo& CopyInfo)
 {
     D3D12_ERROR_COND(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 
@@ -911,7 +911,7 @@ void FD3D12CommandContext::DiscardContents(FRHITexture* Texture)
     }
 }
 
-void FD3D12CommandContext::BuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, CRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)
+void FD3D12CommandContext::BuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)
 {
     D3D12_ERROR_COND(RayTracingGeometry != nullptr, "RayTracingGeometry cannot be nullptr");
 

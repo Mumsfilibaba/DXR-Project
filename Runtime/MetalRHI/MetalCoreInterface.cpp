@@ -60,7 +60,7 @@ FRHITextureCube* CMetalCoreInterface::RHICreateTextureCube(const FRHITextureCube
     return CreateTexture<CMetalTextureCube>(Initializer);
 }
 
-CRHITextureCubeArray* CMetalCoreInterface::RHICreateTextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer)
+FRHITextureCubeArray* CMetalCoreInterface::RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer)
 {
     return CreateTexture<CMetalTextureCubeArray>(Initializer);
 }
@@ -84,7 +84,7 @@ MetalTextureType* CMetalCoreInterface::CreateTexture(const InitializerType& Init
     TextureDescriptor.allowGPUOptimizedContents = NO;
     TextureDescriptor.swizzle                   = MTLTextureSwizzleChannelsMake(MTLTextureSwizzleRed, MTLTextureSwizzleGreen, MTLTextureSwizzleBlue, MTLTextureSwizzleAlpha);
     
-    const CIntVector3 Extent = NewTexture->GetExtent();
+    const FIntVector3 Extent = NewTexture->GetExtent();
     TextureDescriptor.width  = Extent.x;
     TextureDescriptor.height = Extent.y;
     
@@ -120,7 +120,7 @@ MetalTextureType* CMetalCoreInterface::CreateTexture(const InitializerType& Init
     
     if constexpr (bIsTexture2D)
     {
-        CRHITextureDataInitializer* InitialData = Initializer.InitialData;
+        FRHITextureDataInitializer* InitialData = Initializer.InitialData;
         if (InitialData)
         {
             MTLRegion Region;
@@ -167,7 +167,7 @@ FRHISamplerState* CMetalCoreInterface::RHICreateSamplerState(const CRHISamplerSt
     return dbg_new CMetalSamplerState();
 }
 
-CRHIVertexBuffer* CMetalCoreInterface::RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
+FRHIVertexBuffer* CMetalCoreInterface::RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
 {
     return CreateBuffer<CMetalVertexBuffer>(Initializer);
 }
@@ -211,7 +211,7 @@ MetalBufferType* CMetalCoreInterface::CreateBuffer(const InitializerType& Initia
     
     NewBuffer->SetMTLBuffer(NewMTLBuffer);
     
-    CRHIBufferDataInitializer* InitialData = Initializer.InitialData;
+    FRHIBufferDataInitializer* InitialData = Initializer.InitialData;
     if (InitialData)
     {
         if (Initializer.IsDynamic())

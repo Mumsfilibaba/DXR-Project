@@ -86,12 +86,12 @@ public:
     virtual FRHITexture2D*           RHICreateTexture2D(const FRHITexture2DInitializer& Initializer) override final;
     virtual FRHITexture2DArray*      RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer) override final;
     virtual FRHITextureCube*         RHICreateTextureCube(const FRHITextureCubeInitializer& Initializer) override final;
-    virtual CRHITextureCubeArray*    RHICreateTextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer) override final;
+    virtual FRHITextureCubeArray*    RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer) override final;
     virtual FRHITexture3D*           RHICreateTexture3D(const FRHITexture3DInitializer& Initializer) override final;
 
     virtual FRHISamplerState*        RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer) override final;
 
-    virtual CRHIVertexBuffer*        RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer) override final;
+    virtual FRHIVertexBuffer*        RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer) override final;
     virtual FRHIIndexBuffer*         RHICreateIndexBuffer(const FRHIIndexBufferInitializer& Initializer) override final;
     virtual FRHIConstantBuffer*      RHICreateConstantBuffer(const FRHIConstantBufferInitializer& Initializer) override final;
     virtual FRHIGenericBuffer*       RHICreateGenericBuffer(const FRHIGenericBufferInitializer& Initializer) override final;

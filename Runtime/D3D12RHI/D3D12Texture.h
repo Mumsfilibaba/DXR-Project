@@ -183,19 +183,19 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12TextureCubeArray
 
-class CD3D12TextureCubeArray : public CRHITextureCubeArray, public FD3D12Texture
+class CD3D12TextureCubeArray : public FRHITextureCubeArray, public FD3D12Texture
 {
 public:
     
-    explicit CD3D12TextureCubeArray(FD3D12Device* InDevice, const CRHITextureCubeArrayInitializer& Initializer)
-        : CRHITextureCubeArray(Initializer)
+    explicit CD3D12TextureCubeArray(FD3D12Device* InDevice, const FRHITextureCubeArrayInitializer& Initializer)
+        : FRHITextureCubeArray(Initializer)
         , FD3D12Texture(InDevice)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITextureCubeArray Interface
+    // FRHITextureCubeArray Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 

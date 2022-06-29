@@ -57,7 +57,7 @@ private:
 class FD3D12ShaderResourceView : public FRHIShaderResourceView, public FD3D12View
 {
 public:
-    FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource);
+    FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource);
     ~FD3D12ShaderResourceView() = default;
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
@@ -74,7 +74,7 @@ private:
 class FD3D12UnorderedAccessView : public FRHIUnorderedAccessView, public FD3D12View
 {
 public:
-    FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource);
+    FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource);
     ~FD3D12UnorderedAccessView() = default;
 
     bool CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);

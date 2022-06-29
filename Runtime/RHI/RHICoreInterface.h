@@ -183,7 +183,7 @@ public:
      * @param Initializer: Struct with information about the TextureCubeArray
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeArray* RHICreateTextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer) = 0;
+    virtual FRHITextureCubeArray* RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a Texture3D
@@ -207,7 +207,7 @@ public:
      * @param Initializer: State that contains information about a VertexBuffer
      * @return: Returns the newly created Buffer
      */
-    virtual CRHIVertexBuffer* RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer) = 0;
+    virtual FRHIVertexBuffer* RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer) = 0;
     
     /**
      * @brief: Creates a IndexBuffer
@@ -513,7 +513,7 @@ FORCEINLINE FRHITextureCube* RHICreateTextureCube(const FRHITextureCubeInitializ
     return GRHIInstance->RHICreateTextureCube(Initializer);
 }
 
-FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer)
+FORCEINLINE FRHITextureCubeArray* RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer)
 {
     return GRHIInstance->RHICreateTextureCubeArray(Initializer);
 }
@@ -528,7 +528,7 @@ FORCEINLINE FRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitia
     return GRHIInstance->RHICreateSamplerState(Initializer);
 }
 
-FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
+FORCEINLINE FRHIVertexBuffer* RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
 {
     return GRHIInstance->RHICreateVertexBuffer(Initializer);
 }

@@ -12,12 +12,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIVertexBuffer
 
-class CNullRHIVertexBuffer : public CRHIVertexBuffer
+class CNullRHIVertexBuffer : public FRHIVertexBuffer
 {
 public:
 
     CNullRHIVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
-        : CRHIVertexBuffer(Initializer)
+        : FRHIVertexBuffer(Initializer)
     { }
 };
 

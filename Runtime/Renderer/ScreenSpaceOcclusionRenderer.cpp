@@ -114,7 +114,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAONoiseTex->SetName("SSAO Noise Texture");
     }
 
-    CRHICommandList CmdList;
+    FRHICommandList CmdList;
 
     CmdList.TransitionTexture(FrameResources.SSAOBuffer.Get(), EResourceAccess::Common, EResourceAccess::NonPixelShaderResource);
     CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::CopyDest);
@@ -123,9 +123,9 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource);
 
-    CRHICommandQueue::Get().ExecuteCommandList(CmdList);
+    FRHICommandQueue::Get().ExecuteCommandList(CmdList);
 
-    CRHIBufferDataInitializer    SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
+    FRHIBufferDataInitializer    SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
     FRHIGenericBufferInitializer SSAOSamplesInitializer( EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default
                                                        , SSAOKernel.SizeInBytes()
                                                        , sizeof(CVector3)
@@ -242,7 +242,7 @@ bool CScreenSpaceOcclusionRenderer::ResizeResources(SFrameResources& FrameResour
     return CreateRenderTarget(FrameResources);
 }
 
-void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResources& FrameResources)
+void CScreenSpaceOcclusionRenderer::Render(FRHICommandList& CmdList, SFrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
 

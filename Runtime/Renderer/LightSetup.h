@@ -85,7 +85,7 @@ struct RENDERER_API SLightSetup
 
     bool Init();
 
-    void BeginFrame(CRHICommandList& CmdList, const CScene& Scene);
+    void BeginFrame(FRHICommandList& CmdList, const CScene& Scene);
     void Release();
 
     TArray<CVector4>        PointLightsPosRad;
@@ -102,7 +102,7 @@ struct RENDERER_API SLightSetup
     TSharedRef<FRHIConstantBuffer> ShadowCastingPointLightsBuffer;
     TSharedRef<FRHIConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
 
-    TSharedRef<CRHITextureCubeArray> PointLightShadowMaps;
+    TSharedRef<FRHITextureCubeArray> PointLightShadowMaps;
 
     // NOTE: Only one directional light
     SDirectionalLightData DirectionalLightData;

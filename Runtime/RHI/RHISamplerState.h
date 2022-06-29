@@ -196,7 +196,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHISamplerState
 
-class FRHISamplerState : public CRHIResource
+class FRHISamplerState : public FRHIResource
 {
 protected:
 

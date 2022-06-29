@@ -13,7 +13,7 @@ class CMetalShaderResourceView : public CMetalObject, public FRHIShaderResourceV
 {
 public:
 
-    explicit CMetalShaderResourceView(CMetalDeviceContext* InDeviceContext, CRHIResource* InResource)
+    explicit CMetalShaderResourceView(CMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
         : CMetalObject(InDeviceContext)
         , FRHIShaderResourceView(InResource)
     { }
@@ -28,7 +28,7 @@ class CMetalUnorderedAccessView : public CMetalObject, public FRHIUnorderedAcces
 {
 public:
 
-    explicit CMetalUnorderedAccessView(CMetalDeviceContext* InDeviceContext, CRHIResource* InResource)
+    explicit CMetalUnorderedAccessView(CMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
         : CMetalObject(InDeviceContext)
         , FRHIUnorderedAccessView(InResource)
     { }

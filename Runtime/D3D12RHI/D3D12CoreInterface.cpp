@@ -262,7 +262,7 @@ D3D12TextureType* FD3D12CoreInterface::CreateTexture(const InitializerType& Init
     Desc.MipLevels        = static_cast<UINT16>(Initializer.NumMips);
     Desc.Alignment        = 0;
     
-    const CIntVector3 Extent = NewTexture->GetExtent();
+    const FIntVector3 Extent = NewTexture->GetExtent();
     Desc.Width            = Extent.x;
     Desc.Height           = Extent.y;
     Desc.DepthOrArraySize = GetDepthOrArraySize<D3D12TextureType>(Extent.z);
@@ -416,7 +416,7 @@ D3D12TextureType* FD3D12CoreInterface::CreateTexture(const InitializerType& Init
 
     if constexpr (bIsTexture2D)
     {
-        CRHITextureDataInitializer* InitialData = Initializer.InitialData;
+        FRHITextureDataInitializer* InitialData = Initializer.InitialData;
         if (InitialData)
         {
             // TODO: Support other types than texture 2D
@@ -463,7 +463,7 @@ FRHITextureCube* FD3D12CoreInterface::RHICreateTextureCube(const FRHITextureCube
     return CreateTexture<FD3D12TextureCube>(Initializer);
 }
 
-CRHITextureCubeArray* FD3D12CoreInterface::RHICreateTextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer)
+FRHITextureCubeArray* FD3D12CoreInterface::RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer)
 {
     return CreateTexture<CD3D12TextureCubeArray>(Initializer);
 }
@@ -552,7 +552,7 @@ D3D12BufferType* FD3D12CoreInterface::CreateBuffer(const InitializerType& Initia
         }
     }
 
-    CRHIBufferDataInitializer* InitialData = Initializer.InitialData;
+    FRHIBufferDataInitializer* InitialData = Initializer.InitialData;
     if (InitialData)
     {
         D3D12_ERROR_COND(InitialData->Size <= Size, "Size of InitialData is larger than the allocated memory");
@@ -601,7 +601,7 @@ D3D12BufferType* FD3D12CoreInterface::CreateBuffer(const InitializerType& Initia
     return NewBuffer.ReleaseOwnership();
 }
 
-CRHIVertexBuffer* FD3D12CoreInterface::RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
+FRHIVertexBuffer* FD3D12CoreInterface::RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
 {
     return CreateBuffer<FD3D12VertexBuffer>(Initializer);
 }

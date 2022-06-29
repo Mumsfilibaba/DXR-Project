@@ -203,7 +203,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIDepthStencilState
 
-class FRHIDepthStencilState : public CRHIResource
+class FRHIDepthStencilState : public FRHIResource
 {
 protected:
 
@@ -348,7 +348,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRasterizerState
 
-class FRHIRasterizerState : public CRHIResource
+class FRHIRasterizerState : public FRHIResource
 {
 protected:
 
@@ -695,7 +695,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIBlendState
 
-class FRHIBlendState : public CRHIResource
+class FRHIBlendState : public FRHIResource
 {
 protected:
 
@@ -813,7 +813,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIVertexInputLayout
 
-class FRHIVertexInputLayout : public CRHIResource
+class FRHIVertexInputLayout : public FRHIResource
 {
 protected:
 
@@ -845,7 +845,7 @@ inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIPipelineState
 
-class CRHIPipelineState : public CRHIResource
+class CRHIPipelineState : public FRHIResource
 {
 protected:
 

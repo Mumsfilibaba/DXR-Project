@@ -83,11 +83,11 @@ public:
 
     void PerformFrustumCullingAndSort(const CScene& Scene);
 
-    void PerformFXAA(CRHICommandList& InCmdList);
+    void PerformFXAA(FRHICommandList& InCmdList);
     
-    void PerformBackBufferBlit(CRHICommandList& InCmdList);
+    void PerformBackBufferBlit(FRHICommandList& InCmdList);
 
-    void PerformAABBDebugPass(CRHICommandList& InCmdList);
+    void PerformAABBDebugPass(FRHICommandList& InCmdList);
 
     FORCEINLINE TSharedRef<CTextureDebugWindow> GetTextureDebugger() const
     {
@@ -120,15 +120,15 @@ private:
     TSharedRef<CRendererInfoWindow> InfoWindow;
     TSharedRef<CGPUProfilerWindow>  GPUProfilerWindow;
 
-    CRHICommandList PreShadowsCmdList;
-    CRHICommandList PointShadowCmdList;
-    CRHICommandList DirShadowCmdList;
-    CRHICommandList PrepareGBufferCmdList;
-    CRHICommandList PrePassCmdList;
-    CRHICommandList ShadingRateCmdList;
-    CRHICommandList RayTracingCmdList;
-    CRHICommandList BasePassCmdList;
-    CRHICommandList MainCmdList;
+    FRHICommandList PreShadowsCmdList;
+    FRHICommandList PointShadowCmdList;
+    FRHICommandList DirShadowCmdList;
+    FRHICommandList PrepareGBufferCmdList;
+    FRHICommandList PrePassCmdList;
+    FRHICommandList ShadingRateCmdList;
+    FRHICommandList RayTracingCmdList;
+    FRHICommandList BasePassCmdList;
+    FRHICommandList MainCmdList;
 
     CAsyncTask PointShadowTask;
     CAsyncTask DirShadowTask;
@@ -151,7 +151,7 @@ private:
     TSharedRef<FRHIComputePipelineState> ShadingRatePipeline;
     TSharedRef<FRHIComputeShader>        ShadingRateShader;
 
-    TSharedRef<CRHIVertexBuffer>          AABBVertexBuffer;
+    TSharedRef<FRHIVertexBuffer>          AABBVertexBuffer;
     TSharedRef<FRHIIndexBuffer>           AABBIndexBuffer;
     TSharedRef<FRHIGraphicsPipelineState> AABBDebugPipelineState;
     TSharedRef<FRHIVertexShader>          AABBVertexShader;

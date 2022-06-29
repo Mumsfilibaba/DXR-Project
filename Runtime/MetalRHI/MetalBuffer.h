@@ -36,13 +36,13 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalVertexBuffer
 
-class CMetalVertexBuffer : public CMetalBuffer, public CRHIVertexBuffer
+class CMetalVertexBuffer : public CMetalBuffer, public FRHIVertexBuffer
 {
 public:
 
     CMetalVertexBuffer(CMetalDeviceContext* DeviceContext, const FRHIVertexBufferInitializer& Initializer)
         : CMetalBuffer(DeviceContext)
-        , CRHIVertexBuffer(Initializer)
+        , FRHIVertexBuffer(Initializer)
     { }
     
 public:

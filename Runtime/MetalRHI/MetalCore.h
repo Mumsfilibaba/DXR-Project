@@ -119,7 +119,7 @@ inline MTLTextureType GetMTLTextureType(FRHITexture* Texture)
     {
         return MTLTextureTypeCube;
     }
-    else if (CRHITextureCubeArray* TextureCubeArray = Texture->GetTextureCubeArray())
+    else if (FRHITextureCubeArray* TextureCubeArray = Texture->GetTextureCubeArray())
     {
         return MTLTextureTypeCubeArray;
     }

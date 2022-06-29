@@ -275,7 +275,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             BRDF_PipelineState->SetName("BRDFIntegationGen PipelineState");
         }
 
-        CRHICommandList CmdList;
+        FRHICommandList CmdList;
 
         CmdList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
@@ -298,7 +298,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
         CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-        CRHICommandQueue::Get().ExecuteCommandList(CmdList);
+        FRHICommandQueue::Get().ExecuteCommandList(CmdList);
     }
 
     {
@@ -442,7 +442,7 @@ void CDeferredRenderer::Release()
     ReduceDepthShader.Reset();
 }
 
-void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene)
+void CDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene)
 {
     const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
@@ -459,7 +459,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
             CMatrix4 Matrix;
         } PerObjectBuffer;
 
-        CRHIRenderPassInitializer RenderPass;
+        FRHIRenderPassInitializer RenderPass;
         RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get());
 
         CmdList.BeginRenderPass(RenderPass);
@@ -558,7 +558,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Depth Reduction");
 }
 
-void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameResources& FrameResources)
+void CDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const SFrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin GeometryPass");
 
@@ -569,7 +569,7 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
     const float RenderWidth = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
 
-    CRHIRenderPassInitializer RenderPass;
+    FRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX].Get());
     RenderPass.RenderTargets[1] = FRHIRenderTargetView(FrameResources.GBuffer[GBUFFER_NORMAL_INDEX].Get());
     RenderPass.RenderTargets[2] = FRHIRenderTargetView(FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX].Get());
@@ -636,7 +636,7 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
 }
 
-void CDeferredRenderer::RenderDeferredTiledLightPass(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup)
+void CDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
 
@@ -703,7 +703,7 @@ void CDeferredRenderer::RenderDeferredTiledLightPass(CRHICommandList& CmdList, c
 
     CmdList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
 
-    const CIntVector3 ThreadsXYZ = LightPassShader->GetThreadGroupXYZ();
+    const FIntVector3 ThreadsXYZ = LightPassShader->GetThreadGroupXYZ();
     const uint32 WorkGroupWidth = NMath::DivideByMultiple<uint32>(Settings.ScreenWidth, ThreadsXYZ.x);
     const uint32 WorkGroupHeight = NMath::DivideByMultiple<uint32>(Settings.ScreenHeight, ThreadsXYZ.y);
     CmdList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
@@ -790,7 +790,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     }
 
     // DepthStencil
-    const CTextureClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
+    const FTextureClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
     TextureInitializer.Format     = FrameResources.DepthBufferFormat;
     TextureInitializer.UsageFlags = ETextureUsageFlags::ShadowMap;
     TextureInitializer.ClearValue = DepthClearValue;

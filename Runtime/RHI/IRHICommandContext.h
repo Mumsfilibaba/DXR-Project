@@ -4,12 +4,12 @@
 #include "RHIResourceViews.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRenderPassInitializer
+// FRHIRenderPassInitializer
 
-class CRHIRenderPassInitializer
+class FRHIRenderPassInitializer
 {
 public:
-    CRHIRenderPassInitializer()
+    FRHIRenderPassInitializer()
         : ShadingRateTexture(nullptr)
         , DepthStencilView()
         , StaticShadingRate(EShadingRate::VRS_1x1)
@@ -17,7 +17,7 @@ public:
         , RenderTargets()
     { }
 
-    CRHIRenderPassInitializer(const TStaticArray<FRHIRenderTargetView, kRHIMaxRenderTargetCount>& InRenderTargets
+    FRHIRenderPassInitializer( const TStaticArray<FRHIRenderTargetView, kRHIMaxRenderTargetCount>& InRenderTargets
                              , uint32 InNumRenderTargets
                              , FRHIDepthStencilView InDepthStencilView
                              , FRHITexture2D* InShadingRateTexture = nullptr
@@ -29,7 +29,7 @@ public:
         , RenderTargets(InRenderTargets)
     { }
 
-    bool operator==(const CRHIRenderPassInitializer& RHS) const
+    bool operator==(const FRHIRenderPassInitializer& RHS) const
     {
         return (NumRenderTargets   == RHS.NumRenderTargets)
             && (RenderTargets      == RHS.RenderTargets)
@@ -38,7 +38,7 @@ public:
             && (StaticShadingRate  == RHS.StaticShadingRate);
     }
 
-    bool operator!=(const CRHIRenderPassInitializer& RHS) const
+    bool operator!=(const FRHIRenderPassInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -104,7 +104,7 @@ public:
      */
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) = 0;
 
-    virtual void BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer) = 0;
+    virtual void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) = 0;
 
     virtual void EndRenderPass() = 0;
 
@@ -144,7 +144,7 @@ public:
      * @param VertexBufferCount: Number of VertexBuffers in the array
      * @param BufferSlot: Slot to start bind the array to
      */
-    virtual void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot) = 0;
+    virtual void SetVertexBuffers(FRHIVertexBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot) = 0;
     
     /**
      * @brief: Set the current IndexBuffer 
@@ -299,7 +299,7 @@ public:
      * @param Src: Source buffer to copy from
      * @param CopyInfo: Information about the copy operation
      */
-    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo) = 0;
+    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo) = 0;
     
     /**
      * @brief: Copies the entire contents of one texture to another, which require the size and formats to be the same 
@@ -316,7 +316,7 @@ public:
      * @param Src: Source texture
      * @param CopyTextureInfo: Information about the copy operation
      */
-    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo) = 0;
+    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) = 0;
 
     /**
      * @brief: Destroys a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command-list is completed
@@ -340,7 +340,7 @@ public:
      * @param IndexBuffer: IndexBuffer to build Geometry of
      * @param bUpdate: True if the build should be an update, false if it should build from the ground up
      */ 
-    virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate) = 0;
+    virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate) = 0;
     
     /**
      * @brief: Builds the Top-Level Acceleration-Structure for ray tracing

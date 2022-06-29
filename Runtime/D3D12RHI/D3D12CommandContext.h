@@ -272,7 +272,7 @@ public:
     virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) override final;
 
-    virtual void BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer) override final;
+    virtual void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) override final;
     virtual void EndRenderPass() override final;
 
     virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final;
@@ -280,7 +280,7 @@ public:
 
     virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) override final;
 
-    virtual void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
+    virtual void SetVertexBuffers(FRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
     virtual void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer) override final;
 
     virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
@@ -307,14 +307,14 @@ public:
 
     virtual void ResolveTexture(FRHITexture* Destination, FRHITexture* Source) override final;
 
-    virtual void CopyBuffer(FRHIBuffer* Destination, FRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo) override final;
+    virtual void CopyBuffer(FRHIBuffer* Destination, FRHIBuffer* Source, const FRHICopyBufferInfo& CopyInfo) override final;
     virtual void CopyTexture(FRHITexture* Destination, FRHITexture* Source) override final;
-    virtual void CopyTextureRegion(FRHITexture* Destination, FRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo) override final;
+    virtual void CopyTextureRegion(FRHITexture* Destination, FRHITexture* Source, const FRHICopyTextureInfo& CopyTextureInfo) override final;
 
     virtual void DestroyResource(class IRHIResource* Resource) override final;
     virtual void DiscardContents(class FRHITexture* Texture) override final;
 
-    virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate) override final;
+    virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate) override final;
     virtual void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final;
 
      /** @brief: Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
