@@ -75,16 +75,11 @@ struct FD3D12AdapterInitializer
         return !(*this == RHS);
     }
 
-    /** @brief: Enable the D3D12 Debug-Layer, without this enabled, GBV and DRED doesn't work */
-    bool bEnableDebugLayer : 1;
-    /** @brief: Enable GPU Based Validation (GBV) */
+    bool bEnableDebugLayer    : 1;
     bool bEnableGPUValidation : 1;
-    /** @brief: Enable Enhanced Device-Lost tracking (DRED) */
-    bool bEnableDRED : 1;
-    /** @brief: Enable PIX */
-    bool bEnablePIX : 1;
-    /** @brief: Prefer High-Performance GPU (Dedicated GPU) */
-    bool bPreferDGPU : 1;
+    bool bEnableDRED          : 1;
+    bool bEnablePIX           : 1;
+    bool bPreferDGPU          : 1;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
