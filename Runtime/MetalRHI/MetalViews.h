@@ -9,13 +9,13 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalShaderResourceView
 
-class CMetalShaderResourceView : public CMetalObject, public CRHIShaderResourceView
+class CMetalShaderResourceView : public CMetalObject, public FRHIShaderResourceView
 {
 public:
 
-    explicit CMetalShaderResourceView(CMetalDeviceContext* InDeviceContext, CRHIResource* InResource)
+    explicit CMetalShaderResourceView(CMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
         : CMetalObject(InDeviceContext)
-        , CRHIShaderResourceView(InResource)
+        , FRHIShaderResourceView(InResource)
     { }
 
     ~CMetalShaderResourceView() = default;
@@ -24,13 +24,13 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalUnorderedAccessView
 
-class CMetalUnorderedAccessView : public CMetalObject, public CRHIUnorderedAccessView
+class CMetalUnorderedAccessView : public CMetalObject, public FRHIUnorderedAccessView
 {
 public:
 
-    explicit CMetalUnorderedAccessView(CMetalDeviceContext* InDeviceContext, CRHIResource* InResource)
+    explicit CMetalUnorderedAccessView(CMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
         : CMetalObject(InDeviceContext)
-        , CRHIUnorderedAccessView(InResource)
+        , FRHIUnorderedAccessView(InResource)
     { }
 
     ~CMetalUnorderedAccessView() = default;

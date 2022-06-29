@@ -7,7 +7,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalSamplerState
 
-class CMetalSamplerState : public CRHISamplerState
+class CMetalSamplerState : public FRHISamplerState
 {
 public:
 
@@ -17,15 +17,9 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHISamplerState Interface
+    // FRHISamplerState Interface
 
-    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
-    
-public:
-    id<MTLSamplerState> GetMTLSamplerState() const { return SamplerState; }
-    
-private:
-    id<MTLSamplerState> SamplerState;
+    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
 #pragma clang diagnostic pop

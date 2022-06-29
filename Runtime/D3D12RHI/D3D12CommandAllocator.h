@@ -2,14 +2,14 @@
 #include "D3D12Device.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12CommandAllocator 
+// FD3D12CommandAllocator 
 
-class CD3D12CommandAllocator : public CD3D12DeviceChild
+class FD3D12CommandAllocator : public FD3D12DeviceChild
 {
 public:
 
-    FORCEINLINE CD3D12CommandAllocator(CD3D12Device* InDevice)
-        : CD3D12DeviceChild(InDevice)
+    FORCEINLINE FD3D12CommandAllocator(FD3D12Device* InDevice)
+        : FD3D12DeviceChild(InDevice)
         , Allocator(nullptr)
     { }
 
@@ -18,12 +18,12 @@ public:
         HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
         if (SUCCEEDED(Result))
         {
-            D3D12_INFO("[CD3D12CommandAllocator]: Created CommandAllocator");
+            D3D12_INFO("[FD3D12CommandAllocator]: Created CommandAllocator");
             return true;
         }
         else
         {
-            D3D12_ERROR("[CD3D12CommandAllocator]: FAILED to create CommandAllocator");
+            D3D12_ERROR("[FD3D12CommandAllocator]: FAILED to create CommandAllocator");
             return false;
         }
     }

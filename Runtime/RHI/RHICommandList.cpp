@@ -3,28 +3,28 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCommandAllocator
+// FCommandAllocator
 
-CCommandAllocator::CCommandAllocator(uint32 StartSize)
+FCommandAllocator::FCommandAllocator(uint32 StartSize)
     : CurrentMemory(nullptr)
     , Size(StartSize)
     , Offset(0)
     , DiscardedMemory()
 {
-    CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc(Size));
+    CurrentMemory = reinterpret_cast<uint8*>(FMemory::Malloc(Size));
     Check(CurrentMemory != nullptr);
 
     AverageMemoryUsage = Size;
 }
 
-CCommandAllocator::~CCommandAllocator()
+FCommandAllocator::~FCommandAllocator()
 {
     ReleaseDiscardedMemory();
 
     SafeDelete(CurrentMemory);
 }
 
-void* CCommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
+void* FCommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
 {
     Check(CurrentMemory != nullptr);
 
@@ -44,7 +44,7 @@ void* CCommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
         // Allocate a new block of memory
         const uint64 NewSize = NMath::Max(Size + Size, AlignedSize);
 
-        CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc(NewSize));
+        CurrentMemory = reinterpret_cast<uint8*>(FMemory::Malloc(NewSize));
         Check(CurrentMemory != nullptr);
 
         Size = NewSize;
@@ -56,7 +56,7 @@ void* CCommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
     }
 }
 
-void CCommandAllocator::Reset()
+void FCommandAllocator::Reset()
 {
     ReleaseDiscardedMemory();
 
@@ -72,7 +72,7 @@ void CCommandAllocator::Reset()
 
         const uint64 NewSize = AverageMemoryUsage + NMemoryUtils::MegaBytesToBytes(1);
 
-        CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc(NewSize));
+        CurrentMemory = reinterpret_cast<uint8*>(FMemory::Malloc(NewSize));
         Check(CurrentMemory != nullptr);
 
         Size = NewSize;
@@ -83,7 +83,7 @@ void CCommandAllocator::Reset()
     Offset = 0;
 }
 
-void CCommandAllocator::ReleaseDiscardedMemory()
+void FCommandAllocator::ReleaseDiscardedMemory()
 {
     for (uint8* Memory : DiscardedMemory)
     {
@@ -94,16 +94,16 @@ void CCommandAllocator::ReleaseDiscardedMemory()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandQueue
+// FRHICommandQueue
 
-CRHICommandQueue CRHICommandQueue::Instance;
+FRHICommandQueue FRHICommandQueue::Instance;
 
-CRHICommandQueue& CRHICommandQueue::Get()
+FRHICommandQueue& FRHICommandQueue::Get()
 {
     return Instance;
 }
 
-CRHICommandQueue::CRHICommandQueue()
+FRHICommandQueue::FRHICommandQueue()
     : CmdContext(nullptr)
     , NumDrawCalls(0)
     , NumDispatchCalls(0)
@@ -111,7 +111,7 @@ CRHICommandQueue::CRHICommandQueue()
 {
 }
 
-void CRHICommandQueue::ExecuteCommandList(CRHICommandList& CmdList)
+void FRHICommandQueue::ExecuteCommandList(FRHICommandList& CmdList)
 {
     // Execute
     GetContext().StartContext();
@@ -127,7 +127,7 @@ void CRHICommandQueue::ExecuteCommandList(CRHICommandList& CmdList)
     GetContext().FinishContext();
 }
 
-void CRHICommandQueue::ExecuteCommandLists(CRHICommandList* const* CmdLists, uint32 NumCmdLists)
+void FRHICommandQueue::ExecuteCommandLists(FRHICommandList* const* CmdLists, uint32 NumCmdLists)
 {
     // Execute
     GetContext().StartContext();
@@ -139,7 +139,7 @@ void CRHICommandQueue::ExecuteCommandLists(CRHICommandList* const* CmdLists, uin
 
         for (uint32 i = 0; i < NumCmdLists; i++)
         {
-            CRHICommandList* CurrentCmdList = CmdLists[i];
+            FRHICommandList* CurrentCmdList = CmdLists[i];
             InternalExecuteCommandList(*CurrentCmdList);
         }
     }
@@ -147,7 +147,7 @@ void CRHICommandQueue::ExecuteCommandLists(CRHICommandList* const* CmdLists, uin
     GetContext().FinishContext();
 }
 
-void CRHICommandQueue::WaitForGPU()
+void FRHICommandQueue::WaitForGPU()
 {
     if (CmdContext)
     {
@@ -155,14 +155,14 @@ void CRHICommandQueue::WaitForGPU()
     }
 }
 
-void CRHICommandQueue::InternalExecuteCommandList(CRHICommandList& CmdList)
+void FRHICommandQueue::InternalExecuteCommandList(FRHICommandList& CmdList)
 {
     if (CmdList.FirstCommand)
     {
-        CRHICommand* CurrentCommand = CmdList.FirstCommand;
+        FRHICommand* CurrentCommand = CmdList.FirstCommand;
         while (CurrentCommand != nullptr)
         {
-            CRHICommand* PreviousCommand = CurrentCommand;
+            FRHICommand* PreviousCommand = CurrentCommand;
             CurrentCommand = CurrentCommand->NextCommand;
             PreviousCommand->ExecuteAndRelease(GetContext());
         }

@@ -13,16 +13,16 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef TSharedRef<class CRHIViewport> RHIViewportRef;
+typedef TSharedRef<class FRHIViewport> RHIViewportRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIViewportInitializer
+// FRHIViewportInitializer
 
-class CRHIViewportInitializer
+class FRHIViewportInitializer
 {
 public:
 
-    CRHIViewportInitializer()
+    FRHIViewportInitializer()
         : WindowHandle(nullptr)
         , ColorFormat(EFormat::Unknown)
         , DepthFormat(EFormat::Unknown)
@@ -30,7 +30,7 @@ public:
         , Height(0)
     { }
 
-    CRHIViewportInitializer( void* InWindowHandle
+    FRHIViewportInitializer( void* InWindowHandle
                            , EFormat InColorFormat
                            , EFormat InDepthFormat
                            , uint16 InWidth
@@ -42,7 +42,7 @@ public:
         , Height(InHeight)
     { }
 
-    bool operator==(const CRHIViewportInitializer& RHS) const
+    bool operator==(const FRHIViewportInitializer& RHS) const
     {
         return (WindowHandle == RHS.WindowHandle)
             && (ColorFormat  == RHS.ColorFormat)
@@ -51,7 +51,7 @@ public:
             && (Height       == RHS.Height);
     }
 
-    bool operator!=(const CRHIViewportInitializer& RHS) const
+    bool operator!=(const FRHIViewportInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -66,20 +66,20 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIViewport
+// FRHIViewport
 
-class CRHIViewport : public CRHIResource
+class FRHIViewport : public FRHIResource
 {
 protected:
     
-    explicit CRHIViewport(const CRHIViewportInitializer& Initializer)
-        : CRHIResource()
+    explicit FRHIViewport(const FRHIViewportInitializer& Initializer)
+        : FRHIResource()
         , Width(Initializer.Width)
         , Height(Initializer.Height)
         , Format(Initializer.ColorFormat)
     { }
 
-    ~CRHIViewport() = default;
+    ~FRHIViewport() = default;
 
 public:
 
@@ -87,7 +87,7 @@ public:
 
     virtual bool Present(bool bVerticalSync) { return true; }
     
-    virtual CRHITexture2D* GetBackBuffer() const { return nullptr; };
+    virtual FRHITexture2D* GetBackBuffer() const { return nullptr; };
 
     uint32 GetWidth() const { return Width; }
 

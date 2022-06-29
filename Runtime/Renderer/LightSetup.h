@@ -85,24 +85,24 @@ struct RENDERER_API SLightSetup
 
     bool Init();
 
-    void BeginFrame(CRHICommandList& CmdList, const CScene& Scene);
+    void BeginFrame(FRHICommandList& CmdList, const CScene& Scene);
     void Release();
 
     TArray<CVector4>        PointLightsPosRad;
     TArray<SPointLightData> PointLightsData;
 
-    TSharedRef<CRHIConstantBuffer> PointLightsBuffer;
-    TSharedRef<CRHIConstantBuffer> PointLightsPosRadBuffer;
+    TSharedRef<FRHIConstantBuffer> PointLightsBuffer;
+    TSharedRef<FRHIConstantBuffer> PointLightsPosRadBuffer;
 
     TArray<SPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
 
     TArray<CVector4>                     ShadowCastingPointLightsPosRad;
     TArray<SShadowCastingPointLightData> ShadowCastingPointLightsData;
 
-    TSharedRef<CRHIConstantBuffer> ShadowCastingPointLightsBuffer;
-    TSharedRef<CRHIConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
+    TSharedRef<FRHIConstantBuffer> ShadowCastingPointLightsBuffer;
+    TSharedRef<FRHIConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
 
-    TSharedRef<CRHITextureCubeArray> PointLightShadowMaps;
+    TSharedRef<FRHITextureCubeArray> PointLightShadowMaps;
 
     // NOTE: Only one directional light
     SDirectionalLightData DirectionalLightData;
@@ -110,23 +110,23 @@ struct RENDERER_API SLightSetup
 
     float CascadeSplitLambda;
 
-    TSharedRef<CRHIConstantBuffer> DirectionalLightsBuffer;
+    TSharedRef<FRHIConstantBuffer> DirectionalLightsBuffer;
 
-    TSharedRef<CRHITexture2D> ShadowMapCascades[4];
-    TSharedRef<CRHITexture2D> DirectionalShadowMask;
+    TSharedRef<FRHITexture2D> ShadowMapCascades[4];
+    TSharedRef<FRHITexture2D> DirectionalShadowMask;
 
-    TSharedRef<CRHIGenericBuffer>       CascadeMatrixBuffer;
-    TSharedRef<CRHIShaderResourceView>  CascadeMatrixBufferSRV;
-    TSharedRef<CRHIUnorderedAccessView> CascadeMatrixBufferUAV;
+    TSharedRef<FRHIGenericBuffer>       CascadeMatrixBuffer;
+    TSharedRef<FRHIShaderResourceView>  CascadeMatrixBufferSRV;
+    TSharedRef<FRHIUnorderedAccessView> CascadeMatrixBufferUAV;
 
-    TSharedRef<CRHIGenericBuffer>       CascadeSplitsBuffer;
-    TSharedRef<CRHIShaderResourceView>  CascadeSplitsBufferSRV;
-    TSharedRef<CRHIUnorderedAccessView> CascadeSplitsBufferUAV;
+    TSharedRef<FRHIGenericBuffer>       CascadeSplitsBuffer;
+    TSharedRef<FRHIShaderResourceView>  CascadeSplitsBufferSRV;
+    TSharedRef<FRHIUnorderedAccessView> CascadeSplitsBufferUAV;
 
-    TSharedRef<CRHITextureCube>         IrradianceMap;
-    TSharedRef<CRHIUnorderedAccessView> IrradianceMapUAV;
+    TSharedRef<FRHITextureCube>         IrradianceMap;
+    TSharedRef<FRHIUnorderedAccessView> IrradianceMapUAV;
 
-    TSharedRef<CRHITextureCube>                 SpecularIrradianceMap;
-    TArray<TSharedRef<CRHIUnorderedAccessView>> SpecularIrradianceMapUAVs;
-    TArray<CRHIUnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
+    TSharedRef<FRHITextureCube>                 SpecularIrradianceMap;
+    TArray<TSharedRef<FRHIUnorderedAccessView>> SpecularIrradianceMapUAVs;
+    TArray<FRHIUnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
 };

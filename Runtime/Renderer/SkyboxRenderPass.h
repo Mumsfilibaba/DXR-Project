@@ -17,17 +17,17 @@ public:
 
     bool Init(SFrameResources& FrameResources);
 
-    void Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene);
+    void Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene);
 
     void Release();
 
 private:
-    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<CRHIVertexShader> SkyboxVertexShader;
-    TSharedRef<CRHIPixelShader>  SkyboxPixelShader;
-    TSharedRef<CRHIVertexBuffer> SkyboxVertexBuffer;
-    TSharedRef<CRHIIndexBuffer>  SkyboxIndexBuffer;
-    TSharedRef<CRHISamplerState> SkyboxSampler;
+    TSharedRef<FRHIGraphicsPipelineState> PipelineState;
+    TSharedRef<FRHIVertexShader> SkyboxVertexShader;
+    TSharedRef<FRHIPixelShader>  SkyboxPixelShader;
+    TSharedRef<FRHIVertexBuffer> SkyboxVertexBuffer;
+    TSharedRef<FRHIIndexBuffer>  SkyboxIndexBuffer;
+    TSharedRef<FRHISamplerState> SkyboxSampler;
 
     SMeshData SkyboxMesh;
 };

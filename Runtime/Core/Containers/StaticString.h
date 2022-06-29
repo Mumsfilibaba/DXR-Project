@@ -408,7 +408,7 @@ public:
         if (Index > 0)
         {
             Len -= Index;
-            CMemory::Memmove(Characters, Characters + Index, SizeInBytes());
+            FMemory::Memmove(Characters, Characters + Index, SizeInBytes());
         }
     }
 
@@ -1106,7 +1106,7 @@ public:
         CharType* Src = Dst + NumCharacters;
 
         SizeType Num = Len - (Position + NumCharacters);
-        CMemory::Memmove(Dst, Src, Num * sizeof(CharType));
+        FMemory::Memmove(Dst, Src, Num * sizeof(CharType));
     }
 
     /**
@@ -1832,7 +1832,7 @@ private:
         Len = Other.Len;
         Other.Len = 0;
 
-        CMemory::Memexchange(Characters, Other.Characters, SizeInBytes());
+        FMemory::Memexchange(Characters, Other.Characters, SizeInBytes());
         Characters[Len] = StringUtils::Null;
     }
 

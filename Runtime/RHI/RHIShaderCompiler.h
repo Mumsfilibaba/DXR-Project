@@ -40,16 +40,16 @@ enum class EShaderOutputLanguage : uint8
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SShaderDefine
+// FShaderDefine
 
-struct SShaderDefine
+struct FShaderDefine
 {
-    SShaderDefine(const String& InDefine)
+    FShaderDefine(const String& InDefine)
         : Define(InDefine)
         , Value()
     { }
 
-    SShaderDefine(const String& InDefine, const String& InValue)
+    FShaderDefine(const String& InDefine, const String& InValue)
         : Define(InDefine)
         , Value(InValue)
     { }
@@ -59,13 +59,13 @@ struct SShaderDefine
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShaderCompileInfo
+// FShaderCompileInfo
 
-class CShaderCompileInfo
+class FShaderCompileInfo
 {
 public:
     
-    CShaderCompileInfo()
+    FShaderCompileInfo()
         : ShaderModel(EShaderModel::Unknown)
         , ShaderStage(EShaderStage::Unknown)
         , OutputLanguage(EShaderOutputLanguage::Unknown)
@@ -74,10 +74,10 @@ public:
         , EntryPoint()
     { }
     
-    CShaderCompileInfo( const String& InEntryPoint
+    FShaderCompileInfo( const String& InEntryPoint
                       , EShaderModel InShaderModel
                       , EShaderStage InShaderStage
-                      , const TArrayView<SShaderDefine>& InDefines = TArrayView<SShaderDefine>()
+                      , const TArrayView<FShaderDefine>& InDefines = TArrayView<FShaderDefine>()
 #if PLATFORM_WINDOWS
                       , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::HLSL)
 #elif PLATFORM_MACOS
@@ -99,19 +99,19 @@ public:
     
     bool                      bOptimize;
 
-    TArrayView<SShaderDefine> Defines;
+    TArrayView<FShaderDefine> Defines;
 
     String                    EntryPoint;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShaderCompiler
+// FRHIShaderCompiler
 
-class RHI_API CShaderCompiler
+class RHI_API FRHIShaderCompiler
 {
 public:
-    CShaderCompiler(const char* InAssestPath);
-    ~CShaderCompiler();
+    FRHIShaderCompiler(const char* InAssestPath);
+    ~FRHIShaderCompiler();
 
 public:
     
@@ -119,13 +119,13 @@ public:
     
     static void Release();
     
-    static CShaderCompiler& Get();
+    static FRHIShaderCompiler& Get();
 
 public:
 
-    bool CompileFromFile(const String& Filename, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     
-    bool CompileFromSource(const String& ShaderSource, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool CompileFromSource(const String& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
 private:
 
@@ -142,7 +142,7 @@ private:
 
     String                AssetPath;
 
-    static TOptional<CShaderCompiler> Instance;
+    static TOptional<FRHIShaderCompiler> Instance;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -156,8 +156,8 @@ class IRHIShaderCompiler
 public:
     virtual ~IRHIShaderCompiler() = default;
 
-    virtual bool CompileFromFile(const String& FilePath, const String& EntryPoint, const TArray<SShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) = 0;
-    virtual bool CompileShader(const String& ShaderSource, const String& EntryPoint, const TArray<SShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) = 0;
+    virtual bool CompileFromFile(const String& FilePath, const String& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) = 0;
+    virtual bool CompileShader(const String& ShaderSource, const String& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -166,12 +166,12 @@ public:
 class CRHIShaderCompiler
 {
 public:
-    static FORCEINLINE bool CompileFromFile(const String& FilePath, const String& EntryPoint, const TArray<SShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
+    static FORCEINLINE bool CompileFromFile(const String& FilePath, const String& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
     {
         return GShaderCompiler->CompileFromFile(FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
 
-    static FORCEINLINE bool CompileShader(const String& ShaderSource, const String& EntryPoint, const TArray<SShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
+    static FORCEINLINE bool CompileShader(const String& ShaderSource, const String& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
     {
         return GShaderCompiler->CompileShader(ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }

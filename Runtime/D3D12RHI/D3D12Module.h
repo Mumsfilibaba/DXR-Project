@@ -4,14 +4,14 @@
 #include "RHI/RHIModule.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Module
+// FD3D12Module
 
-class CD3D12Module final : public CRHIModule
+class FD3D12Module final : public FRHIModule
 {
 public:
 
-    CD3D12Module()  = default;
-    ~CD3D12Module() = default;
+    FD3D12Module()  = default;
+    ~FD3D12Module() = default;
 
      /** @brief: Creates the core RHI object */
     virtual class CRHICoreInterface* CreateInterface() override final;

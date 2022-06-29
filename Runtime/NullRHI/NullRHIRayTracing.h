@@ -14,12 +14,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIRayTracingGeometry
 
-class CNullRHIRayTracingGeometry : public CRHIRayTracingGeometry
+class CNullRHIRayTracingGeometry : public FRHIRayTracingGeometry
 {
 public:
 
-    CNullRHIRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer)
-        : CRHIRayTracingGeometry(Initializer)
+    CNullRHIRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
+        : FRHIRayTracingGeometry(Initializer)
     { }
 
     ~CNullRHIRayTracingGeometry() = default;
@@ -27,7 +27,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIRayTracingGeometry Interface
+    // FRHIRayTracingGeometry Interface
 
     virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
 
@@ -37,11 +37,11 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIRayTracingScene
 
-class CNullRHIRayTracingScene : public CRHIRayTracingScene
+class CNullRHIRayTracingScene : public FRHIRayTracingScene
 {
 public:
-    CNullRHIRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
-        : CRHIRayTracingScene(Initializer)
+    CNullRHIRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)
+        : FRHIRayTracingScene(Initializer)
         , View(dbg_new CNullRHIShaderResourceView(this))
     { }
 
@@ -50,11 +50,11 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIRayTracingScene Interface
+    // FRHIRayTracingScene Interface
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
 
-    virtual CRHIDescriptorHandle GetBindlessHandle() const override final{ return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final{ return FRHIDescriptorHandle(); }
 
     virtual void* GetRHIBaseBVHBuffer() override final { return nullptr; }
 

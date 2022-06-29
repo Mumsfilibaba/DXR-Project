@@ -72,13 +72,13 @@ public:
     void Release();
 
      /** @brief: Render Point light shadows */
-    void RenderPointLightShadows(CRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene);
+    void RenderPointLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene);
 
      /** @brief: Render Directional light shadows */
-    void RenderDirectionalLightShadows(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene);
+    void RenderDirectionalLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene);
 
      /** @brief: Render ShadowMasks */
-    void RenderShadowMasks(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources);
+    void RenderShadowMasks(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources);
 
      /** @brief: Resize the resources that are dependent on the viewport */
     bool ResizeResources(uint32 Width, uint32 Height, SLightSetup& LightSetup);
@@ -88,23 +88,23 @@ private:
     bool CreateShadowMask(uint32 Width, uint32 Height, SLightSetup& LightSetup);
     bool CreateShadowMaps(SLightSetup& LightSetup, SFrameResources& FrameResources);
 
-    TSharedRef<CRHIConstantBuffer>        PerShadowMapBuffer;
+    TSharedRef<FRHIConstantBuffer>        PerShadowMapBuffer;
 
-    TSharedRef<CRHIGraphicsPipelineState> DirectionalLightPSO;
-    TSharedRef<CRHIVertexShader>          DirectionalLightShader;
+    TSharedRef<FRHIGraphicsPipelineState> DirectionalLightPSO;
+    TSharedRef<FRHIVertexShader>          DirectionalLightShader;
 
-    TSharedRef<CRHIComputePipelineState>  DirectionalShadowMaskPSO;
-    TSharedRef<CRHIComputeShader>         DirectionalShadowMaskShader;
+    TSharedRef<FRHIComputePipelineState>  DirectionalShadowMaskPSO;
+    TSharedRef<FRHIComputeShader>         DirectionalShadowMaskShader;
 
-    TSharedRef<CRHIGraphicsPipelineState> PointLightPipelineState;
-    TSharedRef<CRHIVertexShader>          PointLightVertexShader;
-    TSharedRef<CRHIPixelShader>           PointLightPixelShader;
+    TSharedRef<FRHIGraphicsPipelineState> PointLightPipelineState;
+    TSharedRef<FRHIVertexShader>          PointLightVertexShader;
+    TSharedRef<FRHIPixelShader>           PointLightPixelShader;
 
-    TSharedRef<CRHIConstantBuffer>        PerCascadeBuffer;
-    TSharedRef<CRHIConstantBuffer>        CascadeGenerationData;
+    TSharedRef<FRHIConstantBuffer>        PerCascadeBuffer;
+    TSharedRef<FRHIConstantBuffer>        CascadeGenerationData;
 
-    TSharedRef<CRHIComputePipelineState>  CascadeGen;
-    TSharedRef<CRHIComputeShader>         CascadeGenShader;
+    TSharedRef<FRHIComputePipelineState>  CascadeGen;
+    TSharedRef<FRHIComputeShader>         CascadeGenShader;
 
     bool bUpdateDirLight   = true;
     bool bUpdatePointLight = true;

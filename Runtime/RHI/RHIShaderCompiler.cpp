@@ -90,13 +90,13 @@ public:
         , Size(InSize)
         , References(1)
     {
-        Data = CMemory::Malloc(Size);
-        CMemory::Memcpy(Data, InData, Size);
+        Data = FMemory::Malloc(Size);
+        FMemory::Memcpy(Data, InData, Size);
     }
 
     ~CShaderBlob()
     {
-        CMemory::Free(Data);
+        FMemory::Free(Data);
     }
 
     virtual LPVOID GetBufferPointer() override
@@ -154,11 +154,11 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShaderCompiler
+// FRHIShaderCompiler
 
-TOptional<CShaderCompiler> CShaderCompiler::Instance;
+TOptional<FRHIShaderCompiler> FRHIShaderCompiler::Instance;
 
-CShaderCompiler::CShaderCompiler(const char* InAssetPath)
+FRHIShaderCompiler::FRHIShaderCompiler(const char* InAssetPath)
     : DXCLib(nullptr)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
@@ -178,7 +178,7 @@ CShaderCompiler::CShaderCompiler(const char* InAssetPath)
     }
 }
 
-CShaderCompiler::~CShaderCompiler()
+FRHIShaderCompiler::~FRHIShaderCompiler()
 {
     if (DXCLib)
     {
@@ -189,24 +189,24 @@ CShaderCompiler::~CShaderCompiler()
     DxcCreateInstanceFunc = nullptr;
 }
 
-bool CShaderCompiler::Initialize(const char* InAssetFolderPath)
+bool FRHIShaderCompiler::Initialize(const char* InAssetFolderPath)
 {
     Instance.Emplace(InAssetFolderPath);
     return (Instance->DXCLib != nullptr) && (Instance->DxcCreateInstanceFunc != nullptr);
 }
 
-void CShaderCompiler::Release()
+void FRHIShaderCompiler::Release()
 {
     Instance.Reset();
 }
 
-CShaderCompiler& CShaderCompiler::Get()
+FRHIShaderCompiler& FRHIShaderCompiler::Get()
 {
     Check(Instance.HasValue());
     return Instance.GetValue();
 }
 
-bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     OutByteCode.Clear();
 
@@ -217,7 +217,7 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
     if (FAILED(hResult))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to create Compiler");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Compiler");
         return false;
     }
 
@@ -225,7 +225,7 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     hResult = DxcCreateInstanceFunc(CLSID_DxcLibrary, IID_PPV_ARGS(&Library));
     if (FAILED(hResult))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to create Library");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Library");
         return false;
     }
 
@@ -233,7 +233,7 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     hResult = Library->CreateIncludeHandler(&IncludeHandler);
     if (FAILED(hResult))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to create IncludeHandler");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create IncludeHandler");
         return false;
     }
     
@@ -241,7 +241,7 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     hResult = Library->CreateBlobFromFile(WideFilePath.CStr(), nullptr, &SourceBlob);
     if (FAILED(hResult))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to create Source Data");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Source Data");
         CDebug::DebugBreak();
         return false;
     }
@@ -270,13 +270,13 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     TArray<WString>   StrBuff;
     TArray<DxcDefine> DxcDefines;
     
-    TArrayView<SShaderDefine> Defines = CompileInfo.Defines;
+    TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
     if (!Defines.IsEmpty())
     {
         StrBuff.Reserve(Defines.Size() * 2);
         DxcDefines.Reserve(Defines.Size());
 
-        for (const SShaderDefine& Define : Defines)
+        for (const FShaderDefine& Define : Defines)
         {
             const WString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
             const WString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
@@ -308,14 +308,14 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
                                , &Result);
     if (FAILED(hResult))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to Compile");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
         CDebug::DebugBreak();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
         CDebug::DebugBreak();
         return false;
     }
@@ -331,11 +331,11 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     {
         if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
         {
-            LOG_ERROR("[CShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+            LOG_ERROR("[FRHIShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
         }
         else
         {
-            LOG_ERROR("[CShaderCompiler]: FAILED to compile with. Unknown ERROR.");
+            LOG_ERROR("[FRHIShaderCompiler]: FAILED to compile with. Unknown ERROR.");
         }
 
         return false;
@@ -344,26 +344,26 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
     {
         const String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        LOG_INFO("[CShaderCompiler]: Successfully compiled shader '%s', with arguments '%s' and with the following output: %s", Filename.CStr(), ArgumentsString.CStr(), Output.CStr());
+        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader '%s', with arguments '%s' and with the following output: %s", Filename.CStr(), ArgumentsString.CStr(), Output.CStr());
     }
     else
     {
-        LOG_INFO("[CShaderCompiler]: Successfully compiled shader '%s', with arguments '%s'.", Filename.CStr(), ArgumentsString.CStr());
+        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader '%s', with arguments '%s'.", Filename.CStr(), ArgumentsString.CStr());
     }
 
     TComPtr<IDxcBlob> CompiledBlob;
     if (FAILED(Result->GetResult(&CompiledBlob)))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to retrieve result");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to retrieve result");
         return false;
     }
 
     const uint32 BlobSize = uint32(CompiledBlob->GetBufferSize());
     OutByteCode.Resize(BlobSize);
 
-    LOG_INFO("[CShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
+    LOG_INFO("[FRHIShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
 
-    CMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
+    FMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
     
     // Convert SPIRV into MSL
     if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
@@ -379,7 +379,7 @@ bool CShaderCompiler::CompileFromFile(const String& Filename, const CShaderCompi
     return true;
 }
 
-bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FRHIShaderCompiler::CompileFromSource(const String& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     OutByteCode.Clear();
 
@@ -387,7 +387,7 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
     HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
     if (FAILED(hResult))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to create Compiler");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Compiler");
         return false;
     }
 
@@ -395,7 +395,7 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
     hResult = DxcCreateInstanceFunc(CLSID_DxcLibrary, IID_PPV_ARGS(&Library));
     if (FAILED(hResult))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to create Library");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Library");
         return false;
     }
 
@@ -403,7 +403,7 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
     hResult = Library->CreateIncludeHandler(&IncludeHandler);
     if (FAILED(hResult))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to create IncludeHandler");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create IncludeHandler");
         return false;
     }
 
@@ -431,13 +431,13 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
     TArray<WString>   StrBuff;
     TArray<DxcDefine> DxcDefines;
 
-    TArrayView<SShaderDefine> Defines = CompileInfo.Defines;
+    TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
     if (!Defines.IsEmpty())
     {
         StrBuff.Reserve(Defines.Size() * 2);
         DxcDefines.Reserve(Defines.Size());
 
-        for (const SShaderDefine& Define : Defines)
+        for (const FShaderDefine& Define : Defines)
         {
             const WString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
             const WString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
@@ -471,14 +471,14 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
                                , &Result);
     if (FAILED(hResult))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to Compile");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
         CDebug::DebugBreak();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
         CDebug::DebugBreak();
         return false;
     }
@@ -494,11 +494,11 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
     {
         if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
         {
-            LOG_ERROR("[CShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+            LOG_ERROR("[FRHIShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
         }
         else
         {
-            LOG_ERROR("[CShaderCompiler]: FAILED to compile with. Unknown ERROR.");
+            LOG_ERROR("[FRHIShaderCompiler]: FAILED to compile with. Unknown ERROR.");
         }
 
         return false;
@@ -507,26 +507,26 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
     if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
     {
         const String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        LOG_INFO("[CShaderCompiler]: Successfully compiled shader from source, with arguments '%s' and with the following output: %s", ArgumentsString.CStr(), Output.CStr());
+        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader from source, with arguments '%s' and with the following output: %s", ArgumentsString.CStr(), Output.CStr());
     }
     else
     {
-        LOG_INFO("[CShaderCompiler]: Successfully compiled shader from source, with arguments '%s'.", ArgumentsString.CStr());
+        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader from source, with arguments '%s'.", ArgumentsString.CStr());
     }
 
     TComPtr<IDxcBlob> CompiledBlob;
     if (FAILED(Result->GetResult(&CompiledBlob)))
     {
-        LOG_ERROR("[CShaderCompiler]: FAILED to retrieve result");
+        LOG_ERROR("[FRHIShaderCompiler]: FAILED to retrieve result");
         return false;
     }
 
     const uint32 BlobSize = uint32(CompiledBlob->GetBufferSize());
     OutByteCode.Resize(BlobSize);
 
-    LOG_INFO("[CShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
+    LOG_INFO("[FRHIShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
 
-    CMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
+    FMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 
     // Convert SPIRV into MSL
     if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
@@ -540,14 +540,14 @@ bool CShaderCompiler::CompileFromSource(const String& ShaderSource, const CShade
     return true;
 }
 
-void CShaderCompiler::ErrorCallback(void* Userdata, const char* Error)
+void FRHIShaderCompiler::ErrorCallback(void* Userdata, const char* Error)
 {
     UNREFERENCED_VARIABLE(Userdata);
 
     LOG_ERROR("[SPIRV-Cross Error] %s", Error);
 }
 
-bool CShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TArray<uint8>& OutByteCode)
+bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TArray<uint8>& OutByteCode)
 {
     if (OutByteCode.IsEmpty() || Entrypoint.IsEmpty())
     {
@@ -562,7 +562,7 @@ bool CShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TArray
         return false;
     }
 
-    spvc_context_set_error_callback(Context, CShaderCompiler::ErrorCallback, reinterpret_cast<void*>(this));
+    spvc_context_set_error_callback(Context, FRHIShaderCompiler::ErrorCallback, reinterpret_cast<void*>(this));
 
     constexpr uint32 ElementSize = sizeof(unsigned int) / sizeof(uint8);
 
@@ -608,7 +608,7 @@ bool CShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TArray
     return true;
 }
 
-bool CShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename)
+bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename)
 {
     FILE* Output = fopen(Filename.CStr(), "w");
     if (!Output)
@@ -623,7 +623,7 @@ bool CShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const Str
     return true;
 }
 
-String CShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
+String FRHIShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
 {
     WString WArgumentsString;
     for (LPCWSTR Arg : Args)

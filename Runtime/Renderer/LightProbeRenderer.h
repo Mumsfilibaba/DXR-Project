@@ -17,13 +17,13 @@ public:
 
     void Release();
 
-    void RenderSkyLightProbe(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& Resources);
+    void RenderSkyLightProbe(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& Resources);
 
 private:
     bool CreateSkyLightResources(SLightSetup& LightSetup);
 
-    TSharedRef<CRHIComputePipelineState> IrradianceGenPSO;
-    TSharedRef<CRHIComputeShader>        IrradianceGenShader;
-    TSharedRef<CRHIComputePipelineState> SpecularIrradianceGenPSO;
-    TSharedRef<CRHIComputeShader>        SpecularIrradianceGenShader;
+    TSharedRef<FRHIComputePipelineState> IrradianceGenPSO;
+    TSharedRef<FRHIComputeShader>        IrradianceGenShader;
+    TSharedRef<FRHIComputePipelineState> SpecularIrradianceGenPSO;
+    TSharedRef<FRHIComputeShader>        SpecularIrradianceGenShader;
 };

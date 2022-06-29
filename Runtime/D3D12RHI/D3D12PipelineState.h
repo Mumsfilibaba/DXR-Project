@@ -8,15 +8,15 @@
 #include "D3D12RootSignature.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12VertexInputLayout
+// FD3D12VertexInputLayout
 
-class CD3D12VertexInputLayout : public CRHIVertexInputLayout, public CD3D12DeviceChild
+class FD3D12VertexInputLayout : public FRHIVertexInputLayout, public FD3D12DeviceChild
 {
 public:
 
-    CD3D12VertexInputLayout(CD3D12Device* InDevice, const CRHIVertexInputLayoutInitializer& Initializer)
-        : CRHIVertexInputLayout()
-        , CD3D12DeviceChild(InDevice)
+    FD3D12VertexInputLayout(FD3D12Device* InDevice, const FRHIVertexInputLayoutInitializer& Initializer)
+        : FRHIVertexInputLayout()
+        , FD3D12DeviceChild(InDevice)
         , SemanticNames()
         , ElementDesc()
         , Desc()
@@ -53,15 +53,15 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12DepthStencilState
+// FD3D12DepthStencilState
 
-class CD3D12DepthStencilState : public CRHIDepthStencilState, public CD3D12DeviceChild
+class FD3D12DepthStencilState : public FRHIDepthStencilState, public FD3D12DeviceChild
 {
 public:
     
-    CD3D12DepthStencilState(CD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
-        : CRHIDepthStencilState()
-        , CD3D12DeviceChild(InDevice)
+    FD3D12DepthStencilState(FD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
+        : FRHIDepthStencilState()
+        , FD3D12DeviceChild(InDevice)
         , Desc(InDesc)
     { }
 
@@ -72,15 +72,15 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RasterizerState
+// FD3D12RasterizerState
 
-class CD3D12RasterizerState : public CRHIRasterizerState, public CD3D12DeviceChild
+class FD3D12RasterizerState : public FRHIRasterizerState, public FD3D12DeviceChild
 {
 public:
 
-    CD3D12RasterizerState(CD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
-        : CRHIRasterizerState()
-        , CD3D12DeviceChild(InDevice)
+    FD3D12RasterizerState(FD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
+        : FRHIRasterizerState()
+        , FD3D12DeviceChild(InDevice)
         , Desc(InDesc)
     { }
 
@@ -91,15 +91,15 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12BlendState
+// FD3D12BlendState
 
-class CD3D12BlendState : public CRHIBlendState, public CD3D12DeviceChild
+class FD3D12BlendState : public FRHIBlendState, public FD3D12DeviceChild
 {
 public:
 
-    CD3D12BlendState(CD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
-        : CRHIBlendState()
-        , CD3D12DeviceChild(InDevice)
+    FD3D12BlendState(FD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
+        : FRHIBlendState()
+        , FD3D12DeviceChild(InDevice)
         , Desc(InDesc)
     { }
 
@@ -110,15 +110,15 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12GraphicsPipelineState
+// FD3D12GraphicsPipelineState
 
-class CD3D12GraphicsPipelineState : public CRHIGraphicsPipelineState, public CD3D12DeviceChild
+class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12DeviceChild
 {
 public:
-    CD3D12GraphicsPipelineState(CD3D12Device* InDevice);
-    ~CD3D12GraphicsPipelineState() = default;
+    FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
+    ~FD3D12GraphicsPipelineState() = default;
 
-    bool Init(const CRHIGraphicsPipelineStateInitializer& Initializer);
+    bool Init(const FRHIGraphicsPipelineStateInitializer& Initializer);
 
     virtual void SetName(const String& InName) override final
     {
@@ -131,25 +131,25 @@ public:
         return PipelineState.Get();
     }
 
-    FORCEINLINE CD3D12RootSignature* GetRootSignature() const
+    FORCEINLINE FD3D12RootSignature* GetRootSignature() const
     {
         return RootSignature.Get();
     }
 
 private:
     TComPtr<ID3D12PipelineState>    PipelineState;
-    TSharedRef<CD3D12RootSignature> RootSignature;
+    TSharedRef<FD3D12RootSignature> RootSignature;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12ComputePipelineState
+// FD3D12ComputePipelineState
 
-class CD3D12ComputePipelineState : public CRHIComputePipelineState, public CD3D12DeviceChild
+class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12DeviceChild
 {
 public:
 
-    CD3D12ComputePipelineState(CD3D12Device* InDevice, const TSharedRef<CD3D12ComputeShader>& InShader);
-    ~CD3D12ComputePipelineState() = default;
+    FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader);
+    ~FD3D12ComputePipelineState() = default;
 
     bool Init();
 
@@ -164,35 +164,35 @@ public:
         return PipelineState.Get();
     }
 
-    FORCEINLINE CD3D12RootSignature* GetRootSignature() const
+    FORCEINLINE FD3D12RootSignature* GetRootSignature() const
     {
         return RootSignature.Get();
     }
 
 private:
-    TComPtr<ID3D12PipelineState>       PipelineState;
-    TSharedRef<CD3D12ComputeShader> Shader;
-    TSharedRef<CD3D12RootSignature>    RootSignature;
+    TComPtr<ID3D12PipelineState>    PipelineState;
+    TSharedRef<FD3D12ComputeShader> Shader;
+    TSharedRef<FD3D12RootSignature> RootSignature;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRayTracingShaderIdentifer
+// FRayTracingShaderIdentifer
 
-struct SRayTracingShaderIdentifer
+struct FRayTracingShaderIdentifer
 {
     char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RayTracingPipelineState
+// FD3D12RayTracingPipelineState
 
-class CD3D12RayTracingPipelineState : public CRHIRayTracingPipelineState, public CD3D12DeviceChild
+class FD3D12RayTracingPipelineState : public FRHIRayTracingPipelineState, public FD3D12DeviceChild
 {
 public:
-    CD3D12RayTracingPipelineState(CD3D12Device* InDevice);
-    ~CD3D12RayTracingPipelineState() = default;
+    FD3D12RayTracingPipelineState(FD3D12Device* InDevice);
+    ~FD3D12RayTracingPipelineState() = default;
 
-    bool Init(const CRHIRayTracingPipelineStateInitializer& Initializer);
+    bool Init(const FRHIRayTracingPipelineStateInitializer& Initializer);
 
     virtual void SetName(const String& InName) override
     {
@@ -212,22 +212,22 @@ public:
         return StateObjectProperties.Get();
     }
 
-    FORCEINLINE CD3D12RootSignature* GetGlobalRootSignature() const
+    FORCEINLINE FD3D12RootSignature* GetGlobalRootSignature() const
     {
         return GlobalRootSignature.Get();
     }
 
-    FORCEINLINE CD3D12RootSignature* GetRayGenLocalRootSignature() const
+    FORCEINLINE FD3D12RootSignature* GetRayGenLocalRootSignature() const
     {
         return RayGenLocalRootSignature.Get();
     }
 
-    FORCEINLINE CD3D12RootSignature* GetMissLocalRootSignature() const
+    FORCEINLINE FD3D12RootSignature* GetMissLocalRootSignature() const
     {
         return MissLocalRootSignature.Get();
     }
 
-    FORCEINLINE CD3D12RootSignature* GetHitLocalRootSignature() const
+    FORCEINLINE FD3D12RootSignature* GetHitLocalRootSignature() const
     {
         return HitLocalRootSignature.Get();
     }
@@ -237,10 +237,10 @@ private:
     TComPtr<ID3D12StateObjectProperties> StateObjectProperties;
 
     // TODO: There could be more than one root signature for locals
-    TSharedRef<CD3D12RootSignature> GlobalRootSignature;
-    TSharedRef<CD3D12RootSignature> RayGenLocalRootSignature;
-    TSharedRef<CD3D12RootSignature> MissLocalRootSignature;
-    TSharedRef<CD3D12RootSignature> HitLocalRootSignature;
+    TSharedRef<FD3D12RootSignature> GlobalRootSignature;
+    TSharedRef<FD3D12RootSignature> RayGenLocalRootSignature;
+    TSharedRef<FD3D12RootSignature> MissLocalRootSignature;
+    TSharedRef<FD3D12RootSignature> HitLocalRootSignature;
 
-    THashTable<String, SRayTracingShaderIdentifer, SStringHasher> ShaderIdentifers;
+    THashTable<String, FRayTracingShaderIdentifer, SStringHasher> ShaderIdentifers;
 };

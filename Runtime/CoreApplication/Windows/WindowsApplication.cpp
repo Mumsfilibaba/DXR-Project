@@ -91,7 +91,7 @@ CWindowsApplication::~CWindowsApplication()
 bool CWindowsApplication::RegisterWindowClass()
 {
     WNDCLASS WindowClass;
-    CMemory::Memzero(&WindowClass);
+    FMemory::Memzero(&WindowClass);
 
     WindowClass.hInstance     = InstanceHandle;
     WindowClass.lpszClassName = CWindowsWindow::GetClassName();
@@ -114,7 +114,7 @@ bool CWindowsApplication::RegisterRawInputDevices(HWND Window)
     constexpr uint32 DeviceCount = 1;
 
     RAWINPUTDEVICE Devices[DeviceCount];
-    CMemory::Memzero(Devices, DeviceCount);
+    FMemory::Memzero(Devices, DeviceCount);
 
     // Mouse
     Devices[0].dwFlags     = 0;
@@ -140,7 +140,7 @@ bool CWindowsApplication::UnregisterRawInputDevices()
     constexpr uint32 DeviceCount = 1;
 
     RAWINPUTDEVICE Devices[DeviceCount];
-    CMemory::Memzero(Devices, DeviceCount);
+    FMemory::Memzero(Devices, DeviceCount);
 
     // Mouse
     Devices[0].dwFlags     = RIDEV_REMOVE;
@@ -429,7 +429,7 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
             if (!bIsTrackingMouse)
             {
                 TRACKMOUSEEVENT TrackEvent;
-                CMemory::Memzero(&TrackEvent);
+                FMemory::Memzero(&TrackEvent);
 
                 TrackEvent.cbSize    = sizeof(TRACKMOUSEEVENT);
                 TrackEvent.dwFlags   = TME_LEAVE;

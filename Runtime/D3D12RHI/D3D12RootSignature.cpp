@@ -1,8 +1,9 @@
-#include "D3D12Device.h"
 #include "D3D12RootSignature.h"
 #include "D3D12Core.h"
+#include "D3D12Device.h"
 #include "D3D12Shader.h"
-#include "D3D12FunctionPointers.h"
+#include "D3D12Library.h"
+#include "D3D12CoreInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12_SHADER_VISIBILITY
@@ -61,9 +62,9 @@ static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12RootSignatureResourceCount
+// FD3D12RootSignatureResourceCount
 
-bool SD3D12RootSignatureResourceCount::IsCompatible(const SD3D12RootSignatureResourceCount& Other) const
+bool FD3D12RootSignatureResourceCount::IsCompatible(const FD3D12RootSignatureResourceCount& Other) const
 {
     if (Type != Other.Type || AllowInputAssembler != Other.AllowInputAssembler)
     {
@@ -82,9 +83,9 @@ bool SD3D12RootSignatureResourceCount::IsCompatible(const SD3D12RootSignatureRes
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RootSignatureDescHelper
+// FD3D12RootSignatureDescHelper
 
-CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSignatureResourceCount& RootSignatureInfo)
+FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSignatureResourceCount& RootSignatureInfo)
     : Desc()
     , RootParameters()
     , DescriptorRanges()
@@ -107,7 +108,7 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
     {
         bool AddFlag = true;
 
-        const SShaderResourceCount& ResourceCounts = RootSignatureInfo.ResourceCounts[ShaderStage];
+        const FShaderResourceCount& ResourceCounts = RootSignatureInfo.ResourceCounts[ShaderStage];
         if (ResourceCounts.Ranges.NumCBVs > 0)
         {
             Check(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
@@ -177,7 +178,7 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
     }
 
     Check(RootSignatureCost <= D3D12_MAX_ROOT_PARAMETER_COST);
-    D3D12_INFO("[CD3D12RootSignatureDescHelper] RootSignatureCost=%u", RootSignatureCost);
+    D3D12_INFO("[FD3D12RootSignatureDescHelper] RootSignatureCost=%u", RootSignatureCost);
 
     Desc.NumParameters = NumRootParameters;
     Desc.pParameters   = RootParameters;
@@ -196,7 +197,7 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
     }
 }
 
-void CD3D12RootSignatureDescHelper::InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace)
+void FD3D12RootSignatureDescHelper::InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace)
 {
     Check(NumDescriptors > 0);
 
@@ -207,7 +208,7 @@ void CD3D12RootSignatureDescHelper::InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& 
     OutRange.OffsetInDescriptorsFromTableStart = 0;
 }
 
-void CD3D12RootSignatureDescHelper::InsertDescriptorTable(D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* InDescriptorRanges, uint32 InNumDescriptorRanges)
+void FD3D12RootSignatureDescHelper::InsertDescriptorTable(D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* InDescriptorRanges, uint32 InNumDescriptorRanges)
 {
     D3D12_ROOT_PARAMETER& NewParameters = RootParameters[NumRootParameters++];
     NewParameters.ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -219,7 +220,7 @@ void CD3D12RootSignatureDescHelper::InsertDescriptorTable(D3D12_SHADER_VISIBILIT
     RootSignatureCost++;
 }
 
-void CD3D12RootSignatureDescHelper::Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace)
+void FD3D12RootSignatureDescHelper::Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace)
 {
     Check(Num32BitConstants > 0);
 
@@ -234,7 +235,7 @@ void CD3D12RootSignatureDescHelper::Insert32BitConstantRange(D3D12_SHADER_VISIBI
     RootSignatureCost += Num32BitConstants;
 }
 
-void CD3D12RootSignatureDescHelper::InsertRootCBV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace)
+void FD3D12RootSignatureDescHelper::InsertRootCBV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace)
 {
     D3D12_ROOT_PARAMETER& NewParameters = RootParameters[NumRootParameters++];
     NewParameters.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -246,7 +247,7 @@ void CD3D12RootSignatureDescHelper::InsertRootCBV(D3D12_SHADER_VISIBILITY Shader
     RootSignatureCost += 2;
 }
 
-void CD3D12RootSignatureDescHelper::InsertRootSRV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace)
+void FD3D12RootSignatureDescHelper::InsertRootSRV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace)
 {
     D3D12_ROOT_PARAMETER& NewParameters = RootParameters[NumRootParameters++];
     NewParameters.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_SRV;
@@ -258,7 +259,7 @@ void CD3D12RootSignatureDescHelper::InsertRootSRV(D3D12_SHADER_VISIBILITY Shader
     RootSignatureCost += 2;
 }
 
-void CD3D12RootSignatureDescHelper::InsertRootUAV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace)
+void FD3D12RootSignatureDescHelper::InsertRootUAV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace)
 {
     D3D12_ROOT_PARAMETER& NewParameters = RootParameters[NumRootParameters++];
     NewParameters.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_UAV;
@@ -271,10 +272,10 @@ void CD3D12RootSignatureDescHelper::InsertRootUAV(D3D12_SHADER_VISIBILITY Shader
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RootSignature
+// FD3D12RootSignature
 
-CD3D12RootSignature::CD3D12RootSignature(CD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+FD3D12RootSignature::FD3D12RootSignature(FD3D12Device* InDevice)
+    : FD3D12DeviceChild(InDevice)
     , RootSignature(nullptr)
     , RootParameterMap()
     , ConstantRootParameterIndex(-1)
@@ -288,13 +289,13 @@ CD3D12RootSignature::CD3D12RootSignature(CD3D12Device* InDevice)
     }
 }
 
-bool CD3D12RootSignature::Initialize(const SD3D12RootSignatureResourceCount& RootSignatureInfo)
+bool FD3D12RootSignature::Initialize(const FD3D12RootSignatureResourceCount& RootSignatureInfo)
 {
-    CD3D12RootSignatureDescHelper Desc(RootSignatureInfo);
+    FD3D12RootSignatureDescHelper Desc(RootSignatureInfo);
     return Initialize(Desc.GetDesc());
 }
 
-bool CD3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
+bool FD3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 {
     TComPtr<ID3DBlob> SignatureBlob;
 
@@ -308,13 +309,13 @@ bool CD3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
     return InternalInit(SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize());
 }
 
-bool CD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
+bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
 {
     TComPtr<ID3D12RootSignatureDeserializer> Deserializer;
-    HRESULT Result = ND3D12Functions::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
+    HRESULT Result = FD3D12Library::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[D3D12RootSignature]: FAILED to Retrieve Root Signature Desc");
+        D3D12_ERROR("[FD3D12RootSignature]: FAILED to Retrieve Root Signature Desc");
         return false;
     }
 
@@ -330,17 +331,17 @@ bool CD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
         return false;
     }
 
-    Result = GetDevice()->CreateRootSignature(1, Blob->GetBufferPointer(), Blob->GetBufferSize(), IID_PPV_ARGS(&RootSignature));
+    Result = GetDevice()->GetD3D12Device()->CreateRootSignature(1, Blob->GetBufferPointer(), Blob->GetBufferSize(), IID_PPV_ARGS(&RootSignature));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
+        D3D12_ERROR("[FD3D12RootSignature]: FAILED to Create RootSignature");
         return false;
     }
 
     return InternalInit(BlobWithRootSignature, BlobLengthInBytes);
 }
 
-void CD3D12RootSignature::CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC& Desc)
+void FD3D12RootSignature::CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 {
     for (uint32 i = 0; i < Desc.NumParameters; i++)
     {
@@ -364,26 +365,26 @@ void CD3D12RootSignature::CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC
     }
 }
 
-bool CD3D12RootSignature::InternalInit(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
+bool FD3D12RootSignature::InternalInit(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
 {
-    HRESULT Result = GetDevice()->CreateRootSignature(1, BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&RootSignature));
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateRootSignature(1, BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&RootSignature));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
+        D3D12_ERROR("[FD3D12RootSignature]: FAILED to Create RootSignature");
         return false;
     }
 
     return true;
 }
 
-bool CD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob)
+bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob)
 {
     TComPtr<ID3DBlob> ErrorBlob;
 
-    HRESULT Result = ND3D12Functions::D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob);
+    HRESULT Result = FD3D12Library::D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[D3D12RootSignature]: FAILED to Serialize RootSignature. Error=%s", reinterpret_cast<const char*>(ErrorBlob->GetBufferPointer()));
+        D3D12_ERROR("[FD3D12RootSignature]: FAILED to Serialize RootSignature. Error=%s", reinterpret_cast<const char*>(ErrorBlob->GetBufferPointer()));
         return false;
     }
 
@@ -391,27 +392,27 @@ bool CD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RootSignatureCache
+// FD3D12RootSignatureCache
 
-CD3D12RootSignatureCache* CD3D12RootSignatureCache::Instance = nullptr;
+FD3D12RootSignatureCache* FD3D12RootSignatureCache::Instance = nullptr;
 
-CD3D12RootSignatureCache::CD3D12RootSignatureCache(CD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+FD3D12RootSignatureCache::FD3D12RootSignatureCache(FD3D12Device* InDevice)
+    : FD3D12DeviceChild(InDevice)
     , RootSignatures()
     , ResourceCounts()
 {
     Instance = this;
 }
 
-CD3D12RootSignatureCache::~CD3D12RootSignatureCache()
+FD3D12RootSignatureCache::~FD3D12RootSignatureCache()
 {
     ReleaseAll();
     Instance = nullptr;
 }
 
-bool CD3D12RootSignatureCache::Initialize()
+bool FD3D12RootSignatureCache::Initialize()
 {
-    SD3D12RootSignatureResourceCount GraphicsKey;
+    FD3D12RootSignatureResourceCount GraphicsKey;
     GraphicsKey.Type                = ERootSignatureType::Graphics;
     GraphicsKey.AllowInputAssembler = true;
     GraphicsKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
@@ -425,7 +426,7 @@ bool CD3D12RootSignatureCache::Initialize()
         GraphicsKey.ResourceCounts[i].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
     }
 
-    CD3D12RootSignature* GraphicsRootSignature = CreateRootSignature(GraphicsKey);
+    FD3D12RootSignature* GraphicsRootSignature = CreateRootSignature(GraphicsKey);
     if (!GraphicsRootSignature)
     {
         CDebug::DebugBreak();
@@ -436,7 +437,7 @@ bool CD3D12RootSignatureCache::Initialize()
         GraphicsRootSignature->SetName("Default Graphics RootSignature");
     }
 
-    SD3D12RootSignatureResourceCount ComputeKey;
+    FD3D12RootSignatureResourceCount ComputeKey;
     ComputeKey.Type                = ERootSignatureType::Compute;
     ComputeKey.AllowInputAssembler = false;
     ComputeKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
@@ -445,7 +446,7 @@ bool CD3D12RootSignatureCache::Initialize()
     ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
     ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
 
-    CD3D12RootSignature* ComputeRootSignature = CreateRootSignature(ComputeKey);
+    FD3D12RootSignature* ComputeRootSignature = CreateRootSignature(ComputeKey);
     if (!ComputeRootSignature)
     {
         CDebug::DebugBreak();
@@ -456,12 +457,13 @@ bool CD3D12RootSignatureCache::Initialize()
         ComputeRootSignature->SetName("Default Compute RootSignature");
     }
 
-    if (GetDevice()->GetRayTracingTier() == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+    const FD3D12RayTracingDesc& RayTracingDesc = GetDevice()->GetAdapter()->GetCoreInterface()->GetRayTracingDesc();
+    if (RayTracingDesc.Tier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
     {
         return true;
     }
 
-    SD3D12RootSignatureResourceCount RTGlobalKey;
+    FD3D12RootSignatureResourceCount RTGlobalKey;
     RTGlobalKey.Type                = ERootSignatureType::RayTracingGlobal;
     RTGlobalKey.AllowInputAssembler = false;
     RTGlobalKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
@@ -470,7 +472,7 @@ bool CD3D12RootSignatureCache::Initialize()
     RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
     RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
 
-    CD3D12RootSignature* RTGlobalRootSignature = CreateRootSignature(RTGlobalKey);
+    FD3D12RootSignature* RTGlobalRootSignature = CreateRootSignature(RTGlobalKey);
     if (!RTGlobalRootSignature)
     {
         CDebug::DebugBreak();
@@ -481,7 +483,7 @@ bool CD3D12RootSignatureCache::Initialize()
         RTGlobalRootSignature->SetName("Default Global RayTracing RootSignature");
     }
 
-    SD3D12RootSignatureResourceCount RTLocalKey;
+    FD3D12RootSignatureResourceCount RTLocalKey;
     RTLocalKey.Type                = ERootSignatureType::RayTracingLocal;
     RTLocalKey.AllowInputAssembler = false;
     RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_LOCAL_CONSTANT_BUFFER_COUNT;
@@ -489,7 +491,7 @@ bool CD3D12RootSignatureCache::Initialize()
     RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_LOCAL_UNORDERED_ACCESS_VIEW_COUNT;
     RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers = D3D12_DEFAULT_LOCAL_SAMPLER_STATE_COUNT;
 
-    CD3D12RootSignature* RTLocalRootSignature = CreateRootSignature(RTLocalKey);
+    FD3D12RootSignature* RTLocalRootSignature = CreateRootSignature(RTLocalKey);
     if (!RTLocalRootSignature)
     {
         CDebug::DebugBreak();
@@ -503,9 +505,9 @@ bool CD3D12RootSignatureCache::Initialize()
     return true;
 }
 
-void CD3D12RootSignatureCache::ReleaseAll()
+void FD3D12RootSignatureCache::ReleaseAll()
 {
-    for (TSharedRef<CD3D12RootSignature> RootSignature : RootSignatures)
+    for (TSharedRef<FD3D12RootSignature> RootSignature : RootSignatures)
     {
         RootSignature.Reset();
     }
@@ -514,7 +516,7 @@ void CD3D12RootSignatureCache::ReleaseAll()
     ResourceCounts.Clear();
 }
 
-CD3D12RootSignature* CD3D12RootSignatureCache::GetOrCreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount)
+FD3D12RootSignature* FD3D12RootSignatureCache::GetOrCreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount)
 {
     Check(RootSignatures.Size() == ResourceCounts.Size());
 
@@ -527,10 +529,10 @@ CD3D12RootSignature* CD3D12RootSignatureCache::GetOrCreateRootSignature(const SD
     }
 
     // Make sure that this root signature can be used by more than one pipeline
-    SD3D12RootSignatureResourceCount NewResourceCount = ResourceCount;
+    FD3D12RootSignatureResourceCount NewResourceCount = ResourceCount;
     for (uint32 i = 0; i < ShaderVisibility_Count; i++)
     {
-        SShaderResourceCount& Count = NewResourceCount.ResourceCounts[i];
+        FShaderResourceCount& Count = NewResourceCount.ResourceCounts[i];
         if (Count.Ranges.NumCBVs > 0)
         {
             Count.Ranges.NumCBVs = NMath::Max<uint32>(Count.Ranges.NumCBVs, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
@@ -552,15 +554,15 @@ CD3D12RootSignature* CD3D12RootSignatureCache::GetOrCreateRootSignature(const SD
     return CreateRootSignature(NewResourceCount);
 }
 
-CD3D12RootSignatureCache& CD3D12RootSignatureCache::Get()
+FD3D12RootSignatureCache& FD3D12RootSignatureCache::Get()
 {
     Check(Instance != nullptr);
     return *Instance;
 }
 
-CD3D12RootSignature* CD3D12RootSignatureCache::CreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount)
+FD3D12RootSignature* FD3D12RootSignatureCache::CreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount)
 {
-    TSharedRef<CD3D12RootSignature> NewRootSignature = dbg_new CD3D12RootSignature(GetDevice());
+    TSharedRef<FD3D12RootSignature> NewRootSignature = dbg_new FD3D12RootSignature(GetDevice());
     if (!NewRootSignature->Initialize(ResourceCount))
     {
         return nullptr;

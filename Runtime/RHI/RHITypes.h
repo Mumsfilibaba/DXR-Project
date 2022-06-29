@@ -479,9 +479,9 @@ CONSTEXPR const char* ToString(EDescriptorType DescriptorType)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIDescriptorHandle
+// FRHIDescriptorHandle
 
-class CRHIDescriptorHandle
+class FRHIDescriptorHandle
 {
     enum : uint32
     {
@@ -494,7 +494,7 @@ public:
     /**
      * @brief: Default Constructor
      */
-    CRHIDescriptorHandle()
+    FRHIDescriptorHandle()
         : Index(InvalidHandle)
 	    , Type(EDescriptorType::Unknown)
     { }
@@ -505,7 +505,7 @@ public:
      * @param InType: Type of descriptor
      * @param InIndex: Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
      */
-    CRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
+    FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
         : Index(InIndex)
 	    , Type(InType)
     { }
@@ -518,7 +518,7 @@ public:
      *
      * @return: Returns true if the handles are equal
      */
-    bool operator==(const CRHIDescriptorHandle& RHS) const
+    bool operator==(const FRHIDescriptorHandle& RHS) const
     {
         return (Type == RHS.Type) && (Index == RHS.Index);
     }
@@ -528,7 +528,7 @@ public:
      *
      * @return: Returns false if the handles are equal
      */
-    bool operator!=(const CRHIDescriptorHandle& RHS) const
+    bool operator!=(const FRHIDescriptorHandle& RHS) const
     {
         return !(*this == RHS);
     }
@@ -610,9 +610,9 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CTextureClearValue
+// FTextureClearValue
 
-class CTextureClearValue
+class FTextureClearValue
 {
 public:
 
@@ -625,7 +625,7 @@ public:
     /**
      * @brief: Default Constructor that creates a black clear color
      */
-    CTextureClearValue()
+    FTextureClearValue()
         : Type(EType::Color)
         , Format(EFormat::Unknown)
         , ColorValue(0.0f, 0.0f, 0.0f, 1.0f)
@@ -638,7 +638,7 @@ public:
      * @param InDepth: Depth-value
      * @param InStencil: Stencil-value
      */
-    CTextureClearValue(EFormat InFormat, float InDepth, uint8 InStencil)
+    FTextureClearValue(EFormat InFormat, float InDepth, uint8 InStencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencilValue(InDepth, InStencil)
@@ -653,7 +653,7 @@ public:
      * @param InB: Blue-Channel value
      * @param InA: Alpha-Channel value
      */
-    CTextureClearValue(EFormat InFormat, float InR, float InG, float InB, float InA)
+    FTextureClearValue(EFormat InFormat, float InR, float InG, float InB, float InA)
         : Type(EType::Color)
         , Format(InFormat)
         , ColorValue(InR, InG, InB, InA)
@@ -664,7 +664,7 @@ public:
      *
      * @param Other: Instance to copy
      */
-    CTextureClearValue(const CTextureClearValue& Other)
+    FTextureClearValue(const FTextureClearValue& Other)
         : Type(Other.Type)
         , Format(Other.Format)
         , ColorValue()
@@ -720,7 +720,7 @@ public:
      * @param RHS: Instance to copy
      * @return: Returns a reference to this instance
      */
-    CTextureClearValue& operator=(const CTextureClearValue& RHS)
+    FTextureClearValue& operator=(const FTextureClearValue& RHS)
     {
         Type = RHS.Type;
         Format = RHS.Format;
@@ -744,7 +744,7 @@ public:
      * @param RHS: Instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CTextureClearValue& RHS) const
+    bool operator==(const FTextureClearValue& RHS) const
     {
         if ((Type != RHS.Type) || (Format != RHS.Format))
         {
@@ -766,7 +766,7 @@ public:
      * @param RHS: Instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CTextureClearValue& RHS) const
+    bool operator!=(const FTextureClearValue& RHS) const
     {
         return !(*this == RHS);
     }
@@ -788,13 +788,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyBufferInfo
+// FRHICopyBufferInfo
 
-struct SRHICopyBufferInfo
+struct FRHICopyBufferInfo
 {
-    SRHICopyBufferInfo() = default;
+    FRHICopyBufferInfo() = default;
 
-    FORCEINLINE SRHICopyBufferInfo(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes)
+    FORCEINLINE FRHICopyBufferInfo(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes)
         : SourceOffset(InSourceOffset)
         , DestinationOffset(InDestinationOffset)
         , SizeInBytes(InSizeInBytes)
@@ -826,9 +826,9 @@ struct SRHICopyTextureSubresourceInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyTextureInfo
+// FRHICopyTextureInfo
 
-struct SRHICopyTextureInfo
+struct FRHICopyTextureInfo
 {
     SRHICopyTextureSubresourceInfo Source;
     SRHICopyTextureSubresourceInfo Destination;

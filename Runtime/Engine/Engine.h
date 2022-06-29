@@ -64,7 +64,7 @@ public:
     TSharedRef<CGenericWindow> MainWindow;
 
     /** The main viewport */
-    TSharedRef<CRHIViewport> MainViewport;
+    TSharedRef<FRHIViewport> MainViewport;
 
     /** User */
     TSharedPtr<CCanvasUser> User;
@@ -73,13 +73,13 @@ public:
     TSharedPtr<CScene> Scene;
 
     /** A completely white texture */
-    TSharedRef<CRHITexture2D> BaseTexture;
+    TSharedRef<FRHITexture2D> BaseTexture;
 
     /** A completely flat normal map*/
-    TSharedRef<CRHITexture2D> BaseNormal;
+    TSharedRef<FRHITexture2D> BaseNormal;
 
     /** Base sampler used by all materials */
-    TSharedRef<CRHISamplerState> BaseMaterialSampler;
+    TSharedRef<FRHISamplerState> BaseMaterialSampler;
 
     /** Base material */
     TSharedPtr<CMaterial> BaseMaterial;

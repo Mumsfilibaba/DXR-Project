@@ -6,14 +6,14 @@
 #include "Core/Templates/EnableIf.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRefCounted
+// FRefCounted
 
-class CORE_API CRefCounted
+class CORE_API FRefCounted
 {
 public:
 
-    CRefCounted();
-    virtual ~CRefCounted();
+    FRefCounted();
+    virtual ~FRefCounted();
 
     /**
      * @brief: Adds a reference
@@ -44,7 +44,7 @@ private:
 // Add a reference to a RefCounted object safely
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsBaseOf<CRefCounted, T>::Value, T*>::Type AddRef(T* InRefCounted)
+FORCEINLINE typename TEnableIf<TIsBaseOf<FRefCounted, T>::Value, T*>::Type AddRef(T* InRefCounted)
 {
     if (InRefCounted)
     {

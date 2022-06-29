@@ -15,11 +15,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef TSharedRef<class CRHIBuffer>         RHIBufferRef;
-typedef TSharedRef<class CRHIVertexBuffer>   RHIVertexBufferRef;
-typedef TSharedRef<class CRHIIndexBuffer>    RHIIndexBufferRef;
-typedef TSharedRef<class CRHIGenericBuffer>  RHIGenericBufferRef;
-typedef TSharedRef<class CRHIConstantBuffer> RHIConstantBufferRef;
+typedef TSharedRef<class FRHIBuffer>         FRHIBufferRef;
+typedef TSharedRef<class FRHIVertexBuffer>   FRHIVertexBufferRef;
+typedef TSharedRef<class FRHIIndexBuffer>    FRHIIndexBufferRef;
+typedef TSharedRef<class FRHIGenericBuffer>  FRHIGenericBufferRef;
+typedef TSharedRef<class FRHIConstantBuffer> FRHIConstantBufferRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EIndexFormat 
@@ -78,28 +78,28 @@ enum class EBufferUsageFlags : uint8
 ENUM_CLASS_OPERATORS(EBufferUsageFlags);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBufferDataInitializer
+// FRHIBufferDataInitializer
 
-class CRHIBufferDataInitializer
+class FRHIBufferDataInitializer
 {
 public:
     
-    CRHIBufferDataInitializer()
+    FRHIBufferDataInitializer()
         : BufferData(nullptr)
         , Size(0)
     { }
 
-    explicit CRHIBufferDataInitializer(const void* InBufferData, uint32 InSize)
+    explicit FRHIBufferDataInitializer(const void* InBufferData, uint32 InSize)
         : BufferData(InBufferData)
         , Size(InSize)
     { }
 
-    bool operator==(const CRHIBufferDataInitializer& RHS) const
+    bool operator==(const FRHIBufferDataInitializer& RHS) const
     {
         return (BufferData == RHS.BufferData) && (Size == RHS.Size);
     }
 
-    bool operator!=(const CRHIBufferDataInitializer& RHS) const
+    bool operator!=(const FRHIBufferDataInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -109,19 +109,19 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBufferInitializer
+// FRHIBufferInitializer
 
-class CRHIBufferInitializer
+class FRHIBufferInitializer
 {
 public:
 
-    CRHIBufferInitializer()
+    FRHIBufferInitializer()
         : InitialData(nullptr)
 	    , UsageFlags(EBufferUsageFlags::None)
         , InitialAccess(EResourceAccess::Common)
     { }
 
-    CRHIBufferInitializer(EBufferUsageFlags InUsageFlags, EResourceAccess InInitialState, CRHIBufferDataInitializer* InInitialData = nullptr)
+    FRHIBufferInitializer(EBufferUsageFlags InUsageFlags, EResourceAccess InInitialState, FRHIBufferDataInitializer* InInitialData = nullptr)
         : InitialData(InInitialData)
 	    , UsageFlags(InUsageFlags)
         , InitialAccess(InInitialState)
@@ -133,41 +133,41 @@ public:
 
     bool IsDynamic() const { return ((UsageFlags & EBufferUsageFlags::Dynamic) != EBufferUsageFlags::None); }
 
-    bool operator==(const CRHIBufferInitializer& RHS) const
+    bool operator==(const FRHIBufferInitializer& RHS) const
     {
         return (UsageFlags == RHS.UsageFlags) && (InitialAccess == RHS.InitialAccess);
     }
 
-    bool operator!=(const CRHIBufferInitializer& RHS) const
+    bool operator!=(const FRHIBufferInitializer& RHS) const
     {
         return !(*this == RHS);
     }
 
-    CRHIBufferDataInitializer* InitialData;
+    FRHIBufferDataInitializer* InitialData;
 
     EBufferUsageFlags          UsageFlags;
     EResourceAccess            InitialAccess;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIVertexBufferInitializer
+// FRHIVertexBufferInitializer
 
-class CRHIVertexBufferInitializer : public CRHIBufferInitializer
+class FRHIVertexBufferInitializer : public FRHIBufferInitializer
 {
 public:
 
-    CRHIVertexBufferInitializer()
-        : CRHIBufferInitializer()
+    FRHIVertexBufferInitializer()
+        : FRHIBufferInitializer()
         , NumVertices(0)
         , Stride(0)
     { }
 
-    CRHIVertexBufferInitializer( EBufferUsageFlags InUsageFlags
+    FRHIVertexBufferInitializer( EBufferUsageFlags InUsageFlags
                                , uint32 InNumVertices
                                , uint16 InStride
                                , EResourceAccess InInitialState = EResourceAccess::VertexAndConstantBuffer
-                               , CRHIBufferDataInitializer* InInitialData = nullptr)
-        : CRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
+                               , FRHIBufferDataInitializer* InInitialData = nullptr)
+        : FRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
         , NumVertices(InNumVertices)
         , Stride(InStride)
     { }
@@ -176,14 +176,14 @@ public:
 
     uint32 GetStride() const { return Stride; }
 
-    bool operator==(const CRHIVertexBufferInitializer& RHS) const
+    bool operator==(const FRHIVertexBufferInitializer& RHS) const
     {
-        return CRHIBufferInitializer::operator==(RHS)
+        return FRHIBufferInitializer::operator==(RHS)
             && (NumVertices == RHS.NumVertices)
             && (Stride      == RHS.Stride);
     }
 
-    bool operator!=(const CRHIVertexBufferInitializer& RHS) const
+    bool operator!=(const FRHIVertexBufferInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -193,24 +193,24 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIIndexBufferInitializer
+// FRHIIndexBufferInitializer
 
-class CRHIIndexBufferInitializer : public CRHIBufferInitializer
+class FRHIIndexBufferInitializer : public FRHIBufferInitializer
 {
 public:
 
-    CRHIIndexBufferInitializer()
-        : CRHIBufferInitializer()
+    FRHIIndexBufferInitializer()
+        : FRHIBufferInitializer()
         , IndexFormat(EIndexFormat::Unknown)
         , NumIndicies(0)
     { }
 
-    CRHIIndexBufferInitializer( EBufferUsageFlags InUsageFlags
+    FRHIIndexBufferInitializer( EBufferUsageFlags InUsageFlags
                               , EIndexFormat InIndexFormat
                               , uint32 InNumIndicies
                               , EResourceAccess InInitialState = EResourceAccess::IndexBuffer
-                              , CRHIBufferDataInitializer* InInitialData = nullptr)
-        : CRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
+                              , FRHIBufferDataInitializer* InInitialData = nullptr)
+        : FRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
         , IndexFormat(InIndexFormat)
         , NumIndicies(InNumIndicies)
     { }
@@ -219,14 +219,14 @@ public:
 
     uint32 GetStride() const { return GetStrideFromIndexFormat(IndexFormat); }
 
-    bool operator==(const CRHIIndexBufferInitializer& RHS) const
+    bool operator==(const FRHIIndexBufferInitializer& RHS) const
     {
-        return CRHIBufferInitializer::operator==(RHS)
+        return FRHIBufferInitializer::operator==(RHS)
             && (IndexFormat == RHS.IndexFormat)
             && (NumIndicies == RHS.NumIndicies);
     }
 
-    bool operator!=(const CRHIIndexBufferInitializer& RHS) const
+    bool operator!=(const FRHIIndexBufferInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -236,45 +236,45 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIGenericBufferInitializer
+// FRHIGenericBufferInitializer
 
-class CRHIGenericBufferInitializer : public CRHIBufferInitializer
+class FRHIGenericBufferInitializer : public FRHIBufferInitializer
 {
 public:
 
-    CRHIGenericBufferInitializer()
-        : CRHIBufferInitializer()
+    FRHIGenericBufferInitializer()
+        : FRHIBufferInitializer()
         , Size(0)
         , Stride(0)
     { }
 
-    CRHIGenericBufferInitializer( EBufferUsageFlags InUsageFlags
+    FRHIGenericBufferInitializer( EBufferUsageFlags InUsageFlags
                                 , uint32 InSize
                                 , EResourceAccess InInitialState = EResourceAccess::Common
-                                , CRHIBufferDataInitializer* InInitialData = nullptr)
-        : CRHIBufferInitializer(InUsageFlags, InInitialState)
+                                , FRHIBufferDataInitializer* InInitialData = nullptr)
+        : FRHIBufferInitializer(InUsageFlags, InInitialState)
         , Size(InSize)
         , Stride(InSize)
     { }
 
-    CRHIGenericBufferInitializer( EBufferUsageFlags InUsageFlags
+    FRHIGenericBufferInitializer( EBufferUsageFlags InUsageFlags
                                 , uint32 InNumElements
                                 , uint32 InStride
                                 , EResourceAccess InInitialState = EResourceAccess::Common
-                                , CRHIBufferDataInitializer* InInitialData = nullptr)
-        : CRHIBufferInitializer(InUsageFlags, InInitialState)
+                                , FRHIBufferDataInitializer* InInitialData = nullptr)
+        : FRHIBufferInitializer(InUsageFlags, InInitialState)
         , Size(InNumElements * InStride)
         , Stride(InStride)
     { }
 
-    bool operator==(const CRHIGenericBufferInitializer& RHS) const
+    bool operator==(const FRHIGenericBufferInitializer& RHS) const
     {
-        return CRHIBufferInitializer::operator==(RHS)
+        return FRHIBufferInitializer::operator==(RHS)
             && (Size   == RHS.Size)
             && (Stride == RHS.Stride);
     }
 
-    bool operator!=(const CRHIGenericBufferInitializer& RHS) const
+    bool operator!=(const FRHIGenericBufferInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -284,45 +284,45 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIConstantBufferInitializer
+// FRHIConstantBufferInitializer
 
-class CRHIConstantBufferInitializer : public CRHIBufferInitializer
+class FRHIConstantBufferInitializer : public FRHIBufferInitializer
 {
 public:
 
-    CRHIConstantBufferInitializer()
-        : CRHIBufferInitializer()
+    FRHIConstantBufferInitializer()
+        : FRHIBufferInitializer()
         , Size(0)
         , Stride(0)
     { }
 
-    CRHIConstantBufferInitializer( EBufferUsageFlags InUsageFlags
+    FRHIConstantBufferInitializer( EBufferUsageFlags InUsageFlags
                                  , uint32 InSize
                                  , EResourceAccess InInitialState = EResourceAccess::VertexAndConstantBuffer
-                                 , CRHIBufferDataInitializer* InInitialData = nullptr)
-        : CRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
+                                 , FRHIBufferDataInitializer* InInitialData = nullptr)
+        : FRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
         , Size(InSize)
         , Stride(InSize)
     { }
 
-    CRHIConstantBufferInitializer( EBufferUsageFlags InUsageFlags
+    FRHIConstantBufferInitializer( EBufferUsageFlags InUsageFlags
                                  , uint32 InStride
                                  , uint32 InNumElements
                                  , EResourceAccess InInitialState = EResourceAccess::VertexAndConstantBuffer
-                                 , CRHIBufferDataInitializer* InInitialData = nullptr)
-        : CRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
+                                 , FRHIBufferDataInitializer* InInitialData = nullptr)
+        : FRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
         , Size(InNumElements * InStride)
         , Stride(InStride)
     { }
 
-    bool operator==(const CRHIConstantBufferInitializer& RHS) const
+    bool operator==(const FRHIConstantBufferInitializer& RHS) const
     {
-        return CRHIBufferInitializer::operator==(RHS)
+        return FRHIBufferInitializer::operator==(RHS)
             && (Size   == RHS.Size)
             && (Stride == RHS.Stride);
     }
 
-    bool operator!=(const CRHIConstantBufferInitializer& RHS) const
+    bool operator!=(const FRHIConstantBufferInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -332,26 +332,26 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBuffer
+// FRHIBuffer
 
-class CRHIBuffer : public CRHIResource
+class FRHIBuffer : public FRHIResource
 {
 protected:
 
-    explicit CRHIBuffer(const CRHIBufferInitializer& Initializer)
-        : CRHIResource()
+    explicit FRHIBuffer(const FRHIBufferInitializer& Initializer)
+        : FRHIResource()
         , Flags(Initializer.UsageFlags)
     { }
 
 public:
 
-    virtual class CRHIVertexBuffer* GetVertexBuffer() { return nullptr; }
+    virtual class FRHIVertexBuffer* GetVertexBuffer() { return nullptr; }
 
-    virtual class CRHIIndexBuffer* GetIndexBuffer() { return nullptr; }
+    virtual class FRHIIndexBuffer* GetIndexBuffer() { return nullptr; }
 
-    virtual class CRHIConstantBuffer* GetConstantBuffer() { return nullptr; }
+    virtual class FRHIConstantBuffer* GetConstantBuffer() { return nullptr; }
 
-    virtual class CRHIGenericBuffer* GetGenericBuffer() { return nullptr; }
+    virtual class FRHIGenericBuffer* GetGenericBuffer() { return nullptr; }
 
     virtual void* GetRHIBaseBuffer() { return nullptr; }
 
@@ -374,14 +374,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIVertexBuffer
+// FRHIVertexBuffer
 
-class CRHIVertexBuffer : public CRHIBuffer
+class FRHIVertexBuffer : public FRHIBuffer
 {
 protected:
 
-    explicit CRHIVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
-        : CRHIBuffer(Initializer)
+    explicit FRHIVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
+        : FRHIBuffer(Initializer)
         , NumVertices(Initializer.NumVertices)
         , Stride(Initializer.Stride)
     { }
@@ -389,9 +389,9 @@ protected:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIBuffer Interface
+    // FRHIBuffer Interface
 
-    virtual CRHIVertexBuffer* GetVertexBuffer() override final { return this; }
+    virtual FRHIVertexBuffer* GetVertexBuffer() override final { return this; }
 
     virtual uint32 GetSize() const override final { return GetStride() * NumVertices; }
 
@@ -407,14 +407,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIIndexBuffer
+// FRHIIndexBuffer
 
-class CRHIIndexBuffer : public CRHIBuffer
+class FRHIIndexBuffer : public FRHIBuffer
 {
 protected:
 
-    explicit CRHIIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
-        : CRHIBuffer(Initializer)
+    explicit FRHIIndexBuffer(const FRHIIndexBufferInitializer& Initializer)
+        : FRHIBuffer(Initializer)
         , Format(Initializer.IndexFormat)
         , NumIndicies(Initializer.NumIndicies)
     { }
@@ -422,9 +422,9 @@ protected:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIBuffer Interface
+    // FRHIBuffer Interface
 
-    virtual CRHIIndexBuffer* GetIndexBuffer() override final { return this; }
+    virtual FRHIIndexBuffer* GetIndexBuffer() override final { return this; }
 
     virtual uint32 GetSize() const override final { return GetStride() * NumIndicies; }
 
@@ -442,14 +442,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIGenericBuffer
+// FRHIGenericBuffer
 
-class CRHIGenericBuffer : public CRHIBuffer
+class FRHIGenericBuffer : public FRHIBuffer
 {
 protected:
 
-    explicit CRHIGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
-        : CRHIBuffer(Initializer)
+    explicit FRHIGenericBuffer(const FRHIGenericBufferInitializer& Initializer)
+        : FRHIBuffer(Initializer)
         , Stride(Initializer.Stride)
         , Size(Initializer.Size)
     { }
@@ -457,9 +457,9 @@ protected:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIBuffer Interface
+    // FRHIBuffer Interface
 
-    virtual CRHIGenericBuffer* GetGenericBuffer() override final { return this; }
+    virtual FRHIGenericBuffer* GetGenericBuffer() override final { return this; }
 
     virtual uint32 GetSize() const override final { return Size; }
 
@@ -471,14 +471,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIConstantBuffer
+// FRHIConstantBuffer
 
-class CRHIConstantBuffer : public CRHIBuffer
+class FRHIConstantBuffer : public FRHIBuffer
 {
 protected:
 
-    explicit CRHIConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
-        : CRHIBuffer(Initializer)
+    explicit FRHIConstantBuffer(const FRHIConstantBufferInitializer& Initializer)
+        : FRHIBuffer(Initializer)
         , Size(Initializer.Size)
         , Stride(Initializer.Stride)
     { }
@@ -486,9 +486,9 @@ protected:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIBuffer Interface
+    // FRHIBuffer Interface
 
-    virtual CRHIConstantBuffer* GetConstantBuffer() override final { return this; }
+    virtual FRHIConstantBuffer* GetConstantBuffer() override final { return this; }
 
     virtual uint32 GetSize() const override final { return Size; }
 
@@ -496,7 +496,7 @@ public:
 
 public:
 
-    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
 private:
     uint32 Size;

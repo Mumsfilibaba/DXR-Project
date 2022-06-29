@@ -108,16 +108,16 @@ public:
     void GetGPUSamples(GPUProfileSamplesTable& OutGPUSamples);
 
      /** @brief: Start the GPU frame */
-    void BeginGPUFrame(CRHICommandList& CmdList);
+    void BeginGPUFrame(FRHICommandList& CmdList);
 
      /** @brief: End the GPU frame */
-    void EndGPUFrame(CRHICommandList& CmdList);
+    void EndGPUFrame(FRHICommandList& CmdList);
 
      /** @brief: Begin a GPU scope */
-    void BeginGPUTrace(CRHICommandList& CmdList, const char* Name);
+    void BeginGPUTrace(FRHICommandList& CmdList, const char* Name);
 
      /** @brief: End a GPU scope */
-    void EndGPUTrace(CRHICommandList& CmdList, const char* Name);
+    void EndGPUTrace(FRHICommandList& CmdList, const char* Name);
 
     FORCEINLINE const SGPUProfileSample& GetGPUFrameTime() const
     {
@@ -130,7 +130,7 @@ private:
     ~CGPUProfiler() = default;
 
      /** @brief: Queries for GPUTimeStamps */
-    TSharedRef<CRHITimestampQuery> Timequeries;
+    TSharedRef<FRHITimestampQuery> Timequeries;
 
     uint32 CurrentTimeQueryIndex = 0;
 
@@ -151,7 +151,7 @@ struct SGPUScopedTrace
 {
 public:
 
-    FORCEINLINE SGPUScopedTrace(CRHICommandList& InCmdList, const char* InName)
+    FORCEINLINE SGPUScopedTrace(FRHICommandList& InCmdList, const char* InName)
         : CmdList(InCmdList)
         , Name(InName)
     {
@@ -164,6 +164,6 @@ public:
     }
 
 private:
-    CRHICommandList& CmdList;
+    FRHICommandList& CmdList;
     const char* Name = nullptr;
 };

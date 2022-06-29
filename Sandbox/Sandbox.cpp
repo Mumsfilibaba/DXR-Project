@@ -179,37 +179,37 @@ bool CSandbox::Init()
     NewComponent->Mesh     = CMesh::Make(CubeMeshData);
     NewComponent->Material = MakeShared<CMaterial>(MatProperties);
 
-    TSharedRef<CRHITexture2D> AlbedoMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TSharedRef<FRHITexture2D> AlbedoMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
     if (AlbedoMap)
     {
         AlbedoMap->SetName("AlbedoMap");
     }
 
-    TSharedRef<CRHITexture2D> NormalMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TSharedRef<FRHITexture2D> NormalMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
     if (NormalMap)
     {
         NormalMap->SetName("NormalMap");
     }
 
-    TSharedRef<CRHITexture2D> AOMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
+    TSharedRef<FRHITexture2D> AOMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (AOMap)
     {
         AOMap->SetName("AOMap");
     }
 
-    TSharedRef<CRHITexture2D> RoughnessMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
+    TSharedRef<FRHITexture2D> RoughnessMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (RoughnessMap)
     {
         RoughnessMap->SetName("RoughnessMap");
     }
 
-    TSharedRef<CRHITexture2D> HeightMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
+    TSharedRef<FRHITexture2D> HeightMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (HeightMap)
     {
         HeightMap->SetName("HeightMap");
     }
 
-    TSharedRef<CRHITexture2D> MetallicMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
+    TSharedRef<FRHITexture2D> MetallicMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (MetallicMap)
     {
         MetallicMap->SetName("MetallicMap");

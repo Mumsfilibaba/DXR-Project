@@ -6,18 +6,19 @@
 
 #include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
+#include "D3D12RefCounted.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12DescriptorHeap
+// FD3D12DescriptorHeap
 
-class CD3D12DescriptorHeap : public CD3D12DeviceChild, public CRefCounted
+class FD3D12DescriptorHeap : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
 
-    CD3D12DescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE Type, uint32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
-    ~CD3D12DescriptorHeap() = default;
+    FD3D12DescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE Type, uint32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
+    ~FD3D12DescriptorHeap() = default;
 
-    bool Init();
+    bool Initialize();
 
     FORCEINLINE void SetName(const String& Name)
     {
@@ -71,7 +72,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12OfflineDescriptorHeap
 
-class CD3D12OfflineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
+class FD3D12OfflineDescriptorHeap : public FD3D12DeviceChild, public FRefCounted
 {
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // SDescriptorRange
@@ -104,7 +105,7 @@ class CD3D12OfflineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
 
     struct SDescriptorHeap
     {
-        FORCEINLINE SDescriptorHeap(const TSharedRef<CD3D12DescriptorHeap>& InHeap)
+        FORCEINLINE SDescriptorHeap(const TSharedRef<FD3D12DescriptorHeap>& InHeap)
             : FreeList()
             , Heap(InHeap)
         {
@@ -114,14 +115,14 @@ class CD3D12OfflineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
             FreeList.Emplace(EntireRange);
         }
 
-        TSharedRef<CD3D12DescriptorHeap> Heap;
+        TSharedRef<FD3D12DescriptorHeap> Heap;
         TArray<SDescriptorRange>         FreeList;
     };
 
 public:
 
-    CD3D12OfflineDescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
-    ~CD3D12OfflineDescriptorHeap() = default;
+    FD3D12OfflineDescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
+    ~FD3D12OfflineDescriptorHeap() = default;
 
     bool Init();
 
@@ -155,11 +156,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12OnlineDescriptorHeap
 
-class CD3D12OnlineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
+class FD3D12OnlineDescriptorHeap : public FD3D12DeviceChild, public FRefCounted
 {
 public:
-    CD3D12OnlineDescriptorHeap(CD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
-    ~CD3D12OnlineDescriptorHeap() = default;
+    FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
+    ~FD3D12OnlineDescriptorHeap() = default;
 
     bool Init();
 
@@ -197,18 +198,18 @@ public:
         return Heap->GetHeap();
     }
 
-    FORCEINLINE CD3D12DescriptorHeap* GetHeap() const
+    FORCEINLINE FD3D12DescriptorHeap* GetHeap() const
     {
         return Heap.Get();
     }
 
 private:
-    TSharedRef<CD3D12DescriptorHeap> Heap;
+    TSharedRef<FD3D12DescriptorHeap> Heap;
     uint32 CurrentHandle   = 0;
     uint32 DescriptorCount = 0;
     
-    TArray<TSharedRef<CD3D12DescriptorHeap>> HeapPool;
-    TArray<TSharedRef<CD3D12DescriptorHeap>> DiscardedHeaps;
+    TArray<TSharedRef<FD3D12DescriptorHeap>> HeapPool;
+    TArray<TSharedRef<FD3D12DescriptorHeap>> DiscardedHeaps;
 
     D3D12_DESCRIPTOR_HEAP_TYPE Type;
 };

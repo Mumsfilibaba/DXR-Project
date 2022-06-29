@@ -88,7 +88,7 @@ public:
         MakeAllZeros();
 
         const uint32 Size = (sizeof(Value) < sizeof(StorageType) * Elements()) ? sizeof(Value) : sizeof(StorageType) * Elements();
-        CMemory::Memcpy(Data, &Value, Size);
+        FMemory::Memcpy(Data, &Value, Size);
     }
 
     template<uint32 OtherNumBits, typename OtherStorageType>
@@ -99,17 +99,17 @@ public:
         MakeAllZeros();
 
         const uint32 size = NumBits <= OtherNumBits ? NumBits : OtherNumBits;
-        CMemory::Memcpy(Data, Other.Data, size / 8);
+        FMemory::Memcpy(Data, Other.Data, size / 8);
     }
 
     FORCEINLINE void MakeAllZeros()
     {
-        CMemory::Memset(Data, 0x00000000, sizeof(StorageType) * Elements());
+        FMemory::Memset(Data, 0x00000000, sizeof(StorageType) * Elements());
     }
 
     FORCEINLINE void MakeAllOnes()
     {
-        CMemory::Memset(Data, 0xffffffff, sizeof(StorageType) * Elements());
+        FMemory::Memset(Data, 0xffffffff, sizeof(StorageType) * Elements());
     }
 
     inline void SetBit(uint32 BitIndex)

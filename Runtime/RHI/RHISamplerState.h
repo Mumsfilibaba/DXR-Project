@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef TSharedRef<class CRHISamplerState> RHISamplerStateRef;
+typedef TSharedRef<class FRHISamplerState> RHISamplerStateRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ESamplerMode
@@ -194,17 +194,17 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHISamplerState
+// FRHISamplerState
 
-class CRHISamplerState : public CRHIResource
+class FRHISamplerState : public FRHIResource
 {
 protected:
 
-    CRHISamplerState()  = default;
-    ~CRHISamplerState() = default;
+    FRHISamplerState()  = default;
+    ~FRHISamplerState() = default;
 
 public:
 
     /** @return: Returns the Bindless descriptor-handle if the RHI-supports descriptor-handles */
-    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };

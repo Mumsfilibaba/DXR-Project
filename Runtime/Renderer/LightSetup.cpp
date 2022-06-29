@@ -12,7 +12,7 @@
 
 bool SLightSetup::Init()
 {
-    CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(DirectionalLightData));
+    FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(DirectionalLightData));
 
     DirectionalLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!DirectionalLightsBuffer)
@@ -26,7 +26,7 @@ bool SLightSetup::Init()
     }
 
     PointLightsData.Reserve(256);
-    Initializer = CRHIConstantBufferInitializer(EBufferUsageFlags::Default, PointLightsData.CapacityInBytes());
+    Initializer = FRHIConstantBufferInitializer(EBufferUsageFlags::Default, PointLightsData.CapacityInBytes());
 
     PointLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!PointLightsBuffer)
@@ -40,7 +40,7 @@ bool SLightSetup::Init()
     }
 
     PointLightsPosRad.Reserve(256);
-    Initializer = CRHIConstantBufferInitializer(EBufferUsageFlags::Default, PointLightsPosRad.CapacityInBytes());
+    Initializer = FRHIConstantBufferInitializer(EBufferUsageFlags::Default, PointLightsPosRad.CapacityInBytes());
 
     PointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
     if (!PointLightsPosRadBuffer)
@@ -54,7 +54,7 @@ bool SLightSetup::Init()
     }
 
     ShadowCastingPointLightsData.Reserve(8);
-    Initializer = CRHIConstantBufferInitializer(EBufferUsageFlags::Default, ShadowCastingPointLightsData.CapacityInBytes());
+    Initializer = FRHIConstantBufferInitializer(EBufferUsageFlags::Default, ShadowCastingPointLightsData.CapacityInBytes());
 
     ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!ShadowCastingPointLightsBuffer)
@@ -68,7 +68,7 @@ bool SLightSetup::Init()
     }
 
     ShadowCastingPointLightsPosRad.Reserve(8);
-    Initializer = CRHIConstantBufferInitializer(EBufferUsageFlags::Default, ShadowCastingPointLightsPosRad.CapacityInBytes());
+    Initializer = FRHIConstantBufferInitializer(EBufferUsageFlags::Default, ShadowCastingPointLightsPosRad.CapacityInBytes());
 
     ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
     if (!ShadowCastingPointLightsPosRadBuffer)
@@ -84,7 +84,7 @@ bool SLightSetup::Init()
     return true;
 }
 
-void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
+void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
 {
     PointLightsPosRad.Clear();
     PointLightsData.Clear();
@@ -182,7 +182,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
     {
         CmdList.DestroyResource(PointLightsBuffer.Get());
 
-        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, PointLightsData.CapacityInBytes());
+        FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, PointLightsData.CapacityInBytes());
         PointLightsBuffer = RHICreateConstantBuffer(Initializer);
         if (!PointLightsBuffer)
         {
@@ -194,7 +194,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
     {
         CmdList.DestroyResource(PointLightsPosRadBuffer.Get());
 
-        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, PointLightsPosRad.CapacityInBytes());
+        FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, PointLightsPosRad.CapacityInBytes());
         PointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
         if (!PointLightsPosRadBuffer)
         {
@@ -206,7 +206,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
     {
         CmdList.DestroyResource(ShadowCastingPointLightsBuffer.Get());
 
-        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, ShadowCastingPointLightsData.CapacityInBytes());
+        FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, ShadowCastingPointLightsData.CapacityInBytes());
         ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(Initializer);
         if (!ShadowCastingPointLightsBuffer)
         {
@@ -218,7 +218,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
     {
         CmdList.DestroyResource(ShadowCastingPointLightsPosRadBuffer.Get());
 
-        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, ShadowCastingPointLightsPosRad.CapacityInBytes());
+        FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, ShadowCastingPointLightsPosRad.CapacityInBytes());
         ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
         if (!ShadowCastingPointLightsPosRadBuffer)
         {

@@ -21,7 +21,7 @@ CMaterial::CMaterial(const SMaterialDesc& InProperties)
 
 void CMaterial::Init()
 {
-    CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SMaterialDesc));
+    FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SMaterialDesc));
 
     MaterialBuffer = RHICreateConstantBuffer(Initializer);
     if (MaterialBuffer)
@@ -32,7 +32,7 @@ void CMaterial::Init()
     Sampler = GEngine->BaseMaterialSampler;
 }
 
-void CMaterial::BuildBuffer(CRHICommandList& CmdList)
+void CMaterial::BuildBuffer(FRHICommandList& CmdList)
 {
     CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
     CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(SMaterialDesc), &Properties);
@@ -91,7 +91,7 @@ void CMaterial::SetDebugName(const String& InDebugName)
     DebugName = InDebugName;
 }
 
-CRHIShaderResourceView* const* CMaterial::GetShaderResourceViews() const
+FRHIShaderResourceView* const* CMaterial::GetShaderResourceViews() const
 {
     ShaderResourceViews[0] = SafeGetDefaultSRV(AlbedoMap);
     ShaderResourceViews[1] = SafeGetDefaultSRV(NormalMap);

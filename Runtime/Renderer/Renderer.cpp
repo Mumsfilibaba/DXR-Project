@@ -71,7 +71,7 @@ CRenderer::CRenderer()
 
 bool CRenderer::Init()
 {
-    CRHIViewportInitializer ViewportInitializer( GEngine->MainWindow->GetPlatformHandle()
+    FRHIViewportInitializer ViewportInitializer( GEngine->MainWindow->GetPlatformHandle()
                                                , EFormat::R8G8B8A8_Unorm
                                                , EFormat::Unknown
                                                , GEngine->MainWindow->GetWidth()
@@ -88,7 +88,7 @@ bool CRenderer::Init()
         // Resources.MainWindowViewport->SetName("Main Window Viewport");
     }
 
-    CRHIConstantBufferInitializer CBInitializer(EBufferUsageFlags::Default, sizeof(SCameraBufferDesc), EResourceAccess::Common);
+    FRHIConstantBufferInitializer CBInitializer(EBufferUsageFlags::Default, sizeof(SCameraBufferDesc), EResourceAccess::Common);
     Resources.CameraBuffer = RHICreateConstantBuffer(CBInitializer);
     if (!Resources.CameraBuffer)
     {
@@ -101,7 +101,7 @@ bool CRenderer::Init()
     }
 
     // Init standard input layout
-    CRHIVertexInputLayoutInitializer InputLayout =
+    FRHIVertexInputLayoutInitializer InputLayout =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(SVertex), 0, 0,  EVertexInputClass::Vertex, 0 },
         { "NORMAL",   0, EFormat::R32G32B32_Float, sizeof(SVertex), 0, 12, EVertexInputClass::Vertex, 0 },
@@ -208,7 +208,7 @@ bool CRenderer::Init()
 
     LightProbeRenderer.RenderSkyLightProbe(MainCmdList, LightSetup, Resources);
 
-    CRHICommandQueue::Get().ExecuteCommandList(MainCmdList);
+    FRHICommandQueue::Get().ExecuteCommandList(MainCmdList);
 
     CCanvasApplication& Application = CCanvasApplication::Get();
 
@@ -367,7 +367,7 @@ void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
     }
 }
 
-void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
+void CRenderer::PerformFXAA(FRHICommandList& InCmdList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin FXAA");
 
@@ -384,14 +384,14 @@ void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
     Settings.Width  = static_cast<float>(Resources.BackBuffer->GetWidth());
     Settings.Height = static_cast<float>(Resources.BackBuffer->GetHeight());
 
-    CRHIRenderPassInitializer RenderPass;
-    RenderPass.RenderTargets[0]            = CRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
+    FRHIRenderPassInitializer RenderPass;
+    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
     RenderPass.RenderTargets[0].ClearValue = CFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPass.NumRenderTargets            = 1;
 
     InCmdList.BeginRenderPass(RenderPass);
 
-    CRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
+    FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     if (GFXAADebug.GetBool())
     {
         InCmdList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
@@ -414,20 +414,20 @@ void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End FXAA");
 }
 
-void CRenderer::PerformBackBufferBlit(CRHICommandList& InCmdList)
+void CRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin Draw BackBuffer");
 
     TRACE_SCOPE("Draw to BackBuffer");
 
-    CRHIRenderPassInitializer RenderPass;
-    RenderPass.RenderTargets[0]            = CRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
+    FRHIRenderPassInitializer RenderPass;
+    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
     RenderPass.RenderTargets[0].ClearValue = CFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPass.NumRenderTargets            = 1;
 
     InCmdList.BeginRenderPass(RenderPass);
 
-    CRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
+    FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     InCmdList.SetShaderResourceView(PostShader.Get(), FinalTargetSRV, 0);
     InCmdList.SetSamplerState(PostShader.Get(), Resources.GBufferSampler.Get(), 0);
 
@@ -439,7 +439,7 @@ void CRenderer::PerformBackBufferBlit(CRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End Draw BackBuffer");
 }
 
-void CRenderer::PerformAABBDebugPass(CRHICommandList& InCmdList)
+void CRenderer::PerformAABBDebugPass(FRHICommandList& InCmdList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin DebugPass");
 
@@ -592,7 +592,7 @@ void CRenderer::Tick(const CScene& Scene)
 
         ShadingRateCmdList.SetComputePipelineState(ShadingRatePipeline.Get());
 
-        CRHIUnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
+        FRHIUnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
         ShadingRateCmdList.SetUnorderedAccessView(ShadingRateShader.Get(), ShadingImageUAV, 0);
 
         ShadingRateCmdList.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
@@ -633,28 +633,28 @@ void CRenderer::Tick(const CScene& Scene)
 
     MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView())
                    , Resources.GBuffer[GBUFFER_ALBEDO_INDEX]
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
 
     MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView())
                    , Resources.GBuffer[GBUFFER_NORMAL_INDEX]
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
 
     MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView())
                    , Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
 
     MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView())
                    , Resources.GBuffer[GBUFFER_MATERIAL_INDEX]
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
@@ -672,7 +672,7 @@ void CRenderer::Tick(const CScene& Scene)
 
     MainCmdList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.SSAOBuffer->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(Resources.SSAOBuffer->GetShaderResourceView())
                    , Resources.SSAOBuffer
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
@@ -696,27 +696,27 @@ void CRenderer::Tick(const CScene& Scene)
 
     MainCmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(LightSetup.DirectionalShadowMask->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(LightSetup.DirectionalShadowMask->GetShaderResourceView())
                    , LightSetup.DirectionalShadowMask
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[0]->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(LightSetup.ShadowMapCascades[0]->GetShaderResourceView())
                    , LightSetup.ShadowMapCascades[0]
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[1]->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(LightSetup.ShadowMapCascades[1]->GetShaderResourceView())
                    , LightSetup.ShadowMapCascades[1]
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[2]->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(LightSetup.ShadowMapCascades[2]->GetShaderResourceView())
                    , LightSetup.ShadowMapCascades[2]
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[3]->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(LightSetup.ShadowMapCascades[3]->GetShaderResourceView())
                    , LightSetup.ShadowMapCascades[3]
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
@@ -725,7 +725,7 @@ void CRenderer::Tick(const CScene& Scene)
     MainCmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
     MainCmdList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.IntegrationLUT->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(Resources.IntegrationLUT->GetShaderResourceView())
                    , Resources.IntegrationLUT
                    , EResourceAccess::PixelShaderResource
                    , EResourceAccess::PixelShaderResource);
@@ -738,14 +738,14 @@ void CRenderer::Tick(const CScene& Scene)
 
     MainCmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.FinalTarget->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(Resources.FinalTarget->GetShaderResourceView())
                    , Resources.FinalTarget
                    , EResourceAccess::PixelShaderResource
                    , EResourceAccess::PixelShaderResource);
 
     MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView())
                    , Resources.GBuffer[GBUFFER_DEPTH_INDEX]
                    , EResourceAccess::PixelShaderResource
                    , EResourceAccess::PixelShaderResource);
@@ -777,8 +777,8 @@ void CRenderer::Tick(const CScene& Scene)
         }
 #endif
 
-        CRHIRenderPassInitializer RenderPass;
-        RenderPass.RenderTargets[0] = CRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
+        FRHIRenderPassInitializer RenderPass;
+        RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
         RenderPass.NumRenderTargets = 1;
 
         MainCmdList.BeginRenderPass(RenderPass);
@@ -805,7 +805,7 @@ void CRenderer::Tick(const CScene& Scene)
     {
         TRACE_SCOPE("ExecuteCommandList");
 
-        CRHICommandList* CmdLists[9] =
+        FRHICommandList* CmdLists[9] =
         {
             &PreShadowsCmdList,
             &PointShadowCmdList,
@@ -818,11 +818,11 @@ void CRenderer::Tick(const CScene& Scene)
             &MainCmdList
         };
 
-        CRHICommandQueue::Get().ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
+        FRHICommandQueue::Get().ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
 
-        FrameStatistics.NumDrawCalls      = CRHICommandQueue::Get().GetNumDrawCalls();
-        FrameStatistics.NumDispatchCalls  = CRHICommandQueue::Get().GetNumDispatchCalls();
-        FrameStatistics.NumRenderCommands = CRHICommandQueue::Get().GetNumCommands();
+        FrameStatistics.NumDrawCalls      = FRHICommandQueue::Get().GetNumDrawCalls();
+        FrameStatistics.NumDispatchCalls  = FRHICommandQueue::Get().GetNumDispatchCalls();
+        FrameStatistics.NumRenderCommands = FRHICommandQueue::Get().GetNumCommands();
     }
 
     {
@@ -833,7 +833,7 @@ void CRenderer::Tick(const CScene& Scene)
 
 void CRenderer::Release()
 {
-    CRHICommandQueue::Get().WaitForGPU();
+    FRHICommandQueue::Get().WaitForGPU();
 
     PreShadowsCmdList.Reset();
     PointShadowCmdList.Reset();
@@ -926,8 +926,8 @@ bool CRenderer::InitBoundingBoxDebugPass()
     TArray<uint8> ShaderCode;
     
     {
-        CShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -942,8 +942,8 @@ bool CRenderer::InitBoundingBoxDebugPass()
     }
 
     {
-        CShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -957,12 +957,12 @@ bool CRenderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    CRHIVertexInputLayoutInitializer InputLayout =
+    FRHIVertexInputLayoutInitializer InputLayout =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(CVector3), 0, 0, EVertexInputClass::Vertex, 0 },
     };
 
-    TSharedRef<CRHIVertexInputLayout> InputLayoutState = RHICreateVertexInputLayout(InputLayout);
+    TSharedRef<FRHIVertexInputLayout> InputLayoutState = RHICreateVertexInputLayout(InputLayout);
     if (!InputLayoutState)
     {
         CDebug::DebugBreak();
@@ -974,7 +974,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     DepthStencilInitializer.bDepthEnable   = false;
     DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
+    TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
         CDebug::DebugBreak();
@@ -984,7 +984,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     CRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         CDebug::DebugBreak();
@@ -993,14 +993,14 @@ bool CRenderer::InitBoundingBoxDebugPass()
 
     CRHIBlendStateInitializer BlendStateInfo;
 
-    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+    TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         CDebug::DebugBreak();
         return false;
     }
 
-    CRHIGraphicsPipelineStateInitializer PSOInitializer;
+    FRHIGraphicsPipelineStateInitializer PSOInitializer;
     PSOInitializer.BlendState                             = BlendState.Get();
     PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
     PSOInitializer.VertexInputLayout                      = InputLayoutState.Get();
@@ -1036,9 +1036,9 @@ bool CRenderer::InitBoundingBoxDebugPass()
         CVector3(-0.5f,  0.5f, -0.5f)
     };
 
-    CRHIBufferDataInitializer VertexData(Vertices.Data(), Vertices.SizeInBytes());
+    FRHIBufferDataInitializer VertexData(Vertices.Data(), Vertices.SizeInBytes());
 
-    CRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, Vertices.Size(), sizeof(CVector3), EResourceAccess::Common, &VertexData);
+    FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, Vertices.Size(), sizeof(CVector3), EResourceAccess::Common, &VertexData);
     AABBVertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!AABBVertexBuffer)
     {
@@ -1067,9 +1067,9 @@ bool CRenderer::InitBoundingBoxDebugPass()
         2, 7,
     };
 
-    CRHIBufferDataInitializer IndexData(Indices.Data(), Indices.SizeInBytes());
+    FRHIBufferDataInitializer IndexData(Indices.Data(), Indices.SizeInBytes());
 
-    CRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint16, Indices.Size(), EResourceAccess::Common, &IndexData);
+    FRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint16, Indices.Size(), EResourceAccess::Common, &IndexData);
     AABBIndexBuffer = RHICreateIndexBuffer(IBInitializer);
     if (!AABBIndexBuffer)
     {
@@ -1089,15 +1089,15 @@ bool CRenderer::InitAA()
     TArray<uint8> ShaderCode;
     
     {
-		CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
-		if (!CShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
+		FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
+		if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
 		{
 			CDebug::DebugBreak();
 			return false;
 		}
     }
 
-    TSharedRef<CRHIVertexShader> VShader = RHICreateVertexShader(ShaderCode);
+    TSharedRef<FRHIVertexShader> VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
         CDebug::DebugBreak();
@@ -1105,8 +1105,8 @@ bool CRenderer::InitAA()
     }
 
     {
-		CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
-		if (!CShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
+		FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
+		if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
 		{
 			CDebug::DebugBreak();
 			return false;
@@ -1125,7 +1125,7 @@ bool CRenderer::InitAA()
     DepthStencilInitializer.bDepthEnable   = false;
     DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
+    TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
         CDebug::DebugBreak();
@@ -1135,7 +1135,7 @@ bool CRenderer::InitAA()
     CRHIRasterizerStateInitializer RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
+    TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
     if (!RasterizerState)
     {
         CDebug::DebugBreak();
@@ -1144,14 +1144,14 @@ bool CRenderer::InitAA()
 
     CRHIBlendStateInitializer BlendStateInfo;
 
-    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+    TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         CDebug::DebugBreak();
         return false;
     }
 
-    CRHIGraphicsPipelineStateInitializer PSOInitializer;
+    FRHIGraphicsPipelineStateInitializer PSOInitializer;
     PSOInitializer.VertexInputLayout                      = nullptr;
     PSOInitializer.BlendState                             = BlendState.Get();
     PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
@@ -1184,8 +1184,8 @@ bool CRenderer::InitAA()
     }
 
     {
-        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -1212,14 +1212,14 @@ bool CRenderer::InitAA()
         FXAAPSO->SetName("FXAA PipelineState");
     }
 
-    TArray<SShaderDefine> Defines =
+    TArray<FShaderDefine> Defines =
     {
-        SShaderDefine("ENABLE_DEBUG", "(1)")
+        FShaderDefine("ENABLE_DEBUG", "(1)")
     };
 
     {
-        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -1258,7 +1258,7 @@ bool CRenderer::InitShadingImage()
     const uint32 Width  = Resources.MainWindowViewport->GetWidth() / Support.ShadingRateImageTileSize;
     const uint32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
 
-    CRHITexture2DInitializer Initializer(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::ShadingRateSource);
+    FRHITexture2DInitializer Initializer(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::ShadingRateSource);
     ShadingImage = RHICreateTexture2D(Initializer);
     if (!ShadingImage)
     {
@@ -1273,8 +1273,8 @@ bool CRenderer::InitShadingImage()
     TArray<uint8> ShaderCode;
     
     {
-        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;

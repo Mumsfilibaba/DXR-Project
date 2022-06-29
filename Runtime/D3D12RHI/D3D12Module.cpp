@@ -2,17 +2,17 @@
 #include "D3D12CoreInterface.h"
 #include "D3D12RHIShaderCompiler.h"
 
-IMPLEMENT_ENGINE_MODULE(CD3D12Module, D3D12RHI);
+IMPLEMENT_ENGINE_MODULE(FD3D12Module, D3D12RHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Module
+// FD3D12Module
 
-CRHICoreInterface* CD3D12Module::CreateInterface()
+CRHICoreInterface* FD3D12Module::CreateInterface()
 {
-    return CD3D12CoreInterface::CreateD3D12Instance();
+    return FD3D12CoreInterface::CreateD3D12Instance();
 }
 
-IRHIShaderCompiler* CD3D12Module::CreateCompiler()
+IRHIShaderCompiler* FD3D12Module::CreateCompiler()
 {
     return GD3D12ShaderCompiler;
 }

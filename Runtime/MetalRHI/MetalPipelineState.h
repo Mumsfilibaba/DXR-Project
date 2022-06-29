@@ -12,7 +12,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalInputLayoutState
 
-class CMetalInputLayoutState : public CRHIVertexInputLayout, public CMetalObject
+class CMetalInputLayoutState : public FRHIVertexInputLayout, public CMetalObject
 {
 public:
 
@@ -47,7 +47,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalDepthStencilState
 
-class CMetalDepthStencilState : public CRHIDepthStencilState, public CMetalObject
+class CMetalDepthStencilState : public FRHIDepthStencilState, public CMetalObject
 {
 public:
     
@@ -107,7 +107,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalRasterizerState
 
-class CMetalRasterizerState : public CRHIRasterizerState, public CMetalObject
+class CMetalRasterizerState : public FRHIRasterizerState, public CMetalObject
 {
 public:
 
@@ -134,7 +134,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalBlendState
 
-class CMetalBlendState : public CRHIBlendState
+class CMetalBlendState : public FRHIBlendState
 {
 public:
 
@@ -145,7 +145,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalGraphicsPipelineState
 
-class CMetalGraphicsPipelineState : public CRHIGraphicsPipelineState, public CMetalObject
+class CMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public CMetalObject
 {
 public:
 
@@ -234,7 +234,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalComputePipelineState
 
-class CMetalComputePipelineState : public CRHIComputePipelineState
+class CMetalComputePipelineState : public FRHIComputePipelineState
 {
 public:
 
@@ -254,7 +254,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalRayTracingPipelineState
 
-class CMetalRayTracingPipelineState : public CRHIRayTracingPipelineState
+class CMetalRayTracingPipelineState : public FRHIRayTracingPipelineState
 {
 public:
 

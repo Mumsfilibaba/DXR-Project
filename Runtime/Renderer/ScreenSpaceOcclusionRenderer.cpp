@@ -32,8 +32,8 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     TArray<uint8> ShaderCode;
     
     {
-        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/SSAO.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/SSAO.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -102,7 +102,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAONoise.Emplace(0.0f);
     }
 
-    CRHITexture2DInitializer SSAONoiseInitializer(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::NonPixelShaderResource);
+    FRHITexture2DInitializer SSAONoiseInitializer(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::NonPixelShaderResource);
     SSAONoiseTex = RHICreateTexture2D(SSAONoiseInitializer);
     if (!SSAONoiseTex)
     {
@@ -114,7 +114,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAONoiseTex->SetName("SSAO Noise Texture");
     }
 
-    CRHICommandList CmdList;
+    FRHICommandList CmdList;
 
     CmdList.TransitionTexture(FrameResources.SSAOBuffer.Get(), EResourceAccess::Common, EResourceAccess::NonPixelShaderResource);
     CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::CopyDest);
@@ -123,10 +123,10 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource);
 
-    CRHICommandQueue::Get().ExecuteCommandList(CmdList);
+    FRHICommandQueue::Get().ExecuteCommandList(CmdList);
 
-    CRHIBufferDataInitializer    SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
-    CRHIGenericBufferInitializer SSAOSamplesInitializer( EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default
+    FRHIBufferDataInitializer    SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
+    FRHIGenericBufferInitializer SSAOSamplesInitializer( EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default
                                                        , SSAOKernel.SizeInBytes()
                                                        , sizeof(CVector3)
                                                        , EResourceAccess::Common
@@ -151,12 +151,12 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    TArray<SShaderDefine> Defines;
+    TArray<FShaderDefine> Defines;
     Defines.Emplace("HORIZONTAL_PASS", "1");
 
     {
-        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -190,8 +190,8 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     Defines.Emplace("VERTICAL_PASS", "1");
 
     {
-        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -242,7 +242,7 @@ bool CScreenSpaceOcclusionRenderer::ResizeResources(SFrameResources& FrameResour
     return CreateRenderTarget(FrameResources);
 }
 
-void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResources& FrameResources)
+void CScreenSpaceOcclusionRenderer::Render(FRHICommandList& CmdList, SFrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
 
@@ -269,7 +269,7 @@ void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResou
 
     CmdList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(SSAONoiseTex->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(SSAONoiseTex->GetShaderResourceView())
                    , SSAONoiseTex
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
@@ -281,7 +281,7 @@ void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResou
 
     CmdList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 0);
 
-    CRHIUnorderedAccessView* SSAOBufferUAV = FrameResources.SSAOBuffer->GetUnorderedAccessView();
+    FRHIUnorderedAccessView* SSAOBufferUAV = FrameResources.SSAOBuffer->GetUnorderedAccessView();
     CmdList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
     CmdList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, 7);
 
@@ -319,7 +319,7 @@ bool CScreenSpaceOcclusionRenderer::CreateRenderTarget(SFrameResources& FrameRes
     const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
 
-    CRHITexture2DInitializer SSAOBufferInitializer(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceAccess::Common);
+    FRHITexture2DInitializer SSAOBufferInitializer(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceAccess::Common);
     FrameResources.SSAOBuffer = RHICreateTexture2D(SSAOBufferInitializer);
     if (!FrameResources.SSAOBuffer)
     {

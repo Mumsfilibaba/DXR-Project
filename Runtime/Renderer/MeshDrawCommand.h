@@ -10,10 +10,10 @@ struct SMeshDrawCommand
     class CMesh*                  Mesh         = nullptr;
     class CActor*                 CurrentActor = nullptr;
 
-    class CRHIVertexBuffer*       VertexBuffer = nullptr;
-    class CRHIIndexBuffer*        IndexBuffer  = nullptr;
+    class FRHIVertexBuffer*       VertexBuffer = nullptr;
+    class FRHIIndexBuffer*        IndexBuffer  = nullptr;
 
-    class CRHIRayTracingGeometry* Geometry     = nullptr;
+    class FRHIRayTracingGeometry* Geometry     = nullptr;
 };
 
 template<>

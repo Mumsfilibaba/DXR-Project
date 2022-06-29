@@ -12,7 +12,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHISamplerState
 
-class CNullRHISamplerState : public CRHISamplerState
+class CNullRHISamplerState : public FRHISamplerState
 {
 public:
 
@@ -22,9 +22,9 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHISamplerState Interface
+    // FRHISamplerState Interface
 
-    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
 #if defined(COMPILER_MSVC)

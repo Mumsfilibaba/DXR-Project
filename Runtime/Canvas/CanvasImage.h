@@ -8,8 +8,8 @@ struct SCanvasImage
 {
     SCanvasImage() = default;
 
-    SCanvasImage( const TSharedRef<CRHIShaderResourceView>& InImageView
-                , const TSharedRef<CRHITexture>& InImage
+    SCanvasImage( const TSharedRef<FRHIShaderResourceView>& InImageView
+                , const TSharedRef<FRHITexture>& InImage
                 , EResourceAccess InBefore
                 , EResourceAccess InAfter)
         : ImageView(InImageView)
@@ -18,8 +18,8 @@ struct SCanvasImage
         , AfterState(InAfter)
     { }
 
-    TSharedRef<CRHIShaderResourceView> ImageView;
-    TSharedRef<CRHITexture> Image;
+    TSharedRef<FRHIShaderResourceView> ImageView;
+    TSharedRef<FRHITexture> Image;
 
     EResourceAccess BeforeState;
     EResourceAccess AfterState;

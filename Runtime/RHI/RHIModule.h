@@ -32,14 +32,14 @@ RHI_API bool RHIInitialize(ERHIInstanceType InRenderApi);
 RHI_API void RHIRelease();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIModule
+// FRHIModule
 
-class RHI_API CRHIModule : public CDefaultEngineModule
+class RHI_API FRHIModule : public CDefaultEngineModule
 {
 protected:
 
-    CRHIModule()  = default;
-    ~CRHIModule() = default;
+    FRHIModule()  = default;
+    ~FRHIModule() = default;
 
 public:
 

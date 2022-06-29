@@ -19,30 +19,30 @@ public:
 
     void Release();
 
-    void RenderPrePass(CRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene);
-    void RenderBasePass(CRHICommandList& CmdList, const SFrameResources& FrameResources);
-    void RenderDeferredTiledLightPass(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
+    void RenderPrePass(FRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene);
+    void RenderBasePass(FRHICommandList& CmdList, const SFrameResources& FrameResources);
+    void RenderDeferredTiledLightPass(FRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
 
     bool ResizeResources(SFrameResources& FrameResources);
 
 private:
     bool CreateGBuffer(SFrameResources& FrameResources);
 
-    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<CRHIVertexShader>          BaseVertexShader;
-    TSharedRef<CRHIPixelShader>           BasePixelShader;
+    TSharedRef<FRHIGraphicsPipelineState> PipelineState;
+    TSharedRef<FRHIVertexShader>          BaseVertexShader;
+    TSharedRef<FRHIPixelShader>           BasePixelShader;
 
-    TSharedRef<CRHIGraphicsPipelineState> PrePassPipelineState;
-    TSharedRef<CRHIVertexShader>          PrePassVertexShader;
+    TSharedRef<FRHIGraphicsPipelineState> PrePassPipelineState;
+    TSharedRef<FRHIVertexShader>          PrePassVertexShader;
 
-    TSharedRef<CRHIComputePipelineState>  TiledLightPassPSO;
-    TSharedRef<CRHIComputeShader>         TiledLightShader;
-    TSharedRef<CRHIComputePipelineState>  TiledLightPassPSODebug;
-    TSharedRef<CRHIComputeShader>         TiledLightDebugShader;
+    TSharedRef<FRHIComputePipelineState>  TiledLightPassPSO;
+    TSharedRef<FRHIComputeShader>         TiledLightShader;
+    TSharedRef<FRHIComputePipelineState>  TiledLightPassPSODebug;
+    TSharedRef<FRHIComputeShader>         TiledLightDebugShader;
 
-    TSharedRef<CRHIComputePipelineState> ReduceDepthInitalPSO;
-    TSharedRef<CRHIComputeShader>        ReduceDepthInitalShader;
+    TSharedRef<FRHIComputePipelineState> ReduceDepthInitalPSO;
+    TSharedRef<FRHIComputeShader>        ReduceDepthInitalShader;
 
-    TSharedRef<CRHIComputePipelineState> ReduceDepthPSO;
-    TSharedRef<CRHIComputeShader>        ReduceDepthShader;
+    TSharedRef<FRHIComputePipelineState> ReduceDepthPSO;
+    TSharedRef<FRHIComputeShader>        ReduceDepthShader;
 };
