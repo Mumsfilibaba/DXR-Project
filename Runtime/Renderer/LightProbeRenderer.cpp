@@ -16,8 +16,8 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
     TArray<uint8> Code;
     
     {
-        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/IrradianceGen.hlsl", CompileInfo, Code))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/IrradianceGen.hlsl", CompileInfo, Code))
         {
             LOG_ERROR("Failed to compile IrradianceGen Shader");
         }
@@ -40,8 +40,8 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
     }
 
     {
-        CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", CompileInfo, Code))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", CompileInfo, Code))
         {
             LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
         }
@@ -95,7 +95,7 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
 
     CmdList.SetComputePipelineState(IrradianceGenPSO.Get());
 
-    CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
+    FRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
     CmdList.SetShaderResourceView(IrradianceGenShader.Get(), SkyboxSRV, 0);
     CmdList.SetUnorderedAccessView(IrradianceGenShader.Get(), LightSetup.IrradianceMapUAV.Get(), 0);
 
@@ -145,7 +145,7 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
 bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
 {
     // Generate global irradiance (From Skybox)
-    CRHITextureCubeInitializer LightProbeInitializer(LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::Common);
+    FRHITextureCubeInitializer LightProbeInitializer(LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::Common);
     LightSetup.IrradianceMap = RHICreateTextureCube(LightProbeInitializer);
     if (!LightSetup.IrradianceMap)
     {
@@ -183,7 +183,7 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
     for (uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
         UAVInitializer = CRHITextureUAVInitializer(LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel, 0, 6);
-        TSharedRef<CRHIUnorderedAccessView> Uav = RHICreateUnorderedAccessView(UAVInitializer);
+        TSharedRef<FRHIUnorderedAccessView> Uav = RHICreateUnorderedAccessView(UAVInitializer);
         if (Uav)
         {
             LightSetup.SpecularIrradianceMapUAVs.Emplace(Uav);

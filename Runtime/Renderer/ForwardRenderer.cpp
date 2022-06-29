@@ -15,7 +15,7 @@
 
 bool CForwardRenderer::Init(SFrameResources& FrameResources)
 {
-    TArray<SShaderDefine> Defines =
+    TArray<FShaderDefine> Defines =
     {
         { "ENABLE_PARALLAX_MAPPING", "1" },
         { "ENABLE_NORMAL_MAPPING",   "1" },
@@ -23,8 +23,8 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
 
     TArray<uint8> ShaderCode;
     
-    CShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
-    if (!CShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
+    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
+    if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -37,8 +37,8 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CompileInfo = CShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
-    if (!CShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
+    if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -56,7 +56,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     DepthStencilInitializer.bDepthEnable   = true;
     DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
+    TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
         CDebug::DebugBreak();
@@ -66,7 +66,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     CRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         CDebug::DebugBreak();
@@ -75,14 +75,14 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
 
     CRHIBlendStateInitializer BlendStateInitializer( { SRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero) }, false , false);
 
-    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
+    TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
         CDebug::DebugBreak();
         return false;
     }
 
-    CRHIGraphicsPipelineStateInitializer PSOInitializer;
+    FRHIGraphicsPipelineStateInitializer PSOInitializer;
     PSOInitializer.ShaderState.VertexShader               = VShader.Get();
     PSOInitializer.ShaderState.PixelShader                = PShader.Get();
     PSOInitializer.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
@@ -129,9 +129,9 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
     CRHIRenderPassInitializer RenderPass;
-    RenderPass.RenderTargets[0] = CRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
     RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = CRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);
+    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);
     CmdList.BeginRenderPass(RenderPass);
 
     CmdList.SetConstantBuffer(PShader.Get(), FrameResources.CameraBuffer.Get(), 0);
@@ -173,10 +173,10 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
             Command.Material->BuildBuffer(CmdList);
         }
 
-        CRHIConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
+        FRHIConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
         CmdList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 4);
 
-        CRHIShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
+        FRHIShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
         CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[0], 4);
         CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[1], 5);
         CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[2], 6);
@@ -185,7 +185,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
         CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[5], 9);
         CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[6], 10);
 
-        CRHISamplerState* SamplerState = Command.Material->GetMaterialSampler();
+        FRHISamplerState* SamplerState = Command.Material->GetMaterialSampler();
         CmdList.SetSamplerState(PShader.Get(), SamplerState, 0);
 
         TransformPerObject.Transform = Command.CurrentActor->GetTransform().GetMatrix();

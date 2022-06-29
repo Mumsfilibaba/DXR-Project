@@ -75,12 +75,12 @@ public:
     virtual void StartContext()  override final;
     virtual void FinishContext() override final;
 
-    virtual void BeginTimeStamp(CRHITimestampQuery* Profiler, uint32 Index) override final;
-    virtual void EndTimeStamp(CRHITimestampQuery* Profiler, uint32 Index)   override final;
+    virtual void BeginTimeStamp(FRHITimestampQuery* Profiler, uint32 Index) override final;
+    virtual void EndTimeStamp(FRHITimestampQuery* Profiler, uint32 Index)   override final;
 
-    virtual void ClearRenderTargetView(const CRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor) override final;
-    virtual void ClearDepthStencilView(const CRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
-    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) override final;
+    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor) override final;
+    virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
+    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) override final;
 
     virtual void BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer) override final;
     virtual void EndRenderPass() override final;
@@ -91,58 +91,58 @@ public:
     virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) override final;
 
     virtual void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
-    virtual void SetIndexBuffer(CRHIIndexBuffer* IndexBuffer) override final;
+    virtual void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer) override final;
 
     virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
 
-    virtual void SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState) override final;
-    virtual void SetComputePipelineState(class CRHIComputePipelineState* PipelineState)   override final;
+    virtual void SetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState) override final;
+    virtual void SetComputePipelineState(class FRHIComputePipelineState* PipelineState)   override final;
 
-    virtual void Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final;
+    virtual void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final;
 
-    virtual void SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) override final;
-    virtual void SetShaderResourceViews(CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex) override final;
+    virtual void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) override final;
+    virtual void SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex) override final;
 
-    virtual void SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) override final;
-    virtual void SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex) override final;
+    virtual void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) override final;
+    virtual void SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex) override final;
 
-    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) override final;
-    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) override final;
+    virtual void SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) override final;
+    virtual void SetConstantBuffers(FRHIShader* Shader, FRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) override final;
 
-    virtual void SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex) override final;
-    virtual void SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) override final;
+    virtual void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex) override final;
+    virtual void SetSamplerStates(FRHIShader* Shader, FRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) override final;
 
-    virtual void UpdateBuffer(CRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) override final;
-    virtual void UpdateTexture2D(CRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) override final;
+    virtual void UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) override final;
+    virtual void UpdateTexture2D(FRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) override final;
 
-    virtual void ResolveTexture(CRHITexture* Dst, CRHITexture* Src) override final;
+    virtual void ResolveTexture(FRHITexture* Dst, FRHITexture* Src) override final;
 
-    virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo) override final;
-    virtual void CopyTexture(CRHITexture* Dst, CRHITexture* Src) override final;
-    virtual void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo) override final;
+    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo) override final;
+    virtual void CopyTexture(FRHITexture* Dst, FRHITexture* Src) override final;
+    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo) override final;
 
     virtual void DestroyResource(class IRHIResource* Resource) override final;
 
-    virtual void DiscardContents(class CRHITexture* Texture) override final;
+    virtual void DiscardContents(class FRHITexture* Texture) override final;
 
-    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final;
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final;
+    virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate) override final;
+    virtual void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final;
 
-    virtual void SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
-                                      , CRHIRayTracingPipelineState* PipelineState
-                                      , const SRayTracingShaderResources* GlobalResource
-                                      , const SRayTracingShaderResources* RayGenLocalResources
-                                      , const SRayTracingShaderResources* MissLocalResources
-                                      , const SRayTracingShaderResources* HitGroupResources
+    virtual void SetRayTracingBindings( FRHIRayTracingScene* RayTracingScene
+                                      , FRHIRayTracingPipelineState* PipelineState
+                                      , const FRayTracingShaderResources* GlobalResource
+                                      , const FRayTracingShaderResources* RayGenLocalResources
+                                      , const FRayTracingShaderResources* MissLocalResources
+                                      , const FRayTracingShaderResources* HitGroupResources
                                       , uint32 NumHitGroupResources) override final;
 
-    virtual void GenerateMips(CRHITexture* Texture) override final;
+    virtual void GenerateMips(FRHITexture* Texture) override final;
 
-    virtual void TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
-    virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
+    virtual void TransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
+    virtual void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
 
-    virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) override final;
-    virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer) override final;
+    virtual void UnorderedAccessTextureBarrier(FRHITexture* Texture) override final;
+    virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) override final;
 
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final;
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
@@ -151,7 +151,7 @@ public:
 
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
 
-    virtual void DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
+    virtual void DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
 
     virtual void ClearState() override final;
 

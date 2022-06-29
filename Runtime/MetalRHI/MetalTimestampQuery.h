@@ -7,7 +7,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalTimestampQuery
 
-class CMetalTimestampQuery : public CRHITimestampQuery
+class CMetalTimestampQuery : public FRHITimestampQuery
 {
 public:
     CMetalTimestampQuery() = default;

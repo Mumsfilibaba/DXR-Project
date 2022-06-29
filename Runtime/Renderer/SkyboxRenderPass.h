@@ -22,12 +22,12 @@ public:
     void Release();
 
 private:
-    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<CRHIVertexShader> SkyboxVertexShader;
-    TSharedRef<CRHIPixelShader>  SkyboxPixelShader;
+    TSharedRef<FRHIGraphicsPipelineState> PipelineState;
+    TSharedRef<FRHIVertexShader> SkyboxVertexShader;
+    TSharedRef<FRHIPixelShader>  SkyboxPixelShader;
     TSharedRef<CRHIVertexBuffer> SkyboxVertexBuffer;
-    TSharedRef<CRHIIndexBuffer>  SkyboxIndexBuffer;
-    TSharedRef<CRHISamplerState> SkyboxSampler;
+    TSharedRef<FRHIIndexBuffer>  SkyboxIndexBuffer;
+    TSharedRef<FRHISamplerState> SkyboxSampler;
 
     SMeshData SkyboxMesh;
 };

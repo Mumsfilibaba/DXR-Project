@@ -16,7 +16,7 @@ class CNullRHIVertexBuffer : public CRHIVertexBuffer
 {
 public:
 
-    CNullRHIVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
+    CNullRHIVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
         : CRHIVertexBuffer(Initializer)
     { }
 };
@@ -24,42 +24,42 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIIndexBuffer
 
-class CNullRHIIndexBuffer : public CRHIIndexBuffer
+class CNullRHIIndexBuffer : public FRHIIndexBuffer
 {
 public:
     
-    CNullRHIIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
-        : CRHIIndexBuffer(Initializer)
+    CNullRHIIndexBuffer(const FRHIIndexBufferInitializer& Initializer)
+        : FRHIIndexBuffer(Initializer)
     { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIConstantBuffer
 
-class CNullRHIConstantBuffer : public CRHIConstantBuffer
+class CNullRHIConstantBuffer : public FRHIConstantBuffer
 {
 public:
     
-    CNullRHIConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
-        : CRHIConstantBuffer(Initializer)
+    CNullRHIConstantBuffer(const FRHIConstantBufferInitializer& Initializer)
+        : FRHIConstantBuffer(Initializer)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIConstantBuffer Interface
-    virtual CRHIDescriptorHandle GetBindlessHandle() const override final { return CRHIDescriptorHandle(); }
+    // FRHIConstantBuffer Interface
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIGenericBuffer
 
-class CNullRHIGenericBuffer : public CRHIGenericBuffer
+class CNullRHIGenericBuffer : public FRHIGenericBuffer
 {
 public:
     
-    CNullRHIGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
-        : CRHIGenericBuffer(Initializer)
+    CNullRHIGenericBuffer(const FRHIGenericBufferInitializer& Initializer)
+        : FRHIGenericBuffer(Initializer)
     { }
 };
 
@@ -79,7 +79,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIBuffer Interface
+    // FRHIBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return nullptr; }
 

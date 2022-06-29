@@ -11,34 +11,34 @@
 #include "D3D12CommandContext.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Viewport
+// FD3D12Viewport
 
-class CD3D12Viewport : public CRHIViewport, public CD3D12DeviceChild
+class FD3D12Viewport : public FRHIViewport, public FD3D12DeviceChild
 {
 public:
 
-    CD3D12Viewport(FD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, const CRHIViewportInitializer& Initializer);
-    ~CD3D12Viewport();
+    FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportInitializer& Initializer);
+    ~FD3D12Viewport();
 
     bool Init();
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIViewport Interface
+    // FRHIViewport Interface
 
     virtual bool Resize(uint32 Width, uint32 Height) override final;
 
     virtual bool Present(bool VerticalSync) override final;
 
-    virtual CRHITexture2D* GetBackBuffer() const override final { return BackBuffers[BackBufferIndex].Get(); }
+    virtual FRHITexture2D* GetBackBuffer() const override final { return BackBuffers[BackBufferIndex].Get(); }
 
 private:
     bool RetriveBackBuffers();
 
     TComPtr<IDXGISwapChain3> SwapChain;
 
-    CD3D12CommandContext*    CmdContext;
+    FD3D12CommandContext*    CmdContext;
 
     HWND                     Hwnd = 0;
 
@@ -48,5 +48,5 @@ private:
 
     HANDLE                   SwapChainWaitableObject = 0;
 
-    TArray<TSharedRef<CD3D12Texture2D>> BackBuffers;
+    TArray<TSharedRef<FD3D12Texture2D>> BackBuffers;
 };

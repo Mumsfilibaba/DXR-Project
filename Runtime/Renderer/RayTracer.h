@@ -20,9 +20,9 @@ public:
     void PreRender(CRHICommandList& CmdList, SFrameResources& Resources, const CScene& Scene);
 
 private:
-    TSharedRef<CRHIRayTracingPipelineState> Pipeline;
+    TSharedRef<FRHIRayTracingPipelineState> Pipeline;
 
-    TSharedRef<CRHIRayGenShader>        RayGenShader;
-    TSharedRef<CRHIRayMissShader>       RayMissShader;
-    TSharedRef<CRHIRayClosestHitShader> RayClosestHitShader;
+    TSharedRef<FRHIRayGenShader>        RayGenShader;
+    TSharedRef<FRHIRayMissShader>       RayMissShader;
+    TSharedRef<FRHIRayClosestHitShader> RayClosestHitShader;
 };

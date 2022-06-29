@@ -130,7 +130,7 @@ private:
     ~CGPUProfiler() = default;
 
      /** @brief: Queries for GPUTimeStamps */
-    TSharedRef<CRHITimestampQuery> Timequeries;
+    TSharedRef<FRHITimestampQuery> Timequeries;
 
     uint32 CurrentTimeQueryIndex = 0;
 

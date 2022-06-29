@@ -12,10 +12,10 @@
 class FD3D12Device;
 class FD3D12Adapter;
 class FD3D12CoreInterface;
-class CD3D12RootSignature;
-class CD3D12ComputePipelineState;
-class CD3D12OnlineDescriptorHeap;
-class CD3D12OfflineDescriptorHeap;
+class FD3D12RootSignature;
+class FD3D12ComputePipelineState;
+class FD3D12OnlineDescriptorHeap;
+class FD3D12OfflineDescriptorHeap;
 
 #define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
 #define D3D12_ENABLE_PIX_MARKERS              (1)
@@ -156,15 +156,33 @@ public:
         : FD3D12RefCounted()
         , Adapter(InAdapter)
         , Device(nullptr)
+#if WIN10_BUILD_14393
         , Device1(nullptr)
+#endif
+#if WIN10_BUILD_15063
         , Device2(nullptr)
+#endif
+#if WIN10_BUILD_16299
         , Device3(nullptr)
+#endif
+#if WIN10_BUILD_17134
         , Device4(nullptr)
+#endif
+#if WIN10_BUILD_17763
         , Device5(nullptr)
+#endif
+#if WIN10_BUILD_18362
         , Device6(nullptr)
+#endif
+#if WIN10_BUILD_19041
         , Device7(nullptr)
+#endif
+#if WIN10_BUILD_20348
         , Device8(nullptr)
+#endif
+#if WIN11_BUILD_22000
         , Device9(nullptr)
+#endif
         , MinFeatureLevel(D3D_FEATURE_LEVEL_12_0)
         , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
     { }
@@ -186,15 +204,25 @@ public:
 #if WIN10_BUILD_15063
     ID3D12Device2* GetD3D12Device2() const { return Device2.Get(); }
 #endif
-#if WIN10_BUILD_17763 // TODO: Fix correctly
+#if WIN10_BUILD_16299
     ID3D12Device3* GetD3D12Device3() const { return Device3.Get(); }
+#endif
+#if WIN10_BUILD_17134
     ID3D12Device4* GetD3D12Device4() const { return Device4.Get(); }
+#endif
+#if WIN10_BUILD_17763
     ID3D12Device5* GetD3D12Device5() const { return Device5.Get(); }
 #endif
-#if WIN11_BUILD_22000 // TODO: Fix correctly
+#if WIN10_BUILD_18362
     ID3D12Device6* GetD3D12Device6() const { return Device6.Get(); }
+#endif
+#if WIN10_BUILD_19041
     ID3D12Device7* GetD3D12Device7() const { return Device7.Get(); }
+#endif
+#if WIN10_BUILD_20348
     ID3D12Device8* GetD3D12Device8() const { return Device8.Get(); }
+#endif
+#if WIN11_BUILD_22000
     ID3D12Device9* GetD3D12Device9() const { return Device9.Get(); }
 #endif
 
@@ -208,15 +236,25 @@ private:
 #if WIN10_BUILD_15063
     TComPtr<ID3D12Device2> Device2;
 #endif
-#if WIN10_BUILD_17763 // TODO: Fix correctly
+#if WIN10_BUILD_16299
     TComPtr<ID3D12Device3> Device3;
+#endif
+#if WIN10_BUILD_17134
     TComPtr<ID3D12Device4> Device4;
+#endif
+#if WIN10_BUILD_17763
     TComPtr<ID3D12Device5> Device5;
 #endif
-#if WIN11_BUILD_22000 // TODO: Fix correctly
+#if WIN10_BUILD_18362
     TComPtr<ID3D12Device6> Device6;
+#endif
+#if WIN10_BUILD_19041
     TComPtr<ID3D12Device7> Device7;
+#endif
+#if WIN10_BUILD_20348
     TComPtr<ID3D12Device8> Device8;
+#endif
+#if WIN11_BUILD_22000
     TComPtr<ID3D12Device9> Device9;
 #endif
 

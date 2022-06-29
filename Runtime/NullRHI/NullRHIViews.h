@@ -12,12 +12,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIShaderResourceView
 
-class CNullRHIShaderResourceView : public CRHIShaderResourceView
+class CNullRHIShaderResourceView : public FRHIShaderResourceView
 {
 public:
 
     explicit CNullRHIShaderResourceView(CRHIResource* InResource)
-        : CRHIShaderResourceView(InResource)
+        : FRHIShaderResourceView(InResource)
     { }
 
     ~CNullRHIShaderResourceView() = default;
@@ -26,12 +26,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIUnorderedAccessView
 
-class CNullRHIUnorderedAccessView : public CRHIUnorderedAccessView
+class CNullRHIUnorderedAccessView : public FRHIUnorderedAccessView
 {
 public:
 
     explicit CNullRHIUnorderedAccessView(CRHIResource* InResource)
-        : CRHIUnorderedAccessView(InResource)
+        : FRHIUnorderedAccessView(InResource)
     { }
 
     ~CNullRHIUnorderedAccessView() = default;

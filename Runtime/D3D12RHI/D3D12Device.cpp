@@ -5,7 +5,7 @@
 #include "D3D12CommandAllocator.h"
 #include "D3D12CommandQueue.h"
 #include "D3D12PipelineState.h"
-#include "D3D12FunctionPointers.h"
+#include "D3D12Library.h"
 
 #include "Core/Windows/Windows.h"
 #include "Core/Modules/Platform/PlatformLibrary.h"
@@ -263,7 +263,9 @@ bool FD3D12Adapter::Initialize()
     
     const D3D_FEATURE_LEVEL TestFeatureLevels[] =
     {
+#if WIN10_BUILD_20348
         D3D_FEATURE_LEVEL_12_2,
+#endif
         D3D_FEATURE_LEVEL_12_1,
         D3D_FEATURE_LEVEL_12_0,
         D3D_FEATURE_LEVEL_11_1,
@@ -391,15 +393,33 @@ FD3D12Device::~FD3D12Device()
     }
 
     Device.Reset();
+#if WIN10_BUILD_14393
     Device1.Reset();
+#endif
+#if WIN10_BUILD_15063
     Device2.Reset();
+#endif
+#if WIN10_BUILD_16299
     Device3.Reset();
+#endif
+#if WIN10_BUILD_17134
     Device4.Reset();
+#endif
+#if WIN10_BUILD_17763
     Device5.Reset();
+#endif
+#if WIN10_BUILD_18362
     Device6.Reset();
+#endif
+#if WIN10_BUILD_19041
     Device7.Reset();
+#endif
+#if WIN10_BUILD_20348
     Device8.Reset();
+#endif
+#if WIN11_BUILD_22000
     Device9.Reset();
+#endif
 }
 
 bool FD3D12Device::Initialize()
@@ -412,7 +432,8 @@ bool FD3D12Device::Initialize()
     }
     else
     {
-        D3D12_INFO("[FD3D12Device]: Created Device for adapter '%ls'", AdapterDesc.Description);
+        const String Description = Adapter->GetDescription();
+        D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", Description.CStr());
     }
 
     // Configure debug device (if active).
@@ -431,7 +452,7 @@ bool FD3D12Device::Initialize()
             };
 
             D3D12_INFO_QUEUE_FILTER Filter;
-            CMemory::Memzero(&Filter);
+            FMemory::Memzero(&Filter);
 
             Filter.DenyList.NumIDs  = ArrayCount(Hide);
             Filter.DenyList.pIDList = Hide;
@@ -455,19 +476,23 @@ bool FD3D12Device::Initialize()
     }
 #endif
 
-#if WIN10_BUILD_17763 // TODO: Fix correctly
+#if WIN10_BUILD_16299
     if (FAILED(Device.GetAs<ID3D12Device3>(&Device3)))
     {
         D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device3");
         return false;
     }
+#endif
 
+#if WIN10_BUILD_17134
     if (FAILED(Device.GetAs<ID3D12Device4>(&Device4)))
     {
         D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device4");
         return false;
     }
+#endif
 
+#if WIN10_BUILD_17763
     if (FAILED(Device.GetAs<ID3D12Device5>(&Device5)))
     {
         D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device5");
@@ -475,25 +500,31 @@ bool FD3D12Device::Initialize()
     }
 #endif
 
-#if WIN11_BUILD_22000 // TODO: Fix correctly
+#if WIN10_BUILD_18362
     if (FAILED(Device.GetAs<ID3D12Device6>(&Device6)))
     {
         D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device6");
         return false;
     }
+#endif
 
+#if WIN10_BUILD_19041
     if (FAILED(Device.GetAs<ID3D12Device7>(&Device7)))
     {
         D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device7");
         return false;
     }
+#endif
 
+#if WIN10_BUILD_20348
     if (FAILED(Device.GetAs<ID3D12Device8>(&Device8)))
     {
         D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device8");
         return false;
     }
+#endif
 
+#if WIN11_BUILD_22000
     if (FAILED(Device.GetAs<ID3D12Device9>(&Device9)))
     {
         D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device9");
@@ -504,7 +535,7 @@ bool FD3D12Device::Initialize()
     // TODO: Remove feature levels from unsupported SDKs
     const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
     {
-#if WIN11_BUILD_22000 // TODO: Fix correctly
+#if WIN10_BUILD_20348
         D3D_FEATURE_LEVEL_12_2,
 #endif
         D3D_FEATURE_LEVEL_12_1,
@@ -528,51 +559,13 @@ bool FD3D12Device::Initialize()
         ActiveFeatureLevel = MinFeatureLevel;
     }
 
-    // Check for Ray-Tracing support
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
-        CMemory::Memzero(&Features5);
-
-        Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
-        if (SUCCEEDED(Result))
-        {
-            RayTracingTier = Features5.RaytracingTier;
-        }
-    }
-
-    // Checking for Variable Shading Rate support
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
-        CMemory::Memzero(&Features6);
-
-        Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
-        if (SUCCEEDED(Result))
-        {
-            VariableShadingRateTier     = Features6.VariableShadingRateTier;
-            VariableShadingRateTileSize = Features6.ShadingRateImageTileSize;
-        }
-    }
-
-    // Check for Mesh-Shaders, and SamplerFeedback support
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
-        CMemory::Memzero(&Features7);
-
-        Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
-        if (SUCCEEDED(Result))
-        {
-            MeshShaderTier      = Features7.MeshShaderTier;
-            SamplerFeedBackTier = Features7.SamplerFeedbackTier;
-        }
-    }
-
     return true;
 }
 
 int32 FD3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
 {
     D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data;
-    CMemory::Memzero(&Data);
+    FMemory::Memzero(&Data);
 
     Data.Flags       = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
     Data.Format      = Format;

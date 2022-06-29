@@ -55,7 +55,7 @@ void CWindowsConsoleWindow::Clear()
         TScopedLock<CCriticalSection> Lock(ConsoleMutex);
 
         CONSOLE_SCREEN_BUFFER_INFO CSBI;
-        CMemory::Memzero(&CSBI);
+        FMemory::Memzero(&CSBI);
 
         if (GetConsoleScreenBufferInfo(ConsoleHandle, &CSBI))
         {

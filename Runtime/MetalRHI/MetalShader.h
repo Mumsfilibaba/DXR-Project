@@ -30,19 +30,19 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalVertexShader
 
-class CMetalVertexShader : public CRHIVertexShader, public CMetalShader
+class CMetalVertexShader : public FRHIVertexShader, public CMetalShader
 {
 public:
 
     CMetalVertexShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
-        : CRHIVertexShader()
+        : FRHIVertexShader()
         , CMetalShader(InDevice, InCode)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIShader Interface
+    // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
@@ -52,19 +52,19 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalPixelShader
 
-class CMetalPixelShader : public CRHIPixelShader, public CMetalShader
+class CMetalPixelShader : public FRHIPixelShader, public CMetalShader
 {
 public:
 
     CMetalPixelShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
-        : CRHIPixelShader()
+        : FRHIPixelShader()
         , CMetalShader(InDevice, InCode)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIShader Interface
+    // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
@@ -94,19 +94,19 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalRayGenShader
 
-class CMetalRayGenShader : public CRHIRayGenShader, public CMetalRayTracingShader
+class CMetalRayGenShader : public FRHIRayGenShader, public CMetalRayTracingShader
 {
 public:
 
     CMetalRayGenShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
-        : CRHIRayGenShader()
+        : FRHIRayGenShader()
         , CMetalRayTracingShader(InDevice, InCode)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIShader Interface
+    // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
@@ -116,19 +116,19 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalRayAnyHitShader
 
-class CMetalRayAnyHitShader : public CRHIRayAnyHitShader, public CMetalRayTracingShader
+class CMetalRayAnyHitShader : public FRHIRayAnyHitShader, public CMetalRayTracingShader
 {
 public:
     
     CMetalRayAnyHitShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
-        : CRHIRayAnyHitShader()
+        : FRHIRayAnyHitShader()
         , CMetalRayTracingShader(InDevice, InCode)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIShader Interface
+    // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
@@ -138,19 +138,19 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalRayClosestHitShader
 
-class CMetalRayClosestHitShader : public CRHIRayClosestHitShader, public CMetalRayTracingShader
+class CMetalRayClosestHitShader : public FRHIRayClosestHitShader, public CMetalRayTracingShader
 {
 public:
     
     CMetalRayClosestHitShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
-        : CRHIRayClosestHitShader()
+        : FRHIRayClosestHitShader()
         , CMetalRayTracingShader(InDevice, InCode)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIShader Interface
+    // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
@@ -160,19 +160,19 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalRayMissShader
 
-class CMetalRayMissShader : public CRHIRayMissShader, public CMetalRayTracingShader
+class CMetalRayMissShader : public FRHIRayMissShader, public CMetalRayTracingShader
 {
 public:
 
     CMetalRayMissShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
-        : CRHIRayMissShader()
+        : FRHIRayMissShader()
         , CMetalRayTracingShader(InDevice, InCode)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIShader Interface
+    // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
@@ -182,12 +182,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalComputeShader
 
-class CMetalComputeShader : public CRHIComputeShader, public CMetalShader
+class CMetalComputeShader : public FRHIComputeShader, public CMetalShader
 {
 public:
 
     CMetalComputeShader(CMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
-        : CRHIComputeShader()
+        : FRHIComputeShader()
         , CMetalShader(InDevice, InCode)
         , ThreadGroupXYZ(1, 1, 1)
     { }
@@ -195,7 +195,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIShader Interface
+    // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
@@ -210,12 +210,12 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // GetMetalShader
 
-inline CMetalShader* GetMetalShader(CRHIShader* Shader)
+inline CMetalShader* GetMetalShader(FRHIShader* Shader)
 {
     return Shader ? reinterpret_cast<CMetalShader*>(Shader->GetRHIBaseShader()) : nullptr;
 }
 
-inline CMetalRayTracingShader* MetalRayTracingShaderCast(CRHIRayTracingShader* Shader)
+inline CMetalRayTracingShader* MetalRayTracingShaderCast(FRHIRayTracingShader* Shader)
 {
     return Shader ? reinterpret_cast<CMetalRayTracingShader*>(Shader->GetRHIBaseShader()) : nullptr;
 }

@@ -8,7 +8,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ICanvasRenderer
 
-class ICanvasRenderer : public CRefCounted
+class ICanvasRenderer : public FRefCounted
 {
 public:
 

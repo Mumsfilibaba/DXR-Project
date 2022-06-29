@@ -107,7 +107,7 @@ public:
     template<typename U = ElementType>
     FORCEINLINE typename TEnableIf<TIsTrivial<U>::Value>::Type Memzero()
     {
-        CMemory::Memzero(Elements, SizeInBytes());
+        FMemory::Memzero(Elements, SizeInBytes());
     }
 
     /**

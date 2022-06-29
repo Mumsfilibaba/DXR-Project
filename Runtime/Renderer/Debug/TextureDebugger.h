@@ -23,7 +23,7 @@ public:
     virtual bool IsTickable() override final;
 
      /** @brief: Add image for debug drawing */
-    void AddTextureForDebugging(const TSharedRef<CRHIShaderResourceView>& ImageView, const TSharedRef<CRHITexture>& Image, EResourceAccess BeforeState, EResourceAccess AfterState);
+    void AddTextureForDebugging(const TSharedRef<FRHIShaderResourceView>& ImageView, const TSharedRef<FRHITexture>& Image, EResourceAccess BeforeState, EResourceAccess AfterState);
 
     void ClearImages()
     {

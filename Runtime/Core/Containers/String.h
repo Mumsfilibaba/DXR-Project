@@ -412,7 +412,7 @@ public:
         {
             BufferSize += BufferSize;
 
-            DynamicBuffer = reinterpret_cast<CharType*>(CMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
+            DynamicBuffer = reinterpret_cast<CharType*>(FMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
 
             va_list CopiedArgs;
@@ -428,7 +428,7 @@ public:
 
         if (DynamicBuffer)
         {
-            CMemory::Free(DynamicBuffer);
+            FMemory::Free(DynamicBuffer);
         }
 
         Characters.Emplace(StringUtils::Null);
@@ -478,7 +478,7 @@ public:
         {
             BufferSize += BufferSize;
 
-            DynamicBuffer = reinterpret_cast<CharType*>(CMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
+            DynamicBuffer = reinterpret_cast<CharType*>(FMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
 
             va_list CopiedArgs;
@@ -494,7 +494,7 @@ public:
 
         if (DynamicBuffer)
         {
-            CMemory::Free(DynamicBuffer);
+            FMemory::Free(DynamicBuffer);
         }
 
         Characters.Emplace(StringUtils::Null);

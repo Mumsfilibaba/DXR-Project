@@ -43,23 +43,23 @@ void CMetalCommandContext::FinishContext()
     CommandBuffer = nil;
 }
 
-void CMetalCommandContext::BeginTimeStamp(CRHITimestampQuery* Profiler, uint32 Index)
+void CMetalCommandContext::BeginTimeStamp(FRHITimestampQuery* Profiler, uint32 Index)
 {
 }
 
-void CMetalCommandContext::EndTimeStamp(CRHITimestampQuery* Profiler, uint32 Index)
+void CMetalCommandContext::EndTimeStamp(FRHITimestampQuery* Profiler, uint32 Index)
 {
 }
 
-void CMetalCommandContext::ClearRenderTargetView(const CRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
+void CMetalCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
 {
 }
 
-void CMetalCommandContext::ClearDepthStencilView(const CRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
+void CMetalCommandContext::ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
 {
 }
 
-void CMetalCommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor)
+void CMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor)
 {
 }
 
@@ -79,7 +79,7 @@ void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& Rend
     
     for (uint32 Index = 0; Index < RenderPassInitializer.NumRenderTargets; ++Index)
     {
-        const CRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[Index];
+        const FRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[Index];
         
         CMetalTexture*  RTVTexture = GetMetalTexture(RenderTargetView.Texture);
         CMetalViewport* Viewport   = RTVTexture ? RTVTexture->GetViewport() : nullptr;
@@ -96,7 +96,7 @@ void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& Rend
 
     if (DSVTexture)
     {
-        const CRHIDepthStencilView& DepthStencilView = RenderPassInitializer.DepthStencilView;
+        const FRHIDepthStencilView& DepthStencilView = RenderPassInitializer.DepthStencilView;
         
         MTLRenderPassDepthAttachmentDescriptor* DepthAttachment = RenderPassDescriptor.depthAttachment;
         DepthAttachment.texture            = DSVTexture->GetMTLTexture();
@@ -168,7 +168,7 @@ void CMetalCommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffe
 {
 }
 
-void CMetalCommandContext::SetIndexBuffer(CRHIIndexBuffer* IndexBuffer)
+void CMetalCommandContext::SetIndexBuffer(FRHIIndexBuffer* IndexBuffer)
 {
 }
 
@@ -176,63 +176,63 @@ void CMetalCommandContext::SetPrimitiveTopology(EPrimitiveTopology PrimitveTopol
 {
 }
 
-void CMetalCommandContext::SetGraphicsPipelineState(CRHIGraphicsPipelineState* PipelineState)
+void CMetalCommandContext::SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)
 {
 }
 
-void CMetalCommandContext::SetComputePipelineState(CRHIComputePipelineState* PipelineState)
+void CMetalCommandContext::SetComputePipelineState(FRHIComputePipelineState* PipelineState)
 {
 }
 
-void CMetalCommandContext::Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
+void CMetalCommandContext::Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
 {
 }
 
-void CMetalCommandContext::SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
+void CMetalCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
 {
 }
 
-void CMetalCommandContext::SetShaderResourceViews(CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex)
+void CMetalCommandContext::SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex)
 {
 }
 
-void CMetalCommandContext::SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
+void CMetalCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
 {
 }
 
-void CMetalCommandContext::SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
+void CMetalCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
 {
 }
 
-void CMetalCommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
+void CMetalCommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
 {
 }
 
-void CMetalCommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
+void CMetalCommandContext::SetConstantBuffers(FRHIShader* Shader, FRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
 {
 }
 
-void CMetalCommandContext::SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex)
+void CMetalCommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
 {
 }
 
-void CMetalCommandContext::SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
+void CMetalCommandContext::SetSamplerStates(FRHIShader* Shader, FRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
 {
 }
 
-void CMetalCommandContext::UpdateBuffer(CRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
+void CMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
 {
 }
 
-void CMetalCommandContext::UpdateTexture2D(CRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
+void CMetalCommandContext::UpdateTexture2D(FRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
 {
 }
 
-void CMetalCommandContext::ResolveTexture(CRHITexture* Dst, CRHITexture* Src)
+void CMetalCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
 }
 
-void CMetalCommandContext::CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo)
+void CMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo)
 {
     CMetalBuffer* MetalDst = GetMetalBuffer(Dst);
     CMetalBuffer* MetalSrc = GetMetalBuffer(Src);
@@ -253,7 +253,7 @@ void CMetalCommandContext::CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SR
     CopyContext.FinishContext();
 }
 
-void CMetalCommandContext::CopyTexture(CRHITexture* Dst, CRHITexture* Src)
+void CMetalCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
 {
     CMetalTexture* MetalDst = GetMetalTexture(Dst);
     CMetalTexture* MetalSrc = GetMetalTexture(Src);
@@ -270,7 +270,7 @@ void CMetalCommandContext::CopyTexture(CRHITexture* Dst, CRHITexture* Src)
     CopyContext.FinishContext();
 }
 
-void CMetalCommandContext::CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo)
+void CMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo)
 {
 }
 
@@ -278,29 +278,29 @@ void CMetalCommandContext::DestroyResource(class IRHIResource* Resource)
 {
 }
 
-void CMetalCommandContext::DiscardContents(class CRHITexture* Texture)
+void CMetalCommandContext::DiscardContents(class FRHITexture* Texture)
 {
 }
 
-void CMetalCommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
+void CMetalCommandContext::BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)
 {
 }
 
-void CMetalCommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
+void CMetalCommandContext::BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
 {
 }
 
-void CMetalCommandContext::SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
-                                                , CRHIRayTracingPipelineState* PipelineState
-                                                , const SRayTracingShaderResources* GlobalResource
-                                                , const SRayTracingShaderResources* RayGenLocalResources
-                                                , const SRayTracingShaderResources* MissLocalResources
-                                                , const SRayTracingShaderResources* HitGroupResources
+void CMetalCommandContext::SetRayTracingBindings( FRHIRayTracingScene* RayTracingScene
+                                                , FRHIRayTracingPipelineState* PipelineState
+                                                , const FRayTracingShaderResources* GlobalResource
+                                                , const FRayTracingShaderResources* RayGenLocalResources
+                                                , const FRayTracingShaderResources* MissLocalResources
+                                                , const FRayTracingShaderResources* HitGroupResources
                                                 , uint32 NumHitGroupResources)
 {
 }
 
-void CMetalCommandContext::GenerateMips(CRHITexture* Texture)
+void CMetalCommandContext::GenerateMips(FRHITexture* Texture)
 {
     CMetalTexture* MetalTexture = GetMetalTexture(Texture);
     Check(MetalTexture != nullptr);
@@ -311,19 +311,19 @@ void CMetalCommandContext::GenerateMips(CRHITexture* Texture)
     [CopyEncoder generateMipmapsForTexture:MetalTexture->GetMTLTexture()];
 }
 
-void CMetalCommandContext::TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
+void CMetalCommandContext::TransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
 }
 
-void CMetalCommandContext::TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
+void CMetalCommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
 }
 
-void CMetalCommandContext::UnorderedAccessTextureBarrier(CRHITexture* Texture)
+void CMetalCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
 }
 
-void CMetalCommandContext::UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)
+void CMetalCommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 {
 }
 
@@ -347,7 +347,7 @@ void CMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint
 {
 }
 
-void CMetalCommandContext::DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
+void CMetalCommandContext::DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
 {
 }
 

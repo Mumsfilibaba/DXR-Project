@@ -6,10 +6,10 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12DescriptorCache
+// FD3D12DescriptorCache
 
-CD3D12DescriptorCache::CD3D12DescriptorCache(FD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+FD3D12DescriptorCache::FD3D12DescriptorCache(FD3D12Device* InDevice)
+    : FD3D12DeviceChild(InDevice)
     , NullCBV(nullptr)
     , NullSRV(nullptr)
     , NullUAV(nullptr)
@@ -21,7 +21,7 @@ CD3D12DescriptorCache::CD3D12DescriptorCache(FD3D12Device* InDevice)
     , RangeSizes()
 { }
 
-CD3D12DescriptorCache::~CD3D12DescriptorCache()
+FD3D12DescriptorCache::~FD3D12DescriptorCache()
 {
     SafeDelete(NullCBV);
     SafeRelease(NullSRV);
@@ -29,17 +29,17 @@ CD3D12DescriptorCache::~CD3D12DescriptorCache()
     SafeRelease(NullSampler);
 }
 
-bool CD3D12DescriptorCache::Init()
+bool FD3D12DescriptorCache::Init()
 {
-    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
+    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
     
     D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
-    CMemory::Memzero(&CBVDesc);
+    FMemory::Memzero(&CBVDesc);
 
     CBVDesc.BufferLocation = 0;
     CBVDesc.SizeInBytes    = 0;
 
-    NullCBV = dbg_new CD3D12ConstantBufferView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap());
+    NullCBV = dbg_new FD3D12ConstantBufferView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap());
     if (!NullCBV->AllocateHandle())
     {
         return false;
@@ -51,14 +51,14 @@ bool CD3D12DescriptorCache::Init()
     }
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
-    CMemory::Memzero(&UAVDesc);
+    FMemory::Memzero(&UAVDesc);
 
     UAVDesc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
     UAVDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
     UAVDesc.Texture2D.MipSlice   = 0;
     UAVDesc.Texture2D.PlaneSlice = 0;
 
-    NullUAV = dbg_new CD3D12UnorderedAccessView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap(), nullptr);
+    NullUAV = dbg_new FD3D12UnorderedAccessView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap(), nullptr);
     if (!NullUAV->AllocateHandle())
     {
         return false;
@@ -70,7 +70,7 @@ bool CD3D12DescriptorCache::Init()
     }
 
     D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-    CMemory::Memzero(&SRVDesc);
+    FMemory::Memzero(&SRVDesc);
 
     SRVDesc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
     SRVDesc.Format                        = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -80,7 +80,7 @@ bool CD3D12DescriptorCache::Init()
     SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     SRVDesc.Texture2D.PlaneSlice          = 0;
 
-    NullSRV = dbg_new CD3D12ShaderResourceView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap(), nullptr);
+    NullSRV = dbg_new FD3D12ShaderResourceView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap(), nullptr);
     if (!NullSRV->AllocateHandle())
     {
         return false;
@@ -92,7 +92,7 @@ bool CD3D12DescriptorCache::Init()
     }
 
     D3D12_SAMPLER_DESC SamplerDesc;
-    CMemory::Memzero(&SamplerDesc);
+    FMemory::Memzero(&SamplerDesc);
 
     SamplerDesc.AddressU       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
     SamplerDesc.AddressV       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -108,7 +108,7 @@ bool CD3D12DescriptorCache::Init()
     SamplerDesc.MinLOD         = -FLT_MAX;
     SamplerDesc.MipLODBias     = 0.0f;
 
-    NullSampler = dbg_new CD3D12SamplerState(GetDevice(), D3D12CoreInterface->GetSamplerOfflineDescriptorHeap());
+    NullSampler = dbg_new FD3D12SamplerState(GetDevice(), D3D12CoreInterface->GetSamplerOfflineDescriptorHeap());
     if (!NullSampler->CreateSampler(SamplerDesc))
     {
         return false;
@@ -124,7 +124,7 @@ bool CD3D12DescriptorCache::Init()
     return true;
 }
 
-void CD3D12DescriptorCache::CommitGraphicsDescriptors(CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature)
+void FD3D12DescriptorCache::CommitGraphicsDescriptors(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature)
 {
     // TRACE_FUNCTION_SCOPE();
 
@@ -139,8 +139,8 @@ void CD3D12DescriptorCache::CommitGraphicsDescriptors(CD3D12CommandList& CmdList
     ID3D12Device*              DxDevice  = GetDevice()->GetD3D12Device();
     ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
 
-    CD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    CD3D12OnlineDescriptorHeap* SamplerHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
+    FD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
+    FD3D12OnlineDescriptorHeap* SamplerHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
 
     AllocateDescriptorsAndSetHeaps(DxCmdList, ResourceHeap, SamplerHeap);
 
@@ -163,7 +163,7 @@ void CD3D12DescriptorCache::CommitGraphicsDescriptors(CD3D12CommandList& CmdList
     }
 }
 
-void CD3D12DescriptorCache::CommitComputeDescriptors(CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature)
+void FD3D12DescriptorCache::CommitComputeDescriptors(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature)
 {
     // TRACE_FUNCTION_SCOPE();
 
@@ -173,8 +173,8 @@ void CD3D12DescriptorCache::CommitComputeDescriptors(CD3D12CommandList& CmdList,
     ID3D12Device*              DxDevice  = GetDevice()->GetD3D12Device();
     ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
 
-    CD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    CD3D12OnlineDescriptorHeap* SamplerHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
+    FD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
+    FD3D12OnlineDescriptorHeap* SamplerHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
 
     AllocateDescriptorsAndSetHeaps(DxCmdList, ResourceHeap, SamplerHeap);
 
@@ -193,7 +193,7 @@ void CD3D12DescriptorCache::CommitComputeDescriptors(CD3D12CommandList& CmdList,
     CopyAndBindComputeDescriptors(DxDevice, DxCmdList, SamplerStateCache, ParameterIndex);
 }
 
-void CD3D12DescriptorCache::Reset()
+void FD3D12DescriptorCache::Reset()
 {
     VertexBufferCache.Reset();
     RenderTargetCache.Reset();
@@ -207,7 +207,7 @@ void CD3D12DescriptorCache::Reset()
     PreviousDescriptorHeaps[1] = nullptr;
 }
 
-void CD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommandList* CmdList, CD3D12OnlineDescriptorHeap* ResourceHeap, CD3D12OnlineDescriptorHeap* SamplerHeap)
+void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommandList* CmdList, FD3D12OnlineDescriptorHeap* ResourceHeap, FD3D12OnlineDescriptorHeap* SamplerHeap)
 {
     uint32 NumConstantBuffersViews = ConstantBufferViewCache.CountNeededDescriptors();
     uint32 NumShaderResourceViews  = ShaderResourceViewCache.CountNeededDescriptors();
@@ -303,9 +303,9 @@ void CD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommand
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12VertexBufferCache
+// FD3D12VertexBufferCache
 
-void CD3D12VertexBufferCache::CommitState(CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch)
+void FD3D12VertexBufferCache::CommitState(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch)
 {
     ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
     if (bVertexBuffersDirty)
@@ -314,7 +314,7 @@ void CD3D12VertexBufferCache::CommitState(CD3D12CommandList& CmdList, CD3D12Comm
 
         for (uint32 Index = 0; Index < NumVertexBuffers; ++Index)
         {
-            CD3D12VertexBuffer* VertexBuffer = VertexBuffers[Index];
+            FD3D12VertexBuffer* VertexBuffer = VertexBuffers[Index];
             if (VertexBuffer)
             {
                 VertexBufferViews[Index] = VertexBuffer->GetView();
@@ -322,7 +322,7 @@ void CD3D12VertexBufferCache::CommitState(CD3D12CommandList& CmdList, CD3D12Comm
             }
             else
             {
-                CMemory::Memzero(&VertexBufferViews[Index]);
+                FMemory::Memzero(&VertexBufferViews[Index]);
             }
         }
 

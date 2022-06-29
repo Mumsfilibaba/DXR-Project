@@ -88,23 +88,23 @@ private:
     bool CreateShadowMask(uint32 Width, uint32 Height, SLightSetup& LightSetup);
     bool CreateShadowMaps(SLightSetup& LightSetup, SFrameResources& FrameResources);
 
-    TSharedRef<CRHIConstantBuffer>        PerShadowMapBuffer;
+    TSharedRef<FRHIConstantBuffer>        PerShadowMapBuffer;
 
-    TSharedRef<CRHIGraphicsPipelineState> DirectionalLightPSO;
-    TSharedRef<CRHIVertexShader>          DirectionalLightShader;
+    TSharedRef<FRHIGraphicsPipelineState> DirectionalLightPSO;
+    TSharedRef<FRHIVertexShader>          DirectionalLightShader;
 
-    TSharedRef<CRHIComputePipelineState>  DirectionalShadowMaskPSO;
-    TSharedRef<CRHIComputeShader>         DirectionalShadowMaskShader;
+    TSharedRef<FRHIComputePipelineState>  DirectionalShadowMaskPSO;
+    TSharedRef<FRHIComputeShader>         DirectionalShadowMaskShader;
 
-    TSharedRef<CRHIGraphicsPipelineState> PointLightPipelineState;
-    TSharedRef<CRHIVertexShader>          PointLightVertexShader;
-    TSharedRef<CRHIPixelShader>           PointLightPixelShader;
+    TSharedRef<FRHIGraphicsPipelineState> PointLightPipelineState;
+    TSharedRef<FRHIVertexShader>          PointLightVertexShader;
+    TSharedRef<FRHIPixelShader>           PointLightPixelShader;
 
-    TSharedRef<CRHIConstantBuffer>        PerCascadeBuffer;
-    TSharedRef<CRHIConstantBuffer>        CascadeGenerationData;
+    TSharedRef<FRHIConstantBuffer>        PerCascadeBuffer;
+    TSharedRef<FRHIConstantBuffer>        CascadeGenerationData;
 
-    TSharedRef<CRHIComputePipelineState>  CascadeGen;
-    TSharedRef<CRHIComputeShader>         CascadeGenShader;
+    TSharedRef<FRHIComputePipelineState>  CascadeGen;
+    TSharedRef<FRHIComputeShader>         CascadeGenShader;
 
     bool bUpdateDirLight   = true;
     bool bUpdatePointLight = true;

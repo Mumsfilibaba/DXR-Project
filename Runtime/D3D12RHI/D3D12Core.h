@@ -7,8 +7,6 @@
 #include "Core/Logging/Log.h"
 #include "Core/Containers/ComPtr.h"
 
-#include <dxcapi.h>
-
 #if MONOLITHIC_BUILD
     #define D3D12_RHI_API
 #else
@@ -137,19 +135,19 @@ template<typename D3D12TextureType>
 CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
 
 template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2D>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12Texture2D>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2DArray>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12Texture2DArray>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12TextureCube>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12TextureCube>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
@@ -161,7 +159,7 @@ CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12
 }
 
 template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture3D>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12Texture3D>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
 }
@@ -173,7 +171,7 @@ CONSTEXPR bool IsTextureCube()
 }
 
 template<>
-CONSTEXPR bool IsTextureCube<class CD3D12TextureCube>()
+CONSTEXPR bool IsTextureCube<class FD3D12TextureCube>()
 {
     return true;
 }
@@ -207,13 +205,13 @@ CONSTEXPR uint32 GetBufferAlignedSize(uint32 Size)
 }
 
 template<>
-CONSTEXPR uint32 GetBufferAlignedSize<class CD3D12ConstantBuffer>(uint32 Size)
+CONSTEXPR uint32 GetBufferAlignedSize<class FD3D12ConstantBuffer>(uint32 Size)
 {
     return NMath::AlignUp<uint32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 }
 
 template<>
-CONSTEXPR uint32 GetBufferAlignedSize<class CD3D12IndexBuffer>(uint32 Size)
+CONSTEXPR uint32 GetBufferAlignedSize<class FD3D12IndexBuffer>(uint32 Size)
 {
     return NMath::AlignUp<uint32>(Size, sizeof(uint32));
 }
@@ -224,7 +222,7 @@ CONSTEXPR uint32 GetBufferAlignedSize<class CD3D12IndexBuffer>(uint32 Size)
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    CMemory::Memzero(&HeapProperties);
+    FMemory::Memzero(&HeapProperties);
 
     HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
     HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -238,7 +236,7 @@ inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    CMemory::Memzero(&HeapProperties);
+    FMemory::Memzero(&HeapProperties);
 
     HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
     HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -884,33 +882,33 @@ inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HA
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12CpuDescriptorHandle
+// FD3D12CpuDescriptorHandle
 
-struct SD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
+struct FD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
 {
-    FORCEINLINE SD3D12CpuDescriptorHandle() noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle() noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE({ 0 })
     { }
 
-    FORCEINLINE explicit SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) noexcept
+    FORCEINLINE explicit FD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE(Other)
     { }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) })
     { }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) })
     { }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
     {
         ptr = static_cast<uint64>(static_cast<int64>(ptr) + static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize));
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& Offset(int64 OffsetScaledByIncrementSize) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& Offset(int64 OffsetScaledByIncrementSize) noexcept
     {
         ptr = static_cast<uint64>(static_cast<int64>(ptr) + OffsetScaledByIncrementSize);
         return *this;
@@ -926,31 +924,31 @@ struct SD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
         return (ptr != RHS.ptr);
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator-=(int64 RHS) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& operator-=(int64 RHS) noexcept
     {
         ptr -= RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator-=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& operator-=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr -= RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator+=(int64 RHS) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& operator+=(int64 RHS) noexcept
     {
         ptr += RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator+=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& operator+=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr += RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& operator=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr = RHS.ptr;
         return *this;
@@ -958,33 +956,33 @@ struct SD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12GpuDescriptorHandle
+// FD3D12GpuDescriptorHandle
 
-struct SD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
+struct FD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
 {
-    FORCEINLINE SD3D12GpuDescriptorHandle() noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle() noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE({ 0 })
     { }
 
-    FORCEINLINE explicit SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) noexcept
+    FORCEINLINE explicit FD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE(Other)
     { }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) })
     { }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) })
     { }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
     {
         ptr = static_cast<uint64>(static_cast<int64>(ptr) + static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize));
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& Offset(int64 OffsetScaledByIncrementSize) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& Offset(int64 OffsetScaledByIncrementSize) noexcept
     {
         ptr = static_cast<uint64>(static_cast<int64>(ptr) + OffsetScaledByIncrementSize);
         return *this;
@@ -1000,31 +998,31 @@ struct SD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
         return (ptr != RHS.ptr);
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator-=(int64 RHS) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& operator-=(int64 RHS) noexcept
     {
         ptr -= RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator-=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& operator-=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr -= RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator+=(int64 RHS) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& operator+=(int64 RHS) noexcept
     {
         ptr += RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator+=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& operator+=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr += RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& operator=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr = RHS.ptr;
         return *this;

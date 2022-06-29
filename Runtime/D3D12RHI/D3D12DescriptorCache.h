@@ -6,7 +6,7 @@
 #include "D3D12Views.h"
 #include "D3D12SamplerState.h"
 
-class CD3D12CommandBatch;
+class FD3D12CommandBatch;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TD3D12ViewCache
@@ -48,9 +48,9 @@ public:
 
     void Reset(ViewType* DefaultView)
     {
-        CMemory::Memzero(HostDescriptors  , sizeof(HostDescriptors));
-        CMemory::Memzero(DeviceDescriptors, sizeof(DeviceDescriptors));
-        CMemory::Memzero(CopyDescriptors  , sizeof(CopyDescriptors));
+        FMemory::Memzero(HostDescriptors  , sizeof(HostDescriptors));
+        FMemory::Memzero(DeviceDescriptors, sizeof(DeviceDescriptors));
+        FMemory::Memzero(CopyDescriptors  , sizeof(CopyDescriptors));
 
         for (uint32 Stage = 0; Stage < ShaderVisibility_Count; ++Stage)
         {
@@ -128,19 +128,19 @@ public:
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-using CD3D12ConstantBufferViewCache  = TD3D12ViewCache<CD3D12ConstantBufferView , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT>;
-using CD3D12ShaderResourceViewCache  = TD3D12ViewCache<CD3D12ShaderResourceView , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT>;
-using CD3D12UnorderedAccessViewCache = TD3D12ViewCache<CD3D12UnorderedAccessView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT>;
-using CD3D12SamplerStateCache        = TD3D12ViewCache<CD3D12SamplerState       , D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER    , D3D12_DEFAULT_SAMPLER_STATE_COUNT>;
+using FD3D12ConstantBufferViewCache  = TD3D12ViewCache<FD3D12ConstantBufferView , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT>;
+using FD3D12ShaderResourceViewCache  = TD3D12ViewCache<FD3D12ShaderResourceView , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT>;
+using FD3D12UnorderedAccessViewCache = TD3D12ViewCache<FD3D12UnorderedAccessView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT>;
+using FD3D12SamplerStateCache        = TD3D12ViewCache<FD3D12SamplerState       , D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER    , D3D12_DEFAULT_SAMPLER_STATE_COUNT>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12VertexBufferCache
+// FD3D12VertexBufferCache
 
-class CD3D12VertexBufferCache
+class FD3D12VertexBufferCache
 {
 public:
     
-    CD3D12VertexBufferCache()
+    FD3D12VertexBufferCache()
         : VertexBuffers()
         , NumVertexBuffers(0)
         , bVertexBuffersDirty(false)
@@ -150,9 +150,9 @@ public:
         Reset();
     }
 
-    void CommitState(CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch);
+    void CommitState(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch);
 
-    FORCEINLINE void SetVertexBuffer(CD3D12VertexBuffer* VertexBuffer, uint32 Slot)
+    FORCEINLINE void SetVertexBuffer(FD3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
         D3D12_ERROR_COND(Slot <= D3D12_MAX_VERTEX_BUFFER_SLOTS, "Trying to bind a VertexBuffer to a slot (Slot=%u) higher than the maximum (MaxVertexBufferCount=%u)", Slot, D3D12_MAX_VERTEX_BUFFER_SLOTS);
                         
@@ -165,7 +165,7 @@ public:
         }
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12IndexBuffer* InIndexBuffer)
+    FORCEINLINE void SetIndexBuffer(FD3D12IndexBuffer* InIndexBuffer)
     {
         if (IndexBuffer != InIndexBuffer)
         {
@@ -186,22 +186,22 @@ public:
     }
 
 private:
-    TStaticArray<CD3D12VertexBuffer*, D3D12_MAX_VERTEX_BUFFER_SLOTS> VertexBuffers;
+    TStaticArray<FD3D12VertexBuffer*, D3D12_MAX_VERTEX_BUFFER_SLOTS> VertexBuffers;
     uint32 NumVertexBuffers;
 
-    CD3D12IndexBuffer* IndexBuffer;
+    FD3D12IndexBuffer* IndexBuffer;
 
     bool bVertexBuffersDirty;
     bool bIndexBufferDirty;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RenderTargetState
+// FD3D12RenderTargetState
 
-class CD3D12RenderTargetState
+class FD3D12RenderTargetState
 {
 public:
-    CD3D12RenderTargetState()
+    FD3D12RenderTargetState()
         : RenderTargetViewHandles()
         , NumRenderTargets(0)
         , DepthStencilViewHandle({ 0 })
@@ -210,7 +210,7 @@ public:
         Reset();
     }
 
-    FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* RenderTargetView, uint32 Slot)
+    FORCEINLINE void SetRenderTargetView(FD3D12RenderTargetView* RenderTargetView, uint32 Slot)
     {
         D3D12_ERROR_COND(Slot <= D3D12_MAX_RENDER_TARGET_COUNT, "Trying to bind a RenderTarget to a slot (Slot=%u) higher than the maximum (MaxRenderTargetCount=%u)", Slot, D3D12_MAX_RENDER_TARGET_COUNT);
 
@@ -227,7 +227,7 @@ public:
         bDirty = true;
     }
 
-    FORCEINLINE void SetDepthStencilView(CD3D12DepthStencilView* DepthStencilView)
+    FORCEINLINE void SetDepthStencilView(FD3D12DepthStencilView* DepthStencilView)
     {
         if (DepthStencilView)
         {
@@ -244,12 +244,12 @@ public:
     FORCEINLINE void Reset()
     {
 
-        CMemory::Memzero(RenderTargetViewHandles, sizeof(RenderTargetViewHandles));
+        FMemory::Memzero(RenderTargetViewHandles, sizeof(RenderTargetViewHandles));
         DepthStencilViewHandle = { 0 };
         NumRenderTargets       = 0;
     }
 
-    FORCEINLINE void CommitState(CD3D12CommandList& CmdList)
+    FORCEINLINE void CommitState(FD3D12CommandList& CmdList)
     {
         if (bDirty)
         {
@@ -276,42 +276,42 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12DescriptorCache
+// FD3D12DescriptorCache
 
-class CD3D12DescriptorCache : public CD3D12DeviceChild
+class FD3D12DescriptorCache : public FD3D12DeviceChild
 {
 public:
-    CD3D12DescriptorCache(FD3D12Device* Device);
-    ~CD3D12DescriptorCache();
+    FD3D12DescriptorCache(FD3D12Device* Device);
+    ~FD3D12DescriptorCache();
 
     bool Init();
 
-    void CommitGraphicsDescriptors(CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature);
-    void CommitComputeDescriptors(CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature);
+    void CommitGraphicsDescriptors(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature);
+    void CommitComputeDescriptors(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature);
 
     void Reset();
 
-    FORCEINLINE void SetVertexBuffer(CD3D12VertexBuffer* VertexBuffer, uint32 Slot)
+    FORCEINLINE void SetVertexBuffer(FD3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
         VertexBufferCache.SetVertexBuffer(VertexBuffer, Slot);
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12IndexBuffer* IndexBuffer)
+    FORCEINLINE void SetIndexBuffer(FD3D12IndexBuffer* IndexBuffer)
     {
         VertexBufferCache.SetIndexBuffer(IndexBuffer);
     }
 
-    FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* RenderTargetView, uint32 Slot)
+    FORCEINLINE void SetRenderTargetView(FD3D12RenderTargetView* RenderTargetView, uint32 Slot)
     {
         RenderTargetCache.SetRenderTargetView(RenderTargetView, Slot);
     }
 
-    FORCEINLINE void SetDepthStencilView(CD3D12DepthStencilView* DepthStencilView)
+    FORCEINLINE void SetDepthStencilView(FD3D12DepthStencilView* DepthStencilView)
     {
         RenderTargetCache.SetDepthStencilView(DepthStencilView);
     }
 
-    FORCEINLINE void SetConstantBufferView(CD3D12ConstantBufferView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
+    FORCEINLINE void SetConstantBufferView(FD3D12ConstantBufferView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
@@ -321,7 +321,7 @@ public:
         ConstantBufferViewCache.SetView(Descriptor, Visibility, ShaderRegister);
     }
 
-    FORCEINLINE void SetShaderResourceView(CD3D12ShaderResourceView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
+    FORCEINLINE void SetShaderResourceView(FD3D12ShaderResourceView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
@@ -331,7 +331,7 @@ public:
         ShaderResourceViewCache.SetView(Descriptor, Visibility, ShaderRegister);
     }
 
-    FORCEINLINE void SetUnorderedAccessView(CD3D12UnorderedAccessView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
+    FORCEINLINE void SetUnorderedAccessView(FD3D12UnorderedAccessView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
@@ -341,7 +341,7 @@ public:
         UnorderedAccessViewCache.SetView(Descriptor, Visibility, ShaderRegister);
     }
 
-    FORCEINLINE void SetSamplerState(CD3D12SamplerState* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
+    FORCEINLINE void SetSamplerState(FD3D12SamplerState* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
@@ -352,7 +352,7 @@ public:
     }
 
 private:
-    void AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommandList* CmdList, CD3D12OnlineDescriptorHeap* ResourceHeap, CD3D12OnlineDescriptorHeap* SamplerHeap);
+    void AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommandList* CmdList, FD3D12OnlineDescriptorHeap* ResourceHeap, FD3D12OnlineDescriptorHeap* SamplerHeap);
 
     template<typename TResourveViewCache>
     void CopyAndBindComputeDescriptors(ID3D12Device* DxDevice, ID3D12GraphicsCommandList* DxCmdList, TResourveViewCache& ResourceViewCache, int32 ParameterIndex)
@@ -397,17 +397,17 @@ private:
         }
     }
 
-    CD3D12ConstantBufferView*      NullCBV     = nullptr;
-    CD3D12ShaderResourceView*      NullSRV     = nullptr;
-    CD3D12UnorderedAccessView*     NullUAV     = nullptr;
-    CD3D12SamplerState*            NullSampler = nullptr;
+    FD3D12ConstantBufferView*      NullCBV     = nullptr;
+    FD3D12ShaderResourceView*      NullSRV     = nullptr;
+    FD3D12UnorderedAccessView*     NullUAV     = nullptr;
+    FD3D12SamplerState*            NullSampler = nullptr;
 
-    CD3D12VertexBufferCache        VertexBufferCache;
-    CD3D12RenderTargetState        RenderTargetCache;
-    CD3D12ShaderResourceViewCache  ShaderResourceViewCache;
-    CD3D12UnorderedAccessViewCache UnorderedAccessViewCache;
-    CD3D12ConstantBufferViewCache  ConstantBufferViewCache;
-    CD3D12SamplerStateCache        SamplerStateCache;
+    FD3D12VertexBufferCache        VertexBufferCache;
+    FD3D12RenderTargetState        RenderTargetCache;
+    FD3D12ShaderResourceViewCache  ShaderResourceViewCache;
+    FD3D12UnorderedAccessViewCache UnorderedAccessViewCache;
+    FD3D12ConstantBufferViewCache  ConstantBufferViewCache;
+    FD3D12SamplerStateCache        SamplerStateCache;
 
     ID3D12DescriptorHeap*          PreviousDescriptorHeaps[2] = { nullptr, nullptr };
 
@@ -415,13 +415,13 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12ShaderConstantsCache
+// FD3D12ShaderConstantsCache
 
-class CD3D12ShaderConstantsCache
+class FD3D12ShaderConstantsCache
 {
 public:
 
-    CD3D12ShaderConstantsCache()
+    FD3D12ShaderConstantsCache()
         : Constants()
         , NumConstants()
         , bIsDirty(false)
@@ -431,15 +431,18 @@ public:
 
     FORCEINLINE void Set32BitShaderConstants(const uint32* InConstants, uint32 InNumConstants)
     {
-        D3D12_ERROR_COND(InNumConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT, "Trying to set a number of shader-constants (NumConstants=%u higher than the maximum (MaxShaderConstants=%u", InNumConstants, D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
+        D3D12_ERROR_COND( InNumConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT
+                        , "Trying to set a number of shader-constants (NumConstants=%u) higher than the maximum (MaxShaderConstants=%u)"
+                        , InNumConstants
+                        , D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
 
-        CMemory::Memcpy(Constants, InConstants, sizeof(uint32) * InNumConstants);
+        FMemory::Memcpy(Constants, InConstants, sizeof(uint32) * InNumConstants);
         NumConstants = InNumConstants;
 
         bIsDirty = true;
     }
 
-    FORCEINLINE void CommitGraphics(CD3D12CommandList& CmdList, CD3D12RootSignature* RootSignature)
+    FORCEINLINE void CommitGraphics(FD3D12CommandList& CmdList, FD3D12RootSignature* RootSignature)
     {
         ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
 
@@ -451,7 +454,7 @@ public:
         }
     }
 
-    FORCEINLINE void CommitCompute(CD3D12CommandList& CmdList, CD3D12RootSignature* RootSignature)
+    FORCEINLINE void CommitCompute(FD3D12CommandList& CmdList, FD3D12RootSignature* RootSignature)
     {
         ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
 
@@ -465,7 +468,7 @@ public:
 
     FORCEINLINE void Reset()
     {
-        CMemory::Memzero(Constants, sizeof(Constants));
+        FMemory::Memzero(Constants, sizeof(Constants));
         NumConstants = 0;
 
         bIsDirty = true;

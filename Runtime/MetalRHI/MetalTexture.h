@@ -49,13 +49,13 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalTexture2D
 
-class CMetalTexture2D : public CMetalTexture, public CRHITexture2D
+class CMetalTexture2D : public CMetalTexture, public FRHITexture2D
 {
 public:
 
-    CMetalTexture2D(CMetalDeviceContext* InDeviceContext, const CRHITexture2DInitializer& Initializer)
+    CMetalTexture2D(CMetalDeviceContext* InDeviceContext, const FRHITexture2DInitializer& Initializer)
         : CMetalTexture(InDeviceContext)
-        , CRHITexture2D(Initializer)
+        , FRHITexture2D(Initializer)
         , UnorderedAccessView(dbg_new CMetalUnorderedAccessView(InDeviceContext, this))
     { }
 
@@ -66,17 +66,17 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture Interface
+    // FRHITexture Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
 
     virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CMetalTexture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override { return GetMetalUnorderedAccessView(); }
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override { return GetMetalUnorderedAccessView(); }
     
     virtual void SetName(const String& InName) override final
     {
@@ -97,27 +97,27 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalTexture2DArray
 
-class CMetalTexture2DArray : public CMetalTexture, public CRHITexture2DArray
+class CMetalTexture2DArray : public CMetalTexture, public FRHITexture2DArray
 {
 public:
 
-    CMetalTexture2DArray(CMetalDeviceContext* InDeviceContext, const CRHITexture2DArrayInitializer& Initializer)
+    CMetalTexture2DArray(CMetalDeviceContext* InDeviceContext, const FRHITexture2DArrayInitializer& Initializer)
         : CMetalTexture(InDeviceContext)
-        , CRHITexture2DArray(Initializer)
+        , FRHITexture2DArray(Initializer)
     { }
     
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture Interface
+    // FRHITexture Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
 
     virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CMetalTexture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     
     virtual void SetName(const String& InName) override final
     {
@@ -135,27 +135,27 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalTextureCube
 
-class CMetalTextureCube : public CMetalTexture, public CRHITextureCube
+class CMetalTextureCube : public CMetalTexture, public FRHITextureCube
 {
 public:
 
-    CMetalTextureCube(CMetalDeviceContext* InDeviceContext, const CRHITextureCubeInitializer& Initializer)
+    CMetalTextureCube(CMetalDeviceContext* InDeviceContext, const FRHITextureCubeInitializer& Initializer)
         : CMetalTexture(InDeviceContext)
-        , CRHITextureCube(Initializer)
+        , FRHITextureCube(Initializer)
     { }
     
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture Interface
+    // FRHITexture Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
 
     virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CMetalTexture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     
     virtual void SetName(const String& InName) override final
     {
@@ -185,15 +185,15 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture Interface
+    // FRHITexture Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
 
     virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CMetalTexture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     
     virtual void SetName(const String& InName) override final
     {
@@ -211,27 +211,27 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalTexture3D
 
-class CMetalTexture3D : public CMetalTexture, public CRHITexture3D
+class CMetalTexture3D : public CMetalTexture, public FRHITexture3D
 {
 public:
     
-    CMetalTexture3D(CMetalDeviceContext* InDeviceContext, const CRHITexture3DInitializer& Initializer)
+    CMetalTexture3D(CMetalDeviceContext* InDeviceContext, const FRHITexture3DInitializer& Initializer)
         : CMetalTexture(InDeviceContext)
-        , CRHITexture3D(Initializer)
+        , FRHITexture3D(Initializer)
     { }
     
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture Interface
+    // FRHITexture Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
 
     virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CMetalTexture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     
     virtual void SetName(const String& InName) override final
     {
@@ -249,7 +249,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // GetMetalTexture
 
-inline CMetalTexture* GetMetalTexture(CRHITexture* Texture)
+inline CMetalTexture* GetMetalTexture(FRHITexture* Texture)
 {
     return Texture ? reinterpret_cast<CMetalTexture*>(Texture->GetRHIBaseTexture()) : nullptr;
 }

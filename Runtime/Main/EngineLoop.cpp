@@ -131,7 +131,7 @@ bool CEngineLoop::PreInitialize()
     }
 
    // Initialize the shadercompiler before RHI since RHI might need to compile shaders
-    if (!CShaderCompiler::Initialize(CProjectManager::GetAssetPath()))
+    if (!FRHIShaderCompiler::Initialize(CProjectManager::GetAssetPath()))
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return false;

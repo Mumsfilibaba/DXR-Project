@@ -479,9 +479,9 @@ CONSTEXPR const char* ToString(EDescriptorType DescriptorType)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIDescriptorHandle
+// FRHIDescriptorHandle
 
-class CRHIDescriptorHandle
+class FRHIDescriptorHandle
 {
     enum : uint32
     {
@@ -494,7 +494,7 @@ public:
     /**
      * @brief: Default Constructor
      */
-    CRHIDescriptorHandle()
+    FRHIDescriptorHandle()
         : Index(InvalidHandle)
 	    , Type(EDescriptorType::Unknown)
     { }
@@ -505,7 +505,7 @@ public:
      * @param InType: Type of descriptor
      * @param InIndex: Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
      */
-    CRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
+    FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
         : Index(InIndex)
 	    , Type(InType)
     { }
@@ -518,7 +518,7 @@ public:
      *
      * @return: Returns true if the handles are equal
      */
-    bool operator==(const CRHIDescriptorHandle& RHS) const
+    bool operator==(const FRHIDescriptorHandle& RHS) const
     {
         return (Type == RHS.Type) && (Index == RHS.Index);
     }
@@ -528,7 +528,7 @@ public:
      *
      * @return: Returns false if the handles are equal
      */
-    bool operator!=(const CRHIDescriptorHandle& RHS) const
+    bool operator!=(const FRHIDescriptorHandle& RHS) const
     {
         return !(*this == RHS);
     }

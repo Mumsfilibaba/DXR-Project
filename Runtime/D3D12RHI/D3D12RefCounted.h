@@ -4,7 +4,7 @@
 #include "Core/Threading/AtomicInt.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RefCounted
+// FD3D12RefCounted
 
 class D3D12_RHI_API FD3D12RefCounted : public ID3D12RefCounted
 {

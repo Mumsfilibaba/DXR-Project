@@ -11,14 +11,14 @@ struct SRHITimestamp
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITimestampQuery
+// FRHITimestampQuery
 
-class CRHITimestampQuery : public CRHIResource
+class FRHITimestampQuery : public CRHIResource
 {
 protected:
 
-    CRHITimestampQuery()  = default;
-    ~CRHITimestampQuery() = default;
+    FRHITimestampQuery()  = default;
+    ~FRHITimestampQuery() = default;
 
 public:
 

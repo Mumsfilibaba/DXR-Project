@@ -19,7 +19,7 @@ public:
     void Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
 
 private:
-    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<CRHIVertexShader>          VShader;
-    TSharedRef<CRHIPixelShader>           PShader;
+    TSharedRef<FRHIGraphicsPipelineState> PipelineState;
+    TSharedRef<FRHIVertexShader>          VShader;
+    TSharedRef<FRHIPixelShader>           PShader;
 };

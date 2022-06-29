@@ -17,11 +17,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef TSharedRef<class CRHITexture>        RHITextureRef;
-typedef TSharedRef<class CRHITexture2D>      RHITexture2DRef;
-typedef TSharedRef<class CRHITexture2DArray> RHITexture2DArrayRef;
-typedef TSharedRef<class CRHITextureCube>    RHITextureCubeRef;
-typedef TSharedRef<class CRHITexture3D>      RHITexture3DRef;
+typedef TSharedRef<class FRHITexture>        RHITextureRef;
+typedef TSharedRef<class FRHITexture2D>      RHITexture2DRef;
+typedef TSharedRef<class FRHITexture2DArray> RHITexture2DArrayRef;
+typedef TSharedRef<class FRHITextureCube>    RHITextureCubeRef;
+typedef TSharedRef<class FRHITexture3D>      RHITexture3DRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ETextureUsageFlags
@@ -150,13 +150,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITexture2DInitializer
+// FRHITexture2DInitializer
 
-class CRHITexture2DInitializer : public CRHITextureInitializer
+class FRHITexture2DInitializer : public CRHITextureInitializer
 {
 public:
 
-    CRHITexture2DInitializer()
+    FRHITexture2DInitializer()
         : CRHITextureInitializer()
         , Width(1)
         , Height(1)
@@ -164,7 +164,7 @@ public:
         , NumSamples(1)
     { }
 
-    CRHITexture2DInitializer( EFormat InFormat
+    FRHITexture2DInitializer( EFormat InFormat
                             , uint32 InWidth
                             , uint32 InHeight
                             , uint32 InNumMips
@@ -180,7 +180,7 @@ public:
         , NumSamples(uint8(InNumSamples))
     { }
 
-    bool operator==(const CRHITexture2DInitializer& RHS) const
+    bool operator==(const FRHITexture2DInitializer& RHS) const
     {
         return CRHITextureInitializer::operator==(RHS)
             && (Width      == RHS.Width)
@@ -189,7 +189,7 @@ public:
             && (NumSamples == RHS.NumSamples);
     }
 
-    bool operator!=(const CRHITexture2DInitializer& RHS) const
+    bool operator!=(const FRHITexture2DInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -202,18 +202,18 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITexture2DArrayInitializer
+// FRHITexture2DArrayInitializer
 
-class CRHITexture2DArrayInitializer : public CRHITexture2DInitializer
+class FRHITexture2DArrayInitializer : public FRHITexture2DInitializer
 {
 public:
 
-    CRHITexture2DArrayInitializer()
-        : CRHITexture2DInitializer()
+    FRHITexture2DArrayInitializer()
+        : FRHITexture2DInitializer()
         , ArraySize(1)
     { }
 
-    CRHITexture2DArrayInitializer( EFormat InFormat
+    FRHITexture2DArrayInitializer( EFormat InFormat
                                  , uint32 InWidth
                                  , uint32 InHeight
                                  , uint32 InArraySize
@@ -223,16 +223,16 @@ public:
                                  , EResourceAccess InInitialAccess
                                  , CRHITextureDataInitializer* InInitialData = nullptr
                                  , const CTextureClearValue& InClearValue = CTextureClearValue())
-        : CRHITexture2DInitializer(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InInitialData, InClearValue)
+        : FRHITexture2DInitializer(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InInitialData, InClearValue)
         , ArraySize(uint16(InArraySize))
     { }
 
-    bool operator==(const CRHITexture2DArrayInitializer& RHS) const
+    bool operator==(const FRHITexture2DArrayInitializer& RHS) const
     {
-        return CRHITexture2DInitializer::operator==(RHS) && (ArraySize == RHS.ArraySize);
+        return FRHITexture2DInitializer::operator==(RHS) && (ArraySize == RHS.ArraySize);
     }
 
-    bool operator!=(const CRHITexture2DArrayInitializer& RHS) const
+    bool operator!=(const FRHITexture2DArrayInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -241,19 +241,19 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITextureCubeInitializer
+// FRHITextureCubeInitializer
 
-class CRHITextureCubeInitializer : public CRHITextureInitializer
+class FRHITextureCubeInitializer : public CRHITextureInitializer
 {
 public:
 
-    CRHITextureCubeInitializer()
+    FRHITextureCubeInitializer()
         : CRHITextureInitializer()
 	    , NumSamples(1)
 	    , Extent(1)
     { }
 
-    CRHITextureCubeInitializer( EFormat InFormat
+    FRHITextureCubeInitializer( EFormat InFormat
                               , uint32 InExtent
                               , uint32 InNumMips
                               , uint32 InNumSamples
@@ -266,14 +266,14 @@ public:
 	    , Extent(uint16(InExtent))
     { }
 
-    bool operator==(const CRHITextureCubeInitializer& RHS) const
+    bool operator==(const FRHITextureCubeInitializer& RHS) const
     {
         return CRHITextureInitializer::operator==(RHS)
             && (Extent     == RHS.Extent)
             && (NumSamples == RHS.NumSamples);
     }
 
-    bool operator!=(const CRHITextureCubeInitializer& RHS) const
+    bool operator!=(const FRHITextureCubeInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -285,12 +285,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITextureCubeArrayInitializer
 
-class CRHITextureCubeArrayInitializer : public CRHITextureCubeInitializer
+class CRHITextureCubeArrayInitializer : public FRHITextureCubeInitializer
 {
 public:
 
     CRHITextureCubeArrayInitializer()
-        : CRHITextureCubeInitializer()
+        : FRHITextureCubeInitializer()
         , ArraySize(1)
     { }
 
@@ -303,13 +303,13 @@ public:
                                    , EResourceAccess InInitialAccess
                                    , CRHITextureDataInitializer* InInitialData = nullptr
                                    , const CTextureClearValue& InClearValue = CTextureClearValue())
-        : CRHITextureCubeInitializer(InFormat, InExtent, InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InInitialData, InClearValue)
+        : FRHITextureCubeInitializer(InFormat, InExtent, InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InInitialData, InClearValue)
         , ArraySize(uint16(InArraySize))
     { }
 
     bool operator==(const CRHITextureCubeArrayInitializer& RHS) const
     {
-        return CRHITextureCubeInitializer::operator==(RHS) && (ArraySize == RHS.ArraySize);
+        return FRHITextureCubeInitializer::operator==(RHS) && (ArraySize == RHS.ArraySize);
     }
 
     bool operator!=(const CRHITextureCubeArrayInitializer& RHS) const
@@ -321,20 +321,20 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITexture3DInitializer
+// FRHITexture3DInitializer
 
-class CRHITexture3DInitializer : public CRHITextureInitializer
+class FRHITexture3DInitializer : public CRHITextureInitializer
 {
 public:
 
-    CRHITexture3DInitializer()
+    FRHITexture3DInitializer()
         : CRHITextureInitializer()
         , Width(1)
         , Height(1)
         , Depth(1)
     { }
 
-    CRHITexture3DInitializer( EFormat InFormat
+    FRHITexture3DInitializer( EFormat InFormat
                             , uint16 InWidth
                             , uint16 InHeight
                             , uint16 InDepth
@@ -349,7 +349,7 @@ public:
         , Depth(InDepth)
     { }
 
-    bool operator==(const CRHITexture3DInitializer& RHS) const
+    bool operator==(const FRHITexture3DInitializer& RHS) const
     {
         return CRHITextureInitializer::operator==(RHS)
             && (Width  == RHS.Width)
@@ -357,7 +357,7 @@ public:
             && (Depth  == RHS.Depth);
     }
 
-    bool operator!=(const CRHITexture3DInitializer& RHS) const
+    bool operator!=(const FRHITexture3DInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -368,13 +368,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITexture
+// FRHITexture
 
-class CRHITexture : public CRHIResource
+class FRHITexture : public CRHIResource
 {
 protected:
 
-    explicit CRHITexture(const CRHITextureInitializer& Initializer)
+    explicit FRHITexture(const CRHITextureInitializer& Initializer)
         : CRHIResource()
         , Format(Initializer.Format)
         , NumMips(Initializer.NumMips)
@@ -384,23 +384,23 @@ protected:
 
 public:
 
-    virtual class CRHITexture2D* GetTexture2D() { return nullptr; }
+    virtual class FRHITexture2D* GetTexture2D() { return nullptr; }
 
-    virtual class CRHITexture2DArray* GetTexture2DArray() { return nullptr; }
+    virtual class FRHITexture2DArray* GetTexture2DArray() { return nullptr; }
     
-    virtual class CRHITextureCube* GetTextureCube() { return nullptr; }
+    virtual class FRHITextureCube* GetTextureCube() { return nullptr; }
 
     virtual class CRHITextureCubeArray* GetTextureCubeArray() { return nullptr; }
 
-    virtual class CRHITexture3D* GetTexture3D() { return nullptr; }
+    virtual class FRHITexture3D* GetTexture3D() { return nullptr; }
 
     virtual void* GetRHIBaseTexture() { return nullptr; }
 
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    virtual class CRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
+    virtual class FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
 
     virtual uint32 GetWidth() const { return 1; }
 
@@ -438,14 +438,14 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITexture2D
+// FRHITexture2D
 
-class CRHITexture2D : public CRHITexture
+class FRHITexture2D : public FRHITexture
 {
 protected:
 
-    explicit CRHITexture2D(const CRHITexture2DInitializer& Initializer)
-        : CRHITexture(Initializer)
+    explicit FRHITexture2D(const FRHITexture2DInitializer& Initializer)
+        : FRHITexture(Initializer)
         , NumSamples(Initializer.NumSamples)
         , Width(Initializer.Width)
         , Height(Initializer.Height)
@@ -457,9 +457,9 @@ protected:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture Interface
+    // FRHITexture Interface
 
-    virtual CRHITexture2D* GetTexture2D() override { return this; }
+    virtual FRHITexture2D* GetTexture2D() override { return this; }
 
     virtual uint32 GetWidth() const override final { return Width; }
     
@@ -471,7 +471,7 @@ public:
 
 public:
 
-    virtual class CRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
+    virtual class FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
 protected:
     uint8  NumSamples;
@@ -480,14 +480,14 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITexture2DArray
+// FRHITexture2DArray
 
-class CRHITexture2DArray : public CRHITexture2D
+class FRHITexture2DArray : public FRHITexture2D
 {
 protected:
 
-    explicit CRHITexture2DArray(const CRHITexture2DArrayInitializer& Initializer)
-        : CRHITexture2D(Initializer)
+    explicit FRHITexture2DArray(const FRHITexture2DArrayInitializer& Initializer)
+        : FRHITexture2D(Initializer)
         , ArraySize(Initializer.ArraySize)
     {
         Check(ArraySize != 0);
@@ -496,11 +496,11 @@ protected:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture Interface
+    // FRHITexture Interface
 
-    virtual CRHITexture2D* GetTexture2D() override final { return nullptr; }
+    virtual FRHITexture2D* GetTexture2D() override final { return nullptr; }
     
-    virtual CRHITexture2DArray* GetTexture2DArray() override final { return this; }
+    virtual FRHITexture2DArray* GetTexture2DArray() override final { return this; }
 
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(GetWidth(), GetDepth(), ArraySize); }
 
@@ -511,14 +511,14 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITextureCube
+// FRHITextureCube
 
-class CRHITextureCube : public CRHITexture
+class FRHITextureCube : public FRHITexture
 {
 protected:
 
-    explicit CRHITextureCube(const CRHITextureCubeInitializer& Initializer)
-        : CRHITexture(Initializer)
+    explicit FRHITextureCube(const FRHITextureCubeInitializer& Initializer)
+        : FRHITexture(Initializer)
         , NumSamples(Initializer.NumSamples)
 	    , Extent(Initializer.Extent)
     {
@@ -528,9 +528,9 @@ protected:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture Interface
+    // FRHITexture Interface
 
-    virtual CRHITextureCube* GetTextureCube() override { return this; }
+    virtual FRHITextureCube* GetTextureCube() override { return this; }
 
     virtual uint32 GetWidth()  const override final { return Extent; }
     
@@ -548,12 +548,12 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITextureCubeArray
 
-class CRHITextureCubeArray : public CRHITextureCube
+class CRHITextureCubeArray : public FRHITextureCube
 {
 protected:
 
     explicit CRHITextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer)
-        : CRHITextureCube(Initializer)
+        : FRHITextureCube(Initializer)
         , ArraySize(Initializer.ArraySize)
     {
         Check(ArraySize != 0);
@@ -562,9 +562,9 @@ protected:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture Interface
+    // FRHITexture Interface
 
-    virtual CRHITextureCube* GetTextureCube() override final { return nullptr; }
+    virtual FRHITextureCube* GetTextureCube() override final { return nullptr; }
     
     virtual CRHITextureCubeArray* GetTextureCubeArray() override final { return this; }
 
@@ -577,14 +577,14 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITexture3D
+// FRHITexture3D
 
-class CRHITexture3D : public CRHITexture
+class FRHITexture3D : public FRHITexture
 {
 protected:
 
-    explicit CRHITexture3D(const CRHITexture3DInitializer& Initializer)
-        : CRHITexture(Initializer)
+    explicit FRHITexture3D(const FRHITexture3DInitializer& Initializer)
+        : FRHITexture(Initializer)
         , Width(Initializer.Width)
         , Height(Initializer.Height)
         , Depth(Initializer.Depth)
@@ -597,9 +597,9 @@ protected:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture Interface
+    // FRHITexture Interface
 
-    virtual CRHITexture3D* GetTexture3D() override { return this; }
+    virtual FRHITexture3D* GetTexture3D() override { return this; }
 
     virtual uint32 GetWidth()  const override final { return Width; }
     

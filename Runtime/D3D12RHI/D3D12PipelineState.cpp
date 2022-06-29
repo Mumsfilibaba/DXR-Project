@@ -2,17 +2,17 @@
 #include "D3D12PipelineState.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12GraphicsPipelineState 
+// FD3D12GraphicsPipelineState 
 
-CD3D12GraphicsPipelineState::CD3D12GraphicsPipelineState(FD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+FD3D12GraphicsPipelineState::FD3D12GraphicsPipelineState(FD3D12Device* InDevice)
+    : FD3D12DeviceChild(InDevice)
     , PipelineState(nullptr)
     , RootSignature(nullptr)
 { }
 
-bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitializer& Initializer)
+bool FD3D12GraphicsPipelineState::Init(const FRHIGraphicsPipelineStateInitializer& Initializer)
 {
-    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) SGraphicsPipelineStream
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12GraphicsPipelineStream
     {
         struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
         {
@@ -83,7 +83,7 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
 
     D3D12_INPUT_LAYOUT_DESC& InputLayoutDesc = PipelineStream.InputLayout;
 
-    CD3D12VertexInputLayout* D3D12InputLayoutState = static_cast<CD3D12VertexInputLayout*>(Initializer.VertexInputLayout);
+    FD3D12VertexInputLayout* D3D12InputLayoutState = static_cast<FD3D12VertexInputLayout*>(Initializer.VertexInputLayout);
     if (!D3D12InputLayoutState)
     {
         InputLayoutDesc.pInputElementDescs = nullptr;
@@ -94,11 +94,11 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
         InputLayoutDesc = D3D12InputLayoutState->GetDesc();
     }
 
-    TArray<CD3D12Shader*> ShadersWithRootSignature;
-    TArray<CD3D12Shader*> BaseShaders;
+    TArray<FD3D12Shader*> ShadersWithRootSignature;
+    TArray<FD3D12Shader*> BaseShaders;
 
     // VertexShader
-    CD3D12VertexShader* D3D12VertexShader = static_cast<CD3D12VertexShader*>(Initializer.ShaderState.VertexShader);
+    FD3D12VertexShader* D3D12VertexShader = static_cast<FD3D12VertexShader*>(Initializer.ShaderState.VertexShader);
     Check(D3D12VertexShader != nullptr);
 
     if (D3D12VertexShader->HasRootSignature())
@@ -111,7 +111,7 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
     BaseShaders.Emplace(D3D12VertexShader);
 
     // PixelShader
-    CD3D12PixelShader* D3D12PixelShader = static_cast<CD3D12PixelShader*>(Initializer.ShaderState.PixelShader);
+    FD3D12PixelShader* D3D12PixelShader = static_cast<FD3D12PixelShader*>(Initializer.ShaderState.PixelShader);
 
     D3D12_SHADER_BYTECODE& PixelShader = PipelineStream.PixelShader;
     if (D3D12PixelShader)
@@ -135,6 +135,7 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
 
     D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = PipelineStream.RenderTargetInfo;
     RenderTargetInfo.NumRenderTargets = NumRenderTargets;
+
     for (uint32 Index = 0; Index < NumRenderTargets; Index++)
     {
         RenderTargetInfo.RTFormats[Index] = ConvertFormat(Initializer.PipelineFormats.RenderTargetFormats[Index]);
@@ -144,21 +145,21 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
     PipelineStream.DepthBufferFormat = ConvertFormat(Initializer.PipelineFormats.DepthStencilFormat);
 
     // RasterizerState
-    CD3D12RasterizerState* D3D12RasterizerState = static_cast<CD3D12RasterizerState*>(Initializer.RasterizerState);
+    FD3D12RasterizerState* D3D12RasterizerState = static_cast<FD3D12RasterizerState*>(Initializer.RasterizerState);
     Check(D3D12RasterizerState != nullptr);
 
     D3D12_RASTERIZER_DESC& RasterizerDesc = PipelineStream.RasterizerDesc;
     RasterizerDesc = D3D12RasterizerState->GetDesc();
 
     // DepthStencilState
-    CD3D12DepthStencilState* D3D12DepthStencilState = static_cast<CD3D12DepthStencilState*>(Initializer.DepthStencilState);
+    FD3D12DepthStencilState* D3D12DepthStencilState = static_cast<FD3D12DepthStencilState*>(Initializer.DepthStencilState);
     Check(D3D12DepthStencilState != nullptr);
 
     D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc = PipelineStream.DepthStencilDesc;
     DepthStencilDesc = D3D12DepthStencilState->GetDesc();
 
     // BlendState
-    CD3D12BlendState* D3D12BlendState = static_cast<CD3D12BlendState*>(Initializer.BlendState);
+    FD3D12BlendState* D3D12BlendState = static_cast<FD3D12BlendState*>(Initializer.BlendState);
     Check(D3D12BlendState != nullptr);
 
     D3D12_BLEND_DESC& BlendStateDesc = PipelineStream.BlendStateDesc;
@@ -175,14 +176,14 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
     // RootSignature
     if (ShadersWithRootSignature.IsEmpty())
     {
-        SD3D12RootSignatureResourceCount ResourceCounts;
+        FD3D12RootSignatureResourceCount ResourceCounts;
         ResourceCounts.Type = ERootSignatureType::Graphics;
         // TODO: Check if any shader actually uses the input assembler
         ResourceCounts.AllowInputAssembler = true;
 
         // NOTE: For now all constants are put in visibility_all
         uint32 Num32BitConstants = 0;
-        for (CD3D12Shader* DxShader : BaseShaders)
+        for (FD3D12Shader* DxShader : BaseShaders)
         {
             uint32 Index = DxShader->GetShaderVisibility();
             ResourceCounts.ResourceCounts[Index]                   = DxShader->GetResourceCount();
@@ -192,14 +193,14 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
 
         ResourceCounts.ResourceCounts[ShaderVisibility_All].Num32BitConstants = Num32BitConstants;
 
-        RootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts));
+        RootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts));
     }
     else
     {
         // TODO: Maybe use all shaders and create one that fits all
         D3D12_SHADER_BYTECODE ByteCode = ShadersWithRootSignature.FirstElement()->GetByteCode();
 
-        RootSignature = dbg_new CD3D12RootSignature(GetDevice());
+        RootSignature = dbg_new FD3D12RootSignature(GetDevice());
         if (!RootSignature->Initialize(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
         {
             return false;
@@ -215,13 +216,13 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
     PipelineStream.RootSignature = RootSignature->GetRootSignature();
 
     D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
-    CMemory::Memzero(&PipelineStreamDesc);
+    FMemory::Memzero(&PipelineStreamDesc);
 
     PipelineStreamDesc.pPipelineStateSubobjectStream = &PipelineStream;
-    PipelineStreamDesc.SizeInBytes                   = sizeof(SGraphicsPipelineStream);
+    PipelineStreamDesc.SizeInBytes                   = sizeof(FD3D12GraphicsPipelineStream);
 
     TComPtr<ID3D12PipelineState> NewPipelineState;
-    HRESULT Result = GetDevice()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&NewPipelineState));
+    HRESULT Result = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&NewPipelineState));
     if (FAILED(Result))
     {
         D3D12_ERROR("[D3D12GraphicsPipelineState]: FAILED to Create GraphicsPipelineState");
@@ -235,16 +236,16 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIComputePipelineState
 
-CD3D12ComputePipelineState::CD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<CD3D12ComputeShader>& InShader)
-    : CRHIComputePipelineState()
-    , CD3D12DeviceChild(InDevice)
+FD3D12ComputePipelineState::FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader)
+    : FRHIComputePipelineState()
+    , FD3D12DeviceChild(InDevice)
     , PipelineState(nullptr)
     , Shader(InShader)
     , RootSignature(nullptr)
 {
 }
 
-bool CD3D12ComputePipelineState::Init()
+bool FD3D12ComputePipelineState::Init()
 {
     struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) SComputePipelineStream
     {
@@ -265,18 +266,18 @@ bool CD3D12ComputePipelineState::Init()
 
     if (!Shader->HasRootSignature())
     {
-        SD3D12RootSignatureResourceCount ResourceCounts;
+        FD3D12RootSignatureResourceCount ResourceCounts;
         ResourceCounts.Type                                 = ERootSignatureType::Compute;
         ResourceCounts.AllowInputAssembler                  = false;
         ResourceCounts.ResourceCounts[ShaderVisibility_All] = Shader->GetResourceCount();
 
-        RootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts));
+        RootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts));
     }
     else
     {
         D3D12_SHADER_BYTECODE ByteCode = Shader->GetByteCode();
 
-        RootSignature = dbg_new CD3D12RootSignature(GetDevice());
+        RootSignature = dbg_new FD3D12RootSignature(GetDevice());
         if (!RootSignature->Initialize(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
         {
             return false;
@@ -293,12 +294,12 @@ bool CD3D12ComputePipelineState::Init()
 
     // Create PipelineState
     D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
-    CMemory::Memzero(&PipelineStreamDesc);
+    FMemory::Memzero(&PipelineStreamDesc);
 
     PipelineStreamDesc.pPipelineStateSubobjectStream = &PipelineStream;
     PipelineStreamDesc.SizeInBytes                   = sizeof(SComputePipelineStream);
 
-    HRESULT Result = GetDevice()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
+    HRESULT Result = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
     if (FAILED(Result))
     {
         D3D12_ERROR("[D3D12ComputePipelineState]: FAILED to Create ComputePipelineState");
@@ -309,11 +310,11 @@ bool CD3D12ComputePipelineState::Init()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12RootSignatureAssociation
+// FD3D12RootSignatureAssociation
 
-struct SD3D12RootSignatureAssociation
+struct FD3D12RootSignatureAssociation
 {
-    SD3D12RootSignatureAssociation(ID3D12RootSignature* InRootSignature, const TArray<WString>& InShaderExportNames)
+    FD3D12RootSignatureAssociation(ID3D12RootSignature* InRootSignature, const TArray<WString>& InShaderExportNames)
         : ExportAssociation()
         , RootSignature(InRootSignature)
         , ShaderExportNames(InShaderExportNames)
@@ -334,18 +335,18 @@ struct SD3D12RootSignatureAssociation
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12HitGroup
+// FD3D12HitGroup
 
-struct SD3D12HitGroup
+struct FD3D12HitGroup
 {
-    SD3D12HitGroup(const WString& InHitGroupName, const WString& InClosestHit, const WString& InAnyHit, const WString& InIntersection)
+    FD3D12HitGroup(const WString& InHitGroupName, const WString& InClosestHit, const WString& InAnyHit, const WString& InIntersection)
         : Desc()
         , HitGroupName(InHitGroupName)
         , ClosestHit(InClosestHit)
         , AnyHit(InAnyHit)
         , Intersection(InIntersection)
     {
-        CMemory::Memzero(&Desc);
+        FMemory::Memzero(&Desc);
 
         Desc.Type                   = D3D12_HIT_GROUP_TYPE_TRIANGLES;
         Desc.HitGroupExport         = HitGroupName.CStr();
@@ -371,11 +372,11 @@ struct SD3D12HitGroup
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12Library
+// FD3D12Library
 
-struct SD3D12Library
+struct FD3D12Library
 {
-    SD3D12Library(D3D12_SHADER_BYTECODE ByteCode, const TArray<WString>& InExportNames)
+    FD3D12Library(D3D12_SHADER_BYTECODE ByteCode, const TArray<WString>& InExportNames)
         : ExportNames(InExportNames)
         , ExportDescs(InExportNames.Size())
         , Desc()
@@ -399,9 +400,9 @@ struct SD3D12Library
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12RayTracingPipelineStateStream
+// FD3D12RayTracingPipelineStateStream
 
-struct SD3D12RayTracingPipelineStateStream
+struct FD3D12RayTracingPipelineStateStream
 {
     void AddLibrary(D3D12_SHADER_BYTECODE ByteCode, const TArray<WString>& ExportNames)
     {
@@ -424,21 +425,21 @@ struct SD3D12RayTracingPipelineStateStream
         SubObjects.Resize(NumSubObjects);
 
         uint32 SubObjectIndex = 0;
-        for (SD3D12Library& Lib : Libraries)
+        for (FD3D12Library& Lib : Libraries)
         {
             D3D12_STATE_SUBOBJECT& SubObject = SubObjects[SubObjectIndex++];
             SubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
             SubObject.pDesc = &Lib.Desc;
         }
 
-        for (SD3D12HitGroup& HitGroup : HitGroups)
+        for (FD3D12HitGroup& HitGroup : HitGroups)
         {
             D3D12_STATE_SUBOBJECT& SubObject = SubObjects[SubObjectIndex++];
             SubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
             SubObject.pDesc = &HitGroup.Desc;
         }
 
-        for (SD3D12RootSignatureAssociation& Association : RootSignatureAssociations)
+        for (FD3D12RootSignatureAssociation& Association : RootSignatureAssociations)
         {
             D3D12_STATE_SUBOBJECT& LocalRootSubObject = SubObjects[SubObjectIndex++];
             LocalRootSubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
@@ -480,9 +481,9 @@ struct SD3D12RayTracingPipelineStateStream
         ShaderConfigAssociationSubObject.pDesc = &ShaderConfigAssociation;
     }
 
-    TArray<SD3D12Library>                  Libraries;
-    TArray<SD3D12HitGroup>                 HitGroups;
-    TArray<SD3D12RootSignatureAssociation> RootSignatureAssociations;
+    TArray<FD3D12Library>                  Libraries;
+    TArray<FD3D12HitGroup>                 HitGroups;
+    TArray<FD3D12RootSignatureAssociation> RootSignatureAssociations;
 
     D3D12_RAYTRACING_PIPELINE_CONFIG       PipelineConfig;
     D3D12_RAYTRACING_SHADER_CONFIG         ShaderConfig;
@@ -496,31 +497,31 @@ struct SD3D12RayTracingPipelineStateStream
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RayTracingPipelineState
+// FD3D12RayTracingPipelineState
 
-CD3D12RayTracingPipelineState::CD3D12RayTracingPipelineState(FD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+FD3D12RayTracingPipelineState::FD3D12RayTracingPipelineState(FD3D12Device* InDevice)
+    : FD3D12DeviceChild(InDevice)
     , StateObject(nullptr)
 { }
 
-bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitializer& Initializer)
+bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitializer& Initializer)
 {
-    SD3D12RayTracingPipelineStateStream PipelineStream;
+    FD3D12RayTracingPipelineStateStream PipelineStream;
 
-    TArray<CD3D12Shader*> Shaders;
+    TArray<FD3D12Shader*> Shaders;
 
     // Collect and add all RayGen-Shaders
-    for (CRHIRayGenShader* RayGen : Initializer.RayGenShaders)
+    for (FRHIRayGenShader* RayGen : Initializer.RayGenShaders)
     {
-        CD3D12RayGenShader* D3D12RayGen = static_cast<CD3D12RayGenShader*>(RayGen);
+        FD3D12RayGenShader* D3D12RayGen = static_cast<FD3D12RayGenShader*>(RayGen);
         Shaders.Emplace(D3D12RayGen);
 
-        SD3D12RootSignatureResourceCount RayGenLocalResourceCounts;
+        FD3D12RootSignatureResourceCount RayGenLocalResourceCounts;
         RayGenLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
         RayGenLocalResourceCounts.AllowInputAssembler                  = false;
         RayGenLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12RayGen->GetRTLocalResourceCount();
 
-        HitLocalRootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(RayGenLocalResourceCounts));
+        HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(RayGenLocalResourceCounts));
         if (!HitLocalRootSignature)
         {
             return false;
@@ -538,8 +539,8 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
     WString AnyHitName;
     WString IntersectionName;
 
-    TArray<CRHIRayAnyHitShader*>     AnyHitShaders;
-    TArray<CRHIRayClosestHitShader*> ClosestHitShaders;
+    TArray<FRHIRayAnyHitShader*>     AnyHitShaders;
+    TArray<FRHIRayClosestHitShader*> ClosestHitShaders;
 
     for (const CRHIRayTracingHitGroupInitializer& HitGroup : Initializer.HitGroups)
     {
@@ -548,15 +549,15 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
         AnyHitName.Clear();
         IntersectionName.Clear();
 
-        for (CRHIRayTracingShader* HitGroupShader : HitGroup.Shaders)
+        for (FRHIRayTracingShader* HitGroupShader : HitGroup.Shaders)
         {
-            CD3D12RayTracingShader* D3D12HitGroupShader = D3D12RayTracingShaderCast(HitGroupShader);
+            FD3D12RayTracingShader* D3D12HitGroupShader = D3D12RayTracingShaderCast(HitGroupShader);
             if (HitGroupShader->GetShaderStage() == EShaderStage::RayClosestHit)
             {
                 // TODO: Not the greatest way to handle this
                 Check(ClosestHitName.IsEmpty());
                 ClosestHitName = CharToWide(D3D12HitGroupShader->GetIdentifier());
-                ClosestHitShaders.Emplace(static_cast<CRHIRayClosestHitShader*>(HitGroupShader));
+                ClosestHitShaders.Emplace(static_cast<FRHIRayClosestHitShader*>(HitGroupShader));
             }
             else if (HitGroupShader->GetShaderStage() == EShaderStage::RayAnyHit)
             {
@@ -564,7 +565,7 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
                 Check(AnyHitName.IsEmpty());
 
                 AnyHitName = CharToWide(D3D12HitGroupShader->GetIdentifier());
-                AnyHitShaders.Emplace(static_cast<CRHIRayAnyHitShader*>(HitGroupShader));
+                AnyHitShaders.Emplace(static_cast<FRHIRayAnyHitShader*>(HitGroupShader));
             }
             else if (HitGroupShader->GetShaderStage() == EShaderStage::RayIntersection)
             {
@@ -579,17 +580,17 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
     }
 
     // Collect and add all AnyHit shaders
-    for (CRHIRayAnyHitShader* AnyHit : AnyHitShaders)
+    for (FRHIRayAnyHitShader* AnyHit : AnyHitShaders)
     {
-        CD3D12RayAnyHitShader* D3D12AnyHit = static_cast<CD3D12RayAnyHitShader*>(AnyHit);
+        FD3D12RayAnyHitShader* D3D12AnyHit = static_cast<FD3D12RayAnyHitShader*>(AnyHit);
         Shaders.Emplace(D3D12AnyHit);
 
-        SD3D12RootSignatureResourceCount AnyHitLocalResourceCounts;
+        FD3D12RootSignatureResourceCount AnyHitLocalResourceCounts;
         AnyHitLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
         AnyHitLocalResourceCounts.AllowInputAssembler                  = false;
         AnyHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12AnyHit->GetRTLocalResourceCount();
 
-        HitLocalRootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(AnyHitLocalResourceCounts));
+        HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(AnyHitLocalResourceCounts));
         if (!HitLocalRootSignature)
         {
             return false;
@@ -602,17 +603,17 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
     }
 
     // Collect and add all ClosestHit shaders
-    for (CRHIRayClosestHitShader* ClosestHit : ClosestHitShaders)
+    for (FRHIRayClosestHitShader* ClosestHit : ClosestHitShaders)
     {
-        CD3D12RayClosestHitShader* D3D12ClosestHit = static_cast<CD3D12RayClosestHitShader*>(ClosestHit);
+        FD3D12RayClosestHitShader* D3D12ClosestHit = static_cast<FD3D12RayClosestHitShader*>(ClosestHit);
         Shaders.Emplace(D3D12ClosestHit);
 
-        SD3D12RootSignatureResourceCount ClosestHitLocalResourceCounts;
+        FD3D12RootSignatureResourceCount ClosestHitLocalResourceCounts;
         ClosestHitLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
         ClosestHitLocalResourceCounts.AllowInputAssembler                  = false;
         ClosestHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12ClosestHit->GetRTLocalResourceCount();
 
-        HitLocalRootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(ClosestHitLocalResourceCounts));
+        HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(ClosestHitLocalResourceCounts));
         if (!HitLocalRootSignature)
         {
             return false;
@@ -625,17 +626,17 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
     }
 
     // Collect and add all Miss shaders
-    for (CRHIRayMissShader* Miss : Initializer.MissShaders)
+    for (FRHIRayMissShader* Miss : Initializer.MissShaders)
     {
-        CD3D12RayMissShader* D3D12MissShader = static_cast<CD3D12RayMissShader*>(Miss);
+        FD3D12RayMissShader* D3D12MissShader = static_cast<FD3D12RayMissShader*>(Miss);
         Shaders.Emplace(D3D12MissShader);
 
-        SD3D12RootSignatureResourceCount MissLocalResourceCounts;
+        FD3D12RootSignatureResourceCount MissLocalResourceCounts;
         MissLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
         MissLocalResourceCounts.AllowInputAssembler                  = false;
         MissLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12MissShader->GetRTLocalResourceCount();
 
-        MissLocalRootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(MissLocalResourceCounts));
+        MissLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(MissLocalResourceCounts));
         if (!MissLocalRootSignature)
         {
             return false;
@@ -651,19 +652,19 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
     PipelineStream.ShaderConfig.MaxPayloadSizeInBytes    = Initializer.MaxPayloadSizeInBytes;
     PipelineStream.PipelineConfig.MaxTraceRecursionDepth = Initializer.MaxRecursionDepth;
 
-    SShaderResourceCount CombinedResourceCount;
-    for (CD3D12Shader* Shader : Shaders)
+    FShaderResourceCount CombinedResourceCount;
+    for (FD3D12Shader* Shader : Shaders)
     {
         Check(Shader != nullptr);
         CombinedResourceCount.Combine(Shader->GetResourceCount());
     }
 
-    SD3D12RootSignatureResourceCount GlobalResourceCounts;
+    FD3D12RootSignatureResourceCount GlobalResourceCounts;
     GlobalResourceCounts.Type                                 = ERootSignatureType::RayTracingGlobal;
     GlobalResourceCounts.AllowInputAssembler                  = false;
     GlobalResourceCounts.ResourceCounts[ShaderVisibility_All] = CombinedResourceCount;
 
-    GlobalRootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(GlobalResourceCounts));
+    GlobalRootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(GlobalResourceCounts));
     if (!GlobalRootSignature)
     {
         return false;
@@ -674,14 +675,14 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
     PipelineStream.Generate();
 
     D3D12_STATE_OBJECT_DESC RayTracingPipeline;
-    CMemory::Memzero(&RayTracingPipeline);
+    FMemory::Memzero(&RayTracingPipeline);
 
     RayTracingPipeline.Type          = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
     RayTracingPipeline.pSubobjects   = PipelineStream.SubObjects.Data();
     RayTracingPipeline.NumSubobjects = PipelineStream.SubObjects.Size();
 
     TComPtr<ID3D12StateObject> TempStateObject;
-    HRESULT Result = GetDevice()->GeD3D12Device5()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
+    HRESULT Result = GetDevice()->GetD3D12Device5()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
     if (FAILED(Result))
     {
         CDebug::DebugBreak();
@@ -702,7 +703,7 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
     return true;
 }
 
-void* CD3D12RayTracingPipelineState::GetShaderIdentifer(const String& ExportName)
+void* FD3D12RayTracingPipelineState::GetShaderIdentifer(const String& ExportName)
 {
     const auto MapItem = ShaderIdentifers.find(ExportName);
     if (MapItem == ShaderIdentifers.end())
@@ -715,8 +716,8 @@ void* CD3D12RayTracingPipelineState::GetShaderIdentifer(const String& ExportName
             return nullptr;
         }
 
-        SRayTracingShaderIdentifer Identifier;
-        CMemory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        FRayTracingShaderIdentifer Identifier;
+        FMemory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
         const auto NewIdentifier = ShaderIdentifers.insert(std::make_pair(ExportName, Identifier));
         return NewIdentifier.first->second.ShaderIdentifier;

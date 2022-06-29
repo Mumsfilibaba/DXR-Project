@@ -12,7 +12,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHITimestampQuery
 
-class CNullRHITimestampQuery : public CRHITimestampQuery
+class CNullRHITimestampQuery : public FRHITimestampQuery
 {
 public:
     CNullRHITimestampQuery() = default;

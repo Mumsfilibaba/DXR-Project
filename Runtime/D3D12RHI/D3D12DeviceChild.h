@@ -4,19 +4,19 @@
 class FD3D12Device;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12DeviceChild
+// FD3D12DeviceChild
 
-class CD3D12DeviceChild
+class FD3D12DeviceChild
 {
 public:
 
-    CD3D12DeviceChild(FD3D12Device* InDevice)
+    FD3D12DeviceChild(FD3D12Device* InDevice)
         : Device(InDevice)
     {
         Check(Device != nullptr);
     }
 
-    virtual ~CD3D12DeviceChild()
+    virtual ~FD3D12DeviceChild()
     {
         Device = nullptr;
     }

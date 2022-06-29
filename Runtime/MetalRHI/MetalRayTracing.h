@@ -9,12 +9,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalRayTracingGeometry
 
-class CMetalRayTracingGeometry : public CRHIRayTracingGeometry
+class CMetalRayTracingGeometry : public FRHIRayTracingGeometry
 {
 public:
 
-    CMetalRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer)
-        : CRHIRayTracingGeometry(Initializer)
+    CMetalRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
+        : FRHIRayTracingGeometry(Initializer)
     { }
 
     ~CMetalRayTracingGeometry() = default;
@@ -22,7 +22,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIRayTracingGeometry Interface
+    // FRHIRayTracingGeometry Interface
 
     virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
 
@@ -32,11 +32,11 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalRayTracingScene
 
-class CMetalRayTracingScene : public CRHIRayTracingScene
+class CMetalRayTracingScene : public FRHIRayTracingScene
 {
 public:
-    CMetalRayTracingScene(CMetalDeviceContext* InDeviceContext, const CRHIRayTracingSceneInitializer& Initializer)
-        : CRHIRayTracingScene(Initializer)
+    CMetalRayTracingScene(CMetalDeviceContext* InDeviceContext, const FRHIRayTracingSceneInitializer& Initializer)
+        : FRHIRayTracingScene(Initializer)
         , View(dbg_new CMetalShaderResourceView(InDeviceContext, this))
     { }
 
@@ -45,11 +45,11 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIRayTracingScene Interface
+    // FRHIRayTracingScene Interface
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
 
-    virtual CRHIDescriptorHandle GetBindlessHandle() const override final{ return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final{ return FRHIDescriptorHandle(); }
 
     virtual void* GetRHIBaseBVHBuffer() override final { return nullptr; }
 

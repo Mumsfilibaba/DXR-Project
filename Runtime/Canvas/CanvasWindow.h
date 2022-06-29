@@ -31,7 +31,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CCanvasWindow
 
-class CCanvasWindow : public CRefCounted
+class CCanvasWindow : public FRefCounted
 {
 public:
 

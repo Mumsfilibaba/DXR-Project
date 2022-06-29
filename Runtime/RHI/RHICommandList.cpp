@@ -11,7 +11,7 @@ CCommandAllocator::CCommandAllocator(uint32 StartSize)
     , Offset(0)
     , DiscardedMemory()
 {
-    CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc(Size));
+    CurrentMemory = reinterpret_cast<uint8*>(FMemory::Malloc(Size));
     Check(CurrentMemory != nullptr);
 
     AverageMemoryUsage = Size;
@@ -44,7 +44,7 @@ void* CCommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
         // Allocate a new block of memory
         const uint64 NewSize = NMath::Max(Size + Size, AlignedSize);
 
-        CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc(NewSize));
+        CurrentMemory = reinterpret_cast<uint8*>(FMemory::Malloc(NewSize));
         Check(CurrentMemory != nullptr);
 
         Size = NewSize;
@@ -72,7 +72,7 @@ void CCommandAllocator::Reset()
 
         const uint64 NewSize = AverageMemoryUsage + NMemoryUtils::MegaBytesToBytes(1);
 
-        CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc(NewSize));
+        CurrentMemory = reinterpret_cast<uint8*>(FMemory::Malloc(NewSize));
         Check(CurrentMemory != nullptr);
 
         Size = NewSize;

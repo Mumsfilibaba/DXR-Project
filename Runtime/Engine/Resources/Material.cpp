@@ -21,7 +21,7 @@ CMaterial::CMaterial(const SMaterialDesc& InProperties)
 
 void CMaterial::Init()
 {
-    CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SMaterialDesc));
+    FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SMaterialDesc));
 
     MaterialBuffer = RHICreateConstantBuffer(Initializer);
     if (MaterialBuffer)
@@ -91,7 +91,7 @@ void CMaterial::SetDebugName(const String& InDebugName)
     DebugName = InDebugName;
 }
 
-CRHIShaderResourceView* const* CMaterial::GetShaderResourceViews() const
+FRHIShaderResourceView* const* CMaterial::GetShaderResourceViews() const
 {
     ShaderResourceViews[0] = SafeGetDefaultSRV(AlbedoMap);
     ShaderResourceViews[1] = SafeGetDefaultSRV(NormalMap);

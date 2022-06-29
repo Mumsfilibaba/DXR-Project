@@ -37,11 +37,11 @@ private:
 
     TArray<SCanvasImage*> RenderedImages;
 
-    TSharedRef<CRHITexture2D>             FontTexture;
-    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<CRHIGraphicsPipelineState> PipelineStateNoBlending;
-    TSharedRef<CRHIPixelShader>           PShader;
+    TSharedRef<FRHITexture2D>             FontTexture;
+    TSharedRef<FRHIGraphicsPipelineState> PipelineState;
+    TSharedRef<FRHIGraphicsPipelineState> PipelineStateNoBlending;
+    TSharedRef<FRHIPixelShader>           PShader;
     TSharedRef<CRHIVertexBuffer>          VertexBuffer;
-    TSharedRef<CRHIIndexBuffer>           IndexBuffer;
-    TSharedRef<CRHISamplerState>          PointSampler;
+    TSharedRef<FRHIIndexBuffer>           IndexBuffer;
+    TSharedRef<FRHISamplerState>          PointSampler;
 };

@@ -22,24 +22,24 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalViewport
 
-class CMetalViewport : public CMetalObject, public CRHIViewport
+class CMetalViewport : public CMetalObject, public FRHIViewport
 {
 public:
     
-    CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIViewportInitializer& Initializer);
+    CMetalViewport(CMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer);
     ~CMetalViewport();
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIViewport Interface
+    // FRHIViewport Interface
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
 
     // TODO: This needs to be a command for Vulkan and Metal since we can be using the texture and present will change the resource
     virtual bool Present(bool bVerticalSync) override final;
 
-    virtual CRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
+    virtual FRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
     
 public:
 

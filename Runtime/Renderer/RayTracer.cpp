@@ -17,8 +17,8 @@ bool CRayTracer::Init(SFrameResources& Resources)
     TArray<uint8> Code;
     
     {
-        CShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_3, EShaderStage::RayGen);
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
+        FShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_3, EShaderStage::RayGen);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
         {
             CDebug::DebugBreak();
             return false;
@@ -33,8 +33,8 @@ bool CRayTracer::Init(SFrameResources& Resources)
     }
 
     {
-        CShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_3, EShaderStage::RayClosestHit);
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
+        FShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_3, EShaderStage::RayClosestHit);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
         {
             CDebug::DebugBreak();
             return false;
@@ -49,8 +49,8 @@ bool CRayTracer::Init(SFrameResources& Resources)
     }
 
     {
-        CShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_3, EShaderStage::RayMiss);
-        if (!CShaderCompiler::Get().CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
+        FShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_3, EShaderStage::RayMiss);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
         {
             CDebug::DebugBreak();
             return false;
@@ -64,7 +64,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
         return false;
     }
 
-    CRHIRayTracingPipelineStateInitializer PSOInitializer;
+    FRHIRayTracingPipelineStateInitializer PSOInitializer;
     PSOInitializer.RayGenShaders           = { RayGenShader.Get() };
     PSOInitializer.MissShaders             = { RayMissShader.Get() };
     PSOInitializer.HitGroups               = { CRHIRayTracingHitGroupInitializer("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
@@ -82,7 +82,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
     uint32 Width  = Resources.MainWindowViewport->GetWidth();
     uint32 Height = Resources.MainWindowViewport->GetHeight();
 
-    CRHITexture2DInitializer RTOutputInitializer(Resources.RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::UnorderedAccess);
+    FRHITexture2DInitializer RTOutputInitializer(Resources.RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::UnorderedAccess);
     Resources.RTOutput = RHICreateTexture2D(RTOutputInitializer);
     if (!Resources.RTOutput)
     {
@@ -113,7 +113,7 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
 
     Resources.RTGeometryInstances.Clear();
 
-    CRHISamplerState* Sampler = nullptr;
+    FRHISamplerState* Sampler = nullptr;
 
     for (int32 Index = 0; Index < Resources.GlobalMeshDrawCommands.Size(); ++Index)
     {
@@ -142,7 +142,7 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
             HitGroupIndex = Resources.RTHitGroupResources.Size();
             Resources.RTMeshToHitGroupIndex[Command.Mesh] = HitGroupIndex;
 
-            SRayTracingShaderResources HitGroupResources;
+            FRayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";
             if (Command.Mesh->VertexBufferSRV)
             {
@@ -160,7 +160,7 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
             HitGroupIndex = HitGroupIndexPair->second;
         }
 
-        CRHIRayTracingGeometryInstance Instance;
+        FRHIRayTracingGeometryInstance Instance;
         Instance.Geometry      = Command.Geometry;
         Instance.Flags         = ERayTracingInstanceFlags::None;
         Instance.HitGroupIndex = HitGroupIndex;
@@ -172,7 +172,7 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
 
     if (!Resources.RTScene)
     {
-        CRHIRayTracingSceneInitializer SceneInitializer(Resources.RTGeometryInstances.CreateView(), EAccelerationStructureBuildFlags::None);
+        FRHIRayTracingSceneInitializer SceneInitializer(Resources.RTGeometryInstances.CreateView(), EAccelerationStructureBuildFlags::None);
         Resources.RTScene = RHICreateRayTracingScene(SceneInitializer);
     }
     else
@@ -216,7 +216,7 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
 
     CmdList.UnorderedAccessTextureBarrier(Resources.RTOutput.Get());
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView())
+    AddDebugTexture( MakeSharedRef<FRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView())
                    , Resources.RTOutput
                    , EResourceAccess::UnorderedAccess
                    , EResourceAccess::UnorderedAccess);

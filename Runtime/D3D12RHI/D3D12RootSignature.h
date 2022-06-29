@@ -8,7 +8,7 @@
 #include "Core/Utilities/HashUtilities.h"
 #include "Core/Containers/HashTable.h"
 
-class CD3D12RootSignature;
+class FD3D12RootSignature;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERootSignatureType
@@ -23,25 +23,25 @@ enum class ERootSignatureType
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12RootSignatureResourceCount
+// FD3D12RootSignatureResourceCount
 
-struct SD3D12RootSignatureResourceCount
+struct FD3D12RootSignatureResourceCount
 {
-    bool IsCompatible(const SD3D12RootSignatureResourceCount& Other) const;
+    bool IsCompatible(const FD3D12RootSignatureResourceCount& Other) const;
 
     ERootSignatureType   Type = ERootSignatureType::Unknown;
-    SShaderResourceCount ResourceCounts[ShaderVisibility_Count];
+    FShaderResourceCount ResourceCounts[ShaderVisibility_Count];
     bool AllowInputAssembler = false;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RootSignatureDescHelper
+// FD3D12RootSignatureDescHelper
 
-class CD3D12RootSignatureDescHelper
+class FD3D12RootSignatureDescHelper
 {
 public:
-    CD3D12RootSignatureDescHelper(const SD3D12RootSignatureResourceCount& RootSignatureInfo);
-    ~CD3D12RootSignatureDescHelper() = default;
+    FD3D12RootSignatureDescHelper(const FD3D12RootSignatureResourceCount& RootSignatureInfo);
+    ~FD3D12RootSignatureDescHelper() = default;
 
     const uint32 GetRootSignatureCost() const { return RootSignatureCost; }
 
@@ -68,16 +68,16 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RootSignature
+// FD3D12RootSignature
 
-class CD3D12RootSignature : public CD3D12DeviceChild, public CRefCounted
+class FD3D12RootSignature : public FD3D12DeviceChild, public FRefCounted
 {
 public:
 
-    CD3D12RootSignature(FD3D12Device* InDevice);
-    ~CD3D12RootSignature() = default;
+    FD3D12RootSignature(FD3D12Device* InDevice);
+    ~FD3D12RootSignature() = default;
 
-    bool Initialize(const SD3D12RootSignatureResourceCount& RootSignatureInfo);
+    bool Initialize(const FD3D12RootSignatureResourceCount& RootSignatureInfo);
     bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
     bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
@@ -121,28 +121,28 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RootSignatureCache
+// FD3D12RootSignatureCache
 
-class CD3D12RootSignatureCache : public CD3D12DeviceChild
+class FD3D12RootSignatureCache : public FD3D12DeviceChild
 {
 public:
-    CD3D12RootSignatureCache(FD3D12Device* Device);
-    ~CD3D12RootSignatureCache();
+    FD3D12RootSignatureCache(FD3D12Device* Device);
+    ~FD3D12RootSignatureCache();
 
-    static CD3D12RootSignatureCache& Get();
+    static FD3D12RootSignatureCache& Get();
 
     bool Initialize();
 
     void ReleaseAll();
 
-    CD3D12RootSignature* GetOrCreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount);
+    FD3D12RootSignature* GetOrCreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount);
 
 private:
-    CD3D12RootSignature* CreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount);
+    FD3D12RootSignature* CreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount);
 
     // TODO: Use a hash instead, this is beacuse == operator does not make sense, use it anyway?
-    TArray<TSharedRef<CD3D12RootSignature>>  RootSignatures;
-    TArray<SD3D12RootSignatureResourceCount> ResourceCounts;
+    TArray<TSharedRef<FD3D12RootSignature>>  RootSignatures;
+    TArray<FD3D12RootSignatureResourceCount> ResourceCounts;
 
-    static CD3D12RootSignatureCache* Instance;
+    static FD3D12RootSignatureCache* Instance;
 };

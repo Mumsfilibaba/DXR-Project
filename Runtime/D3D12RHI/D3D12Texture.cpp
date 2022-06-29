@@ -2,17 +2,17 @@
 #include "D3D12CoreInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Texture 
+// FD3D12Texture 
 
-CD3D12Texture::CD3D12Texture(FD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice)
+    : FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
     , ShaderResourceView(nullptr)
 { }
 
-CD3D12RenderTargetView* CD3D12Texture::GetOrCreateRTV(const CRHIRenderTargetView& RTVInitializer)
+FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRTV(const FRHIRenderTargetView& RTVInitializer)
 {
-    CD3D12Resource* D3D12Resource = GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = GetD3D12Resource();
     if (!D3D12Resource)
     {
         D3D12_WARNING("Texture does not have a valid D3D12Resource");
@@ -31,7 +31,7 @@ CD3D12RenderTargetView* CD3D12Texture::GetOrCreateRTV(const CRHIRenderTargetView
     const DXGI_FORMAT DXGIFormat = ConvertFormat(RTVInitializer.Format);
     if (Subresource < uint32(RenderTargetViews.Size()))
     {
-        CD3D12RenderTargetView* ExistingView = RenderTargetViews[Subresource].Get();
+        FD3D12RenderTargetView* ExistingView = RenderTargetViews[Subresource].Get();
         if (ExistingView)
         {
             D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = ExistingView->GetDesc();
@@ -45,7 +45,7 @@ CD3D12RenderTargetView* CD3D12Texture::GetOrCreateRTV(const CRHIRenderTargetView
     }
 
     D3D12_RENDER_TARGET_VIEW_DESC Desc;
-    CMemory::Memzero(&Desc);
+    FMemory::Memzero(&Desc);
 
     Desc.Format = ConvertFormat(RTVInitializer.Format);
     D3D12_ERROR_COND(Desc.Format != DXGI_FORMAT_UNKNOWN, "Unallowed format for RenderTargetViews");
@@ -95,9 +95,9 @@ CD3D12RenderTargetView* CD3D12Texture::GetOrCreateRTV(const CRHIRenderTargetView
         D3D12_ERROR("ResourceDimension (=%s) does not support RenderTargetViews", ToString(ResourceDesc.Dimension));
     }
 
-    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
+    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
 
-    D3D12RenderTargetViewRef D3D12View = dbg_new CD3D12RenderTargetView(GetDevice(), D3D12CoreInterface->GetRenderTargetOfflineDescriptorHeap());
+    FD3D12RenderTargetViewRef D3D12View = dbg_new FD3D12RenderTargetView(GetDevice(), D3D12CoreInterface->GetRenderTargetOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -114,9 +114,9 @@ CD3D12RenderTargetView* CD3D12Texture::GetOrCreateRTV(const CRHIRenderTargetView
     }
 }
 
-CD3D12DepthStencilView* CD3D12Texture::GetOrCreateDSV(const CRHIDepthStencilView& DSVInitializer)
+FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDSV(const FRHIDepthStencilView& DSVInitializer)
 {
-    CD3D12Resource* D3D12Resource = GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = GetD3D12Resource();
     if (!D3D12Resource)
     {
         D3D12_WARNING("Texture does not have a valid D3D12Resource");
@@ -135,7 +135,7 @@ CD3D12DepthStencilView* CD3D12Texture::GetOrCreateDSV(const CRHIDepthStencilView
     const DXGI_FORMAT DXGIFormat = ConvertFormat(DSVInitializer.Format);
     if (Subresource < uint32(DepthStencilViews.Size()))
     {
-        CD3D12DepthStencilView* ExistingView = DepthStencilViews[Subresource].Get();
+        FD3D12DepthStencilView* ExistingView = DepthStencilViews[Subresource].Get();
         if (ExistingView)
         {
             D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = ExistingView->GetDesc();
@@ -149,7 +149,7 @@ CD3D12DepthStencilView* CD3D12Texture::GetOrCreateDSV(const CRHIDepthStencilView
     }
 
     D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
-    CMemory::Memzero(&Desc);
+    FMemory::Memzero(&Desc);
 
     Desc.Format = ConvertFormat(DSVInitializer.Format);
     D3D12_ERROR_COND(Desc.Format != DXGI_FORMAT_UNKNOWN, "Unallowed format for DepthStencilViews");
@@ -190,9 +190,9 @@ CD3D12DepthStencilView* CD3D12Texture::GetOrCreateDSV(const CRHIDepthStencilView
         D3D12_ERROR("ResourceDimension (=%s) does not support DepthStencilViews", ToString(ResourceDesc.Dimension));
     }
 
-    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
+    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
 
-    D3D12DepthStencilViewRef D3D12View = dbg_new CD3D12DepthStencilView(GetDevice(), D3D12CoreInterface->GetDepthStencilOfflineDescriptorHeap());
+    FD3D12DepthStencilViewRef D3D12View = dbg_new FD3D12DepthStencilView(GetDevice(), D3D12CoreInterface->GetDepthStencilOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;

@@ -11,7 +11,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalInputLayoutState
 
-class CMetalInputLayoutState : public CRHIVertexInputLayout, public CMetalObject
+class CMetalInputLayoutState : public FRHIVertexInputLayout, public CMetalObject
 {
 public:
 
@@ -25,7 +25,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalDepthStencilState
 
-class CMetalDepthStencilState : public CRHIDepthStencilState
+class CMetalDepthStencilState : public FRHIDepthStencilState
 {
 public:
 
@@ -36,7 +36,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalRasterizerState
 
-class CMetalRasterizerState : public CRHIRasterizerState
+class CMetalRasterizerState : public FRHIRasterizerState
 {
 public:
 
@@ -47,7 +47,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalBlendState
 
-class CMetalBlendState : public CRHIBlendState
+class CMetalBlendState : public FRHIBlendState
 {
 public:
 
@@ -58,7 +58,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalGraphicsPipelineState
 
-class CMetalGraphicsPipelineState : public CRHIGraphicsPipelineState
+class CMetalGraphicsPipelineState : public FRHIGraphicsPipelineState
 {
 public:
 
@@ -78,7 +78,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalComputePipelineState
 
-class CMetalComputePipelineState : public CRHIComputePipelineState
+class CMetalComputePipelineState : public FRHIComputePipelineState
 {
 public:
 
@@ -98,7 +98,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalRayTracingPipelineState
 
-class CMetalRayTracingPipelineState : public CRHIRayTracingPipelineState
+class CMetalRayTracingPipelineState : public FRHIRayTracingPipelineState
 {
 public:
 

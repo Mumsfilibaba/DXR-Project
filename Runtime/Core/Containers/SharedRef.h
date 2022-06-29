@@ -6,7 +6,7 @@
 #include "Core/Templates/Move.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TSharedRef - Helper class when using objects with CRefCounted as a base
+// TSharedRef - Helper class when using objects with FRefCounted as a base
 
 template<typename T>
 class TSharedRef

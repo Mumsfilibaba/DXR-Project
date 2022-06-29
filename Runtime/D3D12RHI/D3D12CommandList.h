@@ -6,33 +6,33 @@
 #include "D3D12CommandAllocator.h"
 #include "D3D12Views.h"
 
-class CD3D12ComputePipelineState;
+class FD3D12ComputePipelineState;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12CommandList
+// FD3D12CommandList
 
-class CD3D12CommandList : public CD3D12DeviceChild
+class FD3D12CommandList : public FD3D12DeviceChild
 {
 public:
 
-    FORCEINLINE CD3D12CommandList(FD3D12Device* InDevice)
-        : CD3D12DeviceChild(InDevice)
+    FORCEINLINE FD3D12CommandList(FD3D12Device* InDevice)
+        : FD3D12DeviceChild(InDevice)
         , CmdList(nullptr)
         , CmdList5(nullptr)
     { }
 
-    FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type, CD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline)
+    FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline)
     {
         HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
         if (SUCCEEDED(Result))
         {
             CmdList->Close();
 
-            LOG_INFO("[CD3D12CommandList]: Created CommandList");
+            LOG_INFO("[FD3D12CommandList]: Created CommandList");
 
             if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList5>(&CmdList5)))
             {
-                D3D12_ERROR("[CD3D12CommandList]: FAILED to retrieve DXR-CommandList");
+                D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve DXR-CommandList");
                 return false;
             }
             else
@@ -42,12 +42,12 @@ public:
         }
         else
         {
-            D3D12_ERROR("[CD3D12CommandList]: FAILED to create CommandList");
+            D3D12_ERROR("[FD3D12CommandList]: FAILED to create CommandList");
             return false;
         }
     }
 
-    FORCEINLINE bool Reset(CD3D12CommandAllocator& Allocator)
+    FORCEINLINE bool Reset(FD3D12CommandAllocator& Allocator)
     {
         bIsReady = true;
 
@@ -83,15 +83,15 @@ public:
         CmdList->ClearDepthStencilView(DepthStencilView, Flags, Depth, Stencil, 0, nullptr);
     }
 
-    FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const CD3D12UnorderedAccessView* View, const float ClearColor[4])
+    FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const FD3D12UnorderedAccessView* View, const float ClearColor[4])
     {
-        const CD3D12Resource* Resource = View->GetD3D12Resource();
-        CmdList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), Resource->GetResource(), ClearColor, 0, nullptr);
+        const FD3D12Resource* Resource = View->GetD3D12Resource();
+        CmdList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), Resource->GetD3D12Resource(), ClearColor, 0, nullptr);
     }
 
-    FORCEINLINE void CopyBufferRegion(CD3D12Resource* Destination, uint64 DestinationOffset, CD3D12Resource* Source, uint64 SourceOffset, uint64 SizeInBytes)
+    FORCEINLINE void CopyBufferRegion(FD3D12Resource* Destination, uint64 DestinationOffset, FD3D12Resource* Source, uint64 SourceOffset, uint64 SizeInBytes)
     {
-        CopyBufferRegion(Destination->GetResource(), DestinationOffset, Source->GetResource(), SourceOffset, SizeInBytes);
+        CopyBufferRegion(Destination->GetD3D12Resource(), DestinationOffset, Source->GetD3D12Resource(), SourceOffset, SizeInBytes);
     }
 
     FORCEINLINE void CopyBufferRegion(ID3D12Resource* Destination, uint64 DestinationOffset, ID3D12Resource* Source, uint64 SourceOffset, uint64 SizeInBytes)
@@ -104,9 +104,9 @@ public:
         CmdList->CopyTextureRegion(Destination, x, y, z, Source, SourceBox);
     }
 
-    FORCEINLINE void CopyResource(CD3D12Resource* Destination, CD3D12Resource* Source)
+    FORCEINLINE void CopyResource(FD3D12Resource* Destination, FD3D12Resource* Source)
     {
-        CopyResource(Destination->GetResource(), Source->GetResource());
+        CopyResource(Destination->GetD3D12Resource(), Source->GetD3D12Resource());
     }
 
     FORCEINLINE void CopyResource(ID3D12Resource* Destination, ID3D12Resource* Source)
@@ -114,9 +114,9 @@ public:
         CmdList->CopyResource(Destination, Source);
     }
 
-    FORCEINLINE void ResolveSubresource(CD3D12Resource* Destination, CD3D12Resource* Source, DXGI_FORMAT Format)
+    FORCEINLINE void ResolveSubresource(FD3D12Resource* Destination, FD3D12Resource* Source, DXGI_FORMAT Format)
     {
-        CmdList->ResolveSubresource(Destination->GetResource(), 0, Source->GetResource(), 0, Format);
+        CmdList->ResolveSubresource(Destination->GetD3D12Resource(), 0, Source->GetD3D12Resource(), 0, Format);
     }
 
     FORCEINLINE void BuildRaytracingAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* Desc)
@@ -162,12 +162,12 @@ public:
         CmdList->SetPipelineState(PipelineState);
     }
 
-    FORCEINLINE void SetComputeRootSignature(CD3D12RootSignature* RootSignature)
+    FORCEINLINE void SetComputeRootSignature(FD3D12RootSignature* RootSignature)
     {
         CmdList->SetComputeRootSignature(RootSignature->GetRootSignature());
     }
 
-    FORCEINLINE void SetGraphicsRootSignature(CD3D12RootSignature* RootSignature)
+    FORCEINLINE void SetGraphicsRootSignature(FD3D12RootSignature* RootSignature)
     {
         CmdList->SetGraphicsRootSignature(RootSignature->GetRootSignature());
     }
@@ -255,7 +255,7 @@ public:
     FORCEINLINE void TransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, UINT Subresource)
     {
         D3D12_RESOURCE_BARRIER Barrier;
-        CMemory::Memzero(&Barrier);
+        FMemory::Memzero(&Barrier);
 
         Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
         Barrier.Transition.pResource   = Resource;
@@ -269,7 +269,7 @@ public:
     FORCEINLINE void UnorderedAccessBarrier(ID3D12Resource* Resource)
     {
         D3D12_RESOURCE_BARRIER Barrier;
-        CMemory::Memzero(&Barrier);
+        FMemory::Memzero(&Barrier);
 
         Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
         Barrier.UAV.pResource = Resource;

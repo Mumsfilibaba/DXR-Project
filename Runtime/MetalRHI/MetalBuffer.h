@@ -40,7 +40,7 @@ class CMetalVertexBuffer : public CMetalBuffer, public CRHIVertexBuffer
 {
 public:
 
-    CMetalVertexBuffer(CMetalDeviceContext* DeviceContext, const CRHIVertexBufferInitializer& Initializer)
+    CMetalVertexBuffer(CMetalDeviceContext* DeviceContext, const FRHIVertexBufferInitializer& Initializer)
         : CMetalBuffer(DeviceContext)
         , CRHIVertexBuffer(Initializer)
     { }
@@ -48,7 +48,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIBuffer Interface
+    // FRHIBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
 
@@ -70,19 +70,19 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalIndexBuffer
 
-class CMetalIndexBuffer : public CMetalBuffer, public CRHIIndexBuffer
+class CMetalIndexBuffer : public CMetalBuffer, public FRHIIndexBuffer
 {
 public:
     
-    CMetalIndexBuffer(CMetalDeviceContext* DeviceContext, const CRHIIndexBufferInitializer& Initializer)
+    CMetalIndexBuffer(CMetalDeviceContext* DeviceContext, const FRHIIndexBufferInitializer& Initializer)
         : CMetalBuffer(DeviceContext)
-        , CRHIIndexBuffer(Initializer)
+        , FRHIIndexBuffer(Initializer)
     { }
     
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIBuffer Interface
+    // FRHIBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
 
@@ -104,21 +104,21 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalConstantBuffer
 
-class CMetalConstantBuffer : public CMetalBuffer, public CRHIConstantBuffer
+class CMetalConstantBuffer : public CMetalBuffer, public FRHIConstantBuffer
 {
 public:
     
-    CMetalConstantBuffer(CMetalDeviceContext* DeviceContext, const CRHIConstantBufferInitializer& Initializer)
+    CMetalConstantBuffer(CMetalDeviceContext* DeviceContext, const FRHIConstantBufferInitializer& Initializer)
         : CMetalBuffer(DeviceContext)
-        , CRHIConstantBuffer(Initializer)
+        , FRHIConstantBuffer(Initializer)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIConstantBuffer Interface
+    // FRHIConstantBuffer Interface
     
-    virtual CRHIDescriptorHandle GetBindlessHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
 
@@ -140,19 +140,19 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalGenericBuffer
 
-class CMetalGenericBuffer : public CMetalBuffer, public CRHIGenericBuffer
+class CMetalGenericBuffer : public CMetalBuffer, public FRHIGenericBuffer
 {
 public:
     
-    CMetalGenericBuffer(CMetalDeviceContext* DeviceContext, const CRHIGenericBufferInitializer& Initializer)
+    CMetalGenericBuffer(CMetalDeviceContext* DeviceContext, const FRHIGenericBufferInitializer& Initializer)
         : CMetalBuffer(DeviceContext)
-        , CRHIGenericBuffer(Initializer)
+        , FRHIGenericBuffer(Initializer)
     { }
     
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIBuffer Interface
+    // FRHIBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
 
@@ -174,7 +174,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // GetMetalBuffer
 
-inline CMetalBuffer* GetMetalBuffer(CRHIBuffer* Buffer)
+inline CMetalBuffer* GetMetalBuffer(FRHIBuffer* Buffer)
 {
     return Buffer ? reinterpret_cast<CMetalBuffer*>(Buffer->GetRHIBaseBuffer()) : nullptr;
 }

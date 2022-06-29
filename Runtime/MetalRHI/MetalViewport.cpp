@@ -29,9 +29,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalViewport
 
-CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIViewportInitializer& Initializer)
+CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer)
     : CMetalObject(InDeviceContext)
-    , CRHIViewport(Initializer)
+    , FRHIViewport(Initializer)
     , BackBuffer(nullptr)
     , Drawable(nil)
     , MetalView(nullptr)
@@ -75,7 +75,7 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIV
     }, true);
     
     // Create BackBuffer
-    CRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
+    FRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
     BackBuffer = dbg_new CMetalTexture2D(InDeviceContext, BackBufferInitializer);
     
     BackBuffer->SetViewport(this);

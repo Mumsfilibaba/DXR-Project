@@ -147,24 +147,24 @@ private:
     SFrameResources Resources;
     SLightSetup     LightSetup;
 
-    TSharedRef<CRHITexture2D>            ShadingImage;
-    TSharedRef<CRHIComputePipelineState> ShadingRatePipeline;
-    TSharedRef<CRHIComputeShader>        ShadingRateShader;
+    TSharedRef<FRHITexture2D>            ShadingImage;
+    TSharedRef<FRHIComputePipelineState> ShadingRatePipeline;
+    TSharedRef<FRHIComputeShader>        ShadingRateShader;
 
     TSharedRef<CRHIVertexBuffer>          AABBVertexBuffer;
-    TSharedRef<CRHIIndexBuffer>           AABBIndexBuffer;
-    TSharedRef<CRHIGraphicsPipelineState> AABBDebugPipelineState;
-    TSharedRef<CRHIVertexShader>          AABBVertexShader;
-    TSharedRef<CRHIPixelShader>           AABBPixelShader;
+    TSharedRef<FRHIIndexBuffer>           AABBIndexBuffer;
+    TSharedRef<FRHIGraphicsPipelineState> AABBDebugPipelineState;
+    TSharedRef<FRHIVertexShader>          AABBVertexShader;
+    TSharedRef<FRHIPixelShader>           AABBPixelShader;
 
-    TSharedRef<CRHIGraphicsPipelineState> PostPSO;
-    TSharedRef<CRHIPixelShader>           PostShader;
-    TSharedRef<CRHIGraphicsPipelineState> FXAAPSO;
-    TSharedRef<CRHIPixelShader>           FXAAShader;
-    TSharedRef<CRHIGraphicsPipelineState> FXAADebugPSO;
-    TSharedRef<CRHIPixelShader>           FXAADebugShader;
+    TSharedRef<FRHIGraphicsPipelineState> PostPSO;
+    TSharedRef<FRHIPixelShader>           PostShader;
+    TSharedRef<FRHIGraphicsPipelineState> FXAAPSO;
+    TSharedRef<FRHIPixelShader>           FXAAShader;
+    TSharedRef<FRHIGraphicsPipelineState> FXAADebugPSO;
+    TSharedRef<FRHIPixelShader>           FXAADebugShader;
 
-    TSharedRef<CRHITimestampQuery> TimestampQueries;
+    TSharedRef<FRHITimestampQuery> TimestampQueries;
 
     SRendererStatistics FrameStatistics;
 };
@@ -173,8 +173,8 @@ private:
 
 extern RENDERER_API CRenderer GRenderer;
 
-inline void AddDebugTexture( const TSharedRef<CRHIShaderResourceView>& ImageView
-                           , const TSharedRef<CRHITexture>& Image
+inline void AddDebugTexture( const TSharedRef<FRHIShaderResourceView>& ImageView
+                           , const TSharedRef<FRHITexture>& Image
                            , EResourceAccess BeforeState
                            , EResourceAccess AfterState)
 {

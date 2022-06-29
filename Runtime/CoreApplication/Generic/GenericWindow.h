@@ -92,7 +92,7 @@ struct SWindowShape
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CGenericWindow
 
-class CGenericWindow : public CRefCounted
+class CGenericWindow : public FRefCounted
 {
 protected:
 

@@ -53,14 +53,14 @@ public:
 
     // ShaderResourceView are sorted in the way that the deferred rendering pass wants them
     // This means that one can call BindShaderResourceViews directly with this function
-    CRHIShaderResourceView* const* GetShaderResourceViews() const;
+    FRHIShaderResourceView* const* GetShaderResourceViews() const;
 
-    FORCEINLINE CRHISamplerState* GetMaterialSampler() const
+    FORCEINLINE FRHISamplerState* GetMaterialSampler() const
     {
         return Sampler.Get();
     }
 
-    FORCEINLINE CRHIConstantBuffer* GetMaterialBuffer() const
+    FORCEINLINE FRHIConstantBuffer* GetMaterialBuffer() const
     {
         return MaterialBuffer.Get();
     }
@@ -91,13 +91,13 @@ public:
     }
 
 public:
-    TSharedRef<CRHITexture2D> AlbedoMap;
-    TSharedRef<CRHITexture2D> NormalMap;
-    TSharedRef<CRHITexture2D> RoughnessMap;
-    TSharedRef<CRHITexture2D> HeightMap;
-    TSharedRef<CRHITexture2D> AOMap;
-    TSharedRef<CRHITexture2D> MetallicMap;
-    TSharedRef<CRHITexture2D> AlphaMask;
+    TSharedRef<FRHITexture2D> AlbedoMap;
+    TSharedRef<FRHITexture2D> NormalMap;
+    TSharedRef<FRHITexture2D> RoughnessMap;
+    TSharedRef<FRHITexture2D> HeightMap;
+    TSharedRef<FRHITexture2D> AOMap;
+    TSharedRef<FRHITexture2D> MetallicMap;
+    TSharedRef<FRHITexture2D> AlphaMask;
 
 private:
     String DebugName;
@@ -106,8 +106,8 @@ private:
     bool bRenderInForwardPass   = false;
 
     SMaterialDesc        	       Properties;
-    TSharedRef<CRHIConstantBuffer> MaterialBuffer;
-    TSharedRef<CRHISamplerState>   Sampler;
+    TSharedRef<FRHIConstantBuffer> MaterialBuffer;
+    TSharedRef<FRHISamplerState>   Sampler;
 
-    mutable TStaticArray<CRHIShaderResourceView*, 7> ShaderResourceViews;
+    mutable TStaticArray<FRHIShaderResourceView*, 7> ShaderResourceViews;
 };

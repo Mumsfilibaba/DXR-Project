@@ -98,7 +98,7 @@ public:
     {
         UNREFERENCED_VARIABLE(CurrentCount);
 
-        Allocation = CMemory::Realloc<ElementType>(Allocation, NewCount);
+        Allocation = FMemory::Realloc<ElementType>(Allocation, NewCount);
         return Allocation;
     }
 
@@ -106,7 +106,7 @@ public:
     {
         if (Allocation)
         {
-            CMemory::Free(Allocation);
+            FMemory::Free(Allocation);
             Allocation = nullptr;
         }
     }

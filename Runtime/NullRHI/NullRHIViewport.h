@@ -14,15 +14,15 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIViewport
 
-class CNullRHIViewport : public CRHIViewport
+class CNullRHIViewport : public FRHIViewport
 {
 public:
     
-    CNullRHIViewport(const CRHIViewportInitializer& Initializer)
-        : CRHIViewport(Initializer)
+    CNullRHIViewport(const FRHIViewportInitializer& Initializer)
+        : FRHIViewport(Initializer)
         , BackBuffer(nullptr)
     { 
-        CRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
+        FRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
         BackBuffer = dbg_new TNullRHITexture<CNullRHITexture2D>(BackBufferInitializer);
     }
 
@@ -31,7 +31,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIViewport Interface
+    // FRHIViewport Interface
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final
     {
@@ -42,7 +42,7 @@ public:
 
     virtual bool Present(bool bVerticalSync) override final { return true; }
 
-    virtual CRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
+    virtual FRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
 private:
     TSharedRef<CNullRHITexture2D> BackBuffer;
