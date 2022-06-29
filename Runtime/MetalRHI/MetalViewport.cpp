@@ -33,11 +33,13 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const FRHIV
     : CMetalObject(InDeviceContext)
     , FRHIViewport(Initializer)
     , BackBuffer(nullptr)
-    , Drawable(nil)
     , MetalView(nullptr)
+    , Drawable(nil)
 {
     MakeMainThreadCall(^
     {
+        SCOPED_AUTORELEASE_POOL();
+        
         CCocoaWindow* WindowHandle = (CCocoaWindow*)(Initializer.WindowHandle);
         
         NSRect Frame;
@@ -88,6 +90,8 @@ CMetalViewport::~CMetalViewport()
 
 bool CMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     if ((Width != InWidth) || (Height != InHeight))
     {
         MakeMainThreadCall(^
@@ -105,7 +109,7 @@ bool CMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
 
 bool CMetalViewport::Present(bool bVerticalSync)
 {
-    UNREFERENCED_VARIABLE(bVerticalSync);
+    SCOPED_AUTORELEASE_POOL();
     
     id<MTLCommandQueue>  Queue  = GetDeviceContext()->GetMTLCommandQueue();
     id<MTLCommandBuffer> Buffer = [Queue commandBuffer];
@@ -124,13 +128,14 @@ bool CMetalViewport::Present(bool bVerticalSync)
     }
        
     [Buffer commit];
-    [Buffer waitUntilCompleted];
     
     return true;
 }
 
 id<CAMetalDrawable> CMetalViewport::GetDrawable()
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     if (!Drawable)
     {
         CAMetalLayer* MetalLayer = GetMetalLayer();
@@ -147,6 +152,8 @@ id<CAMetalDrawable> CMetalViewport::GetDrawable()
 
 id<MTLTexture> CMetalViewport::GetDrawableTexture()
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     id<CAMetalDrawable> Drawable = GetDrawable();
     return Drawable ? Drawable.texture : nil;
 }

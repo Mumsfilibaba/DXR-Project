@@ -432,7 +432,7 @@ inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilState
     {
         ConvertStencilOp(DepthStencilOp.StencilFailOp),
         ConvertStencilOp(DepthStencilOp.StencilDepthFailOp),
-        ConvertStencilOp(DepthStencilOp.StencilPassOp),
+        ConvertStencilOp(DepthStencilOp.StencilDepthPassOp),
         ConvertComparisonFunc(DepthStencilOp.StencilFunc)
     };
 }

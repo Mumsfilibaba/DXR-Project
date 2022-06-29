@@ -71,7 +71,11 @@ CRenderer::CRenderer()
 
 bool CRenderer::Init()
 {
-    FRHIViewportInitializer ViewportInitializer(GEngine->MainWindow->GetPlatformHandle(), EFormat::R8G8B8A8_Unorm, EFormat::Unknown, 0, 0);
+    FRHIViewportInitializer ViewportInitializer( GEngine->MainWindow->GetPlatformHandle()
+                                               , EFormat::R8G8B8A8_Unorm
+                                               , EFormat::Unknown
+                                               , GEngine->MainWindow->GetWidth()
+                                               , GEngine->MainWindow->GetHeight());
 
     Resources.MainWindowViewport = RHICreateViewport(ViewportInitializer);
     if (!Resources.MainWindowViewport)
@@ -99,10 +103,10 @@ bool CRenderer::Init()
     // Init standard input layout
     FRHIVertexInputLayoutInitializer InputLayout =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0,  EVertexInputClass::Vertex, 0 },
-        { "NORMAL",   0, EFormat::R32G32B32_Float, 0, 12, EVertexInputClass::Vertex, 0 },
-        { "TANGENT",  0, EFormat::R32G32B32_Float, 0, 24, EVertexInputClass::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,    0, 36, EVertexInputClass::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(SVertex), 0, 0,  EVertexInputClass::Vertex, 0 },
+        { "NORMAL",   0, EFormat::R32G32B32_Float, sizeof(SVertex), 0, 12, EVertexInputClass::Vertex, 0 },
+        { "TANGENT",  0, EFormat::R32G32B32_Float, sizeof(SVertex), 0, 24, EVertexInputClass::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(SVertex), 0, 36, EVertexInputClass::Vertex, 0 },
     };
 
     Resources.StdInputLayout = RHICreateVertexInputLayout(InputLayout);
@@ -955,7 +959,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
 
     FRHIVertexInputLayoutInitializer InputLayout =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0, EVertexInputClass::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(CVector3), 0, 0, EVertexInputClass::Vertex, 0 },
     };
 
     TSharedRef<FRHIVertexInputLayout> InputLayoutState = RHICreateVertexInputLayout(InputLayout);

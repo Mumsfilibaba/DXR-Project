@@ -20,6 +20,8 @@ CGenericConsoleWindow* CMacApplicationMisc::CreateConsoleWindow()
 
 void CMacApplicationMisc::MessageBox(const String& Title, const String& Message)
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     CFStringRef CaptionRef = CFStringCreateWithCString(0, Title.CStr(),   static_cast<CFStringEncoding>(Title.Length()));
     CFStringRef TextRef    = CFStringCreateWithCString(0, Message.CStr(), static_cast<CFStringEncoding>(Message.Length()));
         
@@ -57,6 +59,8 @@ void CMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 
 SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
 {
+    SCOPED_AUTORELEASE_POOL();
+    
 	NSUInteger CurrentModifiers = ([NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask);
 
     uint32 Mask = 0;

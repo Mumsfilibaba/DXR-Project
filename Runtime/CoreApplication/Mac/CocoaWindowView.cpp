@@ -44,12 +44,16 @@
 
 - (void) viewWillMoveToWindow:(NSWindow*) window
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     NSTrackingArea* trackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds options: (NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways) owner:self userInfo:nil];
     [self addTrackingArea:trackingArea];
 }
 
 - (void) keyDown:(NSEvent*) Event
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     // Interpret key Event and make sure we get a KeyTyped Event
     [self interpretKeyEvents:[NSArray arrayWithObject: Event]];
     

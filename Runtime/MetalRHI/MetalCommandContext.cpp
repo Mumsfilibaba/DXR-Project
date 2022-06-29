@@ -3,6 +3,7 @@
 #include "MetalBuffer.h"
 #include "MetalTexture.h"
 #include "MetalViewport.h"
+#include "MetalPipelineState.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -15,8 +16,9 @@ CMetalCommandContext::CMetalCommandContext(CMetalDeviceContext* InDeviceContext)
     , IRHICommandContext()
     , CommandBuffer(nil)
     , GraphicsEncoder(nil)
-    , RenderPassDescriptor(nil)
-{ }
+{
+    ClearState();
+}
 
 CMetalCommandContext* CMetalCommandContext::CreateMetalContext(CMetalDeviceContext* InDeviceContext)
 { 
@@ -38,8 +40,8 @@ void CMetalCommandContext::FinishContext()
     CopyContext.FinishContext();
     
     [CommandBuffer commit];
-    [CommandBuffer waitUntilCompleted];
     [CommandBuffer release];
+    
     CommandBuffer = nil;
 }
 
@@ -53,6 +55,31 @@ void CMetalCommandContext::EndTimeStamp(FRHITimestampQuery* Profiler, uint32 Ind
 
 void CMetalCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
 {
+    SCOPED_AUTORELEASE_POOL();
+    
+    CMetalTexture*  RTVTexture = GetMetalTexture(RenderTargetView.Texture);
+    CMetalViewport* Viewport   = RTVTexture ? RTVTexture->GetViewport() : nullptr;
+    
+    MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
+    
+    MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[0];
+    ColorAttachment.texture            = Viewport ? Viewport->GetDrawableTexture() : RTVTexture->GetMTLTexture();
+    ColorAttachment.loadAction         = ConvertAttachmentLoadAction(RenderTargetView.LoadAction);
+    ColorAttachment.clearColor         = MTLClearColorMake(RenderTargetView.ClearValue.R, RenderTargetView.ClearValue.G, RenderTargetView.ClearValue.B, RenderTargetView.ClearValue.A);
+    ColorAttachment.level              = RenderTargetView.MipLevel;
+    ColorAttachment.slice              = RenderTargetView.ArrayIndex;
+    ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
+    ColorAttachment.storeAction        = ConvertAttachmentStoreAction(RenderTargetView.StoreAction);
+    
+    if(!GraphicsEncoder)
+    {
+        GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
+    }
+    
+    NSRelease(RenderPassDescriptor);
+    
+    [GraphicsEncoder endEncoding];
+    GraphicsEncoder = nil;
 }
 
 void CMetalCommandContext::ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
@@ -65,15 +92,16 @@ void CMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
 
 void CMetalCommandContext::BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer)
 {
-    Check(GraphicsEncoder      == nil);
-    Check(RenderPassDescriptor == nil);
+    SCOPED_AUTORELEASE_POOL();
+    
+    Check(GraphicsEncoder == nil);
     
     CopyContext.FinishContext();
 
     CMetalTexture* DSVTexture = GetMetalTexture(RenderPassInitializer.DepthStencilView.Texture);
     METAL_ERROR_COND((RenderPassInitializer.NumRenderTargets > 0) || (DSVTexture != nullptr), "A RenderPass needs a valid RenderTargetView or DepthStencilView");
     
-    RenderPassDescriptor = [MTLRenderPassDescriptor new];
+    MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
     RenderPassDescriptor.defaultRasterSampleCount = 1;
     RenderPassDescriptor.renderTargetArrayLength  = 1;
     
@@ -112,25 +140,21 @@ void CMetalCommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
 
     Check(RenderPassDescriptor != nil);
     GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
+    [GraphicsEncoder retain];
+    
+    NSRelease(RenderPassDescriptor);
 }
 
 void CMetalCommandContext::EndRenderPass()
 {
-    Check(GraphicsEncoder      != nil);
-    Check(RenderPassDescriptor != nil);
+    Check(GraphicsEncoder != nil);
         
     [GraphicsEncoder endEncoding];
-    [GraphicsEncoder release];
-    GraphicsEncoder = nil;
-
-    [RenderPassDescriptor release];
-    RenderPassDescriptor = nil;
+    NSRelease(GraphicsEncoder);
 }
 
 void CMetalCommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
 {
-    Check(GraphicsEncoder != nil);
-    
     MTLViewport Viewport;
     Viewport.width   = Width;
     Viewport.height  = Height;
@@ -139,15 +163,13 @@ void CMetalCommandContext::SetViewport(float Width, float Height, float MinDepth
     Viewport.znear   = MinDepth;
     Viewport.zfar    = MaxDepth;
     
-    [GraphicsEncoder setViewport:Viewport];
+    CurrentViewport = Viewport;
 }
 
 void CMetalCommandContext::SetScissorRect(float Width, float Height, float x, float y)
 {
     // TODO: ImGui is screwing something up here
-    /*Check(GraphicsEncoder != nil);
-    
-    // Ensure that the size is correct;
+    /*// Ensure that the size is correct;
     Width  = Width - x;
     Height = Height - y;
     
@@ -166,18 +188,33 @@ void CMetalCommandContext::SetBlendFactor(const TStaticArray<float, 4>& Color)
 
 void CMetalCommandContext::SetVertexBuffers(FRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
 {
+    for (uint32 BufferIndex = 0; BufferIndex < BufferCount; ++BufferIndex)
+    {
+        const uint32 Index = BufferSlot + BufferIndex;
+        
+        CurrentVertexOffsets[Index] = 0;
+
+        CMetalVertexBuffer* Buffer = static_cast<CMetalVertexBuffer*>(VertexBuffers[Index]);
+        CurrentVertexBuffers[Index] = Buffer ? Buffer->GetMTLBuffer() : nil;
+        
+    }
+    
+    CurrentVertexBufferRange = NSMakeRange(NMath::Min<uint32>(BufferSlot, CurrentVertexBufferRange.location), NMath::Max<uint32>(BufferCount, CurrentVertexBufferRange.length));
 }
 
 void CMetalCommandContext::SetIndexBuffer(FRHIIndexBuffer* IndexBuffer)
 {
+    CurrentIndexBuffer = MakeSharedRef<CMetalIndexBuffer>(IndexBuffer);
 }
 
-void CMetalCommandContext::SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
+void CMetalCommandContext::SetPrimitiveTopology(EPrimitiveTopology PrimitveTopology)
 {
+    CurrentPrimitiveType = ConvertPrimitiveTopology(PrimitveTopology);
 }
 
 void CMetalCommandContext::SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)
 {
+    CurrentGraphicsPipeline = MakeSharedRef<CMetalGraphicsPipelineState>(PipelineState);
 }
 
 void CMetalCommandContext::SetComputePipelineState(FRHIComputePipelineState* PipelineState)
@@ -190,34 +227,110 @@ void CMetalCommandContext::Set32BitShaderConstants(FRHIShader* Shader, const voi
 
 void CMetalCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
 {
+    Check(Shader != nullptr);
+    CMetalShader* MetalShader = GetMetalShader(Shader);
+        
+    Check(ParameterIndex < kMaxSRVs);
+
+    const EShaderVisibility Visibility = MetalShader->GetVisbility();
+    CurrentSRVs[Visibility][ParameterIndex] = MakeSharedRef<CMetalShaderResourceView>(ShaderResourceView);
 }
 
 void CMetalCommandContext::SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex)
 {
+    Check(Shader              != nullptr);
+    Check(ShaderResourceViews != nullptr);
+    
+    CMetalShader* MetalShader = GetMetalShader(Shader);
+        
+    Check((ParameterIndex + NumShaderResourceViews) < kMaxSRVs);
+
+    const EShaderVisibility Visibility = MetalShader->GetVisbility();
+    for (uint32 Index = 0; Index < NumShaderResourceViews; ++Index)
+    {
+        CurrentSRVs[Visibility][ParameterIndex + Index] = MakeSharedRef<CMetalShaderResourceView>(ShaderResourceViews[Index]);
+    }
 }
 
 void CMetalCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
 {
+    Check(Shader != nullptr);
+    CMetalShader* MetalShader = GetMetalShader(Shader);
+        
+    Check(ParameterIndex < kMaxUAVs);
+
+    const EShaderVisibility Visibility = MetalShader->GetVisbility();
+    CurrentUAVs[Visibility][ParameterIndex] = MakeSharedRef<CMetalUnorderedAccessView>(UnorderedAccessView);
 }
 
 void CMetalCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
 {
+    Check(Shader               != nullptr);
+    Check(UnorderedAccessViews != nullptr);
+    
+    CMetalShader* MetalShader = GetMetalShader(Shader);
+        
+    Check((ParameterIndex + NumUnorderedAccessViews) < kMaxUAVs);
+
+    const EShaderVisibility Visibility = MetalShader->GetVisbility();
+    for (uint32 Index = 0; Index < NumUnorderedAccessViews; ++Index)
+    {
+        CurrentUAVs[Visibility][ParameterIndex + Index] = MakeSharedRef<CMetalUnorderedAccessView>(UnorderedAccessViews[Index]);
+    }
 }
 
 void CMetalCommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
 {
+    Check(Shader != nullptr);
+    CMetalShader* MetalShader = GetMetalShader(Shader);
+        
+    Check(ParameterIndex < kMaxConstantBuffers);
+
+    const EShaderVisibility Visibility = MetalShader->GetVisbility();
+    CurrentConstantBuffers[Visibility][ParameterIndex] = MakeSharedRef<CMetalConstantBuffer>(ConstantBuffer);
 }
 
 void CMetalCommandContext::SetConstantBuffers(FRHIShader* Shader, FRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
 {
+    Check(Shader          != nullptr);
+    Check(ConstantBuffers != nullptr);
+    
+    CMetalShader* MetalShader = GetMetalShader(Shader);
+        
+    Check((ParameterIndex + NumConstantBuffers) < kMaxConstantBuffers);
+
+    const EShaderVisibility Visibility = MetalShader->GetVisbility();
+    for (uint32 Index = 0; Index < NumConstantBuffers; ++Index)
+    {
+        CurrentConstantBuffers[Visibility][ParameterIndex + Index] = MakeSharedRef<CMetalConstantBuffer>(ConstantBuffers[Index]);
+    }
 }
 
 void CMetalCommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
 {
+    Check(Shader != nullptr);
+    CMetalShader* MetalShader = GetMetalShader(Shader);
+        
+    Check(ParameterIndex < kMaxConstantBuffers);
+
+    const EShaderVisibility Visibility = MetalShader->GetVisbility();
+    CurrentSamplerStates[Visibility][ParameterIndex] = MakeSharedRef<CMetalSamplerState>(SamplerState);
 }
 
 void CMetalCommandContext::SetSamplerStates(FRHIShader* Shader, FRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
 {
+    Check(Shader        != nullptr);
+    Check(SamplerStates != nullptr);
+    
+    CMetalShader* MetalShader = GetMetalShader(Shader);
+        
+    Check((ParameterIndex + NumSamplerStates) < kMaxSamplerStates);
+
+    const EShaderVisibility Visibility = MetalShader->GetVisbility();
+    for (uint32 Index = 0; Index < NumSamplerStates; ++Index)
+    {
+        CurrentSamplerStates[Visibility][ParameterIndex + Index] = MakeSharedRef<CMetalSamplerState>(SamplerStates[Index]);
+    }
 }
 
 void CMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
@@ -305,6 +418,9 @@ void CMetalCommandContext::GenerateMips(FRHITexture* Texture)
     CMetalTexture* MetalTexture = GetMetalTexture(Texture);
     Check(MetalTexture != nullptr);
     
+    // Cannot call generatemips inside of a RenderPass
+    Check(GraphicsEncoder == nil);
+    
     CopyContext.StartContext(CommandBuffer);
     
     id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
@@ -327,20 +443,98 @@ void CMetalCommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 {
 }
 
+void CMetalCommandContext::PrepareForDraw()
+{
+    Check(GraphicsEncoder != nil);
+    
+    [GraphicsEncoder setViewport:CurrentViewport];
+    
+    // Necessary to retrieve all states and the resource bindings
+    if (CurrentGraphicsPipeline)
+    {
+        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.Data()
+                                  offsets:CurrentVertexOffsets.Data()
+                                withRange:CurrentVertexBufferRange];
+
+        CMetalDepthStencilState* DepthStencilState = CurrentGraphicsPipeline->GetMetalDepthStencilState();
+        Check(DepthStencilState != nullptr);
+        
+        [GraphicsEncoder setDepthStencilState:DepthStencilState->GetMTLDepthStencilState()];
+        
+        CMetalRasterizerState* RasterizerState = CurrentGraphicsPipeline->GetMetalRasterizerState();
+        Check(RasterizerState != nullptr);
+        
+        [GraphicsEncoder setFrontFacingWinding:RasterizerState->GetMTLFrontFaceWinding()];
+        [GraphicsEncoder setTriangleFillMode:RasterizerState->GetMTLFillMode()];
+        
+        [GraphicsEncoder setRenderPipelineState:CurrentGraphicsPipeline->GetMTLPipelineState()];
+        
+        // Vertex-Shader stage
+        // [GraphicsEncoder set]
+
+    }
+}
+
 void CMetalCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 {
+    Check(GraphicsEncoder != nil);
+    
+    PrepareForDraw();
+    
+    Check(CurrentPrimitiveType != MTLPrimitiveType(-1));
+    [GraphicsEncoder drawPrimitives:CurrentPrimitiveType vertexStart:StartVertexLocation vertexCount:VertexCount];
 }
 
 void CMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
+    Check(GraphicsEncoder != nil);
+    
+    PrepareForDraw();
+    
+    Check(CurrentIndexBuffer   != nullptr);
+    Check(CurrentPrimitiveType != MTLPrimitiveType(-1));
+    
+    [GraphicsEncoder drawIndexedPrimitives:CurrentPrimitiveType
+                                indexCount:IndexCount
+                                 indexType:(CurrentIndexBuffer->GetFormat() == EIndexFormat::uint32) ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16
+                               indexBuffer:CurrentIndexBuffer->GetMTLBuffer()
+                         indexBufferOffset:CurrentIndexBuffer->GetStride() * StartIndexLocation
+                             instanceCount:1
+                                baseVertex:BaseVertexLocation
+                              baseInstance:0];
 }
 
 void CMetalCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
+    Check(GraphicsEncoder != nil);
+    
+    PrepareForDraw();
+    
+    Check(CurrentPrimitiveType != MTLPrimitiveType(-1));
+    [GraphicsEncoder drawPrimitives:CurrentPrimitiveType
+                        vertexStart:StartVertexLocation
+                        vertexCount:VertexCountPerInstance
+                      instanceCount:InstanceCount
+                       baseInstance:StartInstanceLocation];
 }
 
 void CMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
+    Check(GraphicsEncoder != nil);
+    
+    PrepareForDraw();
+    
+    Check(CurrentIndexBuffer   != nullptr);
+    Check(CurrentPrimitiveType != MTLPrimitiveType(-1));
+    
+    [GraphicsEncoder drawIndexedPrimitives:CurrentPrimitiveType
+                                indexCount:IndexCountPerInstance
+                                 indexType:(CurrentIndexBuffer->GetFormat() == EIndexFormat::uint32) ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16
+                               indexBuffer:CurrentIndexBuffer->GetMTLBuffer()
+                         indexBufferOffset:CurrentIndexBuffer->GetStride() * StartIndexLocation
+                             instanceCount:InstanceCount
+                                baseVertex:BaseVertexLocation
+                              baseInstance:StartInstanceLocation];
 }
 
 void CMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
@@ -353,6 +547,17 @@ void CMetalCommandContext::DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTra
 
 void CMetalCommandContext::ClearState()
 {
+    CMemory::Memzero(&CurrentViewport);
+    
+    CurrentIndexBuffer      = nullptr;
+    CurrentGraphicsPipeline = nullptr;
+    
+    CurrentVertexBuffers.Fill(nil);
+    CurrentVertexOffsets.Memzero();
+    CurrentVertexBufferRange = NSMakeRange(0, 0);
+    
+    CurrentPrimitiveType = MTLPrimitiveType(-1);
+    
     Flush();
 }
 
@@ -367,6 +572,8 @@ void CMetalCommandContext::Flush()
 
 void CMetalCommandContext::InsertMarker(const String& Message)
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     id<MTLCommandEncoder> Encoder = nil;
     if (GraphicsEncoder)
     {

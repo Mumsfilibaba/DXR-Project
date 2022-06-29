@@ -48,7 +48,11 @@ public:
     
     id<MTLTexture> GetDrawableTexture();
     
-    CAMetalLayer* GetMetalLayer() const { return MetalView ? (CAMetalLayer*)MetalView.layer : nil; }
+    CAMetalLayer* GetMetalLayer() const
+    {
+        SCOPED_AUTORELEASE_POOL();
+        return MetalView ? (CAMetalLayer*)MetalView.layer : nil;
+    }
 
     CMetalWindowView* GetMetalView() const { return MetalView; }
     

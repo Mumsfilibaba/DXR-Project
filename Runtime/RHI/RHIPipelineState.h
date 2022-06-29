@@ -82,7 +82,7 @@ struct SDepthStencilStateFace
     SDepthStencilStateFace()
         : StencilFailOp(EStencilOp::Keep)
         , StencilDepthFailOp(EStencilOp::Keep)
-        , StencilPassOp(EStencilOp::Keep)
+        , StencilDepthPassOp(EStencilOp::Keep)
         , StencilFunc(EComparisonFunc::Always)
     { }
 
@@ -92,7 +92,7 @@ struct SDepthStencilStateFace
                           , EComparisonFunc InStencilFunc)
         : StencilFailOp(InStencilFailOp)
         , StencilDepthFailOp(InStencilDepthFailOp)
-        , StencilPassOp(InStencilPassOp)
+        , StencilDepthPassOp(InStencilPassOp)
         , StencilFunc(InStencilFunc)
     { }
 
@@ -100,7 +100,7 @@ struct SDepthStencilStateFace
     {
         uint64 Hash = ToUnderlying(StencilFailOp);
         HashCombine(Hash, ToUnderlying(StencilDepthFailOp));
-        HashCombine(Hash, ToUnderlying(StencilPassOp));
+        HashCombine(Hash, ToUnderlying(StencilDepthPassOp));
         HashCombine(Hash, ToUnderlying(StencilFunc));
         return Hash;
     }
@@ -109,7 +109,7 @@ struct SDepthStencilStateFace
     {
         return (StencilFailOp      == RHS.StencilFailOp) 
             && (StencilDepthFailOp == RHS.StencilDepthFailOp)
-            && (StencilPassOp      == RHS.StencilPassOp)
+            && (StencilDepthPassOp      == RHS.StencilDepthPassOp)
             && (StencilFunc        == RHS.StencilFunc);
     }
 
@@ -120,7 +120,7 @@ struct SDepthStencilStateFace
 
     EStencilOp      StencilFailOp;
     EStencilOp      StencilDepthFailOp;
-    EStencilOp      StencilPassOp;
+    EStencilOp      StencilDepthPassOp;
     EComparisonFunc StencilFunc;
 };
 
@@ -731,6 +731,7 @@ struct SVertexInputElement
         : Semantic("")
         , SemanticIndex(0)
         , Format(EFormat::Unknown)
+        , VertexStride(0)
         , InputSlot(0)
         , ByteOffset(0)
         , InputClass(EVertexInputClass::Vertex)
@@ -740,6 +741,7 @@ struct SVertexInputElement
     SVertexInputElement( const String& InSemantic
                        , uint32 InSemanticIndex
                        , EFormat InFormat
+                       , uint16 InVertexStride
                        , uint32 InInputSlot
                        , uint32 InByteOffset
                        , EVertexInputClass InInputClass
@@ -747,6 +749,7 @@ struct SVertexInputElement
         : Semantic(InSemantic)
         , SemanticIndex(InSemanticIndex)
         , Format(InFormat)
+        , VertexStride(InVertexStride)
         , InputSlot(InInputSlot)
         , ByteOffset(InByteOffset)
         , InputClass(InInputClass)
@@ -758,6 +761,7 @@ struct SVertexInputElement
         return (Semantic         == RHS.Semantic)
             && (SemanticIndex    == RHS.SemanticIndex)
             && (Format           == RHS.Format)
+            && (VertexStride     == RHS.VertexStride)
             && (InputSlot        == RHS.InputSlot)
             && (ByteOffset       == RHS.ByteOffset)
             && (InputClass       == RHS.InputClass)
@@ -772,6 +776,7 @@ struct SVertexInputElement
     String            Semantic;
     uint32            SemanticIndex;
     EFormat           Format;
+    uint16            VertexStride;
     uint32            InputSlot;
     uint32            ByteOffset;
     EVertexInputClass InputClass;

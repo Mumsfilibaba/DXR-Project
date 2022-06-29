@@ -19,9 +19,9 @@ CMetalDeviceContext::~CMetalDeviceContext()
 
 CMetalDeviceContext* CMetalDeviceContext::CreateContext(CMetalCoreInterface* InCoreInterface)
 {
-    METAL_ERROR_COND(InCoreInterface != nullptr);
-    
     SCOPED_AUTORELEASE_POOL();
+    
+    METAL_ERROR_COND(InCoreInterface != nullptr);
     
     NSArray<id<MTLDevice>>* AvailableDevices = MTLCopyAllDevices();
         
@@ -46,5 +46,6 @@ CMetalDeviceContext* CMetalDeviceContext::CreateContext(CMetalCoreInterface* InC
     const bool bSupportRayTracingFromRender = SelectedDevice.supportsRaytracingFromRender;
     METAL_INFO("bSupportRayTracing=%s, bSupportRayTracingFromRender=%s", bSupportRayTracing ? "true" : "false", bSupportRayTracingFromRender ? "true" : "false");
     
+    NSRelease(AvailableDevices);
 	return dbg_new CMetalDeviceContext(InCoreInterface, SelectedDevice);
 }

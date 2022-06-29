@@ -1,5 +1,8 @@
 #pragma once
-#include "MetalObject.h"
+#include "MetalPipelineState.h"
+#include "MetalBuffer.h"
+#include "MetalViews.h"
+#include "MetalSamplerState.h"
 
 #include "RHI/IRHICommandContext.h"
 
@@ -166,11 +169,41 @@ public:
     virtual void* GetRHIBaseCommandList() override final { return reinterpret_cast<void*>(CommandBuffer); }
     
 private:
-    id<MTLCommandBuffer>        CommandBuffer;
-    id<MTLRenderCommandEncoder> GraphicsEncoder;
-    CMetalCopyCommandContext    CopyContext;
+    void PrepareForDraw();
     
-    MTLRenderPassDescriptor*    RenderPassDescriptor;
+    id<MTLCommandBuffer>        CommandBuffer;
+    
+    // RenderEncoder
+    id<MTLRenderCommandEncoder> GraphicsEncoder;
+    MTLViewport                 CurrentViewport;
+    
+    // VertexBuffer- state
+    TStaticArray<id<MTLBuffer>, kRHIMaxVertexBuffers> CurrentVertexBuffers;
+    TStaticArray<NSUInteger   , kRHIMaxVertexBuffers> CurrentVertexOffsets;
+    NSRange CurrentVertexBufferRange;
+    
+    // PipelineState
+    TSharedRef<CMetalIndexBuffer>           CurrentIndexBuffer;
+    TSharedRef<CMetalGraphicsPipelineState> CurrentGraphicsPipeline;
+    MTLPrimitiveType                        CurrentPrimitiveType;
+    
+    // Resources
+    enum
+    {
+        kMaxSRVs            = 16,
+        kMaxUAVs            = 16,
+        kMaxConstantBuffers = 16,
+        kMaxSamplerStates   = 16,
+    };
+    
+    TStaticArray<TSharedRef<CMetalSamplerState>       , kMaxSamplerStates>   CurrentSamplerStates[ShaderVisibility_Count];
+    TStaticArray<TSharedRef<CMetalShaderResourceView> , kMaxSRVs>            CurrentSRVs[ShaderVisibility_Count];
+    TStaticArray<TSharedRef<CMetalUnorderedAccessView>, kMaxUAVs>            CurrentUAVs[ShaderVisibility_Count];
+    TStaticArray<TSharedRef<CMetalConstantBuffer>     , kMaxConstantBuffers> CurrentConstantBuffers[ShaderVisibility_Count];
+    
+    // Contexts
+    CMetalCopyCommandContext CopyContext;
+    
 };
 
 #pragma clang diagnostic pop

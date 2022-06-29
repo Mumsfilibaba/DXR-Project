@@ -40,6 +40,8 @@
 
 + (NSString*) convertStringWithArgs:(const char*) Format Args:(va_list)Args
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     NSString* TempFormat = @(Format);
     return [[NSString alloc] initWithFormat:TempFormat arguments:Args];
 }

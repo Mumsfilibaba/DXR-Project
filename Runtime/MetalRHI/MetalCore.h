@@ -234,3 +234,126 @@ CONSTEXPR MTLPixelFormat ConvertFormat(EFormat Format)
     }
 }
 
+CONSTEXPR MTLVertexFormat ConvertVertexFormat(EFormat Format)
+{
+    switch (Format)
+    {
+        case EFormat::R32G32B32A32_Float:    return MTLVertexFormatFloat4;
+        case EFormat::R32G32B32A32_Uint:     return MTLVertexFormatUInt4;
+        case EFormat::R32G32B32A32_Sint:     return MTLVertexFormatInt4;
+    
+        case EFormat::R32G32B32_Float:       return MTLVertexFormatFloat3;
+        case EFormat::R32G32B32_Uint:        return MTLVertexFormatUInt3;
+        case EFormat::R32G32B32_Sint:        return MTLVertexFormatInt3;
+            
+        case EFormat::R16G16B16A16_Float:    return MTLVertexFormatHalf4;
+        case EFormat::R16G16B16A16_Unorm:    return MTLVertexFormatUShort4Normalized;
+        case EFormat::R16G16B16A16_Uint:     return MTLVertexFormatUShort4;
+        case EFormat::R16G16B16A16_Snorm:    return MTLVertexFormatShort4Normalized;
+        case EFormat::R16G16B16A16_Sint:     return MTLVertexFormatShort4;
+    
+        case EFormat::R32G32_Float:          return MTLVertexFormatFloat2;
+        case EFormat::R32G32_Uint:           return MTLVertexFormatUInt2;
+        case EFormat::R32G32_Sint:           return MTLVertexFormatInt2;
+    
+        case EFormat::R10G10B10A2_Unorm:     return MTLVertexFormatUInt1010102Normalized;
+    
+        case EFormat::R8G8B8A8_Unorm:        return MTLVertexFormatUChar4Normalized;
+        case EFormat::R8G8B8A8_Uint:         return MTLVertexFormatUChar4;
+        case EFormat::R8G8B8A8_Snorm:        return MTLVertexFormatChar4Normalized;
+        case EFormat::R8G8B8A8_Sint:         return MTLVertexFormatChar4;
+    
+        case EFormat::R16G16_Float:          return MTLVertexFormatHalf2;
+        case EFormat::R16G16_Unorm:          return MTLVertexFormatUShort2Normalized;
+        case EFormat::R16G16_Uint:           return MTLVertexFormatUShort2;
+        case EFormat::R16G16_Snorm:          return MTLVertexFormatShort2Normalized;
+        case EFormat::R16G16_Sint:           return MTLVertexFormatShort2;
+    
+        case EFormat::R32_Float:             return MTLVertexFormatFloat;
+        case EFormat::R32_Uint:              return MTLVertexFormatUInt;
+        case EFormat::R32_Sint:              return MTLVertexFormatInt;
+    
+        case EFormat::R8G8_Unorm:            return MTLVertexFormatUChar2Normalized;
+        case EFormat::R8G8_Uint:             return MTLVertexFormatUChar2;
+        case EFormat::R8G8_Snorm:            return MTLVertexFormatChar2Normalized;
+        case EFormat::R8G8_Sint:             return MTLVertexFormatChar2;
+    
+        case EFormat::R16_Float:             return MTLVertexFormatHalf;
+        case EFormat::R16_Unorm:             return MTLVertexFormatUShortNormalized;
+        case EFormat::R16_Uint:              return MTLVertexFormatUShort;
+        case EFormat::R16_Snorm:             return MTLVertexFormatShortNormalized;
+        case EFormat::R16_Sint:              return MTLVertexFormatShort;
+
+        case EFormat::R8_Unorm:              return MTLVertexFormatUCharNormalized;
+        case EFormat::R8_Uint:               return MTLVertexFormatUChar;
+        case EFormat::R8_Snorm:              return MTLVertexFormatCharNormalized;
+        case EFormat::R8_Sint:               return MTLVertexFormatChar;
+            
+        default:                             return MTLVertexFormatInvalid;
+    }
+}
+
+CONSTEXPR MTLVertexStepFunction ConvertVertexInputClass(EVertexInputClass InputClass)
+{
+    switch (InputClass)
+    {
+        case EVertexInputClass::Vertex:   return MTLVertexStepFunctionPerVertex;
+        case EVertexInputClass::Instance: return MTLVertexStepFunctionPerInstance;
+        default:                          return MTLVertexStepFunction(-1);
+    }
+}
+
+CONSTEXPR MTLCompareFunction ConvertCompareFunction(EComparisonFunc ComparisonFunc)
+{
+    switch (ComparisonFunc)
+    {
+        case EComparisonFunc::Never:        return MTLCompareFunctionNever;
+        case EComparisonFunc::Less:         return MTLCompareFunctionLess;
+        case EComparisonFunc::Equal:        return MTLCompareFunctionEqual;
+        case EComparisonFunc::LessEqual:    return MTLCompareFunctionLessEqual;
+        case EComparisonFunc::Greater:      return MTLCompareFunctionGreater;
+        case EComparisonFunc::NotEqual:     return MTLCompareFunctionNotEqual;
+        case EComparisonFunc::GreaterEqual: return MTLCompareFunctionGreaterEqual;
+        case EComparisonFunc::Always:       return MTLCompareFunctionAlways;
+        default:                            return MTLCompareFunction(-1);
+    }
+}
+
+CONSTEXPR MTLStencilOperation ConvertStencilOp(EStencilOp StencilOp)
+{
+    switch (StencilOp)
+    {
+        case EStencilOp::Keep:    return MTLStencilOperationKeep;
+        case EStencilOp::Zero:    return MTLStencilOperationZero;
+        case EStencilOp::Replace: return MTLStencilOperationReplace;
+        case EStencilOp::IncrSat: return MTLStencilOperationIncrementClamp;
+        case EStencilOp::DecrSat: return MTLStencilOperationDecrementClamp;
+        case EStencilOp::Invert:  return MTLStencilOperationInvert;
+        case EStencilOp::Incr:    return MTLStencilOperationIncrementWrap;
+        case EStencilOp::Decr:    return MTLStencilOperationDecrementWrap;
+        default:                  return MTLStencilOperation(-1);
+    }
+}
+
+CONSTEXPR MTLPrimitiveType ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
+{
+    switch (PrimitiveTopology)
+    {
+        case EPrimitiveTopology::PointList:     return MTLPrimitiveTypePoint;
+        case EPrimitiveTopology::LineList:      return MTLPrimitiveTypeLine;
+        case EPrimitiveTopology::LineStrip:     return MTLPrimitiveTypeLineStrip;
+        case EPrimitiveTopology::TriangleList:  return MTLPrimitiveTypeTriangle;
+        case EPrimitiveTopology::TriangleStrip: return MTLPrimitiveTypeTriangleStrip;
+        default:                                return MTLPrimitiveType(-1);
+    }
+}
+
+CONSTEXPR MTLTriangleFillMode ConvertFillMode(EFillMode FillMode)
+{
+    switch (FillMode)
+    {
+        case EFillMode::WireFrame: return MTLTriangleFillModeLines;
+        case EFillMode::Solid:     return MTLTriangleFillModeFill;
+        default:                   return MTLTriangleFillMode(-1);
+    }
+}

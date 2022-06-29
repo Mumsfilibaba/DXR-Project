@@ -14,15 +14,15 @@ class FD3D12VertexInputLayout : public FRHIVertexInputLayout, public FD3D12Devic
 {
 public:
 
-    FD3D12VertexInputLayout(FD3D12Device* InDevice, const FRHIVertexInputLayoutInitializer& CreateInfo)
+    FD3D12VertexInputLayout(FD3D12Device* InDevice, const FRHIVertexInputLayoutInitializer& Initializer)
         : FRHIVertexInputLayout()
         , FD3D12DeviceChild(InDevice)
         , SemanticNames()
         , ElementDesc()
         , Desc()
     {
-        SemanticNames.Reserve(CreateInfo.Elements.Size());
-        for (const SVertexInputElement& Element : CreateInfo.Elements)
+        SemanticNames.Reserve(Initializer.Elements.Size());
+        for (const SVertexInputElement& Element : Initializer.Elements)
         {
             D3D12_INPUT_ELEMENT_DESC D3D12Element;
             D3D12Element.SemanticName         = SemanticNames.Emplace(Element.Semantic).CStr();
@@ -31,7 +31,7 @@ public:
             D3D12Element.InputSlot            = Element.InputSlot;
             D3D12Element.AlignedByteOffset    = Element.ByteOffset;
             D3D12Element.InputSlotClass       = ConvertVertexInputClass(Element.InputClass);
-            D3D12Element.InstanceDataStepRate = Element.InstanceStepRate;
+            D3D12Element.InstanceDataStepRate = (Element.InputClass == EVertexInputClass::Vertex) ? 0 : Element.InstanceStepRate;
             ElementDesc.Emplace(D3D12Element);
         }
 
@@ -118,7 +118,7 @@ public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
     ~FD3D12GraphicsPipelineState() = default;
 
-    bool Init(const FRHIGraphicsPipelineStateInitializer& CreateInfo);
+    bool Init(const FRHIGraphicsPipelineStateInitializer& Initializer);
 
     virtual void SetName(const String& InName) override final
     {
@@ -192,7 +192,7 @@ public:
     FD3D12RayTracingPipelineState(FD3D12Device* InDevice);
     ~FD3D12RayTracingPipelineState() = default;
 
-    bool Init(const FRHIRayTracingPipelineStateInitializer& CreateInfo);
+    bool Init(const FRHIRayTracingPipelineStateInitializer& Initializer);
 
     virtual void SetName(const String& InName) override
     {
