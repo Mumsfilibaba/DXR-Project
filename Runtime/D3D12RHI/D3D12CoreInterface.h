@@ -15,6 +15,42 @@
 class CD3D12CommandContext;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12RayTracingDesc
+
+struct FD3D12RayTracingDesc
+{
+    FD3D12RayTracingDesc()
+        : Tier(D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+    { }
+
+    D3D12_RAYTRACING_TIER Tier;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12MeshShadingDesc
+
+struct FD3D12MeshShadingDesc
+{
+    FD3D12MeshShadingDesc()
+        : Tier(D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
+    { }
+
+    D3D12_MESH_SHADER_TIER Tier;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12SamplerFeedbackDesc
+
+struct FD3D12SamplerFeedbackDesc
+{
+    FD3D12SamplerFeedbackDesc()
+        : Tier(D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED)
+    { }
+
+    D3D12_SAMPLER_FEEDBACK_TIER Tier;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CoreInterface
 
 class FD3D12CoreInterface : public CRHICoreInterface
@@ -85,7 +121,7 @@ public:
 
     virtual IRHICommandContext* RHIGetDefaultCommandContext() override final { return DirectCmdContext; }
 
-    virtual String GetAdapterName() const override final { return Device->GetAdapterName(); }
+    virtual String GetAdapterName() const override final { return Adapter->GetDescription(); }
 
     virtual void RHIQueryRayTracingSupport(SRayTracingSupport& OutSupport)   const override final;
     virtual void RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport) const override final;
@@ -119,6 +155,10 @@ private:
     FD3D12AdapterRef             Adapter;
     FD3D12DeviceRef              Device;
     
+    FD3D12RayTracingDesc         RayTracingDesc;
+    FD3D12MeshShadingDesc        MeshShadingDesc;
+    FD3D12SamplerFeedbackDesc    SamplerFeedbackDesc;
+
     CD3D12CommandContext*        DirectCmdContext;
     
     CD3D12RootSignatureCache*    RootSignatureCache = nullptr;

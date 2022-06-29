@@ -34,7 +34,7 @@ public:
         if (OfflineHandle != 0)
         {
             Desc = InDesc;
-            GetDevice()->CreateSampler(&Desc, OfflineHandle);
+            GetDevice()->GetD3D12Device()->CreateSampler(&Desc, OfflineHandle);
             return true;
         }
         else

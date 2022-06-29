@@ -2,14 +2,13 @@
 #include "D3D12PipelineState.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIGraphicsPipelineState 
+// CD3D12GraphicsPipelineState 
 
 CD3D12GraphicsPipelineState::CD3D12GraphicsPipelineState(FD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
     , PipelineState(nullptr)
     , RootSignature(nullptr)
-{
-}
+{ }
 
 bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitializer& Initializer)
 {

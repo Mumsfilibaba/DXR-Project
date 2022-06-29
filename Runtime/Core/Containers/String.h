@@ -2090,12 +2090,32 @@ struct TIsTStringType<TString<CharType>>
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // char and wide conversion functions
 
+inline WString CharToWide(const StringView& CharString) noexcept
+{
+    WString NewString;
+    NewString.Resize(CharString.Length());
+
+    mbstowcs(NewString.Data(), CharString.CStr(), CharString.Length());
+
+    return NewString;
+}
+
 inline WString CharToWide(const String& CharString) noexcept
 {
     WString NewString;
     NewString.Resize(CharString.Length());
 
     mbstowcs(NewString.Data(), CharString.CStr(), CharString.Length());
+
+    return NewString;
+}
+
+inline String WideToChar(const WStringView& WideString) noexcept
+{
+    String NewString;
+    NewString.Resize(WideString.Length());
+
+    wcstombs(NewString.Data(), WideString.CStr(), WideString.Length());
 
     return NewString;
 }

@@ -109,7 +109,12 @@ bool CD3D12GPUResourceUploader::Reserve(uint32 InSizeInBytes)
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    HRESULT Result = GetDevice()->CreateCommitedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&Resource));
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommitedResource( &HeapProperties
+                                                                          , D3D12_HEAP_FLAG_NONE
+                                                                          , &Desc
+                                                                          , D3D12_RESOURCE_STATE_GENERIC_READ
+                                                                          , nullptr
+                                                                          , IID_PPV_ARGS(&Resource));
     if (SUCCEEDED(Result))
     {
         Resource->SetName(L"[D3D12GPUResourceUploader] Buffer");
@@ -416,7 +421,7 @@ void CD3D12CommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView
 
     const D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle    = D3D12UnorderedAccessView->GetOfflineHandle();
     const D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle_CPU = OnlineDescriptorHeap->GetCPUDescriptorHandleAt(OnlineDescriptorHandleIndex);
-    GetDevice()->CopyDescriptorsSimple(1, OnlineHandle_CPU, OfflineHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    GetDevice()->GetD3D12Device()->CopyDescriptorsSimple(1, OnlineHandle_CPU, OfflineHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     const D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandle_GPU = OnlineDescriptorHeap->GetGPUDescriptorHandleAt(OnlineDescriptorHandleIndex);
     CommandList.ClearUnorderedAccessViewFloat(OnlineHandle_GPU, D3D12UnorderedAccessView, ClearColor.Elements);
@@ -1113,7 +1118,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     const uint32 StartDescriptorHandleIndex = ResourceHeap->AllocateHandles(UavDescriptorHandleCount + 1);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE SrvHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(StartDescriptorHandleIndex);
-    GetDevice()->CreateShaderResourceView(D3D12Texture->GetD3D12Resource()->GetResource(), &SrvDesc, SrvHandle_CPU);
+    GetDevice()->GetD3D12Device()->CreateShaderResourceView(D3D12Texture->GetD3D12Resource()->GetResource(), &SrvDesc, SrvHandle_CPU);
 
     const uint32 UavStartDescriptorHandleIndex = StartDescriptorHandleIndex + 1;
     for (uint32 i = 0; i < Desc.MipLevels; i++)
@@ -1128,7 +1133,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
         }
 
         const D3D12_CPU_DESCRIPTOR_HANDLE UavHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(UavStartDescriptorHandleIndex + i);
-        GetDevice()->CreateUnorderedAccessView(StagingTexture->GetResource(), nullptr, &UavDesc, UavHandle_CPU);
+        GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(StagingTexture->GetResource(), nullptr, &UavDesc, UavHandle_CPU);
     }
 
     for (uint32 i = Desc.MipLevels; i < UavDescriptorHandleCount; i++)
@@ -1143,7 +1148,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
         }
 
         const D3D12_CPU_DESCRIPTOR_HANDLE UavHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(UavStartDescriptorHandleIndex + i);
-        GetDevice()->CreateUnorderedAccessView(nullptr, nullptr, &UavDesc, UavHandle_CPU);
+        GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(nullptr, nullptr, &UavDesc, UavHandle_CPU);
     }
 
     // We assume the destination is in D3D12_RESOURCE_STATE_COPY_DEST
@@ -1159,7 +1164,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     
     FlushResourceBarriers();
 
-    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
+    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
     if (bIsTextureCube)
     {
         TSharedRef<CD3D12ComputePipelineState> PipelineState = D3D12CoreInterface->GetGenerateMipsPipelineTexureCube();
@@ -1406,7 +1411,7 @@ void CD3D12CommandContext::InsertMarker(const String& Message)
 
 void CD3D12CommandContext::BeginExternalCapture()
 {
-    IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetGraphicsAnalysisInterface();
+    IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetAdapter()->GetGraphicsAnalysis();
     if (GraphicsAnalysis && !bIsCapturing)
     {
         GraphicsAnalysis->BeginCapture();
@@ -1416,7 +1421,7 @@ void CD3D12CommandContext::BeginExternalCapture()
 
 void CD3D12CommandContext::EndExternalCapture()
 {
-    IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetGraphicsAnalysisInterface();
+    IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetAdapter()->GetGraphicsAnalysis();
     if (GraphicsAnalysis && bIsCapturing)
     {
         GraphicsAnalysis->EndCapture();

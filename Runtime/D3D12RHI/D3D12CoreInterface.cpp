@@ -53,6 +53,8 @@ FD3D12CoreInterface::~FD3D12CoreInterface()
 
     Device.Reset();
 
+    FD3D12Library::Release();
+
     GD3D12Instance = nullptr;
 }
 
@@ -93,7 +95,7 @@ bool FD3D12CoreInterface::Initialize(bool bEnableDebug)
         return false;
     }
 
-    Device = dbg_new FD3D12Device(this, bEnableDebug, bEnableGBV, bEnableDRED);
+    Device = dbg_new FD3D12Device(Adapter.Get());
     if (!Device->Initialize())
     {
         return false;

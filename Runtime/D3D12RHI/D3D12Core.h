@@ -67,7 +67,7 @@
 #endif
 // Windows 11 22H2
 #if (NTDDI_WIN10_NI && (WDK_NTDDI_VERSION >= NTDDI_WIN10_NI))
-    #define WIN10_BUILD_22621 (1)
+    #define WIN11_BUILD_22621 (1)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
