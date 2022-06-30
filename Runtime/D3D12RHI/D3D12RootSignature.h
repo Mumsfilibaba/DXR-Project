@@ -10,6 +10,8 @@
 
 class FD3D12RootSignature;
 
+typedef TSharedRef<FD3D12RootSignature> FD3D12RootSignatureRef;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERootSignatureType
 
@@ -76,7 +78,11 @@ public:
 
     FD3D12RootSignature(FD3D12Device* InDevice);
     ~FD3D12RootSignature() = default;
+    
+public:
 
+    static bool Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
+    
     bool Initialize(const FD3D12RootSignatureResourceCount& RootSignatureInfo);
     bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
     bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
@@ -108,13 +114,13 @@ public:
         return RootSignature.GetAddressOf();
     }
 
-    static bool Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
-
 private:
     void CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+
     bool InternalInit(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     TComPtr<ID3D12RootSignature> RootSignature;
+
     int32 RootParameterMap[ShaderVisibility_Count][ResourceType_Count];
     // TODO: Enable this for all shader visibilities
     int32 ConstantRootParameterIndex;
@@ -129,8 +135,6 @@ public:
     FD3D12RootSignatureCache(FD3D12Device* Device);
     ~FD3D12RootSignatureCache();
 
-    static FD3D12RootSignatureCache& Get();
-
     bool Initialize();
 
     void ReleaseAll();
@@ -141,8 +145,6 @@ private:
     FD3D12RootSignature* CreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount);
 
     // TODO: Use a hash instead, this is beacuse == operator does not make sense, use it anyway?
-    TArray<TSharedRef<FD3D12RootSignature>>  RootSignatures;
+    TArray<FD3D12RootSignatureRef>           RootSignatures;
     TArray<FD3D12RootSignatureResourceCount> ResourceCounts;
-
-    static FD3D12RootSignatureCache* Instance;
 };

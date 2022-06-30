@@ -44,8 +44,6 @@ FD3D12CoreInterface::~FD3D12CoreInterface()
     GenerateMipsTex2D_PSO.Reset();
     GenerateMipsTexCube_PSO.Reset();
 
-    SafeDelete(RootSignatureCache);
-
     SafeRelease(ResourceOfflineDescriptorHeap);
     SafeRelease(RenderTargetOfflineDescriptorHeap);
     SafeRelease(DepthStencilOfflineDescriptorHeap);
@@ -97,13 +95,6 @@ bool FD3D12CoreInterface::Initialize(bool bEnableDebug)
 
     Device = dbg_new FD3D12Device(Adapter.Get());
     if (!Device->Initialize())
-    {
-        return false;
-    }
-
-    // RootSignature cache
-    RootSignatureCache = dbg_new FD3D12RootSignatureCache(GetDevice());
-    if (!RootSignatureCache->Initialize())
     {
         return false;
     }

@@ -16,9 +16,7 @@ class FD3D12RootSignature;
 class FD3D12ComputePipelineState;
 class FD3D12OnlineDescriptorHeap;
 class FD3D12OfflineDescriptorHeap;
-
-#define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
-#define D3D12_ENABLE_PIX_MARKERS              (1)
+class FD3D12RootSignatureCache;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedef
@@ -155,6 +153,7 @@ public:
     FD3D12Device(FD3D12Adapter* InAdapter)
         : FD3D12RefCounted()
         , Adapter(InAdapter)
+        , RootSignatureCache(nullptr)
         , Device(nullptr)
 #if WIN10_BUILD_14393
         , Device1(nullptr)
@@ -190,12 +189,13 @@ public:
     ~FD3D12Device();
 
 public:
-    
-    bool           Initialize();
+     
+    bool                      Initialize();
 
-    int32          GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
+    int32                     GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
-    FD3D12Adapter* GetAdapter() const { return Adapter; }
+    FD3D12Adapter*            GetAdapter()            const { return Adapter; }
+    FD3D12RootSignatureCache* GetRootSignatureCache() const { return RootSignatureCache; }
 
     ID3D12Device*  GetD3D12Device()  const { return Device.Get(); }
 #if WIN10_BUILD_14393
@@ -227,7 +227,8 @@ public:
 #endif
 
 private:
-    FD3D12Adapter*         Adapter;
+    FD3D12Adapter*            Adapter;
+    FD3D12RootSignatureCache* RootSignatureCache;
 
     TComPtr<ID3D12Device>  Device;
 #if WIN10_BUILD_14393

@@ -394,20 +394,15 @@ bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RootSignatureCache
 
-FD3D12RootSignatureCache* FD3D12RootSignatureCache::Instance = nullptr;
-
 FD3D12RootSignatureCache::FD3D12RootSignatureCache(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , RootSignatures()
     , ResourceCounts()
-{
-    Instance = this;
-}
+{ }
 
 FD3D12RootSignatureCache::~FD3D12RootSignatureCache()
 {
     ReleaseAll();
-    Instance = nullptr;
 }
 
 bool FD3D12RootSignatureCache::Initialize()
@@ -552,12 +547,6 @@ FD3D12RootSignature* FD3D12RootSignatureCache::GetOrCreateRootSignature(const FD
     }
 
     return CreateRootSignature(NewResourceCount);
-}
-
-FD3D12RootSignatureCache& FD3D12RootSignatureCache::Get()
-{
-    Check(Instance != nullptr);
-    return *Instance;
 }
 
 FD3D12RootSignature* FD3D12RootSignatureCache::CreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount)

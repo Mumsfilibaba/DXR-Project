@@ -193,7 +193,8 @@ bool FD3D12GraphicsPipelineState::Init(const FRHIGraphicsPipelineStateInitialize
 
         ResourceCounts.ResourceCounts[ShaderVisibility_All].Num32BitConstants = Num32BitConstants;
 
-        RootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts));
+        FD3D12RootSignatureCache* RootSignatureCache = GetDevice()->GetRootSignatureCache();
+        RootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureCache->GetOrCreateRootSignature(ResourceCounts));
     }
     else
     {
@@ -234,7 +235,7 @@ bool FD3D12GraphicsPipelineState::Init(const FRHIGraphicsPipelineStateInitialize
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIComputePipelineState
+// FD3D12ComputePipelineState
 
 FD3D12ComputePipelineState::FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader)
     : FRHIComputePipelineState()
@@ -242,8 +243,7 @@ FD3D12ComputePipelineState::FD3D12ComputePipelineState(FD3D12Device* InDevice, c
     , PipelineState(nullptr)
     , Shader(InShader)
     , RootSignature(nullptr)
-{
-}
+{ }
 
 bool FD3D12ComputePipelineState::Init()
 {
@@ -271,7 +271,8 @@ bool FD3D12ComputePipelineState::Init()
         ResourceCounts.AllowInputAssembler                  = false;
         ResourceCounts.ResourceCounts[ShaderVisibility_All] = Shader->GetResourceCount();
 
-        RootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts));
+        FD3D12RootSignatureCache* RootSignatureCache = GetDevice()->GetRootSignatureCache();
+        RootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureCache->GetOrCreateRootSignature(ResourceCounts));
     }
     else
     {
@@ -507,8 +508,10 @@ FD3D12RayTracingPipelineState::FD3D12RayTracingPipelineState(FD3D12Device* InDev
 bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitializer& Initializer)
 {
     FD3D12RayTracingPipelineStateStream PipelineStream;
-
     TArray<FD3D12Shader*> Shaders;
+
+    FD3D12RootSignatureCache* RootSignatureCache = GetDevice()->GetRootSignatureCache();
+    Check(RootSignatureCache != nullptr);
 
     // Collect and add all RayGen-Shaders
     for (FRHIRayGenShader* RayGen : Initializer.RayGenShaders)
@@ -521,7 +524,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
         RayGenLocalResourceCounts.AllowInputAssembler                  = false;
         RayGenLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12RayGen->GetRTLocalResourceCount();
 
-        HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(RayGenLocalResourceCounts));
+        HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureCache->GetOrCreateRootSignature(RayGenLocalResourceCounts));
         if (!HitLocalRootSignature)
         {
             return false;
@@ -590,7 +593,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
         AnyHitLocalResourceCounts.AllowInputAssembler                  = false;
         AnyHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12AnyHit->GetRTLocalResourceCount();
 
-        HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(AnyHitLocalResourceCounts));
+        HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureCache->GetOrCreateRootSignature(AnyHitLocalResourceCounts));
         if (!HitLocalRootSignature)
         {
             return false;
@@ -613,7 +616,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
         ClosestHitLocalResourceCounts.AllowInputAssembler                  = false;
         ClosestHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12ClosestHit->GetRTLocalResourceCount();
 
-        HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(ClosestHitLocalResourceCounts));
+        HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureCache->GetOrCreateRootSignature(ClosestHitLocalResourceCounts));
         if (!HitLocalRootSignature)
         {
             return false;
@@ -636,7 +639,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
         MissLocalResourceCounts.AllowInputAssembler                  = false;
         MissLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12MissShader->GetRTLocalResourceCount();
 
-        MissLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(MissLocalResourceCounts));
+        MissLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureCache->GetOrCreateRootSignature(MissLocalResourceCounts));
         if (!MissLocalRootSignature)
         {
             return false;
@@ -664,7 +667,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
     GlobalResourceCounts.AllowInputAssembler                  = false;
     GlobalResourceCounts.ResourceCounts[ShaderVisibility_All] = CombinedResourceCount;
 
-    GlobalRootSignature = MakeSharedRef<FD3D12RootSignature>(FD3D12RootSignatureCache::Get().GetOrCreateRootSignature(GlobalResourceCounts));
+    GlobalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureCache->GetOrCreateRootSignature(GlobalResourceCounts));
     if (!GlobalRootSignature)
     {
         return false;

@@ -311,8 +311,9 @@ bool FD3D12Adapter::Initialize()
                         BestFeatureLevel = Level;
                         BestVideoMem     = Desc.DedicatedVideoMemory;
                         FinalAdapter     = TempAdapter;
-                        break;
                     }
+                    
+                    break;
                 }
             }
         }
@@ -350,9 +351,13 @@ bool FD3D12Adapter::Initialize()
                 {
                     D3D12_INFO("[FD3D12Adapter]: Suitable Direct3D Adapter (%u): %ls", Index, Desc.Description);
 
-                    AdapterIndex     = Index;
-                    BestFeatureLevel = Level;
-                    FinalAdapter     = TempAdapter;
+                    if (Level >= BestFeatureLevel)
+                    {
+                        AdapterIndex     = Index;
+                        BestFeatureLevel = Level;
+                        FinalAdapter     = TempAdapter;
+                    }
+
                     break;
                 }
             }
@@ -391,6 +396,8 @@ FD3D12Device::~FD3D12Device()
             DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
         }
     }
+
+    SafeDelete(RootSignatureCache);
 
     Device.Reset();
 #if WIN10_BUILD_14393
@@ -524,13 +531,13 @@ bool FD3D12Device::Initialize()
     }
 #endif
 
-#if WIN11_BUILD_22000
+/*#if WIN11_BUILD_22000
     if (FAILED(Device.GetAs<ID3D12Device9>(&Device9)))
     {
         D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device9");
         return false;
     }
-#endif
+#endif*/
 
     // TODO: Remove feature levels from unsupported SDKs
     const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
@@ -557,6 +564,13 @@ bool FD3D12Device::Initialize()
     else
     {
         ActiveFeatureLevel = MinFeatureLevel;
+    }
+
+    // Create RootSignature cache
+    RootSignatureCache = dbg_new FD3D12RootSignatureCache(this);
+    if (!RootSignatureCache->Initialize())
+    {
+        return false;
     }
 
     return true;

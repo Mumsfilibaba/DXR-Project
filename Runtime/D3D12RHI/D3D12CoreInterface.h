@@ -181,8 +181,6 @@ private:
     FD3D12VariableRateShadingDesc VariableRateShadingDesc;
 
     FD3D12CommandContext*         DirectCmdContext;
-    
-    FD3D12RootSignatureCache*     RootSignatureCache = nullptr;
 
     FD3D12OfflineDescriptorHeap*  ResourceOfflineDescriptorHeap     = nullptr;
     FD3D12OfflineDescriptorHeap*  RenderTargetOfflineDescriptorHeap = nullptr;
