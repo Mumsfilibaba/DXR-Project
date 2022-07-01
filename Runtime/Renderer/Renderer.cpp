@@ -100,7 +100,7 @@ bool CRenderer::Init()
         Resources.CameraBuffer->SetName("CameraBuffer");
     }
 
-    // Init standard input layout
+    // Initialize standard input layout
     FRHIVertexInputLayoutInitializer InputLayout =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(SVertex), 0, 0,  EVertexInputClass::Vertex, 0 },
@@ -494,7 +494,7 @@ void CRenderer::Tick(const CScene& Scene)
 
     LightSetup.BeginFrame(PreShadowsCmdList, Scene);
 
-    // Init point light task
+    // Initialize point light task
     const auto RenderPointShadows = [&]()
     {
         CRenderer::ShadowMapRenderer.RenderPointLightShadows(PointShadowCmdList, LightSetup, Scene);
@@ -507,7 +507,7 @@ void CRenderer::Tick(const CScene& Scene)
 
     CAsyncTaskManager::Get().Dispatch(PointShadowTask);
 
-    // Init directional light task
+    // Initialize directional light task
     const auto RenderDirShadows = [&]()
     {
         CRenderer::ShadowMapRenderer.RenderDirectionalLightShadows(DirShadowCmdList, LightSetup, Resources, Scene);

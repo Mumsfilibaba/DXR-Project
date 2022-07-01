@@ -1,5 +1,5 @@
 #include "D3D12DescriptorCache.h"
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12CoreInterface.h"
 #include "D3D12CommandContext.h"
 
@@ -245,7 +245,7 @@ void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommand
     
     uint32 ResourceDescriptorHandle = ResourceHeap->AllocateHandles(NumResourceDescriptors);
     D3D12_ERROR_COND( NumResourceDescriptors <= D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
-                    ,"Trying to bind more Resource Descriptors (NumDescriptors=%u) than the maximum (MaxResourceDescriptors=%u)"
+                    , "Trying to bind more Resource Descriptors (NumDescriptors=%u) than the maximum (MaxResourceDescriptors=%u)"
                     , NumResourceDescriptors
                     , D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
 
@@ -257,8 +257,8 @@ void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommand
 
     ID3D12DescriptorHeap* DescriptorHeaps[] =
     {
-        ResourceHeap->GetNativeHeap(),
-        SamplerHeap->GetNativeHeap()
+        ResourceHeap->GetD3D12Heap(),
+        SamplerHeap->GetD3D12Heap()
     };
 
     if (PreviousDescriptorHeaps[0] != DescriptorHeaps[0] || PreviousDescriptorHeaps[1] != DescriptorHeaps[1])

@@ -18,7 +18,7 @@ public:
 
     static CInterfaceRenderer* Make();
 
-     /** @brief: Init the context */
+     /** @brief: Initialize the context */
     virtual bool InitContext(InterfaceContext Context) override final;
 
      /** @brief: Start the update of the UI, after the call to this function, calls to UI window's tick are valid */

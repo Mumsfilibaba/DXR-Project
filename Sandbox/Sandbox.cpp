@@ -152,7 +152,7 @@ bool CSandbox::Init()
             NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
             NewComponent->Material->AOMap        = GEngine->BaseTexture;
             NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
-            NewComponent->Material->Init();
+            NewComponent->Material->Initialize();
 
             NewActor->AddComponent(NewComponent);
 

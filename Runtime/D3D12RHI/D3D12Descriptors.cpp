@@ -1,4 +1,4 @@
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12Device.h"
 #include "D3D12Views.h"
 
@@ -59,7 +59,7 @@ FD3D12OfflineDescriptorHeap::FD3D12OfflineDescriptorHeap(FD3D12Device* InDevice,
     , Type(InType)
 { }
 
-bool FD3D12OfflineDescriptorHeap::Init()
+bool FD3D12OfflineDescriptorHeap::Initialize()
 {
     DescriptorSize = GetDevice()->GetD3D12Device()->GetDescriptorHandleIncrementSize(Type);
     return AllocateHeap();
@@ -69,7 +69,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE FD3D12OfflineDescriptorHeap::Allocate(uint32& OutHea
 {
     uint32 HeapIndex = 0;
     bool bFoundHeap = false;
-    for (SDescriptorHeap& Heap : Heaps)
+    for (FDescriptorHeap& Heap : Heaps)
     {
         if (!Heap.FreeList.IsEmpty())
         {
@@ -92,8 +92,8 @@ D3D12_CPU_DESCRIPTOR_HANDLE FD3D12OfflineDescriptorHeap::Allocate(uint32& OutHea
         HeapIndex = static_cast<uint32>(Heaps.Size()) - 1;
     }
 
-    SDescriptorHeap&  Heap  = Heaps[HeapIndex];
-    SDescriptorRange& Range = Heap.FreeList.FirstElement();
+    FDescriptorHeap&  Heap  = Heaps[HeapIndex];
+    FDescriptorRange& Range = Heap.FreeList.FirstElement();
 
     D3D12_CPU_DESCRIPTOR_HANDLE Handle = Range.Begin;
     Range.Begin.ptr += DescriptorSize;
@@ -111,10 +111,10 @@ void FD3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint3
 {
     Check(HeapIndex < (uint32)Heaps.Size());
 
-    SDescriptorHeap& Heap = Heaps[HeapIndex];
+    FDescriptorHeap& Heap = Heaps[HeapIndex];
 
     bool bFoundRange = false;
-    for (SDescriptorRange& Range : Heap.FreeList)
+    for (FDescriptorRange& Range : Heap.FreeList)
     {
         Check(Range.IsValid());
 
@@ -146,7 +146,7 @@ void FD3D12OfflineDescriptorHeap::SetName(const String& InName)
     Name = InName;
 
     uint32 HeapIndex = 0;
-    for (SDescriptorHeap& Heap : Heaps)
+    for (FDescriptorHeap& Heap : Heaps)
     {
         String DbgName = Name + "[" + ToString(HeapIndex) + "]";
         Heap.Heap->SetName(DbgName.CStr());
@@ -185,7 +185,7 @@ FD3D12OnlineDescriptorHeap::FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, u
     , Type(InType)
 { }
 
-bool FD3D12OnlineDescriptorHeap::Init()
+bool FD3D12OnlineDescriptorHeap::Initialize()
 {
     Heap = dbg_new FD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     if (Heap->Initialize())
@@ -271,4 +271,23 @@ void FD3D12OnlineDescriptorHeap::SetNumPooledHeaps(uint32 NumHeaps)
     {
         HeapPool.Resize(NumHeaps);
     }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12OnlineDescriptorManager
+
+FD3D12OnlineDescriptorManager::FD3D12OnlineDescriptorManager(FD3D12DescriptorHeap* InDescriptorHeap, uint32 InDescriptorStartOffset, uint32 InDescriptorCount)
+    : DescriptorHeap(InDescriptorHeap)
+    , CPUStartHandle()
+    , GPUStartHandle()
+    , DescriptorStartOffset(InDescriptorStartOffset)
+    , DescriptorCount(InDescriptorCount)
+    , CurrentHandle(0)
+{
+    Check(DescriptorHeap != nullptr);
+
+    DescriptorSize = DescriptorHeap->GetDescriptorHandleIncrementSize();
+
+    CPUStartHandle = FD3D12CPUDescriptorHandle(DescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DescriptorStartOffset, DescriptorSize);
+    GPUStartHandle = FD3D12GPUDescriptorHandle(DescriptorHeap->GetGPUDescriptorHandleForHeapStart(), DescriptorStartOffset, DescriptorSize);
 }

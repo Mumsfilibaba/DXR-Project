@@ -1,5 +1,6 @@
 #pragma once
 #include "D3D12RefCounted.h"
+#include "D3D12Descriptors.h"
 
 #include "Core/Containers/SharedRef.h"
 
@@ -21,8 +22,8 @@ class FD3D12RootSignatureCache;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedef
 
-typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
-typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
+typedef TSharedRef<FD3D12Device>         FD3D12DeviceRef;
+typedef TSharedRef<FD3D12Adapter>        FD3D12AdapterRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12DeviceRemovedHandlerRHI
@@ -197,6 +198,9 @@ public:
     FD3D12Adapter*            GetAdapter()            const { return Adapter; }
     FD3D12RootSignatureCache* GetRootSignatureCache() const { return RootSignatureCache; }
 
+    FD3D12DescriptorHeap*     GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
+    FD3D12DescriptorHeap*     GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
+
     ID3D12Device*  GetD3D12Device()  const { return Device.Get(); }
 #if WIN10_BUILD_14393
     ID3D12Device1* GetD3D12Device1() const { return Device1.Get(); }
@@ -229,6 +233,9 @@ public:
 private:
     FD3D12Adapter*            Adapter;
     FD3D12RootSignatureCache* RootSignatureCache;
+    
+    FD3D12DescriptorHeapRef   GlobalResourceHeap;
+    FD3D12DescriptorHeapRef   GlobalSamplerHeap;
 
     TComPtr<ID3D12Device>  Device;
 #if WIN10_BUILD_14393

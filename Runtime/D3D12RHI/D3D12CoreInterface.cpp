@@ -1,7 +1,6 @@
 #include "D3D12CommandList.h"
 #include "D3D12CommandQueue.h"
 #include "D3D12CommandAllocator.h"
-#include "D3D12DescriptorHeap.h"
 #include "D3D12Fence.h"
 #include "D3D12RootSignature.h"
 #include "D3D12Core.h"
@@ -99,39 +98,39 @@ bool FD3D12CoreInterface::Initialize(bool bEnableDebug)
         return false;
     }
 
-    // Init Offline Descriptor heaps
+    // Initialize Offline Descriptor heaps
     ResourceOfflineDescriptorHeap = dbg_new FD3D12OfflineDescriptorHeap(GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    if (!ResourceOfflineDescriptorHeap->Init())
+    if (!ResourceOfflineDescriptorHeap->Initialize())
     {
         return false;
     }
 
     RenderTargetOfflineDescriptorHeap = dbg_new FD3D12OfflineDescriptorHeap(GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    if (!RenderTargetOfflineDescriptorHeap->Init())
+    if (!RenderTargetOfflineDescriptorHeap->Initialize())
     {
         return false;
     }
 
     DepthStencilOfflineDescriptorHeap = dbg_new FD3D12OfflineDescriptorHeap(GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    if (!DepthStencilOfflineDescriptorHeap->Init())
+    if (!DepthStencilOfflineDescriptorHeap->Initialize())
     {
         return false;
     }
 
     SamplerOfflineDescriptorHeap = dbg_new FD3D12OfflineDescriptorHeap(GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-    if (!SamplerOfflineDescriptorHeap->Init())
+    if (!SamplerOfflineDescriptorHeap->Initialize())
     {
         return false;
     }
 
-    // Init shader compiler
+    // Initialize shader compiler
     GD3D12ShaderCompiler = dbg_new FD3D12ShaderCompiler();
     if (!GD3D12ShaderCompiler->Init())
     {
         return false;
     }
 
-    // Init GenerateMips Shaders and pipeline states 
+    // Initialize GenerateMips Shaders and pipeline states 
     TArray<uint8> Code;
 
     {
@@ -228,7 +227,7 @@ bool FD3D12CoreInterface::Initialize(bool bEnableDebug)
         }
     }
 
-    // Init context
+    // Initialize context
     DirectCmdContext = FD3D12CommandContext::CreateD3D12CommandContext(GetDevice());
     if (!DirectCmdContext)
     {

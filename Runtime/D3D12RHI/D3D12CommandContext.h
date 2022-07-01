@@ -8,7 +8,7 @@
 #include "D3D12CommandList.h"
 #include "D3D12CommandQueue.h"
 #include "D3D12CommandAllocator.h"
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12Fence.h"
 #include "D3D12DescriptorCache.h"
 #include "D3D12Buffer.h"

@@ -1,6 +1,6 @@
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12CoreInterface.h"
 #include "D3D12RayTracing.h"
 
@@ -434,8 +434,8 @@ bool FD3D12RayTracingScene::BuildBindingTable( FD3D12CommandContext& CmdContext
     CmdContext.TransitionResource(BindingTable.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     ShaderBindingTableBuilder.Reset();
-    BindingTableHeaps[0] = ResourceHeap->GetNativeHeap();
-    BindingTableHeaps[1] = SamplerHeap->GetNativeHeap();
+    BindingTableHeaps[0] = ResourceHeap->GetD3D12Heap();
+    BindingTableHeaps[1] = SamplerHeap->GetD3D12Heap();
 
     BindingTableStride = sizeof(FD3D12ShaderBindingTableEntry);
     NumHitGroups = NumHitGroupResources;

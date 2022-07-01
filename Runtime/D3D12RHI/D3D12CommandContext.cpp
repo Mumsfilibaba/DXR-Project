@@ -184,13 +184,13 @@ bool FD3D12CommandBatch::Initialize()
     }
 
     OnlineResourceDescriptorHeap = dbg_new FD3D12OnlineDescriptorHeap(Device, D3D12_DEFAULT_ONLINE_RESOURCE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    if (!OnlineResourceDescriptorHeap->Init())
+    if (!OnlineResourceDescriptorHeap->Initialize())
     {
         return false;
     }
 
     OnlineSamplerDescriptorHeap = dbg_new FD3D12OnlineDescriptorHeap(Device, D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-    if (!OnlineSamplerDescriptorHeap->Init())
+    if (!OnlineSamplerDescriptorHeap->Initialize())
     {
         return false;
     }
@@ -1180,7 +1180,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
 
     const D3D12_GPU_DESCRIPTOR_HANDLE SrvHandle_GPU = ResourceHeap->GetGPUDescriptorHandleAt(StartDescriptorHandleIndex);
 
-    ID3D12DescriptorHeap* OnlineResourceHeap = ResourceHeap->GetHeap()->GetHeap();
+    ID3D12DescriptorHeap* OnlineResourceHeap = ResourceHeap->GetHeap()->GetD3D12Heap();
     CommandList.SetDescriptorHeaps(&OnlineResourceHeap, 1);
 
     struct SConstantBuffer

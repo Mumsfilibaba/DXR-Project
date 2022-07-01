@@ -1,6 +1,6 @@
 #include "D3D12Device.h"
 #include "D3D12RHIShaderCompiler.h"
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12CommandQueue.h"
@@ -300,7 +300,8 @@ bool FD3D12Adapter::Initialize()
                     break;
                 }
 
-                if (SUCCEEDED(FD3D12Library::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr)))
+                Result = FD3D12Library::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
+                if (SUCCEEDED(Result))
                 {
                     // Here it is probably better to have something else to find the best GPU
                     if (Level >= BestFeatureLevel && Desc.DedicatedVideoMemory > BestVideoMem)
@@ -347,11 +348,13 @@ bool FD3D12Adapter::Initialize()
                     break;
                 }
 
-                if (SUCCEEDED(FD3D12Library::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr)))
+                Result = FD3D12Library::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
+                if (SUCCEEDED(Result))
                 {
                     D3D12_INFO("[FD3D12Adapter]: Suitable Direct3D Adapter (%u): %ls", Index, Desc.Description);
 
-                    if (Level >= BestFeatureLevel)
+                    // When we loop based on DXGI_GPU_PREFERENCE we get the best one first, so cannot check for equal here
+                    if (Level > BestFeatureLevel)
                     {
                         AdapterIndex     = Index;
                         BestFeatureLevel = Level;
@@ -571,6 +574,35 @@ bool FD3D12Device::Initialize()
     if (!RootSignatureCache->Initialize())
     {
         return false;
+    }
+
+    // Create DescriptorHeaps
+    GlobalResourceHeap = dbg_new FD3D12DescriptorHeap( this
+                                                     , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+                                                     , D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
+                                                     , D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    if (!GlobalResourceHeap->Initialize())
+    {
+        D3D12_ERROR("Failed to create global resource descriptor heap");
+        return false;
+    }
+    else
+    {
+        GlobalResourceHeap->SetName("Global Resource Descriptor Heap");
+    }
+
+    GlobalSamplerHeap = dbg_new FD3D12DescriptorHeap( this
+                                                    , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+                                                    , D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
+                                                    , D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    if (!GlobalSamplerHeap->Initialize())
+    {
+        D3D12_ERROR("Failed to create global sampler descriptor heap");
+        return false;
+    }
+    else
+    {
+        GlobalResourceHeap->SetName("Global Sampler Descriptor Heap");
     }
 
     return true;

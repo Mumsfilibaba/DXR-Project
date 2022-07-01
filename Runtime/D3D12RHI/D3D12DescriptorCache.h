@@ -1,6 +1,6 @@
 #pragma once
 #include "D3D12RootSignature.h"
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12CommandList.h"
 #include "D3D12Buffer.h"
 #include "D3D12Views.h"

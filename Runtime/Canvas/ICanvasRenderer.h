@@ -15,7 +15,7 @@ public:
     virtual ~ICanvasRenderer() = default;
 
     /**
-     * @brief: Init the context
+     * @brief: Initialize the context
      * 
      * @param NewContext: Context to set to the renderer
      * @return: Returns true if the initialization was successful

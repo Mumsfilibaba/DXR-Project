@@ -2,7 +2,7 @@
 #include "D3D12Device.h"
 #include "D3D12Resource.h"
 #include "D3D12RootSignature.h"
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12Views.h"
 

@@ -1,5 +1,5 @@
 #include "D3D12Device.h"
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12Views.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
