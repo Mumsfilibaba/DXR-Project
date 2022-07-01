@@ -14,7 +14,7 @@ public:
 
     static CGenericThread* CreateThread(const TFunction<void()>& InFunction);
 
-    static CGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const String& InString);
+    static CGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InString);
 
     static FORCEINLINE uint32 GetNumProcessors()
     {

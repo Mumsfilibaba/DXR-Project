@@ -14,7 +14,7 @@ public:
     ~FD3D12Module() = default;
 
      /** @brief: Creates the core RHI object */
-    virtual class CRHICoreInterface* CreateInterface() override final;
+    virtual class FRHICoreInterface* CreateInterface() override final;
 
      /** @brief: Creates the RHI shader compiler */
     virtual class IRHIShaderCompiler* CreateCompiler() override final;

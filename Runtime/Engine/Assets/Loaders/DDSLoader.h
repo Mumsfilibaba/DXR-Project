@@ -9,5 +9,5 @@
 class ENGINE_API CDDSLoader
 {
 public:
-    static TSharedPtr<SImage2D> LoadFile(const String& Filename);
+    static TSharedPtr<SImage2D> LoadFile(const FString& Filename);
 };

@@ -42,7 +42,7 @@ bool CTextureFactory::Init()
     }
 
     // Create pipeline
-    GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState(CRHIComputePipelineStateInitializer(GlobalFactoryData.ComputeShader.Get()));
+    GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(GlobalFactoryData.ComputeShader.Get()));
     if (GlobalFactoryData.PanoramaPSO)
     {
         GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");
@@ -82,7 +82,7 @@ FRHITexture2D* CTextureFactory::LoadFromImage2D(SImage2D* InImage, uint32 Create
     return NewTexture;
 }
 
-FRHITexture2D* CTextureFactory::LoadFromFile(const String& Filepath, uint32 CreateFlags, EFormat Format)
+FRHITexture2D* CTextureFactory::LoadFromFile(const FString& Filepath, uint32 CreateFlags, EFormat Format)
 {
     int32 Width        = 0;
     int32 Height       = 0;
@@ -184,7 +184,7 @@ FRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* Pa
         StagingTexture->SetName("TextureCube From Panorama StagingTexture");
     }
 
-    CRHITextureUAVInitializer UAVInitializer(StagingTexture.Get(), Format, 0, 0, 6);
+    FRHITextureUAVInitializer UAVInitializer(StagingTexture.Get(), Format, 0, 0, 6);
     TSharedRef<FRHIUnorderedAccessView> StagingTextureUAV = RHICreateUnorderedAccessView(UAVInitializer);
     if (!StagingTextureUAV)
     {

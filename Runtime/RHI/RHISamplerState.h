@@ -87,13 +87,13 @@ inline const char* ToString(ESamplerFilter SamplerFilter)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHISamplerStateInitializer
+// FRHISamplerStateInitializer
 
-class CRHISamplerStateInitializer
+class FRHISamplerStateInitializer
 {
 public:
 
-    CRHISamplerStateInitializer()
+    FRHISamplerStateInitializer()
         : AddressU(ESamplerMode::Clamp)
         , AddressV(ESamplerMode::Clamp)
         , AddressW(ESamplerMode::Clamp)
@@ -106,7 +106,7 @@ public:
         , BorderColor()
     { }
 
-    CRHISamplerStateInitializer(ESamplerMode InAddressMode, ESamplerFilter InFilter)
+    FRHISamplerStateInitializer(ESamplerMode InAddressMode, ESamplerFilter InFilter)
         : AddressU(InAddressMode)
         , AddressV(InAddressMode)
         , AddressW(InAddressMode)
@@ -119,7 +119,7 @@ public:
         , BorderColor(0.0f, 0.0f, 0.0f, 1.0f)
     { }
 
-    CRHISamplerStateInitializer( ESamplerMode InAddressU
+    FRHISamplerStateInitializer( ESamplerMode InAddressU
                                , ESamplerMode InAddressV
                                , ESamplerMode InAddressW
                                , ESamplerFilter InFilter
@@ -128,7 +128,7 @@ public:
                                , uint8 InMaxAnisotropy
                                , float InMinLOD
                                , float InMaxLOD
-                               , const CFloatColor& InBorderColor)
+                               , const FFloatColor& InBorderColor)
         : AddressU(InAddressU)
         , AddressV(InAddressV)
         , AddressW(InAddressW)
@@ -156,7 +156,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHISamplerStateInitializer& RHS) const
+    bool operator==(const FRHISamplerStateInitializer& RHS) const
     {
         return (AddressU       == RHS.AddressU)
             && (AddressV       == RHS.AddressV)
@@ -170,7 +170,7 @@ public:
             && (BorderColor    == RHS.BorderColor);
     }
 
-    bool operator!=(const CRHISamplerStateInitializer& RHS) const
+    bool operator!=(const FRHISamplerStateInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -190,7 +190,7 @@ public:
     float           MinLOD;
     float           MaxLOD;
 
-    CFloatColor     BorderColor;
+    FFloatColor     BorderColor;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

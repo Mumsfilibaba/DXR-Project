@@ -11,7 +11,7 @@ CWindowsThread* CWindowsThread::CreateWindowsThread(const TFunction<void()>& InF
     return dbg_new CWindowsThread(InFunction);
 }
 
-CWindowsThread* CWindowsThread::CreateWindowsThread(const TFunction<void()>& InFunction, const String & InName)
+CWindowsThread* CWindowsThread::CreateWindowsThread(const TFunction<void()>& InFunction, const FString & InName)
 {
     return dbg_new CWindowsThread(InFunction, InName);
 }
@@ -23,7 +23,7 @@ CWindowsThread::CWindowsThread(const TFunction<void()>& InFunction)
     , Name()
 { }
 
-CWindowsThread::CWindowsThread(const TFunction<void()>& InFunction, const String& InName)
+CWindowsThread::CWindowsThread(const TFunction<void()>& InFunction, const FString& InName)
     : CGenericThread(InFunction)
     , Thread(0)
     , hThreadID(0)
@@ -62,7 +62,7 @@ int32 CWindowsThread::WaitForCompletion(uint64 TimeoutInMs)
     return Result ? int32(ThreadExitCode) : int32(-1);
 }
 
-void CWindowsThread::SetName(const String& InName)
+void CWindowsThread::SetName(const FString& InName)
 {
     WString WideName = CharToWide(InName);
     SetThreadDescription(Thread, WideName.CStr());

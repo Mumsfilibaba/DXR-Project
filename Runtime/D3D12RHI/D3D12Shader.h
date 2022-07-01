@@ -10,7 +10,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EShaderVisibility
 
-enum EShaderVisibility
+enum EShaderVisibility : int32
 {
     ShaderVisibility_All      = 0,
     ShaderVisibility_Vertex   = 1,
@@ -24,7 +24,7 @@ enum EShaderVisibility
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EResourceType
 
-enum EResourceType
+enum EResourceType : int32
 {
     ResourceType_CBV     = 0,
     ResourceType_SRV     = 1,
@@ -64,7 +64,7 @@ struct FD3D12ShaderParameter
 {
     FD3D12ShaderParameter() = default;
 
-    FORCEINLINE FD3D12ShaderParameter(const String& InName, uint32 InRegister, uint32 InSpace, uint32 InNumDescriptors, uint32 InSizeInBytes)
+    FORCEINLINE FD3D12ShaderParameter(const FString& InName, uint32 InRegister, uint32 InSpace, uint32 InNumDescriptors, uint32 InSizeInBytes)
         : Name(InName)
         , Register(InRegister)
         , Space(InSpace)
@@ -72,7 +72,7 @@ struct FD3D12ShaderParameter
         , SizeInBytes(InSizeInBytes)
     { }
 
-    String Name;
+    FString Name;
     uint32 Register       = 0;
     uint32 Space          = 0;
     uint32 NumDescriptors = 0;
@@ -227,10 +227,10 @@ public:
 
     static bool GetRayTracingShaderReflection(class FD3D12RayTracingShader* Shader);
     
-    FORCEINLINE const String& GetIdentifier() const { return Identifier; }
+    FORCEINLINE const FString& GetIdentifier() const { return Identifier; }
 
 protected:
-    String Identifier;
+    FString Identifier;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

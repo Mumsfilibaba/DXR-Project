@@ -51,7 +51,7 @@ class CMetalDepthStencilState : public FRHIDepthStencilState, public CMetalObjec
 {
 public:
     
-    CMetalDepthStencilState(CMetalDeviceContext* DeviceContext, const CRHIDepthStencilStateInitializer& Initializer)
+    CMetalDepthStencilState(CMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInitializer& Initializer)
         : CMetalObject(DeviceContext)
         , DepthStencilState()
     {
@@ -111,7 +111,7 @@ class CMetalRasterizerState : public FRHIRasterizerState, public CMetalObject
 {
 public:
 
-    CMetalRasterizerState(CMetalDeviceContext* DeviceContext, const CRHIRasterizerStateInitializer& Initializer)
+    CMetalRasterizerState(CMetalDeviceContext* DeviceContext, const FRHIRasterizerStateInitializer& Initializer)
         : CMetalObject(DeviceContext)
         , FillMode(ConvertFillMode(Initializer.FillMode))
         , FrontFaceWinding(Initializer.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
@@ -206,7 +206,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
     virtual void SetName(const String& InName) override final { }
 
@@ -244,7 +244,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
     virtual void SetName(const String& InName) override final { }
 
@@ -264,7 +264,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
     virtual void SetName(const String& InName) override final { }
 

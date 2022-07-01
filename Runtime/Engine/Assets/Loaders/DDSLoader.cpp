@@ -3,7 +3,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CDDSLoader
 
-TSharedPtr<SImage2D> CDDSLoader::LoadFile(const String& Filename)
+TSharedPtr<SImage2D> CDDSLoader::LoadFile(const FString& Filename)
 {
     UNREFERENCED_VARIABLE(Filename);
     return TSharedPtr<SImage2D>();

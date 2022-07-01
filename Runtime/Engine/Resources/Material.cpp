@@ -86,7 +86,7 @@ void CMaterial::EnableAlphaMask(bool bInEnableAlphaMask)
     Properties.EnableMask = (int32)bInEnableAlphaMask;
 }
 
-void CMaterial::SetDebugName(const String& InDebugName)
+void CMaterial::SetDebugName(const FString& InDebugName)
 {
     DebugName = InDebugName;
 }

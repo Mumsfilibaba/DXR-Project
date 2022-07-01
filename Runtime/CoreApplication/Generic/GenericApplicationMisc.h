@@ -29,7 +29,7 @@ public:
 
     static class CGenericConsoleWindow* CreateConsoleWindow();
 
-    static FORCEINLINE void MessageBox(const String& Title, const String& Message) { }
+    static FORCEINLINE void MessageBox(const FString& Title, const FString& Message) { }
 
     static FORCEINLINE void RequestExit(int32 ExitCode) { }
 

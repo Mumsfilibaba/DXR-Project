@@ -27,7 +27,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CPointerReferenceCounter&lt;*&gt;">
+  <Type Name="FPointerReferenceCounter&lt;*&gt;">
     <DisplayString>{{ Strong References={Counter->StrongRefs} Weak References={Counter->WeakRefs} }}</DisplayString>
     <Expand>
       <Item Name="[Strong References]">Counter->StrongRefs</Item>

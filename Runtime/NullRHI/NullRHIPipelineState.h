@@ -68,11 +68,11 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
-    virtual void SetName(const String& InName) override final { }
+    virtual void SetName(const FString& InName) override final { }
 
-    virtual String GetName() const override final { return ""; }
+    virtual FString GetName() const override final { return ""; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -88,11 +88,11 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
-    virtual void SetName(const String& InName) override final { }
+    virtual void SetName(const FString& InName) override final { }
 
-    virtual String GetName() const override final { return ""; }
+    virtual FString GetName() const override final { return ""; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -108,11 +108,11 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
-    virtual void SetName(const String& InName) override final { }
+    virtual void SetName(const FString& InName) override final { }
 
-    virtual String GetName() const override final { return ""; }
+    virtual FString GetName() const override final { return ""; }
 };
 
 #if defined(COMPILER_MSVC)

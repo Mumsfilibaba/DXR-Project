@@ -29,7 +29,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         LOG_ERROR("Failed to create IrradianceGen Shader");
     }
 
-    IrradianceGenPSO = RHICreateComputePipelineState(CRHIComputePipelineStateInitializer(IrradianceGenShader.Get()));
+    IrradianceGenPSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(IrradianceGenShader.Get()));
     if (!IrradianceGenPSO)
     {
         LOG_ERROR("Failed to create IrradianceGen PipelineState");
@@ -53,7 +53,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         LOG_ERROR("Failed to create Specular IrradianceGen Shader");
     }
 
-    SpecularIrradianceGenPSO = RHICreateComputePipelineState(CRHIComputePipelineStateInitializer(SpecularIrradianceGenShader.Get()));
+    SpecularIrradianceGenPSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(SpecularIrradianceGenShader.Get()));
     if (!SpecularIrradianceGenPSO)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen PipelineState");
@@ -63,7 +63,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         SpecularIrradianceGenPSO->SetName("Specular IrradianceGen PSO");
     }
 
-    CRHISamplerStateInitializer SamplerInitializer;
+    FRHISamplerStateInitializer SamplerInitializer;
     SamplerInitializer.AddressU = ESamplerMode::Wrap;
     SamplerInitializer.AddressV = ESamplerMode::Wrap;
     SamplerInitializer.AddressW = ESamplerMode::Wrap;
@@ -157,7 +157,7 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
         LightSetup.IrradianceMap->SetName("Irradiance Map");
     }
 
-    CRHITextureUAVInitializer UAVInitializer(LightSetup.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0, 0, 6);
+    FRHITextureUAVInitializer UAVInitializer(LightSetup.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0, 0, 6);
     LightSetup.IrradianceMapUAV = RHICreateUnorderedAccessView(UAVInitializer);
     if (!LightSetup.IrradianceMapUAV)
     {
@@ -182,7 +182,7 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
 
     for (uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        UAVInitializer = CRHITextureUAVInitializer(LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel, 0, 6);
+        UAVInitializer = FRHITextureUAVInitializer(LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel, 0, 6);
         TSharedRef<FRHIUnorderedAccessView> Uav = RHICreateUnorderedAccessView(UAVInitializer);
         if (Uav)
         {

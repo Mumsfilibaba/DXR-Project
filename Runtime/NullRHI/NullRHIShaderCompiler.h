@@ -19,8 +19,8 @@ public:
     CNullRHIShaderCompiler()  = default;
     ~CNullRHIShaderCompiler() = default;
 
-    virtual bool CompileFromFile( const String& FilePath
-                                , const String& EntryPoint
+    virtual bool CompileFromFile( const FString& FilePath
+                                , const FString& EntryPoint
                                 , const TArray<FShaderDefine>* Defines
                                 , EShaderStage ShaderStage
                                 , EShaderModel ShaderModel
@@ -29,8 +29,8 @@ public:
         return true;
     }
 
-    virtual bool CompileShader( const String& ShaderSource
-                              , const String& EntryPoint
+    virtual bool CompileShader( const FString& ShaderSource
+                              , const FString& EntryPoint
                               , const TArray<FShaderDefine>* Defines
                               , EShaderStage ShaderStage
                               , EShaderModel ShaderModel

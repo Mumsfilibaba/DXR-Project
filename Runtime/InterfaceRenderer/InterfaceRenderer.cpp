@@ -137,7 +137,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
+    FRHIDepthStencilStateInitializer DepthStencilStateInfo;
     DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
@@ -148,7 +148,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    CRHIRasterizerStateInitializer RasterizerStateInfo;
+    FRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -158,7 +158,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    CRHIBlendStateInitializer BlendStateInfo;
+    FRHIBlendStateInitializer BlendStateInfo;
     BlendStateInfo.bIndependentBlendEnable        = false;
     BlendStateInfo.RenderTargets[0].bBlendEnable  = true;
     BlendStateInfo.RenderTargets[0].SrcBlend      = EBlendType ::SrcAlpha;
@@ -237,7 +237,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         IndexBuffer->SetName("ImGui IndexBuffer");
     }
 
-    CRHISamplerStateInitializer CreateInfo;
+    FRHISamplerStateInitializer CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;

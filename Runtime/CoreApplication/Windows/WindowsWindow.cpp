@@ -37,7 +37,7 @@ CWindowsWindow::~CWindowsWindow()
     }
 }
 
-bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
+bool CWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
 {
     // Determine the window style for WinAPI
     DWORD NewStyle   = 0;
@@ -272,7 +272,7 @@ bool CWindowsWindow::IsActiveWindow() const
     return (hActive == Window);
 }
 
-void CWindowsWindow::SetTitle(const String& Title)
+void CWindowsWindow::SetTitle(const FString& Title)
 {
     Check(Window != 0);
 
@@ -285,7 +285,7 @@ void CWindowsWindow::SetTitle(const String& Title)
     }
 }
 
-void CWindowsWindow::GetTitle(String& OutTitle)
+void CWindowsWindow::GetTitle(FString& OutTitle)
 {
     if (IsValid())
     {
@@ -394,7 +394,7 @@ void CWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) cons
     }
     else
     {
-        String Error;
+        FString Error;
         PlatformMisc::GetLastErrorString(Error);
 
         LOG_ERROR("[CWindowsWindow]: Failed to retrieve monitorinfo. Reason: %s", Error.CStr());

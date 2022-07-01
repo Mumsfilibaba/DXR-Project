@@ -6,8 +6,10 @@
 #include "Core/Utilities/StringUtilities.h"
 
 class FD3D12DescriptorHeap;
+class FD3D12OnlineDescriptorManager;
 
-typedef TSharedRef<FD3D12DescriptorHeap> FD3D12DescriptorHeapRef;
+typedef TSharedRef<FD3D12DescriptorHeap>          FD3D12DescriptorHeapRef;
+typedef TSharedRef<FD3D12OnlineDescriptorManager> FD3D12OnlineDescriptorManagerRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12DescriptorHeap
@@ -33,7 +35,7 @@ public:
     uint32                      GetNumDescriptors() const { return uint32(NumDescriptors); }
     uint32                      GetDescriptorHandleIncrementSize() const { return DescriptorHandleIncrementSize; }
 
-    FORCEINLINE void SetName(const String& Name)
+    FORCEINLINE void SetName(const FString& Name)
     {
         WString WideName = CharToWide(Name);
         Heap->SetName(WideName.CStr());
@@ -111,7 +113,7 @@ public:
 
     void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex);
 
-    void SetName(const String& InName);
+    void SetName(const FString& InName);
 
     FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
     {
@@ -126,7 +128,7 @@ public:
 private:
     bool AllocateHeap();
 
-    String Name;
+    FString Name;
 
     TArray<FDescriptorHeap> Heaps;
 
@@ -154,7 +156,7 @@ public:
 
     void SetNumPooledHeaps(uint32 NumHeaps);
 
-    FORCEINLINE void SetName(const String& Name)
+    FORCEINLINE void SetName(const FString& Name)
     {
         Heap->SetName(Name);
     }

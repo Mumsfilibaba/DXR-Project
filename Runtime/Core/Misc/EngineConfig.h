@@ -20,13 +20,13 @@ public:
     CConfigValue& operator=(const CConfigValue& RHS) = default;
 
      /** @brief: Create value from string */
-    explicit CConfigValue(String&& InString)
+    explicit CConfigValue(FString&& InString)
         : SavedValue(InString)
         , CurrentValue(Move(InString))
     { }
 
      /** @brief: Create value from string */
-    explicit CConfigValue(const String& InString)
+    explicit CConfigValue(const FString& InString)
         : SavedValue(InString)
         , CurrentValue(InString)
     { }
@@ -38,9 +38,9 @@ public:
     FORCEINLINE void MakeCurrentSaved() { SavedValue = CurrentValue; }
 
      /** @brief: Current value in the config file */
-    String SavedValue;
+    FString SavedValue;
      /** @brief: Current value in the runtime, this will be saved when the file is flushed to disk */
-    String CurrentValue;
+    FString CurrentValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -62,7 +62,7 @@ public:
     bool Restore(const char* Name);
 
      /** @brief: Set a specific value to a new string */
-    void SetValue(const char* Name, const String& NewValue);
+    void SetValue(const char* Name, const FString& NewValue);
 
      /** @brief: Retrieve a value */
     CConfigValue* GetValue(const char* Name);
@@ -71,7 +71,7 @@ public:
     const CConfigValue* GetValue(const char* Name) const;
 
 private:
-    THashTable<String, CConfigValue, SStringHasher> ConfigValues;
+    THashTable<FString, CConfigValue, FStringHasher> ConfigValues;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -85,7 +85,7 @@ public:
     ~CConfigFile() = default;
 
      /** @brief: Set a string from the Engine config */
-    bool SetString(const char* SectionName, const char* Name, const String& NewValue);
+    bool SetString(const char* SectionName, const char* Name, const FString& NewValue);
 
      /** @brief: Set a int from the Engine config */
     bool SetInt(const char* SectionName, const char* Name, int32 NewValue);
@@ -97,7 +97,7 @@ public:
     bool SetBoolean(const char* SectionName, const char* Name, bool bNewValue);
 
      /** @brief: Retrieve a string from the Engine config */
-    bool GetString(const char* SectionName, const char* Name, String& OutValue);
+    bool GetString(const char* SectionName, const char* Name, FString& OutValue);
 
      /** @brief: Retrieve a int from the Engine config */
     bool GetInt(const char* SectionName, const char* Name, int32& OutValue);
@@ -132,7 +132,7 @@ private:
     template<typename T>
     bool GetTypedValue(const char* SectionName, const char* Name, T& OutValue)
     {
-        String Value;
+        FString Value;
         if (GetString(SectionName, Name, Value))
         {
             return FromString<T>(Value, OutValue);
@@ -144,10 +144,10 @@ private:
     }
 
     // The filename
-    String Filename;
+    FString Filename;
 
     // All the sections
-    THashTable<String, CConfigSection, SStringHasher> Sections;
+    THashTable<FString, CConfigSection, FStringHasher> Sections;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

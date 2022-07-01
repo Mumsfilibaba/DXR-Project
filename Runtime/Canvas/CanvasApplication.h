@@ -219,7 +219,7 @@ public:
     /**
      * @brief: Draws a string in the viewport during the current frame, the strings are reset every frame
      */
-    void DrawString(const String& NewString);
+    void DrawString(const FString& NewString);
 
     /**
      * @brief: Draw all InterfaceWindows
@@ -317,7 +317,7 @@ protected:
     TSharedRef<CGenericWindow>           MainViewport;
     TSharedRef<ICanvasRenderer>          Renderer;
 
-    TArray<String>                       DebugStrings;
+    TArray<FString>                       DebugStrings;
     TArray<TSharedRef<CCanvasWindow>>    InterfaceWindows;
     TArray<TSharedPtr<CCanvasUser>>      RegisteredUsers;
 

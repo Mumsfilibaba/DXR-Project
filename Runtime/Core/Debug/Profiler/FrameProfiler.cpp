@@ -62,7 +62,7 @@ void CFrameProfiler::BeginTraceScope(const char* Name)
     {
         TScopedLock Lock(SamplesTableLock);
 
-        const String ScopeName = Name;
+        const FString ScopeName = Name;
 
         auto Entry = SamplesTable.find(ScopeName);
         if (Entry == SamplesTable.end())
@@ -81,7 +81,7 @@ void CFrameProfiler::EndTraceScope(const char* Name)
 {
     if (bEnabled)
     {
-        const String ScopeName = Name;
+        const FString ScopeName = Name;
 
         TScopedLock Lock(SamplesTableLock);
 

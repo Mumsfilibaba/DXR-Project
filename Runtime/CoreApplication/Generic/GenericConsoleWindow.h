@@ -38,13 +38,13 @@ public:
 
     virtual void Show(bool bShow) { }
 
-    virtual void Print(const String& Message) { }
+    virtual void Print(const FString& Message) { }
 
-    virtual void PrintLine(const String& Message) { }
+    virtual void PrintLine(const FString& Message) { }
 
     virtual void Clear() { }
 
-    virtual void SetTitle(const String& Title) { }
+    virtual void SetTitle(const FString& Title) { }
 
     virtual void SetColor(EConsoleColor Color) { }
 

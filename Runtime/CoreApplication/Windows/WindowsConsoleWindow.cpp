@@ -29,7 +29,7 @@ CWindowsConsoleWindow::~CWindowsConsoleWindow()
     }
 }
 
-void CWindowsConsoleWindow::Print(const String& Message)
+void CWindowsConsoleWindow::Print(const FString& Message)
 {
     if (ConsoleHandle)
     {
@@ -38,7 +38,7 @@ void CWindowsConsoleWindow::Print(const String& Message)
     }
 }
 
-void CWindowsConsoleWindow::PrintLine(const String& Message)
+void CWindowsConsoleWindow::PrintLine(const FString& Message)
 {
     if (ConsoleHandle)
     {
@@ -69,7 +69,7 @@ void CWindowsConsoleWindow::Clear()
     }
 }
 
-void CWindowsConsoleWindow::SetTitle(const String& Title)
+void CWindowsConsoleWindow::SetTitle(const FString& Title)
 {
     if (ConsoleHandle)
     {

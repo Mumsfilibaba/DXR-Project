@@ -282,7 +282,7 @@ public:
         return bIsReady;
     }
 
-    FORCEINLINE void SetName(const String& Name)
+    FORCEINLINE void SetName(const FString& Name)
     {
         WString WideName = CharToWide(Name);
         CmdList->SetName(WideName.CStr());

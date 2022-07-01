@@ -7,7 +7,7 @@
 // CMetalCoreInterface
 
 CMetalCoreInterface::CMetalCoreInterface()
-	: CRHICoreInterface(ERHIInstanceType::Metal)
+	: FRHICoreInterface(ERHIInstanceType::Metal)
 	, CommandContext()
 { }
 
@@ -187,7 +187,7 @@ MetalTextureType* CMetalCoreInterface::CreateTexture(const InitializerType& Init
     return NewTexture.ReleaseOwnership();
 }
 
-FRHISamplerState* CMetalCoreInterface::RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer)
+FRHISamplerState* CMetalCoreInterface::RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer)
 {
     return dbg_new CMetalSamplerState();
 }
@@ -305,22 +305,22 @@ FRHIRayTracingGeometry* CMetalCoreInterface::RHICreateRayTracingGeometry(const F
     return dbg_new CMetalRayTracingGeometry(Initializer);
 }
 
-FRHIShaderResourceView* CMetalCoreInterface::RHICreateShaderResourceView(const CRHITextureSRVInitializer& Initializer)
+FRHIShaderResourceView* CMetalCoreInterface::RHICreateShaderResourceView(const FRHITextureSRVInitializer& Initializer)
 {
     return dbg_new CMetalShaderResourceView(GetDeviceContext(), Initializer.Texture);
 }
 
-FRHIShaderResourceView* CMetalCoreInterface::RHICreateShaderResourceView(const CRHIBufferSRVInitializer& Initializer)
+FRHIShaderResourceView* CMetalCoreInterface::RHICreateShaderResourceView(const FRHIBufferSRVInitializer& Initializer)
 {
     return dbg_new CMetalShaderResourceView(GetDeviceContext(), Initializer.Buffer);
 }
 
-FRHIUnorderedAccessView* CMetalCoreInterface::RHICreateUnorderedAccessView(const CRHITextureUAVInitializer& Initializer)
+FRHIUnorderedAccessView* CMetalCoreInterface::RHICreateUnorderedAccessView(const FRHITextureUAVInitializer& Initializer)
 {
     return dbg_new CMetalUnorderedAccessView(GetDeviceContext(), Initializer.Texture);
 }
 
-FRHIUnorderedAccessView* CMetalCoreInterface::RHICreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer)
+FRHIUnorderedAccessView* CMetalCoreInterface::RHICreateUnorderedAccessView(const FRHIBufferUAVInitializer& Initializer)
 {
     return dbg_new CMetalUnorderedAccessView(GetDeviceContext(), Initializer.Buffer);
 }
@@ -335,27 +335,27 @@ FRHIVertexShader* CMetalCoreInterface::RHICreateVertexShader(const TArray<uint8>
     return dbg_new CMetalVertexShader(GetDeviceContext(), ShaderCode);
 }
 
-CRHIHullShader* CMetalCoreInterface::RHICreateHullShader(const TArray<uint8>& ShaderCode)
+FRHIHullShader* CMetalCoreInterface::RHICreateHullShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-CRHIDomainShader* CMetalCoreInterface::RHICreateDomainShader(const TArray<uint8>& ShaderCode)
+FRHIDomainShader* CMetalCoreInterface::RHICreateDomainShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-CRHIGeometryShader* CMetalCoreInterface::RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
+FRHIGeometryShader* CMetalCoreInterface::RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-CRHIMeshShader* CMetalCoreInterface::RHICreateMeshShader(const TArray<uint8>& ShaderCode)
+FRHIMeshShader* CMetalCoreInterface::RHICreateMeshShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-CRHIAmplificationShader* CMetalCoreInterface::RHICreateAmplificationShader(const TArray<uint8>& ShaderCode)
+FRHIAmplificationShader* CMetalCoreInterface::RHICreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
@@ -385,17 +385,17 @@ FRHIRayMissShader* CMetalCoreInterface::RHICreateRayMissShader(const TArray<uint
     return dbg_new CMetalRayMissShader(GetDeviceContext(), ShaderCode);
 }
 
-FRHIDepthStencilState* CMetalCoreInterface::RHICreateDepthStencilState(const CRHIDepthStencilStateInitializer& Initializer)
+FRHIDepthStencilState* CMetalCoreInterface::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer)
 {
     return dbg_new CMetalDepthStencilState(GetDeviceContext(), Initializer);
 }
 
-FRHIRasterizerState* CMetalCoreInterface::RHICreateRasterizerState(const CRHIRasterizerStateInitializer& Initializer)
+FRHIRasterizerState* CMetalCoreInterface::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer)
 {
     return dbg_new CMetalRasterizerState(GetDeviceContext(), Initializer);
 }
 
-FRHIBlendState* CMetalCoreInterface::RHICreateBlendState(const CRHIBlendStateInitializer& Initializer)
+FRHIBlendState* CMetalCoreInterface::RHICreateBlendState(const FRHIBlendStateInitializer& Initializer)
 {
     return dbg_new CMetalBlendState();
 }
@@ -410,7 +410,7 @@ FRHIGraphicsPipelineState* CMetalCoreInterface::RHICreateGraphicsPipelineState(c
     return dbg_new CMetalGraphicsPipelineState(GetDeviceContext(), Initializer);
 }
 
-FRHIComputePipelineState* CMetalCoreInterface::RHICreateComputePipelineState(const CRHIComputePipelineStateInitializer& Initializer)
+FRHIComputePipelineState* CMetalCoreInterface::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer)
 {
     return dbg_new CMetalComputePipelineState();
 }
@@ -454,14 +454,14 @@ String CMetalCoreInterface::GetAdapterDescription() const
     return String();
 }
 
-void CMetalCoreInterface::RHIQueryRayTracingSupport(SRayTracingSupport& OutSupport) const
+void CMetalCoreInterface::RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport) const
 {
-    OutSupport = SRayTracingSupport();
+    OutSupport = FRayTracingSupport();
 }
 
-void CMetalCoreInterface::RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport) const
+void CMetalCoreInterface::RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const
 {
-    OutSupport = SShadingRateSupport();
+    OutSupport = FShadingRateSupport();
 }
 
 bool CMetalCoreInterface::RHIQueryUAVFormatSupport(EFormat Format) const

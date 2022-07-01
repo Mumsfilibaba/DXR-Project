@@ -22,8 +22,8 @@ class FD3D12RootSignatureCache;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedef
 
-typedef TSharedRef<FD3D12Device>         FD3D12DeviceRef;
-typedef TSharedRef<FD3D12Adapter>        FD3D12AdapterRef;
+typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
+typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12DeviceRemovedHandlerRHI
@@ -105,7 +105,7 @@ public:
     FD3D12AdapterInitializer GetInitializer()   const { return Initializer; }
     uint32                   GetAdapterIndex()  const { return AdapterIndex; }
     
-    String                   GetDescription() const { return WideToChar(WStringView(AdapterDesc.Description)); }
+    FString                   GetDescription() const { return WideToChar(FWStringView(AdapterDesc.Description)); }
 
     bool                     IsDebugLayerEnabled() const { return Initializer.bEnableDebugLayer; }
 

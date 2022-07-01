@@ -86,7 +86,7 @@ bool CAsyncTaskManager::Initialize()
 
     for (uint32 Thread = 0; Thread < ThreadCount; ++Thread)
     {
-        String ThreadName = String::CreateFormated("WorkerThread[%d]", Thread);
+        FString ThreadName = FString::CreateFormated("WorkerThread[%d]", Thread);
 
         GenericThreadRef NewThread = CThreadManager::Get().CreateNamedThread(CAsyncTaskManager::WorkThread, ThreadName);
         if (NewThread)

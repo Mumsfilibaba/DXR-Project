@@ -9,6 +9,12 @@
 class FD3D12CommandBatch;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12DescriptorTable
+
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TD3D12ViewCache
 
 template <typename ViewType, D3D12_DESCRIPTOR_HEAP_TYPE HeapType, uint32 kDescriptorTableSize>
@@ -16,25 +22,25 @@ class TD3D12ViewCache
 {
 public:
 
-    static FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetDescriptorHeapType()
-    {
-        return HeapType;
-    }
-
-    static FORCEINLINE uint32 GetDescriptorTableSize()
+    static CONSTEXPR uint32 GetDescriptorTableSize()
     {
         return kDescriptorTableSize;
     }
 
+    static CONSTEXPR D3D12_DESCRIPTOR_HEAP_TYPE GetDescriptorHeapType()
+    {
+        return HeapType;
+    }
+
     FORCEINLINE TD3D12ViewCache()
         : ResourceViews()
-        , HostDescriptors()
-        , DeviceDescriptors()
+        , CPUDescriptorTables()
+        , GPUDescriptorTables()
         , CopyDescriptors()
         , bDirty()
     { }
 
-    FORCEINLINE void SetView(ViewType* DescriptorView, EShaderVisibility Visibility, uint32 ShaderRegister)
+    FORCEINLINE void BindView(EShaderVisibility Visibility, ViewType* DescriptorView, uint32 ShaderRegister)
     {
         D3D12_ERROR_COND(DescriptorView != nullptr, "Trying to bind a ResourceView that was nullptr, check input from DescriptorCache");
 
@@ -48,8 +54,8 @@ public:
 
     void Reset(ViewType* DefaultView)
     {
-        FMemory::Memzero(HostDescriptors  , sizeof(HostDescriptors));
-        FMemory::Memzero(DeviceDescriptors, sizeof(DeviceDescriptors));
+        FMemory::Memzero(CPUDescriptorTables  , sizeof(CPUDescriptorTables));
+        FMemory::Memzero(GPUDescriptorTables, sizeof(GPUDescriptorTables));
         FMemory::Memzero(CopyDescriptors  , sizeof(CopyDescriptors));
 
         for (uint32 Stage = 0; Stage < ShaderVisibility_Count; ++Stage)
@@ -63,50 +69,30 @@ public:
         }
     }
 
-    FORCEINLINE uint32 CountNeededDescriptors() const
+    FORCEINLINE uint32 GetNumDescriptorsForStage(EShaderVisibility Stage) const
     {
-        uint32 NumDescriptors = 0;
-        for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
-        {
-            if (bDirty[Stage])
-            {
-                NumDescriptors += kDescriptorTableSize;
-            }
-        }
-
-        return NumDescriptors;
+        return bDirty[Stage] ? kDescriptorTableSize : 0;
     }
 
-    void PrepareForCopy()
+    void PrepareDescriptorsForCopy(EShaderVisibility Stage)
     {
-        for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
-        {
-            if (bDirty[Stage])
-            {
-                for (uint32 Index = 0; Index < kDescriptorTableSize; Index++)
-                {
-                    ViewType* View = ResourceViews[Stage][Index];
-                    Check(View != nullptr);
+        Check(bDirty[Stage]);
 
-                    CopyDescriptors[Stage][Index] = View->GetOfflineHandle();
-                }
-            }
+        for (uint32 Index = 0; Index < kDescriptorTableSize; Index++)
+        {
+            ViewType* View = ResourceViews[Stage][Index];
+            Check(View != nullptr);
+
+            CopyDescriptors[Stage][Index] = View->GetOfflineHandle();
         }
     }
 
-    void SetAllocatedDescriptorHandles(D3D12_CPU_DESCRIPTOR_HANDLE HostStartHandle, D3D12_GPU_DESCRIPTOR_HANDLE DeviceStartHandle, uint64 IncreamentDescriptorSize)
+    FORCEINLINE void SetDescriptorTable(EShaderVisibility Stage, D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle)
     {
-        for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
-        {
-            if (bDirty[Stage])
-            {
-                HostDescriptors[Stage] = HostStartHandle;
-                HostStartHandle.ptr += (uint64)(kDescriptorTableSize * IncreamentDescriptorSize);
+        Check(bDirty[Stage]);
 
-                DeviceDescriptors[Stage] = DeviceStartHandle;
-                DeviceStartHandle.ptr += (uint64)(kDescriptorTableSize * IncreamentDescriptorSize);
-            }
-        }
+        CPUDescriptorTables[Stage] = CPUHandle;
+        GPUDescriptorTables[Stage] = GPUHandle;
     }
 
     FORCEINLINE void InvalidateAll()
@@ -121,8 +107,8 @@ public:
 
     D3D12_CPU_DESCRIPTOR_HANDLE CopyDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES][kDescriptorTableSize];
 
-    D3D12_CPU_DESCRIPTOR_HANDLE HostDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
-    D3D12_GPU_DESCRIPTOR_HANDLE DeviceDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
+    D3D12_CPU_DESCRIPTOR_HANDLE CPUDescriptorTables[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
+    D3D12_GPU_DESCRIPTOR_HANDLE GPUDescriptorTables[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
     bool bDirty[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
 };
 
@@ -154,7 +140,10 @@ public:
 
     FORCEINLINE void SetVertexBuffer(FD3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
-        D3D12_ERROR_COND(Slot <= D3D12_MAX_VERTEX_BUFFER_SLOTS, "Trying to bind a VertexBuffer to a slot (Slot=%u) higher than the maximum (MaxVertexBufferCount=%u)", Slot, D3D12_MAX_VERTEX_BUFFER_SLOTS);
+        D3D12_ERROR_COND( Slot <= D3D12_MAX_VERTEX_BUFFER_SLOTS
+                        , "Trying to bind a VertexBuffer to a slot (Slot=%u) higher than the maximum (MaxVertexBufferCount=%u)"
+                        , Slot
+                        , D3D12_MAX_VERTEX_BUFFER_SLOTS);
                         
         if (VertexBuffers[Slot] != VertexBuffer)
         {
@@ -212,7 +201,10 @@ public:
 
     FORCEINLINE void SetRenderTargetView(FD3D12RenderTargetView* RenderTargetView, uint32 Slot)
     {
-        D3D12_ERROR_COND(Slot <= D3D12_MAX_RENDER_TARGET_COUNT, "Trying to bind a RenderTarget to a slot (Slot=%u) higher than the maximum (MaxRenderTargetCount=%u)", Slot, D3D12_MAX_RENDER_TARGET_COUNT);
+        D3D12_ERROR_COND( Slot <= D3D12_MAX_RENDER_TARGET_COUNT
+                        , "Trying to bind a RenderTarget to a slot (Slot=%u) higher than the maximum (MaxRenderTargetCount=%u)"
+                        , Slot
+                        , D3D12_MAX_RENDER_TARGET_COUNT);
 
         if (RenderTargetView)
         {
@@ -276,6 +268,78 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12PipelineStageMask
+
+struct FD3D12PipelineStageMask
+{
+    static CONSTEXPR FD3D12PipelineStageMask ComputeMask()
+    {
+        return FD3D12PipelineStageMask(1, 0, 0, 0, 0, 0);
+    }
+
+    static CONSTEXPR FD3D12PipelineStageMask BasicGraphicsMask()
+    {
+        return FD3D12PipelineStageMask(0, 1, 0, 0, 0, 1);
+    }
+
+    static CONSTEXPR FD3D12PipelineStageMask FullGraphicsMask()
+    {
+        return FD3D12PipelineStageMask(0, 1, 1, 1, 1, 1);
+    }
+
+    CONSTEXPR FD3D12PipelineStageMask()
+        : ComputeStage(0)
+        , VertexStage(0)
+        , HullStage(0)
+        , DomainStage(0)
+        , GeometryStage(0)
+        , PixelStage(0)
+    { }
+
+    CONSTEXPR FD3D12PipelineStageMask( uint8 InComputeStage
+                                     , uint8 InVertexStage
+                                     , uint8 InHullStage
+                                     , uint8 InDomainStage
+                                     , uint8 InGeometryStage
+                                     , uint8 InPixelStage)
+        : ComputeStage(InComputeStage)
+        , VertexStage(InVertexStage)
+        , HullStage(InHullStage)
+        , DomainStage(InDomainStage)
+        , GeometryStage(InGeometryStage)
+        , PixelStage(InPixelStage)
+    { }
+
+    CONSTEXPR bool CheckShaderVisibility(EShaderVisibility ShaderVisibility) const
+    {
+        const uint8 Flag = (1 << ShaderVisibility);
+        return (*GetClassAsData<const uint8>(this)) & Flag;
+    }
+
+    CONSTEXPR bool operator==(FD3D12PipelineStageMask RHS) const
+    {
+        return (ComputeStage  == RHS.ComputeStage)
+            && (VertexStage   == RHS.VertexStage)
+            && (HullStage     == RHS.HullStage)
+            && (DomainStage   == RHS.DomainStage)
+            && (GeometryStage == RHS.GeometryStage)
+            && (PixelStage    == RHS.PixelStage);
+    }
+
+    CONSTEXPR bool operator!=(FD3D12PipelineStageMask RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    uint8 ComputeStage  : 1;
+    uint8 VertexStage   : 1;
+    uint8 HullStage     : 1;
+    uint8 DomainStage   : 1;
+    uint8 GeometryStage : 1;
+    uint8 PixelStage    : 1;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12DescriptorCache
 
 class FD3D12DescriptorCache : public FD3D12DeviceChild
@@ -284,10 +348,10 @@ public:
     FD3D12DescriptorCache(FD3D12Device* Device);
     ~FD3D12DescriptorCache();
 
-    bool Init();
+    bool Initialize();
 
-    void CommitGraphicsDescriptors(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature);
-    void CommitComputeDescriptors(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature);
+    void PrepareGraphicsDescriptors(FD3D12CommandList& CommandList, FD3D12CommandBatch* CommandBatch, FD3D12RootSignature* RootSignature, FD3D12PipelineStageMask PipelineMask);
+    void PrepareComputeDescriptors(FD3D12CommandList& CommandList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature);
 
     void Reset();
 
@@ -311,86 +375,95 @@ public:
         RenderTargetCache.SetDepthStencilView(DepthStencilView);
     }
 
-    FORCEINLINE void SetConstantBufferView(FD3D12ConstantBufferView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
+    FORCEINLINE void SetConstantBufferView(EShaderVisibility Visibility, FD3D12ConstantBufferView* Descriptor, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
             Descriptor = NullCBV;
         }
 
-        ConstantBufferViewCache.SetView(Descriptor, Visibility, ShaderRegister);
+        ConstantBufferViewCache.BindView(Visibility, Descriptor, ShaderRegister);
     }
 
-    FORCEINLINE void SetShaderResourceView(FD3D12ShaderResourceView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
+    FORCEINLINE void SetShaderResourceView(EShaderVisibility Visibility, FD3D12ShaderResourceView* Descriptor, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
             Descriptor = NullSRV;
         }
 
-        ShaderResourceViewCache.SetView(Descriptor, Visibility, ShaderRegister);
+        ShaderResourceViewCache.BindView(Visibility, Descriptor, ShaderRegister);
     }
 
-    FORCEINLINE void SetUnorderedAccessView(FD3D12UnorderedAccessView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
+    FORCEINLINE void SetUnorderedAccessView(EShaderVisibility Visibility, FD3D12UnorderedAccessView* Descriptor, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
             Descriptor = NullUAV;
         }
 
-        UnorderedAccessViewCache.SetView(Descriptor, Visibility, ShaderRegister);
+        UnorderedAccessViewCache.BindView(Visibility, Descriptor, ShaderRegister);
     }
 
-    FORCEINLINE void SetSamplerState(FD3D12SamplerState* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
+    FORCEINLINE void SetSamplerState(EShaderVisibility Visibility, FD3D12SamplerState* Descriptor, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
             Descriptor = NullSampler;
         }
 
-        SamplerStateCache.SetView(Descriptor, Visibility, ShaderRegister);
+        SamplerStateCache.BindView(Visibility, Descriptor, ShaderRegister);
     }
 
 private:
-    void AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommandList* CmdList, FD3D12OnlineDescriptorHeap* ResourceHeap, FD3D12OnlineDescriptorHeap* SamplerHeap);
+    void AllocateDescriptorsAndSetHeaps( ID3D12GraphicsCommandList* CommandList
+                                       , FD3D12OnlineDescriptorManager* ResourceDescriptors
+                                       , FD3D12OnlineDescriptorManager* SamplerDescriptors
+                                       , FD3D12PipelineStageMask PipelineMask);
 
     template<typename TResourveViewCache>
-    void CopyAndBindComputeDescriptors(ID3D12Device* DxDevice, ID3D12GraphicsCommandList* DxCmdList, TResourveViewCache& ResourceViewCache, int32 ParameterIndex)
+    void CopyAndBindComputeDescriptors( ID3D12Device* DxDevice
+                                      , ID3D12GraphicsCommandList* CommandList
+                                      , TResourveViewCache& ResourceViewCache
+                                      , int32 ParameterIndex)
     {
-        const EShaderVisibility ShaderVisibility = ShaderVisibility_All;
-        if (ParameterIndex >= 0 && ResourceViewCache.bDirty[ShaderVisibility])
+        if (ParameterIndex >= 0 && ResourceViewCache.bDirty[ShaderVisibility_All])
         {
             const UINT DestRangeSize = TResourveViewCache::GetDescriptorTableSize();
-            const UINT NumSrcRanges = TResourveViewCache::GetDescriptorTableSize();
+            const UINT NumSrcRanges  = TResourveViewCache::GetDescriptorTableSize();
 
-            const D3D12_CPU_DESCRIPTOR_HANDLE* SrcHostStarts = ResourceViewCache.CopyDescriptors[ShaderVisibility];
+            const D3D12_CPU_DESCRIPTOR_HANDLE* SrcCPUStartHandles = ResourceViewCache.CopyDescriptors[ShaderVisibility_All];
 
-            D3D12_CPU_DESCRIPTOR_HANDLE HostHandle = ResourceViewCache.HostDescriptors[ShaderVisibility];
-            DxDevice->CopyDescriptors(1, &HostHandle, &DestRangeSize, NumSrcRanges, SrcHostStarts, RangeSizes, TResourveViewCache::GetDescriptorHeapType());
+            D3D12_CPU_DESCRIPTOR_HANDLE DstCPUTableHandle = ResourceViewCache.CPUDescriptorTables[ShaderVisibility_All];
+            DxDevice->CopyDescriptors(1, &DstCPUTableHandle, &DestRangeSize, NumSrcRanges, SrcCPUStartHandles, RangeSizes, TResourveViewCache::GetDescriptorHeapType());
 
-            D3D12_GPU_DESCRIPTOR_HANDLE DeviceHandle = ResourceViewCache.DeviceDescriptors[ShaderVisibility];
-            DxCmdList->SetComputeRootDescriptorTable(ParameterIndex, DeviceHandle);
+            D3D12_GPU_DESCRIPTOR_HANDLE GPUTableHandle = ResourceViewCache.GPUDescriptorTables[ShaderVisibility_All];
+            CommandList->SetComputeRootDescriptorTable(ParameterIndex, GPUTableHandle);
 
             // When the descriptors are copied and bound, then the descriptors are not dirty anymore
-            ResourceViewCache.bDirty[ShaderVisibility] = false;
+            ResourceViewCache.bDirty[ShaderVisibility_All] = false;
         }
     }
 
     template<typename TResourveViewCache>
-    void CopyAndBindGraphicsDescriptors(ID3D12Device* DxDevice, ID3D12GraphicsCommandList* DxCmdList, TResourveViewCache& ResourceViewCache, int32 ParameterIndex, EShaderVisibility ShaderVisibility)
+    void CopyAndBindGraphicsDescriptors( ID3D12Device* DxDevice
+                                       , ID3D12GraphicsCommandList* CommandList
+                                       , TResourveViewCache& ResourceViewCache
+                                       , int32 ParameterIndex
+                                       , EShaderVisibility ShaderVisibility)
     {
         if (ParameterIndex >= 0 && ResourceViewCache.bDirty[ShaderVisibility])
         {
             const UINT DestRangeSize = TResourveViewCache::GetDescriptorTableSize();
-            const UINT NumSrcRanges = TResourveViewCache::GetDescriptorTableSize();
+            const UINT NumSrcRanges  = TResourveViewCache::GetDescriptorTableSize();
 
-            const D3D12_CPU_DESCRIPTOR_HANDLE* SrcHostStarts = ResourceViewCache.CopyDescriptors[ShaderVisibility];
+            const D3D12_CPU_DESCRIPTOR_HANDLE* SrcCPUStartHandles = ResourceViewCache.CopyDescriptors[ShaderVisibility];
 
-            D3D12_CPU_DESCRIPTOR_HANDLE HostHandle = ResourceViewCache.HostDescriptors[ShaderVisibility];
-            DxDevice->CopyDescriptors(1, &HostHandle, &DestRangeSize, NumSrcRanges, SrcHostStarts, RangeSizes, TResourveViewCache::GetDescriptorHeapType());
+            D3D12_CPU_DESCRIPTOR_HANDLE DstCPUTableHandle = ResourceViewCache.CPUDescriptorTables[ShaderVisibility];
+            DxDevice->CopyDescriptors(1, &DstCPUTableHandle, &DestRangeSize, NumSrcRanges, SrcCPUStartHandles, RangeSizes, TResourveViewCache::GetDescriptorHeapType());
 
-            D3D12_GPU_DESCRIPTOR_HANDLE DeviceHandle = ResourceViewCache.DeviceDescriptors[ShaderVisibility];
-            DxCmdList->SetGraphicsRootDescriptorTable(ParameterIndex, DeviceHandle);
+            D3D12_GPU_DESCRIPTOR_HANDLE GPUTableHandle = ResourceViewCache.GPUDescriptorTables[ShaderVisibility];
+            CommandList->SetGraphicsRootDescriptorTable(ParameterIndex, GPUTableHandle);
 
             // When the descriptors are copied and bound, then the descriptors are not dirty anymore
             ResourceViewCache.bDirty[ShaderVisibility] = false;

@@ -361,9 +361,9 @@ public:
 
     virtual uint32 GetStride() const { return 1; }
 
-    virtual void SetName(const String& InName) { }
+    virtual void SetName(const FString& InName) { }
 
-    virtual String GetName() const { return ""; }
+    virtual FString GetName() const { return ""; }
 
 public:
     

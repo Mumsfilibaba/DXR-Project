@@ -167,7 +167,7 @@ PlatformModule CModuleManager::GetModuleHandle(const char* ModuleName)
 
 void CModuleManager::RegisterStaticModule(const char* ModuleName, CInitializeStaticModuleDelegate InitDelegate)
 {
-    const bool bContains = StaticModuleDelegates.Contains([=](const TPair<String, CInitializeStaticModuleDelegate>& Element)
+    const bool bContains = StaticModuleDelegates.Contains([=](const TPair<FString, CInitializeStaticModuleDelegate>& Element)
     {
         return (Element.First == ModuleName);
     });
@@ -223,7 +223,7 @@ int32 CModuleManager::GetModuleIndex(const char* ModuleName)
 
 CModuleManager::CInitializeStaticModuleDelegate* CModuleManager::GetStaticModuleDelegate(const char* ModuleName)
 {
-    const int32 Index = StaticModuleDelegates.Find([=](const TPair<String, CInitializeStaticModuleDelegate>& Element)
+    const int32 Index = StaticModuleDelegates.Find([=](const TPair<FString, CInitializeStaticModuleDelegate>& Element)
     {
         return (Element.First == ModuleName);
     });

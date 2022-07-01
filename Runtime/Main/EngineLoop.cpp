@@ -85,7 +85,7 @@ bool CEngineLoop::PreInitialize()
     else
     {
         NErrorDevice::GConsoleWindow->Show(true);
-        NErrorDevice::GConsoleWindow->SetTitle(String(PROJECT_NAME) + ": Error Console");
+        NErrorDevice::GConsoleWindow->SetTitle(FString(PROJECT_NAME) + ": Error Console");
     }
 
     if (!LoadCoreModules())
@@ -100,8 +100,8 @@ bool CEngineLoop::PreInitialize()
     CFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
 
-	const String ProjectLocation     = String(ENGINE_LOCATION) + String("/") + String(PROJECT_NAME);
-    const String AssetFolderLocation = String(ENGINE_LOCATION) + String("/Assets");
+	const FString ProjectLocation     = FString(ENGINE_LOCATION) + FString("/") + FString(PROJECT_NAME);
+    const FString AssetFolderLocation = FString(ENGINE_LOCATION) + FString("/Assets");
     if (!CProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr(), AssetFolderLocation.CStr()))
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");

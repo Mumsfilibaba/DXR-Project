@@ -67,7 +67,7 @@ public:
         return SUCCEEDED(Result);
     }
 
-    FORCEINLINE void SetName(const String& Name)
+    FORCEINLINE void SetName(const FString& Name)
     {
         Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.CStr());
     }

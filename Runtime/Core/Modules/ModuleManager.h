@@ -82,13 +82,13 @@ private:
     {
         SModule() = default;
 
-        SModule(const String& InName, IEngineModule* InInterface)
+        SModule(const FString& InName, IEngineModule* InInterface)
             : Name(InName)
             , Interface(InInterface)
             , Handle(0)
         { }
 
-        String         Name;
+        FString         Name;
         IEngineModule* Interface;
         PlatformModule Handle;
     };
@@ -250,7 +250,7 @@ private:
     CModuleLoadedDelegate ModuleLoadedDelegate;
 
     TArray<SModule> Modules;
-    TArray<TPair<String, CInitializeStaticModuleDelegate>> StaticModuleDelegates;
+    TArray<TPair<FString, CInitializeStaticModuleDelegate>> StaticModuleDelegates;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

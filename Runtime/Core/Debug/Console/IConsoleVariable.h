@@ -42,7 +42,7 @@ public:
      *
      * @param InValue: Value to store
      */
-    virtual void SetString(const String& InValue) = 0;
+    virtual void SetString(const FString& InValue) = 0;
     
     /**
      * @brief: Retrieve the variable as an int
@@ -70,7 +70,7 @@ public:
      *
      * @return: Returns an string with the value of the variable
      */
-    virtual String GetString() const = 0;
+    virtual FString GetString() const = 0;
     
     /**
      * @brief: Check weather the variable is an int

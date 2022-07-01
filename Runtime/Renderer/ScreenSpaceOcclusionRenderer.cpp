@@ -48,7 +48,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        CRHIComputePipelineStateInitializer PSOInitializer;
+        FRHIComputePipelineStateInitializer PSOInitializer;
         PSOInitializer.Shader = SSAOShader.Get();
 
         PipelineState = RHICreateComputePipelineState(PSOInitializer);
@@ -143,7 +143,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAOSamples->SetName("SSAO Samples");
     }
 
-    CRHIBufferSRVInitializer SRVInitializer(SSAOSamples.Get(), 0, SSAOKernel.Size());
+    FRHIBufferSRVInitializer SRVInitializer(SSAOSamples.Get(), 0, SSAOKernel.Size());
     SSAOSamplesSRV = RHICreateShaderResourceView(SRVInitializer);
     if (!SSAOSamplesSRV)
     {
@@ -171,7 +171,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        CRHIComputePipelineStateInitializer PSOInitializer;
+        FRHIComputePipelineStateInitializer PSOInitializer;
         PSOInitializer.Shader = BlurHorizontalShader.Get();
 
         BlurHorizontalPSO = RHICreateComputePipelineState(PSOInitializer);
@@ -206,7 +206,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        CRHIComputePipelineStateInitializer PSOInitializer;
+        FRHIComputePipelineStateInitializer PSOInitializer;
         PSOInitializer.Shader = BlurVerticalShader.Get();
 
         BlurVerticalPSO = RHICreateComputePipelineState(PSOInitializer);

@@ -101,7 +101,7 @@ protected:
 
 public:
 
-    virtual bool Initialize(const String& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) { return true; }
+    virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) { return true; }
 
     virtual void Show(bool bMaximized) { }
 
@@ -119,9 +119,9 @@ public:
 
     virtual bool IsActiveWindow() const { return false; }
 
-    virtual void SetTitle(const String& Title) { }
+    virtual void SetTitle(const FString& Title) { }
 
-    virtual void GetTitle(String& OutTitle) { }
+    virtual void GetTitle(FString& OutTitle) { }
 
     virtual void MoveTo(int32 x, int32 y) { }
 

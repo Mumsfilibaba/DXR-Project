@@ -105,7 +105,7 @@ bool CEngine::Initialize()
     }
 
     /* Create material sampler (Used for now by all materials) */
-    CRHISamplerStateInitializer SamplerCreateInfo;
+    FRHISamplerStateInitializer SamplerCreateInfo;
     SamplerCreateInfo.AddressU = ESamplerMode::Wrap;
     SamplerCreateInfo.AddressV = ESamplerMode::Wrap;
     SamplerCreateInfo.AddressW = ESamplerMode::Wrap;

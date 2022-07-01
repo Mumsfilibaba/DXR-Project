@@ -98,7 +98,7 @@ public:
         return ConstantRootParameterIndex;
     }
 
-    FORCEINLINE void SetName(const String& Name)
+    FORCEINLINE void SetName(const FString& Name)
     {
         WString WideName = CharToWide(Name);
         RootSignature->SetName(WideName.CStr());

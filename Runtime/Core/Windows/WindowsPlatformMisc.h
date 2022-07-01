@@ -28,7 +28,7 @@ public:
         __debugbreak();
     }
 
-    static FORCEINLINE void OutputDebugString(const String& Message)
+    static FORCEINLINE void OutputDebugString(const FString& Message)
     {
         OutputDebugStringA(Message.CStr());
     }
@@ -40,7 +40,7 @@ public:
 
 public:
 
-    static FORCEINLINE void GetLastErrorString(String& OutErrorString)
+    static FORCEINLINE void GetLastErrorString(FString& OutErrorString)
     {
         int32 LastError = ::GetLastError();
 

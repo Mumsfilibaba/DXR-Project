@@ -28,7 +28,7 @@ public:
 
     static FORCEINLINE void DebugBreak() { }
 
-    static FORCEINLINE void OutputDebugString(const String& Message) { }
+    static FORCEINLINE void OutputDebugString(const FString& Message) { }
 
     static FORCEINLINE bool IsDebuggerPresent() { return false; }
 };

@@ -87,7 +87,7 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
@@ -135,7 +135,7 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
@@ -170,7 +170,7 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
@@ -205,7 +205,7 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
@@ -240,7 +240,7 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)

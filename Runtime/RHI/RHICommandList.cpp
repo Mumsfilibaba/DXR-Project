@@ -3,9 +3,9 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCommandAllocator
+// FRHICommandAllocator
 
-FCommandAllocator::FCommandAllocator(uint32 StartSize)
+FRHICommandAllocator::FRHICommandAllocator(uint32 StartSize)
     : CurrentMemory(nullptr)
     , Size(StartSize)
     , Offset(0)
@@ -17,14 +17,14 @@ FCommandAllocator::FCommandAllocator(uint32 StartSize)
     AverageMemoryUsage = Size;
 }
 
-FCommandAllocator::~FCommandAllocator()
+FRHICommandAllocator::~FRHICommandAllocator()
 {
     ReleaseDiscardedMemory();
 
     SafeDelete(CurrentMemory);
 }
 
-void* FCommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
+void* FRHICommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
 {
     Check(CurrentMemory != nullptr);
 
@@ -56,7 +56,7 @@ void* FCommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
     }
 }
 
-void FCommandAllocator::Reset()
+void FRHICommandAllocator::Reset()
 {
     ReleaseDiscardedMemory();
 
@@ -83,7 +83,7 @@ void FCommandAllocator::Reset()
     Offset = 0;
 }
 
-void FCommandAllocator::ReleaseDiscardedMemory()
+void FRHICommandAllocator::ReleaseDiscardedMemory()
 {
     for (uint8* Memory : DiscardedMemory)
     {

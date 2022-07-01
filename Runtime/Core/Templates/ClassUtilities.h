@@ -27,3 +27,12 @@ public:
     NonMovable(const NonMovable&)            = delete;
     NonMovable& operator=(const NonMovable&) = delete;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// GetClassAsData
+
+template<typename NewType, typename ClassType>
+CONSTEXPR NewType* GetClassAsData(ClassType* Class) noexcept
+{
+    return reinterpret_cast<NewType*>(Class);
+}

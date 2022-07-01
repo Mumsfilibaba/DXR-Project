@@ -8,8 +8,8 @@ IMPLEMENT_ENGINE_MODULE(CDefaultEngineModule, RHI);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Globals
 
-RHI_API CRHICoreInterface*  GRHIInstance    = nullptr;
-RHI_API IRHIShaderCompiler* GShaderCompiler = nullptr;
+RHI_API FRHICoreInterface*  GRHICoreInterface = nullptr;
+RHI_API IRHIShaderCompiler* GShaderCompiler   = nullptr;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RHI Functions
@@ -56,14 +56,14 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
         false;
 #endif
 
-    CRHICoreInterface* RHIInterface = RHIModule->CreateInterface();
-    if (!(RHIInterface && RHIInterface->Initialize(bEnableDebug)))
+    FRHICoreInterface* RHICoreInterface = RHIModule->CreateInterface();
+    if (!(RHICoreInterface && RHICoreInterface->Initialize(bEnableDebug)))
     {
         LOG_ERROR("[InitRHI] Failed to init RHIInterface, the application has to terminate");
         return false;
     }
 
-    GRHIInstance = RHIInterface;
+    GRHICoreInterface = RHICoreInterface;
 
     IRHIShaderCompiler* Compiler = RHIModule->CreateCompiler();
     if (!Compiler)
@@ -85,10 +85,10 @@ void RHIRelease()
 {
     FRHICommandQueue::Get().SetContext(nullptr);
 
-    if (GRHIInstance)
+    if (GRHICoreInterface)
     {
-        GRHIInstance->Destroy();
-        GRHIInstance = nullptr;
+        GRHICoreInterface->Destroy();
+        GRHICoreInterface = nullptr;
     }
 
     SafeDelete(GShaderCompiler);

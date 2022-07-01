@@ -31,9 +31,9 @@ public:
 
     GenericThreadRef CreateThread(const TFunction<void()>& InFunction);
 
-    GenericThreadRef CreateNamedThread(const TFunction<void()>& InFunction, const String& InName);
+    GenericThreadRef CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName);
 
-    GenericThreadRef GetNamedThread(const String& InName);
+    GenericThreadRef GetNamedThread(const FString& InName);
 
     GenericThreadRef GetThreadFromHandle(void* ThreadHandle);
 

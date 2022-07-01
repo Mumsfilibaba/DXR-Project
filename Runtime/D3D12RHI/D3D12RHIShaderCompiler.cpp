@@ -183,8 +183,8 @@ FD3D12ShaderCompiler::~FD3D12ShaderCompiler()
 }
 
 bool FD3D12ShaderCompiler::CompileFromFile(
-    const String& FilePath,
-    const String& EntryPoint,
+    const FString& FilePath,
+    const FString& EntryPoint,
     const TArray<FShaderDefine>* Defines,
     EShaderStage ShaderStage,
     EShaderModel ShaderModel,
@@ -209,8 +209,8 @@ bool FD3D12ShaderCompiler::CompileFromFile(
 }
 
 bool FD3D12ShaderCompiler::CompileShader(
-    const String& ShaderSource,
-    const String& EntryPoint,
+    const FString& ShaderSource,
+    const FString& EntryPoint,
     const TArray<FShaderDefine>* Defines,
     EShaderStage ShaderStage,
     EShaderModel ShaderModel,
@@ -413,10 +413,10 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
         return false;
     }
 
-    String AsciiFilePath = (FilePath != nullptr) ? WideToChar(WString(FilePath)) : "";
+    FString AsciiFilePath = (FilePath != nullptr) ? WideToChar(WString(FilePath)) : "";
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
-        String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
+        FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
         D3D12_INFO("[FD3D12ShaderCompiler]: Successfully compiled shader '%s' with the following output: %s", AsciiFilePath.CStr(), Output.CStr());
     }
     else
@@ -514,9 +514,9 @@ bool FD3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Sha
     size_t ConvertedChars;
     wcstombs_s(&ConvertedChars, Buffer, 256, Entrypoint, _TRUNCATE);
 
-    String FuncName(FuncDesc.Name);
+    FString FuncName(FuncDesc.Name);
     auto result = FuncName.Find(Buffer);
-    if (result == String::NPos)
+    if (result == FString::NPos)
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: First exported function does not have correct entrypoint '%s'. Name=%s", Buffer, FuncName.CStr());
         return false;

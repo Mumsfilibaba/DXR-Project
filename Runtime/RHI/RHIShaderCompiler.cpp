@@ -206,7 +206,7 @@ FRHIShaderCompiler& FRHIShaderCompiler::Get()
     return Instance.GetValue();
 }
 
-bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     OutByteCode.Clear();
 
@@ -264,7 +264,7 @@ bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCo
     }
 
     // Create a single string for printing all the shader arguments
-    const String ArgumentsString = CreateArgString(CompileArgs.CreateView());
+    const FString ArgumentsString = CreateArgString(CompileArgs.CreateView());
     
     // Convert defines
     TArray<WString>   StrBuff;
@@ -343,7 +343,7 @@ bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCo
     
     if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
     {
-        const String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
+        const FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
         LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader '%s', with arguments '%s' and with the following output: %s", Filename.CStr(), ArgumentsString.CStr(), Output.CStr());
     }
     else
@@ -379,7 +379,7 @@ bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCo
     return true;
 }
 
-bool FRHIShaderCompiler::CompileFromSource(const String& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     OutByteCode.Clear();
 
@@ -425,7 +425,7 @@ bool FRHIShaderCompiler::CompileFromSource(const String& ShaderSource, const FSh
     }
 
     // Create a single string for printing all the shader arguments
-    const String ArgumentsString = CreateArgString(CompileArgs.CreateView());
+    const FString ArgumentsString = CreateArgString(CompileArgs.CreateView());
 
     // Convert defines
     TArray<WString>   StrBuff;
@@ -506,7 +506,7 @@ bool FRHIShaderCompiler::CompileFromSource(const String& ShaderSource, const FSh
 
     if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
     {
-        const String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
+        const FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
         LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader from source, with arguments '%s' and with the following output: %s", ArgumentsString.CStr(), Output.CStr());
     }
     else
@@ -547,7 +547,7 @@ void FRHIShaderCompiler::ErrorCallback(void* Userdata, const char* Error)
     LOG_ERROR("[SPIRV-Cross Error] %s", Error);
 }
 
-bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TArray<uint8>& OutByteCode)
+bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TArray<uint8>& OutByteCode)
 {
     if (OutByteCode.IsEmpty() || Entrypoint.IsEmpty())
     {
@@ -596,7 +596,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TAr
     }
 
     // Start by adding the entrypoint to the shader, which is needed when we create native shader objects
-    const String Comment = "// " + Entrypoint + "\n\n";
+    const FString Comment = "// " + Entrypoint + "\n\n";
     TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.Data()), Comment.Length() * sizeof(const char));
 
     const uint32 SourceLength = CStringUtils::Length(MSLSource);
@@ -608,7 +608,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TAr
     return true;
 }
 
-bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename)
+bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const FString& Filename)
 {
     FILE* Output = fopen(Filename.CStr(), "w");
     if (!Output)
@@ -623,7 +623,7 @@ bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const 
     return true;
 }
 
-String FRHIShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
+FString FRHIShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
 {
     WString WArgumentsString;
     for (LPCWSTR Arg : Args)

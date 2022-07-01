@@ -67,10 +67,10 @@ bool CRayTracer::Init(SFrameResources& Resources)
     FRHIRayTracingPipelineStateInitializer PSOInitializer;
     PSOInitializer.RayGenShaders           = { RayGenShader.Get() };
     PSOInitializer.MissShaders             = { RayMissShader.Get() };
-    PSOInitializer.HitGroups               = { CRHIRayTracingHitGroupInitializer("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
+    PSOInitializer.HitGroups               = { FRHIRayTracingHitGroupInitializer("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
     PSOInitializer.MaxRecursionDepth       = 4;
-    PSOInitializer.MaxAttributeSizeInBytes = sizeof(SRayIntersectionAttributes);
-    PSOInitializer.MaxPayloadSizeInBytes   = sizeof(SRayPayload);
+    PSOInitializer.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
+    PSOInitializer.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
 
     Pipeline = RHICreateRayTracingPipelineState(PSOInitializer);
     if (!Pipeline)

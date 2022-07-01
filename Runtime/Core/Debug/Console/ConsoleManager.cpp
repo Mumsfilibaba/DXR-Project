@@ -13,7 +13,7 @@
 CAutoConsoleCommand GClearHistory("ClearHistory", 
                                   CExecutedDelegateType::CreateRaw(&CConsoleManager::Get(), &CConsoleManager::ClearHistory));
 
-TAutoConsoleVariable<String> GEcho("Echo", "", 
+TAutoConsoleVariable<FString> GEcho("Echo", "", 
                                    CConsoleVariableChangedDelegateType::CreateLambda([](IConsoleVariable* InVariable) -> void
 {
     if (InVariable->IsString())
@@ -38,7 +38,7 @@ CConsoleManager& CConsoleManager::Get()
     return ConsoleManager.GetValue();
 }
 
-void CConsoleManager::RegisterCommand(const String& Name, IConsoleCommand* Command)
+void CConsoleManager::RegisterCommand(const FString& Name, IConsoleCommand* Command)
 {
     if (!RegisterObject(Name, Command))
     {
@@ -46,7 +46,7 @@ void CConsoleManager::RegisterCommand(const String& Name, IConsoleCommand* Comma
     }
 }
 
-void CConsoleManager::RegisterVariable(const String& Name, IConsoleVariable* Variable)
+void CConsoleManager::RegisterVariable(const FString& Name, IConsoleVariable* Variable)
 {
     if (!RegisterObject(Name, Variable))
     {
@@ -54,7 +54,7 @@ void CConsoleManager::RegisterVariable(const String& Name, IConsoleVariable* Var
     }
 }
 
-void CConsoleManager::UnregisterObject(const String& Name)
+void CConsoleManager::UnregisterObject(const FString& Name)
 {
     auto ExistingObject = ConsoleObjects.find(Name);
     if (ExistingObject == ConsoleObjects.end())
@@ -63,13 +63,13 @@ void CConsoleManager::UnregisterObject(const String& Name)
     }
 }
 
-bool CConsoleManager::IsConsoleObject(const String& Name) const
+bool CConsoleManager::IsConsoleObject(const FString& Name) const
 {
     auto ExistingObject = ConsoleObjects.find(Name);
     return ExistingObject != ConsoleObjects.end();
 }
 
-IConsoleCommand* CConsoleManager::FindCommand(const String& Name)
+IConsoleCommand* CConsoleManager::FindCommand(const FString& Name)
 {
     IConsoleObject* Object = FindConsoleObject(Name);
     if (!Object)
@@ -90,7 +90,7 @@ IConsoleCommand* CConsoleManager::FindCommand(const String& Name)
     }
 }
 
-IConsoleVariable* CConsoleManager::FindVariable(const String& Name)
+IConsoleVariable* CConsoleManager::FindVariable(const FString& Name)
 {
     IConsoleObject* Object = FindConsoleObject(Name);
     if (!Object)
@@ -111,7 +111,7 @@ IConsoleVariable* CConsoleManager::FindVariable(const String& Name)
     }
 }
 
-void CConsoleManager::PrintMessage(const String& Message, EConsoleSeverity Severity)
+void CConsoleManager::PrintMessage(const FString& Message, EConsoleSeverity Severity)
 {
     ConsoleMessages.Emplace(Message, Severity);
 }
@@ -122,11 +122,11 @@ void CConsoleManager::ClearHistory()
     ConsoleMessages.Clear();
 }
 
-void CConsoleManager::FindCandidates(const StringView& CandidateName, TArray<TPair<IConsoleObject*, String>>& OutCandidates)
+void CConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates)
 {
     for (const auto& Object : ConsoleObjects)
     {
-        const String& ObjectName = Object.first;
+        const FString& ObjectName = Object.first;
 
         int32 Length = CandidateName.Length();
         if (Length <= ObjectName.Length())
@@ -151,7 +151,7 @@ void CConsoleManager::FindCandidates(const StringView& CandidateName, TArray<TPa
     }
 }
 
-void CConsoleManager::Execute(const String& Command)
+void CConsoleManager::Execute(const FString& Command)
 {
     PrintMessage(Command, EConsoleSeverity::Info);
 
@@ -163,7 +163,7 @@ void CConsoleManager::Execute(const String& Command)
     }
 
     int32 Pos = Command.FindOneOf(" ");
-    if (Pos == String::NPos)
+    if (Pos == FString::NPos)
     {
         IConsoleCommand* CommandObject = FindCommand(Command);
         if (!CommandObject)
@@ -177,7 +177,7 @@ void CConsoleManager::Execute(const String& Command)
     }
     else
     {
-        String VariableName(Command.CStr(), Pos);
+        FString VariableName(Command.CStr(), Pos);
 
         IConsoleVariable* VariableObject = FindVariable(VariableName);
         if (!VariableObject)
@@ -188,7 +188,7 @@ void CConsoleManager::Execute(const String& Command)
 
         Pos++;
 
-        String Value(Command.CStr() + Pos, Command.Length() - Pos);
+        FString Value(Command.CStr() + Pos, Command.Length() - Pos);
         if (std::regex_match(Value.CStr(), std::regex("[-]?[0-9]+")))
         {
             VariableObject->SetString(Value);
@@ -215,7 +215,7 @@ void CConsoleManager::Execute(const String& Command)
     }
 }
 
-bool CConsoleManager::RegisterObject(const String& Name, IConsoleObject* Object)
+bool CConsoleManager::RegisterObject(const FString& Name, IConsoleObject* Object)
 {
     auto ExistingObject = ConsoleObjects.find(Name);
     if (ExistingObject == ConsoleObjects.end())
@@ -231,7 +231,7 @@ bool CConsoleManager::RegisterObject(const String& Name, IConsoleObject* Object)
     }
 }
 
-IConsoleObject* CConsoleManager::FindConsoleObject(const String& Name)
+IConsoleObject* CConsoleManager::FindConsoleObject(const FString& Name)
 {
     auto ExisitingObject = ConsoleObjects.find(Name);
     if (ExisitingObject != ConsoleObjects.end())

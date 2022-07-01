@@ -418,7 +418,7 @@ public:
     virtual void Flush() = 0;
 
     /** @brief: Inserts a marker on the GPU timeline */
-    virtual void InsertMarker(const String& Message) = 0;
+    virtual void InsertMarker(const FString& Message) = 0;
 
     /** @brief:  Begins a PIX capture event, currently only available on D3D12  */
     virtual void BeginExternalCapture() = 0;

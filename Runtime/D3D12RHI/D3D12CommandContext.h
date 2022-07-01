@@ -71,7 +71,7 @@ public:
     FD3D12CommandBatch(FD3D12Device* InDevice);
     ~FD3D12CommandBatch() = default;
 
-    bool Initialize();
+    bool Initialize(uint32 Index);
 
     bool Reset()
     {
@@ -128,30 +128,30 @@ public:
         return CmdAllocator;
     }
 
-    FORCEINLINE FD3D12OnlineDescriptorHeap* GetOnlineResourceDescriptorHeap() const
+    FORCEINLINE FD3D12OnlineDescriptorManager* GetResourceDescriptorManager() const
     {
         return OnlineResourceDescriptorHeap.Get();
     }
 
-    FORCEINLINE FD3D12OnlineDescriptorHeap* GetOnlineSamplerDescriptorHeap() const
+    FORCEINLINE FD3D12OnlineDescriptorManager* GetSamplerDescriptorManager() const
     {
         return OnlineSamplerDescriptorHeap.Get();
     }
 
-    FD3D12Device*                          Device = nullptr;
+    FD3D12Device*                    Device = nullptr;
     
-    uint64                                 AssignedFenceValue = 0;
+    uint64                           AssignedFenceValue = 0;
 
-    FD3D12CommandAllocator                 CmdAllocator;
-    FD3D12GPUResourceUploader              GpuResourceUploader;
+    FD3D12CommandAllocator           CmdAllocator;
+    FD3D12GPUResourceUploader        GpuResourceUploader;
 
-    TSharedRef<FD3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
-    TSharedRef<FD3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
+    FD3D12OnlineDescriptorManagerRef OnlineResourceDescriptorHeap;
+    FD3D12OnlineDescriptorManagerRef OnlineSamplerDescriptorHeap;
 
-    TArray<TSharedRef<FD3D12Resource>>     DxResources;
-    TArray<TSharedRef<IRHIResource>>       Resources;
+    TArray<FD3D12ResourceRef>        DxResources;
+    TArray<TSharedRef<IRHIResource>> Resources;
 
-    TArray<TComPtr<ID3D12Resource>>        NativeResources;
+    TArray<TComPtr<ID3D12Resource>>  NativeResources;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -347,7 +347,7 @@ public:
 
     virtual void Flush() override final;
 
-    virtual void InsertMarker(const String& Message) override final;
+    virtual void InsertMarker(const FString& Message) override final;
 
     virtual void BeginExternalCapture() override final;
     virtual void EndExternalCapture() override final;

@@ -10,7 +10,7 @@
 #include "Core/Templates/IsTArrayType.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A fixed size array similar to std::array
+// TStaticArray - A fixed size array similar to std::array
 
 template<typename T, int32 NumElements>
 struct TStaticArray

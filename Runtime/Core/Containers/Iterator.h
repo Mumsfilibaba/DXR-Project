@@ -7,7 +7,7 @@
 #include "Core/Templates/ReferenceWrapper.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Iterator for array types
+// TArrayIterator - Iterator for array types
 
 template<typename ArrayType, typename ElementType>
 class TArrayIterator
@@ -268,7 +268,7 @@ FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIter
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Reverse array iterator
+// TReverseArrayIterator - Reverse array iterator
 
 template<typename ArrayType, typename ElementType>
 class TReverseArrayIterator
@@ -529,7 +529,7 @@ FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TRe
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Iterator for tree-structures such as TSet
+// TTreeIterator - Iterator for tree-structures such as TSet
 
 template<typename NodeType, typename ElementType>
 class TTreeIterator
@@ -626,7 +626,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Iterator for BitArrays
+// TBitArrayIterator - Iterator for BitArrays
 
 template<typename BitFieldType>
 class TBitArrayIterator

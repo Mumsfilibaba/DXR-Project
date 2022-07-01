@@ -117,12 +117,12 @@ bool CRenderer::Init()
     }
 
     {
-        CRHISamplerStateInitializer Initializer;
+        FRHISamplerStateInitializer Initializer;
         Initializer.AddressU    = ESamplerMode::Border;
         Initializer.AddressV    = ESamplerMode::Border;
         Initializer.AddressW    = ESamplerMode::Border;
         Initializer.Filter      = ESamplerFilter::MinMagMipPoint;
-        Initializer.BorderColor = CFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
+        Initializer.BorderColor = FFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         Resources.DirectionalLightShadowSampler = RHICreateSamplerState(Initializer);
         if (!Resources.DirectionalLightShadowSampler)
@@ -133,7 +133,7 @@ bool CRenderer::Init()
     }
 
     {
-        CRHISamplerStateInitializer Initializer;
+        FRHISamplerStateInitializer Initializer;
         Initializer.AddressU       = ESamplerMode::Wrap;
         Initializer.AddressV       = ESamplerMode::Wrap;
         Initializer.AddressW       = ESamplerMode::Wrap;
@@ -386,7 +386,7 @@ void CRenderer::PerformFXAA(FRHICommandList& InCmdList)
 
     FRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
-    RenderPass.RenderTargets[0].ClearValue = CFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPass.NumRenderTargets            = 1;
 
     InCmdList.BeginRenderPass(RenderPass);
@@ -422,7 +422,7 @@ void CRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
 
     FRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
-    RenderPass.RenderTargets[0].ClearValue = CFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPass.NumRenderTargets            = 1;
 
     InCmdList.BeginRenderPass(RenderPass);
@@ -969,7 +969,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilInitializer;
+    FRHIDepthStencilStateInitializer DepthStencilInitializer;
     DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
     DepthStencilInitializer.bDepthEnable   = false;
     DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::Zero;
@@ -981,7 +981,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    CRHIRasterizerStateInitializer RasterizerStateInfo;
+    FRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -991,7 +991,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    CRHIBlendStateInitializer BlendStateInfo;
+    FRHIBlendStateInitializer BlendStateInfo;
 
     TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
@@ -1120,7 +1120,7 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilInitializer;
+    FRHIDepthStencilStateInitializer DepthStencilInitializer;
     DepthStencilInitializer.DepthFunc      = EComparisonFunc::Always;
     DepthStencilInitializer.bDepthEnable   = false;
     DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::Zero;
@@ -1132,7 +1132,7 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    CRHIRasterizerStateInitializer RasterizerInitializer;
+    FRHIRasterizerStateInitializer RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
     TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
@@ -1142,7 +1142,7 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    CRHIBlendStateInitializer BlendStateInfo;
+    FRHIBlendStateInitializer BlendStateInfo;
 
     TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
@@ -1171,7 +1171,7 @@ bool CRenderer::InitAA()
     }
 
     // FXAA
-    CRHISamplerStateInitializer SamplerInitializer;
+    FRHISamplerStateInitializer SamplerInitializer;
     SamplerInitializer.AddressU = ESamplerMode::Clamp;
     SamplerInitializer.AddressV = ESamplerMode::Clamp;
     SamplerInitializer.AddressW = ESamplerMode::Clamp;
@@ -1247,7 +1247,7 @@ bool CRenderer::InitAA()
 
 bool CRenderer::InitShadingImage()
 {
-    SShadingRateSupport Support;
+    FShadingRateSupport Support;
     RHIQueryShadingRateSupport(Support);
 
     if (Support.Tier != ERHIShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)
@@ -1288,7 +1288,7 @@ bool CRenderer::InitShadingImage()
         return false;
     }
 
-    CRHIComputePipelineStateInitializer PSOInitializer(ShadingRateShader.Get());
+    FRHIComputePipelineStateInitializer PSOInitializer(ShadingRateShader.Get());
     ShadingRatePipeline = RHICreateComputePipelineState(PSOInitializer);
     if (!ShadingRatePipeline)
     {

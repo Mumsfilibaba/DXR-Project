@@ -16,13 +16,13 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef TSharedRef<class FRHIRasterizerState>         RHIRasterizerStateRef;
-typedef TSharedRef<class FRHIBlendState>              RHIBlendStateRef;
-typedef TSharedRef<class FRHIDepthStencilState>       RHIDepthStencilStateRef;
-typedef TSharedRef<class FRHIVertexInputLayout>       RHIVertexInputLayoutRef;
-typedef TSharedRef<class FRHIGraphicsPipelineState>   RHIGraphicsPipelineStateRef;
-typedef TSharedRef<class FRHIComputePipelineState>    RHIComputePipelineStateRef;
-typedef TSharedRef<class FRHIRayTracingPipelineState> RHIRayTracingPipelineStateRef;
+typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
+typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;
+typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
+typedef TSharedRef<class FRHIVertexInputLayout>       FRHIVertexInputLayoutRef;
+typedef TSharedRef<class FRHIGraphicsPipelineState>   FRHIGraphicsPipelineStateRef;
+typedef TSharedRef<class FRHIComputePipelineState>    FRHIComputePipelineStateRef;
+typedef TSharedRef<class FRHIRayTracingPipelineState> FRHIRayTracingPipelineStateRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EDepthWriteMask
@@ -75,18 +75,18 @@ inline const char* ToString(EStencilOp StencilOp)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SDepthStencilStateFace
+// FDepthStencilStateFace
 
-struct SDepthStencilStateFace
+struct FDepthStencilStateFace
 {
-    SDepthStencilStateFace()
+    FDepthStencilStateFace()
         : StencilFailOp(EStencilOp::Keep)
         , StencilDepthFailOp(EStencilOp::Keep)
         , StencilDepthPassOp(EStencilOp::Keep)
         , StencilFunc(EComparisonFunc::Always)
     { }
 
-    SDepthStencilStateFace( EStencilOp InStencilFailOp
+    FDepthStencilStateFace( EStencilOp InStencilFailOp
                           , EStencilOp InStencilDepthFailOp
                           , EStencilOp InStencilPassOp
                           , EComparisonFunc InStencilFunc)
@@ -105,7 +105,7 @@ struct SDepthStencilStateFace
         return Hash;
     }
 
-    bool operator==(const SDepthStencilStateFace& RHS) const
+    bool operator==(const FDepthStencilStateFace& RHS) const
     {
         return (StencilFailOp      == RHS.StencilFailOp) 
             && (StencilDepthFailOp == RHS.StencilDepthFailOp)
@@ -113,7 +113,7 @@ struct SDepthStencilStateFace
             && (StencilFunc        == RHS.StencilFunc);
     }
 
-    bool operator!=(const SDepthStencilStateFace& RHS) const
+    bool operator!=(const FDepthStencilStateFace& RHS) const
     {
         return !(*this == RHS);
     }
@@ -125,13 +125,13 @@ struct SDepthStencilStateFace
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIDepthStencilStateInitializer
+// FRHIDepthStencilStateInitializer
 
-class CRHIDepthStencilStateInitializer
+class FRHIDepthStencilStateInitializer
 {
 public:
 
-    CRHIDepthStencilStateInitializer()
+    FRHIDepthStencilStateInitializer()
         : DepthWriteMask(EDepthWriteMask::All)
         , DepthFunc(EComparisonFunc::Less)
         , bDepthEnable(true)
@@ -142,14 +142,14 @@ public:
         , BackFace()
     { }
 
-    CRHIDepthStencilStateInitializer( EComparisonFunc InDepthFunc
+    FRHIDepthStencilStateInitializer( EComparisonFunc InDepthFunc
                                     , bool bInDepthEnable
                                     , EDepthWriteMask InDepthWriteMask = EDepthWriteMask::All
                                     , bool bInStencilEnable = false
                                     , uint8 InStencilReadMask = 0xff
                                     , uint8 InStencilWriteMask = 0xff
-                                    , const SDepthStencilStateFace& InFrontFace = SDepthStencilStateFace()
-                                    , const SDepthStencilStateFace& InBackFace = SDepthStencilStateFace())
+                                    , const FDepthStencilStateFace& InFrontFace = FDepthStencilStateFace()
+                                    , const FDepthStencilStateFace& InBackFace = FDepthStencilStateFace())
         : DepthWriteMask(InDepthWriteMask)
         , DepthFunc(InDepthFunc)
         , bDepthEnable(bInDepthEnable)
@@ -173,7 +173,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHIDepthStencilStateInitializer& RHS) const
+    bool operator==(const FRHIDepthStencilStateInitializer& RHS) const
     {
         return (DepthWriteMask   == RHS.DepthWriteMask)
             && (DepthFunc        == RHS.DepthFunc)
@@ -185,7 +185,7 @@ public:
             && (BackFace         == RHS.BackFace);
     }
 
-    bool operator!=(const CRHIDepthStencilStateInitializer& RHS) const
+    bool operator!=(const FRHIDepthStencilStateInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -196,8 +196,8 @@ public:
     uint8                  StencilReadMask;
     uint8                  StencilWriteMask;
     bool                   bStencilEnable;
-    SDepthStencilStateFace FrontFace;
-    SDepthStencilStateFace BackFace;
+    FDepthStencilStateFace FrontFace;
+    FDepthStencilStateFace BackFace;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -252,13 +252,13 @@ inline const char* ToString(EFillMode FillMode)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRasterizerStateInitializer
+// FRHIRasterizerStateInitializer
 
-class CRHIRasterizerStateInitializer
+class FRHIRasterizerStateInitializer
 {
 public:
 
-    CRHIRasterizerStateInitializer()
+    FRHIRasterizerStateInitializer()
         : FillMode(EFillMode::Solid)
         , CullMode(ECullMode::Back)
         , bFrontCounterClockwise(false)
@@ -272,7 +272,7 @@ public:
 	    , SlopeScaledDepthBias(0.0f)
     { }
 
-    CRHIRasterizerStateInitializer( EFillMode InFillMode
+    FRHIRasterizerStateInitializer( EFillMode InFillMode
                                   , ECullMode InCullMode
                                   , bool bInFrontCounterClockwise = false
                                   , int32 InDepthBias = 0
@@ -312,7 +312,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHIRasterizerStateInitializer& RHS) const
+    bool operator==(const FRHIRasterizerStateInitializer& RHS) const
     {
         return (FillMode                  == RHS.FillMode)
             && (CullMode                  == RHS.CullMode)
@@ -327,7 +327,7 @@ public:
             && (bEnableConservativeRaster == RHS.bEnableConservativeRaster);
     }
 
-    bool operator!=(const CRHIRasterizerStateInitializer& RHS) const
+    bool operator!=(const FRHIRasterizerStateInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -493,15 +493,15 @@ enum class EColorWriteFlag : uint8
 ENUM_CLASS_OPERATORS(EColorWriteFlag);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRenderTargetWriteState
+// FRenderTargetWriteState
 
-struct SRenderTargetWriteState
+struct FRenderTargetWriteState
 {
-    SRenderTargetWriteState()
+    FRenderTargetWriteState()
         : Mask(EColorWriteFlag::All)
     { }
 
-    SRenderTargetWriteState(EColorWriteFlag InMask)
+    FRenderTargetWriteState(EColorWriteFlag InMask)
         : Mask(InMask)
     { }
 
@@ -535,12 +535,12 @@ struct SRenderTargetWriteState
         return (Mask == EColorWriteFlag::All);
     }
 
-    FORCEINLINE bool operator==(SRenderTargetWriteState RHS) const
+    FORCEINLINE bool operator==(FRenderTargetWriteState RHS) const
     {
         return (Mask == RHS.Mask);
     }
 
-    FORCEINLINE bool operator!=(SRenderTargetWriteState RHS) const
+    FORCEINLINE bool operator!=(FRenderTargetWriteState RHS) const
     {
         return (Mask != RHS.Mask);
     }
@@ -549,11 +549,11 @@ struct SRenderTargetWriteState
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRenderTargetBlendDesc
+// FRenderTargetBlendDesc
 
-struct SRenderTargetBlendDesc
+struct FRenderTargetBlendDesc
 {
-    SRenderTargetBlendDesc()
+    FRenderTargetBlendDesc()
         : SrcBlend(EBlendType::One)
         , DstBlend(EBlendType::Zero)
         , BlendOp(EBlendOp::Add)
@@ -566,7 +566,7 @@ struct SRenderTargetBlendDesc
         , RenderTargetWriteMask()
     { }
 
-    SRenderTargetBlendDesc( bool bInBlendEnable
+    FRenderTargetBlendDesc( bool bInBlendEnable
                           , EBlendType InSrcBlend
                           , EBlendType InDstBlend
                           , EBlendOp InBlendOp = EBlendOp::Add
@@ -575,7 +575,7 @@ struct SRenderTargetBlendDesc
                           , EBlendOp InBlendOpAlpha = EBlendOp::Add
                           , ELogicOp InLogicOp = ELogicOp::Noop
                           , bool bInLogicOpEnable = false
-                          , SRenderTargetWriteState InRenderTargetWriteMask = SRenderTargetWriteState())
+                          , FRenderTargetWriteState InRenderTargetWriteMask = FRenderTargetWriteState())
         : SrcBlend(InSrcBlend)
         , DstBlend(InDstBlend)
         , BlendOp(InBlendOp)
@@ -608,7 +608,7 @@ struct SRenderTargetBlendDesc
         return Hash;
     }
 
-    bool operator==(const SRenderTargetBlendDesc& RHS) const
+    bool operator==(const FRenderTargetBlendDesc& RHS) const
     {
         return (SrcBlend              == RHS.SrcBlend)
             && (DstBlend              == RHS.DstBlend)
@@ -622,7 +622,7 @@ struct SRenderTargetBlendDesc
             && (RenderTargetWriteMask == RHS.RenderTargetWriteMask);
     }
 
-    bool operator!=(const SRenderTargetBlendDesc& RHS) const
+    bool operator!=(const FRenderTargetBlendDesc& RHS) const
     {
         return !(*this == RHS);
     }
@@ -636,23 +636,23 @@ struct SRenderTargetBlendDesc
     ELogicOp                LogicOp;
     bool                    bBlendEnable;
     bool                    bLogicOpEnable;
-    SRenderTargetWriteState RenderTargetWriteMask;
+    FRenderTargetWriteState RenderTargetWriteMask;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBlendStateInitializer
+// FRHIBlendStateInitializer
 
-class CRHIBlendStateInitializer
+class FRHIBlendStateInitializer
 {
 public:
 
-    CRHIBlendStateInitializer()
+    FRHIBlendStateInitializer()
         : RenderTargets()
         , bAlphaToCoverageEnable(false)
         , bIndependentBlendEnable(false)
     { }
 
-    CRHIBlendStateInitializer( const TStaticArray<SRenderTargetBlendDesc, kRHIMaxRenderTargetCount>& InRenderTargets
+    FRHIBlendStateInitializer( const TStaticArray<FRenderTargetBlendDesc, kRHIMaxRenderTargetCount>& InRenderTargets
                              , bool bInAlphaToCoverageEnable
                              , bool bInIndependentBlendEnable)
         : RenderTargets(InRenderTargets)
@@ -675,19 +675,19 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHIBlendStateInitializer& RHS) const
+    bool operator==(const FRHIBlendStateInitializer& RHS) const
     {
         return (RenderTargets           == RHS.RenderTargets)
             && (bAlphaToCoverageEnable  == RHS.bAlphaToCoverageEnable)
             && (bIndependentBlendEnable == RHS.bIndependentBlendEnable);
     }
 
-    bool operator!=(const CRHIBlendStateInitializer& RHS) const
+    bool operator!=(const FRHIBlendStateInitializer& RHS) const
     {
         return !(*this == RHS);
     }
 
-    TStaticArray<SRenderTargetBlendDesc, kRHIMaxRenderTargetCount> RenderTargets;
+    TStaticArray<FRenderTargetBlendDesc, kRHIMaxRenderTargetCount> RenderTargets;
     bool bAlphaToCoverageEnable;
     bool bIndependentBlendEnable;
 };
@@ -723,11 +723,11 @@ inline const char* ToString(EVertexInputClass BlendOp)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SVertexInputElement
+// FVertexInputElement
 
-struct SVertexInputElement
+struct FVertexInputElement
 {
-    SVertexInputElement()
+    FVertexInputElement()
         : Semantic("")
         , SemanticIndex(0)
         , Format(EFormat::Unknown)
@@ -738,7 +738,7 @@ struct SVertexInputElement
         , InstanceStepRate(0)
     { }
 
-    SVertexInputElement( const String& InSemantic
+    FVertexInputElement( const FString& InSemantic
                        , uint32 InSemanticIndex
                        , EFormat InFormat
                        , uint16 InVertexStride
@@ -756,7 +756,7 @@ struct SVertexInputElement
         , InstanceStepRate(InInstanceStepRate)
     { }
 
-    bool operator==(const SVertexInputElement& RHS) const
+    bool operator==(const FVertexInputElement& RHS) const
     {
         return (Semantic         == RHS.Semantic)
             && (SemanticIndex    == RHS.SemanticIndex)
@@ -768,12 +768,12 @@ struct SVertexInputElement
             && (InstanceStepRate == RHS.InstanceStepRate);
     }
 
-    bool operator!=(const SVertexInputElement& RHS) const
+    bool operator!=(const FVertexInputElement& RHS) const
     {
         return !(*this == RHS);
     }
 
-    String            Semantic;
+    FString            Semantic;
     uint32            SemanticIndex;
     EFormat           Format;
     uint16            VertexStride;
@@ -794,11 +794,11 @@ public:
         : Elements()
     { }
 
-    FRHIVertexInputLayoutInitializer(const TArray<SVertexInputElement>& InElements)
+    FRHIVertexInputLayoutInitializer(const TArray<FVertexInputElement>& InElements)
         : Elements(InElements)
     { }
 
-    FRHIVertexInputLayoutInitializer(std::initializer_list<SVertexInputElement> InList)
+    FRHIVertexInputLayoutInitializer(std::initializer_list<FVertexInputElement> InList)
         : Elements(InList)
     { }
 
@@ -812,7 +812,7 @@ public:
         return !(*this == RHS);
     }
 
-    TArray<SVertexInputElement> Elements;
+    TArray<FVertexInputElement> Elements;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -848,30 +848,30 @@ inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIPipelineState
+// FRHIPipelineState
 
-class CRHIPipelineState : public FRHIResource
+class FRHIPipelineState : public FRHIResource
 {
 protected:
 
-    CRHIPipelineState()  = default;
-    ~CRHIPipelineState() = default;
+    FRHIPipelineState()  = default;
+    ~FRHIPipelineState() = default;
 
 public:
 
     /** @brief: Set the name of the PipelineState */
-    virtual void SetName(const String& InName) { }
+    virtual void SetName(const FString& InName) { }
 
     /** @return: Returns the name of the PipelineState */
-    virtual String GetName() const { return ""; }
+    virtual FString GetName() const { return ""; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SGraphicsPipelineFormats
+// FGraphicsPipelineFormats
 
-struct SGraphicsPipelineFormats
+struct FGraphicsPipelineFormats
 {
-    SGraphicsPipelineFormats()
+    FGraphicsPipelineFormats()
         : RenderTargetFormats()
         , NumRenderTargets(0)
         , DepthStencilFormat(EFormat::Unknown)
@@ -879,7 +879,7 @@ struct SGraphicsPipelineFormats
         RenderTargetFormats.Fill(EFormat::Unknown);
     }
 
-    SGraphicsPipelineFormats( const TStaticArray<EFormat, kRHIMaxRenderTargetCount>& InRenderTargetFormats
+    FGraphicsPipelineFormats( const TStaticArray<EFormat, kRHIMaxRenderTargetCount>& InRenderTargetFormats
                             , uint32 InNumRenderTargets
                             , EFormat InDepthStencilFormat = EFormat::Unknown)
         : RenderTargetFormats(InRenderTargetFormats)
@@ -887,14 +887,14 @@ struct SGraphicsPipelineFormats
         , DepthStencilFormat(InDepthStencilFormat)
     { }
 
-    bool operator==(const SGraphicsPipelineFormats& RHS) const
+    bool operator==(const FGraphicsPipelineFormats& RHS) const
     {
         return (RenderTargetFormats == RHS.RenderTargetFormats)
             && (NumRenderTargets    == RHS.NumRenderTargets)
             && (DepthStencilFormat  == RHS.DepthStencilFormat);
     }
 
-    bool operator!=(const SGraphicsPipelineFormats& RHS) const
+    bool operator!=(const FGraphicsPipelineFormats& RHS) const
     {
         return !(*this == RHS);
     }
@@ -906,27 +906,27 @@ struct SGraphicsPipelineFormats
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SGraphicsPipelineShaders
+// FGraphicsPipelineShaders
 
-struct SGraphicsPipelineShaders
+struct FGraphicsPipelineShaders
 {
-    SGraphicsPipelineShaders()
+    FGraphicsPipelineShaders()
         : VertexShader(nullptr)
         , PixelShader(nullptr)
     { }
 
-    SGraphicsPipelineShaders(FRHIVertexShader* InVertexShader, FRHIPixelShader* InPixelShader)
+    FGraphicsPipelineShaders(FRHIVertexShader* InVertexShader, FRHIPixelShader* InPixelShader)
         : VertexShader(InVertexShader)
         , PixelShader(InPixelShader)
     { }
 
-    bool operator==(const SGraphicsPipelineShaders& RHS) const
+    bool operator==(const FGraphicsPipelineShaders& RHS) const
     {
         return (VertexShader == RHS.VertexShader)
             && (PixelShader  == RHS.PixelShader);
     }
 
-    bool operator!=(const SGraphicsPipelineShaders& RHS) const
+    bool operator!=(const FGraphicsPipelineShaders& RHS) const
     {
         return !(*this == RHS);
     }
@@ -960,8 +960,8 @@ public:
                                         , FRHIDepthStencilState* InDepthStencilState
                                         , FRHIRasterizerState* InRasterizerState
                                         , FRHIBlendState* InBlendState
-                                        , const SGraphicsPipelineShaders& InShaderState
-                                        , const SGraphicsPipelineFormats& InPipelineFormats
+                                        , const FGraphicsPipelineShaders& InShaderState
+                                        , const FGraphicsPipelineFormats& InPipelineFormats
                                         , EPrimitiveTopologyType InPrimitiveTopologyType = EPrimitiveTopologyType::Triangle
                                         , uint32 InSampleCount = 1
                                         , uint32 InSampleQuality = 0
@@ -1011,14 +1011,14 @@ public:
 
     EIndexBufferStripCutValue IBStripCutValue;
     EPrimitiveTopologyType    PrimitiveTopologyType;
-    SGraphicsPipelineShaders  ShaderState;
-    SGraphicsPipelineFormats  PipelineFormats;
+    FGraphicsPipelineShaders  ShaderState;
+    FGraphicsPipelineFormats  PipelineFormats;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIGraphicsPipelineState
 
-class FRHIGraphicsPipelineState : public CRHIPipelineState
+class FRHIGraphicsPipelineState : public FRHIPipelineState
 {
 protected:
 
@@ -1027,26 +1027,26 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIComputePipelineStateInitializer
+// FRHIComputePipelineStateInitializer
 
-class CRHIComputePipelineStateInitializer
+class FRHIComputePipelineStateInitializer
 {
 public:
 
-    CRHIComputePipelineStateInitializer()
+    FRHIComputePipelineStateInitializer()
         : Shader(nullptr)
     { }
 
-    CRHIComputePipelineStateInitializer(FRHIComputeShader* InShader)
+    FRHIComputePipelineStateInitializer(FRHIComputeShader* InShader)
         : Shader(InShader)
     { }
 
-    bool operator==(const CRHIComputePipelineStateInitializer& RHS) const
+    bool operator==(const FRHIComputePipelineStateInitializer& RHS) const
     {
         return (Shader == RHS.Shader);
     }
 
-    bool operator!=(const CRHIComputePipelineStateInitializer& RHS) const
+    bool operator!=(const FRHIComputePipelineStateInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -1057,7 +1057,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIComputePipelineState
 
-class FRHIComputePipelineState : public CRHIPipelineState
+class FRHIComputePipelineState : public FRHIPipelineState
 {
 protected:
 
@@ -1076,19 +1076,19 @@ enum class ERayTracingHitGroupType : uint8
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingHitGroupInitializer
+// FRHIRayTracingHitGroupInitializer
 
-class CRHIRayTracingHitGroupInitializer
+class FRHIRayTracingHitGroupInitializer
 {
 public:
 
-    CRHIRayTracingHitGroupInitializer()
+    FRHIRayTracingHitGroupInitializer()
         : Name()
         , Type(ERayTracingHitGroupType::Unknown)
         , Shaders()
     { }
 
-    CRHIRayTracingHitGroupInitializer( const String& InName
+    FRHIRayTracingHitGroupInitializer( const FString& InName
                                      , ERayTracingHitGroupType InType
                                      , const TArrayView<FRHIRayTracingShader*>& InRayTracingShaders)
         : Name(InName)
@@ -1096,17 +1096,17 @@ public:
         , Shaders(InRayTracingShaders)
     { }
 
-    bool operator==(const CRHIRayTracingHitGroupInitializer& RHS) const
+    bool operator==(const FRHIRayTracingHitGroupInitializer& RHS) const
     {
         return (Name == RHS.Name) && (Shaders == RHS.Shaders) && (Type == RHS.Type);
     }
 
-    bool operator!=(const CRHIRayTracingHitGroupInitializer& RHS) const
+    bool operator!=(const FRHIRayTracingHitGroupInitializer& RHS) const
     {
         return !(*this == RHS);
     }
 
-    String                        Name;
+    FString                        Name;
     ERayTracingHitGroupType       Type;
     TArray<FRHIRayTracingShader*> Shaders;
 };
@@ -1129,8 +1129,8 @@ public:
     { }
 
     FRHIRayTracingPipelineStateInitializer( const TArrayView<FRHIRayGenShader*>& InRayGenShaders
-                                          , const TArrayView<CRHIRayCallableShader*>& InCallableShaders
-                                          , const TArrayView<CRHIRayTracingHitGroupInitializer>& InHitGroups
+                                          , const TArrayView<FRHIRayCallableShader*>& InCallableShaders
+                                          , const TArrayView<FRHIRayTracingHitGroupInitializer>& InHitGroups
                                           , const TArrayView<FRHIRayMissShader*>& InMissShaders
                                           , uint32 InMaxAttributeSizeInBytes
                                           , uint32 InMaxPayloadSizeInBytes
@@ -1161,9 +1161,9 @@ public:
     }
 
     TArray<FRHIRayGenShader*>                 RayGenShaders;
-    TArray<CRHIRayCallableShader*>            CallableShaders;
+    TArray<FRHIRayCallableShader*>            CallableShaders;
     TArray<FRHIRayMissShader*>                MissShaders;
-    TArray<CRHIRayTracingHitGroupInitializer> HitGroups;
+    TArray<FRHIRayTracingHitGroupInitializer> HitGroups;
     
     uint32 MaxAttributeSizeInBytes;
     uint32 MaxPayloadSizeInBytes;
@@ -1173,7 +1173,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayTracingPipelineState
 
-class FRHIRayTracingPipelineState : public CRHIPipelineState
+class FRHIRayTracingPipelineState : public FRHIPipelineState
 {
 protected:
 

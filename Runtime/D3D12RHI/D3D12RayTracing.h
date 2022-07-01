@@ -106,7 +106,7 @@ public:
 
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
@@ -163,7 +163,7 @@ public:
 
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)

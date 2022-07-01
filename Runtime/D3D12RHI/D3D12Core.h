@@ -426,7 +426,7 @@ CONSTEXPR D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
     return D3D12_STENCIL_OP(-1);
 }
 
-inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilStateFace& DepthStencilOp)
+inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const FDepthStencilStateFace& DepthStencilOp)
 {
     return
     {
@@ -523,7 +523,7 @@ CONSTEXPR D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
     return D3D12_LOGIC_OP();
 }
 
-inline uint8 ConvertRenderTargetWriteState(const SRenderTargetWriteState& RenderTargetWriteState)
+inline uint8 ConvertRenderTargetWriteState(const FRenderTargetWriteState& RenderTargetWriteState)
 {
     uint8 RenderTargetWriteMask = 0;
     if (RenderTargetWriteState.WriteAll())

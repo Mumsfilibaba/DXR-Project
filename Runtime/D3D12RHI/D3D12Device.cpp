@@ -78,7 +78,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 {
     Check(Device != nullptr);
 
-    String Message = "[D3D12] Device Removed";
+    FString Message = "[D3D12] Device Removed";
     D3D12_ERROR("%s", Message.CStr());
 
     ID3D12Device* DxDevice = Device->GetD3D12Device();
@@ -122,7 +122,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         D3D12_ERROR("%s", Message.CStr());
         for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
-            Message = "    " + String(ToString(CurrentNode->pCommandHistory[i]));
+            Message = "    " + FString(ToString(CurrentNode->pCommandHistory[i]));
             D3D12_ERROR("%s", Message.CStr());
             if (File)
             {
@@ -442,7 +442,7 @@ bool FD3D12Device::Initialize()
     }
     else
     {
-        const String Description = Adapter->GetDescription();
+        const FString Description = Adapter->GetDescription();
         D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", Description.CStr());
     }
 
@@ -534,13 +534,13 @@ bool FD3D12Device::Initialize()
     }
 #endif
 
-/*#if WIN11_BUILD_22000
+#if 0 && WIN11_BUILD_22000
     if (FAILED(Device.GetAs<ID3D12Device9>(&Device9)))
     {
         D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device9");
         return false;
     }
-#endif*/
+#endif
 
     // TODO: Remove feature levels from unsupported SDKs
     const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
@@ -577,10 +577,7 @@ bool FD3D12Device::Initialize()
     }
 
     // Create DescriptorHeaps
-    GlobalResourceHeap = dbg_new FD3D12DescriptorHeap( this
-                                                     , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-                                                     , D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
-                                                     , D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    GlobalResourceHeap = dbg_new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     if (!GlobalResourceHeap->Initialize())
     {
         D3D12_ERROR("Failed to create global resource descriptor heap");
@@ -591,10 +588,7 @@ bool FD3D12Device::Initialize()
         GlobalResourceHeap->SetName("Global Resource Descriptor Heap");
     }
 
-    GlobalSamplerHeap = dbg_new FD3D12DescriptorHeap( this
-                                                    , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-                                                    , D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
-                                                    , D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    GlobalSamplerHeap = dbg_new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     if (!GlobalSamplerHeap->Initialize())
     {
         D3D12_ERROR("Failed to create global sampler descriptor heap");

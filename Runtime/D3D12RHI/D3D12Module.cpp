@@ -7,7 +7,7 @@ IMPLEMENT_ENGINE_MODULE(FD3D12Module, D3D12RHI);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Module
 
-CRHICoreInterface* FD3D12Module::CreateInterface()
+FRHICoreInterface* FD3D12Module::CreateInterface()
 {
     return FD3D12CoreInterface::CreateD3D12Instance();
 }

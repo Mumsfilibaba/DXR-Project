@@ -16,7 +16,7 @@ CGenericThread* CGenericThreadMisc::CreateThread(const TFunction<void()>& InFunc
     return dbg_new CGenericThread(InFunction);
 }
 
-CGenericThread* CGenericThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const String& InName)
+CGenericThread* CGenericThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
 {
     return dbg_new CGenericThread(InFunction);
 }

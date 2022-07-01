@@ -19,14 +19,14 @@ class FRHIShader;
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCommandAllocator
+// FRHICommandAllocator
 
-class RHI_API FCommandAllocator
+class RHI_API FRHICommandAllocator
 {
 public:
 
-    FCommandAllocator(uint32 StartSize = 4096);
-    ~FCommandAllocator();
+    FRHICommandAllocator(uint32 StartSize = 4096);
+    ~FRHICommandAllocator();
 
     void* Allocate(uint64 SizeInBytes, uint64 Alignment = STANDARD_ALIGNMENT);
 
@@ -863,7 +863,7 @@ public:
      *
      * @param Message: Message for the marker
      */
-    void InsertMarker(const String& Marker)
+    void InsertMarker(const FString& Marker)
     {
         InsertCommand<FRHICommandInsertMarker>(Marker);
     }
@@ -974,7 +974,7 @@ private:
 
 private:
 
-    FCommandAllocator CmdAllocator;
+    FRHICommandAllocator CmdAllocator;
 
     FRHICommand*      FirstCommand;
     FRHICommand*      LastCommand;

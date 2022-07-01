@@ -14,7 +14,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // COBJLoader
 
-static TSharedPtr<SImage2D> LoadMaterialTexture(const String& Path, const String& Filename)
+static TSharedPtr<SImage2D> LoadMaterialTexture(const FString& Path, const FString& Filename)
 {
     // If filename is empty there is no texture to load
     if (Filename.IsEmpty())
@@ -22,14 +22,14 @@ static TSharedPtr<SImage2D> LoadMaterialTexture(const String& Path, const String
         return nullptr;
     }
 
-    String Fullpath = Path + '/' + Filename;
+    FString Fullpath = Path + '/' + Filename;
 
     // Make sure that correct slashes are used
     ConvertBackslashes(Fullpath);
     return CStbImageLoader::LoadFile(Fullpath);
 }
 
-bool COBJLoader::LoadFile(const String& Filename, SSceneData& OutScene, bool ReverseHandedness)
+bool COBJLoader::LoadFile(const FString& Filename, SSceneData& OutScene, bool ReverseHandedness)
 {
     // Make sure to clear everything
     OutScene.Models.Clear();
@@ -42,7 +42,7 @@ bool COBJLoader::LoadFile(const String& Filename, SSceneData& OutScene, bool Rev
     std::vector<tinyobj::material_t> Materials;
     tinyobj::attrib_t Attributes;
 
-    String MTLFiledir = String(Filename.CStr(), Filename.ReverseFind('/'));
+    FString MTLFiledir = FString(Filename.CStr(), Filename.ReverseFind('/'));
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.CStr(), MTLFiledir.CStr(), true, false))
     {
         LOG_WARNING("[COBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.CStr(), Warning.c_str(), Error.c_str());

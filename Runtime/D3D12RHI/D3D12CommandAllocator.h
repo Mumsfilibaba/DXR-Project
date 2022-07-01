@@ -39,7 +39,7 @@ public:
         return SUCCEEDED(Result);
     }
 
-    FORCEINLINE void SetName(const String& Name)
+    FORCEINLINE void SetName(const FString& Name)
     {
         WString WideName = CharToWide(Name);
         Allocator->SetName(WideName.CStr());

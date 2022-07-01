@@ -48,7 +48,7 @@ public:
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
@@ -102,7 +102,7 @@ public:
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
@@ -163,7 +163,7 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
@@ -229,7 +229,7 @@ public:
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)

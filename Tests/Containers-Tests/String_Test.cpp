@@ -36,7 +36,7 @@ void TString_Test( const char* Args )
     {
         std::cout << std::endl << "----Testing StaticString----" << std::endl << std::endl;
 
-        StringView StringView( "Hello StringView" );
+        FStringView FStringView( "Hello FStringView" );
 
         StaticString<64> StaticString0;
         PrintString( StaticString0 );
@@ -44,7 +44,7 @@ void TString_Test( const char* Args )
         PrintString( StaticString1 );
         StaticString<64> StaticString2 = StaticString<64>( Args, 7 );
         PrintString( StaticString2 );
-        StaticString<64> StaticString3 = StaticString<64>( StringView );
+        StaticString<64> StaticString3 = StaticString<64>( FStringView );
         PrintString( StaticString3 );
         StaticString<64> StaticString4 = StaticString1;
         PrintString( StaticString4 );
@@ -196,7 +196,7 @@ void TString_Test( const char* Args )
     {
         std::cout << std::endl << "----Testing WStaticString----" << std::endl << std::endl;
 
-        WStringView StringView( L"Hello StringView" );
+        FWStringView FStringView( L"Hello FStringView" );
 
         const wchar_t* SomeWideStringInsteadOfArgs = L"/Users/SomeFolder/Blabla/BlaBla";
 
@@ -206,7 +206,7 @@ void TString_Test( const char* Args )
         PrintWideString( StaticString1 );
         WStaticString<64> StaticString2 = WStaticString<64>( SomeWideStringInsteadOfArgs, 7 );
         PrintWideString( StaticString2 );
-        WStaticString<64> StaticString3 = WStaticString<64>( StringView );
+        WStaticString<64> StaticString3 = WStaticString<64>( FStringView );
         PrintWideString( StaticString3 );
         WStaticString<64> StaticString4 = StaticString1;
         PrintWideString( StaticString4 );
@@ -358,7 +358,7 @@ void TString_Test( const char* Args )
     {
         std::cout << std::endl << "----Testing String----" << std::endl << std::endl;
 
-        StringView StringView( "Hello StringView" );
+        FStringView FStringView( "Hello FStringView" );
 
         String String0;
         PrintString( String0 );
@@ -366,7 +366,7 @@ void TString_Test( const char* Args )
         PrintString( String1 );
         String String2 = String( Args, 7 );
         PrintString( String2 );
-        String String3 = String( StringView );
+        String String3 = String( FStringView );
         PrintString( String3 );
         String String4 = String1;
         PrintString( String4 );
@@ -518,7 +518,7 @@ void TString_Test( const char* Args )
     {
         std::cout << std::endl << "----Testing WString----" << std::endl << std::endl;
 
-        WStringView StringView( L"Hello StringView" );
+        FWStringView FStringView( L"Hello FStringView" );
 
         const wchar_t* SomeWideStringInsteadOfArgs = L"/Users/SomeFolder/Blabla/BlaBla";
 
@@ -528,7 +528,7 @@ void TString_Test( const char* Args )
         PrintWideString( String1 );
         WString String2 = WString( SomeWideStringInsteadOfArgs, 7 );
         PrintWideString( String2 );
-        WString String3 = WString( StringView );
+        WString String3 = WString( FStringView );
         PrintWideString( String3 );
         WString String4 = String1;
         PrintWideString( String4 );
@@ -678,15 +678,15 @@ void TString_Test( const char* Args )
     }
 
     {
-        std::cout << std::endl << "----Testing StringView----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing FStringView----" << std::endl << std::endl;
 
         const char* LongString = "This is a long string";
 
-        StringView StringView0;
+        FStringView StringView0;
         PrintStringView( StringView0 );
-        StringView StringView1 = LongString;
+        FStringView StringView1 = LongString;
         PrintStringView( StringView1 );
-        StringView StringView2 = StringView( LongString + 5, 4 );
+        FStringView StringView2 = FStringView( LongString + 5, 4 );
         PrintStringView( StringView2 );
 
         char Buffer[6] = { };
@@ -694,16 +694,16 @@ void TString_Test( const char* Args )
         StringView1.Copy( Buffer, 5, 4 );
         std::cout << "Buffer=" << Buffer << std::endl;
 
-        StringView StringView3 = "    Trimmable String    ";
+        FStringView StringView3 = "    Trimmable String    ";
         PrintStringView( StringView3 );
 
-        StringView StringView4 = StringView3.Trim();
+        FStringView StringView4 = StringView3.Trim();
         PrintStringView( StringView4 );
 
-        StringView StringView5 = StringView( "COMPAREPostfix", 7 );
+        FStringView StringView5 = FStringView( "COMPAREPostfix", 7 );
         PrintStringView( StringView5 );
 
-        StringView StringView6 = StringView( "comparePostfix", 7 );
+        FStringView StringView6 = FStringView( "comparePostfix", 7 );
         PrintStringView( StringView6 );
 
         std::cout << "Compare=" << StringView5.Compare( StringView6 ) << std::endl;
@@ -712,7 +712,7 @@ void TString_Test( const char* Args )
         StringView6.Clear();
         PrintStringView( StringView6 );
 
-        StringView SearchString = "0123MeSearch89Me89";
+        FStringView SearchString = "0123MeSearch89Me89";
         PrintStringView( SearchString );
 
         std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;
@@ -729,7 +729,7 @@ void TString_Test( const char* Args )
         std::cout << "Position=" << SearchString.ReverseFindOneOf( "hMc" ) << std::endl;
         std::cout << "Position=" << SearchString.ReverseFindOneNotOf( "0123456789" ) << std::endl;
 
-        StringView TestString = "Test";
+        FStringView TestString = "Test";
         PrintStringView( TestString );
 
         std::cout << "operator== : " << std::boolalpha << ("Test" == TestString) << std::endl;
@@ -768,15 +768,15 @@ void TString_Test( const char* Args )
     }
 
     {
-        std::cout << std::endl << "----Testing WStringView----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing FWStringView----" << std::endl << std::endl;
 
         const wchar_t* LongString = L"This is a long string";
 
-        WStringView StringView0;
+        FWStringView StringView0;
         PrintWideStringView( StringView0 );
-        WStringView StringView1 = LongString;
+        FWStringView StringView1 = LongString;
         PrintWideStringView( StringView1 );
-        WStringView StringView2 = WStringView( LongString + 5, 4 );
+        FWStringView StringView2 = FWStringView( LongString + 5, 4 );
         PrintWideStringView( StringView2 );
 
         wchar_t Buffer[6] = { };
@@ -784,16 +784,16 @@ void TString_Test( const char* Args )
         StringView1.Copy( Buffer, 5, 4 );
         std::cout << "Buffer=" << Buffer << std::endl;
 
-        WStringView StringView3 = L"    Trimmable String    ";
+        FWStringView StringView3 = L"    Trimmable String    ";
         PrintWideStringView( StringView3 );
 
-        WStringView StringView4 = StringView3.Trim();
+        FWStringView StringView4 = StringView3.Trim();
         PrintWideStringView( StringView4 );
 
-        WStringView StringView5 = WStringView( L"COMPAREPostfix", 7 );
+        FWStringView StringView5 = FWStringView( L"COMPAREPostfix", 7 );
         PrintWideStringView( StringView5 );
 
-        WStringView StringView6 = WStringView( L"comparePostfix", 7 );
+        FWStringView StringView6 = FWStringView( L"comparePostfix", 7 );
         PrintWideStringView( StringView6 );
 
         std::cout << "Compare=" << StringView5.Compare( StringView6 ) << std::endl;
@@ -802,7 +802,7 @@ void TString_Test( const char* Args )
         StringView6.Clear();
         PrintWideStringView( StringView6 );
 
-        WStringView SearchString = L"0123MeSearch89Me89";
+        FWStringView SearchString = L"0123MeSearch89Me89";
         PrintWideStringView( SearchString );
 
         std::cout << "Position=" << SearchString.Find( L"Me" ) << std::endl;
@@ -819,7 +819,7 @@ void TString_Test( const char* Args )
         std::cout << "Position=" << SearchString.ReverseFindOneOf( L"hMc" ) << std::endl;
         std::cout << "Position=" << SearchString.ReverseFindOneNotOf( L"0123456789" ) << std::endl;
 
-        WStringView TestString = L"Test";
+        FWStringView TestString = L"Test";
         PrintWideStringView( TestString );
 
         std::cout << "operator== : " << std::boolalpha << (L"Test" == TestString) << std::endl;

@@ -16,7 +16,7 @@ CConfigFile::CConfigFile(const char* InFilename)
 {
 }
 
-bool CConfigFile::SetString(const char* SectionName, const char* Name, const String& NewValue)
+bool CConfigFile::SetString(const char* SectionName, const char* Name, const FString& NewValue)
 {
     CConfigValue* Value = GetValue(SectionName, Name);
     if (Value)
@@ -46,7 +46,7 @@ bool CConfigFile::SetBoolean(const char* SectionName, const char* Name, bool bNe
     return SetString(SectionName, Name, ToString(bNewValue));
 }
 
-bool CConfigFile::GetString(const char* SectionName, const char* Name, String& OutValue)
+bool CConfigFile::GetString(const char* SectionName, const char* Name, FString& OutValue)
 {
     CConfigValue* Value = GetValue(SectionName, Name);
     if (Value)

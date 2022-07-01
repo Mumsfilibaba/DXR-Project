@@ -44,7 +44,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     }
 
     // Create Texture Cube
-    const String PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
+    const FString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
     TSharedRef<FRHITexture2D> Panorama = CTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
     if (!Panorama)
     {
@@ -66,7 +66,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         FrameResources.Skybox->SetName("Skybox");
     }
 
-    CRHISamplerStateInitializer Initializer;
+    FRHISamplerStateInitializer Initializer;
     Initializer.AddressU = ESamplerMode::Wrap;
     Initializer.AddressV = ESamplerMode::Wrap;
     Initializer.AddressW = ESamplerMode::Wrap;
@@ -114,7 +114,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CRHIRasterizerStateInitializer RasterizerInitializer;
+    FRHIRasterizerStateInitializer RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
     TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
@@ -124,7 +124,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CRHIBlendStateInitializer BlendStateInitializer;
+    FRHIBlendStateInitializer BlendStateInitializer;
 
     TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
@@ -133,7 +133,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+    FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
     DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
     DepthStencilStateInitializer.bDepthEnable   = true;
     DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;

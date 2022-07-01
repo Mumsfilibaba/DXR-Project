@@ -114,7 +114,7 @@ public:
      * 
      * @param InName: Name of the actor
      */
-    void SetName(const String& InName);
+    void SetName(const FString& InName);
 
     /**
      * @brief: Check if the actor has a component of the component-class 
@@ -169,7 +169,7 @@ public:
      * 
      * @return: Returns the name of the actor
      */
-    FORCEINLINE const String& GetName() const
+    FORCEINLINE const FString& GetName() const
     {
         return Name;
     }
@@ -225,7 +225,7 @@ public:
     }
 
 private:
-    String              Name;
+    FString              Name;
 
     CScene*             SceneOwner = nullptr;
 

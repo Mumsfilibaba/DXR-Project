@@ -13,10 +13,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CFBXLoader
 
-static String ExtractPath(const String& FullFilePath)
+static FString ExtractPath(const FString& FullFilePath)
 {
     auto Pos = FullFilePath.ReverseFind('/');
-    if (Pos != String::NPos)
+    if (Pos != FString::NPos)
     {
         return FullFilePath.SubString(0, Pos);
     }
@@ -63,7 +63,7 @@ static void GetMatrix(const ofbx::Object* Mesh, CMatrix4& OutMatrix)
 }
 #endif
 
-static TSharedPtr<SImage2D> LoadMaterialTexture(const String& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
+static TSharedPtr<SImage2D> LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
 {
 #if 0
     const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
@@ -91,7 +91,7 @@ static TSharedPtr<SImage2D> LoadMaterialTexture(const String& Path, const ofbx::
     }
 }
 
-bool CFBXLoader::LoadFile(const String& Filename, SSceneData& OutScene, uint32 Flags) noexcept
+bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 Flags) noexcept
 {
     OutScene.Models.Clear();
     OutScene.Materials.Clear();
@@ -144,7 +144,7 @@ bool CFBXLoader::LoadFile(const String& Filename, SSceneData& OutScene, uint32 F
     THashTable<SVertex, uint32, SVertexHasher>  UniqueVertices;
     THashTable<const ofbx::Material*, uint32> UniqueMaterials;
 
-    String Path = ExtractPath(Filename);
+    FString Path = ExtractPath(Filename);
 
     SModelData Data;
 

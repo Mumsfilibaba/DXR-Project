@@ -547,16 +547,16 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CTextureDepthStencilValue
+// FTextureDepthStencilValue
 
-class CTextureDepthStencilValue
+class FTextureDepthStencilValue
 {
 public:
 
     /**
      * @brief: Default Constructor
      */
-    CTextureDepthStencilValue()
+    FTextureDepthStencilValue()
         : Depth(1.0f)
         , Stencil(0)
     { }
@@ -567,7 +567,7 @@ public:
      * @param InDepth: Depth-value
      * @param InStencil: Stencil-value
      */
-    CTextureDepthStencilValue(float InDepth, uint8 InStencil)
+    FTextureDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     { }
@@ -586,7 +586,7 @@ public:
      * @param RHS: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CTextureDepthStencilValue& RHS) const
+    bool operator==(const FTextureDepthStencilValue& RHS) const
     {
         return (Depth == RHS.Depth) && (Stencil && RHS.Stencil);
     }
@@ -597,7 +597,7 @@ public:
      * @param RHS: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CTextureDepthStencilValue& RHS) const
+    bool operator!=(const FTextureDepthStencilValue& RHS) const
     {
         return !(*this == RHS);
     }
@@ -687,28 +687,28 @@ public:
     bool IsDepthStencilValue() const { return (Type == EType::DepthStencil); }
 
     /** @return: Returns a FloatColor */
-    CFloatColor& AsColor()
+    FFloatColor& AsColor()
     {
         Check(IsColorValue());
         return ColorValue;
     }
 
     /** @return: Returns a FloatColor */
-    const CFloatColor& AsColor() const
+    const FFloatColor& AsColor() const
     {
         Check(IsColorValue());
         return ColorValue;
     }
 
     /** @return: Returns a DepthStencilClearValue */
-    CTextureDepthStencilValue& AsDepthStencil()
+    FTextureDepthStencilValue& AsDepthStencil()
     {
         Check(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
     /** @return: Returns a DepthStencilClearValue */
-    const CTextureDepthStencilValue& AsDepthStencil() const
+    const FTextureDepthStencilValue& AsDepthStencil() const
     {
         Check(IsDepthStencilValue());
         return DepthStencilValue;
@@ -780,10 +780,10 @@ public:
     union
     {
         /** @brief: Color-value */
-        CFloatColor ColorValue;
+        FFloatColor ColorValue;
 
         /** @brief: DepthStencil-value */
-        CTextureDepthStencilValue DepthStencilValue;
+        FTextureDepthStencilValue DepthStencilValue;
     };
 };
 
@@ -806,13 +806,13 @@ struct FRHICopyBufferInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyTextureSubresourceInfo
+// FRHICopyTextureSubresourceInfo
 
-struct SRHICopyTextureSubresourceInfo
+struct FRHICopyTextureSubresourceInfo
 {
-    SRHICopyTextureSubresourceInfo() = default;
+    FRHICopyTextureSubresourceInfo() = default;
 
-    FORCEINLINE SRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
+    FORCEINLINE FRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
         : x(InX)
         , y(InY)
         , z(InZ)
@@ -830,9 +830,9 @@ struct SRHICopyTextureSubresourceInfo
 
 struct FRHICopyTextureInfo
 {
-    SRHICopyTextureSubresourceInfo Source;
-    SRHICopyTextureSubresourceInfo Destination;
-    uint32 Width = 0;
+    FRHICopyTextureSubresourceInfo Source;
+    FRHICopyTextureSubresourceInfo Destination;
+    uint32 Width  = 0;
     uint32 Height = 0;
-    uint32 Depth = 0;
+    uint32 Depth  = 0;
 };

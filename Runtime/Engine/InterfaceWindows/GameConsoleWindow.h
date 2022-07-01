@@ -64,10 +64,10 @@ private:
     TSharedPtr<CConsoleInputHandler> InputHandler;
 
     // Text to display in the input box when browsing through the history
-    String PopupSelectedText;
+    FString PopupSelectedText;
 
     // The current candidates of registered console-objects
-    TArray<TPair<IConsoleObject*, String>> Candidates;
+    TArray<TPair<IConsoleObject*, FString>> Candidates;
     int32 CandidatesIndex = -1;
 
     // Index in the history

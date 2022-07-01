@@ -1068,7 +1068,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(FRHICommandInsertMarker)
 {
 public:
-    FORCEINLINE FRHICommandInsertMarker(const String& InMarker)
+    FORCEINLINE FRHICommandInsertMarker(const FString& InMarker)
         : Marker(InMarker)
     { }
 
@@ -1079,7 +1079,7 @@ public:
         CommandContext.InsertMarker(Marker);
     }
 
-    String Marker;
+    FString Marker;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

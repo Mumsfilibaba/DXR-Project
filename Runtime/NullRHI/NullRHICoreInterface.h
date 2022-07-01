@@ -23,12 +23,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHICoreInterface
 
-class CNullRHICoreInterface final : public CRHICoreInterface
+class CNullRHICoreInterface final : public FRHICoreInterface
 {
 private:
 
     CNullRHICoreInterface()
-        : CRHICoreInterface(ERHIInstanceType::Null)
+        : FRHICoreInterface(ERHIInstanceType::Null)
         , CommandContext(CNullRHICommandContext::CreateNullRHIContext())
     { }
 
@@ -44,7 +44,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHICoreInterface Interface
+    // FRHICoreInterface Interface
 
     virtual bool Initialize(bool bEnableDebug) override final { return true; }
 
@@ -73,7 +73,7 @@ public:
         return dbg_new TNullRHITexture<CNullRHITexture3D>(Initializer);
     }
 
-    virtual FRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer) override final
+    virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHISamplerState();
     }
@@ -108,22 +108,22 @@ public:
         return dbg_new CNullRHIRayTracingGeometry(Initializer);
     }
 
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const CRHITextureSRVInitializer& Initializer) override final
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVInitializer& Initializer) override final
     {
         return dbg_new CNullRHIShaderResourceView(Initializer.Texture);
     }
 
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const CRHIBufferSRVInitializer& Initializer) override final
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVInitializer& Initializer) override final
     {
         return dbg_new CNullRHIShaderResourceView(Initializer.Buffer);
     }
 
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const CRHITextureUAVInitializer& Initializer) override final
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVInitializer& Initializer) override final
     {
         return dbg_new CNullRHIUnorderedAccessView(Initializer.Texture);
     }
 
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer) override final
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVInitializer& Initializer) override final
     {
         return dbg_new CNullRHIUnorderedAccessView(Initializer.Buffer);
     }
@@ -138,27 +138,27 @@ public:
         return dbg_new TNullRHIShader<FRHIVertexShader>();
     }
 
-    virtual class CRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) override final
+    virtual class FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode) override final
+    virtual class FRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode) override final
+    virtual class FRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode) override final
+    virtual class FRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode) override final
+    virtual class FRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode) override final
     {
         return nullptr;
     }
@@ -188,17 +188,17 @@ public:
         return dbg_new TNullRHIShader<FRHIRayMissShader>();
     }
 
-    virtual class FRHIDepthStencilState* RHICreateDepthStencilState(const CRHIDepthStencilStateInitializer& Initializer) override final
+    virtual class FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHIDepthStencilState();
     }
 
-    virtual class FRHIRasterizerState* RHICreateRasterizerState(const CRHIRasterizerStateInitializer& Initializer) override final
+    virtual class FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHIRasterizerState();
     }
 
-    virtual class FRHIBlendState* RHICreateBlendState(const CRHIBlendStateInitializer& Initializer) override final
+    virtual class FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHIBlendState();
     }
@@ -213,7 +213,7 @@ public:
         return dbg_new CNullRHIGraphicsPipelineState();
     }
 
-    virtual class FRHIComputePipelineState* RHICreateComputePipelineState(const CRHIComputePipelineStateInitializer& Initializer) override final
+    virtual class FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHIComputePipelineState();
     }
@@ -238,19 +238,19 @@ public:
         return CommandContext;
     }
 
-    virtual String GetAdapterDescription() const override final
+    virtual FString GetAdapterDescription() const override final
     {
-        return String();
+        return FString();
     }
 
-    virtual void RHIQueryRayTracingSupport(SRayTracingSupport& OutSupport) const override final
+    virtual void RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport) const override final
     {
-        OutSupport = SRayTracingSupport();
+        OutSupport = FRayTracingSupport();
     }
 
-    virtual void RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport) const override final
+    virtual void RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const override final
     {
-        OutSupport = SShadingRateSupport();
+        OutSupport = FShadingRateSupport();
     }
 
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final

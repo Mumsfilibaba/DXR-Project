@@ -8,8 +8,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef TSharedRef<class FRHIShaderResourceView>  RHIShaderResourceViewRef;
-typedef TSharedRef<class FRHIUnorderedAccessView> RHIUnorderedAccessViewRef;
+typedef TSharedRef<class FRHIShaderResourceView>  FRHIShaderResourceViewRef;
+typedef TSharedRef<class FRHIUnorderedAccessView> FRHIUnorderedAccessViewRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EBufferSRVFormat
@@ -88,13 +88,13 @@ inline const char* ToString(EAttachmentStoreAction StoreAction)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITextureSRVInitializer
+// FRHITextureSRVInitializer
 
-class CRHITextureSRVInitializer
+class FRHITextureSRVInitializer
 {
 public:
 
-    CRHITextureSRVInitializer()
+    FRHITextureSRVInitializer()
         : Texture(nullptr)
         , MinLODClamp(0.0f)
         , Format(EFormat::Unknown)
@@ -104,7 +104,7 @@ public:
         , NumSlices(0)
     { }
 
-    CRHITextureSRVInitializer( FRHITexture* InTexture
+    FRHITextureSRVInitializer( FRHITexture* InTexture
                              , float InMinLODClamp
                              , EFormat InFormat
                              , uint8 InFirstMipLevel
@@ -132,7 +132,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHITextureSRVInitializer& RHS) const
+    bool operator==(const FRHITextureSRVInitializer& RHS) const
     {
         return (Texture         == RHS.Texture)
             && (MinLODClamp     == RHS.MinLODClamp)
@@ -143,7 +143,7 @@ public:
             && (NumSlices       == RHS.NumSlices);
     }
 
-    bool operator!=(const CRHITextureSRVInitializer& RHS) const
+    bool operator!=(const FRHITextureSRVInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -162,20 +162,20 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBufferSRVInitializer
+// FRHIBufferSRVInitializer
 
-class CRHIBufferSRVInitializer
+class FRHIBufferSRVInitializer
 {
 public:
 
-    CRHIBufferSRVInitializer()
+    FRHIBufferSRVInitializer()
         : Buffer(nullptr)
 	    , Format(EBufferSRVFormat::None)
 	    , FirstElement(0)
 	    , NumElements(0)
     { }
 
-    CRHIBufferSRVInitializer( FRHIBuffer* InBuffer
+    FRHIBufferSRVInitializer( FRHIBuffer* InBuffer
                             , uint32 InFirstElement
                             , uint32 InNumElements
                             , EBufferSRVFormat InFormat = EBufferSRVFormat::None)
@@ -194,7 +194,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHIBufferSRVInitializer& RHS) const
+    bool operator==(const FRHIBufferSRVInitializer& RHS) const
     {
         return (Buffer       == RHS.Buffer) 
             && (Format       == RHS.Format)
@@ -202,7 +202,7 @@ public:
             && (NumElements  == RHS.NumElements);
     }
 
-    bool operator!=(const CRHIBufferSRVInitializer& RHS) const
+    bool operator!=(const FRHIBufferSRVInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -216,13 +216,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITextureUAVInitializer
+// FRHITextureUAVInitializer
 
-class CRHITextureUAVInitializer
+class FRHITextureUAVInitializer
 {
 public:
 
-    CRHITextureUAVInitializer()
+    FRHITextureUAVInitializer()
         : Texture(nullptr)
         , Format(EFormat::Unknown)
         , MipLevel(0)
@@ -230,7 +230,7 @@ public:
         , NumSlices(0)
     { }
 
-    CRHITextureUAVInitializer( FRHITexture* InTexture
+    FRHITextureUAVInitializer( FRHITexture* InTexture
                              , EFormat InFormat
                              , uint32 InMipLevel
                              , uint32 InFirstArraySlice
@@ -242,7 +242,7 @@ public:
         , NumSlices(uint16(InNumSlices))
     { }
 
-    CRHITextureUAVInitializer(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel)
+    FRHITextureUAVInitializer(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel)
         : Texture(InTexture)
         , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
@@ -260,7 +260,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHITextureUAVInitializer& RHS) const
+    bool operator==(const FRHITextureUAVInitializer& RHS) const
     {
         return (Texture         == RHS.Texture)
             && (Format          == RHS.Format)
@@ -269,7 +269,7 @@ public:
             && (NumSlices       == RHS.NumSlices);
     }
 
-    bool operator!=(const CRHITextureUAVInitializer& RHS) const
+    bool operator!=(const FRHITextureUAVInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -285,20 +285,20 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBufferUAVInitializer
+// FRHIBufferUAVInitializer
 
-class CRHIBufferUAVInitializer
+class FRHIBufferUAVInitializer
 {
 public:
 
-    CRHIBufferUAVInitializer()
+    FRHIBufferUAVInitializer()
         : Buffer(nullptr)
 		, Format(EBufferUAVFormat::None)
 		, FirstElement(0)
         , NumElements(0)
     { }
 
-    CRHIBufferUAVInitializer( FRHIBuffer* InBuffer
+    FRHIBufferUAVInitializer( FRHIBuffer* InBuffer
                             , uint32 InFirstElement
                             , uint32 InNumElements
                             , EBufferUAVFormat InFormat = EBufferUAVFormat::None)
@@ -317,7 +317,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHIBufferUAVInitializer& RHS) const
+    bool operator==(const FRHIBufferUAVInitializer& RHS) const
     {
         return (Buffer       == RHS.Buffer) 
             && (Format       == RHS.Format)
@@ -325,7 +325,7 @@ public:
             && (NumElements  == RHS.NumElements);
     }
 
-    bool operator!=(const CRHIBufferUAVInitializer& RHS) const
+    bool operator!=(const FRHIBufferUAVInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -339,18 +339,18 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIResourceView
+// FRHIResourceView
 
-class CRHIResourceView : public FRHIResource
+class FRHIResourceView : public FRHIResource
 {
 protected:
 
-    explicit CRHIResourceView(FRHIResource* InResource)
+    explicit FRHIResourceView(FRHIResource* InResource)
         : FRHIResource()
         , Resource(InResource)
     { }
 
-    ~CRHIResourceView() = default;
+    ~FRHIResourceView() = default;
 
 public:
 
@@ -363,12 +363,12 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIShaderResourceView
 
-class FRHIShaderResourceView : public CRHIResourceView
+class FRHIShaderResourceView : public FRHIResourceView
 {
 protected:
 
     explicit FRHIShaderResourceView(FRHIResource* InResource)
-        : CRHIResourceView(InResource)
+        : FRHIResourceView(InResource)
     { }
 
     ~FRHIShaderResourceView() = default;
@@ -381,12 +381,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIUnorderedAccessView
 
-class FRHIUnorderedAccessView : public CRHIResourceView
+class FRHIUnorderedAccessView : public FRHIResourceView
 {
 protected:
 
     explicit FRHIUnorderedAccessView(FRHIResource* InResource)
-        : CRHIResourceView(InResource)
+        : FRHIResourceView(InResource)
     { }
 
     ~FRHIUnorderedAccessView() = default;
@@ -416,7 +416,7 @@ public:
     explicit FRHIRenderTargetView( FRHITexture* InTexture
                                  , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
                                  , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const CFloatColor& InClearValue = CFloatColor(0.0f, 0.0f, 0.0f, 1.0f))
+                                 , const FFloatColor& InClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f))
         : Texture(InTexture)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(0)
@@ -432,7 +432,7 @@ public:
                                  , uint32 InMipLevel
                                  , EAttachmentLoadAction InLoadAction
                                  , EAttachmentStoreAction InStoreAction
-                                 , const CFloatColor& InClearValue)
+                                 , const FFloatColor& InClearValue)
         : Texture(InTexture)
         , Format(InFormat)
         , ArrayIndex(uint16(InArrayIndex))
@@ -480,7 +480,7 @@ public:
     EAttachmentLoadAction  LoadAction;
     EAttachmentStoreAction StoreAction;
 
-    CFloatColor            ClearValue;
+    FFloatColor            ClearValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -503,7 +503,7 @@ public:
     explicit FRHIDepthStencilView( FRHITexture* InTexture
                                  , EAttachmentLoadAction InLoadAction  = EAttachmentLoadAction::Clear
                                  , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const CTextureDepthStencilValue& InClearValue = CTextureDepthStencilValue(1.0f, 0))
+                                 , const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(0)
@@ -518,7 +518,7 @@ public:
                                  , uint8 InMipLevel
                                  , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
                                  , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const CTextureDepthStencilValue& InClearValue = CTextureDepthStencilValue(1.0f, 0))
+                                 , const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(uint16(InArrayIndex))
@@ -534,7 +534,7 @@ public:
                                  , EFormat InFormat
                                  , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
                                  , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const CTextureDepthStencilValue& InClearValue = CTextureDepthStencilValue(1.0f, 0))
+                                 , const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , Format(InFormat)
         , ArrayIndex(uint16(InArrayIndex))
@@ -582,5 +582,5 @@ public:
     EAttachmentLoadAction     LoadAction;
     EAttachmentStoreAction    StoreAction;
 
-    CTextureDepthStencilValue ClearValue;
+    FTextureDepthStencilValue ClearValue;
 };

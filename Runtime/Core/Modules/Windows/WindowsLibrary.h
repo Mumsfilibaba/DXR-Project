@@ -15,13 +15,13 @@ public:
 
     static FORCEINLINE void* LoadDynamicLib(const char* LibraryName)
     {
-        const String RealName = GetRealName(LibraryName);
+        const FString RealName = GetRealName(LibraryName);
         return reinterpret_cast<void*>(LoadLibraryA(RealName.CStr()));
     }
 
     static FORCEINLINE void* GetLoadedHandle(const char* LibraryName)
     {
-        const String RealName = GetRealName(LibraryName);
+        const FString RealName = GetRealName(LibraryName);
         return reinterpret_cast<void*>(GetModuleHandleA(RealName.CStr()));
     }
 
@@ -40,9 +40,9 @@ public:
         return ".dll";
     }
 
-    static FORCEINLINE String GetRealName(const char* LibraryName)
+    static FORCEINLINE FString GetRealName(const char* LibraryName)
     {
-        return String(LibraryName) + GetDynamicLibExtension();
+        return FString(LibraryName) + GetDynamicLibExtension();
     }
 
     static FORCEINLINE bool IsLibraryLoaded(const char* LibraryName)

@@ -481,7 +481,7 @@ void CCanvasApplication::RemoveWindow(const TSharedRef<CCanvasWindow>& Window)
     InterfaceWindows.Remove(Window);
 }
 
-void CCanvasApplication::DrawString(const String& NewString)
+void CCanvasApplication::DrawString(const FString& NewString)
 {
     DebugStrings.Emplace(NewString);
 }
@@ -785,7 +785,7 @@ void CCanvasApplication::RenderStrings()
         ImGui::Begin("DebugWindow", nullptr, WindowFlags);
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-        for (const String& String : DebugStrings)
+        for (const FString& String : DebugStrings)
         {
             ImGui::Text("%s", String.CStr());
         }

@@ -7,7 +7,7 @@ IMPLEMENT_ENGINE_MODULE(CMetalModule, MetalRHI);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalModule
 
-CRHICoreInterface* CMetalModule::CreateInterface()
+FRHICoreInterface* CMetalModule::CreateInterface()
 {
     return CMetalCoreInterface::CreateMetalCoreInterface();
 }

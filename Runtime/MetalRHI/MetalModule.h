@@ -13,6 +13,6 @@ public:
     CMetalModule()  = default;
     ~CMetalModule() = default;
 
-    virtual class CRHICoreInterface*  CreateInterface() override final;
+    virtual class FRHICoreInterface*  CreateInterface() override final;
     virtual class IRHIShaderCompiler* CreateCompiler()  override final;
 };

@@ -49,7 +49,7 @@ public:
     void EnableHeightMap(bool bInEnableHeightMap);
     void EnableAlphaMask(bool bInEnableAlphaMask);
 
-    void SetDebugName(const String& InDebugName);
+    void SetDebugName(const FString& InDebugName);
 
     // ShaderResourceView are sorted in the way that the deferred rendering pass wants them
     // This means that one can call BindShaderResourceViews directly with this function
@@ -100,7 +100,7 @@ public:
     TSharedRef<FRHITexture2D> AlphaMask;
 
 private:
-    String DebugName;
+    FString DebugName;
 
     bool bMaterialBufferIsDirty = true;
     bool bRenderInForwardPass   = false;

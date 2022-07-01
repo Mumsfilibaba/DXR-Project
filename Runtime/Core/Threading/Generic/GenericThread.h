@@ -42,11 +42,11 @@ public:
     
     virtual bool Start() { return true; }
 	
-    virtual void SetName(const String& InName) { }
+    virtual void SetName(const FString& InName) { }
 
     virtual void* GetPlatformHandle() { return nullptr; }
 
-    virtual String GetName() const { return ""; }
+    virtual FString GetName() const { return ""; }
 
     TFunction<void()> GetFunction() const { return Function; }
 

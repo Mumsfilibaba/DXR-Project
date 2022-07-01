@@ -5,7 +5,7 @@
 #include "Core/Templates/AddReference.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Characters class with a fixed allocated number of characters
+// TStaticString - Characters class with a fixed allocated number of characters
 
 template<typename CharType, int32 CharCount>
 class TStaticString

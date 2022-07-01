@@ -9,7 +9,7 @@ CGenericThread* CWindowsThreadMisc::CreateThread(const TFunction<void()>& InFunc
     return CWindowsThread::CreateWindowsThread(InFunction);
 }
 
-CGenericThread* CWindowsThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const String& InName)
+CGenericThread* CWindowsThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
 {
     return CWindowsThread::CreateWindowsThread(InFunction, InName);
 }

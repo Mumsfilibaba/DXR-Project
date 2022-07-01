@@ -71,14 +71,14 @@ bool CMesh::Init(const SMeshData& Data)
             RTGeometry->SetName("RayTracing Geometry");
         }
 
-        CRHIBufferSRVInitializer SRVInitializer(VertexBuffer.Get(), 0, VertexCount);
+        FRHIBufferSRVInitializer SRVInitializer(VertexBuffer.Get(), 0, VertexCount);
         VertexBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!VertexBufferSRV)
         {
             return false;
         }
 
-        SRVInitializer = CRHIBufferSRVInitializer(IndexBuffer.Get(), 0, IndexCount, EBufferSRVFormat::Uint32);
+        SRVInitializer = FRHIBufferSRVInitializer(IndexBuffer.Get(), 0, IndexCount, EBufferSRVFormat::Uint32);
         IndexBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!IndexBufferSRV)
         {

@@ -105,7 +105,7 @@ struct SProfileSample
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CFrameProfiler
 
-using ProfileSamplesTable = THashTable<String, SProfileSample, SStringHasher>;
+using ProfileSamplesTable = THashTable<FString, SProfileSample, FStringHasher>;
 
 class CORE_API CFrameProfiler
 {

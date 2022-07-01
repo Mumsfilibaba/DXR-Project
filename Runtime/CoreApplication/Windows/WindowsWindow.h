@@ -38,7 +38,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CGenericWindow Interface
 
-    virtual bool Initialize(const String& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
+    virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
 
     virtual void Show(bool bMaximized) override final;
 
@@ -56,9 +56,9 @@ public:
     
     virtual bool IsActiveWindow() const override final;
 
-    virtual void SetTitle(const String& Title) override final;
+    virtual void SetTitle(const FString& Title) override final;
     
-    virtual void GetTitle(String& OutTitle) override final;
+    virtual void GetTitle(FString& OutTitle) override final;
 
     virtual void MoveTo(int32 x, int32 y) override final;
 

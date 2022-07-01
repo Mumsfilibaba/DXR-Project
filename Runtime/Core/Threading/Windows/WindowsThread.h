@@ -10,13 +10,13 @@ class CORE_API CWindowsThread final : public CGenericThread
 private:
 
     CWindowsThread(const TFunction<void()>& InFunction);
-    CWindowsThread(const TFunction<void()>& InFunction, const String& InName);
+    CWindowsThread(const TFunction<void()>& InFunction, const FString& InName);
     ~CWindowsThread();
 
 public:
 
     static CWindowsThread* CreateWindowsThread(const TFunction<void()>& InFunction);
-    static CWindowsThread* CreateWindowsThread(const TFunction<void()>& InFunction, const String& InName);
+    static CWindowsThread* CreateWindowsThread(const TFunction<void()>& InFunction, const FString& InName);
 
 public:
 
@@ -27,11 +27,11 @@ public:
 
     virtual bool Start() override final;
 
-    virtual void SetName(const String& InName) override final;
+    virtual void SetName(const FString& InName) override final;
 
     virtual void* GetPlatformHandle() override final;
 
-    virtual String GetName() const override final { return Name; }
+    virtual FString GetName() const override final { return Name; }
 
 private:
 
@@ -40,5 +40,5 @@ private:
     HANDLE Thread;
     DWORD  hThreadID;
 
-    String Name;
+    FString Name;
 };

@@ -141,14 +141,14 @@ void FD3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint3
     }
 }
 
-void FD3D12OfflineDescriptorHeap::SetName(const String& InName)
+void FD3D12OfflineDescriptorHeap::SetName(const FString& InName)
 {
     Name = InName;
 
     uint32 HeapIndex = 0;
     for (FDescriptorHeap& Heap : Heaps)
     {
-        String DbgName = Name + "[" + ToString(HeapIndex) + "]";
+        FString DbgName = Name + "[" + ToString(HeapIndex) + "]";
         Heap.Heap->SetName(DbgName.CStr());
     }
 }
@@ -162,7 +162,7 @@ bool FD3D12OfflineDescriptorHeap::AllocateHeap()
     {
         if (!Name.IsEmpty())
         {
-            String DbgName = Name + ToString(Heaps.Size());
+            FString DbgName = Name + ToString(Heaps.Size());
             Heap->SetName(DbgName.CStr());
         }
 
@@ -277,7 +277,7 @@ void FD3D12OnlineDescriptorHeap::SetNumPooledHeaps(uint32 NumHeaps)
 // FD3D12OnlineDescriptorManager
 
 FD3D12OnlineDescriptorManager::FD3D12OnlineDescriptorManager(FD3D12DescriptorHeap* InDescriptorHeap, uint32 InDescriptorStartOffset, uint32 InDescriptorCount)
-    : DescriptorHeap(InDescriptorHeap)
+    : DescriptorHeap(MakeSharedRef<FD3D12DescriptorHeap>(InDescriptorHeap))
     , CPUStartHandle()
     , GPUStartHandle()
     , DescriptorStartOffset(InDescriptorStartOffset)

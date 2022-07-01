@@ -4,7 +4,7 @@
 #include "Core/Delegates/MulticastDelegate.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ConsoleCommand - Executes a single function from the console
+// CConsoleCommand - Executes a single function from the console
 
 class CConsoleCommand : public IConsoleCommand
 {

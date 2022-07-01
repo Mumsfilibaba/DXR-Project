@@ -10,15 +10,15 @@
 #include "Core/Threading/AtomicInt.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CPointerReferenceCounter - Counting references in TWeak- and TSharedPtr
+// FPointerReferenceCounter - Counting references in TWeak- and TSharedPtr
 
-class CPointerReferenceCounter
+class FPointerReferenceCounter
 {
 public:
 
     using CounterType = AtomicInt32::Type;
 
-    FORCEINLINE CPointerReferenceCounter() noexcept
+    FORCEINLINE FPointerReferenceCounter() noexcept
         : NumWeakRefs(0)
         , NumStrongRefs(0)
     { }
@@ -68,7 +68,7 @@ class TPointerReferencedStorage : private DeleterType
 
 public:
     using ElementType = typename TRemoveExtent<T>::Type;
-    using CounterType = CPointerReferenceCounter::CounterType;
+    using CounterType = FPointerReferenceCounter::CounterType;
 
     TPointerReferencedStorage(const TPointerReferencedStorage&) = delete;
     TPointerReferencedStorage& operator=(const TPointerReferencedStorage&) = delete;
@@ -107,7 +107,7 @@ public:
 
     ~TPointerReferencedStorage() = default;
 
-    FORCEINLINE void InitStrong(ElementType* NewPtr, CPointerReferenceCounter* NewCounter) noexcept
+    FORCEINLINE void InitStrong(ElementType* NewPtr, FPointerReferenceCounter* NewCounter) noexcept
     {
         // If the pointer is nullptr, we do not care about the counter
         Ptr = NewPtr;
@@ -119,7 +119,7 @@ public:
             }
             else
             {
-                Counter = new CPointerReferenceCounter();
+                Counter = new FPointerReferenceCounter();
             }
 
             Check(Counter != nullptr);
@@ -131,7 +131,7 @@ public:
         }
     }
 
-    FORCEINLINE void InitWeak(ElementType* NewPtr, CPointerReferenceCounter* NewCounter) noexcept
+    FORCEINLINE void InitWeak(ElementType* NewPtr, FPointerReferenceCounter* NewCounter) noexcept
     {
         // If the pointer is nullptr, we do not care about the counter...
         Ptr = NewPtr;
@@ -148,7 +148,7 @@ public:
         }
     }
 
-    FORCEINLINE void InitMove(ElementType* NewPtr, CPointerReferenceCounter* NewCounter) noexcept
+    FORCEINLINE void InitMove(ElementType* NewPtr, FPointerReferenceCounter* NewCounter) noexcept
     {
         // If the pointer is nullptr, we do not care about the counter...
         Ptr = NewPtr;
@@ -208,7 +208,7 @@ public:
     FORCEINLINE void Swap(TPointerReferencedStorage& Other) noexcept
     {
         ElementType* TempPtr = Ptr;
-        CPointerReferenceCounter* TempCounter = Counter;
+        FPointerReferenceCounter* TempCounter = Counter;
 
         Ptr = Other.Ptr;
         Counter = Other.Counter;
@@ -227,7 +227,7 @@ public:
         return &Ptr;
     }
 
-    FORCEINLINE CPointerReferenceCounter* GetCounter() const noexcept
+    FORCEINLINE FPointerReferenceCounter* GetCounter() const noexcept
     {
         return Counter;
     }
@@ -260,7 +260,7 @@ public:
 
 private:
     ElementType* Ptr;
-    CPointerReferenceCounter* Counter;
+    FPointerReferenceCounter* Counter;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -661,7 +661,7 @@ public:
     }
 
 private:
-    FORCEINLINE CPointerReferenceCounter* GetCounter() const noexcept
+    FORCEINLINE FPointerReferenceCounter* GetCounter() const noexcept
     {
         return Storage.GetCounter();
     }
@@ -1114,7 +1114,7 @@ public:
     }
 
 private:
-    FORCEINLINE CPointerReferenceCounter* GetCounter() const noexcept
+    FORCEINLINE FPointerReferenceCounter* GetCounter() const noexcept
     {
         return Storage.GetCounter();
     }

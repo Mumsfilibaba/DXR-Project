@@ -7,7 +7,7 @@ IMPLEMENT_ENGINE_MODULE(CNullRHIModule, NullRHI);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIModule
 
-CRHICoreInterface* CNullRHIModule::CreateInterface()
+FRHICoreInterface* CNullRHIModule::CreateInterface()
 {
     return CNullRHICoreInterface::CreateNullRHICoreInterface();
 }

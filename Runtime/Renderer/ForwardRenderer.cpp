@@ -51,7 +51,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilInitializer;
+    FRHIDepthStencilStateInitializer DepthStencilInitializer;
     DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
     DepthStencilInitializer.bDepthEnable   = true;
     DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::All;
@@ -63,7 +63,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CRHIRasterizerStateInitializer RasterizerStateInfo;
+    FRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -73,7 +73,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CRHIBlendStateInitializer BlendStateInitializer( { SRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero) }, false , false);
+    FRHIBlendStateInitializer BlendStateInitializer( { FRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero) }, false , false);
 
     TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)

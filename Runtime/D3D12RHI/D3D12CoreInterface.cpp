@@ -29,7 +29,7 @@ FD3D12CoreInterface* FD3D12CoreInterface::CreateD3D12Instance()
 }
 
 FD3D12CoreInterface::FD3D12CoreInterface()
-    : CRHICoreInterface(ERHIInstanceType::D3D12)
+    : FRHICoreInterface(ERHIInstanceType::D3D12)
     , Device(nullptr)
     , DirectCmdContext(nullptr)
 {
@@ -463,7 +463,7 @@ FRHITexture3D* FD3D12CoreInterface::RHICreateTexture3D(const FRHITexture3DInitia
     return CreateTexture<FD3D12Texture3D>(Initializer);
 }
 
-FRHISamplerState* FD3D12CoreInterface::RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer)
+FRHISamplerState* FD3D12CoreInterface::RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer)
 {
     D3D12_SAMPLER_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -649,7 +649,7 @@ FRHIRayTracingScene* FD3D12CoreInterface::RHICreateRayTracingScene(const FRHIRay
     return D3D12Scene.ReleaseOwnership();
 }
 
-FRHIShaderResourceView* FD3D12CoreInterface::RHICreateShaderResourceView(const CRHITextureSRVInitializer& Initializer)
+FRHIShaderResourceView* FD3D12CoreInterface::RHICreateShaderResourceView(const FRHITextureSRVInitializer& Initializer)
 {
     D3D12_ERROR_COND(Initializer.Texture != nullptr, "Texture cannot be nullptr");
 
@@ -737,7 +737,7 @@ FRHIShaderResourceView* FD3D12CoreInterface::RHICreateShaderResourceView(const C
     }
 }
 
-FRHIShaderResourceView* FD3D12CoreInterface::RHICreateShaderResourceView(const CRHIBufferSRVInitializer& Initializer)
+FRHIShaderResourceView* FD3D12CoreInterface::RHICreateShaderResourceView(const FRHIBufferSRVInitializer& Initializer)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Initializer.Buffer);
     if (!D3D12Buffer)
@@ -787,7 +787,7 @@ FRHIShaderResourceView* FD3D12CoreInterface::RHICreateShaderResourceView(const C
     }
 }
 
-FRHIUnorderedAccessView* FD3D12CoreInterface::RHICreateUnorderedAccessView(const CRHITextureUAVInitializer& Initializer)
+FRHIUnorderedAccessView* FD3D12CoreInterface::RHICreateUnorderedAccessView(const FRHITextureUAVInitializer& Initializer)
 {
     D3D12_ERROR_COND(Initializer.Texture != nullptr, "Texture cannot be nullptr");
 
@@ -868,7 +868,7 @@ FRHIUnorderedAccessView* FD3D12CoreInterface::RHICreateUnorderedAccessView(const
     }
 }
 
-FRHIUnorderedAccessView* FD3D12CoreInterface::RHICreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer)
+FRHIUnorderedAccessView* FD3D12CoreInterface::RHICreateUnorderedAccessView(const FRHIBufferUAVInitializer& Initializer)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Initializer.Buffer);
     if (!D3D12Buffer)
@@ -939,35 +939,35 @@ FRHIVertexShader* FD3D12CoreInterface::RHICreateVertexShader(const TArray<uint8>
     return Shader.ReleaseOwnership();
 }
 
-CRHIHullShader* FD3D12CoreInterface::RHICreateHullShader(const TArray<uint8>& ShaderCode)
+FRHIHullShader* FD3D12CoreInterface::RHICreateHullShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-CRHIDomainShader* FD3D12CoreInterface::RHICreateDomainShader(const TArray<uint8>& ShaderCode)
+FRHIDomainShader* FD3D12CoreInterface::RHICreateDomainShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-CRHIGeometryShader* FD3D12CoreInterface::RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
+FRHIGeometryShader* FD3D12CoreInterface::RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-CRHIMeshShader* FD3D12CoreInterface::RHICreateMeshShader(const TArray<uint8>& ShaderCode)
+FRHIMeshShader* FD3D12CoreInterface::RHICreateMeshShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-CRHIAmplificationShader* FD3D12CoreInterface::RHICreateAmplificationShader(const TArray<uint8>& ShaderCode)
+FRHIAmplificationShader* FD3D12CoreInterface::RHICreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
@@ -1041,7 +1041,7 @@ FRHIRayMissShader* FD3D12CoreInterface::RHICreateRayMissShader(const TArray<uint
     }
 }
 
-FRHIDepthStencilState* FD3D12CoreInterface::RHICreateDepthStencilState(const CRHIDepthStencilStateInitializer& Initializer)
+FRHIDepthStencilState* FD3D12CoreInterface::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer)
 {
     D3D12_DEPTH_STENCIL_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -1058,7 +1058,7 @@ FRHIDepthStencilState* FD3D12CoreInterface::RHICreateDepthStencilState(const CRH
     return dbg_new FD3D12DepthStencilState(GetDevice(), Desc);
 }
 
-FRHIRasterizerState* FD3D12CoreInterface::RHICreateRasterizerState(const CRHIRasterizerStateInitializer& Initializer)
+FRHIRasterizerState* FD3D12CoreInterface::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer)
 {
     D3D12_RASTERIZER_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -1078,7 +1078,7 @@ FRHIRasterizerState* FD3D12CoreInterface::RHICreateRasterizerState(const CRHIRas
     return dbg_new FD3D12RasterizerState(GetDevice(), Desc);
 }
 
-FRHIBlendState* FD3D12CoreInterface::RHICreateBlendState(const CRHIBlendStateInitializer& Initializer)
+FRHIBlendState* FD3D12CoreInterface::RHICreateBlendState(const FRHIBlendStateInitializer& Initializer)
 {
     D3D12_BLEND_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -1118,7 +1118,7 @@ FRHIGraphicsPipelineState* FD3D12CoreInterface::RHICreateGraphicsPipelineState(c
     return NewPipelineState.ReleaseOwnership();
 }
 
-FRHIComputePipelineState* FD3D12CoreInterface::RHICreateComputePipelineState(const CRHIComputePipelineStateInitializer& Initializer)
+FRHIComputePipelineState* FD3D12CoreInterface::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer)
 {
     Check(Initializer.Shader != nullptr);
 
@@ -1191,7 +1191,7 @@ bool FD3D12CoreInterface::RHIQueryUAVFormatSupport(EFormat Format) const
     return true;
 }
 
-void FD3D12CoreInterface::RHIQueryRayTracingSupport(SRayTracingSupport& OutSupport) const
+void FD3D12CoreInterface::RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport) const
 {
     if (RayTracingDesc.Tier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
     {
@@ -1212,7 +1212,7 @@ void FD3D12CoreInterface::RHIQueryRayTracingSupport(SRayTracingSupport& OutSuppo
     }
 }
 
-void FD3D12CoreInterface::RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport) const
+void FD3D12CoreInterface::RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const
 {
     switch (VariableRateShadingDesc.Tier)
     {

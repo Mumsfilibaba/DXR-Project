@@ -22,7 +22,7 @@ public:
         , Desc()
     {
         SemanticNames.Reserve(Initializer.Elements.Size());
-        for (const SVertexInputElement& Element : Initializer.Elements)
+        for (const FVertexInputElement& Element : Initializer.Elements)
         {
             D3D12_INPUT_ELEMENT_DESC D3D12Element;
             D3D12Element.SemanticName         = SemanticNames.Emplace(Element.Semantic).CStr();
@@ -48,7 +48,7 @@ public:
 private:
     D3D12_INPUT_LAYOUT_DESC Desc;
 
-    TArray<String>                   SemanticNames;
+    TArray<FString>                   SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
 };
 
@@ -120,7 +120,7 @@ public:
 
     bool Init(const FRHIGraphicsPipelineStateInitializer& Initializer);
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         WString WideName = CharToWide(InName);
         PipelineState->SetName(WideName.CStr());
@@ -153,7 +153,7 @@ public:
 
     bool Init();
 
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         WString WideName = CharToWide(InName);
         PipelineState->SetName(WideName.CStr());
@@ -194,13 +194,13 @@ public:
 
     bool Init(const FRHIRayTracingPipelineStateInitializer& Initializer);
 
-    virtual void SetName(const String& InName) override
+    virtual void SetName(const FString& InName) override
     {
         WString WideName = CharToWide(InName);
         StateObject->SetName(WideName.CStr());
     }
 
-    void* GetShaderIdentifer(const String& ExportName);
+    void* GetShaderIdentifer(const FString& ExportName);
 
     FORCEINLINE ID3D12StateObject* GetStateObject() const
     {
@@ -242,5 +242,5 @@ private:
     TSharedRef<FD3D12RootSignature> MissLocalRootSignature;
     TSharedRef<FD3D12RootSignature> HitLocalRootSignature;
 
-    THashTable<String, FRayTracingShaderIdentifer, SStringHasher> ShaderIdentifers;
+    THashTable<FString, FRayTracingShaderIdentifer, FStringHasher> ShaderIdentifers;
 };

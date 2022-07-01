@@ -545,7 +545,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
     TArray<FRHIRayAnyHitShader*>     AnyHitShaders;
     TArray<FRHIRayClosestHitShader*> ClosestHitShaders;
 
-    for (const CRHIRayTracingHitGroupInitializer& HitGroup : Initializer.HitGroups)
+    for (const FRHIRayTracingHitGroupInitializer& HitGroup : Initializer.HitGroups)
     {
         HitGroupName.Clear();
         ClosestHitName.Clear();
@@ -706,7 +706,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
     return true;
 }
 
-void* FD3D12RayTracingPipelineState::GetShaderIdentifer(const String& ExportName)
+void* FD3D12RayTracingPipelineState::GetShaderIdentifer(const FString& ExportName)
 {
     const auto MapItem = ShaderIdentifers.find(ExportName);
     if (MapItem == ShaderIdentifers.end())

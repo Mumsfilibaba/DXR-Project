@@ -78,14 +78,14 @@ struct CColor
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CFloatColor16
+// FFloatColor16
 
-struct CFloatColor16
+struct FFloatColor16
 {
     /**
      * @brief: Default constructor (Initialize components to zero)
      */
-    FORCEINLINE CFloatColor16()
+    FORCEINLINE FFloatColor16()
         : R(0.0f)
         , G(0.0f)
         , B(0.0f)
@@ -100,7 +100,7 @@ struct CFloatColor16
      * @param InB: Blue channel
      * @param InA: Alpha channel
      */
-    FORCEINLINE CFloatColor16(SFloat16 InR, SFloat16 InG, SFloat16 InB, SFloat16 InA)
+    FORCEINLINE FFloatColor16(SFloat16 InR, SFloat16 InG, SFloat16 InB, SFloat16 InA)
         : R(InR)
         , G(InG)
         , B(InB)
@@ -127,12 +127,12 @@ struct CFloatColor16
         return reinterpret_cast<const uint16*>(this);
     }
 
-    bool operator==(const CFloatColor16& RHS) const
+    bool operator==(const FFloatColor16& RHS) const
     {
         return (R == RHS.R) && (G == RHS.G) && (B == RHS.B) && (A == RHS.A);
     }
 
-    bool operator!=(const CFloatColor16& RHS) const
+    bool operator!=(const FFloatColor16& RHS) const
     {
         return !(*this == RHS);
     }
@@ -151,14 +151,14 @@ struct CFloatColor16
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CFloatColor
+// FFloatColor
 
-struct CFloatColor
+struct FFloatColor
 {
     /**
      * @brief: Default constructor (Initialize components to zero)
      */
-    FORCEINLINE CFloatColor()
+    FORCEINLINE FFloatColor()
         : R(0.0f)
         , G(0.0f)
         , B(0.0f)
@@ -173,7 +173,7 @@ struct CFloatColor
      * @param InB: Blue channel
      * @param InA: Alpha channel
      */
-    FORCEINLINE CFloatColor(float InR, float InG, float InB, float InA)
+    FORCEINLINE FFloatColor(float InR, float InG, float InB, float InA)
         : R(InR)
         , G(InG)
         , B(InB)
@@ -200,12 +200,12 @@ struct CFloatColor
         return reinterpret_cast<const float*>(this);
     }
 
-    bool operator==(const CFloatColor& RHS) const
+    bool operator==(const FFloatColor& RHS) const
     {
         return (R == RHS.R) && (G == RHS.G) && (B == RHS.B) && (A == RHS.A);
     }
 
-    bool operator!=(const CFloatColor& RHS) const
+    bool operator!=(const FFloatColor& RHS) const
     {
         return !(*this == RHS);
     }

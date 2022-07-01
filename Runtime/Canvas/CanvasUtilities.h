@@ -11,7 +11,7 @@ constexpr float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-inline void DrawFloat3Control(const String& Label, CVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f)
+inline void DrawFloat3Control(const FString& Label, CVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f)
 {
     ImGui::PushID(Label.CStr());
     ImGui::Columns(2, nullptr, false);

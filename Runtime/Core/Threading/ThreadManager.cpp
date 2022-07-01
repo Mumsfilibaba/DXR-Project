@@ -79,7 +79,7 @@ GenericThreadRef CThreadManager::CreateThread(const TFunction<void()>& InFunctio
     }
 }
 
-GenericThreadRef CThreadManager::CreateNamedThread(const TFunction<void()>& InFunction, const String& InName)
+GenericThreadRef CThreadManager::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
 {
     GenericThreadRef Thread = PlatformThreadMisc::CreateNamedThread(InFunction, InName);
     if (Thread)
@@ -94,7 +94,7 @@ GenericThreadRef CThreadManager::CreateNamedThread(const TFunction<void()>& InFu
     }
 }
 
-GenericThreadRef CThreadManager::GetNamedThread(const String& InName)
+GenericThreadRef CThreadManager::GetNamedThread(const FString& InName)
 {
     for (const auto& Thread : Threads)
     {

@@ -88,14 +88,14 @@ void CGameConsoleWindow::Tick()
             float VariableValueWidth = 20.0f;
 
             // First find the maximum length of each column for the selectable
-            Candidates.Foreach([&](const TPair<IConsoleObject*, String>& Candidate)
+            Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
             {
                 VariableNameWidth = NMath::Max(VariableNameWidth, ImGui::CalcTextSize(Candidate.Second.CStr()).x);
 
                 IConsoleVariable* Variable = Candidate.First->AsVariable();
                 if (Variable)
                 {
-                    String Value = Variable->GetString();
+                    FString Value = Variable->GetString();
                     VariableValueWidth = NMath::Max(VariableValueWidth, ImGui::CalcTextSize(Value.CStr()).x);
                 }
             });
@@ -106,7 +106,7 @@ void CGameConsoleWindow::Tick()
             // Draw UI
             for (int32 i = 0; i < Candidates.Size(); i++)
             {
-                const TPair<IConsoleObject*, String>& Candidate = Candidates[i];
+                const TPair<IConsoleObject*, FString>& Candidate = Candidates[i];
                 bIsActiveIndex = (CandidatesIndex == i);
 
                 // VariableName
@@ -135,7 +135,7 @@ void CGameConsoleWindow::Tick()
                 IConsoleVariable* Variable = Candidate.First->AsVariable();
                 if (Variable)
                 {
-                    String Value = Variable->GetString();
+                    FString Value = Variable->GetString();
                     ImGui::Text("%s", Value.CStr());
 
                     if (Variable->IsBool())
@@ -186,8 +186,8 @@ void CGameConsoleWindow::Tick()
         }
         else
         {
-            const TArray<TPair<String, EConsoleSeverity>>& ConsoleMessages = CConsoleManager::Get().GetMessages();
-            for (const TPair<String, EConsoleSeverity>& Text : ConsoleMessages)
+            const TArray<TPair<FString, EConsoleSeverity>>& ConsoleMessages = CConsoleManager::Get().GetMessages();
+            for (const TPair<FString, EConsoleSeverity>& Text : ConsoleMessages)
             {
                 ImVec4 Color;
                 if (Text.Second == EConsoleSeverity::Info)
@@ -261,7 +261,7 @@ void CGameConsoleWindow::Tick()
             }
             else
             {
-                const String Text = String(TextBuffer.Data());
+                const FString Text = FString(TextBuffer.Data());
                 CConsoleManager::Get().Execute(Text);
 
                 TextBuffer[0] = 0;
@@ -333,7 +333,7 @@ int32 CGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
             break;
         }
 
-        const StringView CandidateName(WordStart, WordLength);
+        const FStringView CandidateName(WordStart, WordLength);
         CConsoleManager::Get().FindCandidates(CandidateName, Candidates);
         break;
     }
@@ -390,7 +390,7 @@ int32 CGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
     {
         if (Candidates.IsEmpty())
         {
-            const TArray<String>& History = CConsoleManager::Get().GetHistory();
+            const TArray<FString>& History = CConsoleManager::Get().GetHistory();
             if (History.IsEmpty())
             {
                 HistoryIndex = -1;
