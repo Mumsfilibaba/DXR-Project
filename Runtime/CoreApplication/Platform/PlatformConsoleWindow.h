@@ -2,11 +2,11 @@
 
 #if PLATFORM_WINDOWS
     #include "CoreApplication/Windows/WindowsConsoleWindow.h"
-    typedef CWindowsConsoleWindow PlatformConsoleWindow;
+    typedef FWindowsConsoleWindow FPlatformConsoleWindow;
 #elif PLATFORM_MACOS
     #include "CoreApplication/Mac/MacConsoleWindow.h"
-    typedef CMacConsoleWindow PlatformConsoleWindow;
+    typedef FMacConsoleWindow FPlatformConsoleWindow;
 #else
     #include "CoreApplication/Generic/GenericConsoleWindow.h"
-    typedef CGenericConsoleWindow PlatformConsoleWindow;
+    typedef FGenericConsoleWindow FPlatformConsoleWindow;
 #endif

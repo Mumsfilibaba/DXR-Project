@@ -16,7 +16,7 @@ class FPointerReferenceCounter
 {
 public:
 
-    using CounterType = AtomicInt32::Type;
+    using CounterType = FAtomicInt32::Type;
 
     FORCEINLINE FPointerReferenceCounter() noexcept
         : NumWeakRefs(0)
@@ -54,8 +54,8 @@ public:
     }
 
 private:
-    AtomicInt32 NumWeakRefs;
-    AtomicInt32 NumStrongRefs;
+    FAtomicInt32 NumWeakRefs;
+    FAtomicInt32 NumStrongRefs;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

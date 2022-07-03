@@ -58,47 +58,47 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsApplication
+// FWindowsApplication
 
-class COREAPPLICATION_API CWindowsApplication final : public CGenericApplication
+class COREAPPLICATION_API FWindowsApplication final : public FGenericApplication
 {
 private:
 
-    friend struct TDefaultDelete<CWindowsApplication>;
+    friend struct TDefaultDelete<FWindowsApplication>;
 
-    CWindowsApplication(HINSTANCE InInstance);
-    ~CWindowsApplication();
+    FWindowsApplication(HINSTANCE InInstance);
+    ~FWindowsApplication();
 
 public:
 
-    static CWindowsApplication* CreateWindowsApplication();
+    static FWindowsApplication* CreateWindowsApplication();
 
 public:
     
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericApplication Interface
+    // FGenericApplication Interface
 
-    virtual TSharedRef<CGenericWindow> CreateWindow() override final;
+    virtual TSharedRef<FGenericWindow> CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
 
 	virtual bool SupportsHighPrecisionMouse() const override final { return false; }
 
-    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<CGenericWindow>& Window) override final;
+    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
-    virtual void SetCapture(const TSharedRef<CGenericWindow>& Window) override final;
+    virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) override final;
 
-    virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) override final;
+    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
-    virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
+    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
 
-    virtual TSharedRef<CGenericWindow> GetCapture() const override final;
+    virtual TSharedRef<FGenericWindow> GetCapture() const override final;
 
-    virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
+    virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
 
 public:
 
-    TSharedRef<CWindowsWindow> GetWindowsWindowFromHWND(HWND Window) const;
+    TSharedRef<FWindowsWindow> GetWindowsWindowFromHWND(HWND Window) const;
 
     void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
@@ -108,7 +108,7 @@ public:
 
     bool IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener) const;
 
-    void CloseWindow(const TSharedRef<CWindowsWindow>& Window); 
+    void CloseWindow(const TSharedRef<FWindowsWindow>& Window); 
 
     FORCEINLINE HINSTANCE GetInstance() const 
     { 
@@ -134,20 +134,20 @@ private:
 private:
 
     TArray<SWindowsMessage>            Messages;
-    CCriticalSection                   MessagesCS;
+    FCriticalSection                   MessagesCS;
 
-    TArray<TSharedRef<CWindowsWindow>> Windows;
-    mutable CCriticalSection           WindowsCS;
+    TArray<TSharedRef<FWindowsWindow>> Windows;
+    mutable FCriticalSection           WindowsCS;
 
-    TArray<TSharedRef<CWindowsWindow>> ClosedWindows;
-    CCriticalSection                   ClosedWindowsCS;
+    TArray<TSharedRef<FWindowsWindow>> ClosedWindows;
+    FCriticalSection                   ClosedWindowsCS;
 
     bool      bIsTrackingMouse;
     
     HINSTANCE InstanceHandle;
 
     TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
-    mutable CCriticalSection                    WindowsMessageListenersCS;
+    mutable FCriticalSection                    WindowsMessageListenersCS;
 };
 
-extern CWindowsApplication* WindowsApplication;
+extern FWindowsApplication* WindowsApplication;

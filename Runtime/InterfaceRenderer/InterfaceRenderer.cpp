@@ -77,7 +77,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromSource(VSSource, CompileInfo, ShaderCode))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -85,7 +85,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     TSharedRef<FRHIVertexShader> VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -111,7 +111,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromSource(PSSource, CompileInfo, ShaderCode))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -119,7 +119,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     PShader = RHICreatePixelShader(ShaderCode);
     if (!PShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -133,7 +133,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     TSharedRef<FRHIVertexInputLayout> InputLayout = RHICreateVertexInputLayout(InputLayoutInfo);
     if (!InputLayout)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -144,7 +144,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -154,7 +154,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -171,7 +171,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     TSharedRef<FRHIBlendState> BlendStateBlending = RHICreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -180,7 +180,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     TSharedRef<FRHIBlendState> BlendStateNoBlending = RHICreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -198,7 +198,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -207,7 +207,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     PipelineStateNoBlending = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineStateNoBlending)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 

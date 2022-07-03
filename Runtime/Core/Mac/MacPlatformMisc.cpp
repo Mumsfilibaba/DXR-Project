@@ -3,9 +3,9 @@
 #include <Foundation/Foundation.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacPlatformMisc
+// FMacPlatformMisc
 
-void CMacPlatformMisc::OutputDebugString(const String& Message)
+void FMacPlatformMisc::OutputDebugString(const String& Message)
 {
     NSLog(@"%s\n", Message.CStr());
 }

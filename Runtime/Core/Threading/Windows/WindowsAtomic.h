@@ -3,33 +3,33 @@
 #include "Core/Threading/Platform/PlatformInterlocked.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsAtomic
+// FWindowsAtomic
 
-class CWindowsAtomic final : public CGenericAtomic
+class FWindowsAtomic final : public FGenericAtomic
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericAtomic Interface
+    // FGenericAtomic Interface
 
     static FORCEINLINE int8 Read(volatile const int8* Source)
     {
-        return PlatformInterlocked::InterlockedCompareExchange((int8*)Source, 0, 0);
+        return FPlatformInterlocked::InterlockedCompareExchange((int8*)Source, 0, 0);
     }
 
     static FORCEINLINE int16 Read(volatile const int16* Source)
     {
-        return PlatformInterlocked::InterlockedCompareExchange((int16*)Source, 0, 0);
+        return FPlatformInterlocked::InterlockedCompareExchange((int16*)Source, 0, 0);
     }
 
     static FORCEINLINE int32 Read(volatile const int32* Source)
     {
-        return PlatformInterlocked::InterlockedCompareExchange((int32*)Source, 0, 0);
+        return FPlatformInterlocked::InterlockedCompareExchange((int32*)Source, 0, 0);
     }
 
     static FORCEINLINE int64 Read(volatile const int64* Source)
     {
-        return PlatformInterlocked::InterlockedCompareExchange((int64*)Source, 0, 0);
+        return FPlatformInterlocked::InterlockedCompareExchange((int64*)Source, 0, 0);
     }
 
     static FORCEINLINE int8 RelaxedRead(volatile const int8* Source)
@@ -54,22 +54,22 @@ public:
 
     static FORCEINLINE void Store(volatile int8* Dest, int8 Value)
     {
-        PlatformInterlocked::InterlockedExchange((int8*)Dest, Value);
+        FPlatformInterlocked::InterlockedExchange((int8*)Dest, Value);
     }
 
     static FORCEINLINE void Store(volatile int16* Dest, int16 Value)
     {
-        PlatformInterlocked::InterlockedExchange((int16*)Dest, Value);
+        FPlatformInterlocked::InterlockedExchange((int16*)Dest, Value);
     }
 
     static FORCEINLINE void Store(volatile int32* Dest, int32 Value)
     {
-        PlatformInterlocked::InterlockedExchange((int32*)Dest, Value);
+        FPlatformInterlocked::InterlockedExchange((int32*)Dest, Value);
     }
 
     static FORCEINLINE void Store(volatile int64* Dest, int64 Value)
     {
-        PlatformInterlocked::InterlockedExchange((int64*)Dest, Value);
+        FPlatformInterlocked::InterlockedExchange((int64*)Dest, Value);
     }
 
     static FORCEINLINE void RelaxedStore(volatile int8* Dest, int8 Value)

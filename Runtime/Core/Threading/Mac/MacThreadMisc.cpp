@@ -4,14 +4,14 @@
 #include <Foundation/Foundation.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacThreadMisc
+// FMacThreadMisc
 
-CGenericThread* CMacThreadMisc::CreateThread(const TFunction<void()>& InFunction)
+FGenericThread* FMacThreadMisc::CreateThread(const TFunction<void()>& InFunction)
 {
-    return CMacThread::CreateMacThread(InFunction);
+    return FMacThread::CreateMacThread(InFunction);
 }
 
-CGenericThread* CMacThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const String& InName)
+FGenericThread* FMacThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const String& InName)
 {
-    return CMacThread::CreateMacThread(InFunction, InName);
+    return FMacThread::CreateMacThread(InFunction, InName);
 }

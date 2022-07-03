@@ -3,25 +3,25 @@
 #include "Core/Threading/Generic/GenericThread.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsThread
+// FWindowsThread
 
-class CORE_API CWindowsThread final : public CGenericThread
+class CORE_API FWindowsThread final : public FGenericThread
 {
 private:
 
-    CWindowsThread(const TFunction<void()>& InFunction);
-    CWindowsThread(const TFunction<void()>& InFunction, const FString& InName);
-    ~CWindowsThread();
+    FWindowsThread(const TFunction<void()>& InFunction);
+    FWindowsThread(const TFunction<void()>& InFunction, const FString& InName);
+    ~FWindowsThread();
 
 public:
 
-    static CWindowsThread* CreateWindowsThread(const TFunction<void()>& InFunction);
-    static CWindowsThread* CreateWindowsThread(const TFunction<void()>& InFunction, const FString& InName);
+    static FWindowsThread* CreateWindowsThread(const TFunction<void()>& InFunction);
+    static FWindowsThread* CreateWindowsThread(const TFunction<void()>& InFunction, const FString& InName);
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericThread Interface
+    // FGenericThread Interface
 
     virtual int32 WaitForCompletion(uint64 TimeoutInMs) override final;
 

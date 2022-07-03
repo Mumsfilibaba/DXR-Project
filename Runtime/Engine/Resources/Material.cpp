@@ -41,7 +41,7 @@ void CMaterial::BuildBuffer(FRHICommandList& CmdList)
     bMaterialBufferIsDirty = false;
 }
 
-void CMaterial::SetAlbedo(const CVector3& Albedo)
+void CMaterial::SetAlbedo(const FVector3& Albedo)
 {
     Properties.Albedo      = Albedo;
     bMaterialBufferIsDirty = true;
@@ -49,7 +49,7 @@ void CMaterial::SetAlbedo(const CVector3& Albedo)
 
 void CMaterial::SetAlbedo(float r, float g, float b)
 {
-    Properties.Albedo      = CVector3(r, g, b);
+    Properties.Albedo      = FVector3(r, g, b);
     bMaterialBufferIsDirty = true;
 }
 

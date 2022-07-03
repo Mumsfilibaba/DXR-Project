@@ -68,27 +68,27 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CModuleManager
+// FModuleManager
 
 typedef void* PlatformModule;
 
-class CORE_API CModuleManager
+class CORE_API FModuleManager
 {
 private:
 
-    friend class TOptional<CModuleManager>;
+    friend class TOptional<FModuleManager>;
 
-    struct SModule
+    struct FModule
     {
-        SModule() = default;
+        FModule() = default;
 
-        SModule(const FString& InName, IEngineModule* InInterface)
+        FModule(const FString& InName, IEngineModule* InInterface)
             : Name(InName)
             , Interface(InInterface)
             , Handle(0)
         { }
 
-        FString         Name;
+        FString        Name;
         IEngineModule* Interface;
         PlatformModule Handle;
     };
@@ -96,10 +96,10 @@ private:
 public:
 
     // Delegate for when a new module is loaded into the engine, name and IEngineModule pointer is the arguments
-    DECLARE_RETURN_DELEGATE(CInitializeStaticModuleDelegate, IEngineModule*);
+    DECLARE_RETURN_DELEGATE(FInitializeStaticModuleDelegate, IEngineModule*);
 
     /** @return: Returns a reference to the ModuleManager */
-    static CModuleManager& Get();
+    static FModuleManager& Get();
 
     /** @brief: Releases all modules that are loaded */
     static void ReleaseAllLoadedModules();
@@ -137,7 +137,7 @@ public:
      * @param ModuleName: Name of the module to load without platform extension or prefix
      * @param InitDelegate: Delegate to initialize the static delegate
      */ 
-    void RegisterStaticModule(const char* ModuleName, CInitializeStaticModuleDelegate InitDelegate);
+    void RegisterStaticModule(const char* ModuleName, FInitializeStaticModuleDelegate InitDelegate);
 
     /**
      * @brief: Check if a module is already loaded
@@ -239,9 +239,9 @@ public:
 
 private:
 
-    static TOptional<CModuleManager>& GetModuleManagerInstance();
+    static TOptional<FModuleManager>& GetModuleManagerInstance();
 
-    CInitializeStaticModuleDelegate* GetStaticModuleDelegate(const char* ModuleName);
+    FInitializeStaticModuleDelegate* GetStaticModuleDelegate(const char* ModuleName);
 
     int32 GetModuleIndex(const char* ModuleName);
 
@@ -249,8 +249,8 @@ private:
 
     CModuleLoadedDelegate ModuleLoadedDelegate;
 
-    TArray<SModule> Modules;
-    TArray<TPair<FString, CInitializeStaticModuleDelegate>> StaticModuleDelegates;
+    TArray<FModule> Modules;
+    TArray<TPair<FString, FInitializeStaticModuleDelegate>> StaticModuleDelegates;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -259,7 +259,7 @@ private:
 template<typename ModuleClass>
 class TStaticModuleInitializer
 {
-    using CInitializeDelegate = CModuleManager::CInitializeStaticModuleDelegate;
+    using FInitializeDelegate = FModuleManager::FInitializeStaticModuleDelegate;
 
 public:
 
@@ -270,8 +270,8 @@ public:
      */
     TStaticModuleInitializer(const char* ModuleName)
     {
-        CInitializeDelegate InitializeDelegate = CInitializeDelegate::CreateRaw(this, &TStaticModuleInitializer<ModuleClass>::MakeModuleInterface);
-        CModuleManager::Get().RegisterStaticModule(ModuleName, InitializeDelegate);
+        FInitializeDelegate InitializeDelegate = FInitializeDelegate::CreateRaw(this, &TStaticModuleInitializer<ModuleClass>::MakeModuleInterface);
+        FModuleManager::Get().RegisterStaticModule(ModuleName, InitializeDelegate);
     }
 
     /** @return: The newly created module interface */

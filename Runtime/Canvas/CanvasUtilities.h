@@ -11,7 +11,7 @@ constexpr float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-inline void DrawFloat3Control(const FString& Label, CVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f)
+inline void DrawFloat3Control(const FString& Label, FVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f)
 {
     ImGui::PushID(Label.CStr());
     ImGui::Columns(2, nullptr, false);
@@ -80,7 +80,7 @@ inline void DrawFloat3Control(const FString& Label, CVector3& OutValue, float Re
     ImGui::PopID();
 }
 
-FORCEINLINE bool DrawColorEdit3(const char* Label, CVector3& OutColor, ImGuiColorEditFlags Flags = 0)
+FORCEINLINE bool DrawColorEdit3(const char* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
 {
     return ImGui::ColorEdit3(Label, OutColor.Data(), Flags);
 }

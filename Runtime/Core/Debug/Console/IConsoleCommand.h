@@ -4,12 +4,12 @@
 #include "Core/Delegates/MulticastDelegate.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Delegate to be executed when the console-command gets executed
+// FCommandDelegate - Delegate to be executed when the console-command gets executed
 
-DECLARE_MULTICAST_DELEGATE(CExecutedDelegate);
+DECLARE_MULTICAST_DELEGATE(FCommandDelegate);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-Command interface 
+// IConsoleCommand - Console-Command interface 
 
 class IConsoleCommand : public IConsoleObject
 {
@@ -27,5 +27,5 @@ public:
      * 
      * @return: Returns the execute delegate
      */
-    virtual CExecutedDelegate& GetExecutedDelgate() = 0;
+    virtual FCommandDelegate& GetDelgate() = 0;
 };

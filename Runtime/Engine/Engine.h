@@ -45,7 +45,7 @@ public:
      * 
      * @param DeltaTime: Time since the last tick
      */
-    virtual void Tick(CTimestamp DeltaTime);
+    virtual void Tick(FTimestamp DeltaTime);
 
     /** 
      * Release engine resources
@@ -61,7 +61,7 @@ public:
     void Destroy();
 
     /** The main window of the app */
-    TSharedRef<CGenericWindow> MainWindow;
+    TSharedRef<FGenericWindow> MainWindow;
 
     /** The main viewport */
     TSharedRef<FRHIViewport> MainViewport;

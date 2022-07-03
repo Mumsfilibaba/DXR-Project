@@ -26,9 +26,9 @@ static FString ExtractPath(const FString& FullFilePath)
     }
 }
 
-static CMatrix4 ToFloat4x4(const ofbx::Matrix& Matrix)
+static FMatrix4 ToFloat4x4(const ofbx::Matrix& Matrix)
 {
-    CMatrix4 Result;
+    FMatrix4 Result;
     for (uint32 y = 0; y < 4; y++)
     {
         for (uint32 x = 0; x < 4; x++)
@@ -42,23 +42,23 @@ static CMatrix4 ToFloat4x4(const ofbx::Matrix& Matrix)
 }
 
 #if 0
-static void GetMatrix(const ofbx::Object* Mesh, CMatrix4& OutMatrix)
+static void GetMatrix(const ofbx::Object* Mesh, FMatrix4& OutMatrix)
 {
     if (Mesh)
     {
-        CMatrix4 Matrix;
+        FMatrix4 Matrix;
         GetMatrix(Mesh->getParent(), Matrix);
 
         ofbx::Vec3 Scaling = Mesh->getLocalScaling();
         ofbx::Vec3 Rotation = Mesh->getLocalRotation();
         ofbx::Vec3 Translation = Mesh->getLocalTranslation();
 
-        CMatrix4 LocalMatrix = ToFloat4x4(Mesh->evalLocal(Translation, Rotation, Scaling));
+        FMatrix4 LocalMatrix = ToFloat4x4(Mesh->evalLocal(Translation, Rotation, Scaling));
         OutMatrix = Matrix * LocalMatrix;
     }
     else
     {
-        OutMatrix = CMatrix4::Identity();
+        OutMatrix = FMatrix4::Identity();
     }
 }
 #endif
@@ -170,7 +170,7 @@ bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 
             MaterialData.EmissiveTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
             MaterialData.AOTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
 
-            MaterialData.Diffuse = CVector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
+            MaterialData.Diffuse = FVector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
             MaterialData.AO = 1.0f;//  CurrentMaterial->getSpecularColor().r;
             MaterialData.Roughness = 1.0f;// CurrentMaterial->getSpecularColor().g;
             MaterialData.Metallic = 1.0f;// CurrentMaterial->getSpecularColor().b;
@@ -200,9 +200,9 @@ bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 
 
         const ofbx::Vec3* Tangents = CurrentGeom->getTangents();
 
-        CMatrix4 Matrix = ToFloat4x4(CurrentMesh->getGlobalTransform());
-        CMatrix4 GeometricMatrix = ToFloat4x4(CurrentMesh->getGeometricMatrix());
-        CMatrix4 Transform = Matrix * GeometricMatrix;
+        FMatrix4 Matrix = ToFloat4x4(CurrentMesh->getGlobalTransform());
+        FMatrix4 GeometricMatrix = ToFloat4x4(CurrentMesh->getGeometricMatrix());
+        FMatrix4 Transform = Matrix * GeometricMatrix;
 
         int32 CurrentIndex = 0;
         int32 MaterialIndex = -1;
@@ -230,7 +230,7 @@ bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 
                 SVertex TempVertex;
 
                 // Position
-                CVector3 Position = CVector3((float)Vertices[CurrentIndex].x, (float)Vertices[CurrentIndex].y, (float)Vertices[CurrentIndex].z);
+                FVector3 Position = FVector3((float)Vertices[CurrentIndex].x, (float)Vertices[CurrentIndex].y, (float)Vertices[CurrentIndex].z);
                 TempVertex.Position = Transform.TransformPosition(Position);
 
                 // Apply the scene scale
@@ -240,16 +240,16 @@ bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 
                 }
 
                 // Normal
-                CVector3 Normal = CVector3((float)Normals[CurrentIndex].x, (float)Normals[CurrentIndex].y, (float)Normals[CurrentIndex].z);
+                FVector3 Normal = FVector3((float)Normals[CurrentIndex].x, (float)Normals[CurrentIndex].y, (float)Normals[CurrentIndex].z);
                 TempVertex.Normal = Transform.TransformDirection(Normal);
 
                 // TexCoords
-                TempVertex.TexCoord = CVector2((float)TexCoords[CurrentIndex].x, (float)TexCoords[CurrentIndex].y);
+                TempVertex.TexCoord = FVector2((float)TexCoords[CurrentIndex].x, (float)TexCoords[CurrentIndex].y);
 
                 // Tangents
                 if (Tangents)
                 {
-                    CVector3 Tangent = CVector3((float)Tangents[CurrentIndex].x, (float)Tangents[CurrentIndex].y, (float)Tangents[CurrentIndex].z);
+                    FVector3 Tangent = FVector3((float)Tangents[CurrentIndex].x, (float)Tangents[CurrentIndex].y, (float)Tangents[CurrentIndex].z);
                     TempVertex.Tangent = Transform.TransformDirection(Tangent);
                 }
 

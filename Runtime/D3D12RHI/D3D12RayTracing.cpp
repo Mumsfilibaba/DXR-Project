@@ -91,7 +91,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, FD3D12Ver
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -122,7 +122,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, FD3D12Ver
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -207,7 +207,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -258,7 +258,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -273,7 +273,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
     for (int32 Instance = 0; Instance < InstanceDescs.Size(); Instance++)
     {
         FD3D12RayTracingGeometry* D3D12Geometry = static_cast<FD3D12RayTracingGeometry*>(InInstances[Instance].Geometry);
-        FMemory::Memcpy(&InstanceDescs[Instance].Transform, &InInstances[Instance].Transform, sizeof(CMatrix3x4));
+        FMemory::Memcpy(&InstanceDescs[Instance].Transform, &InInstances[Instance].Transform, sizeof(FMatrix3x4));
 
         InstanceDescs[Instance].AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
         InstanceDescs[Instance].InstanceID                          = InInstances[Instance].InstanceIndex;
@@ -303,7 +303,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -415,7 +415,7 @@ bool FD3D12RayTracingScene::BuildBindingTable( FD3D12CommandContext& CmdContext
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else

@@ -3,14 +3,14 @@
 #include "Core/Threading/ScopedLock.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsConsoleWindow
+// FWindowsConsoleWindow
 
-CWindowsConsoleWindow* CWindowsConsoleWindow::CreateWindowsConsole()
+FWindowsConsoleWindow* FWindowsConsoleWindow::CreateWindowsConsole()
 {
-    return dbg_new CWindowsConsoleWindow();
+    return dbg_new FWindowsConsoleWindow();
 }
 
-CWindowsConsoleWindow::CWindowsConsoleWindow()
+FWindowsConsoleWindow::FWindowsConsoleWindow()
     : ConsoleHandle(0)
 {
     if (AllocConsole())
@@ -20,7 +20,7 @@ CWindowsConsoleWindow::CWindowsConsoleWindow()
     }
 }
 
-CWindowsConsoleWindow::~CWindowsConsoleWindow()
+FWindowsConsoleWindow::~FWindowsConsoleWindow()
 {
     if (ConsoleHandle)
     {
@@ -29,30 +29,30 @@ CWindowsConsoleWindow::~CWindowsConsoleWindow()
     }
 }
 
-void CWindowsConsoleWindow::Print(const FString& Message)
+void FWindowsConsoleWindow::Print(const FString& Message)
 {
     if (ConsoleHandle)
     {
-        TScopedLock<CCriticalSection> Lock(ConsoleMutex);
+        TScopedLock<FCriticalSection> Lock(ConsoleMutex);
         WriteConsoleA(ConsoleHandle, Message.CStr(), static_cast<DWORD>(Message.Length()), 0, NULL);
     }
 }
 
-void CWindowsConsoleWindow::PrintLine(const FString& Message)
+void FWindowsConsoleWindow::PrintLine(const FString& Message)
 {
     if (ConsoleHandle)
     {
-        TScopedLock<CCriticalSection> Lock(ConsoleMutex);
+        TScopedLock<FCriticalSection> Lock(ConsoleMutex);
         WriteConsoleA(ConsoleHandle, Message.CStr(), static_cast<DWORD>(Message.Length()), 0, NULL);
         WriteConsoleA(ConsoleHandle, "\n", 1, 0, NULL);
     }
 }
 
-void CWindowsConsoleWindow::Clear()
+void FWindowsConsoleWindow::Clear()
 {
     if (ConsoleHandle)
     {
-        TScopedLock<CCriticalSection> Lock(ConsoleMutex);
+        TScopedLock<FCriticalSection> Lock(ConsoleMutex);
 
         CONSOLE_SCREEN_BUFFER_INFO CSBI;
         FMemory::Memzero(&CSBI);
@@ -69,20 +69,20 @@ void CWindowsConsoleWindow::Clear()
     }
 }
 
-void CWindowsConsoleWindow::SetTitle(const FString& Title)
+void FWindowsConsoleWindow::SetTitle(const FString& Title)
 {
     if (ConsoleHandle)
     {
-        TScopedLock<CCriticalSection> Lock(ConsoleMutex);
+        TScopedLock<FCriticalSection> Lock(ConsoleMutex);
         SetConsoleTitleA(Title.CStr());
     }
 }
 
-void CWindowsConsoleWindow::SetColor(EConsoleColor Color)
+void FWindowsConsoleWindow::SetColor(EConsoleColor Color)
 {
     if (ConsoleHandle)
     {
-        TScopedLock<CCriticalSection> Lock(ConsoleMutex);
+        TScopedLock<FCriticalSection> Lock(ConsoleMutex);
 
         WORD wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
         switch (Color)

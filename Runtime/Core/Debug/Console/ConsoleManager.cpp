@@ -10,35 +10,33 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console commands for the console
 
-CAutoConsoleCommand GClearHistory("ClearHistory", 
-                                  CExecutedDelegateType::CreateRaw(&CConsoleManager::Get(), &CConsoleManager::ClearHistory));
+FAutoConsoleCommand GClearHistory("ClearHistory", FCommandDelegateType::CreateRaw(&FConsoleManager::Get(), &FConsoleManager::ClearHistory));
 
-TAutoConsoleVariable<FString> GEcho("Echo", "", 
-                                   CConsoleVariableChangedDelegateType::CreateLambda([](IConsoleVariable* InVariable) -> void
+TAutoConsoleVariable<FString> GEcho("Echo", "", FCVarChangedDelegateType::CreateLambda([](IConsoleVariable* InVariable) -> void
 {
     if (InVariable->IsString())
     {
-        CConsoleManager& ConsoleManager = CConsoleManager::Get();
+        FConsoleManager& ConsoleManager = FConsoleManager::Get();
         ConsoleManager.PrintMessage(InVariable->GetString(), EConsoleSeverity::Info);
     }
 }));
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CConsoleManager
+// FConsoleManager
 
-TOptional<CConsoleManager>& CConsoleManager::GetConsoleManagerInstance()
+TOptional<FConsoleManager>& FConsoleManager::GetConsoleManagerInstance()
 {
-    static TOptional<CConsoleManager> Instance(InPlace);
+    static TOptional<FConsoleManager> Instance(InPlace);
     return Instance;
 }
 
-CConsoleManager& CConsoleManager::Get()
+FConsoleManager& FConsoleManager::Get()
 {
-    TOptional<CConsoleManager>& ConsoleManager = GetConsoleManagerInstance();
+    TOptional<FConsoleManager>& ConsoleManager = GetConsoleManagerInstance();
     return ConsoleManager.GetValue();
 }
 
-void CConsoleManager::RegisterCommand(const FString& Name, IConsoleCommand* Command)
+void FConsoleManager::RegisterCommand(const FString& Name, IConsoleCommand* Command)
 {
     if (!RegisterObject(Name, Command))
     {
@@ -46,7 +44,7 @@ void CConsoleManager::RegisterCommand(const FString& Name, IConsoleCommand* Comm
     }
 }
 
-void CConsoleManager::RegisterVariable(const FString& Name, IConsoleVariable* Variable)
+void FConsoleManager::RegisterVariable(const FString& Name, IConsoleVariable* Variable)
 {
     if (!RegisterObject(Name, Variable))
     {
@@ -54,7 +52,7 @@ void CConsoleManager::RegisterVariable(const FString& Name, IConsoleVariable* Va
     }
 }
 
-void CConsoleManager::UnregisterObject(const FString& Name)
+void FConsoleManager::UnregisterObject(const FString& Name)
 {
     auto ExistingObject = ConsoleObjects.find(Name);
     if (ExistingObject == ConsoleObjects.end())
@@ -63,13 +61,13 @@ void CConsoleManager::UnregisterObject(const FString& Name)
     }
 }
 
-bool CConsoleManager::IsConsoleObject(const FString& Name) const
+bool FConsoleManager::IsConsoleObject(const FString& Name) const
 {
     auto ExistingObject = ConsoleObjects.find(Name);
     return ExistingObject != ConsoleObjects.end();
 }
 
-IConsoleCommand* CConsoleManager::FindCommand(const FString& Name)
+IConsoleCommand* FConsoleManager::FindCommand(const FString& Name)
 {
     IConsoleObject* Object = FindConsoleObject(Name);
     if (!Object)
@@ -90,7 +88,7 @@ IConsoleCommand* CConsoleManager::FindCommand(const FString& Name)
     }
 }
 
-IConsoleVariable* CConsoleManager::FindVariable(const FString& Name)
+IConsoleVariable* FConsoleManager::FindVariable(const FString& Name)
 {
     IConsoleObject* Object = FindConsoleObject(Name);
     if (!Object)
@@ -111,18 +109,18 @@ IConsoleVariable* CConsoleManager::FindVariable(const FString& Name)
     }
 }
 
-void CConsoleManager::PrintMessage(const FString& Message, EConsoleSeverity Severity)
+void FConsoleManager::PrintMessage(const FString& Message, EConsoleSeverity Severity)
 {
     ConsoleMessages.Emplace(Message, Severity);
 }
 
-void CConsoleManager::ClearHistory()
+void FConsoleManager::ClearHistory()
 {
     History.Clear();
     ConsoleMessages.Clear();
 }
 
-void CConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates)
+void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates)
 {
     for (const auto& Object : ConsoleObjects)
     {
@@ -151,7 +149,7 @@ void CConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TP
     }
 }
 
-void CConsoleManager::Execute(const FString& Command)
+void FConsoleManager::Execute(const FString& Command)
 {
     PrintMessage(Command, EConsoleSeverity::Info);
 
@@ -215,7 +213,7 @@ void CConsoleManager::Execute(const FString& Command)
     }
 }
 
-bool CConsoleManager::RegisterObject(const FString& Name, IConsoleObject* Object)
+bool FConsoleManager::RegisterObject(const FString& Name, IConsoleObject* Object)
 {
     auto ExistingObject = ConsoleObjects.find(Name);
     if (ExistingObject == ConsoleObjects.end())
@@ -231,7 +229,7 @@ bool CConsoleManager::RegisterObject(const FString& Name, IConsoleObject* Object
     }
 }
 
-IConsoleObject* CConsoleManager::FindConsoleObject(const FString& Name)
+IConsoleObject* FConsoleManager::FindConsoleObject(const FString& Name)
 {
     auto ExisitingObject = ConsoleObjects.find(Name);
     if (ExisitingObject != ConsoleObjects.end())

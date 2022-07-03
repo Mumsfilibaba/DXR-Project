@@ -140,7 +140,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         fclose(File);
     }
 
-    PlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
+    FPlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -437,7 +437,7 @@ bool FD3D12Device::Initialize()
     // Create Device
     if (FAILED(FD3D12Library::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to create device");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create device");
         return false;
     }
     else

@@ -3,23 +3,23 @@
 #include "Platform/PlatformTime.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CTimer
+// FTimer
 
-CTimer::CTimer()
+FTimer::FTimer()
 {
-    Frequency = PlatformTime::QueryPerformanceFrequency();
+    Frequency = FPlatformTime::QueryPerformanceFrequency();
     Tick();
 }
 
-void CTimer::Tick()
+void FTimer::Tick()
 {
-    const uint64 Now = PlatformTime::QueryPerformanceCounter();
+    const uint64 Now = FPlatformTime::QueryPerformanceCounter();
     
     // TODO: Does this make sense? 
     uint64 Delta       = Now - LastTime;
     uint64 Nanoseconds = NTime::FromSeconds(Delta) / Frequency;
 
-    DeltaTime = CTimestamp(Nanoseconds);
-    LastTime = Now;
+    DeltaTime = FTimestamp(Nanoseconds);
+    LastTime  = Now;
     TotalTime += DeltaTime;
 }

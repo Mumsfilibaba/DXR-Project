@@ -130,11 +130,11 @@ private:
     FRHICommandList BasePassCmdList;
     FRHICommandList MainCmdList;
 
-    CAsyncTask PointShadowTask;
-    CAsyncTask DirShadowTask;
-    CAsyncTask PrePassTask;
-    CAsyncTask BasePassTask;
-    CAsyncTask RayTracingTask;
+    FAsyncTask PointShadowTask;
+    FAsyncTask DirShadowTask;
+    FAsyncTask PrePassTask;
+    FAsyncTask BasePassTask;
+    FAsyncTask RayTracingTask;
 
     CDeferredRenderer             DeferredRenderer;
     CShadowMapRenderer            ShadowMapRenderer;

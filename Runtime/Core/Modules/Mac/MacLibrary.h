@@ -8,14 +8,14 @@
 #define ENABLE_LIBRARY_LAZY_MODE (1)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacLibrary
+// FMacLibrary
 
-class CMacLibrary final : public CGenericLibrary
+class FMacLibrary final : public FGenericLibrary
 {
 public:
     
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericLibrary Interface
+    // FGenericLibrary Interface
 
     static FORCEINLINE void* LoadDynamicLib(const char* LibraryName)
     {

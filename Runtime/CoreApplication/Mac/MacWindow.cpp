@@ -10,13 +10,13 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMacWindow
 
-CMacWindow* CMacWindow::CreateMacWindow(CMacApplication* InApplication)
+CMacWindow* CMacWindow::CreateMacWindow(FMacApplication* InApplication)
 {
 	return dbg_new CMacWindow(InApplication);
 }
 
-CMacWindow::CMacWindow(CMacApplication* InApplication)
-    : CGenericWindow()
+CMacWindow::CMacWindow(FMacApplication* InApplication)
+    : FGenericWindow()
     , Application(InApplication)
     , WindowHandle(nullptr)
 { }
@@ -129,7 +129,7 @@ void CMacWindow::Show(bool bMaximized)
 			[WindowHandle zoom:WindowHandle];
 		}
 
-		PlatformApplicationMisc::PumpMessages(true);
+		FPlatformApplicationMisc::PumpMessages(true);
 	}, true);
 }
 
@@ -140,7 +140,7 @@ void CMacWindow::Close()
 		MakeMainThreadCall(^
 		{
 			[WindowHandle performClose:WindowHandle];
-			PlatformApplicationMisc::PumpMessages(true);
+			FPlatformApplicationMisc::PumpMessages(true);
 		}, true);
 	}
 }
@@ -152,7 +152,7 @@ void CMacWindow::Minimize()
 		MakeMainThreadCall(^
 		{
 			[WindowHandle miniaturize:WindowHandle];
-			PlatformApplicationMisc::PumpMessages(true);
+			FPlatformApplicationMisc::PumpMessages(true);
 		}, true);
 	}
 }
@@ -170,7 +170,7 @@ void CMacWindow::Maximize()
 
 			[WindowHandle zoom:WindowHandle];
 
-			PlatformApplicationMisc::PumpMessages(true);
+			FPlatformApplicationMisc::PumpMessages(true);
 		}, true);
 	}
 }
@@ -195,7 +195,7 @@ void CMacWindow::Restore()
             [WindowHandle zoom:WindowHandle];
         }
     
-        PlatformApplicationMisc::PumpMessages(true);
+        FPlatformApplicationMisc::PumpMessages(true);
     }, true);
 }
 
@@ -256,7 +256,7 @@ void CMacWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
 			[WindowHandle setFrameOrigin:NSMakePoint(Shape.Position.x, Shape.Position.y - Frame.size.height + 1)];
 		}
 		
-		PlatformApplicationMisc::PumpMessages(true);
+		FPlatformApplicationMisc::PumpMessages(true);
 	}, true);
 }
 

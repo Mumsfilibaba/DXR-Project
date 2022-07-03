@@ -37,7 +37,7 @@ public:
     int32 GetRefCount() const;
 
 private:
-    mutable AtomicInt32 StrongReferences;
+    mutable FAtomicInt32 StrongReferences;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

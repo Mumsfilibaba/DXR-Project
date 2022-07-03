@@ -18,13 +18,13 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // CCanvasApplication
 
-class CANVAS_API CCanvasApplication : public CGenericApplicationMessageHandler
+class CANVAS_API CCanvasApplication : public FGenericApplicationMessageHandler
 {
 protected:
 
     friend struct TDefaultDelete<CCanvasApplication>;
 
-    CCanvasApplication(const TSharedPtr<CGenericApplication>& InPlatformApplication);
+    CCanvasApplication(const TSharedPtr<FGenericApplication>& InFPlatformApplication);
     virtual ~CCanvasApplication();
 
 public:
@@ -32,7 +32,7 @@ public:
     DECLARE_EVENT(CExitEvent, CCanvasApplication, int32);
     CExitEvent GetExitEvent() const { return ExitEvent; }
     
-    DECLARE_EVENT(CMainViewportChange, CCanvasApplication, const TSharedRef<CGenericWindow>&);
+    DECLARE_EVENT(CMainViewportChange, CCanvasApplication, const TSharedRef<FGenericWindow>&);
     CMainViewportChange GetMainViewportChange() const { return MainViewportChange; }
 
 public:
@@ -66,33 +66,33 @@ public:
 public:
 
     /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericApplicationMessageHandler Interface
+    // FGenericApplicationMessageHandler Interface
 
-    virtual void HandleKeyReleased(EKey KeyCode, SModifierKeyState ModierKeyState) override;
+    virtual void HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState) override;
     
-    virtual void HandleKeyPressed(EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState) override;
+    virtual void HandleKeyPressed(EKey KeyCode, bool IsRepeat, FModifierKeyState ModierKeyState) override;
     
     virtual void HandleKeyChar(uint32 Character) override;
 
     virtual void HandleMouseMove(int32 x, int32 y) override;
     
-    virtual void HandleMouseReleased(EMouseButton Button, SModifierKeyState ModierKeyState) override;
+    virtual void HandleMouseReleased(EMouseButton Button, FModifierKeyState ModierKeyState) override;
     
-    virtual void HandleMousePressed(EMouseButton Button, SModifierKeyState ModierKeyState) override;
+    virtual void HandleMousePressed(EMouseButton Button, FModifierKeyState ModierKeyState) override;
     
     virtual void HandleMouseScrolled(float HorizontalDelta, float VerticalDelta) override;
 
-    virtual void HandleWindowResized(const TSharedRef<CGenericWindow>& Window, uint32 Width, uint32 Height) override;
+    virtual void HandleWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height) override;
     
-    virtual void HandleWindowMoved(const TSharedRef<CGenericWindow>& Window, int32 x, int32 y) override;
+    virtual void HandleWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 x, int32 y) override;
     
-    virtual void HandleWindowFocusChanged(const TSharedRef<CGenericWindow>& Window, bool HasFocus) override;
+    virtual void HandleWindowFocusChanged(const TSharedRef<FGenericWindow>& Window, bool HasFocus) override;
     
-    virtual void HandleWindowMouseLeft(const TSharedRef<CGenericWindow>& Window) override;
+    virtual void HandleWindowMouseLeft(const TSharedRef<FGenericWindow>& Window) override;
     
-    virtual void HandleWindowMouseEntered(const TSharedRef<CGenericWindow>& Window) override;
+    virtual void HandleWindowMouseEntered(const TSharedRef<FGenericWindow>& Window) override;
     
-    virtual void HandleWindowClosed(const TSharedRef<CGenericWindow>& Window) override;
+    virtual void HandleWindowClosed(const TSharedRef<FGenericWindow>& Window) override;
 
     virtual void HandleApplicationExit(int32 ExitCode) override;
     
@@ -101,12 +101,12 @@ public:
     /**
      * @return: Returns the newly created window
      */
-    TSharedRef<CGenericWindow> CreateWindow();
+    TSharedRef<FGenericWindow> CreateWindow();
 
     /**
      * @brief: Tick and update the CCanvasApplication
      */
-    void Tick(CTimestamp DeltaTime);
+    void Tick(FTimestamp DeltaTime);
 
     /**
      * @return: Returns true if the application is running
@@ -121,22 +121,22 @@ public:
     /**
      * @brief: Set the global cursor position
      */
-    void SetCursorPos(const CIntVector2& Position);
+    void SetCursorPos(const FIntVector2& Position);
 
     /**
      * @brief: Set the cursor position relative to a window
      */
-    void SetCursorPos(const TSharedRef<CGenericWindow>& RelativeWindow, const CIntVector2& Position);
+    void SetCursorPos(const TSharedRef<FGenericWindow>& RelativeWindow, const FIntVector2& Position);
 
     /**
      * @return: Returns  the current global cursor position
      */
-    CIntVector2 GetCursorPos() const;
+    FIntVector2 GetCursorPos() const;
 
     /**
      * @return: Returns the current cursor position relative to a window
      */
-    CIntVector2 GetCursorPos(const TSharedRef<CGenericWindow>& RelativeWindow) const;
+    FIntVector2 GetCursorPos(const TSharedRef<FGenericWindow>& RelativeWindow) const;
 
     /**
      * @brief: Set the visibility of the cursor
@@ -151,40 +151,40 @@ public:
     /**
      * @return: Returns true if high-precision mouse movement is supported
      */
-    bool SupportsHighPrecisionMouse() const { return PlatformApplication->SupportsHighPrecisionMouse();  }
+    bool SupportsHighPrecisionMouse() const { return FPlatformApplication->SupportsHighPrecisionMouse();  }
 
     /**
      * @brief: Enables high-precision mouse movement for a certain window
      */
-    bool EnableHighPrecisionMouseForWindow(const TSharedRef<CGenericWindow>& Window)
+    bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window)
     { 
-        return PlatformApplication->EnableHighPrecisionMouseForWindow(Window); 
+        return FPlatformApplication->EnableHighPrecisionMouseForWindow(Window); 
     }
 
     /**
      * @brief: Sets the window that should have keyboard focus
      */
-    void SetCapture(const TSharedRef<CGenericWindow>& CaptureWindow);
+    void SetCapture(const TSharedRef<FGenericWindow>& CaptureWindow);
 
     /**
      * @brief: Sets the window that should be the active window
      */
-    void SetActiveWindow(const TSharedRef<CGenericWindow>& ActiveWindow);
+    void SetActiveWindow(const TSharedRef<FGenericWindow>& ActiveWindow);
 
     /**
      * @return: Returns the window that currently has the keyboard focus
      */
-    TSharedRef<CGenericWindow> GetCapture() const { return PlatformApplication->GetCapture();  }
+    TSharedRef<FGenericWindow> GetCapture() const { return FPlatformApplication->GetCapture();  }
 
     /**
      * @return: Returns the window that is currently active
      */
-    TSharedRef<CGenericWindow> GetActiveWindow() const { return PlatformApplication->GetActiveWindow(); }
+    TSharedRef<FGenericWindow> GetActiveWindow() const { return FPlatformApplication->GetActiveWindow(); }
 
     /**
      * @return: Returns the window that currently is under the cursor
      */
-    TSharedRef<CGenericWindow> GetWindowUnderCursor() const { return PlatformApplication->GetActiveWindow(); }
+    TSharedRef<FGenericWindow> GetWindowUnderCursor() const { return FPlatformApplication->GetActiveWindow(); }
 
     /**
      * @brief: Adds a InputHandler to the application, which gets processed before the main viewport
@@ -199,7 +199,7 @@ public:
     /**
      * @brief: Registers the main window of the application
      */
-    void RegisterMainViewport(const TSharedRef<CGenericWindow>& NewMainViewport);
+    void RegisterMainViewport(const TSharedRef<FGenericWindow>& NewMainViewport);
 
     /**
      * @brief:  Sets the interface renderer
@@ -229,7 +229,7 @@ public:
     /**
      * @brief: Sets the platform application used to dispatch messages from the platform
      */
-    void SetPlatformApplication(const TSharedPtr<CGenericApplication>& InPlatformApplication);
+    void SetFPlatformApplication(const TSharedPtr<FGenericApplication>& InFPlatformApplication);
 
     /**
      * @brief: Adds a WindowMessageHandler to the application, which gets processed before the application module
@@ -242,9 +242,9 @@ public:
     void RemoveWindowMessageHandler(const TSharedPtr<CWindowMessageHandler>& WindowMessageHandler);
 
     /**
-     * @return: Returns the PlatformApplication
+     * @return: Returns the FPlatformApplication
      */
-    TSharedPtr<CGenericApplication> GetPlatformApplication() const { return PlatformApplication; }
+    TSharedPtr<FGenericApplication> GetFPlatformApplication() const { return FPlatformApplication; }
 
     /**
      * @return: Returns the renderer for the Application
@@ -254,12 +254,12 @@ public:
     /**
      * @return: Returns the window registered as the main viewport
      */
-    TSharedRef<CGenericWindow> GetMainViewport() const { return MainViewport; }
+    TSharedRef<FGenericWindow> GetMainViewport() const { return MainViewport; }
 
     /**
      * @return: Returns the cursor interface
      */
-    TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->GetCursor(); }
+    TSharedPtr<ICursor> GetCursor() const { return FPlatformApplication->GetCursor(); }
 
 public:
 
@@ -312,9 +312,9 @@ protected:
 
     void RenderStrings();
 
-    TSharedPtr<CGenericApplication>      PlatformApplication;
+    TSharedPtr<FGenericApplication>      FPlatformApplication;
 
-    TSharedRef<CGenericWindow>           MainViewport;
+    TSharedRef<FGenericWindow>           MainViewport;
     TSharedRef<ICanvasRenderer>          Renderer;
 
     TArray<FString>                       DebugStrings;

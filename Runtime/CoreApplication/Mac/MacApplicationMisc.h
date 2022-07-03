@@ -7,18 +7,18 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacApplicationMisc
+// FMacApplicationMisc
 
-class CMacApplicationMisc final : public CGenericApplicationMisc
+class FMacApplicationMisc final : public FGenericApplicationMisc
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericApplicationMisc Interface
+    // FGenericApplicationMisc Interface
 
-    static class CGenericApplication* CreateApplication();
+    static class FGenericApplication* CreateApplication();
 
-    static class CGenericConsoleWindow* CreateConsoleWindow();
+    static class FGenericConsoleWindow* CreateConsoleWindow();
 
     static void MessageBox(const String& Title, const String& Message);
 
@@ -29,7 +29,7 @@ public:
 
     static void PumpMessages(bool bUntilEmpty);
 
-    static SModifierKeyState GetModifierKeyState();
+    static FModifierKeyState GetModifierKeyState();
 };
 
 #pragma clang diagnostic pop

@@ -3,9 +3,9 @@
 #include "AtomicInt.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A simple lock that does not use OS functions to lock a thread. Good for short locking periods in high contingency areas
+// FSpinLock
 
-class CSpinLock
+class FSpinLock
 {
     enum
     {
@@ -15,13 +15,13 @@ class CSpinLock
 
 public:
 
-    CSpinLock(const CSpinLock&) = delete;
-    CSpinLock& operator=(const CSpinLock&) = delete;
+    FSpinLock(const FSpinLock&) = delete;
+    FSpinLock& operator=(const FSpinLock&) = delete;
 
-    ~CSpinLock() = default;
+    ~FSpinLock() = default;
 
     /** @brief: Default constructor */
-    FORCEINLINE CSpinLock() noexcept
+    FORCEINLINE FSpinLock() noexcept
         : State(State_Unlocked)
     { }
 
@@ -58,5 +58,5 @@ public:
     }
 
 private:
-    AtomicInt32 State;
+    FAtomicInt32 State;
 };

@@ -11,16 +11,16 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericConditionVariable
+// FGenericConditionVariable
 
-class CGenericConditionVariable : NonCopyable
+class FGenericConditionVariable : FNonCopyable
 {
 public:
 
     typedef void* PlatformHandle;
 
-    CGenericConditionVariable()  = default;
-    ~CGenericConditionVariable() = default;
+    FGenericConditionVariable()  = default;
+    ~FGenericConditionVariable() = default;
 
     /** @brief: Notifies a single CriticalSection */
     FORCEINLINE void NotifyOne() noexcept { }
@@ -34,7 +34,7 @@ public:
      * @param Lock: Lock that should wait for condition to be met
      * @return: Returns true if the wait is successful
      */
-    FORCEINLINE bool Wait(TScopedLock<CCriticalSection>& Lock) noexcept { return false; }
+    FORCEINLINE bool Wait(TScopedLock<FCriticalSection>& Lock) noexcept { return false; }
 
     /**
      * @brief: Retrieve platform specific handle 

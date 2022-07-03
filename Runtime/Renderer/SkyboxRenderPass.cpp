@@ -48,7 +48,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     TSharedRef<FRHITexture2D> Panorama = CTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
     if (!Panorama)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -86,7 +86,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -94,7 +94,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     SkyboxVertexShader = RHICreateVertexShader(ShaderCode);
     if (!SkyboxVertexShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -102,7 +102,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         FShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -110,7 +110,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     SkyboxPixelShader = RHICreatePixelShader(ShaderCode);
     if (!SkyboxPixelShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -120,7 +120,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -129,7 +129,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -141,7 +141,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -159,7 +159,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -200,7 +200,7 @@ void CSkyboxRenderPass::Render(FRHICommandList& CmdList, const SFrameResources& 
 
     struct SSimpleCameraBuffer
     {
-        CMatrix4 Matrix;
+        FMatrix4 Matrix;
     } SimpleCamera;
 
     SimpleCamera.Matrix = Scene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();

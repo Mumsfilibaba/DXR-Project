@@ -4,16 +4,16 @@
 #include "Core/Templates/ClassUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericCriticalSection
+// FGenericCriticalSection
 
-class CGenericCriticalSection : NonCopyable
+class FGenericCriticalSection : FNonCopyable
 {
 public:
 
     typedef void* PlatformHandle;
 
-    CGenericCriticalSection()  = default;
-    ~CGenericCriticalSection() = default;
+    FGenericCriticalSection()  = default;
+    ~FGenericCriticalSection() = default;
 
     /** @brief: Lock CriticalSection for other threads */
     FORCEINLINE void Lock() noexcept { }

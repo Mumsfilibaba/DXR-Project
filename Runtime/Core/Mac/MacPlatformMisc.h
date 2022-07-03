@@ -4,14 +4,14 @@
 #include <sys/sysctl.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacPlatformMisc
+// FMacPlatformMisc
 
-class CMacPlatformMisc final : public CGenericPlatformMisc
+class FMacPlatformMisc final : public FGenericPlatformMisc
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericPlatformMisc Interface
+    // FGenericPlatformMisc Interface
 
     static FORCEINLINE void DebugBreak()
     {

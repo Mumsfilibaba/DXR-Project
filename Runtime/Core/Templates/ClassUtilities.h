@@ -1,31 +1,42 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// NonCopyable
+// FNonCopyable
 
-class NonCopyable
+struct FNonCopyable
 {
-public:
+    FNonCopyable()  = default;
+    ~FNonCopyable() = default;
 
-    NonCopyable()  = default;
-    ~NonCopyable() = default;
-
-    NonCopyable(const NonCopyable&)            = delete;
-    NonCopyable& operator=(const NonCopyable&) = delete;
+    FNonCopyable(const FNonCopyable&)            = delete;
+    FNonCopyable& operator=(const FNonCopyable&) = delete;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// NonMovable
+// FNonMovable
 
-class NonMovable
+struct FNonMovable
 {
-public:
+    FNonMovable()  = default;
+    ~FNonMovable() = default;
 
-    NonMovable()  = default;
-    ~NonMovable() = default;
+    FNonMovable(const FNonMovable&)            = delete;
+    FNonMovable& operator=(const FNonMovable&) = delete;
+};
 
-    NonMovable(const NonMovable&)            = delete;
-    NonMovable& operator=(const NonMovable&) = delete;
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FNonCopyAndNonMovable
+
+struct FNonCopyAndNonMovable
+{
+    FNonCopyAndNonMovable()  = default;
+    ~FNonCopyAndNonMovable() = default;
+
+    FNonCopyAndNonMovable(const FNonCopyAndNonMovable&)            = delete;
+    FNonCopyAndNonMovable& operator=(const FNonCopyAndNonMovable&) = delete;
+
+    FNonCopyAndNonMovable(FNonCopyAndNonMovable&&)            = delete;
+    FNonCopyAndNonMovable& operator=(FNonCopyAndNonMovable&&) = delete;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

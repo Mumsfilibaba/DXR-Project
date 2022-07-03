@@ -26,7 +26,7 @@ public:
 
     virtual ~CCanvasUser() = default;
 
-    virtual void Tick(CTimestamp DeltaTime);
+    virtual void Tick(FTimestamp DeltaTime);
 
     virtual void HandleKeyEvent(const SKeyEvent& KeyEvent);
 
@@ -36,16 +36,16 @@ public:
 
     virtual void HandleMouseScrolledEvent(const SMouseScrolledEvent& MouseScolledEvent);
 
-    virtual void SetCursorPosition(const CIntVector2& Postion);
+    virtual void SetCursorPosition(const FIntVector2& Postion);
 
-    virtual CIntVector2 GetCursorPosition() const;
+    virtual FIntVector2 GetCursorPosition() const;
 
-    FORCEINLINE SKeyState GetKeyState(EKey KeyCode) const
+    FORCEINLINE FKeyState GetKeyState(EKey KeyCode) const
     {
         int32 Index = GetKeyStateIndexFromKeyCode(KeyCode);
         if (Index < 0)
         {
-            return SKeyState(KeyCode);
+            return FKeyState(KeyCode);
         }
         else
         {
@@ -53,12 +53,12 @@ public:
         }
     }
 
-    FORCEINLINE SMouseButtonState GetMouseButtonState(EMouseButton Button) const
+    FORCEINLINE FMouseButtonState GetMouseButtonState(EMouseButton Button) const
     {
         int32 Index = GetMouseButtonStateIndexFromMouseButton(Button);
         if (Index < 0)
         {
-            return SMouseButtonState(Button);
+            return FMouseButtonState(Button);
         }
         else
         {
@@ -68,37 +68,37 @@ public:
 
     FORCEINLINE bool IsKeyDown(EKey KeyCode) const
     {
-        SKeyState KeyState = GetKeyState(KeyCode);
+        FKeyState KeyState = GetKeyState(KeyCode);
         return !!KeyState.IsDown;
     }
 
     FORCEINLINE bool IsKeyUp(EKey KeyCode) const
     {
-        SKeyState KeyState = GetKeyState(KeyCode);
+        FKeyState KeyState = GetKeyState(KeyCode);
         return !KeyState.IsDown;
     }
 
     FORCEINLINE bool IsKeyPressed(EKey KeyCode) const
     {
-        SKeyState KeyState = GetKeyState(KeyCode);
+        FKeyState KeyState = GetKeyState(KeyCode);
         return KeyState.IsDown && !KeyState.PreviousState;
     }
 
     FORCEINLINE bool IsMouseButtonDown(EMouseButton Button) const
     {
-        SMouseButtonState ButtonState = GetMouseButtonState(Button);
+        FMouseButtonState ButtonState = GetMouseButtonState(Button);
         return !!ButtonState.IsDown;
     }
 
     FORCEINLINE bool IsMouseButtonUp(EMouseButton Button) const
     {
-        SMouseButtonState ButtonState = GetMouseButtonState(Button);
+        FMouseButtonState ButtonState = GetMouseButtonState(Button);
         return !ButtonState.IsDown;
     }
 
     FORCEINLINE bool IsMouseButtonPressed(EMouseButton Button) const
     {
-        SMouseButtonState ButtonState = GetMouseButtonState(Button);
+        FMouseButtonState ButtonState = GetMouseButtonState(Button);
         return ButtonState.IsDown && !ButtonState.PreviousState;
     }
 
@@ -119,8 +119,8 @@ private:
      /** @brief: Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const
     {
-        SKeyState TempState(KeyCode);
-        return KeyStates.Find(TempState, [](const SKeyState& LHS, const SKeyState& RHS) -> bool
+        FKeyState TempState(KeyCode);
+        return KeyStates.Find(TempState, [](const FKeyState& LHS, const FKeyState& RHS) -> bool
         {
             return (LHS.KeyCode == RHS.KeyCode);
         });
@@ -129,8 +129,8 @@ private:
      /** @brief: Get the index in the key-state array */
     FORCEINLINE int32 GetMouseButtonStateIndexFromMouseButton(EMouseButton Button) const
     {
-        SMouseButtonState TempState(Button);
-        return MouseButtonStates.Find(TempState, [](const SMouseButtonState& LHS, const SMouseButtonState& RHS) -> bool
+        FMouseButtonState TempState(Button);
+        return MouseButtonStates.Find(TempState, [](const FMouseButtonState& LHS, const FMouseButtonState& RHS) -> bool
         {
             return (LHS.Button == RHS.Button);
         });
@@ -140,6 +140,6 @@ private:
     
     TSharedPtr<ICursor>       Cursor;
 
-    TArray<SKeyState>         KeyStates; // TODO: Use a map instead? 
-    TArray<SMouseButtonState> MouseButtonStates;
+    TArray<FKeyState>         KeyStates; // TODO: Use a map instead? 
+    TArray<FMouseButtonState> MouseButtonStates;
 };

@@ -4,33 +4,33 @@
 #include "Core/Utilities/StringUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsThread
+// FWindowsThread
 
-CWindowsThread* CWindowsThread::CreateWindowsThread(const TFunction<void()>& InFunction)
+FWindowsThread* FWindowsThread::CreateWindowsThread(const TFunction<void()>& InFunction)
 {
-    return dbg_new CWindowsThread(InFunction);
+    return dbg_new FWindowsThread(InFunction);
 }
 
-CWindowsThread* CWindowsThread::CreateWindowsThread(const TFunction<void()>& InFunction, const FString & InName)
+FWindowsThread* FWindowsThread::CreateWindowsThread(const TFunction<void()>& InFunction, const FString & InName)
 {
-    return dbg_new CWindowsThread(InFunction, InName);
+    return dbg_new FWindowsThread(InFunction, InName);
 }
 
-CWindowsThread::CWindowsThread(const TFunction<void()>& InFunction)
-    : CGenericThread(InFunction)
+FWindowsThread::FWindowsThread(const TFunction<void()>& InFunction)
+    : FGenericThread(InFunction)
     , Thread(0)
     , hThreadID(0)
     , Name()
 { }
 
-CWindowsThread::CWindowsThread(const TFunction<void()>& InFunction, const FString& InName)
-    : CGenericThread(InFunction)
+FWindowsThread::FWindowsThread(const TFunction<void()>& InFunction, const FString& InName)
+    : FGenericThread(InFunction)
     , Thread(0)
     , hThreadID(0)
     , Name(InName)
 { }
 
-CWindowsThread::~CWindowsThread()
+FWindowsThread::~FWindowsThread()
 {
     if (Thread)
     {
@@ -38,12 +38,12 @@ CWindowsThread::~CWindowsThread()
     }
 }
 
-bool CWindowsThread::Start()
+bool FWindowsThread::Start()
 {
-    Thread = CreateThread(nullptr, 0, CWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), 0, &hThreadID);
+    Thread = CreateThread(nullptr, 0, FWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), 0, &hThreadID);
     if (!Thread)
     {
-        LOG_ERROR("[CWindowsThread] Failed to create thread");
+        LOG_ERROR("[FWindowsThread] Failed to create thread");
         return false;
     }
     else
@@ -52,7 +52,7 @@ bool CWindowsThread::Start()
     }
 }
 
-int32 CWindowsThread::WaitForCompletion(uint64 TimeoutInMs)
+int32 FWindowsThread::WaitForCompletion(uint64 TimeoutInMs)
 {
     WaitForSingleObject(Thread, DWORD(TimeoutInMs));
 
@@ -62,7 +62,7 @@ int32 CWindowsThread::WaitForCompletion(uint64 TimeoutInMs)
     return Result ? int32(ThreadExitCode) : int32(-1);
 }
 
-void CWindowsThread::SetName(const FString& InName)
+void FWindowsThread::SetName(const FString& InName)
 {
     WString WideName = CharToWide(InName);
     SetThreadDescription(Thread, WideName.CStr());
@@ -70,14 +70,14 @@ void CWindowsThread::SetName(const FString& InName)
     Name = InName;
 }
 
-void* CWindowsThread::GetPlatformHandle()
+void* FWindowsThread::GetPlatformHandle()
 {
     return reinterpret_cast<void*>(static_cast<uintptr_t>(hThreadID));
 }
 
-DWORD WINAPI CWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
+DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
 {
-    CWindowsThread* CurrentThread = reinterpret_cast<CWindowsThread*>(ThreadParameter);
+    FWindowsThread* CurrentThread = reinterpret_cast<FWindowsThread*>(ThreadParameter);
     if (CurrentThread)
     {
         if (!CurrentThread->Name.IsEmpty())

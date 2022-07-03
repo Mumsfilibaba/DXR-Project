@@ -4,9 +4,9 @@
 #include "Core/Containers/Allocators.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDelegateBase
+// FDelegateBase
 
-class CDelegateBase
+class FDelegateBase
 {
     enum
     {
@@ -21,7 +21,7 @@ public:
      * 
      * @param Other: Delegate to copy from
      */
-    FORCEINLINE CDelegateBase(const CDelegateBase& Other)
+    FORCEINLINE FDelegateBase(const FDelegateBase& Other)
         : Storage()
         , Size()
     {
@@ -33,7 +33,7 @@ public:
      *
      * @param Other: Delegate to move from
      */
-    FORCEINLINE CDelegateBase(CDelegateBase&& Other) noexcept
+    FORCEINLINE FDelegateBase(FDelegateBase&& Other) noexcept
         : Storage()
         , Size(Other.Size)
     {
@@ -44,7 +44,7 @@ public:
     /**
      * @brief: Destructor 
      */
-    FORCEINLINE ~CDelegateBase()
+    FORCEINLINE ~FDelegateBase()
     {
         Unbind();
     }
@@ -62,7 +62,7 @@ public:
      * 
      * @param Other: Delegate to swap with
      */
-    FORCEINLINE void Swap(CDelegateBase& Other)
+    FORCEINLINE void Swap(FDelegateBase& Other)
     {
         AllocatorType TempStorage;
         TempStorage.MoveFrom(Move(Storage));
@@ -141,7 +141,7 @@ public:
      * 
      * @return: Returns the delegate handle to this delegate
      */
-    FORCEINLINE CDelegateHandle GetHandle() const
+    FORCEINLINE FDelegateHandle GetHandle() const
     {
         if (IsBound())
         {
@@ -149,7 +149,7 @@ public:
         }
         else
         {
-            return CDelegateHandle();
+            return FDelegateHandle();
         }
     }
 
@@ -159,9 +159,9 @@ public:
      * @param RHS: Instance to move from
      * @return: A reference to this instance
      */
-    FORCEINLINE CDelegateBase& operator=(CDelegateBase&& RHS) noexcept
+    FORCEINLINE FDelegateBase& operator=(FDelegateBase&& RHS) noexcept
     {
-        CDelegateBase(Move(RHS)).Swap(*this);
+        FDelegateBase(Move(RHS)).Swap(*this);
         return *this;
     }
 
@@ -171,9 +171,9 @@ public:
      * @param RHS: Instance to copy from
      * @return: A reference to this instance
      */
-    FORCEINLINE CDelegateBase& operator=(const CDelegateBase& RHS)
+    FORCEINLINE FDelegateBase& operator=(const FDelegateBase& RHS)
     {
-        CDelegateBase(RHS).Swap(*this);
+        FDelegateBase(RHS).Swap(*this);
         return *this;
     }
 
@@ -182,7 +182,7 @@ protected:
     // TODO: Should allocator use the element type at all? 
     using AllocatorType = TInlineArrayAllocator<int8, InlineBytes>;
 
-    FORCEINLINE explicit CDelegateBase()
+    FORCEINLINE explicit FDelegateBase()
         : Storage()
         , Size(0)
     { }
@@ -195,7 +195,7 @@ protected:
         }
     }
 
-    FORCEINLINE void CopyFrom(const CDelegateBase& Other) noexcept
+    FORCEINLINE void CopyFrom(const FDelegateBase& Other) noexcept
     {
         if (Other.IsBound())
         {
@@ -240,5 +240,5 @@ protected:
     }
 
     AllocatorType Storage;
-    int32 Size;
+    int32         Size;
 };

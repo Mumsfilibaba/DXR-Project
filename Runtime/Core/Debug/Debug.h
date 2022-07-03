@@ -6,23 +6,23 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Class for easy access to debugging functions 
+// FDebug - Class for easy access to debugging functions 
 
-class CDebug
+class FDebug
 {
 public:
     static FORCEINLINE void DebugBreak()
     {
-        PlatformMisc::DebugBreak();
+        FPlatformMisc::DebugBreak();
     }
 
     static FORCEINLINE void OutputDebugString(const FString& Message)
     {
-        PlatformMisc::OutputDebugString(Message);
+        FPlatformMisc::OutputDebugString(Message);
     }
 
     static FORCEINLINE bool IsDebuggerPresent()
     {
-        return PlatformMisc::IsDebuggerPresent();
+        return FPlatformMisc::IsDebuggerPresent();
     }
 };

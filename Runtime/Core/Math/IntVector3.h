@@ -2,16 +2,16 @@
 #include "MathCommon.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CInt16Vector3
+// FInt16Vector3
 
-class CInt16Vector3
+class FInt16Vector3
 {
 public:
 
     /**
      * @brief: Default constructor (Initial1ze components to zero)
      */
-    FORCEINLINE CInt16Vector3() noexcept
+    FORCEINLINE FInt16Vector3() noexcept
         : x(0)
         , y(0)
         , z(0)
@@ -24,7 +24,7 @@ public:
      * @param InY: The y-coordinate
      * @param InZ: The z-coordinate
      */
-    FORCEINLINE explicit CInt16Vector3(int16 InX, int16 InY, int16 InZ) noexcept
+    FORCEINLINE explicit FInt16Vector3(int16 InX, int16 InY, int16 InZ) noexcept
         : x(InX)
         , y(InY)
         , z(InZ)
@@ -35,7 +35,7 @@ public:
      *
      * @param Arr: Array with 3 elements
      */
-    FORCEINLINE explicit CInt16Vector3(const int16* Array) noexcept
+    FORCEINLINE explicit FInt16Vector3(const int16* Array) noexcept
         : x(Array[0])
         , y(Array[1])
         , z(Array[2])
@@ -46,7 +46,7 @@ public:
      *
      * @param Scalar: Value to set all components to
      */
-    FORCEINLINE explicit CInt16Vector3(int16 Scalar) noexcept
+    FORCEINLINE explicit FInt16Vector3(int16 Scalar) noexcept
         : x(Scalar)
         , y(Scalar)
         , z(Scalar)
@@ -58,7 +58,7 @@ public:
      * @param Other: Vector to compare against
      * @return: True if equal, false if not
      */
-    FORCEINLINE bool IsEqual(const CInt16Vector3& Other) const noexcept
+    FORCEINLINE bool IsEqual(const FInt16Vector3& Other) const noexcept
     {
         return (x == Other.x) && (y == Other.y) && (z == Other.z);
     }
@@ -72,9 +72,9 @@ public:
      * @param RHS: Second vector to compare with
      * @return: A vector with the smallest components of LHS and RHS
      */
-    friend FORCEINLINE CInt16Vector3 Min(const CInt16Vector3& LHS, const CInt16Vector3& RHS) noexcept
+    friend FORCEINLINE FInt16Vector3 Min(const FInt16Vector3& LHS, const FInt16Vector3& RHS) noexcept
     {
-        return CInt16Vector3(NMath::Min(LHS.x, RHS.x), NMath::Min(LHS.y, RHS.y), NMath::Min(LHS.z, RHS.z));
+        return FInt16Vector3(NMath::Min(LHS.x, RHS.x), NMath::Min(LHS.y, RHS.y), NMath::Min(LHS.z, RHS.z));
     }
 
     /**
@@ -84,9 +84,9 @@ public:
      * @param RHS: Second vector to compare with
      * @return: A vector with the largest components of LHS and RHS
      */
-    friend FORCEINLINE CInt16Vector3 Max(const CInt16Vector3& LHS, const CInt16Vector3& RHS) noexcept
+    friend FORCEINLINE FInt16Vector3 Max(const FInt16Vector3& LHS, const FInt16Vector3& RHS) noexcept
     {
-        return CInt16Vector3(NMath::Max(LHS.x, RHS.x), NMath::Max(LHS.y, RHS.y), NMath::Max(LHS.z, RHS.z));
+        return FInt16Vector3(NMath::Max(LHS.x, RHS.x), NMath::Max(LHS.y, RHS.y), NMath::Max(LHS.z, RHS.z));
     }
 
 public:
@@ -96,9 +96,9 @@ public:
      *
      * @return: A negated vector
      */
-    FORCEINLINE CInt16Vector3 operator-() const noexcept
+    FORCEINLINE FInt16Vector3 operator-() const noexcept
     {
-        return CInt16Vector3(-x, -y, -z);
+        return FInt16Vector3(-x, -y, -z);
     }
 
     /**
@@ -107,9 +107,9 @@ public:
      * @param RHS: The vector to add
      * @return: A vector with the result of addition
      */
-    FORCEINLINE CInt16Vector3 operator+(const CInt16Vector3& RHS) const noexcept
+    FORCEINLINE FInt16Vector3 operator+(const FInt16Vector3& RHS) const noexcept
     {
-        return CInt16Vector3(x + RHS.x, y + RHS.y, z + RHS.z);
+        return FInt16Vector3(x + RHS.x, y + RHS.y, z + RHS.z);
     }
 
     /**
@@ -118,7 +118,7 @@ public:
      * @param RHS: The vector to add
      * @return: A reference to this vector
      */
-    FORCEINLINE CInt16Vector3& operator+=(const CInt16Vector3& RHS) noexcept
+    FORCEINLINE FInt16Vector3& operator+=(const FInt16Vector3& RHS) noexcept
     {
         return *this = *this + RHS;
     }
@@ -129,9 +129,9 @@ public:
      * @param RHS: The scalar to add
      * @return: A vector with the result of addition
      */
-    FORCEINLINE CInt16Vector3 operator+(int16 RHS) const noexcept
+    FORCEINLINE FInt16Vector3 operator+(int16 RHS) const noexcept
     {
-        return CInt16Vector3(x + RHS, y + RHS, z + RHS);
+        return FInt16Vector3(x + RHS, y + RHS, z + RHS);
     }
 
     /**
@@ -140,7 +140,7 @@ public:
      * @param RHS: The scalar to add
      * @return: A reference to this vector
      */
-    FORCEINLINE CInt16Vector3& operator+=(int16 RHS) noexcept
+    FORCEINLINE FInt16Vector3& operator+=(int16 RHS) noexcept
     {
         return *this = *this + RHS;
     }
@@ -151,9 +151,9 @@ public:
      * @param RHS: The vector to subtract
      * @return: A vector with the result of subtraction
      */
-    FORCEINLINE CInt16Vector3 operator-(const CInt16Vector3& RHS) const noexcept
+    FORCEINLINE FInt16Vector3 operator-(const FInt16Vector3& RHS) const noexcept
     {
-        return CInt16Vector3(x - RHS.x, y - RHS.y, z - RHS.z);
+        return FInt16Vector3(x - RHS.x, y - RHS.y, z - RHS.z);
     }
 
     /**
@@ -162,7 +162,7 @@ public:
      * @param RHS: The vector to subtract
      * @return: A reference to this vector
      */
-    FORCEINLINE CInt16Vector3& operator-=(const CInt16Vector3& RHS) noexcept
+    FORCEINLINE FInt16Vector3& operator-=(const FInt16Vector3& RHS) noexcept
     {
         return *this = *this - RHS;
     }
@@ -173,9 +173,9 @@ public:
      * @param RHS: The scalar to subtract
      * @return: A vector with the result of the subtraction
      */
-    FORCEINLINE CInt16Vector3 operator-(int16 RHS) const noexcept
+    FORCEINLINE FInt16Vector3 operator-(int16 RHS) const noexcept
     {
-        return CInt16Vector3(x - RHS, y - RHS, z - RHS);
+        return FInt16Vector3(x - RHS, y - RHS, z - RHS);
     }
 
     /**
@@ -184,7 +184,7 @@ public:
      * @param RHS: The scalar to subtract
      * @return: A reference to this vector
      */
-    FORCEINLINE CInt16Vector3& operator-=(int16 RHS) noexcept
+    FORCEINLINE FInt16Vector3& operator-=(int16 RHS) noexcept
     {
         return *this = *this - RHS;
     }
@@ -195,9 +195,9 @@ public:
      * @param RHS: The vector to multiply with
      * @return: A vector with the result of the multiplication
      */
-    FORCEINLINE CInt16Vector3 operator*(const CInt16Vector3& RHS) const noexcept
+    FORCEINLINE FInt16Vector3 operator*(const FInt16Vector3& RHS) const noexcept
     {
-        return CInt16Vector3(x * RHS.x, y * RHS.y, z * RHS.z);
+        return FInt16Vector3(x * RHS.x, y * RHS.y, z * RHS.z);
     }
 
     /**
@@ -206,7 +206,7 @@ public:
      * @param RHS: The vector to multiply with
      * @return: A reference to this vector
      */
-    FORCEINLINE CInt16Vector3& operator*=(const CInt16Vector3& RHS) noexcept
+    FORCEINLINE FInt16Vector3& operator*=(const FInt16Vector3& RHS) noexcept
     {
         return *this = *this * RHS;
     }
@@ -217,9 +217,9 @@ public:
      * @param RHS: The scalar to multiply with
      * @return: A vector with the result of the multiplication
      */
-    FORCEINLINE CInt16Vector3 operator*(int16 RHS) const noexcept
+    FORCEINLINE FInt16Vector3 operator*(int16 RHS) const noexcept
     {
-        return CInt16Vector3(x * RHS, y * RHS, z * RHS);
+        return FInt16Vector3(x * RHS, y * RHS, z * RHS);
     }
 
     /**
@@ -228,7 +228,7 @@ public:
      * @param RHS: The scalar to multiply with
      * @return: A reference to this vector
      */
-    FORCEINLINE CInt16Vector3& operator*=(int16 RHS) noexcept
+    FORCEINLINE FInt16Vector3& operator*=(int16 RHS) noexcept
     {
         return *this = *this * RHS;
     }
@@ -239,9 +239,9 @@ public:
      * @param RHS: The vector to divide with
      * @return: A vector with the result of the division
      */
-    FORCEINLINE CInt16Vector3 operator/(const CInt16Vector3& RHS) const noexcept
+    FORCEINLINE FInt16Vector3 operator/(const FInt16Vector3& RHS) const noexcept
     {
-        return CInt16Vector3(x / RHS.x, y / RHS.y, z / RHS.z);
+        return FInt16Vector3(x / RHS.x, y / RHS.y, z / RHS.z);
     }
 
     /**
@@ -250,7 +250,7 @@ public:
      * @param RHS: The vector to divide with
      * @return: A reference to this vector
      */
-    FORCEINLINE CInt16Vector3& operator/=(const CInt16Vector3& RHS) noexcept
+    FORCEINLINE FInt16Vector3& operator/=(const FInt16Vector3& RHS) noexcept
     {
         return *this = *this / RHS;
     }
@@ -261,9 +261,9 @@ public:
      * @param RHS: The scalar to divide with
      * @return: A vector with the result of the division
      */
-    FORCEINLINE CInt16Vector3 operator/(int16 RHS) const noexcept
+    FORCEINLINE FInt16Vector3 operator/(int16 RHS) const noexcept
     {
-        return CInt16Vector3(x / RHS, y / RHS, z / RHS);
+        return FInt16Vector3(x / RHS, y / RHS, z / RHS);
     }
 
     /**
@@ -272,7 +272,7 @@ public:
      * @param RHS: The scalar to divide with
      * @return: A reference to this vector
      */
-    FORCEINLINE CInt16Vector3& operator/=(int16 RHS) noexcept
+    FORCEINLINE FInt16Vector3& operator/=(int16 RHS) noexcept
     {
         return *this = *this / RHS;
     }
@@ -283,7 +283,7 @@ public:
      * @param Other: The vector to compare with
      * @return: True if equal, false if not
      */
-    FORCEINLINE bool operator==(const CInt16Vector3& Other) const noexcept
+    FORCEINLINE bool operator==(const FInt16Vector3& Other) const noexcept
     {
         return IsEqual(Other);
     }
@@ -294,7 +294,7 @@ public:
      * @param Other: The vector to compare with
      * @return: False if equal, true if not
      */
-    FORCEINLINE bool operator!=(const CInt16Vector3& Other) const noexcept
+    FORCEINLINE bool operator!=(const FInt16Vector3& Other) const noexcept
     {
         return !IsEqual(Other);
     }

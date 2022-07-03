@@ -76,7 +76,7 @@
         do                                       \
         {                                        \
             LOG_ERROR("[D3D12RHI] "__VA_ARGS__); \
-            CDebug::DebugBreak();                \
+            FDebug::DebugBreak();                \
         } while (false)
     
     #define D3D12_ERROR_COND(bCondition, ...) \

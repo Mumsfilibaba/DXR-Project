@@ -5,28 +5,28 @@
 #include "Core/Logging/Log.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CThreadManager
+// FThreadManager
 
-CThreadManager::CThreadManager()
+FThreadManager::FThreadManager()
     : Threads(0)
     , MainThread(nullptr)
 { }
 
-CThreadManager::~CThreadManager()
+FThreadManager::~FThreadManager()
 {
     MainThread = nullptr;
 }
 
-TOptional<CThreadManager>& CThreadManager::GetConsoleManagerInstance()
+TOptional<FThreadManager>& FThreadManager::GetConsoleManagerInstance()
 {
-    static TOptional<CThreadManager> Instance(InPlace);
+    static TOptional<FThreadManager> Instance(InPlace);
     return Instance;
 }
 
-bool CThreadManager::Initialize()
+bool FThreadManager::Initialize()
 {
-    CThreadManager& ThreadManager = CThreadManager::Get();
-    ThreadManager.MainThread = PlatformThreadMisc::GetThreadHandle();
+    FThreadManager& ThreadManager = FThreadManager::Get();
+    ThreadManager.MainThread = FPlatformThreadMisc::GetThreadHandle();
 
     if (!ThreadManager.MainThread)
     {
@@ -34,12 +34,12 @@ bool CThreadManager::Initialize()
         return false;
     }
 
-    return PlatformThreadMisc::Initialize();
+    return FPlatformThreadMisc::Initialize();
 }
 
-bool CThreadManager::Release()
+bool FThreadManager::Release()
 {
-    TOptional<CThreadManager>& ThreadManager = GetConsoleManagerInstance();
+    TOptional<FThreadManager>& ThreadManager = GetConsoleManagerInstance();
     for (const auto& Thread : ThreadManager->Threads)
     {
         Thread->WaitForCompletion(kWaitForThreadInfinity);
@@ -47,26 +47,26 @@ bool CThreadManager::Release()
 
     ThreadManager.Reset();
 
-    PlatformThreadMisc::Release();
+    FPlatformThreadMisc::Release();
 
     return true;
 }
 
-bool CThreadManager::IsMainThread()
+bool FThreadManager::IsMainThread()
 {
-    CThreadManager& ThreadManager = CThreadManager::Get();
-    return (ThreadManager.MainThread == PlatformThreadMisc::GetThreadHandle());
+    FThreadManager& ThreadManager = FThreadManager::Get();
+    return (ThreadManager.MainThread == FPlatformThreadMisc::GetThreadHandle());
 }
 
-CThreadManager& CThreadManager::Get()
+FThreadManager& FThreadManager::Get()
 {
-    TOptional<CThreadManager>& ThreadManager = GetConsoleManagerInstance();
+    TOptional<FThreadManager>& ThreadManager = GetConsoleManagerInstance();
     return ThreadManager.GetValue();
 }
 
-GenericThreadRef CThreadManager::CreateThread(const TFunction<void()>& InFunction)
+FGenericThreadRef FThreadManager::CreateThread(const TFunction<void()>& InFunction)
 {
-    GenericThreadRef Thread = PlatformThreadMisc::CreateThread(InFunction);
+    FGenericThreadRef Thread = FPlatformThreadMisc::CreateThread(InFunction);
     if (Thread)
     {
         Threads.Push(Thread);
@@ -79,9 +79,9 @@ GenericThreadRef CThreadManager::CreateThread(const TFunction<void()>& InFunctio
     }
 }
 
-GenericThreadRef CThreadManager::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
+FGenericThreadRef FThreadManager::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
 {
-    GenericThreadRef Thread = PlatformThreadMisc::CreateNamedThread(InFunction, InName);
+    FGenericThreadRef Thread = FPlatformThreadMisc::CreateNamedThread(InFunction, InName);
     if (Thread)
     {
         Threads.Push(Thread);
@@ -94,7 +94,7 @@ GenericThreadRef CThreadManager::CreateNamedThread(const TFunction<void()>& InFu
     }
 }
 
-GenericThreadRef CThreadManager::GetNamedThread(const FString& InName)
+FGenericThreadRef FThreadManager::GetNamedThread(const FString& InName)
 {
     for (const auto& Thread : Threads)
     {
@@ -108,7 +108,7 @@ GenericThreadRef CThreadManager::GetNamedThread(const FString& InName)
     return nullptr;
 }
 
-GenericThreadRef CThreadManager::GetThreadFromHandle(void* ThreadHandle)
+FGenericThreadRef FThreadManager::GetThreadFromHandle(void* ThreadHandle)
 {
     for (const auto& Thread : Threads)
     {

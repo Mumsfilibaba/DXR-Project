@@ -3,14 +3,14 @@
 
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacKeyMapping
+// FMacKeyMapping
 
-TStaticArray<EKey        , CMacKeyMapping::kNumKeys>        CMacKeyMapping::KeyCodeFromScanCodeTable;
-TStaticArray<uint16      , CMacKeyMapping::kNumKeys>        CMacKeyMapping::ScanCodeFromKeyCodeTable;
-TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> CMacKeyMapping::ButtonFromButtonIndex;
-TStaticArray<uint8       , EMouseButton::MouseButton_Count> CMacKeyMapping::ButtonIndexFromButton;
+TStaticArray<EKey        , FMacKeyMapping::kNumKeys>        FMacKeyMapping::KeyCodeFromScanCodeTable;
+TStaticArray<uint16      , FMacKeyMapping::kNumKeys>        FMacKeyMapping::ScanCodeFromKeyCodeTable;
+TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> FMacKeyMapping::ButtonFromButtonIndex;
+TStaticArray<uint8       , EMouseButton::MouseButton_Count> FMacKeyMapping::ButtonIndexFromButton;
 
-void CMacKeyMapping::Initialize()
+void FMacKeyMapping::Initialize()
 {
     KeyCodeFromScanCodeTable.Memzero();
     ScanCodeFromKeyCodeTable.Memzero();

@@ -1074,7 +1074,7 @@ public:
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CDebug::OutputDebugString(Marker + '\n');
+        FDebug::OutputDebugString(Marker + '\n');
         LOG_INFO("%s", Marker.CStr());
         CommandContext.InsertMarker(Marker);
     }
@@ -1094,7 +1094,7 @@ public:
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         UNREFERENCED_VARIABLE(CommandContext);
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
     }
 };
 

@@ -4,25 +4,27 @@
 #include "Core/Delegates/MulticastDelegate.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CConsoleCommand - Executes a single function from the console
+// FConsoleCommand - Executes a single function from the console
 
-class CConsoleCommand : public IConsoleCommand
+class FConsoleCommand : public IConsoleCommand
 {
 public:
 
-    CConsoleCommand()
+    FConsoleCommand()
         : ExecuteDelegate()
     { }
 
-    CConsoleCommand(const CExecutedDelegateType& Delegate)
+    FConsoleCommand(const FCommandDelegateType& Delegate)
         : ExecuteDelegate()
     {
         ExecuteDelegate.Add(Delegate);
     }
 
-    virtual ~CConsoleCommand() = default;
+    virtual ~FConsoleCommand() = default;
 
-    virtual IConsoleCommand*  AsCommand() override { return this; }
+public:
+
+    virtual IConsoleCommand*  AsCommand()  override { return this; }
     virtual IConsoleVariable* AsVariable() override { return nullptr; }
 
     // TODO: Add parameters to console commands
@@ -31,11 +33,11 @@ public:
         ExecuteDelegate.Broadcast();
     }
 
-    virtual CExecutedDelegate& GetExecutedDelgate() override
+    virtual FCommandDelegate& GetDelgate() override
     {
         return ExecuteDelegate;
     }
 
 private:
-    CExecutedDelegate ExecuteDelegate;
+    FCommandDelegate ExecuteDelegate;
 };

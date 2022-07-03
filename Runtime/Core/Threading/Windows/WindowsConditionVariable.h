@@ -7,21 +7,21 @@
 #include "Core/Platform/PlatformMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsConditionVariable
+// FWindowsConditionVariable
 
-class CWindowsConditionVariable final : public CGenericConditionVariable
+class FWindowsConditionVariable final : public FGenericConditionVariable
 {
 public:
 
     typedef CONDITION_VARIABLE* PlatformHandle;
 
-    FORCEINLINE CWindowsConditionVariable()
+    FORCEINLINE FWindowsConditionVariable()
         : ConditionVariable()
     {
         InitializeConditionVariable(&ConditionVariable);
     }
 
-    FORCEINLINE ~CWindowsConditionVariable()
+    FORCEINLINE ~FWindowsConditionVariable()
     {
         NotifyAll();
     }
@@ -36,17 +36,17 @@ public:
         WakeAllConditionVariable(&ConditionVariable);
     }
 
-    FORCEINLINE bool Wait(TScopedLock<CCriticalSection>& Lock) noexcept
+    FORCEINLINE bool Wait(TScopedLock<FCriticalSection>& Lock) noexcept
     {
         SetLastError(0);
 
-        CWindowsCriticalSection::PlatformHandle CriticalSection = Lock.GetLock().GetPlatformHandle();
+        FWindowsCriticalSection::PlatformHandle CriticalSection = Lock.GetLock().GetPlatformHandle();
 
         const bool bResult = !!SleepConditionVariableCS(&ConditionVariable, CriticalSection, INFINITE);
         if (!bResult)
         {
             FString ErrorString;
-            PlatformMisc::GetLastErrorString(ErrorString);
+            FPlatformMisc::GetLastErrorString(ErrorString);
 
             LOG_ERROR("%s", ErrorString.CStr());
 

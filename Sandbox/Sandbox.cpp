@@ -33,7 +33,7 @@ IMPLEMENT_ENGINE_MODULE(CSandbox, Sandbox);
 
 bool CSandbox::Init()
 {
-    if (!CApplicationModule::Init())
+    if (!FApplicationModule::Init())
     {
         return false;
     }
@@ -235,7 +235,7 @@ bool CSandbox::Init()
     MatProperties.Metallic     = 0.0f;
     MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo       = CVector3(1.0f);
+    MatProperties.Albedo       = FVector3(1.0f);
 
     NewComponent                         = dbg_new CMeshComponent(NewActor);
     NewComponent->Mesh                   = CMesh::Make(CMeshFactory::CreatePlane(10, 10));
@@ -277,7 +277,7 @@ bool CSandbox::Init()
     MatProperties.Metallic = 1.0f;
     MatProperties.Roughness = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo = CVector3(1.0f, 1.0f, 1.0f);
+    MatProperties.Albedo = FVector3(1.0f, 1.0f, 1.0f);
 
     SSceneData StreetLightData;
     COBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"), StreetLightData);
@@ -309,7 +309,7 @@ bool CSandbox::Init()
     MatProperties.Metallic     = 0.0f;
     MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo       = CVector3(0.4f);
+    MatProperties.Albedo       = FVector3(0.4f);
 
     SSceneData PillarData;
     COBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Models/Pillar.obj"), PillarData);
@@ -419,9 +419,9 @@ bool CSandbox::Init()
     return true;
 }
 
-void CSandbox::Tick(CTimestamp DeltaTime)
+void CSandbox::Tick(FTimestamp DeltaTime)
 {
-    CApplicationModule::Tick(DeltaTime);
+    FApplicationModule::Tick(DeltaTime);
 
     // LOG_INFO("Tick: %f", DeltaTime.AsMilliSeconds());
 
@@ -453,7 +453,7 @@ void CSandbox::Tick(CTimestamp DeltaTime)
         Acceleration = Acceleration * 3;
     }
 
-    CVector3 CameraAcceleration;
+    FVector3 CameraAcceleration;
     if (User->IsKeyDown(EKey::Key_W))
     {
         CameraAcceleration.z = Acceleration;
@@ -485,7 +485,7 @@ void CSandbox::Tick(CTimestamp DeltaTime)
     CameraSpeed = CameraSpeed + (CameraSpeed * Deacceleration) * Delta;
     CameraSpeed = CameraSpeed + (CameraAcceleration * Delta);
 
-    CVector3 Speed = CameraSpeed * Delta;
+    FVector3 Speed = CameraSpeed * Delta;
     CurrentCamera->Move(Speed.x, Speed.y, Speed.z);
     CurrentCamera->UpdateMatrices();
 }

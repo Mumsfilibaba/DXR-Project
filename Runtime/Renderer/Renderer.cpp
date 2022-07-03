@@ -43,20 +43,20 @@ TAutoConsoleVariable<bool> GRayTracingEnabled("Renderer.EnableRayTracing", true)
 
 struct SCameraBufferDesc
 {
-    CMatrix4 ViewProjection;
-    CMatrix4 View;
-    CMatrix4 ViewInv;
-    CMatrix4 Projection;
-    CMatrix4 ProjectionInv;
-    CMatrix4 ViewProjectionInv;
+    FMatrix4 ViewProjection;
+    FMatrix4 View;
+    FMatrix4 ViewInv;
+    FMatrix4 Projection;
+    FMatrix4 ProjectionInv;
+    FMatrix4 ViewProjectionInv;
 
-    CVector3 Position;
+    FVector3 Position;
     float    NearPlane;
 
-    CVector3 Forward;
+    FVector3 Forward;
     float    FarPlane;
 
-    CVector3 Right;
+    FVector3 Right;
     float    AspectRatio;
 };
 
@@ -80,7 +80,7 @@ bool CRenderer::Init()
     Resources.MainWindowViewport = RHICreateViewport(ViewportInitializer);
     if (!Resources.MainWindowViewport)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -112,7 +112,7 @@ bool CRenderer::Init()
     Resources.StdInputLayout = RHICreateVertexInputLayout(InputLayout);
     if (!Resources.StdInputLayout)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -127,7 +127,7 @@ bool CRenderer::Init()
         Resources.DirectionalLightShadowSampler = RHICreateSamplerState(Initializer);
         if (!Resources.DirectionalLightShadowSampler)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -143,7 +143,7 @@ bool CRenderer::Init()
         Resources.PointLightShadowSampler = RHICreateSamplerState(Initializer);
         if (!Resources.PointLightShadowSampler)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -240,14 +240,14 @@ void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
     // Inserts a mesh based on distance
     const auto InsertSorted = []( int32 CommandIndex
                                 , const CCamera* Camera
-                                , const CVector3& WorldPosition
+                                , const FVector3& WorldPosition
                                 , TArray<float>& OutDistances
                                 , TArray<uint32>& OutCommands) -> void
     {
         Check(OutDistances.Size() == OutCommands.Size());
 
-        CVector3 CameraPosition = Camera->GetPosition();
-        CVector3 DistanceVector = WorldPosition - CameraPosition;
+        FVector3 CameraPosition = Camera->GetPosition();
+        FVector3 DistanceVector = WorldPosition - CameraPosition;
 
         const float NewDistance = DistanceVector.LengthSquared();
 
@@ -275,23 +275,23 @@ void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
     DeferredDistances.Reserve(NumCommands);
     OutDeferredDrawCommands.Reserve(NumCommands);
 
-    CFrustum CameraFrustum = CFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+    FFrustum CameraFrustum = FFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
     for (uint32 Index = 0; Index < NumCommands; ++Index)
     {
         const uint32 CommandIndex = StartCommand + Index;
 
         const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
 
-        CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
+        FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
 
-        CVector3 Top = CVector3(Command.Mesh->BoundingBox.Top);
+        FVector3 Top = FVector3(Command.Mesh->BoundingBox.Top);
         Top = TransformMatrix.TransformPosition(Top);
 
-        CVector3 Bottom = CVector3(Command.Mesh->BoundingBox.Bottom);
+        FVector3 Bottom = FVector3(Command.Mesh->BoundingBox.Bottom);
         Bottom = TransformMatrix.TransformPosition(Bottom);
 
-        SAABB Box(Top, Bottom);
+        FAABB Box(Top, Bottom);
         if (CameraFrustum.CheckAABB(Box))
         {
             if (Command.Material->ShouldRenderInForwardPass())
@@ -300,7 +300,7 @@ void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
             }
             else
             {
-                CVector3 WorldPosition = Box.GetCenter();
+                FVector3 WorldPosition = Box.GetCenter();
                 InsertSorted(CommandIndex, Camera, WorldPosition, DeferredDistances, OutDeferredDrawCommands);
             }
         }
@@ -311,7 +311,7 @@ void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
 {
     TRACE_SCOPE("FrustumCulling And Sorting");
 
-    const auto NumThreads = 1;// PlatformThreadMisc::GetNumProcessors();
+    const auto NumThreads = 1;// FPlatformThreadMisc::GetNumProcessors();
     
     TArray<TArray<uint32>> WriteableDeferredMeshCommands;
     WriteableDeferredMeshCommands.Reserve(NumThreads);
@@ -348,16 +348,16 @@ void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
             FrustumCullingAndSortingInternal(CameraPtr, ReadMeshCommands, WriteDeferredMeshCommands, WriteForwardMeshCommands);
         };
 
-        CAsyncTask AsyncTask;
+        FAsyncTask AsyncTask;
         AsyncTask.Delegate.BindLambda(CullAndSort);
 
-        Tasks[Index] = CAsyncTaskManager::Get().Dispatch(AsyncTask);
+        Tasks[Index] = FAsyncTaskManager::Get().Dispatch(AsyncTask);
     }
 
     // Sync and insert
     for (uint32 Index = 0; Index < NumThreads; ++Index)
     {
-        CAsyncTaskManager::Get().WaitFor(Tasks[Index], true);
+        FAsyncTaskManager::Get().WaitFor(Tasks[Index], true);
         
         const TArray<uint32>& WriteForwardMeshCommands = WriteableForwardMeshCommands[Index];
         Resources.ForwardVisibleCommands.Append(WriteForwardMeshCommands);
@@ -458,14 +458,14 @@ void CRenderer::PerformAABBDebugPass(FRHICommandList& InCmdList)
     {
         const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
 
-        SAABB& Box = Command.Mesh->BoundingBox;
+        FAABB& Box = Command.Mesh->BoundingBox;
 
-        CVector3 Scale    = CVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
-        CVector3 Position = Box.GetCenter();
+        FVector3 Scale    = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
+        FVector3 Position = Box.GetCenter();
 
-        CMatrix4 TranslationMatrix = CMatrix4::Translation(Position.x, Position.y, Position.z);
-        CMatrix4 ScaleMatrix       = CMatrix4::Scale(Scale.x, Scale.y, Scale.z);
-        CMatrix4 TransformMatrix   = Command.CurrentActor->GetTransform().GetMatrix();
+        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z);
+        FMatrix4 TransformMatrix   = Command.CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
         TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
         TransformMatrix.Transpose();
@@ -505,7 +505,7 @@ void CRenderer::Tick(const CScene& Scene)
         PointShadowTask.Delegate.BindLambda(RenderPointShadows);
     }
 
-    CAsyncTaskManager::Get().Dispatch(PointShadowTask);
+    FAsyncTaskManager::Get().Dispatch(PointShadowTask);
 
     // Initialize directional light task
     const auto RenderDirShadows = [&]()
@@ -514,7 +514,7 @@ void CRenderer::Tick(const CScene& Scene)
     };
 
     DirShadowTask.Delegate.BindLambda(RenderDirShadows);
-    CAsyncTaskManager::Get().Dispatch(DirShadowTask);
+    FAsyncTaskManager::Get().Dispatch(DirShadowTask);
 
     // Perform frustum culling
     Resources.DeferredVisibleCommands.Clear();
@@ -579,7 +579,7 @@ void CRenderer::Tick(const CScene& Scene)
         };
 
         PrePassTask.Delegate.BindLambda(RenderPrePass);
-        CAsyncTaskManager::Get().Dispatch(PrePassTask);
+        FAsyncTaskManager::Get().Dispatch(PrePassTask);
     }
 
 #if 0
@@ -618,7 +618,7 @@ void CRenderer::Tick(const CScene& Scene)
         };
 
         RayTracingTask.Delegate.BindLambda(RenderRayTracing);
-        CAsyncTaskManager::Get().Dispatch(RayTracingTask);
+        FAsyncTaskManager::Get().Dispatch(RayTracingTask);
     }
 
     {
@@ -628,7 +628,7 @@ void CRenderer::Tick(const CScene& Scene)
         };
 
         BasePassTask.Delegate.BindLambda(RenderBasePass);
-        CAsyncTaskManager::Get().Dispatch(BasePassTask);
+        FAsyncTaskManager::Get().Dispatch(BasePassTask);
     }
 
     MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
@@ -800,7 +800,7 @@ void CRenderer::Tick(const CScene& Scene)
     MainCmdList.EndExternalCapture();
 #endif
 
-    CAsyncTaskManager::Get().WaitForAll();
+    FAsyncTaskManager::Get().WaitForAll();
 
     {
         TRACE_SCOPE("ExecuteCommandList");
@@ -898,25 +898,25 @@ void CRenderer::OnWindowResize(const SWindowResizeEvent& Event)
 
     if (!Resources.MainWindowViewport->Resize(Width, Height))
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return;
     }
 
     if (!DeferredRenderer.ResizeResources(Resources))
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return;
     }
 
     if (!SSAORenderer.ResizeResources(Resources))
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return;
     }
 
     if (!ShadowMapRenderer.ResizeResources(Width, Height, LightSetup))
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return;
     }
 }
@@ -929,7 +929,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -937,7 +937,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     AABBVertexShader = RHICreateVertexShader(ShaderCode);
     if (!AABBVertexShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -945,7 +945,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         FShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -953,19 +953,19 @@ bool CRenderer::InitBoundingBoxDebugPass()
     AABBPixelShader = RHICreatePixelShader(ShaderCode);
     if (!AABBPixelShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
     FRHIVertexInputLayoutInitializer InputLayout =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(CVector3), 0, 0, EVertexInputClass::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 },
     };
 
     TSharedRef<FRHIVertexInputLayout> InputLayoutState = RHICreateVertexInputLayout(InputLayout);
     if (!InputLayoutState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -977,7 +977,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -987,7 +987,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -996,7 +996,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -1015,7 +1015,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     AABBDebugPipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!AABBDebugPipelineState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -1023,26 +1023,26 @@ bool CRenderer::InitBoundingBoxDebugPass()
         AABBDebugPipelineState->SetName("Debug PipelineState");
     }
 
-    TStaticArray<CVector3, 8> Vertices =
+    TStaticArray<FVector3, 8> Vertices =
     {
-        CVector3(-0.5f, -0.5f,  0.5f),
-        CVector3( 0.5f, -0.5f,  0.5f),
-        CVector3(-0.5f,  0.5f,  0.5f),
-        CVector3( 0.5f,  0.5f,  0.5f),
+        FVector3(-0.5f, -0.5f,  0.5f),
+        FVector3( 0.5f, -0.5f,  0.5f),
+        FVector3(-0.5f,  0.5f,  0.5f),
+        FVector3( 0.5f,  0.5f,  0.5f),
 
-        CVector3( 0.5f, -0.5f, -0.5f),
-        CVector3(-0.5f, -0.5f, -0.5f),
-        CVector3( 0.5f,  0.5f, -0.5f),
-        CVector3(-0.5f,  0.5f, -0.5f)
+        FVector3( 0.5f, -0.5f, -0.5f),
+        FVector3(-0.5f, -0.5f, -0.5f),
+        FVector3( 0.5f,  0.5f, -0.5f),
+        FVector3(-0.5f,  0.5f, -0.5f)
     };
 
     FRHIBufferDataInitializer VertexData(Vertices.Data(), Vertices.SizeInBytes());
 
-    FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, Vertices.Size(), sizeof(CVector3), EResourceAccess::Common, &VertexData);
+    FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, Vertices.Size(), sizeof(FVector3), EResourceAccess::Common, &VertexData);
     AABBVertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!AABBVertexBuffer)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -1073,7 +1073,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     AABBIndexBuffer = RHICreateIndexBuffer(IBInitializer);
     if (!AABBIndexBuffer)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -1092,7 +1092,7 @@ bool CRenderer::InitAA()
 		FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
 		if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
 		{
-			CDebug::DebugBreak();
+			FDebug::DebugBreak();
 			return false;
 		}
     }
@@ -1100,7 +1100,7 @@ bool CRenderer::InitAA()
     TSharedRef<FRHIVertexShader> VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -1108,7 +1108,7 @@ bool CRenderer::InitAA()
 		FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
 		if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
 		{
-			CDebug::DebugBreak();
+			FDebug::DebugBreak();
 			return false;
 		}
     }
@@ -1116,7 +1116,7 @@ bool CRenderer::InitAA()
     PostShader = RHICreatePixelShader(ShaderCode);
     if (!PostShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -1128,7 +1128,7 @@ bool CRenderer::InitAA()
     TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -1138,7 +1138,7 @@ bool CRenderer::InitAA()
     TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -1147,7 +1147,7 @@ bool CRenderer::InitAA()
     TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -1166,7 +1166,7 @@ bool CRenderer::InitAA()
     PostPSO = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PostPSO)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -1187,7 +1187,7 @@ bool CRenderer::InitAA()
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -1195,7 +1195,7 @@ bool CRenderer::InitAA()
     FXAAShader = RHICreatePixelShader(ShaderCode);
     if (!FXAAShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -1204,7 +1204,7 @@ bool CRenderer::InitAA()
     FXAAPSO = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!FXAAPSO)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -1221,7 +1221,7 @@ bool CRenderer::InitAA()
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -1229,7 +1229,7 @@ bool CRenderer::InitAA()
     FXAADebugShader = RHICreatePixelShader(ShaderCode);
     if (!FXAADebugShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -1238,7 +1238,7 @@ bool CRenderer::InitAA()
     FXAADebugPSO = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!FXAADebugPSO)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -1262,7 +1262,7 @@ bool CRenderer::InitShadingImage()
     ShadingImage = RHICreateTexture2D(Initializer);
     if (!ShadingImage)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -1276,7 +1276,7 @@ bool CRenderer::InitShadingImage()
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -1284,7 +1284,7 @@ bool CRenderer::InitShadingImage()
     ShadingRateShader = RHICreateComputeShader(ShaderCode);
     if (!ShadingRateShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -1292,7 +1292,7 @@ bool CRenderer::InitShadingImage()
     ShadingRatePipeline = RHICreateComputePipelineState(PSOInitializer);
     if (!ShadingRatePipeline)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 

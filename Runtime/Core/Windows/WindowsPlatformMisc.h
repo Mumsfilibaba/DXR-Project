@@ -14,14 +14,14 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsPlatformMisc
+// FWindowsPlatformMisc
 
-class CWindowsPlatformMisc final : public CGenericPlatformMisc
+class FWindowsPlatformMisc final : public FGenericPlatformMisc
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericPlatformMisc Interface
+    // FGenericPlatformMisc Interface
 
     static FORCEINLINE void DebugBreak()
     {

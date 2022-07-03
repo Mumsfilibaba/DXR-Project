@@ -4,30 +4,30 @@
 #include "Core/Logging/Log.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacThread
+// FMacThread
 
-CMacThread::CMacThread(const TFunction<void()>& InFunction)
-    : CGenericThread(InFunction)
+FMacThread::FMacThread(const TFunction<void()>& InFunction)
+    : FGenericThread(InFunction)
     , Name()
     , Thread()
 	, ThreadExitCode(-1)
     , bIsRunning(false)
 { }
 
-CMacThread::CMacThread(const TFunction<void()>& InFunction, const String& InName)
-    : CGenericThread(InFunction)
+FMacThread::FMacThread(const TFunction<void()>& InFunction, const String& InName)
+    : FGenericThread(InFunction)
     , Name(InName)
     , Thread()
     , ThreadExitCode(-1)
     , bIsRunning(false)
 { }
 
-bool CMacThread::Start()
+bool FMacThread::Start()
 {
-    const auto Result = pthread_create(&Thread, nullptr, CMacThread::ThreadRoutine, reinterpret_cast<void*>(this));
+    const auto Result = pthread_create(&Thread, nullptr, FMacThread::ThreadRoutine, reinterpret_cast<void*>(this));
     if (Result)
     {
-        LOG_ERROR("[CMacThread] Failed to create thread");
+        LOG_ERROR("[FMacThread] Failed to create thread");
         return false;
     }
     else
@@ -36,7 +36,7 @@ bool CMacThread::Start()
     }
 }
 
-int32 CMacThread::WaitForCompletion(uint64 TimeoutInMs)
+int32 FMacThread::WaitForCompletion(uint64 TimeoutInMs)
 {
 	UNREFERENCED_VARIABLE(TimeoutInMs);
 	
@@ -45,10 +45,10 @@ int32 CMacThread::WaitForCompletion(uint64 TimeoutInMs)
     return Result ? ThreadExitCode : int32(-1);
 }
 
-void CMacThread::SetName(const String& InName)
+void FMacThread::SetName(const String& InName)
 {
     // The name can always be set from the current thread
-    const bool bCurrentThreadIsMyself = GetPlatformHandle() == CMacThreadMisc::GetThreadHandle();
+    const bool bCurrentThreadIsMyself = GetPlatformHandle() == FMacThreadMisc::GetThreadHandle();
     if (bCurrentThreadIsMyself)
     {
         Name = InName;
@@ -60,14 +60,14 @@ void CMacThread::SetName(const String& InName)
     }
 }
 
-void* CMacThread::GetPlatformHandle()
+void* FMacThread::GetPlatformHandle()
 {
     return reinterpret_cast<void*>(Thread);
 }
 
-void* CMacThread::ThreadRoutine(void* ThreadParameter)
+void* FMacThread::ThreadRoutine(void* ThreadParameter)
 {
-    CMacThread* CurrentThread = reinterpret_cast<CMacThread*>(ThreadParameter);
+    FMacThread* CurrentThread = reinterpret_cast<FMacThread*>(ThreadParameter);
     if (CurrentThread)
     {
         // Can only set the current thread's name

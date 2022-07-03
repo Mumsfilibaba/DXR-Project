@@ -8,18 +8,18 @@
 #include <Foundation/Foundation.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacThreadMisc
+// FMacThreadMisc
 
-class CMacThreadMisc : public CGenericThreadMisc
+class FMacThreadMisc : public FGenericThreadMisc
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericThreadMisc Interface
+    // FGenericThreadMisc Interface
 
-    static CGenericThread* CreateThread(const TFunction<void()>& InFunction);
+    static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
 
-    static CGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const String& InString);
+    static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const String& InString);
 
     static FORCEINLINE bool Initialize() 
     { 
@@ -44,7 +44,7 @@ public:
         return reinterpret_cast<void*>(CurrentThread);
     }
 
-    static FORCEINLINE void Sleep(CTimestamp Time)
+    static FORCEINLINE void Sleep(FTimestamp Time)
     {	
         float MicroSeconds = Time.AsMicroSeconds();
         usleep(static_cast<useconds_t>(MicroSeconds));

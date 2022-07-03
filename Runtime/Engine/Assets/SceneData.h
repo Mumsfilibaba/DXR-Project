@@ -123,7 +123,7 @@ struct SMaterialData
     TSharedPtr<SImage2D> AlphaMaskTexture;
 
      /** @brief: Diffuse Parameter */
-    CVector3 Diffuse;
+    FVector3 Diffuse;
 
      /** @brief: AO Parameter */
     float AO = 1.0f;

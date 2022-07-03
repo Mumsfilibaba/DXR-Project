@@ -113,8 +113,8 @@ void CMesh::CreateBoundingBox(const SMeshData& Data)
 {
     constexpr float Inf = std::numeric_limits<float>::infinity();
 
-    CVector3 MinBounds = CVector3( Inf,  Inf,  Inf);
-    CVector3 MaxBounds = CVector3(-Inf, -Inf, -Inf);
+    FVector3 MinBounds = FVector3( Inf,  Inf,  Inf);
+    FVector3 MaxBounds = FVector3(-Inf, -Inf, -Inf);
 
     for (const SVertex& Vertex : Data.Vertices)
     {

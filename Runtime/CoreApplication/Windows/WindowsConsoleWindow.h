@@ -13,23 +13,23 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsConsoleWindow
+// FWindowsConsoleWindow
 
-class COREAPPLICATION_API CWindowsConsoleWindow final : public CGenericConsoleWindow
+class COREAPPLICATION_API FWindowsConsoleWindow final : public FGenericConsoleWindow
 {
 private:
 
-    CWindowsConsoleWindow();
-    ~CWindowsConsoleWindow();
+    FWindowsConsoleWindow();
+    ~FWindowsConsoleWindow();
 
 public:
 
-    static CWindowsConsoleWindow* CreateWindowsConsole();
+    static FWindowsConsoleWindow* CreateWindowsConsole();
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CWindowsConsoleWindow Interface
+    // FWindowsConsoleWindow Interface
 
     virtual void Print(const FString& Message) override final;
 
@@ -43,7 +43,7 @@ public:
 
 private:
     HANDLE           ConsoleHandle;
-    CCriticalSection ConsoleMutex;
+    FCriticalSection ConsoleMutex;
 };
 
 #if defined(COMPILER_MSVC)

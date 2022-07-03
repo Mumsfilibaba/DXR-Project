@@ -11,10 +11,10 @@ CCanvasUser::CCanvasUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor
     , MouseButtonStates()
 { }
 
-void CCanvasUser::Tick(CTimestamp DeltaTime)
+void CCanvasUser::Tick(FTimestamp DeltaTime)
 {
     // Update all key-states 
-    for (SKeyState& KeyState : KeyStates)
+    for (FKeyState& KeyState : KeyStates)
     {
         if (KeyState.IsDown)
         {
@@ -23,7 +23,7 @@ void CCanvasUser::Tick(CTimestamp DeltaTime)
     }
 
     // Update all mouse-button states
-    for (SMouseButtonState& MouseButtonState : MouseButtonStates)
+    for (FMouseButtonState& MouseButtonState : MouseButtonStates)
     {
         if (MouseButtonState.IsDown)
         {
@@ -37,7 +37,7 @@ void CCanvasUser::HandleKeyEvent(const SKeyEvent& KeyEvent)
     int32 Index = GetKeyStateIndexFromKeyCode(KeyEvent.KeyCode);
     if (Index >= 0)
     {
-        SKeyState& KeyState = KeyStates[Index];
+        FKeyState& KeyState = KeyStates[Index];
         if (KeyEvent.bIsDown)
         {
             KeyState.PreviousState = KeyState.IsDown;
@@ -58,7 +58,7 @@ void CCanvasUser::HandleKeyEvent(const SKeyEvent& KeyEvent)
     }
     else
     {
-        SKeyState NewKeyState(KeyEvent.KeyCode);
+        FKeyState NewKeyState(KeyEvent.KeyCode);
         NewKeyState.IsDown = KeyEvent.bIsDown;
         KeyStates.Push(NewKeyState);
     }
@@ -69,7 +69,7 @@ void CCanvasUser::HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEve
     int32 Index = GetMouseButtonStateIndexFromMouseButton(MouseButtonEvent.Button);
     if (Index >= 0)
     {
-        SMouseButtonState& MouseButtonState = MouseButtonStates[Index];
+        FMouseButtonState& MouseButtonState = MouseButtonStates[Index];
         if (MouseButtonState.IsDown)
         {
             MouseButtonState.PreviousState = MouseButtonState.IsDown;
@@ -84,7 +84,7 @@ void CCanvasUser::HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEve
     }
     else
     {
-        SMouseButtonState NewMouseButtonState(MouseButtonEvent.Button);
+        FMouseButtonState NewMouseButtonState(MouseButtonEvent.Button);
         NewMouseButtonState.IsDown = MouseButtonEvent.bIsDown;
         MouseButtonStates.Push(NewMouseButtonState);
     }
@@ -102,7 +102,7 @@ void CCanvasUser::HandleMouseScrolledEvent(const SMouseScrolledEvent& MouseScoll
     // TODO: Call all attached player controllers
 }
 
-void CCanvasUser::SetCursorPosition(const CIntVector2& Postion)
+void CCanvasUser::SetCursorPosition(const FIntVector2& Postion)
 {
     if (Cursor)
     {
@@ -111,16 +111,16 @@ void CCanvasUser::SetCursorPosition(const CIntVector2& Postion)
     }
 }
 
-CIntVector2 CCanvasUser::GetCursorPosition() const
+FIntVector2 CCanvasUser::GetCursorPosition() const
 {
     if (Cursor)
     {
-        CIntVector2 Position;
+        FIntVector2 Position;
         Cursor->GetPosition(nullptr, Position.x, Position.y);
         return Position;
     }
     else
     {
-        return CIntVector2(-1, -1);
+        return FIntVector2(-1, -1);
     }
 }

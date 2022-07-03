@@ -55,19 +55,19 @@ void CDirectionalLight::UpdateCascades(CCamera& Camera)
     //XmDirection = XMVector3Normalize( XmOffset );
     //XMStoreFloat3( &Direction, XmDirection );
 
-    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
+    FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
 
-    CVector3 StartDirection(0.0f, -1.0f, 0.0f);
+    FVector3 StartDirection(0.0f, -1.0f, 0.0f);
     StartDirection = RotationMatrix.TransformDirection(StartDirection);
     StartDirection.Normalize();
     Direction = StartDirection;
 
-    CVector3 StartUp(0.0, 0.0f, 1.0f);
+    FVector3 StartUp(0.0, 0.0f, 1.0f);
     StartUp = RotationMatrix.TransformDirection(StartUp);
     StartUp.Normalize();
     Up = StartUp;
 
-    CMatrix4 InvCamera = Camera.GetViewProjectionInverseMatrix();
+    FMatrix4 InvCamera = Camera.GetViewProjectionInverseMatrix();
     InvCamera = InvCamera.Transpose();
 
     float NearPlane = Camera.GetNearPlane();
@@ -109,34 +109,34 @@ void CDirectionalLight::UpdateCascades(CCamera& Camera)
     {
         float SplitDist = LocalCascadeSplits[i];
 
-        CVector4 FrustumCorners[8] =
+        FVector4 FrustumCorners[8] =
         {
-            CVector4(-1.0f,  1.0f, 0.0f, 1.0f),
-            CVector4(1.0f,  1.0f, 0.0f, 1.0f),
-            CVector4(1.0f, -1.0f, 0.0f, 1.0f),
-            CVector4(-1.0f, -1.0f, 0.0f, 1.0f),
-            CVector4(-1.0f,  1.0f, 1.0f, 1.0f),
-            CVector4(1.0f,  1.0f, 1.0f, 1.0f),
-            CVector4(1.0f, -1.0f, 1.0f, 1.0f),
-            CVector4(-1.0f, -1.0f, 1.0f, 1.0f),
+            FVector4(-1.0f,  1.0f, 0.0f, 1.0f),
+            FVector4(1.0f,  1.0f, 0.0f, 1.0f),
+            FVector4(1.0f, -1.0f, 0.0f, 1.0f),
+            FVector4(-1.0f, -1.0f, 0.0f, 1.0f),
+            FVector4(-1.0f,  1.0f, 1.0f, 1.0f),
+            FVector4(1.0f,  1.0f, 1.0f, 1.0f),
+            FVector4(1.0f, -1.0f, 1.0f, 1.0f),
+            FVector4(-1.0f, -1.0f, 1.0f, 1.0f),
         };
 
         // Calculate position of light frustum
         for (uint32 j = 0; j < 8; j++)
         {
-            CVector4 Corner = InvCamera * FrustumCorners[j];
+            FVector4 Corner = InvCamera * FrustumCorners[j];
             FrustumCorners[j] = Corner / Corner.w;
         }
 
         for (uint32 j = 0; j < 4; j++)
         {
-            const CVector4 Distance = FrustumCorners[j + 4] - FrustumCorners[j];
+            const FVector4 Distance = FrustumCorners[j + 4] - FrustumCorners[j];
             FrustumCorners[j + 4] = FrustumCorners[j] + (Distance * SplitDist);
             FrustumCorners[j] = FrustumCorners[j] + (Distance * LastSplitDist);
         }
 
         // Calc frustum center
-        CVector4 Center = CVector4(0.0f);
+        FVector4 Center = FVector4(0.0f);
         for (uint32 j = 0; j < 8; j++)
         {
             Center = Center + FrustumCorners[j];
@@ -174,12 +174,12 @@ void CDirectionalLight::UpdateCascades(CCamera& Camera)
         //XMVector3Transform(XmCenter, LookAtMatInverse);
         //XMStoreFloat4(&Center, XmCenter);
 
-        CVector3 CascadePosition = CVector3(Center.x, Center.y, Center.z) - (Direction * Radius * 6.0f);
-        CVector3 EyePosition = CascadePosition;
-        CVector3 LookPosition = CVector3(Center.x, Center.y, Center.z);
+        FVector3 CascadePosition = FVector3(Center.x, Center.y, Center.z) - (Direction * Radius * 6.0f);
+        FVector3 EyePosition = CascadePosition;
+        FVector3 LookPosition = FVector3(Center.x, Center.y, Center.z);
 
-        CMatrix4 View = CMatrix4::LookAt(EyePosition, LookPosition, Up);
-        CMatrix4 Projection = CMatrix4::OrtographicProjection(-Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f);
+        FMatrix4 View = FMatrix4::LookAt(EyePosition, LookPosition, Up);
+        FMatrix4 Projection = FMatrix4::OrtographicProjection(-Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f);
         ViewMatrices[i] = View.Transpose();
         ProjectionMatrices[i] = Projection.Transpose();
         Matrices[i] = (View * Projection).Transpose();
@@ -191,7 +191,7 @@ void CDirectionalLight::UpdateCascades(CCamera& Camera)
 
         if (i == 0)
         {
-            LookAt = CVector3(Center.x, Center.y, Center.z);
+            LookAt = FVector3(Center.x, Center.y, Center.z);
             Position = CascadePosition;
         }
     }
@@ -199,22 +199,22 @@ void CDirectionalLight::UpdateCascades(CCamera& Camera)
     return;
 }
 
-void CDirectionalLight::SetRotation(const CVector3& InRotation)
+void CDirectionalLight::SetRotation(const FVector3& InRotation)
 {
     Rotation = InRotation;
 }
 
 void CDirectionalLight::SetRotation(float x, float y, float z)
 {
-    SetRotation(CVector3(x, y, z));
+    SetRotation(FVector3(x, y, z));
 }
 
-void CDirectionalLight::SetLookAt(const CVector3& InLookAt)
+void CDirectionalLight::SetLookAt(const FVector3& InLookAt)
 {
     LookAt = InLookAt;
 }
 
 void CDirectionalLight::SetLookAt(float x, float y, float z)
 {
-    SetLookAt(CVector3(x, y, z));
+    SetLookAt(FVector3(x, y, z));
 }

@@ -16,7 +16,7 @@ RHI_API IRHIShaderCompiler* GShaderCompiler   = nullptr;
 
 static FRHIModule* LoadNullRHI()
 {
-    return CModuleManager::Get().LoadEngineModule<FRHIModule>("NullRHI");
+    return FModuleManager::Get().LoadEngineModule<FRHIModule>("NullRHI");
 }
 
 bool RHIInitialize(ERHIInstanceType InRenderApi)
@@ -25,11 +25,11 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
     FRHIModule* RHIModule = nullptr;
     if (InRenderApi == ERHIInstanceType::D3D12)
     {
-        RHIModule = CModuleManager::Get().LoadEngineModule<FRHIModule>("D3D12RHI");
+        RHIModule = FModuleManager::Get().LoadEngineModule<FRHIModule>("D3D12RHI");
     }
 	else if (InRenderApi == ERHIInstanceType::Metal)
 	{
-		RHIModule = CModuleManager::Get().LoadEngineModule<FRHIModule>("MetalRHI");
+		RHIModule = FModuleManager::Get().LoadEngineModule<FRHIModule>("MetalRHI");
 	}
     else if (InRenderApi == ERHIInstanceType::Null)
     {

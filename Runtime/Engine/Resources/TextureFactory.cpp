@@ -148,7 +148,7 @@ FRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
     TSharedRef<FRHITexture2D> Texture = RHICreateTexture2D(Initializer);
     if (!Texture)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return nullptr;
     }
 

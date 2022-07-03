@@ -5,14 +5,14 @@
 #include "Core/Delegates/DelegateInstance.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CApplicationModule
+// FApplicationModule
 
-class CORE_API CApplicationModule : public IEngineModule
+class CORE_API FApplicationModule : public IEngineModule
 {
 public:
 
-    CApplicationModule() = default;
-    virtual ~CApplicationModule() = default;
+    FApplicationModule() = default;
+    virtual ~FApplicationModule() = default;
 
     /** @return: Returns true if the initialization is successful */
     virtual bool Init();
@@ -22,7 +22,7 @@ public:
      * 
      * @param DeltaTime: Time since last time the application was ticked
      */
-    virtual void Tick(CTimestamp Deltatime);
+    virtual void Tick(FTimestamp Deltatime);
 
     /** @return: Returns true if the release is successful */
     virtual bool Release();
@@ -34,10 +34,10 @@ public:
     virtual bool Unload() override;
 
 protected:
-    CDelegateHandle TickHandle;
+    FDelegateHandle TickHandle;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Global application pointer
 
-extern CORE_API CApplicationModule* GApplicationModule;
+extern CORE_API FApplicationModule* GApplicationModule;

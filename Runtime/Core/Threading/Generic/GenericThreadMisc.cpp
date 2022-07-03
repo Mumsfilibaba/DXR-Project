@@ -9,16 +9,16 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericThreadMisc
+// FGenericThreadMisc
 
-CGenericThread* CGenericThreadMisc::CreateThread(const TFunction<void()>& InFunction)
+FGenericThread* FGenericThreadMisc::CreateThread(const TFunction<void()>& InFunction)
 {
-    return dbg_new CGenericThread(InFunction);
+    return dbg_new FGenericThread(InFunction);
 }
 
-CGenericThread* CGenericThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
+FGenericThread* FGenericThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
 {
-    return dbg_new CGenericThread(InFunction);
+    return dbg_new FGenericThread(InFunction);
 }
 
 #if defined(COMPILER_MSVC)

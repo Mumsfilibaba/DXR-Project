@@ -23,8 +23,8 @@ ENGINE_API CEngine* GEngine;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ConsoleCommands
 
-CAutoConsoleCommand GExit("Engine.Exit");
-CAutoConsoleCommand GToggleFullscreen("MainViewport.ToggleFullscreen");
+FAutoConsoleCommand GExit("Engine.Exit");
+FAutoConsoleCommand GToggleFullscreen("MainViewport.ToggleFullscreen");
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Engine
@@ -36,7 +36,7 @@ CEngine* CEngine::Make()
 
 CEngine::CEngine()
 {
-	GExit.GetExecutedDelgate().AddRaw(this, &CEngine::Exit);
+	GExit.GetDelgate().AddRaw(this, &CEngine::Exit);
 }
 
 bool CEngine::Initialize()
@@ -58,11 +58,11 @@ bool CEngine::Initialize()
     {
         MainWindow->Show(false);
 
-        GToggleFullscreen.GetExecutedDelgate().AddRaw(MainWindow.Get(), &CGenericWindow::ToggleFullscreen);
+        GToggleFullscreen.GetDelgate().AddRaw(MainWindow.Get(), &FGenericWindow::ToggleFullscreen);
     }
     else
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Main Window");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Main Window");
         return false;
     }
 
@@ -124,7 +124,7 @@ bool CEngine::Initialize()
     MaterialDesc.Metallic = 0.0f;
     MaterialDesc.Roughness = 1.0f;
     MaterialDesc.EnableHeight = 0;
-    MaterialDesc.Albedo = CVector3(1.0f);
+    MaterialDesc.Albedo = FVector3(1.0f);
 
     BaseMaterial = MakeShared<CMaterial>(MaterialDesc);
     BaseMaterial->AlbedoMap = GEngine->BaseTexture;
@@ -153,7 +153,7 @@ bool CEngine::Start()
     return true;
 }
 
-void CEngine::Tick(CTimestamp DeltaTime)
+void CEngine::Tick(FTimestamp DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -170,7 +170,7 @@ bool CEngine::Release()
 
 void CEngine::Exit()
 {
-    PlatformApplicationMisc::RequestExit(0);
+    FPlatformApplicationMisc::RequestExit(0);
 }
 
 void CEngine::Destroy()

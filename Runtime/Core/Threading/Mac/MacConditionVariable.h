@@ -4,18 +4,18 @@
 #include <pthread.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacConditionVariable
+// FMacConditionVariable
 
-class CMacConditionVariable final : public CGenericConditionVariable
+class FMacConditionVariable final : public FGenericConditionVariable
 {
 public:
 
     typedef pthread_cond_t* PlatformHandle;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericConditionVariable Interface
+    // FGenericConditionVariable Interface
 
-    FORCEINLINE CMacConditionVariable()
+    FORCEINLINE FMacConditionVariable()
         : ConditionVariable()
     {
         pthread_condattr_t Attributes;
@@ -26,7 +26,7 @@ public:
         pthread_condattr_destroy(&Attributes);
     }
 
-    FORCEINLINE ~CMacConditionVariable()
+    FORCEINLINE ~FMacConditionVariable()
     {
         pthread_cond_destroy(&ConditionVariable);
     }
@@ -41,7 +41,7 @@ public:
         pthread_cond_broadcast(&ConditionVariable);
     }
 
-    FORCEINLINE bool Wait(TScopedLock<CCriticalSection>& Lock) noexcept
+    FORCEINLINE bool Wait(TScopedLock<FCriticalSection>& Lock) noexcept
     {
         pthread_mutex_t* Mutex = Lock.GetLock().GetPlatformHandle();
         return (pthread_cond_wait(&ConditionVariable, Mutex) == 0);

@@ -19,10 +19,10 @@ public:
     void UpdateCascades(class CCamera& Camera);
 
     // Rotation in Radians
-    void SetRotation(const CVector3& InRotation);
+    void SetRotation(const FVector3& InRotation);
     void SetRotation(float x, float y, float z);
 
-    void SetLookAt(const CVector3& InInLookAt);
+    void SetLookAt(const FVector3& InInLookAt);
     void SetLookAt(float x, float y, float z);
 
     FORCEINLINE void SetCascadeSplitLambda(float InCascadeSplitLambda)
@@ -35,44 +35,44 @@ public:
         Size = InSize;
     }
 
-    FORCEINLINE const CVector3& GetDirection() const
+    FORCEINLINE const FVector3& GetDirection() const
     {
         return Direction;
     }
 
-    FORCEINLINE const CVector3& GetUp() const
+    FORCEINLINE const FVector3& GetUp() const
     {
         return Up;
     }
 
-    FORCEINLINE const CVector3& GetRotation() const
+    FORCEINLINE const FVector3& GetRotation() const
     {
         return Rotation;
     }
 
-    FORCEINLINE const CVector3& GetPosition() const
+    FORCEINLINE const FVector3& GetPosition() const
     {
         return Position;
     }
 
-    FORCEINLINE const CVector3& GetLookAt() const
+    FORCEINLINE const FVector3& GetLookAt() const
     {
         return LookAt;
     }
 
-    FORCEINLINE const CMatrix4& GetMatrix(uint32 CascadeIndex) const
+    FORCEINLINE const FMatrix4& GetMatrix(uint32 CascadeIndex) const
     {
         Check(CascadeIndex < NUM_SHADOW_CASCADES);
         return Matrices[CascadeIndex];
     }
 
-    FORCEINLINE const CMatrix4& GetViewMatrix(uint32 CascadeIndex) const
+    FORCEINLINE const FMatrix4& GetViewMatrix(uint32 CascadeIndex) const
     {
         Check(CascadeIndex < NUM_SHADOW_CASCADES);
         return ViewMatrices[CascadeIndex];
     }
 
-    FORCEINLINE const CMatrix4& GetProjectionMatrix(uint32 CascadeIndex) const
+    FORCEINLINE const FMatrix4& GetProjectionMatrix(uint32 CascadeIndex) const
     {
         Check(CascadeIndex < NUM_SHADOW_CASCADES);
         return ProjectionMatrices[CascadeIndex];
@@ -99,15 +99,15 @@ public:
     }
 
 private:
-    CVector3 Direction;
-    CVector3 Up;
-    CVector3 Rotation;
-    CVector3 LookAt;
-    CVector3 Position;
+    FVector3 Direction;
+    FVector3 Up;
+    FVector3 Rotation;
+    FVector3 LookAt;
+    FVector3 Position;
 
-    CMatrix4 ViewMatrices[NUM_SHADOW_CASCADES];
-    CMatrix4 ProjectionMatrices[NUM_SHADOW_CASCADES];
-    CMatrix4 Matrices[NUM_SHADOW_CASCADES];
+    FMatrix4 ViewMatrices[NUM_SHADOW_CASCADES];
+    FMatrix4 ProjectionMatrices[NUM_SHADOW_CASCADES];
+    FMatrix4 Matrices[NUM_SHADOW_CASCADES];
 
     float CascadeSplits[NUM_SHADOW_CASCADES];
     float CascadeRadius[NUM_SHADOW_CASCADES];

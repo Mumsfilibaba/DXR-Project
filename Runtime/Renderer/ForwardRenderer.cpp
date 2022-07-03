@@ -26,28 +26,28 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
     if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
     VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
     CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
     if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
     PShader = RHICreatePixelShader(ShaderCode);
     if (!PShader)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -59,7 +59,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -69,7 +69,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -78,7 +78,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -97,7 +97,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -156,8 +156,8 @@ void CForwardRenderer::Render(FRHICommandList& CmdList, const SFrameResources& F
 
     struct STransformBuffer
     {
-        CMatrix4 Transform;
-        CMatrix4 TransformInv;
+        FMatrix4 Transform;
+        FMatrix4 TransformInv;
     } TransformPerObject;
 
     CmdList.SetGraphicsPipelineState(PipelineState.Get());

@@ -14,7 +14,7 @@ public:
     CPointLight();
     ~CPointLight() = default;
 
-    void SetPosition(const CVector3& InPosition);
+    void SetPosition(const FVector3& InPosition);
     void SetPosition(float x, float y, float z);
 
     void SetShadowNearPlane(float InShadowNearPlane);
@@ -31,24 +31,24 @@ public:
         return bShadowCaster;
     }
 
-    FORCEINLINE const CVector3& GetPosition() const
+    FORCEINLINE const FVector3& GetPosition() const
     {
         return Position;
     }
 
-    FORCEINLINE const CMatrix4& GetMatrix(uint32 Index) const
+    FORCEINLINE const FMatrix4& GetMatrix(uint32 Index) const
     {
         Check(Index < 6);
         return Matrices[Index];
     }
 
-    FORCEINLINE const CMatrix4& GetViewMatrix(uint32 Index) const
+    FORCEINLINE const FMatrix4& GetViewMatrix(uint32 Index) const
     {
         Check(Index < 6);
         return ViewMatrices[Index];
     }
 
-    FORCEINLINE const CMatrix4& GetProjectionMatrix(uint32 Index) const
+    FORCEINLINE const FMatrix4& GetProjectionMatrix(uint32 Index) const
     {
         Check(Index < 6);
         return ProjMatrices[Index];
@@ -57,9 +57,9 @@ public:
 private:
     void CalculateMatrices();
 
-    CMatrix4 Matrices[6];
-    CMatrix4 ViewMatrices[6];
-    CMatrix4 ProjMatrices[6];
-    CVector3 Position;
+    FMatrix4 Matrices[6];
+    FMatrix4 ViewMatrices[6];
+    FMatrix4 ProjMatrices[6];
+    FVector3 Position;
     bool     bShadowCaster = false;
 };

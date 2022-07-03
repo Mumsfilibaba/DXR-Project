@@ -29,16 +29,16 @@ enum class EConsoleSeverity
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CConsoleManager
+// FConsoleManager
 
-class CORE_API CConsoleManager
+class CORE_API FConsoleManager
 {
 private:
 
-    friend class TOptional<CConsoleManager>;
+    friend class TOptional<FConsoleManager>;
 
-    CConsoleManager() = default;
-    ~CConsoleManager() = default;
+    FConsoleManager()  = default;
+    ~FConsoleManager() = default;
 
 public:
 
@@ -47,7 +47,7 @@ public:
      * 
      * @return: Returns a reference to the ConsoleManager
      */
-    static CConsoleManager& Get();
+    static FConsoleManager& Get();
 
     /**
      * @brief: Register a new console-command
@@ -144,7 +144,7 @@ public:
 
 private:
     
-    static TOptional<CConsoleManager>& GetConsoleManagerInstance();
+    static TOptional<FConsoleManager>& GetConsoleManagerInstance();
     
     bool RegisterObject(const FString& Name, IConsoleObject* Variable);
 
@@ -157,32 +157,32 @@ private:
     TArray<TPair<FString, EConsoleSeverity>> ConsoleMessages;
 
     TArray<FString> History;
-    int32          HistoryLength = 50;
+    int32           HistoryLength = 50;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CAutoConsoleCommand
+// FAutoConsoleCommand
 
-class CAutoConsoleCommand : public CConsoleCommand
+class FAutoConsoleCommand : public FConsoleCommand
 {
 public:
-    CAutoConsoleCommand(const FString& InName)
-        : CConsoleCommand()
+    FAutoConsoleCommand(const FString& InName)
+        : FConsoleCommand()
         , Name(InName)
     {
-        CConsoleManager::Get().RegisterCommand(InName, this);
+        FConsoleManager::Get().RegisterCommand(InName, this);
     }
     
-    CAutoConsoleCommand(const FString& InName, const CExecutedDelegateType& Delegate)
-        : CConsoleCommand(Delegate)
+    FAutoConsoleCommand(const FString& InName, const FCommandDelegateType& Delegate)
+        : FConsoleCommand(Delegate)
         , Name(InName)
     {
-        CConsoleManager::Get().RegisterCommand(InName, this);
+        FConsoleManager::Get().RegisterCommand(InName, this);
     }
 
-    ~CAutoConsoleCommand()
+    ~FAutoConsoleCommand()
     {
-        CConsoleManager::Get().UnregisterObject(Name);
+        FConsoleManager::Get().UnregisterObject(Name);
     }
 
 private:
@@ -200,19 +200,19 @@ public:
         : TConsoleVariable<T>(StartValue)
         , Name(InName)
     {
-        CConsoleManager::Get().RegisterVariable(InName, this);
+        FConsoleManager::Get().RegisterVariable(InName, this);
     }
 
-    TAutoConsoleVariable(const FString& InName, T StartValue, const CConsoleVariableChangedDelegateType& VariableChangedDelegate)
+    TAutoConsoleVariable(const FString& InName, T StartValue, const FCVarChangedDelegateType& VariableChangedDelegate)
         : TConsoleVariable<T>(StartValue, VariableChangedDelegate)
         , Name(InName)
     {
-        CConsoleManager::Get().RegisterVariable(InName, this);
+        FConsoleManager::Get().RegisterVariable(InName, this);
     }
 
     ~TAutoConsoleVariable()
     {
-        CConsoleManager::Get().UnregisterObject(Name);
+        FConsoleManager::Get().UnregisterObject(Name);
     }
 
 private:

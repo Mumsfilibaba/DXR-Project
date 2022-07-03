@@ -35,7 +35,7 @@
 
 bool CEngineLoop::LoadCoreModules()
 {
-    CModuleManager& ModuleManager = CModuleManager::Get();
+    FModuleManager& ModuleManager = FModuleManager::Get();
 
     IEngineModule* CoreModule            = ModuleManager.LoadEngineModule("Core");
     IEngineModule* CoreApplicationModule = ModuleManager.LoadEngineModule("CoreApplication");
@@ -76,10 +76,10 @@ bool CEngineLoop::LoadCoreModules()
 
 bool CEngineLoop::PreInitialize()
 {
-    NErrorDevice::GConsoleWindow = PlatformApplicationMisc::CreateConsoleWindow();
+    NErrorDevice::GConsoleWindow = FPlatformApplicationMisc::CreateConsoleWindow();
     if (!NErrorDevice::GConsoleWindow)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize ConsoleWindow");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize ConsoleWindow");
         return false;
     }
     else
@@ -90,21 +90,21 @@ bool CEngineLoop::PreInitialize()
 
     if (!LoadCoreModules())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to Load Core-Modules");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Load Core-Modules");
         return false;
     }
 
-    LOG_INFO("IsDebuggerAttached=%s", PlatformMisc::IsDebuggerPresent() ? "true" : "false");
+    LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
     
     // TODO: Use a separate profiler for booting the engine
-    CFrameProfiler::Enable();
+    FFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
 
 	const FString ProjectLocation     = FString(ENGINE_LOCATION) + FString("/") + FString(PROJECT_NAME);
     const FString AssetFolderLocation = FString(ENGINE_LOCATION) + FString("/Assets");
     if (!CProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr(), AssetFolderLocation.CStr()))
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
         return false;
     }
 
@@ -113,19 +113,19 @@ bool CEngineLoop::PreInitialize()
     LOG_INFO("ProjectPath=%s", CProjectManager::GetProjectPath());
 #endif
 
-    if (!CThreadManager::Initialize())
+    if (!FThreadManager::Initialize())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");
         return false;
     }
 
     if (!CCanvasApplication::CreateApplication())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return false;
     }
 
-    if (!CAsyncTaskManager::Get().Initialize())
+    if (!FAsyncTaskManager::Get().Initialize())
     {
         return false;
     }
@@ -133,7 +133,7 @@ bool CEngineLoop::PreInitialize()
    // Initialize the shadercompiler before RHI since RHI might need to compile shaders
     if (!FRHIShaderCompiler::Initialize(CProjectManager::GetAssetPath()))
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return false;
     }
         
@@ -188,13 +188,13 @@ bool CEngineLoop::Initialize()
 
     if (!GRenderer.Init())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
         return false;
     }
 
     NEngineLoopDelegates::PreApplicationLoadedDelegate.Broadcast();
 
-    GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>(CProjectManager::GetProjectModuleName());
+    GApplicationModule = FModuleManager::Get().LoadEngineModule<FApplicationModule>(CProjectManager::GetProjectModuleName());
     if (!GApplicationModule)
     {
         LOG_WARNING("Application Init failed, may not behave as intended");
@@ -204,17 +204,17 @@ bool CEngineLoop::Initialize()
         NEngineLoopDelegates::PostApplicationLoadedDelegate.Broadcast();
     }
 
-    IInterfaceRendererModule* InterfaceRendererModule = CModuleManager::Get().LoadEngineModule<IInterfaceRendererModule>("InterfaceRenderer");
+    IInterfaceRendererModule* InterfaceRendererModule = FModuleManager::Get().LoadEngineModule<IInterfaceRendererModule>("InterfaceRenderer");
     if (!InterfaceRendererModule)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to load InterfaceRenderer");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load InterfaceRenderer");
         return false;
     }
 
     TSharedRef<ICanvasRenderer> InterfaceRenderer = InterfaceRendererModule->CreateRenderer();
     if (!InterfaceRenderer)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to create InterfaceRenderer");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create InterfaceRenderer");
         return false;
     }
 
@@ -232,17 +232,17 @@ bool CEngineLoop::Initialize()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Tick
 
-void CEngineLoop::Tick(CTimestamp Deltatime)
+void CEngineLoop::Tick(FTimestamp Deltatime)
 {
     TRACE_FUNCTION_SCOPE();
 
     CCanvasApplication::Get().Tick(Deltatime);
 
-    CEngineLoopTicker::Get().Tick(Deltatime);
+    FEngineLoopTicker::Get().Tick(Deltatime);
 
     GEngine->Tick(Deltatime);
 
-    CFrameProfiler::Get().Tick();
+    FFrameProfiler::Get().Tick();
 
     CGPUProfiler::Get().Tick();
 
@@ -281,17 +281,17 @@ bool CEngineLoop::Release()
 
     RHIRelease();
 
-    CAsyncTaskManager::Get().Release();
+    FAsyncTaskManager::Get().Release();
 
     CCanvasApplication::Release();
 
-    CThreadManager::Release();
+    FThreadManager::Release();
 
-    CModuleManager::ReleaseAllLoadedModules();
+    FModuleManager::ReleaseAllLoadedModules();
 
     SafeRelease(NErrorDevice::GConsoleWindow);
 
-    CModuleManager::Destroy();
+    FModuleManager::Destroy();
 
     return true;
 }

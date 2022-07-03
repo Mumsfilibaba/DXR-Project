@@ -3,14 +3,14 @@
 #include "GenericConsoleWindow.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericApplicationMisc
+// FGenericApplicationMisc
 
-class CGenericApplication* CGenericApplicationMisc::CreateApplication()
+class FGenericApplication* FGenericApplicationMisc::CreateApplication()
 {
-    return dbg_new CGenericApplication(TSharedPtr<ICursor>(nullptr));
+    return dbg_new FGenericApplication(TSharedPtr<ICursor>(nullptr));
 }
 
-class CGenericConsoleWindow* CGenericApplicationMisc::CreateConsoleWindow()
+class FGenericConsoleWindow* FGenericApplicationMisc::CreateConsoleWindow()
 {
-    return dbg_new CGenericConsoleWindow();
+    return dbg_new FGenericConsoleWindow();
 }

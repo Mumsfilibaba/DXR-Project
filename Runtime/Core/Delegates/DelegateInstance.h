@@ -7,9 +7,9 @@
 typedef int64 DelegateHandle;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDelegateHandle - A handle for a delegate
+// FDelegateHandle - A handle for a delegate
 
-class CDelegateHandle
+class FDelegateHandle
 {
     enum
     {
@@ -26,14 +26,14 @@ public:
     /**
      * @brief: Default constructor
      */
-    FORCEINLINE CDelegateHandle()
+    FORCEINLINE FDelegateHandle()
         : Handle(InvalidHandle)
     { }
 
     /**
      * @brief: Construct a new delegate handle which generates a new ID
      */
-    FORCEINLINE explicit CDelegateHandle(EGenerateID)
+    FORCEINLINE explicit FDelegateHandle(EGenerateID)
         : Handle(GenerateID())
     { }
 
@@ -79,7 +79,7 @@ public:
      * @param RHS: Other delegate-handle to compare with
      * @return: Returns true if the delegate-handles are equal to each other
      */
-    FORCEINLINE bool operator==(CDelegateHandle RHS) const
+    FORCEINLINE bool operator==(FDelegateHandle RHS) const
     {
         return (Handle == RHS.Handle);
     }
@@ -90,7 +90,7 @@ public:
      * @param RHS: Other delegate-handle to compare with
      * @return: Returns false if the delegate-handles are equal to each other
      */
-    FORCEINLINE bool operator!=(CDelegateHandle RHS) const
+    FORCEINLINE bool operator!=(FDelegateHandle RHS) const
     {
         return !(*this == RHS);
     }
@@ -136,7 +136,7 @@ public:
      * 
      * @return: Returns the delegate-handle of this delegate-instance
      */
-    virtual CDelegateHandle GetHandle() const = 0;
+    virtual FDelegateHandle GetHandle() const = 0;
 
     /**
      * @brief: Clones the delegate and stores it in the specified memory 
@@ -175,7 +175,7 @@ public:
         return false;
     }
 
-    virtual CDelegateHandle GetHandle() const override final
+    virtual FDelegateHandle GetHandle() const override final
     {
         return Handle;
     }
@@ -184,10 +184,10 @@ protected:
 
     FORCEINLINE TDelegateInstance()
         : IDelegateInstance()
-        , Handle(CDelegateHandle::EGenerateID::New)
+        , Handle(FDelegateHandle::EGenerateID::New)
     { }
 
-    CDelegateHandle Handle;
+    FDelegateHandle Handle;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

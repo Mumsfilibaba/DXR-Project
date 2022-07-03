@@ -3,18 +3,18 @@
 #include "Core/Threading/Generic/GenericThreadMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsThreadMisc
+// FWindowsThreadMisc
 
-class CWindowsThreadMisc : public CGenericThreadMisc
+class FWindowsThreadMisc : public FGenericThreadMisc
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericThreadMisc Interface
+    // FGenericThreadMisc Interface
 
-    static CGenericThread* CreateThread(const TFunction<void()>& InFunction);
+    static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
 
-    static CGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InString);
+    static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InString);
 
     static FORCEINLINE uint32 GetNumProcessors()
     {
@@ -32,7 +32,7 @@ public:
         return reinterpret_cast<void*>(static_cast<uintptr_t>(CurrentHandle));
     }
 
-    static FORCEINLINE void Sleep(CTimestamp Time)
+    static FORCEINLINE void Sleep(FTimestamp Time)
     {
         DWORD Milliseconds = static_cast<DWORD>(Time.AsMilliSeconds());
         ::Sleep(Milliseconds);

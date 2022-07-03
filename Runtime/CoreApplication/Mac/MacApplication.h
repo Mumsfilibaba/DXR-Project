@@ -58,33 +58,33 @@ struct SDeferredMacEvent
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacApplication
+// FMacApplication
 
-class CMacApplication final : public CGenericApplication
+class FMacApplication final : public FGenericApplication
 {
 private:
 
-    CMacApplication();
-    ~CMacApplication();
+    FMacApplication();
+    ~FMacApplication();
 
 public:
 
-	static CMacApplication* CreateMacApplication();
+	static FMacApplication* CreateMacApplication();
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericApplication Interface
+    // FGenericApplication Interface
 
-    virtual TSharedRef<CGenericWindow> CreateWindow() override final;
+    virtual TSharedRef<FGenericWindow> CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
 
-    virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) override final;
+    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
-    virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
+    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
 
-    virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
+    virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
 
 public:
     
@@ -98,13 +98,13 @@ private:
     void ProcessDeferredEvent(const SDeferredMacEvent& Notification);
 
     TArray<TSharedRef<CMacWindow>> Windows;
-    mutable CCriticalSection       WindowsCS;
+    mutable FCriticalSection       WindowsCS;
     
     TArray<TSharedRef<CMacWindow>> ClosedWindows;
-    CCriticalSection               ClosedWindowsCS;
+    FCriticalSection               ClosedWindowsCS;
 
     TArray<SDeferredMacEvent>      DeferredEvents;
-    CCriticalSection               DeferredEventsCS;
+    FCriticalSection               DeferredEventsCS;
 };
 
-extern CMacApplication* MacApplication;
+extern FMacApplication* MacApplication;

@@ -201,7 +201,7 @@ bool FD3D12ShaderCompiler::CompileFromFile(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
 
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -224,7 +224,7 @@ bool FD3D12ShaderCompiler::CompileShader(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
 
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -276,11 +276,11 @@ bool FD3D12ShaderCompiler::Init()
     DxCompilerDLL = ::LoadLibrary("dxcompiler.dll");
     if (!DxCompilerDLL)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to load dxcompiler.dll");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load dxcompiler.dll");
         return false;
     }
 
-    DxcCreateInstanceFunc = PlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DxCompilerDLL);
+    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DxCompilerDLL);
     if (!DxcCreateInstanceFunc)
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to load DxcCreateInstance");
@@ -367,7 +367,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
 
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     wchar_t TargetProfile[BufferLength];
-    WStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
     TComPtr<IDxcOperationResult> Result;
     HRESULT hResult = DxCompiler->Compile(
@@ -380,7 +380,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Compile");
 
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -388,7 +388,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
 
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 

@@ -15,52 +15,52 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericApplication
+// FGenericApplication
 
-class COREAPPLICATION_API CGenericApplication
+class COREAPPLICATION_API FGenericApplication
 {
-    friend class CGenericApplicationMisc;
+    friend class FGenericApplicationMisc;
     
-    friend struct TDefaultDelete<CGenericApplication>;
+    friend struct TDefaultDelete<FGenericApplication>;
 
 protected:
 
-    CGenericApplication(const TSharedPtr<ICursor>& InCursor)
+    FGenericApplication(const TSharedPtr<ICursor>& InCursor)
         : Cursor(InCursor)
         , MessageListener(nullptr)
     { }
 
-    virtual ~CGenericApplication() = default;
+    virtual ~FGenericApplication() = default;
 
 public:
 
-    virtual TSharedRef<CGenericWindow> CreateWindow() { return nullptr; }
+    virtual TSharedRef<FGenericWindow> CreateWindow() { return nullptr; }
 
     virtual void Tick(float Delta) { }
 
     virtual bool SupportsHighPrecisionMouse() const { return false; }
 
-    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<CGenericWindow>& Window) { return true; }
+    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) { return true; }
 
-    virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) { }
+    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) { }
 
-    virtual TSharedRef<CGenericWindow> GetActiveWindow() const { return nullptr; }
+    virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
 
-    virtual void SetCapture(const TSharedRef<CGenericWindow>& Window) { }
+    virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) { }
 
-    virtual TSharedRef<CGenericWindow> GetCapture() const { return nullptr; }
+    virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
 
-    virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const { return nullptr; }
+    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const { return nullptr; }
 
-    virtual void SetMessageListener(const TSharedPtr<CGenericApplicationMessageHandler>& InMessageHandler) { MessageListener = InMessageHandler; }
+    virtual void SetMessageListener(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) { MessageListener = InMessageHandler; }
 
-    TSharedPtr<CGenericApplicationMessageHandler> GetMessageListener() const { return MessageListener; }
+    TSharedPtr<FGenericApplicationMessageHandler> GetMessageListener() const { return MessageListener; }
 
     TSharedPtr<ICursor> GetCursor() const { return Cursor; }
 
 protected:
     TSharedPtr<ICursor>                           Cursor;
-    TSharedPtr<CGenericApplicationMessageHandler> MessageListener;
+    TSharedPtr<FGenericApplicationMessageHandler> MessageListener;
 };
 
 #if defined(COMPILER_MSVC)

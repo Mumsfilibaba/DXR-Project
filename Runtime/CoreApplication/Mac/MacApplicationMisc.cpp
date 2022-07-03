@@ -8,17 +8,17 @@
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
 
-CGenericApplication* CMacApplicationMisc::CreateApplication()
+FGenericApplication* FMacApplicationMisc::CreateApplication()
 {
-    return CMacApplication::CreateMacApplication();
+    return FMacApplication::CreateMacApplication();
 }
 
-CGenericConsoleWindow* CMacApplicationMisc::CreateConsoleWindow()
+FGenericConsoleWindow* FMacApplicationMisc::CreateConsoleWindow()
 {
-    return CMacConsoleWindow::CreateMacConsole();
+    return FMacConsoleWindow::CreateMacConsole();
 }
 
-void CMacApplicationMisc::MessageBox(const String& Title, const String& Message)
+void FMacApplicationMisc::MessageBox(const String& Title, const String& Message)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -33,7 +33,7 @@ void CMacApplicationMisc::MessageBox(const String& Title, const String& Message)
     CFRelease(TextRef);
 }
 
-void CMacApplicationMisc::PumpMessages(bool bUntilEmpty)
+void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -57,7 +57,7 @@ void CMacApplicationMisc::PumpMessages(bool bUntilEmpty)
     } while (bUntilEmpty);
 }
 
-SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
+FModifierKeyState FMacApplicationMisc::GetModifierKeyState()
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -89,5 +89,5 @@ SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
         Mask |= EModifierFlag::ModifierFlag_CapsLock;
     }
         
-    return SModifierKeyState(Mask);
+    return FModifierKeyState(Mask);
 }

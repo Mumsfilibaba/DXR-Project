@@ -12,15 +12,15 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericThreadMisc
+// FGenericThreadMisc
 
-class CGenericThreadMisc
+class FGenericThreadMisc
 {
 public:
 
-    static CGenericThread* CreateThread(const TFunction<void()>& InFunction);
+    static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
 
-    static CGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName);
+    static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName);
 
     static FORCEINLINE bool Initialize() { return true; }
 
@@ -30,7 +30,7 @@ public:
 
     static FORCEINLINE void* GetThreadHandle() { return nullptr; }
 
-    static FORCEINLINE void Sleep(CTimestamp Time) { }
+    static FORCEINLINE void Sleep(FTimestamp Time) { }
 };
 
 #if defined(COMPILER_MSVC)

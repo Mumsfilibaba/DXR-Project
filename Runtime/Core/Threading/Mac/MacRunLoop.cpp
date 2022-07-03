@@ -94,7 +94,7 @@ private:
     NSString*          RunLoopMode = nullptr;
     
     // Blocks that are going to be executed
-    CSpinLock                BlockLock;
+    FSpinLock                BlockLock;
     TArray<dispatch_block_t> Blocks;
 };
 
@@ -118,7 +118,7 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
 {
     dispatch_block_t CopiedBlock = Block_copy(Block);
     
-    if (PlatformThreadMisc::IsMainThread())
+    if (FPlatformThreadMisc::IsMainThread())
     {
         // If already on mainthread, execute Block here
         CopiedBlock();

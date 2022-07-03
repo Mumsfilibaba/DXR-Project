@@ -4,9 +4,9 @@
 #include "Core/Input/Generic/GenericKeyMapping.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacKeyMapping
+// FMacKeyMapping
 
-class CMacKeyMapping : public CGenericKeyMapping
+class FMacKeyMapping : public FGenericKeyMapping
 {
     enum
     {
@@ -16,7 +16,7 @@ class CMacKeyMapping : public CGenericKeyMapping
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericKeyMapping Interface
+    // FGenericKeyMapping Interface
 
     static void Initialize();
     

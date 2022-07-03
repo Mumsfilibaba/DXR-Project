@@ -29,7 +29,7 @@ CGameConsoleWindow::CGameConsoleWindow()
 
 void CGameConsoleWindow::Tick()
 {
-    TSharedRef<CGenericWindow> MainWindow = CCanvasApplication::Get().GetMainViewport();
+    TSharedRef<FGenericWindow> MainWindow = CCanvasApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainWindow->GetWidth();
 
@@ -113,7 +113,7 @@ void CGameConsoleWindow::Tick()
                 ImGui::PushID(i);
                 if (ImGui::Selectable(Candidate.Second.CStr(), &bIsActiveIndex))
                 {
-                    CStringUtils::Copy(TextBuffer.Data(), Candidate.Second.CStr());
+                    FStringUtils::Copy(TextBuffer.Data(), Candidate.Second.CStr());
                     PopupSelectedText = Candidate.Second;
 
                     Candidates.Clear();
@@ -186,7 +186,7 @@ void CGameConsoleWindow::Tick()
         }
         else
         {
-            const TArray<TPair<FString, EConsoleSeverity>>& ConsoleMessages = CConsoleManager::Get().GetMessages();
+            const TArray<TPair<FString, EConsoleSeverity>>& ConsoleMessages = FConsoleManager::Get().GetMessages();
             for (const TPair<FString, EConsoleSeverity>& Text : ConsoleMessages)
             {
                 ImVec4 Color;
@@ -252,7 +252,7 @@ void CGameConsoleWindow::Tick()
         {
             if (CandidatesIndex != -1)
             {
-                CStringUtils::Copy(TextBuffer.Data(), PopupSelectedText.CStr());
+                FStringUtils::Copy(TextBuffer.Data(), PopupSelectedText.CStr());
 
                 Candidates.Clear();
                 CandidatesIndex = -1;
@@ -262,7 +262,7 @@ void CGameConsoleWindow::Tick()
             else
             {
                 const FString Text = FString(TextBuffer.Data());
-                CConsoleManager::Get().Execute(Text);
+                FConsoleManager::Get().Execute(Text);
 
                 TextBuffer[0] = 0;
                 bScrollDown = true;
@@ -334,7 +334,7 @@ int32 CGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
         }
 
         const FStringView CandidateName(WordStart, WordLength);
-        CConsoleManager::Get().FindCandidates(CandidateName, Candidates);
+        FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
         break;
     }
     case ImGuiInputTextFlags_CallbackCompletion:
@@ -390,7 +390,7 @@ int32 CGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
     {
         if (Candidates.IsEmpty())
         {
-            const TArray<FString>& History = CConsoleManager::Get().GetHistory();
+            const TArray<FString>& History = FConsoleManager::Get().GetHistory();
             if (History.IsEmpty())
             {
                 HistoryIndex = -1;

@@ -13,14 +13,14 @@ CLight::CLight()
     CORE_OBJECT_INIT();
 }
 
-void CLight::SetColor(const CVector3& InColor)
+void CLight::SetColor(const FVector3& InColor)
 {
     Color = InColor;
 }
 
 void CLight::SetColor(float R, float G, float B)
 {
-    Color = CVector3(R, G, B);
+    Color = FVector3(R, G, B);
 }
 
 void CLight::SetIntensity(float InIntensity)

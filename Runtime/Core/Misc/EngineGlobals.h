@@ -8,5 +8,5 @@
 
 namespace NErrorDevice
 {
-    extern CORE_API CGenericConsoleWindow* GConsoleWindow;
+    extern CORE_API FGenericConsoleWindow* GConsoleWindow;
 }

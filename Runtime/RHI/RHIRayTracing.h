@@ -28,7 +28,7 @@ typedef TSharedRef<class FRHIRayTracingScene>        FRHIRayTracingSceneRef;
 
 struct FRayPayload
 {
-    CVector3 Color;
+    FVector3 Color;
     uint32   CurrentDepth;
 };
 
@@ -89,7 +89,7 @@ public:
                                   , uint32 InHitGroupIndex
                                   , ERayTracingInstanceFlags InFlags
                                   , uint32 InMask
-                                  , const CMatrix3x4& InTransform)
+                                  , const FMatrix3x4& InTransform)
         : Geometry(InGeometry)
         , InstanceIndex(InInstanceIndex)
         , HitGroupIndex(InHitGroupIndex)
@@ -122,7 +122,7 @@ public:
 
     uint32                   Mask;
 
-    CMatrix3x4               Transform;
+    FMatrix3x4               Transform;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

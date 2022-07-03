@@ -25,7 +25,7 @@ TSharedRef<CRendererInfoWindow> CRendererInfoWindow::Make()
 
 void CRendererInfoWindow::Tick()
 {
-    TSharedRef<CGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
+    TSharedRef<FGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

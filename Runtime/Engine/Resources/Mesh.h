@@ -37,5 +37,5 @@ public:
     uint32 VertexCount = 0;
     uint32 IndexCount = 0;
 
-    SAABB BoundingBox;
+    FAABB BoundingBox;
 };

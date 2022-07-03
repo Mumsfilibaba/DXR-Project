@@ -17,7 +17,7 @@ bool SLightSetup::Init()
     DirectionalLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!DirectionalLightsBuffer)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -31,7 +31,7 @@ bool SLightSetup::Init()
     PointLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!PointLightsBuffer)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -45,7 +45,7 @@ bool SLightSetup::Init()
     PointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
     if (!PointLightsPosRadBuffer)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -59,7 +59,7 @@ bool SLightSetup::Init()
     ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!ShadowCastingPointLightsBuffer)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -73,7 +73,7 @@ bool SLightSetup::Init()
     ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
     if (!ShadowCastingPointLightsPosRadBuffer)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -102,7 +102,7 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
     for (CLight* Light : Scene.GetLights())
     {
         float Intensity = Light->GetIntensity();
-        CVector3 Color = Light->GetColor();
+        FVector3 Color = Light->GetColor();
         Color = Color * Intensity;
 
         if (IsSubClassOf<CPointLight>(Light))
@@ -114,8 +114,8 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
             float Dot = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
             float Radius = sqrt(Dot / MinLuma);
 
-            CVector3 Position = CurrentLight->GetPosition();
-            CVector4 PosRad   = CVector4(Position, Radius);
+            FVector3 Position = CurrentLight->GetPosition();
+            FVector4 PosRad   = FVector4(Position, Radius);
             if (CurrentLight->IsShadowCaster())
             {
                 SShadowCastingPointLightData Data;
@@ -156,7 +156,7 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
 
             CurrentLight->UpdateCascades(*Camera);
 
-            DirectionalLightData.Color         = CVector3(Color.x, Color.y, Color.z);
+            DirectionalLightData.Color         = FVector3(Color.x, Color.y, Color.z);
             DirectionalLightData.ShadowBias    = CurrentLight->GetShadowBias();
             DirectionalLightData.Direction     = CurrentLight->GetDirection();
             DirectionalLightData.Up            = CurrentLight->GetUp();
@@ -186,7 +186,7 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
         PointLightsBuffer = RHICreateConstantBuffer(Initializer);
         if (!PointLightsBuffer)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
         }
     }
 
@@ -198,7 +198,7 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
         PointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
         if (!PointLightsPosRadBuffer)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
         }
     }
 
@@ -210,7 +210,7 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
         ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(Initializer);
         if (!ShadowCastingPointLightsBuffer)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
         }
     }
 
@@ -222,7 +222,7 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
         ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
         if (!ShadowCastingPointLightsPosRadBuffer)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
         }
     }
 

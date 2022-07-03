@@ -4,25 +4,25 @@
 #include <pthread.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacThread
+// FMacThread
 
-class CMacThread final : public CGenericThread
+class FMacThread final : public FGenericThread
 {
 private:
 
-    CMacThread(const TFunction<void()>& InFunction);
-    CMacThread(const TFunction<void()>& InFunction, const String& InName);
-    ~CMacThread() = default;
+    FMacThread(const TFunction<void()>& InFunction);
+    FMacThread(const TFunction<void()>& InFunction, const String& InName);
+    ~FMacThread() = default;
 
 public:
 
-	static CMacThread* CreateMacThread(const TFunction<void()>& InFunction) { return new CMacThread(InFunction); }
-	static CMacThread* CreateMacThread(const TFunction<void()>& InFunction, const String& InName) { return new CMacThread(InFunction, InName); }
+	static FMacThread* CreateMacThread(const TFunction<void()>& InFunction) { return new FMacThread(InFunction); }
+	static FMacThread* CreateMacThread(const TFunction<void()>& InFunction, const String& InName) { return new FMacThread(InFunction, InName); }
 	
 public:
 	
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericThread Interface
+    // FGenericThread Interface
 
     virtual int32 WaitForCompletion(uint64 TimeoutInMs) override final;
 

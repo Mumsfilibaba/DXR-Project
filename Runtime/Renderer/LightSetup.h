@@ -15,7 +15,7 @@
 
 struct SPointLightData
 {
-    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
+    FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
     float Padding0;
 };
 
@@ -24,7 +24,7 @@ struct SPointLightData
 
 struct SShadowCastingPointLightData
 {
-    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
+    FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
     float ShadowBias = 0.005f;
 
     float FarPlane = 10.0f;
@@ -38,12 +38,12 @@ struct SShadowCastingPointLightData
 
 struct SPointLightShadowMapGenerationData
 {
-    TStaticArray<CMatrix4, 6> Matrix;
-    TStaticArray<CMatrix4, 6> ViewMatrix;
-    TStaticArray<CMatrix4, 6> ProjMatrix;
+    TStaticArray<FMatrix4, 6> Matrix;
+    TStaticArray<FMatrix4, 6> ViewMatrix;
+    TStaticArray<FMatrix4, 6> ProjMatrix;
 
     float    FarPlane;
-    CVector3 Position;
+    FVector3 Position;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -51,13 +51,13 @@ struct SPointLightShadowMapGenerationData
 
 struct SDirectionalLightData
 {
-    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
+    FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
     float ShadowBias = 0.005f;
 
-    CVector3 Direction = CVector3(0.0f, -1.0f, 0.0f);
+    FVector3 Direction = FVector3(0.0f, -1.0f, 0.0f);
     float MaxShadowBias = 0.05f;
 
-    CVector3 Up = CVector3(0.0f, 0.0f, -1.0f);
+    FVector3 Up = FVector3(0.0f, 0.0f, -1.0f);
     float LightSize;
 };
 
@@ -88,7 +88,7 @@ struct RENDERER_API SLightSetup
     void BeginFrame(FRHICommandList& CmdList, const CScene& Scene);
     void Release();
 
-    TArray<CVector4>        PointLightsPosRad;
+    TArray<FVector4>        PointLightsPosRad;
     TArray<SPointLightData> PointLightsData;
 
     TSharedRef<FRHIConstantBuffer> PointLightsBuffer;
@@ -96,7 +96,7 @@ struct RENDERER_API SLightSetup
 
     TArray<SPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
 
-    TArray<CVector4>                     ShadowCastingPointLightsPosRad;
+    TArray<FVector4>                     ShadowCastingPointLightsPosRad;
     TArray<SShadowCastingPointLightData> ShadowCastingPointLightsData;
 
     TSharedRef<FRHIConstantBuffer> ShadowCastingPointLightsBuffer;

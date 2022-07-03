@@ -2,14 +2,14 @@
 #include "WindowsThreadMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsThreadMisc
+// FWindowsThreadMisc
 
-CGenericThread* CWindowsThreadMisc::CreateThread(const TFunction<void()>& InFunction)
+FGenericThread* FWindowsThreadMisc::CreateThread(const TFunction<void()>& InFunction)
 {
-    return CWindowsThread::CreateWindowsThread(InFunction);
+    return FWindowsThread::CreateWindowsThread(InFunction);
 }
 
-CGenericThread* CWindowsThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
+FGenericThread* FWindowsThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
 {
-    return CWindowsThread::CreateWindowsThread(InFunction, InName);
+    return FWindowsThread::CreateWindowsThread(InFunction, InName);
 }

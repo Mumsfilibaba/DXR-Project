@@ -20,9 +20,9 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericPlatformMisc
+// FGenericPlatformMisc
 
-class CGenericPlatformMisc
+class FGenericPlatformMisc
 {
 public:
 

@@ -9,26 +9,26 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacConsoleWindow
+// FMacConsoleWindow
 
-CMacConsoleWindow* CMacConsoleWindow::CreateMacConsole()
+FMacConsoleWindow* FMacConsoleWindow::CreateMacConsole()
 {
-	return dbg_new CMacConsoleWindow();
+	return dbg_new FMacConsoleWindow();
 }
 
-CMacConsoleWindow::CMacConsoleWindow()
+FMacConsoleWindow::FMacConsoleWindow()
     : WindowHandle(nullptr)
 	, TextView(nullptr)
 	, ScrollView(nullptr)
 	, ConsoleColor(nullptr)
 { }
 
-CMacConsoleWindow::~CMacConsoleWindow()
+FMacConsoleWindow::~FMacConsoleWindow()
 {
 	DestroyConsole();
 }
 
-void CMacConsoleWindow::CreateConsole()
+void FMacConsoleWindow::CreateConsole()
 {
     if (!WindowHandle)
     {
@@ -94,14 +94,14 @@ void CMacConsoleWindow::CreateConsole()
             {
                 do
                 {
-                    PlatformApplicationMisc::PumpMessages(true);
+                    FPlatformApplicationMisc::PumpMessages(true);
                 } while(WindowHandle && ![WindowHandle isVisible]);
             }
         }, true);
     }
 }
 
-void CMacConsoleWindow::DestroyConsole()
+void FMacConsoleWindow::DestroyConsole()
 {
     if (IsVisible())
     {
@@ -109,7 +109,7 @@ void CMacConsoleWindow::DestroyConsole()
         {
 			SCOPED_AUTORELEASE_POOL();
 		
-			PlatformApplicationMisc::PumpMessages(true);
+			FPlatformApplicationMisc::PumpMessages(true);
 			
             NSSafeRelease(WindowHandle);
             NSSafeRelease(ConsoleColor);
@@ -119,7 +119,7 @@ void CMacConsoleWindow::DestroyConsole()
 	}
 }
 
-void CMacConsoleWindow::DestroyResources()
+void FMacConsoleWindow::DestroyResources()
 {
 	SCOPED_AUTORELEASE_POOL();
 	
@@ -127,7 +127,7 @@ void CMacConsoleWindow::DestroyResources()
     NSSafeRelease(ScrollView);
 }
 
-void CMacConsoleWindow::Show(bool bShow)
+void FMacConsoleWindow::Show(bool bShow)
 {
     TScopedLock Lock(WindowCS);
     
@@ -144,7 +144,7 @@ void CMacConsoleWindow::Show(bool bShow)
 	}
 }
 
-void CMacConsoleWindow::Print(const String& Message)
+void FMacConsoleWindow::Print(const String& Message)
 {
     if (WindowHandle)
     {
@@ -155,12 +155,12 @@ void CMacConsoleWindow::Print(const String& Message)
             NSString* String = Message.GetNSString();
 			AppendStringAndScroll(String);
 			
-            PlatformApplicationMisc::PumpMessages(true);
+            FPlatformApplicationMisc::PumpMessages(true);
         }, true);
     }
 }
 
-void CMacConsoleWindow::PrintLine(const String& Message)
+void FMacConsoleWindow::PrintLine(const String& Message)
 {
     if (WindowHandle)
     {
@@ -173,12 +173,12 @@ void CMacConsoleWindow::PrintLine(const String& Message)
         
             AppendStringAndScroll(FinalString);
         
-            PlatformApplicationMisc::PumpMessages(true);
+            FPlatformApplicationMisc::PumpMessages(true);
         }, true);
     }
 }
 
-void CMacConsoleWindow::Clear()
+void FMacConsoleWindow::Clear()
 {
     if (WindowHandle)
     {
@@ -190,7 +190,7 @@ void CMacConsoleWindow::Clear()
     }
 }
 
-void CMacConsoleWindow::SetTitle(const String& InTitle)
+void FMacConsoleWindow::SetTitle(const String& InTitle)
 {
     if (WindowHandle)
     {
@@ -204,7 +204,7 @@ void CMacConsoleWindow::SetTitle(const String& InTitle)
     }
 }
 
-void CMacConsoleWindow::SetColor(EConsoleColor Color)
+void FMacConsoleWindow::SetColor(EConsoleColor Color)
 {
     TScopedLock Lock(WindowCS);
     
@@ -250,12 +250,12 @@ void CMacConsoleWindow::SetColor(EConsoleColor Color)
     }
 }
 
-bool CMacConsoleWindow::IsVisible() const
+bool FMacConsoleWindow::IsVisible() const
 {
     return (WindowHandle != nil);
 }
 
-int32 CMacConsoleWindow::GetLineCount() const
+int32 FMacConsoleWindow::GetLineCount() const
 {
 	if (WindowHandle)
 	{
@@ -279,16 +279,16 @@ int32 CMacConsoleWindow::GetLineCount() const
 	}
 }
 
-void CMacConsoleWindow::OnWindowDidClose()
+void FMacConsoleWindow::OnWindowDidClose()
 {
 	DestroyResources();
 	bIsVisible = false;
     
     // Exit the application, this gives the same behaviour as on Windows
-    PlatformApplicationMisc::RequestExit(0);
+    FPlatformApplicationMisc::RequestExit(0);
 }
 
-void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
+void FMacConsoleWindow::AppendStringAndScroll(NSString* String)
 {
 	if (WindowHandle)
 	{

@@ -5,31 +5,31 @@
 #include "Core/Utilities/HashUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SR10G10B10A2
+// FR10G10B10A2
 
-struct SR10G10B10A2
+struct FR10G10B10A2
 {
-    SR10G10B10A2()
+    FR10G10B10A2()
         : A(0)
         , R(0)
         , G(0)
         , B(0)
     { }
 
-    SR10G10B10A2(uint8 InA, uint16 InR, uint16 InG, uint16 InB)
+    FR10G10B10A2(uint8 InA, uint16 InR, uint16 InG, uint16 InB)
         : A(InA)
         , R(InR)
         , G(InG)
         , B(InB)
     { }
 
-    SR10G10B10A2(float InR, float InG, float InB)
+    FR10G10B10A2(float InR, float InG, float InB)
         : A(0)
         , R(0)
         , G(0)
         , B(0)
     {
-        CVector3 Vector(InR, InG, InB);
+        FVector3 Vector(InR, InG, InB);
         Vector.Normalize();
 
         R = uint32(NMath::Round(Vector.x * float(NMath::MaxNum<10>())));
@@ -45,12 +45,12 @@ struct SR10G10B10A2
         return static_cast<uint64>(Hasher(EncodeAsInteger()));
     }
 
-    bool operator==(SR10G10B10A2 RHS) const
+    bool operator==(FR10G10B10A2 RHS) const
     {
         return EncodeAsInteger() == RHS.EncodeAsInteger();
     }
 
-    bool operator!=(SR10G10B10A2 RHS) const
+    bool operator!=(FR10G10B10A2 RHS) const
     {
         return EncodeAsInteger() != RHS.EncodeAsInteger();
     }
@@ -61,26 +61,26 @@ struct SR10G10B10A2
     uint32 B : 10;
 };
 
-static_assert(sizeof(SR10G10B10A2) == sizeof(uint32), "SR10G10B10A2 is assumed to have the same size as a uint32");
+static_assert(sizeof(FR10G10B10A2) == sizeof(uint32), "FR10G10B10A2 is assumed to have the same size as a uint32");
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRG16F
+// FRG16F
 
-struct SRG16F
+struct FRG16F
 {
-    SRG16F()
+    FRG16F()
         : R(0)
         , G(0)
     { }
 
-    SRG16F(uint16 InR, uint16 InG)
+    FRG16F(uint16 InR, uint16 InG)
         : R(InR)
         , G(InG)
     { }
 
-    SRG16F(float InR, float InG)
-        : R(SFloat16(InR).Encoded)
-        , G(SFloat16(InG).Encoded)
+    FRG16F(float InR, float InG)
+        : R(FFloat16(InR).Encoded)
+        , G(FFloat16(InG).Encoded)
     { }
 
     uint32 EncodeAsInteger() const { return *reinterpret_cast<const uint32*>(this); }
@@ -91,12 +91,12 @@ struct SRG16F
         return static_cast<uint64>(Hasher(EncodeAsInteger()));
     }
 
-    bool operator==(SRG16F RHS) const
+    bool operator==(FRG16F RHS) const
     {
         return EncodeAsInteger() == RHS.EncodeAsInteger();
     }
 
-    bool operator!=(SRG16F RHS) const
+    bool operator!=(FRG16F RHS) const
     {
         return EncodeAsInteger() != RHS.EncodeAsInteger();
     }
@@ -105,32 +105,32 @@ struct SRG16F
     uint16 G;
 };
 
-static_assert(sizeof(SRG16F) == sizeof(uint32), "SRG16F is assumed to have the same size as a uint32");
+static_assert(sizeof(FRG16F) == sizeof(uint32), "FRG16F is assumed to have the same size as a uint32");
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRGBA16F
+// FRGBA16F
 
-struct SRGBA16F
+struct FRGBA16F
 {
-    SRGBA16F()
+    FRGBA16F()
         : A(0)
         , R(0)
         , G(0)
         , B(0)
     { }
 
-    SRGBA16F(uint16 InA, uint16 InR, uint16 InG, uint16 InB)
+    FRGBA16F(uint16 InA, uint16 InR, uint16 InG, uint16 InB)
         : A(InA)
         , R(InR)
         , G(InG)
         , B(InB)
     { }
 
-    SRGBA16F(float InA, float InR, float InG, float InB)
-        : A(SFloat16(InA).Encoded)
-        , R(SFloat16(InR).Encoded)
-        , G(SFloat16(InG).Encoded)
-        , B(SFloat16(InB).Encoded)
+    FRGBA16F(float InA, float InR, float InG, float InB)
+        : A(FFloat16(InA).Encoded)
+        , R(FFloat16(InR).Encoded)
+        , G(FFloat16(InG).Encoded)
+        , B(FFloat16(InB).Encoded)
     { }
 
     uint64 EncodeAsInteger() const { return *reinterpret_cast<const uint64*>(this); }
@@ -141,12 +141,12 @@ struct SRGBA16F
         return static_cast<uint64>(Hasher(EncodeAsInteger()));
     }
 
-    bool operator==(SRGBA16F RHS) const
+    bool operator==(FRGBA16F RHS) const
     {
         return EncodeAsInteger() == RHS.EncodeAsInteger();
     }
 
-    bool operator!=(SRGBA16F RHS) const
+    bool operator!=(FRGBA16F RHS) const
     {
         return EncodeAsInteger() != RHS.EncodeAsInteger();
     }
@@ -157,4 +157,4 @@ struct SRGBA16F
     uint16 B;
 };
 
-static_assert(sizeof(SRGBA16F) == sizeof(uint64), "SRGBA16F is assumed to have the same size as a uint64");
+static_assert(sizeof(FRGBA16F) == sizeof(uint64), "FRGBA16F is assumed to have the same size as a uint64");

@@ -65,7 +65,7 @@ void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CmdContext
     {
         if (!AllocateReadResource())
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return;
         }
     }

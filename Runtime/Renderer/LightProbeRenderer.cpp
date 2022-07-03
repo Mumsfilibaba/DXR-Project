@@ -149,7 +149,7 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
     LightSetup.IrradianceMap = RHICreateTextureCube(LightProbeInitializer);
     if (!LightSetup.IrradianceMap)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -161,7 +161,7 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
     LightSetup.IrradianceMapUAV = RHICreateUnorderedAccessView(UAVInitializer);
     if (!LightSetup.IrradianceMapUAV)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -172,7 +172,7 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
     LightSetup.SpecularIrradianceMap = RHICreateTextureCube(LightProbeInitializer);
     if (!LightSetup.SpecularIrradianceMap)
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     else
@@ -191,7 +191,7 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
         }
         else
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }

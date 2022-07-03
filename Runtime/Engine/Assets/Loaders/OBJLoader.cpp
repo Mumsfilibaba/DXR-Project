@@ -64,7 +64,7 @@ bool COBJLoader::LoadFile(const FString& Filename, SSceneData& OutScene, bool Re
         MaterialData.NormalTexture = LoadMaterialTexture(MTLFiledir, Mat.bump_texname.c_str());
         MaterialData.AlphaMaskTexture = LoadMaterialTexture(MTLFiledir, Mat.alpha_texname.c_str());
 
-        MaterialData.Diffuse = CVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
+        MaterialData.Diffuse = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
         MaterialData.Metallic = Mat.ambient[0];
         MaterialData.AO = 1.0f;
         MaterialData.Roughness = 1.0f;
@@ -107,19 +107,19 @@ bool COBJLoader::LoadFile(const FString& Filename, SSceneData& OutScene, bool Re
                 Check(Index.vertex_index >= 0);
 
                 auto PositionIndex = 3 * Index.vertex_index;
-                TempVertex.Position = CVector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);
+                TempVertex.Position = FVector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);
 
                 if (Index.normal_index >= 0)
                 {
                     auto NormalIndex = 3 * Index.normal_index;
-                    TempVertex.Normal = CVector3(Attributes.normals[NormalIndex + 0], Attributes.normals[NormalIndex + 1], Attributes.normals[NormalIndex + 2]);
+                    TempVertex.Normal = FVector3(Attributes.normals[NormalIndex + 0], Attributes.normals[NormalIndex + 1], Attributes.normals[NormalIndex + 2]);
                     TempVertex.Normal.Normalize();
                 }
 
                 if (Index.texcoord_index >= 0)
                 {
                     auto TexCoordIndex = 2 * Index.texcoord_index;
-                    TempVertex.TexCoord = CVector2(Attributes.texcoords[TexCoordIndex + 0], Attributes.texcoords[TexCoordIndex + 1]);
+                    TempVertex.TexCoord = FVector2(Attributes.texcoords[TexCoordIndex + 0], Attributes.texcoords[TexCoordIndex + 1]);
                 }
 
                 if (UniqueVertices.count(TempVertex) == 0)
@@ -153,7 +153,7 @@ bool COBJLoader::LoadFile(const FString& Filename, SSceneData& OutScene, bool Re
     OutScene.Models.ShrinkToFit();
     OutScene.Materials.ShrinkToFit();
 
-    CAsyncTaskManager::Get().WaitForAll();
+    FAsyncTaskManager::Get().WaitForAll();
 
     return true;
 }

@@ -5,12 +5,12 @@
 #include "Core/Delegates/MulticastDelegate.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Multi-cast delegate to be called when the variable changes
+// FCVarChangedDelegate - Multi-cast delegate to be called when the variable changes
 
-DECLARE_MULTICAST_DELEGATE(CConsoleVariableChangedDelegate, class IConsoleVariable*);
+DECLARE_MULTICAST_DELEGATE(FCVarChangedDelegate, class IConsoleVariable*);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-variable Interface
+// IConsoleVariable - Console-variable Interface
 
 class IConsoleVariable : public IConsoleObject
 {
@@ -105,5 +105,5 @@ public:
      *
      * @return: Returns the on changed delegate
      */
-    virtual CConsoleVariableChangedDelegate& GetChangedDelegate() = 0;
+    virtual FCVarChangedDelegate& GetChangedDelegate() = 0;
 };

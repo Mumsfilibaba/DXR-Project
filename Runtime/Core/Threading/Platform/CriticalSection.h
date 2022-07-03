@@ -2,11 +2,11 @@
 
 #if PLATFORM_WINDOWS
     #include "Core/Threading/Windows/WindowsCriticalSection.h"
-    typedef CWindowsCriticalSection CCriticalSection;
+    typedef FWindowsCriticalSection FCriticalSection;
 #elif PLATFORM_MACOS
     #include "Core/Threading/Mac/MacCriticalSection.h"
-    typedef CMacCriticalSection CCriticalSection;
+    typedef FMacCriticalSection FCriticalSection;
 #else
     #include "Core/Threading/Generic/GenericCriticalSection.h"
-    typedef CGenericCriticalSection CCriticalSection;
+    typedef FGenericCriticalSection FCriticalSection;
 #endif

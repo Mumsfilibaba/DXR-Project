@@ -5,34 +5,34 @@
 #include "CoreApplication/Generic/GenericCursor.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsCursor
+// FWindowsCursor
 
-class COREAPPLICATION_API CWindowsCursor final : public CGenericCursor
+class COREAPPLICATION_API FWindowsCursor final : public FGenericCursor
 {
 private:
 
-    friend struct TDefaultDelete<CWindowsCursor>;
+    friend struct TDefaultDelete<FWindowsCursor>;
 
-    CWindowsCursor()
-        : CGenericCursor()
+    FWindowsCursor()
+        : FGenericCursor()
     { }
 
-    ~CWindowsCursor() = default;
+    ~FWindowsCursor() = default;
 
 public:
 
-    static CWindowsCursor* CreateWindowsCursor();
+    static FWindowsCursor* CreateWindowsCursor();
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericCursor Interface
+    // FGenericCursor Interface
 
     virtual void SetCursor(ECursor Cursor) override final;
 
     virtual void SetVisibility(bool bIsVisible) override final;
 
-    virtual void SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 y) const override final;
+    virtual void SetPosition(FGenericWindow* RelativeWindow, int32 x, int32 y) const override final;
     
-    virtual void GetPosition(CGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const override final;
+    virtual void GetPosition(FGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const override final;
 };

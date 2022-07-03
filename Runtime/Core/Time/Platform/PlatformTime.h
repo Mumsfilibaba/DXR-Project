@@ -2,11 +2,11 @@
 
 #if PLATFORM_WINDOWS
     #include "Core/Time/Windows/WindowsTime.h"
-    typedef CWindowsTime PlatformTime;
+    typedef FWindowsTime FPlatformTime;
 #elif PLATFORM_MACOS
     #include "Core/Time/Mac/MacTime.h"
-    typedef CMacTime PlatformTime;
+    typedef FMacTime FPlatformTime;
 #else
     #include "Core/Time/Generic/GenericTime.h"
-    typedef CGenericTime PlatformTime;
+    typedef FGenericTime FPlatformTime;
 #endif

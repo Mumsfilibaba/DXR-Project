@@ -10,32 +10,32 @@
 typedef int64 DispatchID;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CAsyncTask
+// FAsyncTask
 
-class CAsyncTask
+class FAsyncTask
 {
 public:
 
-    DECLARE_DELEGATE(CTaskDelegate);
-    CTaskDelegate Delegate;
+    DECLARE_DELEGATE(FTaskDelegate);
+    FTaskDelegate Delegate;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CAsyncTaskManager
+// FAsyncTaskManager
 
-class CORE_API CAsyncTaskManager
+class CORE_API FAsyncTaskManager
 {
 private:
 
-    CAsyncTaskManager();
-    ~CAsyncTaskManager();
+    FAsyncTaskManager();
+    ~FAsyncTaskManager();
 
 public:
 
     /**
      * @return: Returns the DispatchQueue instance 
      */
-    static CAsyncTaskManager& Get();
+    static FAsyncTaskManager& Get();
 
     /**
      * @return: Returns true if the initialization was successful 
@@ -48,7 +48,7 @@ public:
      * @param NewTask: A new task to dispatch when a worker thread is available
      * @return: Returns a dispatch ID that can be waited for
      */
-    DispatchID Dispatch(const CAsyncTask& NewTask);
+    DispatchID Dispatch(const FAsyncTask& NewTask);
 
     /**
      * @brief: Wait for a specific task 
@@ -71,22 +71,22 @@ private:
 
     static void WorkThread();
 
-    bool PopDispatch(CAsyncTask& OutTask);
+    bool PopDispatch(FAsyncTask& OutTask);
 
     void KillWorkers();
 
-    TArray<TSharedRef<CGenericThread>> WorkerThreads;
+    TArray<TSharedRef<FGenericThread>> WorkerThreads;
 
-    TArray<CAsyncTask> Queue;
-    CCriticalSection   QueueMutex;
+    TArray<FAsyncTask> Queue;
+    FCriticalSection   QueueMutex;
 
-    CConditionVariable WakeCondition;
-    CCriticalSection   WakeMutex;
+    FConditionVariable WakeCondition;
+    FCriticalSection   WakeMutex;
 
-    AtomicInt64        DispatchAdded;
-    AtomicInt64        DispatchCompleted;
+    FAtomicInt64        DispatchAdded;
+    FAtomicInt64        DispatchCompleted;
 
     volatile bool      bIsRunning;
 
-    static CAsyncTaskManager Instance;
+    static FAsyncTaskManager Instance;
 };

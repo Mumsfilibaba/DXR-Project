@@ -19,9 +19,9 @@ template<typename InvokableType>
 class TDelegate;
 
 template<typename ReturnType, typename... ArgTypes>
-class TDelegate<ReturnType(ArgTypes...)> : public CDelegateBase
+class TDelegate<ReturnType(ArgTypes...)> : public FDelegateBase
 {
-    using Super = CDelegateBase;
+    using Super = FDelegateBase;
 
     using DelegateInstance = TDelegateInstance<ReturnType, ArgTypes...>;
 

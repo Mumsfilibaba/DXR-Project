@@ -131,13 +131,13 @@ public:
 
     virtual ULONG AddRef()
     {
-        PlatformInterlocked::InterlockedIncrement(&References);
+        FPlatformInterlocked::InterlockedIncrement(&References);
         return static_cast<ULONG>(References);
     }
 
     virtual ULONG Release()
     {
-        ULONG NumRefs = static_cast<ULONG>(PlatformInterlocked::InterlockedDecrement(&References));
+        ULONG NumRefs = static_cast<ULONG>(FPlatformInterlocked::InterlockedDecrement(&References));
         if (NumRefs == 0)
         {
             delete this;
@@ -163,14 +163,14 @@ FRHIShaderCompiler::FRHIShaderCompiler(const char* InAssetPath)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
 { 
-    DXCLib = PlatformLibrary::LoadDynamicLib("dxcompiler");
+    DXCLib = FPlatformLibrary::LoadDynamicLib("dxcompiler");
     if (!DXCLib)
     {
         LOG_ERROR("Failed to load 'dxcompiler'");
         return;
     }
 
-    DxcCreateInstanceFunc = PlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
+    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
     if (!DxcCreateInstanceFunc)
     {
         LOG_ERROR("Failed to load 'DxcCreateInstance'");
@@ -182,7 +182,7 @@ FRHIShaderCompiler::~FRHIShaderCompiler()
 {
     if (DXCLib)
     {
-        PlatformLibrary::FreeDynamicLib(DXCLib);
+        FPlatformLibrary::FreeDynamicLib(DXCLib);
         DXCLib = nullptr;
     }
 
@@ -242,7 +242,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Source Data");
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
     
@@ -291,7 +291,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     
     WCHAR TargetProfile[BufferLength];
-    WStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
@@ -309,14 +309,14 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -452,7 +452,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
 
     WCHAR TargetProfile[BufferLength];
-    WStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     // Use the asset-folder as base for the shader-files
     const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
@@ -472,14 +472,14 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 
@@ -599,7 +599,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
     const FString Comment = "// " + Entrypoint + "\n\n";
     TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.Data()), Comment.Length() * sizeof(const char));
 
-    const uint32 SourceLength = CStringUtils::Length(MSLSource);
+    const uint32 SourceLength = FStringUtils::Length(MSLSource);
     NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const char));
 
     spvc_context_destroy(Context);

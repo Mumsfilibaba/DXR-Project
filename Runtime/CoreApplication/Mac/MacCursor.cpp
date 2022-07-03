@@ -18,14 +18,14 @@
 @end
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacCursor
+// FMacCursor
 
-CMacCursor* CMacCursor::CreateMacCursor()
+FMacCursor* FMacCursor::CreateMacCursor()
 {
-	return dbg_new CMacCursor();
+	return dbg_new FMacCursor();
 }
 
-void CMacCursor::SetCursor(ECursor Cursor)
+void FMacCursor::SetCursor(ECursor Cursor)
 {
     NSCursor* SelectedCursor = nullptr;
     switch(Cursor)
@@ -76,7 +76,7 @@ void CMacCursor::SetCursor(ECursor Cursor)
     [SelectedCursor set];
 }
 
-void CMacCursor::SetPosition(CGenericWindow* InRelativeWindow, int32 x, int32 y) const
+void FMacCursor::SetPosition(FGenericWindow* InRelativeWindow, int32 x, int32 y) const
 {
     CGPoint NewPosition;
     if (InRelativeWindow)
@@ -100,7 +100,7 @@ void CMacCursor::SetPosition(CGenericWindow* InRelativeWindow, int32 x, int32 y)
     }
 }
 
-void CMacCursor::GetPosition(CGenericWindow* InRelativeWindow, int32& OutX, int32& OutY) const
+void FMacCursor::GetPosition(FGenericWindow* InRelativeWindow, int32& OutX, int32& OutY) const
 {
     NSPoint CursorPosition;
     if (InRelativeWindow)
@@ -117,7 +117,7 @@ void CMacCursor::GetPosition(CGenericWindow* InRelativeWindow, int32& OutX, int3
     OutY = CursorPosition.y;
 }
 
-void CMacCursor::SetVisibility(bool bVisible)
+void FMacCursor::SetVisibility(bool bVisible)
 {
     if (bVisible)
     {

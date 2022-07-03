@@ -19,57 +19,57 @@ public:
 
     void UpdateMatrices();
 
-    const CMatrix4& GetViewMatrix() const
+    const FMatrix4& GetViewMatrix() const
     {
         return View;
     }
 
-    const CMatrix4& GetViewInverseMatrix() const
+    const FMatrix4& GetViewInverseMatrix() const
     {
         return ViewInverse;
     }
 
-    const CMatrix4& GetProjectionMatrix() const
+    const FMatrix4& GetProjectionMatrix() const
     {
         return Projection;
     }
 
-    const CMatrix4& GetProjectionInverseMatrix() const
+    const FMatrix4& GetProjectionInverseMatrix() const
     {
         return ProjectionInverse;
     }
 
-    const CMatrix4& GetViewProjectionMatrix() const
+    const FMatrix4& GetViewProjectionMatrix() const
     {
         return ViewProjection;
     }
 
-    const CMatrix4& GetViewProjectionInverseMatrix() const
+    const FMatrix4& GetViewProjectionInverseMatrix() const
     {
         return ViewProjectionInverse;
     }
 
-    const CMatrix4& GetViewProjectionWitoutTranslateMatrix() const
+    const FMatrix4& GetViewProjectionWitoutTranslateMatrix() const
     {
         return ViewProjectionNoTranslation;
     }
 
-    CVector3 GetPosition() const
+    FVector3 GetPosition() const
     {
         return Position;
     }
 
-    CVector3 GetForward() const
+    FVector3 GetForward() const
     {
         return Forward;
     }
 
-    CVector3 GetUp() const
+    FVector3 GetUp() const
     {
         return Up;
     }
 
-    CVector3 GetRight() const
+    FVector3 GetRight() const
     {
         return Right;
     }
@@ -105,13 +105,13 @@ public:
     }
 
 private:
-    CMatrix4 View;
-    CMatrix4 ViewInverse;
-    CMatrix4 Projection;
-    CMatrix4 ProjectionInverse;
-    CMatrix4 ViewProjection;
-    CMatrix4 ViewProjectionInverse;
-    CMatrix4 ViewProjectionNoTranslation;
+    FMatrix4 View;
+    FMatrix4 ViewInverse;
+    FMatrix4 Projection;
+    FMatrix4 ProjectionInverse;
+    FMatrix4 ViewProjection;
+    FMatrix4 ViewProjectionInverse;
+    FMatrix4 ViewProjectionNoTranslation;
 
     float NearPlane;
     float FarPlane;
@@ -120,9 +120,9 @@ private:
     float Height;
     float FOV;
 
-    CVector3 Position;
-    CVector3 Rotation;
-    CVector3 Forward;
-    CVector3 Right;
-    CVector3 Up;
+    FVector3 Position;
+    FVector3 Rotation;
+    FVector3 Forward;
+    FVector3 Right;
+    FVector3 Up;
 };

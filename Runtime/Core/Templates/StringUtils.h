@@ -18,11 +18,11 @@ class TStringUtils<char>
 {
 public:
 
-    using CharType = char;
-    using Pointer = CharType*;
+    using CharType     = char;
+    using Pointer      = CharType*;
     using ConstPointer = const Pointer;
 
-    static constexpr CharType Null = '\0';
+    static CONSTEXPR CharType Null = '\0';
 
     /**
      * @brief: Is the character a space
@@ -32,7 +32,7 @@ public:
      */
     static FORCEINLINE bool IsSpace(CharType Char) noexcept
     {
-        return !!isspace(static_cast<int>(Char));
+        return isspace(static_cast<int>(Char));
     }
 
     /**
@@ -527,8 +527,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Predefined types
 
-using CStringUtils = TStringUtils<char>;
-using WStringUtils = TStringUtils<wchar_t>;
+using FStringUtils  = TStringUtils<char>;
+using FWStringUtils = TStringUtils<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helpers for StringParsing
@@ -729,5 +729,5 @@ FORCEINLINE uint64 TStringParse<char>::ParseInt<uint64>(const CharType* String, 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Predefined types
 
-using CStringParse = TStringParse<char>;
-using WStringParse = TStringParse<wchar_t>;
+using FStringParse  = TStringParse<char>;
+using FWStringParse = TStringParse<wchar_t>;

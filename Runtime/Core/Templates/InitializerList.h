@@ -1,10 +1,10 @@
 #pragma once
-#include "IsConst.h"
-#include "AddPointer.h"
-
 #include "Core/CoreTypes.h"
 
 #include <initializer_list>
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// std::initializer_list helpers
 
 template<typename T>
 CONSTEXPR T* GetInitializerListData(std::initializer_list<T> InList)

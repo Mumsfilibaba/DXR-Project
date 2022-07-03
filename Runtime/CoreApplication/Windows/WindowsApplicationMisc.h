@@ -10,18 +10,18 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsApplicationMisc
+// FWindowsApplicationMisc
 
-class COREAPPLICATION_API CWindowsApplicationMisc final : public CGenericApplicationMisc
+class COREAPPLICATION_API FWindowsApplicationMisc final : public FGenericApplicationMisc
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericApplicationMisc Interface
+    // FGenericApplicationMisc Interface
 
-    static class CGenericApplication* CreateApplication();
+    static class FGenericApplication* CreateApplication();
 
-    static class CGenericConsoleWindow* CreateConsoleWindow();
+    static class FGenericConsoleWindow* CreateConsoleWindow();
 
     static FORCEINLINE void MessageBox(const FString& Title, const FString& Message)
     {
@@ -35,5 +35,5 @@ public:
 
     static void PumpMessages(bool bUntilEmpty);
 
-    static SModifierKeyState GetModifierKeyState();
+    static FModifierKeyState GetModifierKeyState();
 };

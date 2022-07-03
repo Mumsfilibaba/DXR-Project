@@ -1189,7 +1189,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     {
         uint32   SrcMipLevel;
         uint32   NumMipLevels;
-        CVector2 TexelSize;
+        FVector2 TexelSize;
     } ConstantData;
 
     uint32 DstWidth  = static_cast<uint32>(Desc.Width);
@@ -1201,7 +1201,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     uint32 RemainingMiplevels = Desc.MipLevels;
     for (uint32 i = 0; i < NumDispatches; i++)
     {
-        ConstantData.TexelSize    = CVector2(1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight));
+        ConstantData.TexelSize    = FVector2(1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight));
         ConstantData.NumMipLevels = NMath::Min<uint32>(4, RemainingMiplevels);
 
         CommandList.SetComputeRoot32BitConstants(&ConstantData, 4, 0, 0);

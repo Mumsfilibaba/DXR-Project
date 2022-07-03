@@ -2,11 +2,11 @@
 
 #if PLATFORM_WINDOWS
     #include "Core/Threading/Windows/WindowsThread.h"
-    typedef CWindowsThread PlatformThread;
+    typedef FWindowsThread FPlatformThread;
 #elif PLATFORM_MACOS
     #include "Core/Threading/Mac/MacThread.h"
-    typedef CMacThread PlatformThread;
+    typedef FMacThread FPlatformThread;
 #else
-    #include "Core/Threading/Generic/PlatformThread.h"
-    typedef CGenericThread PlatformThread;
+    #include "Core/Threading/Generic/GenericThread.h"
+    typedef FGenericThread FPlatformThread;
 #endif

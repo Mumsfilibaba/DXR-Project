@@ -5,7 +5,7 @@
 
 extern int EngineMain();
 
-class CMacApplication;
+class FMacApplication;
 
 static int32 GEngineMainResult = 0;
 

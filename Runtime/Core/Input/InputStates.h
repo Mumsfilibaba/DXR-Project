@@ -4,9 +4,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Key-state - Holds information about how a key has been pressed
 
-struct SKeyState
+struct FKeyState
 {
-    FORCEINLINE SKeyState(EKey InKeyCode)
+    FORCEINLINE FKeyState(EKey InKeyCode)
         : KeyCode(InKeyCode)
         , IsDown(0)
         , PreviousState(0)
@@ -29,9 +29,9 @@ struct SKeyState
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // MouseButtonState - Holds information about how a mouse-button has been pressed
 
-struct SMouseButtonState
+struct FMouseButtonState
 {
-    FORCEINLINE SMouseButtonState(EMouseButton InButton)
+    FORCEINLINE FMouseButtonState(EMouseButton InButton)
         : Button(InButton)
         , IsDown(0)
         , PreviousState(0)

@@ -28,7 +28,7 @@ public:
      * 
      * @param DeltaTime: Time since the last call to tick
      */
-    virtual void Tick(CTimestamp DeltaTime);
+    virtual void Tick(FTimestamp DeltaTime);
 
     /**
      * @brief: Retrieve the actor that the component belongs to

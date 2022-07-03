@@ -688,7 +688,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
     HRESULT Result = GetDevice()->GetD3D12Device5()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
     if (FAILED(Result))
     {
-        CDebug::DebugBreak();
+        FDebug::DebugBreak();
         return false;
     }
 

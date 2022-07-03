@@ -23,16 +23,16 @@ enum class EConsoleColor : uint8
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericConsoleWindow
+// FGenericConsoleWindow
 
-class COREAPPLICATION_API CGenericConsoleWindow
+class COREAPPLICATION_API FGenericConsoleWindow
 {
 protected:
 
-    friend class CGenericApplicationMisc;
+    friend class FGenericApplicationMisc;
 
-    CGenericConsoleWindow() = default;
-    virtual ~CGenericConsoleWindow() = default;
+    FGenericConsoleWindow() = default;
+    virtual ~FGenericConsoleWindow() = default;
 
 public:
 

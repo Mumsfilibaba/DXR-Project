@@ -252,7 +252,7 @@ Application/Windows/
 
 * Prefer static classes
 ```
-class CPlatformApplication
+class CFPlatformApplication
 {
 public:
   static void Func()
@@ -260,7 +260,7 @@ public:
   }
 };
 
-class CMacApplication : public CPlatformApplication
+class FMacApplication : public CFPlatformApplication
 {
 public:
   static void Func()
@@ -268,9 +268,9 @@ public:
   }
 };
 
-typedef CMacApplication PlatformApplication;
+typedef FMacApplication FPlatformApplication;
 
-class CWindowsApplication : public CPlatformApplication
+class FWindowsApplication : public CFPlatformApplication
 {
 public:
   static void Func()
@@ -278,12 +278,12 @@ public:
   }
 };
 
-typedef CWindowsApplication PlatformApplication;
+typedef FWindowsApplication FPlatformApplication;
 ```
 
 * Platform classes should be accompanied with a Platform-header like this:
 ```
-//PlatformApplication.h
+//FPlatformApplication.h
 
 #pragma once
 #if PLATFORM_WINDOWS

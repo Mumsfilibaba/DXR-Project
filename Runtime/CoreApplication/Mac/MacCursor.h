@@ -4,32 +4,32 @@
 #include "CoreApplication/Generic/GenericCursor.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacCursor
+// FMacCursor
 
-class CMacCursor final : public CGenericCursor
+class FMacCursor final : public FGenericCursor
 {
 private:
 
-    CMacCursor()
-        : CGenericCursor()
+    FMacCursor()
+        : FGenericCursor()
     { }
 
-	~CMacCursor() = default;
+	~FMacCursor() = default;
 
 public:
 
-	static CMacCursor* CreateMacCursor();
+	static FMacCursor* CreateMacCursor();
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericCursor Interface
+    // FGenericCursor Interface
 	
     virtual void SetCursor(ECursor Cursor) override final;
 
-    virtual void SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 y) const override final;
+    virtual void SetPosition(FGenericWindow* RelativeWindow, int32 x, int32 y) const override final;
 
-    virtual void GetPosition(CGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const override final;
+    virtual void GetPosition(FGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const override final;
 
     virtual void SetVisibility(bool bVisible) override final;
 };

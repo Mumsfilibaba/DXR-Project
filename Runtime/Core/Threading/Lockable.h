@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Class encapsulating an object and a lock for less repetion when protecting a single object with a lock
 
-template<typename T, typename LockType = CCriticalSection>
+template<typename T, typename LockType = FCriticalSection>
 class Lockable
 {
 public:

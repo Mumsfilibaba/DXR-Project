@@ -49,9 +49,9 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericInterlocked
+// FGenericInterlocked
 
-class CGenericInterlocked
+class FGenericInterlocked
 {
 public:
 

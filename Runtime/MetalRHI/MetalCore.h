@@ -27,7 +27,7 @@
         do                                        \
         {                                         \
             LOG_ERROR("[MetalRHI] " __VA_ARGS__); \
-            CDebug::DebugBreak();                 \
+            FDebug::DebugBreak();                 \
         } while (false)
     
     #define METAL_ERROR_COND(bCondition, ...) \

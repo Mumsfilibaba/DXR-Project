@@ -37,7 +37,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         PerShadowMapBuffer = RHICreateConstantBuffer(CBInitializer);
         if (!PerShadowMapBuffer)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -45,7 +45,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             FShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
-                CDebug::DebugBreak();
+                FDebug::DebugBreak();
                 return false;
             }
         }
@@ -53,7 +53,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         PointLightVertexShader = RHICreateVertexShader(ShaderCode);
         if (!PointLightVertexShader)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -61,7 +61,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             FShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
-                CDebug::DebugBreak();
+                FDebug::DebugBreak();
                 return false;
             }
         }
@@ -69,7 +69,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         PointLightPixelShader = RHICreatePixelShader(ShaderCode);
         if (!PointLightPixelShader)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -81,7 +81,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -91,7 +91,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
         if (!RasterizerState)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -100,7 +100,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -122,7 +122,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         PointLightPipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!PointLightPipelineState)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -138,7 +138,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         PerCascadeBuffer = RHICreateConstantBuffer(Initializer);
         if (!PerCascadeBuffer)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -150,7 +150,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
-                CDebug::DebugBreak();
+                FDebug::DebugBreak();
                 return false;
             }
         }
@@ -158,7 +158,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         DirectionalLightShader = RHICreateVertexShader(ShaderCode);
         if (!DirectionalLightShader)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -170,7 +170,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -180,7 +180,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
         if (!RasterizerState)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -188,7 +188,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -210,7 +210,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         DirectionalLightPSO = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!DirectionalLightPSO)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -225,7 +225,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/CascadeMatrixGen.hlsl", CompileInfo, ShaderCode))
             {
-                CDebug::DebugBreak();
+                FDebug::DebugBreak();
                 return false;
             }
         }
@@ -233,7 +233,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         CascadeGenShader = RHICreateComputeShader(ShaderCode);
         if (!CascadeGenShader)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -243,7 +243,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         CascadeGen = RHICreateComputePipelineState(CascadePSO);
         if (!CascadeGen)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -259,7 +259,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         CascadeGenerationData = RHICreateConstantBuffer(CBInitializer);
         if (!CascadeGenerationData)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -272,7 +272,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         LightSetup.CascadeMatrixBuffer = RHICreateGenericBuffer(GenericInitializer);
         if (!LightSetup.CascadeMatrixBuffer)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -284,7 +284,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         LightSetup.CascadeMatrixBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!LightSetup.CascadeMatrixBufferSRV)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -292,7 +292,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         LightSetup.CascadeMatrixBufferUAV = RHICreateUnorderedAccessView(UAVInitializer);
         if (!LightSetup.CascadeMatrixBufferUAV)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -301,7 +301,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         LightSetup.CascadeSplitsBuffer = RHICreateGenericBuffer(GenericInitializer);
         if (!LightSetup.CascadeSplitsBuffer)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -313,7 +313,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         LightSetup.CascadeSplitsBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!LightSetup.CascadeSplitsBufferSRV)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -321,7 +321,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         LightSetup.CascadeSplitsBufferUAV = RHICreateUnorderedAccessView(UAVInitializer);
         if (!LightSetup.CascadeSplitsBufferUAV)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
     }
@@ -332,7 +332,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
             {
-                CDebug::DebugBreak();
+                FDebug::DebugBreak();
                 return false;
             }
         }
@@ -340,7 +340,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         DirectionalShadowMaskShader = RHICreateComputeShader(ShaderCode);
         if (!DirectionalShadowMaskShader)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
 
@@ -350,7 +350,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         DirectionalShadowMaskPSO = RHICreateComputePipelineState(MaskPSO);
         if (!DirectionalShadowMaskPSO)
         {
-            CDebug::DebugBreak();
+            FDebug::DebugBreak();
             return false;
         }
         else
@@ -389,7 +389,7 @@ void CShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const
         // PerObject Structs
         struct SShadowPerObject
         {
-            CMatrix4 Matrix;
+            FMatrix4 Matrix;
         } ShadowPerObjectBuffer;
 
         SPerShadowMap PerShadowMapData;
@@ -424,22 +424,22 @@ void CShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const
                 CmdList.SetConstantBuffer(PointLightPixelShader.Get(), PerShadowMapBuffer.Get(), 0);
 
                 // Draw all objects to depth buffer
-                IConsoleVariable* GlobalFrustumCullEnabled = CConsoleManager::Get().FindVariable("Renderer.EnableFrustumCulling");
+                IConsoleVariable* GlobalFrustumCullEnabled = FConsoleManager::Get().FindVariable("Renderer.EnableFrustumCulling");
                 if (GlobalFrustumCullEnabled && GlobalFrustumCullEnabled->GetBool())
                 {
-                    CFrustum CameraFrustum = CFrustum(Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face]);
+                    FFrustum CameraFrustum = FFrustum(Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face]);
                     for (const SMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
                     {
-                        CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
+                        FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
                         TransformMatrix = TransformMatrix.Transpose();
 
-                        CVector3 Top = CVector3(&Command.Mesh->BoundingBox.Top.x);
+                        FVector3 Top = FVector3(&Command.Mesh->BoundingBox.Top.x);
                         Top = TransformMatrix.TransformPosition(Top);
 
-                        CVector3 Bottom = CVector3(&Command.Mesh->BoundingBox.Bottom.x);
+                        FVector3 Bottom = FVector3(&Command.Mesh->BoundingBox.Bottom.x);
                         Bottom = TransformMatrix.TransformPosition(Bottom);
 
-                        SAABB Box(Top, Bottom);
+                        FAABB Box(Top, Bottom);
                         if (CameraFrustum.CheckAABB(Box))
                         {
                             CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
@@ -534,7 +534,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CmdList,
         // PerObject Structs
         struct SShadowPerObject
         {
-            CMatrix4 Matrix;
+            FMatrix4 Matrix;
         } ShadowPerObjectBuffer;
 
         SPerCascade PerCascadeData;

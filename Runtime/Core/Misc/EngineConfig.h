@@ -5,28 +5,28 @@
 #include "Core/Containers/HashTable.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Holds a single config-value
+// CConfigValue - Holds a single config-value
 
-class CConfigValue
+class FConfigValue
 {
 public:
 
-    CConfigValue() = default;
-    CConfigValue(CConfigValue&& Other) = default;
-    CConfigValue(const CConfigValue& Other) = default;
-    ~CConfigValue() = default;
+    FConfigValue() = default;
+    FConfigValue(FConfigValue&& Other) = default;
+    FConfigValue(const FConfigValue& Other) = default;
+    ~FConfigValue() = default;
 
-    CConfigValue& operator=(CConfigValue&& RHS) = default;
-    CConfigValue& operator=(const CConfigValue& RHS) = default;
+    FConfigValue& operator=(FConfigValue&& RHS) = default;
+    FConfigValue& operator=(const FConfigValue& RHS) = default;
 
      /** @brief: Create value from string */
-    explicit CConfigValue(FString&& InString)
+    explicit FConfigValue(FString&& InString)
         : SavedValue(InString)
         , CurrentValue(Move(InString))
     { }
 
      /** @brief: Create value from string */
-    explicit CConfigValue(const FString& InString)
+    explicit FConfigValue(const FString& InString)
         : SavedValue(InString)
         , CurrentValue(InString)
     { }
@@ -44,16 +44,16 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A section of a config-file
+// FConfigSection - A section of a config-file
 
-class CORE_API CConfigSection
+class CORE_API FConfigSection
 {
-    friend class CConfigFile;
+    friend class FConfigFile;
 
 public:
 
-    CConfigSection(const char* Name);
-    ~CConfigSection() = default;
+    FConfigSection(const char* Name);
+    ~FConfigSection() = default;
 
      /** @brief: Restores all values in the section */
     void Restore();
@@ -65,24 +65,24 @@ public:
     void SetValue(const char* Name, const FString& NewValue);
 
      /** @brief: Retrieve a value */
-    CConfigValue* GetValue(const char* Name);
+    FConfigValue* GetValue(const char* Name);
 
      /** @brief: Retrieve a value */
-    const CConfigValue* GetValue(const char* Name) const;
+    const FConfigValue* GetValue(const char* Name) const;
 
 private:
-    THashTable<FString, CConfigValue, FStringHasher> ConfigValues;
+    THashTable<FString, FConfigValue, FStringHasher> ConfigValues;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Represent an engine-configuration file
+// FConfigFile - Represent an engine-configuration file
 
-class CORE_API CConfigFile
+class CORE_API FConfigFile
 {
 public:
 
-    CConfigFile(const char* Filename);
-    ~CConfigFile() = default;
+    FConfigFile(const char* Filename);
+    ~FConfigFile() = default;
 
      /** @brief: Set a string from the Engine config */
     bool SetString(const char* SectionName, const char* Name, const FString& NewValue);
@@ -115,18 +115,18 @@ public:
     bool SaveFile();
 
      /** @brief: Appends all the sections into this config file */
-    void Append(const CConfigFile& OtherFile);
+    void Append(const FConfigFile& OtherFile);
 
 private:
 
      /** @brief: Retrieve a section with a certain name */
-    CConfigSection* GetSection(const char* SectionName);
+    FConfigSection* GetSection(const char* SectionName);
 
      /** @brief: Retrieve a variable just based on name */
-    CConfigValue* GetValue(const char* Name);
+    FConfigValue* GetValue(const char* Name);
 
      /** @brief: Retrieve a variable from a certain section, with a certain name */
-    CConfigValue* GetValue(const char* SectionName, const char* Name);
+    FConfigValue* GetValue(const char* SectionName, const char* Name);
 
      /** @brief: Templated version of get value */
     template<typename T>
@@ -147,10 +147,10 @@ private:
     FString Filename;
 
     // All the sections
-    THashTable<FString, CConfigSection, FStringHasher> Sections;
+    THashTable<FString, FConfigSection, FStringHasher> Sections;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Main-Engine configuration
 
-extern CORE_API CConfigFile GEngineConfig;
+extern CORE_API FConfigFile GEngineConfig;

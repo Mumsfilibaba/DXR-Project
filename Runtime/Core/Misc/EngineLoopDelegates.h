@@ -10,36 +10,36 @@ namespace NEngineLoopDelegates
     /**
      * @brief: Delegate that gets called after the RHI is initialized 
      */
-    DECLARE_MULTICAST_DELEGATE(CPostInitRHIDelegate);
-    extern CORE_API CPostInitRHIDelegate PostInitRHIDelegate;
+    DECLARE_MULTICAST_DELEGATE(FPostInitRHIDelegate);
+    extern CORE_API FPostInitRHIDelegate PostInitRHIDelegate;
 
     /**
      * @brief: Delegate that gets called at the end of PreInit
      */
-    DECLARE_MULTICAST_DELEGATE(CPreInitFinishedDelegate);
-    extern CORE_API CPreInitFinishedDelegate PreInitFinishedDelegate;
+    DECLARE_MULTICAST_DELEGATE(FPreInitFinishedDelegate);
+    extern CORE_API FPreInitFinishedDelegate PreInitFinishedDelegate;
 
     /**
      * @brief: Delegate that gets called before the Engine is created 
      */
-    DECLARE_MULTICAST_DELEGATE(CPreEngineInitDelegate);
-    extern CORE_API CPreEngineInitDelegate PreEngineInitDelegate;
+    DECLARE_MULTICAST_DELEGATE(FPreEngineInitDelegate);
+    extern CORE_API FPreEngineInitDelegate PreEngineInitDelegate;
 
     /**
      * @brief: Delegate that gets called after the Engine is created 
      */
-    DECLARE_MULTICAST_DELEGATE(CPostEngineInitDelegate);
-    extern CORE_API CPostEngineInitDelegate PostEngineInitDelegate;
+    DECLARE_MULTICAST_DELEGATE(FPostEngineInitDelegate);
+    extern CORE_API FPostEngineInitDelegate PostEngineInitDelegate;
 
     /**
      * @brief: Delegate that gets called before the Application-Module is loaded 
      */
-    DECLARE_MULTICAST_DELEGATE(CPreApplicationLoadedDelegate);
-    extern CORE_API CPreApplicationLoadedDelegate PreApplicationLoadedDelegate;
+    DECLARE_MULTICAST_DELEGATE(FPreApplicationLoadedDelegate);
+    extern CORE_API FPreApplicationLoadedDelegate PreApplicationLoadedDelegate;
 
     /**
      * @brief: Delegate that gets called after the Application-Module is loaded
      */
-    DECLARE_MULTICAST_DELEGATE(CPostApplicationLoadedDelegate);
-    extern CORE_API CPostApplicationLoadedDelegate PostApplicationLoadedDelegate;
+    DECLARE_MULTICAST_DELEGATE(FPostApplicationLoadedDelegate);
+    extern CORE_API FPostApplicationLoadedDelegate PostApplicationLoadedDelegate;
 };

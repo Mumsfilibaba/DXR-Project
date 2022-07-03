@@ -8,67 +8,67 @@
 #include <sstream>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ConsoleVariable - BaseClass for a console-variable that contains a delegate for when the variable changes
+// FConsoleVariable
 
-class CConsoleVariable : public IConsoleVariable
+class FConsoleVariable : public IConsoleVariable
 {
 public:
 
-    CConsoleVariable()
+    FConsoleVariable()
         : IConsoleVariable()
         , ChangedDelegate()
     { }
 
-    CConsoleVariable(const CConsoleVariableChangedDelegateType& VariableChangedDelegate)
+    FConsoleVariable(const FCVarChangedDelegateType& VariableChangedDelegate)
         : IConsoleVariable()
         , ChangedDelegate()
     {
         ChangedDelegate.Add(VariableChangedDelegate);
     }
 
-    virtual ~CConsoleVariable() = default;
+    virtual ~FConsoleVariable() = default;
 
-    virtual IConsoleCommand* AsCommand() override { return nullptr; }
+    virtual IConsoleCommand*  AsCommand()  override { return nullptr; }
     virtual IConsoleVariable* AsVariable() override { return this; }
 
-    virtual CConsoleVariableChangedDelegate& GetChangedDelegate() override
+    virtual FCVarChangedDelegate& GetChangedDelegate() override
     {
         return ChangedDelegate;
     }
 
 protected:
-    CConsoleVariableChangedDelegate ChangedDelegate;
+    FCVarChangedDelegate ChangedDelegate;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Templated console-variable for storing a specific type of variable
+// TConsoleVariable - Templated console-variable for storing a specific type of variable
 
 template<typename T>
-class TConsoleVariable : public CConsoleVariable
+class TConsoleVariable : public FConsoleVariable
 {
 public:
 	
     TConsoleVariable()
-        : CConsoleVariable()
+        : FConsoleVariable()
         , Value()
     { }
 
     TConsoleVariable(T StartValue)
-        : CConsoleVariable()
+        : FConsoleVariable()
         , Value(StartValue)
     { }
 
-    TConsoleVariable(T StartValue, const CConsoleVariableChangedDelegateType& VariableChangedDelegate)
-        : CConsoleVariable(VariableChangedDelegate)
+    TConsoleVariable(T StartValue, const FCVarChangedDelegateType& VariableChangedDelegate)
+        : FConsoleVariable(VariableChangedDelegate)
         , Value(StartValue)
     { }
 
-    virtual bool IsInt() const override final { return false; }
-    virtual bool IsFloat() const override final { return false; }
-    virtual bool IsBool() const override final { return false; }
+    virtual bool IsInt()    const override final { return false; }
+    virtual bool IsFloat()  const override final { return false; }
+    virtual bool IsBool()   const override final { return false; }
     virtual bool IsString() const override final { return false; }
 
-    virtual void SetString(const FString& InValue) override;
+    virtual void    SetString(const FString& InValue) override;
     virtual FString GetString() const override;
 
     virtual void SetInt(int32 InValue) override final
@@ -89,20 +89,9 @@ public:
         OnChanged();
     }
 
-    virtual int32 GetInt() const override final
-    {
-        return static_cast<int32>(Value);
-    }
-
-    virtual float GetFloat() const override final
-    {
-        return static_cast<float>(Value);
-    }
-
-    virtual bool GetBool() const override final
-    {
-        return static_cast<bool>(Value);
-    }
+    virtual int32 GetInt()   const override final { return static_cast<int32>(Value); }
+    virtual float GetFloat() const override final { return static_cast<float>(Value); }
+    virtual bool  GetBool()  const override final { return static_cast<bool>(Value); }
 
 private:
     

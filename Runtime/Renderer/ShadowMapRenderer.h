@@ -11,9 +11,9 @@
 
 struct SCascadeGenerationInfo
 {
-    CVector3 LightDirection;
+    FVector3 LightDirection;
     float CascadeSplitLambda;
-    CVector3 LightUp;
+    FVector3 LightUp;
     float CascadeResolution;
 };
 
@@ -22,8 +22,8 @@ struct SCascadeGenerationInfo
 
 struct SCascadeMatrices
 {
-    CMatrix4 ViewProjection;
-    CMatrix4 View;
+    FMatrix4 ViewProjection;
+    FMatrix4 View;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -31,9 +31,9 @@ struct SCascadeMatrices
 
 struct SCascadeSplits
 {
-    CVector3 MinExtent;
+    FVector3 MinExtent;
     float Split;
-    CVector3 MaxExtent;
+    FVector3 MaxExtent;
     float FarPlane;
 };
 
@@ -42,8 +42,8 @@ struct SCascadeSplits
 
 struct SPerShadowMap
 {
-    CMatrix4 Matrix;
-    CVector3 Position;
+    FMatrix4 Matrix;
+    FVector3 Position;
     float    FarPlane;
 };
 

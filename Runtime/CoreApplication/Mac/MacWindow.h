@@ -6,26 +6,26 @@
 @class CCocoaWindow;
 @class CCocoaWindowView;
 
-class CMacApplication;
+class FMacApplication;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMacWindow
 
-class CMacWindow final : public CGenericWindow
+class CMacWindow final : public FGenericWindow
 {
 private:
 
-    CMacWindow(CMacApplication* InApplication);
+    CMacWindow(FMacApplication* InApplication);
     ~CMacWindow();
 
 public:
 
-	static CMacWindow* CreateMacWindow(CMacApplication* InApplication);
+	static CMacWindow* CreateMacWindow(FMacApplication* InApplication);
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericWindow Interface
+    // FGenericWindow Interface
 
     virtual bool Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
 
@@ -65,9 +65,9 @@ public:
     
     CCocoaWindow* GetWindowHandle() const { return WindowHandle; }
 
-    CMacApplication* GetApplication() const { return Application; }
+    FMacApplication* GetApplication() const { return Application; }
     
 private:
-    CMacApplication* Application;
+    FMacApplication* Application;
     CCocoaWindow*    WindowHandle;
 };

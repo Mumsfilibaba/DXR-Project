@@ -4,18 +4,18 @@
 #include <pthread.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacCriticalSection
+// FMacCriticalSection
 
-class CMacCriticalSection final : public CGenericCriticalSection
+class FMacCriticalSection final : public FGenericCriticalSection
 {
 public:
 
     typedef pthread_mutex_t* PlatformHandle;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericCriticalSection Interface
+    // FGenericCriticalSection Interface
 
-    FORCEINLINE CMacCriticalSection()
+    FORCEINLINE FMacCriticalSection()
         : Mutex()
     {
         // Create a critical section that is recursive, in order to have parity with WinApi CriticalSection
@@ -27,7 +27,7 @@ public:
         pthread_mutexattr_destroy(&MutexAttributes);
     }
 
-    FORCEINLINE ~CMacCriticalSection()
+    FORCEINLINE ~FMacCriticalSection()
     {
         pthread_mutex_destroy(&Mutex);
     }

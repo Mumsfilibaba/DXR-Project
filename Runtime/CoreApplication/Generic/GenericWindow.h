@@ -90,14 +90,14 @@ struct SWindowShape
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericWindow
+// FGenericWindow
 
-class CGenericWindow : public FRefCounted
+class FGenericWindow : public FRefCounted
 {
 protected:
 
-    CGenericWindow()  = default;
-    ~CGenericWindow() = default;
+    FGenericWindow()  = default;
+    ~FGenericWindow() = default;
 
 public:
 

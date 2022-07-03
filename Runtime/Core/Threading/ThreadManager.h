@@ -5,19 +5,19 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Optional.h"
 
-typedef TSharedRef<CGenericThread> GenericThreadRef; 
+typedef TSharedRef<FGenericThread> FGenericThreadRef; 
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CThreadManager
+// FThreadManager
 
-class CORE_API CThreadManager
+class CORE_API FThreadManager
 {
 private:
 
-    friend class TOptional<CThreadManager>;
+    friend class TOptional<FThreadManager>;
 
-    CThreadManager();
-    ~CThreadManager();
+    FThreadManager();
+    ~FThreadManager();
 
 public:
 
@@ -27,20 +27,20 @@ public:
 
     static bool IsMainThread();
 
-    static CThreadManager& Get();
+    static FThreadManager& Get();
 
-    GenericThreadRef CreateThread(const TFunction<void()>& InFunction);
+    FGenericThreadRef CreateThread(const TFunction<void()>& InFunction);
 
-    GenericThreadRef CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName);
+    FGenericThreadRef CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName);
 
-    GenericThreadRef GetNamedThread(const FString& InName);
+    FGenericThreadRef GetNamedThread(const FString& InName);
 
-    GenericThreadRef GetThreadFromHandle(void* ThreadHandle);
+    FGenericThreadRef GetThreadFromHandle(void* ThreadHandle);
 
 private:
 
-    static TOptional<CThreadManager>& GetConsoleManagerInstance();
+    static TOptional<FThreadManager>& GetConsoleManagerInstance();
 
-    TArray<GenericThreadRef> Threads;
+    TArray<FGenericThreadRef> Threads;
     void*                    MainThread;
 };

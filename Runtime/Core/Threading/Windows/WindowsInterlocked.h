@@ -6,9 +6,9 @@
 #include <intrin.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsInterlocked
+// FWindowsInterlocked
 
-class CWindowsInterlocked : public CGenericInterlocked
+class FWindowsInterlocked : public FGenericInterlocked
 {
 public:
 
@@ -18,7 +18,7 @@ public:
     static_assert(sizeof(int32) == sizeof(long) && alignof(int32) == alignof(long), "int32 must have the same size and alignment as long");
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericInterlocked Interface
+    // FGenericInterlocked Interface
 
     static FORCEINLINE int8 InterlockedAdd(volatile int8* Dest, int8 Value)
     {

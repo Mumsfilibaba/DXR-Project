@@ -50,12 +50,12 @@ void CInspectorWindow::DrawSceneInfo()
                 if ( ImGui::TreeNode( "Transform" ) )
                 {
                     // Transform
-                    CVector3 Translation = Actor->GetTransform().GetTranslation();
+                    FVector3 Translation = Actor->GetTransform().GetTranslation();
                     DrawFloat3Control( "Translation", Translation );
                     Actor->GetTransform().SetTranslation( Translation );
 
                     // Rotation
-                    CVector3 Rotation = Actor->GetTransform().GetRotation();
+                    FVector3 Rotation = Actor->GetTransform().GetRotation();
                     Rotation = NMath::ToDegrees( Rotation );
 
                     DrawFloat3Control( "Rotation", Rotation, 0.0f, 100.0f, 1.0f );
@@ -65,8 +65,8 @@ void CInspectorWindow::DrawSceneInfo()
                     Actor->GetTransform().SetRotation( Rotation );
 
                     // Scale
-                    CVector3 Scale0 = Actor->GetTransform().GetScale();
-                    CVector3 Scale1 = Scale0;
+                    FVector3 Scale0 = Actor->GetTransform().GetScale();
+                    FVector3 Scale1 = Scale0;
                     DrawFloat3Control( "Scale", Scale0, 1.0f );
 
                     ImGui::SameLine();
@@ -115,7 +115,7 @@ void CInspectorWindow::DrawSceneInfo()
                         ImGui::Text( "Albedo" );
                         ImGui::NextColumn();
 
-                        CVector3 Color = MeshComponent->Material->GetMaterialProperties().Albedo;
+                        FVector3 Color = MeshComponent->Material->GetMaterialProperties().Albedo;
                         if ( DrawColorEdit3( "##Albedo", Color ) )
                         {
                             MeshComponent->Material->SetAlbedo( Color );
@@ -185,7 +185,7 @@ void CInspectorWindow::DrawSceneInfo()
                     // Transform
                     if ( ImGui::TreeNode( "Transform" ) )
                     {
-                        CVector3 Translation = CurrentPointLight->GetPosition();
+                        FVector3 Translation = CurrentPointLight->GetPosition();
                         DrawFloat3Control( "Translation", Translation, 0.0f, ColumnWidth );
                         CurrentPointLight->SetPosition( Translation );
 
@@ -201,7 +201,7 @@ void CInspectorWindow::DrawSceneInfo()
                         ImGui::Text( "Color" );
                         ImGui::NextColumn();
 
-                        CVector3 Color = CurrentPointLight->GetColor();
+                        FVector3 Color = CurrentPointLight->GetColor();
                         if ( DrawColorEdit3( "##Color", Color ) )
                         {
                             CurrentPointLight->SetColor( Color );
@@ -298,7 +298,7 @@ void CInspectorWindow::DrawSceneInfo()
                         ImGui::Text( "Color" );
                         ImGui::NextColumn();
 
-                        CVector3 Color = CurrentDirectionalLight->GetColor();
+                        FVector3 Color = CurrentDirectionalLight->GetColor();
                         if ( DrawColorEdit3( "##Color", Color ) )
                         {
                             CurrentDirectionalLight->SetColor( Color );
@@ -321,7 +321,7 @@ void CInspectorWindow::DrawSceneInfo()
                     // Transform
                     if ( ImGui::TreeNode( "Transform" ) )
                     {
-                        CVector3 Rotation = CurrentDirectionalLight->GetRotation();
+                        FVector3 Rotation = CurrentDirectionalLight->GetRotation();
                         Rotation = NMath::ToDegrees( Rotation );
 
                         DrawFloat3Control( "Rotation", Rotation, 0.0f, ColumnWidth, 1.0f );
@@ -336,7 +336,7 @@ void CInspectorWindow::DrawSceneInfo()
                         ImGui::Text( "Direction" );
                         ImGui::NextColumn();
 
-                        CVector3 Direction = CurrentDirectionalLight->GetDirection();
+                        FVector3 Direction = CurrentDirectionalLight->GetDirection();
                         ImGui::InputFloat3( "##Direction", Direction.GetData(), "%.3f", ImGuiInputTextFlags_ReadOnly );
 
                         ImGui::Columns( 1 );
@@ -346,7 +346,7 @@ void CInspectorWindow::DrawSceneInfo()
                     // Shadow Settings
                     if ( ImGui::TreeNode( "Shadow Settings" ) )
                     {
-                        CVector3 LookAt = CurrentDirectionalLight->GetLookAt();
+                        FVector3 LookAt = CurrentDirectionalLight->GetLookAt();
                         DrawFloat3Control( "LookAt", LookAt, 0.0f, ColumnWidth );
                         CurrentDirectionalLight->SetLookAt( LookAt );
 
@@ -357,7 +357,7 @@ void CInspectorWindow::DrawSceneInfo()
                         ImGui::Text( "Translation" );
                         ImGui::NextColumn();
 
-                        CVector3 Position = CurrentDirectionalLight->GetPosition();
+                        FVector3 Position = CurrentDirectionalLight->GetPosition();
                         ImGui::InputFloat3( "##Translation", Position.GetData(), "%.3f", ImGuiInputTextFlags_ReadOnly );
 
                         // Shadow Bias

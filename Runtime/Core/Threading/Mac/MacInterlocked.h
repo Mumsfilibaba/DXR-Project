@@ -2,14 +2,14 @@
 #include "Core/Threading/Generic/GenericInterlocked.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacInterlocked
+// FMacInterlocked
 
-class CMacInterlocked : public CGenericInterlocked
+class FMacInterlocked : public FGenericInterlocked
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericInterlocked Interface
+    // FGenericInterlocked Interface
 
     static FORCEINLINE int8 InterlockedAdd(volatile int8* Dest, int8 Value)
     {

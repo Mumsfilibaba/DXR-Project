@@ -17,11 +17,11 @@ enum EWindowsMasks : uint32
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SPointMessage
+// FPointMessage
 
-struct SPointMessage
+struct FPointMessage
 {
-    FORCEINLINE SPointMessage(LPARAM InParam)
+    FORCEINLINE FPointMessage(LPARAM InParam)
         : Param(InParam)
     { }
 
@@ -46,21 +46,21 @@ struct SPointMessage
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsApplication
+// FWindowsApplication
 
-CWindowsApplication* WindowsApplication = nullptr;
+FWindowsApplication* WindowsApplication = nullptr;
 
-CWindowsApplication* CWindowsApplication::CreateWindowsApplication()
+FWindowsApplication* FWindowsApplication::CreateWindowsApplication()
 {
     HINSTANCE TempInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0));
 
     // TODO: Load icon here
-    WindowsApplication = dbg_new CWindowsApplication(TempInstanceHandle);
+    WindowsApplication = dbg_new FWindowsApplication(TempInstanceHandle);
     return WindowsApplication;
 }
 
-CWindowsApplication::CWindowsApplication(HINSTANCE InInstanceHandle)
-    : CGenericApplication(TSharedPtr<ICursor>(CWindowsCursor::CreateWindowsCursor()))
+FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle)
+    : FGenericApplication(TSharedPtr<ICursor>(FWindowsCursor::CreateWindowsCursor()))
     , Windows()
     , Messages()
     , MessagesCS()
@@ -75,10 +75,10 @@ CWindowsApplication::CWindowsApplication(HINSTANCE InInstanceHandle)
     SetProcessDPIAware();
 #endif
 
-    CWindowsKeyMapping::Initialize();
+    FWindowsKeyMapping::Initialize();
  }
 
-CWindowsApplication::~CWindowsApplication()
+FWindowsApplication::~FWindowsApplication()
 {
     Windows.Clear();
 
@@ -88,28 +88,28 @@ CWindowsApplication::~CWindowsApplication()
     }
 }
 
-bool CWindowsApplication::RegisterWindowClass()
+bool FWindowsApplication::RegisterWindowClass()
 {
     WNDCLASS WindowClass;
     FMemory::Memzero(&WindowClass);
 
     WindowClass.hInstance     = InstanceHandle;
-    WindowClass.lpszClassName = CWindowsWindow::GetClassName();
+    WindowClass.lpszClassName = FWindowsWindow::GetClassName();
     WindowClass.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
     WindowClass.hCursor       = LoadCursor(nullptr, IDC_ARROW);
-    WindowClass.lpfnWndProc   = CWindowsApplication::StaticMessageProc;
+    WindowClass.lpfnWndProc   = FWindowsApplication::StaticMessageProc;
 
     ATOM ClassAtom = RegisterClass(&WindowClass);
     if (ClassAtom == 0)
     {
-        LOG_ERROR("[CWindowsApplication]: FAILED to register WindowClass\n");
+        LOG_ERROR("[FWindowsApplication]: FAILED to register WindowClass\n");
         return false;
     }
 
     return true;
 }
 
-bool CWindowsApplication::RegisterRawInputDevices(HWND Window)
+bool FWindowsApplication::RegisterRawInputDevices(HWND Window)
 {
     constexpr uint32 DeviceCount = 1;
 
@@ -125,17 +125,17 @@ bool CWindowsApplication::RegisterRawInputDevices(HWND Window)
     const bool bResult = !!::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
     if (!bResult)
     {
-        LOG_ERROR("[CWindowsApplication] Failed to register Raw Input devices");
+        LOG_ERROR("[FWindowsApplication] Failed to register Raw Input devices");
         return false;
     }
     else
     {
-        LOG_INFO("[CWindowsApplication] Registered Raw Input devices");
+        LOG_INFO("[FWindowsApplication] Registered Raw Input devices");
         return true;
     }
 }
 
-bool CWindowsApplication::UnregisterRawInputDevices()
+bool FWindowsApplication::UnregisterRawInputDevices()
 {
     constexpr uint32 DeviceCount = 1;
 
@@ -151,19 +151,19 @@ bool CWindowsApplication::UnregisterRawInputDevices()
     const bool bResult = !!::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
     if (!bResult)
     {
-        LOG_ERROR("[CWindowsApplication] Failed to unregister Raw Input devices");
+        LOG_ERROR("[FWindowsApplication] Failed to unregister Raw Input devices");
         return false;
     }
     else
     {
-        LOG_INFO("[CWindowsApplication] Unregistered Raw Input devices");
+        LOG_INFO("[FWindowsApplication] Unregistered Raw Input devices");
         return true;
     }
 }
 
-TSharedRef<CGenericWindow> CWindowsApplication::CreateWindow()
+TSharedRef<FGenericWindow> FWindowsApplication::CreateWindow()
 {
-    TSharedRef<CWindowsWindow> NewWindow = CWindowsWindow::CreateWindowsWindow(this);
+    TSharedRef<FWindowsWindow> NewWindow = FWindowsWindow::CreateWindowsWindow(this);
  
     {
         TScopedLock Lock(WindowsCS);
@@ -173,16 +173,16 @@ TSharedRef<CGenericWindow> CWindowsApplication::CreateWindow()
     return NewWindow;
 }
 
-void CWindowsApplication::Tick(float)
+void FWindowsApplication::Tick(float)
 {
     // Start by pumping all the messages 
-    PlatformApplicationMisc::PumpMessages(true);
+    FPlatformApplicationMisc::PumpMessages(true);
 
     // TODO: Store the second TArray to save on allocations
     TArray<SWindowsMessage> ProcessableMessages;
     if (!Messages.IsEmpty())
     {
-        TScopedLock<CCriticalSection> Lock(MessagesCS);
+        TScopedLock<FCriticalSection> Lock(MessagesCS);
         ProcessableMessages.Append(Messages);
         Messages.Clear();
     }
@@ -197,7 +197,7 @@ void CWindowsApplication::Tick(float)
     {
         TScopedLock Lock(ClosedWindowsCS);
 
-        for (const TSharedRef<CWindowsWindow>& Window : ClosedWindows)
+        for (const TSharedRef<FWindowsWindow>& Window : ClosedWindows)
         {
             HWND WindowHandle = Window->GetWindowHandle();
             
@@ -210,11 +210,11 @@ void CWindowsApplication::Tick(float)
     }
 }
 
-bool CWindowsApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<CGenericWindow>& Window)
+bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window)
 {
     if (Window)
     {
-        TSharedRef<CWindowsWindow> WindowsWindow = StaticCastSharedRef<CWindowsWindow>(Window);
+        TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
         return RegisterRawInputDevices(WindowsWindow->GetWindowHandle());
     }
     else
@@ -223,11 +223,11 @@ bool CWindowsApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<CGe
     }
 }
 
-void CWindowsApplication::SetCapture(const TSharedRef<CGenericWindow>& Window)
+void FWindowsApplication::SetCapture(const TSharedRef<FGenericWindow>& Window)
 {
     if (Window)
     {
-        TSharedRef<CWindowsWindow> WindowsWindow = StaticCastSharedRef<CWindowsWindow>(Window);
+        TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
 
         HWND hCapture = WindowsWindow->GetWindowHandle();
         if (WindowsWindow->IsValid())
@@ -241,9 +241,9 @@ void CWindowsApplication::SetCapture(const TSharedRef<CGenericWindow>& Window)
     }
 }
 
-void CWindowsApplication::SetActiveWindow(const TSharedRef<CGenericWindow>& Window)
+void FWindowsApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
 {
-    TSharedRef<CWindowsWindow> WindowsWindow = StaticCastSharedRef<CWindowsWindow>(Window);
+    TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
 
     HWND hActiveWindow = WindowsWindow->GetWindowHandle();
     if (WindowsWindow->IsValid())
@@ -252,21 +252,21 @@ void CWindowsApplication::SetActiveWindow(const TSharedRef<CGenericWindow>& Wind
     }
 }
 
-TSharedRef<CGenericWindow> CWindowsApplication::GetCapture() const
+TSharedRef<FGenericWindow> FWindowsApplication::GetCapture() const
 {
     // TODO: Should we add a reference here
     HWND CaptureWindow = ::GetCapture();
     return GetWindowsWindowFromHWND(CaptureWindow);
 }
 
-TSharedRef<CGenericWindow> CWindowsApplication::GetActiveWindow() const
+TSharedRef<FGenericWindow> FWindowsApplication::GetActiveWindow() const
 {
     // TODO: Should we add a reference here
     HWND ActiveWindow = ::GetActiveWindow();
     return GetWindowsWindowFromHWND(ActiveWindow);
 }
 
-TSharedRef<CGenericWindow> CWindowsApplication::GetWindowUnderCursor() const
+TSharedRef<FGenericWindow> FWindowsApplication::GetWindowUnderCursor() const
 {
     POINT CursorPos;
     if (!GetCursorPos(&CursorPos))
@@ -279,13 +279,13 @@ TSharedRef<CGenericWindow> CWindowsApplication::GetWindowUnderCursor() const
     return GetWindowsWindowFromHWND(Handle);
 }
 
-TSharedRef<CWindowsWindow> CWindowsApplication::GetWindowsWindowFromHWND(HWND InWindow) const
+TSharedRef<FWindowsWindow> FWindowsApplication::GetWindowsWindowFromHWND(HWND InWindow) const
 {
     if (IsWindow(InWindow))
     {
         TScopedLock Lock(WindowsCS);
 
-        for (const TSharedRef<CWindowsWindow>& Window : Windows)
+        for (const TSharedRef<FWindowsWindow>& Window : Windows)
         {
             if (Window->GetWindowHandle() == InWindow)
             {
@@ -297,7 +297,7 @@ TSharedRef<CWindowsWindow> CWindowsApplication::GetWindowsWindowFromHWND(HWND In
     return nullptr;
 }
 
-void CWindowsApplication::AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener)
+void FWindowsApplication::AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener)
 {
     TScopedLock Lock(WindowsMessageListenersCS);
 
@@ -312,19 +312,19 @@ void CWindowsApplication::AddWindowsMessageListener(const TSharedPtr<IWindowsMes
     }
 }
 
-void CWindowsApplication::RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& InWindowsMessageListener)
+void FWindowsApplication::RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& InWindowsMessageListener)
 {
     TScopedLock Lock(WindowsMessageListenersCS);
     WindowsMessageListeners.Remove(InWindowsMessageListener);
 }
 
-bool CWindowsApplication::IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& InWindowsMessageListener) const
+bool FWindowsApplication::IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& InWindowsMessageListener) const
 {
     TScopedLock Lock(WindowsMessageListenersCS);
     return WindowsMessageListeners.Contains(InWindowsMessageListener);
 }
 
-void CWindowsApplication::CloseWindow(const TSharedRef<CWindowsWindow>& Window)
+void FWindowsApplication::CloseWindow(const TSharedRef<FWindowsWindow>& Window)
 {
     {
         TScopedLock Lock(ClosedWindowsCS);
@@ -337,14 +337,14 @@ void CWindowsApplication::CloseWindow(const TSharedRef<CWindowsWindow>& Window)
     }
 }
 
-LRESULT CWindowsApplication::StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT FWindowsApplication::StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     return WindowsApplication ? WindowsApplication->MessageProc(Window, Message, wParam, lParam) : DefWindowProc(Window, Message, wParam, lParam);
 }
 
-void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY)
+void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY)
 {
-    TSharedRef<CWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
+    TSharedRef<FWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
     switch (Message)
     {
         case WM_SETFOCUS:
@@ -374,7 +374,7 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             if (MessageWindow)
             {
-                const SPointMessage Size(lParam);
+                const FPointMessage Size(lParam);
                 MessageListener->HandleWindowResized(MessageWindow, Size.Width, Size.Height);
             }
 
@@ -385,7 +385,7 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             if (MessageWindow)
             {
-                const SPointMessage Size(lParam);
+                const FPointMessage Size(lParam);
                 MessageListener->HandleWindowMoved(MessageWindow, Size.x, Size.y);
             }
 
@@ -396,9 +396,9 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_KEYUP:
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & ScanCodeMask);
-            const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
+            const EKey Key = FWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
 
-            MessageListener->HandleKeyReleased(Key, PlatformApplicationMisc::GetModifierKeyState());
+            MessageListener->HandleKeyReleased(Key, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
 
@@ -406,10 +406,10 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_KEYDOWN:
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & ScanCodeMask);
-            const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
+            const EKey Key = FWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
 
             const bool bIsRepeat = !!(lParam & KeyRepeatMask);
-            MessageListener->HandleKeyPressed(Key, bIsRepeat, PlatformApplicationMisc::GetModifierKeyState());
+            MessageListener->HandleKeyPressed(Key, bIsRepeat, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
 
@@ -482,7 +482,7 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 Button = EMouseButton::MouseButton_Forward;
             }
 
-            MessageListener->HandleMousePressed(Button, PlatformApplicationMisc::GetModifierKeyState());
+            MessageListener->HandleMousePressed(Button, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
 
@@ -513,7 +513,7 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 Button = EMouseButton::MouseButton_Forward;
             }
 
-            MessageListener->HandleMouseReleased(Button, PlatformApplicationMisc::GetModifierKeyState());
+            MessageListener->HandleMouseReleased(Button, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
 
@@ -546,7 +546,7 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
     }
 }
 
-LRESULT CWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT FWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     // Let the message listeners (a.k.a other modules) listen to native messages
     LRESULT ResultFromListeners = 0;
@@ -572,7 +572,7 @@ LRESULT CWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
 
         case WM_CLOSE:
         {
-            TSharedRef<CWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
+            TSharedRef<FWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
             CloseWindow(MessageWindow);
             return ResultFromListeners;
         }
@@ -612,13 +612,13 @@ LRESULT CWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
     return DefWindowProc(Window, Message, wParam, lParam);
 }
 
-void CWindowsApplication::StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY)
+void FWindowsApplication::StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY)
 {
-    TScopedLock<CCriticalSection> Lock(MessagesCS);
+    TScopedLock<FCriticalSection> Lock(MessagesCS);
     Messages.Emplace(Window, Message, wParam, lParam, MouseDeltaX, MouseDeltaY);
 }
 
-LRESULT CWindowsApplication::ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT FWindowsApplication::ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     UINT Size = 0;
     GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, NULL, &Size, sizeof(RAWINPUTHEADER));
@@ -627,7 +627,7 @@ LRESULT CWindowsApplication::ProcessRawInput(HWND Window, UINT Message, WPARAM w
     TUniquePtr<Byte[]> Buffer = MakeUnique<Byte[]>(Size);
     if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER)) != Size)
     {
-        LOG_ERROR("[CWindowsApplication] GetRawInputData did not return correct size");
+        LOG_ERROR("[FWindowsApplication] GetRawInputData did not return correct size");
         return 0;
     }
 

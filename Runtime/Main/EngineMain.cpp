@@ -17,7 +17,7 @@ int32 EngineMain()
         {
             if (!CEngineLoop::Release())
             {
-                PlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::Release Failed");
+                FPlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::Release Failed");
             }
         }
     };
@@ -28,18 +28,18 @@ int32 EngineMain()
     // Initialization
     if (!CEngineLoop::PreInitialize())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::PreInit Failed");
+        FPlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::PreInit Failed");
         return -1;
     }
 
     if (!CEngineLoop::Initialize())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::Init Failed");
+        FPlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::Init Failed");
         return -1;
     }
 
     // Run loop
-    CTimer Timer;
+    FTimer Timer;
     while (CCanvasApplication::Get().IsRunning())
     {
         Timer.Tick();

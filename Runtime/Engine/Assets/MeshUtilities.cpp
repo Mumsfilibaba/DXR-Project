@@ -28,11 +28,11 @@ void CMeshUtilities::Subdivide(SMeshData& OutData, uint32 Subdivisions) noexcept
         for (uint32 j = 0; j < IndexCount; j += 3)
         {
             // Calculate Position
-            CVector3 Position0 = OutData.Vertices[OutData.Indices[j]].Position;
-            CVector3 Position1 = OutData.Vertices[OutData.Indices[j + 1]].Position;
-            CVector3 Position2 = OutData.Vertices[OutData.Indices[j + 2]].Position;
+            FVector3 Position0 = OutData.Vertices[OutData.Indices[j]].Position;
+            FVector3 Position1 = OutData.Vertices[OutData.Indices[j + 1]].Position;
+            FVector3 Position2 = OutData.Vertices[OutData.Indices[j + 2]].Position;
 
-            CVector3 Position = Position0 + Position1;
+            FVector3 Position = Position0 + Position1;
             TempVertices[0].Position = Position * 0.5f;
 
             Position = Position0 + Position2;
@@ -42,11 +42,11 @@ void CMeshUtilities::Subdivide(SMeshData& OutData, uint32 Subdivisions) noexcept
             TempVertices[2].Position = Position * 0.5f;
 
             // Calculate TexCoord
-            CVector2 TexCoord0 = OutData.Vertices[OutData.Indices[j]].TexCoord;
-            CVector2 TexCoord1 = OutData.Vertices[OutData.Indices[j + 1]].TexCoord;
-            CVector2 TexCoord2 = OutData.Vertices[OutData.Indices[j + 2]].TexCoord;
+            FVector2 TexCoord0 = OutData.Vertices[OutData.Indices[j]].TexCoord;
+            FVector2 TexCoord1 = OutData.Vertices[OutData.Indices[j + 1]].TexCoord;
+            FVector2 TexCoord2 = OutData.Vertices[OutData.Indices[j + 2]].TexCoord;
 
-            CVector2 TexCoord = TexCoord0 + TexCoord1;
+            FVector2 TexCoord = TexCoord0 + TexCoord1;
             TempVertices[0].TexCoord = TexCoord * 0.5f;
 
             TexCoord = TexCoord0 + TexCoord2;
@@ -56,11 +56,11 @@ void CMeshUtilities::Subdivide(SMeshData& OutData, uint32 Subdivisions) noexcept
             TempVertices[2].TexCoord = TexCoord * 0.5f;
 
             // Calculate Normal
-            CVector3 Normal0 = OutData.Vertices[OutData.Indices[j]].Normal;
-            CVector3 Normal1 = OutData.Vertices[OutData.Indices[j + 1]].Normal;
-            CVector3 Normal2 = OutData.Vertices[OutData.Indices[j + 2]].Normal;
+            FVector3 Normal0 = OutData.Vertices[OutData.Indices[j]].Normal;
+            FVector3 Normal1 = OutData.Vertices[OutData.Indices[j + 1]].Normal;
+            FVector3 Normal2 = OutData.Vertices[OutData.Indices[j + 2]].Normal;
 
-            CVector3 Normal = Normal0 + Normal1;
+            FVector3 Normal = Normal0 + Normal1;
             Normal = Normal * 0.5f;
             TempVertices[0].Normal = Normal.GetNormalized();
 
@@ -73,11 +73,11 @@ void CMeshUtilities::Subdivide(SMeshData& OutData, uint32 Subdivisions) noexcept
             TempVertices[2].Normal = Normal.GetNormalized();
 
             // Calculate Tangent
-            CVector3 Tangent0 = OutData.Vertices[OutData.Indices[j]].Tangent;
-            CVector3 Tangent1 = OutData.Vertices[OutData.Indices[j + 1]].Tangent;
-            CVector3 Tangent2 = OutData.Vertices[OutData.Indices[j + 2]].Tangent;
+            FVector3 Tangent0 = OutData.Vertices[OutData.Indices[j]].Tangent;
+            FVector3 Tangent1 = OutData.Vertices[OutData.Indices[j + 1]].Tangent;
+            FVector3 Tangent2 = OutData.Vertices[OutData.Indices[j + 2]].Tangent;
 
-            CVector3 Tangent = Tangent0 + Tangent1;
+            FVector3 Tangent = Tangent0 + Tangent1;
             Tangent = Tangent * 0.5f;
             TempVertices[0].Tangent = Tangent.GetNormalized();
 
@@ -169,9 +169,9 @@ void CMeshUtilities::CalculateHardNormals(SMeshData& OutData) noexcept
         SVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
         SVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 2]];
 
-        CVector3 Edge0 = Vertex2.Position - Vertex0.Position;
-        CVector3 Edge1 = Vertex1.Position - Vertex0.Position;
-        CVector3 Normal = Edge0.CrossProduct(Edge1);
+        FVector3 Edge0 = Vertex2.Position - Vertex0.Position;
+        FVector3 Edge1 = Vertex1.Position - Vertex0.Position;
+        FVector3 Normal = Edge0.CrossProduct(Edge1);
         Normal.Normalize();
 
         Vertex0.Normal = Normal;
@@ -193,9 +193,9 @@ void CMeshUtilities::CalculateSoftNormals(SMeshData& OutData) noexcept
         SVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
         SVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 2]];
 
-        CVector3 Edge0 = Vertex2.Position - Vertex0.Position;
-        CVector3 Edge1 = Vertex1.Position - Vertex0.Position;
-        CVector3 Normal = Edge0.CrossProduct(Edge1);
+        FVector3 Edge0 = Vertex2.Position - Vertex0.Position;
+        FVector3 Edge1 = Vertex1.Position - Vertex0.Position;
+        FVector3 Normal = Edge0.CrossProduct(Edge1);
         Normal.Normalize();
 
         // Average current and new normal
@@ -214,15 +214,15 @@ void CMeshUtilities::CalculateTangents(SMeshData& OutData) noexcept
 
     auto CalculateTangentFromVectors = [](SVertex& Vertex1, const SVertex& Vertex2, const SVertex& Vertex3)
     {
-        CVector3 Edge1 = Vertex2.Position - Vertex1.Position;
-        CVector3 Edge2 = Vertex3.Position - Vertex1.Position;
+        FVector3 Edge1 = Vertex2.Position - Vertex1.Position;
+        FVector3 Edge2 = Vertex3.Position - Vertex1.Position;
 
-        CVector2 UVEdge1 = Vertex2.TexCoord - Vertex1.TexCoord;
-        CVector2 UVEdge2 = Vertex3.TexCoord - Vertex1.TexCoord;
+        FVector2 UVEdge1 = Vertex2.TexCoord - Vertex1.TexCoord;
+        FVector2 UVEdge2 = Vertex3.TexCoord - Vertex1.TexCoord;
 
         const float RecipDenominator = 1.0f / (UVEdge1.x * UVEdge2.y - UVEdge2.x * UVEdge1.y);
 
-        CVector3 Tangent = RecipDenominator * ((UVEdge2.y * Edge1) - (UVEdge1.y * Edge2));
+        FVector3 Tangent = RecipDenominator * ((UVEdge2.y * Edge1) - (UVEdge1.y * Edge2));
         Tangent.Normalize();
 
         Vertex1.Tangent = Tangent;

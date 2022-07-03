@@ -2,16 +2,16 @@
 #include "Vector3.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Axis-Aligned Bounding Box
+// FAABB - Axis-Aligned Bounding Box
 
-struct SAABB
+struct FAABB
 {
-    SAABB()
+    FAABB()
         : Top()
         , Bottom()
     { }
 
-    SAABB(const CVector3& InTop, const CVector3& InBottom)
+    FAABB(const FVector3& InTop, const FVector3& InBottom)
         : Top(InTop)
         , Bottom(InBottom)
     { }
@@ -21,7 +21,7 @@ struct SAABB
     * 
     * @return: Returns the center position of the box
     */
-    FORCEINLINE CVector3 GetCenter() const
+    FORCEINLINE FVector3 GetCenter() const
     {
         return (Bottom + Top) * 0.5f;
     }
@@ -56,6 +56,6 @@ struct SAABB
         return Top.z - Bottom.z;
     }
 
-    CVector3 Top;
-    CVector3 Bottom;
+    FVector3 Top;
+    FVector3 Bottom;
 };

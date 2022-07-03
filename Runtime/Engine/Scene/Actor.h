@@ -19,10 +19,10 @@ public:
     ~CActorTransform() = default;
 
     void SetTranslation(float x, float y, float z);
-    void SetTranslation(const CVector3& InPosition);
+    void SetTranslation(const FVector3& InPosition);
 
     void SetScale(float x, float y, float z);
-    void SetScale(const CVector3& InScale);
+    void SetScale(const FVector3& InScale);
 
     FORCEINLINE void SetUniformScale(float InScale)
     {
@@ -30,37 +30,37 @@ public:
     }
 
     void SetRotation(float x, float y, float z);
-    void SetRotation(const CVector3& InRotation);
+    void SetRotation(const FVector3& InRotation);
 
-    FORCEINLINE const CVector3& GetTranslation() const
+    FORCEINLINE const FVector3& GetTranslation() const
     {
         return Translation;
     }
 
-    FORCEINLINE const CVector3& GetScale() const
+    FORCEINLINE const FVector3& GetScale() const
     {
         return Scale;
     }
 
-    FORCEINLINE const CVector3& GetRotation() const
+    FORCEINLINE const FVector3& GetRotation() const
     {
         return Rotation;
     }
 
-    FORCEINLINE const CMatrix4& GetMatrix() const
+    FORCEINLINE const FMatrix4& GetMatrix() const
     {
         return Matrix;
     }
 
-    FORCEINLINE CMatrix4 GetMatrixInverse() const
+    FORCEINLINE FMatrix4 GetMatrixInverse() const
     {
-        CMatrix4 MatrixInverse = Matrix.Invert();
+        FMatrix4 MatrixInverse = Matrix.Invert();
         return MatrixInverse.Transpose();
     }
 
-    FORCEINLINE CMatrix3x4 GetTinyMatrix() const
+    FORCEINLINE FMatrix3x4 GetTinyMatrix() const
     {
-        return CMatrix3x4( Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03
+        return FMatrix3x4( Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03
                          , Matrix.m10, Matrix.m11, Matrix.m12, Matrix.m13
                          , Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23);
     }
@@ -69,10 +69,10 @@ private:
 
     void CalculateMatrix();
 
-    CMatrix4 Matrix;
-    CVector3 Translation;
-    CVector3 Scale;
-    CVector3 Rotation;
+    FMatrix4 Matrix;
+    FVector3 Translation;
+    FVector3 Scale;
+    FVector3 Rotation;
 };
 
 class CScene;
@@ -100,7 +100,7 @@ public:
      *
      * @param DeltaTime: Time since the last call to tick
      */
-    virtual void Tick(CTimestamp DeltaTime);
+    virtual void Tick(FTimestamp DeltaTime);
 
     /**
      * @brief: Add a new component to the actor 

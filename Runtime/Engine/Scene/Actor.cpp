@@ -17,10 +17,10 @@ CActorTransform::CActorTransform()
 
 void CActorTransform::SetTranslation(float x, float y, float z)
 {
-    SetTranslation(CVector3(x, y, z));
+    SetTranslation(FVector3(x, y, z));
 }
 
-void CActorTransform::SetTranslation(const CVector3& InPosition)
+void CActorTransform::SetTranslation(const FVector3& InPosition)
 {
     Translation = InPosition;
     CalculateMatrix();
@@ -28,10 +28,10 @@ void CActorTransform::SetTranslation(const CVector3& InPosition)
 
 void CActorTransform::SetScale(float x, float y, float z)
 {
-    SetScale(CVector3(x, y, z));
+    SetScale(FVector3(x, y, z));
 }
 
-void CActorTransform::SetScale(const CVector3& InScale)
+void CActorTransform::SetScale(const FVector3& InScale)
 {
     Scale = InScale;
     CalculateMatrix();
@@ -39,10 +39,10 @@ void CActorTransform::SetScale(const CVector3& InScale)
 
 void CActorTransform::SetRotation(float x, float y, float z)
 {
-    SetRotation(CVector3(x, y, z));
+    SetRotation(FVector3(x, y, z));
 }
 
-void CActorTransform::SetRotation(const CVector3& InRotation)
+void CActorTransform::SetRotation(const FVector3& InRotation)
 {
     Rotation = InRotation;
     CalculateMatrix();
@@ -50,9 +50,9 @@ void CActorTransform::SetRotation(const CVector3& InRotation)
 
 void CActorTransform::CalculateMatrix()
 {
-    CMatrix4 ScaleMatrix       = CMatrix4::Scale(Scale);
-    CMatrix4 RotationMatrix    = CMatrix4::RotationRollPitchYaw(Rotation);
-    CMatrix4 TranslationMatrix = CMatrix4::Translation(Translation);
+    FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale);
+    FMatrix4 RotationMatrix    = FMatrix4::RotationRollPitchYaw(Rotation);
+    FMatrix4 TranslationMatrix = FMatrix4::Translation(Translation);
     
     Matrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
     Matrix = Matrix.Transpose();
@@ -94,7 +94,7 @@ void CActor::Start()
     }
 }
 
-void CActor::Tick(CTimestamp DeltaTime)
+void CActor::Tick(FTimestamp DeltaTime)
 {
     for (CComponent* Component : Components)
     {

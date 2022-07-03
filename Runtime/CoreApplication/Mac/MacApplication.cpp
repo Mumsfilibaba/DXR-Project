@@ -4,7 +4,7 @@
 #include "CocoaWindow.h"
 
 #include "Core/Logging/Log.h"
-#include "Core/Input/Platform/PlatformKeyMapping.h"
+#include "Core/Input/Platform/FPlatformKeyMapping.h"
 #include "Core/Threading/Mac/MacRunLoop.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
 #include "Core/Threading/ScopedLock.h"
@@ -12,18 +12,18 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacApplication
+// FMacApplication
 
-CMacApplication* MacApplication = nullptr;
+FMacApplication* MacApplication = nullptr;
 
-CMacApplication* CMacApplication::CreateMacApplication()
+FMacApplication* FMacApplication::CreateMacApplication()
 {
-    MacApplication = dbg_new CMacApplication();
+    MacApplication = dbg_new FMacApplication();
 	return MacApplication;
 }
 
-CMacApplication::CMacApplication()
-    : CGenericApplication(TSharedPtr<ICursor>(CMacCursor::CreateMacCursor()))
+FMacApplication::FMacApplication()
+    : FGenericApplication(TSharedPtr<ICursor>(FMacCursor::CreateMacCursor()))
     , Windows()
     , WindowsCS()
     , DeferredEvents()
@@ -32,9 +32,9 @@ CMacApplication::CMacApplication()
     SCOPED_AUTORELEASE_POOL();
     
     // This should only be init from the main thread, but assert just to be sure.
-    Check(PlatformThreadMisc::IsMainThread());
+    Check(FPlatformThreadMisc::IsMainThread());
 
-    PlatformKeyMapping::Initialize();
+    FPlatformKeyMapping::Initialize();
     
     // Init the default macOS menu
     NSMenu* MenuBar = [NSMenu new];
@@ -79,7 +79,7 @@ CMacApplication::CMacApplication()
     NSApp.servicesMenu = ServiceMenu;
 }
 
-CMacApplication::~CMacApplication()
+FMacApplication::~FMacApplication()
 {
     @autoreleasepool
     {
@@ -92,7 +92,7 @@ CMacApplication::~CMacApplication()
     }
 }
 
-TSharedRef<CGenericWindow> CMacApplication::CreateWindow()
+TSharedRef<FGenericWindow> FMacApplication::CreateWindow()
 {
     TSharedRef<CMacWindow> NewWindow = CMacWindow::CreateMacWindow(this);
     
@@ -104,11 +104,11 @@ TSharedRef<CGenericWindow> CMacApplication::CreateWindow()
     return NewWindow;
 }
 
-void CMacApplication::Tick(float)
+void FMacApplication::Tick(float)
 {
     SCOPED_AUTORELEASE_POOL();
     
-    PlatformApplicationMisc::PumpMessages(true);
+    FPlatformApplicationMisc::PumpMessages(true);
 	
 	TArray<SDeferredMacEvent> ProcessableEvents;
     if (!DeferredEvents.IsEmpty())
@@ -137,7 +137,7 @@ void CMacApplication::Tick(float)
     }
 }
 
-void CMacApplication::SetActiveWindow(const TSharedRef<CGenericWindow>& Window)
+void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
 {
 	__block TSharedRef<CMacWindow> MacWindow = StaticCastSharedRef<CMacWindow>(Window);
     MakeMainThreadCall(^
@@ -147,7 +147,7 @@ void CMacApplication::SetActiveWindow(const TSharedRef<CGenericWindow>& Window)
     }, false);
 }
 
-TSharedRef<CGenericWindow> CMacApplication::GetActiveWindow() const
+TSharedRef<FGenericWindow> FMacApplication::GetActiveWindow() const
 {
     @autoreleasepool
     {
@@ -156,7 +156,7 @@ TSharedRef<CGenericWindow> CMacApplication::GetActiveWindow() const
     }
 }
 
-TSharedRef<CGenericWindow> CMacApplication::GetWindowUnderCursor() const
+TSharedRef<FGenericWindow> FMacApplication::GetWindowUnderCursor() const
 {
     @autoreleasepool
     {
@@ -165,7 +165,7 @@ TSharedRef<CGenericWindow> CMacApplication::GetWindowUnderCursor() const
     }
 }
 
-TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow(NSWindow* Window) const
+TSharedRef<CMacWindow> FMacApplication::GetWindowFromNSWindow(NSWindow* Window) const
 {
     if (Window && [Window isKindOfClass:[CCocoaWindow class]])
     {
@@ -184,7 +184,7 @@ TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow(NSWindow* Window) 
     return nullptr;
 }
 
-void CMacApplication::CloseWindow(const TSharedRef<CMacWindow>& Window)
+void FMacApplication::CloseWindow(const TSharedRef<CMacWindow>& Window)
 {
     {
         TScopedLock Lock(ClosedWindowsCS);
@@ -197,7 +197,7 @@ void CMacApplication::CloseWindow(const TSharedRef<CMacWindow>& Window)
     }
 }
 
-void CMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
+void FMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -255,7 +255,7 @@ void CMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 	}
 }
 
-void CMacApplication::ProcessDeferredEvent(const SDeferredMacEvent& Event)
+void FMacApplication::ProcessDeferredEvent(const SDeferredMacEvent& Event)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -299,13 +299,13 @@ void CMacApplication::ProcessDeferredEvent(const SDeferredMacEvent& Event)
 		{
 			case NSEventTypeKeyUp:
 			{
-				MessageListener->HandleKeyReleased(PlatformKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode), PlatformApplicationMisc::GetModifierKeyState());
+				MessageListener->HandleKeyReleased(FPlatformKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode), FPlatformApplicationMisc::GetModifierKeyState());
 				break;
 			}
 			   
 			case NSEventTypeKeyDown:
 			{
-				MessageListener->HandleKeyPressed(PlatformKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode), CurrentEvent.ARepeat, PlatformApplicationMisc::GetModifierKeyState());
+				MessageListener->HandleKeyPressed(FPlatformKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode), CurrentEvent.ARepeat, FPlatformApplicationMisc::GetModifierKeyState());
 				break;
 			}
 
@@ -313,7 +313,7 @@ void CMacApplication::ProcessDeferredEvent(const SDeferredMacEvent& Event)
 			case NSEventTypeRightMouseUp:
 			case NSEventTypeOtherMouseUp:
 			{
-				MessageListener->HandleMouseReleased(PlatformKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber)), PlatformApplicationMisc::GetModifierKeyState());
+				MessageListener->HandleMouseReleased(FPlatformKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber)), FPlatformApplicationMisc::GetModifierKeyState());
 				break;
 			}
 
@@ -321,7 +321,7 @@ void CMacApplication::ProcessDeferredEvent(const SDeferredMacEvent& Event)
 			case NSEventTypeRightMouseDown:
 			case NSEventTypeOtherMouseDown:
 			{
-				MessageListener->HandleMousePressed(PlatformKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber)), PlatformApplicationMisc::GetModifierKeyState());
+				MessageListener->HandleMousePressed(FPlatformKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber)), FPlatformApplicationMisc::GetModifierKeyState());
 				break;
 			}
 

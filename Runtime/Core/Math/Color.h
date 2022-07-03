@@ -5,14 +5,14 @@
 #include "Core/Core.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CColor
+// FColor
 
-struct CColor
+struct FColor
 {
     /**
      * @brief: Default constructor (Initialize components to zero)
      */
-    FORCEINLINE CColor()
+    FORCEINLINE FColor()
         : R(0)
         , G(0)
         , B(0)
@@ -27,7 +27,7 @@ struct CColor
      * @param InB: Blue channel
      * @param InA: Alpha channel
      */
-    FORCEINLINE CColor(uint8 InR, uint8 InG, uint8 InB, uint8 InA)
+    FORCEINLINE FColor(uint8 InR, uint8 InG, uint8 InB, uint8 InA)
         : R(InR)
         , G(InG)
         , B(InB)
@@ -54,12 +54,12 @@ struct CColor
         return reinterpret_cast<const uint8*>(this);
     }
 
-    bool operator==(const CColor& RHS) const
+    bool operator==(const FColor& RHS) const
     {
         return (R == RHS.R) && (G == RHS.G) && (B == RHS.B) && (A == RHS.A);
     }
 
-    bool operator!=(const CColor& RHS) const
+    bool operator!=(const FColor& RHS) const
     {
         return !(*this == RHS);
     }
@@ -100,7 +100,7 @@ struct FFloatColor16
      * @param InB: Blue channel
      * @param InA: Alpha channel
      */
-    FORCEINLINE FFloatColor16(SFloat16 InR, SFloat16 InG, SFloat16 InB, SFloat16 InA)
+    FORCEINLINE FFloatColor16(FFloat16 InR, FFloat16 InG, FFloat16 InB, FFloat16 InA)
         : R(InR)
         , G(InG)
         , B(InB)
@@ -138,16 +138,16 @@ struct FFloatColor16
     }
 
     /* @brief: Red channel */
-    SFloat16 R;
+    FFloat16 R;
 
     /* @brief: Green channel */
-    SFloat16 G;
+    FFloat16 G;
 
     /* @brief: Blue channel */
-    SFloat16 B;
+    FFloat16 B;
 
     /* @brief: Alpha channel */
-    SFloat16 A;
+    FFloat16 A;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

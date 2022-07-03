@@ -3,16 +3,16 @@
 #include "VectorOp.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMatrix2
+// FMatrix2
 
-class VECTOR_ALIGN CMatrix2
+class VECTOR_ALIGN FMatrix2
 {
 public:
 
     /** 
      * @brief: Default constructor (Initialize components to zero) 
      */
-    FORCEINLINE CMatrix2() noexcept 
+    FORCEINLINE FMatrix2() noexcept 
         : m00(0.0f), m01(0.0f)
         , m10(0.0f), m11(0.0f)
     { }
@@ -22,7 +22,7 @@ public:
      *
      * @param Diagonal: Value to set on the diagonal
      */
-    FORCEINLINE explicit CMatrix2(float Diagonal) noexcept
+    FORCEINLINE explicit FMatrix2(float Diagonal) noexcept
         : m00(Diagonal), m01(0.0f)
         , m10(0.0f), m11(Diagonal)
     { }
@@ -33,7 +33,7 @@ public:
      * @param Row0: Vector to set the first row to
      * @param Row1: Vector to set the second row to
      */
-    FORCEINLINE explicit CMatrix2(const CVector2& Row0, const CVector2& Row1) noexcept
+    FORCEINLINE explicit FMatrix2(const FVector2& Row0, const FVector2& Row1) noexcept
         : m00(Row0.x), m01(Row0.y)
         , m10(Row1.x), m11(Row1.y)
     { }
@@ -46,7 +46,7 @@ public:
      * @param In10: Value to set on row 1 and column 0
      * @param In11: Value to set on row 1 and column 1
      */
-    FORCEINLINE explicit CMatrix2(float In00, float In01, float In10, float In11) noexcept
+    FORCEINLINE explicit FMatrix2(float In00, float In01, float In10, float In11) noexcept
         : m00(In00), m01(In01)
         , m10(In10), m11(In11)
     { }
@@ -56,7 +56,7 @@ public:
      *
      * @param Arr: Array with at least 4 elements
      */
-    FORCEINLINE explicit CMatrix2(const float* Arr) noexcept
+    FORCEINLINE explicit FMatrix2(const float* Arr) noexcept
         : m00(Arr[0]), m01(Arr[1])
         , m10(Arr[2]), m11(Arr[3])
     { }
@@ -66,10 +66,10 @@ public:
      *
      * @return: Transposed matrix
      */
-    inline CMatrix2 Transpose() const noexcept
+    inline FMatrix2 Transpose() const noexcept
     {
 #if !USE_VECTOR_OP
-        CMatrix2 Transpose;
+        FMatrix2 Transpose;
         Transpose.f[0][0] = f[0][0];
         Transpose.f[0][1] = f[1][0];
 
@@ -77,7 +77,7 @@ public:
         Transpose.f[1][1] = f[1][1];
         return Transpose;
 #else
-        CMatrix2 Transpose;
+        FMatrix2 Transpose;
 
         NVectorOp::Float128 This = NVectorOp::LoadAligned(this);
         This = NVectorOp::Shuffle<0, 2, 1, 3>(This);
@@ -92,21 +92,21 @@ public:
      *
      * @return: Inverse matrix
      */
-    inline CMatrix2 Invert() const noexcept
+    inline FMatrix2 Invert() const noexcept
     {
         const float fDeterminant = (m00 * m11) - (m01 * m10);
 
 #if !USE_VECTOR_OP
         const float RecipDeterminant = 1.0f / fDeterminant;
 
-        CMatrix2 Inverse;
+        FMatrix2 Inverse;
         Inverse.m00 =  m11 * RecipDeterminant;
         Inverse.m10 = -m10 * RecipDeterminant;
         Inverse.m01 = -m01 * RecipDeterminant;
         Inverse.m11 =  m00 * RecipDeterminant;
         return Inverse;
 #else
-        CMatrix2 Inverse;
+        FMatrix2 Inverse;
 
         NVectorOp::Float128 This = NVectorOp::LoadAligned(this);
         This = NVectorOp::Shuffle<3, 2, 1, 0>(This);
@@ -130,17 +130,17 @@ public:
      *
      * @return: Adjugate matrix
      */
-    FORCEINLINE CMatrix2 Adjoint() const noexcept
+    FORCEINLINE FMatrix2 Adjoint() const noexcept
     {
 #if !USE_VECTOR_OP
-        CMatrix2 Adjugate;
+        FMatrix2 Adjugate;
         Adjugate.m00 =  m11;
         Adjugate.m10 = -m10;
         Adjugate.m01 = -m01;
         Adjugate.m11 =  m00;
         return Adjugate;
 #else
-        CMatrix2 Adjugate;
+        FMatrix2 Adjugate;
 
         NVectorOp::Float128 This = NVectorOp::LoadAligned(this);
         This = NVectorOp::Shuffle<3, 2, 1, 0>(This);
@@ -218,7 +218,7 @@ public:
      * @param Other: matrix to compare against
      * @return: True if equal, false if not
      */
-    inline bool IsEqual(const CMatrix2& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    inline bool IsEqual(const FMatrix2& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
 #if !USE_VECTOR_OP
 
@@ -266,10 +266,10 @@ public:
      * @param Row: The row to retrieve
      * @return: A vector containing the specified row
      */
-    FORCEINLINE CVector2 GetRow(int32 Row) const noexcept
+    FORCEINLINE FVector2 GetRow(int32 Row) const noexcept
     {
         Check(Row < 2);
-        return CVector2(f[Row]);
+        return FVector2(f[Row]);
     }
 
     /**
@@ -278,10 +278,10 @@ public:
      * @param Column: The column to retrieve
      * @return: A vector containing the specified column
      */
-    FORCEINLINE CVector2 GetColumn(int32 Column) const noexcept
+    FORCEINLINE FVector2 GetColumn(int32 Column) const noexcept
     {
         Check(Column < 2);
-        return CVector2(f[0][Column], f[1][Column]);
+        return FVector2(f[0][Column], f[1][Column]);
     }
 
     /**
@@ -312,15 +312,15 @@ public:
      * @param RHS: The vector to transform
      * @return: A vector containing the transformation
      */
-    FORCEINLINE CVector2 operator*(const CVector2& RHS) const noexcept
+    FORCEINLINE FVector2 operator*(const FVector2& RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        CVector2 Result;
+        FVector2 Result;
         Result.x = (RHS[0] * m00) + (RHS[1] * m10);
         Result.y = (RHS[0] * m01) + (RHS[1] * m11);
         return Result;
 #else
-        CVector2 Result;
+        FVector2 Result;
 
         NVectorOp::Float128 X128  = NVectorOp::LoadSingle(RHS.x);
         NVectorOp::Float128 Y128  = NVectorOp::LoadSingle(RHS.y);
@@ -341,10 +341,10 @@ public:
      * @param RHS: The other matrix
      * @return: A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix2 operator*(const CMatrix2& RHS) const noexcept
+    FORCEINLINE FMatrix2 operator*(const FMatrix2& RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        CMatrix2 Result;
+        FMatrix2 Result;
         Result.m00 = (m00 * RHS.m00) + (m01 * RHS.m10);
         Result.m01 = (m01 * RHS.m11) + (m00 * RHS.m01);
 
@@ -352,7 +352,7 @@ public:
         Result.m11 = (m11 * RHS.m11) + (m10 * RHS.m01);
         return Result;
 #else
-        CMatrix2 Result;
+        FMatrix2 Result;
 
         NVectorOp::Float128 This = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Temp = NVectorOp::LoadAligned(&RHS);
@@ -369,7 +369,7 @@ public:
      * @param RHS: The other matrix
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator*=(const CMatrix2& RHS) noexcept
+    FORCEINLINE FMatrix2& operator*=(const FMatrix2& RHS) noexcept
     {
         return *this = *this * RHS;
     }
@@ -380,10 +380,10 @@ public:
      * @param RHS: The scalar
      * @return: A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix2 operator*(float RHS) const noexcept
+    FORCEINLINE FMatrix2 operator*(float RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        CMatrix2 Result;
+        FMatrix2 Result;
         Result.m00 = m00 * RHS;
         Result.m01 = m01 * RHS;
 
@@ -391,7 +391,7 @@ public:
         Result.m11 = m11 * RHS;
         return Result;
 #else
-        CMatrix2 Result;
+        FMatrix2 Result;
 
         NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
         Temp = NVectorOp::Mul(this, Temp);
@@ -407,7 +407,7 @@ public:
      * @param RHS: The scalar
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator*=(float RHS) noexcept
+    FORCEINLINE FMatrix2& operator*=(float RHS) noexcept
     {
         return *this = *this * RHS;
     }
@@ -418,10 +418,10 @@ public:
      * @param RHS: The other matrix
      * @return: A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix2 operator+(const CMatrix2& RHS) const noexcept
+    FORCEINLINE FMatrix2 operator+(const FMatrix2& RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        CMatrix2 Result;
+        FMatrix2 Result;
         Result.m00 = m00 + RHS.m00;
         Result.m01 = m01 + RHS.m01;
 
@@ -429,7 +429,7 @@ public:
         Result.m11 = m11 + RHS.m11;
         return Result;
 #else
-        CMatrix2 Result;
+        FMatrix2 Result;
         NVectorOp::Float128 Temp = NVectorOp::Add(this, &RHS);
         NVectorOp::StoreAligned(Temp, &Result);
         return Result;
@@ -442,7 +442,7 @@ public:
      * @param RHS: The other matrix
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator+=(const CMatrix2& RHS) noexcept
+    FORCEINLINE FMatrix2& operator+=(const FMatrix2& RHS) noexcept
     {
         return *this = *this + RHS;
     }
@@ -453,10 +453,10 @@ public:
      * @param RHS: The scalar
      * @return: A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix2 operator+(float RHS) const noexcept
+    FORCEINLINE FMatrix2 operator+(float RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        CMatrix2 Result;
+        FMatrix2 Result;
         Result.m00 = m00 + RHS;
         Result.m01 = m01 + RHS;
 
@@ -464,7 +464,7 @@ public:
         Result.m11 = m11 + RHS;
         return Result;
 #else
-        CMatrix2 Result;
+        FMatrix2 Result;
 
         NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
         Temp = NVectorOp::Add(this, Temp);
@@ -480,7 +480,7 @@ public:
      * @param RHS: The scalar
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator+=(float RHS) noexcept
+    FORCEINLINE FMatrix2& operator+=(float RHS) noexcept
     {
         return *this = *this + RHS;
     }
@@ -491,10 +491,10 @@ public:
      * @param RHS: The other matrix
      * @return: A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix2 operator-(const CMatrix2& RHS) const noexcept
+    FORCEINLINE FMatrix2 operator-(const FMatrix2& RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        CMatrix2 Result;
+        FMatrix2 Result;
         Result.m00 = m00 - RHS.m00;
         Result.m01 = m01 - RHS.m01;
 
@@ -502,7 +502,7 @@ public:
         Result.m11 = m11 - RHS.m11;
         return Result;
 #else
-        CMatrix2 Result;
+        FMatrix2 Result;
         NVectorOp::Float128 Temp = NVectorOp::Sub(this, &RHS);
         NVectorOp::StoreAligned(Temp, &Result);
         return Result;
@@ -515,7 +515,7 @@ public:
      * @param RHS: The other matrix
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator-=(const CMatrix2& RHS) noexcept
+    FORCEINLINE FMatrix2& operator-=(const FMatrix2& RHS) noexcept
     {
         return *this = *this - RHS;
     }
@@ -526,10 +526,10 @@ public:
      * @param RHS: The scalar
      * @return: A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix2 operator-(float RHS) const noexcept
+    FORCEINLINE FMatrix2 operator-(float RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        CMatrix2 Result;
+        FMatrix2 Result;
         Result.m00 = m00 - RHS;
         Result.m01 = m01 - RHS;
 
@@ -537,7 +537,7 @@ public:
         Result.m11 = m11 - RHS;
         return Result;
 #else
-        CMatrix2 Result;
+        FMatrix2 Result;
 
         NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
         Temp = NVectorOp::Sub(this, Temp);
@@ -553,7 +553,7 @@ public:
      * @param RHS: The scalar
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator-=(float RHS) noexcept
+    FORCEINLINE FMatrix2& operator-=(float RHS) noexcept
     {
         return *this = *this - RHS;
     }
@@ -564,12 +564,12 @@ public:
      * @param RHS: The scalar
      * @return: A matrix containing the result of the division
      */
-    FORCEINLINE CMatrix2 operator/(float RHS) const noexcept
+    FORCEINLINE FMatrix2 operator/(float RHS) const noexcept
     {
 #if !USE_VECTOR_OP
         float Recip = 1.0f / RHS;
 
-        CMatrix2 Result;
+        FMatrix2 Result;
         Result.m00 = m00 * Recip;
         Result.m01 = m01 * Recip;
 
@@ -578,7 +578,7 @@ public:
         return Result;
 
 #else
-        CMatrix2 Result;
+        FMatrix2 Result;
 
         NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
         Temp = NVectorOp::Div(this, Temp);
@@ -594,7 +594,7 @@ public:
      * @param RHS: The scalar
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator/=(float RHS) noexcept
+    FORCEINLINE FMatrix2& operator/=(float RHS) noexcept
     {
         return *this = *this / RHS;
     }
@@ -605,7 +605,7 @@ public:
      * @param Other: The matrix to compare with
      * @return: True if equal, false if not
      */
-    FORCEINLINE bool operator==(const CMatrix2& Other) const noexcept
+    FORCEINLINE bool operator==(const FMatrix2& Other) const noexcept
     {
         return IsEqual(Other);
     }
@@ -616,7 +616,7 @@ public:
      * @param Other: The matrix to compare with
      * @return: False if equal, true if not
      */
-    FORCEINLINE bool operator!=(const CMatrix2& Other) const noexcept
+    FORCEINLINE bool operator!=(const FMatrix2& Other) const noexcept
     {
         return !IsEqual(Other);
     }
@@ -628,9 +628,9 @@ public:
      *
      * @return: A identity matrix
      */
-    inline static CMatrix2 Identity() noexcept
+    inline static FMatrix2 Identity() noexcept
     {
-        return CMatrix2(1.0f);
+        return FMatrix2(1.0f);
     }
 
     /**
@@ -639,9 +639,9 @@ public:
      * @param Scale: Uniform scale that represents this matrix
      * @return: A scale matrix
      */
-    inline static CMatrix2 Scale(float Scale) noexcept
+    inline static FMatrix2 Scale(float Scale) noexcept
     {
-        return CMatrix2(Scale);
+        return FMatrix2(Scale);
     }
 
     /**
@@ -651,9 +651,9 @@ public:
      * @param y: Scale for the y-axis
      * @return: A scale matrix
      */
-    inline static CMatrix2 Scale(float x, float y) noexcept
+    inline static FMatrix2 Scale(float x, float y) noexcept
     {
-        return CMatrix2(x, 0.0f, 0.0f, y);
+        return FMatrix2(x, 0.0f, 0.0f, y);
     }
 
     /**
@@ -662,7 +662,7 @@ public:
      * @param VectorWithScale: A vector containing the scale for each axis in the x-, and y-components
      * @return: A scale matrix
      */
-    inline static CMatrix2 Scale(const CVector2& VectorWithScale) noexcept
+    inline static FMatrix2 Scale(const FVector2& VectorWithScale) noexcept
     {
         return Scale(VectorWithScale.x, VectorWithScale.y);
     }
@@ -673,12 +673,12 @@ public:
      * @param Rotation: Rotation around in radians
      * @return: A rotation matrix
      */
-    inline static CMatrix2 Rotation(float Rotation) noexcept
+    inline static FMatrix2 Rotation(float Rotation) noexcept
     {
         const float SinZ = NMath::Sin(Rotation);
         const float CosZ = NMath::Cos(Rotation);
 
-        return CMatrix2(CosZ, SinZ, -SinZ, CosZ);
+        return FMatrix2(CosZ, SinZ, -SinZ, CosZ);
     }
 
 public:

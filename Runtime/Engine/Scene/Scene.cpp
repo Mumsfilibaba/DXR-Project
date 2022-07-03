@@ -52,7 +52,7 @@ void CScene::Start()
     }
 }
 
-void CScene::Tick(CTimestamp DeltaTime)
+void CScene::Tick(FTimestamp DeltaTime)
 {
     for (CActor* Actor : Actors)
     {

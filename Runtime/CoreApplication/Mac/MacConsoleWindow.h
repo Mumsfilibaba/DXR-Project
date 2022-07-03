@@ -6,23 +6,23 @@
 #include "CoreApplication/Generic/GenericConsoleWindow.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacConsoleWindow
+// FMacConsoleWindow
 
-class COREAPPLICATION_API CMacConsoleWindow final : public CGenericConsoleWindow
+class COREAPPLICATION_API FMacConsoleWindow final : public FGenericConsoleWindow
 {
 private:
 
-    CMacConsoleWindow();
-    ~CMacConsoleWindow();
+    FMacConsoleWindow();
+    ~FMacConsoleWindow();
 
 public:
 
-	static CMacConsoleWindow* CreateMacConsole();
+	static FMacConsoleWindow* CreateMacConsole();
 	
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericConsoleWindow Interface
+    // FGenericConsoleWindow Interface
 
     virtual void Show(bool bShow) override final;
 
@@ -55,7 +55,7 @@ private:
 	void AppendStringAndScroll(NSString* String);
 	
     CCocoaConsoleWindow*     WindowHandle;
-    mutable CCriticalSection WindowCS;
+    mutable FCriticalSection WindowCS;
 
     NSTextView*              TextView;
 	NSScrollView*            ScrollView;

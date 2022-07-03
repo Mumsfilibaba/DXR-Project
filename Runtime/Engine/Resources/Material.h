@@ -13,7 +13,7 @@
 
 struct SMaterialDesc
 {
-    CVector3 Albedo = CVector3(1.0f);
+    FVector3 Albedo = FVector3(1.0f);
     float Roughness = 0.0f;
 
     float Metallic     = 0.0f;
@@ -37,7 +37,7 @@ public:
 
     FORCEINLINE bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
 
-    void SetAlbedo(const CVector3& Albedo);
+    void SetAlbedo(const FVector3& Albedo);
     void SetAlbedo(float r, float g, float b);
 
     void SetMetallic(float Metallic);

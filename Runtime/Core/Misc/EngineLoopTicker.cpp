@@ -3,26 +3,26 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EngineLoopTicker
 
-CEngineLoopTicker& CEngineLoopTicker::Get()
+FEngineLoopTicker& FEngineLoopTicker::Get()
 {
-    static CEngineLoopTicker Instance;
+    static FEngineLoopTicker Instance;
     return Instance;
 }
 
-void CEngineLoopTicker::Tick(CTimestamp Deltatime)
+void FEngineLoopTicker::Tick(FTimestamp Deltatime)
 {
-    for (CTickDelegate TickDelegate : TickDelegates)
+    for (FTickDelegate TickDelegate : TickDelegates)
     {
         TickDelegate.ExecuteIfBound(Deltatime);
     }
 }
 
-void CEngineLoopTicker::AddElement(const CTickDelegate& NewElement)
+void FEngineLoopTicker::AddElement(const FTickDelegate& NewElement)
 {
     TickDelegates.Push(NewElement);
 }
 
-void CEngineLoopTicker::RemoveElement(CDelegateHandle RemoveHandle)
+void FEngineLoopTicker::RemoveElement(FDelegateHandle RemoveHandle)
 {
     uint32 NumElements = TickDelegates.Size();
     for (uint32 Index = 0; Index < NumElements; Index++)

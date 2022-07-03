@@ -2,14 +2,14 @@
 #include "Timestamp.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CTimer
+// FTimer
 
-class CORE_API CTimer
+class CORE_API FTimer
 {
 public:
 
-    CTimer();
-    ~CTimer() = default;
+    FTimer();
+    ~FTimer() = default;
 
     /** @brief: Measure time between this and last call to tick */
     void Tick();
@@ -17,23 +17,23 @@ public:
     /** @brief: Resets the time to zero */
     FORCEINLINE void Reset()
     {
-        DeltaTime = CTimestamp(0);
-        TotalTime = CTimestamp(0);
+        DeltaTime = FTimestamp(0);
+        TotalTime = FTimestamp(0);
     }
 
-    FORCEINLINE const CTimestamp& GetDeltaTime() const
+    FORCEINLINE const FTimestamp& GetDeltaTime() const
     {
         return DeltaTime;
     }
 
-    FORCEINLINE const CTimestamp& GetTotalTime() const
+    FORCEINLINE const FTimestamp& GetTotalTime() const
     {
         return TotalTime;
     }
 
 private:
-    CTimestamp TotalTime;
-    CTimestamp DeltaTime;
+    FTimestamp TotalTime;
+    FTimestamp DeltaTime;
 
     uint64     LastTime  = 0;
     uint64     Frequency = 0;

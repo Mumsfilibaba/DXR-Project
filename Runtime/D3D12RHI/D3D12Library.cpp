@@ -24,7 +24,7 @@ PFN_SetMarkerOnCommandList                             FD3D12Library::SetMarkerO
 #define D3D12_LOAD_FUNCTION(Function, LibraryHandle)                                                 \
     do                                                                                               \
     {                                                                                                \
-        Function = PlatformLibrary::LoadSymbolAddress<decltype(Function)>(#Function, LibraryHandle); \
+        Function = FPlatformLibrary::LoadSymbolAddress<decltype(Function)>(#Function, LibraryHandle); \
         if (!Function)                                                                               \
         {                                                                                            \
             D3D12_ERROR("Failed to load '%s'", #Function);                                           \
@@ -37,10 +37,10 @@ PFN_SetMarkerOnCommandList                             FD3D12Library::SetMarkerO
 
 bool FD3D12Library::Initialize(bool bEnablePIX)
 {
-    DXGILib = PlatformLibrary::LoadDynamicLib("dxgi");
+    DXGILib = FPlatformLibrary::LoadDynamicLib("dxgi");
     if (!DXGILib)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to load dxgi.dll");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load dxgi.dll");
         return false;
     }
     else
@@ -48,10 +48,10 @@ bool FD3D12Library::Initialize(bool bEnablePIX)
         D3D12_INFO("Loaded dxgi.dll");
     }
 
-    D3D12Lib = PlatformLibrary::LoadDynamicLib("d3d12");
+    D3D12Lib = FPlatformLibrary::LoadDynamicLib("d3d12");
     if (!D3D12Lib)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to load d3d12.dll");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load d3d12.dll");
         return false;
     }
     else
@@ -61,11 +61,11 @@ bool FD3D12Library::Initialize(bool bEnablePIX)
 
     if (bEnablePIX)
     {
-        PIXLib = PlatformLibrary::LoadDynamicLib("WinPixEventRuntime");
+        PIXLib = FPlatformLibrary::LoadDynamicLib("WinPixEventRuntime");
         if (PIXLib)
         {
             D3D12_INFO("Loaded WinPixEventRuntime.dll");
-            SetMarkerOnCommandList = PlatformLibrary::LoadSymbolAddress<PFN_SetMarkerOnCommandList>("PIXSetMarkerOnCommandList", PIXLib);
+            SetMarkerOnCommandList = FPlatformLibrary::LoadSymbolAddress<PFN_SetMarkerOnCommandList>("PIXSetMarkerOnCommandList", PIXLib);
         }
         else
         {
@@ -90,19 +90,19 @@ void FD3D12Library::Release()
 {
     if (DXGILib)
     {
-        PlatformLibrary::FreeDynamicLib(DXGILib);
+        FPlatformLibrary::FreeDynamicLib(DXGILib);
         DXGILib = nullptr;
     }
 
     if (D3D12Lib)
     {
-        PlatformLibrary::FreeDynamicLib(D3D12Lib);
+        FPlatformLibrary::FreeDynamicLib(D3D12Lib);
         D3D12Lib = nullptr;
     }
 
     if (PIXLib)
     {
-        PlatformLibrary::FreeDynamicLib(PIXLib);
+        FPlatformLibrary::FreeDynamicLib(PIXLib);
         PIXLib = nullptr;
     }
 

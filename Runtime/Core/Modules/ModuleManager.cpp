@@ -3,9 +3,9 @@
 #include "Core/Templates/StringUtils.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CModuleManager
+// FModuleManager
 
-IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
+IEngineModule* FModuleManager::LoadEngineModule(const char* ModuleName)
 {
     Check(ModuleName != nullptr);
 
@@ -16,9 +16,9 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
         return ExistingModule;
     }
 
-    SModule NewModule;
+    FModule NewModule;
 
-    CInitializeStaticModuleDelegate* ModuleInitializer = GetStaticModuleDelegate(ModuleName);
+    FInitializeStaticModuleDelegate* ModuleInitializer = GetStaticModuleDelegate(ModuleName);
     if (ModuleInitializer)
     {
         if (ModuleInitializer->IsBound())
@@ -38,17 +38,17 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
     }
     else
     {
-        PlatformModule Module = PlatformLibrary::LoadDynamicLib(ModuleName);
+        PlatformModule Module = FPlatformLibrary::LoadDynamicLib(ModuleName);
         if (!Module)
         {
             LOG_ERROR("Failed to find module '%s'", ModuleName);
             return nullptr;
         }
 
-        PFNLoadEngineModule LoadEngineModule = PlatformLibrary::LoadSymbolAddress<PFNLoadEngineModule>("LoadEngineModule", Module);
+        PFNLoadEngineModule LoadEngineModule = FPlatformLibrary::LoadSymbolAddress<PFNLoadEngineModule>("LoadEngineModule", Module);
         if (!LoadEngineModule)
         {
-            PlatformLibrary::FreeDynamicLib(Module);
+            FPlatformLibrary::FreeDynamicLib(Module);
             return nullptr;
         }
 
@@ -56,7 +56,7 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
         if (!NewModule.Interface)
         {
             LOG_ERROR("Failed to load module '%s', resulting interface was nullptr", ModuleName);
-            PlatformLibrary::FreeDynamicLib(Module);
+            FPlatformLibrary::FreeDynamicLib(Module);
 
             return nullptr;
         }
@@ -85,7 +85,7 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
     }
 }
 
-IEngineModule* CModuleManager::GetEngineModule(const char* ModuleName)
+IEngineModule* FModuleManager::GetEngineModule(const char* ModuleName)
 {
     const int32 Index = GetModuleIndex(ModuleName);
     if (Index >= 0)
@@ -107,36 +107,36 @@ IEngineModule* CModuleManager::GetEngineModule(const char* ModuleName)
     }
 }
 
-TOptional<CModuleManager>& CModuleManager::GetModuleManagerInstance()
+TOptional<FModuleManager>& FModuleManager::GetModuleManagerInstance()
 {
-    static TOptional<CModuleManager> Instance(InPlace);
+    static TOptional<FModuleManager> Instance(InPlace);
     return Instance;
 }
 
-CModuleManager& CModuleManager::Get()
+FModuleManager& FModuleManager::Get()
 {
-    TOptional<CModuleManager>& ModuleManager = GetModuleManagerInstance();
+    TOptional<FModuleManager>& ModuleManager = GetModuleManagerInstance();
     return ModuleManager.GetValue();
 }
 
-void CModuleManager::ReleaseAllLoadedModules()
+void FModuleManager::ReleaseAllLoadedModules()
 {
-    TOptional<CModuleManager>& ModuleManager = GetModuleManagerInstance();
+    TOptional<FModuleManager>& ModuleManager = GetModuleManagerInstance();
     ModuleManager->ReleaseAllModules();
 }
 
-void CModuleManager::Destroy()
+void FModuleManager::Destroy()
 {
-    TOptional<CModuleManager>& ModuleManager = GetModuleManagerInstance();
+    TOptional<FModuleManager>& ModuleManager = GetModuleManagerInstance();
     ModuleManager.Reset();
 }
 
-void  CModuleManager::ReleaseAllModules()
+void  FModuleManager::ReleaseAllModules()
 {
     const int32 NumModules = Modules.Size();
     for (int32 Index = 0; Index < NumModules; Index++)
     {
-        SModule& Module = Modules[Index];
+        FModule& Module = Modules[Index];
 
         IEngineModule* EngineModule = Module.Interface;
         if (EngineModule)
@@ -145,14 +145,14 @@ void  CModuleManager::ReleaseAllModules()
             SafeDelete(EngineModule);
         }
 
-        PlatformLibrary::FreeDynamicLib(Module.Handle);
+        FPlatformLibrary::FreeDynamicLib(Module.Handle);
         Module.Handle = nullptr;
     }
 
     Modules.Clear();
 }
 
-PlatformModule CModuleManager::GetModuleHandle(const char* ModuleName)
+PlatformModule FModuleManager::GetModuleHandle(const char* ModuleName)
 {
     const int32 Index = GetModuleIndex(ModuleName);
     if (Index >= 0)
@@ -165,9 +165,9 @@ PlatformModule CModuleManager::GetModuleHandle(const char* ModuleName)
     }
 }
 
-void CModuleManager::RegisterStaticModule(const char* ModuleName, CInitializeStaticModuleDelegate InitDelegate)
+void FModuleManager::RegisterStaticModule(const char* ModuleName, FInitializeStaticModuleDelegate InitDelegate)
 {
-    const bool bContains = StaticModuleDelegates.Contains([=](const TPair<FString, CInitializeStaticModuleDelegate>& Element)
+    const bool bContains = StaticModuleDelegates.Contains([=](const TPair<FString, FInitializeStaticModuleDelegate>& Element)
     {
         return (Element.First == ModuleName);
     });
@@ -178,18 +178,18 @@ void CModuleManager::RegisterStaticModule(const char* ModuleName, CInitializeSta
     }
 }
 
-bool CModuleManager::IsModuleLoaded(const char* ModuleName)
+bool FModuleManager::IsModuleLoaded(const char* ModuleName)
 {
     const int32 Index = GetModuleIndex(ModuleName);
     return (Index >= 0);
 }
 
-void CModuleManager::UnloadModule(const char* ModuleName)
+void FModuleManager::UnloadModule(const char* ModuleName)
 {
     const int32 Index = GetModuleIndex(ModuleName);
     if (Index >= 0)
     {
-        SModule& Module = Modules[Index];
+        FModule& Module = Modules[Index];
 
         IEngineModule* EngineModule = Module.Interface;
         if (EngineModule)
@@ -198,21 +198,21 @@ void CModuleManager::UnloadModule(const char* ModuleName)
             SafeDelete(EngineModule);
         }
 
-        PlatformLibrary::FreeDynamicLib(Module.Handle);
+        FPlatformLibrary::FreeDynamicLib(Module.Handle);
         Module.Handle = nullptr;
 
         Modules.RemoveAt(Index);
     }
 }
 
-uint32 CModuleManager::GetLoadedModuleCount()
+uint32 FModuleManager::GetLoadedModuleCount()
 {
     return static_cast<uint32>(Modules.Size());
 }
 
-int32 CModuleManager::GetModuleIndex(const char* ModuleName)
+int32 FModuleManager::GetModuleIndex(const char* ModuleName)
 {
-    const int32 Index = Modules.Find([=](const SModule& Element)
+    const int32 Index = Modules.Find([=](const FModule& Element)
     {
         return (Element.Name == ModuleName);
     });
@@ -221,16 +221,16 @@ int32 CModuleManager::GetModuleIndex(const char* ModuleName)
     return (Index >= 0) ? Index : -1;
 }
 
-CModuleManager::CInitializeStaticModuleDelegate* CModuleManager::GetStaticModuleDelegate(const char* ModuleName)
+FModuleManager::FInitializeStaticModuleDelegate* FModuleManager::GetStaticModuleDelegate(const char* ModuleName)
 {
-    const int32 Index = StaticModuleDelegates.Find([=](const TPair<FString, CInitializeStaticModuleDelegate>& Element)
+    const int32 Index = StaticModuleDelegates.Find([=](const TPair<FString, FInitializeStaticModuleDelegate>& Element)
     {
         return (Element.First == ModuleName);
     });
 
     if (Index >= 0)
     {
-        CInitializeStaticModuleDelegate& ModuleInitializer = StaticModuleDelegates[Index].Second;
+        FInitializeStaticModuleDelegate& ModuleInitializer = StaticModuleDelegates[Index].Second;
         return &ModuleInitializer;
     }
     else

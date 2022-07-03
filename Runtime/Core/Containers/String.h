@@ -2264,7 +2264,7 @@ inline typename TEnableIf<TIsIntegerNotBool<T>::Value, bool>::Type FromString(co
 {
     // TODO: Improve with more than base 10
     char* End;
-    OutElement = CStringParse::ParseInt<T>(Value.CStr(), &End, 10);
+    OutElement = FStringParse::ParseInt<T>(Value.CStr(), &End, 10);
     return (*End != 0);
 }
 
@@ -2272,7 +2272,7 @@ template<>
 inline bool FromString<float>(const FString& Value, float& OutElement)
 {
     char* End;
-    OutElement = CStringParse::ParseFloat(Value.CStr(), &End);
+    OutElement = FStringParse::ParseFloat(Value.CStr(), &End);
     return (*End != 0);
 }
 
@@ -2280,7 +2280,7 @@ template<>
 inline bool FromString<double>(const FString& Value, double& OutElement)
 {
     char* End;
-    OutElement = CStringParse::ParseDouble(Value.CStr(), &End);
+    OutElement = FStringParse::ParseDouble(Value.CStr(), &End);
     return (*End != 0);
 }
 
@@ -2288,7 +2288,7 @@ template<>
 inline bool FromString<bool>(const FString& Value, bool& OutElement)
 {
     char* End;
-    OutElement = static_cast<bool>(CStringParse::ParseInt32(Value.CStr(), &End, 10));
+    OutElement = static_cast<bool>(FStringParse::ParseInt32(Value.CStr(), &End, 10));
     if (*End)
     {
         return true;

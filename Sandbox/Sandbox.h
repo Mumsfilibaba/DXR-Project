@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CSandbox
 
-class CSandbox : public CApplicationModule
+class CSandbox : public FApplicationModule
 {
 public:
 
@@ -15,9 +15,9 @@ public:
 
     virtual bool Init() override;
 
-    virtual void Tick(CTimestamp DeltaTime) override;
+    virtual void Tick(FTimestamp DeltaTime) override;
 
 private:
     CCamera* CurrentCamera = nullptr;
-    CVector3 CameraSpeed;
+    FVector3 CameraSpeed;
 };

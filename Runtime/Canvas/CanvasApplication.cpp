@@ -14,17 +14,17 @@ TSharedPtr<CCanvasApplication> CCanvasApplication::Instance;
 
 bool CCanvasApplication::CreateApplication()
 {
-    TSharedPtr<CGenericApplication> Application = MakeSharedPtr(PlatformApplicationMisc::CreateApplication());
+    TSharedPtr<FGenericApplication> Application = MakeSharedPtr(FPlatformApplicationMisc::CreateApplication());
     if (!Application)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to create PlatformApplication");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create FPlatformApplication");
         return false;
     }
 
     Instance = MakeSharedPtr(dbg_new CCanvasApplication(Application));
     if (!Instance->CreateContext())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to create UI Context");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create UI Context");
         return false;
     }
 
@@ -43,14 +43,14 @@ void CCanvasApplication::Release()
 {
     if (Instance)
     {
-        Instance->SetPlatformApplication(nullptr);
+        Instance->SetFPlatformApplication(nullptr);
         Instance.Reset();
     }
 }
 
-CCanvasApplication::CCanvasApplication(const TSharedPtr<CGenericApplication>& InPlatformApplication)
-    : CGenericApplicationMessageHandler()
-    , PlatformApplication(InPlatformApplication)
+CCanvasApplication::CCanvasApplication(const TSharedPtr<FGenericApplication>& InFPlatformApplication)
+    : FGenericApplicationMessageHandler()
+    , FPlatformApplication(InFPlatformApplication)
     , MainViewport()
     , Renderer()
     , DebugStrings()
@@ -242,20 +242,20 @@ CCanvasApplication::~CCanvasApplication()
     }
 }
 
-TSharedRef<CGenericWindow> CCanvasApplication::CreateWindow()
+TSharedRef<FGenericWindow> CCanvasApplication::CreateWindow()
 {
-    return PlatformApplication->CreateWindow();
+    return FPlatformApplication->CreateWindow();
 }
 
-void CCanvasApplication::Tick(CTimestamp DeltaTime)
+void CCanvasApplication::Tick(FTimestamp DeltaTime)
 {
     // Update UI
     ImGuiIO& UIState = ImGui::GetIO();
 
-    TSharedRef<CGenericWindow> Window = MainViewport;
+    TSharedRef<FGenericWindow> Window = MainViewport;
     if (UIState.WantSetMousePos)
     {
-        SetCursorPos(Window, CIntVector2(static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y)));
+        SetCursorPos(Window, FIntVector2(static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y)));
     }
 
     SWindowShape CurrentWindowShape;
@@ -265,10 +265,10 @@ void CCanvasApplication::Tick(CTimestamp DeltaTime)
     UIState.DisplaySize             = ImVec2(float(CurrentWindowShape.Width), float(CurrentWindowShape.Height));
     UIState.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
-    CIntVector2 Position = CCanvasApplication::Get().GetCursorPos(Window);
+    FIntVector2 Position = CCanvasApplication::Get().GetCursorPos(Window);
     UIState.MousePos = ImVec2(static_cast<float>(Position.x), static_cast<float>(Position.y));
 
-    SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
+    FModifierKeyState KeyState = FPlatformApplicationMisc::GetModifierKeyState();
     UIState.KeyCtrl  = KeyState.bIsCtrlDown;
     UIState.KeyShift = KeyState.bIsShiftDown;
     UIState.KeyAlt   = KeyState.bIsAltDown;
@@ -321,7 +321,7 @@ void CCanvasApplication::Tick(CTimestamp DeltaTime)
 
     // Update platform
     const float Delta = static_cast<float>(DeltaTime.AsMilliSeconds());
-    PlatformApplication->Tick(Delta);
+    FPlatformApplication->Tick(Delta);
 
     if (!RegisteredUsers.IsEmpty())
     {
@@ -338,33 +338,33 @@ void CCanvasApplication::SetCursor(ECursor InCursor)
     Cursor->SetCursor(InCursor);
 }
 
-void CCanvasApplication::SetCursorPos(const CIntVector2& Position)
+void CCanvasApplication::SetCursorPos(const FIntVector2& Position)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
     Cursor->SetPosition(nullptr, Position.x, Position.y);
 }
 
-void CCanvasApplication::SetCursorPos(const TSharedRef<CGenericWindow>& RelativeWindow, const CIntVector2& Position)
+void CCanvasApplication::SetCursorPos(const TSharedRef<FGenericWindow>& RelativeWindow, const FIntVector2& Position)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
     Cursor->SetPosition(RelativeWindow.Get(), Position.x, Position.y);
 }
 
-CIntVector2 CCanvasApplication::GetCursorPos() const
+FIntVector2 CCanvasApplication::GetCursorPos() const
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
 
-    CIntVector2 CursorPosition;
+    FIntVector2 CursorPosition;
     Cursor->GetPosition(nullptr, CursorPosition.x, CursorPosition.y);
 
     return CursorPosition;
 }
 
-CIntVector2 CCanvasApplication::GetCursorPos(const TSharedRef<CGenericWindow>& RelativeWindow) const
+FIntVector2 CCanvasApplication::GetCursorPos(const TSharedRef<FGenericWindow>& RelativeWindow) const
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
 
-    CIntVector2 CursorPosition;
+    FIntVector2 CursorPosition;
     Cursor->GetPosition(RelativeWindow.Get(), CursorPosition.x, CursorPosition.y);
 
     return CursorPosition;
@@ -382,14 +382,14 @@ bool CCanvasApplication::IsCursorVisibile() const
     return Cursor->IsVisible();
 }
 
-void CCanvasApplication::SetCapture(const TSharedRef<CGenericWindow>& CaptureWindow)
+void CCanvasApplication::SetCapture(const TSharedRef<FGenericWindow>& CaptureWindow)
 {
-    PlatformApplication->SetCapture(CaptureWindow);
+    FPlatformApplication->SetCapture(CaptureWindow);
 }
 
-void CCanvasApplication::SetActiveWindow(const TSharedRef<CGenericWindow>& ActiveWindow)
+void CCanvasApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& ActiveWindow)
 {
-    PlatformApplication->SetActiveWindow(ActiveWindow);
+    FPlatformApplication->SetActiveWindow(ActiveWindow);
 }
 
 template<typename MessageHandlerType>
@@ -436,7 +436,7 @@ void CCanvasApplication::RemoveInputHandler(const TSharedPtr<CInputHandler>& Inp
     }
 }
 
-void CCanvasApplication::RegisterMainViewport(const TSharedRef<CGenericWindow>& NewMainViewport)
+void CCanvasApplication::RegisterMainViewport(const TSharedRef<FGenericWindow>& NewMainViewport)
 {
     MainViewport = NewMainViewport;
     if (MainViewportChange.IsBound())
@@ -462,7 +462,7 @@ void CCanvasApplication::SetRenderer(const TSharedRef<ICanvasRenderer>& NewRende
     {
         if (!Renderer->InitContext(Context))
         {
-            PlatformApplicationMisc::MessageBox("ERROR", "Failed to init InterfaceRenderer ");
+            FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init InterfaceRenderer ");
         }
     }
 }
@@ -513,24 +513,24 @@ void CCanvasApplication::RemoveWindowMessageHandler(const TSharedPtr<CWindowMess
     }
 }
 
-void CCanvasApplication::SetPlatformApplication(const TSharedPtr<CGenericApplication>& InPlatformApplication)
+void CCanvasApplication::SetFPlatformApplication(const TSharedPtr<FGenericApplication>& InFPlatformApplication)
 {
-    if (InPlatformApplication)
+    if (InFPlatformApplication)
     {
         Check(this == Instance);
-        InPlatformApplication->SetMessageListener(Instance);
+        InFPlatformApplication->SetMessageListener(Instance);
     }
 
-    PlatformApplication = InPlatformApplication;
+    FPlatformApplication = InFPlatformApplication;
 }
 
-void CCanvasApplication::HandleKeyReleased(EKey KeyCode, SModifierKeyState ModierKeyState)
+void CCanvasApplication::HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState)
 {
     SKeyEvent KeyEvent(KeyCode, false, false, ModierKeyState);
     HandleKeyEvent(KeyEvent);
 }
 
-void CCanvasApplication::HandleKeyPressed(EKey KeyCode, bool bIsRepeat, SModifierKeyState ModierKeyState)
+void CCanvasApplication::HandleKeyPressed(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
 {
     SKeyEvent KeyEvent(KeyCode, true, bIsRepeat, ModierKeyState);
     HandleKeyEvent(KeyEvent);
@@ -604,25 +604,25 @@ void CCanvasApplication::HandleMouseMove(int32 x, int32 y)
     }
 }
 
-void CCanvasApplication::HandleMouseReleased(EMouseButton Button, SModifierKeyState ModierKeyState)
+void CCanvasApplication::HandleMouseReleased(EMouseButton Button, FModifierKeyState ModierKeyState)
 {
-    TSharedRef<CGenericWindow> CaptureWindow = PlatformApplication->GetCapture();
+    TSharedRef<FGenericWindow> CaptureWindow = FPlatformApplication->GetCapture();
     if (CaptureWindow)
     {
-        PlatformApplication->SetCapture(nullptr);
+        FPlatformApplication->SetCapture(nullptr);
     }
 
     SMouseButtonEvent MouseButtonEvent(Button, false, ModierKeyState);
     HandleMouseButtonEvent(MouseButtonEvent);
 }
 
-void CCanvasApplication::HandleMousePressed(EMouseButton Button, SModifierKeyState ModierKeyState)
+void CCanvasApplication::HandleMousePressed(EMouseButton Button, FModifierKeyState ModierKeyState)
 {
-    TSharedRef<CGenericWindow> CaptureWindow = PlatformApplication->GetCapture();
+    TSharedRef<FGenericWindow> CaptureWindow = FPlatformApplication->GetCapture();
     if (!CaptureWindow)
     {
-        TSharedRef<CGenericWindow> ActiveWindow = PlatformApplication->GetActiveWindow();
-        PlatformApplication->SetCapture(ActiveWindow);
+        TSharedRef<FGenericWindow> ActiveWindow = FPlatformApplication->GetActiveWindow();
+        FPlatformApplication->SetCapture(ActiveWindow);
     }
 
     SMouseButtonEvent MouseButtonEvent(Button, true, ModierKeyState);
@@ -703,7 +703,7 @@ void CCanvasApplication::HandleMouseScrolled(float HorizontalDelta, float Vertic
     }
 }
 
-void CCanvasApplication::HandleWindowResized(const TSharedRef<CGenericWindow>& Window, uint32 Width, uint32 Height)
+void CCanvasApplication::HandleWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height)
 {
     SWindowResizeEvent WindowResizeEvent(Window, Width, Height);
     for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
@@ -716,7 +716,7 @@ void CCanvasApplication::HandleWindowResized(const TSharedRef<CGenericWindow>& W
     }
 }
 
-void CCanvasApplication::HandleWindowMoved(const TSharedRef<CGenericWindow>& Window, int32 x, int32 y)
+void CCanvasApplication::HandleWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 x, int32 y)
 {
     SWindowMovedEvent WindowsMovedEvent(Window, x, y);
     for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
@@ -729,7 +729,7 @@ void CCanvasApplication::HandleWindowMoved(const TSharedRef<CGenericWindow>& Win
     }
 }
 
-void CCanvasApplication::HandleWindowFocusChanged(const TSharedRef<CGenericWindow>& Window, bool bHasFocus)
+void CCanvasApplication::HandleWindowFocusChanged(const TSharedRef<FGenericWindow>& Window, bool bHasFocus)
 {
     SWindowFocusChangedEvent WindowFocusChangedEvent(Window, bHasFocus);
     for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
@@ -742,13 +742,13 @@ void CCanvasApplication::HandleWindowFocusChanged(const TSharedRef<CGenericWindo
     }
 }
 
-void CCanvasApplication::HandleWindowMouseLeft(const TSharedRef<CGenericWindow>& Window)
+void CCanvasApplication::HandleWindowMouseLeft(const TSharedRef<FGenericWindow>& Window)
 {
     SWindowFrameMouseEvent WindowFrameMouseEvent(Window, false);
     HandleWindowFrameMouseEvent(WindowFrameMouseEvent);
 }
 
-void CCanvasApplication::HandleWindowMouseEntered(const TSharedRef<CGenericWindow>& Window)
+void CCanvasApplication::HandleWindowMouseEntered(const TSharedRef<FGenericWindow>& Window)
 {
     SWindowFrameMouseEvent WindowFrameMouseEvent(Window, true);
     HandleWindowFrameMouseEvent(WindowFrameMouseEvent);
@@ -798,7 +798,7 @@ void CCanvasApplication::RenderStrings()
     }
 }
 
-void CCanvasApplication::HandleWindowClosed(const TSharedRef<CGenericWindow>& Window)
+void CCanvasApplication::HandleWindowClosed(const TSharedRef<FGenericWindow>& Window)
 {
     SWindowClosedEvent WindowClosedEvent(Window);
     for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
@@ -813,7 +813,7 @@ void CCanvasApplication::HandleWindowClosed(const TSharedRef<CGenericWindow>& Wi
     LOG_INFO("HandleWindowClosed");
 
     // TODO: Register a main viewport and when that closes, request exit for now just exit
-    PlatformApplicationMisc::RequestExit(0);
+    FPlatformApplicationMisc::RequestExit(0);
 }
 
 void CCanvasApplication::HandleApplicationExit(int32 ExitCode)

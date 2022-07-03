@@ -3,14 +3,14 @@
 #include "Core/Time/Generic/GenericTime.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsTime
+// FWindowsTime
 
-class CWindowsTime : public CGenericTime
+class FWindowsTime : public FGenericTime
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericTime Interface
+    // FGenericTime Interface
 
     static FORCEINLINE uint64 QueryPerformanceCounter()
     {

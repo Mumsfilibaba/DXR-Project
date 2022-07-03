@@ -1,12 +1,12 @@
 #include "WindowsKeyMapping.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsKeyMapping
+// FWindowsKeyMapping
 
-TStaticArray<uint16, CWindowsKeyMapping::kNumKeys> CWindowsKeyMapping::ScanCodeFromKeyCodeTable;
-TStaticArray<EKey  , CWindowsKeyMapping::kNumKeys> CWindowsKeyMapping::KeyCodeFromScanCodeTable;
+TStaticArray<uint16, FWindowsKeyMapping::kNumKeys> FWindowsKeyMapping::ScanCodeFromKeyCodeTable;
+TStaticArray<EKey  , FWindowsKeyMapping::kNumKeys> FWindowsKeyMapping::KeyCodeFromScanCodeTable;
 
-void CWindowsKeyMapping::Initialize()
+void FWindowsKeyMapping::Initialize()
 {
     KeyCodeFromScanCodeTable.Memzero(); 
     ScanCodeFromKeyCodeTable.Memzero();

@@ -3,21 +3,21 @@
 #include "Core/Threading/Generic/GenericCriticalSection.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsCriticalSection
+// FWindowsCriticalSection
 
-class CWindowsCriticalSection final : public CGenericCriticalSection
+class FWindowsCriticalSection final : public FGenericCriticalSection
 {
 public:
 
     typedef CRITICAL_SECTION* PlatformHandle;
 
-    FORCEINLINE CWindowsCriticalSection() noexcept
+    FORCEINLINE FWindowsCriticalSection() noexcept
         : Section()
     {
         InitializeCriticalSection(&Section);
     }
 
-    FORCEINLINE ~CWindowsCriticalSection()
+    FORCEINLINE ~FWindowsCriticalSection()
     {
         DeleteCriticalSection(&Section);
     }

@@ -37,7 +37,7 @@ void CComponent::Start()
 {
 }
 
-void CComponent::Tick(CTimestamp DeltaTime)
+void CComponent::Tick(FTimestamp DeltaTime)
 {
 }
 

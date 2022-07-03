@@ -19,15 +19,15 @@
 // TODO: Enable other types of Modal windows for supported platforms
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericApplicationMisc
+// FGenericApplicationMisc
 
-class COREAPPLICATION_API CGenericApplicationMisc
+class COREAPPLICATION_API FGenericApplicationMisc
 {
 public:
 
-    static class CGenericApplication* CreateApplication();
+    static class FGenericApplication* CreateApplication();
 
-    static class CGenericConsoleWindow* CreateConsoleWindow();
+    static class FGenericConsoleWindow* CreateConsoleWindow();
 
     static FORCEINLINE void MessageBox(const FString& Title, const FString& Message) { }
 
@@ -35,7 +35,7 @@ public:
 
     static FORCEINLINE void PumpMessages(bool bUntilEmpty) { }
 
-    static FORCEINLINE SModifierKeyState GetModifierKeyState() { return SModifierKeyState(); }
+    static FORCEINLINE FModifierKeyState GetModifierKeyState() { return FModifierKeyState(); }
 };
 
 #if defined(COMPILER_MSVC)

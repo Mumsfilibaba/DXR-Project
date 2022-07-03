@@ -2,11 +2,11 @@
 
 #if PLATFORM_WINDOWS
     #include "Core/Modules/Windows/WindowsLibrary.h"
-    typedef CWindowsLibrary PlatformLibrary;
+    typedef FWindowsLibrary FPlatformLibrary;
 #elif PLATFORM_MACOS
     #include "Core/Modules/Mac/MacLibrary.h"
-    typedef CMacLibrary PlatformLibrary;
+    typedef FMacLibrary FPlatformLibrary;
 #else
     #include "Core/Modules/Generic/GenericLibrary.h"
-    typedef CGenericLibrary PlatformLibrary;
+    typedef FGenericLibrary FPlatformLibrary;
 #endif

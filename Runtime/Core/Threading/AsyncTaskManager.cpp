@@ -5,23 +5,23 @@
 #include "Platform/PlatformThreadMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CAsyncTaskManager
+// FAsyncTaskManager
 
-CAsyncTaskManager CAsyncTaskManager::Instance;
+FAsyncTaskManager FAsyncTaskManager::Instance;
 
-CAsyncTaskManager::CAsyncTaskManager()
+FAsyncTaskManager::FAsyncTaskManager()
     : QueueMutex()
     , bIsRunning(false)
 { }
 
-CAsyncTaskManager::~CAsyncTaskManager()
+FAsyncTaskManager::~FAsyncTaskManager()
 {
     KillWorkers();
 }
 
-bool CAsyncTaskManager::PopDispatch(CAsyncTask& OutTask)
+bool FAsyncTaskManager::PopDispatch(FAsyncTask& OutTask)
 {
-    TScopedLock<CCriticalSection> Lock(QueueMutex);
+    TScopedLock<FCriticalSection> Lock(QueueMutex);
 
     if (!Queue.IsEmpty())
     {
@@ -36,25 +36,25 @@ bool CAsyncTaskManager::PopDispatch(CAsyncTask& OutTask)
     }
 }
 
-void CAsyncTaskManager::KillWorkers()
+void FAsyncTaskManager::KillWorkers()
 {
     bIsRunning = false;
 
     WakeCondition.NotifyAll();
 }
 
-void CAsyncTaskManager::WorkThread()
+void FAsyncTaskManager::WorkThread()
 {
-    LOG_INFO("Starting Work thread: %llu", PlatformThreadMisc::GetThreadHandle());
+    LOG_INFO("Starting Work thread: %llu", FPlatformThreadMisc::GetThreadHandle());
 
-    CAsyncTaskManager& AsyncTaskManager = CAsyncTaskManager::Get();
+    FAsyncTaskManager& AsyncTaskManager = FAsyncTaskManager::Get();
     while (AsyncTaskManager.bIsRunning)
     {
-        CAsyncTask CurrentTask;
+        FAsyncTask CurrentTask;
 
         if (!Instance.PopDispatch(CurrentTask))
         {
-            TScopedLock<CCriticalSection> Lock(Instance.WakeMutex);
+            TScopedLock<FCriticalSection> Lock(Instance.WakeMutex);
             Instance.WakeCondition.Wait(Lock);
         }
         else
@@ -64,22 +64,22 @@ void CAsyncTaskManager::WorkThread()
         }
     }
 
-    LOG_INFO("End Work thread: %llu", PlatformThreadMisc::GetThreadHandle());
+    LOG_INFO("End Work thread: %llu", FPlatformThreadMisc::GetThreadHandle());
 }
 
-bool CAsyncTaskManager::Initialize()
+bool FAsyncTaskManager::Initialize()
 {
-    const uint32 ThreadCount = NMath::Max<int32>(PlatformThreadMisc::GetNumProcessors() - 1, 1);
+    const uint32 ThreadCount = NMath::Max<int32>(FPlatformThreadMisc::GetNumProcessors() - 1, 1);
     WorkerThreads.Resize(ThreadCount);
 
     if (ThreadCount == 1)
     {
-        LOG_INFO("[CAsyncTaskManager]: No workers available, tasks will be executing on the main thread");
+        LOG_INFO("[FAsyncTaskManager]: No workers available, tasks will be executing on the main thread");
         WorkerThreads.Clear();
         return true;
     }
 
-    LOG_INFO("[CAsyncTaskManager]: Starting '%u' Workers", ThreadCount);
+    LOG_INFO("[FAsyncTaskManager]: Starting '%u' Workers", ThreadCount);
 
     // Start so that workers now that they should be running
     bIsRunning = true;
@@ -88,7 +88,7 @@ bool CAsyncTaskManager::Initialize()
     {
         FString ThreadName = FString::CreateFormated("WorkerThread[%d]", Thread);
 
-        GenericThreadRef NewThread = CThreadManager::Get().CreateNamedThread(CAsyncTaskManager::WorkThread, ThreadName);
+        FGenericThreadRef NewThread = FThreadManager::Get().CreateNamedThread(FAsyncTaskManager::WorkThread, ThreadName);
         if (NewThread)
         {
             WorkerThreads[Thread] = NewThread;
@@ -104,12 +104,12 @@ bool CAsyncTaskManager::Initialize()
     return true;
 }
 
-DispatchID CAsyncTaskManager::Dispatch(const CAsyncTask& NewTask)
+DispatchID FAsyncTaskManager::Dispatch(const FAsyncTask& NewTask)
 {
     if (WorkerThreads.IsEmpty())
     {
         // Execute task on main-thread
-        CAsyncTask MainThreadTask = NewTask;
+        FAsyncTask MainThreadTask = NewTask;
         MainThreadTask.Delegate.ExecuteIfBound();
 
         // Make sure that both fences is incremented
@@ -121,7 +121,7 @@ DispatchID CAsyncTaskManager::Dispatch(const CAsyncTask& NewTask)
     DispatchID NewTaskID = DispatchAdded.Increment();
 
     {
-        TScopedLock<CCriticalSection> Lock(QueueMutex);
+        TScopedLock<FCriticalSection> Lock(QueueMutex);
         Queue.Emplace(NewTask);
     }
 
@@ -129,13 +129,13 @@ DispatchID CAsyncTaskManager::Dispatch(const CAsyncTask& NewTask)
     return NewTaskID;
 }
 
-void CAsyncTaskManager::WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting)
+void FAsyncTaskManager::WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting)
 {
     while (DispatchCompleted.Load() < Task)
     {
         if (bUseThisThreadWhileWaiting)
         {
-            CAsyncTask CurrentTask;
+            FAsyncTask CurrentTask;
 
             if (Instance.PopDispatch(CurrentTask))
             {
@@ -145,20 +145,20 @@ void CAsyncTaskManager::WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting
         }
 
         // TODO: Look into proper yield
-        PlatformThreadMisc::Sleep(0);
+        FPlatformThreadMisc::Sleep(0);
     }
 }
 
-void CAsyncTaskManager::WaitForAll(bool bUseThisThreadWhileWaiting)
+void FAsyncTaskManager::WaitForAll(bool bUseThisThreadWhileWaiting)
 {
     WaitFor(DispatchAdded.Load(), bUseThisThreadWhileWaiting);
 }
 
-void CAsyncTaskManager::Release()
+void FAsyncTaskManager::Release()
 {
     KillWorkers();
 
-    for (TSharedRef<CGenericThread> Thread : WorkerThreads)
+    for (TSharedRef<FGenericThread> Thread : WorkerThreads)
     {
         Thread->WaitForCompletion(kWaitForThreadInfinity);
     }
@@ -166,7 +166,7 @@ void CAsyncTaskManager::Release()
     WorkerThreads.Clear();
 }
 
-CAsyncTaskManager& CAsyncTaskManager::Get()
+FAsyncTaskManager& FAsyncTaskManager::Get()
 {
     return Instance;
 }

@@ -5,14 +5,14 @@
 #include <mach/mach_time.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacTime
+// FMacTime
 
-class CMacTime : public CGenericTime
+class FMacTime : public FGenericTime
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericTime Interface
+    // FGenericTime Interface
 
     static FORCEINLINE uint64 QueryPerformanceCounter()
     {

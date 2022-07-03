@@ -39,7 +39,7 @@ public:
     void Start();
 
      /** @brief: Ticks all actors in the scene, should be called once per frame */
-    void Tick(CTimestamp DeltaTime);
+    void Tick(FTimestamp DeltaTime);
 
     /**
      * @brief: Adds a camera into the scene 

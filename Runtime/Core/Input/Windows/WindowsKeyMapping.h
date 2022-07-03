@@ -6,9 +6,9 @@
 #include "Core/Input/Generic/GenericKeyMapping.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsKeyMapping
+// FWindowsKeyMapping
 
-class CORE_API CWindowsKeyMapping : public CGenericKeyMapping
+class CORE_API FWindowsKeyMapping : public FGenericKeyMapping
 {
     enum
     {
@@ -18,7 +18,7 @@ class CORE_API CWindowsKeyMapping : public CGenericKeyMapping
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericKeyMapping Interface
+    // FGenericKeyMapping Interface
 
     static void Initialize();
 

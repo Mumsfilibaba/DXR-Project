@@ -2,14 +2,14 @@
 #include "Core/Threading/Generic/GenericAtomic.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacAtomic
+// FMacAtomic
 
-class CMacAtomic final : public CGenericAtomic
+class FMacAtomic final : public FGenericAtomic
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericAtomic Interface
+    // FGenericAtomic Interface
 
     static FORCEINLINE int8 Read(volatile const int8* Source)
     {

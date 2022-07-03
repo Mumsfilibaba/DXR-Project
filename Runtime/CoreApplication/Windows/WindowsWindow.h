@@ -10,21 +10,21 @@
     #undef GetClassName
 #endif
 
-class CWindowsApplication;
+class FWindowsApplication;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsWindow
+// FWindowsWindow
 
-class COREAPPLICATION_API CWindowsWindow final : public CGenericWindow
+class COREAPPLICATION_API FWindowsWindow final : public FGenericWindow
 {
 private:
 
-    CWindowsWindow(CWindowsApplication* InApplication);
-    ~CWindowsWindow();
+    FWindowsWindow(FWindowsApplication* InApplication);
+    ~FWindowsWindow();
 
 public:
 
-    static CWindowsWindow* CreateWindowsWindow(CWindowsApplication* InApplication);
+    static FWindowsWindow* CreateWindowsWindow(FWindowsApplication* InApplication);
 
     static const char* GetClassName();
 
@@ -36,7 +36,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericWindow Interface
+    // FGenericWindow Interface
 
     virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
 
@@ -77,7 +77,7 @@ public:
     virtual void* GetPlatformHandle() const override final { return reinterpret_cast<void*>(Window); }
 
 private:
-    CWindowsApplication* Application;
+    FWindowsApplication* Application;
 
     HWND                 Window;
 

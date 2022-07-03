@@ -4,14 +4,14 @@
 #include "Core/Modules/Generic/GenericLibrary.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsLibrary
+// FWindowsLibrary
 
-class CWindowsLibrary final : public CGenericLibrary
+class FWindowsLibrary final : public FGenericLibrary
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericLibrary Interface
+    // FGenericLibrary Interface
 
     static FORCEINLINE void* LoadDynamicLib(const char* LibraryName)
     {

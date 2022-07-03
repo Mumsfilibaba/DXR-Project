@@ -40,7 +40,7 @@ bool CEditorEngine::Init()
     return true;
 }
 
-void CEditorEngine::Tick( CTimestamp Deltatime )
+void CEditorEngine::Tick( FTimestamp Deltatime )
 {
     CEngine::Tick( Deltatime );
 }

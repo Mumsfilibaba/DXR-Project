@@ -60,7 +60,7 @@ void CFrameProfilerWindow::DrawFPS()
 
     ImGui::Begin("FPS Window", nullptr, Flags);
 
-    const FString FpsString = ToString(CFrameProfiler::Get().GetFramesPerSecond());
+    const FString FpsString = ToString(FFrameProfiler::Get().GetFramesPerSecond());
     ImGui::Text("%s", FpsString.CStr());
 
     ImGui::End();
@@ -78,7 +78,7 @@ void CFrameProfilerWindow::DrawCPUData(float Width)
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
 
-        const SProfileSample& CPUFrameTime = CFrameProfiler::Get().GetCPUFrameTime();
+        const FProfileSample& CPUFrameTime = FFrameProfiler::Get().GetCPUFrameTime();
 
         float Avg = CPUFrameTime.GetAverage();
         float Min = CPUFrameTime.Min;
@@ -183,7 +183,7 @@ void CFrameProfilerWindow::DrawCPUData(float Width)
         ImGui::TableHeadersRow();
 
         // Retrieve a copy of the CPU samples
-        CFrameProfiler::Get().GetCPUSamples(Samples);
+        FFrameProfiler::Get().GetCPUSamples(Samples);
         for (auto& Sample : Samples)
         {
             ImGui::TableNextRow();
@@ -214,7 +214,7 @@ void CFrameProfilerWindow::DrawCPUData(float Width)
 void CFrameProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    TSharedRef<CGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
+    TSharedRef<FGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();
@@ -240,21 +240,21 @@ void CFrameProfilerWindow::DrawWindow()
     {
         if (ImGui::Button("Start Profile"))
         {
-            CFrameProfiler::Get().Enable();
+            FFrameProfiler::Get().Enable();
         }
 
         ImGui::SameLine();
 
         if (ImGui::Button("Stop Profile"))
         {
-            CFrameProfiler::Get().Disable();
+            FFrameProfiler::Get().Disable();
         }
 
         ImGui::SameLine();
 
         if (ImGui::Button("Reset"))
         {
-            CFrameProfiler::Get().Reset();
+            FFrameProfiler::Get().Reset();
         }
 
         DrawCPUData(Width);

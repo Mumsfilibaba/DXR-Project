@@ -17,19 +17,19 @@ enum : uint64
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericThread
+// FGenericThread
 
-class CORE_API CGenericThread : public FRefCounted
+class CORE_API FGenericThread : public FRefCounted
 {
-    friend class CGenericThreadMisc;
+    friend class FGenericThreadMisc;
 
 protected:
 
-    CGenericThread(const TFunction<void()>& InFunction)
+    FGenericThread(const TFunction<void()>& InFunction)
         : Function(InFunction)
     { }
 
-    ~CGenericThread() = default;
+    ~FGenericThread() = default;
 
 public:
 

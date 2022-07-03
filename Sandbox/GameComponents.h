@@ -17,14 +17,14 @@ public:
         , CurrentSpeed(InSpeed)
     { }
 
-    virtual void Tick(CTimestamp DeltaTime)
+    virtual void Tick(FTimestamp DeltaTime)
     {
         const float fDelta = float(DeltaTime.AsSeconds());
 
         CActor* Actor = GetActor();
         
         CActorTransform& ActorTransform = Actor->GetTransform();
-        ActorTransform.SetTranslation(ActorTransform.GetTranslation() + CVector3(0.0f, CurrentSpeed * fDelta, 0.0f));
+        ActorTransform.SetTranslation(ActorTransform.GetTranslation() + FVector3(0.0f, CurrentSpeed * fDelta, 0.0f));
 
         if (ActorTransform.GetTranslation().y >= 60.0f)
         {

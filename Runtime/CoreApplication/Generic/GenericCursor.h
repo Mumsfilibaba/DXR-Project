@@ -3,17 +3,17 @@
 #include "CoreApplication/ICursor.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericCursor
+// FGenericCursor
 
-class COREAPPLICATION_API CGenericCursor : public ICursor
+class COREAPPLICATION_API FGenericCursor : public ICursor
 {
 protected:
 
-    CGenericCursor()
+    FGenericCursor()
         : bIsVisible(true)
     { }
 
-    ~CGenericCursor() = default;
+    ~FGenericCursor() = default;
 
 public:
 
