@@ -8,6 +8,17 @@
 #include "D3D12RootSignature.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedefs
+
+class FD3D12GraphicsPipelineState;
+class FD3D12ComputePipelineState;
+class FD3D12RayTracingPipelineState;
+
+typedef TSharedRef<FD3D12GraphicsPipelineState>   FD3D12GraphicsPipelineStateRef;
+typedef TSharedRef<FD3D12ComputePipelineState>    FD3D12ComputePipelineStateRef;
+typedef TSharedRef<FD3D12RayTracingPipelineState> FD3D12RayTracingPipelineStateRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12VertexInputLayout
 
 class FD3D12VertexInputLayout : public FRHIVertexInputLayout, public FD3D12DeviceChild

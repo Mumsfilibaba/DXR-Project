@@ -1,9 +1,13 @@
 #pragma once
-#include "RHIResources.h"
+#include "RHITexture.h"
+#include "RHIBuffer.h"
 
 #include "Core/Memory/Memory.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/StaticArray.h"
+
+class FRHITexture;
+class FRHIBuffer;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs

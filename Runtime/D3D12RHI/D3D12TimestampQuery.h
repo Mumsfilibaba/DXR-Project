@@ -3,8 +3,10 @@
 
 #include "D3D12Resource.h"
 
+typedef TSharedRef<class FD3D12TimestampQuery> FD3D12TimestampQueryRef;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHITimestampQuery
+// FD3D12TimestampQuery
 
 class FD3D12TimestampQuery : public FRHITimestampQuery, public FD3D12DeviceChild
 {

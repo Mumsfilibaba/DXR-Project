@@ -323,7 +323,7 @@ public:
      * 
      * @param Resource: Resource to destroy
      */
-    virtual void DestroyResource(class IRHIResource* Resource) = 0;
+    virtual void DestroyResource(class IRefCounted* Resource) = 0;
 
     /**
      * @brief: Signal the driver that the contents can be discarded

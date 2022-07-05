@@ -696,7 +696,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(FRHICommandDestroyResource)
 {
 public:
-    FORCEINLINE FRHICommandDestroyResource(IRHIResource* InResource)
+    FORCEINLINE FRHICommandDestroyResource(IRefCounted * InResource)
         : Resource(InResource)
     { }
 
@@ -705,7 +705,7 @@ public:
         CommandContext.DestroyResource(Resource);
     }
 
-    IRHIResource* Resource;
+    IRefCounted* Resource;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

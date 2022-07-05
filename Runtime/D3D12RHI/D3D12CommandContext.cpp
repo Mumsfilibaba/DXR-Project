@@ -62,6 +62,19 @@ void FD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource
     }
 }
 
+void FD3D12ResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource)
+{
+    Check(Resource != nullptr);
+
+    D3D12_RESOURCE_BARRIER Barrier;
+    FMemory::Memzero(&Barrier);
+
+    Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    Barrier.UAV.pResource = Resource;
+
+    Barriers.Emplace(Barrier);
+}
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12GPUResourceUploader
 
@@ -222,9 +235,7 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice)
     , DescriptorCache(InDevice)
     , CmdBatches()
     , BarrierBatcher()
-    , bIsRenderPassActive(false)
-    , bIsReady(false)
-    , bIsCapturing(false)
+    , State()
 { }
 
 FD3D12CommandContext::~FD3D12CommandContext()
@@ -234,7 +245,7 @@ FD3D12CommandContext::~FD3D12CommandContext()
 
 bool FD3D12CommandContext::Initialize()
 {
-    if (!CommandQueue.Init(D3D12_COMMAND_LIST_TYPE_DIRECT))
+    if (!CommandQueue.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
     {
         return false;
     }
@@ -294,7 +305,7 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, uint64 OffsetI
 
 void FD3D12CommandContext::StartContext()
 {
-    Check(bIsReady == false);
+    Check(State.bIsReady == false);
 
     TRACE_FUNCTION_SCOPE();
 
@@ -319,12 +330,12 @@ void FD3D12CommandContext::StartContext()
         D3D12_ERROR("Failed to reset Commandlist");
     }
 
-    bIsReady = true;
+    State.bIsReady = true;
 }
 
 void FD3D12CommandContext::FinishContext()
 {
-    Check(bIsReady == true);
+    Check(State.bIsReady == true);
 
     TRACE_FUNCTION_SCOPE();
 
@@ -355,7 +366,7 @@ void FD3D12CommandContext::FinishContext()
         D3D12_ERROR("Failed to signal Fence on the GPU");
     }
 
-    bIsReady = false;
+    State.bIsReady = false;
 }
 
 void FD3D12CommandContext::BeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
@@ -426,7 +437,7 @@ void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
 
 void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer)
 {
-    D3D12_ERROR_COND(bIsRenderPassActive == false, "A RenderPass is already active");
+    D3D12_ERROR_COND(State.bIsRenderPassActive == false, "A RenderPass is already active");
 
     FlushResourceBarriers();
 
@@ -476,12 +487,12 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
     {
         FD3D12Texture* D3D12Texture = GetD3D12Texture(ShadingRateTexture);
         CommandList.RSSetShadingRateImage(D3D12Texture->GetD3D12Resource()->GetD3D12Resource());
-
+        
         CmdBatch->AddInUseResource(ShadingRateTexture);
 
-        CurrentShadingRateTexture = D3D12Texture;
+        State.Graphics.ShadingRateTexture = MakeSharedRef<FD3D12Texture>(D3D12Texture);
     }
-    else if (CurrentShadingRateTexture)
+    else if (State.Graphics.ShadingRateTexture)
     {
         CommandList.RSSetShadingRateImage(nullptr);
 
@@ -495,16 +506,16 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
 
         CommandList.RSSetShadingRate(D3D12ShadingRate, Combiners);
 
-        CurrentShadingRateTexture = nullptr;
+        State.Graphics.ShadingRateTexture = nullptr;
     }
 
-    bIsRenderPassActive = true;
+    State.bIsRenderPassActive = true;
 }
 
 void FD3D12CommandContext::EndRenderPass()
 {
-    D3D12_ERROR_COND(bIsRenderPassActive == true, "No RenderPass is active");
-    bIsRenderPassActive = false;
+    D3D12_ERROR_COND(State.bIsRenderPassActive == true, "No RenderPass is active");
+    State.bIsRenderPassActive = false;
 }
 
 void FD3D12CommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
@@ -539,10 +550,10 @@ void FD3D12CommandContext::SetBlendFactor(const TStaticArray<float, 4>& Color)
 void FD3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTopology)
 {
     const D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = ConvertPrimitiveTopology(InPrimitveTopology);
-    if (CurrentPrimitiveTolpology != PrimitiveTopology)
+    if (State.Graphics.PrimitiveTopology != PrimitiveTopology)
     {
         CommandList.IASetPrimitiveTopology(PrimitiveTopology);
-        CurrentPrimitiveTolpology = PrimitiveTopology;
+        State.Graphics.PrimitiveTopology = PrimitiveTopology;
     }
 }
 
@@ -569,17 +580,17 @@ void FD3D12CommandContext::SetGraphicsPipelineState(class FRHIGraphicsPipelineSt
     D3D12_ERROR_COND(PipelineState != nullptr, "PipelineState cannot be nullptr");
 
     FD3D12GraphicsPipelineState* D3D12PipelineState = static_cast<FD3D12GraphicsPipelineState*>(PipelineState);
-    if (D3D12PipelineState != CurrentGraphicsPipelineState)
+    if (State.Graphics.PipelineState != D3D12PipelineState)
     {
-        CurrentGraphicsPipelineState = MakeSharedRef<FD3D12GraphicsPipelineState>(D3D12PipelineState);
-        CommandList.SetPipelineState(CurrentGraphicsPipelineState->GetPipeline());
+        State.Graphics.PipelineState = MakeSharedRef<FD3D12GraphicsPipelineState>(D3D12PipelineState);
+        CommandList.SetPipelineState(State.Graphics.PipelineState->GetPipeline());
     }
 
     FD3D12RootSignature* D3D12RootSignature = D3D12PipelineState->GetRootSignature();
-    if (D3D12RootSignature != CurrentRootSignature)
+    if (State.RootSignature != D3D12RootSignature)
     {
-        CurrentRootSignature = MakeSharedRef<FD3D12RootSignature>(D3D12RootSignature);
-        CommandList.SetGraphicsRootSignature(CurrentRootSignature.Get());
+        State.RootSignature = MakeSharedRef<FD3D12RootSignature>(D3D12RootSignature);
+        CommandList.SetGraphicsRootSignature(State.RootSignature.Get());
     }
 }
 
@@ -589,17 +600,17 @@ void FD3D12CommandContext::SetComputePipelineState(class FRHIComputePipelineStat
     D3D12_ERROR_COND(PipelineState != nullptr, "PipelineState cannot be nullptr");
 
     FD3D12ComputePipelineState* D3D12PipelineState = static_cast<FD3D12ComputePipelineState*>(PipelineState);
-    if (D3D12PipelineState != CurrentComputePipelineState.Get())
+    if (State.Compute.PipelineState != D3D12PipelineState)
     {
-        CurrentComputePipelineState = MakeSharedRef<FD3D12ComputePipelineState>(D3D12PipelineState);
-        CommandList.SetPipelineState(CurrentComputePipelineState->GetPipeline());
+        State.Compute.PipelineState = MakeSharedRef<FD3D12ComputePipelineState>(D3D12PipelineState);
+        CommandList.SetPipelineState(State.Compute.PipelineState->GetPipeline());
     }
 
     FD3D12RootSignature* D3D12RootSignature = D3D12PipelineState->GetRootSignature();
-    if (D3D12RootSignature != CurrentRootSignature.Get())
+    if (State.RootSignature != D3D12RootSignature)
     {
-        CurrentRootSignature = MakeSharedRef<FD3D12RootSignature>(D3D12RootSignature);
-        CommandList.SetComputeRootSignature(CurrentRootSignature.Get());
+        State.RootSignature = MakeSharedRef<FD3D12RootSignature>(D3D12RootSignature);
+        CommandList.SetGraphicsRootSignature(State.RootSignature.Get());
     }
 }
 
@@ -891,7 +902,7 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Destination, FRHITextu
     CmdBatch->AddInUseResource(Source);
 }
 
-void FD3D12CommandContext::DestroyResource(IRHIResource* Resource)
+void FD3D12CommandContext::DestroyResource(IRefCounted* Resource)
 {
     CmdBatch->AddInUseResource(Resource);
 }
@@ -1042,11 +1053,11 @@ void FD3D12CommandContext::SetRayTracingBindings( FRHIRayTracingScene* RayTracin
     ID3D12GraphicsCommandList4* DXRCommandList = CommandList.GetDXRCommandList();
 
     FD3D12RootSignature* GlobalRootSignature = D3D12PipelineState->GetGlobalRootSignature();
-    CurrentRootSignature = MakeSharedRef<FD3D12RootSignature>(GlobalRootSignature);
+    State.RootSignature = MakeSharedRef<FD3D12RootSignature>(GlobalRootSignature);
 
-    DXRCommandList->SetComputeRootSignature(CurrentRootSignature->GetRootSignature());
+    DXRCommandList->SetComputeRootSignature(State.RootSignature->GetRootSignature());
 
-    DescriptorCache.PrepareComputeDescriptors(CommandList, CmdBatch, CurrentRootSignature.Get());
+    DescriptorCache.PrepareComputeDescriptors(CommandList, CmdBatch, State.RootSignature.Get());
 }
 
 void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
@@ -1290,8 +1301,8 @@ void FD3D12CommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 
     if (VertexCount)
     {
-        ShaderConstantsCache.CommitGraphics(CommandList, CurrentRootSignature.Get());
-        DescriptorCache.PrepareGraphicsDescriptors(CommandList, CmdBatch, CurrentRootSignature.Get(), FD3D12PipelineStageMask::BasicGraphicsMask());
+        ShaderConstantsCache.CommitGraphics(CommandList, State.RootSignature.Get());
+        DescriptorCache.PrepareGraphicsDescriptors(CommandList, CmdBatch, State.RootSignature.Get(), FD3D12PipelineStageMask::BasicGraphicsMask());
 
         CommandList.DrawInstanced(VertexCount, 1, StartVertexLocation, 0);
     }
@@ -1303,8 +1314,8 @@ void FD3D12CommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocat
 
     if (IndexCount)
     {
-        ShaderConstantsCache.CommitGraphics(CommandList, CurrentRootSignature.Get());
-        DescriptorCache.PrepareGraphicsDescriptors(CommandList, CmdBatch, CurrentRootSignature.Get(), FD3D12PipelineStageMask::BasicGraphicsMask());
+        ShaderConstantsCache.CommitGraphics(CommandList, State.RootSignature.Get());
+        DescriptorCache.PrepareGraphicsDescriptors(CommandList, CmdBatch, State.RootSignature.Get(), FD3D12PipelineStageMask::BasicGraphicsMask());
 
         CommandList.DrawIndexedInstanced(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
     }
@@ -1316,8 +1327,8 @@ void FD3D12CommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 I
 
     if (VertexCountPerInstance > 0 && InstanceCount > 0)
     {
-        ShaderConstantsCache.CommitGraphics(CommandList, CurrentRootSignature.Get());
-        DescriptorCache.PrepareGraphicsDescriptors(CommandList, CmdBatch, CurrentRootSignature.Get(), FD3D12PipelineStageMask::BasicGraphicsMask());
+        ShaderConstantsCache.CommitGraphics(CommandList, State.RootSignature.Get());
+        DescriptorCache.PrepareGraphicsDescriptors(CommandList, CmdBatch, State.RootSignature.Get(), FD3D12PipelineStageMask::BasicGraphicsMask());
 
         CommandList.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
     }
@@ -1329,8 +1340,8 @@ void FD3D12CommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
 
     if (IndexCountPerInstance > 0 && InstanceCount > 0)
     {
-        ShaderConstantsCache.CommitGraphics(CommandList, CurrentRootSignature.Get());
-        DescriptorCache.PrepareGraphicsDescriptors(CommandList, CmdBatch, CurrentRootSignature.Get(), FD3D12PipelineStageMask::BasicGraphicsMask());
+        ShaderConstantsCache.CommitGraphics(CommandList, State.RootSignature.Get());
+        DescriptorCache.PrepareGraphicsDescriptors(CommandList, CmdBatch, State.RootSignature.Get(), FD3D12PipelineStageMask::BasicGraphicsMask());
 
         CommandList.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
     }
@@ -1342,8 +1353,8 @@ void FD3D12CommandContext::Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroup
 
     if (ThreadGroupCountX > 0 || ThreadGroupCountY > 0 || ThreadGroupCountZ > 0)
     {
-        ShaderConstantsCache.CommitCompute(CommandList, CurrentRootSignature.Get());
-        DescriptorCache.PrepareComputeDescriptors(CommandList, CmdBatch, CurrentRootSignature.Get());
+        ShaderConstantsCache.CommitCompute(CommandList, State.RootSignature.Get());
+        DescriptorCache.PrepareComputeDescriptors(CommandList, CmdBatch, State.RootSignature.Get());
 
         CommandList.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
     }
@@ -1414,20 +1425,20 @@ void FD3D12CommandContext::InsertMarker(const FString& Message)
 void FD3D12CommandContext::BeginExternalCapture()
 {
     IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetAdapter()->GetGraphicsAnalysis();
-    if (GraphicsAnalysis && !bIsCapturing)
+    if (GraphicsAnalysis && !State.bIsCapturing)
     {
         GraphicsAnalysis->BeginCapture();
-        bIsCapturing = true;
+        State.bIsCapturing = true;
     }
 }
 
 void FD3D12CommandContext::EndExternalCapture()
 {
     IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetAdapter()->GetGraphicsAnalysis();
-    if (GraphicsAnalysis && bIsCapturing)
+    if (GraphicsAnalysis && State.bIsCapturing)
     {
         GraphicsAnalysis->EndCapture();
-        bIsCapturing = false;
+        State.bIsCapturing = false;
     }
 }
 
@@ -1436,13 +1447,7 @@ void FD3D12CommandContext::InternalClearState()
     DescriptorCache.Reset();
     ShaderConstantsCache.Reset();
 
-    CurrentGraphicsPipelineState.Reset();
-    CurrentRootSignature.Reset();
-    CurrentComputePipelineState.Reset();
-
-    CurrentPrimitiveTolpology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
-
-    bIsRenderPassActive = false;
-
-    CurrentShadingRateTexture = nullptr;
+    State.ClearGraphics();
+    State.ClearCompute();
+    State.Clear();
 }
