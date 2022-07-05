@@ -610,7 +610,7 @@ void FD3D12CommandContext::SetComputePipelineState(class FRHIComputePipelineStat
     if (State.RootSignature != D3D12RootSignature)
     {
         State.RootSignature = MakeSharedRef<FD3D12RootSignature>(D3D12RootSignature);
-        CommandList.SetGraphicsRootSignature(State.RootSignature.Get());
+        CommandList.SetComputeRootSignature(State.RootSignature.Get());
     }
 }
 

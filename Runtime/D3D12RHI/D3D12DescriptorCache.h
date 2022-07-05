@@ -16,17 +16,12 @@ class TD3D12ViewCache
 {
 public:
 
-    static CONSTEXPR uint32 GetDescriptorTableSize()
-    {
-        return kDescriptorTableSize;
-    }
+    static CONSTEXPR D3D12_DESCRIPTOR_HEAP_TYPE GetDescriptorHeapType()  { return HeapType; }
+    static CONSTEXPR uint32                     GetDescriptorTableSize() { return kDescriptorTableSize; }
 
-    static CONSTEXPR D3D12_DESCRIPTOR_HEAP_TYPE GetDescriptorHeapType()
-    {
-        return HeapType;
-    }
+public:
 
-    FORCEINLINE TD3D12ViewCache()
+    TD3D12ViewCache()
         : ResourceViews()
         , CPUDescriptorTables()
         , GPUDescriptorTables()
@@ -34,7 +29,7 @@ public:
         , bDirty()
     { }
 
-    FORCEINLINE void BindView(EShaderVisibility Visibility, ViewType* DescriptorView, uint32 ShaderRegister)
+    void BindView(EShaderVisibility Visibility, ViewType* DescriptorView, uint32 ShaderRegister)
     {
         D3D12_ERROR_COND(DescriptorView != nullptr, "Trying to bind a ResourceView that was nullptr, check input from DescriptorCache");
 
@@ -48,9 +43,9 @@ public:
 
     void Reset(ViewType* DefaultView)
     {
-        FMemory::Memzero(CPUDescriptorTables  , sizeof(CPUDescriptorTables));
+        FMemory::Memzero(CPUDescriptorTables, sizeof(CPUDescriptorTables));
         FMemory::Memzero(GPUDescriptorTables, sizeof(GPUDescriptorTables));
-        FMemory::Memzero(CopyDescriptors  , sizeof(CopyDescriptors));
+        FMemory::Memzero(CopyDescriptors    , sizeof(CopyDescriptors));
 
         for (uint32 Stage = 0; Stage < ShaderVisibility_Count; ++Stage)
         {
@@ -89,7 +84,7 @@ public:
         GPUDescriptorTables[Stage] = GPUHandle;
     }
 
-    FORCEINLINE void InvalidateAll()
+    void InvalidateAll()
     {
         for (uint32 Index = 0; Index < D3D12_CACHED_DESCRIPTORS_NUM_STAGES; Index++)
         {
