@@ -8,6 +8,12 @@
 class FD3D12Device;
 class FD3D12OfflineDescriptorHeap;
 
+typedef TSharedRef<class FD3D12ConstantBufferView>  FD3D12ConstantBufferViewRef;
+typedef TSharedRef<class FD3D12ShaderResourceView>  FD3D12ShaderResourceViewRef;
+typedef TSharedRef<class FD3D12UnorderedAccessView> FD3D12UnorderedAccessViewRef;
+typedef TSharedRef<class FD3D12RenderTargetView>    FD3D12RenderTargetViewRef;
+typedef TSharedRef<class FD3D12DepthStencilView>    FD3D12DepthStencilViewRef;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12View
 
@@ -18,7 +24,6 @@ public:
     virtual ~FD3D12View();
 
     bool AllocateHandle();
-
     void InvalidateAndFreeHandle();
 
     FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }

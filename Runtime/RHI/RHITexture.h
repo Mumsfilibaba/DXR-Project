@@ -4,6 +4,7 @@
 
 #include "Core/Math/IntVector3.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/String.h"
 #include "Core/Templates/EnumUtilities.h"
 
 #if defined(COMPILER_MSVC)
@@ -13,6 +14,8 @@
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
+
+class FRHIShaderResourceView;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
@@ -384,49 +387,37 @@ protected:
 
 public:
 
-    virtual class FRHITexture2D* GetTexture2D() { return nullptr; }
-
-    virtual class FRHITexture2DArray* GetTexture2DArray() { return nullptr; }
-    
-    virtual class FRHITextureCube* GetTextureCube() { return nullptr; }
-
+    virtual class FRHITexture2D*        GetTexture2D()        { return nullptr; }
+    virtual class FRHITexture2DArray*   GetTexture2DArray()   { return nullptr; }
+    virtual class FRHITextureCube*      GetTextureCube()      { return nullptr; }
     virtual class FRHITextureCubeArray* GetTextureCubeArray() { return nullptr; }
+    virtual class FRHITexture3D*        GetTexture3D()        { return nullptr; }
 
-    virtual class FRHITexture3D* GetTexture3D() { return nullptr; }
-
-    virtual void* GetRHIBaseTexture() { return nullptr; }
-
+    virtual void* GetRHIBaseTexture()        { return nullptr; }
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    virtual class FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
+    virtual FRHIDescriptorHandle    GetBindlessSRVHandle()  const { return FRHIDescriptorHandle(); }
 
-    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
-
-    virtual uint32 GetWidth() const { return 1; }
-
-    virtual uint32 GetHeight() const { return 1; }
-
-    virtual uint32 GetDepth() const { return 1; }
+    virtual uint32      GetWidth()  const { return 1; }
+    virtual uint32      GetHeight() const { return 1; }
+    virtual uint32      GetDepth()  const { return 1; }
 
     virtual FIntVector3 GetExtent() const { return FIntVector3(1, 1, 1); }
 
-    virtual uint32 GetArraySize() const { return 1; }
+    virtual uint32      GetArraySize()  const { return 1; }
+    virtual uint32      GetNumSamples() const { return 1; }
 
-    virtual uint32 GetNumSamples() const { return 1; }
-
-    virtual void SetName(const FString& InName) { }
-
+    virtual void    SetName(const FString& InName) { }
     virtual FString GetName() const { return ""; }
 
 public:
     
     bool IsMultiSampled() const { return (GetNumSamples() > 1); }
 
-    ETextureUsageFlags GetFlags() const { return UsageFlags; }
-
-    EFormat GetFormat() const { return Format; }
-
-    uint32 GetNumMips() const { return NumMips; }
+    ETextureUsageFlags GetFlags()   const { return UsageFlags; }
+    EFormat            GetFormat()  const { return Format; }
+    uint32             GetNumMips() const { return NumMips; }
 
     const FTextureClearValue& GetClearValue() const { return ClearValue; }
 
@@ -461,13 +452,12 @@ public:
 
     virtual FRHITexture2D* GetTexture2D() override { return this; }
 
-    virtual uint32 GetWidth() const override final { return Width; }
-    
-    virtual uint32 GetHeight() const override final { return Height; }
+    virtual uint32      GetWidth()  const override final { return Width; }
+    virtual uint32      GetHeight() const override final { return Height; }
     
     virtual FIntVector3 GetExtent() const override { return FIntVector3(Width, Height, 1); }
 
-    virtual uint32 GetNumSamples() const override final { return NumSamples; }
+    virtual uint32      GetNumSamples() const override final { return NumSamples; }
 
 public:
 
@@ -498,13 +488,12 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHITexture Interface
 
-    virtual FRHITexture2D* GetTexture2D() override final { return nullptr; }
-    
+    virtual FRHITexture2D*      GetTexture2D()      override final { return nullptr; }
     virtual FRHITexture2DArray* GetTexture2DArray() override final { return this; }
 
     virtual FIntVector3 GetExtent() const override final { return FIntVector3(GetWidth(), GetDepth(), ArraySize); }
 
-    virtual uint32 GetArraySize() const override final { return ArraySize; }
+    virtual uint32      GetArraySize() const override final { return ArraySize; }
 
 protected:
     uint16 ArraySize;
@@ -532,13 +521,12 @@ public:
 
     virtual FRHITextureCube* GetTextureCube() override { return this; }
 
-    virtual uint32 GetWidth()  const override final { return Extent; }
-    
-    virtual uint32 GetHeight() const override final { return Extent; }
+    virtual uint32      GetWidth()  const override final { return Extent; }
+    virtual uint32      GetHeight() const override final { return Extent; }
 
     virtual FIntVector3 GetExtent() const override { return FIntVector3(Extent, Extent, 1); }
     
-    virtual uint32 GetNumSamples() const override final { return NumSamples; }
+    virtual uint32      GetNumSamples() const override final { return NumSamples; }
 
 protected:
     uint8  NumSamples;
@@ -564,13 +552,12 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHITexture Interface
 
-    virtual FRHITextureCube* GetTextureCube() override final { return nullptr; }
-    
+    virtual FRHITextureCube*      GetTextureCube()      override final { return nullptr; }
     virtual FRHITextureCubeArray* GetTextureCubeArray() override final { return this; }
 
     virtual FIntVector3 GetExtent() const override final { return FIntVector3(GetWidth(), GetHeight(), ArraySize); }
 
-    virtual uint32 GetArraySize() const override final { return ArraySize; }
+    virtual uint32      GetArraySize() const override final { return ArraySize; }
 
 protected:
     uint16 ArraySize;
@@ -601,11 +588,9 @@ public:
 
     virtual FRHITexture3D* GetTexture3D() override { return this; }
 
-    virtual uint32 GetWidth()  const override final { return Width; }
-    
-    virtual uint32 GetHeight() const override final { return Height; }
-
-    virtual uint32 GetDepth()  const override final { return Depth; }
+    virtual uint32      GetWidth()  const override final { return Width; }
+    virtual uint32      GetHeight() const override final { return Height; }
+    virtual uint32      GetDepth()  const override final { return Depth; }
 
     virtual FIntVector3 GetExtent() const override final { return FIntVector3(Width, Height, Depth); }
 

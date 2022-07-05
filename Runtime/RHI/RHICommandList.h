@@ -650,7 +650,7 @@ public:
      *
      * @param Resource: Resource to destroy
      */
-    void DestroyResource(IRHIResource* Resource)
+    void DestroyResource(IRefCounted* Resource)
     {
         InsertCommand<FRHICommandDestroyResource>(Resource);
     }

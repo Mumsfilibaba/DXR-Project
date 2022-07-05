@@ -81,7 +81,7 @@ public:
     virtual void CopyTexture(FRHITexture* Dst, FRHITexture* Src) override final { }
     virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) override final { }
 
-    virtual void DestroyResource(class IRHIResource* Resource) override final { }
+    virtual void DestroyResource(class IRefCounted* Resource) override final { }
 
     virtual void DiscardContents(class FRHITexture* Texture) override final { }
 

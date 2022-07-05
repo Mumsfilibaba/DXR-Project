@@ -241,6 +241,7 @@ template<typename D3D12TextureType, typename InitializerType>
 D3D12TextureType* FD3D12CoreInterface::CreateTexture(const InitializerType& Initializer)
 {
     TSharedRef<D3D12TextureType> NewTexture = dbg_new D3D12TextureType(GetDevice(), Initializer);
+    NewTexture->AddRef();
 
     D3D12_RESOURCE_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -291,7 +292,7 @@ D3D12TextureType* FD3D12CoreInterface::CreateTexture(const InitializerType& Init
         }
     }
 
-    TSharedRef<FD3D12Resource> Resource = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
+    FD3D12ResourceRef Resource = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
     if (!Resource->Initialize(D3D12_RESOURCE_STATE_COMMON, OptimizedClearValue))
     {
         return nullptr;
@@ -357,7 +358,7 @@ D3D12TextureType* FD3D12CoreInterface::CreateTexture(const InitializerType& Init
             return nullptr;
         }
 
-        TSharedRef<FD3D12ShaderResourceView> DefaultSRV = dbg_new FD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap, NewTexture.Get());
+        FD3D12ShaderResourceViewRef DefaultSRV = dbg_new FD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap, NewTexture.Get());
         if (!DefaultSRV->AllocateHandle())
         {
             return nullptr;
@@ -389,7 +390,7 @@ D3D12TextureType* FD3D12CoreInterface::CreateTexture(const InitializerType& Init
             ViewDesc.Texture2D.MipSlice   = 0;
             ViewDesc.Texture2D.PlaneSlice = 0;
 
-            TSharedRef<FD3D12UnorderedAccessView> DefaultUAV = dbg_new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, NewTexture2D);
+            FD3D12UnorderedAccessViewRef DefaultUAV = dbg_new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, NewTexture2D);
             if (!DefaultUAV->AllocateHandle())
             {
                 return nullptr;
