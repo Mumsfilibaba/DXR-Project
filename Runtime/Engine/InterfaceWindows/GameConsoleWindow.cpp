@@ -1,6 +1,6 @@
 #include "GameConsoleWindow.h"
 
-#include "Canvas/CanvasApplication.h"
+#include "Canvas/Application.h"
 
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Templates/StringUtils.h"
@@ -15,13 +15,13 @@ TSharedRef<CGameConsoleWindow> CGameConsoleWindow::Make()
     TSharedRef<CGameConsoleWindow> NewWindow = dbg_new CGameConsoleWindow();
 
     NewWindow->InputHandler->HandleKeyEventDelegate.BindRaw(NewWindow.Get(), &CGameConsoleWindow::HandleKeyPressedEvent);
-    CCanvasApplication::Get().AddInputHandler(NewWindow->InputHandler, uint32(-1));
+    FApplication::Get().AddInputHandler(NewWindow->InputHandler, uint32(-1));
 
     return NewWindow;
 }
 
 CGameConsoleWindow::CGameConsoleWindow()
-    : CCanvasWindow()
+    : FWindow()
     , InputHandler(MakeShared<CConsoleInputHandler>())
 {
     TextBuffer.Fill(0);
@@ -29,7 +29,7 @@ CGameConsoleWindow::CGameConsoleWindow()
 
 void CGameConsoleWindow::Tick()
 {
-    TSharedRef<FGenericWindow> MainWindow = CCanvasApplication::Get().GetMainViewport();
+    FGenericWindowRef MainWindow = FApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainWindow->GetWidth();
 
@@ -462,7 +462,7 @@ int32 CGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
     return 0;
 }
 
-void CGameConsoleWindow::HandleKeyPressedEvent(const SKeyEvent& Event)
+void CGameConsoleWindow::HandleKeyPressedEvent(const FKeyEvent& Event)
 {
     Check(InputHandler.IsValid());
 

@@ -6,7 +6,7 @@
 
 #include "Renderer/Renderer.h"
 
-#include "Canvas/CanvasApplication.h"
+#include "Canvas/Application.h"
 
 #include <imgui.h>
 
@@ -25,7 +25,7 @@ TSharedRef<CRendererInfoWindow> CRendererInfoWindow::Make()
 
 void CRendererInfoWindow::Tick()
 {
-    TSharedRef<FGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
+    FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

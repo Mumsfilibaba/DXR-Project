@@ -1,5 +1,5 @@
 #pragma once
-#include "Canvas/CanvasWindow.h"
+#include "Canvas/Window.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
@@ -8,7 +8,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CFrameProfilerWindow
 
-class CFrameProfilerWindow : public CCanvasWindow
+class CFrameProfilerWindow : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 

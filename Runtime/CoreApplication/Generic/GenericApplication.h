@@ -34,23 +34,23 @@ protected:
 
 public:
 
-    virtual TSharedRef<FGenericWindow> CreateWindow() { return nullptr; }
+    virtual FGenericWindowRef CreateWindow() { return nullptr; }
 
     virtual void Tick(float Delta) { }
 
     virtual bool SupportsHighPrecisionMouse() const { return false; }
 
-    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) { return true; }
+    virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) { return true; }
 
-    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) { }
+    virtual void SetActiveWindow(const FGenericWindowRef& Window) { }
 
-    virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
+    virtual FGenericWindowRef GetActiveWindow() const { return nullptr; }
 
-    virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) { }
+    virtual void SetCapture(const FGenericWindowRef& Window) { }
 
-    virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
+    virtual FGenericWindowRef GetCapture() const { return nullptr; }
 
-    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const { return nullptr; }
+    virtual FGenericWindowRef GetWindowUnderCursor() const { return nullptr; }
 
     virtual void SetMessageListener(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) { MessageListener = InMessageHandler; }
 

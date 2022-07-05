@@ -1,17 +1,17 @@
-#include "CanvasUser.h"
-#include "CanvasApplication.h"
+#include "User.h"
+#include "Application.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCanvasUser
+// FUser
 
-CCanvasUser::CCanvasUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
+FUser::FUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
     : UserIndex(InUserIndex)
     , Cursor(InCursor)
     , KeyStates()
     , MouseButtonStates()
 { }
 
-void CCanvasUser::Tick(FTimestamp DeltaTime)
+void FUser::Tick(FTimestamp DeltaTime)
 {
     // Update all key-states 
     for (FKeyState& KeyState : KeyStates)
@@ -32,7 +32,7 @@ void CCanvasUser::Tick(FTimestamp DeltaTime)
     }
 }
 
-void CCanvasUser::HandleKeyEvent(const SKeyEvent& KeyEvent)
+void FUser::HandleKeyEvent(const FKeyEvent& KeyEvent)
 {
     int32 Index = GetKeyStateIndexFromKeyCode(KeyEvent.KeyCode);
     if (Index >= 0)
@@ -64,7 +64,7 @@ void CCanvasUser::HandleKeyEvent(const SKeyEvent& KeyEvent)
     }
 }
 
-void CCanvasUser::HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEvent)
+void FUser::HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent)
 {
     int32 Index = GetMouseButtonStateIndexFromMouseButton(MouseButtonEvent.Button);
     if (Index >= 0)
@@ -90,19 +90,19 @@ void CCanvasUser::HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEve
     }
 }
 
-void CCanvasUser::HandleMouseMovedEvent(const SMouseMovedEvent& MouseMovedEvent)
+void FUser::HandleMouseMovedEvent(const FMouseMovedEvent& MouseMovedEvent)
 {
     UNREFERENCED_VARIABLE(MouseMovedEvent);
     // TODO: Call all attached player controllers 
 }
 
-void CCanvasUser::HandleMouseScrolledEvent(const SMouseScrolledEvent& MouseScolledEvent)
+void FUser::HandleMouseScrolledEvent(const FMouseScrolledEvent& MouseScolledEvent)
 {
     UNREFERENCED_VARIABLE(MouseScolledEvent);
     // TODO: Call all attached player controllers
 }
 
-void CCanvasUser::SetCursorPosition(const FIntVector2& Postion)
+void FUser::SetCursorPosition(const FIntVector2& Postion)
 {
     if (Cursor)
     {
@@ -111,7 +111,7 @@ void CCanvasUser::SetCursorPosition(const FIntVector2& Postion)
     }
 }
 
-FIntVector2 CCanvasUser::GetCursorPosition() const
+FIntVector2 FUser::GetCursorPosition() const
 {
     if (Cursor)
     {

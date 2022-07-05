@@ -4,7 +4,7 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
 
-#include "Canvas/CanvasApplication.h"
+#include "Canvas/Application.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -18,7 +18,7 @@
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-ENGINE_API CEngine* GEngine;
+ENGINE_API FEngine* GEngine;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ConsoleCommands
@@ -29,17 +29,17 @@ FAutoConsoleCommand GToggleFullscreen("MainViewport.ToggleFullscreen");
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Engine
 
-CEngine* CEngine::Make()
+FEngine* FEngine::CreateEngine()
 {
-    return dbg_new CEngine();
+    return dbg_new FEngine();
 }
 
-CEngine::CEngine()
+FEngine::FEngine()
 {
-	GExit.GetDelgate().AddRaw(this, &CEngine::Exit);
+	GExit.GetDelgate().AddRaw(this, &FEngine::Exit);
 }
 
-bool CEngine::Initialize()
+bool FEngine::Initialize()
 {
     const uint32 Style =
         WindowStyleFlag_Titled |
@@ -48,7 +48,7 @@ bool CEngine::Initialize()
         WindowStyleFlag_Maximizable |
         WindowStyleFlag_Resizeable;
 
-    CCanvasApplication& Application = CCanvasApplication::Get();
+    FApplication& Application = FApplication::Get();
 
     const uint32 WindowWidth  = 1920;
     const uint32 WindowHeight = 1080;
@@ -69,7 +69,7 @@ bool CEngine::Initialize()
     Application.RegisterMainViewport(MainWindow);
 
     TSharedPtr<ICursor> CursorDevice = Application.GetCursor();
-    User = CCanvasUser::Make(0, CursorDevice);
+    User = FUser::Make(0, CursorDevice);
     if (!User)
     {
         return false;
@@ -147,13 +147,13 @@ bool CEngine::Initialize()
     return true;
 }
 
-bool CEngine::Start()
+bool FEngine::Start()
 {
     Scene->Start();
     return true;
 }
 
-void CEngine::Tick(FTimestamp DeltaTime)
+void FEngine::Tick(FTimestamp DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -163,17 +163,17 @@ void CEngine::Tick(FTimestamp DeltaTime)
     }
 }
 
-bool CEngine::Release()
+bool FEngine::Release()
 {
     return true;
 }
 
-void CEngine::Exit()
+void FEngine::Exit()
 {
     FPlatformApplicationMisc::RequestExit(0);
 }
 
-void CEngine::Destroy()
+void FEngine::Destroy()
 {
     delete this;
 }

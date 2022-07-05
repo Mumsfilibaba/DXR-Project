@@ -1,6 +1,6 @@
 #include "Renderer.h"
 
-#include "Canvas/CanvasApplication.h"
+#include "Canvas/Application.h"
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
@@ -210,7 +210,7 @@ bool CRenderer::Init()
 
     FRHICommandQueue::Get().ExecuteCommandList(MainCmdList);
 
-    CCanvasApplication& Application = CCanvasApplication::Get();
+    FApplication& Application = FApplication::Get();
 
     // Register EventFunc
     WindowHandler->WindowResizedDelegate.BindRaw(this, &CRenderer::OnWindowResize);
@@ -783,7 +783,7 @@ void CRenderer::Tick(const CScene& Scene)
 
         MainCmdList.BeginRenderPass(RenderPass);
         
-        CCanvasApplication::Get().DrawWindows(MainCmdList);
+        FApplication::Get().DrawWindows(MainCmdList);
         
         MainCmdList.EndRenderPass();
     }
@@ -877,9 +877,9 @@ void CRenderer::Release()
 
     FrameStatistics.Reset();
 
-    if (CCanvasApplication::IsInitialized())
+    if (FApplication::IsInitialized())
     {
-        CCanvasApplication& Application = CCanvasApplication::Get();
+        FApplication& Application = FApplication::Get();
         Application.RemoveWindow(TextureDebugger);
         TextureDebugger.Reset();
 
@@ -891,7 +891,7 @@ void CRenderer::Release()
     }
 }
 
-void CRenderer::OnWindowResize(const SWindowResizeEvent& Event)
+void CRenderer::OnWindowResize(const FWindowResizeEvent& Event)
 {
     const uint32 Width = Event.Width;
     const uint32 Height = Event.Height;

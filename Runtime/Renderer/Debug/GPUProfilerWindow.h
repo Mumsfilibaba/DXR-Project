@@ -1,11 +1,11 @@
 #pragma once
 #include "GPUProfiler.h"
 
-#include "Canvas/CanvasWindow.h"
+#include "Canvas/Window.h"
 
 #include <imgui.h>
 
-class CGPUProfilerWindow : public CCanvasWindow
+class CGPUProfilerWindow : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 

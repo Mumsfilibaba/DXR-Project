@@ -92,7 +92,7 @@ FMacApplication::~FMacApplication()
     }
 }
 
-TSharedRef<FGenericWindow> FMacApplication::CreateWindow()
+FGenericWindowRef FMacApplication::CreateWindow()
 {
     TSharedRef<CMacWindow> NewWindow = CMacWindow::CreateMacWindow(this);
     
@@ -137,7 +137,7 @@ void FMacApplication::Tick(float)
     }
 }
 
-void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
+void FMacApplication::SetActiveWindow(const FGenericWindowRef& Window)
 {
 	__block TSharedRef<CMacWindow> MacWindow = StaticCastSharedRef<CMacWindow>(Window);
     MakeMainThreadCall(^
@@ -147,7 +147,7 @@ void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
     }, false);
 }
 
-TSharedRef<FGenericWindow> FMacApplication::GetActiveWindow() const
+FGenericWindowRef FMacApplication::GetActiveWindow() const
 {
     @autoreleasepool
     {
@@ -156,7 +156,7 @@ TSharedRef<FGenericWindow> FMacApplication::GetActiveWindow() const
     }
 }
 
-TSharedRef<FGenericWindow> FMacApplication::GetWindowUnderCursor() const
+FGenericWindowRef FMacApplication::GetWindowUnderCursor() const
 {
     @autoreleasepool
     {

@@ -1,11 +1,11 @@
 #pragma once
-#include "Canvas/CanvasWindow.h"
+#include "Canvas/Window.h"
 
 #include "Core/Containers/SharedRef.h"
 
 #include <imgui.h>
 
-class CRendererInfoWindow : public CCanvasWindow
+class CRendererInfoWindow : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 

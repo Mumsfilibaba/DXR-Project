@@ -10,13 +10,13 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CInputHandler
+// FInputHandler
 
-class CInputHandler
+class FInputHandler
 {
 public:
 
-    virtual ~CInputHandler() = default;
+    virtual ~FInputHandler() = default;
 
     /**
      * @brief: Handle KeyEvent event, if the event-handler consumes the event, return true
@@ -24,7 +24,7 @@ public:
      * @param KeyEvent: Data for the key event
      * @return: Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool HandleKeyEvent(const SKeyEvent& KeyEvent)
+    virtual bool HandleKeyEvent(const FKeyEvent& KeyEvent)
     {
         return false;
     }
@@ -35,7 +35,7 @@ public:
      * @param KeyTypedEvent: Data for the key-typed event
      * @return: Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool HandleKeyTyped(SKeyCharEvent KeyTypedEvent)
+    virtual bool HandleKeyTyped(FKeyCharEvent KeyTypedEvent)
     {
         return false;
     }
@@ -46,7 +46,7 @@ public:
      * @param MouseEvent: Data for the mouse event
      * @return: Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool HandleMouseMove(const SMouseMovedEvent& MouseEvent)
+    virtual bool HandleMouseMove(const FMouseMovedEvent& MouseEvent)
     {
         return false;
     }
@@ -57,7 +57,7 @@ public:
      * @param MouseEvent: Data for the mouse event
      * @return: Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool HandleMouseButtonEvent(const SMouseButtonEvent& MouseEvent)
+    virtual bool HandleMouseButtonEvent(const FMouseButtonEvent& MouseEvent)
     {
         return false;
     }
@@ -68,7 +68,7 @@ public:
      * @param MouseEvent: Data for the mouse event
      * @return: Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool HandleMouseScrolled(const SMouseScrolledEvent& MouseEvent)
+    virtual bool HandleMouseScrolled(const FMouseScrolledEvent& MouseEvent)
     {
         return false;
     }
@@ -79,7 +79,7 @@ public:
      * @param HighPrecisionMouseEvent: Data for the mouse event
      * @return: Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool HandleHighPrecisionMouseInput(const SHighPrecisionMouseEvent& HighPrecisionMouseEvent)
+    virtual bool HandleHighPrecisionMouseInput(const FHighPrecisionMouseEvent& HighPrecisionMouseEvent)
     {
         return false;
     }

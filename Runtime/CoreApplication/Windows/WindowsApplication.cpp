@@ -161,7 +161,7 @@ bool FWindowsApplication::UnregisterRawInputDevices()
     }
 }
 
-TSharedRef<FGenericWindow> FWindowsApplication::CreateWindow()
+FGenericWindowRef FWindowsApplication::CreateWindow()
 {
     TSharedRef<FWindowsWindow> NewWindow = FWindowsWindow::CreateWindowsWindow(this);
  
@@ -210,7 +210,7 @@ void FWindowsApplication::Tick(float)
     }
 }
 
-bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window)
+bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window)
 {
     if (Window)
     {
@@ -223,7 +223,7 @@ bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGe
     }
 }
 
-void FWindowsApplication::SetCapture(const TSharedRef<FGenericWindow>& Window)
+void FWindowsApplication::SetCapture(const FGenericWindowRef& Window)
 {
     if (Window)
     {
@@ -241,7 +241,7 @@ void FWindowsApplication::SetCapture(const TSharedRef<FGenericWindow>& Window)
     }
 }
 
-void FWindowsApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
+void FWindowsApplication::SetActiveWindow(const FGenericWindowRef& Window)
 {
     TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
 
@@ -252,21 +252,21 @@ void FWindowsApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Wind
     }
 }
 
-TSharedRef<FGenericWindow> FWindowsApplication::GetCapture() const
+FGenericWindowRef FWindowsApplication::GetCapture() const
 {
     // TODO: Should we add a reference here
     HWND CaptureWindow = ::GetCapture();
     return GetWindowsWindowFromHWND(CaptureWindow);
 }
 
-TSharedRef<FGenericWindow> FWindowsApplication::GetActiveWindow() const
+FGenericWindowRef FWindowsApplication::GetActiveWindow() const
 {
     // TODO: Should we add a reference here
     HWND ActiveWindow = ::GetActiveWindow();
     return GetWindowsWindowFromHWND(ActiveWindow);
 }
 
-TSharedRef<FGenericWindow> FWindowsApplication::GetWindowUnderCursor() const
+FGenericWindowRef FWindowsApplication::GetWindowUnderCursor() const
 {
     POINT CursorPos;
     if (!GetCursorPos(&CursorPos))

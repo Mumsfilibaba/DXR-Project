@@ -2,16 +2,16 @@
 #include "RHI/RHIResourceViews.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// SCanvasImage
+// FDrawableImage
 
-struct SCanvasImage
+struct FDrawableImage
 {
-    SCanvasImage() = default;
+    FDrawableImage() = default;
 
-    SCanvasImage( const TSharedRef<FRHIShaderResourceView>& InImageView
-                , const TSharedRef<FRHITexture>& InImage
-                , EResourceAccess InBefore
-                , EResourceAccess InAfter)
+    FDrawableImage( const TSharedRef<FRHIShaderResourceView>& InImageView
+                  , const TSharedRef<FRHITexture>& InImage
+                  , EResourceAccess InBefore
+                  , EResourceAccess InAfter)
         : ImageView(InImageView)
         , Image(InImage)
         , BeforeState(InBefore)
@@ -19,7 +19,7 @@ struct SCanvasImage
     { }
 
     TSharedRef<FRHIShaderResourceView> ImageView;
-    TSharedRef<FRHITexture> Image;
+    TSharedRef<FRHITexture>            Image;
 
     EResourceAccess BeforeState;
     EResourceAccess AfterState;

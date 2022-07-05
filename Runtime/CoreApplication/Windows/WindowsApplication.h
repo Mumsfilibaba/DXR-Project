@@ -78,23 +78,23 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericApplication Interface
 
-    virtual TSharedRef<FGenericWindow> CreateWindow() override final;
+    virtual FGenericWindowRef CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
 
 	virtual bool SupportsHighPrecisionMouse() const override final { return false; }
 
-    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
+    virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) override final;
 
-    virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) override final;
+    virtual void SetCapture(const FGenericWindowRef& Window) override final;
 
-    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
+    virtual void SetActiveWindow(const FGenericWindowRef& Window) override final;
 
-    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
+    virtual FGenericWindowRef GetWindowUnderCursor() const override final;
 
-    virtual TSharedRef<FGenericWindow> GetCapture() const override final;
+    virtual FGenericWindowRef GetCapture() const override final;
 
-    virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
+    virtual FGenericWindowRef GetActiveWindow() const override final;
 
 public:
 

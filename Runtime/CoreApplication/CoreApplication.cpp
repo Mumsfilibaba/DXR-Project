@@ -5,4 +5,4 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CoreApplicationModule
 
-IMPLEMENT_ENGINE_MODULE(CDefaultEngineModule, CoreApplication);
+IMPLEMENT_ENGINE_MODULE(FDefaultEngineModule, CoreApplication);

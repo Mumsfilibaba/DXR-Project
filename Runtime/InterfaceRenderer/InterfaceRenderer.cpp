@@ -331,7 +331,7 @@ void CInterfaceRenderer::Render(FRHICommandList& CmdList)
             const ImDrawCmd* Cmd = &DrawCmdList->CmdBuffer[CmdIndex];
             if (Cmd->TextureId)
             {
-                SCanvasImage* Image = reinterpret_cast<SCanvasImage*>(Cmd->TextureId);
+                FDrawableImage* Image = reinterpret_cast<FDrawableImage*>(Cmd->TextureId);
                 RenderedImages.Emplace(Image);
 
                 if (Image->BeforeState != EResourceAccess::PixelShaderResource)
@@ -364,7 +364,7 @@ void CInterfaceRenderer::Render(FRHICommandList& CmdList)
         GlobalVertexOffset += DrawCmdList->VtxBuffer.Size;
     }
 
-    for (SCanvasImage* Image : RenderedImages)
+    for (FDrawableImage* Image : RenderedImages)
     {
         Check(Image != nullptr);
 

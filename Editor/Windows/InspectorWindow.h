@@ -1,11 +1,11 @@
 #pragma once
-#include "Interface/CCanvasWindow.h"
+#include "Interface/FWindow.h"
 
 #include "Core/Containers/SharedRef.h"
 
 #include <imgui.h>
 
-class CInspectorWindow : public CCanvasWindow
+class CInspectorWindow : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 

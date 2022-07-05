@@ -32,7 +32,7 @@ void CInspectorWindow::DrawSceneInfo()
     ImGui::Text( "Current Scene" );
     ImGui::Separator();
 
-    SWindowShape WindowShape;
+    FWindowShape WindowShape;
     GEngine->MainWindow->GetWindowShape( WindowShape );
 
     // Actors

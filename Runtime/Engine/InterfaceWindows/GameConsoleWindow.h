@@ -1,5 +1,5 @@
 #pragma once
-#include "Canvas/CanvasWindow.h"
+#include "Canvas/Window.h"
 #include "Canvas/InputHandler.h"
 #include "Canvas/Events.h"
 
@@ -16,17 +16,17 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CConsoleInputHandler
 
-class CConsoleInputHandler final : public CInputHandler
+class CConsoleInputHandler final : public FInputHandler
 {
 public:
 
-    DECLARE_DELEGATE(CHandleKeyEventDelegate, const SKeyEvent&);
+    DECLARE_DELEGATE(CHandleKeyEventDelegate, const FKeyEvent&);
     CHandleKeyEventDelegate HandleKeyEventDelegate;
 
     CConsoleInputHandler() = default;
     ~CConsoleInputHandler() = default;
 
-    virtual bool HandleKeyEvent(const SKeyEvent& KeyEvent) override final
+    virtual bool HandleKeyEvent(const FKeyEvent& KeyEvent) override final
     {
         HandleKeyEventDelegate.Execute(KeyEvent);
         return bConsoleToggled;
@@ -38,7 +38,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CGameConsoleWindow
 
-class CGameConsoleWindow final : public CCanvasWindow
+class CGameConsoleWindow final : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
@@ -59,7 +59,7 @@ private:
     int32 TextCallback(struct ImGuiInputTextCallbackData* Data);
 
     /** Called when a key is pressed */
-    void HandleKeyPressedEvent(const SKeyEvent& Event);
+    void HandleKeyPressedEvent(const FKeyEvent& Event);
 
     TSharedPtr<CConsoleInputHandler> InputHandler;
 

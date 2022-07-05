@@ -3,7 +3,7 @@
 #include "Windows/InspectorWindow.h"
 #include "Windows/EditorMenuWidget.h"
 
-class CEditorEngine : public CEngine
+class CEditorEngine : public FEngine
 {
 public:
 

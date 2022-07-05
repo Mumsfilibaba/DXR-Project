@@ -36,19 +36,19 @@ public:
 
     virtual void HandleMouseScrolled(float HorizontalDelta, float VerticalDelta) { }
 
-    virtual void HandleHighPrecisionMouseInput(const TSharedRef<FGenericWindow>& Window, int32 x, uint32 y) { }
+    virtual void HandleHighPrecisionMouseInput(const FGenericWindowRef& Window, int32 x, uint32 y) { }
 
-    virtual void HandleWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height) { }
+    virtual void HandleWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height) { }
 
-    virtual void HandleWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 x, int32 y) { }
+    virtual void HandleWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y) { }
 
-    virtual void HandleWindowFocusChanged(const TSharedRef<FGenericWindow>& Window, bool bHasFocus) { }
+    virtual void HandleWindowFocusChanged(const FGenericWindowRef& Window, bool bHasFocus) { }
 
-    virtual void HandleWindowMouseLeft(const TSharedRef<FGenericWindow>& Window) { }
+    virtual void HandleWindowMouseLeft(const FGenericWindowRef& Window) { }
 
-    virtual void HandleWindowMouseEntered(const TSharedRef<FGenericWindow>& Window) { }
+    virtual void HandleWindowMouseEntered(const FGenericWindowRef& Window) { }
 
-    virtual void HandleWindowClosed(const TSharedRef<FGenericWindow>& Window) { }
+    virtual void HandleWindowClosed(const FGenericWindowRef& Window) { }
 
     virtual void HandleApplicationExit(int32 ExitCode) { }
 };

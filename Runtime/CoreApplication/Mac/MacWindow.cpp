@@ -30,7 +30,7 @@ CMacWindow::~CMacWindow()
 	}, true);
 }
 
-bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
+bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle InStyle)
 {
     NSUInteger WindowStyle = 0;
     if (InStyle.Style)
@@ -236,7 +236,7 @@ void CMacWindow::GetTitle(String& OutTitle)
     }
 }
 
-void CMacWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
+void CMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
 	SCOPED_AUTORELEASE_POOL();
 	
@@ -260,7 +260,7 @@ void CMacWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
 	}, true);
 }
 
-void CMacWindow::GetWindowShape(SWindowShape& OutWindowShape) const
+void CMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 {
 	SCOPED_AUTORELEASE_POOL();
 

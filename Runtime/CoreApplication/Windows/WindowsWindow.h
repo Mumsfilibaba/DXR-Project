@@ -38,7 +38,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericWindow Interface
 
-    virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
+    virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle Style) override final;
 
     virtual void Show(bool bMaximized) override final;
 
@@ -62,9 +62,9 @@ public:
 
     virtual void MoveTo(int32 x, int32 y) override final;
 
-    virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) override final;
+    virtual void SetWindowShape(const FWindowShape& Shape, bool bMove) override final;
     
-    virtual void GetWindowShape(SWindowShape& OutWindowShape) const override final;
+    virtual void GetWindowShape(FWindowShape& OutWindowShape) const override final;
 
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const override final;
 

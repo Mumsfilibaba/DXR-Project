@@ -3,12 +3,12 @@
 
 #include "RHI/RHIResourceViews.h"
 
-#include "Canvas/CanvasImage.h"
-#include "Canvas/CanvasWindow.h"
+#include "Canvas/DrawableImage.h"
+#include "Canvas/Window.h"
 
 #include <imgui.h>
 
-class CTextureDebugWindow : public CCanvasWindow
+class CTextureDebugWindow : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
@@ -36,7 +36,7 @@ private:
     ~CTextureDebugWindow() = default;
 
      /** @brief: Debug images */
-    TArray<SCanvasImage> DebugTextures;
+    TArray<FDrawableImage> DebugTextures;
 
      /** @brief: The selected image */
     int32 SelectedTextureIndex = -1;

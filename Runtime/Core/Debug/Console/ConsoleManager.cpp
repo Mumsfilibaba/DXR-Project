@@ -2,7 +2,7 @@
 
 #include "Core/Logging/Log.h"
 
-#include "Canvas/CanvasApplication.h"
+#include "Canvas/Application.h"
 
 // TODO: Remove (Make own? Slow?)
 #include <regex>

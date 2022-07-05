@@ -4,7 +4,7 @@
 #include "Core/Delegates/Event.h"
 
 #include "Canvas/Events.h"
-#include "Canvas/CanvasUser.h"
+#include "Canvas/User.h"
 #include "Canvas/WindowMessageHandler.h"
 
 #include "RHI/RHIViewport.h"
@@ -13,18 +13,19 @@
 #include "Engine/Resources/Material.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Engine - Class representing the engine
+// FEngine - Class representing the engine
 
-class ENGINE_API CEngine
+class ENGINE_API FEngine
 {
+protected:
+
+    FEngine();
+    virtual ~FEngine() = default;
+
 public:
 
-    /**
-     * @brief: Create a new engine instance 
-     * 
-     * @return: Returns a new engine instance
-     */
-    static CEngine* Make();
+    /** @return: Creates and returns a new engine instance */
+    static FEngine* CreateEngine();
 
     /**
      * @brief: Initialize the engine 
@@ -61,13 +62,13 @@ public:
     void Destroy();
 
     /** The main window of the app */
-    TSharedRef<FGenericWindow> MainWindow;
+    FGenericWindowRef MainWindow;
 
     /** The main viewport */
     TSharedRef<FRHIViewport> MainViewport;
 
     /** User */
-    TSharedPtr<CCanvasUser> User;
+    TSharedPtr<FUser> User;
 
     /** The current scene */
     TSharedPtr<CScene> Scene;
@@ -83,12 +84,6 @@ public:
 
     /** Base material */
     TSharedPtr<CMaterial> BaseMaterial;
-
-protected:
-
-    CEngine();
-    virtual ~CEngine() = default;
 };
 
-/** Global Engine Pointer */
-extern ENGINE_API CEngine* GEngine;
+extern ENGINE_API FEngine* GEngine;

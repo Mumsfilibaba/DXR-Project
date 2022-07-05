@@ -29,13 +29,13 @@ public:                                                                     \
 private:
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCanvasWindow
+// FWindow
 
-class CCanvasWindow : public FRefCounted
+class FWindow : public FRefCounted
 {
 public:
 
-    virtual ~CCanvasWindow() = default;
+    virtual ~FWindow() = default;
 
     /**
      * @brief: Initializes the window's context

@@ -4,7 +4,7 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-#include "Canvas/CanvasApplication.h"
+#include "Canvas/Application.h"
 
 #include "Engine/Engine.h"
 
@@ -40,7 +40,7 @@ int32 EngineMain()
 
     // Run loop
     FTimer Timer;
-    while (CCanvasApplication::Get().IsRunning())
+    while (FApplication::Get().IsRunning())
     {
         Timer.Tick();
         CEngineLoop::Tick(Timer.GetDeltaTime());

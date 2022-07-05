@@ -31,17 +31,17 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRendererWindowHandler
 
-class CRendererWindowHandler final : public CWindowMessageHandler
+class CRendererWindowHandler final : public FWindowMessageHandler
 {
 public:
 
-    DECLARE_DELEGATE(CWindowResizedDelegate, const SWindowResizeEvent& ResizeEvent);
+    DECLARE_DELEGATE(CWindowResizedDelegate, const FWindowResizeEvent& ResizeEvent);
     CWindowResizedDelegate WindowResizedDelegate;
 
     CRendererWindowHandler() = default;
     ~CRendererWindowHandler() = default;
 
-    virtual bool OnWindowResized(const SWindowResizeEvent& ResizeEvent) override final
+    virtual bool OnWindowResized(const FWindowResizeEvent& ResizeEvent) override final
     {
         WindowResizedDelegate.Execute(ResizeEvent);
         return true;
@@ -101,7 +101,7 @@ public:
 
 private:
 
-    void OnWindowResize(const SWindowResizeEvent& Event);
+    void OnWindowResize(const FWindowResizeEvent& Event);
 
     bool InitBoundingBoxDebugPass();
 

@@ -16,7 +16,7 @@
 
 #include <Core/Logging/Log.h>
 
-#include <Canvas/CanvasApplication.h>
+#include <Canvas/Application.h>
 
 #include <InterfaceRenderer/InterfaceRenderer.h>
 
@@ -428,7 +428,7 @@ void CSandbox::Tick(FTimestamp DeltaTime)
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
 
-    TSharedPtr<CCanvasUser> User = CCanvasApplication::Get().GetFirstUser();
+    TSharedPtr<FUser> User = FApplication::Get().GetFirstUser();
     if (User->IsKeyDown(EKey::Key_Right))
     {
         CurrentCamera->Rotate(0.0f, NMath::ToRadians(RotationSpeed * Delta), 0.0f);

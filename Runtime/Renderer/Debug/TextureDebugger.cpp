@@ -2,7 +2,7 @@
 
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Canvas/CanvasApplication.h"
+#include "Canvas/Application.h"
 
 #include <imgui.h>
 
@@ -27,7 +27,7 @@ void CTextureDebugWindow::Tick()
         constexpr float InvAspectRatio = 16.0f / 9.0f;
         constexpr float AspectRatio = 9.0f / 16.0f;
 
-        TSharedRef<FGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
+        FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();
 
         const uint32 WindowWidth = MainViewport->GetWidth();
         const uint32 WindowHeight = MainViewport->GetHeight();
@@ -70,7 +70,7 @@ void CTextureDebugWindow::Tick()
                 ImVec4 BgCol = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
                 ImVec4 TintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-                SCanvasImage* CurrImage = &DebugTextures[i];
+                FDrawableImage* CurrImage = &DebugTextures[i];
                 if (ImGui::ImageButton(CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol))
                 {
                     SelectedTextureIndex = i;
@@ -95,7 +95,7 @@ void CTextureDebugWindow::Tick()
             const float ImageHeight = ImageWidth * AspectRatio;
             const int32 ImageIndex = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
 
-            SCanvasImage* CurrImage = &DebugTextures[ImageIndex];
+            FDrawableImage* CurrImage = &DebugTextures[ImageIndex];
             ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
         }
 

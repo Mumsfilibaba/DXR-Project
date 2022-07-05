@@ -54,9 +54,9 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDefaultEngineModule
+// FDefaultEngineModule
 
-class CDefaultEngineModule : public IEngineModule
+class FDefaultEngineModule : public IEngineModule
 {
 public:
 

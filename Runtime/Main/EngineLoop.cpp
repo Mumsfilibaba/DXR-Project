@@ -17,7 +17,7 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Canvas/CanvasApplication.h"
+#include "Canvas/Application.h"
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
@@ -119,7 +119,7 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    if (!CCanvasApplication::CreateApplication())
+    if (!FApplication::CreateApplication())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return false;
@@ -176,7 +176,7 @@ bool CEngineLoop::Initialize()
 #if PROJECT_EDITOR
     GEngine = CEditorEngine::Make();
 #else
-    GEngine = CEngine::Make();
+    GEngine = FEngine::CreateEngine();
 #endif
     if (!GEngine->Initialize())
     {
@@ -204,21 +204,21 @@ bool CEngineLoop::Initialize()
         NEngineLoopDelegates::PostApplicationLoadedDelegate.Broadcast();
     }
 
-    IInterfaceRendererModule* InterfaceRendererModule = FModuleManager::Get().LoadEngineModule<IInterfaceRendererModule>("InterfaceRenderer");
+    IApplicationRendererModule* InterfaceRendererModule = FModuleManager::Get().LoadEngineModule<IApplicationRendererModule>("InterfaceRenderer");
     if (!InterfaceRendererModule)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load InterfaceRenderer");
         return false;
     }
 
-    TSharedRef<ICanvasRenderer> InterfaceRenderer = InterfaceRendererModule->CreateRenderer();
+    TSharedRef<IApplicationRenderer> InterfaceRenderer = InterfaceRendererModule->CreateRenderer();
     if (!InterfaceRenderer)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create InterfaceRenderer");
         return false;
     }
 
-    CCanvasApplication::Get().SetRenderer(InterfaceRenderer);
+    FApplication::Get().SetRenderer(InterfaceRenderer);
 
     // Final thing is to startup the engine
     if (!GEngine->Start())
@@ -236,7 +236,7 @@ void CEngineLoop::Tick(FTimestamp Deltatime)
 {
     TRACE_FUNCTION_SCOPE();
 
-    CCanvasApplication::Get().Tick(Deltatime);
+    FApplication::Get().Tick(Deltatime);
 
     FEngineLoopTicker::Get().Tick(Deltatime);
 
@@ -263,9 +263,9 @@ bool CEngineLoop::Release()
     GRenderer.Release();
 
     // Release the Application. Protect against failed initialization where the global pointer was never initialized
-    if (CCanvasApplication::IsInitialized())
+    if (FApplication::IsInitialized())
     {
-        CCanvasApplication::Get().SetRenderer(nullptr);
+        FApplication::Get().SetRenderer(nullptr);
     }
 
     // Release the Engine. Protect against failed initialization where the global pointer was never initialized
@@ -283,7 +283,7 @@ bool CEngineLoop::Release()
 
     FAsyncTaskManager::Get().Release();
 
-    CCanvasApplication::Release();
+    FApplication::Release();
 
     FThreadManager::Release();
 

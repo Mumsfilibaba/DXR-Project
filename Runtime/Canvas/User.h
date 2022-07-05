@@ -11,30 +11,30 @@
 #include "CoreApplication/ICursor.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCanvasUser
+// FUser
 
-class CANVAS_API CCanvasUser
+class CANVAS_API FUser
 {
-    friend class CCanvasApplication;
+    friend class FApplication;
 
 public:
 
-    static FORCEINLINE TSharedPtr<CCanvasUser> Make(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
+    static FORCEINLINE TSharedPtr<FUser> Make(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
     {
-        return TSharedPtr<CCanvasUser>(dbg_new CCanvasUser(InUserIndex, InCursor));
+        return TSharedPtr<FUser>(dbg_new FUser(InUserIndex, InCursor));
     }
 
-    virtual ~CCanvasUser() = default;
+    virtual ~FUser() = default;
 
     virtual void Tick(FTimestamp DeltaTime);
 
-    virtual void HandleKeyEvent(const SKeyEvent& KeyEvent);
+    virtual void HandleKeyEvent(const FKeyEvent& KeyEvent);
 
-    virtual void HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEvent);
+    virtual void HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent);
 
-    virtual void HandleMouseMovedEvent(const SMouseMovedEvent& MouseMovedEvent);
+    virtual void HandleMouseMovedEvent(const FMouseMovedEvent& MouseMovedEvent);
 
-    virtual void HandleMouseScrolledEvent(const SMouseScrolledEvent& MouseScolledEvent);
+    virtual void HandleMouseScrolledEvent(const FMouseScrolledEvent& MouseScolledEvent);
 
     virtual void SetCursorPosition(const FIntVector2& Postion);
 
@@ -114,7 +114,7 @@ public:
 
 private:
 
-    CCanvasUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
+    FUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
 
      /** @brief: Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const

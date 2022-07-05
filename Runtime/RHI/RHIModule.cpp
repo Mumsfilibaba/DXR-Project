@@ -3,7 +3,7 @@
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
 
-IMPLEMENT_ENGINE_MODULE(CDefaultEngineModule, RHI);
+IMPLEMENT_ENGINE_MODULE(FDefaultEngineModule, RHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Globals

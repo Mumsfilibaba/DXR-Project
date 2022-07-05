@@ -23,13 +23,13 @@ CEditorEngine* CEditorEngine::Make()
 
 bool CEditorEngine::Init()
 {
-    if ( !CEngine::Init() )
+    if ( !FEngine::Init() )
     {
         return false;
     }
 
     /* Create Editor windows */
-    CCanvasApplication& Application = CCanvasApplication::Get();
+    FApplication& Application = FApplication::Get();
 
     TSharedRef<CInspectorWindow> InspectorWindow = CInspectorWindow::Make();
     Application.AddWindow( InspectorWindow );
@@ -42,5 +42,5 @@ bool CEditorEngine::Init()
 
 void CEditorEngine::Tick( FTimestamp Deltatime )
 {
-    CEngine::Tick( Deltatime );
+    FEngine::Tick( Deltatime );
 }

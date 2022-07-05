@@ -1,18 +1,18 @@
 #pragma once
-#include "CanvasImage.h"
-#include "CanvasWindow.h"
+#include "DrawableImage.h"
+#include "Window.h"
 
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Containers/SharedRef.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ICanvasRenderer
+// IApplicationRenderer
 
-class ICanvasRenderer : public FRefCounted
+class IApplicationRenderer : public FRefCounted
 {
 public:
 
-    virtual ~ICanvasRenderer() = default;
+    virtual ~IApplicationRenderer() = default;
 
     /**
      * @brief: Initialize the context
@@ -38,9 +38,9 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// IInterfaceRendererModule
+// IApplicationRendererModule
 
-class IInterfaceRendererModule : public CDefaultEngineModule
+class IApplicationRendererModule : public FDefaultEngineModule
 {
 public:
 
@@ -49,5 +49,5 @@ public:
      * 
      * @return: Returns a newly created interface renderer
      */
-    virtual ICanvasRenderer* CreateRenderer() = 0;
+    virtual IApplicationRenderer* CreateRenderer() = 0;
 };

@@ -12,35 +12,35 @@
 // TODO: Will be moved to the viewport in the future
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowMessageHandler
+// FWindowMessageHandler
 
-class CWindowMessageHandler
+class FWindowMessageHandler
 {
 public:
 
-    virtual ~CWindowMessageHandler() = default;
+    virtual ~FWindowMessageHandler() = default;
 
-    virtual bool OnWindowResized(const SWindowResizeEvent& ResizeEvent)
+    virtual bool OnWindowResized(const FWindowResizeEvent& ResizeEvent)
     {
         return false;
     }
 
-    virtual bool OnWindowMoved(const SWindowMovedEvent& WindowMovedEvent)
+    virtual bool OnWindowMoved(const FWindowMovedEvent& WindowMovedEvent)
     {
         return false;
     }
 
-    virtual bool OnWindowFocusChanged(const SWindowFocusChangedEvent& FocusEvent)
+    virtual bool OnWindowFocusChanged(const FWindowFocusChangedEvent& FocusEvent)
     {
         return false;
     }
 
-    virtual bool OnWindowFrameMouseEvent(const SWindowFrameMouseEvent& MouseEnteredOrLeftEvent)
+    virtual bool OnWindowFrameMouseEvent(const FWindowFrameMouseEvent& MouseEnteredOrLeftEvent)
     {
         return false;
     }
 
-    virtual bool OnWindowClosed(const SWindowClosedEvent& Window)
+    virtual bool OnWindowClosed(const FWindowClosedEvent& Window)
     {
         return false;
     }

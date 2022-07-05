@@ -16,7 +16,7 @@ static void DrawRenderSettings()
 {
     ImGui::BeginChild( "RendererInfo" );
 
-    SWindowShape WindowShape;
+    FWindowShape WindowShape;
     GEngine->MainWindow->GetWindowShape( WindowShape );
 
     ImGui::Spacing();

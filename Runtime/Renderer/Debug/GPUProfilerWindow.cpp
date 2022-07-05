@@ -4,7 +4,7 @@
 #include "Core/Debug/Console/ConsoleManager.h"
 
 #include "Canvas/CanvasUtilities.h"
-#include "Canvas/CanvasApplication.h"
+#include "Canvas/Application.h"
 
 #include <imgui.h>
 
@@ -174,7 +174,7 @@ void CGPUProfilerWindow::DrawGPUData(float Width)
 void CGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    TSharedRef<FGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
+    FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/RefCounted.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/SharedRef.h"
 #include "Core/Templates/EnumUtilities.h"
 
 #include "CoreApplication/CoreApplication.h"
@@ -12,6 +13,11 @@
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedefs
+
+typedef TSharedRef<class FGenericWindow> FGenericWindowRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EWindowStyleFlag - Window style flags
@@ -29,13 +35,13 @@ enum EWindowStyleFlag : uint32
 ENUM_CLASS_OPERATORS(EWindowStyleFlag);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SWindowStyle
+// FWindowStyle
 
-struct SWindowStyle
+struct FWindowStyle
 {
-    SWindowStyle() = default;
+    FWindowStyle() = default;
 
-    FORCEINLINE SWindowStyle(uint32 InStyle)
+    FORCEINLINE FWindowStyle(uint32 InStyle)
         : Style(InStyle)
     { }
 
@@ -68,13 +74,13 @@ struct SWindowStyle
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SWindowShape
+// FWindowShape
 
-struct SWindowShape
+struct FWindowShape
 {
-    SWindowShape() = default;
+    FWindowShape() = default;
 
-    FORCEINLINE SWindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
+    FORCEINLINE FWindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
         : Width(InWidth)
         , Height(InHeight)
         , Position({ x, y })
@@ -101,12 +107,11 @@ protected:
 
 public:
 
-    virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) { return true; }
+    virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle Style) { return true; }
 
     virtual void Show(bool bMaximized) { }
 
     virtual void Minimize() { }
-
     virtual void Maximize() { }
 
     virtual void Close() { }
@@ -115,34 +120,29 @@ public:
 
     virtual void ToggleFullscreen() { }
 
-    virtual bool IsValid() const { return false; }
-
     virtual bool IsActiveWindow() const { return false; }
+    virtual bool IsValid()        const { return false; }
 
     virtual void SetTitle(const FString& Title) { }
-
-    virtual void GetTitle(FString& OutTitle) { }
+    virtual void GetTitle(FString& OutTitle)    { }
 
     virtual void MoveTo(int32 x, int32 y) { }
 
-    virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) { }
-
-    virtual void GetWindowShape(SWindowShape& OutWindowShape) const { }
+    virtual void SetWindowShape(const FWindowShape& Shape, bool bMove) { }
+    virtual void GetWindowShape(FWindowShape& OutWindowShape) const    { }
 
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const { }
 
-    virtual uint32 GetWidth() const { return 0; }
-
+    virtual uint32 GetWidth()  const { return 0; }
     virtual uint32 GetHeight() const { return 0; }
 
-    virtual void SetPlatformHandle(void* InPlatformHandle) { }
+    virtual void  SetPlatformHandle(void* InPlatformHandle) { }
+    virtual void* GetPlatformHandle() const                 { return nullptr; }
 
-    virtual void* GetPlatformHandle() const { return nullptr; }
-
-    FORCEINLINE SWindowStyle GetStyle() const { return StyleParams; }
+    FORCEINLINE FWindowStyle GetStyle() const { return StyleParams; }
 
 protected:
-    SWindowStyle StyleParams;
+    FWindowStyle StyleParams;
 };
 
 #if defined(COMPILER_MSVC)

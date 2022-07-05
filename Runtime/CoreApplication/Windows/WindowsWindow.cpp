@@ -37,7 +37,7 @@ FWindowsWindow::~FWindowsWindow()
     }
 }
 
-bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
+bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle InStyle)
 {
     // Determine the window style for WinAPI
     DWORD NewStyle   = 0;
@@ -137,7 +137,7 @@ bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 I
 
         UpdateWindow(Window);
 
-        SWindowShape NewWindowShape(RealWidth, RealHeight, PositionX, PositionY);
+        FWindowShape NewWindowShape(RealWidth, RealHeight, PositionX, PositionY);
         SetWindowShape(NewWindowShape, true);
 
         return true;
@@ -307,7 +307,7 @@ void FWindowsWindow::MoveTo(int32 x, int32 y)
     SetWindowPos(Window, nullptr, x, y, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
 }
 
-void FWindowsWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
+void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
     Check(Window != 0);
 
@@ -350,7 +350,7 @@ void FWindowsWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
     }
 }
 
-void FWindowsWindow::GetWindowShape(SWindowShape& OutWindowShape) const
+void FWindowsWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 {
     Check(Window != 0);
 
@@ -374,7 +374,7 @@ void FWindowsWindow::GetWindowShape(SWindowShape& OutWindowShape) const
             Height = static_cast<uint32>(Rect.bottom - Rect.top);
         }
 
-        OutWindowShape = SWindowShape(Width, Height, PositionX, PositionY);
+        OutWindowShape = FWindowShape(Width, Height, PositionX, PositionY);
     }
 }
 
@@ -446,7 +446,7 @@ void FWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
         uint32 FullscreenHeight;
         GetFullscreenInfo(FullscreenWidth, FullscreenHeight);
 
-        SWindowShape WindowShape;
+        FWindowShape WindowShape;
         GetWindowShape(WindowShape);
 
         const LONG BorderlessStyleMask   = (~WS_BORDER | ~WS_DLGFRAME | ~WS_THICKFRAME);
