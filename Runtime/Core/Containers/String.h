@@ -2073,7 +2073,7 @@ private:
 // Predefined types
 
 using FString  = TString<char>;
-using WString = TString<wchar_t>;
+using FWString = TString<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Add TString to be a string-type
@@ -2090,9 +2090,9 @@ struct TIsTStringType<TString<CharType>>
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // char and wide conversion functions
 
-inline WString CharToWide(const FStringView& CharString) noexcept
+inline FWString CharToWide(const FStringView& CharString) noexcept
 {
-    WString NewString;
+    FWString NewString;
     NewString.Resize(CharString.Length());
 
     mbstowcs(NewString.Data(), CharString.CStr(), CharString.Length());
@@ -2100,9 +2100,9 @@ inline WString CharToWide(const FStringView& CharString) noexcept
     return NewString;
 }
 
-inline WString CharToWide(const FString& CharString) noexcept
+inline FWString CharToWide(const FString& CharString) noexcept
 {
-    WString NewString;
+    FWString NewString;
     NewString.Resize(CharString.Length());
 
     mbstowcs(NewString.Data(), CharString.CStr(), CharString.Length());
@@ -2110,7 +2110,7 @@ inline WString CharToWide(const FString& CharString) noexcept
     return NewString;
 }
 
-inline FString WideToChar(const FWStringView& WideString) noexcept
+inline FString WideToChar(const FFWStringView& WideString) noexcept
 {
     FString NewString;
     NewString.Resize(WideString.Length());
@@ -2120,7 +2120,7 @@ inline FString WideToChar(const FWStringView& WideString) noexcept
     return NewString;
 }
 
-inline FString WideToChar(const WString& WideString) noexcept
+inline FString WideToChar(const FWString& WideString) noexcept
 {
     FString NewString;
     NewString.Resize(WideString.Length());
@@ -2164,7 +2164,7 @@ struct TStringHasher
 // Predefined hashing types
 
 using FStringHasher  = TStringHasher<char>;
-using FWStringHasher = TStringHasher<wchar_t>;
+using FFWStringHasher = TStringHasher<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper for converting to a string
@@ -2215,42 +2215,42 @@ inline FString ToString<bool>(bool bElement)
 }
 
 template<typename T>
-typename TEnableIf<TIsFloatingPoint<T>::Value, WString>::Type ToWideString(T Element)
+typename TEnableIf<TIsFloatingPoint<T>::Value, FWString>::Type ToWideString(T Element)
 {
-    return WString::CreateFormated(L"%f", Element);
+    return FWString::CreateFormated(L"%f", Element);
 }
 
 template<typename T>
-typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, WString>::Type ToWideString(T Element);
+typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, FWString>::Type ToWideString(T Element);
 
 template<>
-inline WString ToWideString<int32>(int32 Element)
+inline FWString ToWideString<int32>(int32 Element)
 {
-    return WString::CreateFormated(L"%d", Element);
+    return FWString::CreateFormated(L"%d", Element);
 }
 
 template<>
-inline WString ToWideString<int64>(int64 Element)
+inline FWString ToWideString<int64>(int64 Element)
 {
-    return WString::CreateFormated(L"%lld", Element);
+    return FWString::CreateFormated(L"%lld", Element);
 }
 
 template<>
-inline WString ToWideString<uint32>(uint32 Element)
+inline FWString ToWideString<uint32>(uint32 Element)
 {
-    return WString::CreateFormated(L"%u", Element);
+    return FWString::CreateFormated(L"%u", Element);
 }
 
 template<>
-inline WString ToWideString<uint64>(uint64 Element)
+inline FWString ToWideString<uint64>(uint64 Element)
 {
-    return WString::CreateFormated(L"%llu", Element);
+    return FWString::CreateFormated(L"%llu", Element);
 }
 
 template<>
-inline WString ToWideString<bool>(bool bElement)
+inline FWString ToWideString<bool>(bool bElement)
 {
-    return WString(bElement ? L"true" : L"false");
+    return FWString(bElement ? L"true" : L"false");
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

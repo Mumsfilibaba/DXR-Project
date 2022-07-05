@@ -192,8 +192,8 @@ bool FD3D12ShaderCompiler::CompileFromFile(
 {
     Code.Clear();
 
-    WString WideFilePath = CharToWide(FilePath);
-    WString WideEntrypoint = CharToWide(EntryPoint);
+    FWString WideFilePath = CharToWide(FilePath);
+    FWString WideEntrypoint = CharToWide(EntryPoint);
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
     HRESULT Result = DxLibrary->CreateBlobFromFile(WideFilePath.CStr(), nullptr, &SourceBlob);
@@ -216,7 +216,7 @@ bool FD3D12ShaderCompiler::CompileShader(
     EShaderModel ShaderModel,
     TArray<uint8>& Code)
 {
-    WString WideEntrypoint = CharToWide(EntryPoint);
+    FWString WideEntrypoint = CharToWide(EntryPoint);
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
     HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(ShaderSource.CStr(), sizeof(char) * static_cast<uint32>(ShaderSource.Size()), CP_UTF8, &SourceBlob);
@@ -347,7 +347,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
 
     // Convert defines
     TArray<DxcDefine> DxDefines;
-    TArray<WString> StrBuff;
+    TArray<FWString> StrBuff;
     if (Defines)
     {
         StrBuff.Reserve(Defines->Size() * 2);
@@ -355,8 +355,8 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
 
         for (const FShaderDefine& Define : *Defines)
         {
-            const WString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
-            const WString& WideValue = StrBuff.Emplace(CharToWide(Define.Value));
+            const FWString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
+            const FWString& WideValue = StrBuff.Emplace(CharToWide(Define.Value));
             DxDefines.Push({ WideDefine.CStr(), WideValue.CStr() });
         }
     }
@@ -367,7 +367,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
 
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     wchar_t TargetProfile[BufferLength];
-    FWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FFWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
     TComPtr<IDxcOperationResult> Result;
     HRESULT hResult = DxCompiler->Compile(
@@ -413,7 +413,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
         return false;
     }
 
-    FString AsciiFilePath = (FilePath != nullptr) ? WideToChar(WString(FilePath)) : "";
+    FString AsciiFilePath = (FilePath != nullptr) ? WideToChar(FWString(FilePath)) : "";
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
         FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));

@@ -69,7 +69,7 @@ public:
 
     FORCEINLINE void SetName(const FString& Name)
     {
-        WString WideDebugName = CharToWide(Name);
+        FWString WideDebugName = CharToWide(Name);
         Queue->SetName(WideDebugName.CStr());
     }
 

@@ -122,7 +122,7 @@ public:
 
     virtual void SetName(const FString& InName) override final
     {
-        WString WideName = CharToWide(InName);
+        FWString WideName = CharToWide(InName);
         PipelineState->SetName(WideName.CStr());
     }
 
@@ -155,7 +155,7 @@ public:
 
     virtual void SetName(const FString& InName) override final
     {
-        WString WideName = CharToWide(InName);
+        FWString WideName = CharToWide(InName);
         PipelineState->SetName(WideName.CStr());
     }
 
@@ -196,7 +196,7 @@ public:
 
     virtual void SetName(const FString& InName) override
     {
-        WString WideName = CharToWide(InName);
+        FWString WideName = CharToWide(InName);
         StateObject->SetName(WideName.CStr());
     }
 

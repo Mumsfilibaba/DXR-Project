@@ -1060,7 +1060,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     D3D12_ERROR_COND(Desc.MipLevels > 1, "MipLevels must be more than one in order to generate any MipLevels");
 
     // TODO: Create this placed from a Heap? See what performance is 
-    TSharedRef<FD3D12Resource> StagingTexture = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12Texture->GetD3D12Resource()->GetHeapType());
+    FD3D12ResourceRef StagingTexture = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12Texture->GetD3D12Resource()->GetHeapType());
     if (!StagingTexture->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
     {
         LOG_ERROR("[FD3D12CommandContext] Failed to create StagingTexture for GenerateMips");

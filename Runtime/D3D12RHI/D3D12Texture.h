@@ -181,13 +181,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12TextureCubeArray
+// FD3D12TextureCubeArray
 
-class CD3D12TextureCubeArray : public FRHITextureCubeArray, public FD3D12Texture
+class FD3D12TextureCubeArray : public FRHITextureCubeArray, public FD3D12Texture
 {
 public:
     
-    explicit CD3D12TextureCubeArray(FD3D12Device* InDevice, const FRHITextureCubeArrayInitializer& Initializer)
+    explicit FD3D12TextureCubeArray(FD3D12Device* InDevice, const FRHITextureCubeArrayInitializer& Initializer)
         : FRHITextureCubeArray(Initializer)
         , FD3D12Texture(InDevice)
     { }

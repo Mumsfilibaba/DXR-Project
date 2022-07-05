@@ -528,7 +528,7 @@ public:
 // Predefined types
 
 using FStringUtils  = TStringUtils<char>;
-using FWStringUtils = TStringUtils<wchar_t>;
+using FFWStringUtils = TStringUtils<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helpers for StringParsing
@@ -730,4 +730,4 @@ FORCEINLINE uint64 TStringParse<char>::ParseInt<uint64>(const CharType* String, 
 // Predefined types
 
 using FStringParse  = TStringParse<char>;
-using FWStringParse = TStringParse<wchar_t>;
+using FFWStringParse = TStringParse<wchar_t>;

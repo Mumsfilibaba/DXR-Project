@@ -211,7 +211,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     OutByteCode.Clear();
 
     // Use the asset-folder as base for the shader-files
-    WString WideFilePath   = CharToWide(AssetPath + '/' + Filename);
+    FWString WideFilePath   = CharToWide(AssetPath + '/' + Filename);
 
     TComPtr<IDxcCompiler> Compiler;
     HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
@@ -267,7 +267,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     const FString ArgumentsString = CreateArgString(CompileArgs.CreateView());
     
     // Convert defines
-    TArray<WString>   StrBuff;
+    TArray<FWString>   StrBuff;
     TArray<DxcDefine> DxcDefines;
     
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
@@ -278,8 +278,8 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
 
         for (const FShaderDefine& Define : Defines)
         {
-            const WString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
-            const WString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
+            const FWString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
+            const FWString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
             DxcDefines.Push({ WideDefine.CStr(), WideValue.CStr() });
         }
     }
@@ -291,9 +291,9 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     
     WCHAR TargetProfile[BufferLength];
-    FWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FFWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
-    const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+    const FWString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
     TComPtr<IDxcOperationResult> Result;
     hResult = Compiler->Compile( SourceBlob.Get()
@@ -428,7 +428,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     const FString ArgumentsString = CreateArgString(CompileArgs.CreateView());
 
     // Convert defines
-    TArray<WString>   StrBuff;
+    TArray<FWString>   StrBuff;
     TArray<DxcDefine> DxcDefines;
 
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
@@ -439,8 +439,8 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
 
         for (const FShaderDefine& Define : Defines)
         {
-            const WString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
-            const WString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
+            const FWString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
+            const FWString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
             DxcDefines.Push({ WideDefine.CStr(), WideValue.CStr() });
         }
     }
@@ -452,10 +452,10 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
 
     WCHAR TargetProfile[BufferLength];
-    FWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FFWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     // Use the asset-folder as base for the shader-files
-    const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+    const FWString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
     TComPtr<IDxcBlob>            SourceBlob = dbg_new CShaderBlob(ShaderSource.Data(), ShaderSource.SizeInBytes());
     TComPtr<IDxcOperationResult> Result;
@@ -625,7 +625,7 @@ bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const 
 
 FString FRHIShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
 {
-    WString WArgumentsString;
+    FWString WArgumentsString;
     for (LPCWSTR Arg : Args)
     {
         WArgumentsString += Arg + ' ';

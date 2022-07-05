@@ -18,12 +18,12 @@ public:
 
     virtual void SetResource(FD3D12Resource* InResource) { Resource = InResource; }
 
-    uint64 GetSizeInBytes() const { return Resource ? static_cast<uint64>(Resource->GetDesc().Width) : 0u; }
+    uint64          GetSizeInBytes()   const { return Resource ? static_cast<uint64>(Resource->GetDesc().Width) : 0u; }
 
     FD3D12Resource* GetD3D12Resource() const { return Resource.Get(); }
 
 protected:
-    TSharedRef<FD3D12Resource> Resource;
+    FD3D12ResourceRef Resource;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

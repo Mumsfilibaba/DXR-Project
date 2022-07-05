@@ -1173,7 +1173,7 @@ private:
 // Predefined types
 
 using FStringView  = TStringView<char>;
-using FWStringView = TStringView<wchar_t>;
+using FFWStringView = TStringView<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Operators

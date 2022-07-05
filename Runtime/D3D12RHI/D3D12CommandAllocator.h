@@ -41,7 +41,7 @@ public:
 
     FORCEINLINE void SetName(const FString& Name)
     {
-        WString WideName = CharToWide(Name);
+        FWString WideName = CharToWide(Name);
         Allocator->SetName(WideName.CStr());
     }
 

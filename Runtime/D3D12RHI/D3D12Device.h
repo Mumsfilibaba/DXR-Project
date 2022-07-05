@@ -105,7 +105,7 @@ public:
     FD3D12AdapterInitializer GetInitializer()   const { return Initializer; }
     uint32                   GetAdapterIndex()  const { return AdapterIndex; }
     
-    FString                   GetDescription() const { return WideToChar(FWStringView(AdapterDesc.Description)); }
+    FString                   GetDescription() const { return WideToChar(FFWStringView(AdapterDesc.Description)); }
 
     bool                     IsDebugLayerEnabled() const { return Initializer.bEnableDebugLayer; }
 
@@ -193,6 +193,9 @@ public:
      
     bool                      Initialize();
 
+    void                      AddWastedBufferSpace(uint64 WastedSize)    { WastedBufferSpace += WastedSize; }
+    void                      RemoveWastedBufferSpace(uint64 WastedSize) { WastedBufferSpace += WastedSize; }
+
     int32                     GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
     FD3D12Adapter*            GetAdapter()            const { return Adapter; }
@@ -265,6 +268,8 @@ private:
 #if WIN11_BUILD_22000
     TComPtr<ID3D12Device9> Device9;
 #endif
+
+    uint64                 WastedBufferSpace = 0;
 
     D3D_FEATURE_LEVEL      MinFeatureLevel;
     D3D_FEATURE_LEVEL      ActiveFeatureLevel;

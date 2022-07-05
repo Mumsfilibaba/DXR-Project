@@ -153,7 +153,7 @@ CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12
 }
 
 template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12TextureCubeArray>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12TextureCubeArray>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
@@ -177,7 +177,7 @@ CONSTEXPR bool IsTextureCube<class FD3D12TextureCube>()
 }
 
 template<>
-CONSTEXPR bool IsTextureCube<class CD3D12TextureCubeArray>()
+CONSTEXPR bool IsTextureCube<class FD3D12TextureCubeArray>()
 {
     return true;
 }
