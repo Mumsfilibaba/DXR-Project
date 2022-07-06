@@ -31,19 +31,17 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FWindowsConsoleWindow Interface
 
-    virtual void Print(const FString& Message) override final;
-
+    virtual void Print(const FString& Message)     override final;
     virtual void PrintLine(const FString& Message) override final;
 
     virtual void Clear() override final;
 
     virtual void SetTitle(const FString& Title) override final;
-    
     virtual void SetColor(EConsoleColor Color)  override final;
 
 private:
     HANDLE           ConsoleHandle;
-    FCriticalSection ConsoleMutex;
+    FCriticalSection ConsoleHandleCS;
 };
 
 #if defined(COMPILER_MSVC)

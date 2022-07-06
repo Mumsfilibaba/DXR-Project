@@ -63,7 +63,7 @@ void FWindowsCursor::SetPosition(FGenericWindow* RelativeWindow, int32 x, int32 
     POINT CursorPos = { x, y };
     if (RelativeWindow)
     {
-        TSharedRef<FWindowsWindow> WinWindow = MakeSharedRef<FWindowsWindow>(RelativeWindow);
+        FWindowsWindowRef WinWindow = MakeSharedRef<FWindowsWindow>(RelativeWindow);
 
         HWND hRelative = WinWindow->GetWindowHandle();
         if (!ClientToScreen(hRelative, &CursorPos))
@@ -85,7 +85,7 @@ void FWindowsCursor::GetPosition(FGenericWindow* RelativeWindow, int32& OutX, in
 
     if (RelativeWindow)
     {
-        TSharedRef<FWindowsWindow> WinRelative = MakeSharedRef<FWindowsWindow>(RelativeWindow);
+        FWindowsWindowRef WinRelative = MakeSharedRef<FWindowsWindow>(RelativeWindow);
 
         HWND Relative = WinRelative->GetWindowHandle();
         if (!ScreenToClient(Relative, &CursorPos))

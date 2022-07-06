@@ -11,24 +11,14 @@
 
 FD3D12DescriptorCache::FD3D12DescriptorCache(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
+    , CurrentCommandList(nullptr)
     , NullCBV(nullptr)
     , NullSRV(nullptr)
     , NullUAV(nullptr)
+    , NullRTV(nullptr)
     , NullSampler(nullptr)
-    , ShaderResourceViewCache()
-    , UnorderedAccessViewCache()
-    , ConstantBufferViewCache()
-    , SamplerStateCache()
     , RangeSizes()
 { }
-
-FD3D12DescriptorCache::~FD3D12DescriptorCache()
-{
-    SafeDelete(NullCBV);
-    SafeRelease(NullSRV);
-    SafeRelease(NullUAV);
-    SafeRelease(NullSampler);
-}
 
 bool FD3D12DescriptorCache::Initialize()
 {
@@ -92,6 +82,25 @@ bool FD3D12DescriptorCache::Initialize()
         return false;
     }
 
+    D3D12_RENDER_TARGET_VIEW_DESC RTVDesc;
+    FMemory::Memzero(&RTVDesc);
+
+    RTVDesc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
+    RTVDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    RTVDesc.Texture2D.MipSlice   = 0;
+    RTVDesc.Texture2D.PlaneSlice = 0;
+
+    NullRTV = dbg_new FD3D12RenderTargetView(GetDevice(), D3D12CoreInterface->GetRenderTargetOfflineDescriptorHeap());
+    if (!NullRTV->AllocateHandle())
+    {
+        return false;
+    }
+
+    if (!NullRTV->CreateView(nullptr, RTVDesc))
+    {
+        return false;
+    }
+
     D3D12_SAMPLER_DESC SamplerDesc;
     FMemory::Memzero(&SamplerDesc);
 
@@ -121,24 +130,24 @@ bool FD3D12DescriptorCache::Initialize()
     }
 
     // Start by resetting the descriptor cache
-    Reset();
+    Clear();
     return true;
 }
 
-void FD3D12DescriptorCache::PrepareGraphicsDescriptors(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature, FD3D12PipelineStageMask PipelineMask)
+void FD3D12DescriptorCache::PrepareGraphicsDescriptors(FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature, FD3D12PipelineStageMask PipelineMask)
 {
     // TRACE_FUNCTION_SCOPE();
 
-    Check(CmdBatch      != nullptr);
-    Check(RootSignature != nullptr);
+    Check(CmdBatch           != nullptr);
+    Check(CurrentCommandList != nullptr);
+    Check(RootSignature      != nullptr);
 
     // Vertex and render-targets
-    VertexBufferCache.CommitState(CmdList, CmdBatch);
-    RenderTargetCache.CommitState(CmdList);
+    VertexBufferCache.CommitState(*CurrentCommandList, CmdBatch);
 
     // Allocate descriptors for resources and samplers 
     ID3D12Device*              DxDevice  = GetDevice()->GetD3D12Device();
-    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+    ID3D12GraphicsCommandList* DxCmdList = CurrentCommandList->GetGraphicsCommandList();
 
     FD3D12OnlineDescriptorManager* ResourceManager = CmdBatch->GetResourceDescriptorManager();
     FD3D12OnlineDescriptorManager* SamplerManager  = CmdBatch->GetSamplerDescriptorManager();
@@ -166,15 +175,16 @@ void FD3D12DescriptorCache::PrepareGraphicsDescriptors(FD3D12CommandList& CmdLis
     }
 }
 
-void FD3D12DescriptorCache::PrepareComputeDescriptors(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature)
+void FD3D12DescriptorCache::PrepareComputeDescriptors(FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature)
 {
     // TRACE_FUNCTION_SCOPE();
 
-    Check(CmdBatch      != nullptr);
-    Check(RootSignature != nullptr);
+    Check(CmdBatch           != nullptr);
+    Check(CurrentCommandList != nullptr);
+    Check(RootSignature      != nullptr);
 
     ID3D12Device*              DxDevice  = GetDevice()->GetD3D12Device();
-    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+    ID3D12GraphicsCommandList* DxCmdList = CurrentCommandList->GetGraphicsCommandList();
 
     FD3D12OnlineDescriptorManager* ResourceDescriptors = CmdBatch->GetResourceDescriptorManager();
     FD3D12OnlineDescriptorManager* SamplerDescriptors  = CmdBatch->GetSamplerDescriptorManager();
@@ -194,18 +204,46 @@ void FD3D12DescriptorCache::PrepareComputeDescriptors(FD3D12CommandList& CmdList
     CopyAndBindComputeDescriptors(DxDevice, DxCmdList, SamplerStateCache, ParameterIndex);
 }
 
-void FD3D12DescriptorCache::Reset()
+void FD3D12DescriptorCache::SetRenderTargets(FD3D12RenderTargetViewCache& RenderTargets, FD3D12DepthStencilView* DepthStencil)
 {
-    VertexBufferCache.Reset();
-    RenderTargetCache.Reset();
+    Check(CurrentCommandList != nullptr);
 
-    ConstantBufferViewCache.Reset(NullCBV);
-    ShaderResourceViewCache.Reset(NullSRV);
-    UnorderedAccessViewCache.Reset(NullUAV);
-    SamplerStateCache.Reset(NullSampler);
+    D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetViewHandles[D3D12_MAX_RENDER_TARGET_COUNT];
+    for (uint32 Index = 0; Index < RenderTargets.NumRenderTargets; ++Index)
+    {
+        FD3D12RenderTargetView* CurrentView = RenderTargets.RenderTargetViews[Index];
+        if (!CurrentView)
+        {
+            CurrentView = NullRTV.Get();
+        }
 
+        Check(CurrentView != nullptr);
+        RenderTargetViewHandles[Index] = CurrentView->GetOfflineHandle();
+    }
+
+    if (DepthStencil)
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilHandle = DepthStencil->GetOfflineHandle();
+        CurrentCommandList->OMSetRenderTargets(RenderTargetViewHandles, RenderTargets.NumRenderTargets, false, &DepthStencilHandle);
+    }
+    else
+    {
+        CurrentCommandList->OMSetRenderTargets(RenderTargetViewHandles, RenderTargets.NumRenderTargets, false, nullptr);
+    }
+}
+
+void FD3D12DescriptorCache::Clear()
+{
+    CurrentCommandList         = nullptr;
     PreviousDescriptorHeaps[0] = nullptr;
     PreviousDescriptorHeaps[1] = nullptr;
+
+    VertexBufferCache.Reset();
+
+    ConstantBufferViewCache.Reset(NullCBV);
+    ShaderResourceViewCache.Reset(NullSRV.Get());
+    UnorderedAccessViewCache.Reset(NullUAV.Get());
+    SamplerStateCache.Reset(NullSampler.Get());
 }
 
 void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps( ID3D12GraphicsCommandList* CmdList

@@ -5,7 +5,7 @@
 #include "D3D12RootSignature.h"
 #include "D3D12Core.h"
 #include "D3D12CoreInterface.h"
-#include "D3D12Views.h"
+#include "D3D12ResourceViews.h"
 #include "D3D12RayTracing.h"
 #include "D3D12PipelineState.h"
 #include "D3D12Texture.h"
@@ -150,7 +150,7 @@ bool FD3D12CoreInterface::Initialize(bool bEnableDebug)
     }
 
     GenerateMipsTex2D_PSO = dbg_new FD3D12ComputePipelineState(GetDevice(), Shader);
-    if (!GenerateMipsTex2D_PSO->Init())
+    if (!GenerateMipsTex2D_PSO->Initialize())
     {
         D3D12_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTex2D PipelineState");
         return false;
@@ -177,7 +177,7 @@ bool FD3D12CoreInterface::Initialize(bool bEnableDebug)
     }
 
     GenerateMipsTexCube_PSO = dbg_new FD3D12ComputePipelineState(GetDevice(), Shader);
-    if (!GenerateMipsTexCube_PSO->Init())
+    if (!GenerateMipsTexCube_PSO->Initialize())
     {
         D3D12_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTexCube PipelineState");
         return false;
@@ -364,7 +364,7 @@ D3D12TextureType* FD3D12CoreInterface::CreateTexture(const InitializerType& Init
             return nullptr;
         }
 
-        if (!DefaultSRV->CreateView(NewTexture->GetD3D12Resource(), ViewDesc))
+        if (!DefaultSRV->CreateView(NewTexture->GetResource(), ViewDesc))
         {
             return nullptr;
         }
@@ -396,7 +396,7 @@ D3D12TextureType* FD3D12CoreInterface::CreateTexture(const InitializerType& Init
                 return nullptr;
             }
 
-            if (!DefaultUAV->CreateView(nullptr, NewTexture->GetD3D12Resource(), ViewDesc))
+            if (!DefaultUAV->CreateView(nullptr, NewTexture->GetResource(), ViewDesc))
             {
                 return nullptr;
             }
@@ -1114,8 +1114,8 @@ FRHIVertexInputLayout* FD3D12CoreInterface::RHICreateVertexInputLayout(const FRH
 
 FRHIGraphicsPipelineState* FD3D12CoreInterface::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& Initializer)
 {
-    TSharedRef<FD3D12GraphicsPipelineState> NewPipelineState = dbg_new FD3D12GraphicsPipelineState(GetDevice());
-    if (!NewPipelineState->Init(Initializer))
+    FD3D12GraphicsPipelineStateRef NewPipelineState = dbg_new FD3D12GraphicsPipelineState(GetDevice());
+    if (!NewPipelineState->Initialize(Initializer))
     {
         return nullptr;
     }
@@ -1129,7 +1129,7 @@ FRHIComputePipelineState* FD3D12CoreInterface::RHICreateComputePipelineState(con
 
     TSharedRef<FD3D12ComputeShader>        Shader           = MakeSharedRef<FD3D12ComputeShader>(Initializer.Shader);
     TSharedRef<FD3D12ComputePipelineState> NewPipelineState = dbg_new FD3D12ComputePipelineState(GetDevice(), Shader);
-    if (!NewPipelineState->Init())
+    if (!NewPipelineState->Initialize())
     {
         return nullptr;
     }
@@ -1140,7 +1140,7 @@ FRHIComputePipelineState* FD3D12CoreInterface::RHICreateComputePipelineState(con
 FRHIRayTracingPipelineState* FD3D12CoreInterface::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Initializer)
 {
     TSharedRef<FD3D12RayTracingPipelineState> NewPipelineState = dbg_new FD3D12RayTracingPipelineState(GetDevice());
-    if (NewPipelineState->Init(Initializer))
+    if (NewPipelineState->Initialize(Initializer))
     {
         return NewPipelineState.ReleaseOwnership();
     }
@@ -1157,8 +1157,8 @@ FRHITimestampQuery* FD3D12CoreInterface::RHICreateTimestampQuery()
 
 FRHIViewport* FD3D12CoreInterface::RHICreateViewport(const FRHIViewportInitializer& Initializer)
 {
-    TSharedRef<FD3D12Viewport> Viewport = dbg_new FD3D12Viewport(GetDevice(), DirectCmdContext, Initializer);
-    if (Viewport->Init())
+    FD3D12ViewportRef Viewport = dbg_new FD3D12Viewport(GetDevice(), DirectCmdContext, Initializer);
+    if (Viewport->Initialize())
     {
         return Viewport.ReleaseOwnership();
     }

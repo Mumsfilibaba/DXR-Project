@@ -1,7 +1,7 @@
 #pragma once
 #include "D3D12DeviceChild.h"
 #include "D3D12Buffer.h"
-#include "D3D12Views.h"
+#include "D3D12ResourceViews.h"
 
 #include "RHI/RHIRayTracing.h"
 

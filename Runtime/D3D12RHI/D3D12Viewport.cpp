@@ -12,7 +12,7 @@ FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InC
     , FRHIViewport(Initializer)
     , Hwnd(reinterpret_cast<HWND>(Initializer.WindowHandle))
     , SwapChain(nullptr)
-    , CmdContext(InCmdContext)
+    , CommandContext(InCmdContext)
     , BackBuffers()
 { }
 
@@ -35,7 +35,7 @@ FD3D12Viewport::~FD3D12Viewport()
     }
 }
 
-bool FD3D12Viewport::Init()
+bool FD3D12Viewport::Initialize()
 {
     // Save the flags
     Flags = GetDevice()->GetAdapter()->SupportsTearing() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
@@ -85,7 +85,7 @@ bool FD3D12Viewport::Init()
     FullscreenDesc.Windowed                = true;
 
     TComPtr<IDXGISwapChain1> TempSwapChain;
-    HRESULT Result = GetDevice()->GetAdapter()->GetDXGIFactory()->CreateSwapChainForHwnd(CmdContext->GetQueue().GetQueue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
+    HRESULT Result = GetDevice()->GetAdapter()->GetDXGIFactory()->CreateSwapChainForHwnd(CommandContext->GetQueue().GetQueue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
     if (SUCCEEDED(Result))
     {
         Result = TempSwapChain.GetAs<IDXGISwapChain3>(&SwapChain);
@@ -127,9 +127,9 @@ bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     if ((InWidth != Width || InHeight != Height) && (InWidth > 0) && (InHeight > 0))
     {
-        CmdContext->ClearState();
+        CommandContext->ClearState();
 
-        FD3D12Resource* Resource = BackBuffers[0]->GetD3D12Resource();
+        FD3D12Resource* Resource = BackBuffers[0]->GetResource();
         UNREFERENCED_VARIABLE(Resource);
 
         BackBuffers.Clear();

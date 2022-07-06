@@ -5,12 +5,11 @@
 // FD3D12GraphicsPipelineState 
 
 FD3D12GraphicsPipelineState::FD3D12GraphicsPipelineState(FD3D12Device* InDevice)
-    : FD3D12DeviceChild(InDevice)
-    , PipelineState(nullptr)
-    , RootSignature(nullptr)
+    : FRHIGraphicsPipelineState()
+    , FD3D12PipelineState(InDevice)
 { }
 
-bool FD3D12GraphicsPipelineState::Init(const FRHIGraphicsPipelineStateInitializer& Initializer)
+bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer)
 {
     struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12GraphicsPipelineStream
     {
@@ -214,7 +213,7 @@ bool FD3D12GraphicsPipelineState::Init(const FRHIGraphicsPipelineStateInitialize
 
     Check(RootSignature != nullptr);
 
-    PipelineStream.RootSignature = RootSignature->GetRootSignature();
+    PipelineStream.RootSignature = RootSignature->GetD3D12RootSignature();
 
     D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
     FMemory::Memzero(&PipelineStreamDesc);
@@ -239,13 +238,11 @@ bool FD3D12GraphicsPipelineState::Init(const FRHIGraphicsPipelineStateInitialize
 
 FD3D12ComputePipelineState::FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader)
     : FRHIComputePipelineState()
-    , FD3D12DeviceChild(InDevice)
-    , PipelineState(nullptr)
+    , FD3D12PipelineState(InDevice)
     , Shader(InShader)
-    , RootSignature(nullptr)
 { }
 
-bool FD3D12ComputePipelineState::Init()
+bool FD3D12ComputePipelineState::Initialize()
 {
     struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) SComputePipelineStream
     {
@@ -291,7 +288,7 @@ bool FD3D12ComputePipelineState::Init()
 
     Check(RootSignature != nullptr);
 
-    PipelineStream.RootSignature = RootSignature->GetRootSignature();
+    PipelineStream.RootSignature = RootSignature->GetD3D12RootSignature();
 
     // Create PipelineState
     D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
@@ -505,7 +502,7 @@ FD3D12RayTracingPipelineState::FD3D12RayTracingPipelineState(FD3D12Device* InDev
     , StateObject(nullptr)
 { }
 
-bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitializer& Initializer)
+bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer)
 {
     FD3D12RayTracingPipelineStateStream PipelineStream;
     TArray<FD3D12Shader*> Shaders;
@@ -532,7 +529,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
 
         FWString RayGenIdentifier = CharToWide(D3D12RayGen->GetIdentifier());
         PipelineStream.AddLibrary(D3D12RayGen->GetByteCode(), { RayGenIdentifier });
-        PipelineStream.AddRootSignatureAssociation(RayGenLocalRootSignature->GetRootSignature(), { RayGenIdentifier });
+        PipelineStream.AddRootSignatureAssociation(RayGenLocalRootSignature->GetD3D12RootSignature(), { RayGenIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(RayGenIdentifier);
     }
 
@@ -554,7 +551,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
 
         for (FRHIRayTracingShader* HitGroupShader : HitGroup.Shaders)
         {
-            FD3D12RayTracingShader* D3D12HitGroupShader = D3D12RayTracingShaderCast(HitGroupShader);
+            FD3D12RayTracingShader* D3D12HitGroupShader = GetD3D12RayTracingShader(HitGroupShader);
             if (HitGroupShader->GetShaderStage() == EShaderStage::RayClosestHit)
             {
                 // TODO: Not the greatest way to handle this
@@ -601,7 +598,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
 
         FWString AnyHitIdentifier = CharToWide(D3D12AnyHit->GetIdentifier());
         PipelineStream.AddLibrary(D3D12AnyHit->GetByteCode(), { AnyHitIdentifier });
-        PipelineStream.AddRootSignatureAssociation(HitLocalRootSignature->GetRootSignature(), { AnyHitIdentifier });
+        PipelineStream.AddRootSignatureAssociation(HitLocalRootSignature->GetD3D12RootSignature(), { AnyHitIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(AnyHitIdentifier);
     }
 
@@ -624,7 +621,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
 
         FWString ClosestHitIdentifier = CharToWide(D3D12ClosestHit->GetIdentifier());
         PipelineStream.AddLibrary(D3D12ClosestHit->GetByteCode(), { ClosestHitIdentifier });
-        PipelineStream.AddRootSignatureAssociation(HitLocalRootSignature->GetRootSignature(), { ClosestHitIdentifier });
+        PipelineStream.AddRootSignatureAssociation(HitLocalRootSignature->GetD3D12RootSignature(), { ClosestHitIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(ClosestHitIdentifier);
     }
 
@@ -647,7 +644,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
 
         FWString MissIdentifier = CharToWide(D3D12MissShader->GetIdentifier());
         PipelineStream.AddLibrary(D3D12MissShader->GetByteCode(), { MissIdentifier });
-        PipelineStream.AddRootSignatureAssociation(MissLocalRootSignature->GetRootSignature(), { MissIdentifier });
+        PipelineStream.AddRootSignatureAssociation(MissLocalRootSignature->GetD3D12RootSignature(), { MissIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(MissIdentifier);
     }
 
@@ -673,7 +670,7 @@ bool FD3D12RayTracingPipelineState::Init(const FRHIRayTracingPipelineStateInitia
         return false;
     }
 
-    PipelineStream.GlobalRootSignature = GlobalRootSignature->GetRootSignature();
+    PipelineStream.GlobalRootSignature = GlobalRootSignature->GetD3D12RootSignature();
 
     PipelineStream.Generate();
 

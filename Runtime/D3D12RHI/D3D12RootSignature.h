@@ -2,15 +2,13 @@
 #include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
 #include "D3D12Shader.h"
+#include "D3D12RefCounted.h"
 
-#include "Core/RefCounted.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Utilities/HashUtilities.h"
 #include "Core/Containers/HashTable.h"
 
-class FD3D12RootSignature;
-
-typedef TSharedRef<FD3D12RootSignature> FD3D12RootSignatureRef;
+typedef TSharedRef<class FD3D12RootSignature> FD3D12RootSignatureRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERootSignatureType
@@ -72,7 +70,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RootSignature
 
-class FD3D12RootSignature : public FD3D12DeviceChild, public FRefCounted
+class FD3D12RootSignature : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
 
@@ -104,12 +102,12 @@ public:
         RootSignature->SetName(WideName.CStr());
     }
 
-    FORCEINLINE ID3D12RootSignature* GetRootSignature() const
+    FORCEINLINE ID3D12RootSignature* GetD3D12RootSignature() const
     {
         return RootSignature.Get();
     }
 
-    FORCEINLINE ID3D12RootSignature** GetAddressOfRootSignature()
+    FORCEINLINE ID3D12RootSignature** GetD3D12RootSignatureAddress()
     {
         return RootSignature.GetAddressOf();
     }

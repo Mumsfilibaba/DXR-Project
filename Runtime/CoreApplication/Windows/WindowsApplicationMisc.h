@@ -19,8 +19,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericApplicationMisc Interface
 
-    static class FGenericApplication* CreateApplication();
-
+    static class FGenericApplication*   CreateApplication();
     static class FGenericConsoleWindow* CreateConsoleWindow();
 
     static FORCEINLINE void MessageBox(const FString& Title, const FString& Message)

@@ -15,12 +15,21 @@ public:
     FD3D12TimestampQuery(FD3D12Device* InDevice);
     ~FD3D12TimestampQuery() = default;
 
+    static FD3D12TimestampQuery* Create(FD3D12Device* InDevice);
+    
+public:
+    
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // FRHITimestampQuery Interface
+
     virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final;
 
     virtual uint64 GetFrequency() const override final
     {
         return static_cast<uint64>(Frequency);
     }
+
+public:
 
     void BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
     void EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
@@ -31,8 +40,6 @@ public:
     {
         return QueryHeap.Get();
     }
-
-    static FD3D12TimestampQuery* Create(FD3D12Device* InDevice);
 
 private:
 

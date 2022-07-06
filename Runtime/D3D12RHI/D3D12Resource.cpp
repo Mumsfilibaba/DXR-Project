@@ -5,7 +5,7 @@
 // FD3D12Resource
 
 FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource)
-    : FRefCounted()
+    : FD3D12RefCounted()
     , FD3D12DeviceChild(InDevice)
     , Resource(InNativeResource)
     , HeapType(D3D12_HEAP_TYPE_DEFAULT)
@@ -15,7 +15,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resou
 { }
 
 FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
-    : FRefCounted()
+    : FD3D12RefCounted()
     , FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
     , HeapType(InHeapType)
@@ -51,12 +51,12 @@ bool FD3D12Resource::Initialize(D3D12_RESOURCE_STATES InitialState, const D3D12_
     }
     else if (Result == E_OUTOFMEMORY)
     {
-        LOG_ERROR("[FD3D12Resource]: Failed to create resource since the device ran out of memory");
+        LOG_ERROR("[FD3D12Resource]: Failed to create committed resource, device ran out of memory");
         return false;
     }
     else
     {
-        LOG_ERROR("[FD3D12Resource]: Failed to create commited resource");
+        LOG_ERROR("[FD3D12Resource]: Failed to create committed resource");
         return false;
     }
 }

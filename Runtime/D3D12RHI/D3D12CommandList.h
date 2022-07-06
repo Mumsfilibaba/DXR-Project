@@ -4,7 +4,7 @@
 #include "D3D12RootSignature.h"
 #include "D3D12Descriptors.h"
 #include "D3D12CommandAllocator.h"
-#include "D3D12Views.h"
+#include "D3D12ResourceViews.h"
 
 class FD3D12ComputePipelineState;
 
@@ -30,15 +30,38 @@ public:
 
             LOG_INFO("[FD3D12CommandList]: Created CommandList");
 
+            // TODO: Ensure that this compiles on different WinSDK versions
+            if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList1>(&CmdList1)))
+            {
+                D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList1");
+            }
+
+            if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList2>(&CmdList2)))
+            {
+                D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList2");
+            }
+
+            if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList3>(&CmdList3)))
+            {
+                D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList3");
+            }
+
+            if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList4>(&CmdList4)))
+            {
+                D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList4");
+            }
+
             if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList5>(&CmdList5)))
             {
-                D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve DXR-CommandList");
-                return false;
+                D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList5");
             }
-            else
+
+            if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList6>(&CmdList6)))
             {
-                return true;
+                D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList6");
             }
+
+            return true;
         }
         else
         {
@@ -164,12 +187,12 @@ public:
 
     FORCEINLINE void SetComputeRootSignature(FD3D12RootSignature* RootSignature)
     {
-        CmdList->SetComputeRootSignature(RootSignature->GetRootSignature());
+        CmdList->SetComputeRootSignature(RootSignature->GetD3D12RootSignature());
     }
 
     FORCEINLINE void SetGraphicsRootSignature(FD3D12RootSignature* RootSignature)
     {
-        CmdList->SetGraphicsRootSignature(RootSignature->GetRootSignature());
+        CmdList->SetGraphicsRootSignature(RootSignature->GetD3D12RootSignature());
     }
 
     FORCEINLINE void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, uint32 RootParameterIndex)
@@ -288,15 +311,24 @@ public:
         CmdList->SetName(WideName.CStr());
     }
 
-    FORCEINLINE ID3D12CommandList* GetCommandList() const { return CmdList.Get(); }
+    FORCEINLINE ID3D12CommandList*          GetCommandList() const { return CmdList.Get(); }
 
-    FORCEINLINE ID3D12GraphicsCommandList* GetGraphicsCommandList() const { return CmdList.Get(); }
-
-    FORCEINLINE ID3D12GraphicsCommandList4* GetDXRCommandList() const { return CmdList5.Get(); }
+    FORCEINLINE ID3D12GraphicsCommandList*  GetGraphicsCommandList()  const { return CmdList.Get(); }
+    FORCEINLINE ID3D12GraphicsCommandList1* GetGraphicsCommandList1() const { return CmdList1.Get(); }
+    FORCEINLINE ID3D12GraphicsCommandList2* GetGraphicsCommandList2() const { return CmdList2.Get(); }
+    FORCEINLINE ID3D12GraphicsCommandList3* GetGraphicsCommandList3() const { return CmdList3.Get(); }
+    FORCEINLINE ID3D12GraphicsCommandList4* GetGraphicsCommandList4() const { return CmdList4.Get(); }
+    FORCEINLINE ID3D12GraphicsCommandList5* GetGraphicsCommandList5() const { return CmdList5.Get(); }
+    FORCEINLINE ID3D12GraphicsCommandList6* GetGraphicsCommandList6() const { return CmdList6.Get(); }
 
 private:
     TComPtr<ID3D12GraphicsCommandList>  CmdList;
+    TComPtr<ID3D12GraphicsCommandList1> CmdList1;
+    TComPtr<ID3D12GraphicsCommandList2> CmdList2;
+    TComPtr<ID3D12GraphicsCommandList3> CmdList3;
+    TComPtr<ID3D12GraphicsCommandList4> CmdList4;
     TComPtr<ID3D12GraphicsCommandList5> CmdList5;
+    TComPtr<ID3D12GraphicsCommandList6> CmdList6;
 
     bool bIsReady = false;
 };

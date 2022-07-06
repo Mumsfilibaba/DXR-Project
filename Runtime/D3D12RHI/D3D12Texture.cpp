@@ -12,7 +12,7 @@ FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice)
 
 FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRTV(const FRHIRenderTargetView& RTVInitializer)
 {
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = GetResource();
     if (!D3D12Resource)
     {
         D3D12_WARNING("Texture does not have a valid D3D12Resource");
@@ -116,7 +116,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRTV(const FRHIRenderTargetView
 
 FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDSV(const FRHIDepthStencilView& DSVInitializer)
 {
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = GetResource();
     if (!D3D12Resource)
     {
         D3D12_WARNING("Texture does not have a valid D3D12Resource");

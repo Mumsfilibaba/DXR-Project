@@ -1,6 +1,6 @@
 #include "D3D12Device.h"
 #include "D3D12Descriptors.h"
-#include "D3D12Views.h"
+#include "D3D12ResourceViews.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12View
@@ -91,7 +91,7 @@ bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD
 {
     Check(OfflineHandle != 0);
 
-    Desc = InDesc;
+    Desc            = InDesc;
     CounterResource = InCounterResource;
     FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
 
@@ -121,14 +121,18 @@ FD3D12RenderTargetView::FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12Off
 
 bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
-    Check(InResource != nullptr);
     Check(OfflineHandle != 0);
 
     Desc = InDesc;
-
     FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
-    GetDevice()->GetD3D12Device()->CreateRenderTargetView(FD3D12View::Resource->GetD3D12Resource(), &Desc, OfflineHandle);
 
+    ID3D12Resource* NativeResource = nullptr;
+    if (FD3D12View::Resource)
+    {
+        NativeResource = FD3D12View::Resource->GetD3D12Resource();
+    }
+
+    GetDevice()->GetD3D12Device()->CreateRenderTargetView(NativeResource, &Desc, OfflineHandle);
     return true;
 }
 
@@ -142,13 +146,17 @@ FD3D12DepthStencilView::FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12Off
 
 bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
-    Check(InResource != nullptr);
     Check(OfflineHandle != 0);
 
     Desc = InDesc;
+    FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
+    
+    ID3D12Resource* NativeResource = nullptr;
+    if (FD3D12View::Resource)
+    {
+        NativeResource = FD3D12View::Resource->GetD3D12Resource();
+    }
 
-    Resource = MakeSharedRef<FD3D12Resource>(InResource);
-    GetDevice()->GetD3D12Device()->CreateDepthStencilView(Resource->GetD3D12Resource(), &Desc, OfflineHandle);
-
+    GetDevice()->GetD3D12Device()->CreateDepthStencilView(NativeResource, &Desc, OfflineHandle);
     return true;
 }

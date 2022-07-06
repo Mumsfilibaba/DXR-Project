@@ -1,6 +1,8 @@
 #pragma once
 #include "D3D12Core.h"
 
+#include "Core/Templates/ClassUtilities.h"
+
 class FD3D12Device;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -9,6 +11,8 @@ class FD3D12Device;
 class FD3D12DeviceChild
 {
 public:
+
+    FD3D12DeviceChild() = delete;
 
     FD3D12DeviceChild(FD3D12Device* InDevice)
         : Device(InDevice)

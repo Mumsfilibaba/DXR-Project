@@ -19,6 +19,17 @@ typedef TSharedRef<FD3D12ComputePipelineState>    FD3D12ComputePipelineStateRef;
 typedef TSharedRef<FD3D12RayTracingPipelineState> FD3D12RayTracingPipelineStateRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ED3D12PipelineType
+
+enum class ED3D12PipelineType
+{
+    Unknown    = 0,
+    Graphics   = 1,
+    Compute    = 2,
+    RayTracing = 3,
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12VertexInputLayout
 
 class FD3D12VertexInputLayout : public FRHIVertexInputLayout, public FD3D12DeviceChild
@@ -121,69 +132,73 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12GraphicsPipelineState
+// FD3D12PipelineState
 
-class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12DeviceChild
+class FD3D12PipelineState : public FD3D12DeviceChild
 {
 public:
-    FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
-    ~FD3D12GraphicsPipelineState() = default;
 
-    bool Init(const FRHIGraphicsPipelineStateInitializer& Initializer);
+    FD3D12PipelineState(FD3D12Device* InDevice)
+        : FD3D12DeviceChild(InDevice)
+    { }
 
-    virtual void SetName(const FString& InName) override final
+    ~FD3D12PipelineState() = default;
+
+    void SetDebugName(const FString& InName)
     {
         FWString WideName = CharToWide(InName);
         PipelineState->SetName(WideName.CStr());
     }
 
-    FORCEINLINE ID3D12PipelineState* GetPipeline() const
-    {
-        return PipelineState.Get();
-    }
+    FORCEINLINE ID3D12PipelineState* GetD3D12PipelineState() const { return PipelineState.Get(); }
+    FORCEINLINE FD3D12RootSignature* GetRootSignature()      const { return RootSignature.Get(); }
 
-    FORCEINLINE FD3D12RootSignature* GetRootSignature() const
-    {
-        return RootSignature.Get();
-    }
+protected:
+    TComPtr<ID3D12PipelineState> PipelineState;
+    FD3D12RootSignatureRef       RootSignature;
+};
 
-private:
-    TComPtr<ID3D12PipelineState>    PipelineState;
-    TSharedRef<FD3D12RootSignature> RootSignature;
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12GraphicsPipelineState
+
+class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12PipelineState
+{
+public:
+
+    FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
+    ~FD3D12GraphicsPipelineState() = default;
+
+    bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
+
+public:
+    
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // FRHIPipelineState
+
+    virtual void SetName(const FString& InName) override final { FD3D12PipelineState::SetDebugName(InName); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12ComputePipelineState
 
-class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12DeviceChild
+class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12PipelineState
 {
 public:
 
     FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader);
     ~FD3D12ComputePipelineState() = default;
 
-    bool Init();
+    bool Initialize();
 
-    virtual void SetName(const FString& InName) override final
-    {
-        FWString WideName = CharToWide(InName);
-        PipelineState->SetName(WideName.CStr());
-    }
+public:
 
-    FORCEINLINE ID3D12PipelineState* GetPipeline() const
-    {
-        return PipelineState.Get();
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // FRHIPipelineState
 
-    FORCEINLINE FD3D12RootSignature* GetRootSignature() const
-    {
-        return RootSignature.Get();
-    }
+    virtual void SetName(const FString& InName) override final { FD3D12PipelineState::SetDebugName(InName); }
 
 private:
-    TComPtr<ID3D12PipelineState>    PipelineState;
     TSharedRef<FD3D12ComputeShader> Shader;
-    TSharedRef<FD3D12RootSignature> RootSignature;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -203,7 +218,7 @@ public:
     FD3D12RayTracingPipelineState(FD3D12Device* InDevice);
     ~FD3D12RayTracingPipelineState() = default;
 
-    bool Init(const FRHIRayTracingPipelineStateInitializer& Initializer);
+    bool Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer);
 
     virtual void SetName(const FString& InName) override
     {
@@ -213,45 +228,23 @@ public:
 
     void* GetShaderIdentifer(const FString& ExportName);
 
-    FORCEINLINE ID3D12StateObject* GetStateObject() const
-    {
-        return StateObject.Get();
-    }
+    FORCEINLINE ID3D12StateObjectProperties* GetD3D12StateObjectProperties() const { return StateObjectProperties.Get(); }
+    FORCEINLINE ID3D12StateObject*           GetD3D12StateObject()           const { return StateObject.Get(); }
 
-    FORCEINLINE ID3D12StateObjectProperties* GetStateObjectProperties() const
-    {
-        return StateObjectProperties.Get();
-    }
-
-    FORCEINLINE FD3D12RootSignature* GetGlobalRootSignature() const
-    {
-        return GlobalRootSignature.Get();
-    }
-
-    FORCEINLINE FD3D12RootSignature* GetRayGenLocalRootSignature() const
-    {
-        return RayGenLocalRootSignature.Get();
-    }
-
-    FORCEINLINE FD3D12RootSignature* GetMissLocalRootSignature() const
-    {
-        return MissLocalRootSignature.Get();
-    }
-
-    FORCEINLINE FD3D12RootSignature* GetHitLocalRootSignature() const
-    {
-        return HitLocalRootSignature.Get();
-    }
+    FORCEINLINE FD3D12RootSignature* GetGlobalRootSignature()      const { return GlobalRootSignature.Get(); }
+    FORCEINLINE FD3D12RootSignature* GetRayGenLocalRootSignature() const { return RayGenLocalRootSignature.Get(); }
+    FORCEINLINE FD3D12RootSignature* GetMissLocalRootSignature()   const { return MissLocalRootSignature.Get(); }
+    FORCEINLINE FD3D12RootSignature* GetHitLocalRootSignature()    const { return HitLocalRootSignature.Get(); }
 
 private:
     TComPtr<ID3D12StateObject>           StateObject;
     TComPtr<ID3D12StateObjectProperties> StateObjectProperties;
 
     // TODO: There could be more than one root signature for locals
-    TSharedRef<FD3D12RootSignature> GlobalRootSignature;
-    TSharedRef<FD3D12RootSignature> RayGenLocalRootSignature;
-    TSharedRef<FD3D12RootSignature> MissLocalRootSignature;
-    TSharedRef<FD3D12RootSignature> HitLocalRootSignature;
+    FD3D12RootSignatureRef GlobalRootSignature;
+    FD3D12RootSignatureRef RayGenLocalRootSignature;
+    FD3D12RootSignatureRef MissLocalRootSignature;
+    FD3D12RootSignatureRef HitLocalRootSignature;
 
     THashTable<FString, FRayTracingShaderIdentifer, FStringHasher> ShaderIdentifers;
 };

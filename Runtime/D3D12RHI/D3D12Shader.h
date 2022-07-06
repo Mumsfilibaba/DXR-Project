@@ -179,12 +179,7 @@ public:
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12Shader* D3D12Shader = static_cast<FD3D12Shader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -205,12 +200,7 @@ public:
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12Shader* D3D12Shader = static_cast<FD3D12Shader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -251,12 +241,7 @@ public:
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12RayTracingShader* D3D12Shader = static_cast<FD3D12RayTracingShader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -277,12 +262,7 @@ public:
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12RayTracingShader* D3D12Shader = static_cast<FD3D12RayTracingShader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -303,12 +283,7 @@ public:
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12RayTracingShader* D3D12Shader = static_cast<FD3D12RayTracingShader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -329,12 +304,7 @@ public:
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12RayTracingShader* D3D12Shader = static_cast<FD3D12RayTracingShader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -358,12 +328,7 @@ public:
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12Shader* D3D12Shader = static_cast<FD3D12Shader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
 
     virtual FIntVector3 GetThreadGroupXYZ() const override final { return ThreadGroupXYZ; }
 
@@ -379,7 +344,7 @@ inline FD3D12Shader* GetD3D12Shader(FRHIShader* Shader)
     return Shader ? reinterpret_cast<FD3D12Shader*>(Shader->GetRHIBaseShader()) : nullptr;
 }
 
-inline FD3D12RayTracingShader* D3D12RayTracingShaderCast(FRHIRayTracingShader* Shader)
+inline FD3D12RayTracingShader* GetD3D12RayTracingShader(FRHIRayTracingShader* Shader)
 {
     return Shader ? reinterpret_cast<FD3D12RayTracingShader*>(Shader->GetRHIBaseShader()) : nullptr;
 }

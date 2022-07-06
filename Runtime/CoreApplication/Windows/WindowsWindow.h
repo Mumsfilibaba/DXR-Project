@@ -12,6 +12,8 @@
 
 class FWindowsApplication;
 
+typedef TSharedRef<class FWindowsWindow> FWindowsWindowRef;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsWindow
 
@@ -43,7 +45,6 @@ public:
     virtual void Show(bool bMaximized) override final;
 
     virtual void Minimize() override final;
-    
     virtual void Maximize() override final;
 
     virtual void Close() override final;
@@ -52,13 +53,11 @@ public:
 
     virtual void ToggleFullscreen() override final;
 
-    virtual bool IsValid() const override final;
-    
+    virtual bool IsValid()        const override final;
     virtual bool IsActiveWindow() const override final;
 
     virtual void SetTitle(const FString& Title) override final;
-    
-    virtual void GetTitle(FString& OutTitle) override final;
+    virtual void GetTitle(FString& OutTitle)    override final;
 
     virtual void MoveTo(int32 x, int32 y) override final;
 
@@ -68,12 +67,10 @@ public:
 
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const override final;
 
-    virtual uint32 GetWidth() const override final;
-
+    virtual uint32 GetWidth()  const override final;
     virtual uint32 GetHeight() const override final;
 
     virtual void  SetPlatformHandle(void* InPlatformHandle) override final;
-
     virtual void* GetPlatformHandle() const override final { return reinterpret_cast<void*>(Window); }
 
 private:

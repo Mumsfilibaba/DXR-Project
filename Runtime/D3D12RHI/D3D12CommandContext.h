@@ -12,7 +12,7 @@
 #include "D3D12Fence.h"
 #include "D3D12DescriptorCache.h"
 #include "D3D12Buffer.h"
-#include "D3D12Views.h"
+#include "D3D12ResourceViews.h"
 #include "D3D12SamplerState.h"
 #include "D3D12PipelineState.h"
 #include "D3D12TimestampQuery.h"
@@ -195,40 +195,58 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ContextState
+// FD3D12CommandContextState
 
-struct FD3D12ContextState : FNonCopyAndNonMovable
+class FD3D12CommandContextState : FNonCopyAndNonMovable
 {
-    FD3D12ContextState()  = default;
-    ~FD3D12ContextState() = default;
+public:
 
-    void ClearGraphics()
+    FD3D12CommandContextState(FD3D12Device* InDevice);
+    ~FD3D12CommandContextState() = default;
+
+    bool Initialize();
+
+    void ApplyGraphics(FD3D12CommandList& CommandList, FD3D12CommandBatch* Batch);
+    void ApplyCompute(FD3D12CommandList& CommandList, FD3D12CommandBatch* Batch);
+
+    void ClearGraphics();
+    void ClearCompute();
+
+    void ClearAll()
     {
-        Graphics.PipelineState.Reset();
-        Graphics.ShadingRateTexture.Reset();
+        ClearGraphics();
+        ClearCompute();
 
-        Graphics.PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
-    }
-
-    void ClearCompute()
-    {
-        Compute.PipelineState.Reset();
-    }
-
-    void Clear()
-    {
-        RootSignature.Reset();
+        DescriptorCache.Clear();
+        ShaderConstantsCache.Reset();
 
         bIsCapturing        = false;
         bIsRenderPassActive = false;
+        bBindRootSignature  = true;
     }
 
     struct
     {
-        FD3D12TextureRef               ShadingRateTexture;
         FD3D12GraphicsPipelineStateRef PipelineState;
 
+        FD3D12TextureRef               ShadingRateTexture;
+
+        FD3D12RenderTargetViewCache    RenderTargets;
+        FD3D12DepthStencilView*        DepthStencil;
+
         D3D12_PRIMITIVE_TOPOLOGY       PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+    
+        D3D12_SHADING_RATE             ShadingRate = D3D12_SHADING_RATE_1X1;
+
+        D3D12_VIEWPORT                 Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                         NumViewports;
+
+        D3D12_RECT                     ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                         NumScissor;
+
+        TStaticArray<float, 4>         BlendFactor;
+
+        bool bBindRenderTargets : 1;
     } Graphics;
 
     struct 
@@ -236,12 +254,13 @@ struct FD3D12ContextState : FNonCopyAndNonMovable
         FD3D12ComputePipelineStateRef PipelineState;
     } Compute;
 
-    // TODO: Remove, this is saved in the PipelineState anyway
-    FD3D12RootSignatureRef RootSignature;
+    FD3D12ShaderConstantsCache ShaderConstantsCache;
+    FD3D12DescriptorCache      DescriptorCache;
 
     bool bIsReady            : 1;
     bool bIsCapturing        : 1;
     bool bIsRenderPassActive : 1;
+    bool bBindRootSignature  : 1;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -255,8 +274,6 @@ private:
 
     FD3D12CommandContext(FD3D12Device* InDevice);
     ~FD3D12CommandContext();
-
-public:
 
     static FD3D12CommandContext* CreateD3D12CommandContext(FD3D12Device* InDevice);
 
@@ -395,18 +412,14 @@ private:
     FD3D12Fence                     Fence;
     FD3D12CommandQueue              CommandQueue;
 
-    FD3D12ShaderConstantsCache      ShaderConstantsCache;
-    
-    FD3D12ContextState              State;
-    FD3D12DescriptorCache           DescriptorCache;
-
+    FD3D12CommandContextState              State;
     FD3D12ResourceBarrierBatcher    BarrierBatcher;
 
-    uint64 FenceValue   = 0;
-    uint32 NextCmdBatch = 0;
+    uint64                          FenceValue   = 0;
+    uint32                          NextCmdBatch = 0;
 
-    TArray<FD3D12CommandBatch> CmdBatches;
-    FD3D12CommandBatch*        CmdBatch = nullptr;
+    TArray<FD3D12CommandBatch>      CmdBatches;
+    FD3D12CommandBatch*             CmdBatch = nullptr;
 
     TArray<FD3D12TimestampQueryRef> ResolveQueries;
 

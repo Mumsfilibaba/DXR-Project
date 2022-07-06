@@ -7,8 +7,10 @@
 
 #include "D3D12Core.h"
 #include "D3D12Texture.h"
-#include "D3D12Views.h"
+#include "D3D12ResourceViews.h"
 #include "D3D12CommandContext.h"
+
+typedef TSharedRef<class FD3D12Viewport> FD3D12ViewportRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Viewport
@@ -20,7 +22,7 @@ public:
     FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportInitializer& Initializer);
     ~FD3D12Viewport();
 
-    bool Init();
+    bool Initialize();
 
 public:
 
@@ -36,17 +38,17 @@ public:
 private:
     bool RetriveBackBuffers();
 
-    TComPtr<IDXGISwapChain3> SwapChain;
+    TComPtr<IDXGISwapChain3>   SwapChain;
 
-    FD3D12CommandContext*    CmdContext;
+    FD3D12CommandContext*      CommandContext;
 
-    HWND                     Hwnd = 0;
+    HWND                       Hwnd = 0;
 
-    uint32                   Flags           = 0;
-    uint32                   NumBackBuffers  = 0;
-    uint32                   BackBufferIndex = 0;
+    uint32                     Flags           = 0;
+    uint32                     NumBackBuffers  = 0;
+    uint32                     BackBufferIndex = 0;
 
-    HANDLE                   SwapChainWaitableObject = 0;
+    HANDLE                     SwapChainWaitableObject = 0;
 
-    TArray<TSharedRef<FD3D12Texture2D>> BackBuffers;
+    TArray<FD3D12Texture2DRef> BackBuffers;
 };

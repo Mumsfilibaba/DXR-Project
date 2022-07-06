@@ -502,7 +502,7 @@ bool FD3D12RootSignatureCache::Initialize()
 
 void FD3D12RootSignatureCache::ReleaseAll()
 {
-    for (TSharedRef<FD3D12RootSignature> RootSignature : RootSignatures)
+    for (FD3D12RootSignatureRef RootSignature : RootSignatures)
     {
         RootSignature.Reset();
     }
@@ -551,7 +551,7 @@ FD3D12RootSignature* FD3D12RootSignatureCache::GetOrCreateRootSignature(const FD
 
 FD3D12RootSignature* FD3D12RootSignatureCache::CreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount)
 {
-    TSharedRef<FD3D12RootSignature> NewRootSignature = dbg_new FD3D12RootSignature(GetDevice());
+    FD3D12RootSignatureRef NewRootSignature = dbg_new FD3D12RootSignature(GetDevice());
     if (!NewRootSignature->Initialize(ResourceCount))
     {
         return nullptr;

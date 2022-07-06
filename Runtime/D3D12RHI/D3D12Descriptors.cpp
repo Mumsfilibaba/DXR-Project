@@ -1,6 +1,6 @@
 #include "D3D12Descriptors.h"
 #include "D3D12Device.h"
-#include "D3D12Views.h"
+#include "D3D12ResourceViews.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 

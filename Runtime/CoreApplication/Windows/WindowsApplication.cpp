@@ -163,7 +163,7 @@ bool FWindowsApplication::UnregisterRawInputDevices()
 
 FGenericWindowRef FWindowsApplication::CreateWindow()
 {
-    TSharedRef<FWindowsWindow> NewWindow = FWindowsWindow::CreateWindowsWindow(this);
+    FWindowsWindowRef NewWindow = FWindowsWindow::CreateWindowsWindow(this);
  
     {
         TScopedLock Lock(WindowsCS);
@@ -179,7 +179,7 @@ void FWindowsApplication::Tick(float)
     FPlatformApplicationMisc::PumpMessages(true);
 
     // TODO: Store the second TArray to save on allocations
-    TArray<SWindowsMessage> ProcessableMessages;
+    TArray<FWindowsMessage> ProcessableMessages;
     if (!Messages.IsEmpty())
     {
         TScopedLock<FCriticalSection> Lock(MessagesCS);
@@ -188,7 +188,7 @@ void FWindowsApplication::Tick(float)
     }
 
     // Handle all the messages 
-    for (const SWindowsMessage& Message : ProcessableMessages)
+    for (const FWindowsMessage& Message : ProcessableMessages)
     {
         HandleStoredMessage(Message.Window, Message.Message, Message.wParam, Message.lParam, Message.MouseDeltaX, Message.MouseDeltaY);
     }
@@ -197,7 +197,7 @@ void FWindowsApplication::Tick(float)
     {
         TScopedLock Lock(ClosedWindowsCS);
 
-        for (const TSharedRef<FWindowsWindow>& Window : ClosedWindows)
+        for (const FWindowsWindowRef& Window : ClosedWindows)
         {
             HWND WindowHandle = Window->GetWindowHandle();
             
@@ -214,7 +214,7 @@ bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const FGenericWindow
 {
     if (Window)
     {
-        TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
+        FWindowsWindowRef WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
         return RegisterRawInputDevices(WindowsWindow->GetWindowHandle());
     }
     else
@@ -227,7 +227,7 @@ void FWindowsApplication::SetCapture(const FGenericWindowRef& Window)
 {
     if (Window)
     {
-        TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
+        FWindowsWindowRef WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
 
         HWND hCapture = WindowsWindow->GetWindowHandle();
         if (WindowsWindow->IsValid())
@@ -243,7 +243,7 @@ void FWindowsApplication::SetCapture(const FGenericWindowRef& Window)
 
 void FWindowsApplication::SetActiveWindow(const FGenericWindowRef& Window)
 {
-    TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
+    FWindowsWindowRef WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
 
     HWND hActiveWindow = WindowsWindow->GetWindowHandle();
     if (WindowsWindow->IsValid())
@@ -279,13 +279,13 @@ FGenericWindowRef FWindowsApplication::GetWindowUnderCursor() const
     return GetWindowsWindowFromHWND(Handle);
 }
 
-TSharedRef<FWindowsWindow> FWindowsApplication::GetWindowsWindowFromHWND(HWND InWindow) const
+FWindowsWindowRef FWindowsApplication::GetWindowsWindowFromHWND(HWND InWindow) const
 {
     if (IsWindow(InWindow))
     {
         TScopedLock Lock(WindowsCS);
 
-        for (const TSharedRef<FWindowsWindow>& Window : Windows)
+        for (const FWindowsWindowRef& Window : Windows)
         {
             if (Window->GetWindowHandle() == InWindow)
             {
@@ -324,7 +324,7 @@ bool FWindowsApplication::IsWindowsMessageListener(const TSharedPtr<IWindowsMess
     return WindowsMessageListeners.Contains(InWindowsMessageListener);
 }
 
-void FWindowsApplication::CloseWindow(const TSharedRef<FWindowsWindow>& Window)
+void FWindowsApplication::CloseWindow(const FWindowsWindowRef& Window)
 {
     {
         TScopedLock Lock(ClosedWindowsCS);
@@ -344,7 +344,7 @@ LRESULT FWindowsApplication::StaticMessageProc(HWND Window, UINT Message, WPARAM
 
 void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY)
 {
-    TSharedRef<FWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
+    FWindowsWindowRef MessageWindow = GetWindowsWindowFromHWND(Window);
     switch (Message)
     {
         case WM_SETFOCUS:
@@ -572,7 +572,7 @@ LRESULT FWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
 
         case WM_CLOSE:
         {
-            TSharedRef<FWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
+            FWindowsWindowRef MessageWindow = GetWindowsWindowFromHWND(Window);
             CloseWindow(MessageWindow);
             return ResultFromListeners;
         }

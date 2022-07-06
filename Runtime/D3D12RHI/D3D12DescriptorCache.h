@@ -3,7 +3,7 @@
 #include "D3D12Descriptors.h"
 #include "D3D12CommandList.h"
 #include "D3D12Buffer.h"
-#include "D3D12Views.h"
+#include "D3D12ResourceViews.h"
 #include "D3D12SamplerState.h"
 
 class FD3D12CommandBatch;
@@ -329,20 +329,75 @@ struct FD3D12PipelineStageMask
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12VertexBufferCache
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12IndexBufferCache
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12RenderTargetViewCache
+
+struct FD3D12RenderTargetViewCache
+{
+    FD3D12RenderTargetViewCache()
+        : RenderTargetViews()
+        , NumRenderTargets(0)
+    {
+        Clear();
+    }
+
+    void SetRenderTarget(FD3D12RenderTargetView* View, uint32 Slot)
+    {
+        Check(Slot < ArrayCount(RenderTargetViews));
+        RenderTargetViews[Slot] = View;
+    }
+
+    void Clear()
+    {
+        FMemory::Memzero(RenderTargetViews, sizeof(RenderTargetViews));
+        NumRenderTargets = 0;
+    }
+
+    FD3D12RenderTargetView* RenderTargetViews[D3D12_MAX_RENDER_TARGET_COUNT];
+    uint32                  NumRenderTargets;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12ConstantBufferCache
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TD3D12ResourceViewCache
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12SamplerStateCache
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12DescriptorCache
 
 class FD3D12DescriptorCache : public FD3D12DeviceChild
 {
 public:
+
     FD3D12DescriptorCache(FD3D12Device* Device);
-    ~FD3D12DescriptorCache();
+    
+    ~FD3D12DescriptorCache()
+    {
+        SafeDelete(NullCBV);
+    }
 
     bool Initialize();
 
-    void PrepareGraphicsDescriptors(FD3D12CommandList& CommandList, FD3D12CommandBatch* CommandBatch, FD3D12RootSignature* RootSignature, FD3D12PipelineStageMask PipelineMask);
-    void PrepareComputeDescriptors(FD3D12CommandList& CommandList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature);
+    void PrepareGraphicsDescriptors(FD3D12CommandBatch* CommandBatch, FD3D12RootSignature* RootSignature, FD3D12PipelineStageMask PipelineMask);
+    void PrepareComputeDescriptors(FD3D12CommandBatch* CommandBatch, FD3D12RootSignature* RootSignature);
+    
+    void SetCurrentCommandList(FD3D12CommandList* InCommandList)
+    {
+        CurrentCommandList = InCommandList;
+    }
 
-    void Reset();
+    void SetRenderTargets(FD3D12RenderTargetViewCache& RenderTargets, FD3D12DepthStencilView* DepthStencil);
+
+    void Clear();
 
     FORCEINLINE void SetVertexBuffer(FD3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
@@ -352,16 +407,6 @@ public:
     FORCEINLINE void SetIndexBuffer(FD3D12IndexBuffer* IndexBuffer)
     {
         VertexBufferCache.SetIndexBuffer(IndexBuffer);
-    }
-
-    FORCEINLINE void SetRenderTargetView(FD3D12RenderTargetView* RenderTargetView, uint32 Slot)
-    {
-        RenderTargetCache.SetRenderTargetView(RenderTargetView, Slot);
-    }
-
-    FORCEINLINE void SetDepthStencilView(FD3D12DepthStencilView* DepthStencilView)
-    {
-        RenderTargetCache.SetDepthStencilView(DepthStencilView);
     }
 
     FORCEINLINE void SetConstantBufferView(EShaderVisibility Visibility, FD3D12ConstantBufferView* Descriptor, uint32 ShaderRegister)
@@ -378,7 +423,7 @@ public:
     {
         if (!Descriptor)
         {
-            Descriptor = NullSRV;
+            Descriptor = NullSRV.Get();
         }
 
         ShaderResourceViewCache.BindView(Visibility, Descriptor, ShaderRegister);
@@ -388,7 +433,7 @@ public:
     {
         if (!Descriptor)
         {
-            Descriptor = NullUAV;
+            Descriptor = NullUAV.Get();
         }
 
         UnorderedAccessViewCache.BindView(Visibility, Descriptor, ShaderRegister);
@@ -398,7 +443,7 @@ public:
     {
         if (!Descriptor)
         {
-            Descriptor = NullSampler;
+            Descriptor = NullSampler.Get();
         }
 
         SamplerStateCache.BindView(Visibility, Descriptor, ShaderRegister);
@@ -459,19 +504,21 @@ private:
         }
     }
 
-    FD3D12ConstantBufferView*      NullCBV     = nullptr;
-    FD3D12ShaderResourceView*      NullSRV     = nullptr;
-    FD3D12UnorderedAccessView*     NullUAV     = nullptr;
-    FD3D12SamplerState*            NullSampler = nullptr;
+    FD3D12CommandList*             CurrentCommandList;
+
+    ID3D12DescriptorHeap*          PreviousDescriptorHeaps[2] = { nullptr, nullptr };
+
+    FD3D12ConstantBufferView*      NullCBV;
+    FD3D12ShaderResourceViewRef    NullSRV;
+    FD3D12UnorderedAccessViewRef   NullUAV;
+    FD3D12RenderTargetViewRef      NullRTV;
+    FD3D12SamplerStateRef          NullSampler;
 
     FD3D12VertexBufferCache        VertexBufferCache;
-    FD3D12RenderTargetState        RenderTargetCache;
     FD3D12ShaderResourceViewCache  ShaderResourceViewCache;
     FD3D12UnorderedAccessViewCache UnorderedAccessViewCache;
     FD3D12ConstantBufferViewCache  ConstantBufferViewCache;
     FD3D12SamplerStateCache        SamplerStateCache;
-
-    ID3D12DescriptorHeap*          PreviousDescriptorHeaps[2] = { nullptr, nullptr };
 
     UINT RangeSizes[D3D12_CACHED_DESCRIPTORS_COUNT];
 };

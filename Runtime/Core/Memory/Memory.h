@@ -94,8 +94,6 @@ public:
      */
     static void* Memzero(void* Dst, uint64 Size) noexcept;
 
-    // TODO: Check if we need all the information from memcmp and refactor in that case
-
     /**
      * @brief: Compare two memory ranges
      *

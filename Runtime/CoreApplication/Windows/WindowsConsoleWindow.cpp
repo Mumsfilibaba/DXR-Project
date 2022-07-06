@@ -33,7 +33,7 @@ void FWindowsConsoleWindow::Print(const FString& Message)
 {
     if (ConsoleHandle)
     {
-        TScopedLock<FCriticalSection> Lock(ConsoleMutex);
+        TScopedLock<FCriticalSection> Lock(ConsoleHandleCS);
         WriteConsoleA(ConsoleHandle, Message.CStr(), static_cast<DWORD>(Message.Length()), 0, NULL);
     }
 }
@@ -42,7 +42,7 @@ void FWindowsConsoleWindow::PrintLine(const FString& Message)
 {
     if (ConsoleHandle)
     {
-        TScopedLock<FCriticalSection> Lock(ConsoleMutex);
+        TScopedLock<FCriticalSection> Lock(ConsoleHandleCS);
         WriteConsoleA(ConsoleHandle, Message.CStr(), static_cast<DWORD>(Message.Length()), 0, NULL);
         WriteConsoleA(ConsoleHandle, "\n", 1, 0, NULL);
     }
@@ -52,7 +52,7 @@ void FWindowsConsoleWindow::Clear()
 {
     if (ConsoleHandle)
     {
-        TScopedLock<FCriticalSection> Lock(ConsoleMutex);
+        TScopedLock<FCriticalSection> Lock(ConsoleHandleCS);
 
         CONSOLE_SCREEN_BUFFER_INFO CSBI;
         FMemory::Memzero(&CSBI);
@@ -73,7 +73,7 @@ void FWindowsConsoleWindow::SetTitle(const FString& Title)
 {
     if (ConsoleHandle)
     {
-        TScopedLock<FCriticalSection> Lock(ConsoleMutex);
+        TScopedLock<FCriticalSection> Lock(ConsoleHandleCS);
         SetConsoleTitleA(Title.CStr());
     }
 }
@@ -82,7 +82,7 @@ void FWindowsConsoleWindow::SetColor(EConsoleColor Color)
 {
     if (ConsoleHandle)
     {
-        TScopedLock<FCriticalSection> Lock(ConsoleMutex);
+        TScopedLock<FCriticalSection> Lock(ConsoleHandleCS);
 
         WORD wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
         switch (Color)
