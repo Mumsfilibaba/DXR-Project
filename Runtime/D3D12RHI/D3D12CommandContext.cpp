@@ -232,24 +232,54 @@ bool FD3D12CommandContextState::Initialize()
 
 void FD3D12CommandContextState::ApplyGraphics(FD3D12CommandList& CommandList, FD3D12CommandBatch* Batch)
 {
+    // VertexBuffer and IndexBuffer
+    if (Graphics.bBindVertexBuffers)
+    {
+        DescriptorCache.SetVertexBuffers(Graphics.VBCache);
+        Graphics.bBindVertexBuffers = false;
+    }
+
+    if (Graphics.bBindIndexBuffer)
+    {
+        DescriptorCache.SetIndexBuffer(Graphics.IBCache);
+        Graphics.bBindIndexBuffer = false;
+    }
+
     // Scissor and Viewport
-    CommandList.RSSetViewports(Graphics.Viewports, Graphics.NumViewports);
-    CommandList.RSSetScissorRects(Graphics.ScissorRects, Graphics.NumScissor);
+    if (Graphics.bBindViewports)
+    {
+        CommandList.RSSetViewports(Graphics.Viewports, Graphics.NumViewports);
+        Graphics.bBindViewports = false;
+    }
+
+    if (Graphics.bBindScissorRects)
+    {
+        CommandList.RSSetScissorRects(Graphics.ScissorRects, Graphics.NumScissor);
+        Graphics.bBindScissorRects = false;
+    }
 
     // Topology
-    CommandList.IASetPrimitiveTopology(Graphics.PrimitiveTopology);
+    if (Graphics.bBindPrimitiveTopology)
+    {
+        CommandList.IASetPrimitiveTopology(Graphics.PrimitiveTopology);
+        Graphics.bBindPrimitiveTopology = false;
+    }
 
     // BlendFactor
-    CommandList.OMSetBlendFactor(Graphics.BlendFactor.Elements);
+    if (Graphics.bBindBlendFactor)
+    {
+        CommandList.OMSetBlendFactor(Graphics.BlendFactor.Elements);
+        Graphics.bBindBlendFactor = false;
+    }
 
     // Pipeline
-    CommandList.SetPipelineState(Graphics.PipelineState->GetD3D12PipelineState());
-
-    // RootSignature
     FD3D12RootSignature* CurrentRootSignture = Graphics.PipelineState->GetRootSignature();
-    if (bBindRootSignature)
+    if (Graphics.bBindPipeline)
     {
+        CommandList.SetPipelineState(Graphics.PipelineState->GetD3D12PipelineState());
         CommandList.SetGraphicsRootSignature(CurrentRootSignture);
+
+        Graphics.bBindPipeline = false;
     }
 
     // Descriptors
@@ -261,7 +291,7 @@ void FD3D12CommandContextState::ApplyGraphics(FD3D12CommandList& CommandList, FD
     // RenderTargets, DepthStencil and ShadingRate
     if (Graphics.bBindRenderTargets)
     {
-        DescriptorCache.SetRenderTargets(Graphics.RenderTargets, Graphics.DepthStencil);
+        DescriptorCache.SetRenderTargets(Graphics.RTCache, Graphics.DepthStencil);
 
         if (Graphics.ShadingRateTexture)
         {
@@ -288,13 +318,13 @@ void FD3D12CommandContextState::ApplyGraphics(FD3D12CommandList& CommandList, FD
 void FD3D12CommandContextState::ApplyCompute(FD3D12CommandList& CommandList, FD3D12CommandBatch* Batch)
 {
     // Pipeline
-    CommandList.SetPipelineState(Compute.PipelineState->GetD3D12PipelineState());
-
-    // RootSignature
     FD3D12RootSignature* CurrentRootSignture = Compute.PipelineState->GetRootSignature();
-    if (bBindRootSignature)
+    if (Compute.bBindPipeline)
     {
+        CommandList.SetPipelineState(Compute.PipelineState->GetD3D12PipelineState());
         CommandList.SetComputeRootSignature(CurrentRootSignture);
+
+        Compute.bBindPipeline = false;
     }
 
     // Descriptors
@@ -306,20 +336,70 @@ void FD3D12CommandContextState::ApplyCompute(FD3D12CommandList& CommandList, FD3
 
 void FD3D12CommandContextState::ClearGraphics()
 {
+    Graphics.VBCache.Clear();
+    Graphics.IBCache.Clear();
+
     Graphics.PipelineState.Reset();
-    Graphics.ShadingRateTexture.Reset();
-    Graphics.RenderTargets.Clear();
-
-    Graphics.DepthStencil = nullptr;
-
     Graphics.PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 
-    Graphics.bBindRenderTargets = true;
+    Graphics.ShadingRateTexture.Reset();
+    Graphics.RTCache.Clear();
+    Graphics.DepthStencil = nullptr;
+
+    Graphics.bBindRenderTargets     = true;
+    Graphics.bBindBlendFactor       = true;
+    Graphics.bBindPrimitiveTopology = true;
+    Graphics.bBindPipeline          = true;
+    Graphics.bBindVertexBuffers     = true;
+    Graphics.bBindIndexBuffer       = true;
+    Graphics.bBindScissorRects      = true;
+    Graphics.bBindViewports         = true;
 }
 
 void FD3D12CommandContextState::ClearCompute()
 {
     Compute.PipelineState.Reset();
+
+    Compute.bBindPipeline = true;
+}
+
+void FD3D12CommandContextState::SetVertexBuffer(FD3D12VertexBuffer* VertexBuffer, uint32 Slot)
+{
+    FD3D12Resource* CurrentResource = Graphics.VBCache.VBResources[Slot];
+    if (!VertexBuffer)
+    {
+        FMemory::Memzero(&Graphics.VBCache.VBViews[Slot]);
+        Graphics.VBCache.VBResources[Slot] = nullptr;
+    }
+    else
+    {
+        Graphics.VBCache.VBViews[Slot]     = VertexBuffer->GetView();
+        Graphics.VBCache.VBResources[Slot] = VertexBuffer->GetD3D12Resource();
+    }
+
+    if (Graphics.VBCache.VBResources[Slot] != CurrentResource)
+    {
+        Graphics.bBindVertexBuffers = true;
+    }
+}
+
+void FD3D12CommandContextState::SetIndexBuffer(FD3D12IndexBuffer* IndexBuffer)
+{
+    FD3D12Resource* CurrentResource = Graphics.IBCache.IBResource;
+    if (IndexBuffer)
+    {
+        Graphics.IBCache.IBView     = IndexBuffer->GetView();
+        Graphics.IBCache.IBResource = IndexBuffer->GetD3D12Resource();
+    }
+    else
+    {
+        Graphics.IBCache.Clear();
+    }
+
+    if (Graphics.IBCache.IBResource != CurrentResource)
+    {
+        Graphics.bBindIndexBuffer = true;
+    }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -557,7 +637,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
 
     // RenderTargetView
     const uint32 NumRenderTargets = RenderPassInitializer.NumRenderTargets;
-    State.Graphics.RenderTargets.NumRenderTargets = NumRenderTargets;
+    State.Graphics.RTCache.NumRenderTargets = NumRenderTargets;
 
     for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
     {
@@ -579,11 +659,11 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
                                                  , nullptr);
             }
             
-            State.Graphics.RenderTargets.SetRenderTarget(D3D12RenderTargetView, Index);
+            State.Graphics.RTCache.SetRenderTarget(D3D12RenderTargetView, Index);
         }
         else
         {
-            State.Graphics.RenderTargets.SetRenderTarget(nullptr, Index);
+            State.Graphics.RTCache.SetRenderTarget(nullptr, Index);
         }
     }
 
@@ -636,7 +716,8 @@ void FD3D12CommandContext::SetViewport(float Width, float Height, float MinDepth
     Viewport.TopLeftX = x;
     Viewport.TopLeftY = y;
 
-    State.Graphics.NumViewports = 1;
+    State.Graphics.NumViewports   = 1;
+    State.Graphics.bBindViewports = true;
 }
 
 void FD3D12CommandContext::SetScissorRect(float Width, float Height, float x, float y)
@@ -647,12 +728,14 @@ void FD3D12CommandContext::SetScissorRect(float Width, float Height, float x, fl
     ScissorRect.left   = LONG(x);
     ScissorRect.right  = LONG(Width);
 
-    State.Graphics.NumScissor = 1;
+    State.Graphics.NumScissor        = 1;
+    State.Graphics.bBindScissorRects = true;
 }
 
 void FD3D12CommandContext::SetBlendFactor(const TStaticArray<float, 4>& Color)
 {
-    State.Graphics.BlendFactor = Color;
+    State.Graphics.BlendFactor      = Color;
+    State.Graphics.bBindBlendFactor = true;
 }
 
 void FD3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTopology)
@@ -661,6 +744,7 @@ void FD3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTop
     if (State.Graphics.PrimitiveTopology != PrimitiveTopology)
     {
         State.Graphics.PrimitiveTopology = PrimitiveTopology;
+        State.Graphics.bBindBlendFactor  = true;
     }
 }
 
@@ -671,14 +755,16 @@ void FD3D12CommandContext::SetVertexBuffers(FRHIVertexBuffer* const* VertexBuffe
     for (uint32 Index = 0; Index < BufferCount; ++Index)
     {
         FD3D12VertexBuffer* D3D12VertexBuffer = static_cast<FD3D12VertexBuffer*>(VertexBuffers[Index]);
-        State.DescriptorCache.SetVertexBuffer(D3D12VertexBuffer, BufferSlot + Index);
+        State.SetVertexBuffer(D3D12VertexBuffer, BufferSlot + Index);
     }
+
+    State.Graphics.VBCache.NumVertexBuffers = NMath::Max(State.Graphics.VBCache.NumVertexBuffers, BufferSlot + BufferCount);
 }
 
 void FD3D12CommandContext::SetIndexBuffer(FRHIIndexBuffer* IndexBuffer)
 {
     FD3D12IndexBuffer* D3D12IndexBuffer = static_cast<FD3D12IndexBuffer*>(IndexBuffer);
-    State.DescriptorCache.SetIndexBuffer(D3D12IndexBuffer);
+    State.SetIndexBuffer(D3D12IndexBuffer);
 }
 
 void FD3D12CommandContext::SetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState)
@@ -687,7 +773,7 @@ void FD3D12CommandContext::SetGraphicsPipelineState(class FRHIGraphicsPipelineSt
     if (State.Graphics.PipelineState != D3D12PipelineState)
     {
         State.Graphics.PipelineState = MakeSharedRef<FD3D12GraphicsPipelineState>(D3D12PipelineState);
-        State.bBindRootSignature = true;
+        State.Graphics.bBindPipeline = true;
     }
 }
 
@@ -697,7 +783,7 @@ void FD3D12CommandContext::SetComputePipelineState(class FRHIComputePipelineStat
     if (State.Compute.PipelineState != D3D12PipelineState)
     {
         State.Compute.PipelineState = MakeSharedRef<FD3D12ComputePipelineState>(D3D12PipelineState);
-        State.bBindRootSignature = true;
+        State.Compute.bBindPipeline = true;
     }
 }
 

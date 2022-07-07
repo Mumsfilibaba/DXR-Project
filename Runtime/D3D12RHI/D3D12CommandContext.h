@@ -212,6 +212,9 @@ public:
     void ClearGraphics();
     void ClearCompute();
 
+    void SetVertexBuffer(FD3D12VertexBuffer* VertexBuffer, uint32 Slot);
+    void SetIndexBuffer(FD3D12IndexBuffer* IndexBuffer);
+
     void ClearAll()
     {
         ClearGraphics();
@@ -220,6 +223,7 @@ public:
         DescriptorCache.Clear();
         ShaderConstantsCache.Reset();
 
+        bIsReady            = false;
         bIsCapturing        = false;
         bIsRenderPassActive = false;
         bBindRootSignature  = true;
@@ -230,14 +234,16 @@ public:
         FD3D12GraphicsPipelineStateRef PipelineState;
 
         FD3D12TextureRef               ShadingRateTexture;
+        D3D12_SHADING_RATE             ShadingRate = D3D12_SHADING_RATE_1X1;
 
-        FD3D12RenderTargetViewCache    RenderTargets;
+        FD3D12RenderTargetViewCache    RTCache;
         FD3D12DepthStencilView*        DepthStencil;
+
+        FD3D12IndexBufferCache         IBCache;
+        FD3D12VertexBufferCache        VBCache;
 
         D3D12_PRIMITIVE_TOPOLOGY       PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
     
-        D3D12_SHADING_RATE             ShadingRate = D3D12_SHADING_RATE_1X1;
-
         D3D12_VIEWPORT                 Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
         uint32                         NumViewports;
 
@@ -246,12 +252,21 @@ public:
 
         TStaticArray<float, 4>         BlendFactor;
 
-        bool bBindRenderTargets : 1;
+        bool bBindRenderTargets     : 1;
+        bool bBindBlendFactor       : 1;
+        bool bBindPrimitiveTopology : 1;
+        bool bBindPipeline          : 1;
+        bool bBindVertexBuffers     : 1;
+        bool bBindIndexBuffer       : 1;
+        bool bBindScissorRects      : 1;
+        bool bBindViewports         : 1;
     } Graphics;
 
     struct 
     {
         FD3D12ComputePipelineStateRef PipelineState;
+        
+        bool bBindPipeline : 1;
     } Compute;
 
     FD3D12ShaderConstantsCache ShaderConstantsCache;

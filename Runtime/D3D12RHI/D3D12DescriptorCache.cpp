@@ -142,9 +142,6 @@ void FD3D12DescriptorCache::PrepareGraphicsDescriptors(FD3D12CommandBatch* CmdBa
     Check(CurrentCommandList != nullptr);
     Check(RootSignature      != nullptr);
 
-    // Vertex and render-targets
-    VertexBufferCache.CommitState(*CurrentCommandList, CmdBatch);
-
     // Allocate descriptors for resources and samplers 
     ID3D12Device*              DxDevice  = GetDevice()->GetD3D12Device();
     ID3D12GraphicsCommandList* DxCmdList = CurrentCommandList->GetGraphicsCommandList();
@@ -232,13 +229,23 @@ void FD3D12DescriptorCache::SetRenderTargets(FD3D12RenderTargetViewCache& Render
     }
 }
 
+void FD3D12DescriptorCache::SetVertexBuffers(FD3D12VertexBufferCache& VertexBuffers)
+{
+    Check(CurrentCommandList != nullptr);
+    CurrentCommandList->IASetVertexBuffers(0, VertexBuffers.VBViews, VertexBuffers.NumVertexBuffers);
+}
+
+void FD3D12DescriptorCache::SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer)
+{
+    Check(CurrentCommandList != nullptr);
+    CurrentCommandList->IASetIndexBuffer(&IndexBuffer.IBView);
+}
+
 void FD3D12DescriptorCache::Clear()
 {
     CurrentCommandList         = nullptr;
     PreviousDescriptorHeaps[0] = nullptr;
     PreviousDescriptorHeaps[1] = nullptr;
-
-    VertexBufferCache.Reset();
 
     ConstantBufferViewCache.Reset(NullCBV);
     ShaderResourceViewCache.Reset(NullSRV.Get());
@@ -375,53 +382,5 @@ void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps( ID3D12GraphicsComman
                 SamplerStateCache.SetDescriptorTable(ShaderVisibility, CPUHandle, GPUHandle);
             }
         }
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12VertexBufferCache
-
-void FD3D12VertexBufferCache::CommitState(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch)
-{
-    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
-    if (bVertexBuffersDirty)
-    {
-        TStaticArray<D3D12_VERTEX_BUFFER_VIEW, D3D12_MAX_VERTEX_BUFFER_SLOTS> VertexBufferViews;
-
-        for (uint32 Index = 0; Index < NumVertexBuffers; ++Index)
-        {
-            FD3D12VertexBuffer* VertexBuffer = VertexBuffers[Index];
-            if (VertexBuffer)
-            {
-                VertexBufferViews[Index] = VertexBuffer->GetView();
-                CmdBatch->AddInUseResource(VertexBuffer);
-            }
-            else
-            {
-                FMemory::Memzero(&VertexBufferViews[Index]);
-            }
-        }
-
-        DxCmdList->IASetVertexBuffers(0, NumVertexBuffers, VertexBufferViews.Data());
-        bVertexBuffersDirty = false;
-    }
-
-    if (bIndexBufferDirty)
-    {
-        D3D12_INDEX_BUFFER_VIEW IndexBufferView;
-        if (!IndexBuffer)
-        {
-            IndexBufferView.Format         = DXGI_FORMAT_R32_UINT;
-            IndexBufferView.BufferLocation = 0;
-            IndexBufferView.SizeInBytes    = 0;
-        }
-        else
-        {
-            IndexBufferView = IndexBuffer->GetView();
-            CmdBatch->AddInUseResource(IndexBuffer);
-        }
-
-        DxCmdList->IASetIndexBuffer(&IndexBufferView);
-        bIndexBufferDirty = false;
     }
 }

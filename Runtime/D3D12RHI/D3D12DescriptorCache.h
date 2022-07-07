@@ -109,154 +109,6 @@ using FD3D12UnorderedAccessViewCache = TD3D12ViewCache<FD3D12UnorderedAccessView
 using FD3D12SamplerStateCache        = TD3D12ViewCache<FD3D12SamplerState       , D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER    , D3D12_DEFAULT_SAMPLER_STATE_COUNT>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12VertexBufferCache
-
-class FD3D12VertexBufferCache
-{
-public:
-    
-    FD3D12VertexBufferCache()
-        : VertexBuffers()
-        , NumVertexBuffers(0)
-        , bVertexBuffersDirty(false)
-        , IndexBuffer(nullptr)
-        , bIndexBufferDirty(false)
-    {
-        Reset();
-    }
-
-    void CommitState(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch);
-
-    FORCEINLINE void SetVertexBuffer(FD3D12VertexBuffer* VertexBuffer, uint32 Slot)
-    {
-        D3D12_ERROR_COND( Slot <= D3D12_MAX_VERTEX_BUFFER_SLOTS
-                        , "Trying to bind a VertexBuffer to a slot (Slot=%u) higher than the maximum (MaxVertexBufferCount=%u)"
-                        , Slot
-                        , D3D12_MAX_VERTEX_BUFFER_SLOTS);
-                        
-        if (VertexBuffers[Slot] != VertexBuffer)
-        {
-            VertexBuffers[Slot] = VertexBuffer;
-            NumVertexBuffers    = NMath::Max(NumVertexBuffers, Slot + 1);
-
-            bVertexBuffersDirty = true;
-        }
-    }
-
-    FORCEINLINE void SetIndexBuffer(FD3D12IndexBuffer* InIndexBuffer)
-    {
-        if (IndexBuffer != InIndexBuffer)
-        {
-            IndexBuffer = InIndexBuffer;
-            bIndexBufferDirty = true;
-        }
-    }
-
-    FORCEINLINE void Reset()
-    {
-        VertexBuffers.Memzero();
-
-        NumVertexBuffers    = 0;
-        bVertexBuffersDirty = true;
-
-        IndexBuffer       = nullptr;
-        bIndexBufferDirty = true;
-    }
-
-private:
-    TStaticArray<FD3D12VertexBuffer*, D3D12_MAX_VERTEX_BUFFER_SLOTS> VertexBuffers;
-    uint32 NumVertexBuffers;
-
-    FD3D12IndexBuffer* IndexBuffer;
-
-    bool bVertexBuffersDirty;
-    bool bIndexBufferDirty;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RenderTargetState
-
-class FD3D12RenderTargetState
-{
-public:
-    FD3D12RenderTargetState()
-        : RenderTargetViewHandles()
-        , NumRenderTargets(0)
-        , DepthStencilViewHandle({ 0 })
-        , bDirty(false)
-    {
-        Reset();
-    }
-
-    FORCEINLINE void SetRenderTargetView(FD3D12RenderTargetView* RenderTargetView, uint32 Slot)
-    {
-        D3D12_ERROR_COND( Slot <= D3D12_MAX_RENDER_TARGET_COUNT
-                        , "Trying to bind a RenderTarget to a slot (Slot=%u) higher than the maximum (MaxRenderTargetCount=%u)"
-                        , Slot
-                        , D3D12_MAX_RENDER_TARGET_COUNT);
-
-        if (RenderTargetView)
-        {
-            RenderTargetViewHandles[Slot] = RenderTargetView->GetOfflineHandle();
-        }
-        else
-        {
-            RenderTargetViewHandles[Slot] = { 0 };
-        }
-
-        NumRenderTargets = NMath::Max(NumRenderTargets, Slot + 1);
-        bDirty = true;
-    }
-
-    FORCEINLINE void SetDepthStencilView(FD3D12DepthStencilView* DepthStencilView)
-    {
-        if (DepthStencilView)
-        {
-            DepthStencilViewHandle = DepthStencilView->GetOfflineHandle();
-        }
-        else
-        {
-            DepthStencilViewHandle = { 0 };
-        }
-
-        bDirty = true;
-    }
-
-    FORCEINLINE void Reset()
-    {
-
-        FMemory::Memzero(RenderTargetViewHandles, sizeof(RenderTargetViewHandles));
-        DepthStencilViewHandle = { 0 };
-        NumRenderTargets       = 0;
-    }
-
-    FORCEINLINE void CommitState(FD3D12CommandList& CmdList)
-    {
-        if (bDirty)
-        {
-            ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
-
-            D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencil = nullptr;
-            if (DepthStencilViewHandle.ptr)
-            {
-                DepthStencil = &DepthStencilViewHandle;
-            }
-
-            DxCmdList->OMSetRenderTargets(NumRenderTargets, RenderTargetViewHandles, false, DepthStencil);
-            bDirty = false;
-        }
-    }
-
-private:
-    D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetViewHandles[D3D12_MAX_RENDER_TARGET_COUNT];
-    uint32 NumRenderTargets;
-
-    D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilViewHandle;
-
-    bool bDirty;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12PipelineStageMask
 
 struct FD3D12PipelineStageMask
@@ -331,8 +183,52 @@ struct FD3D12PipelineStageMask
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12VertexBufferCache
 
+struct FD3D12VertexBufferCache
+{
+    FD3D12VertexBufferCache()
+        : NumVertexBuffers(0)
+        , VBViews()
+        , VBResources()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        FMemory::Memzero(VBViews    , sizeof(VBViews));
+        FMemory::Memzero(VBResources, sizeof(VBResources));
+        NumVertexBuffers = 0;
+    }
+
+    uint32                   NumVertexBuffers;
+    D3D12_VERTEX_BUFFER_VIEW VBViews[D3D12_MAX_VERTEX_BUFFER_SLOTS];
+    FD3D12Resource*          VBResources[D3D12_MAX_VERTEX_BUFFER_SLOTS];
+};
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12IndexBufferCache
+
+struct FD3D12IndexBufferCache
+{
+    FD3D12IndexBufferCache()
+        : IBView()
+        , IBResource(nullptr)
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        IBView.Format         = DXGI_FORMAT_R32_UINT;
+        IBView.BufferLocation = 0;
+        IBView.SizeInBytes    = 0;
+
+        IBResource = nullptr;
+    }
+
+    D3D12_INDEX_BUFFER_VIEW IBView;
+    FD3D12Resource*         IBResource;
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RenderTargetViewCache
@@ -397,17 +293,10 @@ public:
 
     void SetRenderTargets(FD3D12RenderTargetViewCache& RenderTargets, FD3D12DepthStencilView* DepthStencil);
 
+    void SetVertexBuffers(FD3D12VertexBufferCache& VertexBuffers);
+    void SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer);
+
     void Clear();
-
-    FORCEINLINE void SetVertexBuffer(FD3D12VertexBuffer* VertexBuffer, uint32 Slot)
-    {
-        VertexBufferCache.SetVertexBuffer(VertexBuffer, Slot);
-    }
-
-    FORCEINLINE void SetIndexBuffer(FD3D12IndexBuffer* IndexBuffer)
-    {
-        VertexBufferCache.SetIndexBuffer(IndexBuffer);
-    }
 
     FORCEINLINE void SetConstantBufferView(EShaderVisibility Visibility, FD3D12ConstantBufferView* Descriptor, uint32 ShaderRegister)
     {
@@ -514,7 +403,6 @@ private:
     FD3D12RenderTargetViewRef      NullRTV;
     FD3D12SamplerStateRef          NullSampler;
 
-    FD3D12VertexBufferCache        VertexBufferCache;
     FD3D12ShaderResourceViewCache  ShaderResourceViewCache;
     FD3D12UnorderedAccessViewCache UnorderedAccessViewCache;
     FD3D12ConstantBufferViewCache  ConstantBufferViewCache;
