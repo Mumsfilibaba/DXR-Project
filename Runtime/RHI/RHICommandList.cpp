@@ -256,11 +256,11 @@ void FRHICommandListExecutor::WaitForGPU()
     }
 }
 
-void FRHICommandListExecutor::InternalExecuteCommandList(FRHICommandList& CmdList)
+void FRHICommandListExecutor::InternalExecuteCommandList(FRHICommandList& CommandList)
 {
-    if (CmdList.FirstCommand)
+    if (CommandList.FirstCommand)
     {
-        FRHICommand* CurrentCommand = CmdList.FirstCommand;
+        FRHICommand* CurrentCommand = CommandList.FirstCommand;
         while (CurrentCommand != nullptr)
         {
             FRHICommand* PreviousCommand = CurrentCommand;
@@ -268,12 +268,12 @@ void FRHICommandListExecutor::InternalExecuteCommandList(FRHICommandList& CmdLis
             PreviousCommand->ExecuteAndRelease(GetContext());
         }
 
-        Statistics.NumDrawCalls     += CmdList.GetNumDrawCalls();
-        Statistics.NumDispatchCalls += CmdList.GetNumDispatchCalls();
-        Statistics.NumCommands      += CmdList.GetNumCommands();
+        Statistics.NumDrawCalls     += CommandList.GetNumDrawCalls();
+        Statistics.NumDispatchCalls += CommandList.GetNumDispatchCalls();
+        Statistics.NumCommands      += CommandList.GetNumCommands();
 
-        CmdList.FirstCommand = nullptr;
-        CmdList.LastCommand  = nullptr;
-        CmdList.Reset();
+        CommandList.FirstCommand = nullptr;
+        CommandList.LastCommand  = nullptr;
+        CommandList.Reset();
     }
 }

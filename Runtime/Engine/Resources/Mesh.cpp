@@ -90,9 +90,9 @@ bool FMesh::Init(const FMeshData& Data)
     return true;
 }
 
-bool FMesh::BuildAccelerationStructure(FRHICommandList& CmdList)
+bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
 {
-    CmdList.BuildRayTracingGeometry(RTGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), true);
+    CommandList.BuildRayTracingGeometry(RTGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), true);
     return true;
 }
 

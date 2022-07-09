@@ -14,7 +14,7 @@ class FRHIUnorderedAccessView;
 class FRHIShader;
 
 #define ENABLE_INSERT_DEBUG_CMDLIST_MARKER (0)
-#define ENABLE_RHI_EXECUTOR_THREAD         (1)
+#define ENABLE_RHI_EXECUTOR_THREAD         (0)
 
 #if ENABLE_INSERT_DEBUG_CMDLIST_MARKER
     #define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString) CmdList.InsertMarker(MarkerString);

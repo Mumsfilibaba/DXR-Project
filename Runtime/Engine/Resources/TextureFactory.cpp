@@ -16,7 +16,6 @@ struct TextureFactoryData
 {
     FRHIComputePipelineStateRef PanoramaPSO;
     FRHIComputeShaderRef        ComputeShader;
-    FRHICommandList CmdList;
 };
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -153,12 +152,12 @@ FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
 
     if (GenerateMips)
     {
-        FRHICommandList& CmdList = GlobalFactoryData.CmdList;
-        CmdList.TransitionTexture(Texture.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
-        CmdList.GenerateMips(Texture.Get());
-        CmdList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+        FRHICommandList CommandList;
+        CommandList.TransitionTexture(Texture.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
+        CommandList.GenerateMips(Texture.Get());
+        CommandList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-        FRHICommandListExecutor::Get().ExecuteCommandList(CmdList);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
 
     return Texture.ReleaseOwnership();
@@ -202,46 +201,48 @@ FRHITextureCube* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* Pa
         return nullptr;
     }
 
-    FRHICommandList& CmdList = GlobalFactoryData.CmdList;
-    CmdList.TransitionTexture(PanoramaSource, EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
-    CmdList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
-
-    CmdList.SetComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
-
-    struct ConstantBuffer
     {
-        uint32 CubeMapSize;
-    } CB0;
-    CB0.CubeMapSize = CubeMapSize;
+        FRHICommandList CommandList;
+        CommandList.TransitionTexture(PanoramaSource, EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
-    CmdList.Set32BitShaderConstants(GlobalFactoryData.ComputeShader.Get(), &CB0, 1);
-    CmdList.SetUnorderedAccessView(GlobalFactoryData.ComputeShader.Get(), StagingTextureUAV.Get(), 0);
+        CommandList.SetComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
 
-    FRHIShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
-    CmdList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
+        struct ConstantBuffer
+        {
+            uint32 CubeMapSize;
+        } CB0;
+        CB0.CubeMapSize = CubeMapSize;
 
-    constexpr uint32 LocalWorkGroupCount = 16;
-    const uint32 ThreadsX = NMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
-    const uint32 ThreadsY = NMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
-    CmdList.Dispatch(ThreadsX, ThreadsY, 6);
+        CommandList.Set32BitShaderConstants(GlobalFactoryData.ComputeShader.Get(), &CB0, 1);
+        CommandList.SetUnorderedAccessView(GlobalFactoryData.ComputeShader.Get(), StagingTextureUAV.Get(), 0);
 
-    CmdList.TransitionTexture(PanoramaSource, EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
-    CmdList.TransitionTexture(StagingTexture.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
-    CmdList.TransitionTexture(Texture.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
+        FRHIShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
+        CommandList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
 
-    CmdList.CopyTexture(Texture.Get(), StagingTexture.Get());
+        constexpr uint32 LocalWorkGroupCount = 16;
+        const uint32 ThreadsX = NMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
+        const uint32 ThreadsY = NMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
+        CommandList.Dispatch(ThreadsX, ThreadsY, 6);
 
-    if (GenerateNumMips)
-    {
-        CmdList.GenerateMips(Texture.Get());
+        CommandList.TransitionTexture(PanoramaSource, EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+        CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
+        CommandList.TransitionTexture(Texture.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
+
+        CommandList.CopyTexture(Texture.Get(), StagingTexture.Get());
+
+        if (GenerateNumMips)
+        {
+            CommandList.GenerateMips(Texture.Get());
+        }
+
+        CommandList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+
+        CommandList.DestroyResource(StagingTexture.Get());
+        CommandList.DestroyResource(StagingTextureUAV.Get());
+
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
-
-    CmdList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
-
-    CmdList.DestroyResource(StagingTexture.Get());
-    CmdList.DestroyResource(StagingTextureUAV.Get());
-
-    FRHICommandListExecutor::Get().ExecuteCommandList(CmdList);
 
     return Texture.ReleaseOwnership();
 }

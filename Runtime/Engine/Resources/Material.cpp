@@ -32,11 +32,11 @@ void FMaterial::Initialize()
     Sampler = GEngine->BaseMaterialSampler;
 }
 
-void FMaterial::BuildBuffer(FRHICommandList& CmdList)
+void FMaterial::BuildBuffer(FRHICommandList& CommandList)
 {
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-    CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(FMaterialDesc), &Properties);
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
+    CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(FMaterialDesc), &Properties);
+    CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
 
     bMaterialBufferIsDirty = false;
 }

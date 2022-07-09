@@ -21,7 +21,7 @@ public:
 
     bool Init(const FMeshData& Data);
 
-    bool BuildAccelerationStructure(FRHICommandList& CmdList);
+    bool BuildAccelerationStructure(FRHICommandList& CommandList);
 
     static TSharedPtr<FMesh> Make(const FMeshData& Data);
 

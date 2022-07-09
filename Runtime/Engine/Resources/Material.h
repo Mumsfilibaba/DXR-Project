@@ -33,7 +33,7 @@ public:
 
     void Initialize();
 
-    void BuildBuffer(class FRHICommandList& CmdList);
+    void BuildBuffer(class FRHICommandList& CommandList);
 
     FORCEINLINE bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
 
