@@ -11,18 +11,18 @@
 #include "RHI/RHITypes.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMeshData
+// FMeshData
 
-struct SMeshData
+struct FMeshData
 {
     // C++ Being retarded?
-    SMeshData() = default;
+    FMeshData() = default;
 
-    SMeshData(SMeshData&&) = default;
-    SMeshData(const SMeshData&) = default;
+    FMeshData(FMeshData&&) = default;
+    FMeshData(const FMeshData&) = default;
 
-    SMeshData& operator=(SMeshData&&) = default;
-    SMeshData& operator=(const SMeshData&) = default;
+    FMeshData& operator=(FMeshData&&) = default;
+    FMeshData& operator=(const FMeshData&) = default;
 
     inline void Clear()
     {
@@ -35,41 +35,43 @@ struct SMeshData
         return !Vertices.IsEmpty();
     }
 
-    TArray<SVertex> Vertices;
+    TArray<FVertex> Vertices;
     TArray<uint32>  Indices;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SModelData
+// FModelData
 
-struct SModelData
+struct FModelData
 {
-    SModelData() = default;
+    FModelData() = default;
 
-    SModelData(SModelData&&) = default;
-    SModelData(const SModelData&) = default;
+    FModelData(FModelData&&) = default;
+    FModelData(const FModelData&) = default;
 
-    SModelData& operator=(SModelData&&) = default;
-    SModelData& operator=(const SModelData&) = default;
+    FModelData& operator=(FModelData&&) = default;
+    FModelData& operator=(const FModelData&) = default;
 
      /** @brief: Name of the mesh specified in the model-file */
     FString Name;
 
      /** @brief: Model mesh data */
-    SMeshData Mesh;
+    FMeshData Mesh;
 
-     /** @brief: The Material index in the SSceneData Materials Array */
+     /** @brief: The Material index in the FSceneData Materials Array */
     int32 MaterialIndex = -1;
 };
 
+typedef TSharedPtr<struct FImage2D> FImage2DPtr;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SImage2D - Image for when loading materials
+// FImage2D - Image for when loading materials
 
-struct SImage2D
+struct FImage2D
 {
-    SImage2D() = default;
+    FImage2D() = default;
 
-    SImage2D(const FString& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat)
+    FImage2D(const FString& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat)
         : Path(InPath)
         , Image()
         , Width(InWidth)
@@ -94,33 +96,33 @@ struct SImage2D
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMaterialData
+// FMaterialData
 
-struct SMaterialData
+struct FMaterialData
 {
      /** @brief: Diffuse texture */
-    TSharedPtr<SImage2D> DiffuseTexture;
+    int8 DiffuseTexture = -1;
 
      /** @brief: Normal texture */
-    TSharedPtr<SImage2D> NormalTexture;
+    int8 NormalTexture = -1;
 
      /** @brief: Specular texture - Stores AO, Metallic, and Roughness in the same textures */
-    TSharedPtr<SImage2D> SpecularTexture;
+    int8 SpecularTexture = -1;
 
      /** @brief: Emissive texture */
-    TSharedPtr<SImage2D> EmissiveTexture;
+    int8 EmissiveTexture = -1;
 
      /** @brief: AO texture - Ambient Occlusion */
-    TSharedPtr<SImage2D> AOTexture;
+    int8 AOTexture = -1;
 
      /** @brief: Roughness texture*/
-    TSharedPtr<SImage2D> RoughnessTexture;
+    int8 RoughnessTexture = -1;
 
      /** @brief: Metallic Texture*/
-    TSharedPtr<SImage2D> MetallicTexture;
+    int8 MetallicTexture = -1;
 
      /** @brief: Metallic Texture*/
-    TSharedPtr<SImage2D> AlphaMaskTexture;
+    int8 AlphaMaskTexture = -1;
 
      /** @brief: Diffuse Parameter */
     FVector3 Diffuse;
@@ -136,11 +138,11 @@ struct SMaterialData
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SSceneData
+// FSceneData
 
-struct ENGINE_API SSceneData
+struct ENGINE_API FSceneData
 {
-    void AddToScene(class CScene* Scene);
+    void AddToScene(class FScene* Scene);
 
     FORCEINLINE bool HasData() const
     {
@@ -157,8 +159,9 @@ struct ENGINE_API SSceneData
         return !Materials.IsEmpty();
     }
 
-    TArray<SModelData>    Models;
-    TArray<SMaterialData> Materials;
+    TArray<FModelData>    Models;
+    TArray<FMaterialData> Materials;
+    TArray<FImage2DPtr>   Textures;
 
      /** @brief: A scale used to scale each actor when using add to scene */
     float Scale = 1.0f;

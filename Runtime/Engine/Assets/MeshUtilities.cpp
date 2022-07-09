@@ -1,16 +1,16 @@
 #include "MeshUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMeshUtilities
+// FMeshUtilities
 
-void CMeshUtilities::Subdivide(SMeshData& OutData, uint32 Subdivisions) noexcept
+void FMeshUtilities::Subdivide(FMeshData& OutData, uint32 Subdivisions) noexcept
 {
     if (Subdivisions < 1)
     {
         return;
     }
 
-    SVertex TempVertices[3];
+    FVertex TempVertices[3];
     uint32 IndexCount = 0;
     uint32 VertexCount = 0;
     uint32 OldVertexCount = 0;
@@ -120,7 +120,7 @@ void CMeshUtilities::Subdivide(SMeshData& OutData, uint32 Subdivisions) noexcept
     OutData.Indices.ShrinkToFit();
 }
 
-void CMeshUtilities::Optimize(SMeshData& OutData, uint32 StartVertex) noexcept
+void FMeshUtilities::Optimize(FMeshData& OutData, uint32 StartVertex) noexcept
 {
     uint32 VertexCount = static_cast<uint32>(OutData.Vertices.Size());
     uint32 IndexCount = static_cast<uint32>(OutData.Indices.Size());
@@ -159,15 +159,15 @@ void CMeshUtilities::Optimize(SMeshData& OutData, uint32 StartVertex) noexcept
     }
 }
 
-void CMeshUtilities::CalculateHardNormals(SMeshData& OutData) noexcept
+void FMeshUtilities::CalculateHardNormals(FMeshData& OutData) noexcept
 {
     Check(OutData.Indices.Size() % 3 == 0);
 
     for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
-        SVertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
-        SVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
-        SVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 2]];
+        FVertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
+        FVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
+        FVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 2]];
 
         FVector3 Edge0 = Vertex2.Position - Vertex0.Position;
         FVector3 Edge1 = Vertex1.Position - Vertex0.Position;
@@ -180,7 +180,7 @@ void CMeshUtilities::CalculateHardNormals(SMeshData& OutData) noexcept
     }
 }
 
-void CMeshUtilities::CalculateSoftNormals(SMeshData& OutData) noexcept
+void FMeshUtilities::CalculateSoftNormals(FMeshData& OutData) noexcept
 {
     Check(OutData.Indices.Size() % 3 == 0);
 
@@ -189,9 +189,9 @@ void CMeshUtilities::CalculateSoftNormals(SMeshData& OutData) noexcept
 
     for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
-        SVertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
-        SVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
-        SVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 2]];
+        FVertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
+        FVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
+        FVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 2]];
 
         FVector3 Edge0 = Vertex2.Position - Vertex0.Position;
         FVector3 Edge1 = Vertex1.Position - Vertex0.Position;
@@ -208,11 +208,11 @@ void CMeshUtilities::CalculateSoftNormals(SMeshData& OutData) noexcept
     }
 }
 
-void CMeshUtilities::CalculateTangents(SMeshData& OutData) noexcept
+void FMeshUtilities::CalculateTangents(FMeshData& OutData) noexcept
 {
     Check(OutData.Indices.Size() % 3 == 0);
 
-    auto CalculateTangentFromVectors = [](SVertex& Vertex1, const SVertex& Vertex2, const SVertex& Vertex3)
+    auto CalculateTangentFromVectors = [](FVertex& Vertex1, const FVertex& Vertex2, const FVertex& Vertex3)
     {
         FVector3 Edge1 = Vertex2.Position - Vertex1.Position;
         FVector3 Edge2 = Vertex3.Position - Vertex1.Position;
@@ -230,9 +230,9 @@ void CMeshUtilities::CalculateTangents(SMeshData& OutData) noexcept
 
     for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
-        SVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
-        SVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];
-        SVertex& Vertex3 = OutData.Vertices[OutData.Indices[i + 2]];
+        FVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
+        FVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];
+        FVertex& Vertex3 = OutData.Vertices[OutData.Indices[i + 2]];
 
         CalculateTangentFromVectors(Vertex1, Vertex2, Vertex3);
         CalculateTangentFromVectors(Vertex2, Vertex3, Vertex1);
@@ -240,7 +240,7 @@ void CMeshUtilities::CalculateTangents(SMeshData& OutData) noexcept
     }
 }
 
-void CMeshUtilities::ReverseHandedness(SMeshData& OutData) noexcept
+void FMeshUtilities::ReverseHandedness(FMeshData& OutData) noexcept
 {
     Check(OutData.Indices.Size() % 3 == 0);
 

@@ -85,7 +85,7 @@ struct RENDERER_API SLightSetup
 
     bool Init();
 
-    void BeginFrame(FRHICommandList& CmdList, const CScene& Scene);
+    void BeginFrame(FRHICommandList& CmdList, const FScene& Scene);
     void Release();
 
     TArray<FVector4>        PointLightsPosRad;
@@ -112,21 +112,21 @@ struct RENDERER_API SLightSetup
 
     TSharedRef<FRHIConstantBuffer> DirectionalLightsBuffer;
 
-    TSharedRef<FRHITexture2D> ShadowMapCascades[4];
-    TSharedRef<FRHITexture2D> DirectionalShadowMask;
+    FRHITexture2DRef ShadowMapCascades[4];
+    FRHITexture2DRef DirectionalShadowMask;
 
     TSharedRef<FRHIGenericBuffer>       CascadeMatrixBuffer;
     TSharedRef<FRHIShaderResourceView>  CascadeMatrixBufferSRV;
-    TSharedRef<FRHIUnorderedAccessView> CascadeMatrixBufferUAV;
+    FRHIUnorderedAccessViewRef CascadeMatrixBufferUAV;
 
     TSharedRef<FRHIGenericBuffer>       CascadeSplitsBuffer;
     TSharedRef<FRHIShaderResourceView>  CascadeSplitsBufferSRV;
-    TSharedRef<FRHIUnorderedAccessView> CascadeSplitsBufferUAV;
+    FRHIUnorderedAccessViewRef CascadeSplitsBufferUAV;
 
-    TSharedRef<FRHITextureCube>         IrradianceMap;
-    TSharedRef<FRHIUnorderedAccessView> IrradianceMapUAV;
+    FRHITextureCubeRef         IrradianceMap;
+    FRHIUnorderedAccessViewRef IrradianceMapUAV;
 
-    TSharedRef<FRHITextureCube>                 SpecularIrradianceMap;
-    TArray<TSharedRef<FRHIUnorderedAccessView>> SpecularIrradianceMapUAVs;
+    FRHITextureCubeRef                 SpecularIrradianceMap;
+    TArray<FRHIUnorderedAccessViewRef> SpecularIrradianceMapUAVs;
     TArray<FRHIUnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
 };

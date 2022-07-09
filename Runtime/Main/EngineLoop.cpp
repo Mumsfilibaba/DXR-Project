@@ -156,7 +156,7 @@ bool CEngineLoop::PreInitialize()
         LOG_ERROR("CGPUProfiler failed to be initialized");
     }
 
-    if (!CTextureFactory::Init())
+    if (!FTextureFactory::Init())
     {
         return false;
     }
@@ -256,7 +256,7 @@ bool CEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
-    FRHICommandQueue::Get().WaitForGPU();
+    FRHICommandListExecutor::Get().WaitForGPU();
 
     CGPUProfiler::Release();
 
@@ -277,7 +277,7 @@ bool CEngineLoop::Release()
         GEngine = nullptr;
     }
 
-    CTextureFactory::Release();
+    FTextureFactory::Release();
 
     RHIRelease();
 

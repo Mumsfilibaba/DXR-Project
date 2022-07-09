@@ -5,25 +5,25 @@
 #include "Core/Math/FormatStructs.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SVertex
+// FVertex
 
-struct SVertex
+struct FVertex
 {
-    SVertex()
+    FVertex()
         : Position()
         , Normal()
         , Tangent()
         , TexCoord()
     { }
 
-    SVertex(const FVector3& InPosition, const FVector3& InNormal, const FVector3& InTangent, const FVector2& InTexCoord)
+    FVertex(const FVector3& InPosition, const FVector3& InNormal, const FVector3& InTangent, const FVector2& InTexCoord)
         : Position(InPosition)
         , Normal(InNormal)
         , Tangent(InTangent)
         , TexCoord(InTexCoord)
     { }
 
-    bool operator==(const SVertex& Other) const
+    bool operator==(const FVertex& Other) const
     {
         return (Position == Other.Position) 
             && (Normal   == Other.Normal) 
@@ -31,7 +31,7 @@ struct SVertex
             && (TexCoord == Other.TexCoord);
     }
 
-    bool operator!=(const SVertex& Other) const
+    bool operator!=(const FVertex& Other) const
     {
         return !(*this == Other);
     }
@@ -43,11 +43,11 @@ struct SVertex
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SVertexHasher
+// FVertexHasher
 
-struct SVertexHasher
+struct FVertexHasher
 {
-    inline size_t operator()(const SVertex& Vertex) const
+    inline size_t operator()(const FVertex& Vertex) const
     {
         THash<FVector3> Hasher;
 

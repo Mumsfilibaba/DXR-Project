@@ -6,15 +6,15 @@
 #define NUM_SHADOW_CASCADES (4)
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDirectionalLight
+// FDirectionalLight
 
-class ENGINE_API CDirectionalLight : public CLight
+class ENGINE_API FDirectionalLight : public CLight
 {
-    CORE_OBJECT(CDirectionalLight, CLight);
+    CORE_OBJECT(FDirectionalLight, CLight);
 
 public:
-    CDirectionalLight();
-    ~CDirectionalLight();
+    FDirectionalLight();
+    ~FDirectionalLight();
 
     void UpdateCascades(class CCamera& Camera);
 

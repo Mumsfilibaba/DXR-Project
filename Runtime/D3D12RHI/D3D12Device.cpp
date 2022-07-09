@@ -574,7 +574,7 @@ bool FD3D12Device::Initialize()
     if (!RootSignatureCache->Initialize())
     {
         return false;
-    }
+    } 
 
     // Create DescriptorHeaps
     GlobalResourceHeap = dbg_new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
@@ -596,7 +596,7 @@ bool FD3D12Device::Initialize()
     }
     else
     {
-        GlobalResourceHeap->SetName("Global Sampler Descriptor Heap");
+        GlobalSamplerHeap->SetName("Global Sampler Descriptor Heap");
     }
 
     return true;

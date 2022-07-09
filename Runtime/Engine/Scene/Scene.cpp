@@ -12,14 +12,14 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Scene
 
-CScene::CScene()
+FScene::FScene()
     : Actors()
 {
 }
 
-CScene::~CScene()
+FScene::~FScene()
 {
-    for (CActor* CurrentActor : Actors)
+    for (FActor* CurrentActor : Actors)
     {
         SafeDelete(CurrentActor);
     }
@@ -34,16 +34,16 @@ CScene::~CScene()
     SafeDelete(CurrentCamera);
 }
 
-CActor* CScene::MakeActor()
+FActor* FScene::MakeActor()
 {
-    CActor* NewActor = dbg_new CActor(this);
+    FActor* NewActor = dbg_new FActor(this);
     AddActor(NewActor);
     return NewActor;
 }
 
-void CScene::Start()
+void FScene::Start()
 {
-    for (CActor* Actor : Actors)
+    for (FActor* Actor : Actors)
     {
         if (Actor->IsStartable())
         {
@@ -52,9 +52,9 @@ void CScene::Start()
     }
 }
 
-void CScene::Tick(FTimestamp DeltaTime)
+void FScene::Tick(FTimestamp DeltaTime)
 {
-    for (CActor* Actor : Actors)
+    for (FActor* Actor : Actors)
     {
         if (Actor->IsTickable())
         {
@@ -63,7 +63,7 @@ void CScene::Tick(FTimestamp DeltaTime)
     }
 }
 
-void CScene::AddCamera(CCamera* InCamera)
+void FScene::AddCamera(CCamera* InCamera)
 {
     if (CurrentCamera)
     {
@@ -73,34 +73,34 @@ void CScene::AddCamera(CCamera* InCamera)
     CurrentCamera = InCamera;
 }
 
-void CScene::AddActor(CActor* InActor)
+void FScene::AddActor(FActor* InActor)
 {
     Check(InActor != nullptr);
     Actors.Emplace(InActor);
 
-    CMeshComponent* Component = InActor->GetComponentOfType<CMeshComponent>();
+    FMeshComponent* Component = InActor->GetComponentOfType<FMeshComponent>();
     if (Component)
     {
         AddMeshComponent(Component);
     }
 }
 
-void CScene::AddLight(CLight* InLight)
+void FScene::AddLight(CLight* InLight)
 {
     Check(InLight != nullptr);
     Lights.Emplace(InLight);
 }
 
-void CScene::OnAddedComponent(CComponent* NewComponent)
+void FScene::OnAddedComponent(CComponent* NewComponent)
 {
-    CMeshComponent* Component = Cast<CMeshComponent>(NewComponent);
+    FMeshComponent* Component = Cast<FMeshComponent>(NewComponent);
     if (Component && Component->Mesh)
     {
         AddMeshComponent(Component);
     }
 }
 
-void CScene::AddMeshComponent(CMeshComponent* Component)
+void FScene::AddMeshComponent(FMeshComponent* Component)
 {
     SMeshDrawCommand Command;
     Command.CurrentActor = Component->GetActor();

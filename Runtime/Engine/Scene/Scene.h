@@ -12,26 +12,26 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Scene
 
-class ENGINE_API CScene
+class ENGINE_API FScene
 {
 public:
 
     /**
      * @brief: Default constructor
      */
-    CScene();
+    FScene();
 
     /**
      * @brief: Destructor
      */
-    ~CScene();
+    ~FScene();
 
     /**
      * @brief: Create a new actor and add it to the scene 
      * 
      * @return: Returns the newly created actor
      */
-    class CActor* MakeActor();
+    class FActor* MakeActor();
 
     /**
      * @brief: Start game 
@@ -53,7 +53,7 @@ public:
      * 
      * @param InActor: Actor to add to the scene
      */
-    void AddActor(CActor* InActor);
+    void AddActor(FActor* InActor);
 
     /**
      * @brief: Adds an light into the scene
@@ -80,7 +80,7 @@ public:
         // TODO: Cache this result
 
         TArray<ComponentType> Components;
-        for (CActor* Actor : Actors)
+        for (FActor* Actor : Actors)
         {
             ComponentType* Component = Actor->GetComponentOfType<ComponentType>();
             if (Component)
@@ -97,7 +97,7 @@ public:
      * 
      * @return: Returns a reference to an array of all actors in the scene
      */
-    FORCEINLINE const TArray<CActor*>& GetActors() const
+    FORCEINLINE const TArray<FActor*>& GetActors() const
     {
         return Actors;
     }
@@ -133,9 +133,9 @@ public:
     }
 
 private:
-    void AddMeshComponent(class CMeshComponent* Component);
+    void AddMeshComponent(class FMeshComponent* Component);
 
-    TArray<CActor*> Actors;
+    TArray<FActor*> Actors;
     TArray<CLight*> Lights;
     TArray<SMeshDrawCommand> MeshDrawCommands;
 

@@ -72,10 +72,10 @@ public:
     void Release();
 
      /** @brief: Render Point light shadows */
-    void RenderPointLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene);
+    void RenderPointLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const FScene& Scene);
 
      /** @brief: Render Directional light shadows */
-    void RenderDirectionalLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene);
+    void RenderDirectionalLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const FScene& Scene);
 
      /** @brief: Render ShadowMasks */
     void RenderShadowMasks(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources);
@@ -93,8 +93,8 @@ private:
     TSharedRef<FRHIGraphicsPipelineState> DirectionalLightPSO;
     TSharedRef<FRHIVertexShader>          DirectionalLightShader;
 
-    TSharedRef<FRHIComputePipelineState>  DirectionalShadowMaskPSO;
-    TSharedRef<FRHIComputeShader>         DirectionalShadowMaskShader;
+    FRHIComputePipelineStateRef  DirectionalShadowMaskPSO;
+    FRHIComputeShaderRef         DirectionalShadowMaskShader;
 
     TSharedRef<FRHIGraphicsPipelineState> PointLightPipelineState;
     TSharedRef<FRHIVertexShader>          PointLightVertexShader;
@@ -103,8 +103,8 @@ private:
     TSharedRef<FRHIConstantBuffer>        PerCascadeBuffer;
     TSharedRef<FRHIConstantBuffer>        CascadeGenerationData;
 
-    TSharedRef<FRHIComputePipelineState>  CascadeGen;
-    TSharedRef<FRHIComputeShader>         CascadeGenShader;
+    FRHIComputePipelineStateRef  CascadeGen;
+    FRHIComputeShaderRef         CascadeGenShader;
 
     bool bUpdateDirLight   = true;
     bool bUpdatePointLight = true;

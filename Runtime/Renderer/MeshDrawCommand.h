@@ -6,9 +6,9 @@
 
 struct SMeshDrawCommand
 {
-    class CMaterial*              Material     = nullptr;
-    class CMesh*                  Mesh         = nullptr;
-    class CActor*                 CurrentActor = nullptr;
+    class FMaterial*              Material     = nullptr;
+    class FMesh*                  Mesh         = nullptr;
+    class FActor*                 CurrentActor = nullptr;
 
     class FRHIVertexBuffer*       VertexBuffer = nullptr;
     class FRHIIndexBuffer*        IndexBuffer  = nullptr;

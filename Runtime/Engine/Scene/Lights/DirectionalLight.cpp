@@ -14,7 +14,7 @@ TAutoConsoleVariable<float> GSunSize("Scene.SunSize", 0.5f);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // DirectionalLight
 
-CDirectionalLight::CDirectionalLight()
+FDirectionalLight::FDirectionalLight()
     : CLight()
     , Direction(0.0f, -1.0f, 0.0f)
     , Rotation(0.0f, 0.0f, 0.0f)
@@ -42,12 +42,12 @@ CDirectionalLight::CDirectionalLight()
     }
 }
 
-CDirectionalLight::~CDirectionalLight()
+FDirectionalLight::~FDirectionalLight()
 {
     // Empty for now
 }
 
-void CDirectionalLight::UpdateCascades(CCamera& Camera)
+void FDirectionalLight::UpdateCascades(CCamera& Camera)
 {
     //XMVECTOR XmDirection = XMVectorSet( 0.0, -1.0f, 0.0f, 0.0f );
     //XMMATRIX XmRotation = XMMatrixRotationRollPitchYaw( Rotation.x, Rotation.y, Rotation.z );
@@ -199,22 +199,22 @@ void CDirectionalLight::UpdateCascades(CCamera& Camera)
     return;
 }
 
-void CDirectionalLight::SetRotation(const FVector3& InRotation)
+void FDirectionalLight::SetRotation(const FVector3& InRotation)
 {
     Rotation = InRotation;
 }
 
-void CDirectionalLight::SetRotation(float x, float y, float z)
+void FDirectionalLight::SetRotation(float x, float y, float z)
 {
     SetRotation(FVector3(x, y, z));
 }
 
-void CDirectionalLight::SetLookAt(const FVector3& InLookAt)
+void FDirectionalLight::SetLookAt(const FVector3& InLookAt)
 {
     LookAt = InLookAt;
 }
 
-void CDirectionalLight::SetLookAt(float x, float y, float z)
+void FDirectionalLight::SetLookAt(float x, float y, float z)
 {
     SetLookAt(FVector3(x, y, z));
 }

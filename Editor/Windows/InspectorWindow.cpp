@@ -40,7 +40,7 @@ void CInspectorWindow::DrawSceneInfo()
     {
         ImGui::Text( "Total Actor Count: %d", GEngine->Scene->GetActors().Size() );
 
-        for ( CActor* Actor : GEngine->Scene->GetActors() )
+        for ( FActor* Actor : GEngine->Scene->GetActors() )
         {
             ImGui::PushID( Actor );
 
@@ -103,7 +103,7 @@ void CInspectorWindow::DrawSceneInfo()
                 }
 
                 // MeshComponent
-                CMeshComponent* MeshComponent = Actor->GetComponentOfType<CMeshComponent>();
+                FMeshComponent* MeshComponent = Actor->GetComponentOfType<FMeshComponent>();
                 if ( MeshComponent )
                 {
                     if ( ImGui::TreeNode( "MeshComponent" ) )
@@ -175,9 +175,9 @@ void CInspectorWindow::DrawSceneInfo()
         {
             ImGui::PushID( CurrentLight );
 
-            if ( IsSubClassOf<CPointLight>( CurrentLight ) )
+            if ( IsSubClassOf<FPointLight>( CurrentLight ) )
             {
-                CPointLight* CurrentPointLight = Cast<CPointLight>( CurrentLight );
+                FPointLight* CurrentPointLight = Cast<FPointLight>( CurrentLight );
                 if ( ImGui::TreeNode( "PointLight" ) )
                 {
                     const float ColumnWidth = 150.0f;
@@ -282,9 +282,9 @@ void CInspectorWindow::DrawSceneInfo()
                     ImGui::TreePop();
                 }
             }
-            else if ( IsSubClassOf<CDirectionalLight>( CurrentLight ) )
+            else if ( IsSubClassOf<FDirectionalLight>( CurrentLight ) )
             {
-                CDirectionalLight* CurrentDirectionalLight = Cast<CDirectionalLight>( CurrentLight );
+                FDirectionalLight* CurrentDirectionalLight = Cast<FDirectionalLight>( CurrentLight );
                 if ( ImGui::TreeNode( "DirectionalLight" ) )
                 {
                     const float ColumnWidth = 150.0f;

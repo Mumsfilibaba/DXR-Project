@@ -35,7 +35,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-    FontTexture = CTextureFactory::LoadFromMemory(Pixels, Width, Height, 0, EFormat::R8G8B8A8_Unorm);
+    FontTexture = FTextureFactory::LoadFromMemory(Pixels, Width, Height, 0, EFormat::R8G8B8A8_Unorm);
     if (!FontTexture)
     {
         return false;
@@ -151,7 +151,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     FRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         FDebug::DebugBreak();
@@ -168,7 +168,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     BlendStateInfo.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
     BlendStateInfo.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
-    TSharedRef<FRHIBlendState> BlendStateBlending = RHICreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendStateBlending = RHICreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
         FDebug::DebugBreak();
@@ -177,7 +177,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
 
     BlendStateInfo.RenderTargets[0].bBlendEnable = false;
 
-    TSharedRef<FRHIBlendState> BlendStateNoBlending = RHICreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendStateNoBlending = RHICreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
         FDebug::DebugBreak();

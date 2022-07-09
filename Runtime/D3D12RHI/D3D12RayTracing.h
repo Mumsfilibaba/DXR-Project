@@ -8,7 +8,7 @@
 #include "Core/Containers/Array.h"
 
 class FD3D12CommandList;
-class CMaterial;
+class FMaterial;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12ShaderBindingTableEntry

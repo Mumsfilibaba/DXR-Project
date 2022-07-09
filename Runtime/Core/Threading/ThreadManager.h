@@ -42,5 +42,5 @@ private:
     static TOptional<FThreadManager>& GetConsoleManagerInstance();
 
     TArray<FGenericThreadRef> Threads;
-    void*                    MainThread;
+    void*                     MainThread;
 };

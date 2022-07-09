@@ -4,9 +4,9 @@
 #include "RHI/RHICommandList.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMesh
+// FMesh
 
-bool CMesh::Init(const SMeshData& Data)
+bool FMesh::Init(const FMeshData& Data)
 {
     const bool bRTOn = RHISupportsRayTracing();
 
@@ -17,7 +17,7 @@ bool CMesh::Init(const SMeshData& Data)
 
     FRHIBufferDataInitializer InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
     
-    FRHIVertexBufferInitializer VBInitializer(BufferFlags, VertexCount, sizeof(SVertex), EResourceAccess::VertexAndConstantBuffer, &InitialData);
+    FRHIVertexBufferInitializer VBInitializer(BufferFlags, VertexCount, sizeof(FVertex), EResourceAccess::VertexAndConstantBuffer, &InitialData);
     VertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!VertexBuffer)
     {
@@ -90,33 +90,33 @@ bool CMesh::Init(const SMeshData& Data)
     return true;
 }
 
-bool CMesh::BuildAccelerationStructure(FRHICommandList& CmdList)
+bool FMesh::BuildAccelerationStructure(FRHICommandList& CmdList)
 {
     CmdList.BuildRayTracingGeometry(RTGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), true);
     return true;
 }
 
-TSharedPtr<CMesh> CMesh::Make(const SMeshData& Data)
+TSharedPtr<FMesh> FMesh::Make(const FMeshData& Data)
 {
-    TSharedPtr<CMesh> Result = MakeShared<CMesh>();
+    TSharedPtr<FMesh> Result = MakeShared<FMesh>();
     if (Result->Init(Data))
     {
         return Result;
     }
     else
     {
-        return TSharedPtr<CMesh>();
+        return TSharedPtr<FMesh>();
     }
 }
 
-void CMesh::CreateBoundingBox(const SMeshData& Data)
+void FMesh::CreateBoundingBox(const FMeshData& Data)
 {
     constexpr float Inf = std::numeric_limits<float>::infinity();
 
     FVector3 MinBounds = FVector3( Inf,  Inf,  Inf);
     FVector3 MaxBounds = FVector3(-Inf, -Inf, -Inf);
 
-    for (const SVertex& Vertex : Data.Vertices)
+    for (const FVertex& Vertex : Data.Vertices)
     {
         MinBounds = Min(MinBounds, Vertex.Position);
         MaxBounds = Max(MaxBounds, Vertex.Position);

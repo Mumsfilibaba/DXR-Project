@@ -37,7 +37,7 @@ private:
 
     TArray<FDrawableImage*> RenderedImages;
 
-    TSharedRef<FRHITexture2D>             FontTexture;
+    FRHITexture2DRef             FontTexture;
     TSharedRef<FRHIGraphicsPipelineState> PipelineState;
     TSharedRef<FRHIGraphicsPipelineState> PipelineStateNoBlending;
     TSharedRef<FRHIPixelShader>           PShader;

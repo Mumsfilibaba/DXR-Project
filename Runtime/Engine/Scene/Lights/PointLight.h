@@ -4,15 +4,15 @@
 #include "Core/Math/Matrix4.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CPointLight
+// FPointLight
 
-class ENGINE_API CPointLight : public CLight
+class ENGINE_API FPointLight : public CLight
 {
-    CORE_OBJECT(CPointLight, CLight);
+    CORE_OBJECT(FPointLight, CLight);
 
 public:
-    CPointLight();
-    ~CPointLight() = default;
+    FPointLight();
+    ~FPointLight() = default;
 
     void SetPosition(const FVector3& InPosition);
     void SetPosition(float x, float y, float z);

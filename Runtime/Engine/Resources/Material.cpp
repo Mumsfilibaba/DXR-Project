@@ -6,9 +6,9 @@
 #include "Engine/Engine.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMaterial
+// FMaterial
 
-CMaterial::CMaterial(const SMaterialDesc& InProperties)
+FMaterial::FMaterial(const FMaterialDesc& InProperties)
     : AlbedoMap()
     , NormalMap()
     , RoughnessMap()
@@ -19,9 +19,9 @@ CMaterial::CMaterial(const SMaterialDesc& InProperties)
     , MaterialBuffer()
 { }
 
-void CMaterial::Init()
+void FMaterial::Initialize()
 {
-    FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SMaterialDesc));
+    FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(FMaterialDesc));
 
     MaterialBuffer = RHICreateConstantBuffer(Initializer);
     if (MaterialBuffer)
@@ -32,66 +32,66 @@ void CMaterial::Init()
     Sampler = GEngine->BaseMaterialSampler;
 }
 
-void CMaterial::BuildBuffer(FRHICommandList& CmdList)
+void FMaterial::BuildBuffer(FRHICommandList& CmdList)
 {
     CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-    CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(SMaterialDesc), &Properties);
+    CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(FMaterialDesc), &Properties);
     CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
 
     bMaterialBufferIsDirty = false;
 }
 
-void CMaterial::SetAlbedo(const FVector3& Albedo)
+void FMaterial::SetAlbedo(const FVector3& Albedo)
 {
     Properties.Albedo      = Albedo;
     bMaterialBufferIsDirty = true;
 }
 
-void CMaterial::SetAlbedo(float r, float g, float b)
+void FMaterial::SetAlbedo(float r, float g, float b)
 {
     Properties.Albedo      = FVector3(r, g, b);
     bMaterialBufferIsDirty = true;
 }
 
-void CMaterial::SetMetallic(float Metallic)
+void FMaterial::SetMetallic(float Metallic)
 {
     Properties.Metallic    = Metallic;
     bMaterialBufferIsDirty = true;
 }
 
-void CMaterial::SetRoughness(float Roughness)
+void FMaterial::SetRoughness(float Roughness)
 {
     Properties.Roughness   = Roughness;
     bMaterialBufferIsDirty = true;
 }
 
-void CMaterial::SetAmbientOcclusion(float AO)
+void FMaterial::SetAmbientOcclusion(float AO)
 {
     Properties.AO          = AO;
     bMaterialBufferIsDirty = true;
 }
 
-void CMaterial::ForceForwardPass(bool bForceForwardRender)
+void FMaterial::ForceForwardPass(bool bForceForwardRender)
 {
     bRenderInForwardPass = bForceForwardRender;
 }
 
-void CMaterial::EnableHeightMap(bool bInEnableHeightMap)
+void FMaterial::EnableHeightMap(bool bInEnableHeightMap)
 {
     Properties.EnableHeight = (int32)bInEnableHeightMap;
 }
 
-void CMaterial::EnableAlphaMask(bool bInEnableAlphaMask)
+void FMaterial::EnableAlphaMask(bool bInEnableAlphaMask)
 {
     Properties.EnableMask = (int32)bInEnableAlphaMask;
 }
 
-void CMaterial::SetDebugName(const FString& InDebugName)
+void FMaterial::SetDebugName(const FString& InDebugName)
 {
     DebugName = InDebugName;
 }
 
-FRHIShaderResourceView* const* CMaterial::GetShaderResourceViews() const
+FRHIShaderResourceView* const* FMaterial::GetShaderResourceViews() const
 {
     ShaderResourceViews[0] = SafeGetDefaultSRV(AlbedoMap);
     ShaderResourceViews[1] = SafeGetDefaultSRV(NormalMap);

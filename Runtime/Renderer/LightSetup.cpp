@@ -84,7 +84,7 @@ bool SLightSetup::Init()
     return true;
 }
 
-void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
+void SLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
 {
     PointLightsPosRad.Clear();
     PointLightsData.Clear();
@@ -105,9 +105,9 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
         FVector3 Color = Light->GetColor();
         Color = Color * Intensity;
 
-        if (IsSubClassOf<CPointLight>(Light))
+        if (IsSubClassOf<FPointLight>(Light))
         {
-            CPointLight* CurrentLight = Cast<CPointLight>(Light);
+            FPointLight* CurrentLight = Cast<FPointLight>(Light);
             Check(CurrentLight != nullptr);
 
             constexpr float MinLuma = 0.005f;
@@ -149,9 +149,9 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const CScene& Scene)
                 PointLightsPosRad.Emplace(PosRad);
             }
         }
-        else if (IsSubClassOf<CDirectionalLight>(Light))
+        else if (IsSubClassOf<FDirectionalLight>(Light))
         {
-            CDirectionalLight* CurrentLight = Cast<CDirectionalLight>(Light);
+            FDirectionalLight* CurrentLight = Cast<FDirectionalLight>(Light);
             Check(CurrentLight != nullptr);
 
             CurrentLight->UpdateCascades(*Camera);

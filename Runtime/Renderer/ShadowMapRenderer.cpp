@@ -88,7 +88,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         FRHIRasterizerStateInitializer RasterizerInitializer;
         RasterizerInitializer.CullMode = ECullMode::Back;
 
-        TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
+        FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
         if (!RasterizerState)
         {
             FDebug::DebugBreak();
@@ -97,7 +97,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
         FRHIBlendStateInitializer BlendStateInitializer;
 
-        TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
+        FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
             FDebug::DebugBreak();
@@ -177,7 +177,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         FRHIRasterizerStateInitializer RasterizerInitializer;
         RasterizerInitializer.CullMode = ECullMode::Back;
 
-        TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
+        FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
         if (!RasterizerState)
         {
             FDebug::DebugBreak();
@@ -185,7 +185,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         }
 
         FRHIBlendStateInitializer BlendStateInitializer;
-        TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
+        FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
             FDebug::DebugBreak();
@@ -362,7 +362,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
     return true;
 }
 
-void CShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene)
+void CShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const FScene& Scene)
 {
     //PointLightFrame++;
     //if (PointLightFrame > 6)
@@ -480,7 +480,7 @@ void CShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
 }
 
-void CShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene)
+void CShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const FScene& Scene)
 {
     // Generate matrices for directional light
     {

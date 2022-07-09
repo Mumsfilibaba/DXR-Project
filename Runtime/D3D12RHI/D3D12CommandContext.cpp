@@ -66,6 +66,19 @@ void FD3D12ResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Res
 {
     Check(Resource != nullptr);
 
+    // Make sure we are not already have UAV barrier for this resource
+    for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType It = Barriers.StartIterator(); It != Barriers.EndIterator(); It++)
+    {
+        if ((*It).Type == D3D12_RESOURCE_BARRIER_TYPE_UAV)
+        {
+            if ((*It).UAV.pResource == Resource)
+            {
+                It = Barriers.RemoveAt(It);
+                return;
+            }
+        }
+    }
+
     D3D12_RESOURCE_BARRIER Barrier;
     FMemory::Memzero(&Barrier);
 
@@ -199,10 +212,10 @@ bool FD3D12CommandBatch::Initialize(uint32 Index)
     const uint32 ResourceCount = 100000;
     const uint32 SamplerCount  = 200;
 
-    OnlineResourceDescriptorHeap = dbg_new FD3D12OnlineDescriptorManager(Device->GetGlobalResourceHeap(), Index * ResourceCount, ResourceCount);
+    OnlineResourceDescriptorHeap = dbg_new FD3D12OnlineDescriptorManager(Device, Device->GetGlobalResourceHeap(), Index * ResourceCount, ResourceCount);
     Check(OnlineResourceDescriptorHeap != nullptr);
 
-    OnlineSamplerDescriptorHeap = dbg_new FD3D12OnlineDescriptorManager(Device->GetGlobalSamplerHeap(), Index * SamplerCount, SamplerCount);
+    OnlineSamplerDescriptorHeap = dbg_new FD3D12OnlineDescriptorManager(Device, Device->GetGlobalSamplerHeap(), Index * SamplerCount, SamplerCount);
     Check(OnlineResourceDescriptorHeap != nullptr);
 
     GpuResourceUploader.Reserve(1024);
@@ -497,70 +510,80 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, uint64 OffsetI
 
 void FD3D12CommandContext::StartContext()
 {
-    Check(State.bIsReady == false);
+    // Lock to the thread that started the context
+    CommandContextCS.Lock();
 
-    TRACE_FUNCTION_SCOPE();
-
-    CmdBatch     = &CmdBatches[NextCmdBatch];
-    NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
-
-    if (CmdBatch->AssignedFenceValue >= Fence.GetCompletedValue())
     {
-        Fence.WaitForValue(CmdBatch->AssignedFenceValue);
+        Check(State.bIsReady == false);
+
+        TRACE_FUNCTION_SCOPE();
+
+        CmdBatch = &CmdBatches[NextCmdBatch];
+        NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
+
+        if (CmdBatch->AssignedFenceValue >= Fence.GetCompletedValue())
+        {
+            Fence.WaitForValue(CmdBatch->AssignedFenceValue);
+        }
+
+        if (!CmdBatch->Reset())
+        {
+            D3D12_ERROR("Failed to reset D3D12CommandBatch");
+            return;
+        }
+
+        InternalClearState();
+
+        if (!CommandList.Reset(CmdBatch->GetCommandAllocator()))
+        {
+            D3D12_ERROR("Failed to reset Commandlist");
+        }
+
+        State.DescriptorCache.SetCurrentCommandList(&CommandList);
+        State.bIsReady = true;
     }
-
-    if (!CmdBatch->Reset())
-    {
-        D3D12_ERROR("Failed to reset D3D12CommandBatch");
-        return;
-    }
-
-    InternalClearState();
-
-    if (!CommandList.Reset(CmdBatch->GetCommandAllocator()))
-    {
-        D3D12_ERROR("Failed to reset Commandlist");
-    }
-
-    State.DescriptorCache.SetCurrentCommandList(&CommandList);
-    State.bIsReady = true;
 }
 
 void FD3D12CommandContext::FinishContext()
 {
-    Check(State.bIsReady == true);
-
-    TRACE_FUNCTION_SCOPE();
-
-    FlushResourceBarriers();
-
-    const uint64 NewFenceValue = ++FenceValue;
-    CmdBatch->AssignedFenceValue = NewFenceValue;
-    CmdBatch = nullptr;
-
-    for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.Size(); ++QueryIndex)
     {
-        ResolveQueries[QueryIndex]->ResolveQueries(*this);
+        Check(State.bIsReady == true);
+
+        TRACE_FUNCTION_SCOPE();
+
+        FlushResourceBarriers();
+
+        const uint64 NewFenceValue = ++FenceValue;
+        CmdBatch->AssignedFenceValue = NewFenceValue;
+        CmdBatch = nullptr;
+
+        for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.Size(); ++QueryIndex)
+        {
+            ResolveQueries[QueryIndex]->ResolveQueries(*this);
+        }
+
+        ResolveQueries.Clear();
+
+        // Execute
+        if (!CommandList.Close())
+        {
+            D3D12_ERROR("Failed to close CommandList");
+            return;
+        }
+
+        CommandQueue.ExecuteCommandList(&CommandList);
+
+        if (!CommandQueue.SignalFence(Fence, NewFenceValue))
+        {
+            D3D12_ERROR("Failed to signal Fence on the GPU");
+        }
+
+        State.ClearAll();
+        State.DescriptorCache.SetCurrentCommandList(nullptr);
     }
 
-    ResolveQueries.Clear();
-
-    // Execute
-    if (!CommandList.Close())
-    {
-        D3D12_ERROR("Failed to close CommandList");
-        return;
-    }
-
-    CommandQueue.ExecuteCommandList(&CommandList);
-
-    if (!CommandQueue.SignalFence(Fence, NewFenceValue))
-    {
-        D3D12_ERROR("Failed to signal Fence on the GPU");
-    }
-
-    State.DescriptorCache.SetCurrentCommandList(nullptr);
-    State.bIsReady = false;
+    // Unlock from the thread that started the context
+    CommandContextCS.Unlock();
 }
 
 void FD3D12CommandContext::BeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
@@ -653,10 +676,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
             // it is not certain that there will be a call to draw inside of the RenderPass
             if (RenderTargetView.LoadAction == EAttachmentLoadAction::Clear)
             {
-                CommandList.ClearRenderTargetView( D3D12RenderTargetView->GetOfflineHandle()
-                                                 , RenderTargetView.ClearValue.Data()
-                                                 , 0
-                                                 , nullptr);
+                CommandList.ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), RenderTargetView.ClearValue.Data(), 0, nullptr);
             }
             
             State.Graphics.RTCache.SetRenderTarget(D3D12RenderTargetView, Index);
@@ -679,10 +699,8 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
         // it is not certain that there will be a call to draw inside of the RenderPass
         if (DepthStencilView.LoadAction == EAttachmentLoadAction::Clear)
         {
-            CommandList.ClearDepthStencilView( D3D12DepthStencilView->GetOfflineHandle()
-                                             , D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL
-                                             , DepthStencilView.ClearValue.Depth
-                                             , DepthStencilView.ClearValue.Stencil);
+            const D3D12_CLEAR_FLAGS ClearFlags = D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL;
+            CommandList.ClearDepthStencilView(D3D12DepthStencilView->GetOfflineHandle(), ClearFlags, DepthStencilView.ClearValue.Depth, DepthStencilView.ClearValue.Stencil);
         }
 
         State.Graphics.DepthStencil = D3D12DepthStencilView;
@@ -796,7 +814,7 @@ void FD3D12CommandContext::Set32BitShaderConstants(FRHIShader* Shader, const voi
 void FD3D12CommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
+    Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
@@ -809,7 +827,7 @@ void FD3D12CommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderR
 void FD3D12CommandContext::SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
+    Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
@@ -825,7 +843,7 @@ void FD3D12CommandContext::SetShaderResourceViews(FRHIShader* Shader, FRHIShader
 void FD3D12CommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
+    Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
@@ -838,7 +856,7 @@ void FD3D12CommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorde
 void FD3D12CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
+    Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
@@ -854,7 +872,7 @@ void FD3D12CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnord
 void FD3D12CommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
+    Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
@@ -874,7 +892,7 @@ void FD3D12CommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuf
 void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, FRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
+    Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
@@ -897,7 +915,7 @@ void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, FRHIConstantBu
 void FD3D12CommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
+    Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
@@ -910,7 +928,7 @@ void FD3D12CommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState*
 void FD3D12CommandContext::SetSamplerStates(FRHIShader* Shader, FRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
+    Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
@@ -1033,7 +1051,11 @@ void FD3D12CommandContext::CopyTexture(FRHITexture* Destination, FRHITexture* So
     FlushResourceBarriers();
 
     FD3D12Texture* D3D12Destination = GetD3D12Texture(Destination);
-    FD3D12Texture* D3D12Source      = GetD3D12Texture(Source);
+    Check(D3D12Destination != nullptr);
+
+    FD3D12Texture* D3D12Source = GetD3D12Texture(Source);
+    Check(D3D12Source != nullptr);
+    
     CommandList.CopyResource(D3D12Destination->GetResource(), D3D12Source->GetResource());
 
     CmdBatch->AddInUseResource(Destination);
@@ -1045,7 +1067,10 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Destination, FRHITextu
     D3D12_ERROR_COND(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 
     FD3D12Texture* D3D12Destination = GetD3D12Texture(Destination);
-    FD3D12Texture* D3D12Source      = GetD3D12Texture(Source);
+    Check(D3D12Destination != nullptr);
+    
+    FD3D12Texture* D3D12Source = GetD3D12Texture(Source);
+    Check(D3D12Source != nullptr);
 
     // Source
     D3D12_TEXTURE_COPY_LOCATION SourceLocation;
@@ -1449,6 +1474,8 @@ void FD3D12CommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess 
     const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(AfterState);
 
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
+    Check(D3D12Buffer != nullptr);
+
     TransitionResource(D3D12Buffer->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
 
     CmdBatch->AddInUseResource(Buffer);
@@ -1457,6 +1484,8 @@ void FD3D12CommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess 
 void FD3D12CommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
+    Check(D3D12Texture != nullptr);
+
     UnorderedAccessBarrier(D3D12Texture->GetResource());
 
     CmdBatch->AddInUseResource(Texture);
@@ -1465,6 +1494,8 @@ void FD3D12CommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
 void FD3D12CommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
+    Check(D3D12Buffer != nullptr);
+
     UnorderedAccessBarrier(D3D12Buffer->GetD3D12Resource());
 
     CmdBatch->AddInUseResource(Buffer);
@@ -1474,55 +1505,40 @@ void FD3D12CommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 {
     FlushResourceBarriers();
 
-    if (VertexCount)
-    {
-        State.ApplyGraphics(CommandList, CmdBatch);
-        CommandList.DrawInstanced(VertexCount, 1, StartVertexLocation, 0);
-    }
+    State.ApplyGraphics(CommandList, CmdBatch);
+    CommandList.DrawInstanced(VertexCount, 1, StartVertexLocation, 0);
 }
 
 void FD3D12CommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
     FlushResourceBarriers();
 
-    if (IndexCount)
-    {
-        State.ApplyGraphics(CommandList, CmdBatch);
-        CommandList.DrawIndexedInstanced(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
-    }
+    State.ApplyGraphics(CommandList, CmdBatch);
+    CommandList.DrawIndexedInstanced(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
 }
 
 void FD3D12CommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
     FlushResourceBarriers();
 
-    if (VertexCountPerInstance > 0 && InstanceCount > 0)
-    {
-        State.ApplyGraphics(CommandList, CmdBatch);
-        CommandList.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
-    }
+    State.ApplyGraphics(CommandList, CmdBatch);
+    CommandList.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
 void FD3D12CommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
     FlushResourceBarriers();
 
-    if (IndexCountPerInstance > 0 && InstanceCount > 0)
-    {
-        State.ApplyGraphics(CommandList, CmdBatch);
-        CommandList.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
-    }
+    State.ApplyGraphics(CommandList, CmdBatch);
+    CommandList.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
 
 void FD3D12CommandContext::Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 {
     FlushResourceBarriers();
 
-    if (ThreadGroupCountX > 0 || ThreadGroupCountY > 0 || ThreadGroupCountZ > 0)
-    {
-        State.ApplyCompute(CommandList, CmdBatch);
-        CommandList.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
-    }
+    State.ApplyCompute(CommandList, CmdBatch);
+    CommandList.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
 
 void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
@@ -1538,22 +1554,19 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
 
     FlushResourceBarriers();
 
-    if (Width > 0 || Height > 0 || Depth > 0)
-    {
-        D3D12_DISPATCH_RAYS_DESC RayDispatchDesc;
-        FMemory::Memzero(&RayDispatchDesc);
+    D3D12_DISPATCH_RAYS_DESC RayDispatchDesc;
+    FMemory::Memzero(&RayDispatchDesc);
 
-        RayDispatchDesc.RayGenerationShaderRecord = D3D12Scene->GetRayGenShaderRecord();
-        RayDispatchDesc.MissShaderTable           = D3D12Scene->GetMissShaderTable();
-        RayDispatchDesc.HitGroupTable             = D3D12Scene->GetHitGroupTable();
+    RayDispatchDesc.RayGenerationShaderRecord = D3D12Scene->GetRayGenShaderRecord();
+    RayDispatchDesc.MissShaderTable = D3D12Scene->GetMissShaderTable();
+    RayDispatchDesc.HitGroupTable = D3D12Scene->GetHitGroupTable();
 
-        RayDispatchDesc.Width  = Width;
-        RayDispatchDesc.Height = Height;
-        RayDispatchDesc.Depth  = Depth;
+    RayDispatchDesc.Width = Width;
+    RayDispatchDesc.Height = Height;
+    RayDispatchDesc.Depth = Depth;
 
-        DXRCommandList->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
-        DXRCommandList->DispatchRays(&RayDispatchDesc);
-    }
+    DXRCommandList->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
+    DXRCommandList->DispatchRays(&RayDispatchDesc);
 }
 
 void FD3D12CommandContext::ClearState()

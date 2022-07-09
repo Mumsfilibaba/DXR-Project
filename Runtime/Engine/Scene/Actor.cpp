@@ -59,9 +59,9 @@ void CActorTransform::CalculateMatrix()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CActor
+// FActor
 
-CActor::CActor(class CScene* InSceneOwner)
+FActor::FActor(class FScene* InSceneOwner)
     : CCoreObject()
     , Name()
     , SceneOwner(InSceneOwner)
@@ -73,7 +73,7 @@ CActor::CActor(class CScene* InSceneOwner)
     CORE_OBJECT_INIT();
 }
 
-CActor::~CActor()
+FActor::~FActor()
 {
     for (CComponent* CurrentComponent : Components)
     {
@@ -83,7 +83,7 @@ CActor::~CActor()
     Components.Clear();
 }
 
-void CActor::Start()
+void FActor::Start()
 {
     for (CComponent* Component : Components)
     {
@@ -94,7 +94,7 @@ void CActor::Start()
     }
 }
 
-void CActor::Tick(FTimestamp DeltaTime)
+void FActor::Tick(FTimestamp DeltaTime)
 {
     for (CComponent* Component : Components)
     {
@@ -105,7 +105,7 @@ void CActor::Tick(FTimestamp DeltaTime)
     }
 }
 
-void CActor::AddComponent(CComponent* InComponent)
+void FActor::AddComponent(CComponent* InComponent)
 {
     Check(InComponent != nullptr);
     Components.Emplace(InComponent);
@@ -116,12 +116,12 @@ void CActor::AddComponent(CComponent* InComponent)
     }
 }
 
-void CActor::SetName(const FString& InName)
+void FActor::SetName(const FString& InName)
 {
     Name = InName;
 }
 
-bool CActor::HasComponentOfClass(class CClassType* ComponentClass) const
+bool FActor::HasComponentOfClass(class CClassType* ComponentClass) const
 {
     for (CComponent* Component : Components)
     {
@@ -134,7 +134,7 @@ bool CActor::HasComponentOfClass(class CClassType* ComponentClass) const
     return false;
 }
 
-CComponent* CActor::GetComponentOfClass(class CClassType* ComponentClass) const
+CComponent* FActor::GetComponentOfClass(class CClassType* ComponentClass) const
 {
     for (CComponent* Component : Components)
     {

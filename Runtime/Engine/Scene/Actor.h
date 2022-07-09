@@ -75,20 +75,20 @@ private:
     FVector3 Rotation;
 };
 
-class CScene;
+class FScene;
 class CComponent;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CActor
+// FActor
 
-class ENGINE_API CActor : public CCoreObject
+class ENGINE_API FActor : public CCoreObject
 {
-    CORE_OBJECT(CActor, CCoreObject);
+    CORE_OBJECT(FActor, CCoreObject);
 
 public:
 
-    CActor(class CScene* InSceneOwner);
-    ~CActor();
+    FActor(class FScene* InSceneOwner);
+    ~FActor();
 
     /**
      * @brief: Start actor, called in the beginning of the run, perform initialization here
@@ -179,7 +179,7 @@ public:
      *
      * @return: Returns the Scene that owns the actor
      */
-    FORCEINLINE CScene* GetScene() const
+    FORCEINLINE FScene* GetScene() const
     {
         return SceneOwner;
     }
@@ -227,7 +227,7 @@ public:
 private:
     FString              Name;
 
-    CScene*             SceneOwner = nullptr;
+    FScene*             SceneOwner = nullptr;
 
     CActorTransform     Transform;
 

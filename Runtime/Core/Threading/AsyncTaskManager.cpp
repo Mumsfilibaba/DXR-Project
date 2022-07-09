@@ -10,7 +10,7 @@
 FAsyncTaskManager FAsyncTaskManager::Instance;
 
 FAsyncTaskManager::FAsyncTaskManager()
-    : QueueMutex()
+    : QueueCS()
     , bIsRunning(false)
 { }
 
@@ -21,7 +21,7 @@ FAsyncTaskManager::~FAsyncTaskManager()
 
 bool FAsyncTaskManager::PopDispatch(FAsyncTask& OutTask)
 {
-    TScopedLock<FCriticalSection> Lock(QueueMutex);
+    TScopedLock<FCriticalSection> Lock(QueueCS);
 
     if (!Queue.IsEmpty())
     {
@@ -121,7 +121,7 @@ DispatchID FAsyncTaskManager::Dispatch(const FAsyncTask& NewTask)
     DispatchID NewTaskID = DispatchAdded.Increment();
 
     {
-        TScopedLock<FCriticalSection> Lock(QueueMutex);
+        TScopedLock<FCriticalSection> Lock(QueueCS);
         Queue.Emplace(NewTask);
     }
 

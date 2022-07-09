@@ -24,13 +24,13 @@ public:
 private:
     bool CreateRenderTarget(SFrameResources& FrameResources);
 
-    TSharedRef<FRHIComputePipelineState> PipelineState;
-    TSharedRef<FRHIComputeShader>        SSAOShader;
-    TSharedRef<FRHIComputePipelineState> BlurHorizontalPSO;
-    TSharedRef<FRHIComputeShader>        BlurHorizontalShader;
-    TSharedRef<FRHIComputePipelineState> BlurVerticalPSO;
-    TSharedRef<FRHIComputeShader>        BlurVerticalShader;
+    FRHIComputePipelineStateRef PipelineState;
+    FRHIComputeShaderRef        SSAOShader;
+    FRHIComputePipelineStateRef BlurHorizontalPSO;
+    FRHIComputeShaderRef        BlurHorizontalShader;
+    FRHIComputePipelineStateRef BlurVerticalPSO;
+    FRHIComputeShaderRef        BlurVerticalShader;
     TSharedRef<FRHIGenericBuffer>     SSAOSamples;
     TSharedRef<FRHIShaderResourceView>   SSAOSamplesSRV;
-    TSharedRef<FRHITexture2D>            SSAONoiseTex;
+    FRHITexture2DRef            SSAONoiseTex;
 };

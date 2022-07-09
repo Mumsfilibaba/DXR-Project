@@ -4,6 +4,9 @@
 #include "RHICommands.h"
 #include "RHITimestampQuery.h"
 
+#include "Core/Threading/ThreadManager.h"
+#include "Core/Threading/Platform/ConditionVariable.h"
+
 class FRHIRenderTargetView;
 class FRHIDepthStencilView;
 class FRHIShaderResourceView;
@@ -11,6 +14,7 @@ class FRHIUnorderedAccessView;
 class FRHIShader;
 
 #define ENABLE_INSERT_DEBUG_CMDLIST_MARKER (0)
+#define ENABLE_RHI_EXECUTOR_THREAD         (1)
 
 #if ENABLE_INSERT_DEBUG_CMDLIST_MARKER
     #define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString) CmdList.InsertMarker(MarkerString);
@@ -29,8 +33,7 @@ public:
     ~FRHICommandAllocator();
 
     void* Allocate(uint64 SizeInBytes, uint64 Alignment = STANDARD_ALIGNMENT);
-
-    void Reset();
+    void  Reset();
 
     template<typename T>
     FORCEINLINE T* Allocate()
@@ -70,113 +73,26 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHICommandQueue
+// FRHICommandStatistics
 
-class RHI_API FRHICommandQueue
+struct FRHICommandStatistics
 {
-public:
+    FRHICommandStatistics()
+        : NumDrawCalls(0)
+        , NumDispatchCalls(0)
+        , NumCommands(0)
+    { }
 
-    /**
-     * @brief: Retrieve the RHICommandQueue instance
-     * 
-     * @return: Returns the instance of the RHICommandQueue
-     */
-    static FRHICommandQueue& Get();
-
-    /**
-     * @brief: Execute a single RHICommandList
-     * 
-     * @param CmdList: CommandList to execute
-     */
-    void ExecuteCommandList(class FRHICommandList& CmdList);
-
-    /**
-     * @brief: Execute multiple RHICommandLists
-     *
-     * @param CmdLists: CommandLists to execute
-     * @param NumCmdLists: Number of CommandLists to execute
-     */
-    void ExecuteCommandLists(class FRHICommandList* const* CmdLists, uint32 NumCmdLists);
-
-    /**
-     * @brief: Wait for the GPU to finish all submitted operations
-     */
-    void WaitForGPU();
-
-    /**
-     * @brief: Set the context that should be used
-     * 
-     * @param InCmdContext: CommandContext to use when executing CommandLists
-     */
-    FORCEINLINE void SetContext(IRHICommandContext* InCmdContext)
-    {
-        CmdContext = InCmdContext;
-    }
-
-    /**
-     * @brief: Retrieve the CommandContext that is used when executing CommandLists
-     * 
-     * @return: Returns a reference to the CommandContext that is currently being used
-     */
-    FORCEINLINE IRHICommandContext& GetContext()
-    {
-        Check(CmdContext != nullptr);
-        return *CmdContext;
-    }
-
-    /**
-     * @brief: Retrieve the number of draw-calls that where in the previously executed CommandList
-     * 
-     * @return: Returns the number of draw-calls in the previously executed CommandList
-     */
-    FORCEINLINE uint32 GetNumDrawCalls() const
-    {
-        return NumDrawCalls;
-    }
-
-    /**
-     * @brief: Retrieve the number of dispatch-calls that where in the previously executed CommandList
-     *
-     * @return: Returns the number of dispatch-calls in the previously executed CommandList
-     */
-    FORCEINLINE uint32 GetNumDispatchCalls() const
-    {
-        return NumDispatchCalls;
-    }
-
-    /**
-     * @brief: Retrieve the number of commands that where in the previously executed CommandList
-     *
-     * @return: Returns the number of commands in the previously executed CommandList
-     */
-    FORCEINLINE uint32 GetNumCommands() const
-    {
-        return NumCommands;
-    }
-
-private:
-
-    FRHICommandQueue();
-    ~FRHICommandQueue() = default;
-
-    /** Internal function for executing the CommandList */
-    void InternalExecuteCommandList(class FRHICommandList& CmdList);
-
-    FORCEINLINE void ResetStatistics()
+    void Reset()
     {
         NumDrawCalls     = 0;
         NumDispatchCalls = 0;
         NumCommands      = 0;
     }
 
-    IRHICommandContext* CmdContext;
-
-    // Statistics
-    uint32              NumDrawCalls;
-    uint32              NumDispatchCalls;
-    uint32              NumCommands;
-
-    static FRHICommandQueue Instance;
+    uint32 NumDrawCalls;
+    uint32 NumDispatchCalls;
+    uint32 NumCommands;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -184,28 +100,26 @@ private:
 
 class FRHICommandList
 {
-    friend class FRHICommandQueue;
+    friend class FRHICommandListExecutor;
 
 public:
 
-    /**
-     * @brief: Default constructor
-     */
+    /** @brief: Default constructor */
     FRHICommandList()
-        : CmdAllocator()
+        : Allocator(nullptr)
         , FirstCommand(nullptr)
         , LastCommand(nullptr)
-	    , NumDrawCalls(0)
-	    , NumDispatchCalls(0)
-	    , NumCommands(0)
-    { }
+	    , Statistics()
+    {
+        Allocator = dbg_new FRHICommandAllocator();
+    }
 
-    /**
-     * @brief: Destructor
-     */
+    /** @brief: Destructor */
     ~FRHICommandList()
     {
         Reset();
+
+        SafeDelete(Allocator);
     }
 
     /**
@@ -266,9 +180,7 @@ public:
         InsertCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
 
-    /**
-     * @brief: Begin a RenderPass
-     */
+    /** @brief: Begin a RenderPass */
     void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer)
     {
         Check(bIsRenderPassActive == false);
@@ -277,9 +189,7 @@ public:
         bIsRenderPassActive = true;
     }
 
-    /**
-     * @brief: Ends a RenderPass
-     */
+    /** @brief: Ends a RenderPass */
     void EndRenderPass()
     {
         Check(bIsRenderPassActive == true);
@@ -335,32 +245,19 @@ public:
      */
     void SetVertexBuffers(FRHIVertexBuffer* const* InVertexBuffers, uint32 NumVertexBuffers, uint32 BufferSlot)
     {
-        bool bNeedsBinding = false;
-        for (uint32 Index = 0; Index < NumVertexBuffers; ++Index)
+        Check(Allocator != nullptr);
+
+        FRHIVertexBuffer** TempVertexBuffers = Allocator->Allocate<FRHIVertexBuffer*>(NumVertexBuffers);
+        if (InVertexBuffers)
         {
-            const uint32 RealIndex = BufferSlot + Index;
-            if (VertexBuffers[RealIndex] != InVertexBuffers[Index])
-            {
-                bNeedsBinding = true;
-                VertexBuffers[RealIndex] = InVertexBuffers[Index];
-                break;
-            }
+            FMemory::MemcpyTyped(TempVertexBuffers, InVertexBuffers, NumVertexBuffers);
+        }
+        else
+        {
+            FMemory::Memzero(TempVertexBuffers, NumVertexBuffers);
         }
 
-        if (bNeedsBinding)
-        {
-            FRHIVertexBuffer** TempVertexBuffers = CmdAllocator.Allocate<FRHIVertexBuffer*>(NumVertexBuffers);
-            if (InVertexBuffers)
-            {
-                FMemory::MemcpyTyped(TempVertexBuffers, InVertexBuffers, NumVertexBuffers);
-            }
-            else
-            {
-                FMemory::Memzero(TempVertexBuffers, NumVertexBuffers);
-            }
-
-            InsertCommand<FRHICommandSetVertexBuffers>(TempVertexBuffers, NumVertexBuffers, BufferSlot);
-        }
+        InsertCommand<FRHICommandSetVertexBuffers>(TempVertexBuffers, NumVertexBuffers, BufferSlot);
     }
 
     /**
@@ -412,9 +309,11 @@ public:
      */
     void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
     {
+        Check(Allocator != nullptr);
+
         const uint32 Num32BitConstantsInBytes = Num32BitConstants * 4;
 
-        void* Shader32BitConstantsMemory = CmdAllocator.Allocate(Num32BitConstantsInBytes, 1);
+        void* Shader32BitConstantsMemory = Allocator->Allocate(Num32BitConstantsInBytes, 1);
         FMemory::Memcpy(Shader32BitConstantsMemory, Shader32BitConstants, Num32BitConstantsInBytes);
 
         InsertCommand<FRHICommandSet32BitShaderConstants>(Shader, Shader32BitConstantsMemory, Num32BitConstants);
@@ -443,7 +342,9 @@ public:
      */
     void SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* ShaderResourceViews, uint32 NumShaderResourceViews, uint32 ParameterIndex)
     {
-        FRHIShaderResourceView** TempShaderResourceViews = CmdAllocator.Allocate<FRHIShaderResourceView*>(NumShaderResourceViews);
+        Check(Allocator != nullptr);
+
+        FRHIShaderResourceView** TempShaderResourceViews = Allocator->Allocate<FRHIShaderResourceView*>(NumShaderResourceViews);
         if (ShaderResourceViews)
         {
             FMemory::MemcpyTyped(TempShaderResourceViews, ShaderResourceViews, NumShaderResourceViews);
@@ -479,7 +380,9 @@ public:
      */
     void SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
     {
-        FRHIUnorderedAccessView** TempUnorderedAccessViews = CmdAllocator.Allocate<FRHIUnorderedAccessView*>(NumUnorderedAccessViews);
+        Check(Allocator != nullptr);
+
+        FRHIUnorderedAccessView** TempUnorderedAccessViews = Allocator->Allocate<FRHIUnorderedAccessView*>(NumUnorderedAccessViews);
         if (UnorderedAccessViews)
         {
             FMemory::MemcpyTyped(TempUnorderedAccessViews, UnorderedAccessViews, NumUnorderedAccessViews);
@@ -515,7 +418,9 @@ public:
      */
     void SetConstantBuffers(FRHIShader* Shader, FRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
     {
-        FRHIConstantBuffer** TempConstantBuffers = CmdAllocator.Allocate<FRHIConstantBuffer*>(NumConstantBuffers);
+        Check(Allocator != nullptr);
+
+        FRHIConstantBuffer** TempConstantBuffers = Allocator->Allocate<FRHIConstantBuffer*>(NumConstantBuffers);
         if (ConstantBuffers)
         {
             FMemory::MemcpyTyped(TempConstantBuffers, ConstantBuffers, NumConstantBuffers);
@@ -551,7 +456,9 @@ public:
      */
     void SetSamplerStates(FRHIShader* Shader, FRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
     {
-        FRHISamplerState** TempSamplerStates = CmdAllocator.Allocate<FRHISamplerState*>(NumSamplerStates);
+        Check(Allocator != nullptr);
+
+        FRHISamplerState** TempSamplerStates = Allocator->Allocate<FRHISamplerState*>(NumSamplerStates);
         if (SamplerStates)
         {
             FMemory::MemcpyTyped(TempSamplerStates, SamplerStates, NumSamplerStates);
@@ -574,7 +481,9 @@ public:
      */
     void UpdateBuffer(FRHIBuffer* Dst, uint32 DestinationOffsetInBytes, uint32 SizeInBytes, const void* SourceData)
     {
-        void* TempSourceData = CmdAllocator.Allocate(SizeInBytes);
+        Check(Allocator != nullptr);
+
+        void* TempSourceData = Allocator->Allocate(SizeInBytes);
         FMemory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
         InsertCommand<FRHICommandUpdateBuffer>(Dst, DestinationOffsetInBytes, SizeInBytes, TempSourceData);
@@ -591,9 +500,11 @@ public:
      */
     void UpdateTexture2D(FRHITexture2D* Dst, uint16 Width, uint16 Height, uint16 MipLevel, const void* SourceData)
     {
+        Check(Allocator != nullptr);
+
         const uint32 SizeInBytes = Width * Height * GetByteStrideFromFormat(Dst->GetFormat());
 
-        void* TempSourceData = CmdAllocator.Allocate(SizeInBytes);
+        void* TempSourceData = Allocator->Allocate(SizeInBytes);
         FMemory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
         InsertCommand<FRHICommandUpdateTexture2D>(Dst, Width, Height, MipLevel, TempSourceData);
@@ -785,8 +696,11 @@ public:
      */
     void Draw(uint32 VertexCount, uint32 StartVertexLocation)
     {
-        InsertCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);
-        NumDrawCalls++;
+        if (VertexCount > 0)
+        {
+            InsertCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);
+            Statistics.NumDrawCalls++;
+        }
     }
 
     /**
@@ -798,8 +712,11 @@ public:
      */
     void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
     {
-        InsertCommand<FRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
-        NumDrawCalls++;
+        if (IndexCount > 0)
+        {
+            InsertCommand<FRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
+            Statistics.NumDrawCalls++;
+        }
     }
 
     /**
@@ -812,8 +729,11 @@ public:
      */
     void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
     {
-        InsertCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
-        NumDrawCalls++;
+        if ((VertexCountPerInstance > 0) && (InstanceCount > 0))
+        {
+            InsertCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+            Statistics.NumDrawCalls++;
+        }
     }
 
     /**
@@ -827,8 +747,11 @@ public:
      */
     void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
     {
-        InsertCommand<FRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
-        NumDrawCalls++;
+        if ((IndexCountPerInstance > 0) && (InstanceCount > 0))
+        {
+            InsertCommand<FRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+            Statistics.NumDrawCalls++;
+        }
     }
 
     /**
@@ -840,8 +763,11 @@ public:
      */
     void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
     {
-        InsertCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
-        NumDispatchCalls++;
+        if ((ThreadGroupCountX > 0) || (ThreadGroupCountY > 0) || (ThreadGroupCountZ > 0))
+        {
+            InsertCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+            Statistics.NumDispatchCalls++;
+        }
     }
 
     /**
@@ -855,7 +781,10 @@ public:
      */
     void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
     {
-        InsertCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
+        if ((Width > 0) || (Height > 0) || (Depth > 0))
+        {
+            InsertCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
+        }
     }
 
     /**
@@ -868,33 +797,25 @@ public:
         InsertCommand<FRHICommandInsertMarker>(Marker);
     }
     
-    /**
-     * @brief: Insert a debug-break into the command-list
-     */
+    /** @brief: Insert a debug-break into the command-list */
     void DebugBreak()
     {
         InsertCommand<FRHICommandDebugBreak>();
     }
 
-    /**
-     * @brief:  Begins a PIX capture event, currently only available on D3D12
-     */
+    /** @brief: Begins a PIX capture event, currently only available on D3D12 */
     void BeginExternalCapture()
     {
         InsertCommand<FRHICommandBeginExternalCapture>();
     }
 
-    /**
-     * @brief: Ends a PIX capture event, currently only available on D3D12
-     */
+    /** @brief: Ends a PIX capture event, currently only available on D3D12 */
     void EndExternalCapture()
     {
         InsertCommand<FRHICommandEndExternalCapture>();
     }
 
-    /**
-     * @brief: Resets the CommandList
-     */
+    /** @brief: Resets the CommandList */
     void Reset()
     {
         if (FirstCommand != nullptr)
@@ -911,45 +832,54 @@ public:
             LastCommand  = nullptr;
         }
 
-        NumDrawCalls     = 0;
-        NumDispatchCalls = 0;
-        NumCommands      = 0;
+        Statistics.Reset();
 
-        CmdAllocator.Reset();
-
-        VertexBuffers.Memzero();
+        if (Allocator)
+        {
+            Allocator->Reset();
+        }
 
         bIsRenderPassActive = false;
     }
 
-    /**
-     * @brief: Retrieve the number of recorded draw-calls
-     * 
-     * @return: Returns the number of draw-calls
-     */
+    /** @brief: Swap a CommandList with another */
+    void Swap(FRHICommandList& Other)
+    {
+        FRHICommandAllocator* TempAllocator           = Allocator;
+        FRHICommand*          TempFirstCommand        = FirstCommand;
+        FRHICommand*          TempLastCommand         = LastCommand;
+        FRHICommandStatistics TempStatistics          = Statistics;
+        bool                  bTempIsRenderPassActive = bIsRenderPassActive;
+
+        Allocator           = Other.Allocator;
+        FirstCommand        = Other.FirstCommand;
+        LastCommand         = Other.LastCommand;
+        Statistics          = Other.Statistics;
+        bIsRenderPassActive = Other.bIsRenderPassActive;
+
+        Other.Allocator           = TempAllocator;
+        Other.FirstCommand        = TempFirstCommand;
+        Other.LastCommand         = TempLastCommand;
+        Other.Statistics          = TempStatistics;
+        Other.bIsRenderPassActive = bTempIsRenderPassActive;
+    }
+
+    /** @return: Returns the number of draw-calls */
     FORCEINLINE uint32 GetNumDrawCalls() const
     {
-        return NumDrawCalls;
+        return Statistics.NumDrawCalls;
     }
 
-    /**
-     * @brief: Retrieve the number of recorded dispatch-calls
-     *
-     * @return: Returns the number of dispatch-calls
-     */
+    /** @return: Returns the number of dispatch-calls */
     FORCEINLINE uint32 GetNumDispatchCalls() const
     {
-        return NumDispatchCalls;
+        return Statistics.NumDispatchCalls;
     }
 
-    /**
-     * @brief: Retrieve the number of recorded Commands
-     *
-     * @return: Returns the number of Commands
-     */
+    /** @return: Returns the number of Commands */
     FORCEINLINE uint32 GetNumCommands() const
     {
-        return NumCommands;
+        return Statistics.NumCommands;
     }
 
 private:
@@ -957,7 +887,9 @@ private:
     template<typename CommandType, typename... ArgTypes>
     void InsertCommand(ArgTypes&&... Args)
     {
-        CommandType* Cmd = CmdAllocator.Construct<CommandType>(Forward<ArgTypes>(Args)...);
+        Check(Allocator != nullptr);
+
+        CommandType* Cmd = Allocator->Construct<CommandType>(Forward<ArgTypes>(Args)...);
         if (LastCommand)
         {
             LastCommand->NextCommand = Cmd;
@@ -969,21 +901,143 @@ private:
             LastCommand  = FirstCommand;
         }
 
-        NumCommands++;
+        Statistics.NumCommands++;
     }
 
 private:
+    FRHICommandAllocator* Allocator;
+    FRHICommand*          FirstCommand;
+    FRHICommand*          LastCommand;
 
-    FRHICommandAllocator CmdAllocator;
+    FRHICommandStatistics Statistics;
 
-    FRHICommand*      FirstCommand;
-    FRHICommand*      LastCommand;
+    bool                  bIsRenderPassActive = false;
+};
 
-    uint32            NumDrawCalls     = 0;
-    uint32            NumDispatchCalls = 0;
-    uint32            NumCommands      = 0;
 
-    bool              bIsRenderPassActive = false;
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FRHIExecutorTask
 
-    TStaticArray<FRHIVertexBuffer*, kRHIMaxVertexBuffers> VertexBuffers;
+struct FRHIExecutorTask
+{
+    FRHIExecutorTask()
+        : Function()
+    { }
+
+    FRHIExecutorTask(const TFunction<void()>& InWork)
+        : Function(InWork)
+    { }
+
+    FORCEINLINE void operator()()
+    {
+        Function();
+    }
+
+    TFunction<void()> Function;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FRHIExecutorThread
+
+class RHI_API FRHIExecutorThread
+{
+public:
+
+    FRHIExecutorThread();
+    ~FRHIExecutorThread() = default;
+
+    static FORCEINLINE const char* GetStaticThreadName() { return "RHI Executor-Thread"; }
+
+    bool Start();
+    void StopExecution();
+
+    void Execute(const FRHIExecutorTask& ExecutionTask);
+
+private:
+    void Worker();
+    
+    FGenericThreadRef  Thread;
+
+    FCriticalSection   WaitCS;
+    FConditionVariable WaitCondition;
+
+    FRHIExecutorTask   CurrentTask;
+    FCriticalSection   CurrentTaskCS;
+
+    bool               bIsRunning;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FRHICommandListExecutor
+
+class RHI_API FRHICommandListExecutor
+{
+private:
+
+    FRHICommandListExecutor();
+    ~FRHICommandListExecutor() = default;
+
+public:
+
+    /** @return: Returns true if the initialization was successful */
+    static bool Initialize();
+
+    /** @brief: Releases resources */
+    static void Release();
+
+    /** @return: Returns the instance of the FRHICommandListExecutor */
+    static FRHICommandListExecutor& Get();
+
+    /** @brief: Wait for the GPU to finish all submitted operations */
+    void WaitForGPU();
+
+    /**
+     * @brief: Execute a single RHICommandList
+     *
+     * @param CmdList: CommandList to execute
+     */
+    void ExecuteCommandList(class FRHICommandList& CmdList);
+
+    /**
+     * @brief: Execute multiple RHICommandLists
+     *
+     * @param CmdLists: CommandLists to execute
+     * @param NumCmdLists: Number of CommandLists to execute
+     */
+    void ExecuteCommandLists(class FRHICommandList* const* CmdLists, uint32 NumCmdLists);
+
+    /**
+     * @brief: Set the context that should be used
+     *
+     * @param InCmdContext: CommandContext to use when executing CommandLists
+     */
+    FORCEINLINE void SetContext(IRHICommandContext* InCmdContext) { CommandContext = InCmdContext; }
+
+    /**
+     * @brief: Retrieve the CommandContext that is used when executing CommandLists
+     *
+     * @return: Returns a reference to the CommandContext that is currently being used
+     */
+    FORCEINLINE IRHICommandContext& GetContext()
+    {
+        Check(CommandContext != nullptr);
+        return *CommandContext;
+    }
+
+    /** @return: Returns the number of draw-calls in the previously executed CommandList */
+    FORCEINLINE const FRHICommandStatistics& GetStatistics() const { return Statistics; }
+
+private:
+
+    /** Internal function for executing the CommandList */
+    void InternalExecuteCommandList(class FRHICommandList& CmdList);
+
+    TArray<FRHICommandAllocator*> CommandAllocators;
+
+    FRHIExecutorThread    ExecutorThread;
+    FRHICommandStatistics Statistics;
+
+    IRHICommandContext*   CommandContext;
+
+    static FRHICommandListExecutor Instance;
 };

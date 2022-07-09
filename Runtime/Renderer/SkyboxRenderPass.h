@@ -17,7 +17,7 @@ public:
 
     bool Init(SFrameResources& FrameResources);
 
-    void Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene);
+    void Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const FScene& Scene);
 
     void Release();
 
@@ -29,5 +29,5 @@ private:
     TSharedRef<FRHIIndexBuffer>  SkyboxIndexBuffer;
     TSharedRef<FRHISamplerState> SkyboxSampler;
 
-    SMeshData SkyboxMesh;
+    FMeshData SkyboxMesh;
 };

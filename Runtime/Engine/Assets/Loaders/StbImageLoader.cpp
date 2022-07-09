@@ -7,7 +7,7 @@
 #include <stb_image.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CStbImageLoader
+// FSTBImageLoader
 
 static EFormat GetByteFormat(int32 Channels)
 {
@@ -73,9 +73,9 @@ static EFormat GetFloatFormat(int32 Channels)
     }
 }
 
-TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const FString& Filename)
+FImage2DPtr FSTBImageLoader::LoadFile(const FString& Filename)
 {
-    TSharedPtr<SImage2D> Image = MakeShared<SImage2D>(Filename, uint16(0), uint16(0), EFormat::Unknown);
+    FImage2DPtr Image = MakeShared<FImage2D>(Filename, uint16(0), uint16(0), EFormat::Unknown);
 
     // Async lambda
     const auto LoadImageAsync = [Image, Filename]()
@@ -83,13 +83,13 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const FString& Filename)
         FILE* File = fopen(Filename.CStr(), "rb");
         if (!File)
         {
-            LOG_ERROR("[CStbImageLoader]: Failed to open '%s'", Filename.CStr());
+            LOG_ERROR("[FSTBImageLoader]: Failed to open '%s'", Filename.CStr());
             return;
         }
 
         // Retrieve info about the file
-        int32 Width = 0;
-        int32 Height = 0;
+        int32 Width        = 0;
+        int32 Height       = 0;
         int32 ChannelCount = 0;
         stbi_info_from_file(File, &Width, &Height, &ChannelCount);
 
@@ -135,12 +135,12 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const FString& Filename)
         // Check if succeeded
         if (!Pixels)
         {
-            LOG_ERROR("[CStbImageLoader]: Failed to load image '%s'", Filename.CStr());
+            LOG_ERROR("[FSTBImageLoader]: Failed to load image '%s'", Filename.CStr());
             return;
         }
         else
         {
-            LOG_INFO("[CStbImageLoader]: Loaded image '%s'", Filename.CStr());
+            LOG_INFO("[FSTBImageLoader]: Loaded image '%s'", Filename.CStr());
         }
 
         Image->Image     = Move(Pixels);
@@ -154,6 +154,5 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const FString& Filename)
     NewTask.Delegate.BindLambda(LoadImageAsync);
 
     FAsyncTaskManager::Get().Dispatch(NewTask);
-
     return Image;
 }

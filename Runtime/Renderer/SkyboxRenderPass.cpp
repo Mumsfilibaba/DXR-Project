@@ -15,11 +15,11 @@
 
 bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
 {
-    SkyboxMesh = CMeshFactory::CreateSphere(1);
+    SkyboxMesh = FMeshFactory::CreateSphere(1);
 
     FRHIBufferDataInitializer VertexData(SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes());
 
-    FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, SkyboxMesh.Vertices.Size(), sizeof(SVertex), EResourceAccess::VertexAndConstantBuffer, &VertexData);
+    FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, SkyboxMesh.Vertices.Size(), sizeof(FVertex), EResourceAccess::VertexAndConstantBuffer, &VertexData);
     SkyboxVertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!SkyboxVertexBuffer)
     {
@@ -45,7 +45,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
 
     // Create Texture Cube
     const FString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
-    TSharedRef<FRHITexture2D> Panorama = CTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
+    FRHITexture2DRef Panorama = FTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
     if (!Panorama)
     {
         FDebug::DebugBreak();
@@ -56,7 +56,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         Panorama->SetName(PanoramaSourceFilename);
     }
 
-    FrameResources.Skybox = CTextureFactory::CreateTextureCubeFromPanorma(Panorama.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
+    FrameResources.Skybox = FTextureFactory::CreateTextureCubeFromPanorma(Panorama.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
     if (!FrameResources.Skybox)
     {
         return false;
@@ -117,7 +117,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     FRHIRasterizerStateInitializer RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
-    TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
     if (!RasterizerState)
     {
         FDebug::DebugBreak();
@@ -126,7 +126,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
 
     FRHIBlendStateInitializer BlendStateInitializer;
 
-    TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
         FDebug::DebugBreak();
@@ -170,7 +170,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     return true;
 }
 
-void CSkyboxRenderPass::Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene)
+void CSkyboxRenderPass::Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const FScene& Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
 

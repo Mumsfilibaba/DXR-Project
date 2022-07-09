@@ -17,7 +17,7 @@ public:
     bool Init(SFrameResources& Resources);
     void Release();
 
-    void PreRender(FRHICommandList& CmdList, SFrameResources& Resources, const CScene& Scene);
+    void PreRender(FRHICommandList& CmdList, SFrameResources& Resources, const FScene& Scene);
 
 private:
     TSharedRef<FRHIRayTracingPipelineState> Pipeline;

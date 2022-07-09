@@ -8,14 +8,13 @@
 #include "Core/Logging/Log.h"
 #include "Core/Containers/ArrayView.h"
 
-#define DECLARE_RHICOMMAND_CLASS(RHICommandName) class RHICommandName final : public TRHICommand<RHICommandName>
+#define DECLARE_RHICOMMAND(RHICommandName) struct RHICommandName final : public TRHICommand<RHICommandName>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommand
 
-class FRHICommand
+struct FRHICommand
 {
-public:
     virtual ~FRHICommand() = default;
 
     virtual void ExecuteAndRelease(IRHICommandContext& CommandContext) = 0;
@@ -27,10 +26,9 @@ public:
 // TRHICommand
 
 template<typename CommandType>
-class TRHICommand : public FRHICommand
+struct TRHICommand : public FRHICommand
 {
-public:
-    TRHICommand() = default;
+    TRHICommand()  = default;
     ~TRHICommand() = default;
 
     virtual void ExecuteAndRelease(IRHICommandContext& CommandContext) override final
@@ -44,9 +42,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandBeginTimeStamp
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandBeginTimeStamp)
+DECLARE_RHICOMMAND(FRHICommandBeginTimeStamp)
 {
-public:
     FORCEINLINE FRHICommandBeginTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
@@ -64,9 +61,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandEndTimeStamp
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandEndTimeStamp)
+DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
 {
-public:
     FORCEINLINE FRHICommandEndTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
@@ -84,9 +80,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandClearRenderTargetView
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandClearRenderTargetView)
+DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
 {
-public:
     FORCEINLINE FRHICommandClearRenderTargetView(const FRHIRenderTargetView& InRenderTargetView, const TStaticArray<float, 4>&InClearColor)
         : RenderTargetView(InRenderTargetView)
         , ClearColor(InClearColor)
@@ -104,9 +99,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandClearDepthStencilView
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandClearDepthStencilView)
+DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
 {
-public:
     FORCEINLINE FRHICommandClearDepthStencilView(const FRHIDepthStencilView& InDepthStencilView, const float InDepth, const uint8 InStencil)
         : DepthStencilView(InDepthStencilView)
         , Depth(InDepth)
@@ -126,9 +120,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandClearUnorderedAccessViewFloat
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandClearUnorderedAccessViewFloat)
+DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
 {
-public:
     FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const TStaticArray<float, 4>&InClearColor)
         : UnorderedAccessView(InUnorderedAccessView)
         , ClearColor(InClearColor)
@@ -146,10 +139,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandBeginRenderPass
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandBeginRenderPass)
+DECLARE_RHICOMMAND(FRHICommandBeginRenderPass)
 {
-public:
-
     FRHICommandBeginRenderPass(const FRHIRenderPassInitializer& InRenderPassInitializer)
         : RenderPassInitializer(InRenderPassInitializer)
     { }
@@ -165,10 +156,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandEndRenderPass
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandEndRenderPass)
+DECLARE_RHICOMMAND(FRHICommandEndRenderPass)
 {
-public:
-
     FRHICommandEndRenderPass() = default;
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -180,9 +169,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetViewport
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetViewport)
+DECLARE_RHICOMMAND(FRHICommandSetViewport)
 {
-public:
     FORCEINLINE FRHICommandSetViewport(float InWidth, float InHeight, float InMinDepth, float InMaxDepth, float InX, float InY)
         : Width(InWidth)
         , Height(InHeight)
@@ -208,9 +196,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetScissorRect
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetScissorRect)
+DECLARE_RHICOMMAND(FRHICommandSetScissorRect)
 {
-public:
     FORCEINLINE FRHICommandSetScissorRect(float InWidth, float InHeight, float InX, float InY)
         : Width(InWidth)
         , Height(InHeight)
@@ -232,9 +219,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetBlendFactor
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetBlendFactor)
+DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
 {
-public:
     FORCEINLINE FRHICommandSetBlendFactor(const TStaticArray<float, 4>&InColor)
         : Color(InColor)
     { }
@@ -250,9 +236,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetVertexBuffers
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetVertexBuffers)
+DECLARE_RHICOMMAND(FRHICommandSetVertexBuffers)
 {
-public:
     FORCEINLINE FRHICommandSetVertexBuffers(FRHIVertexBuffer* const* InVertexBuffers, uint32 InVertexBufferCount, uint32 InStartSlot)
         : VertexBuffers(InVertexBuffers)
         , VertexBufferCount(InVertexBufferCount)
@@ -272,9 +257,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetIndexBuffer
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetIndexBuffer)
+DECLARE_RHICOMMAND(FRHICommandSetIndexBuffer)
 {
-public:
     FORCEINLINE FRHICommandSetIndexBuffer(FRHIIndexBuffer* InIndexBuffer)
         : IndexBuffer(InIndexBuffer)
     { }
@@ -290,9 +274,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetPrimitiveTopology
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetPrimitiveTopology)
+DECLARE_RHICOMMAND(FRHICommandSetPrimitiveTopology)
 {
-public:
     FORCEINLINE FRHICommandSetPrimitiveTopology(EPrimitiveTopology InPrimitiveTopologyType)
         : PrimitiveTopologyType(InPrimitiveTopologyType)
     { }
@@ -308,9 +291,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetGraphicsPipelineState
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetGraphicsPipelineState)
+DECLARE_RHICOMMAND(FRHICommandSetGraphicsPipelineState)
 {
-public:
     FORCEINLINE FRHICommandSetGraphicsPipelineState(FRHIGraphicsPipelineState* InPipelineState)
         : PipelineState(InPipelineState)
     { }
@@ -326,9 +308,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetComputePipelineState
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetComputePipelineState)
+DECLARE_RHICOMMAND(FRHICommandSetComputePipelineState)
 {
-public:
     FORCEINLINE FRHICommandSetComputePipelineState(FRHIComputePipelineState* InPipelineState)
         : PipelineState(InPipelineState)
     { }
@@ -344,9 +325,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSet32BitShaderConstants
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSet32BitShaderConstants)
+DECLARE_RHICOMMAND(FRHICommandSet32BitShaderConstants)
 {
-public:
     FORCEINLINE FRHICommandSet32BitShaderConstants(FRHIShader* InShader, const void* InShader32BitConstants, uint32 InNum32BitConstants)
         : Shader(InShader)
         , Shader32BitConstants(InShader32BitConstants)
@@ -366,9 +346,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetShaderResourceView
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetShaderResourceView)
+DECLARE_RHICOMMAND(FRHICommandSetShaderResourceView)
 {
-public:
     FORCEINLINE FRHICommandSetShaderResourceView(FRHIShader* InShader, FRHIShaderResourceView* InShaderResourceView, uint32 InParameterIndex)
         : Shader(InShader)
         , ShaderResourceView(InShaderResourceView)
@@ -388,9 +367,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetShaderResourceViews
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetShaderResourceViews)
+DECLARE_RHICOMMAND(FRHICommandSetShaderResourceViews)
 {
-public:
     FORCEINLINE FRHICommandSetShaderResourceViews( FRHIShader* InShader
                                                  , FRHIShaderResourceView* const* InShaderResourceViews
                                                  , uint32 InNumShaderResourceViews
@@ -415,9 +393,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetUnorderedAccessView
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetUnorderedAccessView)
+DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessView)
 {
-public:
     FORCEINLINE FRHICommandSetUnorderedAccessView(FRHIShader* InShader, FRHIUnorderedAccessView* InUnorderedAccessView, uint32 InParameterIndex)
         : Shader(InShader)
         , UnorderedAccessView(InUnorderedAccessView)
@@ -437,9 +414,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetUnorderedAccessViews
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetUnorderedAccessViews)
+DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessViews)
 {
-public:
     FORCEINLINE FRHICommandSetUnorderedAccessViews( FRHIShader* InShader
                                                   , FRHIUnorderedAccessView* const* InUnorderedAccessViews
                                                   , uint32 InNumUnorderedAccessViews
@@ -464,9 +440,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetConstantBuffer
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetConstantBuffer)
+DECLARE_RHICOMMAND(FRHICommandSetConstantBuffer)
 {
-public:
     FORCEINLINE FRHICommandSetConstantBuffer(FRHIShader* InShader, FRHIConstantBuffer* InConstantBuffer, uint32 InParameterIndex)
         : Shader(InShader)
         , ConstantBuffer(InConstantBuffer)
@@ -486,9 +461,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetConstantBuffers
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetConstantBuffers)
+DECLARE_RHICOMMAND(FRHICommandSetConstantBuffers)
 {
-public:
     FORCEINLINE FRHICommandSetConstantBuffers( FRHIShader* InShader
                                              , FRHIConstantBuffer* const* InConstantBuffers
                                              , uint32 InNumConstantBuffers
@@ -513,9 +487,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetSamplerState
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetSamplerState)
+DECLARE_RHICOMMAND(FRHICommandSetSamplerState)
 {
-public:
     FORCEINLINE FRHICommandSetSamplerState(FRHIShader* InShader, FRHISamplerState* InSamplerState, uint32 InParameterIndex)
         : Shader(InShader)
         , SamplerState(InSamplerState)
@@ -535,9 +508,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetSamplerStates
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetSamplerStates)
+DECLARE_RHICOMMAND(FRHICommandSetSamplerStates)
 {
-public:
     FORCEINLINE FRHICommandSetSamplerStates(FRHIShader* InShader, FRHISamplerState* const* InSamplerStates, uint32 InNumSamplerStates, uint32 InStartParameterIndex)
         : Shader(InShader)
         , SamplerStates(InSamplerStates)
@@ -559,9 +531,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandUpdateBuffer
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandUpdateBuffer)
+DECLARE_RHICOMMAND(FRHICommandUpdateBuffer)
 {
-public:
     FORCEINLINE FRHICommandUpdateBuffer(FRHIBuffer* InDst, uint32 InDstOffset, uint32 InSize, const void* InSrcData)
         : Dst(InDst)
         , DstOffset(InDstOffset)
@@ -583,9 +554,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandUpdateTexture2D
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandUpdateTexture2D)
+DECLARE_RHICOMMAND(FRHICommandUpdateTexture2D)
 {
-public:
     FORCEINLINE FRHICommandUpdateTexture2D(FRHITexture2D* InDst, uint16 InWidth, uint16 InHeight, uint16 InMipLevel, const void* InSrcData)
         : Dst(InDst)
         , Width(InWidth)
@@ -609,9 +579,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandResolveTexture
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandResolveTexture)
+DECLARE_RHICOMMAND(FRHICommandResolveTexture)
 {
-public:
     FORCEINLINE FRHICommandResolveTexture(FRHITexture* InDst, FRHITexture* InSrc)
         : Dst(InDst)
         , Src(InSrc)
@@ -629,9 +598,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandResolveTexture
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandCopyBuffer)
+DECLARE_RHICOMMAND(FRHICommandCopyBuffer)
 {
-public:
     FORCEINLINE FRHICommandCopyBuffer(FRHIBuffer* InDst, FRHIBuffer* InSrc, const FRHICopyBufferInfo& InCopyBufferInfo)
         : Dst(InDst)
         , Src(InSrc)
@@ -651,9 +619,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandCopyTexture
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandCopyTexture)
+DECLARE_RHICOMMAND(FRHICommandCopyTexture)
 {
-public:
     FORCEINLINE FRHICommandCopyTexture(FRHITexture* InDestination, FRHITexture* InSource)
         : Destination(InDestination)
         , Source(InSource)
@@ -671,9 +638,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandCopyTextureRegion
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandCopyTextureRegion)
+DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
 {
-public:
     FORCEINLINE FRHICommandCopyTextureRegion(FRHITexture* InDst, FRHITexture* InSrc, const FRHICopyTextureInfo& InCopyInfo)
         : Dst(InDst)
         , Src(InSrc)
@@ -693,27 +659,25 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandDestroyResource
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandDestroyResource)
+DECLARE_RHICOMMAND(FRHICommandDestroyResource)
 {
-public:
-    FORCEINLINE FRHICommandDestroyResource(IRefCounted * InResource)
-        : Resource(InResource)
+    FORCEINLINE FRHICommandDestroyResource(IRefCounted* InResource)
+        : Resource(MakeSharedRef<IRefCounted>(InResource))
     { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.DestroyResource(Resource);
+        CommandContext.DestroyResource(Resource.Get());
     }
 
-    IRefCounted* Resource;
+    TSharedRef<IRefCounted> Resource;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandDiscardContents
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandDiscardContents)
+DECLARE_RHICOMMAND(FRHICommandDiscardContents)
 {
-public:
     FORCEINLINE FRHICommandDiscardContents(FRHITexture* InTexture)
         : Texture(InTexture)
     { }
@@ -729,9 +693,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandBuildRayTracingGeometry
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandBuildRayTracingGeometry)
+DECLARE_RHICOMMAND(FRHICommandBuildRayTracingGeometry)
 {
-public:
     FORCEINLINE FRHICommandBuildRayTracingGeometry( FRHIRayTracingGeometry* InGeometry
                                                   , FRHIVertexBuffer* InVertexBuffer
                                                   , FRHIIndexBuffer* InIndexBuffer
@@ -756,9 +719,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandBuildRayTracingScene
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandBuildRayTracingScene)
+DECLARE_RHICOMMAND(FRHICommandBuildRayTracingScene)
 {
-public:
     FORCEINLINE FRHICommandBuildRayTracingScene( FRHIRayTracingScene* InScene
                                                , const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances
                                                , bool bInUpdate)
@@ -781,9 +743,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandSetRayTracingBindings
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandSetRayTracingBindings)
+DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
 {
-public:
     FORCEINLINE FRHICommandSetRayTracingBindings( FRHIRayTracingScene* InRayTracingScene
                                                 , FRHIRayTracingPipelineState* InPipelineState
                                                 , const FRayTracingShaderResources* InGlobalResource
@@ -823,9 +784,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandGenerateMips
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandGenerateMips)
+DECLARE_RHICOMMAND(FRHICommandGenerateMips)
 {
-public:
     FORCEINLINE FRHICommandGenerateMips(FRHITexture* InTexture)
         : Texture(InTexture)
     { }
@@ -841,9 +801,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandTransitionTexture
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandTransitionTexture)
+DECLARE_RHICOMMAND(FRHICommandTransitionTexture)
 {
-public:
     FORCEINLINE FRHICommandTransitionTexture(FRHITexture* InTexture, EResourceAccess InBeforeState, EResourceAccess InAfterState)
         : Texture(InTexture)
         , BeforeState(InBeforeState)
@@ -863,9 +822,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandTransitionBuffer
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandTransitionBuffer)
+DECLARE_RHICOMMAND(FRHICommandTransitionBuffer)
 {
-public:
     FORCEINLINE FRHICommandTransitionBuffer(FRHIBuffer* InBuffer, EResourceAccess InBeforeState, EResourceAccess InAfterState)
         : Buffer(InBuffer)
         , BeforeState(InBeforeState)
@@ -885,9 +843,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandUnorderedAccessTextureBarrier
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandUnorderedAccessTextureBarrier)
+DECLARE_RHICOMMAND(FRHICommandUnorderedAccessTextureBarrier)
 {
-public:
     FORCEINLINE FRHICommandUnorderedAccessTextureBarrier(FRHITexture* InTexture)
         : Texture(InTexture)
     { }
@@ -903,9 +860,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandUnorderedAccessBufferBarrier
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandUnorderedAccessBufferBarrier)
+DECLARE_RHICOMMAND(FRHICommandUnorderedAccessBufferBarrier)
 {
-public:
     FORCEINLINE FRHICommandUnorderedAccessBufferBarrier(FRHIBuffer* InBuffer)
         : Buffer(InBuffer)
     { }
@@ -921,9 +877,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandDraw
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandDraw)
+DECLARE_RHICOMMAND(FRHICommandDraw)
 {
-public:
     FORCEINLINE FRHICommandDraw(uint32 InVertexCount, uint32 InStartVertexLocation)
         : VertexCount(InVertexCount)
         , StartVertexLocation(InStartVertexLocation)
@@ -941,9 +896,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandDrawIndexed
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandDrawIndexed)
+DECLARE_RHICOMMAND(FRHICommandDrawIndexed)
 {
-public:
     FORCEINLINE FRHICommandDrawIndexed(uint32 InIndexCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation)
         : IndexCount(InIndexCount)
         , StartIndexLocation(InStartIndexLocation)
@@ -963,9 +917,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandDrawInstanced
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandDrawInstanced)
+DECLARE_RHICOMMAND(FRHICommandDrawInstanced)
 {
-public:
     FORCEINLINE FRHICommandDrawInstanced(uint32 InVertexCountPerInstance, uint32 InInstanceCount, uint32 InStartVertexLocation, uint32 InStartInstanceLocation)
         : VertexCountPerInstance(InVertexCountPerInstance)
         , InstanceCount(InInstanceCount)
@@ -987,9 +940,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandDrawIndexedInstanced
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandDrawIndexedInstanced)
+DECLARE_RHICOMMAND(FRHICommandDrawIndexedInstanced)
 {
-public:
     FORCEINLINE FRHICommandDrawIndexedInstanced(uint32 InIndexCountPerInstance
                                                 , uint32 InInstanceCount
                                                 , uint32 InStartIndexLocation
@@ -1017,9 +969,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandDispatch
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandDispatch)
+DECLARE_RHICOMMAND(FRHICommandDispatch)
 {
-public:
     FORCEINLINE FRHICommandDispatch(uint32 InThreadGroupCountX, uint32 InThreadGroupCountY, uint32 InThreadGroupCountZ)
         : ThreadGroupCountX(InThreadGroupCountX)
         , ThreadGroupCountY(InThreadGroupCountY)
@@ -1039,9 +990,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandDispatchRays
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandDispatchRays)
+DECLARE_RHICOMMAND(FRHICommandDispatchRays)
 {
-public:
     FORCEINLINE FRHICommandDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
         : Scene(InScene)
         , PipelineState(InPipelineState)
@@ -1065,9 +1015,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandInsertMarker
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandInsertMarker)
+DECLARE_RHICOMMAND(FRHICommandInsertMarker)
 {
-public:
     FORCEINLINE FRHICommandInsertMarker(const FString& InMarker)
         : Marker(InMarker)
     { }
@@ -1085,10 +1034,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandDebugBreak
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandDebugBreak)
+DECLARE_RHICOMMAND(FRHICommandDebugBreak)
 {
-public:
-
     FRHICommandDebugBreak() = default;
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -1101,10 +1048,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandBeginExternalCapture
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandBeginExternalCapture)
+DECLARE_RHICOMMAND(FRHICommandBeginExternalCapture)
 {
-public:
-
     FRHICommandBeginExternalCapture() = default;
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -1116,10 +1061,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandEndExternalCapture
 
-DECLARE_RHICOMMAND_CLASS(FRHICommandEndExternalCapture)
+DECLARE_RHICOMMAND(FRHICommandEndExternalCapture)
 {
-public:
-
     FRHICommandEndExternalCapture() = default;
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)

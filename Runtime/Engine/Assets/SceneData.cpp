@@ -7,7 +7,7 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/TextureFactory.h"
 
-void SSceneData::AddToScene(CScene* Scene)
+void FSceneData::AddToScene(FScene* Scene)
 {
     if (!HasModelData())
     {
@@ -16,12 +16,19 @@ void SSceneData::AddToScene(CScene* Scene)
 
     LOG_INFO("AddToScene");
 
-    TArray<TSharedPtr<CMaterial>> CreatedMaterials;
+    TArray<FRHITexture2DRef> RHITextures;
+    for (FImage2DPtr Image : Textures)
+    {
+        FRHITexture2DRef NewTexture = FTextureFactory::LoadFromImage2D(Image.Get(), TextureFactoryFlag_GenerateMips);
+        RHITextures.Emplace(NewTexture);
+    }
+
+    TArray<TSharedPtr<FMaterial>> CreatedMaterials;
     if (!Materials.IsEmpty())
     {
-        for (const SMaterialData& MaterialData : Materials)
+        for (const FMaterialData& MaterialData : Materials)
         {
-            SMaterialDesc Desc;
+            FMaterialDesc Desc;
             Desc.Albedo    = MaterialData.Diffuse;
             Desc.AO        = MaterialData.AO;
             Desc.Metallic  = MaterialData.Metallic;
@@ -29,28 +36,27 @@ void SSceneData::AddToScene(CScene* Scene)
 
             // TODO: Should probably have a better connection between RHITexture and a Texture
 
-            TSharedPtr<CMaterial> Material = MakeShared<CMaterial>(Desc);
-            Material->AlbedoMap = CTextureFactory::LoadFromImage2D(MaterialData.DiffuseTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->AlbedoMap = Material->AlbedoMap ? Material->AlbedoMap : GEngine->BaseTexture;
+            TSharedPtr<FMaterial> Material = MakeShared<FMaterial>(Desc);
+            Material->AlbedoMap = (MaterialData.DiffuseTexture >= 0) ? RHITextures[MaterialData.DiffuseTexture] : GEngine->BaseTexture;
+            Material->AlbedoMap = (Material->AlbedoMap)              ? Material->AlbedoMap                      : GEngine->BaseTexture;
 
-            Material->AlphaMask = CTextureFactory::LoadFromImage2D(MaterialData.AlphaMaskTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->AlphaMask = Material->AlphaMask ? Material->AlphaMask : GEngine->BaseTexture;
+            Material->AlphaMask = (MaterialData.AlphaMaskTexture >= 0) ? RHITextures[MaterialData.AlphaMaskTexture] : GEngine->BaseTexture;
+            Material->AlphaMask = (Material->AlphaMask)                ? Material->AlphaMask                        : GEngine->BaseTexture;
 
-            Material->AOMap = CTextureFactory::LoadFromImage2D(MaterialData.AOTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->AOMap = Material->AOMap ? Material->AOMap : GEngine->BaseTexture;
+            Material->AOMap = (MaterialData.AOTexture >= 0) ? RHITextures[MaterialData.AOTexture] : GEngine->BaseTexture;
+            Material->AOMap = (Material->AOMap)             ? Material->AOMap                     : GEngine->BaseTexture;
 
-            Material->MetallicMap = CTextureFactory::LoadFromImage2D(MaterialData.MetallicTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->MetallicMap = Material->MetallicMap ? Material->MetallicMap : GEngine->BaseTexture;
+            Material->MetallicMap = (MaterialData.MetallicTexture >= 0) ? RHITextures[MaterialData.MetallicTexture] : GEngine->BaseTexture;
+            Material->MetallicMap = (Material->MetallicMap)             ? Material->MetallicMap                     : GEngine->BaseTexture;
 
-            Material->NormalMap = CTextureFactory::LoadFromImage2D(MaterialData.NormalTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->NormalMap = Material->NormalMap ? Material->NormalMap : GEngine->BaseNormal;
+            Material->NormalMap = (MaterialData.NormalTexture >= 0) ? RHITextures[MaterialData.NormalTexture] : GEngine->BaseNormal;
+            Material->NormalMap = (Material->NormalMap)             ? Material->NormalMap                     : GEngine->BaseNormal;
 
-            Material->RoughnessMap = CTextureFactory::LoadFromImage2D(MaterialData.RoughnessTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->RoughnessMap = Material->RoughnessMap ? Material->RoughnessMap : GEngine->BaseTexture;
+            Material->RoughnessMap = (MaterialData.RoughnessTexture >= 0) ? RHITextures[MaterialData.RoughnessTexture] : GEngine->BaseTexture;
+            Material->RoughnessMap = (Material->RoughnessMap)             ? Material->RoughnessMap                     : GEngine->BaseTexture;
 
             Material->HeightMap = GEngine->BaseTexture;
-
-            Material->Init();
+            Material->Initialize();
 
             CreatedMaterials.Push(Material);
         }
@@ -58,16 +64,16 @@ void SSceneData::AddToScene(CScene* Scene)
 
     Check(Materials.Size() == CreatedMaterials.Size());
 
-    for (const SModelData& ModelData : Models)
+    for (const FModelData& ModelData : Models)
     {
         if (ModelData.Mesh.Hasdata())
         {
-            CActor* NewActor = Scene->MakeActor();
+            FActor* NewActor = Scene->MakeActor();
             NewActor->SetName(ModelData.Name.CStr());
             NewActor->GetTransform().SetUniformScale(Scale);
 
-            CMeshComponent* MeshComponent = dbg_new CMeshComponent(NewActor);
-            MeshComponent->Mesh = CMesh::Make(ModelData.Mesh);
+            FMeshComponent* MeshComponent = dbg_new FMeshComponent(NewActor);
+            MeshComponent->Mesh = FMesh::Make(ModelData.Mesh);
 
             if (ModelData.MaterialIndex >= 0)
             {

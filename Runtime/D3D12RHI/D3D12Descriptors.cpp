@@ -67,6 +67,8 @@ bool FD3D12OfflineDescriptorHeap::Initialize()
 
 D3D12_CPU_DESCRIPTOR_HANDLE FD3D12OfflineDescriptorHeap::Allocate(uint32& OutHeapIndex)
 {
+    TScopedLock Lock(CriticalSection);
+
     uint32 HeapIndex = 0;
     bool bFoundHeap = false;
     for (FDescriptorHeap& Heap : Heaps)
@@ -109,6 +111,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE FD3D12OfflineDescriptorHeap::Allocate(uint32& OutHea
 
 void FD3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex)
 {
+    TScopedLock Lock(CriticalSection);
     Check(HeapIndex < (uint32)Heaps.Size());
 
     FDescriptorHeap& Heap = Heaps[HeapIndex];
@@ -276,8 +279,9 @@ void FD3D12OnlineDescriptorHeap::SetNumPooledHeaps(uint32 NumHeaps)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12OnlineDescriptorManager
 
-FD3D12OnlineDescriptorManager::FD3D12OnlineDescriptorManager(FD3D12DescriptorHeap* InDescriptorHeap, uint32 InDescriptorStartOffset, uint32 InDescriptorCount)
-    : DescriptorHeap(MakeSharedRef<FD3D12DescriptorHeap>(InDescriptorHeap))
+FD3D12OnlineDescriptorManager::FD3D12OnlineDescriptorManager(FD3D12Device* InDevice, FD3D12DescriptorHeap* InDescriptorHeap, uint32 InDescriptorStartOffset, uint32 InDescriptorCount)
+    : FD3D12DeviceChild(InDevice)
+    , DescriptorHeap(MakeSharedRef<FD3D12DescriptorHeap>(InDescriptorHeap))
     , CPUStartHandle()
     , GPUStartHandle()
     , DescriptorStartOffset(InDescriptorStartOffset)

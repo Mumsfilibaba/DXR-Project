@@ -4,14 +4,14 @@
 #include <Engine/Scene/Camera.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CSandbox
+// FSandbox
 
-class CSandbox : public FApplicationModule
+class FSandbox : public FApplicationModule
 {
 public:
 
-    CSandbox()  = default;
-    ~CSandbox() = default;
+    FSandbox()  = default;
+    ~FSandbox() = default;
 
     virtual bool Init() override;
 

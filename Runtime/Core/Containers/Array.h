@@ -212,19 +212,22 @@ public:
      */
     FORCEINLINE void Reset(const ElementType* InputArray, SizeType NumElements) noexcept
     {
-        Check((InputArray != nullptr) && (NumElements > 0));
-
-        if (InputArray != Data())
+        if (NumElements > 0)
         {
-            DestructRange<ElementType>(Data(), ArraySize);
+            Check(InputArray != nullptr);
 
-            if (NumElements)
+            if (InputArray != Data())
             {
-                CopyConstructFrom(InputArray, NumElements);
-            }
-            else
-            {
-                ArraySize = 0;
+                DestructRange<ElementType>(Data(), ArraySize);
+
+                if (NumElements)
+                {
+                    CopyConstructFrom(InputArray, NumElements);
+                }
+                else
+                {
+                    ArraySize = 0;
+                }
             }
         }
     }

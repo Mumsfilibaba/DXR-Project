@@ -11,7 +11,7 @@
 #include <ofbx.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CFBXLoader
+// FFBXLoader
 
 static FString ExtractPath(const FString& FullFilePath)
 {
@@ -63,7 +63,7 @@ static void GetMatrix(const ofbx::Object* Mesh, FMatrix4& OutMatrix)
 }
 #endif
 
-static TSharedPtr<SImage2D> LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
+static FImage2DPtr LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
 {
 #if 0
     const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
@@ -77,7 +77,7 @@ static TSharedPtr<SImage2D> LoadMaterialTexture(const FString& Path, const ofbx:
         String Filename = StringBuffer;
         ConvertBackslashes(Filename);
 
-        TSharedPtr<SImage2D> Texture = MakeShared<SImage2D>();
+        FImage2DPtr Texture = MakeShared<FImage2D>();
         return Texture;
     }
     else
@@ -87,11 +87,11 @@ static TSharedPtr<SImage2D> LoadMaterialTexture(const FString& Path, const ofbx:
     UNREFERENCED_VARIABLE(Type);
 #endif
     {
-        return TSharedPtr<SImage2D>();
+        return FImage2DPtr();
     }
 }
 
-bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 Flags) noexcept
+bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 Flags) noexcept
 {
     OutScene.Models.Clear();
     OutScene.Materials.Clear();
@@ -99,7 +99,7 @@ bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 
     FILE* File = fopen(Filename.CStr(), "rb");
     if (!File)
     {
-        LOG_ERROR("[CFBXLoader]: Failed to open '%s'", Filename.CStr());
+        LOG_ERROR("[FFBXLoader]: Failed to open '%s'", Filename.CStr());
         return false;
     }
 
@@ -125,7 +125,7 @@ bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 
 
     if (NumBytesRead != FileSize)
     {
-        LOG_ERROR("[CFBXLoader]: Failed to load '%s'", Filename.CStr());
+        LOG_ERROR("[FFBXLoader]: Failed to load '%s'", Filename.CStr());
         return false;
     }
 
@@ -134,19 +134,19 @@ bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 
     ofbx::IScene* FBXScene = ofbx::load(Bytes, FileSize, (ofbx::u64)ofbx::LoadFlags::TRIANGULATE);
     if (!FBXScene)
     {
-        LOG_ERROR("[CMeshFactory]: Failed to load content '%s'", Filename.CStr());
+        LOG_ERROR("[FMeshFactory]: Failed to load content '%s'", Filename.CStr());
         return false;
     }
 
     const ofbx::GlobalSettings* Settings = FBXScene->getGlobalSettings();
 
     // Unique tables
-    THashTable<SVertex, uint32, SVertexHasher>  UniqueVertices;
+    THashTable<FVertex, uint32, FVertexHasher>  UniqueVertices;
     THashTable<const ofbx::Material*, uint32> UniqueMaterials;
 
     FString Path = ExtractPath(Filename);
 
-    SModelData Data;
+    FModelData Data;
 
     uint32 MeshCount = FBXScene->getMeshCount();
     for (uint32 i = 0; i < MeshCount; i++)
@@ -163,7 +163,7 @@ bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 
                 continue;
             }
 
-            SMaterialData MaterialData;
+            FMaterialData MaterialData;
             MaterialData.DiffuseTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
             MaterialData.NormalTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
             MaterialData.SpecularTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);
@@ -227,7 +227,7 @@ bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 
                     }
                 }
 
-                SVertex TempVertex;
+                FVertex TempVertex;
 
                 // Position
                 FVector3 Position = FVector3((float)Vertices[CurrentIndex].x, (float)Vertices[CurrentIndex].y, (float)Vertices[CurrentIndex].z);
@@ -271,7 +271,7 @@ bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 
 
             if (!Tangents)
             {
-                CMeshUtilities::CalculateTangents(Data.Mesh);
+                FMeshUtilities::CalculateTangents(Data.Mesh);
             }
 
             // Convert to left-handed
@@ -279,7 +279,7 @@ bool CFBXLoader::LoadFile(const FString& Filename, SSceneData& OutScene, uint32 
             {
                 if (Settings->CoordAxis == ofbx::CoordSystem_RightHanded)
                 {
-                    CMeshUtilities::ReverseHandedness(Data.Mesh);
+                    FMeshUtilities::ReverseHandedness(Data.Mesh);
                 }
             }
 

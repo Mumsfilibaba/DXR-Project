@@ -3,15 +3,15 @@
 #include <Engine/Scene/Components/Component.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMovingBallComponent
+// FMovingBallComponent
 
-class CMovingBallComponent : public CComponent
+class FMovingBallComponent : public CComponent
 {
-    CORE_OBJECT(CMovingBallComponent, CComponent);
+    CORE_OBJECT(FMovingBallComponent, CComponent);
 
 public:
 
-    CMovingBallComponent(CActor* InActorOwner, float InSpeed)
+    FMovingBallComponent(FActor* InActorOwner, float InSpeed)
         : CComponent(InActorOwner, false, true)
         , Speed(InSpeed)
         , CurrentSpeed(InSpeed)
@@ -21,7 +21,7 @@ public:
     {
         const float fDelta = float(DeltaTime.AsSeconds());
 
-        CActor* Actor = GetActor();
+        FActor* Actor = GetActor();
         
         CActorTransform& ActorTransform = Actor->GetTransform();
         ActorTransform.SetTranslation(ActorTransform.GetTranslation() + FVector3(0.0f, CurrentSpeed * fDelta, 0.0f));

@@ -12,69 +12,89 @@
 #include <tiny_obj_loader.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// COBJLoader
+// FOBJLoader
 
-static TSharedPtr<SImage2D> LoadMaterialTexture(const FString& Path, const FString& Filename)
+struct FOBJTextureContext
 {
-    // If filename is empty there is no texture to load
-    if (Filename.IsEmpty())
+    int8 LoadMaterialTexture(const FString& Path, const FString& Filename)
     {
-        return nullptr;
+        // If filename is empty there is no texture to load
+        if (Filename.IsEmpty())
+        {
+            return -1;
+        }
+
+        // Make sure that correct slashes are used
+        FString Fullpath = Path + '/' + Filename;
+        ConvertBackslashes(Fullpath);
+
+        auto TextureIt = UniqueTextures.find(Fullpath);
+        if (TextureIt == UniqueTextures.end())
+        {
+            int8 TextureIndex = static_cast<int8>(Textures.Size());
+
+            FImage2DPtr NewTexture = Textures.Emplace(FSTBImageLoader::LoadFile(Fullpath));
+            UniqueTextures.insert(std::make_pair(Fullpath, TextureIndex));
+            return TextureIndex;
+        }
+        else
+        {
+            return TextureIt->second;
+        }
     }
 
-    FString Fullpath = Path + '/' + Filename;
+    THashTable<FString, int8, FStringHasher> UniqueTextures;
+    TArray<FImage2DPtr>                      Textures;
+};
 
-    // Make sure that correct slashes are used
-    ConvertBackslashes(Fullpath);
-    return CStbImageLoader::LoadFile(Fullpath);
-}
-
-bool COBJLoader::LoadFile(const FString& Filename, SSceneData& OutScene, bool ReverseHandedness)
+bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool ReverseHandedness)
 {
     // Make sure to clear everything
     OutScene.Models.Clear();
     OutScene.Materials.Clear();
 
     // Load Scene File
-    std::string Warning;
-    std::string Error;
+    std::string                      Warning;
+    std::string                      Error;
     std::vector<tinyobj::shape_t>    Shapes;
     std::vector<tinyobj::material_t> Materials;
-    tinyobj::attrib_t Attributes;
+    tinyobj::attrib_t                Attributes;
 
     FString MTLFiledir = FString(Filename.CStr(), Filename.ReverseFind('/'));
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.CStr(), MTLFiledir.CStr(), true, false))
     {
-        LOG_WARNING("[COBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.CStr(), Warning.c_str(), Error.c_str());
+        LOG_WARNING("[FOBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.CStr(), Warning.c_str(), Error.c_str());
         return false;
     }
     else
     {
-        LOG_INFO("[COBJLoader]: Loaded '%s'", Filename.CStr());
+        LOG_INFO("[FOBJLoader]: Loaded '%s'", Filename.CStr());
     }
 
     // Create All Materials in scene
+    FOBJTextureContext TextureContext;
     for (tinyobj::material_t& Mat : Materials)
     {
         // Create new material with default properties
-        SMaterialData MaterialData;
-        MaterialData.MetallicTexture = LoadMaterialTexture(MTLFiledir, Mat.ambient_texname.c_str());
-        MaterialData.DiffuseTexture = LoadMaterialTexture(MTLFiledir, Mat.diffuse_texname.c_str());
-        MaterialData.RoughnessTexture = LoadMaterialTexture(MTLFiledir, Mat.specular_highlight_texname.c_str());
-        MaterialData.NormalTexture = LoadMaterialTexture(MTLFiledir, Mat.bump_texname.c_str());
-        MaterialData.AlphaMaskTexture = LoadMaterialTexture(MTLFiledir, Mat.alpha_texname.c_str());
+        FMaterialData MaterialData;
+        MaterialData.MetallicTexture  = TextureContext.LoadMaterialTexture(MTLFiledir, Mat.ambient_texname.c_str());
+        MaterialData.DiffuseTexture   = TextureContext.LoadMaterialTexture(MTLFiledir, Mat.diffuse_texname.c_str());
+        MaterialData.RoughnessTexture = TextureContext.LoadMaterialTexture(MTLFiledir, Mat.specular_highlight_texname.c_str());
+        MaterialData.NormalTexture    = TextureContext.LoadMaterialTexture(MTLFiledir, Mat.bump_texname.c_str());
+        MaterialData.AlphaMaskTexture = TextureContext.LoadMaterialTexture(MTLFiledir, Mat.alpha_texname.c_str());
 
-        MaterialData.Diffuse = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
-        MaterialData.Metallic = Mat.ambient[0];
-        MaterialData.AO = 1.0f;
+        MaterialData.Diffuse   = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
+        MaterialData.Metallic  = Mat.ambient[0];
+        MaterialData.AO        = 1.0f;
         MaterialData.Roughness = 1.0f;
 
         OutScene.Materials.Emplace(MaterialData);
     }
+    OutScene.Textures = TextureContext.Textures;
 
     // Construct Scene
-    SModelData Data;
-    THashTable<SVertex, uint32, SVertexHasher> UniqueVertices;
+    FModelData Data;
+    THashTable<FVertex, uint32, FVertexHasher> UniqueVertices;
     for (const tinyobj::shape_t& Shape : Shapes)
     {
         // Start at index zero for each mesh and loop until all indices are processed
@@ -101,7 +121,7 @@ bool COBJLoader::LoadFile(const FString& Filename, SSceneData& OutScene, bool Re
 
                 const tinyobj::index_t& Index = Shape.mesh.indices[i];
 
-                SVertex TempVertex;
+                FVertex TempVertex;
 
                 // Normals and texcoords are optional, Positions are required
                 Check(Index.vertex_index >= 0);
@@ -132,11 +152,11 @@ bool COBJLoader::LoadFile(const FString& Filename, SSceneData& OutScene, bool Re
             }
 
             // Calculate tangents and create mesh
-            CMeshUtilities::CalculateTangents(Data.Mesh);
+            FMeshUtilities::CalculateTangents(Data.Mesh);
 
             if (ReverseHandedness)
             {
-                CMeshUtilities::ReverseHandedness(Data.Mesh);
+                FMeshUtilities::ReverseHandedness(Data.Mesh);
             }
 
             // Add materialID
@@ -154,6 +174,5 @@ bool COBJLoader::LoadFile(const FString& Filename, SSceneData& OutScene, bool Re
     OutScene.Materials.ShrinkToFit();
 
     FAsyncTaskManager::Get().WaitForAll();
-
     return true;
 }

@@ -83,7 +83,7 @@ class TDefaultArrayAllocator
 public:
 
     using ElementType = T;
-    using SizeType = int32;
+    using SizeType    = int32;
 
     FORCEINLINE TDefaultArrayAllocator() noexcept
         : Allocation(nullptr)

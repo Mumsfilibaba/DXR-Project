@@ -29,17 +29,17 @@
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRendererWindowHandler
+// FRendererWindowHandler
 
-class CRendererWindowHandler final : public FWindowMessageHandler
+class FRendererWindowHandler final : public FWindowMessageHandler
 {
 public:
 
     DECLARE_DELEGATE(CWindowResizedDelegate, const FWindowResizeEvent& ResizeEvent);
     CWindowResizedDelegate WindowResizedDelegate;
 
-    CRendererWindowHandler() = default;
-    ~CRendererWindowHandler() = default;
+    FRendererWindowHandler() = default;
+    ~FRendererWindowHandler() = default;
 
     virtual bool OnWindowResized(const FWindowResizeEvent& ResizeEvent) override final
     {
@@ -49,39 +49,22 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRendererStatistics
+// FRenderer
 
-struct SRendererStatistics
-{
-    uint32 NumDrawCalls = 0;
-    uint32 NumDispatchCalls = 0;
-    uint32 NumRenderCommands = 0;
-
-    void Reset()
-    {
-        NumDrawCalls      = 0;
-        NumDispatchCalls  = 0;
-        NumRenderCommands = 0;
-    }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRenderer
-
-class RENDERER_API CRenderer
+class RENDERER_API FRenderer
 {
 public:
 
-    CRenderer();
-    ~CRenderer() = default;
+    FRenderer();
+    ~FRenderer() = default;
 
     bool Init();
 
-    void Tick(const CScene& Scene);
+    void Tick(const FScene& Scene);
 
     void Release();
 
-    void PerformFrustumCullingAndSort(const CScene& Scene);
+    void PerformFrustumCullingAndSort(const FScene& Scene);
 
     void PerformFXAA(FRHICommandList& InCmdList);
     
@@ -94,7 +77,7 @@ public:
         return TextureDebugger;
     }
 
-    FORCEINLINE const SRendererStatistics& GetStatistics() const
+    FORCEINLINE const FRHICommandStatistics& GetStatistics() const
     {
         return FrameStatistics;
     }
@@ -114,7 +97,7 @@ private:
                                                   , TArray<uint32>& OutDeferredDrawCommands
                                                   , TArray<uint32>& OutForwardDrawCommands);
 
-    TSharedPtr<CRendererWindowHandler> WindowHandler;
+    TSharedPtr<FRendererWindowHandler> WindowHandler;
 
     TSharedRef<CTextureDebugWindow> TextureDebugger;
     TSharedRef<CRendererInfoWindow> InfoWindow;
@@ -136,10 +119,10 @@ private:
     FAsyncTask BasePassTask;
     FAsyncTask RayTracingTask;
 
-    CDeferredRenderer             DeferredRenderer;
+    FDeferredRenderer             DeferredRenderer;
     CShadowMapRenderer            ShadowMapRenderer;
     CScreenSpaceOcclusionRenderer SSAORenderer;
-    CLightProbeRenderer           LightProbeRenderer;
+    FLightProbeRenderer           LightProbeRenderer;
     CSkyboxRenderPass             SkyboxRenderPass;
     CForwardRenderer              ForwardRenderer;
     CRayTracer                    RayTracer;
@@ -147,9 +130,9 @@ private:
     SFrameResources Resources;
     SLightSetup     LightSetup;
 
-    TSharedRef<FRHITexture2D>            ShadingImage;
-    TSharedRef<FRHIComputePipelineState> ShadingRatePipeline;
-    TSharedRef<FRHIComputeShader>        ShadingRateShader;
+    FRHITexture2DRef            ShadingImage;
+    FRHIComputePipelineStateRef ShadingRatePipeline;
+    FRHIComputeShaderRef        ShadingRateShader;
 
     TSharedRef<FRHIVertexBuffer>          AABBVertexBuffer;
     TSharedRef<FRHIIndexBuffer>           AABBIndexBuffer;
@@ -166,12 +149,12 @@ private:
 
     TSharedRef<FRHITimestampQuery> TimestampQueries;
 
-    SRendererStatistics FrameStatistics;
+    FRHICommandStatistics FrameStatistics;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-extern RENDERER_API CRenderer GRenderer;
+extern RENDERER_API FRenderer GRenderer;
 
 inline void AddDebugTexture( const TSharedRef<FRHIShaderResourceView>& ImageView
                            , const TSharedRef<FRHITexture>& Image

@@ -7,15 +7,15 @@
 #include "Engine/Resources/Material.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMeshComponent
+// FMeshComponent
 
-class ENGINE_API CMeshComponent : public CComponent
+class ENGINE_API FMeshComponent : public CComponent
 {
-    CORE_OBJECT(CMeshComponent, CComponent);
+    CORE_OBJECT(FMeshComponent, CComponent);
 
 public:
 
-    CMeshComponent(CActor* InActorOwner)
+    FMeshComponent(FActor* InActorOwner)
         : CComponent(InActorOwner, false, false)
         , Material(nullptr)
         , Mesh(nullptr)
@@ -23,6 +23,6 @@ public:
         CORE_OBJECT_INIT();
     }
 
-    TSharedPtr<CMaterial> Material;
-    TSharedPtr<CMesh>     Mesh;
+    TSharedPtr<FMaterial> Material;
+    TSharedPtr<FMesh>     Mesh;
 };

@@ -74,16 +74,24 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
 
     GShaderCompiler = Compiler;
 
+    // Initialize the CommandListExecutor
+    if (!FRHICommandListExecutor::Initialize())
+    {
+        return false;
+    }
+
     // Set the context to the command queue
     IRHICommandContext* CmdContext = RHIGetDefaultCommandContext();
-    FRHICommandQueue::Get().SetContext(CmdContext);
+    FRHICommandListExecutor::Get().SetContext(CmdContext);
 
     return true;
 }
 
 void RHIRelease()
 {
-    FRHICommandQueue::Get().SetContext(nullptr);
+    FRHICommandListExecutor::Release();
+
+    FRHICommandListExecutor::Get().SetContext(nullptr);
 
     if (GRHICoreInterface)
     {

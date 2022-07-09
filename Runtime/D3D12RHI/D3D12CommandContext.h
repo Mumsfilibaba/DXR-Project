@@ -166,8 +166,6 @@ public:
         : Barriers()
     { }
 
-    ~FD3D12ResourceBarrierBatcher() = default;
-
     void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
     void AddUnorderedAccessBarrier(ID3D12Resource* Resource);
 
@@ -180,15 +178,9 @@ public:
         }
     }
 
-    FORCEINLINE const D3D12_RESOURCE_BARRIER* GetBarriers() const
-    {
-        return Barriers.Data();
-    }
+    FORCEINLINE const D3D12_RESOURCE_BARRIER* GetBarriers() const { return Barriers.Data(); }
 
-    FORCEINLINE uint32 GetNumBarriers() const
-    {
-        return Barriers.Size();
-    }
+    FORCEINLINE uint32 GetNumBarriers() const { return Barriers.Size(); }
 
 private:
     TArray<D3D12_RESOURCE_BARRIER> Barriers;
@@ -423,11 +415,14 @@ private:
 
     void InternalClearState();
 
+    // TODO: Look into if this is the best way
+    FCriticalSection                CommandContextCS;
+
     FD3D12CommandList               CommandList;
     FD3D12Fence                     Fence;
     FD3D12CommandQueue              CommandQueue;
 
-    FD3D12CommandContextState              State;
+    FD3D12CommandContextState       State;
     FD3D12ResourceBarrierBatcher    BarrierBatcher;
 
     uint64                          FenceValue   = 0;

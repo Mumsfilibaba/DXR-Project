@@ -3,7 +3,7 @@
 
 #include "Engine/CoreObject/CoreObject.h"
 
-class CActor;
+class FActor;
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // CComponent
@@ -14,8 +14,8 @@ class ENGINE_API CComponent : public CCoreObject
 
 public:
 
-    CComponent(CActor* InActorOwner);
-    CComponent(CActor* InActorOwner, bool bInIsStartable, bool bInIsTickable);
+    CComponent(FActor* InActorOwner);
+    CComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTickable);
     virtual ~CComponent() = default;
 
     /**
@@ -35,7 +35,7 @@ public:
      * 
      * @return: Returns a pointer to the actor that the component belongs to
      */
-    FORCEINLINE CActor* GetActor() const
+    FORCEINLINE FActor* GetActor() const
     {
         return ActorOwner;
     }
@@ -61,7 +61,7 @@ public:
     }
 
 private:
-    CActor* ActorOwner = nullptr;
+    FActor* ActorOwner = nullptr;
 
     bool bIsStartable : 1;
     bool bIsTickable  : 1;

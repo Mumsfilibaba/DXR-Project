@@ -71,19 +71,19 @@ public:
     TSharedPtr<FUser> User;
 
     /** The current scene */
-    TSharedPtr<CScene> Scene;
+    TSharedPtr<FScene> Scene;
 
     /** A completely white texture */
-    TSharedRef<FRHITexture2D> BaseTexture;
+    FRHITexture2DRef BaseTexture;
 
     /** A completely flat normal map*/
-    TSharedRef<FRHITexture2D> BaseNormal;
+    FRHITexture2DRef BaseNormal;
 
     /** Base sampler used by all materials */
     TSharedRef<FRHISamplerState> BaseMaterialSampler;
 
     /** Base material */
-    TSharedPtr<CMaterial> BaseMaterial;
+    TSharedPtr<FMaterial> BaseMaterial;
 };
 
 extern ENGINE_API FEngine* GEngine;

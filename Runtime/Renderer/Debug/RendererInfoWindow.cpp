@@ -56,7 +56,7 @@ void CRendererInfoWindow::Tick()
     ImGui::Text("%s", AdapterName.CStr());
     ImGui::NextColumn();
 
-    SRendererStatistics Statistics = GRenderer.GetStatistics();
+    FRHICommandStatistics Statistics = GRenderer.GetStatistics();
 
     ImGui::Text("DrawCalls: ");
     ImGui::NextColumn();
@@ -73,7 +73,7 @@ void CRendererInfoWindow::Tick()
     ImGui::Text("Command Count: ");
     ImGui::NextColumn();
 
-    ImGui::Text("%d", Statistics.NumRenderCommands);
+    ImGui::Text("%d", Statistics.NumCommands);
 
     ImGui::Columns(1);
 

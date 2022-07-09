@@ -106,13 +106,13 @@ class TFunction<ReturnType(ArgTypes...)>
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Generic functor interface
     
-    class IFunctor
+    struct IFunctor
     {
-    public:
         virtual ~IFunctor() = default;
 
         virtual ReturnType Invoke(ArgTypes&&... Args) noexcept = 0;
-        virtual IFunctor* Clone(void* Memory) const noexcept = 0;
+
+        virtual IFunctor*  Clone(void* Memory) const noexcept  = 0;
     };
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -126,14 +126,12 @@ class TFunction<ReturnType(ArgTypes...)>
         FORCEINLINE TGenericFunctor(const FunctorType& InFunctor) noexcept
             : IFunctor()
             , Functor(InFunctor)
-        {
-        }
+        { }
 
         FORCEINLINE TGenericFunctor(const TGenericFunctor& Other) noexcept
             : IFunctor()
             , Functor(Other.Functor)
-        {
-        }
+        { }
 
         FORCEINLINE TGenericFunctor(TGenericFunctor&& Other) noexcept
             : IFunctor()
@@ -158,17 +156,13 @@ class TFunction<ReturnType(ArgTypes...)>
 
 public:
 
-    /**
-     * @brief:  Default constructor
-     */
+    /** @brief:  Default constructor */
     FORCEINLINE TFunction() noexcept
         : Storage()
         , Size(0)
     { }
 
-    /**
-     * @brief: Create from nullptr. Same as default constructor.
-     */
+    /** @brief: Create from nullptr. Same as default constructor. */
     FORCEINLINE TFunction(NullptrType) noexcept
         : Storage()
         , Size(0)
@@ -211,19 +205,13 @@ public:
         MoveFrom(Move(Other));
     }
 
-    /**
-     * @brief: Destructor
-     */
+    /** @brief: Destructor */
     FORCEINLINE ~TFunction()
     {
         Release();
     }
 
-    /**
-     * @brief: Checks weather the pointer is valid or not
-     *
-     * @return: True if the pointer is not nullptr otherwise false
-     */
+    /** @return: Returns True if the pointer is not nullptr otherwise false */
     FORCEINLINE bool IsValid() const noexcept
     {
         return (Size > 0);
@@ -279,11 +267,7 @@ public:
 
 public:
 
-    /**
-     * @brief: Checks weather the pointer is valid or not
-     *
-     * @return: True if the pointer is not nullptr otherwise false
-     */
+    /** @return: Returns True if the pointer is not nullptr otherwise false */
     FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
@@ -382,5 +366,5 @@ private:
     }
 
     AllocatorType Storage;
-    int32 Size;
+    int32         Size;
 };

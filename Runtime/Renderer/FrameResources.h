@@ -90,24 +90,24 @@ struct RENDERER_API SFrameResources
     TSharedRef<FRHISamplerState> DirectionalLightShadowSampler;
     TSharedRef<FRHISamplerState> IrradianceSampler;
 
-    TSharedRef<FRHITextureCube> Skybox;
+    FRHITextureCubeRef Skybox;
 
-    TSharedRef<FRHITexture2D>    IntegrationLUT;
+    FRHITexture2DRef    IntegrationLUT;
     TSharedRef<FRHISamplerState> IntegrationLUTSampler;
 
-    TSharedRef<FRHITexture2D> SSAOBuffer;
-    TSharedRef<FRHITexture2D> FinalTarget;
-    TSharedRef<FRHITexture2D> GBuffer[5];
+    FRHITexture2DRef SSAOBuffer;
+    FRHITexture2DRef FinalTarget;
+    FRHITexture2DRef GBuffer[5];
 
     // Two resources that can be ping-ponged between
-    TSharedRef<FRHITexture2D> ReducedDepthBuffer[2];
+    FRHITexture2DRef ReducedDepthBuffer[2];
 
     TSharedRef<FRHISamplerState> GBufferSampler;
     TSharedRef<FRHISamplerState> FXAASampler;
 
     TSharedRef<FRHIVertexInputLayout> StdInputLayout;
 
-    TSharedRef<FRHITexture2D>       RTOutput;
+    FRHITexture2DRef       RTOutput;
     TSharedRef<FRHIRayTracingScene> RTScene;
 
     FRayTracingShaderResources GlobalResources;
@@ -116,7 +116,7 @@ struct RENDERER_API SFrameResources
     TArray<FRHIRayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<FRayTracingShaderResources>     RTHitGroupResources;
-    THashTable<class CMesh*, uint32>       RTMeshToHitGroupIndex;
+    THashTable<class FMesh*, uint32>       RTMeshToHitGroupIndex;
     TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
 
     TArrayView<const SMeshDrawCommand> GlobalMeshDrawCommands;

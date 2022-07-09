@@ -4,15 +4,15 @@
 #include "Core/Math/MathCommon.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMeshFactory
+// FMeshFactory
 
-SMeshData CMeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
+FMeshData FMeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
 {
     const float HalfWidth = Width * 0.5f;
     const float HalfHeight = Height * 0.5f;
     const float HalfDepth = Depth * 0.5f;
 
-    SMeshData Cube;
+    FMeshData Cube;
     Cube.Vertices =
     {
         // FRONT FACE
@@ -82,9 +82,9 @@ SMeshData CMeshFactory::CreateCube(float Width, float Height, float Depth) noexc
     return Cube;
 }
 
-SMeshData CMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
+FMeshData FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
 {
-    SMeshData Data;
+    FMeshData Data;
     if (Width < 1)
     {
         Width = 1;
@@ -134,9 +134,9 @@ SMeshData CMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
     return Data;
 }
 
-SMeshData CMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
+FMeshData FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
 {
-    SMeshData Sphere;
+    FMeshData Sphere;
     Sphere.Vertices.Resize(12);
 
     const float t = (1.0f + NMath::Sqrt(5.0f)) / 2.0f;
@@ -182,7 +182,7 @@ SMeshData CMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
 
     if (Subdivisions > 0)
     {
-        CMeshUtilities::Subdivide(Sphere, Subdivisions);
+        FMeshUtilities::Subdivide(Sphere, Subdivisions);
     }
 
     for (uint32 i = 0; i < static_cast<uint32>(Sphere.Vertices.Size()); i++)
@@ -202,20 +202,20 @@ SMeshData CMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
     Sphere.Indices.ShrinkToFit();
     Sphere.Vertices.ShrinkToFit();
 
-    CMeshUtilities::CalculateTangents(Sphere);
+    FMeshUtilities::CalculateTangents(Sphere);
 
     return Sphere;
 }
 
 // TODO: Finish
-SMeshData CMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noexcept
+FMeshData FMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noexcept
 {
     UNREFERENCED_VARIABLE(Sides);
     UNREFERENCED_VARIABLE(Radius);
     UNREFERENCED_VARIABLE(Height);
 
     /*
-    SMeshData data;
+    FMeshData data;
     // Num verts = (Sides*2)    (Bottom, since we need unique normals)
     //            +  Sides    (1 MiddlePoint per side)
     //            +  1        (One middlepoint on the underside)
@@ -284,14 +284,14 @@ SMeshData CMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noe
 
     return data;
     */
-    return SMeshData();
+    return FMeshData();
 }
 
 // TODO: Finish
-SMeshData CMeshFactory::CreatePyramid() noexcept
+FMeshData FMeshFactory::CreatePyramid() noexcept
 {
     /*
-    SMeshData data;
+    FMeshData data;
     data.Vertices.resize(16);
     data.Indices.resize(18);
 
@@ -375,18 +375,18 @@ SMeshData CMeshFactory::CreatePyramid() noexcept
 
     return data;
     */
-    return SMeshData();
+    return FMeshData();
 }
 
 // TODO: Finish
-SMeshData CMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) noexcept
+FMeshData FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) noexcept
 {
     UNREFERENCED_VARIABLE(Sides);
     UNREFERENCED_VARIABLE(Radius);
     UNREFERENCED_VARIABLE(Height);
 
     /*
-    SMeshData data;
+    FMeshData data;
     if (sides < 5)
         sides = 5;
     if (Height < 0.1f)
@@ -484,5 +484,5 @@ SMeshData CMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height)
     CalculateTangents(data);
     return data;
     */
-    return SMeshData();
+    return FMeshData();
 }

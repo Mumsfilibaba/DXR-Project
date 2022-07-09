@@ -11,22 +11,22 @@
 #include "Engine/Assets/MeshFactory.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMesh
+// FMesh
 
-class ENGINE_API CMesh
+class ENGINE_API FMesh
 {
 public:
-    CMesh() = default;
-    ~CMesh() = default;
+    FMesh() = default;
+    ~FMesh() = default;
 
-    bool Init(const SMeshData& Data);
+    bool Init(const FMeshData& Data);
 
     bool BuildAccelerationStructure(FRHICommandList& CmdList);
 
-    static TSharedPtr<CMesh> Make(const SMeshData& Data);
+    static TSharedPtr<FMesh> Make(const FMeshData& Data);
 
 public:
-    void CreateBoundingBox(const SMeshData& Data);
+    void CreateBoundingBox(const FMeshData& Data);
 
     TSharedRef<FRHIVertexBuffer>       VertexBuffer;
     TSharedRef<FRHIShaderResourceView> VertexBufferSRV;

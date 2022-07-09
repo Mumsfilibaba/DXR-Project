@@ -18,9 +18,9 @@
 TAutoConsoleVariable<bool> GDrawTileDebug("Renderer.DrawTileDebug", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDeferredRenderer
+// FDeferredRenderer
 
-bool CDeferredRenderer::Init(SFrameResources& FrameResources)
+bool FDeferredRenderer::Init(SFrameResources& FrameResources)
 {
     if (!CreateGBuffer(FrameResources))
     {
@@ -82,7 +82,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         DepthStencilInitializer.bDepthEnable   = true;
         DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<FRHIDepthStencilState> GeometryDepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
+        FRHIDepthStencilStateRef GeometryDepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
         if (!GeometryDepthStencilState)
         {
             FDebug::DebugBreak();
@@ -92,7 +92,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         FRHIRasterizerStateInitializer RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<FRHIRasterizerState> GeometryRasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+        FRHIRasterizerStateRef GeometryRasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
         if (!GeometryRasterizerState)
         {
             FDebug::DebugBreak();
@@ -101,7 +101,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
         FRHIBlendStateInitializer BlendStateInitializer;
 
-        TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
+        FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
             FDebug::DebugBreak();
@@ -155,7 +155,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         DepthStencil.bDepthEnable   = true;
         DepthStencil.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencil);
+        FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencil);
         if (!DepthStencilState)
         {
             FDebug::DebugBreak();
@@ -165,7 +165,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         FRHIRasterizerStateInitializer RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+        FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             FDebug::DebugBreak();
@@ -174,7 +174,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
         FRHIBlendStateInitializer BlendStateInfo;
 
-        TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+        FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             FDebug::DebugBreak();
@@ -201,13 +201,13 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     constexpr EFormat LUTFormat = EFormat::R16G16_Float;
     if (!RHIQueryUAVFormatSupport(LUTFormat))
     {
-        LOG_ERROR("[CRenderer]: R16G16_Float is not supported for UAVs");
+        LOG_ERROR("[FRenderer]: R16G16_Float is not supported for UAVs");
         return false;
     }
 
     FRHITexture2DInitializer LUTInitializer(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::AllowUAV, EResourceAccess::Common);
 
-    TSharedRef<FRHITexture2D> StagingTexture = RHICreateTexture2D(LUTInitializer);
+    FRHITexture2DRef StagingTexture = RHICreateTexture2D(LUTInitializer);
     if (!StagingTexture)
     {
         FDebug::DebugBreak();
@@ -253,7 +253,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         }
     }
 
-    TSharedRef<FRHIComputeShader> CShader = RHICreateComputeShader(ShaderCode);
+    FRHIComputeShaderRef CShader = RHICreateComputeShader(ShaderCode);
     if (!CShader)
     {
         FDebug::DebugBreak();
@@ -264,7 +264,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         FRHIComputePipelineStateInitializer PSOInitializer;
         PSOInitializer.Shader = CShader.Get();
 
-        TSharedRef<FRHIComputePipelineState> BRDF_PipelineState = RHICreateComputePipelineState(PSOInitializer);
+        FRHIComputePipelineStateRef BRDF_PipelineState = RHICreateComputePipelineState(PSOInitializer);
         if (!BRDF_PipelineState)
         {
             FDebug::DebugBreak();
@@ -276,7 +276,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         }
 
         FRHICommandList CmdList;
-
         CmdList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
         CmdList.SetComputePipelineState(BRDF_PipelineState.Get());
@@ -298,7 +297,9 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
         CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-        FRHICommandQueue::Get().ExecuteCommandList(CmdList);
+        CmdList.DestroyResource(BRDF_PipelineState.Get());
+
+        FRHICommandListExecutor::Get().ExecuteCommandList(CmdList);
     }
 
     {
@@ -421,7 +422,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     return true;
 }
 
-void CDeferredRenderer::Release()
+void FDeferredRenderer::Release()
 {
     PrePassPipelineState.Reset();
     PrePassVertexShader.Reset();
@@ -442,7 +443,7 @@ void CDeferredRenderer::Release()
     ReduceDepthShader.Reset();
 }
 
-void CDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene)
+void FDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, SFrameResources& FrameResources, const FScene& Scene)
 {
     const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
@@ -466,7 +467,7 @@ void CDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, SFrameResources&
 
         CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
         
-        // NOTE: For now, MetalRHI require a renderpass to be started for these two to be valid
+        // NOTE: For now, MetalRHI require a RenderPass to be started for these two to be valid
         CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
         CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
@@ -558,7 +559,7 @@ void CDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, SFrameResources&
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Depth Reduction");
 }
 
-void CDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const SFrameResources& FrameResources)
+void FDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const SFrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin GeometryPass");
 
@@ -636,7 +637,7 @@ void CDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const SFrameRes
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
 }
 
-void CDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup)
+void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
 
@@ -711,12 +712,12 @@ void CDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, c
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");
 }
 
-bool CDeferredRenderer::ResizeResources(SFrameResources& FrameResources)
+bool FDeferredRenderer::ResizeResources(SFrameResources& FrameResources)
 {
     return CreateGBuffer(FrameResources);
 }
 
-bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
+bool FDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
 {
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget;
 

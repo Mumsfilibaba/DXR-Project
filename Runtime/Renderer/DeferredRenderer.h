@@ -7,19 +7,19 @@
 #include "RHI/RHICommandList.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDeferredRenderer
+// FDeferredRenderer
 
-class RENDERER_API CDeferredRenderer
+class RENDERER_API FDeferredRenderer
 {
 public:
-    CDeferredRenderer() = default;
-    ~CDeferredRenderer() = default;
+    FDeferredRenderer() = default;
+    ~FDeferredRenderer() = default;
 
     bool Init(SFrameResources& FrameResources);
 
     void Release();
 
-    void RenderPrePass(FRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene);
+    void RenderPrePass(FRHICommandList& CmdList, SFrameResources& FrameResources, const FScene& Scene);
     void RenderBasePass(FRHICommandList& CmdList, const SFrameResources& FrameResources);
     void RenderDeferredTiledLightPass(FRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
 
@@ -35,14 +35,14 @@ private:
     TSharedRef<FRHIGraphicsPipelineState> PrePassPipelineState;
     TSharedRef<FRHIVertexShader>          PrePassVertexShader;
 
-    TSharedRef<FRHIComputePipelineState>  TiledLightPassPSO;
-    TSharedRef<FRHIComputeShader>         TiledLightShader;
-    TSharedRef<FRHIComputePipelineState>  TiledLightPassPSODebug;
-    TSharedRef<FRHIComputeShader>         TiledLightDebugShader;
+    FRHIComputePipelineStateRef  TiledLightPassPSO;
+    FRHIComputeShaderRef         TiledLightShader;
+    FRHIComputePipelineStateRef  TiledLightPassPSODebug;
+    FRHIComputeShaderRef         TiledLightDebugShader;
 
-    TSharedRef<FRHIComputePipelineState> ReduceDepthInitalPSO;
-    TSharedRef<FRHIComputeShader>        ReduceDepthInitalShader;
+    FRHIComputePipelineStateRef ReduceDepthInitalPSO;
+    FRHIComputeShaderRef        ReduceDepthInitalShader;
 
-    TSharedRef<FRHIComputePipelineState> ReduceDepthPSO;
-    TSharedRef<FRHIComputeShader>        ReduceDepthShader;
+    FRHIComputePipelineStateRef ReduceDepthPSO;
+    FRHIComputeShaderRef        ReduceDepthShader;
 };

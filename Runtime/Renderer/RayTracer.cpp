@@ -105,7 +105,7 @@ void CRayTracer::Release()
     RayClosestHitShader.Reset();
 }
 
-void CRayTracer::PreRender(FRHICommandList& CmdList, SFrameResources& Resources, const CScene& Scene)
+void CRayTracer::PreRender(FRHICommandList& CmdList, SFrameResources& Resources, const FScene& Scene)
 {
     UNREFERENCED_VARIABLE(Scene);
 
@@ -119,7 +119,7 @@ void CRayTracer::PreRender(FRHICommandList& CmdList, SFrameResources& Resources,
     {
         const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[Index];
 
-        CMaterial* Material = Command.Material;
+        FMaterial* Material = Command.Material;
         if (Command.Material->HasAlphaMask())
         {
             continue;

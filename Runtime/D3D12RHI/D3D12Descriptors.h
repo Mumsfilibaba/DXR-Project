@@ -4,6 +4,8 @@
 
 #include "Core/Containers/Array.h"
 #include "Core/Utilities/StringUtilities.h"
+#include "Core/Threading/ScopedLock.h"
+#include "Core/Threading/Platform/CriticalSection.h"
 
 class FD3D12DescriptorHeap;
 class FD3D12OnlineDescriptorManager;
@@ -127,6 +129,8 @@ private:
 
     D3D12_DESCRIPTOR_HEAP_TYPE Type;
     uint32                     DescriptorSize = 0;
+
+    FCriticalSection           CriticalSection;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -184,12 +188,31 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12DescriptorBlock
+
+struct FD3D12DescriptorBlock
+{
+    FD3D12DescriptorBlock()
+        : StartDescriptor(0)
+        , NumDescriptors(0)
+    { }
+
+    FD3D12DescriptorBlock(uint32 InStartDescriptor, uint32 InNumDescriptors)
+        : StartDescriptor(InStartDescriptor)
+        , NumDescriptors(InNumDescriptors)
+    { }
+
+    uint32 StartDescriptor;
+    uint32 NumDescriptors;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12OnlineDescriptorManager
 
-class FD3D12OnlineDescriptorManager : public FD3D12RefCounted
+class FD3D12OnlineDescriptorManager : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
-    FD3D12OnlineDescriptorManager(FD3D12DescriptorHeap* InDescriptorHeap, uint32 InDescriptorStartOffset, uint32 InDescriptorCount);
+    FD3D12OnlineDescriptorManager(FD3D12Device* InDevice, FD3D12DescriptorHeap* InDescriptorHeap, uint32 InDescriptorStartOffset, uint32 InDescriptorCount);
     ~FD3D12OnlineDescriptorManager() = default;
 
     uint32 AllocateHandles(uint32 NumHandles)

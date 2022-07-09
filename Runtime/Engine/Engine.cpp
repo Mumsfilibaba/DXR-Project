@@ -80,7 +80,7 @@ bool FEngine::Initialize()
     // Create standard textures
     uint8 Pixels[] = { 255, 255, 255, 255 };
 
-    BaseTexture = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    BaseTexture = FTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
     if (!BaseTexture)
     {
         LOG_WARNING("Failed to create BaseTexture");
@@ -94,7 +94,7 @@ bool FEngine::Initialize()
     Pixels[1] = 127;
     Pixels[2] = 255;
 
-    BaseNormal = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    BaseNormal = FTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
     if (!BaseNormal)
     {
         LOG_WARNING("Failed to create BaseNormal-Texture");
@@ -106,36 +106,36 @@ bool FEngine::Initialize()
 
     /* Create material sampler (Used for now by all materials) */
     FRHISamplerStateInitializer SamplerCreateInfo;
-    SamplerCreateInfo.AddressU = ESamplerMode::Wrap;
-    SamplerCreateInfo.AddressV = ESamplerMode::Wrap;
-    SamplerCreateInfo.AddressW = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressU       = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressV       = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressW       = ESamplerMode::Wrap;
     SamplerCreateInfo.ComparisonFunc = EComparisonFunc::Never;
-    SamplerCreateInfo.Filter = ESamplerFilter::Anistrotopic;
-    SamplerCreateInfo.MaxAnisotropy = 16;
-    SamplerCreateInfo.MaxLOD = FLT_MAX;
-    SamplerCreateInfo.MinLOD = -FLT_MAX;
-    SamplerCreateInfo.MipLODBias = 0.0f;
+    SamplerCreateInfo.Filter         = ESamplerFilter::Anistrotopic;
+    SamplerCreateInfo.MaxAnisotropy  = 16;
+    SamplerCreateInfo.MaxLOD         = FLT_MAX;
+    SamplerCreateInfo.MinLOD         = -FLT_MAX;
+    SamplerCreateInfo.MipLODBias     = 0.0f;
 
     BaseMaterialSampler = RHICreateSamplerState(SamplerCreateInfo);
 
     /* Base material */
-    SMaterialDesc MaterialDesc;
-    MaterialDesc.AO = 1.0f;
-    MaterialDesc.Metallic = 0.0f;
-    MaterialDesc.Roughness = 1.0f;
+    FMaterialDesc MaterialDesc;
+    MaterialDesc.AO           = 1.0f;
+    MaterialDesc.Metallic     = 0.0f;
+    MaterialDesc.Roughness    = 1.0f;
     MaterialDesc.EnableHeight = 0;
-    MaterialDesc.Albedo = FVector3(1.0f);
+    MaterialDesc.Albedo       = FVector3(1.0f);
 
-    BaseMaterial = MakeShared<CMaterial>(MaterialDesc);
-    BaseMaterial->AlbedoMap = GEngine->BaseTexture;
-    BaseMaterial->NormalMap = GEngine->BaseNormal;
+    BaseMaterial = MakeShared<FMaterial>(MaterialDesc);
+    BaseMaterial->AlbedoMap    = GEngine->BaseTexture;
+    BaseMaterial->NormalMap    = GEngine->BaseNormal;
     BaseMaterial->RoughnessMap = GEngine->BaseTexture;
-    BaseMaterial->AOMap = GEngine->BaseTexture;
-    BaseMaterial->MetallicMap = GEngine->BaseTexture;
-    BaseMaterial->Init();
+    BaseMaterial->AOMap        = GEngine->BaseTexture;
+    BaseMaterial->MetallicMap  = GEngine->BaseTexture;
+    BaseMaterial->Initialize();
 
     /* Create the start scene */
-    Scene = MakeShared<CScene>();
+    Scene = MakeShared<FScene>();
 
     /* Create windows */
     TSharedRef<CFrameProfilerWindow> ProfilerWindow = CFrameProfilerWindow::Make();

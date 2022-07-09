@@ -32,14 +32,10 @@ private:
 
 public:
 
-    /**
-     * @return: Returns the DispatchQueue instance 
-     */
+    /** @return: Returns the TaskManager instance  */
     static FAsyncTaskManager& Get();
 
-    /**
-     * @return: Returns true if the initialization was successful 
-     */
+    /** @return: Returns true if the initialization was successful */
     bool Initialize();
 
     /**
@@ -57,14 +53,10 @@ public:
      */
     void WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting = true);
 
-    /**
-     * @brief: Wait for all queued up tasks to be dispatched and finish 
-     */
+    /** @brief: Wait for all queued up tasks to be dispatched and finish  */
     void WaitForAll(bool bUseThisThreadWhileWaiting = true);
 
-    /**
-     * @brief: Release the DispatchQueue 
-     */
+    /** @brief: Release the TaskManager */
     void Release();
 
 private:
@@ -78,7 +70,7 @@ private:
     TArray<TSharedRef<FGenericThread>> WorkerThreads;
 
     TArray<FAsyncTask> Queue;
-    FCriticalSection   QueueMutex;
+    FCriticalSection   QueueCS;
 
     FConditionVariable WakeCondition;
     FCriticalSection   WakeMutex;

@@ -9,9 +9,9 @@
 #define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetShaderResourceView() : nullptr)
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMaterialDesc
+// FMaterialDesc
 
-struct SMaterialDesc
+struct FMaterialDesc
 {
     FVector3 Albedo = FVector3(1.0f);
     float Roughness = 0.0f;
@@ -23,15 +23,15 @@ struct SMaterialDesc
 };
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMaterial
+// FMaterial
 
-class ENGINE_API CMaterial
+class ENGINE_API FMaterial
 {
 public:
-    CMaterial(const SMaterialDesc& InProperties);
-    ~CMaterial() = default;
+    FMaterial(const FMaterialDesc& InProperties);
+    ~FMaterial() = default;
 
-    void Init();
+    void Initialize();
 
     void BuildBuffer(class FRHICommandList& CmdList);
 
@@ -85,19 +85,19 @@ public:
         return HeightMap;
     }
 
-    FORCEINLINE const SMaterialDesc& GetMaterialProperties() const
+    FORCEINLINE const FMaterialDesc& GetMaterialProperties() const
     {
         return Properties;
     }
 
 public:
-    TSharedRef<FRHITexture2D> AlbedoMap;
-    TSharedRef<FRHITexture2D> NormalMap;
-    TSharedRef<FRHITexture2D> RoughnessMap;
-    TSharedRef<FRHITexture2D> HeightMap;
-    TSharedRef<FRHITexture2D> AOMap;
-    TSharedRef<FRHITexture2D> MetallicMap;
-    TSharedRef<FRHITexture2D> AlphaMask;
+    FRHITexture2DRef AlbedoMap;
+    FRHITexture2DRef NormalMap;
+    FRHITexture2DRef RoughnessMap;
+    FRHITexture2DRef HeightMap;
+    FRHITexture2DRef AOMap;
+    FRHITexture2DRef MetallicMap;
+    FRHITexture2DRef AlphaMask;
 
 private:
     FString DebugName;
@@ -105,7 +105,7 @@ private:
     bool bMaterialBufferIsDirty = true;
     bool bRenderInForwardPass   = false;
 
-    SMaterialDesc        	       Properties;
+    FMaterialDesc        	       Properties;
     TSharedRef<FRHIConstantBuffer> MaterialBuffer;
     TSharedRef<FRHISamplerState>   Sampler;
 

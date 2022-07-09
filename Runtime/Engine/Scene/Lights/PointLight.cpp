@@ -1,9 +1,9 @@
 #include "PointLight.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CPointLight
+// FPointLight
 
-CPointLight::CPointLight()
+FPointLight::FPointLight()
     : CLight()
     , Matrices()
     , Position(0.0f, 0.0f, 0.0f)
@@ -13,18 +13,18 @@ CPointLight::CPointLight()
     CalculateMatrices();
 }
 
-void CPointLight::SetPosition(const FVector3& InPosition)
+void FPointLight::SetPosition(const FVector3& InPosition)
 {
     Position = InPosition;
     CalculateMatrices();
 }
 
-void CPointLight::SetPosition(float x, float y, float z)
+void FPointLight::SetPosition(float x, float y, float z)
 {
     SetPosition(FVector3(x, y, z));
 }
 
-void CPointLight::SetShadowNearPlane(float InShadowNearPlane)
+void FPointLight::SetShadowNearPlane(float InShadowNearPlane)
 {
     if (InShadowNearPlane > 0.0f)
     {
@@ -36,7 +36,7 @@ void CPointLight::SetShadowNearPlane(float InShadowNearPlane)
     }
 }
 
-void CPointLight::SetShadowFarPlane(float InShadowFarPlane)
+void FPointLight::SetShadowFarPlane(float InShadowFarPlane)
 {
     if (InShadowFarPlane > 0.0f)
     {
@@ -48,7 +48,7 @@ void CPointLight::SetShadowFarPlane(float InShadowFarPlane)
     }
 }
 
-void CPointLight::CalculateMatrices()
+void FPointLight::CalculateMatrices()
 {
     if (!bShadowCaster)
     {

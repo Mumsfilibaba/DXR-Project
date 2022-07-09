@@ -123,7 +123,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource);
 
-    FRHICommandQueue::Get().ExecuteCommandList(CmdList);
+    FRHICommandListExecutor::Get().ExecuteCommandList(CmdList);
 
     FRHIBufferDataInitializer    SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
     FRHIGenericBufferInitializer SSAOSamplesInitializer( EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default

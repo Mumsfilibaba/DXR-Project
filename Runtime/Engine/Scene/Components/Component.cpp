@@ -11,7 +11,7 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // CComponent
 
-CComponent::CComponent(CActor* InActorOwner)
+CComponent::CComponent(FActor* InActorOwner)
     : CCoreObject()
     , ActorOwner(InActorOwner)
     , bIsStartable(true)
@@ -22,7 +22,7 @@ CComponent::CComponent(CActor* InActorOwner)
     CORE_OBJECT_INIT();
 }
 
-CComponent::CComponent(CActor* InActorOwner, bool bInIsStartable, bool bInIsTickable)
+CComponent::CComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTickable)
     : CCoreObject()
     , ActorOwner(InActorOwner)
     , bIsStartable(bInIsStartable)

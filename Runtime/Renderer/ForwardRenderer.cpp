@@ -66,7 +66,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     FRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         FDebug::DebugBreak();
@@ -75,7 +75,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
 
     FRHIBlendStateInitializer BlendStateInitializer( { FRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero) }, false , false);
 
-    TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
         FDebug::DebugBreak();

@@ -60,16 +60,16 @@ struct SCameraBufferDesc
     float    AspectRatio;
 };
 
-RENDERER_API CRenderer GRenderer;
+RENDERER_API FRenderer GRenderer;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRenderer
+// FRenderer
 
-CRenderer::CRenderer()
-    : WindowHandler(MakeShared<CRendererWindowHandler>())
+FRenderer::FRenderer()
+    : WindowHandler(MakeShared<FRendererWindowHandler>())
 { }
 
-bool CRenderer::Init()
+bool FRenderer::Init()
 {
     FRHIViewportInitializer ViewportInitializer( GEngine->MainWindow->GetPlatformHandle()
                                                , EFormat::R8G8B8A8_Unorm
@@ -103,10 +103,10 @@ bool CRenderer::Init()
     // Initialize standard input layout
     FRHIVertexInputLayoutInitializer InputLayout =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(SVertex), 0, 0,  EVertexInputClass::Vertex, 0 },
-        { "NORMAL",   0, EFormat::R32G32B32_Float, sizeof(SVertex), 0, 12, EVertexInputClass::Vertex, 0 },
-        { "TANGENT",  0, EFormat::R32G32B32_Float, sizeof(SVertex), 0, 24, EVertexInputClass::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(SVertex), 0, 36, EVertexInputClass::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 0,  EVertexInputClass::Vertex, 0 },
+        { "NORMAL",   0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 12, EVertexInputClass::Vertex, 0 },
+        { "TANGENT",  0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 24, EVertexInputClass::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertex), 0, 36, EVertexInputClass::Vertex, 0 },
     };
 
     Resources.StdInputLayout = RHICreateVertexInputLayout(InputLayout);
@@ -208,12 +208,12 @@ bool CRenderer::Init()
 
     LightProbeRenderer.RenderSkyLightProbe(MainCmdList, LightSetup, Resources);
 
-    FRHICommandQueue::Get().ExecuteCommandList(MainCmdList);
+    FRHICommandListExecutor::Get().ExecuteCommandList(MainCmdList);
 
     FApplication& Application = FApplication::Get();
 
     // Register EventFunc
-    WindowHandler->WindowResizedDelegate.BindRaw(this, &CRenderer::OnWindowResize);
+    WindowHandler->WindowResizedDelegate.BindRaw(this, &FRenderer::OnWindowResize);
     Application.AddWindowMessageHandler(WindowHandler, uint32(-1));
 
     // Register Windows
@@ -229,7 +229,7 @@ bool CRenderer::Init()
     return true;
 }
 
-void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
+void FRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
                                                 , const TPair<uint32, uint32>& DrawCommands
                                                 , TArray<uint32>& OutDeferredDrawCommands
                                                 , TArray<uint32>& OutForwardDrawCommands)
@@ -307,7 +307,7 @@ void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
     }
 }
 
-void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
+void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
 {
     TRACE_SCOPE("FrustumCulling And Sorting");
 
@@ -367,7 +367,7 @@ void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
     }
 }
 
-void CRenderer::PerformFXAA(FRHICommandList& InCmdList)
+void FRenderer::PerformFXAA(FRHICommandList& InCmdList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin FXAA");
 
@@ -414,7 +414,7 @@ void CRenderer::PerformFXAA(FRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End FXAA");
 }
 
-void CRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
+void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin Draw BackBuffer");
 
@@ -439,7 +439,7 @@ void CRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End Draw BackBuffer");
 }
 
-void CRenderer::PerformAABBDebugPass(FRHICommandList& InCmdList)
+void FRenderer::PerformAABBDebugPass(FRHICommandList& InCmdList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin DebugPass");
 
@@ -478,7 +478,7 @@ void CRenderer::PerformAABBDebugPass(FRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End DebugPass");
 }
 
-void CRenderer::Tick(const CScene& Scene)
+void FRenderer::Tick(const FScene& Scene)
 {
     Resources.BackBuffer             = Resources.MainWindowViewport->GetBackBuffer();
     Resources.GlobalMeshDrawCommands = TArrayView<const SMeshDrawCommand>(Scene.GetMeshDrawCommands());
@@ -497,7 +497,7 @@ void CRenderer::Tick(const CScene& Scene)
     // Initialize point light task
     const auto RenderPointShadows = [&]()
     {
-        CRenderer::ShadowMapRenderer.RenderPointLightShadows(PointShadowCmdList, LightSetup, Scene);
+        FRenderer::ShadowMapRenderer.RenderPointLightShadows(PointShadowCmdList, LightSetup, Scene);
     };
 
     if (!PointShadowTask.Delegate.IsBound())
@@ -510,7 +510,7 @@ void CRenderer::Tick(const CScene& Scene)
     // Initialize directional light task
     const auto RenderDirShadows = [&]()
     {
-        CRenderer::ShadowMapRenderer.RenderDirectionalLightShadows(DirShadowCmdList, LightSetup, Resources, Scene);
+        FRenderer::ShadowMapRenderer.RenderDirectionalLightShadows(DirShadowCmdList, LightSetup, Resources, Scene);
     };
 
     DirShadowTask.Delegate.BindLambda(RenderDirShadows);
@@ -575,7 +575,7 @@ void CRenderer::Tick(const CScene& Scene)
     {
         const auto RenderPrePass = [&]()
         {
-            CRenderer::DeferredRenderer.RenderPrePass(PrePassCmdList, Resources, Scene);
+            FRenderer::DeferredRenderer.RenderPrePass(PrePassCmdList, Resources, Scene);
         };
 
         PrePassTask.Delegate.BindLambda(RenderPrePass);
@@ -614,7 +614,7 @@ void CRenderer::Tick(const CScene& Scene)
         const auto RenderRayTracing = [&]()
         {
             GPU_TRACE_SCOPE(RayTracingCmdList, "Ray Tracing");
-            CRenderer::RayTracer.PreRender(RayTracingCmdList, Resources, Scene);
+            FRenderer::RayTracer.PreRender(RayTracingCmdList, Resources, Scene);
         };
 
         RayTracingTask.Delegate.BindLambda(RenderRayTracing);
@@ -624,7 +624,7 @@ void CRenderer::Tick(const CScene& Scene)
     {
         const auto RenderBasePass = [&]()
         {
-            CRenderer::DeferredRenderer.RenderBasePass(BasePassCmdList, Resources);
+            FRenderer::DeferredRenderer.RenderBasePass(BasePassCmdList, Resources);
         };
 
         BasePassTask.Delegate.BindLambda(RenderBasePass);
@@ -818,11 +818,10 @@ void CRenderer::Tick(const CScene& Scene)
             &MainCmdList
         };
 
-        FRHICommandQueue::Get().ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
-
-        FrameStatistics.NumDrawCalls      = FRHICommandQueue::Get().GetNumDrawCalls();
-        FrameStatistics.NumDispatchCalls  = FRHICommandQueue::Get().GetNumDispatchCalls();
-        FrameStatistics.NumRenderCommands = FRHICommandQueue::Get().GetNumCommands();
+        FRHICommandListExecutor& Executor = FRHICommandListExecutor::Get();
+        Executor.ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
+        
+        FrameStatistics = Executor.GetStatistics();
     }
 
     {
@@ -831,9 +830,9 @@ void CRenderer::Tick(const CScene& Scene)
     }
 }
 
-void CRenderer::Release()
+void FRenderer::Release()
 {
-    FRHICommandQueue::Get().WaitForGPU();
+    FRHICommandListExecutor::Get().WaitForGPU();
 
     PreShadowsCmdList.Reset();
     PointShadowCmdList.Reset();
@@ -891,7 +890,7 @@ void CRenderer::Release()
     }
 }
 
-void CRenderer::OnWindowResize(const FWindowResizeEvent& Event)
+void FRenderer::OnWindowResize(const FWindowResizeEvent& Event)
 {
     const uint32 Width = Event.Width;
     const uint32 Height = Event.Height;
@@ -921,7 +920,7 @@ void CRenderer::OnWindowResize(const FWindowResizeEvent& Event)
     }
 }
 
-bool CRenderer::InitBoundingBoxDebugPass()
+bool FRenderer::InitBoundingBoxDebugPass()
 {
     TArray<uint8> ShaderCode;
     
@@ -984,7 +983,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     FRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         FDebug::DebugBreak();
@@ -993,7 +992,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
 
     FRHIBlendStateInitializer BlendStateInfo;
 
-    TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         FDebug::DebugBreak();
@@ -1084,7 +1083,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     return true;
 }
 
-bool CRenderer::InitAA()
+bool FRenderer::InitAA()
 {
     TArray<uint8> ShaderCode;
     
@@ -1135,7 +1134,7 @@ bool CRenderer::InitAA()
     FRHIRasterizerStateInitializer RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
-    TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
     if (!RasterizerState)
     {
         FDebug::DebugBreak();
@@ -1144,7 +1143,7 @@ bool CRenderer::InitAA()
 
     FRHIBlendStateInitializer BlendStateInfo;
 
-    TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         FDebug::DebugBreak();
@@ -1245,7 +1244,7 @@ bool CRenderer::InitAA()
     return true;
 }
 
-bool CRenderer::InitShadingImage()
+bool FRenderer::InitShadingImage()
 {
     FShadingRateSupport Support;
     RHIQueryShadingRateSupport(Support);
