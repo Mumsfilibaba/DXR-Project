@@ -1380,13 +1380,13 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
     if (bIsTextureCube)
     {
-        TSharedRef<FD3D12ComputePipelineState> PipelineState = D3D12CoreInterface->GetGenerateMipsPipelineTexureCube();
+        FD3D12ComputePipelineStateRef PipelineState = D3D12CoreInterface->GetGenerateMipsPipelineTexureCube();
         CommandList.SetPipelineState(PipelineState->GetD3D12PipelineState());
         CommandList.SetComputeRootSignature(PipelineState->GetRootSignature());
     }
     else
     {
-        TSharedRef<FD3D12ComputePipelineState> PipelineState = D3D12CoreInterface->GetGenerateMipsPipelineTexure2D();
+        FD3D12ComputePipelineStateRef PipelineState = D3D12CoreInterface->GetGenerateMipsPipelineTexure2D();
         CommandList.SetPipelineState(PipelineState->GetD3D12PipelineState());
         CommandList.SetComputeRootSignature(PipelineState->GetRootSignature());
     }

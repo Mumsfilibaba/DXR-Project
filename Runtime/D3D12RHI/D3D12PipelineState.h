@@ -10,13 +10,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-class FD3D12GraphicsPipelineState;
-class FD3D12ComputePipelineState;
-class FD3D12RayTracingPipelineState;
-
-typedef TSharedRef<FD3D12GraphicsPipelineState>   FD3D12GraphicsPipelineStateRef;
-typedef TSharedRef<FD3D12ComputePipelineState>    FD3D12ComputePipelineStateRef;
-typedef TSharedRef<FD3D12RayTracingPipelineState> FD3D12RayTracingPipelineStateRef;
+typedef TSharedRef<class FD3D12GraphicsPipelineState>   FD3D12GraphicsPipelineStateRef;
+typedef TSharedRef<class FD3D12ComputePipelineState>    FD3D12ComputePipelineStateRef;
+typedef TSharedRef<class FD3D12RayTracingPipelineState> FD3D12RayTracingPipelineStateRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ED3D12PipelineType

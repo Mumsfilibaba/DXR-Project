@@ -1128,7 +1128,7 @@ FRHIComputePipelineState* FD3D12CoreInterface::RHICreateComputePipelineState(con
     Check(Initializer.Shader != nullptr);
 
     TSharedRef<FD3D12ComputeShader>        Shader           = MakeSharedRef<FD3D12ComputeShader>(Initializer.Shader);
-    TSharedRef<FD3D12ComputePipelineState> NewPipelineState = dbg_new FD3D12ComputePipelineState(GetDevice(), Shader);
+    FD3D12ComputePipelineStateRef NewPipelineState = dbg_new FD3D12ComputePipelineState(GetDevice(), Shader);
     if (!NewPipelineState->Initialize())
     {
         return nullptr;
