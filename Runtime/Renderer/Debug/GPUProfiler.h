@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Containers/HashTable.h"
-#include "Core/Threading/Lockable.h"
+#include "Core/Threading/Spinlock.h"
 
 #include "Renderer/RendererModule.h"
 
@@ -11,14 +11,14 @@
 #define NUM_GPU_PROFILER_SAMPLES (200)
 
 #if ENABLE_GPU_PROFILER
-#define GPU_TRACE_SCOPE(CmdList, Name) SGPUScopedTrace PREPROCESS_CONCAT(GPUScopedTrace_Line_, __LINE__)(CmdList, Name)
+    #define GPU_TRACE_SCOPE(CmdList, Name) FGPUScopedTrace PREPROCESS_CONCAT(GPUScopedTrace_Line_, __LINE__)(CmdList, Name)
 #else
-#define GPU_TRACE_SCOPE(CmdList, Name)
+    #define GPU_TRACE_SCOPE(CmdList, Name)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-struct SGPUProfileSample
+struct FGPUProfileSample
 {
     void AddSample(float NewSample)
     {
@@ -78,9 +78,9 @@ struct SGPUProfileSample
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-using GPUProfileSamplesTable = THashTable<FString, SGPUProfileSample, FStringHasher>;
+using GPUProfileSamplesTable = THashTable<FString, FGPUProfileSample, FStringHasher>;
 
-class RENDERER_API CGPUProfiler
+class RENDERER_API FGPUProfiler
 {
 public:
 
@@ -90,7 +90,7 @@ public:
      /** @brief: Release the resources */
     static void Release();
 
-    static FORCEINLINE CGPUProfiler& Get() { return Instance; }
+    static FORCEINLINE FGPUProfiler& Get() { return Instance; }
 
      /** @brief: Enables the collection of samples (Resume) */
     void Enable();
@@ -119,15 +119,15 @@ public:
      /** @brief: End a GPU scope */
     void EndGPUTrace(FRHICommandList& CmdList, const char* Name);
 
-    FORCEINLINE const SGPUProfileSample& GetGPUFrameTime() const
+    FORCEINLINE const FGPUProfileSample& GetGPUFrameTime() const
     {
         return FrameTime;
     }
 
 private:
 
-    CGPUProfiler();
-    ~CGPUProfiler() = default;
+    FGPUProfiler();
+    ~FGPUProfiler() = default;
 
      /** @brief: Queries for GPUTimeStamps */
     TSharedRef<FRHITimestampQuery> Timequeries;
@@ -135,32 +135,33 @@ private:
     uint32 CurrentTimeQueryIndex = 0;
 
      /** @brief: Sample for the GPU FrameTime */
-    SGPUProfileSample FrameTime;
+    FGPUProfileSample FrameTime;
 
      /** @brief: Lockable table for GPU- samples */
-    Lockable<GPUProfileSamplesTable> Samples;
+    GPUProfileSamplesTable Samples;
+    FSpinLock              SamplesLock;
 
     bool bEnabled;
 
-    static CGPUProfiler Instance;
+    static FGPUProfiler Instance;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-struct SGPUScopedTrace
+struct FGPUScopedTrace
 {
 public:
 
-    FORCEINLINE SGPUScopedTrace(FRHICommandList& InCmdList, const char* InName)
+    FORCEINLINE FGPUScopedTrace(FRHICommandList& InCmdList, const char* InName)
         : CmdList(InCmdList)
         , Name(InName)
     {
-        CGPUProfiler::Get().BeginGPUTrace(CmdList, Name);
+        FGPUProfiler::Get().BeginGPUTrace(CmdList, Name);
     }
 
-    FORCEINLINE ~SGPUScopedTrace()
+    FORCEINLINE ~FGPUScopedTrace()
     {
-        CGPUProfiler::Get().EndGPUTrace(CmdList, Name);
+        FGPUProfiler::Get().EndGPUTrace(CmdList, Name);
     }
 
 private:

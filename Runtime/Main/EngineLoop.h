@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Time/Timer.h"
 
-class CEngineLoop
+class FEngineLoop
 {
 public:
 
@@ -15,7 +15,7 @@ public:
     static bool Initialize();
 
      /** @brief: Ticks the engine */
-    static void Tick( FTimestamp Deltatime );
+    static void Tick(FTimestamp Deltatime);
 
      /** @brief: Releases the engine */
     static bool Release();

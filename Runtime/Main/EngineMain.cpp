@@ -15,9 +15,9 @@ int32 EngineMain()
     {
         ~SEngineMainGuard()
         {
-            if (!CEngineLoop::Release())
+            if (!FEngineLoop::Release())
             {
-                FPlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::Release Failed");
+                FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Release Failed");
             }
         }
     };
@@ -26,15 +26,15 @@ int32 EngineMain()
     SEngineMainGuard EngineMainGuard;
 
     // Initialization
-    if (!CEngineLoop::PreInitialize())
+    if (!FEngineLoop::PreInitialize())
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::PreInit Failed");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::PreInit Failed");
         return -1;
     }
 
-    if (!CEngineLoop::Initialize())
+    if (!FEngineLoop::Initialize())
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::Init Failed");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Init Failed");
         return -1;
     }
 
@@ -43,7 +43,7 @@ int32 EngineMain()
     while (FApplication::Get().IsRunning())
     {
         Timer.Tick();
-        CEngineLoop::Tick(Timer.GetDeltaTime());
+        FEngineLoop::Tick(Timer.GetDeltaTime());
     }
 
     return 0;

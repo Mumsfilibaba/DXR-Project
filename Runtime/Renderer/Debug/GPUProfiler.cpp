@@ -5,17 +5,16 @@
 
 #include "RHI/RHICoreInterface.h"
 
-CGPUProfiler CGPUProfiler::Instance;
+FGPUProfiler FGPUProfiler::Instance;
 
-CGPUProfiler::CGPUProfiler()
+FGPUProfiler::FGPUProfiler()
     : Timequeries(nullptr)
     , FrameTime()
     , Samples()
     , bEnabled(false)
-{
-}
+{ }
 
-bool CGPUProfiler::Init()
+bool FGPUProfiler::Init()
 {
     Instance.Timequeries = RHICreateTimestampQuery();
     if (!Instance.Timequeries)
@@ -26,22 +25,22 @@ bool CGPUProfiler::Init()
     return true;
 }
 
-void CGPUProfiler::Release()
+void FGPUProfiler::Release()
 {
     Instance.Timequeries.Reset();
 }
 
-void CGPUProfiler::Enable()
+void FGPUProfiler::Enable()
 {
     bEnabled = true;
 }
 
-void CGPUProfiler::Disable()
+void FGPUProfiler::Disable()
 {
     bEnabled = false;
 }
 
-void CGPUProfiler::Tick()
+void FGPUProfiler::Tick()
 {
     if (Timequeries)
     {
@@ -56,26 +55,26 @@ void CGPUProfiler::Tick()
     }
 }
 
-void CGPUProfiler::Reset()
+void FGPUProfiler::Reset()
 {
     FrameTime.Reset();
 
     {
-        TScopedLock Lock(Samples);
-        for (auto& Sample : Samples.Get())
+        TScopedLock Lock(SamplesLock);
+        for (auto& Sample : Samples)
         {
             Sample.second.Reset();
         }
     }
 }
 
-void CGPUProfiler::GetGPUSamples(GPUProfileSamplesTable& OutSamples)
+void FGPUProfiler::GetGPUSamples(GPUProfileSamplesTable& OutSamples)
 {
-    TScopedLock Lock(Samples);
-    OutSamples = Samples.Get();
+    TScopedLock Lock(SamplesLock);
+    OutSamples = Samples;
 }
 
-void CGPUProfiler::BeginGPUFrame(FRHICommandList& CmdList)
+void FGPUProfiler::BeginGPUFrame(FRHICommandList& CmdList)
 {
     if (Timequeries && bEnabled)
     {
@@ -83,7 +82,7 @@ void CGPUProfiler::BeginGPUFrame(FRHICommandList& CmdList)
     }
 }
 
-void CGPUProfiler::EndGPUFrame(FRHICommandList& CmdList)
+void FGPUProfiler::EndGPUFrame(FRHICommandList& CmdList)
 {
     if (Timequeries && bEnabled)
     {
@@ -91,7 +90,7 @@ void CGPUProfiler::EndGPUFrame(FRHICommandList& CmdList)
     }
 }
 
-void CGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const char* Name)
+void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const char* Name)
 {
     if (Timequeries && bEnabled)
     {
@@ -100,12 +99,12 @@ void CGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const char* Name)
         int32 TimeQueryIndex = -1;
 
         {
-            TScopedLock Lock(Samples);
+            TScopedLock Lock(SamplesLock);
 
-            auto Entry = Samples.Get().find(ScopeName);
-            if (Entry == Samples.Get().end())
+            auto Entry = Samples.find(ScopeName);
+            if (Entry == Samples.end())
             {
-                auto NewSample = Samples.Get().insert(std::make_pair(ScopeName, SGPUProfileSample()));
+                auto NewSample = Samples.insert(std::make_pair(ScopeName, FGPUProfileSample()));
                 NewSample.first->second.TimeQueryIndex = ++CurrentTimeQueryIndex;
                 TimeQueryIndex = NewSample.first->second.TimeQueryIndex;
             }
@@ -122,7 +121,7 @@ void CGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const char* Name)
     }
 }
 
-void CGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const char* Name)
+void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const char* Name)
 {
     if (Timequeries && bEnabled)
     {
@@ -130,10 +129,10 @@ void CGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const char* Name)
 
         int32 TimeQueryIndex = -1;
 
-        TScopedLock Lock(Samples);
+        TScopedLock Lock(SamplesLock);
 
-        auto Entry = Samples.Get().find(ScopeName);
-        if (Entry != Samples.Get().end())
+        auto Entry = Samples.find(ScopeName);
+        if (Entry != Samples.end())
         {
             TimeQueryIndex = Entry->second.TimeQueryIndex;
             CmdList.EndTimeStamp(Timequeries.Get(), TimeQueryIndex);

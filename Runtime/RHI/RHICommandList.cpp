@@ -1,6 +1,9 @@
 #include "RHICommandList.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Threading/Platform/PlatformThreadMisc.h"
+
+RHI_API FRHICommandListExecutor GRHICommandListExecutor;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandAllocator
@@ -101,6 +104,7 @@ FRHIExecutorThread::FRHIExecutorThread()
     , WaitCS()
     , WaitCondition()
     , bIsRunning(false)
+    , bIsExecuting(false)
 { }
 
 bool FRHIExecutorThread::Start()
@@ -135,14 +139,17 @@ void FRHIExecutorThread::StopExecution()
 
 void FRHIExecutorThread::Execute(const FRHIExecutorTask& ExecutionTask)
 {
-    // Set the work to execute
     {
+        // Set the work to execute
         TScopedLock TaskLock(CurrentTaskCS);
         CurrentTask = ExecutionTask;
+
+        // Then notify worker
+        WaitCondition.NotifyOne();
     }
 
-    // Then notify worker
-    WaitCondition.NotifyOne();
+    // Wait for the worker to start
+    while (!bIsExecuting) { }
 }
 
 void FRHIExecutorThread::Worker()
@@ -154,21 +161,21 @@ void FRHIExecutorThread::Worker()
 
         {
             TScopedLock TaskLock(CurrentTaskCS);
-            CurrentTask();
-        }
+            bIsExecuting = true;
 
-        LOG_INFO("FRHIExecutorThread");
+            CurrentTask();
+
+            bIsExecuting = false;
+        }
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandListExecutor
 
-FRHICommandListExecutor FRHICommandListExecutor::Instance;
-
 FRHICommandListExecutor& FRHICommandListExecutor::Get()
 {
-    return Instance;
+    return GRHICommandListExecutor;
 }
 
 FRHICommandListExecutor::FRHICommandListExecutor()
@@ -180,7 +187,7 @@ FRHICommandListExecutor::FRHICommandListExecutor()
 bool FRHICommandListExecutor::Initialize()
 {
 #if ENABLE_RHI_EXECUTOR_THREAD
-    if (!Instance.ExecutorThread.Start())
+    if (!GRHICommandListExecutor.ExecutorThread.Start())
     {
         return false;
     }
@@ -192,7 +199,7 @@ bool FRHICommandListExecutor::Initialize()
 void FRHICommandListExecutor::Release()
 {
 #if ENABLE_RHI_EXECUTOR_THREAD
-    Instance.ExecutorThread.StopExecution();
+    GRHICommandListExecutor.ExecutorThread.StopExecution();
 #endif
 }
 

@@ -591,7 +591,12 @@ D3D12BufferType* FD3D12CoreInterface::CreateBuffer(const InitializerType& Initia
         }
     }
 
-    D3D12_INFO("Created buffer (BufferSize=%u AlignedSize=%u WastedSpace=%u)", BufferSize, AlignedSize, WastedSpace);
+    // TODO: CVar
+    const bool bVerboseLogging = false;
+    if (bVerboseLogging)
+    {
+        D3D12_INFO("Created buffer (BufferSize=%u AlignedSize=%u WastedSpace=%u)", BufferSize, AlignedSize, WastedSpace);
+    }
 
     return NewBuffer.ReleaseOwnership();
 }

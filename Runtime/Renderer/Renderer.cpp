@@ -488,7 +488,7 @@ void FRenderer::Tick(const FScene& Scene)
     PreShadowsCmdList.BeginExternalCapture();
 #endif
 
-    CGPUProfiler::Get().BeginGPUFrame(PreShadowsCmdList);
+    FGPUProfiler::Get().BeginGPUFrame(PreShadowsCmdList);
 
     INSERT_DEBUG_CMDLIST_MARKER(PreShadowsCmdList, "--BEGIN FRAME--");
 
@@ -794,7 +794,7 @@ void FRenderer::Tick(const FScene& Scene)
 
     INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "--END FRAME--");
 
-    CGPUProfiler::Get().EndGPUFrame(MainCmdList);
+    FGPUProfiler::Get().EndGPUFrame(MainCmdList);
 
 #if 1
     MainCmdList.EndExternalCapture();

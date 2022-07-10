@@ -33,13 +33,18 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // LoadCoreModules
 
-bool CEngineLoop::LoadCoreModules()
+bool FEngineLoop::LoadCoreModules()
 {
     FModuleManager& ModuleManager = FModuleManager::Get();
 
-    IEngineModule* CoreModule            = ModuleManager.LoadEngineModule("Core");
+    IEngineModule* CoreModule = ModuleManager.LoadEngineModule("Core");
+    if (!CoreModule)
+    {
+        return false;
+    }
+
     IEngineModule* CoreApplicationModule = ModuleManager.LoadEngineModule("CoreApplication");
-    if (!CoreModule || !CoreApplicationModule)
+    if (!CoreApplicationModule)
     {
         return false;
     }
@@ -74,7 +79,7 @@ bool CEngineLoop::LoadCoreModules()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // PreInitialize
 
-bool CEngineLoop::PreInitialize()
+bool FEngineLoop::PreInitialize()
 {
     NErrorDevice::GConsoleWindow = FPlatformApplicationMisc::CreateConsoleWindow();
     if (!NErrorDevice::GConsoleWindow)
@@ -151,9 +156,9 @@ bool CEngineLoop::PreInitialize()
 
     NEngineLoopDelegates::PostInitRHIDelegate.Broadcast();
 
-    if (!CGPUProfiler::Init())
+    if (!FGPUProfiler::Init())
     {
-        LOG_ERROR("CGPUProfiler failed to be initialized");
+        LOG_ERROR("FGPUProfiler failed to be initialized");
     }
 
     if (!FTextureFactory::Init())
@@ -169,7 +174,7 @@ bool CEngineLoop::PreInitialize()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Initialize
 
-bool CEngineLoop::Initialize()
+bool FEngineLoop::Initialize()
 {
     NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
 
@@ -232,7 +237,7 @@ bool CEngineLoop::Initialize()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Tick
 
-void CEngineLoop::Tick(FTimestamp Deltatime)
+void FEngineLoop::Tick(FTimestamp Deltatime)
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -244,7 +249,7 @@ void CEngineLoop::Tick(FTimestamp Deltatime)
 
     FFrameProfiler::Get().Tick();
 
-    CGPUProfiler::Get().Tick();
+    FGPUProfiler::Get().Tick();
 
     GRenderer.Tick(*GEngine->Scene);
 }
@@ -252,13 +257,13 @@ void CEngineLoop::Tick(FTimestamp Deltatime)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Release
 
-bool CEngineLoop::Release()
+bool FEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
     FRHICommandListExecutor::Get().WaitForGPU();
 
-    CGPUProfiler::Release();
+    FGPUProfiler::Release();
 
     GRenderer.Release();
 

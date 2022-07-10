@@ -43,7 +43,7 @@ void CGPUProfilerWindow::DrawGPUData(float Width)
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
 
-        const SGPUProfileSample& GPUFrameTime = CGPUProfiler::Get().GetGPUFrameTime();
+        const FGPUProfileSample& GPUFrameTime = FGPUProfiler::Get().GetGPUFrameTime();
 
         float Avg = GPUFrameTime.GetAverage();
         float Min = GPUFrameTime.Min;
@@ -146,7 +146,7 @@ void CGPUProfilerWindow::DrawGPUData(float Width)
         ImGui::TableSetupColumn("Max");
         ImGui::TableHeadersRow();
 
-        CGPUProfiler::Get().GetGPUSamples(Samples);
+        FGPUProfiler::Get().GetGPUSamples(Samples);
         for (auto& Sample : Samples)
         {
             ImGui::TableNextRow();
@@ -200,21 +200,21 @@ void CGPUProfilerWindow::DrawWindow()
     {
         if (ImGui::Button("Start Profile"))
         {
-            CGPUProfiler::Get().Enable();
+            FGPUProfiler::Get().Enable();
         }
 
         ImGui::SameLine();
 
         if (ImGui::Button("Stop Profile"))
         {
-            CGPUProfiler::Get().Disable();
+            FGPUProfiler::Get().Disable();
         }
 
         ImGui::SameLine();
 
         if (ImGui::Button("Reset"))
         {
-            CGPUProfiler::Get().Reset();
+            FGPUProfiler::Get().Reset();
         }
 
         DrawGPUData(Width);

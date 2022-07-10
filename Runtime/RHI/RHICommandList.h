@@ -14,7 +14,7 @@ class FRHIUnorderedAccessView;
 class FRHIShader;
 
 #define ENABLE_INSERT_DEBUG_CMDLIST_MARKER (0)
-#define ENABLE_RHI_EXECUTOR_THREAD         (0)
+#define ENABLE_RHI_EXECUTOR_THREAD         (1)
 
 #if ENABLE_INSERT_DEBUG_CMDLIST_MARKER
     #define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString) CmdList.InsertMarker(MarkerString);
@@ -98,13 +98,12 @@ struct FRHICommandStatistics
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandList
 
-class FRHICommandList
+class RHI_API FRHICommandList : public FNonCopyable
 {
     friend class FRHICommandListExecutor;
 
 public:
 
-    /** @brief: Default constructor */
     FRHICommandList()
         : Allocator(nullptr)
         , FirstCommand(nullptr)
@@ -114,7 +113,6 @@ public:
         Allocator = dbg_new FRHICommandAllocator();
     }
 
-    /** @brief: Destructor */
     ~FRHICommandList()
     {
         Reset();
@@ -122,65 +120,34 @@ public:
         SafeDelete(Allocator);
     }
 
-    /**
-     * @brief: Begins the timestamp with the specified index in the TimestampQuery
-     *
-     * @param TimestampQuery: Timestamp-Query object to work on
-     * @param Index: Timestamp index within the query object to begin
-     */
     void BeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
     {
         InsertCommand<FRHICommandBeginTimeStamp>(TimestampQuery, Index);
     }
 
-    /**
-     * @brief: Ends the timestamp with the specified index in the TimestampQuery
-     *
-     * @param TimestampQuery: Timestamp-Query object to work on
-     * @param Index: Timestamp index within the query object to end
-     */
     void EndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
     {
         InsertCommand<FRHICommandEndTimeStamp>(TimestampQuery, Index);
     }
 
-    /**
-     * @brief: Clears a RenderTargetView with a specific color
-     *
-     * @param RenderTargetView: RenderTargetView to clear
-     * @param ClearColor: Color to set each pixel within the RenderTargetView to
-     */
     void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
     {
         Check(RenderTargetView.Texture != nullptr);
         InsertCommand<FRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
 
-    /**
-     * @brief: Clears a DepthStencilView with a specific value
-     *
-     * @param DepthStencilView: DepthStencilView to clear
-     * @param ClearValue: Value to set each pixel within the DepthStencilView to
-     */
     void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
     {
         Check(DepthStencilView.Texture != nullptr);
         InsertCommand<FRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
     }
 
-    /**
-     * @brief: Clears a UnorderedAccessView with a specific value
-     *
-     * @param UnorderedAccessView: UnorderedAccessView to clear
-     * @param ClearColor: Value to set each pixel within the UnorderedAccessView to
-     */
     void ClearUnorderedAccessView(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor)
     {
         Check(UnorderedAccessView != nullptr);
         InsertCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
 
-    /** @brief: Begin a RenderPass */
     void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer)
     {
         Check(bIsRenderPassActive == false);
@@ -189,7 +156,6 @@ public:
         bIsRenderPassActive = true;
     }
 
-    /** @brief: Ends a RenderPass */
     void EndRenderPass()
     {
         Check(bIsRenderPassActive == true);
@@ -198,51 +164,21 @@ public:
         bIsRenderPassActive = false;
     }
 
-    /**
-     * @brief: Set the current viewport settings
-     *
-     * @param Width: Width of the viewport
-     * @param Height: Height of the viewport
-     * @param MinDepth: Minimum-depth of the viewport
-     * @param MaxDepth: Maximum-depth of the viewport
-     * @param x: x-position of the viewport
-     * @param y: y-position of the viewport
-     */
     void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
     {
         InsertCommand<FRHICommandSetViewport>(Width, Height, MinDepth, MaxDepth, x, y);
     }
 
-    /**
-     * @brief: Set the current scissor settings
-     *
-     * @param Width: Width of the viewport
-     * @param Height: Height of the viewport
-     * @param x: x-position of the viewport
-     * @param y: y-position of the viewport
-     */
     void SetScissorRect(float Width, float Height, float x, float y)
     {
         InsertCommand<FRHICommandSetScissorRect>(Width, Height, x, y);
     }
 
-    /**
-     * @brief: Set the BlendFactor color
-     *
-     * @param Color: New blend-factor to use
-     */
     void SetBlendFactor(const TStaticArray<float, 4>& Color)
     {
         InsertCommand<FRHICommandSetBlendFactor>(Color);
     }
 
-    /**
-     * @brief: Set the VertexBuffers to be used
-     *
-     * @param VertexBuffers: Array of VertexBuffers to use
-     * @param VertexBufferCount: Number of VertexBuffers in the array
-     * @param BufferSlot: Slot to start bind the array to
-     */
     void SetVertexBuffers(FRHIVertexBuffer* const* InVertexBuffers, uint32 NumVertexBuffers, uint32 BufferSlot)
     {
         Check(Allocator != nullptr);
@@ -260,53 +196,26 @@ public:
         InsertCommand<FRHICommandSetVertexBuffers>(TempVertexBuffers, NumVertexBuffers, BufferSlot);
     }
 
-    /**
-     * @brief: Set the current IndexBuffer
-     *
-     * @param IndexBuffer: IndexBuffer to use
-     */
     void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer)
     {
         InsertCommand<FRHICommandSetIndexBuffer>(IndexBuffer);
     }
 
-    /**
-     * @brief: Set the primitive topology
-     *
-     * @param PrimitveTopologyType: New primitive topology to use
-     */
     void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
     {
         InsertCommand<FRHICommandSetPrimitiveTopology>(PrimitveTopologyType);
     }
 
-    /**
-     * @brief: Sets the current graphics PipelineState
-     *
-     * @param PipelineState: New PipelineState to use
-     */
     void SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)
     {
         InsertCommand<FRHICommandSetGraphicsPipelineState>(PipelineState);
     }
 
-    /**
-     * @brief: Sets the current compute PipelineState
-     *
-     * @param PipelineState: New PipelineState to use
-     */
     void SetComputePipelineState(FRHIComputePipelineState* PipelineState)
     {
         InsertCommand<FRHICommandSetComputePipelineState>(PipelineState);
     }
 
-    /**
-     * @brief: Set shader constants
-     *
-     * @param Shader: Shader to bind the constants to
-     * @param Shader32BitConstants: Array of 32-bit constants
-     * @param Num32bitConstants: Number o 32-bit constants (Each is 4 bytes)
-     */
     void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
     {
         Check(Allocator != nullptr);
@@ -319,27 +228,11 @@ public:
         InsertCommand<FRHICommandSet32BitShaderConstants>(Shader, Shader32BitConstantsMemory, Num32BitConstants);
     }
 
-    /**
-     * @brief: Sets a single ShaderResourceView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param ShaderResourceView: ShaderResourceView to bind
-     * @param ParameterIndex: ShaderResourceView-index to bind to
-     */
     void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
     {
         InsertCommand<FRHICommandSetShaderResourceView>(Shader, ShaderResourceView, ParameterIndex);
     }
 
-    /**
-     * @brief: Sets a multiple ShaderResourceViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
-     * which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param ShaderResourceViews: Array of ShaderResourceViews to bind
-     * @param NumShaderResourceViews: Number of ShaderResourceViews in the array
-     * @param ParameterIndex: ShaderResourceView-index to bind to
-     */
     void SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* ShaderResourceViews, uint32 NumShaderResourceViews, uint32 ParameterIndex)
     {
         Check(Allocator != nullptr);
@@ -357,27 +250,11 @@ public:
         InsertCommand<FRHICommandSetShaderResourceViews>(Shader, TempShaderResourceViews, NumShaderResourceViews, ParameterIndex);
     }
 
-    /**
-     * @brief: Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param UnorderedAccessView: UnorderedAccessView to bind
-     * @param ParameterIndex: UnorderedAccessView-index to bind to
-     */
     void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
     {
         InsertCommand<FRHICommandSetUnorderedAccessView>(Shader, UnorderedAccessView, ParameterIndex);
     }
 
-    /**
-     * @brief: Sets a multiple UnorderedAccessViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
-     * which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param UnorderedAccessViews: Array of UnorderedAccessViews to bind
-     * @param NumUnorderedAccessViews: Number of UnorderedAccessViews in the array
-     * @param ParameterIndex: UnorderedAccessView-index to bind to
-     */
     void SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
     {
         Check(Allocator != nullptr);
@@ -395,27 +272,11 @@ public:
         InsertCommand<FRHICommandSetUnorderedAccessViews>(Shader, TempUnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
     }
 
-    /**
-     * @brief: Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param ConstantBuffer: ConstantBuffer to bind
-     * @param ParameterIndex: ConstantBuffer-index to bind to
-     */
     void SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
     {
         InsertCommand<FRHICommandSetConstantBuffer>(Shader, ConstantBuffer, ParameterIndex);
     }
 
-    /**
-     * @brief: Sets a multiple ConstantBuffers to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
-     * which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param ConstantBuffers: Array of ConstantBuffers to bind
-     * @param NumConstantBuffers: Number of ConstantBuffers in the array
-     * @param ParameterIndex: ConstantBuffer-index to bind to
-     */
     void SetConstantBuffers(FRHIShader* Shader, FRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
     {
         Check(Allocator != nullptr);
@@ -433,27 +294,11 @@ public:
         InsertCommand<FRHICommandSetConstantBuffers>(Shader, TempConstantBuffers, NumConstantBuffers, ParameterIndex);
     }
 
-    /**
-     * @brief: Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind sampler to
-     * @param SamplerState: SamplerState to bind
-     * @param ParameterIndex: SamplerState-index to bind to
-     */
     void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
     {
         InsertCommand<FRHICommandSetSamplerState>(Shader, SamplerState, ParameterIndex);
     }
 
-    /**
-     * @brief: Sets a multiple SamplerStates to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
-     * which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param SamplerStates: Array of SamplerStates to bind
-     * @param NumConstantBuffers: Number of ConstantBuffers in the array
-     * @param ParameterIndex: ConstantBuffer-index to bind to
-     */
     void SetSamplerStates(FRHIShader* Shader, FRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
     {
         Check(Allocator != nullptr);
@@ -471,14 +316,6 @@ public:
         InsertCommand<FRHICommandSetSamplerStates>(Shader, TempSamplerStates, NumSamplerStates, ParameterIndex);
     }
 
-    /**
-     * @brief: Updates the contents of a Buffer
-     *
-     * @param Dst: Destination buffer to update
-     * @param OffsetInBytes: Offset in bytes inside the destination-buffer
-     * @param SizeInBytes: Number of bytes to copy over to the buffer
-     * @param SourceData: SourceData to copy to the GPU
-     */
     void UpdateBuffer(FRHIBuffer* Dst, uint32 DestinationOffsetInBytes, uint32 SizeInBytes, const void* SourceData)
     {
         Check(Allocator != nullptr);
@@ -489,15 +326,6 @@ public:
         InsertCommand<FRHICommandUpdateBuffer>(Dst, DestinationOffsetInBytes, SizeInBytes, TempSourceData);
     }
 
-    /**
-     * @brief: Updates the contents of a Texture2D
-     *
-     * @param Dst: Destination Texture2D to update
-     * @param Width: Width of the texture to update
-     * @param Height: Height of the texture to update
-     * @param MipLevel: MipLevel of the texture to update
-     * @param SourceData: SourceData to copy to the GPU
-     */
     void UpdateTexture2D(FRHITexture2D* Dst, uint16 Width, uint16 Height, uint16 MipLevel, const void* SourceData)
     {
         Check(Allocator != nullptr);
@@ -510,93 +338,42 @@ public:
         InsertCommand<FRHICommandUpdateTexture2D>(Dst, Width, Height, MipLevel, TempSourceData);
     }
 
-    /**
-     * @brief: Resolves a multi-sampled texture, must have the same sizes and compatible formats
-     *
-     * @param Dst: Destination texture, must have a single sample
-     * @param Src: Source texture to resolve
-     */
     void ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     {
         InsertCommand<FRHICommandResolveTexture>(Dst, Src);
     }
 
-    /**
-     * @brief: Copies the contents from one buffer to another
-     *
-     * @param Dst: Destination buffer to copy to
-     * @param Src: Source buffer to copy from
-     * @param CopyInfo: Information about the copy operation
-     */
     void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo)
     {
         InsertCommand<FRHICommandCopyBuffer>(Dst, Src, CopyInfo);
     }
 
-    /**
-     * @brief: Copies the entire contents of one texture to another, which require the size and formats to be the same
-     *
-     * @param Dst: Destination texture
-     * @param Src: Source texture
-     */
     void CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     {
         InsertCommand<FRHICommandCopyTexture>(Dst, Src);
     }
 
-    /**
-     * @brief: Copies contents of a texture region of one texture to another, which require the size and formats to be the same
-     *
-     * @param Dst: Destination texture
-     * @param Src: Source texture
-     * @param CopyTextureInfo: Information about the copy operation
-     */
     void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo)
     {
         InsertCommand<FRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
     }
 
-    /**
-     * @brief: Destroys a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command-list is completed
-     *
-     * @param Resource: Resource to destroy
-     */
     void DestroyResource(IRefCounted* Resource)
     {
         InsertCommand<FRHICommandDestroyResource>(Resource);
     }
 
-    /**
-     * @brief: Signal the driver that the contents can be discarded
-     *
-     * @param Texture: Texture to discard contents of
-     */
     void DiscardContents(FRHITexture* Texture)
     {
         InsertCommand<FRHICommandDiscardContents>(Texture);
     }
 
-    /**
-     * @brief: Builds the Bottom-Level Acceleration-Structure for ray tracing
-     *
-     * @param Geometry: Bottom-level acceleration-structure to build or update
-     * @param VertexBuffer: VertexBuffer to build Geometry of
-     * @param IndexBuffer: IndexBuffer to build Geometry of
-     * @param bUpdate: True if the build should be an update, false if it should build from the ground up
-     */
     void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)
     {
         Check((Geometry != nullptr) && (!bUpdate || (bUpdate && (Geometry->GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)));
         InsertCommand<FRHICommandBuildRayTracingGeometry>(Geometry, VertexBuffer, IndexBuffer, bUpdate);
     }
 
-    /**
-     * @brief: Builds the Top-Level Acceleration-Structure for ray tracing
-     *
-     * @param Scene: Top-level acceleration-structure to build or update
-     * @param Instances: Instances to build the scene of
-     * @param bUpdate: True if the build should be an update, false if it should build from the ground up
-     */
     void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
     {
         Check((Scene != nullptr) && (!bUpdate || (bUpdate && (Scene->GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)));
@@ -615,24 +392,12 @@ public:
         InsertCommand<FRHICommandSetRayTracingBindings>(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
 
-    /**
-     * @brief: Generate MipLevels for a texture. Works with Texture2D and TextureCubes.
-     *
-     * @param Texture: Texture to generate MipLevels for
-     */
     void GenerateMips(FRHITexture* Texture)
     {
         Check(Texture != nullptr);
         InsertCommand<FRHICommandGenerateMips>(Texture);
     }
 
-    /**
-     * @brief: Transition the ResourceState of a Texture resource
-     *
-     * @param Texture: Texture to transition ResourceState for
-     * @param BeforeState: State that the Texture had before the transition
-     * @param AfterState: State that the Texture have after the transition
-     */
     void TransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
     {
         if (BeforeState != AfterState)
@@ -645,13 +410,6 @@ public:
         }
     }
 
-    /**
-     * @brief: Transition the ResourceState of a Buffer resource
-     *
-     * @param Buffer: Buffer to transition ResourceState for
-     * @param BeforeState: State that the Buffer had before the transition
-     * @param AfterState: State that the Buffer have after the transition
-     */
     void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
     {
         Check(Buffer != nullptr);
@@ -666,34 +424,18 @@ public:
         }
     }
 
-    /**
-     * @brief: Add a UnorderedAccessBarrier for a Texture resource, which should be issued before reading of a resource in UnorderedAccessState
-     *
-     * @param Texture: Texture to issue barrier for
-     */
     void UnorderedAccessTextureBarrier(FRHITexture* Texture)
     {
         Check(Texture != nullptr);
         InsertCommand<FRHICommandUnorderedAccessTextureBarrier>(Texture);
     }
 
-    /**
-     * @brief: Add a UnorderedAccessBarrier for a Buffer resource, which should be issued before reading of a resource in UnorderedAccessState
-     *
-     * @param Buffer: Buffer to issue barrier for
-     */
     void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
     {
         Check(Buffer != nullptr);
         InsertCommand<FRHICommandUnorderedAccessBufferBarrier>(Buffer);
     }
 
-    /**
-     * @brief: Issue a draw-call
-     *
-     * @param VertexCount: Number of vertices
-     * @param StartVertexLocation: Offset of the vertices
-     */
     void Draw(uint32 VertexCount, uint32 StartVertexLocation)
     {
         if (VertexCount > 0)
@@ -703,13 +445,6 @@ public:
         }
     }
 
-    /**
-     * @brief: Issue a draw-call for drawing with an IndexBuffer
-     *
-     * @param IndexCount: Number of indices
-     * @param StartIndexLocation: Offset in the index-buffer
-     * @param BaseVertexLocation: Index of the vertex that should be considered as index zero
-     */
     void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
     {
         if (IndexCount > 0)
@@ -719,14 +454,6 @@ public:
         }
     }
 
-    /**
-     * @brief: Issue a draw-call for drawing instanced
-     *
-     * @param VertexCountPerInstance: Number of vertices per instance
-     * @param InstanceCount: Number of instances
-     * @param StartVertexLocation: Offset of the vertices
-     * @param StartInstanceLocation: Offset of the instances
-     */
     void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
     {
         if ((VertexCountPerInstance > 0) && (InstanceCount > 0))
@@ -736,15 +463,6 @@ public:
         }
     }
 
-    /**
-     * @brief: Issue a draw-call for drawing instanced with an IndexBuffer
-     *
-     * @param IndexCountPerInstance: Number of indices per instance
-     * @param InstanceCount: Number of instances
-     * @param StartIndexLocation: Offset of the index to start with
-     * @param BaseVertexLocation: Offset of the vertices
-     * @param StartInstanceLocation: Offset of the instances
-     */
     void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
     {
         if ((IndexCountPerInstance > 0) && (InstanceCount > 0))
@@ -754,13 +472,6 @@ public:
         }
     }
 
-    /**
-     * @brief: Issues a compute dispatch
-     *
-     * @param WorkGroupX: Number of work-groups in x-direction
-     * @param WorkGroupY: Number of work-groups in y-direction
-     * @param WorkGroupZ: Number of work-groups in z-direction
-     */
     void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
     {
         if ((ThreadGroupCountX > 0) || (ThreadGroupCountY > 0) || (ThreadGroupCountZ > 0))
@@ -770,15 +481,6 @@ public:
         }
     }
 
-    /**
-     * @brief: Issues a ray generation dispatch
-     *
-     * @param Scene: Scene to trace rays in
-     * @param PipelineState: PipelineState to use when tracing
-     * @param Width: Number of rays in x-direction
-     * @param Height: Number of rays in y-direction
-     * @param Depth: Number of rays in z-direction
-     */
     void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
     {
         if ((Width > 0) || (Height > 0) || (Depth > 0))
@@ -787,35 +489,26 @@ public:
         }
     }
 
-    /**
-     * @brief: Inserts a marker on the GPU timeline
-     *
-     * @param Message: Message for the marker
-     */
     void InsertMarker(const FString& Marker)
     {
         InsertCommand<FRHICommandInsertMarker>(Marker);
     }
     
-    /** @brief: Insert a debug-break into the command-list */
     void DebugBreak()
     {
         InsertCommand<FRHICommandDebugBreak>();
     }
 
-    /** @brief: Begins a PIX capture event, currently only available on D3D12 */
     void BeginExternalCapture()
     {
         InsertCommand<FRHICommandBeginExternalCapture>();
     }
 
-    /** @brief: Ends a PIX capture event, currently only available on D3D12 */
     void EndExternalCapture()
     {
         InsertCommand<FRHICommandEndExternalCapture>();
     }
 
-    /** @brief: Resets the CommandList */
     void Reset()
     {
         if (FirstCommand != nullptr)
@@ -842,7 +535,6 @@ public:
         bIsRenderPassActive = false;
     }
 
-    /** @brief: Swap a CommandList with another */
     void Swap(FRHICommandList& Other)
     {
         FRHICommandAllocator* TempAllocator           = Allocator;
@@ -864,19 +556,16 @@ public:
         Other.bIsRenderPassActive = bTempIsRenderPassActive;
     }
 
-    /** @return: Returns the number of draw-calls */
     FORCEINLINE uint32 GetNumDrawCalls() const
     {
         return Statistics.NumDrawCalls;
     }
 
-    /** @return: Returns the number of dispatch-calls */
     FORCEINLINE uint32 GetNumDispatchCalls() const
     {
         return Statistics.NumDispatchCalls;
     }
 
-    /** @return: Returns the number of Commands */
     FORCEINLINE uint32 GetNumCommands() const
     {
         return Statistics.NumCommands;
@@ -939,7 +628,7 @@ struct FRHIExecutorTask
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIExecutorThread
 
-class RHI_API FRHIExecutorThread
+class RHI_API FRHIExecutorThread : public FNonCopyable
 {
 public:
 
@@ -965,79 +654,45 @@ private:
     FCriticalSection   CurrentTaskCS;
 
     bool               bIsRunning;
+    bool               bIsExecuting;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandListExecutor
 
-class RHI_API FRHICommandListExecutor
+class RHI_API FRHICommandListExecutor : public FNonCopyable
 {
-private:
+public:
 
     FRHICommandListExecutor();
     ~FRHICommandListExecutor() = default;
 
 public:
 
-    /** @return: Returns true if the initialization was successful */
     static bool Initialize();
-
-    /** @brief: Releases resources */
     static void Release();
-
-    /** @return: Returns the instance of the FRHICommandListExecutor */
     static FRHICommandListExecutor& Get();
 
-    /** @brief: Wait for the GPU to finish all submitted operations */
     void WaitForGPU();
 
-    /**
-     * @brief: Execute a single RHICommandList
-     *
-     * @param CmdList: CommandList to execute
-     */
     void ExecuteCommandList(class FRHICommandList& CmdList);
-
-    /**
-     * @brief: Execute multiple RHICommandLists
-     *
-     * @param CmdLists: CommandLists to execute
-     * @param NumCmdLists: Number of CommandLists to execute
-     */
     void ExecuteCommandLists(class FRHICommandList* const* CmdLists, uint32 NumCmdLists);
 
-    /**
-     * @brief: Set the context that should be used
-     *
-     * @param InCmdContext: CommandContext to use when executing CommandLists
-     */
     FORCEINLINE void SetContext(IRHICommandContext* InCmdContext) { CommandContext = InCmdContext; }
 
-    /**
-     * @brief: Retrieve the CommandContext that is used when executing CommandLists
-     *
-     * @return: Returns a reference to the CommandContext that is currently being used
-     */
     FORCEINLINE IRHICommandContext& GetContext()
     {
         Check(CommandContext != nullptr);
         return *CommandContext;
     }
 
-    /** @return: Returns the number of draw-calls in the previously executed CommandList */
     FORCEINLINE const FRHICommandStatistics& GetStatistics() const { return Statistics; }
 
 private:
-
-    /** Internal function for executing the CommandList */
     void InternalExecuteCommandList(class FRHICommandList& CmdList);
-
-    TArray<FRHICommandAllocator*> CommandAllocators;
 
     FRHIExecutorThread    ExecutorThread;
     FRHICommandStatistics Statistics;
 
     IRHICommandContext*   CommandContext;
-
-    static FRHICommandListExecutor Instance;
 };
