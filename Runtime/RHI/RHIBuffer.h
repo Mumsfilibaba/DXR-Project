@@ -345,25 +345,19 @@ protected:
 
 public:
 
-    virtual class FRHIVertexBuffer* GetVertexBuffer() { return nullptr; }
-
-    virtual class FRHIIndexBuffer* GetIndexBuffer() { return nullptr; }
-
+    virtual class FRHIVertexBuffer*   GetVertexBuffer()   { return nullptr; }
+    virtual class FRHIIndexBuffer*    GetIndexBuffer()    { return nullptr; }
     virtual class FRHIConstantBuffer* GetConstantBuffer() { return nullptr; }
+    virtual class FRHIGenericBuffer*  GetGenericBuffer()  { return nullptr; }
 
-    virtual class FRHIGenericBuffer* GetGenericBuffer() { return nullptr; }
-
-    virtual void* GetRHIBaseBuffer() { return nullptr; }
-
+    virtual void* GetRHIBaseBuffer()         { return nullptr; }
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    virtual uint32 GetSize() const { return 1; }
-
+    virtual uint32 GetSize()   const { return 1; }
     virtual uint32 GetStride() const { return 1; }
 
-    virtual void SetName(const FString& InName) { }
-
-    virtual FString GetName() const { return ""; }
+    virtual void    SetName(const FString& InName) { }
+    virtual FString GetName() const                { return ""; }
 
 public:
     
@@ -393,8 +387,7 @@ public:
 
     virtual FRHIVertexBuffer* GetVertexBuffer() override final { return this; }
 
-    virtual uint32 GetSize() const override final { return GetStride() * NumVertices; }
-
+    virtual uint32 GetSize()   const override final { return GetStride() * NumVertices; }
     virtual uint32 GetStride() const override final { return Stride; }
 
 public:
@@ -426,8 +419,7 @@ public:
 
     virtual FRHIIndexBuffer* GetIndexBuffer() override final { return this; }
 
-    virtual uint32 GetSize() const override final { return GetStride() * NumIndicies; }
-
+    virtual uint32 GetSize()   const override final { return GetStride() * NumIndicies; }
     virtual uint32 GetStride() const override final { return GetStrideFromIndexFormat(Format); }
 
 public:
@@ -461,8 +453,7 @@ public:
 
     virtual FRHIGenericBuffer* GetGenericBuffer() override final { return this; }
 
-    virtual uint32 GetSize() const override final { return Size; }
-
+    virtual uint32 GetSize()   const override final { return Size; }
     virtual uint32 GetStride() const override final { return Stride; }
 
 private:
@@ -490,12 +481,9 @@ public:
 
     virtual FRHIConstantBuffer* GetConstantBuffer() override final { return this; }
 
-    virtual uint32 GetSize() const override final { return Size; }
-
+    virtual uint32 GetSize()   const override final { return Size; }
     virtual uint32 GetStride() const override final { return Stride; }
-
-public:
-
+    
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
 private:

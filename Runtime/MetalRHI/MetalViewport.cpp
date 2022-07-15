@@ -3,9 +3,9 @@
 #include "Core/Threading/Mac/MacRunLoop.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalWindowView
+// FMetalWindowView
 
-@implementation CMetalWindowView
+@implementation FMetalWindowView
 
 - (instancetype)initWithFrame:(NSRect)frameRect
 {
@@ -27,10 +27,10 @@
 @end
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalViewport
+// FMetalViewport
 
-CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer)
-    : CMetalObject(InDeviceContext)
+FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer)
+    : FMetalObject(InDeviceContext)
     , FRHIViewport(Initializer)
     , BackBuffer(nullptr)
     , MetalView(nullptr)
@@ -48,7 +48,7 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const FRHIV
         Frame.origin.x    = 0;
         Frame.origin.y    = 0;
         
-        MetalView = [[CMetalWindowView alloc] initWithFrame:Frame];
+        MetalView = [[FMetalWindowView alloc] initWithFrame:Frame];
         [MetalView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [MetalView setWantsLayer:YES];
         
@@ -78,17 +78,17 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const FRHIV
     
     // Create BackBuffer
     FRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
-    BackBuffer = dbg_new CMetalTexture2D(InDeviceContext, BackBufferInitializer);
+    BackBuffer = dbg_new FMetalTexture2D(InDeviceContext, BackBufferInitializer);
     
     BackBuffer->SetViewport(this);
 }
 
-CMetalViewport::~CMetalViewport()
+FMetalViewport::~FMetalViewport()
 {
     NSSafeRelease(MetalView);
 }
 
-bool CMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
+bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -107,7 +107,7 @@ bool CMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
     return true;
 }
 
-bool CMetalViewport::Present(bool bVerticalSync)
+bool FMetalViewport::Present(bool bVerticalSync)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -132,7 +132,7 @@ bool CMetalViewport::Present(bool bVerticalSync)
     return true;
 }
 
-id<CAMetalDrawable> CMetalViewport::GetDrawable()
+id<CAMetalDrawable> FMetalViewport::GetDrawable()
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -150,7 +150,7 @@ id<CAMetalDrawable> CMetalViewport::GetDrawable()
     return Drawable;
 }
 
-id<MTLTexture> CMetalViewport::GetDrawableTexture()
+id<MTLTexture> FMetalViewport::GetDrawableTexture()
 {
     SCOPED_AUTORELEASE_POOL();
     

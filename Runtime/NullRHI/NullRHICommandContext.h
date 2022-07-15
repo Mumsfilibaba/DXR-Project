@@ -12,20 +12,20 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHICommandContext
+// FNullRHICommandContext
 
-class CNullRHICommandContext final : public IRHICommandContext
+class FNullRHICommandContext final : public IRHICommandContext
 {
 private:
 
-    friend class CNullRHICoreInterface;
+    friend class FNullRHICoreInterface;
 
-    CNullRHICommandContext()  = default;
-    ~CNullRHICommandContext() = default;
+    FNullRHICommandContext()  = default;
+    ~FNullRHICommandContext() = default;
 
 public:
 
-    static CNullRHICommandContext* CreateNullRHIContext() { return dbg_new CNullRHICommandContext(); }
+    static FNullRHICommandContext* CreateNullRHIContext() { return dbg_new FNullRHICommandContext(); }
 
 public:
 

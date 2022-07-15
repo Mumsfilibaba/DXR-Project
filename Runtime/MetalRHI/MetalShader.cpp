@@ -1,10 +1,10 @@
 #include "MetalShader.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalShader
+// FMetalShader
 
-CMetalShader::CMetalShader(CMetalDeviceContext* InDevice, EShaderVisibility InVisibility, const TArray<uint8>& InCode)
-    : CMetalObject(InDevice)
+FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVisibility, const TArray<uint8>& InCode)
+    : FMetalObject(InDevice)
     , Library(nil)
     , FunctionName(nil)
     , Visbility(InVisibility)
@@ -14,7 +14,7 @@ CMetalShader::CMetalShader(CMetalDeviceContext* InDevice, EShaderVisibility InVi
     {
         NSError* Error = nil;
         
-        String SourceString(reinterpret_cast<const char*>(InCode.Data()), InCode.Size());
+        FString SourceString(reinterpret_cast<const char*>(InCode.Data()), InCode.Size());
         
         NSString* Source = SourceString.GetNSString();
         Check(Source != nil);
@@ -24,7 +24,7 @@ CMetalShader::CMetalShader(CMetalDeviceContext* InDevice, EShaderVisibility InVi
         
         // Retrieve the entrypoint
         const auto Length = NMath::Max(SourceString.Find('\n') - 3, 0);
-        NSString* EntryPoint = String(SourceString.CStr() + 3, Length).GetNSString();
+        NSString* EntryPoint = FString(SourceString.CStr() + 3, Length).GetNSString();
         FunctionName = [EntryPoint retain];
         
         Function = [Library newFunctionWithName:EntryPoint];
@@ -32,7 +32,7 @@ CMetalShader::CMetalShader(CMetalDeviceContext* InDevice, EShaderVisibility InVi
     }
 }
 
-CMetalShader::~CMetalShader()
+FMetalShader::~FMetalShader()
 {
     NSSafeRelease(Library);
     NSSafeRelease(FunctionName);

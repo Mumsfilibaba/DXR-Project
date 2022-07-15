@@ -9,42 +9,22 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIVertexBuffer
+template<typename T>
+struct TNullRHIBuffer;
 
-class CNullRHIVertexBuffer : public FRHIVertexBuffer
-{
-public:
-
-    CNullRHIVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
-        : FRHIVertexBuffer(Initializer)
-    { }
-};
+typedef TNullRHIBuffer<class FRHIVertexBuffer>            FNullRHIVertexBuffer;
+typedef TNullRHIBuffer<class FRHIIndexBuffer>             FNullRHIIndexBuffer;
+typedef TNullRHIBuffer<class FRHIGenericBuffer>           FNullRHIGenericBuffer;
+typedef TNullRHIBuffer<struct FNullRHIConstantBufferBase> FNullRHIConstantBuffer;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIIndexBuffer
+// FNullRHIConstantBufferBase
 
-class CNullRHIIndexBuffer : public FRHIIndexBuffer
+struct FNullRHIConstantBufferBase : public FRHIConstantBuffer
 {
-public:
-    
-    CNullRHIIndexBuffer(const FRHIIndexBufferInitializer& Initializer)
-        : FRHIIndexBuffer(Initializer)
-    { }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIConstantBuffer
-
-class CNullRHIConstantBuffer : public FRHIConstantBuffer
-{
-public:
-    
-    CNullRHIConstantBuffer(const FRHIConstantBufferInitializer& Initializer)
+    explicit FNullRHIConstantBufferBase(const FRHIConstantBufferInitializer& Initializer)
         : FRHIConstantBuffer(Initializer)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIConstantBuffer Interface
@@ -52,38 +32,21 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIGenericBuffer
-
-class CNullRHIGenericBuffer : public FRHIGenericBuffer
-{
-public:
-    
-    CNullRHIGenericBuffer(const FRHIGenericBufferInitializer& Initializer)
-        : FRHIGenericBuffer(Initializer)
-    { }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TNullRHIBuffer
 
 template<typename BaseBufferType>
-class TNullRHIBuffer : public BaseBufferType
+struct TNullRHIBuffer final : public BaseBufferType
 {
-public:
-
     template<typename... ArgTypes>
-    TNullRHIBuffer(ArgTypes&&... Args)
+    explicit TNullRHIBuffer(ArgTypes&&... Args)
         : BaseBufferType(Forward<ArgTypes>(Args)...)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return nullptr; }
-
-    virtual void* GetRHIBaseBuffer() override final { return this; }
+    virtual void* GetRHIBaseBuffer()   override final       { return this; }
 };
 
 #if defined(COMPILER_MSVC)

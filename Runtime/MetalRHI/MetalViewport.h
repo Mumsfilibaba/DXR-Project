@@ -14,20 +14,20 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalWindowView
+// FMetalWindowView
 
-@interface CMetalWindowView : CCocoaWindowView
+@interface FMetalWindowView : CCocoaWindowView
 @end
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalViewport
+// FMetalViewport
 
-class CMetalViewport : public CMetalObject, public FRHIViewport
+class FMetalViewport : public FMetalObject, public FRHIViewport
 {
 public:
     
-    CMetalViewport(CMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer);
-    ~CMetalViewport();
+    FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer);
+    ~FMetalViewport();
 
 public:
 
@@ -45,8 +45,7 @@ public:
 
     // @return: Returns the current drawable, will relase it during next call to present
     id<CAMetalDrawable> GetDrawable();
-    
-    id<MTLTexture> GetDrawableTexture();
+    id<MTLTexture>      GetDrawableTexture();
     
     CAMetalLayer* GetMetalLayer() const
     {
@@ -54,12 +53,12 @@ public:
         return MetalView ? (CAMetalLayer*)MetalView.layer : nil;
     }
 
-    CMetalWindowView* GetMetalView() const { return MetalView; }
+    FMetalWindowView* GetMetalView() const { return MetalView; }
     
 private:
-    TSharedRef<CMetalTexture2D> BackBuffer;
+    TSharedRef<FMetalTexture2D> BackBuffer;
     
-    CMetalWindowView*           MetalView;
+    FMetalWindowView*           MetalView;
     
     id<CAMetalDrawable>         Drawable;
 };

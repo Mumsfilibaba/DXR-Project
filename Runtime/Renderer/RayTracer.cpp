@@ -10,9 +10,9 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRayTracer
+// FRayTracer
 
-bool CRayTracer::Init(SFrameResources& Resources)
+bool FRayTracer::Init(FFrameResources& Resources)
 {
     TArray<uint8> Code;
     
@@ -97,7 +97,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
     return true;
 }
 
-void CRayTracer::Release()
+void FRayTracer::Release()
 {
     Pipeline.Reset();
     RayGenShader.Reset();
@@ -105,7 +105,7 @@ void CRayTracer::Release()
     RayClosestHitShader.Reset();
 }
 
-void CRayTracer::PreRender(FRHICommandList& CmdList, SFrameResources& Resources, const FScene& Scene)
+void FRayTracer::PreRender(FRHICommandList& CmdList, FFrameResources& Resources, const FScene& Scene)
 {
     UNREFERENCED_VARIABLE(Scene);
 
@@ -117,7 +117,7 @@ void CRayTracer::PreRender(FRHICommandList& CmdList, SFrameResources& Resources,
 
     for (int32 Index = 0; Index < Resources.GlobalMeshDrawCommands.Size(); ++Index)
     {
-        const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[Index];
+        const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[Index];
 
         FMaterial* Material = Command.Material;
         if (Command.Material->HasAlphaMask())

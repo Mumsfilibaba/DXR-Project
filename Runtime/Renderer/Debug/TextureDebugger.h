@@ -8,13 +8,13 @@
 
 #include <imgui.h>
 
-class CTextureDebugWindow : public FWindow
+class FTextureDebugWindow : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
 
-    static TSharedRef<CTextureDebugWindow> Make();
+    static TSharedRef<FTextureDebugWindow> Make();
 
      /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;
@@ -32,8 +32,8 @@ public:
 
 private:
 
-    CTextureDebugWindow() = default;
-    ~CTextureDebugWindow() = default;
+    FTextureDebugWindow() = default;
+    ~FTextureDebugWindow() = default;
 
      /** @brief: Debug images */
     TArray<FDrawableImage> DebugTextures;

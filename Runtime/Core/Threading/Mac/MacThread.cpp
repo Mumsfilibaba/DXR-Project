@@ -14,7 +14,7 @@ FMacThread::FMacThread(const TFunction<void()>& InFunction)
     , bIsRunning(false)
 { }
 
-FMacThread::FMacThread(const TFunction<void()>& InFunction, const String& InName)
+FMacThread::FMacThread(const TFunction<void()>& InFunction, const FString& InName)
     : FGenericThread(InFunction)
     , Name(InName)
     , Thread()
@@ -45,7 +45,7 @@ int32 FMacThread::WaitForCompletion(uint64 TimeoutInMs)
     return Result ? ThreadExitCode : int32(-1);
 }
 
-void FMacThread::SetName(const String& InName)
+void FMacThread::SetName(const FString& InName)
 {
     // The name can always be set from the current thread
     const bool bCurrentThreadIsMyself = GetPlatformHandle() == FMacThreadMisc::GetThreadHandle();

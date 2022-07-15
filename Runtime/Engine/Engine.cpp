@@ -54,7 +54,7 @@ bool FEngine::Initialize()
     const uint32 WindowHeight = 1080;
 
     MainWindow = Application.CreateWindow();
-    if (MainWindow && MainWindow->Initialize(CProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
+    if (MainWindow && MainWindow->Initialize(FProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
     {
         MainWindow->Show(false);
 
@@ -138,10 +138,10 @@ bool FEngine::Initialize()
     Scene = MakeShared<FScene>();
 
     /* Create windows */
-    TSharedRef<CFrameProfilerWindow> ProfilerWindow = CFrameProfilerWindow::Make();
+    TSharedRef<FFrameProfilerWindow> ProfilerWindow = FFrameProfilerWindow::Make();
     Application.AddWindow(ProfilerWindow);
 
-    TSharedRef<CGameConsoleWindow> ConsoleWindow = CGameConsoleWindow::Make();
+    TSharedRef<FGameConsoleWindow> ConsoleWindow = FGameConsoleWindow::Make();
     Application.AddWindow(ConsoleWindow);
 
     return true;

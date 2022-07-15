@@ -62,12 +62,12 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SFrameResources
+// FFrameResources
 
-struct RENDERER_API SFrameResources
+struct RENDERER_API FFrameResources
 {
-    SFrameResources()  = default;
-    ~SFrameResources() = default;
+    FFrameResources()  = default;
+    ~FFrameResources() = default;
 
     void Release();
 
@@ -83,17 +83,17 @@ struct RENDERER_API SFrameResources
 
     FRHITexture2D* BackBuffer = nullptr;
 
-    TSharedRef<FRHIConstantBuffer> CameraBuffer;
-    TSharedRef<FRHIConstantBuffer> TransformBuffer;
+    FRHIConstantBufferRef CameraBuffer;
+    FRHIConstantBufferRef TransformBuffer;
 
-    TSharedRef<FRHISamplerState> PointLightShadowSampler;
-    TSharedRef<FRHISamplerState> DirectionalLightShadowSampler;
-    TSharedRef<FRHISamplerState> IrradianceSampler;
+    FRHISamplerStateRef PointLightShadowSampler;
+    FRHISamplerStateRef DirectionalLightShadowSampler;
+    FRHISamplerStateRef IrradianceSampler;
 
     FRHITextureCubeRef Skybox;
 
     FRHITexture2DRef    IntegrationLUT;
-    TSharedRef<FRHISamplerState> IntegrationLUTSampler;
+    FRHISamplerStateRef IntegrationLUTSampler;
 
     FRHITexture2DRef SSAOBuffer;
     FRHITexture2DRef FinalTarget;
@@ -102,13 +102,13 @@ struct RENDERER_API SFrameResources
     // Two resources that can be ping-ponged between
     FRHITexture2DRef ReducedDepthBuffer[2];
 
-    TSharedRef<FRHISamplerState> GBufferSampler;
-    TSharedRef<FRHISamplerState> FXAASampler;
+    FRHISamplerStateRef GBufferSampler;
+    FRHISamplerStateRef FXAASampler;
 
     TSharedRef<FRHIVertexInputLayout> StdInputLayout;
 
     FRHITexture2DRef       RTOutput;
-    TSharedRef<FRHIRayTracingScene> RTScene;
+    FRHIRayTracingSceneRef RTScene;
 
     FRayTracingShaderResources GlobalResources;
     FRayTracingShaderResources RayGenLocalResources;
@@ -119,10 +119,10 @@ struct RENDERER_API SFrameResources
     THashTable<class FMesh*, uint32>       RTMeshToHitGroupIndex;
     TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
 
-    TArrayView<const SMeshDrawCommand> GlobalMeshDrawCommands;
+    TArrayView<const FMeshDrawCommand> GlobalMeshDrawCommands;
     TArray<uint32>                     DeferredVisibleCommands;
     TArray<uint32>                     ForwardVisibleCommands;
 
-    TSharedRef<FRHIViewport> MainWindowViewport;
+    FRHIViewportRef MainWindowViewport;
 };
 

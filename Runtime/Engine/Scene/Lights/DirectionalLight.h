@@ -8,15 +8,15 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FDirectionalLight
 
-class ENGINE_API FDirectionalLight : public CLight
+class ENGINE_API FDirectionalLight : public FLight
 {
-    CORE_OBJECT(FDirectionalLight, CLight);
+    CORE_OBJECT(FDirectionalLight, FLight);
 
 public:
     FDirectionalLight();
     ~FDirectionalLight();
 
-    void UpdateCascades(class CCamera& Camera);
+    void UpdateCascades(class FCamera& Camera);
 
     // Rotation in Radians
     void SetRotation(const FVector3& InRotation);

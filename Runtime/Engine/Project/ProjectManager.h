@@ -6,9 +6,9 @@
 #define MAX_ASSET_PATH_LENGTH   (512)
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CProjectManager
+// FProjectManager
 
-class ENGINE_API CProjectManager
+class ENGINE_API FProjectManager
 {
 public:
 

@@ -10,13 +10,13 @@
 #include "Canvas/IApplicationRenderer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CInterfaceRenderer
+// FInterfaceRenderer
 
-class CInterfaceRenderer final : public IApplicationRenderer
+class FInterfaceRenderer final : public IApplicationRenderer
 {
 public:
 
-    static CInterfaceRenderer* Make();
+    static FInterfaceRenderer* Make();
 
      /** @brief: Initialize the context */
     virtual bool InitContext(InterfaceContext Context) override final;
@@ -32,8 +32,8 @@ public:
 
 private:
 
-    CInterfaceRenderer() = default;
-    ~CInterfaceRenderer() = default;
+    FInterfaceRenderer() = default;
+    ~FInterfaceRenderer() = default;
 
     TArray<FDrawableImage*> RenderedImages;
 
@@ -43,5 +43,5 @@ private:
     TSharedRef<FRHIPixelShader>           PShader;
     TSharedRef<FRHIVertexBuffer>          VertexBuffer;
     TSharedRef<FRHIIndexBuffer>           IndexBuffer;
-    TSharedRef<FRHISamplerState>          PointSampler;
+    FRHISamplerStateRef          PointSampler;
 };

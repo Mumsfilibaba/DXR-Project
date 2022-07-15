@@ -77,22 +77,19 @@ private:
 
 struct FRHICommandStatistics
 {
-    FRHICommandStatistics()
+    FORCEINLINE FRHICommandStatistics()
         : NumDrawCalls(0)
         , NumDispatchCalls(0)
-        , NumCommands(0)
     { }
 
-    void Reset()
+    FORCEINLINE void Reset()
     {
         NumDrawCalls     = 0;
         NumDispatchCalls = 0;
-        NumCommands      = 0;
     }
 
     uint32 NumDrawCalls;
     uint32 NumDispatchCalls;
-    uint32 NumCommands;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -568,7 +565,7 @@ public:
 
     FORCEINLINE uint32 GetNumCommands() const
     {
-        return Statistics.NumCommands;
+        return NumCommands;
     }
 
 private:
@@ -590,7 +587,7 @@ private:
             LastCommand  = FirstCommand;
         }
 
-        Statistics.NumCommands++;
+        NumCommands++;
     }
 
 private:
@@ -599,6 +596,7 @@ private:
     FRHICommand*          LastCommand;
 
     FRHICommandStatistics Statistics;
+    uint32                NumCommands;
 
     bool                  bIsRenderPassActive = false;
 };

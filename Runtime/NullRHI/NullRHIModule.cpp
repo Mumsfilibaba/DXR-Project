@@ -2,17 +2,17 @@
 #include "NullRHICoreInterface.h"
 #include "NullRHIShaderCompiler.h"
 
-IMPLEMENT_ENGINE_MODULE(CNullRHIModule, NullRHI);
+IMPLEMENT_ENGINE_MODULE(FNullRHIModule, NullRHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIModule
+// FNullRHIModule
 
-FRHICoreInterface* CNullRHIModule::CreateInterface()
+FRHICoreInterface* FNullRHIModule::CreateInterface()
 {
-    return CNullRHICoreInterface::CreateNullRHICoreInterface();
+    return FNullRHICoreInterface::CreateNullRHICoreInterface();
 }
 
-IRHIShaderCompiler* CNullRHIModule::CreateCompiler()
+IRHIShaderCompiler* FNullRHIModule::CreateCompiler()
 {
     return dbg_new CNullRHIShaderCompiler();
 }

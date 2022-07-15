@@ -7,41 +7,45 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalBuffer
+// FMetalBuffer
 
-class CMetalBuffer : public CMetalObject
+class FMetalBuffer : public FMetalObject
 {
 public:
     
-    CMetalBuffer(CMetalDeviceContext* DeviceContext)
-        : CMetalObject(DeviceContext)
+    FMetalBuffer(FMetalDeviceContext* DeviceContext)
+        : FMetalObject(DeviceContext)
         , Buffer(nil)
     { }
     
-    ~CMetalBuffer()
+    ~FMetalBuffer()
     {
         NSSafeRelease(Buffer);
     }
     
-public:
-    
-    void SetMTLBuffer(id<MTLBuffer> InBuffer) { Buffer = [InBuffer retain]; }
-    
-    id<MTLBuffer> GetMTLBuffer() const { return Buffer; }
+    FORCEINLINE id<MTLBuffer> GetMTLBuffer() const 
+    { 
+        return Buffer; 
+    }
+
+    FORCEINLINE void SetMTLBuffer(id<MTLBuffer> InBuffer) 
+    { 
+        Buffer = [InBuffer retain]; 
+    } 
     
 private:
     id<MTLBuffer> Buffer;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalVertexBuffer
+// FMetalVertexBuffer
 
-class CMetalVertexBuffer : public CMetalBuffer, public FRHIVertexBuffer
+class FMetalVertexBuffer : public FMetalBuffer, public FRHIVertexBuffer
 {
 public:
 
-    CMetalVertexBuffer(CMetalDeviceContext* DeviceContext, const FRHIVertexBufferInitializer& Initializer)
-        : CMetalBuffer(DeviceContext)
+    FMetalVertexBuffer(FMetalDeviceContext* DeviceContext, const FRHIVertexBufferInitializer& Initializer)
+        : FMetalBuffer(DeviceContext)
         , FRHIVertexBuffer(Initializer)
     { }
     
@@ -51,10 +55,9 @@ public:
     // FRHIBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
-
-    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<CMetalBuffer*>(this)); }
+    virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
     
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         @autoreleasepool
         {
@@ -68,14 +71,14 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalIndexBuffer
+// FMetalIndexBuffer
 
-class CMetalIndexBuffer : public CMetalBuffer, public FRHIIndexBuffer
+class FMetalIndexBuffer : public FMetalBuffer, public FRHIIndexBuffer
 {
 public:
     
-    CMetalIndexBuffer(CMetalDeviceContext* DeviceContext, const FRHIIndexBufferInitializer& Initializer)
-        : CMetalBuffer(DeviceContext)
+    FMetalIndexBuffer(FMetalDeviceContext* DeviceContext, const FRHIIndexBufferInitializer& Initializer)
+        : FMetalBuffer(DeviceContext)
         , FRHIIndexBuffer(Initializer)
     { }
     
@@ -85,10 +88,9 @@ public:
     // FRHIBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
-
-    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<CMetalBuffer*>(this)); }
+    virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
     
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         @autoreleasepool
         {
@@ -102,14 +104,14 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalConstantBuffer
+// FMetalConstantBuffer
 
-class CMetalConstantBuffer : public CMetalBuffer, public FRHIConstantBuffer
+class FMetalConstantBuffer : public FMetalBuffer, public FRHIConstantBuffer
 {
 public:
     
-    CMetalConstantBuffer(CMetalDeviceContext* DeviceContext, const FRHIConstantBufferInitializer& Initializer)
-        : CMetalBuffer(DeviceContext)
+    FMetalConstantBuffer(FMetalDeviceContext* DeviceContext, const FRHIConstantBufferInitializer& Initializer)
+        : FMetalBuffer(DeviceContext)
         , FRHIConstantBuffer(Initializer)
     { }
 
@@ -117,14 +119,13 @@ public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIConstantBuffer Interface
+
+    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
+    virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
     
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
-
-    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<CMetalBuffer*>(this)); }
-    
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         @autoreleasepool
         {
@@ -138,14 +139,14 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalGenericBuffer
+// FMetalGenericBuffer
 
-class CMetalGenericBuffer : public CMetalBuffer, public FRHIGenericBuffer
+class FMetalGenericBuffer : public FMetalBuffer, public FRHIGenericBuffer
 {
 public:
     
-    CMetalGenericBuffer(CMetalDeviceContext* DeviceContext, const FRHIGenericBufferInitializer& Initializer)
-        : CMetalBuffer(DeviceContext)
+    FMetalGenericBuffer(FMetalDeviceContext* DeviceContext, const FRHIGenericBufferInitializer& Initializer)
+        : FMetalBuffer(DeviceContext)
         , FRHIGenericBuffer(Initializer)
     { }
     
@@ -155,10 +156,9 @@ public:
     // FRHIBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
-
-    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<CMetalBuffer*>(this)); }
+    virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
     
-    virtual void SetName(const String& InName) override final
+    virtual void SetName(const FString& InName) override final
     {
         @autoreleasepool
         {
@@ -174,9 +174,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // GetMetalBuffer
 
-inline CMetalBuffer* GetMetalBuffer(FRHIBuffer* Buffer)
+inline FMetalBuffer* GetMetalBuffer(FRHIBuffer* Buffer)
 {
-    return Buffer ? reinterpret_cast<CMetalBuffer*>(Buffer->GetRHIBaseBuffer()) : nullptr;
+    return Buffer ? reinterpret_cast<FMetalBuffer*>(Buffer->GetRHIBaseBuffer()) : nullptr;
 }
 
 #pragma clang diagnostic pop

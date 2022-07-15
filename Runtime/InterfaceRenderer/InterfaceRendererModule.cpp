@@ -8,5 +8,5 @@ IMPLEMENT_ENGINE_MODULE(FApplicationRendererModule, InterfaceRenderer);
 
 IApplicationRenderer* FApplicationRendererModule::CreateRenderer()
 {
-    return CInterfaceRenderer::Make();;
+    return FInterfaceRenderer::Make();;
 }

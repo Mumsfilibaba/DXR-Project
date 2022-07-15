@@ -116,7 +116,6 @@ public:
 public:
     
     static bool Initialize(const char* AssetFolderPath);
-    
     static void Release();
     
     static FRHIShaderCompiler& Get();
@@ -124,7 +123,6 @@ public:
 public:
 
     bool CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-    
     bool CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
 private:
@@ -140,7 +138,7 @@ private:
     void*                 DXCLib;
     DxcCreateInstanceProc DxcCreateInstanceFunc;
 
-    FString                AssetPath;
+    FString               AssetPath;
 
     static TOptional<FRHIShaderCompiler> Instance;
 };

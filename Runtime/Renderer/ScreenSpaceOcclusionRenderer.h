@@ -6,23 +6,23 @@
 #include "Engine/Scene/Scene.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CScreenSpaceOcclusionRenderer
+// FScreenSpaceOcclusionRenderer
 
-class RENDERER_API CScreenSpaceOcclusionRenderer
+class RENDERER_API FScreenSpaceOcclusionRenderer
 {
 public:
-    CScreenSpaceOcclusionRenderer() = default;
-    ~CScreenSpaceOcclusionRenderer() = default;
+    FScreenSpaceOcclusionRenderer() = default;
+    ~FScreenSpaceOcclusionRenderer() = default;
 
-    bool Init(SFrameResources& FrameResources);
+    bool Init(FFrameResources& FrameResources);
     void Release();
 
-    void Render(FRHICommandList& CmdList, SFrameResources& FrameResources);
+    void Render(FRHICommandList& CmdList, FFrameResources& FrameResources);
 
-    bool ResizeResources(SFrameResources& FrameResources);
+    bool ResizeResources(FFrameResources& FrameResources);
 
 private:
-    bool CreateRenderTarget(SFrameResources& FrameResources);
+    bool CreateRenderTarget(FFrameResources& FrameResources);
 
     FRHIComputePipelineStateRef PipelineState;
     FRHIComputeShaderRef        SSAOShader;

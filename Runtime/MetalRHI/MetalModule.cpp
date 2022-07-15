@@ -2,17 +2,17 @@
 #include "MetalCoreInterface.h"
 #include "MetalShaderCompiler.h"
 
-IMPLEMENT_ENGINE_MODULE(CMetalModule, MetalRHI);
+IMPLEMENT_ENGINE_MODULE(FMetalModule, MetalRHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalModule
+// FMetalModule
 
-FRHICoreInterface* CMetalModule::CreateInterface()
+FRHICoreInterface* FMetalModule::CreateInterface()
 {
-    return CMetalCoreInterface::CreateMetalCoreInterface();
+    return FMetalCoreInterface::CreateMetalCoreInterface();
 }
 
-IRHIShaderCompiler* CMetalModule::CreateCompiler()
+IRHIShaderCompiler* FMetalModule::CreateCompiler()
 {
-    return dbg_new CMetalShaderCompiler();
+    return dbg_new FMetalShaderCompiler();
 }

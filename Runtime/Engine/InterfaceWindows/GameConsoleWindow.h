@@ -14,17 +14,17 @@
 #include <imgui.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CConsoleInputHandler
+// FConsoleInputHandler
 
-class CConsoleInputHandler final : public FInputHandler
+class FConsoleInputHandler final : public FInputHandler
 {
 public:
 
     DECLARE_DELEGATE(CHandleKeyEventDelegate, const FKeyEvent&);
     CHandleKeyEventDelegate HandleKeyEventDelegate;
 
-    CConsoleInputHandler() = default;
-    ~CConsoleInputHandler() = default;
+    FConsoleInputHandler() = default;
+    ~FConsoleInputHandler() = default;
 
     virtual bool HandleKeyEvent(const FKeyEvent& KeyEvent) override final
     {
@@ -36,15 +36,15 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGameConsoleWindow
+// FGameConsoleWindow
 
-class CGameConsoleWindow final : public FWindow
+class FGameConsoleWindow final : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
 
-    static TSharedRef<CGameConsoleWindow> Make();
+    static TSharedRef<FGameConsoleWindow> Make();
 
     virtual void Tick() override final;
 
@@ -52,8 +52,8 @@ public:
 
 private:
 
-    CGameConsoleWindow();
-    ~CGameConsoleWindow() = default;
+    FGameConsoleWindow();
+    ~FGameConsoleWindow() = default;
 
     /** Callback from the input */
     int32 TextCallback(struct ImGuiInputTextCallbackData* Data);
@@ -61,7 +61,7 @@ private:
     /** Called when a key is pressed */
     void HandleKeyPressedEvent(const FKeyEvent& Event);
 
-    TSharedPtr<CConsoleInputHandler> InputHandler;
+    TSharedPtr<FConsoleInputHandler> InputHandler;
 
     // Text to display in the input box when browsing through the history
     FString PopupSelectedText;
@@ -75,8 +75,8 @@ private:
 
     TStaticArray<char, 256> TextBuffer;
 
-    bool bUpdateCursorPosition = false;
-    bool bIsActive = false;
+    bool bUpdateCursorPosition      = false;
+    bool bIsActive                  = false;
     bool bCandidateSelectionChanged = false;
-    bool bScrollDown = false;
+    bool bScrollDown                = false;
 };

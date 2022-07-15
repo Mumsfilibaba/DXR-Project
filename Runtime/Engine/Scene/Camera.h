@@ -7,11 +7,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Camera
 
-class ENGINE_API CCamera
+class ENGINE_API FCamera
 {
 public:
-    CCamera();
-    ~CCamera() = default;
+    FCamera();
+    ~FCamera() = default;
 
     void Move(float x, float y, float z);
 

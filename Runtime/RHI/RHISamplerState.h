@@ -207,4 +207,9 @@ public:
 
     /** @return: Returns the Bindless descriptor-handle if the RHI-supports descriptor-handles */
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+
+    const FRHISamplerStateInitializer& GetInitializer() const { return Initializer; } 
+    
+private:
+    FRHISamplerStateInitializer Initializer;
 };

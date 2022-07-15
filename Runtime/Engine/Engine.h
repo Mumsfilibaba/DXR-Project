@@ -65,7 +65,7 @@ public:
     FGenericWindowRef MainWindow;
 
     /** The main viewport */
-    TSharedRef<FRHIViewport> MainViewport;
+    FRHIViewportRef MainViewport;
 
     /** User */
     TSharedPtr<FUser> User;
@@ -80,7 +80,7 @@ public:
     FRHITexture2DRef BaseNormal;
 
     /** Base sampler used by all materials */
-    TSharedRef<FRHISamplerState> BaseMaterialSampler;
+    FRHISamplerStateRef BaseMaterialSampler;
 
     /** Base material */
     TSharedPtr<FMaterial> BaseMaterial;

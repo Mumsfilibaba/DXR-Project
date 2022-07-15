@@ -12,47 +12,47 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIInputLayoutState
+// FNullRHIInputLayoutState
 
-class CNullRHIInputLayoutState : public FRHIVertexInputLayout
+class FNullRHIInputLayoutState : public FRHIVertexInputLayout
 {
 public:
 
-    CNullRHIInputLayoutState()  = default;
-    ~CNullRHIInputLayoutState() = default;
+    FNullRHIInputLayoutState()  = default;
+    ~FNullRHIInputLayoutState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIDepthStencilState
+// FNullRHIDepthStencilState
 
-class CNullRHIDepthStencilState : public FRHIDepthStencilState
+class FNullRHIDepthStencilState : public FRHIDepthStencilState
 {
 public:
 
-    CNullRHIDepthStencilState()  = default;
-    ~CNullRHIDepthStencilState() = default;
+    FNullRHIDepthStencilState()  = default;
+    ~FNullRHIDepthStencilState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIRasterizerState
+// FNullRHIRasterizerState
 
-class CNullRHIRasterizerState : public FRHIRasterizerState
+class FNullRHIRasterizerState : public FRHIRasterizerState
 {
 public:
 
-    CNullRHIRasterizerState()  = default;
-    ~CNullRHIRasterizerState() = default;
+    FNullRHIRasterizerState()  = default;
+    ~FNullRHIRasterizerState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIBlendState
+// FNullRHIBlendState
 
-class CNullRHIBlendState : public FRHIBlendState
+class FNullRHIBlendState : public FRHIBlendState
 {
 public:
 
-    CNullRHIBlendState()  = default;
-    ~CNullRHIBlendState() = default;
+    FNullRHIBlendState()  = default;
+    ~FNullRHIBlendState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -65,54 +65,45 @@ public:
     CNullRHIGraphicsPipelineState()  = default;
     ~CNullRHIGraphicsPipelineState() = default;
 
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIPipelineState Interface
 
-    virtual void SetName(const FString& InName) override final { }
-
-    virtual FString GetName() const override final { return ""; }
+    virtual void    SetName(const FString& InName) override final { }
+    virtual FString GetName() const override final                { return ""; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIComputePipelineState
+// FNullRHIComputePipelineState
 
-class CNullRHIComputePipelineState : public FRHIComputePipelineState
+class FNullRHIComputePipelineState : public FRHIComputePipelineState
 {
 public:
 
-    CNullRHIComputePipelineState()  = default;
-    ~CNullRHIComputePipelineState() = default;
-
-public:
+    FNullRHIComputePipelineState()  = default;
+    ~FNullRHIComputePipelineState() = default;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIPipelineState Interface
 
-    virtual void SetName(const FString& InName) override final { }
-
-    virtual FString GetName() const override final { return ""; }
+    virtual void    SetName(const FString& InName) override final { }
+    virtual FString GetName() const override final                { return ""; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIRayTracingPipelineState
+// FNullRHIRayTracingPipelineState
 
-class CNullRHIRayTracingPipelineState : public FRHIRayTracingPipelineState
+class FNullRHIRayTracingPipelineState : public FRHIRayTracingPipelineState
 {
 public:
 
-    CNullRHIRayTracingPipelineState()  = default;
-    ~CNullRHIRayTracingPipelineState() = default;
-
-public:
+    FNullRHIRayTracingPipelineState()  = default;
+    ~FNullRHIRayTracingPipelineState() = default;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIPipelineState Interface
 
-    virtual void SetName(const FString& InName) override final { }
-
-    virtual FString GetName() const override final { return ""; }
+    virtual void    SetName(const FString& InName) override final { }
+    virtual FString GetName() const override final                { return ""; }
 };
 
 #if defined(COMPILER_MSVC)

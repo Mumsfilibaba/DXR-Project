@@ -13,14 +13,14 @@ public:
     FLightProbeRenderer() = default;
     ~FLightProbeRenderer() = default;
 
-    bool Init(SLightSetup& LightSetup, SFrameResources& FrameResources);
+    bool Init(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
     void Release();
 
-    void RenderSkyLightProbe(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& Resources);
+    void RenderSkyLightProbe(FRHICommandList& CmdList, const FLightSetup& LightSetup, const FFrameResources& Resources);
 
 private:
-    bool CreateSkyLightResources(SLightSetup& LightSetup);
+    bool CreateSkyLightResources(FLightSetup& LightSetup);
 
     FRHIComputePipelineStateRef IrradianceGenPSO;
     FRHIComputeShaderRef        IrradianceGenShader;

@@ -5,13 +5,13 @@
 
 #include <imgui.h>
 
-class CGPUProfilerWindow : public FWindow
+class FGPUProfilerWindow : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
 
-    static TSharedRef<CGPUProfilerWindow> Make();
+    static TSharedRef<FGPUProfilerWindow> Make();
 
      /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;
@@ -21,8 +21,8 @@ public:
 
 private:
 
-    CGPUProfilerWindow() = default;
-    ~CGPUProfilerWindow() = default;
+    FGPUProfilerWindow()  = default;
+    ~FGPUProfilerWindow() = default;
 
      /** @brief: Draw the profiler window */
     void DrawWindow();

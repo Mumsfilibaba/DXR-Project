@@ -2,34 +2,21 @@
 #include "Core/Core.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Standard alignment of memory-allocations
+// FMemory
 
-#define STANDARD_ALIGNMENT (__STDCPP_DEFAULT_NEW_ALIGNMENT__)
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Conversion from mega-bytes to bytes
-
-namespace NMemoryUtils
+struct CORE_API FMemory
 {
     template<typename T>
-    CONSTEXPR T BytesToMegaBytes(T Bytes)
+    static CONSTEXPR T BytesToMegaBytes(T Bytes)
     {
         return Bytes / T(1024 * 1024);
     }
 
     template<typename T>
-    CONSTEXPR T MegaBytesToBytes(T MegaBytes)
+    static CONSTEXPR T MegaBytesToBytes(T MegaBytes)
     {
         return MegaBytes * T(1024 * 1024);
     }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Class handling memory
-
-class CORE_API FMemory
-{
-public:
 
     /**
      * @brief: Allocate memory
@@ -38,6 +25,14 @@ public:
      * @return: Returns the newly allocated memory
      */
     static void* Malloc(uint64 Size) noexcept;
+
+    /**
+     * @brief: Allocate memory and zero it
+     *
+     * @param Size: The number of bytes to allocate
+     * @return: Returns the newly allocated memory
+     */
+    static void* MallocZeroed(uint64 Size) noexcept;
 
     /**
      * @brief: Reallocate memory
@@ -107,8 +102,8 @@ public:
     /**
      * @brief: Swaps the contents of two memory ranges
      *
-     * @param LHS: Memory range 1
-     * @param RHS: Memory range 2
+     * @param LHS: First of the memory ranges to swap
+     * @param RHS: Second of the memory ranges to swap
      * @param Size: Size of the memory ranges
      */
     static void Memswap(void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size) noexcept;
@@ -237,7 +232,7 @@ public:
      * @param Src: Src memory range
      */
     template<typename T>
-    static FORCEINLINE T* Memexchange(void* restrict_ptr Dst, void* restrict_ptr Src) noexcept
+    static FORCEINLINE T* Memexchange(T* restrict_ptr Dst, T* restrict_ptr Src) noexcept
     {
         return Memexchange(reinterpret_cast<void*>(Dst), reinterpret_cast<void*>(Src), sizeof(T));
     }

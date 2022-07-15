@@ -8,9 +8,9 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SLightSetup
+// FLightSetup
 
-bool SLightSetup::Init()
+bool FLightSetup::Init()
 {
     FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(DirectionalLightData));
 
@@ -84,7 +84,7 @@ bool SLightSetup::Init()
     return true;
 }
 
-void SLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
+void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
 {
     PointLightsPosRad.Clear();
     PointLightsData.Clear();
@@ -96,10 +96,10 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
 
     TRACE_SCOPE("Update LightBuffers");
 
-    CCamera* Camera = Scene.GetCamera();
+    FCamera* Camera = Scene.GetCamera();
     Check(Camera != nullptr);
 
-    for (CLight* Light : Scene.GetLights())
+    for (FLight* Light : Scene.GetLights())
     {
         float Intensity = Light->GetIntensity();
         FVector3 Color = Light->GetColor();
@@ -118,7 +118,7 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
             FVector4 PosRad   = FVector4(Position, Radius);
             if (CurrentLight->IsShadowCaster())
             {
-                SShadowCastingPointLightData Data;
+                FShadowCastingPointLightData Data;
                 Data.Color         = Color;
                 Data.FarPlane      = CurrentLight->GetShadowFarPlane();
                 Data.MaxShadowBias = CurrentLight->GetMaxShadowBias();
@@ -127,7 +127,7 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
                 ShadowCastingPointLightsData.Emplace(Data);
                 ShadowCastingPointLightsPosRad.Emplace(PosRad);
 
-                SPointLightShadowMapGenerationData ShadowMapData;
+                FPointLightShadowMapGenerationData ShadowMapData;
                 ShadowMapData.FarPlane = CurrentLight->GetShadowFarPlane();
                 ShadowMapData.Position = CurrentLight->GetPosition();
 
@@ -142,7 +142,7 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
             }
             else
             {
-                SPointLightData Data;
+                FPointLightData Data;
                 Data.Color = Color;
 
                 PointLightsData.Emplace(Data);
@@ -259,7 +259,7 @@ void SLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Update Lights");
 }
 
-void SLightSetup::Release()
+void FLightSetup::Release()
 {
     DirectionalShadowMask.Reset();
 

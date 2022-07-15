@@ -11,13 +11,13 @@ class FMacThread final : public FGenericThread
 private:
 
     FMacThread(const TFunction<void()>& InFunction);
-    FMacThread(const TFunction<void()>& InFunction, const String& InName);
+    FMacThread(const TFunction<void()>& InFunction, const FString& InName);
     ~FMacThread() = default;
 
 public:
 
 	static FMacThread* CreateMacThread(const TFunction<void()>& InFunction) { return new FMacThread(InFunction); }
-	static FMacThread* CreateMacThread(const TFunction<void()>& InFunction, const String& InName) { return new FMacThread(InFunction, InName); }
+	static FMacThread* CreateMacThread(const TFunction<void()>& InFunction, const FString& InName) { return new FMacThread(InFunction, InName); }
 	
 public:
 	
@@ -28,17 +28,17 @@ public:
 
     virtual bool Start() override final;
 
-    virtual void SetName(const String& InName) override final;
+    virtual void SetName(const FString& InName) override final;
 
     virtual void* GetPlatformHandle() override final;
 
-    virtual String GetName() const override final { return Name; }
+    virtual FString GetName() const override final { return Name; }
 
 private:
 
     static void* ThreadRoutine(void* ThreadParameter);
 
-    String    Name;
+    FString    Name;
 
     pthread_t Thread;
 	

@@ -2,9 +2,9 @@
 #include "LightSetup.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SFrameResources
+// FFrameResources
 
-void SFrameResources::Release()
+void FFrameResources::Release()
 {
     BackBuffer = nullptr;
 

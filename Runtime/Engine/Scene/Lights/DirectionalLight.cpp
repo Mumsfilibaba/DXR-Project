@@ -15,7 +15,7 @@ TAutoConsoleVariable<float> GSunSize("Scene.SunSize", 0.5f);
 // DirectionalLight
 
 FDirectionalLight::FDirectionalLight()
-    : CLight()
+    : FLight()
     , Direction(0.0f, -1.0f, 0.0f)
     , Rotation(0.0f, 0.0f, 0.0f)
     , LookAt(0.0f, 0.0f, 0.0f)
@@ -47,7 +47,7 @@ FDirectionalLight::~FDirectionalLight()
     // Empty for now
 }
 
-void FDirectionalLight::UpdateCascades(CCamera& Camera)
+void FDirectionalLight::UpdateCascades(FCamera& Camera)
 {
     //XMVECTOR XmDirection = XMVectorSet( 0.0, -1.0f, 0.0f, 0.0f );
     //XMMATRIX XmRotation = XMMatrixRotationRollPitchYaw( Rotation.x, Rotation.y, Rotation.z );

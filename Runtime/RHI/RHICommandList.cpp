@@ -69,11 +69,11 @@ void FRHICommandAllocator::Reset()
 
     // Resize if to much memory is used 
     const uint64 SlackSize = Size - AverageMemoryUsage;
-    if (NMemoryUtils::BytesToMegaBytes(SlackSize) > 1)
+    if (FMemory::BytesToMegaBytes(SlackSize) > 1)
     {
         SafeDelete(CurrentMemory);
 
-        const uint64 NewSize = AverageMemoryUsage + NMemoryUtils::MegaBytesToBytes(1);
+        const uint64 NewSize = AverageMemoryUsage + FMemory::MegaBytesToBytes(1);
 
         CurrentMemory = reinterpret_cast<uint8*>(FMemory::Malloc(NewSize));
         Check(CurrentMemory != nullptr);
@@ -277,7 +277,6 @@ void FRHICommandListExecutor::InternalExecuteCommandList(FRHICommandList& Comman
 
         Statistics.NumDrawCalls     += CommandList.GetNumDrawCalls();
         Statistics.NumDispatchCalls += CommandList.GetNumDispatchCalls();
-        Statistics.NumCommands      += CommandList.GetNumCommands();
 
         CommandList.FirstCommand = nullptr;
         CommandList.LastCommand  = nullptr;

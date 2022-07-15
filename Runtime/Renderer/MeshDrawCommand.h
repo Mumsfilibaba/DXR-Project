@@ -2,9 +2,9 @@
 #include "Core/Core.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMeshDrawCommand
+// FMeshDrawCommand
 
-struct SMeshDrawCommand
+struct FMeshDrawCommand
 {
     class FMaterial*              Material     = nullptr;
     class FMesh*                  Mesh         = nullptr;
@@ -17,7 +17,7 @@ struct SMeshDrawCommand
 };
 
 template<>
-struct TIsReallocatable<SMeshDrawCommand>
+struct TIsReallocatable<FMeshDrawCommand>
 {
     enum
     {

@@ -20,7 +20,7 @@ TAutoConsoleVariable<bool> GDrawTileDebug("Renderer.DrawTileDebug", false);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FDeferredRenderer
 
-bool FDeferredRenderer::Init(SFrameResources& FrameResources)
+bool FDeferredRenderer::Init(FFrameResources& FrameResources)
 {
     if (!CreateGBuffer(FrameResources))
     {
@@ -443,7 +443,7 @@ void FDeferredRenderer::Release()
     ReduceDepthShader.Reset();
 }
 
-void FDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, SFrameResources& FrameResources, const FScene& Scene)
+void FDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, FFrameResources& FrameResources, const FScene& Scene)
 {
     const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
@@ -477,7 +477,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, SFrameResources&
 
         for (const auto CommandIndex : FrameResources.DeferredVisibleCommands)
         {
-            const SMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
+            const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
             if (Command.Material->ShouldRenderInPrePass())
             {
                 CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
@@ -559,7 +559,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, SFrameResources&
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Depth Reduction");
 }
 
-void FDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const SFrameResources& FrameResources)
+void FDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const FFrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin GeometryPass");
 
@@ -597,7 +597,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const SFrameRes
 
     for (const auto CommandIndex : FrameResources.DeferredVisibleCommands)
     {
-        const SMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
+        const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
 
         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
         CmdList.SetIndexBuffer(Command.IndexBuffer);
@@ -637,7 +637,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const SFrameRes
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
 }
 
-void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup)
+void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, const FFrameResources& FrameResources, const FLightSetup& LightSetup)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
 
@@ -712,12 +712,12 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, c
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");
 }
 
-bool FDeferredRenderer::ResizeResources(SFrameResources& FrameResources)
+bool FDeferredRenderer::ResizeResources(FFrameResources& FrameResources)
 {
     return CreateGBuffer(FrameResources);
 }
 
-bool FDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
+bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
 {
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget;
 

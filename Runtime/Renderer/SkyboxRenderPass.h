@@ -7,17 +7,17 @@
 #include "Engine/Scene/Scene.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShadowMapRenderer
+// FShadowMapRenderer
 
-class RENDERER_API CSkyboxRenderPass final
+class RENDERER_API FSkyboxRenderPass final
 {
 public:
-    CSkyboxRenderPass() = default;
-    ~CSkyboxRenderPass() = default;
+    FSkyboxRenderPass() = default;
+    ~FSkyboxRenderPass() = default;
 
-    bool Init(SFrameResources& FrameResources);
+    bool Init(FFrameResources& FrameResources);
 
-    void Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const FScene& Scene);
+    void Render(FRHICommandList& CmdList, const FFrameResources& FrameResources, const FScene& Scene);
 
     void Release();
 
@@ -27,7 +27,7 @@ private:
     TSharedRef<FRHIPixelShader>  SkyboxPixelShader;
     TSharedRef<FRHIVertexBuffer> SkyboxVertexBuffer;
     TSharedRef<FRHIIndexBuffer>  SkyboxIndexBuffer;
-    TSharedRef<FRHISamplerState> SkyboxSampler;
+    FRHISamplerStateRef SkyboxSampler;
 
     FMeshData SkyboxMesh;
 };

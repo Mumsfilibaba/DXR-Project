@@ -11,9 +11,9 @@
 #include "Engine/Resources/TextureFactory.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShadowMapRenderer
+// FShadowMapRenderer
 
-bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
+bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
 {
     SkyboxMesh = FMeshFactory::CreateSphere(1);
 
@@ -170,7 +170,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     return true;
 }
 
-void CSkyboxRenderPass::Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const FScene& Scene)
+void FSkyboxRenderPass::Render(FRHICommandList& CmdList, const FFrameResources& FrameResources, const FScene& Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
 
@@ -219,7 +219,7 @@ void CSkyboxRenderPass::Render(FRHICommandList& CmdList, const SFrameResources& 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
 }
 
-void CSkyboxRenderPass::Release()
+void FSkyboxRenderPass::Release()
 {
     PipelineState.Reset();
     SkyboxVertexBuffer.Reset();

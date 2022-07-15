@@ -20,9 +20,9 @@ TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAOBias", 0.025f);
 TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAOKernelSize", 32);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CScreenSpaceOcclusionRenderer
+// FScreenSpaceOcclusionRenderer
 
-bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
+bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
 {
     if (!CreateRenderTarget(FrameResources))
     {
@@ -224,7 +224,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     return true;
 }
 
-void CScreenSpaceOcclusionRenderer::Release()
+void FScreenSpaceOcclusionRenderer::Release()
 {
     PipelineState.Reset();
     BlurHorizontalPSO.Reset();
@@ -237,12 +237,12 @@ void CScreenSpaceOcclusionRenderer::Release()
     BlurVerticalShader.Reset();
 }
 
-bool CScreenSpaceOcclusionRenderer::ResizeResources(SFrameResources& FrameResources)
+bool FScreenSpaceOcclusionRenderer::ResizeResources(FFrameResources& FrameResources)
 {
     return CreateRenderTarget(FrameResources);
 }
 
-void CScreenSpaceOcclusionRenderer::Render(FRHICommandList& CmdList, SFrameResources& FrameResources)
+void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CmdList, FFrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
 
@@ -312,7 +312,7 @@ void CScreenSpaceOcclusionRenderer::Render(FRHICommandList& CmdList, SFrameResou
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End SSAO");
 }
 
-bool CScreenSpaceOcclusionRenderer::CreateRenderTarget(SFrameResources& FrameResources)
+bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameResources)
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::RWTexture;
     

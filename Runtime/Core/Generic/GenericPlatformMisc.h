@@ -22,10 +22,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericPlatformMisc
 
-class FGenericPlatformMisc
+struct FGenericPlatformMisc
 {
-public:
-
     static FORCEINLINE void DebugBreak() { }
 
     static FORCEINLINE void OutputDebugString(const FString& Message) { }

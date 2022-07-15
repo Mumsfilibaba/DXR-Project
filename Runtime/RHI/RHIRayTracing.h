@@ -143,7 +143,6 @@ public:
     bool AllowUpdate() const { return ((Flags & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None); }
 
     bool PreferFastTrace() const { return ((Flags & EAccelerationStructureBuildFlags::PreferFastTrace) != EAccelerationStructureBuildFlags::None); }
-
     bool PreferFastBuild() const { return ((Flags & EAccelerationStructureBuildFlags::PreferFastBuild) != EAccelerationStructureBuildFlags::None); }
 
     bool operator==(const FRHIAccelerationStructureInitializer& RHS) const
@@ -238,25 +237,15 @@ protected:
 
 public:
 
-    /** @return: Returns the FRHIRayTracingScene interface if implemented otherwise nullptr */
-    virtual class FRHIRayTracingScene* GetRayTracingScene() { return nullptr; }
-
-    /** @return: Returns the FRHIRayTracingGeometry interface if implemented otherwise nullptr */
+    virtual class FRHIRayTracingScene*    GetRayTracingScene()    { return nullptr; }
     virtual class FRHIRayTracingGeometry* GetRayTracingGeometry() { return nullptr; }
 
-    /** @return: Returns the native handle of the resource */
-    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
-
-    /** @return: Returns the native handle of the resource */
+    virtual void* GetRHIBaseBVHBuffer()             { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() { return nullptr; }
 
-    /** @brief: Set the name of the AccelerationStructure */
-    virtual void SetName(const FString& InName) { }
-
-    /** @return: Returns the name of the Texture */
+    virtual void    SetName(const FString& InName) { }
     virtual FString GetName() const { return ""; }
 
-    /** @return: Returns the Flags of the RayTracingScene */
     EAccelerationStructureBuildFlags GetFlags() const { return Flags; }
 
 protected:
@@ -295,18 +284,14 @@ protected:
 
 public:
 
-    /** @return: Returns the ShaderResourceView for the RayTracingScene */
     virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
-
-    /** @return: Returns a Bindless descriptor-handle if the RHI supports it */
-    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
-
-public:
+    virtual FRHIDescriptorHandle    GetBindlessHandle()     const { return FRHIDescriptorHandle(); }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIAccelerationStructure Interface
 
     virtual class FRHIRayTracingScene* GetRayTracingScene() override final { return this; }
+
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

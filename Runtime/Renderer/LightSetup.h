@@ -11,18 +11,18 @@
 #include "Core/Math/Vector4.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SPointLightData
+// FPointLightData
 
-struct SPointLightData
+struct FPointLightData
 {
     FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
     float Padding0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SShadowCastingPointLightData
+// FShadowCastingPointLightData
 
-struct SShadowCastingPointLightData
+struct FShadowCastingPointLightData
 {
     FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
     float ShadowBias = 0.005f;
@@ -34,9 +34,9 @@ struct SShadowCastingPointLightData
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SPointLightShadowMapGenerationData
+// FPointLightShadowMapGenerationData
 
-struct SPointLightShadowMapGenerationData
+struct FPointLightShadowMapGenerationData
 {
     TStaticArray<FMatrix4, 6> Matrix;
     TStaticArray<FMatrix4, 6> ViewMatrix;
@@ -47,9 +47,9 @@ struct SPointLightShadowMapGenerationData
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SDirectionalLightData
+// FDirectionalLightData
 
-struct SDirectionalLightData
+struct FDirectionalLightData
 {
     FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
     float ShadowBias = 0.005f;
@@ -62,9 +62,9 @@ struct SDirectionalLightData
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SLightSetup
+// FLightSetup
 
-struct RENDERER_API SLightSetup
+struct RENDERER_API FLightSetup
 {
     const EFormat ShadowMaskFormat = EFormat::R8_Unorm;
     const EFormat ShadowMapFormat  = EFormat::D16_Unorm;
@@ -80,8 +80,8 @@ struct RENDERER_API SLightSetup
     const uint16 SpecularIrradianceSize = 256;
     const uint16 PointLightShadowSize   = 512;
 
-    SLightSetup() = default;
-    ~SLightSetup() = default;
+    FLightSetup() = default;
+    ~FLightSetup() = default;
 
     bool Init();
 
@@ -89,28 +89,28 @@ struct RENDERER_API SLightSetup
     void Release();
 
     TArray<FVector4>        PointLightsPosRad;
-    TArray<SPointLightData> PointLightsData;
+    TArray<FPointLightData> PointLightsData;
 
-    TSharedRef<FRHIConstantBuffer> PointLightsBuffer;
-    TSharedRef<FRHIConstantBuffer> PointLightsPosRadBuffer;
+    FRHIConstantBufferRef PointLightsBuffer;
+    FRHIConstantBufferRef PointLightsPosRadBuffer;
 
-    TArray<SPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
+    TArray<FPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
 
     TArray<FVector4>                     ShadowCastingPointLightsPosRad;
-    TArray<SShadowCastingPointLightData> ShadowCastingPointLightsData;
+    TArray<FShadowCastingPointLightData> ShadowCastingPointLightsData;
 
-    TSharedRef<FRHIConstantBuffer> ShadowCastingPointLightsBuffer;
-    TSharedRef<FRHIConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
+    FRHIConstantBufferRef ShadowCastingPointLightsBuffer;
+    FRHIConstantBufferRef ShadowCastingPointLightsPosRadBuffer;
 
     TSharedRef<FRHITextureCubeArray> PointLightShadowMaps;
 
     // NOTE: Only one directional light
-    SDirectionalLightData DirectionalLightData;
+    FDirectionalLightData DirectionalLightData;
     bool DirectionalLightDataDirty = true;
 
     float CascadeSplitLambda;
 
-    TSharedRef<FRHIConstantBuffer> DirectionalLightsBuffer;
+    FRHIConstantBufferRef DirectionalLightsBuffer;
 
     FRHITexture2DRef ShadowMapCascades[4];
     FRHITexture2DRef DirectionalShadowMask;

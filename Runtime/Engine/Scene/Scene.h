@@ -46,7 +46,7 @@ public:
      * 
      * @param InCamera: Camera to add to the scene
      */
-    void AddCamera(CCamera* InCamera);
+    void AddCamera(FCamera* InCamera);
 
     /**
      * @brief: Adds an actor into the scene 
@@ -60,14 +60,14 @@ public:
      *
      * @param InLight: Light to add to the scene
      */
-    void AddLight(CLight* InLight);
+    void AddLight(FLight* InLight);
 
     /**
      * @brief: Function called when adding a component
      * 
      * @param NewComponent: New component just added to the scene
      */
-    void OnAddedComponent(CComponent* NewComponent);
+    void OnAddedComponent(FComponent* NewComponent);
 
     /**
      * @brief: Retrieve all components of a certain type
@@ -107,7 +107,7 @@ public:
      *
      * @return: Returns a reference to an array of all lights in the scene
      */
-    FORCEINLINE const TArray<CLight*>& GetLights() const
+    FORCEINLINE const TArray<FLight*>& GetLights() const
     {
         return Lights;
     }
@@ -117,7 +117,7 @@ public:
      *
      * @return: Returns a reference to an array of all MeshDrawCommands in the scene
      */
-    FORCEINLINE const TArray<SMeshDrawCommand>& GetMeshDrawCommands() const
+    FORCEINLINE const TArray<FMeshDrawCommand>& GetMeshDrawCommands() const
     {
         return MeshDrawCommands;
     }
@@ -127,7 +127,7 @@ public:
      * 
      * @return: Returns a pointer to the camera of the scene
      */
-    FORCEINLINE CCamera* GetCamera() const
+    FORCEINLINE FCamera* GetCamera() const
     {
         return CurrentCamera;
     }
@@ -136,8 +136,8 @@ private:
     void AddMeshComponent(class FMeshComponent* Component);
 
     TArray<FActor*> Actors;
-    TArray<CLight*> Lights;
-    TArray<SMeshDrawCommand> MeshDrawCommands;
+    TArray<FLight*> Lights;
+    TArray<FMeshDrawCommand> MeshDrawCommands;
 
-    CCamera* CurrentCamera = nullptr;
+    FCamera* CurrentCamera = nullptr;
 };

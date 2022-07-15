@@ -72,7 +72,7 @@ public:
 
     void PerformAABBDebugPass(FRHICommandList& InCmdList);
 
-    FORCEINLINE TSharedRef<CTextureDebugWindow> GetTextureDebugger() const
+    FORCEINLINE TSharedRef<FTextureDebugWindow> GetTextureDebugger() const
     {
         return TextureDebugger;
     }
@@ -92,16 +92,16 @@ private:
     
     bool InitShadingImage();
 
-    NOINLINE void FrustumCullingAndSortingInternal( const CCamera* Camera
+    NOINLINE void FrustumCullingAndSortingInternal( const FCamera* Camera
                                                   , const TPair<uint32, uint32>& DrawCommands
                                                   , TArray<uint32>& OutDeferredDrawCommands
                                                   , TArray<uint32>& OutForwardDrawCommands);
 
     TSharedPtr<FRendererWindowHandler> WindowHandler;
 
-    TSharedRef<CTextureDebugWindow> TextureDebugger;
-    TSharedRef<CRendererInfoWindow> InfoWindow;
-    TSharedRef<CGPUProfilerWindow>  GPUProfilerWindow;
+    TSharedRef<FTextureDebugWindow> TextureDebugger;
+    TSharedRef<FRendererInfoWindow> InfoWindow;
+    TSharedRef<FGPUProfilerWindow>  GPUProfilerWindow;
 
     FRHICommandList PreShadowsCmdList;
     FRHICommandList PointShadowCmdList;
@@ -120,15 +120,15 @@ private:
     FAsyncTask RayTracingTask;
 
     FDeferredRenderer             DeferredRenderer;
-    CShadowMapRenderer            ShadowMapRenderer;
-    CScreenSpaceOcclusionRenderer SSAORenderer;
+    FShadowMapRenderer            ShadowMapRenderer;
+    FScreenSpaceOcclusionRenderer SSAORenderer;
     FLightProbeRenderer           LightProbeRenderer;
-    CSkyboxRenderPass             SkyboxRenderPass;
-    CForwardRenderer              ForwardRenderer;
-    CRayTracer                    RayTracer;
+    FSkyboxRenderPass             SkyboxRenderPass;
+    FForwardRenderer              ForwardRenderer;
+    FRayTracer                    RayTracer;
 
-    SFrameResources Resources;
-    SLightSetup     LightSetup;
+    FFrameResources Resources;
+    FLightSetup     LightSetup;
 
     FRHITexture2DRef            ShadingImage;
     FRHIComputePipelineStateRef ShadingRatePipeline;

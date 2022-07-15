@@ -30,7 +30,7 @@ CMacWindow::~CMacWindow()
 	}, true);
 }
 
-bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle InStyle)
+bool CMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle InStyle)
 {
     NSUInteger WindowStyle = 0;
     if (InStyle.Style)
@@ -210,7 +210,7 @@ void CMacWindow::ToggleFullscreen()
 	}
 }
 
-void CMacWindow::SetTitle(const String& InTitle)
+void CMacWindow::SetTitle(const FString& InTitle)
 {
 
     if (StyleParams.IsTitled())
@@ -225,7 +225,7 @@ void CMacWindow::SetTitle(const String& InTitle)
 	}
 }
 
-void CMacWindow::GetTitle(String& OutTitle)
+void CMacWindow::GetTitle(FString& OutTitle)
 {
     if (StyleParams.IsTitled())
     {

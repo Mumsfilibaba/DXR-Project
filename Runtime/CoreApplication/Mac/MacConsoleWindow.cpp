@@ -144,7 +144,7 @@ void FMacConsoleWindow::Show(bool bShow)
 	}
 }
 
-void FMacConsoleWindow::Print(const String& Message)
+void FMacConsoleWindow::Print(const FString& Message)
 {
     if (WindowHandle)
     {
@@ -160,7 +160,7 @@ void FMacConsoleWindow::Print(const String& Message)
     }
 }
 
-void FMacConsoleWindow::PrintLine(const String& Message)
+void FMacConsoleWindow::PrintLine(const FString& Message)
 {
     if (WindowHandle)
     {
@@ -190,7 +190,7 @@ void FMacConsoleWindow::Clear()
     }
 }
 
-void FMacConsoleWindow::SetTitle(const String& InTitle)
+void FMacConsoleWindow::SetTitle(const FString& InTitle)
 {
     if (WindowHandle)
     {

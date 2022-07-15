@@ -18,12 +18,12 @@ TAutoConsoleVariable<bool> GDrawRendererInfo("Renderer.DrawRendererInfo", false)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RendererInfoWindow
 
-TSharedRef<CRendererInfoWindow> CRendererInfoWindow::Make()
+TSharedRef<FRendererInfoWindow> FRendererInfoWindow::Make()
 {
-    return dbg_new CRendererInfoWindow();
+    return dbg_new FRendererInfoWindow();
 }
 
-void CRendererInfoWindow::Tick()
+void FRendererInfoWindow::Tick()
 {
     FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();
 
@@ -73,14 +73,15 @@ void CRendererInfoWindow::Tick()
     ImGui::Text("Command Count: ");
     ImGui::NextColumn();
 
-    ImGui::Text("%d", Statistics.NumCommands);
+    // TODO: Fix NumCommands
+    ImGui::Text("%d", 0);
 
     ImGui::Columns(1);
 
     ImGui::End();
 }
 
-bool CRendererInfoWindow::IsTickable()
+bool FRendererInfoWindow::IsTickable()
 {
     return GDrawRendererInfo.GetBool();
 }

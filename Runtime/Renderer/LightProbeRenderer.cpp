@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FLightProbeRenderer
 
-bool FLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameResources)
+bool FLightProbeRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameResources)
 {
     if (!CreateSkyLightResources(LightSetup))
     {
@@ -86,7 +86,7 @@ void FLightProbeRenderer::Release()
     SpecularIrradianceGenShader.Reset();
 }
 
-void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources)
+void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, const FLightSetup& LightSetup, const FFrameResources& FrameResources)
 {
     const uint32 IrradianceMapSize = static_cast<uint32>(LightSetup.IrradianceMap->GetWidth());
 
@@ -142,7 +142,7 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, const SL
     CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
 }
 
-bool FLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
+bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
 {
     // Generate global irradiance (From Skybox)
     FRHITextureCubeInitializer LightProbeInitializer(LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::Common);

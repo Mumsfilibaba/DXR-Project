@@ -10,14 +10,14 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIModule
+// FNullRHIModule
 
-class CNullRHIModule final : public FRHIModule
+class FNullRHIModule final : public FRHIModule
 {
 public:
 
-    CNullRHIModule()  = default;
-    ~CNullRHIModule() = default;
+    FNullRHIModule()  = default;
+    ~FNullRHIModule() = default;
 
     virtual class FRHICoreInterface*  CreateInterface() override final;
     virtual class IRHIShaderCompiler* CreateCompiler() override final;

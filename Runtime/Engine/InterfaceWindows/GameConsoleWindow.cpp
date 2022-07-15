@@ -8,26 +8,26 @@
 #include <imgui.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGameConsoleWindow
+// FGameConsoleWindow
 
-TSharedRef<CGameConsoleWindow> CGameConsoleWindow::Make()
+TSharedRef<FGameConsoleWindow> FGameConsoleWindow::Make()
 {
-    TSharedRef<CGameConsoleWindow> NewWindow = dbg_new CGameConsoleWindow();
+    TSharedRef<FGameConsoleWindow> NewWindow = dbg_new FGameConsoleWindow();
 
-    NewWindow->InputHandler->HandleKeyEventDelegate.BindRaw(NewWindow.Get(), &CGameConsoleWindow::HandleKeyPressedEvent);
+    NewWindow->InputHandler->HandleKeyEventDelegate.BindRaw(NewWindow.Get(), &FGameConsoleWindow::HandleKeyPressedEvent);
     FApplication::Get().AddInputHandler(NewWindow->InputHandler, uint32(-1));
 
     return NewWindow;
 }
 
-CGameConsoleWindow::CGameConsoleWindow()
+FGameConsoleWindow::FGameConsoleWindow()
     : FWindow()
-    , InputHandler(MakeShared<CConsoleInputHandler>())
+    , InputHandler(MakeShared<FConsoleInputHandler>())
 {
     TextBuffer.Fill(0);
 }
 
-void CGameConsoleWindow::Tick()
+void FGameConsoleWindow::Tick()
 {
     FGenericWindowRef MainWindow = FApplication::Get().GetMainViewport();
 
@@ -243,7 +243,7 @@ void CGameConsoleWindow::Tick()
         // Prepare callback for ImGui
         auto Callback = [](ImGuiInputTextCallbackData* Data)->int32
         {
-            CGameConsoleWindow* This = reinterpret_cast<CGameConsoleWindow*>(Data->UserData);
+            FGameConsoleWindow* This = reinterpret_cast<FGameConsoleWindow*>(Data->UserData);
             return This->TextCallback(Data);
         };
 
@@ -291,12 +291,12 @@ void CGameConsoleWindow::Tick()
     ImGui::PopStyleVar();
 }
 
-bool CGameConsoleWindow::IsTickable()
+bool FGameConsoleWindow::IsTickable()
 {
     return bIsActive;
 }
 
-int32 CGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
+int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
 {
     if (bUpdateCursorPosition)
     {
@@ -462,7 +462,7 @@ int32 CGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
     return 0;
 }
 
-void CGameConsoleWindow::HandleKeyPressedEvent(const FKeyEvent& Event)
+void FGameConsoleWindow::HandleKeyPressedEvent(const FKeyEvent& Event)
 {
     Check(InputHandler.IsValid());
 

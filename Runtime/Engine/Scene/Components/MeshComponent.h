@@ -9,14 +9,14 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMeshComponent
 
-class ENGINE_API FMeshComponent : public CComponent
+class ENGINE_API FMeshComponent : public FComponent
 {
-    CORE_OBJECT(FMeshComponent, CComponent);
+    CORE_OBJECT(FMeshComponent, FComponent);
 
 public:
 
     FMeshComponent(FActor* InActorOwner)
-        : CComponent(InActorOwner, false, false)
+        : FComponent(InActorOwner, false, false)
         , Material(nullptr)
         , Mesh(nullptr)
     {

@@ -19,7 +19,7 @@ public:
 
     static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
 
-    static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const String& InString);
+    static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InString);
 
     static FORCEINLINE bool Initialize() 
     { 

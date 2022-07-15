@@ -10,31 +10,27 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIShaderResourceView
+// FNullRHIShaderResourceView
 
-class CNullRHIShaderResourceView : public FRHIShaderResourceView
-{
-public:
-
-    explicit CNullRHIShaderResourceView(FRHIResource* InResource)
+struct FNullRHIShaderResourceView : public FRHIShaderResourceView
+{ 
+    explicit FNullRHIShaderResourceView(FRHIResource* InResource)
         : FRHIShaderResourceView(InResource)
     { }
 
-    ~CNullRHIShaderResourceView() = default;
+    ~FNullRHIShaderResourceView() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIUnorderedAccessView
+// FNullRHIUnorderedAccessView
 
-class CNullRHIUnorderedAccessView : public FRHIUnorderedAccessView
+struct FNullRHIUnorderedAccessView : public FRHIUnorderedAccessView
 {
-public:
-
-    explicit CNullRHIUnorderedAccessView(FRHIResource* InResource)
+    explicit FNullRHIUnorderedAccessView(FRHIResource* InResource)
         : FRHIUnorderedAccessView(InResource)
     { }
 
-    ~CNullRHIUnorderedAccessView() = default;
+    ~FNullRHIUnorderedAccessView() = default;
 };
 
 #if defined(COMPILER_MSVC)

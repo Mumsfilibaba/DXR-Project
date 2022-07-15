@@ -11,7 +11,7 @@ FGenericThread* FMacThreadMisc::CreateThread(const TFunction<void()>& InFunction
     return FMacThread::CreateMacThread(InFunction);
 }
 
-FGenericThread* FMacThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const String& InName)
+FGenericThread* FMacThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
 {
     return FMacThread::CreateMacThread(InFunction, InName);
 }

@@ -3,11 +3,11 @@
 #include "Windows/InspectorWindow.h"
 #include "Windows/EditorMenuWidget.h"
 
-class CEditorEngine : public FEngine
+class FEditorEngine : public FEngine
 {
 public:
 
-    static CEditorEngine* Make();
+    static FEditorEngine* Make();
 
     /* Init engine */
     virtual bool Init() override;

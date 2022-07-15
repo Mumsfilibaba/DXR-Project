@@ -9,10 +9,10 @@
 #endif
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CComponent
+// FComponent
 
-CComponent::CComponent(FActor* InActorOwner)
-    : CCoreObject()
+FComponent::FComponent(FActor* InActorOwner)
+    : FCoreObject()
     , ActorOwner(InActorOwner)
     , bIsStartable(true)
     , bIsTickable(true)
@@ -22,8 +22,8 @@ CComponent::CComponent(FActor* InActorOwner)
     CORE_OBJECT_INIT();
 }
 
-CComponent::CComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTickable)
-    : CCoreObject()
+FComponent::FComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTickable)
+    : FCoreObject()
     , ActorOwner(InActorOwner)
     , bIsStartable(bInIsStartable)
     , bIsTickable(bInIsTickable)
@@ -33,11 +33,11 @@ CComponent::CComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTick
     CORE_OBJECT_INIT();
 }
 
-void CComponent::Start()
+void FComponent::Start()
 {
 }
 
-void CComponent::Tick(FTimestamp DeltaTime)
+void FComponent::Tick(FTimestamp DeltaTime)
 {
 }
 

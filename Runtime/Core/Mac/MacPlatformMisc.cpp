@@ -5,7 +5,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacPlatformMisc
 
-void FMacPlatformMisc::OutputDebugString(const String& Message)
+void FMacPlatformMisc::OutputDebugString(const FString& Message)
 {
     NSLog(@"%s\n", Message.CStr());
 }

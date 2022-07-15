@@ -4,15 +4,15 @@
 #include "Engine/CoreObject/CoreObject.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CLight
+// FLight
 
-class ENGINE_API CLight : public CCoreObject
+class ENGINE_API FLight : public FCoreObject
 {
-    CORE_OBJECT(CLight, CCoreObject);
+    CORE_OBJECT(FLight, FCoreObject);
 
 public:
-    CLight();
-    virtual ~CLight() = default;
+    FLight();
+    virtual ~FLight() = default;
 
     void SetColor(const FVector3& InColor);
     void SetColor(float r, float g, float b);

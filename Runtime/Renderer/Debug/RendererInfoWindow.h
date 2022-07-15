@@ -5,13 +5,13 @@
 
 #include <imgui.h>
 
-class CRendererInfoWindow : public FWindow
+class FRendererInfoWindow : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
 
-    static TSharedRef<CRendererInfoWindow> Make();
+    static TSharedRef<FRendererInfoWindow> Make();
 
      /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;
@@ -21,5 +21,5 @@ public:
 
 private:
 
-    CRendererInfoWindow() = default;
+    FRendererInfoWindow() = default;
 };

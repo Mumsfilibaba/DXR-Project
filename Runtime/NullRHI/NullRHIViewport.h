@@ -12,21 +12,21 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIViewport
+// FNullRHIViewport
 
-class CNullRHIViewport : public FRHIViewport
+class FNullRHIViewport : public FRHIViewport
 {
 public:
     
-    CNullRHIViewport(const FRHIViewportInitializer& Initializer)
+    FNullRHIViewport(const FRHIViewportInitializer& Initializer)
         : FRHIViewport(Initializer)
         , BackBuffer(nullptr)
     { 
         FRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
-        BackBuffer = dbg_new TNullRHITexture<CNullRHITexture2D>(BackBufferInitializer);
+        BackBuffer = dbg_new FNullRHITexture2D(BackBufferInitializer);
     }
 
-    ~CNullRHIViewport() = default;
+    ~FNullRHIViewport() = default;
 
 public:
 
@@ -45,7 +45,7 @@ public:
     virtual FRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
 private:
-    TSharedRef<CNullRHITexture2D> BackBuffer;
+    TSharedRef<FNullRHITexture2D> BackBuffer;
 };
 
 #if defined(COMPILER_MSVC)

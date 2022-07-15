@@ -16,12 +16,12 @@
 
 #include "Interface/InterfaceApplication.h"
 
-CEditorEngine* CEditorEngine::Make()
+FEditorEngine* FEditorEngine::Make()
 {
-    return dbg_new CEditorEngine();
+    return dbg_new FEditorEngine();
 }
 
-bool CEditorEngine::Init()
+bool FEditorEngine::Init()
 {
     if ( !FEngine::Init() )
     {
@@ -40,7 +40,7 @@ bool CEditorEngine::Init()
     return true;
 }
 
-void CEditorEngine::Tick( FTimestamp Deltatime )
+void FEditorEngine::Tick( FTimestamp Deltatime )
 {
     FEngine::Tick( Deltatime );
 }

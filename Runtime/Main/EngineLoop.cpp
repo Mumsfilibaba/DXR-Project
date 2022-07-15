@@ -107,15 +107,15 @@ bool FEngineLoop::PreInitialize()
 
 	const FString ProjectLocation     = FString(ENGINE_LOCATION) + FString("/") + FString(PROJECT_NAME);
     const FString AssetFolderLocation = FString(ENGINE_LOCATION) + FString("/Assets");
-    if (!CProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr(), AssetFolderLocation.CStr()))
+    if (!FProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr(), AssetFolderLocation.CStr()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
         return false;
     }
 
 #if !PRODUCTION_BUILD
-    LOG_INFO("ProjectName=%s", CProjectManager::GetProjectName());
-    LOG_INFO("ProjectPath=%s", CProjectManager::GetProjectPath());
+    LOG_INFO("ProjectName=%s", FProjectManager::GetProjectName());
+    LOG_INFO("ProjectPath=%s", FProjectManager::GetProjectPath());
 #endif
 
     if (!FThreadManager::Initialize())
@@ -136,7 +136,7 @@ bool FEngineLoop::PreInitialize()
     }
 
    // Initialize the shadercompiler before RHI since RHI might need to compile shaders
-    if (!FRHIShaderCompiler::Initialize(CProjectManager::GetAssetPath()))
+    if (!FRHIShaderCompiler::Initialize(FProjectManager::GetAssetPath()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return false;
@@ -179,7 +179,7 @@ bool FEngineLoop::Initialize()
     NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
 
 #if PROJECT_EDITOR
-    GEngine = CEditorEngine::Make();
+    GEngine = FEditorEngine::Make();
 #else
     GEngine = FEngine::CreateEngine();
 #endif
@@ -199,7 +199,7 @@ bool FEngineLoop::Initialize()
 
     NEngineLoopDelegates::PreApplicationLoadedDelegate.Broadcast();
 
-    GApplicationModule = FModuleManager::Get().LoadEngineModule<FApplicationModule>(CProjectManager::GetProjectModuleName());
+    GApplicationModule = FModuleManager::Get().LoadEngineModule<FApplicationModule>(FProjectManager::GetProjectModuleName());
     if (!GApplicationModule)
     {
         LOG_WARNING("Application Init failed, may not behave as intended");

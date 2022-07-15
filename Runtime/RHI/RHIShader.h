@@ -93,13 +93,9 @@ protected:
 
 public:
 
-    /** @return: Returns the native handle of the Shader */
     virtual void* GetRHIBaseResource() { return nullptr; }
-
-    /** @return: Returns the RHI-backend Shader interface */
-    virtual void* GetRHIBaseShader() { return nullptr; }
-
-    /** @return: Returns ShaderStage that the shader can be bound to */
+    virtual void* GetRHIBaseShader()   { return nullptr; }
+    
     EShaderStage GetShaderStage() const { return ShaderStage; }
 
 private:

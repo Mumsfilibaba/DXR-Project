@@ -217,19 +217,19 @@ bool FRenderer::Init()
     Application.AddWindowMessageHandler(WindowHandler, uint32(-1));
 
     // Register Windows
-    TextureDebugger = CTextureDebugWindow::Make();
+    TextureDebugger = FTextureDebugWindow::Make();
     Application.AddWindow(TextureDebugger);
 
-    InfoWindow = CRendererInfoWindow::Make();
+    InfoWindow = FRendererInfoWindow::Make();
     Application.AddWindow(InfoWindow);
 
-    GPUProfilerWindow = CGPUProfilerWindow::Make();
+    GPUProfilerWindow = FGPUProfilerWindow::Make();
     Application.AddWindow(GPUProfilerWindow);
 
     return true;
 }
 
-void FRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
+void FRenderer::FrustumCullingAndSortingInternal( const FCamera* Camera
                                                 , const TPair<uint32, uint32>& DrawCommands
                                                 , TArray<uint32>& OutDeferredDrawCommands
                                                 , TArray<uint32>& OutForwardDrawCommands)
@@ -239,7 +239,7 @@ void FRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
 
     // Inserts a mesh based on distance
     const auto InsertSorted = []( int32 CommandIndex
-                                , const CCamera* Camera
+                                , const FCamera* Camera
                                 , const FVector3& WorldPosition
                                 , TArray<float>& OutDistances
                                 , TArray<uint32>& OutCommands) -> void
@@ -280,7 +280,7 @@ void FRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
     {
         const uint32 CommandIndex = StartCommand + Index;
 
-        const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
+        const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
 
         FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
@@ -456,7 +456,7 @@ void FRenderer::PerformAABBDebugPass(FRHICommandList& InCmdList)
 
     for (const auto CommandIndex : Resources.DeferredVisibleCommands)
     {
-        const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
+        const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
 
         FAABB& Box = Command.Mesh->BoundingBox;
 
@@ -481,7 +481,7 @@ void FRenderer::PerformAABBDebugPass(FRHICommandList& InCmdList)
 void FRenderer::Tick(const FScene& Scene)
 {
     Resources.BackBuffer             = Resources.MainWindowViewport->GetBackBuffer();
-    Resources.GlobalMeshDrawCommands = TArrayView<const SMeshDrawCommand>(Scene.GetMeshDrawCommands());
+    Resources.GlobalMeshDrawCommands = TArrayView<const FMeshDrawCommand>(Scene.GetMeshDrawCommands());
 
     // Prepare Lights
 #if 1
@@ -528,7 +528,7 @@ void FRenderer::Tick(const FScene& Scene)
     {
         for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.Size(); ++CommandIndex)
         {
-            const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
+            const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
             if (Command.Material->HasAlphaMask())
             {
                 Resources.ForwardVisibleCommands.Emplace(CommandIndex);

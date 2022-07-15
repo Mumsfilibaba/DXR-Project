@@ -16,10 +16,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsPlatformMisc
 
-class FWindowsPlatformMisc final : public FGenericPlatformMisc
+struct FWindowsPlatformMisc final : public FGenericPlatformMisc
 {
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericPlatformMisc Interface
 
@@ -38,7 +36,8 @@ public:
         return ::IsDebuggerPresent();
     }
 
-public:
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Windows Platform specific
 
     static FORCEINLINE void GetLastErrorString(FString& OutErrorString)
     {

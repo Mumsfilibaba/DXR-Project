@@ -11,9 +11,9 @@
 // Main function for all implementations
 int32 EngineMain()
 {
-    struct SEngineMainGuard
+    struct FMainCleanupGuard
     {
-        ~SEngineMainGuard()
+        ~FMainCleanupGuard()
         {
             if (!FEngineLoop::Release())
             {
@@ -23,7 +23,7 @@ int32 EngineMain()
     };
 
     // Make sure that the engine is released if the main function exits early
-    SEngineMainGuard EngineMainGuard;
+    FMainCleanupGuard EngineMainGuard;
 
     // Initialization
     if (!FEngineLoop::PreInitialize())

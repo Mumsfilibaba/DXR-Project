@@ -5,7 +5,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Camera
 
-CCamera::CCamera()
+FCamera::FCamera()
     : View()
     , Projection()
     , ViewProjection()
@@ -22,7 +22,7 @@ CCamera::CCamera()
     UpdateMatrices();
 }
 
-void CCamera::Move(float x, float y, float z)
+void FCamera::Move(float x, float y, float z)
 {
     const FVector3 TempRight = Right * x;
     const FVector3 TempUp = Up * y;
@@ -30,7 +30,7 @@ void CCamera::Move(float x, float y, float z)
     Position = Position + TempRight + TempUp + TempForward;
 }
 
-void CCamera::Rotate(float Pitch, float Yaw, float Roll)
+void FCamera::Rotate(float Pitch, float Yaw, float Roll)
 {
     Rotation.x += Pitch;
     Rotation.x = NMath::Max<float>(NMath::ToRadians(-89.0f), NMath::Min<float>(NMath::ToRadians(89.0f), Rotation.x));
@@ -50,7 +50,7 @@ void CCamera::Rotate(float Pitch, float Yaw, float Roll)
     Up.Normalize();
 }
 
-void CCamera::UpdateMatrices()
+void FCamera::UpdateMatrices()
 {
     FOV = NMath::ToRadians(80.0f);
     Width = 1920.0f;

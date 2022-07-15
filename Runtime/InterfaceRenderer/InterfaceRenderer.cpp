@@ -16,14 +16,14 @@
 #include <imgui.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CInterfaceRenderer
+// FInterfaceRenderer
 
-CInterfaceRenderer* CInterfaceRenderer::Make()
+FInterfaceRenderer* FInterfaceRenderer::Make()
 {
-    return dbg_new CInterfaceRenderer();;
+    return dbg_new FInterfaceRenderer();;
 }
 
-bool CInterfaceRenderer::InitContext(InterfaceContext Context)
+bool FInterfaceRenderer::InitContext(InterfaceContext Context)
 {
     INIT_CONTEXT(Context);
 
@@ -252,19 +252,19 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     return true;
 }
 
-void CInterfaceRenderer::BeginTick()
+void FInterfaceRenderer::BeginTick()
 {
     // Begin new frame
     ImGui::NewFrame();
 }
 
-void CInterfaceRenderer::EndTick()
+void FInterfaceRenderer::EndTick()
 {
     // EndFrame
     ImGui::EndFrame();
 }
 
-void CInterfaceRenderer::Render(FRHICommandList& CmdList)
+void FInterfaceRenderer::Render(FRHICommandList& CmdList)
 {
     // Render ImgGui draw data
     ImGui::Render();

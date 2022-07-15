@@ -10,12 +10,12 @@ class FMacApplication;
 static int32 GEngineMainResult = 0;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaAppDelegate
+// FCocoaAppDelegate
 
-@interface CCocoaAppDelegate : NSObject<NSApplicationDelegate>
+@interface FCocoaAppDelegate : NSObject<NSApplicationDelegate>
 @end
 
-@implementation CCocoaAppDelegate
+@implementation FCocoaAppDelegate
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*) Sender
 {
@@ -52,7 +52,7 @@ int main(int NumArgs, const char** Args)
     UNREFERENCED_VARIABLE(Args);
     
     [NSApplication sharedApplication];
-    [NSApplication sharedApplication].delegate = [CCocoaAppDelegate new];
+    [NSApplication sharedApplication].delegate = [FCocoaAppDelegate new];
     
     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     [NSApplication sharedApplication].presentationOptions = NSApplicationPresentationDefault;

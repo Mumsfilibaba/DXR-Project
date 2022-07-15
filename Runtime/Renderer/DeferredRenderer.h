@@ -15,18 +15,18 @@ public:
     FDeferredRenderer() = default;
     ~FDeferredRenderer() = default;
 
-    bool Init(SFrameResources& FrameResources);
+    bool Init(FFrameResources& FrameResources);
 
     void Release();
 
-    void RenderPrePass(FRHICommandList& CmdList, SFrameResources& FrameResources, const FScene& Scene);
-    void RenderBasePass(FRHICommandList& CmdList, const SFrameResources& FrameResources);
-    void RenderDeferredTiledLightPass(FRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
+    void RenderPrePass(FRHICommandList& CmdList, FFrameResources& FrameResources, const FScene& Scene);
+    void RenderBasePass(FRHICommandList& CmdList, const FFrameResources& FrameResources);
+    void RenderDeferredTiledLightPass(FRHICommandList& CmdList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
 
-    bool ResizeResources(SFrameResources& FrameResources);
+    bool ResizeResources(FFrameResources& FrameResources);
 
 private:
-    bool CreateGBuffer(SFrameResources& FrameResources);
+    bool CreateGBuffer(FFrameResources& FrameResources);
 
     TSharedRef<FRHIGraphicsPipelineState> PipelineState;
     TSharedRef<FRHIVertexShader>          BaseVertexShader;

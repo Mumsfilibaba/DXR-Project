@@ -9,7 +9,7 @@
 
 #include <AppKit/AppKit.h>
 
-@class CCocoaAppDelegate;
+@class FCocoaAppDelegate;
 @class CCocoaWindow;
 
 class CMacWindow;

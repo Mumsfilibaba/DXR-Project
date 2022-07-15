@@ -25,7 +25,7 @@ FScene::~FScene()
     }
     Actors.Clear();
 
-    for (CLight* CurrentLight : Lights)
+    for (FLight* CurrentLight : Lights)
     {
         SafeDelete(CurrentLight);
     }
@@ -63,7 +63,7 @@ void FScene::Tick(FTimestamp DeltaTime)
     }
 }
 
-void FScene::AddCamera(CCamera* InCamera)
+void FScene::AddCamera(FCamera* InCamera)
 {
     if (CurrentCamera)
     {
@@ -85,13 +85,13 @@ void FScene::AddActor(FActor* InActor)
     }
 }
 
-void FScene::AddLight(CLight* InLight)
+void FScene::AddLight(FLight* InLight)
 {
     Check(InLight != nullptr);
     Lights.Emplace(InLight);
 }
 
-void FScene::OnAddedComponent(CComponent* NewComponent)
+void FScene::OnAddedComponent(FComponent* NewComponent)
 {
     FMeshComponent* Component = Cast<FMeshComponent>(NewComponent);
     if (Component && Component->Mesh)
@@ -102,7 +102,7 @@ void FScene::OnAddedComponent(CComponent* NewComponent)
 
 void FScene::AddMeshComponent(FMeshComponent* Component)
 {
-    SMeshDrawCommand Command;
+    FMeshDrawCommand Command;
     Command.CurrentActor = Component->GetActor();
     Command.Geometry = Component->Mesh->RTGeometry.Get();
     Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();

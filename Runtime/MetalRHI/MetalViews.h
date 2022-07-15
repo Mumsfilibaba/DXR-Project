@@ -7,33 +7,33 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalShaderResourceView
+// FMetalShaderResourceView
 
-class CMetalShaderResourceView : public CMetalObject, public FRHIShaderResourceView
+class FMetalShaderResourceView : public FMetalObject, public FRHIShaderResourceView
 {
 public:
 
-    explicit CMetalShaderResourceView(CMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
-        : CMetalObject(InDeviceContext)
+    explicit FMetalShaderResourceView(FMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
+        : FMetalObject(InDeviceContext)
         , FRHIShaderResourceView(InResource)
     { }
 
-    ~CMetalShaderResourceView() = default;
+    ~FMetalShaderResourceView() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalUnorderedAccessView
+// FMetalUnorderedAccessView
 
-class CMetalUnorderedAccessView : public CMetalObject, public FRHIUnorderedAccessView
+class FMetalUnorderedAccessView : public FMetalObject, public FRHIUnorderedAccessView
 {
 public:
 
-    explicit CMetalUnorderedAccessView(CMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
-        : CMetalObject(InDeviceContext)
+    explicit FMetalUnorderedAccessView(FMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
+        : FMetalObject(InDeviceContext)
         , FRHIUnorderedAccessView(InResource)
     { }
 
-    ~CMetalUnorderedAccessView() = default;
+    ~FMetalUnorderedAccessView() = default;
 };
 
 #pragma clang diagnostic pop

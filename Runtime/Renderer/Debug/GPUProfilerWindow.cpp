@@ -16,12 +16,12 @@ TAutoConsoleVariable<bool> GDrawGPUProfiler("Renderer.DrawGPUProfiler", false);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // GPUProfilerWindow
 
-TSharedRef<CGPUProfilerWindow> CGPUProfilerWindow::Make()
+TSharedRef<FGPUProfilerWindow> FGPUProfilerWindow::Make()
 {
-    return dbg_new CGPUProfilerWindow();
+    return dbg_new FGPUProfilerWindow();
 }
 
-void CGPUProfilerWindow::Tick()
+void FGPUProfilerWindow::Tick()
 {
     if (GDrawGPUProfiler.GetBool())
     {
@@ -29,12 +29,12 @@ void CGPUProfilerWindow::Tick()
     }
 }
 
-bool CGPUProfilerWindow::IsTickable()
+bool FGPUProfilerWindow::IsTickable()
 {
     return GDrawGPUProfiler.GetBool();
 }
 
-void CGPUProfilerWindow::DrawGPUData(float Width)
+void FGPUProfilerWindow::DrawGPUData(float Width)
 {
     const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
 
@@ -171,7 +171,7 @@ void CGPUProfilerWindow::DrawGPUData(float Width)
     }
 }
 
-void CGPUProfilerWindow::DrawWindow()
+void FGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
     FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();

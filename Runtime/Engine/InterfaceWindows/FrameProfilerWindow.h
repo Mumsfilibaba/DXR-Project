@@ -6,15 +6,15 @@
 #include <imgui.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CFrameProfilerWindow
+// FFrameProfilerWindow
 
-class CFrameProfilerWindow : public FWindow
+class FFrameProfilerWindow : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
 
-    static TSharedRef<CFrameProfilerWindow> Make();
+    static TSharedRef<FFrameProfilerWindow> Make();
 
     virtual void Tick() override final;
 
@@ -22,8 +22,8 @@ public:
 
 private:
 
-    CFrameProfilerWindow() = default;
-    ~CFrameProfilerWindow() = default;
+    FFrameProfilerWindow() = default;
+    ~FFrameProfilerWindow() = default;
 
      /** @brief: Draw a simple FPS counter */
     void DrawFPS();

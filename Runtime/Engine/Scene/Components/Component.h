@@ -6,17 +6,17 @@
 class FActor;
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CComponent
+// FComponent
 
-class ENGINE_API CComponent : public CCoreObject
+class ENGINE_API FComponent : public FCoreObject
 {
-    CORE_OBJECT(CComponent, CCoreObject);
+    CORE_OBJECT(FComponent, FCoreObject);
 
 public:
 
-    CComponent(FActor* InActorOwner);
-    CComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTickable);
-    virtual ~CComponent() = default;
+    FComponent(FActor* InActorOwner);
+    FComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTickable);
+    virtual ~FComponent() = default;
 
     /**
      * @brief: Start component, called in the beginning of the run, perform initialization here

@@ -4,7 +4,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ClassDescription
 
-struct SClassDescription
+struct FClassDescription
 {
     /** Name of the class */
     const char* Name = nullptr;
@@ -17,14 +17,14 @@ struct SClassDescription
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ClassType - Stores info about a class, for now inheritance
 
-class ENGINE_API CClassType
+class ENGINE_API FClassType
 {
 public:
 
-    CClassType(const CClassType* InSuperClass, const SClassDescription& ClassDescription);
-    ~CClassType() = default;
+    FClassType(const FClassType* InSuperClass, const FClassDescription& ClassDescription);
+    ~FClassType() = default;
 
-    bool IsSubClassOf(const CClassType* Class) const;
+    bool IsSubClassOf(const FClassType* Class) const;
 
     template<typename T>
     FORCEINLINE bool IsSubClassOf() const
@@ -37,7 +37,7 @@ public:
         return Name;
     }
 
-    FORCEINLINE const CClassType* GetSuperClass() const
+    FORCEINLINE const FClassType* GetSuperClass() const
     {
         return SuperClass;
     }
@@ -48,9 +48,8 @@ public:
     }
 
 private:
-    const char* Name;
-
-    const CClassType* SuperClass;
+    const char*       Name;
+    const FClassType* SuperClass;
     
     uint32 SizeInBytes;
     uint32 Alignment;

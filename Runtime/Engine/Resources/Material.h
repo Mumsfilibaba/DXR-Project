@@ -106,8 +106,8 @@ private:
     bool bRenderInForwardPass   = false;
 
     FMaterialDesc        	       Properties;
-    TSharedRef<FRHIConstantBuffer> MaterialBuffer;
-    TSharedRef<FRHISamplerState>   Sampler;
+    FRHIConstantBufferRef MaterialBuffer;
+    FRHISamplerStateRef   Sampler;
 
     mutable TStaticArray<FRHIShaderResourceView*, 7> ShaderResourceViews;
 };

@@ -4,7 +4,7 @@
 // FPointLight
 
 FPointLight::FPointLight()
-    : CLight()
+    : FLight()
     , Matrices()
     , Position(0.0f, 0.0f, 0.0f)
 {

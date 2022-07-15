@@ -24,6 +24,14 @@ void* FMemory::Malloc(uint64 Size) noexcept
     }
 }
 
+void* FMemory::MallocZeroed(uint64 Size) noexcept
+{
+    // Calloc?
+    void* NewMemory = MallocZeroed(Size);
+    Memzero(NewMemory, Size);
+    return NewMemory;
+}
+
 void* FMemory::Realloc(void* Ptr, uint64 Size) noexcept
 {
     return realloc(Ptr, Size);

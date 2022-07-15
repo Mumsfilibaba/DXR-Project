@@ -1,9 +1,9 @@
 #include "ClassType.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CClassType
+// FClassType
 
-CClassType::CClassType(const CClassType* InSuperClass, const SClassDescription& ClassDescription)
+FClassType::FClassType(const FClassType* InSuperClass, const FClassDescription& ClassDescription)
     : Name(nullptr)
     , SuperClass(InSuperClass)
     , SizeInBytes(0)
@@ -14,9 +14,9 @@ CClassType::CClassType(const CClassType* InSuperClass, const SClassDescription& 
     Alignment = ClassDescription.Alignment;
 }
 
-bool CClassType::IsSubClassOf(const CClassType* Class) const
+bool FClassType::IsSubClassOf(const FClassType* Class) const
 {
-    for (const CClassType* Current = this; Current; Current = Current->GetSuperClass())
+    for (const FClassType* Current = this; Current; Current = Current->GetSuperClass())
     {
         if (Current == Class)
         {

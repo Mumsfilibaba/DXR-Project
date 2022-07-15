@@ -7,9 +7,9 @@
 #include "Engine/Scene/Scene.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SCascadeGenerationInfo
+// FCascadeGenerationInfo
 
-struct SCascadeGenerationInfo
+struct FCascadeGenerationInfo
 {
     FVector3 LightDirection;
     float CascadeSplitLambda;
@@ -18,29 +18,29 @@ struct SCascadeGenerationInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SCascadeMatrices
+// FCascadeMatrices
 
-struct SCascadeMatrices
+struct FCascadeMatrices
 {
     FMatrix4 ViewProjection;
     FMatrix4 View;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SCascadeSplits
+// FCascadeSplits
 
-struct SCascadeSplits
+struct FCascadeSplits
 {
     FVector3 MinExtent;
-    float Split;
+    float    Split;
     FVector3 MaxExtent;
-    float FarPlane;
+    float    FarPlane;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SPerShadowMap
+// FPerShadowMap
 
-struct SPerShadowMap
+struct FPerShadowMap
 {
     FMatrix4 Matrix;
     FVector3 Position;
@@ -48,9 +48,9 @@ struct SPerShadowMap
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SPerCascade
+// FPerCascade
 
-struct SPerCascade
+struct FPerCascade
 {
     int32 CascadeIndex;
     int32 Padding0;
@@ -59,36 +59,36 @@ struct SPerCascade
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShadowMapRenderer
+// FShadowMapRenderer
 
-class RENDERER_API CShadowMapRenderer
+class RENDERER_API FShadowMapRenderer
 {
 public:
-    CShadowMapRenderer() = default;
-    ~CShadowMapRenderer() = default;
+    FShadowMapRenderer() = default;
+    ~FShadowMapRenderer() = default;
 
-    bool Init(SLightSetup& LightSetup, SFrameResources& Resources);
+    bool Init(FLightSetup& LightSetup, FFrameResources& Resources);
 
     void Release();
 
      /** @brief: Render Point light shadows */
-    void RenderPointLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const FScene& Scene);
+    void RenderPointLightShadows(FRHICommandList& CmdList, const FLightSetup& LightSetup, const FScene& Scene);
 
      /** @brief: Render Directional light shadows */
-    void RenderDirectionalLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const FScene& Scene);
+    void RenderDirectionalLightShadows(FRHICommandList& CmdList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, const FScene& Scene);
 
      /** @brief: Render ShadowMasks */
-    void RenderShadowMasks(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources);
+    void RenderShadowMasks(FRHICommandList& CmdList, const FLightSetup& LightSetup, const FFrameResources& FrameResources);
 
      /** @brief: Resize the resources that are dependent on the viewport */
-    bool ResizeResources(uint32 Width, uint32 Height, SLightSetup& LightSetup);
+    bool ResizeResources(uint32 Width, uint32 Height, FLightSetup& LightSetup);
 
 private:
 
-    bool CreateShadowMask(uint32 Width, uint32 Height, SLightSetup& LightSetup);
-    bool CreateShadowMaps(SLightSetup& LightSetup, SFrameResources& FrameResources);
+    bool CreateShadowMask(uint32 Width, uint32 Height, FLightSetup& LightSetup);
+    bool CreateShadowMaps(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
-    TSharedRef<FRHIConstantBuffer>        PerShadowMapBuffer;
+    FRHIConstantBufferRef        PerShadowMapBuffer;
 
     TSharedRef<FRHIGraphicsPipelineState> DirectionalLightPSO;
     TSharedRef<FRHIVertexShader>          DirectionalLightShader;
@@ -100,8 +100,8 @@ private:
     TSharedRef<FRHIVertexShader>          PointLightVertexShader;
     TSharedRef<FRHIPixelShader>           PointLightPixelShader;
 
-    TSharedRef<FRHIConstantBuffer>        PerCascadeBuffer;
-    TSharedRef<FRHIConstantBuffer>        CascadeGenerationData;
+    FRHIConstantBufferRef        PerCascadeBuffer;
+    FRHIConstantBufferRef        CascadeGenerationData;
 
     FRHIComputePipelineStateRef  CascadeGen;
     FRHIComputeShaderRef         CascadeGenShader;

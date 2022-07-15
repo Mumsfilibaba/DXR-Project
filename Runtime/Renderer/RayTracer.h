@@ -6,18 +6,18 @@
 #include "Engine/Scene/Scene.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRayTracer
+// FRayTracer
 
-class RENDERER_API CRayTracer
+class RENDERER_API FRayTracer
 {
 public:
-    CRayTracer() = default;
-    ~CRayTracer() = default;
+    FRayTracer() = default;
+    ~FRayTracer() = default;
 
-    bool Init(SFrameResources& Resources);
+    bool Init(FFrameResources& Resources);
     void Release();
 
-    void PreRender(FRHICommandList& CmdList, SFrameResources& Resources, const FScene& Scene);
+    void PreRender(FRHICommandList& CmdList, FFrameResources& Resources, const FScene& Scene);
 
 private:
     TSharedRef<FRHIRayTracingPipelineState> Pipeline;

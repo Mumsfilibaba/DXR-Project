@@ -5,57 +5,57 @@
 // Defines for creating CoreObjects
 
 #define CLASS_DESCRIPTION( TCoreObject )        \
-    static SClassDescription ClassDescription = \
+    static FClassDescription ClassDescription = \
     {                                           \
         #TCoreObject,                           \
         sizeof(TCoreObject),                    \
         alignof(TCoreObject),                   \
     }
 
-#define CORE_OBJECT( TCoreObject, TSuperClass )                                   \
-private:                                                                          \
-    typedef TCoreObject This;                                                     \
-    typedef TSuperClass Super;                                                    \
-                                                                                  \
-public:                                                                           \
-    static CClassType* GetStaticClass()                                           \
-    {                                                                             \
-        CLASS_DESCRIPTION( TCoreObject );                                         \
-        static CClassType ClassInfo( Super::GetStaticClass(), ClassDescription ); \
-        return &ClassInfo;                                                        \
-    }                                                                             \
-                                                                                  \
+#define CORE_OBJECT( TCoreObject, TSuperClass )                                 \
+private:                                                                        \
+    typedef TCoreObject This;                                                   \
+    typedef TSuperClass Super;                                                  \
+                                                                                \
+public:                                                                         \
+    static FClassType* GetStaticClass()                                         \
+    {                                                                           \
+        CLASS_DESCRIPTION(TCoreObject);                                         \
+        static FClassType ClassInfo(Super::GetStaticClass(), ClassDescription); \
+        return &ClassInfo;                                                      \
+    }                                                                           \
+                                                                                \
 private:
 
 #define CORE_OBJECT_INIT()                 \
     this->SetClass(This::GetStaticClass())
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCoreObject
+// FCoreObject
 
-class ENGINE_API CCoreObject
+class ENGINE_API FCoreObject
 {
 public:
 
-    virtual ~CCoreObject() = default;
+    virtual ~FCoreObject() = default;
 
-    FORCEINLINE const CClassType* GetClass() const
+    FORCEINLINE const FClassType* GetClass() const
     {
         return Class;
     }
 
-    static const CClassType* GetStaticClass()
+    static const FClassType* GetStaticClass()
     {
-        CLASS_DESCRIPTION(CCoreObject);
-        static CClassType ClassInfo(nullptr, ClassDescription);
+        CLASS_DESCRIPTION(FCoreObject);
+        static FClassType ClassInfo(nullptr, ClassDescription);
         return &ClassInfo;
     }
 
 protected:
 
-    CCoreObject() = default;
+    FCoreObject() = default;
 
-    FORCEINLINE void SetClass(const CClassType* InClass)
+    FORCEINLINE void SetClass(const FClassType* InClass)
     {
         Class = InClass;
     }
@@ -63,13 +63,13 @@ protected:
 private:
 
      /** @brief: Object representing the class */
-    const CClassType* Class = nullptr;
+    const FClassType* Class = nullptr;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helpers
 
-inline bool IsSubClassOf(CCoreObject* CoreObject, CClassType* ClassType)
+inline bool IsSubClassOf(FCoreObject* CoreObject, FClassType* ClassType)
 {
     Check(CoreObject != nullptr);
     Check(CoreObject->GetClass() != nullptr);
@@ -77,13 +77,13 @@ inline bool IsSubClassOf(CCoreObject* CoreObject, CClassType* ClassType)
 }
 
 template<typename T>
-inline bool IsSubClassOf(CCoreObject* CoreObject)
+inline bool IsSubClassOf(FCoreObject* CoreObject)
 {
     return IsSubClassOf(CoreObject, T::GetStaticClass());
 }
 
 template<typename T>
-inline T* Cast(CCoreObject* Object)
+inline T* Cast(FCoreObject* Object)
 {
     return IsSubClassOf<T>(Object) ? static_cast<T*>(Object) : nullptr;
 }

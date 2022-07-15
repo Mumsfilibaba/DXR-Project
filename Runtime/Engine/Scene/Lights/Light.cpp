@@ -1,9 +1,9 @@
 #include "Light.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CLight
+// FLight
 
-CLight::CLight()
+FLight::FLight()
     : Color()
     , ShadowNearPlane(1.0f)
     , ShadowFarPlane(30.0f)
@@ -13,17 +13,17 @@ CLight::CLight()
     CORE_OBJECT_INIT();
 }
 
-void CLight::SetColor(const FVector3& InColor)
+void FLight::SetColor(const FVector3& InColor)
 {
     Color = InColor;
 }
 
-void CLight::SetColor(float R, float G, float B)
+void FLight::SetColor(float R, float G, float B)
 {
     Color = FVector3(R, G, B);
 }
 
-void CLight::SetIntensity(float InIntensity)
+void FLight::SetIntensity(float InIntensity)
 {
     Intensity = InIntensity;
 }

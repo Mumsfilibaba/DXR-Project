@@ -11,9 +11,9 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CForwardRenderer
+// FForwardRenderer
 
-bool CForwardRenderer::Init(SFrameResources& FrameResources)
+bool FForwardRenderer::Init(FFrameResources& FrameResources)
 {
     TArray<FShaderDefine> Defines =
     {
@@ -104,14 +104,14 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     return true;
 }
 
-void CForwardRenderer::Release()
+void FForwardRenderer::Release()
 {
     PipelineState.Reset();
     VShader.Reset();
     PShader.Reset();
 }
 
-void CForwardRenderer::Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup)
+void FForwardRenderer::Render(FRHICommandList& CmdList, const FFrameResources& FrameResources, const FLightSetup& LightSetup)
 {
     // Forward Pass
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin ForwardPass");
@@ -163,7 +163,7 @@ void CForwardRenderer::Render(FRHICommandList& CmdList, const SFrameResources& F
     CmdList.SetGraphicsPipelineState(PipelineState.Get());
     for (const auto CommandIndex : FrameResources.ForwardVisibleCommands)
     {
-        const SMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
+        const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
 
         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
         CmdList.SetIndexBuffer(Command.IndexBuffer);

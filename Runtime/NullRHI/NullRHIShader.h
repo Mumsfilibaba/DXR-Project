@@ -9,18 +9,35 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
+template<typename T>
+struct TNullRHIShader;
+
+typedef TNullRHIShader<class FRHIVertexShader>           FNullRHIVertexShader;
+typedef TNullRHIShader<class FRHIHullShader>             FNullRHIHullShader;
+typedef TNullRHIShader<class FRHIDomainShader>           FNullRHIDomainShader;
+typedef TNullRHIShader<class FRHIGeometryShader>         FNullRHIGeometryShader;
+typedef TNullRHIShader<class FRHIAmplificationShader>    FNullRHIAmplificationShader;
+typedef TNullRHIShader<class FRHIMeshShader>             FNullRHIMeshShader;
+typedef TNullRHIShader<class FRHIPixelShader>            FNullRHIPixelShader;
+
+typedef TNullRHIShader<struct FNullRHIComputeShaderBase> FNullRHIComputeShader;
+
+typedef TNullRHIShader<class FRHIRayTracingShader>       FNullRHIRayTracingShader;
+typedef TNullRHIShader<class FRHIRayGenShader>           FNullRHIRayGenShader;
+typedef TNullRHIShader<class FRHIRayMissShader>          FNullRHIRayMissShader;
+typedef TNullRHIShader<class FRHIRayClosestHitShader>    FNullRHIRayClosestHitShader;
+typedef TNullRHIShader<class FRHIRayAnyHitShader>        FNullRHIRayAnyHitShader;
+typedef TNullRHIShader<class FRHIRayIntersectionShader>  FNullRHIRayIntersectionShader;
+typedef TNullRHIShader<class FRHIRayCallableShader>      FNullRHIRayCallableShader;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIComputeShader
+// FNullRHIComputeShader
 
-class CNullRHIComputeShader : public FRHIComputeShader
+struct FNullRHIComputeShaderBase : public FRHIComputeShader
 {
-public:
-
-    CNullRHIComputeShader()
+    FNullRHIComputeShaderBase()
         : FRHIComputeShader()
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIComputeShader Interface
@@ -32,15 +49,11 @@ public:
 // TNullRHIShader
 
 template<typename BaseShaderType>
-class TNullRHIShader : public BaseShaderType
+struct TNullRHIShader final : public BaseShaderType
 {
-public:
-
     TNullRHIShader()
         : BaseShaderType()
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface

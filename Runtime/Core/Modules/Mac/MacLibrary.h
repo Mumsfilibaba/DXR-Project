@@ -19,7 +19,7 @@ public:
 
     static FORCEINLINE void* LoadDynamicLib(const char* LibraryName)
     {
-        String RealName = GetRealName(LibraryName);
+        FString RealName = GetRealName(LibraryName);
 
 #if ENABLE_LIBRARY_LAZY_MODE
         const int32 Mode = RTLD_LAZY;
@@ -33,7 +33,7 @@ public:
 
     static FORCEINLINE void* GetLoadedHandle(const char* LibraryName)
     { 
-        String RealName = GetRealName(LibraryName);
+        FString RealName = GetRealName(LibraryName);
 
 #if ENABLE_LIBRARY_LAZY_MODE
         const int32 Mode = RTLD_LAZY | RTLD_NOLOAD;
@@ -67,10 +67,10 @@ public:
         return ".dylib";
     }
 
-    static FORCEINLINE String GetRealName(const char* LibraryName) 
+    static FORCEINLINE FString GetRealName(const char* LibraryName) 
     { 
         // TODO: MacOS seems to prefix all libraries with lib*, it would be nice if we could decide if this should happen or not
-        return String("lib") + LibraryName + GetDynamicLibExtension();
+        return FString("lib") + LibraryName + GetDynamicLibExtension();
     }
 
     static FORCEINLINE bool IsLibraryLoaded(const char* LibraryName)

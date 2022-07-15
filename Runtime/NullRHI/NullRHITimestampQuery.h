@@ -10,23 +10,16 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHITimestampQuery
+// FNullRHITimestampQuery
 
-class CNullRHITimestampQuery : public FRHITimestampQuery
+struct FNullRHITimestampQuery : public FRHITimestampQuery
 {
-public:
-    CNullRHITimestampQuery() = default;
-    ~CNullRHITimestampQuery() = default;
+    FNullRHITimestampQuery()  = default;
+    ~FNullRHITimestampQuery() = default;
 
-    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final
-    {
-        OutQuery = FRHITimestamp();
-    }
+    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final { OutQuery = FRHITimestamp(); }
 
-    virtual uint64 GetFrequency() const override final
-    {
-        return 1;
-    }
+    virtual uint64 GetFrequency() const override final { return 1; }
 };
 
 #if defined(COMPILER_MSVC)

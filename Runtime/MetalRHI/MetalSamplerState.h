@@ -5,16 +5,14 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalSamplerState
+// FMetalSamplerState
 
-class CMetalSamplerState : public FRHISamplerState
+class FMetalSamplerState : public FRHISamplerState
 {
 public:
 
-    CMetalSamplerState()  = default;
-    ~CMetalSamplerState() = default;
-    
-public:
+    FMetalSamplerState()  = default;
+    ~FMetalSamplerState() = default;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHISamplerState Interface

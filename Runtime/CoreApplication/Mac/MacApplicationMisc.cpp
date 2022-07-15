@@ -18,7 +18,7 @@ FGenericConsoleWindow* FMacApplicationMisc::CreateConsoleWindow()
     return FMacConsoleWindow::CreateMacConsole();
 }
 
-void FMacApplicationMisc::MessageBox(const String& Title, const String& Message)
+void FMacApplicationMisc::MessageBox(const FString& Title, const FString& Message)
 {
     SCOPED_AUTORELEASE_POOL();
     

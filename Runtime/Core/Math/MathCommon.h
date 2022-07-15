@@ -191,4 +191,4 @@ namespace NMath
     {
         return ((1 << kBits) - 1);
     }
-}
+};

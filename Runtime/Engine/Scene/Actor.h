@@ -9,14 +9,14 @@
 #include "Engine/CoreObject/CoreObject.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CActorTransform
+// FActorTransform
 
-class ENGINE_API CActorTransform
+class ENGINE_API FActorTransform
 {
 public:
 
-    CActorTransform();
-    ~CActorTransform() = default;
+    FActorTransform();
+    ~FActorTransform() = default;
 
     void SetTranslation(float x, float y, float z);
     void SetTranslation(const FVector3& InPosition);
@@ -76,14 +76,14 @@ private:
 };
 
 class FScene;
-class CComponent;
+class FComponent;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FActor
 
-class ENGINE_API FActor : public CCoreObject
+class ENGINE_API FActor : public FCoreObject
 {
-    CORE_OBJECT(FActor, CCoreObject);
+    CORE_OBJECT(FActor, FCoreObject);
 
 public:
 
@@ -107,7 +107,7 @@ public:
      * 
      * @param InComponent: Component to add to the Actor
      */
-    void AddComponent(CComponent* InComponent);
+    void AddComponent(FComponent* InComponent);
 
     /**
      * @brief: Set name of the actor 
@@ -122,7 +122,7 @@ public:
      * @param ComponentClass: ClassObject to of the component to retrieve 
      * @return: Returns true if the actor contains a component of a certain type
      */
-    bool HasComponentOfClass(class CClassType* ComponentClass) const;
+    bool HasComponentOfClass(class FClassType* ComponentClass) const;
 
     /**
      * @brief: Check if the actor has a component of the component-class
@@ -141,7 +141,7 @@ public:
      * @param ComponentClass: ClassObject to of the component to retrieve
      * @return: Returns a pointer to the requested component, or nullptr if no component of the type exist
      */
-    CComponent* GetComponentOfClass(class CClassType* ComponentClass) const;
+    FComponent* GetComponentOfClass(class FClassType* ComponentClass) const;
 
     /**
      * @brief: Retrieve a component from the actor of the component-class
@@ -159,7 +159,7 @@ public:
      * 
      * @param InTransform: New transform of the actor
      */
-    FORCEINLINE void SetTransform(const CActorTransform& InTransform)
+    FORCEINLINE void SetTransform(const FActorTransform& InTransform)
     {
         Transform = InTransform;
     }
@@ -189,7 +189,7 @@ public:
      *
      * @return: Returns the transform of the actor
      */
-    FORCEINLINE CActorTransform& GetTransform()
+    FORCEINLINE FActorTransform& GetTransform()
     {
         return Transform;
     }
@@ -199,7 +199,7 @@ public:
      *
      * @return: Returns the transform of the actor
      */
-    FORCEINLINE const CActorTransform& GetTransform() const
+    FORCEINLINE const FActorTransform& GetTransform() const
     {
         return Transform;
     }
@@ -225,13 +225,13 @@ public:
     }
 
 private:
-    FString              Name;
+    FString             Name;
 
     FScene*             SceneOwner = nullptr;
 
-    CActorTransform     Transform;
+    FActorTransform     Transform;
 
-    TArray<CComponent*> Components;
+    TArray<FComponent*> Components;
 
     bool bIsStartable : 1;
     bool bIsTickable  : 1;

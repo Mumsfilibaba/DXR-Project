@@ -5,13 +5,13 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalTimestampQuery
+// FMetalTimestampQuery
 
-class CMetalTimestampQuery : public FRHITimestampQuery
+class FMetalTimestampQuery : public FRHITimestampQuery
 {
 public:
-    CMetalTimestampQuery() = default;
-    ~CMetalTimestampQuery() = default;
+    FMetalTimestampQuery()  = default;
+    ~FMetalTimestampQuery() = default;
 
     virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final
     {

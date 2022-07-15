@@ -10,16 +10,14 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHISamplerState
+// FNullRHISamplerState
 
-class CNullRHISamplerState : public FRHISamplerState
+class FNullRHISamplerState : public FRHISamplerState
 {
 public:
 
-    CNullRHISamplerState()  = default;
-    ~CNullRHISamplerState() = default;
-
-public:
+    FNullRHISamplerState()  = default;
+    ~FNullRHISamplerState() = default;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHISamplerState Interface

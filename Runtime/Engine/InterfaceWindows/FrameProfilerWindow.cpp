@@ -17,12 +17,12 @@ TAutoConsoleVariable<bool> GDrawFrameProfiler("Renderer.DrawFrameProfiler", fals
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FrameProfilerWindow
 
-TSharedRef<CFrameProfilerWindow> CFrameProfilerWindow::Make()
+TSharedRef<FFrameProfilerWindow> FFrameProfilerWindow::Make()
 {
-    return dbg_new CFrameProfilerWindow();
+    return dbg_new FFrameProfilerWindow();
 }
 
-void CFrameProfilerWindow::Tick()
+void FFrameProfilerWindow::Tick()
 {
     if (GDrawFps.GetBool())
     {
@@ -35,12 +35,12 @@ void CFrameProfilerWindow::Tick()
     }
 }
 
-bool CFrameProfilerWindow::IsTickable()
+bool FFrameProfilerWindow::IsTickable()
 {
     return GDrawFps.GetBool() || GDrawFrameProfiler.GetBool();
 }
 
-void CFrameProfilerWindow::DrawFPS()
+void FFrameProfilerWindow::DrawFPS()
 {
     const uint32 WindowWidth = FApplication::Get().GetMainViewport()->GetWidth();
 
@@ -70,7 +70,7 @@ void CFrameProfilerWindow::DrawFPS()
     ImGui::PopStyleVar();
 }
 
-void CFrameProfilerWindow::DrawCPUData(float Width)
+void FFrameProfilerWindow::DrawCPUData(float Width)
 {
     const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
     if (ImGui::BeginTable("Frame Statistics", 1, TableFlags))
@@ -211,7 +211,7 @@ void CFrameProfilerWindow::DrawCPUData(float Width)
     }
 }
 
-void CFrameProfilerWindow::DrawWindow()
+void FFrameProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
     FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();
