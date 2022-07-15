@@ -105,7 +105,7 @@ private:
     bool bMaterialBufferIsDirty = true;
     bool bRenderInForwardPass   = false;
 
-    FMaterialDesc        	       Properties;
+    FMaterialDesc         Properties;
     FRHIConstantBufferRef MaterialBuffer;
     FRHISamplerStateRef   Sampler;
 

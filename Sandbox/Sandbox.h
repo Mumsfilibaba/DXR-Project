@@ -18,6 +18,6 @@ public:
     virtual void Tick(FTimestamp DeltaTime) override;
 
 private:
-    CCamera* CurrentCamera = nullptr;
+    FCamera* CurrentCamera = nullptr;
     FVector3 CameraSpeed;
 };

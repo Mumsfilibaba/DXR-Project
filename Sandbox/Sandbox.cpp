@@ -338,7 +338,7 @@ bool FSandbox::Init()
         NewActor->AddComponent(NewComponent);
     }
 
-    CurrentCamera = dbg_new CCamera();
+    CurrentCamera = dbg_new FCamera();
     CurrentScene->AddCamera(CurrentCamera);
 
     // Add PointLight- Source

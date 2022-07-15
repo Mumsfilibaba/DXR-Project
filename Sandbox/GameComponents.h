@@ -5,14 +5,14 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMovingBallComponent
 
-class FMovingBallComponent : public CComponent
+class FMovingBallComponent : public FComponent
 {
-    CORE_OBJECT(FMovingBallComponent, CComponent);
+    CORE_OBJECT(FMovingBallComponent, FComponent);
 
 public:
 
     FMovingBallComponent(FActor* InActorOwner, float InSpeed)
-        : CComponent(InActorOwner, false, true)
+        : FComponent(InActorOwner, false, true)
         , Speed(InSpeed)
         , CurrentSpeed(InSpeed)
     { }
@@ -23,7 +23,7 @@ public:
 
         FActor* Actor = GetActor();
         
-        CActorTransform& ActorTransform = Actor->GetTransform();
+        FActorTransform& ActorTransform = Actor->GetTransform();
         ActorTransform.SetTranslation(ActorTransform.GetTranslation() + FVector3(0.0f, CurrentSpeed * fDelta, 0.0f));
 
         if (ActorTransform.GetTranslation().y >= 60.0f)

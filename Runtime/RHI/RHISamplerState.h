@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef TSharedRef<class FRHISamplerState> RHISamplerStateRef;
+typedef TSharedRef<class FRHISamplerState> FRHISamplerStateRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ESamplerMode
@@ -209,7 +209,7 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
     const FRHISamplerStateInitializer& GetInitializer() const { return Initializer; } 
-    
+
 private:
     FRHISamplerStateInitializer Initializer;
 };
