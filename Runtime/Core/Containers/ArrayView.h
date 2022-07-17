@@ -142,6 +142,16 @@ public:
     }
 
     /**
+     * @brief: Sets the array to zero
+     */
+    template<typename U = ElementType>
+    FORCEINLINE typename TEnableIf<TIsTrivial<U>::Value>::Type Memzero()
+    {
+        ElementType* Elements = Data();
+        FMemory::Memzero(Elements, SizeInBytes());
+    }
+
+    /**
      * @brief: Retrieve the last index that can be used to retrieve an element from the view
      *
      * @return: Returns a the index to the last element of the view
@@ -400,3 +410,18 @@ struct TIsTArrayType<TArrayView<T>>
         Value = true
     };
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// MakeArrayView
+
+template<typename T>
+TArrayView<T> MakeArrayView(std::initializer_list<T> InitList)
+{
+    return TArrayView<T>(InitList);
+}
+
+template<typename T>
+TArrayView<T> MakeArrayView(T* Array, int32 Size)
+{
+    return TArrayView<T>(Array, Size);
+}

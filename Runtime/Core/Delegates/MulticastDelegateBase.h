@@ -15,7 +15,7 @@ public:
      * 
      * @param Other: Other delegate to copy
      */
-    FORCEINLINE FMulticastDelegateBase(const FMulticastDelegateBase& Other)
+    FORCEINLINE FMulticastDelegateBase(const FMulticastDelegateBase& Other) noexcept
         : Delegates(Other.Delegates)
         , LockVariable(Other.LockVariable)
     { }
@@ -25,7 +25,7 @@ public:
      *
      * @param Other: Other delegate to move
      */
-    FORCEINLINE FMulticastDelegateBase(FMulticastDelegateBase&& Other)
+    FORCEINLINE FMulticastDelegateBase(FMulticastDelegateBase&& Other) noexcept
         : Delegates(Move(Other.Delegates))
         , LockVariable(Other.LockVariable)
     { }
@@ -33,7 +33,7 @@ public:
     /**
      * @brief: Destructor 
      */
-    FORCEINLINE ~FMulticastDelegateBase()
+    FORCEINLINE ~FMulticastDelegateBase() noexcept
     {
         UnbindAll();
     }
@@ -41,7 +41,7 @@ public:
     /**
      * @brief:  Unbind all bound delegates 
      */
-    FORCEINLINE void UnbindAll()
+    FORCEINLINE void UnbindAll() noexcept
     {
         if (IsLocked())
         {
@@ -61,7 +61,7 @@ public:
      * 
      * @param Other: Delegate to swap with
      */
-    FORCEINLINE void Swap(FMulticastDelegateBase& Other)
+    FORCEINLINE void Swap(FMulticastDelegateBase& Other) noexcept
     {
         Delegates.Swap(Other.Delegates);
     }
@@ -72,7 +72,7 @@ public:
      * @param Handle: Handle to remove
      * @return: Returns true if the handle was found and unbound
      */
-    FORCEINLINE bool Unbind(FDelegateHandle Handle)
+    FORCEINLINE bool Unbind(FDelegateHandle Handle) noexcept
     {
         if (Handle.IsValid())
         {
@@ -103,7 +103,7 @@ public:
      * @param Object: Object to check for
      * @return: Returns true if the object was unbound from any delegate
      */
-    FORCEINLINE bool UnbindIfBound(const void* Object)
+    FORCEINLINE bool UnbindIfBound(const void* Object) noexcept
     {
         bool bResult = false;
 
@@ -140,7 +140,7 @@ public:
      * 
      * @return: Returns true if there is any delegate bound
      */
-    FORCEINLINE bool IsBound() const
+    FORCEINLINE bool IsBound() const noexcept
     {
         for (const FDelegateBase& Delegate : Delegates)
         {
@@ -160,7 +160,7 @@ public:
      * @param Object: Object to check for
      * @return: Returns true if any of the delegates has the object bound
      */
-    FORCEINLINE bool IsObjectBound(const void* Object) const
+    FORCEINLINE bool IsObjectBound(const void* Object) const noexcept
     {
         if (Object)
         {
@@ -182,7 +182,7 @@ public:
      * 
      * @return: Returns the number of delegates bound
      */
-    FORCEINLINE uint32 GetCount() const
+    FORCEINLINE uint32 GetCount() const noexcept
     {
         return static_cast<uint32>(Delegates.Size());
     }
@@ -193,7 +193,7 @@ public:
      * @param RHS: Delegate to copy from
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE FMulticastDelegateBase& operator=(const FMulticastDelegateBase& RHS)
+    FORCEINLINE FMulticastDelegateBase& operator=(const FMulticastDelegateBase& RHS) noexcept
     {
         CopyFrom(RHS);
         return *this;
@@ -205,7 +205,7 @@ public:
      * @param RHS: Delegate to move from
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE FMulticastDelegateBase& operator=(FMulticastDelegateBase&& RHS)
+    FORCEINLINE FMulticastDelegateBase& operator=(FMulticastDelegateBase&& RHS) noexcept
     {
         MoveFrom(Forward<FMulticastDelegateBase>(RHS));
         return *this;
@@ -213,12 +213,12 @@ public:
 
 protected:
 
-    FORCEINLINE explicit FMulticastDelegateBase()
+    FORCEINLINE explicit FMulticastDelegateBase() noexcept
         : Delegates()
         , LockVariable(0)
     { }
 
-    FORCEINLINE FDelegateHandle AddDelegate(const FDelegateBase& NewDelegate)
+    FORCEINLINE FDelegateHandle AddDelegate(const FDelegateBase& NewDelegate) noexcept
     {
         FDelegateHandle NewHandle = NewDelegate.GetHandle();
         if (!NewHandle.IsValid())
@@ -251,20 +251,20 @@ protected:
         return NewHandle;
     }
 
-    FORCEINLINE void CopyFrom(const FMulticastDelegateBase& Other)
+    FORCEINLINE void CopyFrom(const FMulticastDelegateBase& Other) noexcept
     {
         Delegates = Other.Delegates;
         LockVariable = Other.LockVariable;
     }
 
-    FORCEINLINE void MoveFrom(FMulticastDelegateBase&& Other)
+    FORCEINLINE void MoveFrom(FMulticastDelegateBase&& Other) noexcept
     {
         Delegates = Move(Other.Delegates);
         LockVariable = Other.LockVariable;
         Other.LockVariable = 0;
     }
 
-    FORCEINLINE void CompactArray()
+    FORCEINLINE void CompactArray() noexcept
     {
         if (!IsLocked() && !Delegates.IsEmpty())
         {
@@ -290,12 +290,12 @@ protected:
         }
     }
 
-    FORCEINLINE void Lock() const
+    FORCEINLINE void Lock() const noexcept
     {
         LockVariable++;
     }
 
-    FORCEINLINE void Unlock() const
+    FORCEINLINE void Unlock() const noexcept
     {
         Check(LockVariable > 0);
         LockVariable--;

@@ -146,7 +146,7 @@ FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
     FRHITexture2DRef Texture = RHICreateTexture2D(Initializer);
     if (!Texture)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return nullptr;
     }
 

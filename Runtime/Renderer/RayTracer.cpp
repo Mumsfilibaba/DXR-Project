@@ -20,7 +20,7 @@ bool FRayTracer::Init(FFrameResources& Resources)
         FShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_3, EShaderStage::RayGen);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
         {
-            FDebug::DebugBreak();
+            PlatformDebugBreak();
             return false;
         }
     }
@@ -28,7 +28,7 @@ bool FRayTracer::Init(FFrameResources& Resources)
     RayGenShader = RHICreateRayGenShader(Code);
     if (!RayGenShader)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -36,7 +36,7 @@ bool FRayTracer::Init(FFrameResources& Resources)
         FShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_3, EShaderStage::RayClosestHit);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
         {
-            FDebug::DebugBreak();
+            PlatformDebugBreak();
             return false;
         }
     }
@@ -44,7 +44,7 @@ bool FRayTracer::Init(FFrameResources& Resources)
     RayClosestHitShader = RHICreateRayClosestHitShader(Code);
     if (!RayClosestHitShader)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -52,7 +52,7 @@ bool FRayTracer::Init(FFrameResources& Resources)
         FShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_3, EShaderStage::RayMiss);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
         {
-            FDebug::DebugBreak();
+            PlatformDebugBreak();
             return false;
         }
     }
@@ -60,7 +60,7 @@ bool FRayTracer::Init(FFrameResources& Resources)
     RayMissShader = RHICreateRayMissShader(Code);
     if (!RayMissShader)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -75,7 +75,7 @@ bool FRayTracer::Init(FFrameResources& Resources)
     Pipeline = RHICreateRayTracingPipelineState(PSOInitializer);
     if (!Pipeline)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -86,7 +86,7 @@ bool FRayTracer::Init(FFrameResources& Resources)
     Resources.RTOutput = RHICreateTexture2D(RTOutputInitializer);
     if (!Resources.RTOutput)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
     else

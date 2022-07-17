@@ -201,7 +201,7 @@ bool FD3D12ShaderCompiler::CompileFromFile(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
 
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -224,7 +224,7 @@ bool FD3D12ShaderCompiler::CompileShader(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
 
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -367,7 +367,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
 
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     wchar_t TargetProfile[BufferLength];
-    FFWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FWCString::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
     TComPtr<IDxcOperationResult> Result;
     HRESULT hResult = DxCompiler->Compile(
@@ -380,7 +380,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Compile");
 
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -388,7 +388,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
 
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 

@@ -48,7 +48,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     FRHITexture2DRef Panorama = FTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
     if (!Panorama)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
     else
@@ -86,7 +86,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
-            FDebug::DebugBreak();
+            PlatformDebugBreak();
             return false;
         }
     }
@@ -94,7 +94,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     SkyboxVertexShader = RHICreateVertexShader(ShaderCode);
     if (!SkyboxVertexShader)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -102,7 +102,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         FShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
-            FDebug::DebugBreak();
+            PlatformDebugBreak();
             return false;
         }
     }
@@ -110,7 +110,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     SkyboxPixelShader = RHICreatePixelShader(ShaderCode);
     if (!SkyboxPixelShader)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -120,7 +120,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
     if (!RasterizerState)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -129,7 +129,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -141,7 +141,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
     if (!DepthStencilState)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -159,7 +159,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
     else

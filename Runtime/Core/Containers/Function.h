@@ -11,7 +11,7 @@
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/Decay.h"
 
-namespace NBindInternal
+namespace NInternal
 {
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // BindPayload - Stores the payload resulted from a call to bind
@@ -24,8 +24,7 @@ namespace NBindInternal
         FORCEINLINE TBindPayload(FunctionType InFunc, PayloadTypes&&... PayloadArgs) noexcept
             : Payload(Forward<PayloadTypes>(PayloadArgs)...)
             , Func(Move(InFunc))
-        {
-        }
+        { }
 
         template<typename... ArgTypes>
         FORCEINLINE auto Execute(ArgTypes&&... Args) noexcept
@@ -57,8 +56,7 @@ namespace NBindInternal
 
         FORCEINLINE TBindPayload(FunctionType InFunc) noexcept
             : Func(Move(InFunc))
-        {
-        }
+        { }
 
         template<typename... ArgTypes>
         FORCEINLINE auto Execute(ArgTypes&&... Args) noexcept
@@ -83,7 +81,7 @@ namespace NBindInternal
 template<typename FunctionType, typename... ArgTypes>
 FORCEINLINE auto Bind(FunctionType Function, ArgTypes&&... Args)
 {
-    return NBindInternal::TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
+    return NInternal::TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

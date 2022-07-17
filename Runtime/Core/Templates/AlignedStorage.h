@@ -64,7 +64,7 @@ public:
     }
 
 private:
-    ALIGN_AS(Alignment) Byte Storage[NumBytes];
+    ALIGN_AS(Alignment) uint8 Storage[NumBytes];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

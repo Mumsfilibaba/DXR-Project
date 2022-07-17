@@ -84,10 +84,17 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Pause the thread
+// PauseInstruction
 
 #ifndef PauseInstruction
     #define PauseInstruction __builtin_ia32_pause
+#endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// PlatformDebugBreak
+
+#ifndef PlatformDebugBreak
+    #define PlatformDebugBreak __builtin_trap
 #endif
 
 // Define the rest of the defines to a default value

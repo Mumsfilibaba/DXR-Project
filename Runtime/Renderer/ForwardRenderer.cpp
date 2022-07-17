@@ -26,28 +26,28 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
     if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
     VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
     CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
     if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
     PShader = RHICreatePixelShader(ShaderCode);
     if (!PShader)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -59,7 +59,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -69,7 +69,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -78,7 +78,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -97,7 +97,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 

@@ -229,7 +229,7 @@ bool FD3D12OnlineDescriptorHeap::AllocateFreshHeap()
         Heap = dbg_new FD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
         if (!Heap->Initialize())
         {
-            FDebug::DebugBreak();
+            PlatformDebugBreak();
             return false;
         }
     }

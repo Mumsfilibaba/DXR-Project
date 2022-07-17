@@ -624,7 +624,7 @@ LRESULT FWindowsApplication::ProcessRawInput(HWND Window, UINT Message, WPARAM w
     GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, NULL, &Size, sizeof(RAWINPUTHEADER));
 
     // TODO: Measure performance impact
-    TUniquePtr<Byte[]> Buffer = MakeUnique<Byte[]>(Size);
+    TUniquePtr<uint8[]> Buffer = MakeUnique<uint8[]>(Size);
     if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER)) != Size)
     {
         LOG_ERROR("[FWindowsApplication] GetRawInputData did not return correct size");

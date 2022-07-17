@@ -88,11 +88,18 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Pause the thread
+// PauseInstruction
 
 #ifndef PauseInstruction
     #include <immintrin.h>
     #define PauseInstruction _mm_pause
+#endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// PlatformDebugBreak
+
+#ifndef PlatformDebugBreak
+    #define PlatformDebugBreak __debugbreak
 #endif
 
 // Define the rest of the defines to a default value

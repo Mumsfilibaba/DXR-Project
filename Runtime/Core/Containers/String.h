@@ -43,7 +43,7 @@ public:
 
     using ElementType = CharType;
     using SizeType    = int32;
-    using StringUtils = TStringUtils<ElementType>;
+    using StringUtils = TCString<ElementType>;
     using ViewType    = TStringView<ElementType>;
     using StorageType = TArray<CharType, TStringAllocator<CharType>>;
 

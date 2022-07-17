@@ -8,14 +8,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FDebug - Class for easy access to debugging functions 
 
-class FDebug
+struct FDebug
 {
-public:
-    static FORCEINLINE void DebugBreak()
-    {
-        FPlatformMisc::DebugBreak();
-    }
-
     static FORCEINLINE void OutputDebugString(const FString& Message)
     {
         FPlatformMisc::OutputDebugString(Message);

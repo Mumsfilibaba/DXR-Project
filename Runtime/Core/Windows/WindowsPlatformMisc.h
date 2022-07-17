@@ -21,11 +21,6 @@ struct FWindowsPlatformMisc final : public FGenericPlatformMisc
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericPlatformMisc Interface
 
-    static FORCEINLINE void DebugBreak()
-    {
-        __debugbreak();
-    }
-
     static FORCEINLINE void OutputDebugString(const FString& Message)
     {
         OutputDebugStringA(Message.CStr());

@@ -7,14 +7,22 @@
 #include <cwctype>
 #include <cstdarg>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TStringUtils
+template<typename CharType>
+class TCString;
+
+using FCString  = TCString<char>;
+using FWCString = TCString<wchar_t>;
 
 template<typename CharType>
-class TStringUtils;
+class TStringParse;
+
+using FStringParse = TStringParse<char>;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TCString
 
 template<>
-class TStringUtils<char>
+class TCString<char>
 {
 public:
 
@@ -267,11 +275,8 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Specialization for wide-chars
-
 template<>
-class TStringUtils<wchar_t>
+class TCString<wchar_t>
 {
 public:
 
@@ -525,16 +530,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Predefined types
-
-using FStringUtils  = TStringUtils<char>;
-using FFWStringUtils = TStringUtils<wchar_t>;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helpers for StringParsing
-
-template<typename CharType>
-class TStringParse;
+// TStringParse
 
 template<>
 class TStringParse<char>
@@ -725,9 +721,3 @@ FORCEINLINE uint64 TStringParse<char>::ParseInt<uint64>(const CharType* String, 
 {
     return ParseUint64(String, End, Base);
 }
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Predefined types
-
-using FStringParse  = TStringParse<char>;
-using FFWStringParse = TStringParse<wchar_t>;

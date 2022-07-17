@@ -17,7 +17,7 @@ public:
 
     using ElementType = CharType;
     using SizeType = int32;
-    using StringUtils = TStringUtils<CharType>;
+    using StringUtils = TCString<CharType>;
 
     enum
     {

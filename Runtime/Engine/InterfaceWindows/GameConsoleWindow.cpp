@@ -113,7 +113,7 @@ void FGameConsoleWindow::Tick()
                 ImGui::PushID(i);
                 if (ImGui::Selectable(Candidate.Second.CStr(), &bIsActiveIndex))
                 {
-                    FStringUtils::Copy(TextBuffer.Data(), Candidate.Second.CStr());
+                    FCString::Copy(TextBuffer.Data(), Candidate.Second.CStr());
                     PopupSelectedText = Candidate.Second;
 
                     Candidates.Clear();
@@ -252,7 +252,7 @@ void FGameConsoleWindow::Tick()
         {
             if (CandidatesIndex != -1)
             {
-                FStringUtils::Copy(TextBuffer.Data(), PopupSelectedText.CStr());
+                FCString::Copy(TextBuffer.Data(), PopupSelectedText.CStr());
 
                 Candidates.Clear();
                 CandidatesIndex = -1;

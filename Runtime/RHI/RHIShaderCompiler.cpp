@@ -242,7 +242,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Source Data");
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
     
@@ -291,7 +291,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     
     WCHAR TargetProfile[BufferLength];
-    FFWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FWCString::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     const FWString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
@@ -309,14 +309,14 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -452,7 +452,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
 
     WCHAR TargetProfile[BufferLength];
-    FFWStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FWCString::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     // Use the asset-folder as base for the shader-files
     const FWString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
@@ -472,14 +472,14 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
 
@@ -599,7 +599,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
     const FString Comment = "// " + Entrypoint + "\n\n";
     TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.Data()), Comment.Length() * sizeof(const char));
 
-    const uint32 SourceLength = FStringUtils::Length(MSLSource);
+    const uint32 SourceLength = FCString::Length(MSLSource);
     NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const char));
 
     spvc_context_destroy(Context);

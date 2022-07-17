@@ -424,7 +424,7 @@ bool FD3D12RootSignatureCache::Initialize()
     FD3D12RootSignature* GraphicsRootSignature = CreateRootSignature(GraphicsKey);
     if (!GraphicsRootSignature)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
     else
@@ -444,7 +444,7 @@ bool FD3D12RootSignatureCache::Initialize()
     FD3D12RootSignature* ComputeRootSignature = CreateRootSignature(ComputeKey);
     if (!ComputeRootSignature)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
     else
@@ -470,7 +470,7 @@ bool FD3D12RootSignatureCache::Initialize()
     FD3D12RootSignature* RTGlobalRootSignature = CreateRootSignature(RTGlobalKey);
     if (!RTGlobalRootSignature)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
     else
@@ -489,7 +489,7 @@ bool FD3D12RootSignatureCache::Initialize()
     FD3D12RootSignature* RTLocalRootSignature = CreateRootSignature(RTLocalKey);
     if (!RTLocalRootSignature)
     {
-        FDebug::DebugBreak();
+        PlatformDebugBreak();
         return false;
     }
     else

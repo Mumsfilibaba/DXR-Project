@@ -18,7 +18,7 @@ struct TStaticArray
 public:
 
     using ElementType = T;
-    using SizeType = int32;
+    using SizeType    = int32;
 
     typedef TArrayIterator<TStaticArray, ElementType>                    IteratorType;
     typedef TArrayIterator<const TStaticArray, const ElementType>        ConstIteratorType;

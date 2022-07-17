@@ -11,11 +11,6 @@ struct FMacPlatformMisc final : public FGenericPlatformMisc
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericPlatformMisc Interface
 
-    static FORCEINLINE void DebugBreak()
-    {
-        __builtin_trap();
-    }
-
     static void OutputDebugString(const FString& Message);
 
     static FORCEINLINE bool IsDebuggerPresent()

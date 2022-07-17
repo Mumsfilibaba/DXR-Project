@@ -82,7 +82,7 @@ DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
 
 DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
 {
-    FORCEINLINE FRHICommandClearRenderTargetView(const FRHIRenderTargetView& InRenderTargetView, const TStaticArray<float, 4>&InClearColor)
+    FORCEINLINE FRHICommandClearRenderTargetView(const FRHIRenderTargetView& InRenderTargetView, const TStaticArray<float, 4>& InClearColor)
         : RenderTargetView(InRenderTargetView)
         , ClearColor(InClearColor)
     { }
@@ -331,7 +331,9 @@ DECLARE_RHICOMMAND(FRHICommandSet32BitShaderConstants)
         : Shader(InShader)
         , Shader32BitConstants(InShader32BitConstants)
         , Num32BitConstants(InNum32BitConstants)
-    { }
+    { 
+        Check(InNum32BitConstants <= kRHIMaxShaderConstants);
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1023,8 +1025,13 @@ DECLARE_RHICOMMAND(FRHICommandInsertMarker)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        FDebug::OutputDebugString(Marker + '\n');
+        if (FDebug::IsDebuggerPresent())
+        {
+            FDebug::OutputDebugString(Marker + '\n');
+        }
+
         LOG_INFO("%s", Marker.CStr());
+
         CommandContext.InsertMarker(Marker);
     }
 
@@ -1038,10 +1045,12 @@ DECLARE_RHICOMMAND(FRHICommandDebugBreak)
 {
     FRHICommandDebugBreak() = default;
 
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    FORCEINLINE void Execute(IRHICommandContext&)
     {
-        UNREFERENCED_VARIABLE(CommandContext);
-        FDebug::DebugBreak();
+        if (FDebug::IsDebuggerPresent())
+        {
+            PlatformDebugBreak();
+        }
     }
 };
 
