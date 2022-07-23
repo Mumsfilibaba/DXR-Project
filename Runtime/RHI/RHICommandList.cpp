@@ -3,22 +3,21 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
 
-RHI_API FRHICommandListExecutor GRHICommandListExecutor;
+RHI_API FRHICommandListExecutor GRHICommandExecutor;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIExecutorThread
+// FRHIThread
 
-FRHIExecutorThread::FRHIExecutorThread()
+FRHIThread::FRHIThread()
     : Thread(nullptr)
     , WaitCS()
     , WaitCondition()
     , bIsRunning(false)
-    , bIsExecuting(false)
 { }
 
-bool FRHIExecutorThread::Start()
+bool FRHIThread::Start()
 {
-    TFunction<void()> ThreadFunction = Bind(&FRHIExecutorThread::Worker, this);
+    TFunction<void()> ThreadFunction = Bind(&FRHIThread::Worker, this);
 
     Thread = FThreadManager::Get().CreateNamedThread(ThreadFunction, GetStaticThreadName());
     if (!Thread)
@@ -36,56 +35,68 @@ bool FRHIExecutorThread::Start()
     return true;
 }
 
-void FRHIExecutorThread::StopExecution()
+void FRHIThread::StopExecution()
 {
     bIsRunning = false;
 
-    WaitCondition.NotifyOne();
+    WaitCondition.NotifyAll();
 
     Check(Thread != nullptr);
     Thread->WaitForCompletion(kWaitForThreadInfinity);
 }
 
-void FRHIExecutorThread::Execute(const FRHIExecutorTask& ExecutionTask)
+void FRHIThread::Execute(const FRHIThreadTask& NewTask)
 {
     {
         // Set the work to execute
-        TScopedLock TaskLock(CurrentTaskCS);
-        CurrentTask = ExecutionTask;
-
-        // Then notify worker
-        WaitCondition.NotifyOne();
+        TScopedLock TaskLock(TasksCS);
+        Tasks.Emplace(NewTask);
+        
+        NumSubmittedTasks++;
     }
 
-    // Wait for the worker to start
-    while (!bIsExecuting) { }
+    // Then notify worker
+    WaitCondition.NotifyOne();
 }
 
-void FRHIExecutorThread::Worker()
+void FRHIThread::WaitForCompletion()
+{
+    while (NumCompletedTasks.Load() < NumSubmittedTasks.Load())
+    {
+        PauseInstruction();
+    }
+}
+
+void FRHIThread::Worker()
 {
     while(bIsRunning)
     {
         TScopedLock WaitLock(WaitCS);
         WaitCondition.Wait(WaitLock);
 
+        FRHIThreadTask CurrentTask;
+
         {
-            TScopedLock TaskLock(CurrentTaskCS);
-            bIsExecuting = true;
-
-            CurrentTask();
-
-            bIsExecuting = false;
+            TScopedLock Lock(TasksCS);
+            if (!Tasks.IsEmpty())
+            {
+                CurrentTask = Move(Tasks.FirstElement());
+                Tasks.RemoveAt(0);
+            }
         }
+        
+        if (CurrentTask)
+        {
+            TRACE_FUNCTION_SCOPE();
+            CurrentTask.CommandList->Execute();
+        }
+
+        NumCompletedTasks++;
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandListExecutor
-
-FRHICommandListExecutor& FRHICommandListExecutor::Get()
-{
-    return GRHICommandListExecutor;
-}
 
 FRHICommandListExecutor::FRHICommandListExecutor()
     : ExecutorThread()
@@ -96,7 +107,7 @@ FRHICommandListExecutor::FRHICommandListExecutor()
 bool FRHICommandListExecutor::Initialize()
 {
 #if ENABLE_RHI_EXECUTOR_THREAD
-    if (!GRHICommandListExecutor.ExecutorThread.Start())
+    if (!ExecutorThread.Start())
     {
         return false;
     }
@@ -108,93 +119,36 @@ bool FRHICommandListExecutor::Initialize()
 void FRHICommandListExecutor::Release()
 {
 #if ENABLE_RHI_EXECUTOR_THREAD
-    GRHICommandListExecutor.ExecutorThread.StopExecution();
+    ExecutorThread.StopExecution();
 #endif
 }
 
-void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CmdList)
+void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 {
-    FRHICommandList* TempCommandList = dbg_new FRHICommandList();
-    TempCommandList->ExchangeState(CmdList);
-
-    FRHIExecutorTask ExecutorTask = FRHIExecutorTask([=]()
+    if (CommandList.HasCommands())
     {
-        // Execute CommandList
-        GetContext().StartContext();
+        Statistics.NumDrawCalls     += CommandList.GetNumDrawCalls();
+        Statistics.NumDispatchCalls += CommandList.GetNumDispatchCalls();
 
-        {
-            TRACE_FUNCTION_SCOPE();
+        FRHICommandList* NewCommandList = dbg_new FRHICommandList();
+        NewCommandList->ExchangeState(CommandList);
+        NewCommandList->SetCommandContext(CommandContext);
 
-            Statistics.Reset();
-
-            InternalExecuteCommandList(*TempCommandList);
-        }
-
-        GetContext().FinishContext();
-
-        delete TempCommandList;
-    });
-
-#if ENABLE_RHI_EXECUTOR_THREAD
-    ExecutorThread.Execute(ExecutorTask);
-#else
-    ExecutorTask();
-#endif
-}
-
-void FRHICommandListExecutor::ExecuteCommandLists(FRHICommandList* const* CmdLists, uint32 NumCmdLists)
-{
-    // TODO: We need to present on the CommandContext before we can continue here
-
-    // Execute multiple CommandList
-    GetContext().StartContext();
-
-    {
-        TRACE_FUNCTION_SCOPE();
-
-        Statistics.Reset();
-
-        for (uint32 Index = 0; Index < NumCmdLists; ++Index)
-        {
-            FRHICommandList* CurrentCmdList = CmdLists[Index];
-            InternalExecuteCommandList(*CurrentCmdList);
-        }
+        ExecutorThread.Execute(FRHIThreadTask(NewCommandList));
     }
+}
 
-    GetContext().FinishContext();
+void FRHICommandListExecutor::WaitForOutstandingTasks()
+{
+    ExecutorThread.WaitForCompletion();
 }
 
 void FRHICommandListExecutor::WaitForGPU()
 {
+    WaitForOutstandingTasks();
+
     if (CommandContext)
     {
         CommandContext->Flush();
-    }
-}
-
-void FRHICommandListExecutor::InternalExecuteCommandList(FRHICommandList& CommandList)
-{
-    if (CommandList.FirstCommand)
-    {
-        int32 NumCommands = 0;
-
-        FRHICommand* CurrentCommand = CommandList.FirstCommand;
-        while (CurrentCommand != nullptr)
-        {
-            FRHICommand* PreviousCommand = CurrentCommand;
-            CurrentCommand = CurrentCommand->NextCommand;
-            PreviousCommand->ExecuteAndRelease(GetContext());
-
-            NumCommands++;
-        }
-
-        Statistics.NumDrawCalls     += CommandList.GetNumDrawCalls();
-        Statistics.NumDispatchCalls += CommandList.GetNumDispatchCalls();
-
-        // Ensure that all commands got executed
-        Check(CommandList.NumCommands == NumCommands);
-
-        CommandList.FirstCommand = nullptr;
-        CommandList.Reset();
     }
 }

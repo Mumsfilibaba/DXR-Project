@@ -37,37 +37,37 @@ bool FEngineLoop::LoadCoreModules()
 {
     FModuleManager& ModuleManager = FModuleManager::Get();
 
-    IEngineModule* CoreModule = ModuleManager.LoadEngineModule("Core");
+    IModule* CoreModule = ModuleManager.LoadModule("Core");
     if (!CoreModule)
     {
         return false;
     }
 
-    IEngineModule* CoreApplicationModule = ModuleManager.LoadEngineModule("CoreApplication");
+    IModule* CoreApplicationModule = ModuleManager.LoadModule("CoreApplication");
     if (!CoreApplicationModule)
     {
         return false;
     }
 
-    IEngineModule* CanvasModule = ModuleManager.LoadEngineModule("Canvas");
+    IModule* CanvasModule = ModuleManager.LoadModule("Canvas");
     if (!CanvasModule)
     {
         return false;
     }
 
-    IEngineModule* EngineModule = ModuleManager.LoadEngineModule("Engine");
+    IModule* EngineModule = ModuleManager.LoadModule("Engine");
     if (!EngineModule)
     {
         return false;
     }
 
-    IEngineModule* RHIModule = ModuleManager.LoadEngineModule("RHI");
+    IModule* RHIModule = ModuleManager.LoadModule("RHI");
     if (!RHIModule)
     {
         return false;
     }
 
-    IEngineModule* RendererModule = ModuleManager.LoadEngineModule("Renderer");
+    IModule* RendererModule = ModuleManager.LoadModule("Renderer");
     if (!RendererModule)
     {
         return false;
@@ -199,7 +199,7 @@ bool FEngineLoop::Initialize()
 
     NEngineLoopDelegates::PreApplicationLoadedDelegate.Broadcast();
 
-    GApplicationModule = FModuleManager::Get().LoadEngineModule<FApplicationModule>(FProjectManager::GetProjectModuleName());
+    GApplicationModule = FModuleManager::Get().LoadModule<FApplicationModule>(FProjectManager::GetProjectModuleName());
     if (!GApplicationModule)
     {
         LOG_WARNING("Application Init failed, may not behave as intended");
@@ -209,7 +209,7 @@ bool FEngineLoop::Initialize()
         NEngineLoopDelegates::PostApplicationLoadedDelegate.Broadcast();
     }
 
-    IApplicationRendererModule* InterfaceRendererModule = FModuleManager::Get().LoadEngineModule<IApplicationRendererModule>("InterfaceRenderer");
+    IApplicationRendererModule* InterfaceRendererModule = FModuleManager::Get().LoadModule<IApplicationRendererModule>("InterfaceRenderer");
     if (!InterfaceRendererModule)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load InterfaceRenderer");
@@ -261,7 +261,7 @@ bool FEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
-    FRHICommandListExecutor::Get().WaitForGPU();
+    GRHICommandExecutor.WaitForGPU();
 
     FGPUProfiler::Release();
 

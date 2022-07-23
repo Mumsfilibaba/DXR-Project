@@ -26,28 +26,28 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
     if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
     if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     PShader = RHICreatePixelShader(ShaderCode);
     if (!PShader)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -59,7 +59,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -69,7 +69,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -78,7 +78,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -97,7 +97,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 

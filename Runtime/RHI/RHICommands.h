@@ -10,6 +10,8 @@
 
 #define DECLARE_RHICOMMAND(RHICommandName) struct RHICommandName final : public TRHICommand<RHICommandName>
 
+class FRHICommandList;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommand
 
@@ -37,6 +39,38 @@ struct TRHICommand : public FRHICommand
         Command->Execute(CommandContext);
         Command->~CommandType();
     }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TRHICommandExecuteLambda
+
+template<typename LambdaType>
+struct TRHICommandExecuteLambda : public TRHICommand<TRHICommandExecuteLambda<LambdaType>>
+{
+    FORCEINLINE TRHICommandExecuteLambda(LambdaType InLambda)
+        : Lambda(InLambda)
+    { }
+
+    FORCEINLINE void Execute(IRHICommandContext&)
+    {
+        Lambda();
+    }
+
+    LambdaType Lambda;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FRHICommandExecuteCommandList
+
+DECLARE_RHICOMMAND(FRHICommandExecuteCommandList)
+{
+    FORCEINLINE FRHICommandExecuteCommandList(FRHICommandList* InCommandList)
+        : CommandList(InCommandList)
+    { }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext);
+
+    FRHICommandList* CommandList;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1019,7 +1053,7 @@ DECLARE_RHICOMMAND(FRHICommandDispatchRays)
 
 DECLARE_RHICOMMAND(FRHICommandInsertMarker)
 {
-    FORCEINLINE FRHICommandInsertMarker(const FString& InMarker)
+    FORCEINLINE FRHICommandInsertMarker(const FStringView& InMarker)
         : Marker(InMarker)
     { }
 
@@ -1027,7 +1061,7 @@ DECLARE_RHICOMMAND(FRHICommandInsertMarker)
     {
         if (FDebug::IsDebuggerPresent())
         {
-            FDebug::OutputDebugString(Marker + '\n');
+            FDebug::OutputDebugString(FString(Marker) + '\n');
         }
 
         LOG_INFO("%s", Marker.CStr());
@@ -1035,7 +1069,7 @@ DECLARE_RHICOMMAND(FRHICommandInsertMarker)
         CommandContext.InsertMarker(Marker);
     }
 
-    FString Marker;
+    FStringView Marker;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1049,7 +1083,7 @@ DECLARE_RHICOMMAND(FRHICommandDebugBreak)
     {
         if (FDebug::IsDebuggerPresent())
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
         }
     }
 };
@@ -1078,4 +1112,23 @@ DECLARE_RHICOMMAND(FRHICommandEndExternalCapture)
     {
         CommandContext.EndExternalCapture();
     }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FRHICommandPresentViewport
+
+DECLARE_RHICOMMAND(FRHICommandPresentViewport)
+{
+    FORCEINLINE FRHICommandPresentViewport(FRHIViewport* InViewport, bool bInVerticalSync)
+        : Viewport(InViewport)
+        , bVerticalSync(bInVerticalSync)
+    { }
+
+    FORCEINLINE void Execute(IRHICommandContext & CommandContext)
+    {
+        CommandContext.PresentViewport(Viewport, bVerticalSync);
+    }
+
+    FRHIViewport* Viewport;
+    bool          bVerticalSync;
 };

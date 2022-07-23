@@ -146,7 +146,7 @@ FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
     FRHITexture2DRef Texture = RHICreateTexture2D(Initializer);
     if (!Texture)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return nullptr;
     }
 
@@ -157,7 +157,7 @@ FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
         CommandList.GenerateMips(Texture.Get());
         CommandList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        GRHICommandExecutor.ExecuteCommandList(CommandList);
     }
 
     return Texture.ReleaseOwnership();
@@ -241,7 +241,7 @@ FRHITextureCube* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* Pa
         CommandList.DestroyResource(StagingTexture.Get());
         CommandList.DestroyResource(StagingTextureUAV.Get());
 
-        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        GRHICommandExecutor.ExecuteCommandList(CommandList);
     }
 
     return Texture.ReleaseOwnership();

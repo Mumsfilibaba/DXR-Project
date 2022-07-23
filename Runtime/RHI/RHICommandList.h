@@ -14,9 +14,9 @@ class FRHIDepthStencilView;
 class FRHIShaderResourceView;
 class FRHIUnorderedAccessView;
 class FRHIShader;
+class FRHIViewport;
 
 #define ENABLE_INSERT_DEBUG_CMDLIST_MARKER (0)
-#define ENABLE_RHI_EXECUTOR_THREAD         (1)
 
 #if ENABLE_INSERT_DEBUG_CMDLIST_MARKER
     #define INSERT_DEBUG_CMDLIST_MARKER(CommandList, MarkerString) (CommandList).InsertMarker(MarkerString)
@@ -47,47 +47,45 @@ struct FRHICommandStatistics
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandList
 
-class RHI_API FRHICommandList : public FNonCopyable
+class RHI_API FRHICommandList : FNonCopyable
 {
-    friend class FRHICommandListExecutor;
-
 public:
-
-    FRHICommandList()
+    FRHICommandList() noexcept
         : Memory()
         , CommandPointer(nullptr)
         , FirstCommand(nullptr)
+        , CommandContext(nullptr)
 	    , Statistics()
         , NumCommands(0)
     {
         CommandPointer = &FirstCommand;
     }
 
-    ~FRHICommandList()
+    ~FRHICommandList() noexcept
     {
         Reset();
     }
 
-    FORCEINLINE void* Allocate(int32 Size, int32 Alignment)
+    FORCEINLINE void* Allocate(int32 Size, int32 Alignment) noexcept
     {
         return Memory.Allocate(Size, Alignment);
     }
 
     template<typename T>
-    FORCEINLINE T* Allocate()
+    FORCEINLINE T* Allocate() noexcept
     {
         return reinterpret_cast<T*>(Allocate(sizeof(T), alignof(T)));
     }
 
     template<typename T>
-    FORCEINLINE TArrayView<T> AllocateArray(const TArrayView<T>& Array)
+    FORCEINLINE TArrayView<T> AllocateArray(const TArrayView<T>& Array) noexcept
     {
         void* NewArray = Allocate(Array.Size() * sizeof(T), alignof(T));
         FMemory::Memcpy(NewArray, Array.Data(), Array.SizeInBytes());
         return TArrayView<T>(reinterpret_cast<T*>(NewArray), Array.Size());
     }
 
-    FORCEINLINE void* AllocateCommand(int32 Size, int32 Alignment)
+    FORCEINLINE void* AllocateCommand(int32 Size, int32 Alignment) noexcept
     {
         FRHICommand* NewCommand = reinterpret_cast<FRHICommand*>(Allocate(Size, Alignment));
         *CommandPointer = NewCommand;
@@ -96,7 +94,7 @@ public:
         return NewCommand;
     }
 
-    FORCEINLINE tchar* AllocateString(const tchar* String)
+    FORCEINLINE tchar* AllocateString(const tchar* String) noexcept
     {
         int32  Length    = FCString::Length(String);
         tchar* NewString = reinterpret_cast<tchar*>(Allocate(sizeof(tchar) * Length, alignof(tchar)));
@@ -104,380 +102,47 @@ public:
     }
 
     template<typename CommandType, typename... ArgTypes>
-    FORCEINLINE void EmplaceCommand(ArgTypes&&... Args)
+    FORCEINLINE void EmplaceCommand(ArgTypes&&... Args) noexcept
     {
         new(AllocateCommand(sizeof(CommandType), alignof(CommandType))) CommandType(Forward<ArgTypes>(Args)...);
     }
 
-public:
-
-    FORCEINLINE void BeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
+    template<typename T, typename... ArgTypes>
+    FORCEINLINE T* EmplaceObject(ArgTypes&&... Args) noexcept
     {
-        EmplaceCommand<FRHICommandBeginTimeStamp>(TimestampQuery, Index);
+        return new(Allocate(sizeof(T), alignof(T))) T(Forward<ArgTypes>(Args)...);
     }
 
-    FORCEINLINE void EndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
+    FORCEINLINE void Execute() noexcept
     {
-        EmplaceCommand<FRHICommandEndTimeStamp>(TimestampQuery, Index);
+        ExecuteWithContext(GetCommandContext());
     }
 
-    FORCEINLINE void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
+    FORCEINLINE void ExecuteWithContext(IRHICommandContext& InCommandContext) noexcept
     {
-        Check(RenderTargetView.Texture != nullptr);
-        EmplaceCommand<FRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
-    }
+        uint32 CommandsExecuted = 0;
 
-    FORCEINLINE void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
-    {
-        Check(DepthStencilView.Texture != nullptr);
-        EmplaceCommand<FRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
-    }
-
-    FORCEINLINE void ClearUnorderedAccessView(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor)
-    {
-        Check(UnorderedAccessView != nullptr);
-        EmplaceCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
-    }
-
-    FORCEINLINE void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer)
-    {
-        Check(bIsRenderPassActive == false);
-
-        EmplaceCommand<FRHICommandBeginRenderPass>(RenderPassInitializer);
-        bIsRenderPassActive = true;
-    }
-
-    FORCEINLINE void EndRenderPass()
-    {
-        Check(bIsRenderPassActive == true);
-
-        EmplaceCommand<FRHICommandEndRenderPass>();
-        bIsRenderPassActive = false;
-    }
-
-    FORCEINLINE void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
-    {
-        EmplaceCommand<FRHICommandSetViewport>(Width, Height, MinDepth, MaxDepth, x, y);
-    }
-
-    FORCEINLINE void SetScissorRect(float Width, float Height, float x, float y)
-    {
-        EmplaceCommand<FRHICommandSetScissorRect>(Width, Height, x, y);
-    }
-
-    FORCEINLINE void SetBlendFactor(const TStaticArray<float, 4>& Color)
-    {
-        EmplaceCommand<FRHICommandSetBlendFactor>(Color);
-    }
-
-    // TODO: Use arrayview
-    FORCEINLINE void SetVertexBuffers(FRHIVertexBuffer* const* InVertexBuffers, uint32 NumVertexBuffers, uint32 BufferSlot)
-    {
-        TArrayView<FRHIVertexBuffer*> VertexBuffers = AllocateArray(MakeArrayView((FRHIVertexBuffer**)InVertexBuffers, NumVertexBuffers));
-        if (!InVertexBuffers)
+        FRHICommand* CurrentCommand = FirstCommand;
+        while (CurrentCommand != nullptr)
         {
-            VertexBuffers.Memzero();
+            FRHICommand* PreviousCommand = CurrentCommand;
+            CurrentCommand = CurrentCommand->NextCommand;
+            PreviousCommand->ExecuteAndRelease(InCommandContext);
+
+            CommandsExecuted++;
         }
 
-        EmplaceCommand<FRHICommandSetVertexBuffers>(VertexBuffers.Data(), VertexBuffers.Size(), BufferSlot);
+        FirstCommand = nullptr;
+
+        // Ensure that all commands got executed
+        Check(CommandsExecuted == NumCommands);
     }
 
-    FORCEINLINE void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer)
-    {
-        EmplaceCommand<FRHICommandSetIndexBuffer>(IndexBuffer);
-    }
-
-    FORCEINLINE void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
-    {
-        EmplaceCommand<FRHICommandSetPrimitiveTopology>(PrimitveTopologyType);
-    }
-
-    FORCEINLINE void SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)
-    {
-        EmplaceCommand<FRHICommandSetGraphicsPipelineState>(PipelineState);
-    }
-
-    FORCEINLINE void SetComputePipelineState(FRHIComputePipelineState* PipelineState)
-    {
-        EmplaceCommand<FRHICommandSetComputePipelineState>(PipelineState);
-    }
-
-    FORCEINLINE void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
-    {
-        Check(Num32BitConstants <= kRHIMaxShaderConstants);
-
-        int32 Size       = Num32BitConstants * sizeof(uint32);
-        void* SourceData = Allocate(Size, alignof(uint32));
-        FMemory::Memcpy(SourceData, Shader32BitConstants, Size);
-
-        EmplaceCommand<FRHICommandSet32BitShaderConstants>(Shader, SourceData, Num32BitConstants);
-    }
-
-    FORCEINLINE void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
-    {
-        EmplaceCommand<FRHICommandSetShaderResourceView>(Shader, ShaderResourceView, ParameterIndex);
-    }
-
-    // TODO: Use arrayview
-    FORCEINLINE void SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* InShaderResourceViews, uint32 NumShaderResourceViews, uint32 ParameterIndex)
-    {
-        TArrayView<FRHIShaderResourceView*> ShaderResourceViews = AllocateArray(MakeArrayView((FRHIShaderResourceView**)InShaderResourceViews, NumShaderResourceViews));
-        if (!InShaderResourceViews)
-        {
-            ShaderResourceViews.Memzero();
-        }
-
-        EmplaceCommand<FRHICommandSetShaderResourceViews>(Shader, ShaderResourceViews.Data(), ShaderResourceViews.Size(), ParameterIndex);
-    }
-
-    FORCEINLINE void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
-    {
-        EmplaceCommand<FRHICommandSetUnorderedAccessView>(Shader, UnorderedAccessView, ParameterIndex);
-    }
-
-    // TODO: Use arrayview
-    FORCEINLINE void SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnorderedAccessView* const* InUnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
-    {
-        TArrayView<FRHIUnorderedAccessView*> UnorderedAccessViews = AllocateArray(MakeArrayView((FRHIUnorderedAccessView**)InUnorderedAccessViews, NumUnorderedAccessViews));
-        if (!InUnorderedAccessViews)
-        {
-            UnorderedAccessViews.Memzero();
-        }
-
-        EmplaceCommand<FRHICommandSetUnorderedAccessViews>(Shader, UnorderedAccessViews.Data(), UnorderedAccessViews.Size(), ParameterIndex);
-    }
-
-    FORCEINLINE void SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
-    {
-        EmplaceCommand<FRHICommandSetConstantBuffer>(Shader, ConstantBuffer, ParameterIndex);
-    }
-
-    // TODO: Use arrayview
-    FORCEINLINE void SetConstantBuffers(FRHIShader* Shader, FRHIConstantBuffer* const* InConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
-    {
-        TArrayView<FRHIConstantBuffer*> ConstantBuffers = AllocateArray(MakeArrayView((FRHIConstantBuffer**)InConstantBuffers, NumConstantBuffers));
-        if (!InConstantBuffers)
-        {
-            ConstantBuffers.Memzero();
-        }
-
-        EmplaceCommand<FRHICommandSetConstantBuffers>(Shader, ConstantBuffers.Data(), ConstantBuffers.Size(), ParameterIndex);
-    }
-
-    FORCEINLINE void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
-    {
-        EmplaceCommand<FRHICommandSetSamplerState>(Shader, SamplerState, ParameterIndex);
-    }
-
-    // TODO: Use arrayview
-    FORCEINLINE void SetSamplerStates(FRHIShader* Shader, FRHISamplerState* const* InSamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
-    {
-        TArrayView<FRHISamplerState*> SamplerStates = AllocateArray(MakeArrayView((FRHISamplerState**)InSamplerStates, NumSamplerStates));
-        if (!InSamplerStates)
-        {
-            SamplerStates.Memzero();
-        }
-
-        EmplaceCommand<FRHICommandSetSamplerStates>(Shader, SamplerStates.Data(), SamplerStates.Size(), ParameterIndex);
-    }
-
-    FORCEINLINE void UpdateBuffer(FRHIBuffer* Dst, uint32 OffsetInBytes, uint32 SizeInBytes, const void* InSourceData)
-    {
-        void* SourceData = Allocate(SizeInBytes, alignof(uint8));
-        FMemory::Memcpy(SourceData, InSourceData, SizeInBytes);
-        EmplaceCommand<FRHICommandUpdateBuffer>(Dst, OffsetInBytes, SizeInBytes, SourceData);
-    }
-
-    FORCEINLINE void UpdateTexture2D(FRHITexture2D* Dst, uint16 Width, uint16 Height, uint16 MipLevel, const void* InSourceData)
-    {
-        const uint32 SizeInBytes = Width * Height * GetByteStrideFromFormat(Dst->GetFormat());
-
-        void* SourceData = Allocate(SizeInBytes, alignof(uint8));
-        FMemory::Memcpy(SourceData, InSourceData, SizeInBytes);
-        EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, Width, Height, MipLevel, SourceData);
-    }
-
-    FORCEINLINE void ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
-    {
-        EmplaceCommand<FRHICommandResolveTexture>(Dst, Src);
-    }
-
-    FORCEINLINE void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo)
-    {
-        EmplaceCommand<FRHICommandCopyBuffer>(Dst, Src, CopyInfo);
-    }
-
-    FORCEINLINE void CopyTexture(FRHITexture* Dst, FRHITexture* Src)
-    {
-        EmplaceCommand<FRHICommandCopyTexture>(Dst, Src);
-    }
-
-    FORCEINLINE void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo)
-    {
-        EmplaceCommand<FRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
-    }
-
-    FORCEINLINE void DestroyResource(IRefCounted* Resource)
-    {
-        EmplaceCommand<FRHICommandDestroyResource>(Resource);
-    }
-
-    FORCEINLINE void DiscardContents(FRHITexture* Texture)
-    {
-        EmplaceCommand<FRHICommandDiscardContents>(Texture);
-    }
-
-    FORCEINLINE void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)
-    {
-        Check((Geometry != nullptr) && (!bUpdate || (bUpdate && IsEnumFlagSet(Geometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))));
-        EmplaceCommand<FRHICommandBuildRayTracingGeometry>(Geometry, VertexBuffer, IndexBuffer, bUpdate);
-    }
-
-    FORCEINLINE void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
-    {
-        Check((Scene != nullptr) && (!bUpdate || (bUpdate && IsEnumFlagSet(Scene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))));
-        EmplaceCommand<FRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);
-    }
-
-    // TODO: Refactor
-    FORCEINLINE void SetRayTracingBindings( FRHIRayTracingScene* RayTracingScene
-                                          , FRHIRayTracingPipelineState* PipelineState
-                                          , const FRayTracingShaderResources* GlobalResource
-                                          , const FRayTracingShaderResources* RayGenLocalResources
-                                          , const FRayTracingShaderResources* MissLocalResources
-                                          , const FRayTracingShaderResources* HitGroupResources
-                                          , uint32 NumHitGroupResources)
-    {
-        EmplaceCommand<FRHICommandSetRayTracingBindings>( RayTracingScene
-                                                        , PipelineState
-                                                        , GlobalResource
-                                                        , RayGenLocalResources
-                                                        , MissLocalResources
-                                                        , HitGroupResources
-                                                        , NumHitGroupResources);
-    }
-
-    FORCEINLINE void GenerateMips(FRHITexture* Texture)
-    {
-        Check(Texture != nullptr);
-        EmplaceCommand<FRHICommandGenerateMips>(Texture);
-    }
-
-    FORCEINLINE void TransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
-    {
-        if (BeforeState != AfterState)
-        {
-            EmplaceCommand<FRHICommandTransitionTexture>(Texture, BeforeState, AfterState);
-        }
-        else
-        {
-            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Texture->GetName().CStr(),  ToString(BeforeState));
-        }
-    }
-
-    FORCEINLINE void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
-    {
-        Check(Buffer != nullptr);
-
-        if (BeforeState != AfterState)
-        {
-            EmplaceCommand<FRHICommandTransitionBuffer>(Buffer, BeforeState, AfterState);
-        }
-        else
-        {
-            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Buffer->GetName().CStr(),  ToString(BeforeState));
-        }
-    }
-
-    FORCEINLINE void UnorderedAccessTextureBarrier(FRHITexture* Texture)
-    {
-        Check(Texture != nullptr);
-        EmplaceCommand<FRHICommandUnorderedAccessTextureBarrier>(Texture);
-    }
-
-    FORCEINLINE void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
-    {
-        Check(Buffer != nullptr);
-        EmplaceCommand<FRHICommandUnorderedAccessBufferBarrier>(Buffer);
-    }
-
-    FORCEINLINE void Draw(uint32 VertexCount, uint32 StartVertexLocation)
-    {
-        if (VertexCount > 0)
-        {
-            EmplaceCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);
-            Statistics.NumDrawCalls++;
-        }
-    }
-
-    FORCEINLINE void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
-    {
-        if (IndexCount > 0)
-        {
-            EmplaceCommand<FRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
-            Statistics.NumDrawCalls++;
-        }
-    }
-
-    FORCEINLINE void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
-    {
-        if ((VertexCountPerInstance > 0) && (InstanceCount > 0))
-        {
-            EmplaceCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
-            Statistics.NumDrawCalls++;
-        }
-    }
-
-    FORCEINLINE void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
-    {
-        if ((IndexCountPerInstance > 0) && (InstanceCount > 0))
-        {
-            EmplaceCommand<FRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
-            Statistics.NumDrawCalls++;
-        }
-    }
-
-    FORCEINLINE void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
-    {
-        if ((ThreadGroupCountX > 0) || (ThreadGroupCountY > 0) || (ThreadGroupCountZ > 0))
-        {
-            EmplaceCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
-            Statistics.NumDispatchCalls++;
-        }
-    }
-
-    FORCEINLINE void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
-    {
-        if ((Width > 0) || (Height > 0) || (Depth > 0))
-        {
-            EmplaceCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
-        }
-    }
-
-    FORCEINLINE void InsertMarker(const FString& Marker)
-    {
-        EmplaceCommand<FRHICommandInsertMarker>(Marker);
-    }
-    
-    FORCEINLINE void DebugBreak()
-    {
-        EmplaceCommand<FRHICommandDebugBreak>();
-    }
-
-    FORCEINLINE void BeginExternalCapture()
-    {
-        EmplaceCommand<FRHICommandBeginExternalCapture>();
-    }
-
-    FORCEINLINE void EndExternalCapture()
-    {
-        EmplaceCommand<FRHICommandEndExternalCapture>();
-    }
-
-    FORCEINLINE void Reset()
+    FORCEINLINE void Reset() noexcept
     {
         if (FirstCommand != nullptr)
         {
+            // Call destructor on all commands that has not been executed
             FRHICommand* Command = FirstCommand;
             while (Command != nullptr)
             {
@@ -489,6 +154,7 @@ public:
 
         FirstCommand   = nullptr;
         CommandPointer = &FirstCommand;
+        CommandContext = nullptr;
         NumCommands    = 0;
 
         bIsRenderPassActive = false;
@@ -498,7 +164,7 @@ public:
         Memory.Reset();
     }
 
-    void ExchangeState(FRHICommandList& Other)
+    FORCEINLINE void ExchangeState(FRHICommandList& Other) noexcept
     {
         // This works fine in this case
         FMemory::Memswap(this, &Other, sizeof(FRHICommandList));
@@ -514,19 +180,422 @@ public:
         }
     }
 
-    FORCEINLINE uint32 GetNumDrawCalls() const
+    FORCEINLINE void SetCommandContext(IRHICommandContext* InCommandContext) noexcept
+    {
+        CommandContext = InCommandContext;
+    }
+
+    FORCEINLINE IRHICommandContext& GetCommandContext() const noexcept
+    {
+        Check(CommandContext != nullptr);
+        return *CommandContext;
+    }
+
+    FORCEINLINE bool HasCommands() const noexcept
+    {
+        return (NumCommands > 0);
+    }
+
+    FORCEINLINE uint32 GetNumDrawCalls() const noexcept
     {
         return Statistics.NumDrawCalls;
     }
 
-    FORCEINLINE uint32 GetNumDispatchCalls() const
+    FORCEINLINE uint32 GetNumDispatchCalls() const noexcept
     {
         return Statistics.NumDispatchCalls;
     }
 
-    FORCEINLINE uint32 GetNumCommands() const
+    FORCEINLINE uint32 GetNumCommands() const noexcept
     {
         return NumCommands;
+    }
+
+public:
+
+    template<typename LambdaType>
+    FORCEINLINE void ExecuteLambda(LambdaType Lambda) noexcept
+    {
+        EmplaceCommand<TRHICommandExecuteLambda<LambdaType>>(Lambda);
+    }
+
+    FORCEINLINE void ExecuteCommandList(FRHICommandList& CommandList) noexcept
+    {
+        // Cannot execute CommandList in CommandList in CommandList
+        FRHICommandList* NewCommandList = EmplaceObject<FRHICommandList>();
+        NewCommandList->ExchangeState(CommandList);
+
+        EmplaceCommand<FRHICommandExecuteCommandList>(CommandList);
+    }
+
+    FORCEINLINE void BeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) noexcept
+    {
+        EmplaceCommand<FRHICommandBeginTimeStamp>(TimestampQuery, Index);
+    }
+
+    FORCEINLINE void EndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) noexcept
+    {
+        EmplaceCommand<FRHICommandEndTimeStamp>(TimestampQuery, Index);
+    }
+
+    FORCEINLINE void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor) noexcept
+    {
+        Check(RenderTargetView.Texture != nullptr);
+        EmplaceCommand<FRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
+    }
+
+    FORCEINLINE void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) noexcept
+    {
+        Check(DepthStencilView.Texture != nullptr);
+        EmplaceCommand<FRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
+    }
+
+    FORCEINLINE void ClearUnorderedAccessView(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) noexcept
+    {
+        Check(UnorderedAccessView != nullptr);
+        EmplaceCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
+    }
+
+    FORCEINLINE void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) noexcept
+    {
+        Check(bIsRenderPassActive == false);
+
+        EmplaceCommand<FRHICommandBeginRenderPass>(RenderPassInitializer);
+        bIsRenderPassActive = true;
+    }
+
+    FORCEINLINE void EndRenderPass() noexcept
+    {
+        Check(bIsRenderPassActive == true);
+
+        EmplaceCommand<FRHICommandEndRenderPass>();
+        bIsRenderPassActive = false;
+    }
+
+    FORCEINLINE void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) noexcept
+    {
+        EmplaceCommand<FRHICommandSetViewport>(Width, Height, MinDepth, MaxDepth, x, y);
+    }
+
+    FORCEINLINE void SetScissorRect(float Width, float Height, float x, float y) noexcept
+    {
+        EmplaceCommand<FRHICommandSetScissorRect>(Width, Height, x, y);
+    }
+
+    FORCEINLINE void SetBlendFactor(const TStaticArray<float, 4>& Color) noexcept
+    {
+        EmplaceCommand<FRHICommandSetBlendFactor>(Color);
+    }
+
+    // TODO: Use arrayview
+    FORCEINLINE void SetVertexBuffers(FRHIVertexBuffer* const* InVertexBuffers, uint32 NumVertexBuffers, uint32 BufferSlot) noexcept
+    {
+        TArrayView<FRHIVertexBuffer*> VertexBuffers = AllocateArray(MakeArrayView((FRHIVertexBuffer**)InVertexBuffers, NumVertexBuffers));
+        if (!InVertexBuffers)
+        {
+            VertexBuffers.Memzero();
+        }
+
+        EmplaceCommand<FRHICommandSetVertexBuffers>(VertexBuffers.Data(), VertexBuffers.Size(), BufferSlot);
+    }
+
+    FORCEINLINE void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer) noexcept
+    {
+        EmplaceCommand<FRHICommandSetIndexBuffer>(IndexBuffer);
+    }
+
+    FORCEINLINE void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) noexcept
+    {
+        EmplaceCommand<FRHICommandSetPrimitiveTopology>(PrimitveTopologyType);
+    }
+
+    FORCEINLINE void SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState) noexcept
+    {
+        EmplaceCommand<FRHICommandSetGraphicsPipelineState>(PipelineState);
+    }
+
+    FORCEINLINE void SetComputePipelineState(FRHIComputePipelineState* PipelineState) noexcept
+    {
+        EmplaceCommand<FRHICommandSetComputePipelineState>(PipelineState);
+    }
+
+    FORCEINLINE void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) noexcept
+    {
+        Check(Num32BitConstants <= kRHIMaxShaderConstants);
+
+        int32 Size       = Num32BitConstants * sizeof(uint32);
+        void* SourceData = Allocate(Size, alignof(uint32));
+        FMemory::Memcpy(SourceData, Shader32BitConstants, Size);
+
+        EmplaceCommand<FRHICommandSet32BitShaderConstants>(Shader, SourceData, Num32BitConstants);
+    }
+
+    FORCEINLINE void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) noexcept
+    {
+        EmplaceCommand<FRHICommandSetShaderResourceView>(Shader, ShaderResourceView, ParameterIndex);
+    }
+
+    // TODO: Use arrayview
+    FORCEINLINE void SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* InShaderResourceViews, uint32 NumShaderResourceViews, uint32 ParameterIndex) noexcept
+    {
+        TArrayView<FRHIShaderResourceView*> ShaderResourceViews = AllocateArray(MakeArrayView((FRHIShaderResourceView**)InShaderResourceViews, NumShaderResourceViews));
+        if (!InShaderResourceViews)
+        {
+            ShaderResourceViews.Memzero();
+        }
+
+        EmplaceCommand<FRHICommandSetShaderResourceViews>(Shader, ShaderResourceViews.Data(), ShaderResourceViews.Size(), ParameterIndex);
+    }
+
+    FORCEINLINE void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) noexcept
+    {
+        EmplaceCommand<FRHICommandSetUnorderedAccessView>(Shader, UnorderedAccessView, ParameterIndex);
+    }
+
+    // TODO: Use arrayview
+    FORCEINLINE void SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnorderedAccessView* const* InUnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex) noexcept
+    {
+        TArrayView<FRHIUnorderedAccessView*> UnorderedAccessViews = AllocateArray(MakeArrayView((FRHIUnorderedAccessView**)InUnorderedAccessViews, NumUnorderedAccessViews));
+        if (!InUnorderedAccessViews)
+        {
+            UnorderedAccessViews.Memzero();
+        }
+
+        EmplaceCommand<FRHICommandSetUnorderedAccessViews>(Shader, UnorderedAccessViews.Data(), UnorderedAccessViews.Size(), ParameterIndex);
+    }
+
+    FORCEINLINE void SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) noexcept
+    {
+        EmplaceCommand<FRHICommandSetConstantBuffer>(Shader, ConstantBuffer, ParameterIndex);
+    }
+
+    // TODO: Use arrayview
+    FORCEINLINE void SetConstantBuffers(FRHIShader* Shader, FRHIConstantBuffer* const* InConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) noexcept
+    {
+        TArrayView<FRHIConstantBuffer*> ConstantBuffers = AllocateArray(MakeArrayView((FRHIConstantBuffer**)InConstantBuffers, NumConstantBuffers));
+        if (!InConstantBuffers)
+        {
+            ConstantBuffers.Memzero();
+        }
+
+        EmplaceCommand<FRHICommandSetConstantBuffers>(Shader, ConstantBuffers.Data(), ConstantBuffers.Size(), ParameterIndex);
+    }
+
+    FORCEINLINE void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex) noexcept
+    {
+        EmplaceCommand<FRHICommandSetSamplerState>(Shader, SamplerState, ParameterIndex);
+    }
+
+    // TODO: Use arrayview
+    FORCEINLINE void SetSamplerStates(FRHIShader* Shader, FRHISamplerState* const* InSamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) noexcept
+    {
+        TArrayView<FRHISamplerState*> SamplerStates = AllocateArray(MakeArrayView((FRHISamplerState**)InSamplerStates, NumSamplerStates));
+        if (!InSamplerStates)
+        {
+            SamplerStates.Memzero();
+        }
+
+        EmplaceCommand<FRHICommandSetSamplerStates>(Shader, SamplerStates.Data(), SamplerStates.Size(), ParameterIndex);
+    }
+
+    FORCEINLINE void UpdateBuffer(FRHIBuffer* Dst, uint32 OffsetInBytes, uint32 SizeInBytes, const void* InSourceData) noexcept
+    {
+        void* SourceData = Allocate(SizeInBytes, alignof(uint8));
+        FMemory::Memcpy(SourceData, InSourceData, SizeInBytes);
+        EmplaceCommand<FRHICommandUpdateBuffer>(Dst, OffsetInBytes, SizeInBytes, SourceData);
+    }
+
+    FORCEINLINE void UpdateTexture2D(FRHITexture2D* Dst, uint16 Width, uint16 Height, uint16 MipLevel, const void* InSourceData) noexcept
+    {
+        const uint32 SizeInBytes = Width * Height * GetByteStrideFromFormat(Dst->GetFormat());
+
+        void* SourceData = Allocate(SizeInBytes, alignof(uint8));
+        FMemory::Memcpy(SourceData, InSourceData, SizeInBytes);
+        EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, Width, Height, MipLevel, SourceData);
+    }
+
+    FORCEINLINE void ResolveTexture(FRHITexture* Dst, FRHITexture* Src) noexcept
+    {
+        EmplaceCommand<FRHICommandResolveTexture>(Dst, Src);
+    }
+
+    FORCEINLINE void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo) noexcept
+    {
+        EmplaceCommand<FRHICommandCopyBuffer>(Dst, Src, CopyInfo);
+    }
+
+    FORCEINLINE void CopyTexture(FRHITexture* Dst, FRHITexture* Src) noexcept
+    {
+        EmplaceCommand<FRHICommandCopyTexture>(Dst, Src);
+    }
+
+    FORCEINLINE void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) noexcept
+    {
+        EmplaceCommand<FRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
+    }
+
+    FORCEINLINE void DestroyResource(IRefCounted* Resource) noexcept
+    {
+        EmplaceCommand<FRHICommandDestroyResource>(Resource);
+    }
+
+    FORCEINLINE void DiscardContents(FRHITexture* Texture) noexcept
+    {
+        EmplaceCommand<FRHICommandDiscardContents>(Texture);
+    }
+
+    FORCEINLINE void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate) noexcept
+    {
+        Check((Geometry != nullptr) && (!bUpdate || (bUpdate && IsEnumFlagSet(Geometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))));
+        EmplaceCommand<FRHICommandBuildRayTracingGeometry>(Geometry, VertexBuffer, IndexBuffer, bUpdate);
+    }
+
+    FORCEINLINE void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) noexcept
+    {
+        Check((Scene != nullptr) && (!bUpdate || (bUpdate && IsEnumFlagSet(Scene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))));
+        EmplaceCommand<FRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);
+    }
+
+    // TODO: Refactor
+    FORCEINLINE void SetRayTracingBindings( FRHIRayTracingScene* RayTracingScene
+                                          , FRHIRayTracingPipelineState* PipelineState
+                                          , const FRayTracingShaderResources* GlobalResource
+                                          , const FRayTracingShaderResources* RayGenLocalResources
+                                          , const FRayTracingShaderResources* MissLocalResources
+                                          , const FRayTracingShaderResources* HitGroupResources
+                                          , uint32 NumHitGroupResources) noexcept
+    {
+        EmplaceCommand<FRHICommandSetRayTracingBindings>( RayTracingScene
+                                                        , PipelineState
+                                                        , GlobalResource
+                                                        , RayGenLocalResources
+                                                        , MissLocalResources
+                                                        , HitGroupResources
+                                                        , NumHitGroupResources);
+    }
+
+    FORCEINLINE void GenerateMips(FRHITexture* Texture) noexcept
+    {
+        Check(Texture != nullptr);
+        EmplaceCommand<FRHICommandGenerateMips>(Texture);
+    }
+
+    FORCEINLINE void TransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
+    {
+        if (BeforeState != AfterState)
+        {
+            EmplaceCommand<FRHICommandTransitionTexture>(Texture, BeforeState, AfterState);
+        }
+        else
+        {
+            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Texture->GetName().CStr(),  ToString(BeforeState));
+        }
+    }
+
+    FORCEINLINE void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
+    {
+        Check(Buffer != nullptr);
+
+        if (BeforeState != AfterState)
+        {
+            EmplaceCommand<FRHICommandTransitionBuffer>(Buffer, BeforeState, AfterState);
+        }
+        else
+        {
+            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Buffer->GetName().CStr(),  ToString(BeforeState));
+        }
+    }
+
+    FORCEINLINE void UnorderedAccessTextureBarrier(FRHITexture* Texture) noexcept
+    {
+        Check(Texture != nullptr);
+        EmplaceCommand<FRHICommandUnorderedAccessTextureBarrier>(Texture);
+    }
+
+    FORCEINLINE void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) noexcept
+    {
+        Check(Buffer != nullptr);
+        EmplaceCommand<FRHICommandUnorderedAccessBufferBarrier>(Buffer);
+    }
+
+    FORCEINLINE void Draw(uint32 VertexCount, uint32 StartVertexLocation) noexcept
+    {
+        if (VertexCount > 0)
+        {
+            EmplaceCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);
+            Statistics.NumDrawCalls++;
+        }
+    }
+
+    FORCEINLINE void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) noexcept
+    {
+        if (IndexCount > 0)
+        {
+            EmplaceCommand<FRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
+            Statistics.NumDrawCalls++;
+        }
+    }
+
+    FORCEINLINE void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) noexcept
+    {
+        if ((VertexCountPerInstance > 0) && (InstanceCount > 0))
+        {
+            EmplaceCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+            Statistics.NumDrawCalls++;
+        }
+    }
+     
+    FORCEINLINE void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) noexcept
+    {
+        if ((IndexCountPerInstance > 0) && (InstanceCount > 0))
+        {
+            EmplaceCommand<FRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+            Statistics.NumDrawCalls++;
+        }
+    }
+
+    FORCEINLINE void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) noexcept
+    {
+        if ((ThreadGroupCountX > 0) || (ThreadGroupCountY > 0) || (ThreadGroupCountZ > 0))
+        {
+            EmplaceCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+            Statistics.NumDispatchCalls++;
+        }
+    }
+
+    FORCEINLINE void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) noexcept
+    {
+        if ((Width > 0) || (Height > 0) || (Depth > 0))
+        {
+            EmplaceCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
+        }
+    }
+
+    FORCEINLINE void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) noexcept
+    {
+        Check(Viewport != nullptr);
+        EmplaceCommand<FRHICommandPresentViewport>(Viewport, bVerticalSync);
+    }
+
+    FORCEINLINE void InsertMarker(const FStringView& Marker) noexcept
+    {
+        FStringView NewMarker = AllocateString(Marker.CStr());
+        EmplaceCommand<FRHICommandInsertMarker>(NewMarker);
+    }
+    
+    FORCEINLINE void DebugBreak() noexcept
+    {
+        EmplaceCommand<FRHICommandDebugBreak>();
+    }
+
+    FORCEINLINE void BeginExternalCapture() noexcept
+    {
+        EmplaceCommand<FRHICommandBeginExternalCapture>();
+    }
+
+    FORCEINLINE void EndExternalCapture() noexcept
+    {
+        EmplaceCommand<FRHICommandEndExternalCapture>();
     }
 
 private:
@@ -535,6 +604,7 @@ private:
     /** @brief: pointer to FirstCommand to avoid branching */
     FRHICommand**         CommandPointer;
     FRHICommand*          FirstCommand;
+    IRHICommandContext*   CommandContext;
 
     FRHICommandStatistics Statistics;
     uint32                NumCommands;
@@ -543,80 +613,104 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIExecutorTask
+// FRHICommandExecuteCommandList
 
-struct FRHIExecutorTask
+void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
 {
-    FRHIExecutorTask()
-        : Function()
+    CommandList->ExecuteWithContext(CommandContext);
+    CommandList->~FRHICommandList();
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FRHIThreadTask
+
+struct FRHIThreadTask : FNonCopyable
+{
+    FORCEINLINE FRHIThreadTask() noexcept
+        : CommandList(nullptr)
     { }
 
-    FRHIExecutorTask(const TFunction<void()>& InWork)
-        : Function(InWork)
+    FORCEINLINE explicit FRHIThreadTask(FRHICommandList* InCommandList) noexcept
+        : CommandList(InCommandList)
     { }
 
-    FORCEINLINE void operator()()
+    FORCEINLINE FRHIThreadTask(FRHIThreadTask&& Other) noexcept
+        : CommandList(Other.CommandList)
     {
-        Function();
+        Other.CommandList = nullptr;
     }
 
-    TFunction<void()> Function;
+    FORCEINLINE ~FRHIThreadTask() noexcept
+    {
+        SafeDelete(CommandList);
+    }
+
+    FORCEINLINE FRHIThreadTask& operator=(FRHIThreadTask&& RHS) noexcept
+    {
+        CommandList = RHS.CommandList;
+        RHS.CommandList = nullptr;
+        return *this;
+    }
+
+    FORCEINLINE operator bool() const noexcept
+    {
+        return (CommandList != nullptr);
+    }
+
+    FRHICommandList* CommandList;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIExecutorThread
+// FRHIThread
 
-class RHI_API FRHIExecutorThread : public FNonCopyable
+class RHI_API FRHIThread : FNonCopyable
 {
 public:
-
-    FRHIExecutorThread();
-    ~FRHIExecutorThread() = default;
+    FRHIThread();
+    ~FRHIThread() = default;
 
     static FORCEINLINE const char* GetStaticThreadName() { return "RHI Executor-Thread"; }
 
     bool Start();
     void StopExecution();
 
-    void Execute(const FRHIExecutorTask& ExecutionTask);
+    void Execute(const FRHIThreadTask& NewTask);
+
+    void WaitForCompletion();
 
 private:
     void Worker();
     
-    FGenericThreadRef  Thread;
+    FGenericThreadRef      Thread;
 
-    FCriticalSection   WaitCS;
-    FConditionVariable WaitCondition;
+    FCriticalSection       WaitCS;
+    FConditionVariable     WaitCondition;
 
-    FRHIExecutorTask   CurrentTask;
-    FCriticalSection   CurrentTaskCS;
+    FAtomicInt64           NumSubmittedTasks;
+    FAtomicInt64           NumCompletedTasks;
 
-    FAtomicInt64       Fence;
+    TArray<FRHIThreadTask> Tasks;
+    FCriticalSection       TasksCS;
 
-    bool               bIsRunning;
-    bool               bIsExecuting;
+    bool bIsRunning;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandListExecutor
 
-class RHI_API FRHICommandListExecutor : public FNonCopyable
+class RHI_API FRHICommandListExecutor : FNonCopyable
 {
 public:
-
     FRHICommandListExecutor();
     ~FRHICommandListExecutor() = default;
 
-public:
+    bool Initialize();
+    void Release();
 
-    static bool Initialize();
-    static void Release();
-    static FRHICommandListExecutor& Get();
-
+    void WaitForOutstandingTasks();
     void WaitForGPU();
 
     void ExecuteCommandList(class FRHICommandList& CmdList);
-    void ExecuteCommandLists(class FRHICommandList* const* CmdLists, uint32 NumCmdLists);
 
     FORCEINLINE void SetContext(IRHICommandContext* InCmdContext) { CommandContext = InCmdContext; }
 
@@ -629,10 +723,10 @@ public:
     FORCEINLINE const FRHICommandStatistics& GetStatistics() const { return Statistics; }
 
 private:
-    void InternalExecuteCommandList(class FRHICommandList& CmdList);
-
-    FRHIExecutorThread    ExecutorThread;
+    FRHIThread            ExecutorThread;
     FRHICommandStatistics Statistics;
 
     IRHICommandContext*   CommandContext;
 };
+
+extern RHI_API FRHICommandListExecutor GRHICommandExecutor;

@@ -3,6 +3,8 @@
 #include "RHIResources.h"
 #include "RHIResourceViews.h"
 
+class FRHIViewport;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRenderPassInitializer
 
@@ -60,8 +62,7 @@ class IRHICommandContext
 {
 public:
 
-    virtual void StartContext() = 0;
-
+    virtual void StartContext()  = 0;
     virtual void FinishContext() = 0;
 
     /**
@@ -105,8 +106,7 @@ public:
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) = 0;
 
     virtual void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) = 0;
-
-    virtual void EndRenderPass() = 0;
+    virtual void EndRenderPass()                                                         = 0;
 
     /**
      * @brief: Set the current viewport settings
@@ -400,16 +400,15 @@ public:
     virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) = 0;
 
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) = 0;
-
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
-
     virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) = 0;
-    
     virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) = 0;
 
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
 
     virtual void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
+
+    virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) = 0;
 
     /** @brief: Clears the state of the context, clearing all bound references currently bound */
     virtual void ClearState() = 0;
@@ -418,7 +417,7 @@ public:
     virtual void Flush() = 0;
 
     /** @brief: Inserts a marker on the GPU timeline */
-    virtual void InsertMarker(const FString& Message) = 0;
+    virtual void InsertMarker(const FStringView& Message) = 0;
 
     /** @brief:  Begins a PIX capture event, currently only available on D3D12  */
     virtual void BeginExternalCapture() = 0;

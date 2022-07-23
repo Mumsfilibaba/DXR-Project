@@ -72,8 +72,8 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// PlatformDebugBreak
+// DEBUG_BREAK
 
-#ifndef PlatformDebugBreak
-    #define PlatformDebugBreak() ((void)0)
+#ifndef DEBUG_BREAK
+    #define DEBUG_BREAK() ((void)0)
 #endif

@@ -2,4 +2,4 @@
 
 #include "Core/Modules/ModuleManager.h"
 
-IMPLEMENT_ENGINE_MODULE(FDefaultEngineModule, Engine);
+IMPLEMENT_ENGINE_MODULE(FDefaultModule, Engine);

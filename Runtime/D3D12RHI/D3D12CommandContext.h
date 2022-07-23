@@ -370,11 +370,13 @@ public:
 
     virtual void DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
 
+    virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) override final;
+
     virtual void ClearState() override final;
 
     virtual void Flush() override final;
 
-    virtual void InsertMarker(const FString& Message) override final;
+    virtual void InsertMarker(const FStringView& Message) override final;
 
     virtual void BeginExternalCapture() override final;
     virtual void EndExternalCapture()   override final;
@@ -382,6 +384,9 @@ public:
     virtual void* GetRHIBaseCommandList() override final { return reinterpret_cast<void*>(&CommandList); }
 
 public:
+
+    void StartCommandList();
+    void EndCommandList();
 
     void UpdateBuffer(FD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
 

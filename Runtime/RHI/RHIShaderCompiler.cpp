@@ -242,7 +242,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Source Data");
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     
@@ -309,14 +309,14 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -472,14 +472,14 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 

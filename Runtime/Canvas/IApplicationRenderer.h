@@ -40,7 +40,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IApplicationRendererModule
 
-class IApplicationRendererModule : public FDefaultEngineModule
+class IApplicationRendererModule : public FDefaultModule
 {
 public:
 

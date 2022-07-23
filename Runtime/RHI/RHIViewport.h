@@ -84,14 +84,12 @@ protected:
 public:
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) { return true; }
-    virtual bool Present(bool bVerticalSync)             { return true; }
-    
+
     virtual FRHITexture2D* GetBackBuffer() const { return nullptr; };
 
-    uint32 GetWidth()  const { return Width; }
-    uint32 GetHeight() const { return Height; }
-
     EFormat GetColorFormat() const { return Format; }
+    uint32  GetWidth()       const { return Width;  }
+    uint32  GetHeight()      const { return Height; }
 
 protected:
     uint16  Width;

@@ -85,7 +85,7 @@ public:
 
     virtual void DiscardContents(class FRHITexture* Texture) override final { }
 
-    virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate) override final { }
+    virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)       override final { }
     virtual void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final { }
 
     virtual void SetRayTracingBindings( FRHIRayTracingScene* RayTracingScene
@@ -99,10 +99,10 @@ public:
     virtual void GenerateMips(FRHITexture* Texture) override final { }
 
     virtual void TransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final { }
-    virtual void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final { }
+    virtual void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)    override final { }
 
     virtual void UnorderedAccessTextureBarrier(FRHITexture* Texture) override final { }
-    virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) override final { }
+    virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)    override final { }
 
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final { }
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final { }
@@ -113,11 +113,13 @@ public:
 
     virtual void DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final { }
 
+    virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) override final { }
+
     virtual void ClearState() override final { }
 
     virtual void Flush() override final { }
 
-    virtual void InsertMarker(const FString& Message) override final { }
+    virtual void InsertMarker(const FStringView& Message) override final { }
 
     virtual void BeginExternalCapture() override final { }
     virtual void EndExternalCapture()   override final { }

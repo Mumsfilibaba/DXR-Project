@@ -52,28 +52,28 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
         BaseVertexShader = RHICreateVertexShader(ShaderCode);
         if (!BaseVertexShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
         CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
         BasePixelShader = RHICreatePixelShader(ShaderCode);
         if (!BasePixelShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -85,7 +85,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FRHIDepthStencilStateRef GeometryDepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
         if (!GeometryDepthStencilState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -95,7 +95,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FRHIRasterizerStateRef GeometryRasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
         if (!GeometryRasterizerState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -104,7 +104,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -125,7 +125,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!PipelineState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -139,14 +139,14 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
         PrePassVertexShader = RHICreateVertexShader(ShaderCode);
         if (!PrePassVertexShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -158,7 +158,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencil);
         if (!DepthStencilState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -168,7 +168,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -177,7 +177,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -192,7 +192,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         PrePassPipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!PrePassPipelineState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         } 
     }
@@ -210,7 +210,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
     FRHITexture2DRef StagingTexture = RHICreateTexture2D(LUTInitializer);
     if (!StagingTexture)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -223,7 +223,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
     FrameResources.IntegrationLUT = RHICreateTexture2D(LUTInitializer);
     if (!FrameResources.IntegrationLUT)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -240,7 +240,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
     FrameResources.IntegrationLUTSampler = RHICreateSamplerState(SamplerInitializer);
     if (!FrameResources.IntegrationLUTSampler)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -248,7 +248,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/BRDFIntegationGen.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -256,7 +256,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
     FRHIComputeShaderRef CShader = RHICreateComputeShader(ShaderCode);
     if (!CShader)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -267,7 +267,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FRHIComputePipelineStateRef BRDF_PipelineState = RHICreateComputePipelineState(PSOInitializer);
         if (!BRDF_PipelineState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -299,21 +299,21 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
 
         CmdList.DestroyResource(BRDF_PipelineState.Get());
 
-        FRHICommandListExecutor::Get().ExecuteCommandList(CmdList);
+        GRHICommandExecutor.ExecuteCommandList(CmdList);
     }
 
     {
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
         TiledLightShader = RHICreateComputeShader(ShaderCode);
         if (!TiledLightShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -323,7 +323,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         TiledLightPassPSO = RHICreateComputePipelineState(DeferredLightPassInitializer);
         if (!TiledLightPassPSO)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -337,14 +337,14 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
         TiledLightDebugShader = RHICreateComputeShader(ShaderCode);
         if (!TiledLightDebugShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -354,7 +354,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         TiledLightPassPSODebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
         if (!TiledLightPassPSODebug)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -367,14 +367,14 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FShaderCompileInfo CompileInfo("ReductionMainInital", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
         ReduceDepthInitalShader = RHICreateComputeShader(ShaderCode);
         if (!ReduceDepthInitalShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -384,7 +384,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         ReduceDepthInitalPSO = RHICreateComputePipelineState(PipelineStateInfo);
         if (!ReduceDepthInitalPSO)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -393,14 +393,14 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FShaderCompileInfo CompileInfo("ReductionMain", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
         ReduceDepthShader = RHICreateComputeShader(ShaderCode);
         if (!ReduceDepthShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -410,7 +410,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         ReduceDepthPSO = RHICreateComputePipelineState(PSOInitializer);
         if (!ReduceDepthPSO)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else

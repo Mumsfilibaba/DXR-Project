@@ -91,10 +91,10 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// PlatformDebugBreak
+// DEBUG_BREAK
 
-#ifndef PlatformDebugBreak
-    #define PlatformDebugBreak __builtin_trap
+#ifndef DEBUG_BREAK
+    #define DEBUG_BREAK __builtin_trap
 #endif
 
 // Define the rest of the defines to a default value

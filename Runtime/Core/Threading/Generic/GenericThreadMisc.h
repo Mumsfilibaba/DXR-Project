@@ -19,12 +19,10 @@ class FGenericThreadMisc
 public:
 
     static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
-
     static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName);
 
     static FORCEINLINE bool Initialize() { return true; }
-
-    static FORCEINLINE void Release() { }
+    static FORCEINLINE void Release()    { }
 
     static FORCEINLINE uint32 GetNumProcessors() { return 1; }
 

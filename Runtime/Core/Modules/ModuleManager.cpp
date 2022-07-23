@@ -5,11 +5,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FModuleManager
 
-IEngineModule* FModuleManager::LoadEngineModule(const char* ModuleName)
+IModule* FModuleManager::LoadModule(const char* ModuleName)
 {
     Check(ModuleName != nullptr);
 
-    IEngineModule* ExistingModule = GetEngineModule(ModuleName);
+    IModule* ExistingModule = GetModule(ModuleName);
     if (ExistingModule)
     {
         LOG_WARNING("Module '%s' is already loaded", ModuleName);
@@ -85,12 +85,12 @@ IEngineModule* FModuleManager::LoadEngineModule(const char* ModuleName)
     }
 }
 
-IEngineModule* FModuleManager::GetEngineModule(const char* ModuleName)
+IModule* FModuleManager::GetModule(const char* ModuleName)
 {
     const int32 Index = GetModuleIndex(ModuleName);
     if (Index >= 0)
     {
-        IEngineModule* EngineModule = Modules[Index].Interface;
+        IModule* EngineModule = Modules[Index].Interface;
         if (EngineModule)
         {
             LOG_WARNING("Module is loaded but does not contain an EngineModule interface");
@@ -138,7 +138,7 @@ void  FModuleManager::ReleaseAllModules()
     {
         FModule& Module = Modules[Index];
 
-        IEngineModule* EngineModule = Module.Interface;
+        IModule* EngineModule = Module.Interface;
         if (EngineModule)
         {
             EngineModule->Unload();
@@ -191,7 +191,7 @@ void FModuleManager::UnloadModule(const char* ModuleName)
     {
         FModule& Module = Modules[Index];
 
-        IEngineModule* EngineModule = Module.Interface;
+        IModule* EngineModule = Module.Interface;
         if (EngineModule)
         {
             EngineModule->Unload();

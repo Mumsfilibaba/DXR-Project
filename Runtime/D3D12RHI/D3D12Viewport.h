@@ -24,14 +24,14 @@ public:
 
     bool Initialize();
 
+    bool Present(bool VerticalSync);
+
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIViewport Interface
 
     virtual bool Resize(uint32 Width, uint32 Height) override final;
-
-    virtual bool Present(bool VerticalSync) override final;
 
     virtual FRHITexture2D* GetBackBuffer() const override final { return BackBuffers[BackBufferIndex].Get(); }
 

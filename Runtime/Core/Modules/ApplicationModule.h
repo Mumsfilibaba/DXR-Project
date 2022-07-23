@@ -7,7 +7,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FApplicationModule
 
-class CORE_API FApplicationModule : public IEngineModule
+class CORE_API FApplicationModule : public IModule
 {
 public:
 

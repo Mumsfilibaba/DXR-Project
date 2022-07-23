@@ -12,6 +12,7 @@
 #include "D3D12TimestampQuery.h"
 #include "D3D12CommandContext.h"
 #include "D3D12Library.h"
+#include "D3D12Viewport.h"
 
 #include "Core/Math/Vector2.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
@@ -513,74 +514,12 @@ void FD3D12CommandContext::StartContext()
     // Lock to the thread that started the context
     CommandContextCS.Lock();
 
-    {
-        Check(State.bIsReady == false);
-
-        TRACE_FUNCTION_SCOPE();
-
-        CmdBatch = &CmdBatches[NextCmdBatch];
-        NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
-
-        if (CmdBatch->AssignedFenceValue >= Fence.GetCompletedValue())
-        {
-            Fence.WaitForValue(CmdBatch->AssignedFenceValue);
-        }
-
-        if (!CmdBatch->Reset())
-        {
-            D3D12_ERROR("Failed to reset D3D12CommandBatch");
-            return;
-        }
-
-        InternalClearState();
-
-        if (!CommandList.Reset(CmdBatch->GetCommandAllocator()))
-        {
-            D3D12_ERROR("Failed to reset Commandlist");
-        }
-
-        State.DescriptorCache.SetCurrentCommandList(&CommandList);
-        State.bIsReady = true;
-    }
+    StartCommandList();
 }
 
 void FD3D12CommandContext::FinishContext()
 {
-    {
-        Check(State.bIsReady == true);
-
-        TRACE_FUNCTION_SCOPE();
-
-        FlushResourceBarriers();
-
-        const uint64 NewFenceValue = ++FenceValue;
-        CmdBatch->AssignedFenceValue = NewFenceValue;
-        CmdBatch = nullptr;
-
-        for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.Size(); ++QueryIndex)
-        {
-            ResolveQueries[QueryIndex]->ResolveQueries(*this);
-        }
-
-        ResolveQueries.Clear();
-
-        // Execute
-        if (!CommandList.Close())
-        {
-            D3D12_ERROR("Failed to close CommandList");
-            return;
-        }
-
-        CommandQueue.ExecuteCommandList(&CommandList);
-
-        if (!CommandQueue.SignalFence(Fence, NewFenceValue))
-        {
-            D3D12_ERROR("Failed to signal Fence on the GPU");
-        }
-
-        State.ClearAll();
-        State.DescriptorCache.SetCurrentCommandList(nullptr);
-    }
+    EndCommandList();
 
     // Unlock from the thread that started the context
     CommandContextCS.Unlock();
@@ -1569,6 +1508,18 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
     DXRCommandList->DispatchRays(&RayDispatchDesc);
 }
 
+void FD3D12CommandContext::PresentViewport(FRHIViewport* Viewport, bool bVerticalSync)
+{
+    // Ensure that commands are submitted
+    EndCommandList();
+
+    FD3D12Viewport* D3D12Viewport = static_cast<FD3D12Viewport*>(Viewport);
+    D3D12Viewport->Present(bVerticalSync);
+
+    // Start recording again
+    StartCommandList();
+}
+
 void FD3D12CommandContext::ClearState()
 {
     Flush();
@@ -1592,7 +1543,7 @@ void FD3D12CommandContext::Flush()
     }
 }
 
-void FD3D12CommandContext::InsertMarker(const FString& Message)
+void FD3D12CommandContext::InsertMarker(const FStringView& Message)
 {
     if (FD3D12Library::SetMarkerOnCommandList)
     {
@@ -1623,4 +1574,72 @@ void FD3D12CommandContext::EndExternalCapture()
 void FD3D12CommandContext::InternalClearState()
 {
     State.ClearAll();
+}
+
+void FD3D12CommandContext::StartCommandList()
+{
+    Check(State.bIsReady == false);
+
+    TRACE_FUNCTION_SCOPE();
+
+    CmdBatch = &CmdBatches[NextCmdBatch];
+    NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
+
+    if (CmdBatch->AssignedFenceValue >= Fence.GetCompletedValue())
+    {
+        Fence.WaitForValue(CmdBatch->AssignedFenceValue);
+    }
+
+    if (!CmdBatch->Reset())
+    {
+        D3D12_ERROR("Failed to reset D3D12CommandBatch");
+        return;
+    }
+
+    InternalClearState();
+
+    if (!CommandList.Reset(CmdBatch->GetCommandAllocator()))
+    {
+        D3D12_ERROR("Failed to reset Commandlist");
+    }
+
+    State.DescriptorCache.SetCurrentCommandList(&CommandList);
+    State.bIsReady = true;
+}
+
+void FD3D12CommandContext::EndCommandList()
+{
+    Check(State.bIsReady == true);
+
+    TRACE_FUNCTION_SCOPE();
+
+    FlushResourceBarriers();
+
+    const uint64 NewFenceValue = ++FenceValue;
+    CmdBatch->AssignedFenceValue = NewFenceValue;
+    CmdBatch = nullptr;
+
+    for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.Size(); ++QueryIndex)
+    {
+        ResolveQueries[QueryIndex]->ResolveQueries(*this);
+    }
+
+    ResolveQueries.Clear();
+
+    // Execute
+    if (!CommandList.Close())
+    {
+        D3D12_ERROR("Failed to close CommandList");
+        return;
+    }
+
+    CommandQueue.ExecuteCommandList(&CommandList);
+
+    if (!CommandQueue.SignalFence(Fence, NewFenceValue))
+    {
+        D3D12_ERROR("Failed to signal Fence on the GPU");
+    }
+
+    State.ClearAll();
+    State.DescriptorCache.SetCurrentCommandList(nullptr);
 }

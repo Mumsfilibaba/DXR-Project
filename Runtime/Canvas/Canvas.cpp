@@ -2,4 +2,4 @@
 
 #include "Core/Modules/ModuleManager.h"
 
-IMPLEMENT_ENGINE_MODULE(FDefaultEngineModule, Canvas);
+IMPLEMENT_ENGINE_MODULE(FDefaultModule, Canvas);

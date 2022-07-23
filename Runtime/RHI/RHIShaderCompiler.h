@@ -101,7 +101,7 @@ public:
 
     TArrayView<FShaderDefine> Defines;
 
-    FString                    EntryPoint;
+    FString                   EntryPoint;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -109,8 +109,10 @@ public:
 
 class RHI_API FRHIShaderCompiler
 {
-public:
-    FRHIShaderCompiler(const char* InAssestPath);
+private:
+    friend class TOptional<FRHIShaderCompiler>;
+
+    FRHIShaderCompiler(const char* InAssetPath);
     ~FRHIShaderCompiler();
 
 public:
@@ -120,21 +122,18 @@ public:
     
     static FRHIShaderCompiler& Get();
 
-public:
-
     bool CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     bool CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
 private:
-
     static void ErrorCallback(void* Userdata, const char* Error);
 
     bool ConvertSpirvToMetalShader(const FString& Entrypoint, TArray<uint8>& OutByteCode);
-
     bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);
 
     FString CreateArgString(const TArrayView<LPCWSTR> Args);
 
+public:
     void*                 DXCLib;
     DxcCreateInstanceProc DxcCreateInstanceFunc;
 

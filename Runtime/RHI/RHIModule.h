@@ -34,7 +34,7 @@ RHI_API void RHIRelease();
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIModule
 
-class RHI_API FRHIModule : public FDefaultEngineModule
+class RHI_API FRHIModule : public FDefaultModule
 {
 protected:
 

@@ -40,8 +40,6 @@ public:
         return true;
     }
 
-    virtual bool Present(bool bVerticalSync) override final { return true; }
-
     virtual FRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
 private:

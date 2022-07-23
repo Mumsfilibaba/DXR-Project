@@ -2,4 +2,4 @@
 
 #include "Core/Modules/ModuleManager.h"
 
-IMPLEMENT_ENGINE_MODULE(FDefaultEngineModule, Renderer);
+IMPLEMENT_ENGINE_MODULE(FDefaultModule, Renderer);

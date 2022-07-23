@@ -201,7 +201,7 @@ bool FD3D12ShaderCompiler::CompileFromFile(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
 
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -224,7 +224,7 @@ bool FD3D12ShaderCompiler::CompileShader(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
 
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -380,7 +380,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Compile");
 
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -388,7 +388,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
 
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 

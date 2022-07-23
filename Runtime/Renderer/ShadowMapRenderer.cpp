@@ -37,7 +37,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         PerShadowMapBuffer = RHICreateConstantBuffer(CBInitializer);
         if (!PerShadowMapBuffer)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -45,7 +45,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             FShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
-                PlatformDebugBreak();
+                DEBUG_BREAK();
                 return false;
             }
         }
@@ -53,7 +53,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         PointLightVertexShader = RHICreateVertexShader(ShaderCode);
         if (!PointLightVertexShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -61,7 +61,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             FShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
-                PlatformDebugBreak();
+                DEBUG_BREAK();
                 return false;
             }
         }
@@ -69,7 +69,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         PointLightPixelShader = RHICreatePixelShader(ShaderCode);
         if (!PointLightPixelShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -81,7 +81,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -91,7 +91,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
         if (!RasterizerState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -100,7 +100,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -122,7 +122,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         PointLightPipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!PointLightPipelineState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -138,7 +138,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         PerCascadeBuffer = RHICreateConstantBuffer(Initializer);
         if (!PerCascadeBuffer)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -150,7 +150,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
-                PlatformDebugBreak();
+                DEBUG_BREAK();
                 return false;
             }
         }
@@ -158,7 +158,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         DirectionalLightShader = RHICreateVertexShader(ShaderCode);
         if (!DirectionalLightShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -170,7 +170,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -180,7 +180,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
         if (!RasterizerState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -188,7 +188,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -210,7 +210,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         DirectionalLightPSO = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!DirectionalLightPSO)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -225,7 +225,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/CascadeMatrixGen.hlsl", CompileInfo, ShaderCode))
             {
-                PlatformDebugBreak();
+                DEBUG_BREAK();
                 return false;
             }
         }
@@ -233,7 +233,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         CascadeGenShader = RHICreateComputeShader(ShaderCode);
         if (!CascadeGenShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -243,7 +243,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         CascadeGen = RHICreateComputePipelineState(CascadePSO);
         if (!CascadeGen)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -259,7 +259,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         CascadeGenerationData = RHICreateConstantBuffer(CBInitializer);
         if (!CascadeGenerationData)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -272,7 +272,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         LightSetup.CascadeMatrixBuffer = RHICreateGenericBuffer(GenericInitializer);
         if (!LightSetup.CascadeMatrixBuffer)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -284,7 +284,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         LightSetup.CascadeMatrixBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!LightSetup.CascadeMatrixBufferSRV)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -292,7 +292,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         LightSetup.CascadeMatrixBufferUAV = RHICreateUnorderedAccessView(UAVInitializer);
         if (!LightSetup.CascadeMatrixBufferUAV)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -301,7 +301,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         LightSetup.CascadeSplitsBuffer = RHICreateGenericBuffer(GenericInitializer);
         if (!LightSetup.CascadeSplitsBuffer)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -313,7 +313,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         LightSetup.CascadeSplitsBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!LightSetup.CascadeSplitsBufferSRV)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -321,7 +321,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         LightSetup.CascadeSplitsBufferUAV = RHICreateUnorderedAccessView(UAVInitializer);
         if (!LightSetup.CascadeSplitsBufferUAV)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -332,7 +332,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
             {
-                PlatformDebugBreak();
+                DEBUG_BREAK();
                 return false;
             }
         }
@@ -340,7 +340,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         DirectionalShadowMaskShader = RHICreateComputeShader(ShaderCode);
         if (!DirectionalShadowMaskShader)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
 
@@ -350,7 +350,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         DirectionalShadowMaskPSO = RHICreateComputePipelineState(MaskPSO);
         if (!DirectionalShadowMaskPSO)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else

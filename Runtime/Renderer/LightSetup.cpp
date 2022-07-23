@@ -17,7 +17,7 @@ bool FLightSetup::Init()
     DirectionalLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!DirectionalLightsBuffer)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -31,7 +31,7 @@ bool FLightSetup::Init()
     PointLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!PointLightsBuffer)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -45,7 +45,7 @@ bool FLightSetup::Init()
     PointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
     if (!PointLightsPosRadBuffer)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -59,7 +59,7 @@ bool FLightSetup::Init()
     ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!ShadowCastingPointLightsBuffer)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -73,7 +73,7 @@ bool FLightSetup::Init()
     ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
     if (!ShadowCastingPointLightsPosRadBuffer)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -186,7 +186,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
         PointLightsBuffer = RHICreateConstantBuffer(Initializer);
         if (!PointLightsBuffer)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
         }
     }
 
@@ -198,7 +198,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
         PointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
         if (!PointLightsPosRadBuffer)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
         }
     }
 
@@ -210,7 +210,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
         ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(Initializer);
         if (!ShadowCastingPointLightsBuffer)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
         }
     }
 
@@ -222,7 +222,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
         ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
         if (!ShadowCastingPointLightsPosRadBuffer)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
         }
     }
 

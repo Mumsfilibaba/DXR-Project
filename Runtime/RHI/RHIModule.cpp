@@ -3,7 +3,7 @@
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
 
-IMPLEMENT_ENGINE_MODULE(FDefaultEngineModule, RHI);
+IMPLEMENT_ENGINE_MODULE(FDefaultModule, RHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Globals
@@ -16,7 +16,7 @@ RHI_API IRHIShaderCompiler* GShaderCompiler   = nullptr;
 
 static FRHIModule* LoadNullRHI()
 {
-    return FModuleManager::Get().LoadEngineModule<FRHIModule>("NullRHI");
+    return FModuleManager::Get().LoadModule<FRHIModule>("NullRHI");
 }
 
 bool RHIInitialize(ERHIInstanceType InRenderApi)
@@ -25,11 +25,11 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
     FRHIModule* RHIModule = nullptr;
     if (InRenderApi == ERHIInstanceType::D3D12)
     {
-        RHIModule = FModuleManager::Get().LoadEngineModule<FRHIModule>("D3D12RHI");
+        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("D3D12RHI");
     }
 	else if (InRenderApi == ERHIInstanceType::Metal)
 	{
-		RHIModule = FModuleManager::Get().LoadEngineModule<FRHIModule>("MetalRHI");
+		RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("MetalRHI");
 	}
     else if (InRenderApi == ERHIInstanceType::Null)
     {
@@ -75,23 +75,21 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
     GShaderCompiler = Compiler;
 
     // Initialize the CommandListExecutor
-    if (!FRHICommandListExecutor::Initialize())
+    if (!GRHICommandExecutor.Initialize())
     {
         return false;
     }
 
     // Set the context to the command queue
     IRHICommandContext* CmdContext = RHIGetDefaultCommandContext();
-    FRHICommandListExecutor::Get().SetContext(CmdContext);
+    GRHICommandExecutor.SetContext(CmdContext);
 
     return true;
 }
 
 void RHIRelease()
 {
-    FRHICommandListExecutor::Release();
-
-    FRHICommandListExecutor::Get().SetContext(nullptr);
+    GRHICommandExecutor.Release();
 
     if (GRHICoreInterface)
     {

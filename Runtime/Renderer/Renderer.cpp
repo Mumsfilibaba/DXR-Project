@@ -80,7 +80,7 @@ bool FRenderer::Init()
     Resources.MainWindowViewport = RHICreateViewport(ViewportInitializer);
     if (!Resources.MainWindowViewport)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -112,7 +112,7 @@ bool FRenderer::Init()
     Resources.StdInputLayout = RHICreateVertexInputLayout(InputLayout);
     if (!Resources.StdInputLayout)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -127,7 +127,7 @@ bool FRenderer::Init()
         Resources.DirectionalLightShadowSampler = RHICreateSamplerState(Initializer);
         if (!Resources.DirectionalLightShadowSampler)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -143,7 +143,7 @@ bool FRenderer::Init()
         Resources.PointLightShadowSampler = RHICreateSamplerState(Initializer);
         if (!Resources.PointLightShadowSampler)
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -206,10 +206,8 @@ bool FRenderer::Init()
         }
     }
 
-    FRHICommandListExecutor& CommandListExecutor = FRHICommandListExecutor::Get();
-
     LightProbeRenderer.RenderSkyLightProbe(MainCmdList, LightSetup, Resources);
-    CommandListExecutor.ExecuteCommandList(MainCmdList);
+    GRHICommandExecutor.ExecuteCommandList(MainCmdList);
 
     FApplication& Application = FApplication::Get();
 
@@ -484,6 +482,16 @@ void FRenderer::Tick(const FScene& Scene)
     Resources.BackBuffer             = Resources.MainWindowViewport->GetBackBuffer();
     Resources.GlobalMeshDrawCommands = TArrayView<const FMeshDrawCommand>(Scene.GetMeshDrawCommands());
 
+    // Prepare Execution of commandlists
+    MainCmdList.ExecuteCommandList(&PreShadowsCmdList);
+    MainCmdList.ExecuteCommandList(&PointShadowCmdList);
+    MainCmdList.ExecuteCommandList(&DirShadowCmdList);
+    MainCmdList.ExecuteCommandList(&PrepareGBufferCmdList);
+    MainCmdList.ExecuteCommandList(&PrePassCmdList);
+    MainCmdList.ExecuteCommandList(&ShadingRateCmdList);
+    MainCmdList.ExecuteCommandList(&RayTracingCmdList);
+    MainCmdList.ExecuteCommandList(&BasePassCmdList);
+
     // Prepare Lights
 #if 1
     PreShadowsCmdList.BeginExternalCapture();
@@ -561,9 +569,7 @@ void FRenderer::Tick(const FScene& Scene)
     CamBuffer.AspectRatio       = Scene.GetCamera()->GetAspectRatio();
 
     PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-
     PrepareGBufferCmdList.UpdateBuffer(Resources.CameraBuffer.Get(), 0, sizeof(SCameraBufferDesc), &CamBuffer);
-
     PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
 
     PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
@@ -801,39 +807,22 @@ void FRenderer::Tick(const FScene& Scene)
     MainCmdList.EndExternalCapture();
 #endif
 
+    MainCmdList.PresentViewport(Resources.MainWindowViewport.Get(), GVSyncEnabled.GetBool());
+
     FAsyncTaskManager::Get().WaitForAll();
 
     {
         TRACE_SCOPE("ExecuteCommandList");
 
-        FRHICommandList* CmdLists[9] =
-        {
-            &PreShadowsCmdList,
-            &PointShadowCmdList,
-            &DirShadowCmdList,
-            &PrepareGBufferCmdList,
-            &PrePassCmdList,
-            &ShadingRateCmdList,
-            &RayTracingCmdList,
-            &BasePassCmdList,
-            &MainCmdList
-        };
-
-        FRHICommandListExecutor& Executor = FRHICommandListExecutor::Get();
-        Executor.ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
-        
-        FrameStatistics = Executor.GetStatistics();
-    }
-
-    {
-        TRACE_SCOPE("Present");
-        Resources.MainWindowViewport->Present(GVSyncEnabled.GetBool());
+        GRHICommandExecutor.WaitForOutstandingTasks();
+        GRHICommandExecutor.ExecuteCommandList(MainCmdList);
+        FrameStatistics = GRHICommandExecutor.GetStatistics();
     }
 }
 
 void FRenderer::Release()
 {
-    FRHICommandListExecutor::Get().WaitForGPU();
+    GRHICommandExecutor.WaitForGPU();
 
     PreShadowsCmdList.Reset();
     PointShadowCmdList.Reset();
@@ -898,25 +887,25 @@ void FRenderer::OnWindowResize(const FWindowResizeEvent& Event)
 
     if (!Resources.MainWindowViewport->Resize(Width, Height))
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return;
     }
 
     if (!DeferredRenderer.ResizeResources(Resources))
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return;
     }
 
     if (!SSAORenderer.ResizeResources(Resources))
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return;
     }
 
     if (!ShadowMapRenderer.ResizeResources(Width, Height, LightSetup))
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return;
     }
 }
@@ -929,7 +918,7 @@ bool FRenderer::InitBoundingBoxDebugPass()
         FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -937,7 +926,7 @@ bool FRenderer::InitBoundingBoxDebugPass()
     AABBVertexShader = RHICreateVertexShader(ShaderCode);
     if (!AABBVertexShader)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -945,7 +934,7 @@ bool FRenderer::InitBoundingBoxDebugPass()
         FShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -953,7 +942,7 @@ bool FRenderer::InitBoundingBoxDebugPass()
     AABBPixelShader = RHICreatePixelShader(ShaderCode);
     if (!AABBPixelShader)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -965,7 +954,7 @@ bool FRenderer::InitBoundingBoxDebugPass()
     TSharedRef<FRHIVertexInputLayout> InputLayoutState = RHICreateVertexInputLayout(InputLayout);
     if (!InputLayoutState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -977,7 +966,7 @@ bool FRenderer::InitBoundingBoxDebugPass()
     TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -987,7 +976,7 @@ bool FRenderer::InitBoundingBoxDebugPass()
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -996,7 +985,7 @@ bool FRenderer::InitBoundingBoxDebugPass()
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -1015,7 +1004,7 @@ bool FRenderer::InitBoundingBoxDebugPass()
     AABBDebugPipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!AABBDebugPipelineState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -1042,7 +1031,7 @@ bool FRenderer::InitBoundingBoxDebugPass()
     AABBVertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!AABBVertexBuffer)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -1073,7 +1062,7 @@ bool FRenderer::InitBoundingBoxDebugPass()
     AABBIndexBuffer = RHICreateIndexBuffer(IBInitializer);
     if (!AABBIndexBuffer)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -1092,7 +1081,7 @@ bool FRenderer::InitAA()
 		FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
 		if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
 		{
-			PlatformDebugBreak();
+			DEBUG_BREAK();
 			return false;
 		}
     }
@@ -1100,7 +1089,7 @@ bool FRenderer::InitAA()
     TSharedRef<FRHIVertexShader> VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -1108,7 +1097,7 @@ bool FRenderer::InitAA()
 		FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
 		if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
 		{
-			PlatformDebugBreak();
+			DEBUG_BREAK();
 			return false;
 		}
     }
@@ -1116,7 +1105,7 @@ bool FRenderer::InitAA()
     PostShader = RHICreatePixelShader(ShaderCode);
     if (!PostShader)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -1128,7 +1117,7 @@ bool FRenderer::InitAA()
     TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -1138,7 +1127,7 @@ bool FRenderer::InitAA()
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
     if (!RasterizerState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -1147,7 +1136,7 @@ bool FRenderer::InitAA()
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -1166,7 +1155,7 @@ bool FRenderer::InitAA()
     PostPSO = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PostPSO)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -1187,7 +1176,7 @@ bool FRenderer::InitAA()
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -1195,7 +1184,7 @@ bool FRenderer::InitAA()
     FXAAShader = RHICreatePixelShader(ShaderCode);
     if (!FXAAShader)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -1204,7 +1193,7 @@ bool FRenderer::InitAA()
     FXAAPSO = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!FXAAPSO)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -1221,7 +1210,7 @@ bool FRenderer::InitAA()
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -1229,7 +1218,7 @@ bool FRenderer::InitAA()
     FXAADebugShader = RHICreatePixelShader(ShaderCode);
     if (!FXAADebugShader)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -1238,7 +1227,7 @@ bool FRenderer::InitAA()
     FXAADebugPSO = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!FXAADebugPSO)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -1262,7 +1251,7 @@ bool FRenderer::InitShadingImage()
     ShadingImage = RHICreateTexture2D(Initializer);
     if (!ShadingImage)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -1276,7 +1265,7 @@ bool FRenderer::InitShadingImage()
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
         {
-            PlatformDebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -1284,7 +1273,7 @@ bool FRenderer::InitShadingImage()
     ShadingRateShader = RHICreateComputeShader(ShaderCode);
     if (!ShadingRateShader)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -1292,7 +1281,7 @@ bool FRenderer::InitShadingImage()
     ShadingRatePipeline = RHICreateComputePipelineState(PSOInitializer);
     if (!ShadingRatePipeline)
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 

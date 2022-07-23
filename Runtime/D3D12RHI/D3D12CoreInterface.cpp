@@ -172,7 +172,7 @@ bool FD3D12CoreInterface::Initialize(bool bEnableDebug)
     Shader = dbg_new FD3D12ComputeShader(GetDevice(), Code);
     if (!Shader->Init())
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -633,7 +633,7 @@ FRHIRayTracingGeometry* FD3D12CoreInterface::RHICreateRayTracingGeometry(const F
     
     if (!D3D12Geometry->Build(*DirectCmdContext, D3D12VertexBuffer, D3D12IndexBuffer, false))
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         D3D12Geometry.Reset();
     }
 
@@ -650,7 +650,7 @@ FRHIRayTracingScene* FD3D12CoreInterface::RHICreateRayTracingScene(const FRHIRay
 
     if (!D3D12Scene->Build(*DirectCmdContext, Initializer.Instances.CreateView(), false))
     {
-        PlatformDebugBreak();
+        DEBUG_BREAK();
         D3D12Scene.Reset();
     }
 
