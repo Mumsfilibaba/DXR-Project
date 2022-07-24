@@ -385,7 +385,6 @@ public:
     virtual void* GetRHIBaseCommandList() override final { return reinterpret_cast<void*>(&CommandList); }
 
 public:
-
     void StartCommandList();
     void EndCommandList();
 
