@@ -84,12 +84,13 @@ public:
         , Transform()
     { }
 
-    FRHIRayTracingGeometryInstance( FRHIRayTracingGeometry* InGeometry
-                                  , uint32 InInstanceIndex
-                                  , uint32 InHitGroupIndex
-                                  , ERayTracingInstanceFlags InFlags
-                                  , uint32 InMask
-                                  , const FMatrix3x4& InTransform)
+    FRHIRayTracingGeometryInstance(
+        FRHIRayTracingGeometry* InGeometry,
+        uint32 InInstanceIndex,
+        uint32 InHitGroupIndex,
+        ERayTracingInstanceFlags InFlags,
+        uint32 InMask,
+        const FMatrix3x4& InTransform)
         : Geometry(InGeometry)
         , InstanceIndex(InInstanceIndex)
         , HitGroupIndex(InHitGroupIndex)
@@ -171,7 +172,10 @@ public:
         , IndexBuffer(nullptr)
     { }
 
-    FRHIRayTracingGeometryInitializer(FRHIVertexBuffer* InVertexBuffer, FRHIIndexBuffer* InIndexBuffer, EAccelerationStructureBuildFlags InFlags)
+    FRHIRayTracingGeometryInitializer(
+        FRHIVertexBuffer* InVertexBuffer,
+        FRHIIndexBuffer* InIndexBuffer,
+        EAccelerationStructureBuildFlags InFlags)
         : FRHIAccelerationStructureInitializer(InFlags)
         , VertexBuffer(InVertexBuffer)
         , IndexBuffer(InIndexBuffer)
@@ -205,7 +209,9 @@ public:
         , Instances()
     { }
 
-    FRHIRayTracingSceneInitializer(const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances, EAccelerationStructureBuildFlags InFlags)
+    FRHIRayTracingSceneInitializer(
+        const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances,
+        EAccelerationStructureBuildFlags InFlags)
         : FRHIAccelerationStructureInitializer(InFlags)
         , Instances(InInstances)
     { }

@@ -74,16 +74,17 @@ public:
         , EntryPoint()
     { }
     
-    FShaderCompileInfo( const FString& InEntryPoint
-                      , EShaderModel InShaderModel
-                      , EShaderStage InShaderStage
-                      , const TArrayView<FShaderDefine>& InDefines = TArrayView<FShaderDefine>()
+    FShaderCompileInfo(
+        const FString& InEntryPoint,
+        EShaderModel InShaderModel,
+        EShaderStage InShaderStage,
+        const TArrayView<FShaderDefine>& InDefines = TArrayView<FShaderDefine>(),
 #if PLATFORM_WINDOWS
-                      , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::HLSL)
+        EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::HLSL)
 #elif PLATFORM_MACOS
-                      , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::MSL)
+        EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::MSL)
 #else
-                      , EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::Unknown)
+        EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::Unknown)
 #endif
         : ShaderModel(InShaderModel)
         , ShaderStage(InShaderStage)

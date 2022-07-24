@@ -345,13 +345,14 @@ public:
     virtual void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final;
 
      /** @brief: Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
-    virtual void SetRayTracingBindings( FRHIRayTracingScene* RayTracingScene
-                                      , FRHIRayTracingPipelineState* PipelineState
-                                      , const FRayTracingShaderResources* GlobalResource
-                                      , const FRayTracingShaderResources* RayGenLocalResources
-                                      , const FRayTracingShaderResources* MissLocalResources
-                                      , const FRayTracingShaderResources* HitGroupResources
-                                      , uint32 NumHitGroupResources) override final;
+    virtual void SetRayTracingBindings(
+        FRHIRayTracingScene* RayTracingScene,
+        FRHIRayTracingPipelineState* PipelineState,
+        const FRayTracingShaderResources* GlobalResource,
+        const FRayTracingShaderResources* RayGenLocalResources,
+        const FRayTracingShaderResources* MissLocalResources,
+        const FRayTracingShaderResources* HitGroupResources,
+        uint32 NumHitGroupResources) override final;
 
     virtual void GenerateMips(FRHITexture* Texture) override final;
 

@@ -30,11 +30,12 @@ public:
         , Height(0)
     { }
 
-    FRHIViewportInitializer( void* InWindowHandle
-                           , EFormat InColorFormat
-                           , EFormat InDepthFormat
-                           , uint16 InWidth
-                           , uint16 InHeight)
+    FRHIViewportInitializer(
+        void* InWindowHandle,
+        EFormat InColorFormat,
+        EFormat InDepthFormat,
+        uint16 InWidth,
+        uint16 InHeight)
         : WindowHandle(InWindowHandle)
         , ColorFormat(InColorFormat)
         , DepthFormat(InDepthFormat)
@@ -74,9 +75,9 @@ protected:
     
     explicit FRHIViewport(const FRHIViewportInitializer& Initializer)
         : FRHIResource()
+        , Format(Initializer.ColorFormat)
         , Width(Initializer.Width)
         , Height(Initializer.Height)
-        , Format(Initializer.ColorFormat)
     { }
 
     ~FRHIViewport() = default;
@@ -88,13 +89,14 @@ public:
     virtual FRHITexture2D* GetBackBuffer() const { return nullptr; };
 
     EFormat GetColorFormat() const { return Format; }
+
     uint32  GetWidth()       const { return Width;  }
     uint32  GetHeight()      const { return Height; }
 
 protected:
+    EFormat Format;
     uint16  Width;
     uint16  Height;
-    EFormat Format;
 };
 
 #if defined(COMPILER_MSVC)

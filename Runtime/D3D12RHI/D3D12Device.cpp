@@ -194,7 +194,7 @@ bool FD3D12Adapter::Initialize()
             TComPtr<ID3D12Debug5> DebugInterface5;
             if (FAILED(DebugInterface.GetAs(&DebugInterface5)))
             {
-                D3D12_ERROR("[FD3D12Adapter]: FAILED to enable auto-naming of objects");
+                D3D12_WARNING("[FD3D12Adapter]: FAILED to enable auto-naming of objects");
             }
             else
             {

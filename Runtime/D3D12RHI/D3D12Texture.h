@@ -9,19 +9,18 @@
     #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
+class FD3D12Viewport;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedef
 
-typedef TSharedRef<class FD3D12Texture>          FD3D12TextureRef;
-typedef TSharedRef<class FD3D12Texture2D>        FD3D12Texture2DRef;
-typedef TSharedRef<class FD3D12Texture2DArray>   FD3D12Texture2DArrayRef;
-typedef TSharedRef<class FD3D12TextureCube>      FD3D12TextureCubeRef;
-typedef TSharedRef<class FD3D12TextureCubeArray> FD3D12TextureCubeArrayRef;
-typedef TSharedRef<class FD3D12Texture3D>        FD3D12Texture3DRef;
-
-typedef TSharedRef<FD3D12RenderTargetView>   FD3D12RenderTargetViewRef;
-typedef TSharedRef<FD3D12DepthStencilView>   FD3D12DepthStencilViewRef;
-typedef TSharedRef<FD3D12ShaderResourceView> FD3D12ShaderResourceViewRef;
+typedef TSharedRef<class FD3D12Texture>           FD3D12TextureRef;
+typedef TSharedRef<class FD3D12Texture2D>         FD3D12Texture2DRef;
+typedef TSharedRef<class FD3D12Texture2DArray>    FD3D12Texture2DArrayRef;
+typedef TSharedRef<class FD3D12TextureCube>       FD3D12TextureCubeRef;
+typedef TSharedRef<class FD3D12TextureCubeArray>  FD3D12TextureCubeArrayRef;
+typedef TSharedRef<class FD3D12Texture3D>         FD3D12Texture3DRef;
+typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Texture 
@@ -29,17 +28,19 @@ typedef TSharedRef<FD3D12ShaderResourceView> FD3D12ShaderResourceViewRef;
 class FD3D12Texture : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
-
     FD3D12Texture(FD3D12Device* InDevice);
     ~FD3D12Texture() = default;
-
-public:
 
     FD3D12RenderTargetView* GetOrCreateRTV(const FRHIRenderTargetView& RTVInitializer);
     FD3D12DepthStencilView* GetOrCreateDSV(const FRHIDepthStencilView& DSVInitializer);
 
     void DestroyRTVs() { RenderTargetViews.Clear(); }
 	void DestroyDSVs() { DepthStencilViews.Clear(); }
+
+    FD3D12Resource*           GetResource()           const { return Resource.Get(); }
+    FD3D12ShaderResourceView* GetShaderResourceView() const { return ShaderResourceView.Get(); }
+
+    DXGI_FORMAT               GetDXGIFormat() const { return Resource ? Resource->GetDesc().Format : DXGI_FORMAT_UNKNOWN; }
 
     void SetShaderResourceView(FD3D12ShaderResourceView* InShaderResourceView) 
     { 
@@ -52,11 +53,6 @@ public:
         RenderTargetViews.Clear();
         DepthStencilViews.Clear();
     }
-
-    FD3D12Resource*           GetResource()           const { return Resource.Get(); }
-    FD3D12ShaderResourceView* GetShaderResourceView() const { return ShaderResourceView.Get(); }
-
-    DXGI_FORMAT               GetDXGIFormat() const { return Resource ? Resource->GetDesc().Format : DXGI_FORMAT_UNKNOWN; }
 
 protected:
     FD3D12ResourceRef                 Resource;
@@ -72,14 +68,11 @@ protected:
 class FD3D12Texture2D : public FRHITexture2D, public FD3D12Texture
 {
 public:
-    
     explicit FD3D12Texture2D(FD3D12Device* InDevice, const FRHITexture2DInitializer& Initializer)
         : FRHITexture2D(Initializer)
         , FD3D12Texture(InDevice)
         , UnorderedAccessView(nullptr)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // IRefCounted Interface
@@ -107,18 +100,33 @@ public:
         }
     }
 
-public:
-
     void SetUnorderedAccessView(FD3D12UnorderedAccessView* InUnorderedAccessView) { UnorderedAccessView = InUnorderedAccessView; }
-
-    void SetSize(uint16 InWidth, uint16 InHeight)
-    {
-        Width  = InWidth;
-        Height = InHeight;
-    }
 
 private:
     FD3D12UnorderedAccessViewRef UnorderedAccessView;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12BackBufferTexture
+
+class FD3D12BackBufferTexture : public FD3D12Texture2D
+{
+public:
+    explicit FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITexture2DInitializer& Initializer)
+        : FD3D12Texture2D(InDevice, Initializer)
+        , Viewport(InViewport)
+    { }
+
+    FD3D12Texture*  GetCurrentBackBufferTexture();
+    FD3D12Viewport* GetViewport() const { return Viewport; }
+
+    void SetViewport(FD3D12Viewport* InViewport)
+    {
+        Viewport = InViewport;
+    }
+
+private:
+    FD3D12Viewport* Viewport;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -127,13 +135,10 @@ private:
 class FD3D12Texture2DArray : public FRHITexture2DArray, public FD3D12Texture
 {
 public:
-
     explicit FD3D12Texture2DArray(FD3D12Device* InDevice, const FRHITexture2DArrayInitializer& Initializer)
         : FRHITexture2DArray(Initializer)
         , FD3D12Texture(InDevice)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // IRefCounted Interface
@@ -167,13 +172,10 @@ public:
 class FD3D12TextureCube : public FRHITextureCube, public FD3D12Texture
 {
 public:
-
     explicit FD3D12TextureCube(FD3D12Device* InDevice, const FRHITextureCubeInitializer& Initializer)
         : FRHITextureCube(Initializer)
         , FD3D12Texture(InDevice)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // IRefCounted Interface
@@ -207,13 +209,10 @@ public:
 class FD3D12TextureCubeArray : public FRHITextureCubeArray, public FD3D12Texture
 {
 public:
-    
     explicit FD3D12TextureCubeArray(FD3D12Device* InDevice, const FRHITextureCubeArrayInitializer& Initializer)
         : FRHITextureCubeArray(Initializer)
         , FD3D12Texture(InDevice)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // IRefCounted Interface
@@ -247,13 +246,10 @@ public:
 class FD3D12Texture3D final : public FRHITexture3D, public FD3D12Texture
 {
 public:
-
     explicit FD3D12Texture3D(FD3D12Device* InDevice, const FRHITexture3DInitializer& Initializer)
         : FRHITexture3D(Initializer)
         , FD3D12Texture(InDevice)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // IRefCounted Interface
@@ -284,12 +280,28 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // GetD3D12Texture
 
-inline FD3D12Texture* GetD3D12Texture(FRHITexture* Texture)
+FORCEINLINE FD3D12Texture* GetD3D12Texture(FRHITexture* Texture)
 {
-    return Texture ? reinterpret_cast<FD3D12Texture*>(Texture->GetRHIBaseTexture()) : nullptr;
+    if (Texture)
+    {
+        FD3D12Texture* D3D12Texture = nullptr;
+        if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
+        {
+            FD3D12BackBufferTexture* BackBuffer = static_cast<FD3D12BackBufferTexture*>(Texture);
+            D3D12Texture = BackBuffer->GetCurrentBackBufferTexture();
+        }
+        else
+        {
+            D3D12Texture = reinterpret_cast<FD3D12Texture*>(Texture->GetRHIBaseTexture());
+        }
+
+        return D3D12Texture;
+    }
+
+    return nullptr;
 }
 
-inline FD3D12Resource* GetD3D12Resource(FRHITexture* Texture)
+FORCEINLINE FD3D12Resource* GetD3D12Resource(FRHITexture* Texture)
 {
     return Texture ? reinterpret_cast<FD3D12Resource*>(Texture->GetRHIBaseResource()) : nullptr;
 }

@@ -37,13 +37,10 @@ public:
 
 public:
 
-    /** @brief: Creates a standard main application */
+    /** @brief: Create the application instance */
     static bool CreateApplication();
 
-    /** @brief: Initializes the singleton from an existing application - Used for classes inheriting from FApplication */
-    static bool CreateApplication(const TSharedPtr<FApplication>& InApplication);
-
-    /** @brief: Releases the global application instance */
+    /** @brief: Releases the application instance */
     static void Release();
 
     /** @return: Returns true if the FApplication is initialized */
@@ -114,10 +111,10 @@ public:
     bool IsCursorVisibile() const;
 
     /** @return: Returns true if high-precision mouse movement is supported */
-    bool SupportsHighPrecisionMouse() const { return FPlatformApplication->SupportsHighPrecisionMouse();  }
+    bool SupportsHighPrecisionMouse() const { return PlatformApplication->SupportsHighPrecisionMouse(); }
 
     /** @brief: Enables high-precision mouse movement for a certain window */
-    bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) { return FPlatformApplication->EnableHighPrecisionMouseForWindow(Window);  }
+    bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) { return PlatformApplication->EnableHighPrecisionMouseForWindow(Window);  }
 
     /** @brief: Sets the window that should have keyboard focus */
     void SetCapture(const FGenericWindowRef& CaptureWindow);
@@ -126,13 +123,13 @@ public:
     void SetActiveWindow(const FGenericWindowRef& ActiveWindow);
 
     /** @return: Returns the window that currently has the keyboard focus */
-    FGenericWindowRef GetCapture() const { return FPlatformApplication->GetCapture();  }
+    FGenericWindowRef GetCapture() const { return PlatformApplication->GetCapture();  }
 
     /** @return: Returns the window that is currently active */
-    FGenericWindowRef GetActiveWindow() const { return FPlatformApplication->GetActiveWindow(); }
+    FGenericWindowRef GetActiveWindow() const { return PlatformApplication->GetActiveWindow(); }
 
     /** @return: Returns the window that currently is under the cursor */
-    FGenericWindowRef GetWindowUnderCursor() const { return FPlatformApplication->GetActiveWindow(); }
+    FGenericWindowRef GetWindowUnderCursor() const { return PlatformApplication->GetActiveWindow(); }
 
     /** @brief: Adds a InputHandler to the application, which gets processed before the main viewport */
     void AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority);
@@ -168,7 +165,7 @@ public:
     void RemoveWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& WindowMessageHandler);
 
     /** @return: Returns the FPlatformApplication */
-    TSharedPtr<FGenericApplication> GetPlatformApplication() const { return FPlatformApplication; }
+    TSharedPtr<FGenericApplication> GetPlatformApplication() const { return PlatformApplication; }
 
     /** @return: Returns the renderer for the Application */
     TSharedRef<IApplicationRenderer> GetRenderer() const { return Renderer; }
@@ -177,7 +174,7 @@ public:
     FGenericWindowRef GetMainViewport() const { return MainViewport; }
 
     /** @return: Returns the cursor interface */
-    TSharedPtr<ICursor> GetCursor() const { return FPlatformApplication->GetCursor(); }
+    TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->GetCursor(); }
 
 public:
 
@@ -216,9 +213,10 @@ public:
 protected:
 
     template<typename MessageHandlerType>
-    static void InsertMessageHandler( TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray
-                                    , const TSharedPtr<MessageHandlerType>& NewMessageHandler
-                                    , uint32 NewPriority);
+    static void InsertMessageHandler(
+        TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray,
+        const TSharedPtr<MessageHandlerType>& NewMessageHandler,
+        uint32 NewPriority);
 
     bool CreateContext();
 
@@ -230,17 +228,17 @@ protected:
 
     void RenderStrings();
 
-    TSharedPtr<FGenericApplication> FPlatformApplication;
+    TSharedPtr<FGenericApplication>  PlatformApplication;
 
-    FGenericWindowRef               MainViewport;
-    TSharedRef<IApplicationRenderer>     Renderer;
+    FGenericWindowRef                MainViewport;
+    TSharedRef<IApplicationRenderer> Renderer;
 
-    TArray<FString>                 DebugStrings;
-    TArray<TSharedRef<FWindow>>     InterfaceWindows;
-    TArray<TSharedPtr<FUser>> RegisteredUsers;
+    TArray<FString>                  DebugStrings;
+    TArray<TSharedRef<FWindow>>      InterfaceWindows;
+    TArray<TSharedPtr<FUser>>        RegisteredUsers;
 
-    FExitEvent                      ExitEvent;
-    FViewportChangedEvent           ViewportChangedEvent;
+    FExitEvent                       ExitEvent;
+    FViewportChangedEvent            ViewportChangedEvent;
 
     TArray<TPair<TSharedPtr<FInputHandler>        , uint32>> InputHandlers;
     TArray<TPair<TSharedPtr<FWindowMessageHandler>, uint32>> WindowMessageHandlers;

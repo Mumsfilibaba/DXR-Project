@@ -45,24 +45,25 @@ void FRHIThread::StopExecution()
     Thread->WaitForCompletion(kWaitForThreadInfinity);
 }
 
-void FRHIThread::Execute(const FRHIThreadTask& NewTask)
+void FRHIThread::Execute(FRHIThreadTask&& NewTask)
 {
     {
         // Set the work to execute
         TScopedLock TaskLock(TasksCS);
-        Tasks.Emplace(NewTask);
+        Tasks.Emplace(Move(NewTask));
         
         NumSubmittedTasks++;
     }
 
     // Then notify worker
-    WaitCondition.NotifyOne();
+    WaitCondition.NotifyAll();
 }
 
 void FRHIThread::WaitForCompletion()
 {
     while (NumCompletedTasks.Load() < NumSubmittedTasks.Load())
     {
+        WaitCondition.NotifyAll();
         PauseInstruction();
     }
 }
@@ -106,21 +107,17 @@ FRHICommandListExecutor::FRHICommandListExecutor()
 
 bool FRHICommandListExecutor::Initialize()
 {
-#if ENABLE_RHI_EXECUTOR_THREAD
     if (!ExecutorThread.Start())
     {
         return false;
     }
-#endif
 
     return true;
 }
 
 void FRHICommandListExecutor::Release()
 {
-#if ENABLE_RHI_EXECUTOR_THREAD
     ExecutorThread.StopExecution();
-#endif
 }
 
 void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)

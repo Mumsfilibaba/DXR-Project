@@ -33,12 +33,6 @@ bool FApplication::CreateApplication()
     return true;
 }
 
-bool FApplication::CreateApplication(const TSharedPtr<FApplication>& InApplication)
-{
-    Instance = InApplication;
-    return (Instance != nullptr);
-}
-
 void FApplication::Release()
 {
     if (Instance)
@@ -48,9 +42,9 @@ void FApplication::Release()
     }
 }
 
-FApplication::FApplication(const TSharedPtr<FGenericApplication>& InFPlatformApplication)
+FApplication::FApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
     : FGenericApplicationMessageHandler()
-    , FPlatformApplication(InFPlatformApplication)
+    , PlatformApplication(InPlatformApplication)
     , MainViewport()
     , Renderer()
     , DebugStrings()
@@ -244,7 +238,7 @@ FApplication::~FApplication()
 
 FGenericWindowRef FApplication::CreateWindow()
 {
-    return FPlatformApplication->CreateWindow();
+    return PlatformApplication->CreateWindow();
 }
 
 void FApplication::Tick(FTimestamp DeltaTime)
@@ -321,7 +315,7 @@ void FApplication::Tick(FTimestamp DeltaTime)
 
     // Update platform
     const float Delta = static_cast<float>(DeltaTime.AsMilliSeconds());
-    FPlatformApplication->Tick(Delta);
+    PlatformApplication->Tick(Delta);
 
     if (!RegisteredUsers.IsEmpty())
     {
@@ -384,12 +378,12 @@ bool FApplication::IsCursorVisibile() const
 
 void FApplication::SetCapture(const FGenericWindowRef& CaptureWindow)
 {
-    FPlatformApplication->SetCapture(CaptureWindow);
+    PlatformApplication->SetCapture(CaptureWindow);
 }
 
 void FApplication::SetActiveWindow(const FGenericWindowRef& ActiveWindow)
 {
-    FPlatformApplication->SetActiveWindow(ActiveWindow);
+    PlatformApplication->SetActiveWindow(ActiveWindow);
 }
 
 template<typename MessageHandlerType>
@@ -513,15 +507,15 @@ void FApplication::RemoveWindowMessageHandler(const TSharedPtr<FWindowMessageHan
     }
 }
 
-void FApplication::SetPlatformApplication(const TSharedPtr<FGenericApplication>& InFPlatformApplication)
+void FApplication::SetPlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
 {
-    if (InFPlatformApplication)
+    if (InPlatformApplication)
     {
         Check(this == Instance);
-        InFPlatformApplication->SetMessageListener(Instance);
+        InPlatformApplication->SetMessageListener(Instance);
     }
 
-    FPlatformApplication = InFPlatformApplication;
+    PlatformApplication = InPlatformApplication;
 }
 
 void FApplication::HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState)
@@ -606,10 +600,10 @@ void FApplication::HandleMouseMove(int32 x, int32 y)
 
 void FApplication::HandleMouseReleased(EMouseButton Button, FModifierKeyState ModierKeyState)
 {
-    FGenericWindowRef CaptureWindow = FPlatformApplication->GetCapture();
+    FGenericWindowRef CaptureWindow = PlatformApplication->GetCapture();
     if (CaptureWindow)
     {
-        FPlatformApplication->SetCapture(nullptr);
+        PlatformApplication->SetCapture(nullptr);
     }
 
     FMouseButtonEvent MouseButtonEvent(Button, false, ModierKeyState);
@@ -618,11 +612,11 @@ void FApplication::HandleMouseReleased(EMouseButton Button, FModifierKeyState Mo
 
 void FApplication::HandleMousePressed(EMouseButton Button, FModifierKeyState ModierKeyState)
 {
-    FGenericWindowRef CaptureWindow = FPlatformApplication->GetCapture();
+    FGenericWindowRef CaptureWindow = PlatformApplication->GetCapture();
     if (!CaptureWindow)
     {
-        FGenericWindowRef ActiveWindow = FPlatformApplication->GetActiveWindow();
-        FPlatformApplication->SetCapture(ActiveWindow);
+        FGenericWindowRef ActiveWindow = PlatformApplication->GetActiveWindow();
+        PlatformApplication->SetCapture(ActiveWindow);
     }
 
     FMouseButtonEvent MouseButtonEvent(Button, true, ModierKeyState);

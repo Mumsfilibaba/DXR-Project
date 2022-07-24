@@ -119,16 +119,17 @@ public:
         , BorderColor(0.0f, 0.0f, 0.0f, 1.0f)
     { }
 
-    FRHISamplerStateInitializer( ESamplerMode InAddressU
-                               , ESamplerMode InAddressV
-                               , ESamplerMode InAddressW
-                               , ESamplerFilter InFilter
-                               , EComparisonFunc InComparisonFunc
-                               , float InMipLODBias
-                               , uint8 InMaxAnisotropy
-                               , float InMinLOD
-                               , float InMaxLOD
-                               , const FFloatColor& InBorderColor)
+    FRHISamplerStateInitializer(
+        ESamplerMode InAddressU,
+        ESamplerMode InAddressV,
+        ESamplerMode InAddressW,
+        ESamplerFilter InFilter,
+        EComparisonFunc InComparisonFunc,
+        float InMipLODBias,
+        uint8 InMaxAnisotropy,
+        float InMinLOD,
+        float InMaxLOD,
+        const FFloatColor& InBorderColor)
         : AddressU(InAddressU)
         , AddressV(InAddressV)
         , AddressW(InAddressW)

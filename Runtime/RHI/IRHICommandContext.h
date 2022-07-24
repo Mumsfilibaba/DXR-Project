@@ -19,11 +19,12 @@ public:
         , RenderTargets()
     { }
 
-    FRHIRenderPassInitializer( const TStaticArray<FRHIRenderTargetView, kRHIMaxRenderTargetCount>& InRenderTargets
-                             , uint32 InNumRenderTargets
-                             , FRHIDepthStencilView InDepthStencilView
-                             , FRHITexture2D* InShadingRateTexture = nullptr
-                             , EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1)
+    FRHIRenderPassInitializer(
+        const TStaticArray<FRHIRenderTargetView, kRHIMaxRenderTargetCount>& InRenderTargets,
+        uint32 InNumRenderTargets,
+        FRHIDepthStencilView InDepthStencilView,
+        FRHITexture2D* InShadingRateTexture = nullptr,
+        EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1)
         : ShadingRateTexture(InShadingRateTexture)
         , DepthStencilView(InDepthStencilView)
         , StaticShadingRate(InStaticShadingRate)
@@ -201,7 +202,11 @@ public:
      * @param NumShaderResourceViews: Number of ShaderResourceViews in the array
      * @param ParameterIndex: ShaderResourceView-index to bind to
      */
-    virtual void SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* ShaderResourceViews, uint32 NumShaderResourceViews, uint32 ParameterIndex) = 0;
+    virtual void SetShaderResourceViews(
+        FRHIShader* Shader,
+        FRHIShaderResourceView* const* ShaderResourceViews,
+        uint32 NumShaderResourceViews,
+        uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -221,7 +226,11 @@ public:
      * @param NumUnorderedAccessViews: Number of UnorderedAccessViews in the array
      * @param ParameterIndex: UnorderedAccessView-index to bind to
      */
-    virtual void SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex) = 0;
+    virtual void SetUnorderedAccessViews(
+        FRHIShader* Shader,
+        FRHIUnorderedAccessView* const* UnorderedAccessViews,
+        uint32 NumUnorderedAccessViews,
+        uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -241,7 +250,11 @@ public:
      * @param NumConstantBuffers: Number of ConstantBuffers in the array
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    virtual void SetConstantBuffers(FRHIShader* Shader, FRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffers(
+        FRHIShader* Shader,
+        FRHIConstantBuffer* const* ConstantBuffers,
+        uint32 NumConstantBuffers,
+        uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -261,7 +274,11 @@ public:
      * @param NumConstantBuffers: Number of ConstantBuffers in the array
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    virtual void SetSamplerStates(FRHIShader* Shader, FRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) = 0;
+    virtual void SetSamplerStates(
+        FRHIShader* Shader,
+        FRHISamplerState* const* SamplerStates,
+        uint32 NumSamplerStates,
+        uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Updates the contents of a Buffer
@@ -319,7 +336,8 @@ public:
     virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) = 0;
 
     /**
-     * @brief: Destroys a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command-list is completed
+     * @brief: Destroys a resource, this can be used to not having to deal with resource life time, 
+     * the resource will be destroyed when the underlying command-list is completed
      * 
      * @param Resource: Resource to destroy
      */
@@ -352,13 +370,14 @@ public:
     virtual void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) = 0;
 
      /** @brief: Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
-    virtual void SetRayTracingBindings( FRHIRayTracingScene* RayTracingScene
-                                      , FRHIRayTracingPipelineState* PipelineState
-                                      , const FRayTracingShaderResources* GlobalResource
-                                      , const FRayTracingShaderResources* RayGenLocalResources
-                                      , const FRayTracingShaderResources* MissLocalResources
-                                      , const FRayTracingShaderResources* HitGroupResources
-                                      , uint32 NumHitGroupResources) = 0;
+    virtual void SetRayTracingBindings(
+        FRHIRayTracingScene* RayTracingScene,
+        FRHIRayTracingPipelineState* PipelineState,
+        const FRayTracingShaderResources* GlobalResource,
+        const FRayTracingShaderResources* RayGenLocalResources,
+        const FRayTracingShaderResources* MissLocalResources,
+        const FRayTracingShaderResources* HitGroupResources,
+        uint32 NumHitGroupResources) = 0;
 
     /**
      * @brief: Generate MipLevels for a texture. Works with Texture2D and TextureCubes.
@@ -400,13 +419,30 @@ public:
     virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) = 0;
 
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) = 0;
+    
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
-    virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) = 0;
-    virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) = 0;
+    
+    virtual void DrawInstanced(
+        uint32 VertexCountPerInstance,
+        uint32 InstanceCount,
+        uint32 StartVertexLocation,
+        uint32 StartInstanceLocation) = 0;
+    
+    virtual void DrawIndexedInstanced(
+        uint32 IndexCountPerInstance,
+        uint32 InstanceCount,
+        uint32 StartIndexLocation,
+        uint32 BaseVertexLocation,
+        uint32 StartInstanceLocation) = 0;
 
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
 
-    virtual void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
+    virtual void DispatchRays(
+        FRHIRayTracingScene* Scene,
+        FRHIRayTracingPipelineState* PipelineState,
+        uint32 Width,
+        uint32 Height,
+        uint32 Depth) = 0;
 
     virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) = 0;
 

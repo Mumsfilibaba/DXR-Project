@@ -108,13 +108,14 @@ public:
         , NumSlices(0)
     { }
 
-    FRHITextureSRVInitializer( FRHITexture* InTexture
-                             , float InMinLODClamp
-                             , EFormat InFormat
-                             , uint8 InFirstMipLevel
-                             , uint8 InNumMips
-                             , uint16 InFirstArraySlice
-                             , uint16 InNumSlices)
+    FRHITextureSRVInitializer(
+        FRHITexture* InTexture,
+        float InMinLODClamp,
+        EFormat InFormat,
+        uint8 InFirstMipLevel,
+        uint8 InNumMips,
+        uint16 InFirstArraySlice,
+        uint16 InNumSlices)
         : Texture(InTexture)
         , MinLODClamp(InMinLODClamp)
         , Format(InFormat)
@@ -179,10 +180,11 @@ public:
 	    , NumElements(0)
     { }
 
-    FRHIBufferSRVInitializer( FRHIBuffer* InBuffer
-                            , uint32 InFirstElement
-                            , uint32 InNumElements
-                            , EBufferSRVFormat InFormat = EBufferSRVFormat::None)
+    FRHIBufferSRVInitializer(
+        FRHIBuffer* InBuffer,
+        uint32 InFirstElement,
+        uint32 InNumElements,
+        EBufferSRVFormat InFormat = EBufferSRVFormat::None)
         : Buffer(InBuffer)
 	    , Format(InFormat)
 	    , FirstElement(InFirstElement)
@@ -234,11 +236,12 @@ public:
         , NumSlices(0)
     { }
 
-    FRHITextureUAVInitializer( FRHITexture* InTexture
-                             , EFormat InFormat
-                             , uint32 InMipLevel
-                             , uint32 InFirstArraySlice
-                             , uint32 InNumSlices)
+    FRHITextureUAVInitializer(
+        FRHITexture* InTexture,
+        EFormat InFormat,
+        uint32 InMipLevel,
+        uint32 InFirstArraySlice,
+        uint32 InNumSlices)
         : Texture(InTexture)
         , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
@@ -302,10 +305,11 @@ public:
         , NumElements(0)
     { }
 
-    FRHIBufferUAVInitializer( FRHIBuffer* InBuffer
-                            , uint32 InFirstElement
-                            , uint32 InNumElements
-                            , EBufferUAVFormat InFormat = EBufferUAVFormat::None)
+    FRHIBufferUAVInitializer(
+        FRHIBuffer* InBuffer,
+        uint32 InFirstElement,
+        uint32 InNumElements,
+        EBufferUAVFormat InFormat = EBufferUAVFormat::None)
         : Buffer(InBuffer)
 	    , Format(InFormat)
 	    , FirstElement(InFirstElement)
@@ -417,10 +421,11 @@ public:
         , ClearValue()
     { }
     
-    explicit FRHIRenderTargetView( FRHITexture* InTexture
-                                 , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
-                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const FFloatColor& InClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f))
+    explicit FRHIRenderTargetView(
+        FRHITexture* InTexture,
+        EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
+        const FFloatColor& InClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f))
         : Texture(InTexture)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(0)
@@ -430,13 +435,14 @@ public:
         , ClearValue(InClearValue)
     { }
 
-    explicit FRHIRenderTargetView( FRHITexture* InTexture
-                                 , EFormat InFormat
-                                 , uint32 InArrayIndex
-                                 , uint32 InMipLevel
-                                 , EAttachmentLoadAction InLoadAction
-                                 , EAttachmentStoreAction InStoreAction
-                                 , const FFloatColor& InClearValue)
+    explicit FRHIRenderTargetView(
+        FRHITexture* InTexture,
+        EFormat InFormat,
+        uint32 InArrayIndex,
+        uint32 InMipLevel,
+        EAttachmentLoadAction InLoadAction,
+        EAttachmentStoreAction InStoreAction,
+        const FFloatColor& InClearValue)
         : Texture(InTexture)
         , Format(InFormat)
         , ArrayIndex(uint16(InArrayIndex))
@@ -504,10 +510,11 @@ public:
         , ClearValue()
     { }
 
-    explicit FRHIDepthStencilView( FRHITexture* InTexture
-                                 , EAttachmentLoadAction InLoadAction  = EAttachmentLoadAction::Clear
-                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
+    explicit FRHIDepthStencilView(
+        FRHITexture* InTexture,
+        EAttachmentLoadAction InLoadAction  = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
+        const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(0)
@@ -517,12 +524,13 @@ public:
         , ClearValue(InClearValue)
     { }
 
-    explicit FRHIDepthStencilView( FRHITexture* InTexture
-                                 , uint16 InArrayIndex
-                                 , uint8 InMipLevel
-                                 , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
-                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
+    explicit FRHIDepthStencilView(
+        FRHITexture* InTexture,
+        uint16 InArrayIndex,
+        uint8 InMipLevel,
+        EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
+        const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(uint16(InArrayIndex))
@@ -532,13 +540,14 @@ public:
         , ClearValue(InClearValue)
     { }
 
-    explicit FRHIDepthStencilView( FRHITexture* InTexture
-                                 , uint16 InArrayIndex
-                                 , uint8 InMipLevel
-                                 , EFormat InFormat
-                                 , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
-                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
+    explicit FRHIDepthStencilView(
+        FRHITexture* InTexture,
+        uint16 InArrayIndex,
+        uint8 InMipLevel,
+        EFormat InFormat,
+        EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear, 
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
+        const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , Format(InFormat)
         , ArrayIndex(uint16(InArrayIndex))

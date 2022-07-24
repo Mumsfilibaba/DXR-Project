@@ -405,10 +405,11 @@ DECLARE_RHICOMMAND(FRHICommandSetShaderResourceView)
 
 DECLARE_RHICOMMAND(FRHICommandSetShaderResourceViews)
 {
-    FORCEINLINE FRHICommandSetShaderResourceViews( FRHIShader* InShader
-                                                 , FRHIShaderResourceView* const* InShaderResourceViews
-                                                 , uint32 InNumShaderResourceViews
-                                                 , uint32 InStartParameterIndex)
+    FORCEINLINE FRHICommandSetShaderResourceViews(
+        FRHIShader* InShader,
+        FRHIShaderResourceView* const* InShaderResourceViews,
+        uint32 InNumShaderResourceViews,
+        uint32 InStartParameterIndex)
         : Shader(InShader)
         , ShaderResourceViews(InShaderResourceViews)
         , NumShaderResourceViews(InNumShaderResourceViews)
@@ -452,10 +453,11 @@ DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessView)
 
 DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessViews)
 {
-    FORCEINLINE FRHICommandSetUnorderedAccessViews( FRHIShader* InShader
-                                                  , FRHIUnorderedAccessView* const* InUnorderedAccessViews
-                                                  , uint32 InNumUnorderedAccessViews
-                                                  , uint32 InStartParameterIndex)
+    FORCEINLINE FRHICommandSetUnorderedAccessViews(
+        FRHIShader* InShader,
+        FRHIUnorderedAccessView* const* InUnorderedAccessViews,
+        uint32 InNumUnorderedAccessViews,
+        uint32 InStartParameterIndex)
         : Shader(InShader)
         , UnorderedAccessViews(InUnorderedAccessViews)
         , NumUnorderedAccessViews(InNumUnorderedAccessViews)
@@ -499,10 +501,11 @@ DECLARE_RHICOMMAND(FRHICommandSetConstantBuffer)
 
 DECLARE_RHICOMMAND(FRHICommandSetConstantBuffers)
 {
-    FORCEINLINE FRHICommandSetConstantBuffers( FRHIShader* InShader
-                                             , FRHIConstantBuffer* const* InConstantBuffers
-                                             , uint32 InNumConstantBuffers
-                                             , uint32 InStartParameterIndex)
+    FORCEINLINE FRHICommandSetConstantBuffers(
+        FRHIShader* InShader,
+        FRHIConstantBuffer* const* InConstantBuffers,
+        uint32 InNumConstantBuffers,
+        uint32 InStartParameterIndex)
         : Shader(InShader)
         , ConstantBuffers(InConstantBuffers)
         , NumConstantBuffers(InNumConstantBuffers)
@@ -546,7 +549,11 @@ DECLARE_RHICOMMAND(FRHICommandSetSamplerState)
 
 DECLARE_RHICOMMAND(FRHICommandSetSamplerStates)
 {
-    FORCEINLINE FRHICommandSetSamplerStates(FRHIShader* InShader, FRHISamplerState* const* InSamplerStates, uint32 InNumSamplerStates, uint32 InStartParameterIndex)
+    FORCEINLINE FRHICommandSetSamplerStates(
+        FRHIShader* InShader,
+        FRHISamplerState* const* InSamplerStates,
+        uint32 InNumSamplerStates,
+        uint32 InStartParameterIndex)
         : Shader(InShader)
         , SamplerStates(InSamplerStates)
         , NumSamplerStates(InNumSamplerStates)
@@ -731,10 +738,11 @@ DECLARE_RHICOMMAND(FRHICommandDiscardContents)
 
 DECLARE_RHICOMMAND(FRHICommandBuildRayTracingGeometry)
 {
-    FORCEINLINE FRHICommandBuildRayTracingGeometry( FRHIRayTracingGeometry* InGeometry
-                                                  , FRHIVertexBuffer* InVertexBuffer
-                                                  , FRHIIndexBuffer* InIndexBuffer
-                                                  , bool bInUpdate)
+    FORCEINLINE FRHICommandBuildRayTracingGeometry(
+        FRHIRayTracingGeometry* InGeometry,
+        FRHIVertexBuffer* InVertexBuffer,
+        FRHIIndexBuffer* InIndexBuffer,
+        bool bInUpdate)
         : Geometry(InGeometry)
         , VertexBuffer(InVertexBuffer)
         , IndexBuffer(InIndexBuffer)
@@ -757,9 +765,10 @@ DECLARE_RHICOMMAND(FRHICommandBuildRayTracingGeometry)
 
 DECLARE_RHICOMMAND(FRHICommandBuildRayTracingScene)
 {
-    FORCEINLINE FRHICommandBuildRayTracingScene( FRHIRayTracingScene* InScene
-                                               , const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances
-                                               , bool bInUpdate)
+    FORCEINLINE FRHICommandBuildRayTracingScene(
+        FRHIRayTracingScene* InScene,
+        const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances,
+        bool bInUpdate)
         : Scene(InScene)
         , Instances(InInstances)
         , bUpdate(bInUpdate)
@@ -781,13 +790,14 @@ DECLARE_RHICOMMAND(FRHICommandBuildRayTracingScene)
 
 DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
 {
-    FORCEINLINE FRHICommandSetRayTracingBindings( FRHIRayTracingScene* InRayTracingScene
-                                                , FRHIRayTracingPipelineState* InPipelineState
-                                                , const FRayTracingShaderResources* InGlobalResource
-                                                , const FRayTracingShaderResources* InRayGenLocalResources
-                                                , const FRayTracingShaderResources* InMissLocalResources
-                                                , const FRayTracingShaderResources* InHitGroupResources
-                                                , uint32 InNumHitGroupResources)
+    FORCEINLINE FRHICommandSetRayTracingBindings(
+        FRHIRayTracingScene* InRayTracingScene,
+        FRHIRayTracingPipelineState* InPipelineState,
+        const FRayTracingShaderResources* InGlobalResource,
+        const FRayTracingShaderResources* InRayGenLocalResources,
+        const FRayTracingShaderResources* InMissLocalResources,
+        const FRayTracingShaderResources* InHitGroupResources,
+        uint32 InNumHitGroupResources)
         : RayTracingScene(InRayTracingScene)
         , PipelineState(InPipelineState)
         , GlobalResource(InGlobalResource)
@@ -799,13 +809,14 @@ DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetRayTracingBindings( RayTracingScene
-                                            , PipelineState
-                                            , GlobalResource
-                                            , RayGenLocalResources
-                                            , MissLocalResources
-                                            , HitGroupResources
-                                            , NumHitGroupResources);
+        CommandContext.SetRayTracingBindings(
+            RayTracingScene,
+            PipelineState,
+            GlobalResource,
+            RayGenLocalResources,
+            MissLocalResources,
+            HitGroupResources,
+            NumHitGroupResources);
     }
 
     FRHIRayTracingScene*              RayTracingScene;
@@ -978,11 +989,12 @@ DECLARE_RHICOMMAND(FRHICommandDrawInstanced)
 
 DECLARE_RHICOMMAND(FRHICommandDrawIndexedInstanced)
 {
-    FORCEINLINE FRHICommandDrawIndexedInstanced(uint32 InIndexCountPerInstance
-                                                , uint32 InInstanceCount
-                                                , uint32 InStartIndexLocation
-                                                , uint32 InBaseVertexLocation
-                                                , uint32 InStartInstanceLocation)
+    FORCEINLINE FRHICommandDrawIndexedInstanced(
+        uint32 InIndexCountPerInstance,
+        uint32 InInstanceCount,
+        uint32 InStartIndexLocation,
+        uint32 InBaseVertexLocation,
+        uint32 InStartInstanceLocation)
         : IndexCountPerInstance(InIndexCountPerInstance)
         , InstanceCount(InInstanceCount)
         , StartIndexLocation(InStartIndexLocation)
@@ -1028,7 +1040,12 @@ DECLARE_RHICOMMAND(FRHICommandDispatch)
 
 DECLARE_RHICOMMAND(FRHICommandDispatchRays)
 {
-    FORCEINLINE FRHICommandDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
+    FORCEINLINE FRHICommandDispatchRays(
+        FRHIRayTracingScene* InScene,
+        FRHIRayTracingPipelineState* InPipelineState,
+        uint32 InWidth,
+        uint32 InHeight,
+        uint32 InDepth)
         : Scene(InScene)
         , PipelineState(InPipelineState)
         , Width(InWidth)
@@ -1124,7 +1141,7 @@ DECLARE_RHICOMMAND(FRHICommandPresentViewport)
         , bVerticalSync(bInVerticalSync)
     { }
 
-    FORCEINLINE void Execute(IRHICommandContext & CommandContext)
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         CommandContext.PresentViewport(Viewport, bVerticalSync);
     }

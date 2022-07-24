@@ -36,10 +36,14 @@ enum class ETextureUsageFlags
     AllowDSV     = FLAG(2), // DepthStencilView
     AllowUAV     = FLAG(3), // UnorderedAccessView
     AllowSRV     = FLAG(4), // ShaderResourceView
+
     NoDefaultRTV = FLAG(5), // Do not create default RenderTargetView
     NoDefaultDSV = FLAG(6), // Do not create default DepthStencilView
     NoDefaultUAV = FLAG(7), // Do not create default UnorderedAccessView
     NoDefaultSRV = FLAG(8), // Do not create default ShaderResourceView
+
+    // Indicate that the resource is a backbuffer resource
+    Presentable  = FLAG(9),
     
     RWTexture    = AllowUAV | AllowSRV,
     RenderTarget = AllowRTV | AllowSRV,
@@ -95,12 +99,13 @@ public:
         , NumMips(1)
     { }
 
-    FRHITextureInitializer( EFormat InFormat
-                          , ETextureUsageFlags InUsageFlags
-                          , EResourceAccess InInitialAccess
-                          , uint32 InNumMips
-                          , FRHITextureDataInitializer* InInitialData = nullptr
-                          , const FTextureClearValue& InClearValue = FTextureClearValue())
+    FRHITextureInitializer(
+        EFormat InFormat,
+        ETextureUsageFlags InUsageFlags,
+        EResourceAccess InInitialAccess,
+        uint32 InNumMips,
+        FRHITextureDataInitializer* InInitialData = nullptr,
+        const FTextureClearValue& InClearValue = FTextureClearValue())
         : ClearValue(InClearValue)
         , Format(InFormat)
         , UsageFlags(InUsageFlags)
@@ -109,21 +114,19 @@ public:
         , NumMips(uint8(InNumMips))
     { }
 
-    bool AllowSRV() const { return ((UsageFlags & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None); }
-
+    bool AllowSRV()        const { return ((UsageFlags & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None); }
     bool AllowDefaultSRV() const { return AllowSRV() && ((UsageFlags & ETextureUsageFlags::NoDefaultSRV) == ETextureUsageFlags::None); }
 
-    bool AllowUAV() const { return ((UsageFlags & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None); }
-
+    bool AllowUAV()        const { return ((UsageFlags & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None); }
     bool AllowDefaultUAV() const { return AllowUAV() && ((UsageFlags & ETextureUsageFlags::NoDefaultUAV) == ETextureUsageFlags::None); }
 
-    bool AllowRTV() const { return ((UsageFlags & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None); }
-
+    bool AllowRTV()        const { return ((UsageFlags & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None); }
     bool AllowDefaultRTV() const { return AllowRTV() && ((UsageFlags & ETextureUsageFlags::NoDefaultRTV) == ETextureUsageFlags::None); }
 
-    bool AllowDSV() const { return ((UsageFlags & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None); }
-
+    bool AllowDSV()        const { return ((UsageFlags & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None); }
     bool AllowDefaultDSV() const { return AllowDSV() && ((UsageFlags & ETextureUsageFlags::NoDefaultDSV) == ETextureUsageFlags::None); }
+
+    bool IsPresentable() const { return ((UsageFlags & ETextureUsageFlags::Presentable) != ETextureUsageFlags::None); }
 
     bool operator==(const FRHITextureInitializer& RHS) const
     {
@@ -167,15 +170,16 @@ public:
         , NumSamples(1)
     { }
 
-    FRHITexture2DInitializer( EFormat InFormat
-                            , uint32 InWidth
-                            , uint32 InHeight
-                            , uint32 InNumMips
-                            , uint32 InNumSamples
-                            , ETextureUsageFlags InUsageFlags
-                            , EResourceAccess InInitialAccess
-                            , FRHITextureDataInitializer* InInitialData = nullptr
-                            , const FTextureClearValue& InClearValue = FTextureClearValue())
+    FRHITexture2DInitializer(
+        EFormat InFormat,
+        uint32 InWidth,
+        uint32 InHeight,
+        uint32 InNumMips,
+        uint32 InNumSamples,
+        ETextureUsageFlags InUsageFlags,
+        EResourceAccess InInitialAccess,
+        FRHITextureDataInitializer* InInitialData = nullptr,
+        const FTextureClearValue& InClearValue = FTextureClearValue())
         : FRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InInitialData, InClearValue)
         , Width(uint16(InWidth))
         , Height(uint16(InHeight))
@@ -216,16 +220,17 @@ public:
         , ArraySize(1)
     { }
 
-    FRHITexture2DArrayInitializer( EFormat InFormat
-                                 , uint32 InWidth
-                                 , uint32 InHeight
-                                 , uint32 InArraySize
-                                 , uint32 InNumMips
-                                 , uint32 InNumSamples
-                                 , ETextureUsageFlags InUsageFlags
-                                 , EResourceAccess InInitialAccess
-                                 , FRHITextureDataInitializer* InInitialData = nullptr
-                                 , const FTextureClearValue& InClearValue = FTextureClearValue())
+    FRHITexture2DArrayInitializer(
+        EFormat InFormat,
+        uint32 InWidth,
+        uint32 InHeight,
+        uint32 InArraySize,
+        uint32 InNumMips,
+        uint32 InNumSamples,
+        ETextureUsageFlags InUsageFlags,
+        EResourceAccess InInitialAccess,
+        FRHITextureDataInitializer* InInitialData = nullptr,
+        const FTextureClearValue& InClearValue = FTextureClearValue())
         : FRHITexture2DInitializer(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InInitialData, InClearValue)
         , ArraySize(uint16(InArraySize))
     { }
@@ -256,14 +261,15 @@ public:
 	    , Extent(1)
     { }
 
-    FRHITextureCubeInitializer( EFormat InFormat
-                              , uint32 InExtent
-                              , uint32 InNumMips
-                              , uint32 InNumSamples
-                              , ETextureUsageFlags InUsageFlags
-                              , EResourceAccess InInitialAccess
-                              , FRHITextureDataInitializer* InInitialData = nullptr
-                              , const FTextureClearValue& InClearValue = FTextureClearValue())
+    FRHITextureCubeInitializer(
+        EFormat InFormat,
+        uint32 InExtent,
+        uint32 InNumMips,
+        uint32 InNumSamples,
+        ETextureUsageFlags InUsageFlags,
+        EResourceAccess InInitialAccess,
+        FRHITextureDataInitializer* InInitialData = nullptr,
+        const FTextureClearValue& InClearValue = FTextureClearValue())
         : FRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InInitialData, InClearValue)
 	    , NumSamples(uint8(InNumSamples))
 	    , Extent(uint16(InExtent))
@@ -297,15 +303,16 @@ public:
         , ArraySize(1)
     { }
 
-    FRHITextureCubeArrayInitializer( EFormat InFormat
-                                   , uint32 InExtent
-                                   , uint32 InArraySize
-                                   , uint32 InNumMips
-                                   , uint32 InNumSamples
-                                   , ETextureUsageFlags InUsageFlags
-                                   , EResourceAccess InInitialAccess
-                                   , FRHITextureDataInitializer* InInitialData = nullptr
-                                   , const FTextureClearValue& InClearValue = FTextureClearValue())
+    FRHITextureCubeArrayInitializer(
+        EFormat InFormat,
+        uint32 InExtent,
+        uint32 InArraySize,
+        uint32 InNumMips,
+        uint32 InNumSamples,
+        ETextureUsageFlags InUsageFlags,
+        EResourceAccess InInitialAccess,
+        FRHITextureDataInitializer* InInitialData = nullptr,
+        const FTextureClearValue& InClearValue = FTextureClearValue())
         : FRHITextureCubeInitializer(InFormat, InExtent, InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InInitialData, InClearValue)
         , ArraySize(uint16(InArraySize))
     { }
@@ -337,15 +344,16 @@ public:
         , Depth(1)
     { }
 
-    FRHITexture3DInitializer( EFormat InFormat
-                            , uint16 InWidth
-                            , uint16 InHeight
-                            , uint16 InDepth
-                            , uint8 InNumMips
-                            , ETextureUsageFlags InUsageFlags
-                            , EResourceAccess InInitialAccess
-                            , FRHITextureDataInitializer* InInitialData = nullptr
-                            , const FTextureClearValue& InClearValue = FTextureClearValue())
+    FRHITexture3DInitializer(
+        EFormat InFormat,
+        uint16 InWidth,
+        uint16 InHeight,
+        uint16 InDepth,
+        uint8 InNumMips,
+        ETextureUsageFlags InUsageFlags,
+        EResourceAccess InInitialAccess,
+        FRHITextureDataInitializer* InInitialData = nullptr,
+        const FTextureClearValue& InClearValue = FTextureClearValue())
         : FRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InInitialData, InClearValue)
         , Width(InWidth)
         , Height(InHeight)
@@ -399,11 +407,11 @@ public:
     virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
     virtual FRHIDescriptorHandle    GetBindlessSRVHandle()  const { return FRHIDescriptorHandle(); }
 
+    virtual FIntVector3 GetExtent() const { return FIntVector3(1, 1, 1); }
+    
     virtual uint32      GetWidth()  const { return 1; }
     virtual uint32      GetHeight() const { return 1; }
     virtual uint32      GetDepth()  const { return 1; }
-
-    virtual FIntVector3 GetExtent() const { return FIntVector3(1, 1, 1); }
 
     virtual uint32      GetArraySize()  const { return 1; }
     virtual uint32      GetNumSamples() const { return 1; }
@@ -411,8 +419,6 @@ public:
     virtual void    SetName(const FString& InName) { }
     virtual FString GetName() const { return ""; }
 
-public:
-    
     bool IsMultiSampled() const { return (GetNumSamples() > 1); }
 
     ETextureUsageFlags GetFlags()   const { return UsageFlags; }
@@ -452,14 +458,12 @@ public:
 
     virtual FRHITexture2D* GetTexture2D() override { return this; }
 
+    virtual FIntVector3 GetExtent() const override { return FIntVector3(Width, Height, 1); }
+    
     virtual uint32      GetWidth()  const override final { return Width; }
     virtual uint32      GetHeight() const override final { return Height; }
     
-    virtual FIntVector3 GetExtent() const override { return FIntVector3(Width, Height, 1); }
-
     virtual uint32      GetNumSamples() const override final { return NumSamples; }
-
-public:
 
     virtual class FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
@@ -521,10 +525,10 @@ public:
 
     virtual FRHITextureCube* GetTextureCube() override { return this; }
 
+    virtual FIntVector3 GetExtent() const override { return FIntVector3(Extent, Extent, 1); }
+    
     virtual uint32      GetWidth()  const override final { return Extent; }
     virtual uint32      GetHeight() const override final { return Extent; }
-
-    virtual FIntVector3 GetExtent() const override { return FIntVector3(Extent, Extent, 1); }
     
     virtual uint32      GetNumSamples() const override final { return NumSamples; }
 
@@ -588,11 +592,11 @@ public:
 
     virtual FRHITexture3D* GetTexture3D() override { return this; }
 
+    virtual FIntVector3 GetExtent() const override final { return FIntVector3(Width, Height, Depth); }
+    
     virtual uint32      GetWidth()  const override final { return Width; }
     virtual uint32      GetHeight() const override final { return Height; }
     virtual uint32      GetDepth()  const override final { return Depth; }
-
-    virtual FIntVector3 GetExtent() const override final { return FIntVector3(Width, Height, Depth); }
 
 protected:
     uint16 Width;

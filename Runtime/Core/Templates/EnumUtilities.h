@@ -37,7 +37,7 @@
     }                                                                                                          \
     CONSTEXPR bool IsEnumFlagSet(EnumType EnumMask, EnumType EnumFlag) noexcept                                \
     {                                                                                                          \
-        return (ToUnderlying((EnumMask) & (EnumFlag)) == 0);                                                   \
+        return (ToUnderlying((EnumMask) & (EnumFlag)) != 0);                                                   \
     }
 
 template<typename EnumType>
