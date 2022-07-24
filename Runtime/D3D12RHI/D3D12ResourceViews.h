@@ -5,7 +5,6 @@
 
 #include "RHI/RHIResourceViews.h"
 
-class FD3D12Device;
 class FD3D12OfflineDescriptorHeap;
 
 typedef TSharedRef<class FD3D12ConstantBufferView>  FD3D12ConstantBufferViewRef;
@@ -75,7 +74,6 @@ public:
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
 public:
-
     bool CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
     FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const { return Desc; }
@@ -102,7 +100,6 @@ public:
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
 public:
-
     bool CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
     FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const { return Desc; }

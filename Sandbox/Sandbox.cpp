@@ -106,7 +106,7 @@ bool FSandbox::Init()
 
 #if ENABLE_MANY_SPHERES
     {
-        constexpr uint32 kNumSpheres = 1024;
+        constexpr uint32 kNumSpheres = 4096 * 8;
         constexpr float  kMaxRadius  = 32.0f;
 
         std::default_random_engine            Generator;

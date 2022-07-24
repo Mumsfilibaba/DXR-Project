@@ -142,9 +142,15 @@ bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     if ((InWidth != Width || InHeight != Height) && (InWidth > 0) && (InHeight > 0))
     {
+        GRHICommandExecutor.WaitForOutstandingTasks();
+
         CommandContext->ClearState();
 
-        BackBuffers.Clear();
+        for (FD3D12TextureRef& Texture : BackBuffers)
+        {
+            Texture->SetResource(nullptr);
+            Texture->DestroyRTVs();
+        }
 
         HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
         if (SUCCEEDED(Result))
@@ -162,6 +168,8 @@ bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
         {
             return false;
         }
+
+        D3D12_INFO("[FD3D12Viewport]: Resized %u x %u", Width, Height);
     }
 
     // NOTE: Not considered an error to try to resize when the size is the same, maybe it should?

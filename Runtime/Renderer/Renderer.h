@@ -83,7 +83,6 @@ public:
     }
 
 private:
-
     void OnWindowResize(const FWindowResizeEvent& Event);
 
     bool InitBoundingBoxDebugPass();
@@ -92,10 +91,11 @@ private:
     
     bool InitShadingImage();
 
-    NOINLINE void FrustumCullingAndSortingInternal( const FCamera* Camera
-                                                  , const TPair<uint32, uint32>& DrawCommands
-                                                  , TArray<uint32>& OutDeferredDrawCommands
-                                                  , TArray<uint32>& OutForwardDrawCommands);
+    NOINLINE void FrustumCullingAndSortingInternal(
+        const FCamera* Camera,
+        const TPair<uint32, uint32>& DrawCommands,
+        TArray<uint32>& OutDeferredDrawCommands,
+        TArray<uint32>& OutForwardDrawCommands);
 
     TSharedPtr<FRendererWindowHandler> WindowHandler;
 
@@ -156,10 +156,11 @@ private:
 
 extern RENDERER_API FRenderer GRenderer;
 
-inline void AddDebugTexture( const TSharedRef<FRHIShaderResourceView>& ImageView
-                           , const TSharedRef<FRHITexture>& Image
-                           , EResourceAccess BeforeState
-                           , EResourceAccess AfterState)
+inline void AddDebugTexture(
+    const TSharedRef<FRHIShaderResourceView>& ImageView,
+    const TSharedRef<FRHITexture>& Image,
+    EResourceAccess BeforeState,
+    EResourceAccess AfterState)
 {
     GRenderer.GetTextureDebugger()->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
 }

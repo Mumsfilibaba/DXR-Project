@@ -1529,17 +1529,22 @@ void FD3D12CommandContext::ClearState()
 
 void FD3D12CommandContext::Flush()
 {
-    const uint64 NewFenceValue = ++FenceValue;
-    if (!CommandQueue.SignalFence(Fence, NewFenceValue))
+    TScopedLock Lock(CommandContextCS);
+
+    if (State.bIsReady)
     {
-        return;
+        EndCommandList();
     }
 
-    Fence.WaitForValue(NewFenceValue);
-
-    for (FD3D12CommandBatch& Batch : CmdBatches)
+    const uint64 NewFenceValue = ++FenceValue;
+    if (CommandQueue.SignalFence(Fence, NewFenceValue))
     {
-        Batch.Reset();
+        Fence.WaitForValue(NewFenceValue);
+
+        for (FD3D12CommandBatch& Batch : CmdBatches)
+        {
+            Batch.Reset();
+        }
     }
 }
 

@@ -900,8 +900,10 @@ void FRenderer::Release()
 
 void FRenderer::OnWindowResize(const FWindowResizeEvent& Event)
 {
-    const uint32 Width = Event.Width;
+    const uint32 Width  = Event.Width;
     const uint32 Height = Event.Height;
+
+    GRHICommandExecutor.WaitForOutstandingTasks();
 
     if (!Resources.MainWindowViewport->Resize(Width, Height))
     {
