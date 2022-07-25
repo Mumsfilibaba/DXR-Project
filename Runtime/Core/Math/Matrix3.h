@@ -54,9 +54,10 @@ public:
      * @param In21: Value to set on row 2 and column 1
      * @param In22: Value to set on row 2 and column 2
      */
-    FORCEINLINE explicit FMatrix3(float In00, float In01, float In02
-                                 ,float In10, float In11, float In12
-                                 ,float In20, float In21, float In22) noexcept
+    FORCEINLINE explicit FMatrix3(
+        float In00, float In01, float In02,
+        float In10, float In11, float In12,
+        float In20, float In21, float In22) noexcept
         : m00(In00), m01(In01), m02(In02)
         , m10(In10), m11(In11), m12(In12)
         , m20(In20), m21(In21), m22(In22)
@@ -619,9 +620,10 @@ public:
      */
     inline static FMatrix3 Scale(float x, float y, float z) noexcept
     {
-        return FMatrix3( x   , 0.0f, 0.0f
-                       , 0.0f, y   , 0.0f
-                       , 0.0f, 0.0f, z);
+        return FMatrix3(
+            x   , 0.0f, 0.0f,
+            0.0f, y   , 0.0f,
+            0.0f, 0.0f, z);
     }
 
     /**
@@ -655,9 +657,10 @@ public:
         const float SinRSinP = SinR * SinP;
         const float CosRSinP = CosR * SinP;
 
-        return FMatrix3((CosR * CosY) + (SinRSinP * SinY), (SinR * CosP), (SinRSinP * CosY) - (CosR * SinY)
-                       ,(CosRSinP * SinY) - (SinR * CosY), (CosR * CosP), (SinR * SinY) + (CosRSinP * CosY)
-                       ,(CosP * SinY)                    , -SinP        , (CosP * CosY));
+        return FMatrix3(
+            (CosR * CosY) + (SinRSinP * SinY), (SinR * CosP), (SinRSinP * CosY) - (CosR * SinY),
+            (CosRSinP * SinY) - (SinR * CosY), (CosR * CosP), (SinR * SinY) + (CosRSinP * CosY),
+            (CosP * SinY)                    , -SinP        , (CosP * CosY));
     }
 
     /**
@@ -671,9 +674,10 @@ public:
         const float SinX = NMath::Sin(x);
         const float CosX = NMath::Cos(x);
 
-        return FMatrix3(1.0f,  0.0f, 0.0f
-                       ,0.0f,  CosX, SinX
-                       ,0.0f, -SinX, CosX);
+        return FMatrix3(
+            1.0f,  0.0f, 0.0f,
+            0.0f,  CosX, SinX,
+            0.0f, -SinX, CosX);
     }
 
     /**
@@ -687,9 +691,10 @@ public:
         const float SinY = NMath::Sin(y);
         const float CosY = NMath::Cos(y);
 
-        return FMatrix3(CosY, 0.0f, -SinY
-                       ,0.0f, 1.0f,  0.0f
-                       ,SinY, 0.0f,  CosY);
+        return FMatrix3(
+            CosY, 0.0f, -SinY,
+            0.0f, 1.0f,  0.0f,
+            SinY, 0.0f,  CosY);
     }
 
     /**
@@ -703,9 +708,10 @@ public:
         const float SinZ = NMath::Sin(z);
         const float CosZ = NMath::Cos(z);
 
-        return FMatrix3( CosZ, SinZ, 0.0f
-                       ,-SinZ, CosZ, 0.0f
-                       , 0.0f, 0.0f, 1.0f);
+        return FMatrix3(
+             CosZ, SinZ, 0.0f,
+            -SinZ, CosZ, 0.0f,
+             0.0f, 0.0f, 1.0f);
     }
 
 public:

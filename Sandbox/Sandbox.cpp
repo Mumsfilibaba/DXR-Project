@@ -46,7 +46,7 @@ bool FSandbox::Init()
 
     // Load Scene
     FSceneData SceneData;
-#if 1
+#if 0
     FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
     SceneData.Scale = 0.015f;
 #else

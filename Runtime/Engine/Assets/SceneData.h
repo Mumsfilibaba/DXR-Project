@@ -35,6 +35,12 @@ struct FMeshData
         return !Vertices.IsEmpty();
     }
 
+    inline void RefitContainers()
+    {
+        Vertices.ShrinkToFit();
+        Indices.ShrinkToFit();
+    }
+
     TArray<FVertex> Vertices;
     TArray<uint32>  Indices;
 };

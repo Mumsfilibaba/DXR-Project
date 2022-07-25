@@ -75,7 +75,7 @@ void FSceneData::AddToScene(FScene* Scene)
             FMeshComponent* MeshComponent = dbg_new FMeshComponent(NewActor);
             MeshComponent->Mesh = FMesh::Make(ModelData.Mesh);
 
-            if (ModelData.MaterialIndex >= 0)
+            if (!CreatedMaterials.IsEmpty() && ModelData.MaterialIndex >= 0)
             {
                 MeshComponent->Material = CreatedMaterials[ModelData.MaterialIndex];
             }

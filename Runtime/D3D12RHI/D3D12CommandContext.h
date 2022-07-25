@@ -161,7 +161,6 @@ public:
 class FD3D12ResourceBarrierBatcher
 {
 public:
-    
     FD3D12ResourceBarrierBatcher()
         : Barriers()
     { }

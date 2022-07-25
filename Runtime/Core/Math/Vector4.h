@@ -377,10 +377,11 @@ public:
     friend FORCEINLINE FVector4 Min(const FVector4& First, const FVector4& Second) noexcept
     {
 #if !USE_VECTOR_OP
-        return FVector4(NMath::Min(First.x, Second.x)
-                       ,NMath::Min(First.y, Second.y)
-                       ,NMath::Min(First.z, Second.z)
-                       ,NMath::Min(First.w, Second.w));
+        return FVector4(
+            NMath::Min(First.x, Second.x),
+            NMath::Min(First.y, Second.y),
+            NMath::Min(First.z, Second.z),
+            NMath::Min(First.w, Second.w));
 #else
         FVector4 Result;
 
@@ -403,10 +404,11 @@ public:
     friend FORCEINLINE FVector4 Max(const FVector4& First, const FVector4& Second) noexcept
     {
 #if !USE_VECTOR_OP
-        return FVector4(NMath::Max(First.x, Second.x)
-                       ,NMath::Max(First.y, Second.y)
-                       ,NMath::Max(First.z, Second.z)
-                       ,NMath::Max(First.w, Second.w));
+        return FVector4(
+            NMath::Max(First.x, Second.x),
+            NMath::Max(First.y, Second.y),
+            NMath::Max(First.z, Second.z),
+            NMath::Max(First.w, Second.w));
 #else
         FVector4 Result;
 
@@ -430,10 +432,11 @@ public:
     friend FORCEINLINE FVector4 Lerp(const FVector4& First, const FVector4& Second, float t) noexcept
     {
 #if !USE_VECTOR_OP
-        return FVector4((1.0f - t) * First.x + t * Second.x
-                       ,(1.0f - t) * First.y + t * Second.y
-                       ,(1.0f - t) * First.z + t * Second.z
-                       ,(1.0f - t) * First.w + t * Second.w);
+        return FVector4(
+            (1.0f - t) * First.x + t * Second.x,
+            (1.0f - t) * First.y + t * Second.y,
+            (1.0f - t) * First.z + t * Second.z,
+            (1.0f - t) * First.w + t * Second.w);
 #else
         FVector4 Result;
 
@@ -464,10 +467,11 @@ public:
     friend FORCEINLINE FVector4 Clamp(const FVector4& Min, const FVector4& Max, const FVector4& Value) noexcept
     {
 #if !USE_VECTOR_OP
-        return FVector4(NMath::Min(NMath::Max(Value.x, Min.x), Max.x)
-                       ,NMath::Min(NMath::Max(Value.y, Min.y), Max.y)
-                       ,NMath::Min(NMath::Max(Value.z, Min.z), Max.z)
-                       ,NMath::Min(NMath::Max(Value.w, Min.w), Max.w));
+        return FVector4(
+            NMath::Min(NMath::Max(Value.x, Min.x), Max.x),
+            NMath::Min(NMath::Max(Value.y, Min.y), Max.y),
+            NMath::Min(NMath::Max(Value.z, Min.z), Max.z),
+            NMath::Min(NMath::Max(Value.w, Min.w), Max.w));
 #else
         FVector4 Result;
 
@@ -491,10 +495,11 @@ public:
     friend FORCEINLINE FVector4 Saturate(const FVector4& Value) noexcept
     {
 #if !USE_VECTOR_OP
-        return FVector4(NMath::Min(NMath::Max(Value.x, 0.0f), 1.0f)
-                       ,NMath::Min(NMath::Max(Value.y, 0.0f), 1.0f)
-                       ,NMath::Min(NMath::Max(Value.z, 0.0f), 1.0f)
-                       ,NMath::Min(NMath::Max(Value.w, 0.0f), 1.0f));
+        return FVector4(
+            NMath::Min(NMath::Max(Value.x, 0.0f), 1.0f),
+            NMath::Min(NMath::Max(Value.y, 0.0f), 1.0f),
+            NMath::Min(NMath::Max(Value.z, 0.0f), 1.0f),
+            NMath::Min(NMath::Max(Value.w, 0.0f), 1.0f));
 #else
         FVector4 Result;
 

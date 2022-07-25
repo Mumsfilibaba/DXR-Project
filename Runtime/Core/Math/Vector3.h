@@ -196,9 +196,10 @@ public:
      */
     inline FVector3 CrossProduct(const FVector3& Other) const noexcept
     {
-        return FVector3((y * Other.z) - (z * Other.y)
-                       ,(z * Other.x) - (x * Other.z)
-                       ,(x * Other.y) - (y * Other.x));
+        return FVector3(
+            (y * Other.z) - (z * Other.y),
+            (z * Other.x) - (x * Other.z),
+            (x * Other.y) - (y * Other.x));
     }
 
     /**
@@ -283,9 +284,10 @@ public:
      */
     friend FORCEINLINE FVector3 Lerp(const FVector3& First, const FVector3& Second, float Factor) noexcept
     {
-        return FVector3((1.0f - Factor) * First.x + Factor * Second.x
-                       ,(1.0f - Factor) * First.y + Factor * Second.y
-                       ,(1.0f - Factor) * First.z + Factor * Second.z);
+        return FVector3(
+            (1.0f - Factor) * First.x + Factor * Second.x,
+            (1.0f - Factor) * First.y + Factor * Second.y,
+            (1.0f - Factor) * First.z + Factor * Second.z);
     }
 
     /**
@@ -298,9 +300,10 @@ public:
      */
     friend FORCEINLINE FVector3 Clamp(const FVector3& Min, const FVector3& Max, const FVector3& Value) noexcept
     {
-        return FVector3(NMath::Min(NMath::Max(Value.x, Min.x), Max.x)
-                       ,NMath::Min(NMath::Max(Value.y, Min.y), Max.y)
-                       ,NMath::Min(NMath::Max(Value.z, Min.z), Max.z));
+        return FVector3(
+            NMath::Min(NMath::Max(Value.x, Min.x), Max.x),
+            NMath::Min(NMath::Max(Value.y, Min.y), Max.y),
+            NMath::Min(NMath::Max(Value.z, Min.z), Max.z));
     }
 
     /**
@@ -311,9 +314,10 @@ public:
      */
     friend FORCEINLINE FVector3 Saturate(const FVector3& Value) noexcept
     {
-        return FVector3(NMath::Min(NMath::Max(Value.x, 0.0f), 1.0f)
-                       ,NMath::Min(NMath::Max(Value.y, 0.0f), 1.0f)
-                       ,NMath::Min(NMath::Max(Value.z, 0.0f), 1.0f));
+        return FVector3(
+            NMath::Min(NMath::Max(Value.x, 0.0f), 1.0f),
+            NMath::Min(NMath::Max(Value.y, 0.0f), 1.0f),
+            NMath::Min(NMath::Max(Value.z, 0.0f), 1.0f));
     }
 
 public:

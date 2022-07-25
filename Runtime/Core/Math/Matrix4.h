@@ -67,10 +67,11 @@ public:
      * @param In32: Value to set on row 3 and column 2
      * @param In33: Value to set on row 3 and column 3
      */
-    FORCEINLINE explicit FMatrix4(float m00, float m01, float m02, float m03
-                                 ,float m10, float m11, float m12, float m13
-                                 ,float m20, float m21, float m22, float m23
-                                 ,float m30, float m31, float m32, float m33) noexcept
+    FORCEINLINE explicit FMatrix4(
+        float m00, float m01, float m02, float m03,
+        float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23,
+        float m30, float m31, float m32, float m33) noexcept
         : m00(m00), m01(m01), m02(m02), m03(m03)
         , m10(m10), m11(m11), m12(m12), m13(m13)
         , m20(m20), m21(m21), m22(m22), m23(m23)
@@ -1180,10 +1181,11 @@ public:
      */
     inline static FMatrix4 Scale(float Scale) noexcept
     {
-        return FMatrix4(Scale, 0.0f , 0.0f , 0.0f
-                       ,0.0f , Scale, 0.0f , 0.0f
-                       ,0.0f , 0.0f , Scale, 0.0f
-                       ,0.0f , 0.0f , 0.0f , 1.0f);
+        return FMatrix4(
+            Scale, 0.0f , 0.0f , 0.0f,
+            0.0f , Scale, 0.0f , 0.0f,
+            0.0f , 0.0f , Scale, 0.0f,
+            0.0f , 0.0f , 0.0f , 1.0f);
     }
 
     /**
@@ -1196,10 +1198,11 @@ public:
      */
     inline static FMatrix4 Scale(float x, float y, float z) noexcept
     {
-        return FMatrix4(x   , 0.0f, 0.0f, 0.0f
-                       ,0.0f, y   , 0.0f, 0.0f
-                       ,0.0f, 0.0f, z   , 0.0f
-                       ,0.0f, 0.0f, 0.0f, 1.0f);
+        return FMatrix4(
+            x   , 0.0f, 0.0f, 0.0f,
+            0.0f, y   , 0.0f, 0.0f,
+            0.0f, 0.0f, z   , 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     /**
@@ -1223,10 +1226,11 @@ public:
      */
     inline static FMatrix4 Translation(float x, float y, float z) noexcept
     {
-        return FMatrix4(1.0f, 0.0f, 0.0f, 0.0f
-                       ,0.0f, 1.0f, 0.0f, 0.0f
-                       ,0.0f, 0.0f, 1.0f, 0.0f
-                       ,x   , y   , z   , 1.0f);
+        return FMatrix4(
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            x   , y   , z   , 1.0f);
     }
 
     /**
@@ -1260,10 +1264,11 @@ public:
         const float SinRSinP = SinR * SinP;
         const float CosRSinP = CosR * SinP;
 
-        return FMatrix4((CosR * CosY) + (SinRSinP * SinY), (SinR * CosP), (SinRSinP * CosY) - (CosR * SinY), 0.0f
-                       ,(CosRSinP * SinY) - (SinR * CosY), (CosR * CosP), (SinR * SinY) + (CosRSinP * CosY), 0.0f
-                       ,(CosP * SinY)                    , -SinP        , (CosP * CosY)                    , 0.0f
-                       ,0.0f                             , 0.0f         , 0.0f                             , 1.0f);
+        return FMatrix4(
+            (CosR * CosY) + (SinRSinP * SinY), (SinR * CosP), (SinRSinP * CosY) - (CosR * SinY), 0.0f,
+            (CosRSinP * SinY) - (SinR * CosY), (CosR * CosP), (SinR * SinY) + (CosRSinP * CosY), 0.0f,
+            (CosP * SinY)                    , -SinP        , (CosP * CosY)                    , 0.0f,
+            0.0f                             , 0.0f         , 0.0f                             , 1.0f);
     }
 
     /**
@@ -1288,10 +1293,11 @@ public:
         const float SinX = NMath::Sin(x);
         const float CosX = NMath::Cos(x);
 
-        return FMatrix4(1.0f,  0.0f, 0.0f, 0.0f
-                       ,0.0f,  CosX, SinX, 0.0f
-                       ,0.0f, -SinX, CosX, 0.0f
-                       ,0.0f,  0.0f, 0.0f, 1.0f);
+        return FMatrix4(
+            1.0f,  0.0f, 0.0f, 0.0f,
+            0.0f,  CosX, SinX, 0.0f,
+            0.0f, -SinX, CosX, 0.0f,
+            0.0f,  0.0f, 0.0f, 1.0f);
     }
 
     /**
@@ -1305,10 +1311,11 @@ public:
         const float SinY = NMath::Sin(y);
         const float CosY = NMath::Cos(y);
 
-        return FMatrix4(CosY, 0.0f, -SinY, 0.0f
-                       ,0.0f, 1.0f,  0.0f, 0.0f
-                       ,SinY, 0.0f,  CosY, 0.0f
-                       ,0.0f, 0.0f,  0.0f, 1.0f);
+        return FMatrix4(
+            CosY, 0.0f, -SinY, 0.0f,
+            0.0f, 1.0f,  0.0f, 0.0f,
+            SinY, 0.0f,  CosY, 0.0f,
+            0.0f, 0.0f,  0.0f, 1.0f);
     }
 
     /**
@@ -1322,10 +1329,11 @@ public:
         const float SinZ = NMath::Sin(z);
         const float CosZ = NMath::Cos(z);
 
-        return FMatrix4( CosZ, SinZ, 0.0f, 0.0f
-                       ,-SinZ, CosZ, 0.0f, 0.0f
-                       , 0.0f, 0.0f, 1.0f, 0.0f
-                       , 0.0f, 0.0f, 0.0f, 1.0f);
+        return FMatrix4(
+             CosZ, SinZ, 0.0f, 0.0f,
+            -SinZ, CosZ, 0.0f, 0.0f,
+             0.0f, 0.0f, 1.0f, 0.0f,
+             0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     /**
@@ -1339,10 +1347,11 @@ public:
      */
     inline static FMatrix4 OrtographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
     {
-        return FMatrix4(2.0f / Width, 0.0f         ,  0.0f                  , 0.0f
-                       ,0.0f        , 2.0f / Height,  0.0f                  , 0.0f
-                       ,0.0f        , 0.0f         ,  1.0f / (FarZ - NearZ) , 0.0f
-                       ,0.0f        , 0.0f         , -NearZ / (FarZ - NearZ), 1.0f);
+        return FMatrix4(
+            2.0f / Width, 0.0f         ,  0.0f                  , 0.0f,
+            0.0f        , 2.0f / Height,  0.0f                  , 0.0f,
+            0.0f        , 0.0f         ,  1.0f / (FarZ - NearZ) , 0.0f,
+            0.0f        , 0.0f         , -NearZ / (FarZ - NearZ), 1.0f);
     }
 
     /**
@@ -1362,10 +1371,11 @@ public:
         const float InvHeight = 1.0f / (Top - Bottom);
         const float Range     = 1.0f / (FarZ - NearZ);
 
-        return FMatrix4( InvWidth + InvWidth      ,  0.0f                      ,  0.0f         , 0.0f
-                       , 0.0f                     ,  InvHeight + InvHeight     ,  0.0f         , 0.0f
-                       , 0.0f                     ,  0.0f                      ,  Range        , 0.0f
-                       ,-(Left + Right) * InvWidth, -(Top + Bottom) * InvHeight, -Range * NearZ, 1.0f);
+        return FMatrix4(
+             InvWidth + InvWidth      ,  0.0f                      ,  0.0f         , 0.0f,
+             0.0f                     ,  InvHeight + InvHeight     ,  0.0f         , 0.0f,
+             0.0f                     ,  0.0f                      ,  Range        , 0.0f,
+            -(Left + Right) * InvWidth, -(Top + Bottom) * InvHeight, -Range * NearZ, 1.0f);
     }
 
     /**
@@ -1388,10 +1398,11 @@ public:
         const float ScaleX = (ScaleY / AspectRatio);
         const float Range  = (FarZ / (FarZ - NearZ));
 
-        return FMatrix4(ScaleX, 0.0f  ,  0.0f         , 0.0f
-                       ,0.0f  , ScaleY,  0.0f         , 0.0f
-                       ,0.0f  , 0.0f  ,  Range        , 1.0f
-                       ,0.0f  , 0.0f  , -Range * NearZ, 0.0f);
+        return FMatrix4(
+            ScaleX, 0.0f  ,  0.0f         , 0.0f,
+            0.0f  , ScaleY,  0.0f         , 0.0f,
+            0.0f  , 0.0f  ,  Range        , 1.0f,
+            0.0f  , 0.0f  , -Range * NearZ, 0.0f);
     }
 
     /**
@@ -1444,10 +1455,11 @@ public:
         const float m31 = NegEye.DotProduct(e1);
         const float m32 = NegEye.DotProduct(e2);
 
-        FMatrix4 Result(FVector4(e0, m30)
-                       ,FVector4(e1, m31)
-                       ,FVector4(e2, m32)
-                       ,FVector4(0.0f, 0.0f, 0.0f, 1.0f));
+        FMatrix4 Result(
+            FVector4(e0, m30),
+            FVector4(e1, m31),
+            FVector4(e2, m32),
+            FVector4(0.0f, 0.0f, 0.0f, 1.0f));
         return Result.Transpose();
     }
 

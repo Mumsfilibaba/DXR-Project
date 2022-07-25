@@ -10,6 +10,8 @@
 
 #include <ofbx.h>
 
+#define INVALID_MATERIAL_INDEX (-1)
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FFBXLoader
 
@@ -63,6 +65,7 @@ static void GetMatrix(const ofbx::Object* Mesh, FMatrix4& OutMatrix)
 }
 #endif
 
+#if 0
 static FImage2DPtr LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
 {
 #if 0
@@ -90,6 +93,7 @@ static FImage2DPtr LoadMaterialTexture(const FString& Path, const ofbx::Material
         return FImage2DPtr();
     }
 }
+#endif
 
 bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 Flags) noexcept
 {
@@ -139,6 +143,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     }
 
     const ofbx::GlobalSettings* Settings = FBXScene->getGlobalSettings();
+    const float UnitScaleFactorRecip     = Settings->UnitScaleFactor;
 
     // Unique tables
     THashTable<FVertex, uint32, FVertexHasher>  UniqueVertices;
@@ -151,7 +156,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     uint32 MeshCount = FBXScene->getMeshCount();
     for (uint32 i = 0; i < MeshCount; i++)
     {
-        const ofbx::Mesh* CurrentMesh = FBXScene->getMesh(i);
+        const ofbx::Mesh*     CurrentMesh = FBXScene->getMesh(i);
         const ofbx::Geometry* CurrentGeom = CurrentMesh->getGeometry();
 
         uint32 MaterialCount = CurrentMesh->getMaterialCount();
@@ -164,30 +169,29 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
             }
 
             FMaterialData MaterialData;
-            MaterialData.DiffuseTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
-            MaterialData.NormalTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
-            MaterialData.SpecularTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);
-            MaterialData.EmissiveTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
-            MaterialData.AOTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
+            // MaterialData.DiffuseTexture  = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
+            // MaterialData.NormalTexture   = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
+            // MaterialData.SpecularTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);
+            // MaterialData.EmissiveTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
+            // MaterialData.AOTexture       = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
 
-            MaterialData.Diffuse = FVector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
-            MaterialData.AO = 1.0f;//  CurrentMaterial->getSpecularColor().r;
-            MaterialData.Roughness = 1.0f;// CurrentMaterial->getSpecularColor().g;
-            MaterialData.Metallic = 1.0f;// CurrentMaterial->getSpecularColor().b;
+            MaterialData.Diffuse   = FVector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
+            MaterialData.AO        = 1.0f; // CurrentMaterial->getSpecularColor().r;
+            MaterialData.Roughness = 1.0f; // CurrentMaterial->getSpecularColor().g;
+            MaterialData.Metallic  = 1.0f; // CurrentMaterial->getSpecularColor().b;
 
             //TODO: Other material properties
-
-            //UniqueMaterials[CurrentMaterial] = OutScene.Materials.Size();
-            //OutScene.Materials.Emplace( MaterialData );
+            UniqueMaterials[CurrentMaterial] = OutScene.Materials.Size();
+            OutScene.Materials.Emplace(MaterialData);
         }
 
         int32 VertexCount = (int32)CurrentGeom->getVertexCount();
-        int32 IndexCount = (int32)CurrentGeom->getIndexCount();
+        int32 IndexCount  = (int32)CurrentGeom->getIndexCount();
         Data.Mesh.Indices.Reserve(IndexCount);
         Data.Mesh.Vertices.Reserve(VertexCount);
         UniqueVertices.reserve(VertexCount);
 
-        const int* Materials = CurrentGeom->getMaterials();
+        const auto* Materials = CurrentGeom->getMaterials();
 
         const ofbx::Vec3* Vertices = CurrentGeom->getVertices();
         Check(Vertices != nullptr);
@@ -200,13 +204,13 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
 
         const ofbx::Vec3* Tangents = CurrentGeom->getTangents();
 
-        FMatrix4 Matrix = ToFloat4x4(CurrentMesh->getGlobalTransform());
+        FMatrix4 Matrix          = ToFloat4x4(CurrentMesh->getGlobalTransform());
         FMatrix4 GeometricMatrix = ToFloat4x4(CurrentMesh->getGeometricMatrix());
-        FMatrix4 Transform = Matrix * GeometricMatrix;
+        FMatrix4 Transform       = Matrix * GeometricMatrix;
 
-        int32 CurrentIndex = 0;
-        int32 MaterialIndex = -1;
-        int32 LastMaterialIndex = 0;
+        int32 CurrentIndex      = 0;
+        int32 MaterialIndex     = Materials ? Materials[0] : INVALID_MATERIAL_INDEX;
+        int32 LastMaterialIndex = INVALID_MATERIAL_INDEX;
         while (CurrentIndex < IndexCount)
         {
             Data.MaterialIndex = -1;
@@ -218,11 +222,11 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
             {
                 if (Materials)
                 {
-                    uint32 TriangleIndex = CurrentIndex / 3;
-                    LastMaterialIndex = MaterialIndex;
-                    MaterialIndex = Materials[TriangleIndex];
-                    if (MaterialIndex != LastMaterialIndex)
+                    const uint32 TriangleIndex = (CurrentIndex / 3);
+                    if (MaterialIndex != Materials[TriangleIndex])
                     {
+                        LastMaterialIndex = MaterialIndex;
+                        MaterialIndex     = Materials[TriangleIndex];
                         break;
                     }
                 }
@@ -230,13 +234,16 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
                 FVertex TempVertex;
 
                 // Position
-                FVector3 Position = FVector3((float)Vertices[CurrentIndex].x, (float)Vertices[CurrentIndex].y, (float)Vertices[CurrentIndex].z);
+                FVector3 Position = FVector3(
+                    static_cast<float>(Vertices[CurrentIndex].x),
+                    static_cast<float>(Vertices[CurrentIndex].y),
+                    static_cast<float>(Vertices[CurrentIndex].z));
                 TempVertex.Position = Transform.TransformPosition(Position);
 
                 // Apply the scene scale
                 if (Flags & EFBXFlags::FBXFlags_ApplyScaleFactor)
                 {
-                    TempVertex.Position /= Settings->UnitScaleFactor;
+                    TempVertex.Position *= UnitScaleFactorRecip;
                 }
 
                 // Normal
@@ -285,18 +292,22 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
 
             Data.Name = CurrentMesh->name;
 
-            const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(LastMaterialIndex);
-            if (UniqueMaterials.count(CurrentMaterial) != 0)
+            if (LastMaterialIndex != INVALID_MATERIAL_INDEX)
             {
-                Data.MaterialIndex = UniqueMaterials[CurrentMaterial];
-            }
-            else
-            {
-                Data.MaterialIndex = -1;
+                const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(LastMaterialIndex);
+                if (UniqueMaterials.count(CurrentMaterial) != 0)
+                {
+                    Data.MaterialIndex = UniqueMaterials[CurrentMaterial];
+                }
+                else
+                {
+                    Data.MaterialIndex = -1;
+                }
             }
 
             if (Data.Mesh.Hasdata())
             {
+                Data.Mesh.RefitContainers();
                 OutScene.Models.Emplace(Data);
             }
             else
