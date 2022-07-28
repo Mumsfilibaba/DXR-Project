@@ -18,7 +18,7 @@ void FUser::Tick(FTimestamp DeltaTime)
     {
         if (KeyState.IsDown)
         {
-            KeyState.TimePressed += (float)DeltaTime.AsMilliSeconds();
+            KeyState.TimePressed += (float)DeltaTime.AsMilliseconds();
         }
     }
 
@@ -27,7 +27,7 @@ void FUser::Tick(FTimestamp DeltaTime)
     {
         if (MouseButtonState.IsDown)
         {
-            MouseButtonState.TimePressed += (float)DeltaTime.AsMilliSeconds();
+            MouseButtonState.TimePressed += (float)DeltaTime.AsMilliseconds();
         }
     }
 }

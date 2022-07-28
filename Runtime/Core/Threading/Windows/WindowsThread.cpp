@@ -6,16 +6,6 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsThread
 
-FWindowsThread* FWindowsThread::CreateWindowsThread(const TFunction<void()>& InFunction)
-{
-    return dbg_new FWindowsThread(InFunction);
-}
-
-FWindowsThread* FWindowsThread::CreateWindowsThread(const TFunction<void()>& InFunction, const FString & InName)
-{
-    return dbg_new FWindowsThread(InFunction, InName);
-}
-
 FWindowsThread::FWindowsThread(const TFunction<void()>& InFunction)
     : FGenericThread(InFunction)
     , Thread(0)

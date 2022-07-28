@@ -38,7 +38,7 @@ struct FProfileSample
     {
         Clock.Tick();
 
-        const float Delta = static_cast<float>(Clock.GetDeltaTime().AsNanoSeconds());
+        const float Delta = static_cast<float>(Clock.GetDeltaTime().AsNanoseconds());
         AddSample(Delta);
 
         TotalCalls++;

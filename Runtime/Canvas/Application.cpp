@@ -314,7 +314,7 @@ void FApplication::Tick(FTimestamp DeltaTime)
     }
 
     // Update platform
-    const float Delta = static_cast<float>(DeltaTime.AsMilliSeconds());
+    const float Delta = static_cast<float>(DeltaTime.AsMilliseconds());
     PlatformApplication->Tick(Delta);
 
     if (!RegisteredUsers.IsEmpty())

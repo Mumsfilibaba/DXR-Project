@@ -44,8 +44,8 @@ struct FMacThreadMisc
 
     static FORCEINLINE void Sleep(FTimestamp Time)
     {	
-        float MicroSeconds = Time.AsMicroSeconds();
-        usleep(static_cast<useconds_t>(MicroSeconds));
+        float Microseconds = Time.AsMicroseconds();
+        usleep(static_cast<useconds_t>(Microseconds));
     }
 
     static FORCEINLINE bool IsMainThread() 

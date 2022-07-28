@@ -8,11 +8,10 @@
 struct FWindowsThreadMisc 
     : public FGenericThreadMisc
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericThreadMisc Interface
-
     static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
     static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InString);
+
+    static FGenericEvent* CreateEvent(bool bManualReset);
 
     static FORCEINLINE uint32 GetNumProcessors()
     {
@@ -32,7 +31,7 @@ struct FWindowsThreadMisc
 
     static FORCEINLINE void Sleep(FTimestamp Time)
     {
-        DWORD Milliseconds = static_cast<DWORD>(Time.AsMilliSeconds());
+        DWORD Milliseconds = static_cast<DWORD>(Time.AsMilliseconds());
         ::Sleep(Milliseconds);
     }
 };

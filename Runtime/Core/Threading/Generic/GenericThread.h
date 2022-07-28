@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Time/Timestamp.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/Function.h"
@@ -33,15 +34,20 @@ protected:
 
 public:
 
+    /** @brief: Start the thread and start executing the entrypoint */
+    virtual bool Start() { return true; }
+
     /**
      * @brief: Waits for the thread to complete and joins with caller 
      * 
      * @return: Returns the return-value from the thread
      */
     virtual int32 WaitForCompletion(uint64 TimeoutInMs) { return 0; }
+
+    /** @brief: Waits for the thread to complete and joins with caller  */
+    virtual int32 WaitForCompletion(FTimestamp Timeout) { return WaitForCompletion(static_cast<uint64>(Timeout.AsMilliseconds())); }
     
-    virtual bool Start() { return true; }
-	
+    /** @return: Returns the native platform handle */
     virtual void* GetPlatformHandle() { return nullptr; }
 
     virtual FString GetName() const { return ""; }

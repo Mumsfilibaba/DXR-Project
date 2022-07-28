@@ -21,6 +21,11 @@ FGenericThread* FGenericThreadMisc::CreateNamedThread(const TFunction<void()>& I
     return dbg_new FGenericThread(InFunction);
 }
 
+FGenericEvent* FGenericThreadMisc::CreateEvent(bool bManualReset)
+{
+    return dbg_new FGenericEvent();
+}
+
 #if defined(COMPILER_MSVC)
     #pragma warning(pop)
 #elif defined(COMPILER_CLANG)

@@ -26,7 +26,7 @@ void FFrameProfiler::Tick()
 
     if (bEnabled)
     {
-        const double Delta = Clock.GetDeltaTime().AsMilliSeconds();
+        const double Delta = Clock.GetDeltaTime().AsMilliseconds();
         CPUFrameTime.AddSample(float(Delta));
     }
 }

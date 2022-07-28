@@ -1,5 +1,6 @@
 #pragma once
 #include "GenericThread.h"
+#include "GenericEvent.h"
 
 #include "Core/Time/Timestamp.h"
 
@@ -18,6 +19,8 @@ struct FGenericThreadMisc
 {
     static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
     static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName);
+
+    static FGenericEvent* CreateEvent(bool bManualReset);
 
     static FORCEINLINE bool Initialize() { return true; }
     static FORCEINLINE void Release()    { }

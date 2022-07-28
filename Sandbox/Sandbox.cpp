@@ -423,7 +423,7 @@ void FSandbox::Tick(FTimestamp DeltaTime)
 {
     FApplicationModule::Tick(DeltaTime);
 
-    // LOG_INFO("Tick: %f", DeltaTime.AsMilliSeconds());
+    // LOG_INFO("Tick: %f", DeltaTime.AsMilliseconds());
 
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
