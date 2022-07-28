@@ -16,12 +16,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FConsoleInputHandler
 
-class FConsoleInputHandler final : public FInputHandler
+class FConsoleInputHandler final 
+    : public FInputHandler
 {
 public:
-
-    DECLARE_DELEGATE(CHandleKeyEventDelegate, const FKeyEvent&);
-    CHandleKeyEventDelegate HandleKeyEventDelegate;
+    DECLARE_DELEGATE(FHandleKeyEventDelegate, const FKeyEvent&);
+    FHandleKeyEventDelegate HandleKeyEventDelegate;
 
     FConsoleInputHandler() = default;
     ~FConsoleInputHandler() = default;
@@ -38,12 +38,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGameConsoleWindow
 
-class FGameConsoleWindow final : public FWindow
+class FGameConsoleWindow final 
+    : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
-
     static TSharedRef<FGameConsoleWindow> Make();
 
     virtual void Tick() override final;
@@ -51,7 +51,6 @@ public:
     virtual bool IsTickable() override final;
 
 private:
-
     FGameConsoleWindow();
     ~FGameConsoleWindow() = default;
 

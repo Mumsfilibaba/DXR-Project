@@ -9,7 +9,6 @@
 class D3D12_RHI_API FD3D12RefCounted
 {
 protected:
-
     FD3D12RefCounted()
         : StrongReferences(1)
     { }
@@ -20,7 +19,6 @@ protected:
     }
 
 public:
-
     int32 AddRef()
     {
         Check(StrongReferences.Load() > 0);

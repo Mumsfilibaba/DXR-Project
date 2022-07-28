@@ -128,10 +128,8 @@ struct FDepthStencilStateFace
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIDepthStencilStateInitializer
 
-class FRHIDepthStencilStateInitializer
+struct FRHIDepthStencilStateInitializer
 {
-public:
-
     FRHIDepthStencilStateInitializer()
         : DepthWriteMask(EDepthWriteMask::All)
         , DepthFunc(EComparisonFunc::Less)
@@ -205,10 +203,10 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIDepthStencilState
 
-class FRHIDepthStencilState : public FRHIResource
+class FRHIDepthStencilState 
+    : public FRHIResource
 {
 protected:
-
     FRHIDepthStencilState()  = default;
     ~FRHIDepthStencilState() = default;
 };
@@ -256,22 +254,20 @@ inline const char* ToString(EFillMode FillMode)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRasterizerStateInitializer
 
-class FRHIRasterizerStateInitializer
+struct FRHIRasterizerStateInitializer
 {
-public:
-
     FRHIRasterizerStateInitializer()
         : FillMode(EFillMode::Solid)
         , CullMode(ECullMode::Back)
         , bFrontCounterClockwise(false)
-	    , bDepthClipEnable(true)
-	    , bMultisampleEnable(false)
-	    , bAntialiasedLineEnable(false)
-	    , bEnableConservativeRaster(false)
-	    , ForcedSampleCount(0)
-	    , DepthBias(0)
-	    , DepthBiasClamp(0.0f)
-	    , SlopeScaledDepthBias(0.0f)
+        , bDepthClipEnable(true)
+        , bMultisampleEnable(false)
+        , bAntialiasedLineEnable(false)
+        , bEnableConservativeRaster(false)
+        , ForcedSampleCount(0)
+        , DepthBias(0)
+        , DepthBiasClamp(0.0f)
+        , SlopeScaledDepthBias(0.0f)
     { }
 
     FRHIRasterizerStateInitializer(
@@ -289,14 +285,14 @@ public:
         : FillMode(InFillMode)
         , CullMode(InCullMode)
         , bFrontCounterClockwise(bInFrontCounterClockwise)
-	    , bDepthClipEnable(bInDepthClipEnable)
-	    , bMultisampleEnable(bInMultisampleEnable)
-	    , bAntialiasedLineEnable(bInAntialiasedLineEnable)
-	    , bEnableConservativeRaster(bInEnableConservativeRaster)
-	    , ForcedSampleCount(InForcedSampleCount)
-	    , DepthBias(InDepthBias)
-	    , DepthBiasClamp(InDepthBiasClamp)
-	    , SlopeScaledDepthBias(InSlopeScaledDepthBias)
+        , bDepthClipEnable(bInDepthClipEnable)
+        , bMultisampleEnable(bInMultisampleEnable)
+        , bAntialiasedLineEnable(bInAntialiasedLineEnable)
+        , bEnableConservativeRaster(bInEnableConservativeRaster)
+        , ForcedSampleCount(InForcedSampleCount)
+        , DepthBias(InDepthBias)
+        , DepthBiasClamp(InDepthBiasClamp)
+        , SlopeScaledDepthBias(InSlopeScaledDepthBias)
     { }
 
     uint64 GetHash() const
@@ -351,10 +347,10 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRasterizerState
 
-class FRHIRasterizerState : public FRHIResource
+class FRHIRasterizerState 
+    : public FRHIResource
 {
 protected:
-
     FRHIRasterizerState()  = default;
     ~FRHIRasterizerState() = default;
 };
@@ -646,10 +642,8 @@ struct FRenderTargetBlendDesc
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIBlendStateInitializer
 
-class FRHIBlendStateInitializer
+struct FRHIBlendStateInitializer
 {
-public:
-
     FRHIBlendStateInitializer()
         : RenderTargets()
         , bAlphaToCoverageEnable(false)
@@ -703,7 +697,6 @@ public:
 class FRHIBlendState : public FRHIResource
 {
 protected:
-
     FRHIBlendState()  = default;
     ~FRHIBlendState() = default;
 };
@@ -792,10 +785,8 @@ struct FVertexInputElement
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIVertexInputLayoutInitializer
 
-class FRHIVertexInputLayoutInitializer
+struct FRHIVertexInputLayoutInitializer
 {
-public:
-
     FRHIVertexInputLayoutInitializer()
         : Elements()
     { }
@@ -827,7 +818,6 @@ public:
 class FRHIVertexInputLayout : public FRHIResource
 {
 protected:
-
     FRHIVertexInputLayout()  = default;
     ~FRHIVertexInputLayout() = default;
 };
@@ -859,7 +849,6 @@ inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 class FRHIPipelineState : public FRHIResource
 {
 protected:
-
     FRHIPipelineState()  = default;
     ~FRHIPipelineState() = default;
 
@@ -945,10 +934,8 @@ struct FGraphicsPipelineShaders
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIGraphicsPipelineStateInitializer
 
-class FRHIGraphicsPipelineStateInitializer
+struct FRHIGraphicsPipelineStateInitializer
 {
-public:
-
     FRHIGraphicsPipelineStateInitializer()
         : VertexInputLayout(nullptr)
         , DepthStencilState(nullptr)
@@ -1029,7 +1016,6 @@ public:
 class FRHIGraphicsPipelineState : public FRHIPipelineState
 {
 protected:
-
     FRHIGraphicsPipelineState()  = default;
     ~FRHIGraphicsPipelineState() = default;
 };
@@ -1037,10 +1023,8 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIComputePipelineStateInitializer
 
-class FRHIComputePipelineStateInitializer
+struct FRHIComputePipelineStateInitializer
 {
-public:
-
     FRHIComputePipelineStateInitializer()
         : Shader(nullptr)
     { }
@@ -1068,7 +1052,6 @@ public:
 class FRHIComputePipelineState : public FRHIPipelineState
 {
 protected:
-
     FRHIComputePipelineState()  = default;
     ~FRHIComputePipelineState() = default;
 };
@@ -1086,10 +1069,8 @@ enum class ERayTracingHitGroupType : uint8
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayTracingHitGroupInitializer
 
-class FRHIRayTracingHitGroupInitializer
+struct FRHIRayTracingHitGroupInitializer
 {
-public:
-
     FRHIRayTracingHitGroupInitializer()
         : Name()
         , Type(ERayTracingHitGroupType::Unknown)
@@ -1123,15 +1104,13 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayTracingPipelineStateInitializer
 
-class FRHIRayTracingPipelineStateInitializer
+struct FRHIRayTracingPipelineStateInitializer
 {
-public:
-
     FRHIRayTracingPipelineStateInitializer()
         : RayGenShaders()
         , CallableShaders()
-	    , MissShaders()
-	    , HitGroups()
+        , MissShaders()
+        , HitGroups()
         , MaxAttributeSizeInBytes(0)
         , MaxPayloadSizeInBytes(0)
         , MaxRecursionDepth(1)
@@ -1147,7 +1126,7 @@ public:
         uint32 InMaxRecursionDepth)
         : RayGenShaders(InRayGenShaders)
         , CallableShaders(InCallableShaders)
-     	, MissShaders(InMissShaders)
+        , MissShaders(InMissShaders)
         , HitGroups(InHitGroups)
         , MaxAttributeSizeInBytes(InMaxAttributeSizeInBytes)
         , MaxPayloadSizeInBytes(InMaxPayloadSizeInBytes)
@@ -1186,7 +1165,6 @@ public:
 class FRHIRayTracingPipelineState : public FRHIPipelineState
 {
 protected:
-
     FRHIRayTracingPipelineState()  = default;
     ~FRHIRayTracingPipelineState() = default;
 };

@@ -86,7 +86,7 @@ struct FWindowShape
         , Position({ x, y })
     { }
 
-    uint32 Width = 0;
+    uint32 Width  = 0;
     uint32 Height = 0;
     struct
     {
@@ -98,15 +98,14 @@ struct FWindowShape
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericWindow
 
-class FGenericWindow : public FRefCounted
+class FGenericWindow 
+    : public FRefCounted
 {
 protected:
-
     FGenericWindow()  = default;
     ~FGenericWindow() = default;
 
 public:
-
     virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle Style) { return true; }
 
     virtual void Show(bool bMaximized) { }

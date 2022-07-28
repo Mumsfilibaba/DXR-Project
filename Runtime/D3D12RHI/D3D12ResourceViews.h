@@ -16,7 +16,8 @@ typedef TSharedRef<class FD3D12DepthStencilView>    FD3D12DepthStencilViewRef;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12View
 
-class FD3D12View : public FD3D12DeviceChild
+class FD3D12View 
+    : public FD3D12DeviceChild
 {
 public:
     FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);
@@ -41,7 +42,8 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12ConstantBufferView
 
-class FD3D12ConstantBufferView : public FD3D12View
+class FD3D12ConstantBufferView 
+    : public FD3D12View
 {
 public:
     FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);
@@ -58,7 +60,10 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12ShaderResourceView
 
-class FD3D12ShaderResourceView : public FRHIShaderResourceView, public FD3D12View, public FD3D12RefCounted
+class FD3D12ShaderResourceView 
+    : public FRHIShaderResourceView
+    , public FD3D12View
+    , public FD3D12RefCounted
 {
 public:
     FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource);
@@ -85,7 +90,10 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12UnorderedAccessView
 
-class FD3D12UnorderedAccessView : public FRHIUnorderedAccessView, public FD3D12View, public FD3D12RefCounted
+class FD3D12UnorderedAccessView 
+    : public FRHIUnorderedAccessView
+    , public FD3D12View
+    , public FD3D12RefCounted
 {
 public:
     FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource);
@@ -114,7 +122,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RenderTargetView
 
-class FD3D12RenderTargetView : public FD3D12View, public FD3D12RefCounted
+class FD3D12RenderTargetView 
+    : public FD3D12View
+    , public FD3D12RefCounted
 {
 public:
     FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);
@@ -131,7 +141,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12DepthStencilView
 
-class FD3D12DepthStencilView : public FD3D12View, public FD3D12RefCounted
+class FD3D12DepthStencilView 
+    : public FD3D12View
+    , public FD3D12RefCounted
 {
 public:
     FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);

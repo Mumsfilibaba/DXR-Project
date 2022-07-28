@@ -10,10 +10,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FConsoleVariable
 
-class FConsoleVariable : public IConsoleVariable
+class FConsoleVariable 
+    : public IConsoleVariable
 {
 public:
-
     FConsoleVariable()
         : IConsoleVariable()
         , ChangedDelegate()
@@ -44,7 +44,8 @@ protected:
 // TConsoleVariable - Templated console-variable for storing a specific type of variable
 
 template<typename T>
-class TConsoleVariable : public FConsoleVariable
+class TConsoleVariable 
+    : public FConsoleVariable
 {
 public:
 	

@@ -4,7 +4,8 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FSpotLight
 
-class ENGINE_API FSpotLight : public FLight
+class ENGINE_API FSpotLight 
+    : public FLight
 {
     CORE_OBJECT(FSpotLight, FLight);
 

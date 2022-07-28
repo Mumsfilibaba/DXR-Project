@@ -8,7 +8,9 @@
 #include "Core/Logging/Log.h"
 #include "Core/Containers/ArrayView.h"
 
-#define DECLARE_RHICOMMAND(RHICommandName) struct RHICommandName final : public TRHICommand<RHICommandName>
+#define DECLARE_RHICOMMAND(RHICommandName) \
+struct RHICommandName final                \
+    : public TRHICommand<RHICommandName>
 
 class FRHICommandList;
 
@@ -28,7 +30,8 @@ struct FRHICommand
 // TRHICommand
 
 template<typename CommandType>
-struct TRHICommand : public FRHICommand
+struct TRHICommand 
+    : public FRHICommand
 {
     TRHICommand()  = default;
     ~TRHICommand() = default;

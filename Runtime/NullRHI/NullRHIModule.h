@@ -12,13 +12,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIModule
 
-class FNullRHIModule final : public FRHIModule
+struct FNullRHIModule final 
+    : public FRHIModule
 {
-public:
-
     FNullRHIModule()  = default;
     ~FNullRHIModule() = default;
 
     virtual class FRHICoreInterface*  CreateInterface() override final;
-    virtual class IRHIShaderCompiler* CreateCompiler() override final;
+    virtual class IRHIShaderCompiler* CreateCompiler()  override final;
 };

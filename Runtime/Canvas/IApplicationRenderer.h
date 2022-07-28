@@ -8,10 +8,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IApplicationRenderer
 
-class IApplicationRenderer : public FRefCounted
+struct IApplicationRenderer 
+    : public FRefCounted
 {
-public:
-
     virtual ~IApplicationRenderer() = default;
 
     /**
@@ -40,10 +39,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IApplicationRendererModule
 
-class IApplicationRendererModule : public FDefaultModule
+struct IApplicationRendererModule 
+    : public FDefaultModule
 {
-public:
-
     /**
      * @brief: Creates a interface renderer
      * 

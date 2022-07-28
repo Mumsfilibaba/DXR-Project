@@ -14,7 +14,6 @@
 class ENGINE_API FActorTransform
 {
 public:
-
     FActorTransform();
     ~FActorTransform() = default;
 
@@ -66,7 +65,6 @@ public:
     }
 
 private:
-
     void CalculateMatrix();
 
     FMatrix4 Matrix;
@@ -81,12 +79,12 @@ class FComponent;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FActor
 
-class ENGINE_API FActor : public FCoreObject
+class ENGINE_API FActor 
+    : public FCoreObject
 {
     CORE_OBJECT(FActor, FCoreObject);
 
 public:
-
     FActor(class FScene* InSceneOwner);
     ~FActor();
 

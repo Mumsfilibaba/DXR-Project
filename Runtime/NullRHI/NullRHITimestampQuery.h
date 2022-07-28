@@ -12,7 +12,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHITimestampQuery
 
-struct FNullRHITimestampQuery : public FRHITimestampQuery
+struct FNullRHITimestampQuery 
+    : public FRHITimestampQuery
 {
     FNullRHITimestampQuery()  = default;
     ~FNullRHITimestampQuery() = default;

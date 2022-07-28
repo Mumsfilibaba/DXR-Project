@@ -51,10 +51,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericInterlocked
 
-class FGenericInterlocked
+struct FGenericInterlocked
 {
-public:
-
     /**
      * @brief: Adds two integers atomically and return original value
      * 

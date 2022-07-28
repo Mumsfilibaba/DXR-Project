@@ -137,7 +137,7 @@ private:
      /** @brief: Sample for the GPU FrameTime */
     FGPUProfileSample FrameTime;
 
-     /** @brief: Lockable table for GPU- samples */
+     /** @brief: Table for GPU- samples */
     GPUProfileSamplesTable Samples;
     FSpinLock              SamplesLock;
 
@@ -151,7 +151,6 @@ private:
 struct FGPUScopedTrace
 {
 public:
-
     FORCEINLINE FGPUScopedTrace(FRHICommandList& InCmdList, const char* InName)
         : CmdList(InCmdList)
         , Name(InName)

@@ -11,7 +11,6 @@ template<typename T>
 class TAtomicInt
 {
 public:
-
     typedef T Type;
 
     static_assert(TIsSigned<T>::Value, "AtomicInt only supports signed types");

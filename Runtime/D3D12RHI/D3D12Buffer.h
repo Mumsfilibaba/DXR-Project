@@ -6,12 +6,22 @@
 #include "RHI/RHIResources.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedef
+
+typedef TSharedRef<class FD3D12Buffer>         FD3D12BufferRef;
+typedef TSharedRef<class FD3D12VertexBuffer>   FD3D12VertexBufferRef;
+typedef TSharedRef<class FD3D12IndexBuffer>    FD3D12IndexBufferRef;
+typedef TSharedRef<class FD3D12GenericBuffer>  FD3D12GenericBufferRef;
+typedef TSharedRef<class FD3D12ConstantBuffer> FD3D12ConstantBufferRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Buffer
 
-class FD3D12Buffer : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12Buffer 
+    : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
 public:
-
     FD3D12Buffer(FD3D12Device* InDevice)
         : FD3D12DeviceChild(InDevice)
         , Resource(nullptr)
@@ -20,7 +30,6 @@ public:
     virtual void SetResource(FD3D12Resource* InResource) { Resource = InResource; }
 
     uint64          GetSizeInBytes()   const { return Resource ? static_cast<uint64>(Resource->GetDesc().Width) : 0u; }
-
     FD3D12Resource* GetD3D12Resource() const { return Resource.Get(); }
 
 protected:
@@ -30,10 +39,11 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12VertexBuffer
 
-class FD3D12VertexBuffer : public FRHIVertexBuffer, public FD3D12Buffer
+class FD3D12VertexBuffer 
+    : public FRHIVertexBuffer
+    , public FD3D12Buffer
 {
 public:
-
     FD3D12VertexBuffer(FD3D12Device* InDevice, const FRHIVertexBufferInitializer& Initializer)
         : FRHIVertexBuffer(Initializer)
         , FD3D12Buffer(InDevice)
@@ -92,10 +102,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12IndexBuffer
 
-class FD3D12IndexBuffer : public FRHIIndexBuffer, public FD3D12Buffer
+class FD3D12IndexBuffer 
+    : public FRHIIndexBuffer
+    , public FD3D12Buffer
 {
 public:
-
     FD3D12IndexBuffer(FD3D12Device* InDevice, const FRHIIndexBufferInitializer& Initializer)
         : FRHIIndexBuffer(Initializer)
         , FD3D12Buffer(InDevice)
@@ -159,10 +170,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12ConstantBuffer
 
-class FD3D12ConstantBuffer : public FRHIConstantBuffer, public FD3D12Buffer
+class FD3D12ConstantBuffer 
+    : public FRHIConstantBuffer
+    , public FD3D12Buffer
 {
 public:
-
     FD3D12ConstantBuffer(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap, const FRHIConstantBufferInitializer& Initializer)
         : FRHIConstantBuffer(Initializer)
         , FD3D12Buffer(InDevice)
@@ -235,10 +247,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12GenericBuffer
 
-class FD3D12GenericBuffer : public FRHIGenericBuffer, public FD3D12Buffer
+class FD3D12GenericBuffer 
+    : public FRHIGenericBuffer
+    , public FD3D12Buffer
 {
 public:
-    
     FD3D12GenericBuffer(FD3D12Device* InDevice, const FRHIGenericBufferInitializer& Initializer)
         : FRHIGenericBuffer(Initializer)
         , FD3D12Buffer(InDevice)

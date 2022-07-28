@@ -342,14 +342,15 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
     return true;
 }
 
-bool FD3D12RayTracingScene::BuildBindingTable( FD3D12CommandContext& CmdContext
-                                             , FD3D12RayTracingPipelineState* PipelineState
-                                             , FD3D12OnlineDescriptorHeap* ResourceHeap
-                                             , FD3D12OnlineDescriptorHeap* SamplerHeap
-                                             , const FRayTracingShaderResources* RayGenLocalResources
-                                             , const FRayTracingShaderResources* MissLocalResources
-                                             , const FRayTracingShaderResources* HitGroupResources
-                                             , uint32 NumHitGroupResources)
+bool FD3D12RayTracingScene::BuildBindingTable(
+    FD3D12CommandContext& CmdContext,
+    FD3D12RayTracingPipelineState* PipelineState,
+    FD3D12OnlineDescriptorHeap* ResourceHeap,
+    FD3D12OnlineDescriptorHeap* SamplerHeap,
+    const FRayTracingShaderResources* RayGenLocalResources,
+    const FRayTracingShaderResources* MissLocalResources,
+    const FRayTracingShaderResources* HitGroupResources,
+    uint32 NumHitGroupResources)
 {
     Check(ResourceHeap         != nullptr);
     Check(SamplerHeap          != nullptr);
@@ -357,22 +358,24 @@ bool FD3D12RayTracingScene::BuildBindingTable( FD3D12CommandContext& CmdContext
     Check(RayGenLocalResources != nullptr);
 
     FD3D12ShaderBindingTableEntry RayGenEntry;
-    ShaderBindingTableBuilder.PopulateEntry( PipelineState
-                                           , PipelineState->GetRayGenLocalRootSignature()
-                                           , ResourceHeap
-                                           , SamplerHeap
-                                           , RayGenEntry
-                                           , *RayGenLocalResources);
+    ShaderBindingTableBuilder.PopulateEntry(
+        PipelineState,
+        PipelineState->GetRayGenLocalRootSignature(),
+        ResourceHeap,
+        SamplerHeap,
+        RayGenEntry,
+        *RayGenLocalResources);
 
     Check(MissLocalResources != nullptr);
 
     FD3D12ShaderBindingTableEntry MissEntry;
-    ShaderBindingTableBuilder.PopulateEntry( PipelineState
-                                           , PipelineState->GetMissLocalRootSignature()
-                                           , ResourceHeap
-                                           , SamplerHeap
-                                           , MissEntry
-                                           , *MissLocalResources);
+    ShaderBindingTableBuilder.PopulateEntry(
+        PipelineState,
+        PipelineState->GetMissLocalRootSignature(),
+        ResourceHeap,
+        SamplerHeap,
+        MissEntry,
+        *MissLocalResources);
 
     Check(HitGroupResources != nullptr);
     Check(NumHitGroupResources <= D3D12_MAX_HIT_GROUPS);
@@ -380,12 +383,13 @@ bool FD3D12RayTracingScene::BuildBindingTable( FD3D12CommandContext& CmdContext
     FD3D12ShaderBindingTableEntry HitGroupEntries[D3D12_MAX_HIT_GROUPS];
     for (uint32 i = 0; i < NumHitGroupResources; i++)
     {
-        ShaderBindingTableBuilder.PopulateEntry( PipelineState
-                                               , PipelineState->GetHitLocalRootSignature()
-                                               , ResourceHeap
-                                               , SamplerHeap
-                                               , HitGroupEntries[i]
-                                               , HitGroupResources[i]);
+        ShaderBindingTableBuilder.PopulateEntry(
+            PipelineState,
+            PipelineState->GetHitLocalRootSignature(),
+            ResourceHeap,
+            SamplerHeap,
+            HitGroupEntries[i],
+            HitGroupResources[i]);
     }
 
     ShaderBindingTableBuilder.CopyDescriptors();
@@ -482,12 +486,13 @@ FD3D12ShaderBindingTableBuilder::FD3D12ShaderBindingTableBuilder(FD3D12Device* I
     Reset();
 }
 
-void FD3D12ShaderBindingTableBuilder::PopulateEntry( FD3D12RayTracingPipelineState* PipelineState
-                                                   , FD3D12RootSignature* RootSignature
-                                                   , FD3D12OnlineDescriptorHeap* ResourceHeap
-                                                   , FD3D12OnlineDescriptorHeap* SamplerHeap
-                                                   , FD3D12ShaderBindingTableEntry& OutShaderBindingEntry
-                                                   , const FRayTracingShaderResources& Resources)
+void FD3D12ShaderBindingTableBuilder::PopulateEntry(
+    FD3D12RayTracingPipelineState* PipelineState,
+    FD3D12RootSignature* RootSignature,
+    FD3D12OnlineDescriptorHeap* ResourceHeap,
+    FD3D12OnlineDescriptorHeap* SamplerHeap,
+    FD3D12ShaderBindingTableEntry& OutShaderBindingEntry,
+    const FRayTracingShaderResources& Resources)
 {
     Check(PipelineState != nullptr);
     Check(RootSignature != nullptr);
@@ -572,21 +577,23 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry( FD3D12RayTracingPipelineSta
 
 void FD3D12ShaderBindingTableBuilder::CopyDescriptors()
 {
-    GetDevice()->GetD3D12Device()->CopyDescriptors( GPUResourceIndex
-                                                  , GPUResourceHandles
-                                                  , GPUResourceHandleSizes
-                                                  , CPUResourceIndex
-                                                  , ResourceHandles
-                                                  , CPUHandleSizes
-                                                  , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    GetDevice()->GetD3D12Device()->CopyDescriptors(
+        GPUResourceIndex,
+        GPUResourceHandles,
+        GPUResourceHandleSizes,
+        CPUResourceIndex,
+        ResourceHandles,
+        CPUHandleSizes,
+        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    GetDevice()->GetD3D12Device()->CopyDescriptors( GPUSamplerIndex
-                                                  , GPUSamplerHandles
-                                                  , GPUSamplerHandleSizes
-                                                  , CPUSamplerIndex
-                                                  , SamplerHandles
-                                                  , CPUHandleSizes
-                                                  , D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+    GetDevice()->GetD3D12Device()->CopyDescriptors(
+        GPUSamplerIndex,
+        GPUSamplerHandles,
+        GPUSamplerHandleSizes,
+        CPUSamplerIndex,
+        SamplerHandles,
+        CPUHandleSizes,
+        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 }
 
 void FD3D12ShaderBindingTableBuilder::Reset()

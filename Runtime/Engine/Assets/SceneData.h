@@ -15,7 +15,6 @@
 
 struct FMeshData
 {
-    // C++ Being retarded?
     FMeshData() = default;
 
     FMeshData(FMeshData&&) = default;
@@ -92,7 +91,7 @@ struct FImage2D
     TUniquePtr<uint8[]> Image;
 
      /** @brief: Size of the image */
-    uint16 Width = 0;
+    uint16 Width  = 0;
     uint16 Height = 0;
 
      /** @brief: The format that the image was loaded as */

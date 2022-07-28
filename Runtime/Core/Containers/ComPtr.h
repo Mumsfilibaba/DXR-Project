@@ -10,7 +10,6 @@ template<typename T>
 class TComPtr
 {
 public:
-
     using ElementType = T;
 
     template<typename OtherType>

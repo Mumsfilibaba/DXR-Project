@@ -7,15 +7,14 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FCVarChangedDelegate - Multi-cast delegate to be called when the variable changes
 
-DECLARE_MULTICAST_DELEGATE(FCVarChangedDelegate, class IConsoleVariable*);
+DECLARE_MULTICAST_DELEGATE(FCVarChangedDelegate, struct IConsoleVariable*);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IConsoleVariable - Console-variable Interface
 
-class IConsoleVariable : public IConsoleObject
+struct IConsoleVariable 
+    : public IConsoleObject
 {
-public:
-
     /**
      * @brief: Set the variable with an int
      * 

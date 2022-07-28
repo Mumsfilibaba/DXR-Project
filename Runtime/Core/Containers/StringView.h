@@ -15,12 +15,11 @@ template<typename CharType>
 class TStringView
 {
 public:
-
-    static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
-
     using ElementType = CharType;
-    using SizeType = int32;
+    using SizeType    = int32;
     using StringUtils = TCString<CharType>;
+    
+    static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
 
     enum
     {
@@ -1172,7 +1171,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Predefined types
 
-using FStringView  = TStringView<char>;
+using FStringView   = TStringView<char>;
 using FFWStringView = TStringView<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

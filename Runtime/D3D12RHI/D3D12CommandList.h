@@ -11,10 +11,10 @@ class FD3D12ComputePipelineState;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CommandList
 
-class FD3D12CommandList : public FD3D12DeviceChild
+class FD3D12CommandList 
+    : public FD3D12DeviceChild
 {
 public:
-
     FORCEINLINE FD3D12CommandList(FD3D12Device* InDevice)
         : FD3D12DeviceChild(InDevice)
         , CmdList(nullptr)
@@ -257,10 +257,11 @@ public:
         CmdList->OMSetBlendFactor(BlendFactor);
     }
 
-    FORCEINLINE void OMSetRenderTargets( const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors
-                                       , uint32 NumRenderTargetDescriptors
-                                       , bool bRTsSingleHandleToDescriptorRange
-                                       , const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor)
+    FORCEINLINE void OMSetRenderTargets(
+        const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors,
+        uint32 NumRenderTargetDescriptors,
+        bool bRTsSingleHandleToDescriptorRange,
+        const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor)
     {
         CmdList->OMSetRenderTargets(NumRenderTargetDescriptors, RenderTargetDescriptors, bRTsSingleHandleToDescriptorRange, DepthStencilDescriptor);
     }

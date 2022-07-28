@@ -5,10 +5,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsCriticalSection
 
-class FWindowsCriticalSection final : public FGenericCriticalSection
+class FWindowsCriticalSection final 
+    : public FGenericCriticalSection
 {
 public:
-
     typedef CRITICAL_SECTION* PlatformHandle;
 
     FORCEINLINE FWindowsCriticalSection() noexcept

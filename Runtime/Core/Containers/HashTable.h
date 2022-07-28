@@ -27,7 +27,6 @@ template<typename ElementType, typename KeyType, typename HasherType = THash<Key
 class THashTable
 {
 public:
-
     ElementType* Find(const KeyType& Key)
     {
         return nullptr;
@@ -46,7 +45,6 @@ public:
 
         }
     }
-
 
 private:
     TArray<ElementType> Elements;

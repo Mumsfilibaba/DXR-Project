@@ -549,10 +549,8 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FTextureDepthStencilValue
 
-class FTextureDepthStencilValue
+struct FTextureDepthStencilValue
 {
-public:
-
     /**
      * @brief: Default Constructor
      */
@@ -612,14 +610,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FTextureClearValue
 
-class FTextureClearValue
+struct FTextureClearValue
 {
-public:
-
     enum class EType : uint8
     {
-        Color = 1,
-        DepthStencil = 2
+        Color        = 1,
+        DepthStencil = 2,
     };
 
     /**

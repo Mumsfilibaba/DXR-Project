@@ -14,10 +14,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIRayTracingGeometry
 
-class FNullRHIRayTracingGeometry : public FRHIRayTracingGeometry
+struct FNullRHIRayTracingGeometry 
+    : public FRHIRayTracingGeometry
 {
-public:
-
     explicit FNullRHIRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
         : FRHIRayTracingGeometry(Initializer)
     { }
@@ -34,10 +33,10 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIRayTracingScene
 
-class FNullRHIRayTracingScene : public FRHIRayTracingScene
+class FNullRHIRayTracingScene 
+    : public FRHIRayTracingScene
 {
 public:
-    
     explicit FNullRHIRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)
         : FRHIRayTracingScene(Initializer)
         , View(dbg_new FNullRHIShaderResourceView(this))

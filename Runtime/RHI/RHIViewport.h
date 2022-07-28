@@ -18,10 +18,8 @@ typedef TSharedRef<class FRHIViewport> FRHIViewportRef;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIViewportInitializer
 
-class FRHIViewportInitializer
+struct FRHIViewportInitializer
 {
-public:
-
     FRHIViewportInitializer()
         : WindowHandle(nullptr)
         , ColorFormat(EFormat::Unknown)
@@ -69,10 +67,10 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIViewport
 
-class FRHIViewport : public FRHIResource
+class FRHIViewport 
+    : public FRHIResource
 {
 protected:
-    
     explicit FRHIViewport(const FRHIViewportInitializer& Initializer)
         : FRHIResource()
         , Format(Initializer.ColorFormat)
@@ -83,7 +81,6 @@ protected:
     ~FRHIViewport() = default;
 
 public:
-
     virtual bool Resize(uint32 InWidth, uint32 InHeight) { return true; }
 
     virtual FRHITexture2D* GetBackBuffer() const { return nullptr; };

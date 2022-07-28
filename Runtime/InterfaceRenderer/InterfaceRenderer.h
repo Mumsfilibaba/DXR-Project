@@ -12,10 +12,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FInterfaceRenderer
 
-class FInterfaceRenderer final : public IApplicationRenderer
+class FInterfaceRenderer final
+    : public IApplicationRenderer
 {
 public:
-
     static FInterfaceRenderer* Make();
 
      /** @brief: Initialize the context */
@@ -31,7 +31,6 @@ public:
     virtual void Render(class FRHICommandList& Commandlist) override final;
 
 private:
-
     FInterfaceRenderer() = default;
     ~FInterfaceRenderer() = default;
 

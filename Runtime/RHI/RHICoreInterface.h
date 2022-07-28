@@ -131,7 +131,6 @@ struct FRayTracingSupport
 class FRHICoreInterface
 {
 protected:
-
     FRHICoreInterface(ERHIInstanceType InRHIType)
         : RHIType(InRHIType)
     { }

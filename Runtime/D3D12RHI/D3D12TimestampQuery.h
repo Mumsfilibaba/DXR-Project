@@ -8,7 +8,9 @@ typedef TSharedRef<class FD3D12TimestampQuery> FD3D12TimestampQueryRef;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12TimestampQuery
 
-class FD3D12TimestampQuery : public FRHITimestampQuery, public FD3D12DeviceChild
+class FD3D12TimestampQuery 
+    : public FRHITimestampQuery
+    , public FD3D12DeviceChild
 {
 public:
 
@@ -16,8 +18,6 @@ public:
     ~FD3D12TimestampQuery() = default;
 
     static FD3D12TimestampQuery* Create(FD3D12Device* InDevice);
-    
-public:
     
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHITimestampQuery Interface
@@ -28,8 +28,6 @@ public:
     {
         return static_cast<uint64>(Frequency);
     }
-
-public:
 
     void BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
     void EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);

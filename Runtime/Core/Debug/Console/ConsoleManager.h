@@ -34,7 +34,6 @@ enum class EConsoleSeverity
 class CORE_API FConsoleManager
 {
 private:
-
     friend class TOptional<FConsoleManager>;
 
     FConsoleManager()  = default;
@@ -163,7 +162,8 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FAutoConsoleCommand
 
-class FAutoConsoleCommand : public FConsoleCommand
+class FAutoConsoleCommand
+    : public FConsoleCommand
 {
 public:
     FAutoConsoleCommand(const FString& InName)
@@ -193,7 +193,8 @@ private:
 // TAutoConsoleVariable
 
 template<typename T>
-class TAutoConsoleVariable : public TConsoleVariable<T>
+class TAutoConsoleVariable 
+    : public TConsoleVariable<T>
 {
 public:
     TAutoConsoleVariable(const FString& InName, T StartValue)

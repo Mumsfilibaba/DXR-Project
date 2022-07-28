@@ -8,10 +8,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIResource
 
-class RHI_API FRHIResource : public IRefCounted
+class RHI_API FRHIResource 
+    : public IRefCounted
 {
 protected:
-
     FRHIResource()
         : StrongReferences(1)
     { }
@@ -19,7 +19,6 @@ protected:
     virtual ~FRHIResource() = default;
 
 public:
-
     virtual int32 AddRef() override
     {
         Check(StrongReferences.Load() > 0);

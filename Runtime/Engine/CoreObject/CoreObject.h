@@ -36,7 +36,6 @@ private:
 class ENGINE_API FCoreObject
 {
 public:
-
     virtual ~FCoreObject() = default;
 
     FORCEINLINE const FClassType* GetClass() const
@@ -52,7 +51,6 @@ public:
     }
 
 protected:
-
     FCoreObject() = default;
 
     FORCEINLINE void SetClass(const FClassType* InClass)
@@ -61,7 +59,6 @@ protected:
     }
 
 private:
-
      /** @brief: Object representing the class */
     const FClassType* Class = nullptr;
 };

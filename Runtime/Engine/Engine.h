@@ -18,7 +18,6 @@
 class ENGINE_API FEngine
 {
 protected:
-
     FEngine();
     virtual ~FEngine() = default;
 

@@ -94,10 +94,8 @@ inline const char* ToString(EAttachmentStoreAction StoreAction)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITextureSRVInitializer
 
-class FRHITextureSRVInitializer
+struct FRHITextureSRVInitializer
 {
-public:
-
     FRHITextureSRVInitializer()
         : Texture(nullptr)
         , MinLODClamp(0.0f)
@@ -169,15 +167,13 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIBufferSRVInitializer
 
-class FRHIBufferSRVInitializer
+struct FRHIBufferSRVInitializer
 {
-public:
-
     FRHIBufferSRVInitializer()
         : Buffer(nullptr)
-	    , Format(EBufferSRVFormat::None)
-	    , FirstElement(0)
-	    , NumElements(0)
+        , Format(EBufferSRVFormat::None)
+        , FirstElement(0)
+        , NumElements(0)
     { }
 
     FRHIBufferSRVInitializer(
@@ -186,9 +182,9 @@ public:
         uint32 InNumElements,
         EBufferSRVFormat InFormat = EBufferSRVFormat::None)
         : Buffer(InBuffer)
-	    , Format(InFormat)
-	    , FirstElement(InFirstElement)
-	    , NumElements(InNumElements)
+        , Format(InFormat)
+        , FirstElement(InFirstElement)
+        , NumElements(InNumElements)
     { }
 
     uint64 GetHash() const
@@ -224,10 +220,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITextureUAVInitializer
 
-class FRHITextureUAVInitializer
+struct FRHITextureUAVInitializer
 {
-public:
-
     FRHITextureUAVInitializer()
         : Texture(nullptr)
         , Format(EFormat::Unknown)
@@ -294,14 +288,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIBufferUAVInitializer
 
-class FRHIBufferUAVInitializer
+struct FRHIBufferUAVInitializer
 {
-public:
-
     FRHIBufferUAVInitializer()
         : Buffer(nullptr)
-		, Format(EBufferUAVFormat::None)
-		, FirstElement(0)
+        , Format(EBufferUAVFormat::None)
+        , FirstElement(0)
         , NumElements(0)
     { }
 
@@ -311,8 +303,8 @@ public:
         uint32 InNumElements,
         EBufferUAVFormat InFormat = EBufferUAVFormat::None)
         : Buffer(InBuffer)
-	    , Format(InFormat)
-	    , FirstElement(InFirstElement)
+        , Format(InFormat)
+        , FirstElement(InFirstElement)
         , NumElements(InNumElements)
     { }
 
@@ -349,10 +341,10 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIResourceView
 
-class FRHIResourceView : public FRHIResource
+class FRHIResourceView 
+    : public FRHIResource
 {
 protected:
-
     explicit FRHIResourceView(FRHIResource* InResource)
         : FRHIResource()
         , Resource(InResource)
@@ -361,7 +353,6 @@ protected:
     ~FRHIResourceView() = default;
 
 public:
-
     FRHIResource* GetResource() const { return Resource; }
 
 protected:
@@ -371,10 +362,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIShaderResourceView
 
-class FRHIShaderResourceView : public FRHIResourceView
+class FRHIShaderResourceView 
+    : public FRHIResourceView
 {
 protected:
-
     explicit FRHIShaderResourceView(FRHIResource* InResource)
         : FRHIResourceView(InResource)
     { }
@@ -389,10 +380,10 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIUnorderedAccessView
 
-class FRHIUnorderedAccessView : public FRHIResourceView
+class FRHIUnorderedAccessView 
+    : public FRHIResourceView
 {
 protected:
-
     explicit FRHIUnorderedAccessView(FRHIResource* InResource)
         : FRHIResourceView(InResource)
     { }
@@ -400,17 +391,14 @@ protected:
     ~FRHIUnorderedAccessView() = default;
 
 public:
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRenderTargetView
 
-class FRHIRenderTargetView
+struct FRHIRenderTargetView
 {
-public:
-
     FRHIRenderTargetView()
         : Texture(nullptr)
         , Format(EFormat::Unknown)
@@ -496,10 +484,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIDepthStencilView
 
-class FRHIDepthStencilView
+struct FRHIDepthStencilView
 {
-public:
-
     FRHIDepthStencilView()
         : Texture(nullptr)
         , Format(EFormat::Unknown)

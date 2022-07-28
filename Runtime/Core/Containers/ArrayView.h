@@ -12,7 +12,6 @@ template<typename T>
 class TArrayView
 {
 public:
-
     using ElementType = T;
     using SizeType    = int32;
 

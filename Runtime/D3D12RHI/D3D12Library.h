@@ -17,12 +17,10 @@ typedef HRESULT(WINAPI* PFN_SetMarkerOnCommandList)(ID3D12GraphicsCommandList* c
 class FD3D12Library
 {
 public:
-
     static bool Initialize(bool bEnablePIX);
     static void Release();
 
 public:
-
     static PFN_CREATE_DXGI_FACTORY_2                              CreateDXGIFactory2;
     static PFN_DXGI_GET_DEBUG_INTERFACE_1                         DXGIGetDebugInterface1;
 

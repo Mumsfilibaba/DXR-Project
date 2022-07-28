@@ -12,10 +12,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsApplicationMisc
 
-class COREAPPLICATION_API FWindowsApplicationMisc final : public FGenericApplicationMisc
+struct COREAPPLICATION_API FWindowsApplicationMisc final 
+    : public FGenericApplicationMisc
 {
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericApplicationMisc Interface
 

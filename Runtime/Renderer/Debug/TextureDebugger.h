@@ -8,12 +8,12 @@
 
 #include <imgui.h>
 
-class FTextureDebugWindow : public FWindow
+class FTextureDebugWindow 
+    : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
-
     static TSharedRef<FTextureDebugWindow> Make();
 
      /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
@@ -31,8 +31,7 @@ public:
     }
 
 private:
-
-    FTextureDebugWindow() = default;
+    FTextureDebugWindow()  = default;
     ~FTextureDebugWindow() = default;
 
      /** @brief: Debug images */

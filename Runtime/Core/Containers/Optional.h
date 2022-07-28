@@ -13,7 +13,6 @@ template<typename T>
 class TOptional
 {
 public:
-
     using ElementType = T;
 
     template<typename OtherType>

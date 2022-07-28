@@ -8,10 +8,11 @@ struct FDrawableImage
 {
     FDrawableImage() = default;
 
-    FDrawableImage( const TSharedRef<FRHIShaderResourceView>& InImageView
-                  , const TSharedRef<FRHITexture>& InImage
-                  , EResourceAccess InBefore
-                  , EResourceAccess InAfter)
+    FDrawableImage(
+        const TSharedRef<FRHIShaderResourceView>& InImageView,
+        const TSharedRef<FRHITexture>& InImage,
+        EResourceAccess InBefore,
+        EResourceAccess InAfter)
         : ImageView(InImageView)
         , Image(InImage)
         , BeforeState(InBefore)

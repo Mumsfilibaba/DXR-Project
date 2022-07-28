@@ -400,8 +400,6 @@ FD3D12Device::~FD3D12Device()
         }
     }
 
-    SafeDelete(RootSignatureCache);
-
     Device.Reset();
 #if WIN10_BUILD_14393
     Device1.Reset();
@@ -570,8 +568,7 @@ bool FD3D12Device::Initialize()
     }
 
     // Create RootSignature cache
-    RootSignatureCache = dbg_new FD3D12RootSignatureCache(this);
-    if (!RootSignatureCache->Initialize())
+    if (!RootSignatureCache.Initialize())
     {
         return false;
     } 

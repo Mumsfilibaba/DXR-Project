@@ -15,6 +15,8 @@
     #undef GetModuleHandle
 #endif
 
+struct IModule;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Macro for implementing a new engine module based on monolithic or dynamic build
 
@@ -42,12 +44,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IModule
 
-typedef class IModule* (*PFNLoadEngineModule)();
+typedef IModule* (*PFNLoadEngineModule)();
 
-class IModule
+struct IModule
 {
-public:
-
     virtual ~IModule() = default;
 
     /** @return: Returns true if the load is successful */
@@ -60,10 +60,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FDefaultModule
 
-class FDefaultModule : public IModule
+struct FDefaultModule 
+    : public IModule
 {
-public:
-
     /** @return: Returns true if the load is successful */
     virtual bool Load() override { return true; }
 

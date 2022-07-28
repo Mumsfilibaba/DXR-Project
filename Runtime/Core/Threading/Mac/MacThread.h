@@ -6,16 +6,15 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacThread
 
-class FMacThread final : public FGenericThread
+class FMacThread final 
+    : public FGenericThread
 {
 private:
-
     FMacThread(const TFunction<void()>& InFunction);
     FMacThread(const TFunction<void()>& InFunction, const FString& InName);
     ~FMacThread() = default;
 
 public:
-
 	static FMacThread* CreateMacThread(const TFunction<void()>& InFunction) { return new FMacThread(InFunction); }
 	static FMacThread* CreateMacThread(const TFunction<void()>& InFunction, const FString& InName) { return new FMacThread(InFunction, InName); }
 	
@@ -28,11 +27,10 @@ public:
 
     virtual bool Start() override final;
 
-    virtual void SetName(const FString& InName) override final;
-
     virtual void* GetPlatformHandle() override final;
 
     virtual FString GetName() const override final { return Name; }
+    virtual void    SetName(const FString& InName) override final;
 
 private:
 
@@ -41,7 +39,6 @@ private:
     FString    Name;
 
     pthread_t Thread;
-	
 	int32     ThreadExitCode;
 
     bool      bIsRunning;

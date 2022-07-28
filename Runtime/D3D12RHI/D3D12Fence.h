@@ -5,7 +5,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Fence
 
-class FD3D12Fence : public FD3D12DeviceChild
+class FD3D12Fence 
+    : public FD3D12DeviceChild
 {
 public:
     FORCEINLINE FD3D12Fence(FD3D12Device* InDevice)

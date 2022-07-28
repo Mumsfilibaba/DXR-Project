@@ -9,7 +9,8 @@
     /* The type pf delegates that will be executed by the multicast-delegate*/ \
     typedef TDelegate<void(__VA_ARGS__)> DelegateName##Type;                   \
     /* Multicast-delegate type */                                              \
-    class DelegateName : public TMulticastDelegate<__VA_ARGS__>                \
+    class DelegateName                                                         \
+        : public TMulticastDelegate<__VA_ARGS__>                               \
     {                                                                          \
     };
 
@@ -17,7 +18,8 @@
 // TMulticastDelegate
 
 template<typename... ArgTypes>
-class TMulticastDelegate : public FMulticastDelegateBase
+class TMulticastDelegate 
+    : public FMulticastDelegateBase
 {
     using Super = FMulticastDelegateBase;
 

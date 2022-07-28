@@ -10,7 +10,6 @@
 class FConfigValue
 {
 public:
-
     FConfigValue() = default;
     FConfigValue(FConfigValue&& Other) = default;
     FConfigValue(const FConfigValue& Other) = default;
@@ -51,7 +50,6 @@ class CORE_API FConfigSection
     friend class FConfigFile;
 
 public:
-
     FConfigSection(const char* Name);
     ~FConfigSection() = default;
 
@@ -80,7 +78,6 @@ private:
 class CORE_API FConfigFile
 {
 public:
-
     FConfigFile(const char* Filename);
     ~FConfigFile() = default;
 

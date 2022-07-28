@@ -1,5 +1,4 @@
 #pragma once
-#include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
 #include "D3D12Shader.h"
 #include "D3D12RefCounted.h"
@@ -70,15 +69,14 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RootSignature
 
-class FD3D12RootSignature : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12RootSignature 
+    : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
 public:
-
     FD3D12RootSignature(FD3D12Device* InDevice);
     ~FD3D12RootSignature() = default;
     
-public:
-
     static bool Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
     
     bool Initialize(const FD3D12RootSignatureResourceCount& RootSignatureInfo);
@@ -127,17 +125,17 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RootSignatureCache
 
-class FD3D12RootSignatureCache : public FD3D12DeviceChild
+class FD3D12RootSignatureCache
+    : public FD3D12DeviceChild
 {
 public:
     FD3D12RootSignatureCache(FD3D12Device* Device);
     ~FD3D12RootSignatureCache();
 
-    bool Initialize();
-
-    void ReleaseAll();
-
     FD3D12RootSignature* GetOrCreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount);
+    
+    bool Initialize();
+    void ReleaseAll();
 
 private:
     FD3D12RootSignature* CreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount);

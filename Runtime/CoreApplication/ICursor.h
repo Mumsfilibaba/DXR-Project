@@ -23,10 +23,8 @@ class FGenericWindow;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ICursor
 
-class ICursor
+struct ICursor
 {
-public:
-
     virtual ~ICursor() = default;
 
      /**

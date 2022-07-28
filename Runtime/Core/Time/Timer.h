@@ -7,7 +7,6 @@
 class CORE_API FTimer
 {
 public:
-
     FTimer();
     ~FTimer() = default;
 

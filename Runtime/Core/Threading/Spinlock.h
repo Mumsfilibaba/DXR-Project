@@ -14,7 +14,6 @@ class FSpinLock
     };
 
 public:
-
     FSpinLock(const FSpinLock&) = delete;
     FSpinLock& operator=(const FSpinLock&) = delete;
 

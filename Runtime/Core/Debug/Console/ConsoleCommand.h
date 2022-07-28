@@ -6,10 +6,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FConsoleCommand - Executes a single function from the console
 
-class FConsoleCommand : public IConsoleCommand
+class FConsoleCommand 
+    : public IConsoleCommand
 {
 public:
-
     FConsoleCommand()
         : ExecuteDelegate()
     { }

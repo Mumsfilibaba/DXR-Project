@@ -12,10 +12,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericAtomic
 
-class FGenericAtomic
+struct FGenericAtomic
 {
-public:
-
     /**
      * @brief: Reads a value atomically. All memory loads and stores are synced.
      * 

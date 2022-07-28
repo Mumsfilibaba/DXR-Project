@@ -23,10 +23,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHICoreInterface
 
-class FNullRHICoreInterface final : public FRHICoreInterface
+class FNullRHICoreInterface final 
+    : public FRHICoreInterface
 {
 private:
-
     FNullRHICoreInterface()
         : FRHICoreInterface(ERHIInstanceType::Null)
         , CommandContext(FNullRHICommandContext::CreateNullRHIContext())
@@ -38,10 +38,7 @@ private:
     }
 
 public:
-
     static FNullRHICoreInterface* CreateNullRHICoreInterface() { return dbg_new FNullRHICoreInterface(); }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHICoreInterface Interface
@@ -210,7 +207,7 @@ public:
 
     virtual class FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& Initializer) override final
     {
-        return dbg_new CNullRHIGraphicsPipelineState();
+        return dbg_new FNullRHIGraphicsPipelineState();
     }
 
     virtual class FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer) override final

@@ -6,7 +6,8 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FPointLight
 
-class ENGINE_API FPointLight : public FLight
+class ENGINE_API FPointLight 
+    : public FLight
 {
     CORE_OBJECT(FPointLight, FLight);
 

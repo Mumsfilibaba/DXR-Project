@@ -18,17 +18,16 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FApplication
 
-class CANVAS_API FApplication : public FGenericApplicationMessageHandler
+class CANVAS_API FApplication 
+    : public FGenericApplicationMessageHandler
 {
 protected:
-
     friend struct TDefaultDelete<FApplication>;
 
     FApplication(const TSharedPtr<FGenericApplication>& InFPlatformApplication);
     virtual ~FApplication();
 
 public:
-    
     DECLARE_EVENT(FExitEvent, FApplication, int32);
     FExitEvent GetExitEvent() const { return ExitEvent; }
     

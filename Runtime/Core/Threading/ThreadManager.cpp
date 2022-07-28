@@ -17,7 +17,7 @@ FThreadManager::~FThreadManager()
     MainThread = nullptr;
 }
 
-TOptional<FThreadManager>& FThreadManager::GetConsoleManagerInstance()
+TOptional<FThreadManager>& FThreadManager::GetThreadManagerInstance()
 {
     static TOptional<FThreadManager> Instance(InPlace);
     return Instance;
@@ -39,7 +39,7 @@ bool FThreadManager::Initialize()
 
 bool FThreadManager::Release()
 {
-    TOptional<FThreadManager>& ThreadManager = GetConsoleManagerInstance();
+    TOptional<FThreadManager>& ThreadManager = GetThreadManagerInstance();
     for (const auto& Thread : ThreadManager->Threads)
     {
         Thread->WaitForCompletion(kWaitForThreadInfinity);
@@ -60,7 +60,7 @@ bool FThreadManager::IsMainThread()
 
 FThreadManager& FThreadManager::Get()
 {
-    TOptional<FThreadManager>& ThreadManager = GetConsoleManagerInstance();
+    TOptional<FThreadManager>& ThreadManager = GetThreadManagerInstance();
     return ThreadManager.GetValue();
 }
 

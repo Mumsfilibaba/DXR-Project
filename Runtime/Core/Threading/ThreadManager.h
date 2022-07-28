@@ -13,14 +13,12 @@ typedef TSharedRef<FGenericThread> FGenericThreadRef;
 class CORE_API FThreadManager
 {
 private:
-
     friend class TOptional<FThreadManager>;
 
     FThreadManager();
     ~FThreadManager();
 
 public:
-
     static bool Initialize();
     static bool Release();
     static FThreadManager& Get();
@@ -34,8 +32,7 @@ public:
     FGenericThreadRef GetThreadFromHandle(void* ThreadHandle);
 
 private:
-
-    static TOptional<FThreadManager>& GetConsoleManagerInstance();
+    static TOptional<FThreadManager>& GetThreadManagerInstance();
 
     TArray<FGenericThreadRef> Threads;
     void*                     MainThread;

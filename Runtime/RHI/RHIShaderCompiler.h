@@ -61,10 +61,8 @@ struct FShaderDefine
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FShaderCompileInfo
 
-class FShaderCompileInfo
+struct FShaderCompileInfo
 {
-public:
-    
     FShaderCompileInfo()
         : ShaderModel(EShaderModel::Unknown)
         , ShaderStage(EShaderStage::Unknown)
@@ -117,7 +115,6 @@ private:
     ~FRHIShaderCompiler();
 
 public:
-    
     static bool Initialize(const char* AssetFolderPath);
     static void Release();
     

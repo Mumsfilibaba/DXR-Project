@@ -4,7 +4,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CommandAllocator 
 
-class FD3D12CommandAllocator : public FD3D12DeviceChild
+class FD3D12CommandAllocator 
+    : public FD3D12DeviceChild
 {
 public:
 

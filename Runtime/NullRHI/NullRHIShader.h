@@ -33,7 +33,8 @@ typedef TNullRHIShader<class FRHIRayCallableShader>      FNullRHIRayCallableShad
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIComputeShader
 
-struct FNullRHIComputeShaderBase : public FRHIComputeShader
+struct FNullRHIComputeShaderBase 
+    : public FRHIComputeShader
 {
     FNullRHIComputeShaderBase()
         : FRHIComputeShader()
@@ -49,7 +50,8 @@ struct FNullRHIComputeShaderBase : public FRHIComputeShader
 // TNullRHIShader
 
 template<typename BaseShaderType>
-struct TNullRHIShader final : public BaseShaderType
+struct TNullRHIShader final 
+    : public BaseShaderType
 {
     TNullRHIShader()
         : BaseShaderType()

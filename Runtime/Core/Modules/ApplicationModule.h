@@ -7,10 +7,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FApplicationModule
 
-class CORE_API FApplicationModule : public IModule
+class CORE_API FApplicationModule 
+    : public IModule
 {
 public:
-
     FApplicationModule() = default;
     virtual ~FApplicationModule() = default;
 

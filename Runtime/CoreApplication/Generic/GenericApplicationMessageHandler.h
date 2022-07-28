@@ -16,10 +16,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericApplicationMessageHandler
 
-class FGenericApplicationMessageHandler
+struct FGenericApplicationMessageHandler
 {
-public:
-
     virtual ~FGenericApplicationMessageHandler() = default;
 
     virtual void HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState) { }

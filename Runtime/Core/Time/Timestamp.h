@@ -14,7 +14,6 @@
 class FTimestamp
 {
 public:
-
     FORCEINLINE FTimestamp(uint64 InNanoseconds = 0)
         : Nanoseconds(InNanoseconds)
     { }
@@ -94,7 +93,6 @@ public:
     }
 
 public:
-
     FORCEINLINE friend FTimestamp operator+(const FTimestamp& Left, const FTimestamp& Right)
     {
         return FTimestamp(Left.Nanoseconds + Right.Nanoseconds);

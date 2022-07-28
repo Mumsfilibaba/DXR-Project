@@ -13,7 +13,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMemoryStack
 
-class CORE_API FMemoryStack : FNonCopyable
+class CORE_API FMemoryStack
+    : FNonCopyable
 {
     struct FMemoryHeader
     {

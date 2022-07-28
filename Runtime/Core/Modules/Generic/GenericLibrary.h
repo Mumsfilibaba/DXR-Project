@@ -12,10 +12,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericLibrary
 
-class FGenericLibrary
+struct FGenericLibrary
 {
-public:
-
     /**
      * @brief: Load a dynamic library on the platform 
      * 

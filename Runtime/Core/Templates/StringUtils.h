@@ -8,13 +8,13 @@
 #include <cstdarg>
 
 template<typename CharType>
-class TCString;
+struct TCString;
 
 using FCString  = TCString<char>;
 using FWCString = TCString<wchar_t>;
 
 template<typename CharType>
-class TStringParse;
+struct TStringParse;
 
 using FStringParse = TStringParse<char>;
 
@@ -22,10 +22,8 @@ using FStringParse = TStringParse<char>;
 // TCString
 
 template<>
-class TCString<char>
+struct TCString<char>
 {
-public:
-
     using CharType     = char;
     using Pointer      = CharType*;
     using ConstPointer = const Pointer;
@@ -276,12 +274,10 @@ public:
 };
 
 template<>
-class TCString<wchar_t>
+struct TCString<wchar_t>
 {
-public:
-
-    using CharType = wchar_t;
-    using Pointer = CharType*;
+    using CharType     = wchar_t;
+    using Pointer      = CharType*;
     using ConstPointer = const Pointer;
 
     static constexpr CharType Null = L'\0';
@@ -533,10 +529,8 @@ public:
 // TStringParse
 
 template<>
-class TStringParse<char>
+struct TStringParse<char>
 {
-public:
-
     using CharType = char;
 
     template<typename T>

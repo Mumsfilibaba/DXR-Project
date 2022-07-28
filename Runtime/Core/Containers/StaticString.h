@@ -11,13 +11,12 @@ template<typename CharType, int32 CharCount>
 class TStaticString
 {
 public:
+    using ElementType = CharType;
+    using SizeType    = int32;
+    using StringUtils = TCString<CharType>;
 
     static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
     static_assert(CharCount > 0, "The number of chars has to be more than zero");
-
-    using ElementType = CharType;
-    using SizeType = int32;
-    using StringUtils = TCString<CharType>;
 
     enum
     {
@@ -1543,7 +1542,6 @@ public:
     }
 
 public:
-
     friend TStaticString operator+(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         TStaticString NewString = LHS;
@@ -1817,7 +1815,6 @@ public:
     }
 
 private:
-
     FORCEINLINE void CopyFrom(const CharType* InString, SizeType InLength) noexcept
     {
         Check(InLength < Capacity());

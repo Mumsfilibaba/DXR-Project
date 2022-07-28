@@ -15,7 +15,6 @@
 class FPointerReferenceCounter
 {
 public:
-
     using CounterType = FAtomicInt32::Type;
 
     FORCEINLINE FPointerReferenceCounter() noexcept
@@ -62,7 +61,8 @@ private:
 // Helper object for shared ref counter
 
 template<typename T, typename DeleterType = TDefaultDelete<T>>
-class TPointerReferencedStorage : private DeleterType
+class TPointerReferencedStorage 
+    : private DeleterType
 {
     using Super = DeleterType;
 
@@ -276,11 +276,10 @@ template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TSharedPtr
 {
 public:
-
-    using ElementType = typename TRemoveExtent<T>::Type;
+    using ElementType    = typename TRemoveExtent<T>::Type;
     using PointerStorage = TPointerReferencedStorage<ElementType, DeleterType>;
-    using CounterType = typename PointerStorage::CounterType;
-    using SizeType = int32;
+    using CounterType    = typename PointerStorage::CounterType;
+    using SizeType       = int32;
 
     template<typename OtherType, typename OtherDeleterType>
     friend class TWeakPtr;
@@ -763,10 +762,10 @@ template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TWeakPtr
 {
 public:
-    using ElementType = typename TRemoveExtent<T>::Type;
+    using ElementType    = typename TRemoveExtent<T>::Type;
     using PointerStorage = TPointerReferencedStorage<ElementType, DeleterType>;
-    using CounterType = typename PointerStorage::CounterType;
-    using SizeType = int32;
+    using CounterType    = typename PointerStorage::CounterType;
+    using SizeType       = int32;
 
     template<typename OtherType, typename OtherDeleterType>
     friend class TSharedPtr;

@@ -11,7 +11,6 @@
 class ENGINE_API FProjectManager
 {
 public:
-
     static bool Initialize(const char* ProjectName, const char* ProjectPath, const char* AssetPath);
 
     static FORCEINLINE const char* GetProjectName()

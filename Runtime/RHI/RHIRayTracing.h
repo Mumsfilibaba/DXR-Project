@@ -71,10 +71,8 @@ ENUM_CLASS_OPERATORS(ERayTracingInstanceFlags);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayTracingGeometryInstance
 
-class FRHIRayTracingGeometryInstance
+struct FRHIRayTracingGeometryInstance
 {
-public:
-
     FRHIRayTracingGeometryInstance()
         : Geometry(nullptr)
         , InstanceIndex(0)
@@ -129,10 +127,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIAccelerationStructureInitializer
 
-class FRHIAccelerationStructureInitializer
+struct FRHIAccelerationStructureInitializer
 {
-public:
-
     FRHIAccelerationStructureInitializer()
         : Flags(EAccelerationStructureBuildFlags::None)
     { }
@@ -162,10 +158,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayTracingGeometryInitializer
 
-class FRHIRayTracingGeometryInitializer : public FRHIAccelerationStructureInitializer
+struct FRHIRayTracingGeometryInitializer 
+    : public FRHIAccelerationStructureInitializer
 {
-public:
-
     FRHIRayTracingGeometryInitializer()
         : FRHIAccelerationStructureInitializer()
         , VertexBuffer(nullptr)
@@ -200,10 +195,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayTracingSceneInitializer
 
-class FRHIRayTracingSceneInitializer : public FRHIAccelerationStructureInitializer
+struct FRHIRayTracingSceneInitializer 
+    : public FRHIAccelerationStructureInitializer
 {
-public:
-
     FRHIRayTracingSceneInitializer()
         : FRHIAccelerationStructureInitializer()
         , Instances()
@@ -232,10 +226,10 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIAccelerationStructure
 
-class FRHIAccelerationStructure : public FRHIResource
+class FRHIAccelerationStructure 
+    : public FRHIResource
 {
 protected:
-
     explicit FRHIAccelerationStructure(const FRHIAccelerationStructureInitializer& Initializer)
         : FRHIResource()
         , Flags(Initializer.Flags)
@@ -261,10 +255,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayTracingGeometry
 
-class FRHIRayTracingGeometry : public FRHIAccelerationStructure
+class FRHIRayTracingGeometry 
+    : public FRHIAccelerationStructure
 {
 protected: 
-
     explicit FRHIRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
         : FRHIAccelerationStructure(Initializer)
     { }
@@ -280,23 +274,22 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayTracingScene
 
-class FRHIRayTracingScene : public FRHIAccelerationStructure
+class FRHIRayTracingScene 
+    : public FRHIAccelerationStructure
 {
 protected:
-
     explicit FRHIRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)
         : FRHIAccelerationStructure(Initializer)
     { }
 
 public:
-
     virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
     virtual FRHIDescriptorHandle    GetBindlessHandle()     const { return FRHIDescriptorHandle(); }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIAccelerationStructure Interface
 
-    virtual class FRHIRayTracingScene* GetRayTracingScene() override final { return this; }
+    virtual FRHIRayTracingScene* GetRayTracingScene() override final { return this; }
 
 };
 

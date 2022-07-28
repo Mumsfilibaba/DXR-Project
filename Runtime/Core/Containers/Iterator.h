@@ -13,12 +13,12 @@ template<typename ArrayType, typename ElementType>
 class TArrayIterator
 {
 public:
-
     using SizeType = typename ArrayType::SizeType;
 
     TArrayIterator(const TArrayIterator&) = default;
     TArrayIterator(TArrayIterator&&) = default;
     ~TArrayIterator() = default;
+
     TArrayIterator& operator=(const TArrayIterator&) = default;
     TArrayIterator& operator=(TArrayIterator&&) = default;
 
@@ -274,12 +274,12 @@ template<typename ArrayType, typename ElementType>
 class TReverseArrayIterator
 {
 public:
-
     using SizeType = typename ArrayType::SizeType;
 
     TReverseArrayIterator(const TReverseArrayIterator&) = default;
     TReverseArrayIterator(TReverseArrayIterator&&) = default;
     ~TReverseArrayIterator() = default;
+
     TReverseArrayIterator& operator=(const TReverseArrayIterator&) = default;
     TReverseArrayIterator& operator=(TReverseArrayIterator&&) = default;
 
@@ -535,12 +535,12 @@ template<typename NodeType, typename ElementType>
 class TTreeIterator
 {
 public:
-
     using SizeType = int32;
 
     TTreeIterator(const TTreeIterator&) = default;
     TTreeIterator(TTreeIterator&&) = default;
     ~TTreeIterator() = default;
+
     TTreeIterator& operator=(const TTreeIterator&) = default;
     TTreeIterator& operator=(TTreeIterator&&) = default;
 
@@ -641,6 +641,7 @@ public:
     TBitArrayIterator(const TBitArrayIterator&) = default;
     TBitArrayIterator(TBitArrayIterator&&) = default;
     ~TBitArrayIterator() = default;
+
     TBitArrayIterator& operator=(const TBitArrayIterator&) = default;
     TBitArrayIterator& operator=(TBitArrayIterator&&) = default;
 

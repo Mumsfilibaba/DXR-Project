@@ -12,10 +12,11 @@ typedef TSharedRef<class FD3D12Resource> FD3D12ResourceRef;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Resource
 
-class FD3D12Resource : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12Resource 
+    : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
 public:
-
     FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource);
     FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType);
     ~FD3D12Resource() = default;

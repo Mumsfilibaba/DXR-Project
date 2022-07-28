@@ -14,20 +14,17 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHICommandContext
 
-class FNullRHICommandContext final : public IRHICommandContext
+class FNullRHICommandContext final 
+    : public IRHICommandContext
 {
 private:
-
     friend class FNullRHICoreInterface;
 
     FNullRHICommandContext()  = default;
     ~FNullRHICommandContext() = default;
 
 public:
-
     static FNullRHICommandContext* CreateNullRHIContext() { return dbg_new FNullRHICommandContext(); }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // IRHICommandContext Interface
@@ -88,13 +85,14 @@ public:
     virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)       override final { }
     virtual void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final { }
 
-    virtual void SetRayTracingBindings( FRHIRayTracingScene* RayTracingScene
-                                      , FRHIRayTracingPipelineState* PipelineState
-                                      , const FRayTracingShaderResources* GlobalResource
-                                      , const FRayTracingShaderResources* RayGenLocalResources
-                                      , const FRayTracingShaderResources* MissLocalResources
-                                      , const FRayTracingShaderResources* HitGroupResources
-                                      , uint32 NumHitGroupResources) override final { }
+    virtual void SetRayTracingBindings(
+        FRHIRayTracingScene* RayTracingScene,
+        FRHIRayTracingPipelineState* PipelineState,
+        const FRayTracingShaderResources* GlobalResource,
+        const FRayTracingShaderResources* RayGenLocalResources,
+        const FRayTracingShaderResources* MissLocalResources,
+        const FRayTracingShaderResources* HitGroupResources,
+        uint32 NumHitGroupResources) override final { }
 
     virtual void GenerateMips(FRHITexture* Texture) override final { }
 

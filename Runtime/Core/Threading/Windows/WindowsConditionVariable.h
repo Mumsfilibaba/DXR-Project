@@ -9,10 +9,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsConditionVariable
 
-class FWindowsConditionVariable final : public FGenericConditionVariable
+class FWindowsConditionVariable final 
+    : public FGenericConditionVariable
 {
 public:
-
     typedef CONDITION_VARIABLE* PlatformHandle;
 
     FORCEINLINE FWindowsConditionVariable()

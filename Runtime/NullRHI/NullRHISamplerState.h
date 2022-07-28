@@ -12,10 +12,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHISamplerState
 
-class FNullRHISamplerState : public FRHISamplerState
+struct FNullRHISamplerState 
+    : public FRHISamplerState
 {
-public:
-
     FNullRHISamplerState()  = default;
     ~FNullRHISamplerState() = default;
 

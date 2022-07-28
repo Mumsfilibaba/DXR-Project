@@ -19,12 +19,12 @@ enum : uint64
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericThread
 
-class CORE_API FGenericThread : public FRefCounted
+class CORE_API FGenericThread 
+    : public FRefCounted
 {
-    friend class FGenericThreadMisc;
+    friend struct FGenericThreadMisc;
 
 protected:
-
     FGenericThread(const TFunction<void()>& InFunction)
         : Function(InFunction)
     { }
@@ -42,11 +42,10 @@ public:
     
     virtual bool Start() { return true; }
 	
-    virtual void SetName(const FString& InName) { }
-
     virtual void* GetPlatformHandle() { return nullptr; }
 
     virtual FString GetName() const { return ""; }
+    virtual void    SetName(const FString& InName) { }
 
     TFunction<void()> GetFunction() const { return Function; }
 

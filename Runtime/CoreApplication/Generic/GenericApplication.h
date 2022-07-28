@@ -19,12 +19,10 @@
 
 class COREAPPLICATION_API FGenericApplication
 {
-    friend class FGenericApplicationMisc;
-    
+    friend struct FGenericApplicationMisc;
     friend struct TDefaultDelete<FGenericApplication>;
 
 protected:
-
     FGenericApplication(const TSharedPtr<ICursor>& InCursor)
         : Cursor(InCursor)
         , MessageListener(nullptr)
@@ -33,7 +31,6 @@ protected:
     virtual ~FGenericApplication() = default;
 
 public:
-
     virtual FGenericWindowRef CreateWindow() { return nullptr; }
 
     virtual void Tick(float Delta) { }

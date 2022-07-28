@@ -1,5 +1,4 @@
 #pragma once
-#include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
 #include "D3D12Constants.h"
 
@@ -82,20 +81,19 @@ struct FD3D12ShaderParameter
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Shader
 
-class FD3D12Shader : public FD3D12DeviceChild
+class FD3D12Shader 
+    : public FD3D12DeviceChild
 {
 public:
     FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility ShaderVisibility);
     ~FD3D12Shader();
 
 public:
-
     static bool GetShaderReflection(class FD3D12Shader* Shader);
 
     EShaderVisibility GetShaderVisibility() const { return Visibility; }
 
-    const FShaderResourceCount& GetResourceCount() const { return ResourceCount; }
-
+    const FShaderResourceCount& GetResourceCount()        const { return ResourceCount; }
     const FShaderResourceCount& GetRTLocalResourceCount() const { return RTLocalResourceCount; }
 
     D3D12_SHADER_BYTECODE GetByteCode() const { return ByteCode; }
@@ -143,7 +141,6 @@ public:
     FORCEINLINE uint32 GetNumSamplerStateParameters() { return SamplerParameters.Size(); }
 
 protected:
-
     template<typename TD3D12ReflectionInterface>
     static bool GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, FD3D12Shader* Shader, uint32 NumBoundResources);
 
@@ -164,16 +161,15 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12VertexShader
 
-class FD3D12VertexShader : public FRHIVertexShader, public FD3D12Shader
+class FD3D12VertexShader 
+    : public FRHIVertexShader
+    , public FD3D12Shader
 {
 public:
-
     FD3D12VertexShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIVertexShader()
         , FD3D12Shader(InDevice, InCode, ShaderVisibility_Vertex)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface
@@ -185,16 +181,15 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12PixelShader
 
-class FD3D12PixelShader : public FRHIPixelShader, public FD3D12Shader
+class FD3D12PixelShader 
+    : public FRHIPixelShader
+    , public FD3D12Shader
 {
 public:
-
     FD3D12PixelShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIPixelShader()
         , FD3D12Shader(InDevice, InCode, ShaderVisibility_Pixel)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface
@@ -206,14 +201,13 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayTracingShader
 
-class FD3D12RayTracingShader : public FD3D12Shader
+class FD3D12RayTracingShader 
+    : public FD3D12Shader
 {
 public:
     FD3D12RayTracingShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FD3D12Shader(InDevice, InCode, ShaderVisibility_All)
     { }
-
-public:
 
     static bool GetRayTracingShaderReflection(class FD3D12RayTracingShader* Shader);
     
@@ -226,16 +220,15 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayGenShader
 
-class FD3D12RayGenShader : public FRHIRayGenShader, public FD3D12RayTracingShader
+class FD3D12RayGenShader 
+    : public FRHIRayGenShader
+    , public FD3D12RayTracingShader
 {
 public:
-
     FD3D12RayGenShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIRayGenShader()
         , FD3D12RayTracingShader(InDevice, InCode)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface
@@ -247,16 +240,15 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayAnyHitShader
 
-class FD3D12RayAnyHitShader : public FRHIRayAnyHitShader, public FD3D12RayTracingShader
+class FD3D12RayAnyHitShader 
+    : public FRHIRayAnyHitShader
+    , public FD3D12RayTracingShader
 {
 public:
-    
     FD3D12RayAnyHitShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIRayAnyHitShader()
         , FD3D12RayTracingShader(InDevice, InCode)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface
@@ -268,16 +260,15 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayClosestHitShader
 
-class FD3D12RayClosestHitShader : public FRHIRayClosestHitShader, public FD3D12RayTracingShader
+class FD3D12RayClosestHitShader 
+    : public FRHIRayClosestHitShader
+    , public FD3D12RayTracingShader
 {
 public:
-    
     FD3D12RayClosestHitShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIRayClosestHitShader()
         , FD3D12RayTracingShader(InDevice, InCode)
     { }
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface
@@ -289,10 +280,11 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayMissShader
 
-class FD3D12RayMissShader : public FRHIRayMissShader, public FD3D12RayTracingShader
+class FD3D12RayMissShader 
+    : public FRHIRayMissShader
+    , public FD3D12RayTracingShader
 {
 public:
-
     FD3D12RayMissShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIRayMissShader()
         , FD3D12RayTracingShader(InDevice, InCode)
@@ -313,7 +305,6 @@ public:
 class FD3D12ComputeShader : public FRHIComputeShader, public FD3D12Shader
 {
 public:
-
     FD3D12ComputeShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIComputeShader()
         , FD3D12Shader(InDevice, InCode, ShaderVisibility_All)
@@ -321,8 +312,6 @@ public:
     { }
 
     bool Init();
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface

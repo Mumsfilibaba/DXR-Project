@@ -67,16 +67,14 @@ struct FD3D12SamplerFeedbackDesc
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CoreInterface
 
-class FD3D12CoreInterface : public FRHICoreInterface
+class FD3D12CoreInterface 
+    : public FRHICoreInterface
 {
     FD3D12CoreInterface();
     ~FD3D12CoreInterface();
 
 public:
-
     static FD3D12CoreInterface* CreateD3D12Instance();
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHICoreInterface Interface

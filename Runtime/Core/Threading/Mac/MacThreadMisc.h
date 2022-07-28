@@ -10,21 +10,19 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacThreadMisc
 
-class FMacThreadMisc : public FGenericThreadMisc
+struct FMacThreadMisc 
+    : public FGenericThreadMisc
 {
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericThreadMisc Interface
 
     static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
-
     static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InString);
 
     static FORCEINLINE bool Initialize() 
     { 
         Check(IsMainThread());
-		return RegisterMainRunLoop();
+		    return RegisterMainRunLoop();
     }
 
     static FORCEINLINE void Release() 

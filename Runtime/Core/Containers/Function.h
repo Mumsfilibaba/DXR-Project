@@ -117,10 +117,10 @@ class TFunction<ReturnType(ArgTypes...)>
     // Generic functor implementation
 
     template<typename FunctorType>
-    class TGenericFunctor : public IFunctor
+    class TGenericFunctor 
+        : public IFunctor
     {
     public:
-
         FORCEINLINE TGenericFunctor(const FunctorType& InFunctor) noexcept
             : IFunctor()
             , Functor(InFunctor)
@@ -307,7 +307,6 @@ public:
     }
 
 private:
-
     FORCEINLINE void Release() noexcept
     {
         if (IsValid())

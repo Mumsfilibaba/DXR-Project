@@ -8,9 +8,8 @@ class FRHIViewport;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRenderPassInitializer
 
-class FRHIRenderPassInitializer
+struct FRHIRenderPassInitializer
 {
-public:
     FRHIRenderPassInitializer()
         : ShadingRateTexture(nullptr)
         , DepthStencilView()

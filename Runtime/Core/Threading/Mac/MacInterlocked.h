@@ -4,7 +4,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacInterlocked
 
-class FMacInterlocked : public FGenericInterlocked
+struct FMacInterlocked 
+    : public FGenericInterlocked
 {
 public:
 

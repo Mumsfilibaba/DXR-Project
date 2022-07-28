@@ -14,10 +14,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericThreadMisc
 
-class FGenericThreadMisc
+struct FGenericThreadMisc
 {
-public:
-
     static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
     static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName);
 

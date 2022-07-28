@@ -12,7 +12,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIShaderResourceView
 
-struct FNullRHIShaderResourceView : public FRHIShaderResourceView
+struct FNullRHIShaderResourceView
+    : public FRHIShaderResourceView
 { 
     explicit FNullRHIShaderResourceView(FRHIResource* InResource)
         : FRHIShaderResourceView(InResource)
@@ -24,7 +25,8 @@ struct FNullRHIShaderResourceView : public FRHIShaderResourceView
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIUnorderedAccessView
 
-struct FNullRHIUnorderedAccessView : public FRHIUnorderedAccessView
+struct FNullRHIUnorderedAccessView 
+    : public FRHIUnorderedAccessView
 {
     explicit FNullRHIUnorderedAccessView(FRHIResource* InResource)
         : FRHIUnorderedAccessView(InResource)

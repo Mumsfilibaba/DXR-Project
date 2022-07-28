@@ -5,10 +5,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericCursor
 
-class COREAPPLICATION_API FGenericCursor : public ICursor
+class COREAPPLICATION_API FGenericCursor 
+    : public ICursor
 {
 protected:
-
     FGenericCursor()
         : bIsVisible(true)
     { }
@@ -16,7 +16,6 @@ protected:
     ~FGenericCursor() = default;
 
 public:
-
     virtual bool IsVisible() const override final { return bIsVisible; }
 
 protected:

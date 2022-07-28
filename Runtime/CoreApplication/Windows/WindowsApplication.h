@@ -16,12 +16,13 @@
 
 struct FWindowsMessage
 {
-    FORCEINLINE FWindowsMessage( HWND InWindow
-                               , uint32 InMessage
-                               , WPARAM InwParam
-                               , LPARAM InlParam
-                               , int32 InMouseDeltaX
-                               , int32 InMouseDeltaY)
+    FORCEINLINE FWindowsMessage(
+        HWND InWindow,
+        uint32 InMessage,
+        WPARAM InwParam,
+        LPARAM InlParam,
+        int32 InMouseDeltaX,
+        int32 InMouseDeltaY)
         : Window(InWindow)
         , Message(InMessage)
         , wParam(InwParam)
@@ -44,10 +45,8 @@ struct FWindowsMessage
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IWindowsMessageListener
 
-class IWindowsMessageListener
+struct IWindowsMessageListener
 {
-public:
-
     virtual ~IWindowsMessageListener() = default;
 
     /*
@@ -60,21 +59,18 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsApplication
 
-class COREAPPLICATION_API FWindowsApplication final : public FGenericApplication
+class COREAPPLICATION_API FWindowsApplication final 
+    : public FGenericApplication
 {
 private:
-
     friend struct TDefaultDelete<FWindowsApplication>;
 
     FWindowsApplication(HINSTANCE InInstance);
     ~FWindowsApplication();
 
 public:
-
     static FWindowsApplication* CreateWindowsApplication();
 
-public:
-    
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericApplication Interface
 
@@ -94,13 +90,11 @@ public:
     virtual FGenericWindowRef GetActiveWindow()      const override final;
 
 public:
-
     FWindowsWindowRef GetWindowsWindowFromHWND(HWND Window) const;
 
     void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
     void AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener);
-
     void RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener);
 
     bool IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener) const;
@@ -113,7 +107,6 @@ public:
     }
 
 private:
-
     static LRESULT StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
     bool RegisterWindowClass();
@@ -126,7 +119,6 @@ private:
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
 private:
-
     TArray<FWindowsMessage>   Messages;
     FCriticalSection          MessagesCS;
 
@@ -136,9 +128,8 @@ private:
     TArray<FWindowsWindowRef> ClosedWindows;
     FCriticalSection          ClosedWindowsCS;
 
-    bool      bIsTrackingMouse;
-    
-    HINSTANCE InstanceHandle;
+    HINSTANCE                 InstanceHandle;
+    bool                      bIsTrackingMouse;
 
     TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
     mutable FCriticalSection                    WindowsMessageListenersCS;

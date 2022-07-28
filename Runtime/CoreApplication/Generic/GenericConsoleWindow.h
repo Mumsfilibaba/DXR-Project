@@ -28,14 +28,12 @@ enum class EConsoleColor : uint8
 class COREAPPLICATION_API FGenericConsoleWindow
 {
 protected:
-
-    friend class FGenericApplicationMisc;
+    friend struct FGenericApplicationMisc;
 
     FGenericConsoleWindow() = default;
     virtual ~FGenericConsoleWindow() = default;
 
 public:
-
     virtual void Show(bool bShow) { }
 
     virtual void Print(const FString& Message)     { }

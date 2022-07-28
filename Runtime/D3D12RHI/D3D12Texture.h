@@ -25,10 +25,12 @@ typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Texture 
 
-class FD3D12Texture : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12Texture 
+    : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
 public:
-    FD3D12Texture(FD3D12Device* InDevice);
+    explicit FD3D12Texture(FD3D12Device* InDevice);
     ~FD3D12Texture() = default;
 
     FD3D12RenderTargetView* GetOrCreateRTV(const FRHIRenderTargetView& RTVInitializer);
@@ -65,7 +67,9 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Texture2D
 
-class FD3D12Texture2D : public FRHITexture2D, public FD3D12Texture
+class FD3D12Texture2D 
+    : public FRHITexture2D
+    , public FD3D12Texture
 {
 public:
     explicit FD3D12Texture2D(FD3D12Device* InDevice, const FRHITexture2DInitializer& Initializer)
@@ -109,7 +113,8 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12BackBufferTexture
 
-class FD3D12BackBufferTexture : public FD3D12Texture2D
+class FD3D12BackBufferTexture 
+    : public FD3D12Texture2D
 {
 public:
     explicit FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITexture2DInitializer& Initializer)
@@ -132,7 +137,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Texture2DArray
 
-class FD3D12Texture2DArray : public FRHITexture2DArray, public FD3D12Texture
+class FD3D12Texture2DArray 
+    : public FRHITexture2DArray
+    , public FD3D12Texture
 {
 public:
     explicit FD3D12Texture2DArray(FD3D12Device* InDevice, const FRHITexture2DArrayInitializer& Initializer)
@@ -169,7 +176,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12TextureCube
 
-class FD3D12TextureCube : public FRHITextureCube, public FD3D12Texture
+class FD3D12TextureCube 
+    : public FRHITextureCube
+    , public FD3D12Texture
 {
 public:
     explicit FD3D12TextureCube(FD3D12Device* InDevice, const FRHITextureCubeInitializer& Initializer)
@@ -206,7 +215,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12TextureCubeArray
 
-class FD3D12TextureCubeArray : public FRHITextureCubeArray, public FD3D12Texture
+class FD3D12TextureCubeArray 
+    : public FRHITextureCubeArray
+    , public FD3D12Texture
 {
 public:
     explicit FD3D12TextureCubeArray(FD3D12Device* InDevice, const FRHITextureCubeArrayInitializer& Initializer)
@@ -243,7 +254,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Texture3D
 
-class FD3D12Texture3D final : public FRHITexture3D, public FD3D12Texture
+class FD3D12Texture3D final 
+    : public FRHITexture3D
+    , public FD3D12Texture
 {
 public:
     explicit FD3D12Texture3D(FD3D12Device* InDevice, const FRHITexture3DInitializer& Initializer)

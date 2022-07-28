@@ -8,7 +8,8 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FDirectionalLight
 
-class ENGINE_API FDirectionalLight : public FLight
+class ENGINE_API FDirectionalLight 
+    : public FLight
 {
     CORE_OBJECT(FDirectionalLight, FLight);
 

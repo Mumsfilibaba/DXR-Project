@@ -31,10 +31,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindow
 
-class FWindow : public FRefCounted
+struct  FWindow 
+    : public FRefCounted
 {
-public:
-
     virtual ~FWindow() = default;
 
     /**

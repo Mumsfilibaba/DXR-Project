@@ -55,10 +55,8 @@ ENUM_CLASS_OPERATORS(ETextureUsageFlags);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITextureDataInitializer
 
-class FRHITextureDataInitializer
+struct FRHITextureDataInitializer
 {
-public:
-
     FRHITextureDataInitializer()
         : TextureData(nullptr)
         , Size(0)
@@ -86,10 +84,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITextureInitializer
 
-class FRHITextureInitializer
+struct FRHITextureInitializer
 {
-public:
-
     FRHITextureInitializer()
         : ClearValue()
         , Format(EFormat::Unknown)
@@ -158,10 +154,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITexture2DInitializer
 
-class FRHITexture2DInitializer : public FRHITextureInitializer
+struct FRHITexture2DInitializer 
+    : public FRHITextureInitializer
 {
-public:
-
     FRHITexture2DInitializer()
         : FRHITextureInitializer()
         , Width(1)
@@ -211,10 +206,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITexture2DArrayInitializer
 
-class FRHITexture2DArrayInitializer : public FRHITexture2DInitializer
+struct FRHITexture2DArrayInitializer
+    : public FRHITexture2DInitializer
 {
-public:
-
     FRHITexture2DArrayInitializer()
         : FRHITexture2DInitializer()
         , ArraySize(1)
@@ -251,14 +245,13 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITextureCubeInitializer
 
-class FRHITextureCubeInitializer : public FRHITextureInitializer
+struct FRHITextureCubeInitializer
+    : public FRHITextureInitializer
 {
-public:
-
     FRHITextureCubeInitializer()
         : FRHITextureInitializer()
-	    , NumSamples(1)
-	    , Extent(1)
+        , NumSamples(1)
+        , Extent(1)
     { }
 
     FRHITextureCubeInitializer(
@@ -271,8 +264,8 @@ public:
         FRHITextureDataInitializer* InInitialData = nullptr,
         const FTextureClearValue& InClearValue = FTextureClearValue())
         : FRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InInitialData, InClearValue)
-	    , NumSamples(uint8(InNumSamples))
-	    , Extent(uint16(InExtent))
+        , NumSamples(uint8(InNumSamples))
+        , Extent(uint16(InExtent))
     { }
 
     bool operator==(const FRHITextureCubeInitializer& RHS) const
@@ -294,10 +287,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITextureCubeArrayInitializer
 
-class FRHITextureCubeArrayInitializer : public FRHITextureCubeInitializer
+struct FRHITextureCubeArrayInitializer
+    : public FRHITextureCubeInitializer
 {
-public:
-
     FRHITextureCubeArrayInitializer()
         : FRHITextureCubeInitializer()
         , ArraySize(1)
@@ -333,10 +325,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITexture3DInitializer
 
-class FRHITexture3DInitializer : public FRHITextureInitializer
+struct FRHITexture3DInitializer
+    : public FRHITextureInitializer
 {
-public:
-
     FRHITexture3DInitializer()
         : FRHITextureInitializer()
         , Width(1)
@@ -381,10 +372,10 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITexture
 
-class FRHITexture : public FRHIResource
+class FRHITexture 
+    : public FRHIResource
 {
 protected:
-
     explicit FRHITexture(const FRHITextureInitializer& Initializer)
         : FRHIResource()
         , Format(Initializer.Format)
@@ -394,7 +385,6 @@ protected:
     { }
 
 public:
-
     virtual class FRHITexture2D*        GetTexture2D()        { return nullptr; }
     virtual class FRHITexture2DArray*   GetTexture2DArray()   { return nullptr; }
     virtual class FRHITextureCube*      GetTextureCube()      { return nullptr; }
@@ -437,10 +427,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITexture2D
 
-class FRHITexture2D : public FRHITexture
+class FRHITexture2D 
+    : public FRHITexture
 {
 protected:
-
     explicit FRHITexture2D(const FRHITexture2DInitializer& Initializer)
         : FRHITexture(Initializer)
         , NumSamples(Initializer.NumSamples)
@@ -476,10 +466,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITexture2DArray
 
-class FRHITexture2DArray : public FRHITexture2D
+class FRHITexture2DArray 
+    : public FRHITexture2D
 {
 protected:
-
     explicit FRHITexture2DArray(const FRHITexture2DArrayInitializer& Initializer)
         : FRHITexture2D(Initializer)
         , ArraySize(Initializer.ArraySize)
@@ -506,14 +496,14 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITextureCube
 
-class FRHITextureCube : public FRHITexture
+class FRHITextureCube 
+    : public FRHITexture
 {
 protected:
-
     explicit FRHITextureCube(const FRHITextureCubeInitializer& Initializer)
         : FRHITexture(Initializer)
         , NumSamples(Initializer.NumSamples)
-	    , Extent(Initializer.Extent)
+        , Extent(Initializer.Extent)
     {
         Check(Extent != 0);
     }
@@ -540,10 +530,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITextureCubeArray
 
-class FRHITextureCubeArray : public FRHITextureCube
+class FRHITextureCubeArray 
+    : public FRHITextureCube
 {
 protected:
-
     explicit FRHITextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer)
         : FRHITextureCube(Initializer)
         , ArraySize(Initializer.ArraySize)
@@ -570,10 +560,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITexture3D
 
-class FRHITexture3D : public FRHITexture
+class FRHITexture3D 
+    : public FRHITexture
 {
 protected:
-
     explicit FRHITexture3D(const FRHITexture3DInitializer& Initializer)
         : FRHITexture(Initializer)
         , Width(Initializer.Width)

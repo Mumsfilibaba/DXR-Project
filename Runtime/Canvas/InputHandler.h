@@ -12,10 +12,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FInputHandler
 
-class FInputHandler
+struct FInputHandler
 {
-public:
-
     virtual ~FInputHandler() = default;
 
     /**

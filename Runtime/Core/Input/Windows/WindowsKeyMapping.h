@@ -8,7 +8,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsKeyMapping
 
-class CORE_API FWindowsKeyMapping : public FGenericKeyMapping
+class CORE_API FWindowsKeyMapping 
+    : public FGenericKeyMapping
 {
     enum
     {

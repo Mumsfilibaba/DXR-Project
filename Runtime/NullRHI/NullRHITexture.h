@@ -23,10 +23,10 @@ typedef TNullRHITexture<struct FNullRHITexture3DBase>        FNullRHITexture3D;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHITexture2DBase
 
-class FNullRHITexture2DBase : public FRHITexture2D
+class FNullRHITexture2DBase 
+    : public FRHITexture2D
 {
 public:
-
     explicit FNullRHITexture2DBase(const FRHITexture2DInitializer& Initializer)
         : FRHITexture2D(Initializer)
         , UnorderedAccessView(dbg_new FNullRHIUnorderedAccessView(this))
@@ -44,7 +44,8 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHITexture2DArrayBase
 
-struct FNullRHITexture2DArrayBase : public FRHITexture2DArray
+struct FNullRHITexture2DArrayBase 
+    : public FRHITexture2DArray
 {
     explicit FNullRHITexture2DArrayBase(const FRHITexture2DArrayInitializer& Initializer)
         : FRHITexture2DArray(Initializer)
@@ -54,7 +55,8 @@ struct FNullRHITexture2DArrayBase : public FRHITexture2DArray
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHITextureCubeBase
 
-struct FNullRHITextureCubeBase : public FRHITextureCube
+struct FNullRHITextureCubeBase 
+    : public FRHITextureCube
 {
     explicit FNullRHITextureCubeBase(const FRHITextureCubeInitializer& Initializer)
         : FRHITextureCube(Initializer)
@@ -64,7 +66,8 @@ struct FNullRHITextureCubeBase : public FRHITextureCube
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHITextureCubeArrayBase
 
-struct FNullRHITextureCubeArrayBase : public FRHITextureCubeArray
+struct FNullRHITextureCubeArrayBase 
+    : public FRHITextureCubeArray
 {
     explicit FNullRHITextureCubeArrayBase(const FRHITextureCubeArrayInitializer& Initializer)
         : FRHITextureCubeArray(Initializer)
@@ -74,7 +77,8 @@ struct FNullRHITextureCubeArrayBase : public FRHITextureCubeArray
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHITexture3DBase
 
-struct FNullRHITexture3DBase : public FRHITexture3D
+struct FNullRHITexture3DBase 
+    : public FRHITexture3D
 {
     explicit FNullRHITexture3DBase(const FRHITexture3DInitializer& Initializer)
         : FRHITexture3D(Initializer)
@@ -85,7 +89,8 @@ struct FNullRHITexture3DBase : public FRHITexture3D
 // TNullRHITexture
 
 template<typename BaseTextureType>
-class TNullRHITexture final : public BaseTextureType
+class TNullRHITexture final 
+    : public BaseTextureType
 {
 public:
 

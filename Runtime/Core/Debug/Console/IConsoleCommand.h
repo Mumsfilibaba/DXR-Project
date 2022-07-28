@@ -11,10 +11,9 @@ DECLARE_MULTICAST_DELEGATE(FCommandDelegate);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IConsoleCommand - Console-Command interface 
 
-class IConsoleCommand : public IConsoleObject
+struct IConsoleCommand 
+    : public IConsoleObject
 {
-public:
-
     // TODO: Add parameters to console commands
 
     /**

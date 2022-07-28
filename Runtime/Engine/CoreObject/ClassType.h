@@ -20,7 +20,6 @@ struct FClassDescription
 class ENGINE_API FClassType
 {
 public:
-
     FClassType(const FClassType* InSuperClass, const FClassDescription& ClassDescription);
     ~FClassType() = default;
 

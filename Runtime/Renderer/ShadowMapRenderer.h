@@ -84,7 +84,6 @@ public:
     bool ResizeResources(uint32 Width, uint32 Height, FLightSetup& LightSetup);
 
 private:
-
     bool CreateShadowMask(uint32 Width, uint32 Height, FLightSetup& LightSetup);
     bool CreateShadowMaps(FLightSetup& LightSetup, FFrameResources& FrameResources);
 

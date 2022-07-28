@@ -13,7 +13,6 @@ template<typename FuncType, typename... ArgTypes>
 struct TIsInvokable
 {
 private:
-
     template<typename Fn, typename = void, typename... Args>
     struct TIsInvokableHelper
     {
@@ -33,7 +32,6 @@ private:
     };
 
 public:
-
     enum
     {
         Value = TIsInvokableHelper<FuncType, void, ArgTypes...>::Value
@@ -47,7 +45,6 @@ template<typename FuncType, typename ReturnType, typename... ArgTypes>
 struct TIsInvokableR
 {
 private:
-
     template<typename Fn, typename Ret, typename = void, typename... Args>
     struct TIsInvokableRHelper
     {
@@ -67,7 +64,6 @@ private:
     };
 
 public:
-
     enum
     {
         Value = TIsInvokableRHelper<FuncType, ReturnType, void, ArgTypes...>::Value

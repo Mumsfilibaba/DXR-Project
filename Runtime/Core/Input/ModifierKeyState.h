@@ -6,8 +6,6 @@
 
 struct FModifierKeyState
 {
-public:
-
     FModifierKeyState() = default;
 
     FORCEINLINE FModifierKeyState(uint8 InModifierMask)

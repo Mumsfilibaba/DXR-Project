@@ -15,8 +15,6 @@
 template<typename T, int32 NumElements>
 struct TStaticArray
 {
-public:
-
     using ElementType = T;
     using SizeType    = int32;
 

@@ -5,12 +5,12 @@
 
 #include <imgui.h>
 
-class FRendererInfoWindow : public FWindow
+class FRendererInfoWindow 
+    : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
-
     static TSharedRef<FRendererInfoWindow> Make();
 
      /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
@@ -20,6 +20,5 @@ public:
     virtual bool IsTickable() override final;
 
 private:
-
     FRendererInfoWindow() = default;
 };

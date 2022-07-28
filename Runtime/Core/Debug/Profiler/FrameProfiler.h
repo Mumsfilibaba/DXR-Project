@@ -178,7 +178,6 @@ private:
 struct FScopedTrace
 {
 public:
-
     FORCEINLINE FScopedTrace(const char* InName)
         : Name(InName)
     {

@@ -6,10 +6,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FSandbox
 
-class FSandbox : public FApplicationModule
+class FSandbox 
+    : public FApplicationModule
 {
 public:
-
     FSandbox()  = default;
     ~FSandbox() = default;
 

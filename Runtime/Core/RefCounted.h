@@ -8,15 +8,14 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRefCounted
 
-class CORE_API FRefCounted : public IRefCounted
+class CORE_API FRefCounted 
+    : public IRefCounted
 {
 protected:
-
     FRefCounted();
     virtual ~FRefCounted();
 
 public:
-
     virtual int32 AddRef()  override;
     virtual int32 Release() override;
 

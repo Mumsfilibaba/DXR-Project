@@ -11,10 +11,11 @@ typedef TSharedRef<class FD3D12SamplerState> FD3D12SamplerStateRef;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12SamplerState
 
-class FD3D12SamplerState : public FRHISamplerState, public FD3D12DeviceChild
+class FD3D12SamplerState 
+    : public FRHISamplerState
+    , public FD3D12DeviceChild
 {
 public:
-
     FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap)
         : FRHISamplerState()
         , FD3D12DeviceChild(InDevice)

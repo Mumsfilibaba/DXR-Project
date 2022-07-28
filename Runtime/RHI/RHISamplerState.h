@@ -89,10 +89,8 @@ inline const char* ToString(ESamplerFilter SamplerFilter)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHISamplerStateInitializer
 
-class FRHISamplerStateInitializer
+struct FRHISamplerStateInitializer
 {
-public:
-
     FRHISamplerStateInitializer()
         : AddressU(ESamplerMode::Clamp)
         , AddressV(ESamplerMode::Clamp)
@@ -197,10 +195,10 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHISamplerState
 
-class FRHISamplerState : public FRHIResource
+class FRHISamplerState 
+    : public FRHIResource
 {
 protected:
-
     FRHISamplerState()  = default;
     ~FRHISamplerState() = default;
 

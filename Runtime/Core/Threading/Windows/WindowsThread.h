@@ -5,10 +5,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsThread
 
-class CORE_API FWindowsThread final : public FGenericThread
+class CORE_API FWindowsThread final 
+    : public FGenericThread
 {
 private:
-
     FWindowsThread(const TFunction<void()>& InFunction);
     FWindowsThread(const TFunction<void()>& InFunction, const FString& InName);
     ~FWindowsThread();

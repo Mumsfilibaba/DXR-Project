@@ -8,12 +8,12 @@ class FActor;
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FComponent
 
-class ENGINE_API FComponent : public FCoreObject
+class ENGINE_API FComponent
+    : public FCoreObject
 {
     CORE_OBJECT(FComponent, FCoreObject);
 
 public:
-
     FComponent(FActor* InActorOwner);
     FComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTickable);
     virtual ~FComponent() = default;

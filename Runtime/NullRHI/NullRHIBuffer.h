@@ -20,7 +20,8 @@ typedef TNullRHIBuffer<struct FNullRHIConstantBufferBase> FNullRHIConstantBuffer
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIConstantBufferBase
 
-struct FNullRHIConstantBufferBase : public FRHIConstantBuffer
+struct FNullRHIConstantBufferBase 
+    : public FRHIConstantBuffer
 {
     explicit FNullRHIConstantBufferBase(const FRHIConstantBufferInitializer& Initializer)
         : FRHIConstantBuffer(Initializer)
@@ -35,7 +36,8 @@ struct FNullRHIConstantBufferBase : public FRHIConstantBuffer
 // TNullRHIBuffer
 
 template<typename BaseBufferType>
-struct TNullRHIBuffer final : public BaseBufferType
+struct TNullRHIBuffer final 
+    : public BaseBufferType
 {
     template<typename... ArgTypes>
     explicit TNullRHIBuffer(ArgTypes&&... Args)

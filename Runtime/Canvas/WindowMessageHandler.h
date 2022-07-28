@@ -14,10 +14,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowMessageHandler
 
-class FWindowMessageHandler
+struct FWindowMessageHandler
 {
-public:
-
     virtual ~FWindowMessageHandler() = default;
 
     virtual bool OnWindowResized(const FWindowResizeEvent& ResizeEvent)

@@ -14,10 +14,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIInputLayoutState
 
-class FNullRHIInputLayoutState : public FRHIVertexInputLayout
+struct FNullRHIInputLayoutState 
+    : public FRHIVertexInputLayout
 {
-public:
-
     FNullRHIInputLayoutState()  = default;
     ~FNullRHIInputLayoutState() = default;
 };
@@ -25,10 +24,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIDepthStencilState
 
-class FNullRHIDepthStencilState : public FRHIDepthStencilState
+struct FNullRHIDepthStencilState 
+    : public FRHIDepthStencilState
 {
-public:
-
     FNullRHIDepthStencilState()  = default;
     ~FNullRHIDepthStencilState() = default;
 };
@@ -36,10 +34,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIRasterizerState
 
-class FNullRHIRasterizerState : public FRHIRasterizerState
+struct FNullRHIRasterizerState 
+    : public FRHIRasterizerState
 {
-public:
-
     FNullRHIRasterizerState()  = default;
     ~FNullRHIRasterizerState() = default;
 };
@@ -47,23 +44,21 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIBlendState
 
-class FNullRHIBlendState : public FRHIBlendState
+struct FNullRHIBlendState 
+    : public FRHIBlendState
 {
-public:
-
     FNullRHIBlendState()  = default;
     ~FNullRHIBlendState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIGraphicsPipelineState
+// FNullRHIGraphicsPipelineState
 
-class CNullRHIGraphicsPipelineState : public FRHIGraphicsPipelineState
+struct FNullRHIGraphicsPipelineState 
+    : public FRHIGraphicsPipelineState
 {
-public:
-
-    CNullRHIGraphicsPipelineState()  = default;
-    ~CNullRHIGraphicsPipelineState() = default;
+    FNullRHIGraphicsPipelineState()  = default;
+    ~FNullRHIGraphicsPipelineState() = default;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIPipelineState Interface
@@ -75,10 +70,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIComputePipelineState
 
-class FNullRHIComputePipelineState : public FRHIComputePipelineState
+struct FNullRHIComputePipelineState 
+    : public FRHIComputePipelineState
 {
-public:
-
     FNullRHIComputePipelineState()  = default;
     ~FNullRHIComputePipelineState() = default;
 
@@ -92,10 +86,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIRayTracingPipelineState
 
-class FNullRHIRayTracingPipelineState : public FRHIRayTracingPipelineState
+struct FNullRHIRayTracingPipelineState 
+    : public FRHIRayTracingPipelineState
 {
-public:
-
     FNullRHIRayTracingPipelineState()  = default;
     ~FNullRHIRayTracingPipelineState() = default;
 

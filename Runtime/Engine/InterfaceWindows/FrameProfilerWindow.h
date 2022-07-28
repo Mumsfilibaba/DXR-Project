@@ -8,12 +8,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FFrameProfilerWindow
 
-class FFrameProfilerWindow : public FWindow
+class FFrameProfilerWindow 
+    : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
-
     static TSharedRef<FFrameProfilerWindow> Make();
 
     virtual void Tick() override final;
@@ -21,7 +21,6 @@ public:
     virtual bool IsTickable() override final;
 
 private:
-
     FFrameProfilerWindow() = default;
     ~FFrameProfilerWindow() = default;
 

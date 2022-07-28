@@ -9,12 +9,12 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMeshComponent
 
-class ENGINE_API FMeshComponent : public FComponent
+class ENGINE_API FMeshComponent 
+    : public FComponent
 {
     CORE_OBJECT(FMeshComponent, FComponent);
 
 public:
-
     FMeshComponent(FActor* InActorOwner)
         : FComponent(InActorOwner, false, false)
         , Material(nullptr)

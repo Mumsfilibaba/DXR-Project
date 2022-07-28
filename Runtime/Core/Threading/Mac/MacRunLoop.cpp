@@ -8,13 +8,12 @@
 #include <Foundation/Foundation.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacRunLoopSource
+// FMacRunLoopSource
 
-class CMacRunLoopSource
+class FMacRunLoopSource
 {
 public:
-
-    CMacRunLoopSource(CFRunLoopRef InRunLoop, NSString* InRunLoopMode)
+    FMacRunLoopSource(CFRunLoopRef InRunLoop, NSString* InRunLoopMode)
         : RunLoop(InRunLoop)
         , RunLoopMode(InRunLoopMode)
         , BlockLock()
@@ -25,13 +24,13 @@ public:
         CFRunLoopSourceContext SourceContext = CFRunLoopSourceContext();
         SourceContext.info     = reinterpret_cast<void*>(this);
         SourceContext.version  = 0;
-        SourceContext.perform  = &CMacRunLoopSource::Perform;
+        SourceContext.perform  = &FMacRunLoopSource::Perform;
         
         Source = CFRunLoopSourceCreate(nullptr, 0, &SourceContext);
         CFRunLoopAddSource(RunLoop, Source, (CFStringRef)RunLoopMode);
     }
     
-    ~CMacRunLoopSource()
+    ~FMacRunLoopSource()
     {
         CFRunLoopRemoveSource(RunLoop, Source, (CFStringRef)RunLoopMode);
         CFRelease(Source);
@@ -79,10 +78,9 @@ public:
     }
     
 private:
-    
     static void Perform(void* Info)
     {
-        CMacRunLoopSource* RunLoopSource = reinterpret_cast<CMacRunLoopSource*>(Info);
+        FMacRunLoopSource* RunLoopSource = reinterpret_cast<FMacRunLoopSource*>(Info);
         if (RunLoopSource)
         {
             RunLoopSource->Execute();
@@ -99,12 +97,12 @@ private:
 };
 
 // Main-thread runloop source
-CMacRunLoopSource* GMainThread = nullptr;
+FMacRunLoopSource* GMainThread = nullptr;
 
 bool RegisterMainRunLoop()
 {
     CFRunLoopRef MainLoop = CFRunLoopGetMain();
-    GMainThread = new CMacRunLoopSource(MainLoop, NSDefaultRunLoopMode);
+    GMainThread = new FMacRunLoopSource(MainLoop, NSDefaultRunLoopMode);
     
     return true;
 }

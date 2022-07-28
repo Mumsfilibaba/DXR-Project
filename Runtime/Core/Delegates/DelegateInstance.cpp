@@ -3,4 +3,4 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FDelegateHandle
 
-CORE_API DelegateHandle FDelegateHandle::NextID = 0;
+CORE_API FAtomicInt64 FDelegateHandle::NextID = 0;

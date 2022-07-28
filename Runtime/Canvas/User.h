@@ -113,7 +113,6 @@ public:
     }
 
 private:
-
     FUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
 
      /** @brief: Get the index in the key-state array */

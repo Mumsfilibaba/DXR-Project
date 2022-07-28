@@ -7,10 +7,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsCursor
 
-class COREAPPLICATION_API FWindowsCursor final : public FGenericCursor
+class COREAPPLICATION_API FWindowsCursor final 
+    : public FGenericCursor
 {
 private:
-
     friend struct TDefaultDelete<FWindowsCursor>;
 
     FWindowsCursor()
@@ -20,10 +20,7 @@ private:
     ~FWindowsCursor() = default;
 
 public:
-
     static FWindowsCursor* CreateWindowsCursor();
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericCursor Interface

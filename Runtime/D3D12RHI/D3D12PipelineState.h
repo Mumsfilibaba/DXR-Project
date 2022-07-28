@@ -1,11 +1,11 @@
 #pragma once
+#include "D3D12Shader.h"
+#include "D3D12RootSignature.h"
+#include "D3D12DeviceChild.h"
+
 #include "RHI/RHIResources.h"
 
 #include "Core/Utilities/StringUtilities.h"
-
-#include "D3D12Shader.h"
-#include "D3D12Core.h"
-#include "D3D12RootSignature.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
@@ -28,10 +28,11 @@ enum class ED3D12PipelineType
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12VertexInputLayout
 
-class FD3D12VertexInputLayout : public FRHIVertexInputLayout, public FD3D12DeviceChild
+class FD3D12VertexInputLayout 
+    : public FRHIVertexInputLayout
+    , public FD3D12DeviceChild
 {
 public:
-
     FD3D12VertexInputLayout(FD3D12Device* InDevice, const FRHIVertexInputLayoutInitializer& Initializer)
         : FRHIVertexInputLayout()
         , FD3D12DeviceChild(InDevice)
@@ -73,10 +74,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12DepthStencilState
 
-class FD3D12DepthStencilState : public FRHIDepthStencilState, public FD3D12DeviceChild
+class FD3D12DepthStencilState 
+    : public FRHIDepthStencilState
+    , public FD3D12DeviceChild
 {
 public:
-    
     FD3D12DepthStencilState(FD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
         : FRHIDepthStencilState()
         , FD3D12DeviceChild(InDevice)
@@ -92,10 +94,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RasterizerState
 
-class FD3D12RasterizerState : public FRHIRasterizerState, public FD3D12DeviceChild
+class FD3D12RasterizerState 
+    : public FRHIRasterizerState
+    , public FD3D12DeviceChild
 {
 public:
-
     FD3D12RasterizerState(FD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
         : FRHIRasterizerState()
         , FD3D12DeviceChild(InDevice)
@@ -111,10 +114,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12BlendState
 
-class FD3D12BlendState : public FRHIBlendState, public FD3D12DeviceChild
+class FD3D12BlendState 
+    : public FRHIBlendState
+    , public FD3D12DeviceChild
 {
 public:
-
     FD3D12BlendState(FD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
         : FRHIBlendState()
         , FD3D12DeviceChild(InDevice)
@@ -130,10 +134,10 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12PipelineState
 
-class FD3D12PipelineState : public FD3D12DeviceChild
+class FD3D12PipelineState 
+    : public FD3D12DeviceChild
 {
 public:
-
     FD3D12PipelineState(FD3D12Device* InDevice)
         : FD3D12DeviceChild(InDevice)
     { }
@@ -157,10 +161,11 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12GraphicsPipelineState
 
-class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12PipelineState
+class FD3D12GraphicsPipelineState
+    : public FRHIGraphicsPipelineState
+    , public FD3D12PipelineState
 {
 public:
-
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
     ~FD3D12GraphicsPipelineState() = default;
 
@@ -177,10 +182,11 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12ComputePipelineState
 
-class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12PipelineState
+class FD3D12ComputePipelineState 
+    : public FRHIComputePipelineState
+    , public FD3D12PipelineState
 {
 public:
-
     FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader);
     ~FD3D12ComputePipelineState() = default;
 
@@ -208,7 +214,9 @@ struct FRayTracingShaderIdentifer
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayTracingPipelineState
 
-class FD3D12RayTracingPipelineState : public FRHIRayTracingPipelineState, public FD3D12DeviceChild
+class FD3D12RayTracingPipelineState 
+    : public FRHIRayTracingPipelineState
+    , public FD3D12DeviceChild
 {
 public:
     FD3D12RayTracingPipelineState(FD3D12Device* InDevice);

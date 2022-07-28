@@ -7,7 +7,6 @@
 class IRefCounted
 {
 protected:
-
     IRefCounted()          = default;
     virtual ~IRefCounted() = default;
 

@@ -14,10 +14,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIViewport
 
-class FNullRHIViewport : public FRHIViewport
+class FNullRHIViewport 
+    : public FRHIViewport
 {
 public:
-    
     FNullRHIViewport(const FRHIViewportInitializer& Initializer)
         : FRHIViewport(Initializer)
         , BackBuffer(nullptr)

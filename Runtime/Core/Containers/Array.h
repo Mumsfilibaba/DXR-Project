@@ -17,7 +17,6 @@ template<typename T, typename AllocatorType = TDefaultArrayAllocator<T>>
 class TArray
 {
 public:
-
     using ElementType = T;
     using SizeType    = int32;
 

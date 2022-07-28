@@ -9,8 +9,8 @@
 #include "Core/Threading/Platform/ConditionVariable.h"
 #include "Core/Containers/ArrayView.h"
 
-class FRHIRenderTargetView;
-class FRHIDepthStencilView;
+struct FRHIRenderTargetView;
+struct FRHIDepthStencilView;
 class FRHIShaderResourceView;
 class FRHIUnorderedAccessView;
 class FRHIShader;
@@ -47,7 +47,8 @@ struct FRHICommandStatistics
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandList
 
-class RHI_API FRHICommandList : FNonCopyable
+class RHI_API FRHICommandList 
+    : FNonCopyable
 {
 public:
     FRHICommandList() noexcept
@@ -654,7 +655,8 @@ void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIThreadTask
 
-struct FRHIThreadTask : FNonCopyable
+struct FRHIThreadTask
+    : FNonCopyable
 {
     FORCEINLINE FRHIThreadTask() noexcept
         : CommandList(nullptr)
@@ -693,7 +695,8 @@ struct FRHIThreadTask : FNonCopyable
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIThread
 
-class RHI_API FRHIThread : FNonCopyable
+class RHI_API FRHIThread 
+    : FNonCopyable
 {
 public:
     FRHIThread();
@@ -728,7 +731,8 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandListExecutor
 
-class RHI_API FRHICommandListExecutor : FNonCopyable
+class RHI_API FRHICommandListExecutor 
+    : FNonCopyable
 {
 public:
     FRHICommandListExecutor();

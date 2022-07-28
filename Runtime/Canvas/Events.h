@@ -23,7 +23,8 @@ struct FEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FKeyEvent
 
-struct FKeyEvent : public FEvent
+struct FKeyEvent 
+    : public FEvent
 {
     FORCEINLINE FKeyEvent(EKey InKeyCode, bool bInIsDown, bool bInIsRepeat, FModifierKeyState InModiferKeyState)
         : KeyCode(InKeyCode)
@@ -48,7 +49,8 @@ struct FKeyEvent : public FEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FKeyCharEvent
 
-struct FKeyCharEvent : public FEvent
+struct FKeyCharEvent 
+    : public FEvent
 {
     FORCEINLINE FKeyCharEvent(uint32 InCharacter)
         : Character(InCharacter)
@@ -66,7 +68,8 @@ struct FKeyCharEvent : public FEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMouseMovedEvent
 
-struct FMouseMovedEvent : public FEvent
+struct FMouseMovedEvent 
+    : public FEvent
 {
     FORCEINLINE FMouseMovedEvent(int32 InX, int32 InY)
         : X(InX)
@@ -83,7 +86,8 @@ struct FMouseMovedEvent : public FEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FHighPrecisionMouseEvent
 
-struct FHighPrecisionMouseEvent : public FEvent
+struct FHighPrecisionMouseEvent 
+    : public FEvent
 {
     FORCEINLINE FHighPrecisionMouseEvent(const FGenericWindowRef& InWindow, int32 InX, int32 InY)
         : Window(InWindow)
@@ -104,7 +108,8 @@ struct FHighPrecisionMouseEvent : public FEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMouseButtonEvent
 
-struct FMouseButtonEvent : public FEvent
+struct FMouseButtonEvent 
+    : public FEvent
 {
     FORCEINLINE FMouseButtonEvent(EMouseButton InButton, bool bInIsDown, FModifierKeyState InModifiers)
         : Button(InButton)
@@ -125,7 +130,8 @@ struct FMouseButtonEvent : public FEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMouseScrolledEvent
 
-struct FMouseScrolledEvent : public FEvent
+struct FMouseScrolledEvent 
+    : public FEvent
 {
     FORCEINLINE FMouseScrolledEvent(float InHorizontalDelta, float InVerticalDelta)
         : HorizontalDelta(InHorizontalDelta)
@@ -142,7 +148,8 @@ struct FMouseScrolledEvent : public FEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowResizeEvent
 
-struct FWindowResizeEvent : public FEvent
+struct FWindowResizeEvent 
+    : public FEvent
 {
     FORCEINLINE FWindowResizeEvent(const FGenericWindowRef& InWindow, uint32 InWidth, uint32 InHeight)
         : Window(InWindow)
@@ -180,7 +187,8 @@ struct FWindowFocusChangedEvent : public FEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowMovedEvent
 
-struct FWindowMovedEvent : public FEvent
+struct FWindowMovedEvent 
+    : public FEvent
 {
     FORCEINLINE FWindowMovedEvent(const FGenericWindowRef& InWindow, int32 InX, int32 InY)
         : Window(InWindow)
@@ -201,7 +209,8 @@ struct FWindowMovedEvent : public FEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowFrameMouseEvent
 
-struct FWindowFrameMouseEvent : public FEvent
+struct FWindowFrameMouseEvent 
+    : public FEvent
 {
     FORCEINLINE FWindowFrameMouseEvent(const FGenericWindowRef& InWindow, bool bInMouseEntered)
         : Window(InWindow)
@@ -218,7 +227,8 @@ struct FWindowFrameMouseEvent : public FEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowClosedEvent
 
-struct FWindowClosedEvent : public FEvent
+struct FWindowClosedEvent 
+    : public FEvent
 {
     FORCEINLINE FWindowClosedEvent(const FGenericWindowRef& InWindow)
         : Window(InWindow)

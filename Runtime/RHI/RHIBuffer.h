@@ -80,10 +80,8 @@ ENUM_CLASS_OPERATORS(EBufferUsageFlags);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIBufferDataInitializer
 
-class FRHIBufferDataInitializer
+struct FRHIBufferDataInitializer
 {
-public:
-    
     FRHIBufferDataInitializer()
         : BufferData(nullptr)
         , Size(0)
@@ -111,10 +109,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIBufferInitializer
 
-class FRHIBufferInitializer
+struct FRHIBufferInitializer
 {
-public:
-
     FRHIBufferInitializer()
         : InitialData(nullptr)
 	    , UsageFlags(EBufferUsageFlags::None)
@@ -151,10 +147,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIVertexBufferInitializer
 
-class FRHIVertexBufferInitializer : public FRHIBufferInitializer
+struct FRHIVertexBufferInitializer
+    : public FRHIBufferInitializer
 {
-public:
-
     FRHIVertexBufferInitializer()
         : FRHIBufferInitializer()
         , NumVertices(0)
@@ -194,10 +189,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIIndexBufferInitializer
 
-class FRHIIndexBufferInitializer : public FRHIBufferInitializer
+struct FRHIIndexBufferInitializer
+    : public FRHIBufferInitializer
 {
-public:
-
     FRHIIndexBufferInitializer()
         : FRHIBufferInitializer()
         , IndexFormat(EIndexFormat::Unknown)
@@ -237,10 +231,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIGenericBufferInitializer
 
-class FRHIGenericBufferInitializer : public FRHIBufferInitializer
+struct FRHIGenericBufferInitializer
+    : public FRHIBufferInitializer
 {
-public:
-
     FRHIGenericBufferInitializer()
         : FRHIBufferInitializer()
         , Size(0)
@@ -287,10 +280,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIConstantBufferInitializer
 
-class FRHIConstantBufferInitializer : public FRHIBufferInitializer
+struct FRHIConstantBufferInitializer
+    : public FRHIBufferInitializer
 {
-public:
-
     FRHIConstantBufferInitializer()
         : FRHIBufferInitializer()
         , Size(0)
@@ -337,17 +329,16 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIBuffer
 
-class FRHIBuffer : public FRHIResource
+class FRHIBuffer 
+    : public FRHIResource
 {
 protected:
-
     explicit FRHIBuffer(const FRHIBufferInitializer& Initializer)
         : FRHIResource()
         , Flags(Initializer.UsageFlags)
     { }
 
 public:
-
     virtual class FRHIVertexBuffer*   GetVertexBuffer()   { return nullptr; }
     virtual class FRHIIndexBuffer*    GetIndexBuffer()    { return nullptr; }
     virtual class FRHIConstantBuffer* GetConstantBuffer() { return nullptr; }
@@ -371,10 +362,10 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIVertexBuffer
 
-class FRHIVertexBuffer : public FRHIBuffer
+class FRHIVertexBuffer 
+    : public FRHIBuffer
 {
 protected:
-
     explicit FRHIVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
         : FRHIBuffer(Initializer)
         , NumVertices(Initializer.NumVertices)
@@ -401,10 +392,10 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIIndexBuffer
 
-class FRHIIndexBuffer : public FRHIBuffer
+class FRHIIndexBuffer 
+    : public FRHIBuffer
 {
 protected:
-
     explicit FRHIIndexBuffer(const FRHIIndexBufferInitializer& Initializer)
         : FRHIBuffer(Initializer)
         , Format(Initializer.IndexFormat)
@@ -432,10 +423,10 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIGenericBuffer
 
-class FRHIGenericBuffer : public FRHIBuffer
+class FRHIGenericBuffer 
+    : public FRHIBuffer
 {
 protected:
-
     explicit FRHIGenericBuffer(const FRHIGenericBufferInitializer& Initializer)
         : FRHIBuffer(Initializer)
         , Stride(Initializer.Stride)
@@ -460,10 +451,10 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIConstantBuffer
 
-class FRHIConstantBuffer : public FRHIBuffer
+class FRHIConstantBuffer 
+    : public FRHIBuffer
 {
 protected:
-
     explicit FRHIConstantBuffer(const FRHIConstantBufferInitializer& Initializer)
         : FRHIBuffer(Initializer)
         , Size(Initializer.Size)

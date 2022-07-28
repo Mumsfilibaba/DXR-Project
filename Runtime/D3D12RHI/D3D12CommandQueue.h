@@ -6,10 +6,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12CommandQueue
 
-class FD3D12CommandQueue : public FD3D12DeviceChild
+class FD3D12CommandQueue 
+    : public FD3D12DeviceChild
 {
 public:
-
     FD3D12CommandQueue(FD3D12Device* InDevice)
         : FD3D12DeviceChild(InDevice)
         , Queue(nullptr)

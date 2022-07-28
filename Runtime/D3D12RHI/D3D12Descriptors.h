@@ -16,17 +16,16 @@ typedef TSharedRef<FD3D12OnlineDescriptorManager> FD3D12OnlineDescriptorManagerR
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12DescriptorHeap
 
-class FD3D12DescriptorHeap : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12DescriptorHeap 
+    : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
 public:
-
     FD3D12DescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE Type, uint32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
     ~FD3D12DescriptorHeap() = default;
 
     bool Initialize();
     
-public:
-
     FORCEINLINE ID3D12DescriptorHeap*       GetD3D12Heap() const { return Heap.Get(); }
 
     FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart() const { return CPUStart; }
@@ -59,7 +58,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12OfflineDescriptorHeap
 
-class FD3D12OfflineDescriptorHeap : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12OfflineDescriptorHeap 
+    : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FDescriptorRange
@@ -105,14 +106,12 @@ class FD3D12OfflineDescriptorHeap : public FD3D12DeviceChild, public FD3D12RefCo
     };
 
 public:
-
     FD3D12OfflineDescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
     ~FD3D12OfflineDescriptorHeap() = default;
 
     bool Initialize();
 
     D3D12_CPU_DESCRIPTOR_HANDLE Allocate(uint32& OutHeapIndex);
-
     void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex);
 
     void SetName(const FString& InName);
@@ -136,7 +135,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12OnlineDescriptorHeap
 
-class FD3D12OnlineDescriptorHeap : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12OnlineDescriptorHeap 
+    : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
 public:
     FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
@@ -209,7 +210,9 @@ struct FD3D12DescriptorBlock
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12OnlineDescriptorManager
 
-class FD3D12OnlineDescriptorManager : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12OnlineDescriptorManager 
+    : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
 public:
     FD3D12OnlineDescriptorManager(FD3D12Device* InDevice, FD3D12DescriptorHeap* InDescriptorHeap, uint32 InDescriptorStartOffset, uint32 InDescriptorCount);

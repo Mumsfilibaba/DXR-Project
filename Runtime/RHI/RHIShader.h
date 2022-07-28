@@ -81,10 +81,10 @@ inline const char* ToString(EShaderStage ShaderStage)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIShader
 
-class FRHIShader : public FRHIResource
+class FRHIShader 
+    : public FRHIResource
 {
 protected:
-
     explicit FRHIShader(EShaderStage InShaderStage)
         : ShaderStage(InShaderStage)
     { }
@@ -92,7 +92,6 @@ protected:
     ~FRHIShader() = default;
 
 public:
-
     virtual void* GetRHIBaseResource() { return nullptr; }
     virtual void* GetRHIBaseShader()   { return nullptr; }
     
@@ -105,10 +104,10 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIComputeShader
 
-class FRHIComputeShader : public FRHIShader
+class FRHIComputeShader
+    : public FRHIShader
 {
 protected:
-
     FRHIComputeShader()
         : FRHIShader(EShaderStage::Compute)
     { }
@@ -124,10 +123,10 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIGraphicsShader
 
-class FRHIGraphicsShader : public FRHIShader
+class FRHIGraphicsShader 
+    : public FRHIShader
 {
 protected:
-
     explicit FRHIGraphicsShader(EShaderStage InShaderStage)
         : FRHIShader(InShaderStage)
     { }
@@ -138,10 +137,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIVertexShader
 
-class FRHIVertexShader : public FRHIGraphicsShader
+class FRHIVertexShader 
+    : public FRHIGraphicsShader
 {
 protected:
-
     FRHIVertexShader()
         : FRHIGraphicsShader(EShaderStage::Vertex)
     { }
@@ -152,10 +151,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIHullShader
 
-class FRHIHullShader : public FRHIGraphicsShader
+class FRHIHullShader 
+    : public FRHIGraphicsShader
 {
 protected:
-
     FRHIHullShader()
         : FRHIGraphicsShader(EShaderStage::Hull)
     { }
@@ -166,10 +165,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIDomainShader
 
-class FRHIDomainShader : public FRHIGraphicsShader
+class FRHIDomainShader 
+    : public FRHIGraphicsShader
 {
 protected:
-
     FRHIDomainShader()
         : FRHIGraphicsShader(EShaderStage::Domain)
     { }
@@ -180,10 +179,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIGeometryShader
 
-class FRHIGeometryShader : public FRHIGraphicsShader
+class FRHIGeometryShader 
+    : public FRHIGraphicsShader
 {
 protected:
-
     FRHIGeometryShader()
         : FRHIGraphicsShader(EShaderStage::Geometry)
     { }
@@ -194,10 +193,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIMeshShader
 
-class FRHIMeshShader : public FRHIGraphicsShader
+class FRHIMeshShader 
+    : public FRHIGraphicsShader
 {
 protected:
-
     FRHIMeshShader()
         : FRHIGraphicsShader(EShaderStage::Mesh)
     { }
@@ -208,10 +207,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIAmplificationShader
 
-class FRHIAmplificationShader : public FRHIGraphicsShader
+class FRHIAmplificationShader 
+    : public FRHIGraphicsShader
 {
 protected:
-
     FRHIAmplificationShader()
         : FRHIGraphicsShader(EShaderStage::Amplification)
     { }
@@ -222,10 +221,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIPixelShader
 
-class FRHIPixelShader : public FRHIGraphicsShader
+class FRHIPixelShader 
+    : public FRHIGraphicsShader
 {
 protected:
-
     FRHIPixelShader()
         : FRHIGraphicsShader(EShaderStage::Pixel)
     { }
@@ -236,10 +235,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayTracingShader
 
-class FRHIRayTracingShader : public FRHIShader
+class FRHIRayTracingShader 
+    : public FRHIShader
 {
 protected:
-
     explicit FRHIRayTracingShader(EShaderStage InShaderStage)
         : FRHIShader(InShaderStage)
     { }
@@ -250,10 +249,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayGenShader
 
-class FRHIRayGenShader : public FRHIRayTracingShader
+class FRHIRayGenShader 
+    : public FRHIRayTracingShader
 {
 protected:
-
     FRHIRayGenShader()
         : FRHIRayTracingShader(EShaderStage::RayGen)
     { }
@@ -264,10 +263,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayAnyHitShader
 
-class FRHIRayAnyHitShader : public FRHIRayTracingShader
+class FRHIRayAnyHitShader 
+    : public FRHIRayTracingShader
 {
 protected:
-
     FRHIRayAnyHitShader()
         : FRHIRayTracingShader(EShaderStage::RayAnyHit)
     { }
@@ -278,10 +277,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayClosestHitShader
 
-class FRHIRayClosestHitShader : public FRHIRayTracingShader
+class FRHIRayClosestHitShader
+    : public FRHIRayTracingShader
 {
 protected:
-
     FRHIRayClosestHitShader()
         : FRHIRayTracingShader(EShaderStage::RayClosestHit)
     { }
@@ -292,10 +291,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayMissShader
 
-class FRHIRayMissShader : public FRHIRayTracingShader
+class FRHIRayMissShader 
+    : public FRHIRayTracingShader
 {
 protected:
-
     FRHIRayMissShader()
         : FRHIRayTracingShader(EShaderStage::RayMiss)
     { }
@@ -306,10 +305,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayIntersectionShader
 
-class FRHIRayIntersectionShader : public FRHIRayTracingShader
+class FRHIRayIntersectionShader 
+    : public FRHIRayTracingShader
 {
 protected:
-
     FRHIRayIntersectionShader()
         : FRHIRayTracingShader(EShaderStage::RayIntersection)
     { }
@@ -320,10 +319,10 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRayCallableShader
 
-class FRHIRayCallableShader : public FRHIRayTracingShader
+class FRHIRayCallableShader
+    : public FRHIRayTracingShader
 {
 protected:
-
     FRHIRayCallableShader()
         : FRHIRayTracingShader(EShaderStage::RayCallable)
     { }

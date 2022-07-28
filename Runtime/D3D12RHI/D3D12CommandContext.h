@@ -30,7 +30,8 @@ struct FD3D12UploadAllocation
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12GPUResourceUploader
 
-class FD3D12GPUResourceUploader : public FD3D12DeviceChild
+class FD3D12GPUResourceUploader 
+    : public FD3D12DeviceChild
 {
 public:
     FD3D12GPUResourceUploader(FD3D12Device* InDevice);
@@ -188,7 +189,8 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CommandContextState
 
-struct FD3D12CommandContextState : FNonCopyAndNonMovable
+struct FD3D12CommandContextState 
+    : FNonCopyAndNonMovable
 {
     FD3D12CommandContextState(FD3D12Device* InDevice);
     ~FD3D12CommandContextState() = default;
@@ -270,18 +272,18 @@ struct FD3D12CommandContextState : FNonCopyAndNonMovable
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CommandContext
 
-class FD3D12CommandContext : public IRHICommandContext, public FD3D12DeviceChild
+class FD3D12CommandContext 
+    : public IRHICommandContext
+    , public FD3D12DeviceChild
 {
 private:
-
     friend class FD3D12CoreInterface;
 
     FD3D12CommandContext(FD3D12Device* InDevice);
     ~FD3D12CommandContext();
 
-    static FD3D12CommandContext* CreateD3D12CommandContext(FD3D12Device* InDevice);
-
 public:
+    static FD3D12CommandContext* CreateD3D12CommandContext(FD3D12Device* InDevice);
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // IRHICommandContext Interface

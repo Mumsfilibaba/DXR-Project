@@ -17,9 +17,8 @@ enum ETextureFactoryFlags : uint32
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FTextureFactory
 
-class ENGINE_API FTextureFactory
+struct ENGINE_API FTextureFactory
 {
-public:
     static bool Init();
     static void Release();
 

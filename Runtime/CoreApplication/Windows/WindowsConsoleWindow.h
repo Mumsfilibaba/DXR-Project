@@ -15,18 +15,15 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsConsoleWindow
 
-class COREAPPLICATION_API FWindowsConsoleWindow final : public FGenericConsoleWindow
+class COREAPPLICATION_API FWindowsConsoleWindow final 
+    : public FGenericConsoleWindow
 {
 private:
-
     FWindowsConsoleWindow();
     ~FWindowsConsoleWindow();
 
 public:
-
     static FWindowsConsoleWindow* CreateWindowsConsole();
-
-public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FWindowsConsoleWindow Interface

@@ -15,12 +15,10 @@ template <typename ViewType, D3D12_DESCRIPTOR_HEAP_TYPE HeapType, uint32 kDescri
 class TD3D12ViewCache
 {
 public:
-
     static CONSTEXPR D3D12_DESCRIPTOR_HEAP_TYPE GetDescriptorHeapType()  { return HeapType; }
     static CONSTEXPR uint32                     GetDescriptorTableSize() { return kDescriptorTableSize; }
 
 public:
-
     TD3D12ViewCache()
         : ResourceViews()
         , CPUDescriptorTables()
@@ -270,10 +268,10 @@ struct FD3D12RenderTargetViewCache
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12DescriptorCache
 
-class FD3D12DescriptorCache : public FD3D12DeviceChild
+class FD3D12DescriptorCache 
+    : public FD3D12DeviceChild
 {
 public:
-
     FD3D12DescriptorCache(FD3D12Device* Device);
     
     ~FD3D12DescriptorCache()
@@ -339,16 +337,18 @@ public:
     }
 
 private:
-    void AllocateDescriptorsAndSetHeaps( ID3D12GraphicsCommandList* CommandList
-                                       , FD3D12OnlineDescriptorManager* ResourceDescriptors
-                                       , FD3D12OnlineDescriptorManager* SamplerDescriptors
-                                       , FD3D12PipelineStageMask PipelineMask);
+    void AllocateDescriptorsAndSetHeaps(
+        ID3D12GraphicsCommandList* CommandList,
+        FD3D12OnlineDescriptorManager* ResourceDescriptors,
+        FD3D12OnlineDescriptorManager* SamplerDescriptors,
+        FD3D12PipelineStageMask PipelineMask);
 
     template<typename TResourveViewCache>
-    void CopyAndBindComputeDescriptors( ID3D12Device* DxDevice
-                                      , ID3D12GraphicsCommandList* CommandList
-                                      , TResourveViewCache& ResourceViewCache
-                                      , int32 ParameterIndex)
+    void CopyAndBindComputeDescriptors(
+        ID3D12Device* DxDevice,
+        ID3D12GraphicsCommandList* CommandList,
+        TResourveViewCache& ResourceViewCache,
+        int32 ParameterIndex)
     {
         if (ParameterIndex >= 0 && ResourceViewCache.bDirty[ShaderVisibility_All])
         {
@@ -369,11 +369,12 @@ private:
     }
 
     template<typename TResourveViewCache>
-    void CopyAndBindGraphicsDescriptors( ID3D12Device* DxDevice
-                                       , ID3D12GraphicsCommandList* CommandList
-                                       , TResourveViewCache& ResourceViewCache
-                                       , int32 ParameterIndex
-                                       , EShaderVisibility ShaderVisibility)
+    void CopyAndBindGraphicsDescriptors(
+        ID3D12Device* DxDevice,
+        ID3D12GraphicsCommandList* CommandList,
+        TResourveViewCache& ResourceViewCache,
+        int32 ParameterIndex,
+        EShaderVisibility ShaderVisibility)
     {
         if (ParameterIndex >= 0 && ResourceViewCache.bDirty[ShaderVisibility])
         {
@@ -417,7 +418,6 @@ private:
 class FD3D12ShaderConstantsCache
 {
 public:
-
     FD3D12ShaderConstantsCache()
         : Constants()
         , NumConstants()
@@ -428,10 +428,11 @@ public:
 
     FORCEINLINE void Set32BitShaderConstants(const uint32* InConstants, uint32 InNumConstants)
     {
-        D3D12_ERROR_COND( InNumConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT
-                        , "Trying to set a number of shader-constants (NumConstants=%u) higher than the maximum (MaxShaderConstants=%u)"
-                        , InNumConstants
-                        , D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
+        D3D12_ERROR_COND(
+            InNumConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT,
+            "Trying to set a number of shader-constants (NumConstants=%u) higher than the maximum (MaxShaderConstants=%u)",
+            InNumConstants,
+            D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
 
         FMemory::Memcpy(Constants, InConstants, sizeof(uint32) * InNumConstants);
         NumConstants = InNumConstants;

@@ -34,10 +34,10 @@ RHI_API void RHIRelease();
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIModule
 
-class RHI_API FRHIModule : public FDefaultModule
+class RHI_API FRHIModule 
+    : public FDefaultModule
 {
 protected:
-
     FRHIModule()  = default;
     ~FRHIModule() = default;
 

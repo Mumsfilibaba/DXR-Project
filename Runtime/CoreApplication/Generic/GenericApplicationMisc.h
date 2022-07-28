@@ -21,10 +21,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericApplicationMisc
 
-class COREAPPLICATION_API FGenericApplicationMisc
+struct COREAPPLICATION_API FGenericApplicationMisc
 {
-public:
-
     static class FGenericApplication*   CreateApplication();
     static class FGenericConsoleWindow* CreateConsoleWindow();
 

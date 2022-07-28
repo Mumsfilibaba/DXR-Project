@@ -8,10 +8,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsInterlocked
 
-class FWindowsInterlocked : public FGenericInterlocked
+struct FWindowsInterlocked 
+    : public FGenericInterlocked
 {
-public:
-
     // See: https://docs.microsoft.com/en-us/cpp/intrinsics/interlockedexchangeadd-intrinsic-functions?view=msvc-160
     //      https://docs.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-interlockedincrement16
 

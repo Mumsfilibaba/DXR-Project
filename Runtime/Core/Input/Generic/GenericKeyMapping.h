@@ -12,10 +12,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericKeyMapping
 
-class FGenericKeyMapping
+struct FGenericKeyMapping
 {
-public:
-
     /** @brief: Initialize key-tables */
     static FORCEINLINE void Initialize() { }
 

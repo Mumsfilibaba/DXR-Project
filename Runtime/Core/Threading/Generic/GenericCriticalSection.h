@@ -6,10 +6,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericCriticalSection
 
-class FGenericCriticalSection : FNonCopyable
+struct FGenericCriticalSection
+    : FNonCopyable
 {
-public:
-
     typedef void* PlatformHandle;
 
     FGenericCriticalSection()  = default;

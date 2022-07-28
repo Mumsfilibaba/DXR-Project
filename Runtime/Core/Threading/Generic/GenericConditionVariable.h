@@ -13,10 +13,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericConditionVariable
 
-class FGenericConditionVariable : FNonCopyable
+struct FGenericConditionVariable 
+    : FNonCopyable
 {
-public:
-
     typedef void* PlatformHandle;
 
     FGenericConditionVariable()  = default;

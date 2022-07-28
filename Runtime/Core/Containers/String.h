@@ -38,14 +38,13 @@ template<typename CharType>
 class TString
 {
 public:
-
-    static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
-
     using ElementType = CharType;
     using SizeType    = int32;
     using StringUtils = TCString<ElementType>;
     using ViewType    = TStringView<ElementType>;
     using StorageType = TArray<CharType, TStringAllocator<CharType>>;
+
+    static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
 
     enum
     {
@@ -180,6 +179,7 @@ public:
         CopyFrom(RawString, InString.length);
     }
 #endif
+
     /**
      * @brief: Empties the storage 
      */
@@ -1780,7 +1780,6 @@ public:
     }
 	
 public:
-	
     friend TString operator+(const TString& LHS, const TString& RHS) noexcept
     {
         const typename TString::SizeType CombinedSize = LHS.Length() + RHS.Length();
@@ -2051,7 +2050,6 @@ public:
     }
 
 private:
-
     FORCEINLINE void CopyFrom(const CharType* InString, SizeType InLength) noexcept
     {
         Characters.Resize(InLength);

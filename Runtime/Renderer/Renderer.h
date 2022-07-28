@@ -31,7 +31,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRendererWindowHandler
 
-class FRendererWindowHandler final : public FWindowMessageHandler
+class FRendererWindowHandler final 
+    : public FWindowMessageHandler
 {
 public:
 
@@ -54,7 +55,6 @@ public:
 class RENDERER_API FRenderer
 {
 public:
-
     FRenderer();
     ~FRenderer() = default;
 

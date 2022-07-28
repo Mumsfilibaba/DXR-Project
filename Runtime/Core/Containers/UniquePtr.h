@@ -13,7 +13,8 @@
 /* TUniquePtr - Scalar values. Similar to std::unique_ptr */
 
 template<typename T, typename DeleterType = TDefaultDelete<T>>
-class TUniquePtr : private DeleterType // Using inheritance instead of composition to avoid extra memory usage
+class TUniquePtr 
+    : private DeleterType // Using inheritance instead of composition to avoid extra memory usage
 {
 public:
     using ElementType = T;
@@ -275,7 +276,8 @@ private:
 /* TUniquePtr - Array values. Similar to std::unique_ptr */
 
 template<typename T, typename DeleterType>
-class TUniquePtr<T[], DeleterType> : private DeleterType
+class TUniquePtr<T[], DeleterType> 
+    : private DeleterType
 {
 public:
     using ElementType = T;

@@ -5,15 +5,13 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsThreadMisc
 
-class FWindowsThreadMisc : public FGenericThreadMisc
+struct FWindowsThreadMisc 
+    : public FGenericThreadMisc
 {
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericThreadMisc Interface
 
     static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
-
     static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InString);
 
     static FORCEINLINE uint32 GetNumProcessors()

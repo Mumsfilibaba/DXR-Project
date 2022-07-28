@@ -4,10 +4,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericTime
 
-class FGenericTime
+struct FGenericTime
 {
-public:
-
     /** @return: Returns the current value of the performance counter */
     static FORCEINLINE uint64 QueryPerformanceCounter() { return 0; }
 

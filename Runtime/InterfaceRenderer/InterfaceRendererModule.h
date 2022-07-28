@@ -4,10 +4,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FApplicationRendererModule
 
-class FApplicationRendererModule : public IApplicationRendererModule
+class FApplicationRendererModule 
+    : public IApplicationRendererModule
 {
 public:
-
     FApplicationRendererModule()  = default;
     ~FApplicationRendererModule() = default;
 
