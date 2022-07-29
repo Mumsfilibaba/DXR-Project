@@ -13,7 +13,7 @@
 
 TSharedPtr<FApplication> FApplication::Instance;
 
-bool FApplication::CreateApplication()
+bool FApplication::Create()
 {
     TSharedPtr<FGenericApplication> Application = MakeSharedPtr(FPlatformApplicationMisc::CreateApplication());
     if (!Application)

@@ -81,7 +81,7 @@ bool FEngineLoop::LoadCoreModules()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // PreInitialize
 
-FOutputDeviceConsole* GConsoleWindow = 0;
+FOutputDeviceConsole* GConsoleWindow = nullptr;
 
 bool FEngineLoop::PreInitialize()
 {
@@ -107,8 +107,10 @@ bool FEngineLoop::PreInitialize()
         return false;
     }
 
+#if !PRODUCTION_BUILD
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
-    
+#endif
+
     // TODO: Use a separate profiler for booting the engine
     FFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
@@ -132,7 +134,7 @@ bool FEngineLoop::PreInitialize()
         return false;
     }
 
-    if (!FApplication::CreateApplication())
+    if (!FApplication::Create())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return false;
@@ -189,7 +191,7 @@ bool FEngineLoop::Initialize()
 #if PROJECT_EDITOR
     GEngine = FEditorEngine::Make();
 #else
-    GEngine = FEngine::CreateEngine();
+    GEngine = dbg_new FEngine();
 #endif
     if (!GEngine->Initialize())
     {

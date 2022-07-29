@@ -1,7 +1,7 @@
 #include "GPUProfiler.h"
 
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 
 #include "RHI/RHICoreInterface.h"
 

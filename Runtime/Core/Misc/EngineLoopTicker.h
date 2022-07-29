@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 #include "Core/Containers/Array.h"
 #include "Core/Delegates/Delegate.h"
 

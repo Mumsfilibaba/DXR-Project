@@ -5,7 +5,7 @@
 #include "Core/Input/InputStates.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedPtr.h"
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 #include "Core/Math/IntVector2.h"
 
 #include "CoreApplication/ICursor.h"

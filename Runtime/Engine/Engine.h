@@ -15,16 +15,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FEngine - Class representing the engine
 
-class ENGINE_API FEngine
+struct ENGINE_API FEngine
 {
-protected:
     FEngine();
     virtual ~FEngine() = default;
-
-public:
-
-    /** @return: Creates and returns a new engine instance */
-    static FEngine* CreateEngine();
 
     /**
      * @brief: Initialize the engine 

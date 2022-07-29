@@ -27,12 +27,7 @@ FAutoConsoleCommand GExit("Engine.Exit");
 FAutoConsoleCommand GToggleFullscreen("MainViewport.ToggleFullscreen");
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Engine
-
-FEngine* FEngine::CreateEngine()
-{
-    return dbg_new FEngine();
-}
+// FEngine
 
 FEngine::FEngine()
 {

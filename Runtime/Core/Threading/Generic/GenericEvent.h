@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 #include "Core/Containers/SharedRef.h"
 
 #if defined(COMPILER_MSVC)

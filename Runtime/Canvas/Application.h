@@ -8,7 +8,7 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Delegates/Event.h"
 
@@ -22,22 +22,19 @@ class CANVAS_API FApplication
     : public FGenericApplicationMessageHandler
 {
 protected:
-    friend struct TDefaultDelete<FApplication>;
-
     FApplication(const TSharedPtr<FGenericApplication>& InFPlatformApplication);
-    virtual ~FApplication();
 
 public:
+    virtual ~FApplication();
+
     DECLARE_EVENT(FExitEvent, FApplication, int32);
     FExitEvent GetExitEvent() const { return ExitEvent; }
     
     DECLARE_EVENT(FViewportChangedEvent, FApplication, const FGenericWindowRef&);
     FViewportChangedEvent GetViewportChangedEvent() const { return ViewportChangedEvent; }
 
-public:
-
     /** @brief: Create the application instance */
-    static bool CreateApplication();
+    static bool Create();
 
     /** @brief: Releases the application instance */
     static void Release();
@@ -46,13 +43,9 @@ public:
     static FORCEINLINE bool IsInitialized() { return Instance.IsValid(); }
 
     /** @return: Returns a reference to the FApplication */
-    static FORCEINLINE FApplication& Get() { return *Instance; }
+    static FORCEINLINE FApplication& Get() { return Instance.Dereference(); }
 
 public:
-
-    /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericApplicationMessageHandler Interface
-
     virtual void HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState)               override;
     virtual void HandleKeyPressed(EKey KeyCode, bool IsRepeat, FModifierKeyState ModierKeyState) override;
     
@@ -78,7 +71,6 @@ public:
     virtual void HandleApplicationExit(int32 ExitCode) override;
     
 public:
-
     /** @return: Returns the newly created window */
     FGenericWindowRef CreateWindow();
 
@@ -220,9 +212,7 @@ protected:
     bool CreateContext();
 
     void HandleKeyEvent(const FKeyEvent& KeyEvent);
-    
     void HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent);
-    
     void HandleWindowFrameMouseEvent(const FWindowFrameMouseEvent& WindowFrameMouseEvent);
 
     void RenderStrings();

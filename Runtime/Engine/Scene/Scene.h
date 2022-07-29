@@ -6,7 +6,7 @@
 
 #include "Renderer/MeshDrawCommand.h"
 
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 #include "Core/Containers/Array.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

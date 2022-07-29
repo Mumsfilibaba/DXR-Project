@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/Function.h"

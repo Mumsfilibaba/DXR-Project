@@ -2,7 +2,7 @@
 #include "GenericThread.h"
 #include "GenericEvent.h"
 
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 
 #if defined(COMPILER_MSVC)
     #pragma warning(push)
