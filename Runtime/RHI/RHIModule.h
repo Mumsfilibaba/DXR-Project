@@ -49,17 +49,9 @@ public:
      * @return: Returns the newly created RHIInstance
      */
     virtual class FRHICoreInterface* CreateInterface() = 0;
-
-    /**
-     * @brief: Creates the RHI shader compiler
-     *
-     * @return: Returns the shader compiler for this RHI Module
-     */
-    virtual class IRHIShaderCompiler* CreateCompiler() = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Global variables
+// Global Variable
 
-extern RHI_API class FRHICoreInterface*  GRHICoreInterface;
-extern RHI_API class IRHIShaderCompiler* GShaderCompiler;
+extern RHI_API class FRHICoreInterface* GRHICoreInterface;

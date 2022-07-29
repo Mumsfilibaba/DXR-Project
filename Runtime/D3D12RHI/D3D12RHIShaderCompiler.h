@@ -11,7 +11,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12ShaderCompiler
 
-class FD3D12ShaderCompiler : public IRHIShaderCompiler
+class FD3D12ShaderCompiler
 {
 public:
     FD3D12ShaderCompiler();
@@ -19,21 +19,21 @@ public:
 
     bool Init();
 
-    virtual bool CompileFromFile(
+    bool CompileFromFile(
         const FString& FilePath,
         const FString& EntryPoint,
         const TArray<FShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code) override final;
+        TArray<uint8>& Code);
 
-    virtual bool CompileShader(
+    bool CompileShader(
         const FString& ShaderSource,
         const FString& EntryPoint,
         const TArray<FShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code) override final;
+        TArray<uint8>& Code);
 
     bool GetReflection(FD3D12Shader* Shader, ID3D12ShaderReflection** Reflection);
     bool GetLibraryReflection(FD3D12Shader* Shader, ID3D12LibraryReflection** Reflection);

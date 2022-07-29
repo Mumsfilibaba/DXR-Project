@@ -418,7 +418,7 @@ bool FSandbox::Init()
     return true;
 }
 
-void FSandbox::Tick(FTimestamp DeltaTime)
+void FSandbox::Tick(FTimespan DeltaTime)
 {
     FApplicationModule::Tick(DeltaTime);
 

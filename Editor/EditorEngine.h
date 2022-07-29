@@ -13,5 +13,5 @@ public:
     virtual bool Init() override;
 
     /* Tick should be called once per frame */
-    virtual void Tick( FTimestamp DeltaTime ) override;
+    virtual void Tick( FTimespan DeltaTime ) override;
 };

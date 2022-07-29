@@ -33,7 +33,7 @@ public:
     virtual void Wait(uint64 Milliseconds) { }
 
     /** @brief: Wait for the event to be triggered */
-    virtual void Wait(FTimestamp Timeout) { Wait(static_cast<uint64>(Timeout.AsMilliseconds())); }
+    virtual void Wait(FTimespan Timeout) { Wait(static_cast<uint64>(Timeout.AsMilliseconds())); }
 
     /** @brief: Reset the event */
     virtual void Reset() { }

@@ -139,36 +139,3 @@ public:
 
     static TOptional<FRHIShaderCompiler> Instance;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* DEPRECATED */
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// IRHIShaderCompiler
-
-class IRHIShaderCompiler
-{
-public:
-    virtual ~IRHIShaderCompiler() = default;
-
-    virtual bool CompileFromFile(const FString& FilePath, const FString& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) = 0;
-    virtual bool CompileShader(const FString& ShaderSource, const FString& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) = 0;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIShaderCompiler
-
-class CRHIShaderCompiler
-{
-public:
-    static FORCEINLINE bool CompileFromFile(const FString& FilePath, const FString& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
-    {
-        return GShaderCompiler->CompileFromFile(FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
-    }
-
-    static FORCEINLINE bool CompileShader(const FString& ShaderSource, const FString& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
-    {
-        return GShaderCompiler->CompileShader(ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
-    }
-};
-

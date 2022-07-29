@@ -23,11 +23,6 @@ FD3D12CoreInterface* GD3D12Instance = nullptr;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CoreInterface
 
-FD3D12CoreInterface* FD3D12CoreInterface::CreateD3D12Instance()
-{ 
-    return dbg_new FD3D12CoreInterface(); 
-}
-
 FD3D12CoreInterface::FD3D12CoreInterface()
     : FRHICoreInterface(ERHIInstanceType::D3D12)
     , Device(nullptr)

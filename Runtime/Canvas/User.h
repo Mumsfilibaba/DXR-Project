@@ -26,7 +26,7 @@ public:
 
     virtual ~FUser() = default;
 
-    virtual void Tick(FTimestamp DeltaTime);
+    virtual void Tick(FTimespan DeltaTime);
 
     virtual void HandleKeyEvent(const FKeyEvent& KeyEvent);
 

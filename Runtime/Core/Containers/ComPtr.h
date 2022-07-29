@@ -389,7 +389,7 @@ public:
      * 
      * @return: A reference to this object
      */
-    FORCEINLINE TComPtr& operator=(NullptrType) noexcept
+    FORCEINLINE TComPtr& operator=(nullptr_type) noexcept
     {
         TComPtr().Swap(*this);
         return *this;
@@ -449,25 +449,25 @@ FORCEINLINE bool operator!=(const TComPtr<T>& LHS, const TComPtr<U>& RHS) noexce
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TComPtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator==(const TComPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TComPtr<T>& RHS) noexcept
+FORCEINLINE bool operator==(nullptr_type, const TComPtr<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TComPtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TComPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TComPtr<T>& RHS) noexcept
+FORCEINLINE bool operator!=(nullptr_type, const TComPtr<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }

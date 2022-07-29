@@ -15,7 +15,7 @@ public:
     static bool Initialize();
 
      /** @brief: Ticks the engine */
-    static void Tick(FTimestamp Deltatime);
+    static void Tick(FTimespan Deltatime);
 
      /** @brief: Releases the engine */
     static bool Release();

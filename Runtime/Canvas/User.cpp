@@ -11,7 +11,7 @@ FUser::FUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
     , MouseButtonStates()
 { }
 
-void FUser::Tick(FTimestamp DeltaTime)
+void FUser::Tick(FTimespan DeltaTime)
 {
     // Update all key-states 
     for (FKeyState& KeyState : KeyStates)

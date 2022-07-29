@@ -8,8 +8,7 @@ IMPLEMENT_ENGINE_MODULE(FDefaultModule, RHI);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Globals
 
-RHI_API FRHICoreInterface*  GRHICoreInterface = nullptr;
-RHI_API IRHIShaderCompiler* GShaderCompiler   = nullptr;
+RHI_API FRHICoreInterface* GRHICoreInterface = nullptr;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RHI Functions
@@ -65,15 +64,6 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
 
     GRHICoreInterface = RHICoreInterface;
 
-    IRHIShaderCompiler* Compiler = RHIModule->CreateCompiler();
-    if (!Compiler)
-    {
-        LOG_ERROR("[InitRHI] Failed to init RHIShaderCompiler, the application has to terminate");
-        return false;
-    }
-
-    GShaderCompiler = Compiler;
-
     // Initialize the CommandListExecutor
     if (!GRHICommandExecutor.Initialize())
     {
@@ -96,6 +86,4 @@ void RHIRelease()
         GRHICoreInterface->Destroy();
         GRHICoreInterface = nullptr;
     }
-
-    SafeDelete(GShaderCompiler);
 }

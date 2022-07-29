@@ -29,7 +29,7 @@ public:
     /**
      * @brief: Construct from nullptr
      */
-    FORCEINLINE TOptional(NullptrType) noexcept
+    FORCEINLINE TOptional(nullptr_type) noexcept
         : Value()
         , bHasValue(false)
     
@@ -255,7 +255,7 @@ public:
      * 
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(NullptrType) noexcept
+    FORCEINLINE TOptional& operator=(nullptr_type) noexcept
     {
         Reset();
         return *this;

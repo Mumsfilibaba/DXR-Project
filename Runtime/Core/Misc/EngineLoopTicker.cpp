@@ -13,7 +13,7 @@ FEngineLoopTicker& FEngineLoopTicker::Get()
     return Instance;
 }
 
-void FEngineLoopTicker::Tick(FTimestamp Deltatime)
+void FEngineLoopTicker::Tick(FTimespan Deltatime)
 {
     for (FTickDelegate TickDelegate : TickDelegates)
     {

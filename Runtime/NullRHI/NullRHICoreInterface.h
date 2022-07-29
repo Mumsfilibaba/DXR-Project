@@ -26,7 +26,7 @@
 class FNullRHICoreInterface final 
     : public FRHICoreInterface
 {
-private:
+public:
     FNullRHICoreInterface()
         : FRHICoreInterface(ERHIInstanceType::Null)
         , CommandContext(FNullRHICommandContext::CreateNullRHIContext())
@@ -36,9 +36,6 @@ private:
     {
         SafeDelete(CommandContext);
     }
-
-public:
-    static FNullRHICoreInterface* CreateNullRHICoreInterface() { return dbg_new FNullRHICoreInterface(); }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHICoreInterface Interface

@@ -161,7 +161,7 @@ public:
     { }
 
     /** @brief: Create from nullptr. Same as default constructor. */
-    FORCEINLINE TFunction(NullptrType) noexcept
+    FORCEINLINE TFunction(nullptr_type) noexcept
         : Storage()
         , Size(0)
     { }
@@ -300,7 +300,7 @@ public:
      *
      * @return: A reference to this object
      */
-    FORCEINLINE TFunction& operator=(NullptrType) noexcept
+    FORCEINLINE TFunction& operator=(nullptr_type) noexcept
     {
         Release();
         return *this;

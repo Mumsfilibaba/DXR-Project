@@ -45,7 +45,7 @@ public:
     virtual int32 WaitForCompletion(uint64 TimeoutInMs) { return 0; }
 
     /** @brief: Waits for the thread to complete and joins with caller  */
-    virtual int32 WaitForCompletion(FTimestamp Timeout) { return WaitForCompletion(static_cast<uint64>(Timeout.AsMilliseconds())); }
+    virtual int32 WaitForCompletion(FTimespan Timeout) { return WaitForCompletion(static_cast<uint64>(Timeout.AsMilliseconds())); }
     
     /** @return: Returns the native platform handle */
     virtual void* GetPlatformHandle() { return nullptr; }

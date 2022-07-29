@@ -159,8 +159,7 @@ private:
 FD3D12ShaderCompiler* GD3D12ShaderCompiler = nullptr;
 
 FD3D12ShaderCompiler::FD3D12ShaderCompiler()
-    : IRHIShaderCompiler()
-    , DxCompiler(nullptr)
+    : DxCompiler(nullptr)
     , DxLibrary(nullptr)
     , DxLinker(nullptr)
     , DxIncludeHandler(nullptr)

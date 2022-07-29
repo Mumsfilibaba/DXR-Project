@@ -16,23 +16,23 @@ public:
     /** @brief: Resets the time to zero */
     FORCEINLINE void Reset()
     {
-        DeltaTime = FTimestamp(0);
-        TotalTime = FTimestamp(0);
+        DeltaTime = FTimespan(0);
+        TotalTime = FTimespan(0);
     }
 
-    FORCEINLINE const FTimestamp& GetDeltaTime() const
+    FORCEINLINE const FTimespan& GetDeltaTime() const
     {
         return DeltaTime;
     }
 
-    FORCEINLINE const FTimestamp& GetTotalTime() const
+    FORCEINLINE const FTimespan& GetTotalTime() const
     {
         return TotalTime;
     }
 
 private:
-    FTimestamp TotalTime;
-    FTimestamp DeltaTime;
+    FTimespan TotalTime;
+    FTimespan DeltaTime;
 
     uint64     LastTime  = 0;
     uint64     Frequency = 0;

@@ -17,7 +17,7 @@ bool FApplicationModule::Init()
     return true;
 }
 
-void FApplicationModule::Tick(FTimestamp)
+void FApplicationModule::Tick(FTimespan)
 {
 }
 

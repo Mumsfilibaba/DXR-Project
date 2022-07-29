@@ -377,7 +377,7 @@ public:
      *
      * @return: A reference to this object
      */
-    FORCEINLINE TSharedRef& operator=(NullptrType) noexcept
+    FORCEINLINE TSharedRef& operator=(nullptr_type) noexcept
     {
         TSharedRef().Swap(*this);
         return *this;
@@ -437,25 +437,25 @@ FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) 
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TSharedRef<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator==(const TSharedRef<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TSharedRef<T>& RHS) noexcept
+FORCEINLINE bool operator==(nullptr_type, const TSharedRef<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TSharedRef<T>& RHS) noexcept
+FORCEINLINE bool operator!=(nullptr_type, const TSharedRef<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }

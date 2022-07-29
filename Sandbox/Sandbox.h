@@ -15,7 +15,7 @@ public:
 
     virtual bool Init() override;
 
-    virtual void Tick(FTimestamp DeltaTime) override;
+    virtual void Tick(FTimespan DeltaTime) override;
 
 private:
     FCamera* CurrentCamera = nullptr;

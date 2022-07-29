@@ -36,7 +36,7 @@ public:
     /**
      * @brief: Construct from nullptr
      */
-    FORCEINLINE TUniquePtr(NullptrType) noexcept
+    FORCEINLINE TUniquePtr(nullptr_type) noexcept
         : DeleterType()
         , Ptr(nullptr)
     { }
@@ -242,7 +242,7 @@ public:
     /**
      * @brief: Assignment operator that takes a nullptr
      */
-    FORCEINLINE TUniquePtr& operator=(NullptrType) noexcept
+    FORCEINLINE TUniquePtr& operator=(nullptr_type) noexcept
     {
         TUniquePtr().Swap(*this);
         return *this;
@@ -300,7 +300,7 @@ public:
     /**
      * @brief: Construct from nullptr
      */
-    FORCEINLINE TUniquePtr(NullptrType) noexcept
+    FORCEINLINE TUniquePtr(nullptr_type) noexcept
         : DeleterType()
         , Ptr(nullptr)
     { }
@@ -500,7 +500,7 @@ public:
      *
      * @return: A reference to this instance
      */
-    FORCEINLINE TUniquePtr& operator=(NullptrType) noexcept
+    FORCEINLINE TUniquePtr& operator=(nullptr_type) noexcept
     {
         TUniquePtr().Swap(*this);
         return *this;
@@ -570,25 +570,25 @@ FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) 
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TUniquePtr<T>& RHS) noexcept
+FORCEINLINE bool operator==(nullptr_type, const TUniquePtr<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TUniquePtr<T>& RHS) noexcept
+FORCEINLINE bool operator!=(nullptr_type, const TUniquePtr<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }

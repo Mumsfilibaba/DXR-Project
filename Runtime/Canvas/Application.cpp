@@ -242,7 +242,7 @@ FGenericWindowRef FApplication::CreateWindow()
     return PlatformApplication->CreateWindow();
 }
 
-void FApplication::Tick(FTimestamp DeltaTime)
+void FApplication::Tick(FTimespan DeltaTime)
 {
     // Update UI
     ImGuiIO& UIState = ImGui::GetIO();

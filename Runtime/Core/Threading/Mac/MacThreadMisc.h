@@ -42,7 +42,7 @@ struct FMacThreadMisc
         return reinterpret_cast<void*>(CurrentThread);
     }
 
-    static FORCEINLINE void Sleep(FTimestamp Time)
+    static FORCEINLINE void Sleep(FTimespan Time)
     {	
         float Microseconds = Time.AsMicroseconds();
         usleep(static_cast<useconds_t>(Microseconds));

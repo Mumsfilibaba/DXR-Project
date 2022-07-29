@@ -93,7 +93,6 @@ class TNullRHITexture final
     : public BaseTextureType
 {
 public:
-
     template<typename BaseTextureInitializer>
     explicit TNullRHITexture(const BaseTextureInitializer& Initializer)
         : BaseTextureType(Initializer)

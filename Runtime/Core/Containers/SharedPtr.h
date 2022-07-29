@@ -297,7 +297,7 @@ public:
     /**
      * @brief: Constructor setting both counter and pointer to nullptr 
      */
-    FORCEINLINE TSharedPtr(NullptrType) noexcept
+    FORCEINLINE TSharedPtr(nullptr_type) noexcept
         : Storage()
     { }
 
@@ -653,7 +653,7 @@ public:
      * 
      * @return: A reference to this instance
      */
-    FORCEINLINE TSharedPtr& operator=(NullptrType) noexcept
+    FORCEINLINE TSharedPtr& operator=(nullptr_type) noexcept
     {
         TSharedPtr().Swap(*this);
         return *this;
@@ -708,25 +708,25 @@ FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) 
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TSharedPtr<T>& RHS) noexcept
+FORCEINLINE bool operator==(nullptr_type, const TSharedPtr<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TSharedPtr<T>& RHS) noexcept
+FORCEINLINE bool operator!=(nullptr_type, const TSharedPtr<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }
@@ -1106,7 +1106,7 @@ public:
      *
      * @return: Return the reference to this instance
      */
-    FORCEINLINE TWeakPtr& operator=(NullptrType) noexcept
+    FORCEINLINE TWeakPtr& operator=(nullptr_type) noexcept
     {
         TWeakPtr().Swap(*this);
         return *this;
@@ -1161,25 +1161,25 @@ FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noex
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TWeakPtr<T>& RHS) noexcept
+FORCEINLINE bool operator==(nullptr_type, const TWeakPtr<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TWeakPtr<T>& RHS) noexcept
+FORCEINLINE bool operator!=(nullptr_type, const TWeakPtr<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }

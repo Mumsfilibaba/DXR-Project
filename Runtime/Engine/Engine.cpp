@@ -153,7 +153,7 @@ bool FEngine::Start()
     return true;
 }
 
-void FEngine::Tick(FTimestamp DeltaTime)
+void FEngine::Tick(FTimespan DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 

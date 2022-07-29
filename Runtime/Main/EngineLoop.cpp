@@ -245,7 +245,7 @@ bool FEngineLoop::Initialize()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Tick
 
-void FEngineLoop::Tick(FTimestamp Deltatime)
+void FEngineLoop::Tick(FTimespan Deltatime)
 {
     TRACE_FUNCTION_SCOPE();
 

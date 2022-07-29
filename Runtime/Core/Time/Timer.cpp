@@ -19,7 +19,7 @@ void FTimer::Tick()
     uint64 Delta       = Now - LastTime;
     uint64 Nanoseconds = NTime::FromSeconds(Delta) / Frequency;
 
-    DeltaTime = FTimestamp(Nanoseconds);
+    DeltaTime = FTimespan(Nanoseconds);
     LastTime  = Now;
     TotalTime += DeltaTime;
 }

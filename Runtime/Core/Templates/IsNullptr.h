@@ -3,9 +3,9 @@
 #include "RemoveCV.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// NullptrType
+// nullptr_type
 
-typedef decltype(nullptr) NullptrType;
+typedef decltype(nullptr) nullptr_type;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TIsNullptr
@@ -15,6 +15,6 @@ struct TIsNullptr
 {
     enum
     {
-        Value = TIsSame<NullptrType, typename TRemoveCV<T>::Type>::Value
+        Value = TIsSame<nullptr_type, typename TRemoveCV<T>::Type>::Value
     };
 };

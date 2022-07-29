@@ -40,7 +40,7 @@ bool FEditorEngine::Init()
     return true;
 }
 
-void FEditorEngine::Tick( FTimestamp Deltatime )
+void FEditorEngine::Tick( FTimespan Deltatime )
 {
     FEngine::Tick( Deltatime );
 }

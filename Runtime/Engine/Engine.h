@@ -45,7 +45,7 @@ public:
      * 
      * @param DeltaTime: Time since the last tick
      */
-    virtual void Tick(FTimestamp DeltaTime);
+    virtual void Tick(FTimespan DeltaTime);
 
     /** 
      * Release engine resources

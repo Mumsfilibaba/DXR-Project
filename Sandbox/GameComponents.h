@@ -17,7 +17,7 @@ public:
         , CurrentSpeed(InSpeed)
     { }
 
-    virtual void Tick(FTimestamp DeltaTime)
+    virtual void Tick(FTimespan DeltaTime)
     {
         const float fDelta = float(DeltaTime.AsSeconds());
 

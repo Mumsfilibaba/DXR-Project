@@ -83,7 +83,7 @@ public:
     FGenericWindowRef CreateWindow();
 
     /** @brief: Tick and update the FApplication */
-    void Tick(FTimestamp DeltaTime);
+    void Tick(FTimespan DeltaTime);
 
     /** @return: Returns true if the application is running */
     bool IsRunning() const { return bIsRunning; }

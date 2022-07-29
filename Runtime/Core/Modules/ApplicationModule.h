@@ -22,7 +22,7 @@ public:
      * 
      * @param DeltaTime: Time since last time the application was ticked
      */
-    virtual void Tick(FTimestamp Deltatime);
+    virtual void Tick(FTimespan Deltatime);
 
     /** @return: Returns true if the release is successful */
     virtual bool Release();

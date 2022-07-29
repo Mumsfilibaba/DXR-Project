@@ -4,7 +4,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Delegates/Delegate.h"
 
-DECLARE_DELEGATE(FTickDelegate, FTimestamp);
+DECLARE_DELEGATE(FTickDelegate, FTimespan);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FEngineLoopTicker
@@ -28,7 +28,7 @@ public:
      * 
      * @param DeltaTime: Time since last time the delegates was fired
      */
-    void Tick(FTimestamp Deltatime);
+    void Tick(FTimespan Deltatime);
 
     /**
      * @brief: Add a new element that should be called when the EngineLoop ticks 

@@ -52,7 +52,7 @@ void FScene::Start()
     }
 }
 
-void FScene::Tick(FTimestamp DeltaTime)
+void FScene::Tick(FTimespan DeltaTime)
 {
     for (FActor* Actor : Actors)
     {

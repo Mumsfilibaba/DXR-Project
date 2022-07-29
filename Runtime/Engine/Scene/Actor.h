@@ -98,7 +98,7 @@ public:
      *
      * @param DeltaTime: Time since the last call to tick
      */
-    virtual void Tick(FTimestamp DeltaTime);
+    virtual void Tick(FTimespan DeltaTime);
 
     /**
      * @brief: Add a new component to the actor 

@@ -29,7 +29,7 @@ struct FWindowsThreadMisc
         return reinterpret_cast<void*>(static_cast<uintptr_t>(CurrentHandle));
     }
 
-    static FORCEINLINE void Sleep(FTimestamp Time)
+    static FORCEINLINE void Sleep(FTimespan Time)
     {
         DWORD Milliseconds = static_cast<DWORD>(Time.AsMilliseconds());
         ::Sleep(Milliseconds);

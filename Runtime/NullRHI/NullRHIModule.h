@@ -18,6 +18,5 @@ struct FNullRHIModule final
     FNullRHIModule()  = default;
     ~FNullRHIModule() = default;
 
-    virtual class FRHICoreInterface*  CreateInterface() override final;
-    virtual class IRHIShaderCompiler* CreateCompiler()  override final;
+    virtual class FRHICoreInterface* CreateInterface() override final;
 };
