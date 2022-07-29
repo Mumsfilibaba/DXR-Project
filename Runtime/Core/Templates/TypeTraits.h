@@ -21,15 +21,7 @@
 #include "And.h"
 #include "Or.h"
 #include "Not.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helpers
-
-#include "Conditional.h"
-#include "EnableIf.h"
-#include "Identity.h"
-#include "Decay.h"
-#include "MemberPointerTraits.h"
+#include "MinMax.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Is*
@@ -58,11 +50,14 @@
 #include "IsPOD.h"
 #include "IsPointer.h"
 #include "IsPolymorphic.h"
+#include "IsReallocatable.h"
 #include "IsReference.h"
 #include "IsSame.h"
 #include "IsScalar.h"
 #include "IsSigned.h"
+#include "IsTArrayType.h"
 #include "IsTrivial.h"
+#include "IsTStringType.h"
 #include "IsUnion.h"
 #include "IsVoid.h"
 #include "IsVolatile.h"

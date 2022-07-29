@@ -6,7 +6,7 @@
 #include "Core/Math/Matrix4.h"
 #include "Core/Containers/HashTable.h"
 #include "Core/Utilities/StringUtilities.h"
-#include "Core/Logging/Log.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 #include <ofbx.h>
 

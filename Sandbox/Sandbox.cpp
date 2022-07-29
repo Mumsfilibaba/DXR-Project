@@ -2,6 +2,7 @@
 #include "GameComponents.h"
 
 #include <Core/Math/Math.h>
+#include <Core/Misc/OutputDeviceLogger.h>
 
 #include <Renderer/Renderer.h>
 
@@ -13,8 +14,6 @@
 #include <Engine/Scene/Lights/DirectionalLight.h>
 #include <Engine/Scene/Components/MeshComponent.h>
 #include <Engine/Resources/TextureFactory.h>
-
-#include <Core/Logging/Log.h>
 
 #include <Canvas/Application.h>
 

@@ -5,11 +5,10 @@
 #include "Core/Containers/HashTable.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CConfigValue - Holds a single config-value
+// FConfigValue
 
-class FConfigValue
+struct FConfigValue
 {
-public:
     FConfigValue() = default;
     FConfigValue(FConfigValue&& Other) = default;
     FConfigValue(const FConfigValue& Other) = default;

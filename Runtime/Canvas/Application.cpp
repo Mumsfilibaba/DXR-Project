@@ -1,9 +1,10 @@
 #include "Application.h"
 
+#include "Core/Input/InputStates.h"
+#include "Core/Misc/OutputDeviceLogger.h"
+
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-
-#include "Core/Input/InputStates.h"
 
 #include <imgui.h>
 

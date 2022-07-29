@@ -41,14 +41,30 @@
 // Templates
 
 #include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/CallableWrapper.h"
+#include "Core/Templates/ClassUtilities.h"
+#include "Core/Templates/Conditional.h"
+#include "Core/Templates/Decay.h"
+#include "Core/Templates/DeclVal.h"
+#include "Core/Templates/EnableIf.h"
+#include "Core/Templates/EnumUtilities.h"
+#include "Core/Templates/Identity.h"
+#include "Core/Templates/InitializerList.h"
+#include "Core/Templates/InPlace.h"
+#include "Core/Templates/Invoke.h"
+#include "Core/Templates/MemberPointerTraits.h"
 #include "Core/Templates/Move.h"
-#include "Core/Templates/AddressOf.h"
 #include "Core/Templates/ObjectHandling.h"
+#include "Core/Templates/ReferenceWrapper.h"
+#include "Core/Templates/UnderlyingType.h"
+#include "Core/Templates/AddressOf.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Application
+// Misc
 
-#include "Core/Logging/Log.h"
+#include "Core/Misc/OutputDevice.h"
+#include "Core/Misc/OutputDeviceConsole.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Utilities

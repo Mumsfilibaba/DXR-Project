@@ -1,6 +1,6 @@
 #include "WindowsApplication.h"
 #include "WindowsApplicationMisc.h"
-#include "WindowsConsoleWindow.h"
+#include "WindowsOutputDeviceConsole.h"
 
 #include "Core/Input/ModifierKeyState.h"
 
@@ -12,9 +12,9 @@ FGenericApplication* FWindowsApplicationMisc::CreateApplication()
     return FWindowsApplication::CreateWindowsApplication();
 }
 
-FGenericConsoleWindow* FWindowsApplicationMisc::CreateConsoleWindow()
+FOutputDeviceConsole* FWindowsApplicationMisc::CreateOutputDeviceConsole()
 {
-    return FWindowsConsoleWindow::CreateWindowsConsole();
+    return dbg_new FWindowsOutputDeviceConsole();
 }
 
 void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)

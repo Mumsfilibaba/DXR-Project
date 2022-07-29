@@ -1,7 +1,7 @@
 #include "StbImageLoader.h"
 
 #include "Core/Threading/AsyncTaskManager.h"
-#include "Core/Logging/Log.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>

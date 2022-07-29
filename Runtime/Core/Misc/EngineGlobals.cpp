@@ -1,9 +1,0 @@
-#include "EngineGlobals.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EngineGlobals
-
-namespace NErrorDevice
-{
-    CORE_API FGenericConsoleWindow* GConsoleWindow = nullptr;
-}

@@ -1,6 +1,6 @@
 #include "WindowsWindow.h"
 
-#include "Core/Logging/Log.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformMisc.h"
 
 #include "CoreApplication/Platform/PlatformApplication.h"

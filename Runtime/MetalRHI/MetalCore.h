@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Mac/Mac.h"
-#include "Core/Logging/Log.h"
+#include "Core/Logging/Logger.h"
 #include "Core/Debug/Debug.h"
 
 #include "RHI/RHITexture.h"

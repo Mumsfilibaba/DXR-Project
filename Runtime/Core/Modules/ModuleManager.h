@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Logging/Log.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/String.h"
@@ -78,7 +77,6 @@ typedef void* PlatformModule;
 class CORE_API FModuleManager
 {
 private:
-
     friend class TOptional<FModuleManager>;
 
     struct FModule
@@ -97,7 +95,6 @@ private:
     };
 
 public:
-
     // Delegate for when a new module is loaded into the engine, name and IModule pointer is the arguments
     DECLARE_RETURN_DELEGATE(FInitializeStaticModuleDelegate, IModule*);
 
@@ -161,8 +158,8 @@ public:
     uint32 GetLoadedModuleCount();
 
     /** Delegate for when a new module is loaded into the engine, name and IModule pointer is the arguments */
-    DECLARE_MULTICAST_DELEGATE(CModuleLoadedDelegate, const char*, IModule*);
-    CModuleLoadedDelegate GetModuleLoadedDelegate() { return ModuleLoadedDelegate; }
+    DECLARE_MULTICAST_DELEGATE(FModuleLoadedDelegate, const char*, IModule*);
+    FModuleLoadedDelegate GetModuleLoadedDelegate() { return ModuleLoadedDelegate; }
 
     /**
      * @brief: Load a new module into the engine
@@ -239,7 +236,6 @@ public:
     }
 
 private:
-
     static TOptional<FModuleManager>& GetModuleManagerInstance();
 
     FInitializeStaticModuleDelegate* GetStaticModuleDelegate(const char* ModuleName);
@@ -249,11 +245,12 @@ private:
     void ReleaseAllModules();
 
 private:
-    CModuleLoadedDelegate ModuleLoadedDelegate;
+    typedef TPair<FString, FInitializeStaticModuleDelegate> FStaticModulePair;
 
-    TArray<FModule>       Modules;
+    FModuleLoadedDelegate     ModuleLoadedDelegate;
 
-    TArray<TPair<FString, FInitializeStaticModuleDelegate>> StaticModuleDelegates;
+    TArray<FModule>           Modules;
+    TArray<FStaticModulePair> StaticModuleDelegates;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

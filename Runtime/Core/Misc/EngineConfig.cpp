@@ -1,11 +1,6 @@
 #include "EngineConfig.h"
 
-#include "Core/Logging/Log.h"
-
-#include <stdio.h>
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
+#include "Core/Misc/OutputDeviceLogger.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ConfigFile
@@ -13,8 +8,7 @@
 FConfigFile::FConfigFile(const char* InFilename)
     : Filename(InFilename)
     , Sections()
-{
-}
+{ }
 
 bool FConfigFile::SetString(const char* SectionName, const char* Name, const FString& NewValue)
 {

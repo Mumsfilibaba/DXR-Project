@@ -15,11 +15,8 @@
 struct COREAPPLICATION_API FWindowsApplicationMisc final 
     : public FGenericApplicationMisc
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericApplicationMisc Interface
-
-    static class FGenericApplication*   CreateApplication();
-    static class FGenericConsoleWindow* CreateConsoleWindow();
+    static FOutputDeviceConsole* CreateOutputDeviceConsole();
+    static FGenericApplication*  CreateApplication();
 
     static FORCEINLINE void MessageBox(const FString& Title, const FString& Message)
     {

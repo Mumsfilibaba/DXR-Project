@@ -2,7 +2,7 @@
 
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Input/Windows/WindowsKeyMapping.h"
-#include "Core/Logging/Log.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 

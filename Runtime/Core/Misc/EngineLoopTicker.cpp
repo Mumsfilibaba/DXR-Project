@@ -1,7 +1,11 @@
 #include "EngineLoopTicker.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EngineLoopTicker
+// FEngineLoopTicker
+
+FEngineLoopTicker::FEngineLoopTicker()
+    : TickDelegates()
+{ }
 
 FEngineLoopTicker& FEngineLoopTicker::Get()
 {
@@ -17,12 +21,12 @@ void FEngineLoopTicker::Tick(FTimestamp Deltatime)
     }
 }
 
-void FEngineLoopTicker::AddElement(const FTickDelegate& NewElement)
+void FEngineLoopTicker::AddDelegate(const FTickDelegate& NewElement)
 {
     TickDelegates.Push(NewElement);
 }
 
-void FEngineLoopTicker::RemoveElement(FDelegateHandle RemoveHandle)
+void FEngineLoopTicker::RemoveDelegate(FDelegateHandle RemoveHandle)
 {
     uint32 NumElements = TickDelegates.Size();
     for (uint32 Index = 0; Index < NumElements; Index++)

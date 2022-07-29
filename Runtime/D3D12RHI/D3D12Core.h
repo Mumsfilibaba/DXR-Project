@@ -4,7 +4,7 @@
 #include "RHI/RHIResources.h"
 
 #include "Core/Debug/Debug.h"
-#include "Core/Logging/Log.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/ComPtr.h"
 
 #if MONOLITHIC_BUILD

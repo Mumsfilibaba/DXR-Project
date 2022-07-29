@@ -12,7 +12,7 @@ bool FApplicationModule::Init()
     FTickDelegate TickDelegate = FTickDelegate::CreateRaw(this, &FApplicationModule::Tick);
     TickHandle = TickDelegate.GetHandle();
 
-    FEngineLoopTicker::Get().AddElement(TickDelegate);
+    FEngineLoopTicker::Get().AddDelegate(TickDelegate);
 
     return true;
 }
@@ -23,7 +23,7 @@ void FApplicationModule::Tick(FTimestamp)
 
 bool FApplicationModule::Release()
 {
-    FEngineLoopTicker::Get().RemoveElement(TickHandle);
+    FEngineLoopTicker::Get().RemoveDelegate(TickHandle);
     return true;
 }
 

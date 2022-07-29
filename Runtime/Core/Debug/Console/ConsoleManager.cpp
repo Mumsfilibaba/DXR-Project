@@ -1,7 +1,5 @@
 #include "ConsoleManager.h"
 
-#include "Core/Logging/Log.h"
-
 #include "Canvas/Application.h"
 
 // TODO: Remove (Make own? Slow?)
@@ -10,16 +8,21 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console commands for the console
 
-FAutoConsoleCommand GClearHistory("ClearHistory", FCommandDelegateType::CreateRaw(&FConsoleManager::Get(), &FConsoleManager::ClearHistory));
+FAutoConsoleCommand GClearHistory(
+    "ClearHistory",
+    FCommandDelegateType::CreateRaw(&FConsoleManager::Get(), &FConsoleManager::ClearHistory));
 
-TAutoConsoleVariable<FString> GEcho("Echo", "", FCVarChangedDelegateType::CreateLambda([](IConsoleVariable* InVariable) -> void
-{
-    if (InVariable->IsString())
+TAutoConsoleVariable<FString> GEcho(
+    "Echo",
+    "",
+    FCVarChangedDelegateType::CreateLambda([](IConsoleVariable* InVariable) -> void
     {
-        FConsoleManager& ConsoleManager = FConsoleManager::Get();
-        ConsoleManager.PrintMessage(InVariable->GetString(), EConsoleSeverity::Info);
-    }
-}));
+        if (InVariable->IsString())
+        {
+            FConsoleManager& ConsoleManager = FConsoleManager::Get();
+            ConsoleManager.PrintMessage(InVariable->GetString(), EConsoleSeverity::Info);
+        }
+    }));
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FConsoleManager

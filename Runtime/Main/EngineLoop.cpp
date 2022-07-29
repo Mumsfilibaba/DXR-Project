@@ -14,6 +14,8 @@
 #include "Core/Threading/AsyncTaskManager.h"
 #include "Core/Misc/EngineLoopDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
+#include "Core/Misc/OutputDeviceConsole.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
@@ -79,20 +81,26 @@ bool FEngineLoop::LoadCoreModules()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // PreInitialize
 
+FOutputDeviceConsole* GConsoleWindow = 0;
+
 bool FEngineLoop::PreInitialize()
 {
-    NErrorDevice::GConsoleWindow = FPlatformApplicationMisc::CreateConsoleWindow();
-    if (!NErrorDevice::GConsoleWindow)
+    // Create the console window
+    GConsoleWindow = FPlatformApplicationMisc::CreateOutputDeviceConsole();
+    if (GConsoleWindow)
+    {
+        FOutputDeviceLogger::Get()->AddOutputDevice(GConsoleWindow);
+        
+        GConsoleWindow->Show(true);
+        GConsoleWindow->SetTitle(FString(PROJECT_NAME) + ": Error Console");
+    }
+    else
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize ConsoleWindow");
         return false;
     }
-    else
-    {
-        NErrorDevice::GConsoleWindow->Show(true);
-        NErrorDevice::GConsoleWindow->SetTitle(FString(PROJECT_NAME) + ": Error Console");
-    }
 
+    // Load the Core-Modules
     if (!LoadCoreModules())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Load Core-Modules");
@@ -135,7 +143,7 @@ bool FEngineLoop::PreInitialize()
         return false;
     }
 
-   // Initialize the shadercompiler before RHI since RHI might need to compile shaders
+   // Initialize the ShaderCompiler before RHI since RHI might need to compile shaders
     if (!FRHIShaderCompiler::Initialize(FProjectManager::GetAssetPath()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
@@ -294,7 +302,7 @@ bool FEngineLoop::Release()
 
     FModuleManager::ReleaseAllLoadedModules();
 
-    SafeRelease(NErrorDevice::GConsoleWindow);
+    SafeDelete(GConsoleWindow);
 
     FModuleManager::Destroy();
 

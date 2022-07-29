@@ -2,7 +2,7 @@
 #include "CocoaWindow.h"
 
 #include "Core/Mac/Mac.h"
-#include "Core/Logging/Log.h"
+#include "Core/Logging/Logger.h"
 #include "Core/Threading/Mac/MacRunLoop.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"

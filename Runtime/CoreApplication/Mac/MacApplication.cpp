@@ -3,7 +3,7 @@
 #include "MacCursor.h"
 #include "CocoaWindow.h"
 
-#include "Core/Logging/Log.h"
+#include "Core/Logging/Logger.h"
 #include "Core/Input/Platform/FPlatformKeyMapping.h"
 #include "Core/Threading/Mac/MacRunLoop.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"

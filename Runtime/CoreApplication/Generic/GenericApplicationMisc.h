@@ -18,13 +18,16 @@
 
 // TODO: Enable other types of Modal windows for supported platforms
 
+struct FOutputDeviceConsole;
+class  FGenericApplication;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericApplicationMisc
 
 struct COREAPPLICATION_API FGenericApplicationMisc
 {
-    static class FGenericApplication*   CreateApplication();
-    static class FGenericConsoleWindow* CreateConsoleWindow();
+    static FOutputDeviceConsole* CreateOutputDeviceConsole() { return nullptr; }
+    static FGenericApplication*  CreateApplication();
 
     static FORCEINLINE void MessageBox(const FString& Title, const FString& Message) { }
 

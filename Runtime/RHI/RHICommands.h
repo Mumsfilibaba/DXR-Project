@@ -5,7 +5,7 @@
 
 #include "Core/Debug/Debug.h"
 #include "Core/Memory/Memory.h"
-#include "Core/Logging/Log.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/ArrayView.h"
 
 #define DECLARE_RHICOMMAND(RHICommandName) \

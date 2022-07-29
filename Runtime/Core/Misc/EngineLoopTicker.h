@@ -7,11 +7,11 @@
 DECLARE_DELEGATE(FTickDelegate, FTimestamp);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Enables systems to bind to the tick function, this enables modules to be called every frame */
+// FEngineLoopTicker
 
 class CORE_API FEngineLoopTicker
 {
-    FEngineLoopTicker()  = default;
+    FEngineLoopTicker();
     ~FEngineLoopTicker() = default;
 
 public:
@@ -33,16 +33,16 @@ public:
     /**
      * @brief: Add a new element that should be called when the EngineLoop ticks 
      * 
-     * @param NewElement: Delegate to add to the engine-loop ticker
+     * @param NewDelegate: Delegate to add to the engine-loop ticker
      */
-    void AddElement(const FTickDelegate& NewElement);
+    void AddDelegate(const FTickDelegate& NewDelegate);
 
     /**
      * @brief: Remove all instances of a delegate from the Tick-loop 
      * 
      * @param RemoveHandle: DelegateHandle of the delegate to remove
      */
-    void RemoveElement(FDelegateHandle RemoveHandle);
+    void RemoveDelegate(FDelegateHandle RemoveHandle);
 
 private:
     // TODO: These should be stored in some priority, also there should be the possibility to add a delay for systems that does not need to be called every frame

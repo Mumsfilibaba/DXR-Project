@@ -1,7 +1,7 @@
 #pragma once
 #include "WindowsCriticalSection.h"
 
-#include "Core/Logging/Log.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Generic/GenericConditionVariable.h"
 #include "Core/Platform/PlatformMisc.h"
