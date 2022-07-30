@@ -12,14 +12,18 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* TUniquePtr - Scalar values. Similar to std::unique_ptr */
 
-template<typename T, typename DeleterType = TDefaultDelete<T>>
+template<
+    typename T,
+    typename DeleterType = TDefaultDelete<T>>
 class TUniquePtr 
     : private DeleterType // Using inheritance instead of composition to avoid extra memory usage
 {
 public:
     using ElementType = T;
 
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     friend class TUniquePtr;
 
     TUniquePtr(const TUniquePtr& Other) = delete;
@@ -68,7 +72,10 @@ public:
      *
      * @param Other: UniquePtr to move from
      */
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TUniquePtr(TUniquePtr<OtherType, OtherDeleterType>&& Other) noexcept
         : DeleterType(Move(Other))
         , Ptr(Other.Ptr)
@@ -232,8 +239,11 @@ public:
      * @param RHS: UniquePtr to move from
      * @return: A reference to this instance
      */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type operator=(TUniquePtr<OtherType, OtherDeleterType>&& RHS) noexcept
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type 
+        operator=(TUniquePtr<OtherType, OtherDeleterType>&& RHS) noexcept
     {
         TUniquePtr(Move(RHS)).Swap(*this);
         return *this;
@@ -275,7 +285,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* TUniquePtr - Array values. Similar to std::unique_ptr */
 
-template<typename T, typename DeleterType>
+template<
+    typename T,
+    typename DeleterType>
 class TUniquePtr<T[], DeleterType> 
     : private DeleterType
 {
@@ -283,7 +295,9 @@ public:
     using ElementType = T;
     using SizeType = int32;
 
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     friend class TUniquePtr;
 
     TUniquePtr(const TUniquePtr& Other) = delete;
@@ -332,7 +346,10 @@ public:
      *
      * @param Other: UniquePtr to move from
      */
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TUniquePtr(TUniquePtr<OtherType[], OtherDeleterType>&& Other) noexcept
         : DeleterType(Move(Other))
         , Ptr(Other.Ptr)
@@ -488,8 +505,11 @@ public:
      * @param RHS: UniquePtr to move from
      * @return: A reference to this instance
      */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type operator=(TUniquePtr<OtherType[], OtherDeleterType>&& RHS) noexcept
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type 
+        operator=(TUniquePtr<OtherType[], OtherDeleterType>&& RHS) noexcept
     {
         TUniquePtr(Move(RHS)).Swap(*this);
         return *this;
@@ -533,37 +553,49 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Operators
 
-template<typename T, typename U>
+template<
+    typename T,
+    typename U>
 FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-template<typename T, typename U>
+template<
+    typename T,
+    typename U>
 FORCEINLINE bool operator==(T* LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-template<typename T, typename U>
+template<
+    typename T,
+    typename U>
 FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-template<typename T, typename U>
+template<
+    typename T,
+    typename U>
 FORCEINLINE bool operator!=(T* LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-template<typename T, typename U>
+template<
+    typename T,
+    typename U>
 FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-template<typename T, typename U>
+template<
+    typename T,
+    typename U>
 FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
@@ -596,7 +628,9 @@ FORCEINLINE bool operator!=(nullptr_type, const TUniquePtr<T>& RHS) noexcept
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* MakeUnique - Creates a new object together with a UniquePtr */
 
-template<typename T, typename... ArgTypes>
+template<
+    typename T,
+    typename... ArgTypes>
 FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TUniquePtr<T>>::Type MakeUnique(ArgTypes&&... Args) noexcept
 {
     T* UniquePtr = dbg_new T(Forward<ArgTypes>(Args)...);

@@ -19,7 +19,7 @@ public:
     void Render(FRHICommandList& CmdList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
 
 private:
-    TSharedRef<FRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<FRHIVertexShader>          VShader;
-    TSharedRef<FRHIPixelShader>           PShader;
+    FRHIGraphicsPipelineStateRef PipelineState;
+    FRHIVertexShaderRef          VShader;
+    FRHIPixelShaderRef           PShader;
 };

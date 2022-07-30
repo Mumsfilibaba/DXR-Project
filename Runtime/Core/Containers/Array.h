@@ -13,7 +13,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TArray - Dynamic Array similar to std::vector
 
-template<typename T, typename AllocatorType = TDefaultArrayAllocator<T>>
+template<
+    typename T,
+    typename AllocatorType = TDefaultArrayAllocator<T>>
 class TArray
 {
 public:
@@ -108,7 +110,9 @@ public:
      *
      * @param Other: Array to copy from
      */
-    template<typename ArrayType, typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
+    template<
+        typename ArrayType,
+        typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
     FORCEINLINE explicit TArray(const ArrayType& Other) noexcept
         : Allocator()
         , ArraySize(0)
@@ -416,7 +420,6 @@ public:
         {
             ReserveForInsertion(Position, 1);
             new(Data() + Position) ElementType(Forward<ArgTypes>(Args)...);
-
             ArraySize++;
         }
     }
@@ -497,7 +500,6 @@ public:
         {
             ReserveForInsertion(Position, NumElements);
             CopyConstructRange<ElementType>(Data() + Position, InputArray, NumElements);
-
             ArraySize += NumElements;
         }
     }
@@ -1551,7 +1553,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Enable TArrayType
 
-template<typename T, typename AllocatorType>
+template<
+    typename T,
+    typename AllocatorType>
 struct TIsTArrayType<TArray<T, AllocatorType>>
 {
     enum

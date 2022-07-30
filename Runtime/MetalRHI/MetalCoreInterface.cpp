@@ -13,8 +13,8 @@ FMetalCoreInterface::FMetalCoreInterface()
 
 FMetalCoreInterface::~FMetalCoreInterface()
 {
-	SafeDelete(CommandContext);
-	SafeDelete(DeviceContext);
+	SAFE_DELETE(CommandContext);
+	SAFE_DELETE(DeviceContext);
 }
 
 FMetalCoreInterface* FMetalCoreInterface::CreateMetalCoreInterface()

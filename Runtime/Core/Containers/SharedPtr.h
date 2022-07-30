@@ -73,7 +73,9 @@ public:
     TPointerReferencedStorage(const TPointerReferencedStorage&) = delete;
     TPointerReferencedStorage& operator=(const TPointerReferencedStorage&) = delete;
 
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     friend class TPointerReferencedStorage;
 
     FORCEINLINE TPointerReferencedStorage() noexcept
@@ -93,7 +95,10 @@ public:
         Other.Counter = nullptr;
     }
 
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TPointerReferencedStorage(TPointerReferencedStorage<OtherType, OtherDeleterType>&& Other) noexcept
         : DeleterType(Move(Other))
         , Ptr(nullptr)
@@ -191,7 +196,7 @@ public:
         Counter->ReleaseWeakRef();
 
         CounterType NumStrongRefs = Counter->GetStrongRefCount();
-        CounterType NumWeakRefs = Counter->GetWeakRefCount();
+        CounterType NumWeakRefs   = Counter->GetWeakRefCount();
         if ((NumStrongRefs < 1) && (NumWeakRefs < 1))
         {
             delete Counter;
@@ -250,7 +255,9 @@ public:
         return *this;
     }
 
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value, TPointerReferencedStorage&>::Type
         operator=(TPointerReferencedStorage<OtherType, OtherDeleterType>&& RHS) noexcept
     {
@@ -317,7 +324,9 @@ public:
      *
      * @param InPointer: Raw pointer to store
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
     FORCEINLINE explicit TSharedPtr(typename TRemoveExtent<OtherType>::Type* InPointer) noexcept
         : Storage()
     {
@@ -340,7 +349,10 @@ public:
      *
      * @param Other: SharedPtr to copy
      */
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedPtr(const TSharedPtr<OtherType, OtherDeleterType>& Other) noexcept
         : Storage()
     {
@@ -361,7 +373,10 @@ public:
      *
      * @param Other: SharedPtr to move
      */
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedPtr(TSharedPtr<OtherType, OtherDeleterType>&& Other) noexcept
         : Storage(Move(Other.Storage))
     { }
@@ -372,7 +387,9 @@ public:
      * @param Other: Container to take the counter from
      * @param InPointer: Raw pointer to store
      */
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     FORCEINLINE explicit TSharedPtr(const TSharedPtr<OtherType, OtherDeleterType>& Other, ElementType* InPointer) noexcept
         : Storage()
     {
@@ -385,7 +402,9 @@ public:
      * @param Other: Container to take the counter from
      * @param InPointer: Raw pointer to store
      */
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     FORCEINLINE explicit TSharedPtr(TSharedPtr<OtherType, OtherDeleterType>&& Other, ElementType* InPointer) noexcept
         : Storage()
     {
@@ -398,7 +417,10 @@ public:
      * 
      * @param Other: WeakPtr to take counter and pointer from
      */
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
     FORCEINLINE explicit TSharedPtr(const TWeakPtr<OtherType, OtherDeleterType>& Other) noexcept
         : Storage()
     {
@@ -410,7 +432,10 @@ public:
      *
      * @param Other: UniquePtr to take counter and pointer from
      */
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedPtr(TUniquePtr<OtherType, OtherDeleterType>&& Other) noexcept
         : Storage()
     {
@@ -614,7 +639,9 @@ public:
      * @param RHS: SharedPtr to copy
      * @return: A reference to this instance
      */
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value, typename TAddReference<TSharedPtr>::LValue>::Type
         operator=(const TSharedPtr<OtherType, OtherDeleterType>& RHS) noexcept
     {
@@ -628,7 +655,9 @@ public:
      * @param RHS: SharedPtr to move
      * @return: A reference to this instance
      */
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value, typename TAddReference<TSharedPtr>::LValue>::Type
         operator=(TSharedPtr<OtherType, OtherDeleterType>&& RHS) noexcept
     {
@@ -805,7 +834,10 @@ public:
      *
      * @param Other: WeakPtr to copy
      */
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TWeakPtr(const TWeakPtr<OtherType, OtherDeleterType>& Other) noexcept
         : Storage()
     {
@@ -817,7 +849,10 @@ public:
      *
      * @param Other: WeakPtr to move
      */
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TWeakPtr(TWeakPtr<OtherType, OtherDeleterType>&& Other) noexcept
         : Storage(Move(Other.Storage))
     { }
@@ -838,7 +873,10 @@ public:
      *
      * @param Other: SharedPtr to take pointer and counter from
      */
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TWeakPtr(const TSharedPtr<OtherType, OtherDeleterType>& Other) noexcept
         : Storage()
     {
@@ -1067,7 +1105,9 @@ public:
      * @param RHS: WeakPtr to copy from
      * @return: Return the reference to this instance
      */
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddReference<TWeakPtr>::LValue>::Type
         operator=(const TWeakPtr<OtherType, OtherDeleterType>& RHS) noexcept
     {
@@ -1081,7 +1121,9 @@ public:
      * @param RHS: WeakPtr to move from
      * @return: Return the reference to this instance
      */
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddReference<TWeakPtr>::LValue>::Type
         operator=(TWeakPtr<OtherType, OtherDeleterType>&& RHS) noexcept
     {
@@ -1262,7 +1304,9 @@ FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShar
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Casting functions
 
-template<typename ToType, typename FromType>
+template<
+    typename ToType,
+    typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type StaticCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
@@ -1271,7 +1315,9 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     return TSharedPtr<ToType>(Pointer, RawPointer);
 }
 
-template<typename ToType, typename FromType>
+template<
+    typename ToType,
+    typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type StaticCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
@@ -1280,7 +1326,9 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     return TSharedPtr<ToType>(Move(Pointer), RawPointer);
 }
 
-template<typename ToType, typename FromType>
+template<
+    typename ToType,
+    typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ConstCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
@@ -1289,7 +1337,9 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     return TSharedPtr<ToType>(Pointer, RawPointer);
 }
 
-template<typename ToType, typename FromType>
+template<
+    typename ToType,
+    typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ConstCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
@@ -1298,7 +1348,9 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     return TSharedPtr<ToType>(Move(Pointer), RawPointer);
 }
 
-template<typename ToType, typename FromType>
+template<
+    typename ToType, 
+    typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ReinterpretCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
@@ -1307,7 +1359,9 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     return TSharedPtr<ToType>(Pointer, RawPointer);
 }
 
-template<typename ToType, typename FromType>
+template<
+    typename ToType,
+    typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ReinterpretCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
@@ -1316,7 +1370,9 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     return TSharedPtr<ToType>(Move(Pointer), RawPointer);
 }
 
-template<typename ToType, typename FromType>
+template<
+    typename ToType,
+    typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type DynamicCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
@@ -1325,7 +1381,9 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     return TSharedPtr<ToType>(Pointer, RawPointer);
 }
 
-template<typename ToType, typename FromType>
+template<
+    typename ToType,
+    typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type DynamicCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;

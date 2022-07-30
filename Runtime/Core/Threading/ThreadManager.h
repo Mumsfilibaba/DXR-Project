@@ -5,8 +5,6 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Optional.h"
 
-typedef TSharedRef<FGenericThread> FGenericThreadRef; 
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FThreadManager
 
@@ -21,6 +19,7 @@ private:
 public:
     static bool Initialize();
     static bool Release();
+
     static FThreadManager& Get();
 
     static bool IsMainThread();
@@ -32,8 +31,6 @@ public:
     FGenericThreadRef GetThreadFromHandle(void* ThreadHandle);
 
 private:
-    static TOptional<FThreadManager>& GetThreadManagerInstance();
-
     TArray<FGenericThreadRef> Threads;
     void*                     MainThread;
 };

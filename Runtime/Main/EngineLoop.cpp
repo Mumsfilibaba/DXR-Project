@@ -302,11 +302,9 @@ bool FEngineLoop::Release()
 
     FThreadManager::Release();
 
-    FModuleManager::ReleaseAllLoadedModules();
+    SAFE_DELETE(GConsoleWindow);
 
-    SafeDelete(GConsoleWindow);
-
-    FModuleManager::Destroy();
+    FModuleManager::Shutdown();
 
     return true;
 }

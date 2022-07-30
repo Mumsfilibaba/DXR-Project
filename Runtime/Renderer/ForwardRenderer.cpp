@@ -56,7 +56,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     DepthStencilInitializer.bDepthEnable   = true;
     DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
+    FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
@@ -118,9 +118,12 @@ void FForwardRenderer::Render(FRHICommandList& CmdList, const FFrameResources& F
 
     TRACE_SCOPE("ForwardPass");
 
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+    CmdList.TransitionTexture(
+        LightSetup.ShadowMapCascades[0].Get(), 
+        EResourceAccess::NonPixelShaderResource, 
+        EResourceAccess::PixelShaderResource);
 
-    const float RenderWidth = float(FrameResources.FinalTarget->GetWidth());
+    const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
 
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);

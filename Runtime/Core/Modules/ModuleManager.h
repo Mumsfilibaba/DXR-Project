@@ -76,7 +76,6 @@ typedef void* PlatformModule;
 
 class CORE_API FModuleManager
 {
-private:
     friend class TOptional<FModuleManager>;
 
     struct FModule
@@ -104,8 +103,8 @@ public:
     /** @brief: Releases all modules that are loaded */
     static void ReleaseAllLoadedModules();
 
-    /** @brief: Destroy the module manager, after this no more modules can be loaded */
-    static void Destroy();
+    /** @brief: ReleaseAllLoadedModules and Destroy the module manager, after this no more modules can be accessed */
+    static void Shutdown();
 
     /**
      * @brief: Load a new module into the engine
@@ -236,8 +235,6 @@ public:
     }
 
 private:
-    static TOptional<FModuleManager>& GetModuleManagerInstance();
-
     FInitializeStaticModuleDelegate* GetStaticModuleDelegate(const char* ModuleName);
 
     int32 GetModuleIndex(const char* ModuleName);
@@ -245,12 +242,11 @@ private:
     void ReleaseAllModules();
 
 private:
-    typedef TPair<FString, FInitializeStaticModuleDelegate> FStaticModulePair;
-
     FModuleLoadedDelegate     ModuleLoadedDelegate;
 
-    TArray<FModule>           Modules;
+    typedef TPair<FString, FInitializeStaticModuleDelegate> FStaticModulePair;
     TArray<FStaticModulePair> StaticModuleDelegates;
+    TArray<FModule>           Modules;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

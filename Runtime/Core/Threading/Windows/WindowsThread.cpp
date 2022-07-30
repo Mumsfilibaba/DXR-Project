@@ -43,9 +43,8 @@ bool FWindowsThread::Start()
 
 int32 FWindowsThread::WaitForCompletion(uint64 TimeoutInMs)
 {
-    WaitForSingleObject(Thread, DWORD(TimeoutInMs));
-
     DWORD ThreadExitCode = 0;
+    WaitForSingleObject(Thread, DWORD(TimeoutInMs));
 
     const BOOL Result = GetExitCodeThread(Thread, &ThreadExitCode);
     return Result ? int32(ThreadExitCode) : int32(-1);
@@ -55,7 +54,6 @@ void FWindowsThread::SetName(const FString& InName)
 {
     FWString WideName = CharToWide(InName);
     SetThreadDescription(Thread, WideName.CStr());
-
     Name = InName;
 }
 
@@ -77,7 +75,6 @@ DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
 
         Check(CurrentThread->Function);
         CurrentThread->Function();
-
         return 0;
     }
 

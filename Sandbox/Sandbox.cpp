@@ -22,6 +22,7 @@
 // TODO: Custom random
 #include <random>
 
+#define LOAD_SPONZA         (1)
 #define ENABLE_LIGHT_TEST   (0)
 #define ENABLE_MANY_SPHERES (0)
 
@@ -45,7 +46,7 @@ bool FSandbox::Init()
 
     // Load Scene
     FSceneData SceneData;
-#if 0
+#if LOAD_SPONZA
     FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
     SceneData.Scale = 0.015f;
 #else

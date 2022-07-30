@@ -19,7 +19,12 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
 
     FRHIBufferDataInitializer VertexData(SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes());
 
-    FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, SkyboxMesh.Vertices.Size(), sizeof(FVertex), EResourceAccess::VertexAndConstantBuffer, &VertexData);
+    FRHIVertexBufferInitializer VBInitializer(
+        EBufferUsageFlags::Default, 
+        SkyboxMesh.Vertices.Size(),
+        sizeof(FVertex), 
+        EResourceAccess::VertexAndConstantBuffer, &VertexData);
+    
     SkyboxVertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!SkyboxVertexBuffer)
     {
@@ -32,7 +37,13 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
 
     FRHIBufferDataInitializer IndexData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
 
-    FRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint32, SkyboxMesh.Indices.Size(), EResourceAccess::IndexBuffer, &IndexData);
+    FRHIIndexBufferInitializer IBInitializer(
+        EBufferUsageFlags::Default, 
+        EIndexFormat::uint32,
+        SkyboxMesh.Indices.Size(),
+        EResourceAccess::IndexBuffer, 
+        &IndexData);
+
     SkyboxIndexBuffer = RHICreateIndexBuffer(IBInitializer);
     if (!SkyboxIndexBuffer)
     {
@@ -56,7 +67,12 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         Panorama->SetName(PanoramaSourceFilename);
     }
 
-    FrameResources.Skybox = FTextureFactory::CreateTextureCubeFromPanorma(Panorama.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
+    FrameResources.Skybox = FTextureFactory::CreateTextureCubeFromPanorma(
+        Panorama.Get(), 
+        1024,
+        TextureFactoryFlag_GenerateMips, 
+        EFormat::R16G16B16A16_Float);
+
     if (!FrameResources.Skybox)
     {
         return false;
@@ -138,7 +154,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     DepthStencilStateInitializer.bDepthEnable   = true;
     DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
+    FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
@@ -180,7 +196,6 @@ void FSkyboxRenderPass::Render(FRHICommandList& CmdList, const FFrameResources& 
 
     const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
-
 
     FRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);

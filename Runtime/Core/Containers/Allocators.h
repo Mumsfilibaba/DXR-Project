@@ -148,7 +148,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TInlineAllocation - Wrapper class for inline allocated bytes
 
-template<typename InlineType, int32 NumElements>
+template<
+    typename InlineType,
+    int32 NumElements>
 class TInlineAllocation
 {
 public:
@@ -181,7 +183,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TInlineArrayAllocator - InlineAllocator allocator that has a small fixed size memory, then allocates from TDefaultArrayAllocator
 
-template<typename T, int32 NumInlineElements>
+template<
+    typename T,
+    int32 NumInlineElements>
 class TInlineArrayAllocator
 {
 public:

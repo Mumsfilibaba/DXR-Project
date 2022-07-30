@@ -109,7 +109,7 @@ bool RegisterMainRunLoop()
 
 void UnregisterMainRunLoop()
 {
-    SafeDelete(GMainThread);
+    SAFE_DELETE(GMainThread);
 }
 
 void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)

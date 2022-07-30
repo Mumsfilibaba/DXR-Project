@@ -428,7 +428,7 @@ FD3D12CommandContext* FD3D12CommandContext::CreateD3D12CommandContext(FD3D12Devi
     }
     else
     {
-        SafeDelete(NewContext);
+        SAFE_DELETE(NewContext);
         return nullptr;
     }
 }

@@ -82,7 +82,7 @@ bool FInterfaceRenderer::InitContext(InterfaceContext Context)
         }
     }
 
-    TSharedRef<FRHIVertexShader> VShader = RHICreateVertexShader(ShaderCode);
+    FRHIVertexShaderRef VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
         DEBUG_BREAK();
@@ -130,7 +130,7 @@ bool FInterfaceRenderer::InitContext(InterfaceContext Context)
         { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EVertexInputClass::Vertex, 0 },
     };
 
-    TSharedRef<FRHIVertexInputLayout> InputLayout = RHICreateVertexInputLayout(InputLayoutInfo);
+    FRHIVertexInputLayoutRef InputLayout = RHICreateVertexInputLayout(InputLayoutInfo);
     if (!InputLayout)
     {
         DEBUG_BREAK();
@@ -141,7 +141,7 @@ bool FInterfaceRenderer::InitContext(InterfaceContext Context)
     DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+    FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();

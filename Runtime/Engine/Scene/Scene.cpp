@@ -21,17 +21,17 @@ FScene::~FScene()
 {
     for (FActor* CurrentActor : Actors)
     {
-        SafeDelete(CurrentActor);
+        SAFE_DELETE(CurrentActor);
     }
     Actors.Clear();
 
     for (FLight* CurrentLight : Lights)
     {
-        SafeDelete(CurrentLight);
+        SAFE_DELETE(CurrentLight);
     }
     Lights.Clear();
 
-    SafeDelete(CurrentCamera);
+    SAFE_DELETE(CurrentCamera);
 }
 
 FActor* FScene::MakeActor()
@@ -67,7 +67,7 @@ void FScene::AddCamera(FCamera* InCamera)
 {
     if (CurrentCamera)
     {
-        SafeDelete(CurrentCamera);
+        SAFE_DELETE(CurrentCamera);
     }
 
     CurrentCamera = InCamera;

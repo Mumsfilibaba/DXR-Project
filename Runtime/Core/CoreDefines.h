@@ -61,8 +61,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Macro for deleting objects safely
 
-#ifndef SafeDelete
-    #define SafeDelete(OutObject)      \
+#ifndef SAFE_DELETE
+    #define SAFE_DELETE(OutObject)     \
         do                             \
         {                              \
             if ((OutObject))           \
@@ -73,8 +73,8 @@
         } while (false)
 #endif
 
-#ifndef SafeRelease
-    #define SafeRelease(OutObject)      \
+#ifndef SAFE_RELEASE
+    #define SAFE_RELEASE(OutObject)     \
         do                              \
         {                               \
             if ((OutObject))            \
@@ -85,8 +85,8 @@
         } while (false)
 #endif
 
-#ifndef SafeAddRef
-    #define SafeAddRef(OutObject)      \
+#ifndef SAFE_ADD_REF
+    #define SAFE_ADD_REF(OutObject)    \
         do                             \
         {                              \
             if ((OutObject))           \
@@ -99,8 +99,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper Macros
 
-#ifndef ArrayCount
-    #define ArrayCount(Array) (sizeof(Array) / sizeof(Array[0]))
+#ifndef ARRAY_COUNT
+    #define ARRAY_COUNT(Array) (sizeof(Array) / sizeof(Array[0]))
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

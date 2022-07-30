@@ -12,10 +12,17 @@ FThreadManager::FThreadManager()
 
 FThreadManager::~FThreadManager()
 {
+    for (const auto& Thread : Threads)
+    {
+        Thread->WaitForCompletion(FTimespan::Infinity());
+    }
+
+    Threads.Clear();
+
     MainThread = nullptr;
 }
 
-TOptional<FThreadManager>& FThreadManager::GetThreadManagerInstance()
+static auto& GetThreadManagerInstance()
 {
     static TOptional<FThreadManager> Instance(InPlace);
     return Instance;
@@ -37,16 +44,10 @@ bool FThreadManager::Initialize()
 
 bool FThreadManager::Release()
 {
-    TOptional<FThreadManager>& ThreadManager = GetThreadManagerInstance();
-    for (const auto& Thread : ThreadManager->Threads)
-    {
-        Thread->WaitForCompletion(kWaitForThreadInfinity);
-    }
-
+    auto& ThreadManager = GetThreadManagerInstance();
     ThreadManager.Reset();
 
     FPlatformThreadMisc::Release();
-
     return true;
 }
 

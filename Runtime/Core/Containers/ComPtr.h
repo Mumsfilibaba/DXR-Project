@@ -38,7 +38,9 @@ public:
      *
      * @param Other: ComPtr to copy from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TComPtr(const TComPtr<OtherType>& Other) noexcept
         : Ptr(Other.Ptr)
     {
@@ -61,7 +63,9 @@ public:
      *
      * @param Other: ComPtr to move from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TComPtr(TComPtr<OtherType>&& Other) noexcept
         : Ptr(Other.Ptr)
     {
@@ -82,7 +86,9 @@ public:
      *
      * @param InPointer: Pointer to reference
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TComPtr(OtherType* InPointer) noexcept
         : Ptr(InPointer)
     { }

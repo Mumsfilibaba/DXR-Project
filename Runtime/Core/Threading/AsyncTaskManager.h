@@ -25,7 +25,6 @@ public:
 
 class CORE_API FAsyncTaskManager
 {
-private:
     FAsyncTaskManager();
     ~FAsyncTaskManager();
 
@@ -41,14 +40,13 @@ public:
     void WaitForAll(bool bUseThisThreadWhileWaiting = true);
 
 private:
-
     static void WorkThread();
 
     bool PopDispatch(FAsyncTask& OutTask);
 
     void KillWorkers();
 
-    TArray<TSharedRef<FGenericThread>> WorkerThreads;
+    TArray<FGenericThreadRef> WorkerThreads;
 
     TArray<FAsyncTask> Queue;
     FCriticalSection   QueueCS;

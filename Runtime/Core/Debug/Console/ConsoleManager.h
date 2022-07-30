@@ -33,14 +33,9 @@ enum class EConsoleSeverity
 
 class CORE_API FConsoleManager
 {
-private:
     friend class TOptional<FConsoleManager>;
 
-    FConsoleManager()  = default;
-    ~FConsoleManager() = default;
-
 public:
-
     /**
      * @brief: Retrieve the ConsoleManager instance
      * 
@@ -142,15 +137,11 @@ public:
     }
 
 private:
-    
-    static TOptional<FConsoleManager>& GetConsoleManagerInstance();
-    
     bool RegisterObject(const FString& Name, IConsoleObject* Variable);
 
     IConsoleObject* FindConsoleObject(const FString& Name);
 
 private:
-
     THashTable<FString, IConsoleObject*, FStringHasher> ConsoleObjects;
 
     TArray<TPair<FString, EConsoleSeverity>> ConsoleMessages;
@@ -170,19 +161,22 @@ public:
         : FConsoleCommand()
         , Name(InName)
     {
-        FConsoleManager::Get().RegisterCommand(InName, this);
+        FConsoleManager& ConsoleManager = FConsoleManager::Get();
+        ConsoleManager.RegisterCommand(InName, this);
     }
     
     FAutoConsoleCommand(const FString& InName, const FCommandDelegateType& Delegate)
         : FConsoleCommand(Delegate)
         , Name(InName)
     {
-        FConsoleManager::Get().RegisterCommand(InName, this);
+        FConsoleManager& ConsoleManager = FConsoleManager::Get();
+        ConsoleManager.RegisterCommand(InName, this);
     }
 
     ~FAutoConsoleCommand()
     {
-        FConsoleManager::Get().UnregisterObject(Name);
+        FConsoleManager& ConsoleManager = FConsoleManager::Get();
+        ConsoleManager.UnregisterObject(Name);
     }
 
 private:
@@ -201,19 +195,22 @@ public:
         : TConsoleVariable<T>(StartValue)
         , Name(InName)
     {
-        FConsoleManager::Get().RegisterVariable(InName, this);
+        FConsoleManager& ConsoleManager = FConsoleManager::Get();
+        ConsoleManager.RegisterVariable(InName, this);
     }
 
     TAutoConsoleVariable(const FString& InName, T StartValue, const FCVarChangedDelegateType& VariableChangedDelegate)
         : TConsoleVariable<T>(StartValue, VariableChangedDelegate)
         , Name(InName)
     {
-        FConsoleManager::Get().RegisterVariable(InName, this);
+        FConsoleManager& ConsoleManager = FConsoleManager::Get();
+        ConsoleManager.RegisterVariable(InName, this);
     }
 
     ~TAutoConsoleVariable()
     {
-        FConsoleManager::Get().UnregisterObject(Name);
+        FConsoleManager& ConsoleManager = FConsoleManager::Get();
+        ConsoleManager.UnregisterObject(Name);
     }
 
 private:

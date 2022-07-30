@@ -149,7 +149,6 @@ bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
         for (FD3D12TextureRef& Texture : BackBuffers)
         {
             Texture->SetResource(nullptr);
-            Texture->DestroyRTVs();
         }
 
         HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);

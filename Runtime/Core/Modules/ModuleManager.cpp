@@ -5,6 +5,32 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FModuleManager
 
+static auto& GetModuleManagerInstance()
+{
+    static TOptional<FModuleManager> Instance(InPlace);
+    return Instance;
+}
+
+FModuleManager& FModuleManager::Get()
+{
+    auto& ModuleManager = GetModuleManagerInstance();
+    return ModuleManager.GetValue();
+}
+
+void FModuleManager::ReleaseAllLoadedModules()
+{
+    auto& ModuleManager = GetModuleManagerInstance();
+    ModuleManager->ReleaseAllModules();
+}
+
+void FModuleManager::Shutdown()
+{
+    ReleaseAllLoadedModules();
+
+    auto& ModuleManager = GetModuleManagerInstance();
+    ModuleManager.Reset();
+}
+
 IModule* FModuleManager::LoadModule(const char* ModuleName)
 {
     Check(ModuleName != nullptr);
@@ -79,8 +105,7 @@ IModule* FModuleManager::LoadModule(const char* ModuleName)
     else
     {
         LOG_ERROR("Failed to load module '%s'", ModuleName);
-        SafeDelete(NewModule.Interface);
-
+        SAFE_DELETE(NewModule.Interface);
         return nullptr;
     }
 }
@@ -107,31 +132,7 @@ IModule* FModuleManager::GetModule(const char* ModuleName)
     }
 }
 
-TOptional<FModuleManager>& FModuleManager::GetModuleManagerInstance()
-{
-    static TOptional<FModuleManager> Instance(InPlace);
-    return Instance;
-}
-
-FModuleManager& FModuleManager::Get()
-{
-    TOptional<FModuleManager>& ModuleManager = GetModuleManagerInstance();
-    return ModuleManager.GetValue();
-}
-
-void FModuleManager::ReleaseAllLoadedModules()
-{
-    TOptional<FModuleManager>& ModuleManager = GetModuleManagerInstance();
-    ModuleManager->ReleaseAllModules();
-}
-
-void FModuleManager::Destroy()
-{
-    TOptional<FModuleManager>& ModuleManager = GetModuleManagerInstance();
-    ModuleManager.Reset();
-}
-
-void  FModuleManager::ReleaseAllModules()
+void FModuleManager::ReleaseAllModules()
 {
     const int32 NumModules = Modules.Size();
     for (int32 Index = 0; Index < NumModules; Index++)
@@ -142,7 +143,7 @@ void  FModuleManager::ReleaseAllModules()
         if (EngineModule)
         {
             EngineModule->Unload();
-            SafeDelete(EngineModule);
+            SAFE_DELETE(EngineModule);
         }
 
         FPlatformLibrary::FreeDynamicLib(Module.Handle);
@@ -195,7 +196,7 @@ void FModuleManager::UnloadModule(const char* ModuleName)
         if (EngineModule)
         {
             EngineModule->Unload();
-            SafeDelete(EngineModule);
+            SAFE_DELETE(EngineModule);
         }
 
         FPlatformLibrary::FreeDynamicLib(Module.Handle);

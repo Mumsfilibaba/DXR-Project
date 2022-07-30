@@ -32,7 +32,6 @@ public:
     FORCEINLINE TOptional(nullptr_type) noexcept
         : Value()
         , bHasValue(false)
-    
     { }
 
     /**
@@ -47,7 +46,6 @@ public:
         if (Other)
         {
             Construct(*(Other.Value.GetStorage()));
-            bHasValue = true;
         }
     }
 
@@ -56,7 +54,9 @@ public:
      *
      * @param Other: Optional to copy from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConstructible<ElementType, const OtherType&>::Value>::Type>
+    template<
+        typename OtherType,
+        typename = typename TEnableIf<TIsConstructible<ElementType, const OtherType&>::Value>::Type>
     FORCEINLINE TOptional(const TOptional<OtherType>& Other)
         : Value()
         , bHasValue(false)
@@ -64,7 +64,6 @@ public:
         if (Other)
         {
             Construct(*(Other.Value.GetStorage()));
-            bHasValue = true;
         }
     }
 
@@ -81,7 +80,6 @@ public:
         {
             Construct(Move(*Other.Value.GetStorage()));
             Other.Reset();
-            bHasValue = true;
         }
     }
 
@@ -90,7 +88,9 @@ public:
      *
      * @param Other: Optional to move from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value>::Type>
+    template<
+        typename OtherType,
+        typename = typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value>::Type>
     FORCEINLINE TOptional(TOptional<OtherType>&& Other) noexcept
         : Value()
         , bHasValue(false)
@@ -99,7 +99,6 @@ public:
         {
             Construct(Move<ElementType>(*(Other.Value.GetStorage())));
             Other.Reset();
-            bHasValue = true;
         }
     }
 
@@ -111,7 +110,7 @@ public:
     template<typename... ArgTypes>
     FORCEINLINE explicit TOptional(EInPlace, ArgTypes&&... Args) noexcept
         : Value()
-        , bHasValue(true)
+        , bHasValue()
     {
         Construct(Forward<ArgTypes>(Args)...);
     }
@@ -144,11 +143,7 @@ public:
     FORCEINLINE ElementType& Emplace(ArgTypes&&... Args) noexcept
     {
         Reset();
-
         Construct(Forward<ArgTypes>(Args)...);
-
-        bHasValue = true;
-
         return *Value.GetStorage();
     }
 
@@ -160,7 +155,6 @@ public:
         if (HasValue())
         {
             Destruct();
-            bHasValue = false;
         }
     }
 
@@ -171,26 +165,17 @@ public:
      */
     FORCEINLINE void Swap(TOptional& Other)
     {
-        TOptional TempOptional;
-        if (HasValue())
-        {
-            TempOptional.Construct(Move(GetValue()));
-            Destruct();
-            TempOptional.bHasValue = true;
-        }
-
+        TOptional TempOptional(Move(*this));
         if (Other.HasValue())
         {
             Construct(Move(Other.GetValue()));
             Other.Destruct();
-            bHasValue = true;
         }
 
         if (TempOptional.HasValue())
         {
             Other.Construct(Move(TempOptional.GetValue()));
             TempOptional.Destruct();
-            Other.bHasValue = true;
         }
     }
 
@@ -280,7 +265,8 @@ public:
      * @return: Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType,
+        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& RHS) noexcept
     {
         TOptional(RHS).Swap(*this);
         return *this;
@@ -305,7 +291,8 @@ public:
      * @return: Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType,
+        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& RHS) noexcept
     {
         TOptional(RHS).Swap(*this);
         return *this;
@@ -318,7 +305,8 @@ public:
      * @return: Returns a reference to this instance
      */
     template<typename OtherType = T>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType,
+        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& RHS) noexcept
     {
         TOptional(RHS).Swap(*this);
         return *this;
@@ -389,12 +377,12 @@ public:
      */
     friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!LHS.bHasValue && !RHS.bHasValue)
+        if (!LHS.HasValue() && !RHS.HasValue())
         {
             return true;
         }
 
-        if (!LHS.bHasValue)
+        if (!LHS.HasValue())
         {
             return false;
         }
@@ -423,12 +411,12 @@ public:
      */
     friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!LHS.bHasValue && !RHS.bHasValue)
+        if (!LHS.HasValue() && !RHS.HasValue())
         {
             return true;
         }
 
-        if (!LHS.bHasValue)
+        if (!LHS.HasValue())
         {
             return false;
         }
@@ -445,12 +433,12 @@ public:
      */
     friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!LHS.bHasValue && !RHS.bHasValue)
+        if (!LHS.HasValue() && !RHS.HasValue())
         {
             return true;
         }
 
-        if (!LHS.bHasValue)
+        if (!LHS.HasValue())
         {
             return false;
         }
@@ -483,17 +471,18 @@ public:
     }
 
 private:
-
     template<typename... ArgTypes>
     FORCEINLINE void Construct(ArgTypes&&... Args) noexcept
     {
         new(reinterpret_cast<void*>(Value.GetStorage())) ElementType(Forward<ArgTypes>(Args)...);
+        bHasValue = true;
     }
 
     FORCEINLINE void Destruct() noexcept
     {
         typedef ElementType ElementDestructType;
         Value.GetStorage()->ElementDestructType::~ElementDestructType();
+        bHasValue = false;
     }
 
     FORCEINLINE bool IsEqual(const TOptional& RHS) const noexcept

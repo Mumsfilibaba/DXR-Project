@@ -77,7 +77,7 @@ FActor::~FActor()
 {
     for (FComponent* CurrentComponent : Components)
     {
-        SafeDelete(CurrentComponent);
+        SAFE_DELETE(CurrentComponent);
     }
 
     Components.Clear();

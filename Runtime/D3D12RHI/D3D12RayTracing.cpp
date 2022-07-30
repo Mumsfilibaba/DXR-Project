@@ -598,7 +598,7 @@ void FD3D12ShaderBindingTableBuilder::CopyDescriptors()
 
 void FD3D12ShaderBindingTableBuilder::Reset()
 {
-    for (uint32 i = 0; i < ArrayCount(CPUHandleSizes); i++)
+    for (uint32 i = 0; i < ARRAY_COUNT(CPUHandleSizes); i++)
     {
         CPUHandleSizes[i] = 1;
     }

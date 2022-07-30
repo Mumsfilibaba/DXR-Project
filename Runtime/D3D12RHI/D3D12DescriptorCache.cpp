@@ -322,7 +322,7 @@ void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps( ID3D12GraphicsComman
 
     if (PreviousDescriptorHeaps[0] != DescriptorHeaps[0] || PreviousDescriptorHeaps[1] != DescriptorHeaps[1])
     {
-        CmdList->SetDescriptorHeaps(ArrayCount(DescriptorHeaps), DescriptorHeaps);
+        CmdList->SetDescriptorHeaps(ARRAY_COUNT(DescriptorHeaps), DescriptorHeaps);
 
         PreviousDescriptorHeaps[0] = DescriptorHeaps[0];
         PreviousDescriptorHeaps[1] = DescriptorHeaps[1];

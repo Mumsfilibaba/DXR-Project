@@ -33,15 +33,15 @@ FD3D12CoreInterface::FD3D12CoreInterface()
 
 FD3D12CoreInterface::~FD3D12CoreInterface()
 {
-    SafeDelete(DirectCmdContext);
+    SAFE_DELETE(DirectCmdContext);
 
     GenerateMipsTex2D_PSO.Reset();
     GenerateMipsTexCube_PSO.Reset();
 
-    SafeRelease(ResourceOfflineDescriptorHeap);
-    SafeRelease(RenderTargetOfflineDescriptorHeap);
-    SafeRelease(DepthStencilOfflineDescriptorHeap);
-    SafeRelease(SamplerOfflineDescriptorHeap);
+    SAFE_RELEASE(ResourceOfflineDescriptorHeap);
+    SAFE_RELEASE(RenderTargetOfflineDescriptorHeap);
+    SAFE_RELEASE(DepthStencilOfflineDescriptorHeap);
+    SAFE_RELEASE(SamplerOfflineDescriptorHeap);
 
     Device.Reset();
 

@@ -26,13 +26,6 @@ template<int32 kNumBytes, int32 kAlignment>
 class TAlignedStorage
 {
 public:
-
-    enum
-    {
-        NumBytes  = kNumBytes,
-        Alignment = kAlignment
-    };
-
     TAlignedStorage() = default;
     TAlignedStorage(const TAlignedStorage&) = default;
     TAlignedStorage(TAlignedStorage&&) = default;
@@ -64,7 +57,7 @@ public:
     }
 
 private:
-    ALIGN_AS(Alignment) uint8 Storage[NumBytes];
+    ALIGN_AS(kAlignment) uint8 Storage[kNumBytes];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -74,7 +67,6 @@ template<typename T>
 class TTypedStorage
 {
 public:
-
     using StorageType = TAlignedStorage<sizeof(T), AlignmentOf<T>>;
 
     TTypedStorage() = default;

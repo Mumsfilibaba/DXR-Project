@@ -34,7 +34,7 @@ public:
 
     ~FNullRHICoreInterface()
     {
-        SafeDelete(CommandContext);
+        SAFE_DELETE(CommandContext);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/

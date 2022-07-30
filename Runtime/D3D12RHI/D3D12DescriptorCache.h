@@ -242,7 +242,7 @@ struct FD3D12RenderTargetViewCache
 
     void SetRenderTarget(FD3D12RenderTargetView* View, uint32 Slot)
     {
-        Check(Slot < ArrayCount(RenderTargetViews));
+        Check(Slot < ARRAY_COUNT(RenderTargetViews));
         RenderTargetViews[Slot] = View;
     }
 
@@ -276,7 +276,7 @@ public:
     
     ~FD3D12DescriptorCache()
     {
-        SafeDelete(NullCBV);
+        SAFE_DELETE(NullCBV);
     }
 
     bool Initialize();

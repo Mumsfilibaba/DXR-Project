@@ -12,7 +12,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TStaticArray - A fixed size array similar to std::array
 
-template<typename T, int32 NumElements>
+template<
+    typename T,
+    int32 NumElements>
 struct TStaticArray
 {
     using ElementType = T;
@@ -376,7 +378,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Enable TArrayType
 
-template<typename T, int32 NumElements>
+template<
+    typename T,
+    int32 NumElements>
 struct TIsTArrayType<TStaticArray<T, NumElements>>
 {
     enum

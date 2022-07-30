@@ -40,7 +40,9 @@ public:
      *
      * @param Other: SharedRef to copy from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType, 
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedRef(const TSharedRef<OtherType>& Other) noexcept
         : Ptr(Other.Ptr)
     {
@@ -63,7 +65,9 @@ public:
      *
      * @param Other: SharedRef to move from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedRef(TSharedRef<OtherType>&& Other) noexcept
         : Ptr(Other.Ptr)
     {
@@ -84,7 +88,9 @@ public:
      *
      * @param InPointer: Pointer to reference
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType, 
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedRef(OtherType* InPtr) noexcept
         : Ptr(InPtr)
     { }

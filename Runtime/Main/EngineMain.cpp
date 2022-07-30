@@ -22,28 +22,30 @@ int32 EngineMain()
         }
     };
 
-    // Make sure that the engine is released if the main function exits early
-    FMainCleanupGuard EngineMainGuard;
-
-    // Initialization
-    if (!FEngineLoop::PreInitialize())
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::PreInit Failed");
-        return -1;
-    }
+        // Make sure that the engine is released if the main function exits early
+        FMainCleanupGuard EngineMainGuard;
 
-    if (!FEngineLoop::Initialize())
-    {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Init Failed");
-        return -1;
-    }
+        // Initialization
+        if (!FEngineLoop::PreInitialize())
+        {
+            FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::PreInit Failed");
+            return -1;
+        }
 
-    // Run loop
-    FTimer Timer;
-    while (FApplication::Get().IsRunning())
-    {
-        Timer.Tick();
-        FEngineLoop::Tick(Timer.GetDeltaTime());
+        if (!FEngineLoop::Initialize())
+        {
+            FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Init Failed");
+            return -1;
+        }
+
+        // Run loop
+        FTimer Timer;
+        while (FApplication::Get().IsRunning())
+        {
+            Timer.Tick();
+            FEngineLoop::Tick(Timer.GetDeltaTime());
+        }
     }
 
     return 0;

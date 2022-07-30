@@ -462,7 +462,7 @@ bool FD3D12Device::Initialize()
             D3D12_INFO_QUEUE_FILTER Filter;
             FMemory::Memzero(&Filter);
 
-            Filter.DenyList.NumIDs  = ArrayCount(Hide);
+            Filter.DenyList.NumIDs  = ARRAY_COUNT(Hide);
             Filter.DenyList.pIDList = Hide;
             InfoQueue->AddStorageFilterEntries(&Filter);
         }
@@ -554,7 +554,7 @@ bool FD3D12Device::Initialize()
 
     D3D12_FEATURE_DATA_FEATURE_LEVELS FeatureLevels =
     {
-        ArrayCount(SupportedFeatureLevels), SupportedFeatureLevels, D3D_FEATURE_LEVEL_11_0
+        ARRAY_COUNT(SupportedFeatureLevels), SupportedFeatureLevels, D3D_FEATURE_LEVEL_11_0
     };
 
     HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));

@@ -226,11 +226,26 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
         }
     }
 
-    CmdList.TransitionBuffer(DirectionalLightsBuffer.Get()             , EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(PointLightsBuffer.Get()                   , EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(PointLightsPosRadBuffer.Get()             , EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get()      , EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(
+        DirectionalLightsBuffer.Get(),
+        EResourceAccess::VertexAndConstantBuffer,
+        EResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(
+        PointLightsBuffer.Get(),
+        EResourceAccess::VertexAndConstantBuffer, 
+        EResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(
+        PointLightsPosRadBuffer.Get(),
+        EResourceAccess::VertexAndConstantBuffer,
+        EResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(
+        ShadowCastingPointLightsBuffer.Get(),
+        EResourceAccess::VertexAndConstantBuffer,
+        EResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(
+        ShadowCastingPointLightsPosRadBuffer.Get(),
+        EResourceAccess::VertexAndConstantBuffer, 
+        EResourceAccess::CopyDest);
 
     if (DirectionalLightDataDirty)
     {
@@ -246,15 +261,38 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
 
     if (!ShadowCastingPointLightsData.IsEmpty())
     {
-        CmdList.UpdateBuffer(ShadowCastingPointLightsBuffer.Get(), 0, ShadowCastingPointLightsData.SizeInBytes(), ShadowCastingPointLightsData.Data());
-        CmdList.UpdateBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), 0, ShadowCastingPointLightsPosRad.SizeInBytes(), ShadowCastingPointLightsPosRad.Data());
+        CmdList.UpdateBuffer(
+            ShadowCastingPointLightsBuffer.Get(),
+            0,
+            ShadowCastingPointLightsData.SizeInBytes(),
+            ShadowCastingPointLightsData.Data());
+        CmdList.UpdateBuffer(
+            ShadowCastingPointLightsPosRadBuffer.Get(),
+            0,
+            ShadowCastingPointLightsPosRad.SizeInBytes(),
+            ShadowCastingPointLightsPosRad.Data());
     }
 
-    CmdList.TransitionBuffer(DirectionalLightsBuffer.Get()             , EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
-    CmdList.TransitionBuffer(PointLightsBuffer.Get()                   , EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
-    CmdList.TransitionBuffer(PointLightsPosRadBuffer.Get()             , EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
-    CmdList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get()      , EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
-    CmdList.TransitionBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(
+        DirectionalLightsBuffer.Get(),
+        EResourceAccess::CopyDest,
+        EResourceAccess::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(
+        PointLightsBuffer.Get(),
+        EResourceAccess::CopyDest,
+        EResourceAccess::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(
+        PointLightsPosRadBuffer.Get(), 
+        EResourceAccess::CopyDest,
+        EResourceAccess::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(
+        ShadowCastingPointLightsBuffer.Get(),
+        EResourceAccess::CopyDest,
+        EResourceAccess::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(
+        ShadowCastingPointLightsPosRadBuffer.Get(),
+        EResourceAccess::CopyDest,
+        EResourceAccess::VertexAndConstantBuffer);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Update Lights");
 }

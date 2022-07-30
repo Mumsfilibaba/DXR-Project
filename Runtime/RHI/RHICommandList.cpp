@@ -26,7 +26,6 @@ bool FRHIThread::Start()
     }
 
     bIsRunning = true;
-
     if (!Thread->Start())
     {
         return false;
@@ -37,21 +36,25 @@ bool FRHIThread::Start()
 
 void FRHIThread::StopExecution()
 {
-    bIsRunning = false;
+    WaitForOutstandingTasks();
 
+    bIsRunning = false;
     WaitCondition.NotifyAll();
 
     Check(Thread != nullptr);
-    Thread->WaitForCompletion(kWaitForThreadInfinity);
+    Thread->WaitForCompletion(FTimespan::Infinity());
+
+    Thread.Reset();
 }
 
 void FRHIThread::Execute(FRHIThreadTask&& NewTask)
 {
+    Check(bIsRunning);
+
     {
         // Set the work to execute
         TScopedLock TaskLock(TasksCS);
         Tasks.Emplace(Move(NewTask));
-        
         NumSubmittedTasks++;
     }
 
@@ -59,7 +62,7 @@ void FRHIThread::Execute(FRHIThreadTask&& NewTask)
     WaitCondition.NotifyAll();
 }
 
-void FRHIThread::WaitForCompletion()
+void FRHIThread::WaitForOutstandingTasks()
 {
     while (NumCompletedTasks.Load() < NumSubmittedTasks.Load())
     {
@@ -76,7 +79,6 @@ void FRHIThread::Worker()
         WaitCondition.Wait(WaitLock);
 
         FRHIThreadTask CurrentTask;
-
         {
             TScopedLock Lock(TasksCS);
             if (!Tasks.IsEmpty())
@@ -90,9 +92,8 @@ void FRHIThread::Worker()
         {
             TRACE_FUNCTION_SCOPE();
             CurrentTask.CommandList->Execute();
+            NumCompletedTasks++;
         }
-
-        NumCompletedTasks++;
     }
 }
 
@@ -137,7 +138,7 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 
 void FRHICommandListExecutor::WaitForOutstandingTasks()
 {
-    ExecutorThread.WaitForCompletion();
+    ExecutorThread.WaitForOutstandingTasks();
 }
 
 void FRHICommandListExecutor::WaitForGPU()

@@ -407,12 +407,12 @@ public:
         BarrierBatcher.AddTransitionBarrier(Resource->GetD3D12Resource(), BeforeState, AfterState);
     }
 
-    FORCEINLINE FD3D12CommandQueue& GetQueue()       { return CommandQueue; }
-    FORCEINLINE FD3D12CommandList&  GetCommandList() { return CommandList; }
+    FORCEINLINE void DestroyResource(FD3D12Resource* Resource) { CmdBatch->AddInUseResource(Resource); }
 
     FORCEINLINE void FlushResourceBarriers() { BarrierBatcher.FlushBarriers(CommandList); }
-
-    FORCEINLINE void DestroyResource(FD3D12Resource* Resource) { CmdBatch->AddInUseResource(Resource); }
+    
+    FORCEINLINE FD3D12CommandQueue& GetQueue()       { return CommandQueue; }
+    FORCEINLINE FD3D12CommandList&  GetCommandList() { return CommandList; }
 
 private:
     bool Initialize();

@@ -27,15 +27,15 @@ TAutoConsoleVariable<FString> GEcho(
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FConsoleManager
 
-TOptional<FConsoleManager>& FConsoleManager::GetConsoleManagerInstance()
+static auto& GetConsoleManagerInstance()
 {
-    static TOptional<FConsoleManager> Instance(InPlace);
-    return Instance;
+    static TOptional<FConsoleManager> GInstance(InPlace);
+    return GInstance;
 }
 
 FConsoleManager& FConsoleManager::Get()
 {
-    TOptional<FConsoleManager>& ConsoleManager = GetConsoleManagerInstance();
+    auto& ConsoleManager = GetConsoleManagerInstance();
     return ConsoleManager.GetValue();
 }
 
@@ -58,7 +58,7 @@ void FConsoleManager::RegisterVariable(const FString& Name, IConsoleVariable* Va
 void FConsoleManager::UnregisterObject(const FString& Name)
 {
     auto ExistingObject = ConsoleObjects.find(Name);
-    if (ExistingObject == ConsoleObjects.end())
+    if (ExistingObject != ConsoleObjects.end())
     {
         ConsoleObjects.erase(ExistingObject);
     }
@@ -67,7 +67,7 @@ void FConsoleManager::UnregisterObject(const FString& Name)
 bool FConsoleManager::IsConsoleObject(const FString& Name) const
 {
     auto ExistingObject = ConsoleObjects.find(Name);
-    return ExistingObject != ConsoleObjects.end();
+    return (ExistingObject != ConsoleObjects.end());
 }
 
 IConsoleCommand* FConsoleManager::FindCommand(const FString& Name)

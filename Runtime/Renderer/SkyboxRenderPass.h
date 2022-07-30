@@ -22,9 +22,9 @@ public:
     void Release();
 
 private:
-    TSharedRef<FRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<FRHIVertexShader> SkyboxVertexShader;
-    TSharedRef<FRHIPixelShader>  SkyboxPixelShader;
+    FRHIGraphicsPipelineStateRef PipelineState;
+    FRHIVertexShaderRef SkyboxVertexShader;
+    FRHIPixelShaderRef  SkyboxPixelShader;
     TSharedRef<FRHIVertexBuffer> SkyboxVertexBuffer;
     TSharedRef<FRHIIndexBuffer>  SkyboxIndexBuffer;
     FRHISamplerStateRef SkyboxSampler;

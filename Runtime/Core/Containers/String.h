@@ -133,7 +133,9 @@ public:
      *
      * @param InString: String to copy from
      */
-    template<typename StringType, typename = typename TEnableIf<TIsTStringType<StringType>::Value>::Type>
+    template<
+        typename StringType,
+        typename = typename TEnableIf<TIsTStringType<StringType>::Value>::Type>
     FORCEINLINE explicit TString(const StringType& InString) noexcept
         : Characters()
     {
@@ -786,7 +788,9 @@ public:
      * @return: Returns the position of the first character in the search-string
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type Find(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type Find(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return Find(InString, InString.Length(), Position);
     }
@@ -868,7 +872,9 @@ public:
      * @return: Returns the position of the first character in the search-string
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFind(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFind(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return ReverseFind(InString, InString.Length(), Position);
     }
@@ -983,7 +989,9 @@ public:
      * @return: Returns the position of the first character in the search-string that is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneOf(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneOf(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return FindOneOf(InString.CStr(), InString.Length(), Position);
     }
@@ -1038,7 +1046,9 @@ public:
      * @return: Returns the position of the first character in the search-string that is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneOf(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneOf(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return ReverseFindOneOf(InString, InString.Length(), Position);
     }
@@ -1069,13 +1079,13 @@ public:
         SizeType SubstringLength = StringUtils::Length(InString);
 
         const CharType* Start = CStr();
-        const CharType* End = Start + ThisLength;
+        const CharType* End   = Start + ThisLength;
         while (End != Start)
         {
             End--;
 
             const CharType* SubstringStart = InString;
-            const CharType* SubstringEnd = SubstringStart + SubstringLength;
+            const CharType* SubstringEnd   = SubstringStart + SubstringLength;
             while (SubstringStart != SubstringEnd)
             {
                 if (*End == *(SubstringStart++))
@@ -1108,7 +1118,9 @@ public:
      * @return: Return position the first character not a part of the search-string
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneNotOf(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneNotOf(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return FindOneNotOf(InString.CStr(), InString.Length(), Position);
     }
@@ -1163,7 +1175,9 @@ public:
      * @return: Return position the first character not a part of the search-string
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneNotOf(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneNotOf(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return ReverseFindOneNotOf(InString, InString.Length(), Position);
     }
@@ -1237,7 +1251,9 @@ public:
      * @return: Returns true if the string is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Contains(const StringType& InString, SizeType InOffset = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Contains(
+        const StringType& InString,
+        SizeType InOffset = 0) const noexcept
     {
         return (Find(InString, InOffset) != NPos);
     }
@@ -1286,7 +1302,10 @@ public:
      * @return: Returns true if the string is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type ContainsOneOf(const StringType& InString, SizeType InLength, SizeType InOffset = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type ContainsOneOf(
+        const StringType& InString,
+        SizeType InLength, 
+        SizeType InOffset = 0) const noexcept
     {
         return (FindOneOf<StringType>(InString, InLength, InOffset) != NPos);
     }
@@ -1702,7 +1721,8 @@ public:
      * @return: Returns a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TString>::LValue>::Type operator+=(const StringType& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TString>::LValue>::Type 
+        operator+=(const StringType& RHS) noexcept
     {
         Append<StringType>(RHS);
         return *this;
@@ -1761,7 +1781,8 @@ public:
      * @return: Return a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TString>::LValue>::Type operator=(const StringType& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TString>::LValue>::Type 
+        operator=(const StringType& RHS) noexcept
     {
         TString<StringType>(RHS).Swap(*this);
         return *this;

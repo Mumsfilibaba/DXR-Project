@@ -38,9 +38,11 @@ bool FAsyncTaskManager::PopDispatch(FAsyncTask& OutTask)
 
 void FAsyncTaskManager::KillWorkers()
 {
-    bIsRunning = false;
-
-    WakeCondition.NotifyAll();
+    if (bIsRunning && !WorkerThreads.IsEmpty())
+    {
+        bIsRunning = false;
+        WakeCondition.NotifyAll();
+    }
 }
 
 void FAsyncTaskManager::WorkThread()
@@ -160,7 +162,7 @@ void FAsyncTaskManager::Release()
 
     for (TSharedRef<FGenericThread> Thread : WorkerThreads)
     {
-        Thread->WaitForCompletion(kWaitForThreadInfinity);
+        Thread->WaitForCompletion(FTimespan::Infinity());
     }
 
     WorkerThreads.Clear();

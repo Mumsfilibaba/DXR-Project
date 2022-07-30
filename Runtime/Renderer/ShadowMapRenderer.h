@@ -72,13 +72,23 @@ public:
     void Release();
 
      /** @brief: Render Point light shadows */
-    void RenderPointLightShadows(FRHICommandList& CmdList, const FLightSetup& LightSetup, const FScene& Scene);
+    void RenderPointLightShadows(
+        FRHICommandList& CmdList,
+        const FLightSetup& LightSetup, 
+        const FScene& Scene);
 
      /** @brief: Render Directional light shadows */
-    void RenderDirectionalLightShadows(FRHICommandList& CmdList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, const FScene& Scene);
+    void RenderDirectionalLightShadows(
+        FRHICommandList& CmdList, 
+        const FLightSetup& LightSetup, 
+        const FFrameResources& FrameResources,
+        const FScene& Scene);
 
      /** @brief: Render ShadowMasks */
-    void RenderShadowMasks(FRHICommandList& CmdList, const FLightSetup& LightSetup, const FFrameResources& FrameResources);
+    void RenderShadowMasks(
+        FRHICommandList& CmdList, 
+        const FLightSetup& LightSetup, 
+        const FFrameResources& FrameResources);
 
      /** @brief: Resize the resources that are dependent on the viewport */
     bool ResizeResources(uint32 Width, uint32 Height, FLightSetup& LightSetup);
@@ -89,15 +99,15 @@ private:
 
     FRHIConstantBufferRef        PerShadowMapBuffer;
 
-    TSharedRef<FRHIGraphicsPipelineState> DirectionalLightPSO;
-    TSharedRef<FRHIVertexShader>          DirectionalLightShader;
+    FRHIGraphicsPipelineStateRef DirectionalLightPSO;
+    FRHIVertexShaderRef          DirectionalLightShader;
 
     FRHIComputePipelineStateRef  DirectionalShadowMaskPSO;
     FRHIComputeShaderRef         DirectionalShadowMaskShader;
 
-    TSharedRef<FRHIGraphicsPipelineState> PointLightPipelineState;
-    TSharedRef<FRHIVertexShader>          PointLightVertexShader;
-    TSharedRef<FRHIPixelShader>           PointLightPixelShader;
+    FRHIGraphicsPipelineStateRef PointLightPipelineState;
+    FRHIVertexShaderRef          PointLightVertexShader;
+    FRHIPixelShaderRef           PointLightPixelShader;
 
     FRHIConstantBufferRef        PerCascadeBuffer;
     FRHIConstantBufferRef        CascadeGenerationData;

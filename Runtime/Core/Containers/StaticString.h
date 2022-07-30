@@ -7,7 +7,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TStaticString - Characters class with a fixed allocated number of characters
 
-template<typename CharType, int32 CharCount>
+template<
+    typename CharType,
+    int32 CharCount>
 class TStaticString
 {
 public:
@@ -588,7 +590,9 @@ public:
      * @return: Returns the position of the first character in the search-string
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type Find(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type Find(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return Find(InString, InString.Length(), Position);
     }
@@ -670,7 +674,9 @@ public:
      * @return: Returns the position of the first character in the search-string
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFind(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFind(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return ReverseFind(InString, InString.Length(), Position);
     }
@@ -782,7 +788,9 @@ public:
      * @return: Returns the position of the first character in the search-string that is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneOf(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneOf(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return FindOneOf(InString.CStr(), InString.Length(), Position);
     }
@@ -836,7 +844,9 @@ public:
      * @return: Returns the position of the first character in the search-string that is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneOf(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneOf(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return ReverseFindOneOf(InString, InString.Length(), Position);
     }
@@ -901,7 +911,9 @@ public:
      * @return: Return position the first character not a part of the search-string
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneNotOf(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneNotOf(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return FindOneNotOf(InString.CStr(), InString.Length(), Position);
     }
@@ -955,7 +967,9 @@ public:
      * @return: Return position the first character not a part of the search-string
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneNotOf(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneNotOf(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return ReverseFindOneNotOf(InString, InString.Length(), Position);
     }
@@ -1024,7 +1038,9 @@ public:
      * @return: Returns true if the string is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Contains(const StringType& InString, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Contains(
+        const StringType& InString,
+        SizeType Position = 0) const noexcept
     {
         return (Find(InString, Position) != NPos);
     }
@@ -1073,7 +1089,10 @@ public:
      * @return: Returns true if the string is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type ContainsOneOf(const StringType& InString, SizeType InLength, SizeType Position = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type ContainsOneOf(
+        const StringType& InString,
+        SizeType InLength,
+        SizeType Position = 0) const noexcept
     {
         return (FindOneOf<StringType>(InString, InLength, Position) != NPos);
     }
@@ -1464,7 +1483,8 @@ public:
      * @return: Returns a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator+=(const StringType& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type 
+        operator+=(const StringType& RHS) noexcept
     {
         Append<StringType>(RHS);
         return *this;
@@ -1523,7 +1543,8 @@ public:
      * @return: Return a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator=(const StringType& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type
+        operator=(const StringType& RHS) noexcept
     {
         TStaticString<StringType, CharCount>(RHS).Swap(*this);
         return *this;
@@ -1849,7 +1870,9 @@ using WStaticString = TStaticString<wchar_t, CharCount>;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Add TStaticString to be a string-type
 
-template<typename CharType, int32 CharCount>
+template<
+    typename CharType,
+    int32 CharCount>
 struct TIsTStringType<TStaticString<CharType, CharCount>>
 {
     enum

@@ -136,16 +136,16 @@ private:
 
     TSharedRef<FRHIVertexBuffer>          AABBVertexBuffer;
     TSharedRef<FRHIIndexBuffer>           AABBIndexBuffer;
-    TSharedRef<FRHIGraphicsPipelineState> AABBDebugPipelineState;
-    TSharedRef<FRHIVertexShader>          AABBVertexShader;
-    TSharedRef<FRHIPixelShader>           AABBPixelShader;
+    FRHIGraphicsPipelineStateRef AABBDebugPipelineState;
+    FRHIVertexShaderRef          AABBVertexShader;
+    FRHIPixelShaderRef           AABBPixelShader;
 
-    TSharedRef<FRHIGraphicsPipelineState> PostPSO;
-    TSharedRef<FRHIPixelShader>           PostShader;
-    TSharedRef<FRHIGraphicsPipelineState> FXAAPSO;
-    TSharedRef<FRHIPixelShader>           FXAAShader;
-    TSharedRef<FRHIGraphicsPipelineState> FXAADebugPSO;
-    TSharedRef<FRHIPixelShader>           FXAADebugShader;
+    FRHIGraphicsPipelineStateRef PostPSO;
+    FRHIPixelShaderRef           PostShader;
+    FRHIGraphicsPipelineStateRef FXAAPSO;
+    FRHIPixelShaderRef           FXAAShader;
+    FRHIGraphicsPipelineStateRef FXAADebugPSO;
+    FRHIPixelShaderRef           FXAADebugShader;
 
     TSharedRef<FRHITimestampQuery> TimestampQueries;
 

@@ -674,7 +674,7 @@ struct FRHIThreadTask
 
     FORCEINLINE ~FRHIThreadTask() noexcept
     {
-        SafeDelete(CommandList);
+        SAFE_DELETE(CommandList);
     }
 
     FORCEINLINE FRHIThreadTask& operator=(FRHIThreadTask&& RHS) noexcept
@@ -709,7 +709,7 @@ public:
 
     void Execute(FRHIThreadTask&& NewTask);
 
-    void WaitForCompletion();
+    void WaitForOutstandingTasks();
 
 private:
     void Worker();

@@ -28,12 +28,12 @@ public:
 private:
     bool CreateGBuffer(FFrameResources& FrameResources);
 
-    TSharedRef<FRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<FRHIVertexShader>          BaseVertexShader;
-    TSharedRef<FRHIPixelShader>           BasePixelShader;
+    FRHIGraphicsPipelineStateRef PipelineState;
+    FRHIVertexShaderRef          BaseVertexShader;
+    FRHIPixelShaderRef           BasePixelShader;
 
-    TSharedRef<FRHIGraphicsPipelineState> PrePassPipelineState;
-    TSharedRef<FRHIVertexShader>          PrePassVertexShader;
+    FRHIGraphicsPipelineStateRef PrePassPipelineState;
+    FRHIVertexShaderRef          PrePassVertexShader;
 
     FRHIComputePipelineStateRef  TiledLightPassPSO;
     FRHIComputeShaderRef         TiledLightShader;

@@ -105,7 +105,7 @@ struct RENDERER_API FFrameResources
     FRHISamplerStateRef GBufferSampler;
     FRHISamplerStateRef FXAASampler;
 
-    TSharedRef<FRHIVertexInputLayout> StdInputLayout;
+    FRHIVertexInputLayoutRef StdInputLayout;
 
     FRHITexture2DRef       RTOutput;
     FRHIRayTracingSceneRef RTScene;
