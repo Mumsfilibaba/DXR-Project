@@ -71,7 +71,7 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle)
     const bool bResult = RegisterWindowClass();
     Check(bResult == true);
 
-#if PLATFORM_WINDOWS_VISTA && ENABLE_DPI_AWARENESS
+#if (PLATFORM_WINDOWS_VISTA && ENABLE_DPI_AWARENESS)
     SetProcessDPIAware();
 #endif
 
@@ -122,7 +122,8 @@ bool FWindowsApplication::RegisterRawInputDevices(HWND Window)
     Devices[0].usUsage     = 0x02;
     Devices[0].usUsagePage = 0x01;
 
-    const bool bResult = !!::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
+    const bool bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
+
     if (!bResult)
     {
         LOG_ERROR("[FWindowsApplication] Failed to register Raw Input devices");
@@ -148,7 +149,7 @@ bool FWindowsApplication::UnregisterRawInputDevices()
     Devices[0].usUsage     = 0x02;
     Devices[0].usUsagePage = 0x01;
 
-    const bool bResult = !!::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
+    const bool bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
     if (!bResult)
     {
         LOG_ERROR("[FWindowsApplication] Failed to unregister Raw Input devices");

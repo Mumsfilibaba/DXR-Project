@@ -169,7 +169,6 @@ public:
     virtual ReturnType Execute(ArgTypes... Args) = 0;
 
 public:
-
     virtual const void* GetBoundObject() const override
     {
         return nullptr;

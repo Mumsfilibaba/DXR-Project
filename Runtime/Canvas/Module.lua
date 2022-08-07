@@ -4,7 +4,7 @@ include '../../BuildScripts/Scripts/build_module.lua'
 ---------------------------------------------------------------------------------------------------
 -- Canvas Module
 
-local CanvasModule = CModuleBuildRules('Canvas')
+local CanvasModule = FModuleBuildRules('Canvas')
 CanvasModule.AddSystemIncludes( 
 {
     CreateExternalDependencyPath('imgui')

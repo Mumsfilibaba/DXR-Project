@@ -1,11 +1,11 @@
 include 'build_rule.lua'
 
 -- Module build rules
-function CModuleBuildRules(InName)
+function FModuleBuildRules(InName)
     printf('Creating Module \'%s\'', InName)
 
     -- Init parent class
-    local self = CBuildRules(InName)
+    local self = FBuildRules(InName)
     if self == nil then
         printf('Module Error: Failed to create BuildRule')
         return nil
@@ -22,7 +22,7 @@ function CModuleBuildRules(InName)
     
     -- Should the module be dynamic or static, this is overridden by monolithic build, which forces all modules to be linked statically
     self.bIsDynamic = true
-    -- Should perform linking at compile time (Ignored if bIsDynamic is false). Set to true if hot-reloading
+    -- Should perform linking at compile time (Ignored if bIsDynamic is false). Set to true to enable hot-reloading
     self.bRuntimeLinking = true
     
     -- Generate the module

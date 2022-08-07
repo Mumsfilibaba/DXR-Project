@@ -92,18 +92,19 @@ bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 I
     int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
     HINSTANCE Instance = Application->GetInstance();
-    Window = CreateWindowEx( NewStyleEx
-                           , FWindowsWindow::GetClassName()
-                           , InTitle.CStr()
-                           , NewStyle
-                           , PositionX
-                           , PositionY
-                           , RealWidth
-                           , RealHeight
-                           , nullptr
-                           , nullptr
-                           , Instance
-                           , nullptr);
+    Window = CreateWindowEx(
+        NewStyleEx,
+        FWindowsWindow::GetClassName(),
+        InTitle.CStr(),
+        NewStyle,
+        PositionX,
+        PositionY,
+        RealWidth,
+        RealHeight,
+        nullptr,
+        nullptr,
+        Instance,
+        nullptr);
     if (Window == 0)
     {
         LOG_ERROR("[FWindowsWindow]: FAILED to create window\n");

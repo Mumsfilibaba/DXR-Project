@@ -204,7 +204,7 @@ void FSkyboxRenderPass::Render(FRHICommandList& CmdList, const FFrameResources& 
 
     CmdList.BeginRenderPass(RenderPass);
 
-    // NOTE: For now, MetalRHI require a renderpass to be started for these two to be valid
+    // NOTE: For now, MetalRHI require a RenderPass to be started for these two to be valid
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
@@ -213,7 +213,7 @@ void FSkyboxRenderPass::Render(FRHICommandList& CmdList, const FFrameResources& 
     CmdList.SetIndexBuffer(SkyboxIndexBuffer.Get());
     CmdList.SetGraphicsPipelineState(PipelineState.Get());
 
-    struct SSimpleCameraBuffer
+    struct FSimpleCameraBuffer
     {
         FMatrix4 Matrix;
     } SimpleCamera;

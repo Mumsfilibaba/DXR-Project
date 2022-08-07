@@ -3,6 +3,6 @@ include '../../BuildScripts/Scripts/build_module.lua'
 ---------------------------------------------------------------------------------------------------
 -- Core Module
 
-local CoreModule = CModuleBuildRules('Core')
+local CoreModule = FModuleBuildRules('Core')
 CoreModule.bUsePrecompiledHeaders = true
 CoreModule.Generate()

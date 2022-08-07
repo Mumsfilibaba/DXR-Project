@@ -23,11 +23,11 @@ public:
 
 private:
     FRHIGraphicsPipelineStateRef PipelineState;
-    FRHIVertexShaderRef SkyboxVertexShader;
-    FRHIPixelShaderRef  SkyboxPixelShader;
+    FRHIVertexShaderRef          SkyboxVertexShader;
+    FRHIPixelShaderRef           SkyboxPixelShader;
     TSharedRef<FRHIVertexBuffer> SkyboxVertexBuffer;
     TSharedRef<FRHIIndexBuffer>  SkyboxIndexBuffer;
-    FRHISamplerStateRef SkyboxSampler;
+    FRHISamplerStateRef          SkyboxSampler;
 
-    FMeshData SkyboxMesh;
+    FMeshData                    SkyboxMesh;
 };

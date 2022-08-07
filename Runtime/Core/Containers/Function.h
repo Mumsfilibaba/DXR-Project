@@ -20,7 +20,6 @@ namespace NInternal
     class TBindPayload
     {
     public:
-
         FORCEINLINE TBindPayload(FunctionType InFunc, PayloadTypes&&... PayloadArgs) noexcept
             : Payload(Forward<PayloadTypes>(PayloadArgs)...)
             , Func(Move(InFunc))
@@ -53,7 +52,6 @@ namespace NInternal
     class TBindPayload<FunctionType>
     {
     public:
-
         FORCEINLINE TBindPayload(FunctionType InFunc) noexcept
             : Func(Move(InFunc))
         { }

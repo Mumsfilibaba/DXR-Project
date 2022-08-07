@@ -3,7 +3,7 @@ include '../../BuildScripts/Scripts/build_module.lua'
 ---------------------------------------------------------------------------------------------------
 -- InterfaceRenderer Module
 
-local InterfaceRendererModule = CModuleBuildRules('InterfaceRenderer')
+local InterfaceRendererModule = FModuleBuildRules('InterfaceRenderer')
 InterfaceRendererModule.bRuntimeLinking = false
 
 InterfaceRendererModule.AddSystemIncludes( 
