@@ -19,7 +19,9 @@ public:
     using ElementType = T;
     using SizeType    = int32;
 
-    static_assert(TIsSigned<SizeType>::Value, "TArrayView only supports a SizeType that's signed");
+    static_assert(
+        TIsSigned<SizeType>::Value,
+        "TArrayView only supports a SizeType that's signed");
 
     /* Iterators */
     typedef TArrayIterator<TArrayView, ElementType>                    IteratorType;
