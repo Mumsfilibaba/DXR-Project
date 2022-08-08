@@ -213,10 +213,9 @@ void FWindowsApplication::Tick(float)
 
 bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window)
 {
-    TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>(Window);
+    TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
     if (WindowsWindow && WindowsWindow->IsValid())
     {
-        FWindowsWindowRef WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
         return RegisterRawInputDevices(WindowsWindow->GetWindowHandle());
     }
     else
@@ -227,16 +226,11 @@ bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const FGenericWindow
 
 void FWindowsApplication::SetCapture(const FGenericWindowRef& Window)
 {
-    TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>(Window);
+    TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
     if (WindowsWindow && WindowsWindow->IsValid())
     {
-        FWindowsWindowRef WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
-
         HWND hCapture = WindowsWindow->GetWindowHandle();
-        if (WindowsWindow->IsValid())
-        {
-            ::SetCapture(hCapture);
-        }
+        ::SetCapture(hCapture);
     }
     else
     {
@@ -247,11 +241,9 @@ void FWindowsApplication::SetCapture(const FGenericWindowRef& Window)
 void FWindowsApplication::SetActiveWindow(const FGenericWindowRef& Window)
 {
     FWindowsWindowRef WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
-
-    HWND hActiveWindow = WindowsWindow->GetWindowHandle();
-    if (WindowsWindow->IsValid())
+    if (WindowsWindow && WindowsWindow->IsValid())
     {
-        HWND hActiveWindow = WindowsWindow->GetHandle();
+        HWND hActiveWindow = WindowsWindow->GetWindowHandle();
         ::SetActiveWindow(hActiveWindow);
     }
 }

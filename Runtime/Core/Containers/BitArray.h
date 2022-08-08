@@ -160,7 +160,7 @@ public:
      */
     FORCEINLINE void ResetWithZeros()
     {
-        Memory::Memset(Data(), 0x00, CapacityInBytes());
+        FMemory::Memset(Data(), 0x00, CapacityInBytes());
     }
 
     /**
@@ -168,8 +168,7 @@ public:
      */
     FORCEINLINE void ResetWithOnes()
     {
-        Memory::Memset(Data(), 0xff, CapacityInBytes());
-        
+        FMemory::Memset(Data(), 0xff, CapacityInBytes());
         MaskOutLastStorageElement();
     }
 
@@ -191,9 +190,7 @@ public:
     inline void Push(const bool bValue) noexcept
     {
         Reserve(NumBits + 1);
-
         AssignBit_Internal(NumBits, bValue);
-
         NumBits++;
     }
 
@@ -953,12 +950,12 @@ private:
 
         NumElements = NewNumElements;
          
-        Memory::Memzero(Storage.GetAllocation(), CapacityInBytes());
+        FMemory::Memzero(Storage.GetAllocation(), CapacityInBytes());
     }
 
     FORCEINLINE void CopyFrom(const TBitArray& Other) noexcept
     {
-        Memory::Memcpy(Storage.GetAllocation(), Other.Storage.GetAllocation(), Other.NumElements * sizeof(StorageType));
+        FMemory::Memcpy(Storage.GetAllocation(), Other.Storage.GetAllocation(), Other.NumElements * sizeof(StorageType));
     }
 
     FORCEINLINE void MoveFrom(TBitArray&& Other) noexcept
@@ -1002,8 +999,8 @@ private:
             const SizeType DiscardCount = Steps / GetBitsPerStorage();
             const SizeType RangeSize    = RemainingElements - DiscardCount;
 
-            Memory::Memmove(Pointer, Pointer + DiscardCount, sizeof(StorageType) * RangeSize);
-            Memory::Memzero(Pointer + RangeSize, sizeof(StorageType) * DiscardCount);
+            FMemory::Memmove(Pointer, Pointer + DiscardCount, sizeof(StorageType) * RangeSize);
+            FMemory::Memzero(Pointer + RangeSize, sizeof(StorageType) * DiscardCount);
 
             BitshiftRight_Simple(Steps, StartElementIndex, RangeSize);
 
@@ -1012,7 +1009,7 @@ private:
         }
         else
         {
-            Memory::Memzero(Pointer, RemainingElements * sizeof(StorageType));
+            FMemory::Memzero(Pointer, RemainingElements * sizeof(StorageType));
         }
     }
 
@@ -1075,8 +1072,8 @@ private:
             const SizeType DiscardCount = Steps / GetBitsPerStorage();
             const SizeType RangeSize    = RemainingElements - DiscardCount;
 
-            Memory::Memmove(Pointer + DiscardCount, Pointer, sizeof(StorageType) * RangeSize);
-            Memory::Memzero(Pointer, sizeof(StorageType) * DiscardCount);
+            FMemory::Memmove(Pointer + DiscardCount, Pointer, sizeof(StorageType) * RangeSize);
+            FMemory::Memzero(Pointer, sizeof(StorageType) * DiscardCount);
 
             BitshiftLeft_Simple(Steps, StartElementIndex + DiscardCount, RangeSize);
 
@@ -1085,7 +1082,7 @@ private:
         }
         else
         {
-            Memory::Memzero(Pointer, RemainingElements * sizeof(StorageType));
+            FMemory::Memzero(Pointer, RemainingElements * sizeof(StorageType));
         }
     }
 

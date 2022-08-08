@@ -1,7 +1,6 @@
 #include "ModuleManager.h"
 
 #include "Core/Templates/StringUtils.h"
-#include "Core/Threading/ScopedLock.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FModuleManager
@@ -100,12 +99,7 @@ IModule* FModuleManager::LoadModule(const char* ModuleName)
         ModuleLoadedDelegate.Broadcast(ModuleName, NewModule.Interface);
 
         NewModule.Name = ModuleName;
-
-        {
-            TScopedLock Lock(ModulesCriticalSection);
-            Modules.Emplace(NewModule);
-        }
-
+        Modules.Emplace(NewModule);
         return NewModule.Interface;
     }
     else
@@ -118,9 +112,7 @@ IModule* FModuleManager::LoadModule(const char* ModuleName)
 
 IModule* FModuleManager::GetModule(const char* ModuleName)
 {
-    TScopedLock Lock(ModulesCriticalSection);
-
-    const int32 Index = GetModuleIndex_Internal(ModuleName);
+    const int32 Index = GetModuleIndex(ModuleName);
     if (Index >= 0)
     {
         IModule* EngineModule = Modules[Index].Interface;
@@ -163,9 +155,7 @@ void FModuleManager::ReleaseAllModules()
 
 PlatformModule FModuleManager::GetModuleHandle(const char* ModuleName)
 {
-    TScopedLock Lock(ModulesCriticalSection);
-
-    const int32 Index = GetModuleIndex_Internal(ModuleName);
+    const int32 Index = GetModuleIndex(ModuleName);
     if (Index >= 0)
     {
         return Modules[Index].Handle;
@@ -191,17 +181,13 @@ void FModuleManager::RegisterStaticModule(const char* ModuleName, FInitializeSta
 
 bool FModuleManager::IsModuleLoaded(const char* ModuleName)
 {
-    TScopedLock Lock(ModulesCriticalSection);
-
-    const int32 Index = GetModuleIndex_Internal(ModuleName);
+    const int32 Index = GetModuleIndex(ModuleName);
     return (Index >= 0);
 }
 
 void FModuleManager::UnloadModule(const char* ModuleName)
 {
-    TScopedLock Lock(ModulesCriticalSection);
-
-    const int32 Index = GetModuleIndex_Internal(ModuleName);
+    const int32 Index = GetModuleIndex(ModuleName);
     if (Index >= 0)
     {
         FModule& Module = Modules[Index];

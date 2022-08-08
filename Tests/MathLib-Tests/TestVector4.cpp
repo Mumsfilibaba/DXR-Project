@@ -122,7 +122,7 @@ bool TestVector4()
 
     // NaN
     FVector4 NaN(1.0f, 0.0f, 0.0f, NAN);
-    if (!NaN.HasNan())
+    if (!NaN.HasNaN())
     {
         TEST_FAILED();
     }

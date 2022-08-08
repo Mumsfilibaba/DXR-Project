@@ -73,9 +73,9 @@ void TSharedPtr_Test()
     PrintRefCount( BasePtr0 );
     TSharedPtr<Base> BasePtr = TSharedPtr<Base>( new Derived() );
     PrintRefCount( BasePtr );
-    TSharedPtr<Derived> DerivedPtr1 = StaticCast<Derived>( BasePtr0 );
+    TSharedPtr<Derived> DerivedPtr1 = StaticCastSharedPtr<Derived>( BasePtr0 );
     PrintRefCount( DerivedPtr1 );
-    TSharedPtr<Derived> DerivedPtr3 = StaticCast<Derived>( Move( BasePtr0 ) );
+    TSharedPtr<Derived> DerivedPtr3 = StaticCastSharedPtr<Derived>( Move( BasePtr0 ) );
     PrintRefCount( DerivedPtr3 );
 
     std::cout << std::endl << "----Testing StaticCast (Array)----" << std::endl << std::endl;
@@ -85,9 +85,9 @@ void TSharedPtr_Test()
     PrintRefCount( BasePtr1 );
     TSharedPtr<Base[]> BasePtrArray = TSharedPtr<Base[]>( new Derived[5] );
     PrintRefCount( BasePtrArray );
-    TSharedPtr<Derived[]> BasePtr2 = StaticCast<Derived[]>( DerivedPtr2 );
+    TSharedPtr<Derived[]> BasePtr2 = StaticCastSharedPtr<Derived[]>( DerivedPtr2 );
     PrintRefCount( BasePtr2 );
-    TSharedPtr<Derived[]> BasePtr3 = StaticCast<Derived[]>( Move( DerivedPtr2 ) );
+    TSharedPtr<Derived[]> BasePtr3 = StaticCastSharedPtr<Derived[]>( Move( DerivedPtr2 ) );
     PrintRefCount( BasePtr3 );
 
     std::cout << std::endl << "----Testing ConstCast----" << std::endl << std::endl;
@@ -95,7 +95,7 @@ void TSharedPtr_Test()
     std::cout << "ConstPtr0=" << *ConstPtr0 << std::endl;
     PrintRefCount( ConstPtr0 );
 
-    TSharedPtr<uint32> ConstPtr1 = ConstCast<uint32>( ConstPtr0 );
+    TSharedPtr<uint32> ConstPtr1 = ConstCastSharedPtr<uint32>( ConstPtr0 );
     std::cout << "ConstPtr1=" << *ConstPtr1 << std::endl;
     PrintRefCount( ConstPtr1 );
 
@@ -104,7 +104,7 @@ void TSharedPtr_Test()
     std::cout << "ReintPtr0=" << *ReintPtr0 << std::endl;
     PrintRefCount( ReintPtr0 );
 
-    TSharedPtr<float> ReintPtr1 = ReinterpretCast<float>( ReintPtr0 );
+    TSharedPtr<float> ReintPtr1 = ReinterpretCastSharedPtr<float>( ReintPtr0 );
     std::cout << "ReintPtr1=" << *ReintPtr1 << std::endl;
     PrintRefCount( ReintPtr1 );
 
@@ -112,7 +112,7 @@ void TSharedPtr_Test()
     TSharedPtr<VirtualBase> VirtualPtr0 = MakeShared<VirtualDerived>();
     PrintRefCount( VirtualPtr0 );
 
-    TSharedPtr<VirtualDerived> VirtualPtr1 = DynamicCast<VirtualDerived>( VirtualPtr0 );
+    TSharedPtr<VirtualDerived> VirtualPtr1 = DynamicCastSharedPtr<VirtualDerived>( VirtualPtr0 );
     PrintRefCount( VirtualPtr1 );
 
     std::cout << std::endl << "----Testing Operator[]----" << std::endl << std::endl;
@@ -127,7 +127,7 @@ void TSharedPtr_Test()
         std::cout << ConstPtr3[i] << std::endl;
     }
 
-    TSharedPtr<const uint32[]> ConstPtr4 = ConstCast<const uint32[]>( ConstPtr3 );
+    TSharedPtr<const uint32[]> ConstPtr4 = ConstCastSharedPtr<const uint32[]>( ConstPtr3 );
     PrintRefCount( ConstPtr4 );
 
     std::cout << "ConstPtr4=" << std::endl;
@@ -143,7 +143,7 @@ void TSharedPtr_Test()
     TWeakPtr<Derived> WeakBase1 = DerivedPtr0;
     PrintRefCount( WeakBase1 );
 
-    std::cout << std::endl << "----Testing Equallity----" << std::endl << std::endl;
+    std::cout << std::endl << "----Testing Equality----" << std::endl << std::endl;
     std::cout << "operator==(Weak, WeaK): " << std::boolalpha << (WeakBase0 == WeakBase1) << std::endl;
     std::cout << "operator==(Weak, Raw): " << std::boolalpha << (WeakBase0 == WeakBase0.Get()) << std::endl;
     std::cout << "operator==(Raw, Weak): " << std::boolalpha << (WeakBase0.Get() == WeakBase0) << std::endl;

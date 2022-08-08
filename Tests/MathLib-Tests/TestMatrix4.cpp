@@ -33,10 +33,10 @@ bool TestMatrix4()
     }
 
     Test = FMatrix4(
-        CVector4(1.0f, 0.0f, 0.0f, 0.0f),
-        CVector4(0.0f, 1.0f, 0.0f, 0.0f),
-        CVector4(0.0f, 0.0f, 1.0f, 0.0f),
-        CVector4(0.0f, 0.0f, 0.0f, 1.0f));
+        FVector4(1.0f, 0.0f, 0.0f, 0.0f),
+        FVector4(0.0f, 1.0f, 0.0f, 0.0f),
+        FVector4(0.0f, 0.0f, 1.0f, 0.0f),
+        FVector4(0.0f, 0.0f, 0.0f, 1.0f));
     if (Identity != Test)
     {
         TEST_FAILED();
@@ -72,15 +72,15 @@ bool TestMatrix4()
     }
 
     // Transformation
-    CVector3 Vec0 = CVector3(1.0f, 1.0f, 1.0f);
-    CVector3 Vec1 = Translation.TransformPosition(Vec0);
-    if (Vec1 != CVector3(6.0f, 2.0f, -1.0f))
+    FVector3 Vec0 = FVector3(1.0f, 1.0f, 1.0f);
+    FVector3 Vec1 = Translation.TransformPosition(Vec0);
+    if (Vec1 != FVector3(6.0f, 2.0f, -1.0f))
     {
         TEST_FAILED();
     }
 
     Vec1 = Translation.TransformDirection(Vec0);
-    if (Vec1 != CVector3(1.0f, 1.0f, 1.0f))
+    if (Vec1 != FVector3(1.0f, 1.0f, 1.0f))
     {
         TEST_FAILED();
     }
@@ -109,7 +109,7 @@ bool TestMatrix4()
     }
 
     // LookAt / Look To
-    FMatrix4 LookAt = FMatrix4::LookAt(CVector3(0.0f, 0.0f, 1.0f), CVector3(0.0f), CVector3(0.0f, 1.0f, 0.0f));
+    FMatrix4 LookAt = FMatrix4::LookAt(FVector3(0.0f, 0.0f, 1.0f), FVector3(0.0f), FVector3(0.0f, 1.0f, 0.0f));
     XMMATRIX XmLookAt = XMMatrixLookAtLH(
         XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
         XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
@@ -217,7 +217,7 @@ bool TestMatrix4()
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, NAN);
-    if (NaN.HasNan() != true)
+    if (NaN.HasNaN() != true)
     {
         TEST_FAILED();
     }
@@ -240,15 +240,15 @@ bool TestMatrix4()
     }
 
     // Get Row
-    CVector4 Row = Infinity.GetRow(0);
-    if (Row != CVector4(1.0f, 0.0f, 0.0f, 0.0f))
+    FVector4 Row = Infinity.GetRow(0);
+    if (Row != FVector4(1.0f, 0.0f, 0.0f, 0.0f))
     {
         TEST_FAILED();
     }
 
     // Column
-    CVector4 Column = Infinity.GetColumn(0);
-    if (Column != CVector4(1.0f, 0.0f, 0.0f, 0.0f))
+    FVector4 Column = Infinity.GetColumn(0);
+    if (Column != FVector4(1.0f, 0.0f, 0.0f, 0.0f))
     {
         TEST_FAILED();
     }
@@ -263,22 +263,22 @@ bool TestMatrix4()
     }
 
     // GetTranslation
-    CVector3 Position = Infinity.GetTranslation();
-    if (Position != CVector3(0.0f))
+    FVector3 Position = Infinity.GetTranslation();
+    if (Position != FVector3(0.0f))
     {
         TEST_FAILED();
     }
 
     // GetRotationAndScale
-    CMatrix3 RotationAndScale = Infinity.GetRotationAndScale();
-    if (RotationAndScale != CMatrix3::Identity())
+    FMatrix3 RotationAndScale = Infinity.GetRotationAndScale();
+    if (RotationAndScale != FMatrix3::Identity())
     {
         TEST_FAILED();
     }
 
     // GetData
     FMatrix4 Matrix0 = FMatrix4::Identity();
-    FMatrix4 Matrix1 = FMatrix4(Matrix0.GetData());
+    FMatrix4 Matrix1 = FMatrix4(Matrix0.Data());
     if (Matrix0 != Matrix1)
     {
         TEST_FAILED();
@@ -286,15 +286,15 @@ bool TestMatrix4()
 
     // Multiply a vector
     Translation = FMatrix4::Translation(5.0f, 5.0f, 5.0f);
-    CVector4 TranslatedVector = Translation * CVector4(0.0f, 0.0f, 0.0f, 1.0f);
+    FVector4 TranslatedVector = Translation * FVector4(0.0f, 0.0f, 0.0f, 1.0f);
 
-    if (TranslatedVector != CVector4(5.0f, 5.0f, 5.0f, 1.0f))
+    if (TranslatedVector != FVector4(5.0f, 5.0f, 5.0f, 1.0f))
     {
         TEST_FAILED();
     }
 
     // Roll Pitch Yaw
-    for (double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE)
+    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
     {
         FMatrix4 RollPitchYaw = FMatrix4::RotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
         XMMATRIX XmRollPitchYaw = XMMatrixRotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
@@ -307,7 +307,7 @@ bool TestMatrix4()
     }
 
     // RotationX
-    for (double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE)
+    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
     {
         FMatrix4 Rotation = FMatrix4::RotationX((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationX((float)Angle);
@@ -320,7 +320,7 @@ bool TestMatrix4()
     }
 
     // RotationY
-    for (double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE)
+    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
     {
         FMatrix4 Rotation = FMatrix4::RotationY((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationY((float)Angle);
@@ -333,7 +333,7 @@ bool TestMatrix4()
     }
 
     // RotationZ
-    for (double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE)
+    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
     {
         FMatrix4 Rotation = FMatrix4::RotationZ((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationZ((float)Angle);

@@ -88,7 +88,7 @@ bool FAsyncTaskManager::Initialize()
 
     for (uint32 Thread = 0; Thread < ThreadCount; ++Thread)
     {
-        FString ThreadName = FString::CreateFormated("WorkerThread[%d]", Thread);
+        FString ThreadName = FString::CreateFormatted("WorkerThread[%d]", Thread);
 
         FGenericThreadRef NewThread = FThreadManager::Get().CreateNamedThread(FAsyncTaskManager::WorkThread, ThreadName);
         if (NewThread)

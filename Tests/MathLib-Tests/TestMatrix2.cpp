@@ -30,8 +30,8 @@ bool TestMatrix2()
     }
 
     Test = FMatrix2(
-        CVector2(1.0f, 0.0f),
-        CVector2(0.0f, 1.0f));
+        FVector2(1.0f, 0.0f),
+        FVector2(0.0f, 1.0f));
     if (Identity != Test)
     {
         TEST_FAILED();
@@ -71,7 +71,7 @@ bool TestMatrix2()
     XMFLOAT3X3 Float3x3Matrix;
 
     // Rotation
-    for (double Angle = -NMath::kTwoPI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE)
+    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
     {
         FMatrix2 Rotation = FMatrix2::Rotation((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationZ((float)Angle);
@@ -85,12 +85,12 @@ bool TestMatrix2()
     }
 
     // Multiplication
-    FMatrix2 Mat0 = FMatrix2::Rotation(NMath::HALF_PI_F);
-    FMatrix2 Mat1 = FMatrix2::Rotation(NMath::HALF_PI_F);
+    FMatrix2 Mat0 = FMatrix2::Rotation(NMath::kHalfPI_f);
+    FMatrix2 Mat1 = FMatrix2::Rotation(NMath::kHalfPI_f);
     FMatrix2 Mult = Mat0 * Mat1;
 
-    XMMATRIX XmMat0 = XMMatrixRotationZ(NMath::HALF_PI_F);
-    XMMATRIX XmMat1 = XMMatrixRotationZ(NMath::HALF_PI_F);
+    XMMATRIX XmMat0 = XMMatrixRotationZ(NMath::kHalfPI_f);
+    XMMATRIX XmMat1 = XMMatrixRotationZ(NMath::kHalfPI_f);
     XMMATRIX XmMult = XMMatrixMultiply(XmMat0, XmMat1);
 
     XMStoreFloat3x3(&Float3x3Matrix, XmMult);
@@ -175,7 +175,7 @@ bool TestMatrix2()
 
     // NaN
     FMatrix2 NaN(1.0f, 0.0f, 0.0f, NAN);
-    if (NaN.HasNan() != true)
+    if (NaN.HasNaN() != true)
     {
         TEST_FAILED();
     }
@@ -194,15 +194,15 @@ bool TestMatrix2()
     }
 
     // Get Row
-    CVector2 Row = Infinity.GetRow(0);
-    if (Row != CVector2(1.0f, 0.0f))
+    FVector2 Row = Infinity.GetRow(0);
+    if (Row != FVector2(1.0f, 0.0f))
     {
         TEST_FAILED();
     }
 
     // Column
-    CVector2 Column = Infinity.GetColumn(0);
-    if (Column != CVector2(1.0f, 0.0f))
+    FVector2 Column = Infinity.GetColumn(0);
+    if (Column != FVector2(1.0f, 0.0f))
     {
         TEST_FAILED();
     }
@@ -216,7 +216,7 @@ bool TestMatrix2()
 
     // GetData
     FMatrix2 Matrix0 = FMatrix2::Identity();
-    FMatrix2 Matrix1 = FMatrix2(Matrix0.GetData());
+    FMatrix2 Matrix1 = FMatrix2(Matrix0.Data());
 
     if (Matrix0 != Matrix1)
     {
@@ -224,17 +224,17 @@ bool TestMatrix2()
     }
 
     // Multiply a vector
-    FMatrix2 Rot = FMatrix2::Rotation(NMath::HALF_PI_F);
-    CVector2 TranslatedVector = Rot * CVector2(1.0f, 2.0f);
+    FMatrix2 Rot = FMatrix2::Rotation(NMath::kHalfPI_f);
+    FVector2 TranslatedVector = Rot * FVector2(1.0f, 2.0f);
 
     XMVECTOR XmTranslatedVector = XMVectorSet(1.0f, 2.0f, 0.0f, 0.0f);
-    XMMATRIX XmRot = XMMatrixRotationZ(NMath::HALF_PI_F);
+    XMMATRIX XmRot = XMMatrixRotationZ(NMath::kHalfPI_f);
     XmTranslatedVector = XMVector3Transform(XmTranslatedVector, XmRot);
 
     XMFLOAT2 XmFloat2;
     XMStoreFloat2(&XmFloat2, XmTranslatedVector);
 
-    if (TranslatedVector != CVector2(reinterpret_cast<float*>(&XmFloat2)))
+    if (TranslatedVector != FVector2(reinterpret_cast<float*>(&XmFloat2)))
     {
         TEST_FAILED();
     }

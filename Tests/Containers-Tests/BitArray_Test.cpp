@@ -65,7 +65,7 @@ bool TBitArray_Test()
             0b01010101,
         };
 
-        TBitArray<uint8> BitArray(Bits, ArrayCount(Bits));
+        TBitArray<uint8> BitArray(Bits, ARRAY_COUNT(Bits));
         CHECK(BitArray.Size() == 16);
         CHECK(MakeStringFromBitArray(BitArray) == "0101010101010101");
     }
@@ -320,7 +320,7 @@ bool TStaticBitArray_Test()
             0b01010101,
         };
 
-        TStaticBitArray<14, uint8> BitArray(Bits, ArrayCount(Bits));
+        TStaticBitArray<14, uint8> BitArray(Bits, ARRAY_COUNT(Bits));
         CHECK(BitArray.Size() == 14);
         CHECK(MakeStringFromBitArray(BitArray) == "01010101010101");
     }

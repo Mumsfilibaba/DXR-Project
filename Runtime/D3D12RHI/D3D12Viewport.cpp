@@ -248,7 +248,7 @@ bool FD3D12Viewport::RetriveBackBuffers()
         }
 
         BackBuffers[Index]->SetResource(dbg_new FD3D12Resource(GetDevice(), BackBufferResource));
-        BackBuffers[Index]->GetResource()->SetName(FString::CreateFormated("BackBuffer[%u]", Index));
+        BackBuffers[Index]->GetResource()->SetName(FString::CreateFormatted("BackBuffer[%u]", Index));
     }
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();

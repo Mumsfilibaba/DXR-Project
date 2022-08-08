@@ -272,7 +272,7 @@ private:
 template<
     typename ArrayType,
     typename ElementType>
-FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(TArrayIterator<ArrayType, ElementType>::SizeType LHS, TArrayIterator<ArrayType, ElementType>& RHS) noexcept
+FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIterator<ArrayType, ElementType>::SizeType LHS, TArrayIterator<ArrayType, ElementType>& RHS) noexcept
 {
     TArrayIterator NewIterator(RHS);
     return NewIterator += LHS;

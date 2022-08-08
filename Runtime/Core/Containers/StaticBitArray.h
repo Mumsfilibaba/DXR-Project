@@ -109,7 +109,7 @@ public:
      */
     FORCEINLINE void ResetWithZeros()
     {
-        Memory::Memset(Storage, 0x00, CapacityInBytes());
+        FMemory::Memset(Storage, 0x00, CapacityInBytes());
     }
 
     /**
@@ -117,7 +117,7 @@ public:
      */
     FORCEINLINE void ResetWithOnes()
     {
-        Memory::Memset(Storage, 0xff, CapacityInBytes());
+        FMemory::Memset(Storage, 0xff, CapacityInBytes());
         
         MaskOutLastStorageElement();
     }
@@ -130,7 +130,7 @@ public:
      */
     inline void AssignBit(SizeType BitPosition, const bool bValue) noexcept
     {
-        Assert(BitPosition < NumBits);
+        Check(BitPosition < NumBits);
         AssignBit_Internal(BitPosition, bValue);
     }
 
@@ -141,7 +141,7 @@ public:
      */
     FORCEINLINE void FlipBit(SizeType BitPosition) noexcept
     {
-        Assert(BitPosition < NumBits);
+        Check(BitPosition < NumBits);
 
         const SizeType ElementIndex   = GetStorageIndexOfBit(BitPosition);
         const SizeType IndexInElement = GetIndexOfBitInStorage(BitPosition);
@@ -317,10 +317,10 @@ public:
      */
     FORCEINLINE BitReferenceType GetBitReference(SizeType BitIndex) noexcept
     {
-        Assert(BitIndex < NumBits);
+        Check(BitIndex < NumBits);
 
         const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
-        Assert(ElementIndex < Capacity());
+        Check(ElementIndex < Capacity());
 
         return BitReferenceType(Storage[ElementIndex], ~Element);
     }
@@ -333,10 +333,10 @@ public:
      */
     FORCEINLINE const ConstBitReferenceType GetBitReference(SizeType Index) const noexcept
     {
-        Assert(Index < NumBits);
+        Check(Index < NumBits);
 
         const SizeType ElementIndex = GetStorageIndexOfBit(Index);
-        Assert(ElementIndex < Capacity());
+        Check(ElementIndex < Capacity());
 
         return ConstBitReferenceType(Storage[ElementIndex], CreateMaskForBit(Index));
     }

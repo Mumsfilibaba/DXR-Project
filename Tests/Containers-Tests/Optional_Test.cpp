@@ -160,7 +160,7 @@ bool TOptional_Test()
     // Emplace
 
     {
-        TOptional<STest> Optional0(InPlace, 70);
+        TOptional<FTest> Optional0(InPlace, 70);
         CHECK(*Optional0 == 70);
         CHECK(Optional0.Emplace(245) == 245);
         CHECK(Optional0.Emplace(235) == 235);
@@ -206,8 +206,8 @@ bool TOptional_Test()
     // Swap complex
 
     {
-        TOptional<STest> Optional0;
-        TOptional<STest> Optional1(InPlace, 100);
+        TOptional<FTest> Optional0;
+        TOptional<FTest> Optional1(InPlace, 100);
         
         CHECK(!Optional0.HasValue());
         CHECK( Optional1.HasValue());

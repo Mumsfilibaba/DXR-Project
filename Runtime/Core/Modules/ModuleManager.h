@@ -7,12 +7,11 @@
 #include "Core/Delegates/Delegate.h"
 #include "Core/Delegates/MulticastDelegate.h"
 #include "Core/Debug/Debug.h"
-#include "Core/Threading/Platform/CriticalSection.h"
 
 #include "Platform/PlatformLibrary.h"
 
 #ifdef GetModuleHandle
-    #undef GetModuleHandle
+#undef GetModuleHandle
 #endif
 
 struct IModule;
@@ -60,7 +59,7 @@ struct IModule
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FDefaultModule
 
-struct FDefaultModule 
+struct FDefaultModule
     : public IModule
 {
     /** @return: Returns true if the load is successful */
@@ -87,10 +86,11 @@ class CORE_API FModuleManager
             : Name(InName)
             , Interface(InInterface)
             , Handle(0)
-        { }
+        {
+        }
 
         FString        Name;
-        IModule*       Interface;
+        IModule* Interface;
         PlatformModule Handle;
     };
 
@@ -109,7 +109,7 @@ public:
 
     /**
      * @brief: Load a new module into the engine
-     * 
+     *
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a pointer to a IModule interface if the load is successful, otherwise nullptr
      */
@@ -133,15 +133,15 @@ public:
 
     /*
      * Registers a static module
-     * 
+     *
      * @param ModuleName: Name of the module to load without platform extension or prefix
      * @param InitDelegate: Delegate to initialize the static delegate
-     */ 
+     */
     void RegisterStaticModule(const char* ModuleName, FInitializeStaticModuleDelegate InitDelegate);
 
     /**
      * @brief: Check if a module is already loaded
-     * 
+     *
      * @param ModuleName: Name of the module to load without platform extension or prefix
      * @return: Returns true if the module is loaded, otherwise false
      */
@@ -262,7 +262,7 @@ public:
 
     /**
      * @brief: Constructor that registers the module to the ModuleManager
-     * 
+     *
      * @param ModuleName: Name of the module
      */
     TStaticModuleInitializer(const tchar* ModuleName)
