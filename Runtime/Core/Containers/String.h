@@ -68,7 +68,7 @@ public:
      * @param Format: Formatted string
      * @return: Returns the formatted string based on the format string
      */
-    static NOINLINE TString CreateFormated(const CharType* Format, ...) noexcept
+    static NOINLINE TString CreateFormatted(const CharType* Format, ...) noexcept
     {
         TString NewString;
 
@@ -87,7 +87,7 @@ public:
      * @param ArgsList: Argument-list to be formatted based on the format-string
      * @return: Returns the formatted string based on the format string
      */
-    static FORCEINLINE TString CreateFormatedArgs(const CharType* Format, va_list ArgsList) noexcept
+    static FORCEINLINE TString CreateFormattedArgs(const CharType* Format, va_list ArgsList) noexcept
     {
         TString NewString;
         NewString.FormatArgs(Format, ArgsList);
@@ -2192,7 +2192,7 @@ using FFWStringHasher = TStringHasher<wchar_t>;
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, FString>::Type ToString(T Element)
 {
-    return FString::CreateFormated("%f", Element);
+    return FString::CreateFormatted("%f", Element);
 }
 
 template<typename T>
@@ -2201,31 +2201,31 @@ typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, FString>::Type ToString(T E
 template<>
 inline FString ToString<int32>(int32 Element)
 {
-    return FString::CreateFormated("%d", Element);
+    return FString::CreateFormatted("%d", Element);
 }
 
 template<>
 inline FString ToString<int64>(int64 Element)
 {
-    return FString::CreateFormated("%lld", Element);
+    return FString::CreateFormatted("%lld", Element);
 }
 
 template<>
 inline FString ToString<uint32>(uint32 Element)
 {
-    return FString::CreateFormated("%u", Element);
+    return FString::CreateFormatted("%u", Element);
 }
 
 template<>
 inline FString ToString<uint64>(uint64 Element)
 {
-    return FString::CreateFormated("%llu", Element);
+    return FString::CreateFormatted("%llu", Element);
 }
 
 template<>
 inline FString ToString<void*>(void* Element)
 {
-    return FString::CreateFormated("%p", Element);
+    return FString::CreateFormatted("%p", Element);
 }
 
 template<>
@@ -2237,7 +2237,7 @@ inline FString ToString<bool>(bool bElement)
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, FWString>::Type ToWideString(T Element)
 {
-    return FWString::CreateFormated(L"%f", Element);
+    return FWString::CreateFormatted(L"%f", Element);
 }
 
 template<typename T>
@@ -2246,25 +2246,25 @@ typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, FWString>::Type ToWideStrin
 template<>
 inline FWString ToWideString<int32>(int32 Element)
 {
-    return FWString::CreateFormated(L"%d", Element);
+    return FWString::CreateFormatted(L"%d", Element);
 }
 
 template<>
 inline FWString ToWideString<int64>(int64 Element)
 {
-    return FWString::CreateFormated(L"%lld", Element);
+    return FWString::CreateFormatted(L"%lld", Element);
 }
 
 template<>
 inline FWString ToWideString<uint32>(uint32 Element)
 {
-    return FWString::CreateFormated(L"%u", Element);
+    return FWString::CreateFormatted(L"%u", Element);
 }
 
 template<>
 inline FWString ToWideString<uint64>(uint64 Element)
 {
-    return FWString::CreateFormated(L"%llu", Element);
+    return FWString::CreateFormatted(L"%llu", Element);
 }
 
 template<>

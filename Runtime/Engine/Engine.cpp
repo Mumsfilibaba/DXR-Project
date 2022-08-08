@@ -64,6 +64,7 @@ bool FEngine::Initialize()
     Application.RegisterMainViewport(MainWindow);
 
     TSharedPtr<ICursor> CursorDevice = Application.GetCursor();
+
     User = FUser::Make(0, CursorDevice);
     if (!User)
     {

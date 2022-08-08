@@ -7,6 +7,7 @@
 #include "Core/Delegates/Delegate.h"
 #include "Core/Delegates/MulticastDelegate.h"
 #include "Core/Debug/Debug.h"
+#include "Core/Threading/Platform/CriticalSection.h"
 
 #include "Platform/PlatformLibrary.h"
 

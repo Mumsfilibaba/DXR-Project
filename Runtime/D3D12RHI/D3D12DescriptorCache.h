@@ -135,12 +135,13 @@ struct FD3D12PipelineStageMask
         , PixelStage(0)
     { }
 
-    CONSTEXPR FD3D12PipelineStageMask( uint8 InComputeStage
-                                     , uint8 InVertexStage
-                                     , uint8 InHullStage
-                                     , uint8 InDomainStage
-                                     , uint8 InGeometryStage
-                                     , uint8 InPixelStage)
+    CONSTEXPR FD3D12PipelineStageMask(
+        uint8 InComputeStage,
+        uint8 InVertexStage,
+        uint8 InHullStage,
+        uint8 InDomainStage,
+        uint8 InGeometryStage,
+        uint8 InPixelStage)
         : ComputeStage(InComputeStage)
         , VertexStage(InVertexStage)
         , HullStage(InHullStage)
@@ -157,12 +158,13 @@ struct FD3D12PipelineStageMask
 
     CONSTEXPR bool operator==(FD3D12PipelineStageMask RHS) const
     {
-        return (ComputeStage  == RHS.ComputeStage)
-            && (VertexStage   == RHS.VertexStage)
-            && (HullStage     == RHS.HullStage)
-            && (DomainStage   == RHS.DomainStage)
-            && (GeometryStage == RHS.GeometryStage)
-            && (PixelStage    == RHS.PixelStage);
+        return 
+            (ComputeStage  == RHS.ComputeStage)  &&
+            (VertexStage   == RHS.VertexStage)   &&
+            (HullStage     == RHS.HullStage)     &&
+            (DomainStage   == RHS.DomainStage)   &&
+            (GeometryStage == RHS.GeometryStage) &&
+            (PixelStage    == RHS.PixelStage);
     }
 
     CONSTEXPR bool operator!=(FD3D12PipelineStageMask RHS) const

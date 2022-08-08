@@ -471,72 +471,63 @@ bool FD3D12Device::Initialize()
 #if WIN10_BUILD_14393
     if (FAILED(Device.GetAs<ID3D12Device1>(&Device1)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device1");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device1");
     }
 #endif
 
 #if WIN10_BUILD_15063
     if (FAILED(Device.GetAs<ID3D12Device2>(&Device2)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device2");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device2");
     }
 #endif
 
 #if WIN10_BUILD_16299
     if (FAILED(Device.GetAs<ID3D12Device3>(&Device3)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device3");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device3");
     }
 #endif
 
 #if WIN10_BUILD_17134
     if (FAILED(Device.GetAs<ID3D12Device4>(&Device4)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device4");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device4");
     }
 #endif
 
 #if WIN10_BUILD_17763
     if (FAILED(Device.GetAs<ID3D12Device5>(&Device5)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device5");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device5");
     }
 #endif
 
 #if WIN10_BUILD_18362
     if (FAILED(Device.GetAs<ID3D12Device6>(&Device6)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device6");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device6");
     }
 #endif
 
 #if WIN10_BUILD_19041
     if (FAILED(Device.GetAs<ID3D12Device7>(&Device7)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device7");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device7");
     }
 #endif
 
 #if WIN10_BUILD_20348
     if (FAILED(Device.GetAs<ID3D12Device8>(&Device8)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device8");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device8");
     }
 #endif
 
-#if 0 && WIN11_BUILD_22000
+#if WIN11_BUILD_22000
     if (FAILED(Device.GetAs<ID3D12Device9>(&Device9)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device9");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device9");
     }
 #endif
 

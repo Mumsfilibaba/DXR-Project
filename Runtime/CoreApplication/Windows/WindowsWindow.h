@@ -29,14 +29,7 @@ public:
 
     static const char* GetClassName();
 
-    FORCEINLINE HWND GetWindowHandle() const 
-    { 
-        return Window;
-    }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericWindow Interface
-
+public:
     virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle Style) override final;
 
     virtual void Show(bool bMaximized) override final;
@@ -69,6 +62,11 @@ public:
 
     virtual void  SetPlatformHandle(void* InPlatformHandle) override final;
     virtual void* GetPlatformHandle() const override final { return reinterpret_cast<void*>(Window); }
+
+    FORCEINLINE HWND GetWindowHandle() const 
+    { 
+        return Window;
+    }
 
 private:
     FWindowsApplication* Application;

@@ -38,7 +38,7 @@ void* FMemory::Realloc(void* Ptr, uint64 Size) noexcept
 
 void FMemory::Free(void* Ptr) noexcept
 {
-    free(Ptr);
+    free(Pointer);
 }
 
 void* FMemory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept

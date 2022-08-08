@@ -253,10 +253,11 @@ void FD3D12DescriptorCache::Clear()
     SamplerStateCache.Reset(NullSampler.Get());
 }
 
-void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps( ID3D12GraphicsCommandList* CmdList
-                                                          , FD3D12OnlineDescriptorManager* ResourceDescriptors
-                                                          , FD3D12OnlineDescriptorManager* SamplerDescriptors
-                                                          , FD3D12PipelineStageMask PipelineMask)
+void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(
+    ID3D12GraphicsCommandList* CmdList,
+    FD3D12OnlineDescriptorManager* ResourceDescriptors,
+    FD3D12OnlineDescriptorManager* SamplerDescriptors,
+    FD3D12PipelineStageMask PipelineMask)
 {
     // Count descriptors
     uint32 NumResourceDescriptors = 0;
@@ -302,16 +303,18 @@ void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps( ID3D12GraphicsComman
 
     // Allocate handles
     uint32 ResourceDescriptorHandle = ResourceDescriptors->AllocateHandles(NumResourceDescriptors);
-    D3D12_ERROR_COND( NumResourceDescriptors <= D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
-                    , "Trying to bind more Resource Descriptors (NumDescriptors=%u) than the maximum (MaxResourceDescriptors=%u)"
-                    , NumResourceDescriptors
-                    , D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
+    D3D12_ERROR_COND(
+        NumResourceDescriptors <= D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT,
+        "Trying to bind more Resource Descriptors (NumDescriptors=%u) than the maximum (MaxResourceDescriptors=%u)",
+        NumResourceDescriptors,
+        D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
 
     uint32 SamplerDescriptorHandle = SamplerDescriptors->AllocateHandles(NumSamplerDescriptors);
-    D3D12_ERROR_COND( NumSamplerDescriptors <= D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT
-                    , "Trying to bind more Sampler Descriptors (NumDescriptors=%u) than the maximum (MaxSamplerDescriptors=%u)"
-                    , NumSamplerDescriptors
-                    , D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT);
+    D3D12_ERROR_COND(
+        NumSamplerDescriptors <= D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT,
+        "Trying to bind more Sampler Descriptors (NumDescriptors=%u) than the maximum (MaxSamplerDescriptors=%u)",
+        NumSamplerDescriptors,
+        D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT);
 
     // Bind the heaps
     ID3D12DescriptorHeap* DescriptorHeaps[] =

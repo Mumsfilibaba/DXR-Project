@@ -122,8 +122,7 @@ bool FWindowsApplication::RegisterRawInputDevices(HWND Window)
     Devices[0].usUsage     = 0x02;
     Devices[0].usUsagePage = 0x01;
 
-    const bool bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
-
+    const auto bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
     if (!bResult)
     {
         LOG_ERROR("[FWindowsApplication] Failed to register Raw Input devices");
@@ -149,7 +148,7 @@ bool FWindowsApplication::UnregisterRawInputDevices()
     Devices[0].usUsage     = 0x02;
     Devices[0].usUsagePage = 0x01;
 
-    const bool bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
+    const auto bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
     if (!bResult)
     {
         LOG_ERROR("[FWindowsApplication] Failed to unregister Raw Input devices");
@@ -185,6 +184,7 @@ void FWindowsApplication::Tick(float)
     {
         TScopedLock<FCriticalSection> Lock(MessagesCS);
         ProcessableMessages.Append(Messages);
+
         Messages.Clear();
     }
 
@@ -213,7 +213,8 @@ void FWindowsApplication::Tick(float)
 
 bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window)
 {
-    if (Window)
+    TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>(Window);
+    if (WindowsWindow && WindowsWindow->IsValid())
     {
         FWindowsWindowRef WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
         return RegisterRawInputDevices(WindowsWindow->GetWindowHandle());
@@ -226,7 +227,8 @@ bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const FGenericWindow
 
 void FWindowsApplication::SetCapture(const FGenericWindowRef& Window)
 {
-    if (Window)
+    TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>(Window);
+    if (WindowsWindow && WindowsWindow->IsValid())
     {
         FWindowsWindowRef WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
 
@@ -249,6 +251,7 @@ void FWindowsApplication::SetActiveWindow(const FGenericWindowRef& Window)
     HWND hActiveWindow = WindowsWindow->GetWindowHandle();
     if (WindowsWindow->IsValid())
     {
+        HWND hActiveWindow = WindowsWindow->GetHandle();
         ::SetActiveWindow(hActiveWindow);
     }
 }
@@ -563,7 +566,6 @@ LRESULT FWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
         }
     }
 
-    // Store relevant messages 
     switch (Message)
     {
         case WM_INPUT:

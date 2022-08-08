@@ -48,10 +48,14 @@ struct ENGINE_API FEngine
      */
     virtual bool Release();
 
-    /** Request exit from the engine */
+    /**
+     * Request exit from the engine 
+     */
     void Exit();
 
-    /** Destroy the engine */
+    /**
+     * Destroy the engine 
+     */
     void Destroy();
 
     /** The main window of the app */

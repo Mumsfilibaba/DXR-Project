@@ -1,0 +1,402 @@
+#include "BitArray_Test.h"
+
+#if RUN_TBITARRAY_TEST || RUN_TSTATICBITARRAY_TEST
+#include "TestUtils.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helpers
+
+template<typename BitArrayType>
+std::string MakeStringFromBitArray(const BitArrayType& BitArray)
+{
+    std::string NewString;
+    NewString.reserve(BitArray.Size());
+
+    for (BitArrayType::SizeType Index = 0; Index < BitArray.Size(); ++Index)
+    {
+        const bool bValue = (BitArray[Index] == true);
+        NewString.push_back(bValue ? '1' : '0');
+    }
+
+    std::reverse(NewString.begin(), NewString.end());
+    return NewString;
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// BitArray test
+
+#if RUN_TBITARRAY_TEST
+#include <Core/Containers/BitArray.h>
+
+bool TBitArray_Test()
+{
+    std::cout << '\n' << "----------TBitArray----------" << '\n' << '\n';
+
+    {
+        TBitArray<uint8> BitArray;
+        CHECK(BitArray.Size() == 0);
+        CHECK(BitArray.StorageSize() == 0);
+        CHECK(MakeStringFromBitArray(BitArray) == "");
+    }
+
+    {
+        TBitArray<uint32> BitArray;
+        CHECK(BitArray.Size()        == 0);
+        CHECK(BitArray.StorageSize() == 0);
+        CHECK(MakeStringFromBitArray(BitArray) == "");
+    }
+
+    {
+        TBitArray BitArray(8, true);
+        CHECK(BitArray.Size() == 8);
+        CHECK(MakeStringFromBitArray(BitArray) == "11111111");
+    }
+
+    {
+        TBitArray<uint8> BitArray(uint8(0b01010101));
+        CHECK(BitArray.Size() == 8);
+        CHECK(MakeStringFromBitArray(BitArray) == "01010101");
+    }
+
+    {
+        const uint8 Bits[] =
+        {
+            0b01010101,
+            0b01010101,
+        };
+
+        TBitArray<uint8> BitArray(Bits, ArrayCount(Bits));
+        CHECK(BitArray.Size() == 16);
+        CHECK(MakeStringFromBitArray(BitArray) == "0101010101010101");
+    }
+
+    {
+        TBitArray BitArray = { false, true, false, true };
+        CHECK(BitArray.Size() == 4);
+        CHECK(MakeStringFromBitArray(BitArray) == "1010");
+    }
+
+    {
+        TBitArray<uint8> BitArray0(9, true);
+        CHECK(BitArray0.Size() == 9);
+        CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
+
+        TBitArray<uint8> BitArray1(BitArray0);
+        CHECK(BitArray1.Size() == 9);
+        CHECK(MakeStringFromBitArray(BitArray1) == "111111111");
+
+        CHECK((BitArray0 == BitArray1) == true);
+    }
+
+    {
+        TBitArray<uint8> BitArray0(9, true);
+        CHECK(BitArray0.Size() == 9);
+        CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
+
+        TBitArray<uint8> BitArray1(Move(BitArray0));
+        CHECK(BitArray0.Size() == 0);
+        CHECK(BitArray1.Size() == 9);
+        
+        CHECK(MakeStringFromBitArray(BitArray0) == "");
+        CHECK(MakeStringFromBitArray(BitArray1) == "111111111");
+
+        CHECK((BitArray0 != BitArray1) == true);
+    }
+
+    {
+        TBitArray<uint8> BitArray(9, true);
+        CHECK(BitArray.Size() == 9);
+        CHECK(MakeStringFromBitArray(BitArray) == "111111111");
+
+        BitArray.ResetWithZeros();
+
+        CHECK(MakeStringFromBitArray(BitArray) == "000000000");
+
+        BitArray.ResetWithOnes();
+
+        CHECK(MakeStringFromBitArray(BitArray) == "111111111");
+    }
+
+    {
+        TBitArray<uint8> BitArray;
+        CHECK(BitArray.Size()    == 0);
+        CHECK(BitArray.IsEmpty() == true);
+
+        BitArray.Push(false);
+        BitArray.Push(true);
+        BitArray.Push(false);
+        BitArray.Push(true);
+        BitArray.Push(true);
+        BitArray.Push(false);
+        BitArray.Push(true);
+        BitArray.Push(true);
+        BitArray.Push(false);
+        BitArray.Push(true);
+        BitArray.Push(false);
+
+        CHECK(BitArray.Size()    == 11);
+        CHECK(BitArray.IsEmpty() == false);
+
+        CHECK(MakeStringFromBitArray(BitArray) == "01011011010");
+    }
+
+    {
+        TBitArray<uint8> BitArray(0b00000000);
+        CHECK(BitArray.Size() == 8);
+        CHECK(MakeStringFromBitArray(BitArray) == "00000000");
+
+        BitArray.AssignBit(3, true);
+        CHECK(MakeStringFromBitArray(BitArray) == "00001000");
+
+        BitArray.FlipBit(4);
+        CHECK(MakeStringFromBitArray(BitArray) == "00011000");
+
+        CHECK(BitArray.CountAssignedBits() == 2);
+        CHECK(BitArray.HasAnyBitSet()      == true);
+        CHECK(BitArray.HasNoBitSet()       == false);
+
+        uint32 MostSignificantBit;
+        BitArray.MostSignificantBit(MostSignificantBit);
+        CHECK(MostSignificantBit == 4);
+
+        uint32 LeastSignificantBit;
+        BitArray.LeastSignificantBit(LeastSignificantBit);
+        CHECK(LeastSignificantBit == 3);
+    }
+
+    {
+        TBitArray BitArray = { false, true, false, true };
+        CHECK(BitArray.Size() == 4);
+        CHECK(MakeStringFromBitArray(BitArray) == "1010");
+
+        BitArray = ~BitArray;
+
+        CHECK(BitArray.Size() == 4);
+        CHECK(MakeStringFromBitArray(BitArray) == "0101");
+    }
+
+    constexpr int32 BitCount = 18;
+    {
+        TBitArray<uint8> BitArray(BitCount, false);
+        for (int32 Bit = 0; Bit < BitCount; ++Bit)
+        {
+            BitArray.Insert(3, true);
+
+            std::cout << MakeStringFromBitArray(BitArray) << '\n';
+            continue;
+        }
+    }
+
+    {
+        TBitArray<uint8> BitArray(BitCount, false);
+        for (int32 Index = 0; Index < BitCount; ++Index)
+        {
+            if (Index % 2 == 0)
+            {
+                BitArray.FlipBit(Index);
+            }
+        }
+
+        for (int32 Bit = 0; Bit < BitCount; ++Bit)
+        {
+            if (3 < BitArray.Size())
+            {
+                BitArray.Remove(3);
+            }
+
+            std::cout << MakeStringFromBitArray(BitArray) << '\n';
+            continue;
+        }
+    }
+
+    
+    std::cout << "Testing BitShift Left\n";
+    {
+        for (int32 Bit = 0; Bit <= BitCount; ++Bit)
+        {
+            TBitArray<uint8> BitArray;
+            for (int32 Index = 0; Index < (BitCount / 2); ++Index)
+            {
+                if (Index % 2)
+                {
+                    BitArray.Push(false);
+                    BitArray.Push(false);
+                }
+                else
+                {
+                    BitArray.Push(true);
+                    BitArray.Push(true);
+                }
+            }
+
+            BitArray.BitshiftLeft(Bit);
+            std::cout << MakeStringFromBitArray(BitArray) << '\n';
+            continue;
+        }
+    }
+
+    std::cout << "Testing BitShift Right\n";
+    {
+        for (int32 Bit = 0; Bit <= BitCount; ++Bit)
+        {
+            TBitArray<uint8> BitArray;
+            for (int32 Index = 0; Index < (BitCount / 2); ++Index)
+            {
+                if (Index % 2)
+                {
+                    BitArray.Push(false);
+                    BitArray.Push(false);
+                }
+                else
+                {
+                    BitArray.Push(true);
+                    BitArray.Push(true);
+                }
+            }
+
+            BitArray.BitshiftRight(Bit);
+            std::cout << MakeStringFromBitArray(BitArray) << '\n';
+            continue;
+        }
+    }
+
+    std::cout << "Testing Flip\n";
+    {
+        TBitArray<uint8> BitArray(BitCount, false);
+        for (int32 Bit = 0; Bit < BitCount; ++Bit)
+        {
+            BitArray.FlipBit(Bit);
+
+            std::cout << MakeStringFromBitArray(BitArray) << '\n';
+            continue;
+        }
+    }
+
+    SUCCESS();
+}
+#endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// StaticBitArray Test
+
+#if RUN_TSTATICBITARRAY_TEST
+#include <Core/Containers/StaticBitArray.h>
+
+bool TStaticBitArray_Test()
+{
+    std::cout << '\n' << "----------TStaticBitArray----------" << '\n' << '\n';
+
+    {
+        TStaticBitArray<11, uint8> BitArray;
+        CHECK(BitArray.Size()        == 11);
+        CHECK(BitArray.StorageSize() == 2);
+        CHECK(MakeStringFromBitArray(BitArray) == "00000000000");
+    }
+
+    {
+        TStaticBitArray<18, uint32> BitArray;
+        CHECK(BitArray.Size()        == 18);
+        CHECK(BitArray.StorageSize() == 1);
+        CHECK(MakeStringFromBitArray(BitArray) == "000000000000000000");
+    }
+
+    {
+        TStaticBitArray<9, uint8> BitArray(8, true);
+        CHECK(BitArray.Size()        == 9);
+        CHECK(BitArray.StorageSize() == 2);
+        CHECK(MakeStringFromBitArray(BitArray) == "011111111");
+    }
+
+    {
+        TStaticBitArray<8, uint8> BitArray(uint8(0b01010101));
+        CHECK(BitArray.Size() == 8);
+        CHECK(MakeStringFromBitArray(BitArray) == "01010101");
+    }
+
+    {
+        const uint8 Bits[] =
+        {
+            0b01010101,
+            0b01010101,
+        };
+
+        TStaticBitArray<14, uint8> BitArray(Bits, ArrayCount(Bits));
+        CHECK(BitArray.Size() == 14);
+        CHECK(MakeStringFromBitArray(BitArray) == "01010101010101");
+    }
+
+    {
+        TStaticBitArray<8> BitArray = { false, true, false, true };
+        CHECK(BitArray.Size() == 8);
+        CHECK(MakeStringFromBitArray(BitArray) == "00001010");
+    }
+
+    {
+        TStaticBitArray<9, uint8> BitArray0(9, true);
+        CHECK(BitArray0.Size() == 9);
+        CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
+
+        TStaticBitArray<9, uint8> BitArray1(BitArray0);
+        CHECK(BitArray1.Size() == 9);
+        CHECK(MakeStringFromBitArray(BitArray1) == "111111111");
+        
+        CHECK((BitArray0 == BitArray1) == true);
+    }
+
+    {
+        TStaticBitArray<9, uint8> BitArray0(9, true);
+        CHECK(BitArray0.Size() == 9);
+        CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
+
+        TStaticBitArray<9, uint8> BitArray1(Move(BitArray0));
+        CHECK(BitArray1.Size() == 9);
+        
+        CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
+        CHECK(MakeStringFromBitArray(BitArray1) == "111111111");
+        
+        CHECK((BitArray0 == BitArray1) == true);
+    }
+
+    {
+        TStaticBitArray<9, uint8> BitArray(9, true);
+        CHECK(BitArray.Size() == 9);
+        CHECK(MakeStringFromBitArray(BitArray) == "111111111");
+
+        BitArray.ResetWithZeros();
+
+        CHECK(MakeStringFromBitArray(BitArray) == "000000000");
+
+        BitArray.ResetWithOnes();
+
+        CHECK(MakeStringFromBitArray(BitArray) == "111111111");
+    }
+
+    {
+        TStaticBitArray<8, uint8> BitArray(0b00000000);
+        CHECK(BitArray.Size() == 8);
+        CHECK(MakeStringFromBitArray(BitArray) == "00000000");
+
+        BitArray.AssignBit(3, true);
+        CHECK(MakeStringFromBitArray(BitArray) == "00001000");
+
+        BitArray.FlipBit(4);
+        CHECK(MakeStringFromBitArray(BitArray) == "00011000");
+
+        CHECK(BitArray.CountAssignedBits() == 2);
+        CHECK(BitArray.HasAnyBitSet()      == true);
+        CHECK(BitArray.HasNoBitSet()       == false);
+
+        uint32 MostSignificantBit;
+        BitArray.MostSignificantBit(MostSignificantBit);
+        CHECK(MostSignificantBit == 4);
+
+        uint32 LeastSignificantBit;
+        BitArray.LeastSignificantBit(LeastSignificantBit);
+        CHECK(LeastSignificantBit == 3);
+    }
+
+    SUCCESS();
+}
+#endif
+
+#endif
