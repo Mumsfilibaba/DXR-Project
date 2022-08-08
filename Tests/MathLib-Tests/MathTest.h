@@ -1,5 +1,5 @@
 #pragma once
 
 #define TEST_FAILED(); \
-    assert(false);    \
+    assert(false);     \
     return false
