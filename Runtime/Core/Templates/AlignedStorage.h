@@ -10,14 +10,11 @@
 template<typename T>
 struct TAlignmentOf
 {
-    enum
-    {
-        Value = alignof(T)
-    };
+    enum { Value = alignof(T) };
 };
 
 template<typename T>
-inline constexpr int32 AlignmentOf = TAlignmentOf<T>::Value;
+inline CONSTEXPR int32 AlignmentOf = TAlignmentOf<T>::Value;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TAlignedStorage

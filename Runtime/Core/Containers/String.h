@@ -40,21 +40,25 @@ class TString
 public:
     using ElementType = CharType;
     using SizeType    = int32;
-    using StringUtils = TCString<ElementType>;
+    using StringType  = TCString<ElementType>;
     using ViewType    = TStringView<ElementType>;
     using StorageType = TArray<CharType, TStringAllocator<CharType>>;
 
-    static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
-
-    enum
-    {
-        NPos = SizeType(-1)
-    };
-
+    static_assert(
+        TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value,
+        "TString only supports 'char' and 'wchar_t'");
+    
+    static_assert(
+        TIsSigned<SizeType>::Value,
+        "TString only supports a SizeType that's signed");
+    
+    /* Iterators */
     typedef TArrayIterator<TString, CharType>                    IteratorType;
     typedef TArrayIterator<const TString, const CharType>        ConstIteratorType;
     typedef TReverseArrayIterator<TString, CharType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TString, const CharType> ReverseConstIteratorType;
+    
+    enum { NPos = SizeType(-1) };
 
 public:
 	
@@ -109,7 +113,7 @@ public:
     {
         if (InString)
         {
-            CopyFrom(InString, StringUtils::Length(InString));
+            CopyFrom(InString, StringType::Length(InString));
         }
     }
 
@@ -198,7 +202,7 @@ public:
         if (!Characters.IsEmpty())
         {
             Characters.Resize(1);
-            Characters[0] = StringUtils::Null;
+            Characters[0] = StringType::Null;
         }
     }
     
@@ -272,7 +276,7 @@ public:
         }
 
         Characters.Emplace(Char);
-        Characters.Emplace(StringUtils::Null);
+        Characters.Emplace(StringType::Null);
     }
 
     /**
@@ -282,7 +286,7 @@ public:
      */
     FORCEINLINE void Append(const CharType* InString) noexcept
     {
-        Append(InString, StringUtils::Length(InString));
+        Append(InString, StringType::Length(InString));
     }
 
     /**
@@ -312,7 +316,7 @@ public:
         }
 
         Characters.Append(InString, InLength);
-        Characters.Emplace(StringUtils::Null);
+        Characters.Emplace(StringType::Null);
     }
 
     /**
@@ -339,7 +343,7 @@ public:
         }
 
         Characters.Resize(NewSize, FillElement);
-        Characters.Emplace(StringUtils::Null);
+        Characters.Emplace(StringType::Null);
     }
 
     /**
@@ -366,7 +370,7 @@ public:
         if (Buffer && (BufferSize > 0))
         {
             SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
-            StringUtils::Copy(Buffer, Characters.Data() + Position, CopySize);
+            StringType::Copy(Buffer, Characters.Data() + Position, CopySize);
         }
     }
 
@@ -404,7 +408,7 @@ public:
             va_list CopiedArgs;
             va_copy(CopiedArgs, ArgsList);
             
-            WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
+            WrittenChars = StringType::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
             
             va_end(CopiedArgs);
         }
@@ -420,12 +424,12 @@ public:
             va_list CopiedArgs;
             va_copy(CopiedArgs, ArgsList);
             
-            WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
+            WrittenChars = StringType::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
             
             va_end(CopiedArgs);
         }
 
-        int32 WrittenLength = StringUtils::Length(WrittenString);
+        int32 WrittenLength = StringType::Length(WrittenString);
         Characters.Reset(WrittenString, WrittenLength);
 
         if (DynamicBuffer)
@@ -433,7 +437,7 @@ public:
             FMemory::Free(DynamicBuffer);
         }
 
-        Characters.Emplace(StringUtils::Null);
+        Characters.Emplace(StringType::Null);
     }
 
     /**
@@ -470,7 +474,7 @@ public:
             va_list CopiedArgs;
             va_copy(CopiedArgs, ArgsList);
             
-            WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
+            WrittenChars = StringType::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
             
             va_end(CopiedArgs);
         }
@@ -486,7 +490,7 @@ public:
             va_list CopiedArgs;
             va_copy(CopiedArgs, ArgsList);
             
-            WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
+            WrittenChars = StringType::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
             
             va_end(CopiedArgs);
         }
@@ -499,7 +503,7 @@ public:
             FMemory::Free(DynamicBuffer);
         }
 
-        Characters.Emplace(StringUtils::Null);
+        Characters.Emplace(StringType::Null);
     }
 
     /**
@@ -511,7 +515,7 @@ public:
         CharType* End = It + Characters.Size();
         while (It != End)
         {
-            *It = StringUtils::ToLower(*It);
+            *It = StringType::ToLower(*It);
             It++;
         }
     }
@@ -537,7 +541,7 @@ public:
         CharType* End = It + Characters.Size();
         while (It != End)
         {
-            *It = StringUtils::ToUpper(*It);
+            *It = StringType::ToUpper(*It);
             It++;
         }
     }
@@ -599,7 +603,7 @@ public:
         CharType* End = Start + ThisLength;
         while (Start != End)
         {
-            if (StringUtils::IsWhiteSpace(*(Start++)))
+            if (StringType::IsWhiteSpace(*(Start++)))
             {
                 Count++;
             }
@@ -636,7 +640,7 @@ public:
         SizeType Index = LastIndex;
         for (; Index >= 0; Index--)
         {
-            if (!StringUtils::IsWhiteSpace(Characters[Index]))
+            if (!StringType::IsWhiteSpace(Characters[Index]))
             {
                 break;
             }
@@ -646,7 +650,7 @@ public:
         if (Count > 0)
         {
             Characters.PopRange(Count + 1);
-            Characters.Emplace(StringUtils::Null);
+            Characters.Emplace(StringType::Null);
         }
     }
 
@@ -697,7 +701,7 @@ public:
      */
     FORCEINLINE int32 Compare(const CharType* InString) const noexcept
     {
-        return StringUtils::Compare(Characters.Data(), InString);
+        return StringType::Compare(Characters.Data(), InString);
     }
 
     /**
@@ -709,7 +713,7 @@ public:
      */
     FORCEINLINE int32 Compare(const CharType* InString, SizeType InLength) const noexcept
     {
-        return StringUtils::Compare(Characters.Data(), InString, InLength);
+        return StringType::Compare(Characters.Data(), InString, InLength);
     }
 
     /**
@@ -732,7 +736,7 @@ public:
      */
     FORCEINLINE int32 CompareNoCase(const CharType* InString) const noexcept
     {
-        return CompareNoCase(InString, StringUtils::Length(InString));
+        return CompareNoCase(InString, StringType::Length(InString));
     }
 
     /**
@@ -756,8 +760,8 @@ public:
         const CharType* End = Start + nLength;
         while (Start != End)
         {
-            const CharType TempChar0 = StringUtils::ToLower(*(Start++));
-            const CharType TempChar1 = StringUtils::ToLower(*(InString++));
+            const CharType TempChar0 = StringType::ToLower(*(Start++));
+            const CharType TempChar1 = StringType::ToLower(*(InString++));
 
             if (TempChar0 != TempChar1)
             {
@@ -777,7 +781,7 @@ public:
      */
     FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return Find(InString, StringUtils::Length(InString), Position);
+        return Find(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -807,13 +811,13 @@ public:
     {
         Check((Position < Length()) || (Position == 0));
 
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Length() == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (Length() == 0))
         {
             return 0;
         }
 
         const CharType* Start = CStr() + Position;
-        const CharType* Result = StringUtils::Find(Start, InString);
+        const CharType* Result = StringType::Find(Start, InString);
         if (!Result)
         {
             return NPos;
@@ -835,13 +839,13 @@ public:
     {
         Check((Position < Length()) || (Position == 0));
 
-        if (StringUtils::IsTerminator(Char) || (Length() == 0))
+        if (StringType::IsTerminator(Char) || (Length() == 0))
         {
             return 0;
         }
 
         const CharType* Start = CStr() + Position;
-        const CharType* Result = StringUtils::FindChar(Start, Char);
+        const CharType* Result = StringType::FindChar(Start, Char);
         if (!Result)
         {
             return NPos;
@@ -861,7 +865,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFind(InString, StringUtils::Length(InString), Position);
+        return ReverseFind(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -894,7 +898,7 @@ public:
         Check(InString != nullptr);
 
         SizeType nLength = Length();
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (nLength == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (nLength == 0))
         {
             return nLength;
         }
@@ -914,7 +918,7 @@ public:
                 {
                     break;
                 }
-                else if (StringUtils::IsTerminator(*SubstringIt))
+                else if (StringType::IsTerminator(*SubstringIt))
                 {
                     return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
                 }
@@ -936,7 +940,7 @@ public:
         Check((Position < Length()) || (Position == 0));
 
         SizeType nLength = Length();
-        if (StringUtils::IsTerminator(Char) || (nLength == 0))
+        if (StringType::IsTerminator(Char) || (nLength == 0))
         {
             return nLength;
         }
@@ -945,16 +949,16 @@ public:
         const CharType* Start = CStr();
         if (Position == 0)
         {
-            Result = StringUtils::ReverseFindChar(Start, Char);
+            Result = StringType::ReverseFindChar(Start, Char);
         }
         else
         {
             // TODO: Get rid of const_cast
             CharType* TempCharacters = const_cast<CharType*>(Characters.Data());
             CharType TempChar = TempCharacters[Position + 1];
-            TempCharacters[Position + 1] = StringUtils::Null;
+            TempCharacters[Position + 1] = StringType::Null;
 
-            Result = StringUtils::ReverseFindChar(TempCharacters, Char);
+            Result = StringType::ReverseFindChar(TempCharacters, Char);
 
             TempCharacters[Position + 1] = TempChar;
         }
@@ -978,7 +982,7 @@ public:
      */
     FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneOf(InString, StringUtils::Length(InString), Position);
+        return FindOneOf(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -1009,13 +1013,13 @@ public:
         Check((Position < Length()) || (Position == 0));
 
         SizeType nLength = Length();
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (nLength == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (nLength == 0))
         {
             return 0;
         }
 
         const CharType* Start = CStr() + Position;
-        const CharType* Result = StringUtils::FindOneOf(Start, InString);
+        const CharType* Result = StringType::FindOneOf(Start, InString);
         if (!Result)
         {
             return NPos;
@@ -1035,7 +1039,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneOf(InString, StringUtils::Length(InString), Position);
+        return ReverseFindOneOf(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -1066,7 +1070,7 @@ public:
         Check((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (ThisLength == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (ThisLength == 0))
         {
             return ThisLength;
         }
@@ -1076,7 +1080,7 @@ public:
             ThisLength = NMath::Min(Position, ThisLength);
         }
 
-        SizeType SubstringLength = StringUtils::Length(InString);
+        SizeType SubstringLength = StringType::Length(InString);
 
         const CharType* Start = CStr();
         const CharType* End   = Start + ThisLength;
@@ -1107,7 +1111,7 @@ public:
      */
     FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneNotOf(InString, StringUtils::Length(InString), Position);
+        return FindOneNotOf(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -1138,12 +1142,12 @@ public:
         Check((Position < Length()) || (Position == 0));
 
         SizeType nLength = Length();
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (nLength == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (nLength == 0))
         {
             return 0;
         }
 
-        SizeType Pos = static_cast<SizeType>(StringUtils::RangeLength(CStr() + Position, InString));
+        SizeType Pos = static_cast<SizeType>(StringType::RangeLength(CStr() + Position, InString));
         SizeType Ret = Pos + Position;
         if (Ret >= nLength)
         {
@@ -1164,7 +1168,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneNotOf(InString, StringUtils::Length(InString), Position);
+        return ReverseFindOneNotOf(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -1195,7 +1199,7 @@ public:
         Check((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (ThisLength == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (ThisLength == 0))
         {
             return ThisLength;
         }
@@ -1205,7 +1209,7 @@ public:
             ThisLength = NMath::Min(Position, ThisLength);
         }
 
-        SizeType SubstringLength = StringUtils::Length(InString);
+        SizeType SubstringLength = StringType::Length(InString);
 
         const CharType* Start = CStr();
         const CharType* End = Start + ThisLength;
@@ -1221,7 +1225,7 @@ public:
                 {
                     break;
                 }
-                else if (StringUtils::IsTerminator(*SubstringStart))
+                else if (StringType::IsTerminator(*SubstringStart))
                 {
                     return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
                 }
@@ -1343,7 +1347,7 @@ public:
      */
     FORCEINLINE void Insert(const CharType* InString, SizeType Position) noexcept
     {
-        Insert(InString, StringUtils::Length(InString), Position);
+        Insert(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -1399,7 +1403,7 @@ public:
      */
     FORCEINLINE void Replace(const CharType* InString, SizeType Position) noexcept
     {
-        Replace(InString, StringUtils::Length(InString), Position);
+        Replace(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -1424,7 +1428,7 @@ public:
     FORCEINLINE void Replace(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
         Check((Position < Length()) && (Position + InLength < Length()));
-        StringUtils::Copy(Data() + Position, InString, InLength);
+        StringType::Copy(Data() + Position, InString, InLength);
     }
 
     /**
@@ -1458,7 +1462,7 @@ public:
     {
         SizeType nLength = Length();
         Characters.Pop();
-        Characters[nLength] = StringUtils::Null;
+        Characters[nLength] = StringType::Null;
     }
 
     /**
@@ -1550,7 +1554,7 @@ public:
      */
     FORCEINLINE const CharType* CStr() const noexcept
     {
-        return (!Characters.IsEmpty()) ? Characters.Data() : StringUtils::Empty();
+        return (!Characters.IsEmpty()) ? Characters.Data() : StringType::Empty();
     }
 
 #if defined(__OBJC__)
@@ -1814,7 +1818,7 @@ public:
 
     friend TString operator+(const CharType* LHS, const TString& RHS) noexcept
     {
-        const typename TString::SizeType CombinedSize = StringUtils::Length(LHS) + RHS.Length();
+        const typename TString::SizeType CombinedSize = StringType::Length(LHS) + RHS.Length();
 
         TString NewString;
         NewString.Reserve(CombinedSize);
@@ -1825,7 +1829,7 @@ public:
 
     friend TString operator+(const TString& LHS, const CharType* RHS) noexcept
     {
-        const typename TString::SizeType CombinedSize = LHS.Length() + StringUtils::Length(RHS);
+        const typename TString::SizeType CombinedSize = LHS.Length() + StringType::Length(RHS);
 
         TString NewString;
         NewString.Reserve(CombinedSize);
@@ -2075,9 +2079,9 @@ private:
     {
         Characters.Resize(InLength);
         
-        StringUtils::Copy(Characters.Data(), InString, InLength);
+        StringType::Copy(Characters.Data(), InString, InLength);
         
-        Characters.Emplace(StringUtils::Null);
+        Characters.Emplace(StringType::Null);
     }
 
     FORCEINLINE void MoveFrom(TString&& Other) noexcept
@@ -2100,10 +2104,7 @@ using FWString = TString<wchar_t>;
 template<typename CharType>
 struct TIsTStringType<TString<CharType>>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -2182,7 +2183,7 @@ struct TStringHasher
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Predefined hashing types
 
-using FStringHasher  = TStringHasher<char>;
+using FStringHasher   = TStringHasher<char>;
 using FFWStringHasher = TStringHasher<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

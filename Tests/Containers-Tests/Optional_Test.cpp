@@ -9,64 +9,64 @@
 #include <iostream>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// STest
+// FTest
 
-struct STest
+struct FTest
 {
     enum
     {
         SizeInBytes = 1024*1024
     };
 
-    STest()
+    FTest()
     {
-        Pointer = CMemory::Malloc(SizeInBytes);
+        Pointer = FMemory::Malloc(SizeInBytes);
     }
 
-    STest(int32 Value)
+    FTest(int32 Value)
     {
-        Pointer = CMemory::Malloc(SizeInBytes);
-        CMemory::Memset(Pointer, static_cast<uint8>(Value), SizeInBytes);
+        Pointer = FMemory::Malloc(SizeInBytes);
+        FMemory::Memset(Pointer, static_cast<uint8>(Value), SizeInBytes);
 
         char* Temp =reinterpret_cast<char*>(Pointer);
         UNREFERENCED_VARIABLE(Temp);
     }
-
-    STest(const STest& Other)
+     
+    FTest(const FTest& Other)
     {
-        Pointer = CMemory::Malloc(SizeInBytes);
-        CMemory::Memcpy(Pointer, Other.Pointer, SizeInBytes);
+        Pointer = FMemory::Malloc(SizeInBytes);
+        FMemory::Memcpy(Pointer, Other.Pointer, SizeInBytes);
     }
 
-    STest(STest&& Other)
+    FTest(FTest&& Other)
         : Pointer(Other.Pointer)
     {
         Other.Pointer = nullptr;
     }
 
-    ~STest()
+    ~FTest()
     {
-        CMemory::Free(Pointer);
+        FMemory::Free(Pointer);
         Pointer = nullptr;
     }
 
-    STest& operator=(const STest& RHS)
+    FTest& operator=(const FTest& RHS)
     {
         if (Pointer)
         {
-            CMemory::Free(Pointer);
+            FMemory::Free(Pointer);
         }
 
-        Pointer = CMemory::Malloc(SizeInBytes);
-        CMemory::Memcpy(Pointer, RHS.Pointer, SizeInBytes);
+        Pointer = FMemory::Malloc(SizeInBytes);
+        FMemory::Memcpy(Pointer, RHS.Pointer, SizeInBytes);
         return *this;
     }
 
-    STest& operator=(STest&& RHS)
+    FTest& operator=(FTest&& RHS)
     {
         if (Pointer)
         {
-            CMemory::Free(Pointer);
+            FMemory::Free(Pointer);
         }
 
         Pointer = RHS.Pointer;
@@ -74,42 +74,42 @@ struct STest
         return *this;
     }
 
-    bool operator==(const STest& RHS) const
+    bool operator==(const FTest& RHS) const
     {
-        return CMemory::Memcmp(Pointer, RHS.Pointer, SizeInBytes);
+        return FMemory::Memcmp(Pointer, RHS.Pointer, SizeInBytes);
     }
 
     void* Pointer = nullptr;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMoveable
+// FMoveable
 
-struct SMoveable
+struct FMoveable
 {
-    SMoveable() = default;
-    ~SMoveable() = default;
+    FMoveable() = default;
+    ~FMoveable() = default;
 
-    SMoveable(SMoveable&&) = default;
-    SMoveable& operator=(SMoveable&&) = default;
+    FMoveable(FMoveable&&) = default;
+    FMoveable& operator=(FMoveable&&) = default;
 
-    SMoveable(const SMoveable&) = delete;
-    SMoveable& operator=(const SMoveable&) = delete;
+    FMoveable(const FMoveable&) = delete;
+    FMoveable& operator=(const FMoveable&) = delete;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SCopyable
+// FCopyable
 
-struct SCopyable
+struct FCopyable
 {
-    SCopyable() = default;
-    ~SCopyable() = default;
+    FCopyable() = default;
+    ~FCopyable() = default;
 
-    SCopyable(SCopyable&&) = delete;
-    SCopyable& operator=(SCopyable&&) = delete;
+    FCopyable(FCopyable&&) = delete;
+    FCopyable& operator=(FCopyable&&) = delete;
 
-    SCopyable(const SCopyable&) = default;
-    SCopyable& operator=(const SCopyable&) = default;
+    FCopyable(const FCopyable&) = default;
+    FCopyable& operator=(const FCopyable&) = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -123,8 +123,8 @@ void TOptional_Test()
     // Constructors copy/move etc
 
     {
-        TOptional<STest> Optional0;
-        TOptional<STest> Optional1(InPlace, 65);
+        TOptional<FTest> Optional0;
+        TOptional<FTest> Optional1(InPlace, 65);
 
         if (!Optional0)
         {
@@ -145,17 +145,17 @@ void TOptional_Test()
     }
 
     {
-        TOptional<SMoveable> Optional0;
+        TOptional<FMoveable> Optional0;
         Optional0.Emplace();
 
-        TOptional<SMoveable> Optional�1(Move(Optional0));
+        TOptional<FMoveable> Optional1(Move(Optional0));
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Emplace
 
     {
-        TOptional<STest> Optional0(InPlace, 70);
+        TOptional<FTest> Optional0(InPlace, 70);
         Optional0.Emplace(245);
         Optional0.Emplace(235);
         Optional0.Emplace(225);
@@ -198,8 +198,8 @@ void TOptional_Test()
     // Swap complex
 
     {
-        TOptional<STest> Optional0;
-        TOptional<STest> Optional1(InPlace, 100);
+        TOptional<FTest> Optional0;
+        TOptional<FTest> Optional1(InPlace, 100);
 
         std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
 
@@ -235,8 +235,6 @@ void TOptional_Test()
         std::cout << "OptionalInt0.TryGetValue()=" << Optional0.TryGetValue() << '\n';
         std::cout << "OptionalInt1.TryGetValue()=" << Optional1.TryGetValue() << '\n';
     }
-
-
 
     return;
 }

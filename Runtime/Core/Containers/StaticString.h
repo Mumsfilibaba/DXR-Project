@@ -13,22 +13,26 @@ template<
 class TStaticString
 {
 public:
+    using StringType  = TCString<CharType>;
     using ElementType = CharType;
     using SizeType    = int32;
-    using StringUtils = TCString<CharType>;
 
-    static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
-    static_assert(CharCount > 0, "The number of chars has to be more than zero");
-
-    enum
-    {
-        NPos = SizeType(-1)
-    };
+    static_assert(
+        TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, 
+        "TStaticString only supports 'char' and 'wchar_t'");
+    
+    static_assert(
+        CharCount > 0,
+        "TStaticString does not support a zero element count");
 
     typedef TArrayIterator<TStaticString, CharType>                    IteratorType;
     typedef TArrayIterator<const TStaticString, const CharType>        ConstIteratorType;
     typedef TReverseArrayIterator<TStaticString, CharType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TStaticString, const CharType> ReverseConstIteratorType;
+
+    enum { NPos = SizeType(-1) };
+
+public:
 
     /**
      * @brief: Create a static string from a formatted string
@@ -62,6 +66,8 @@ public:
         return NewString;
     }
 
+public:
+
     /**
      * @brief: Default constructor
      */
@@ -69,7 +75,7 @@ public:
         : Characters()
         , Len(0)
     {
-        Characters[Len] = StringUtils::Null;
+        Characters[Len] = StringType::Null;
     }
 
     /**
@@ -84,7 +90,7 @@ public:
     {
         if (InString)
         {
-            CopyFrom(InString, StringUtils::Length(InString));
+            CopyFrom(InString, StringType::Length(InString));
         }
     }
 
@@ -111,7 +117,9 @@ public:
      * 
      * @param InString: String to copy from
      */
-    template<typename StringType, typename = typename TEnableIf<TIsTStringType<StringType>::Value>::Type>
+    template<
+        typename StringType, 
+        typename = typename TEnableIf<TIsTStringType<StringType>::Value>::Type>
     FORCEINLINE explicit TStaticString(const StringType& InString) noexcept
         : Characters()
         , Len(0)
@@ -149,7 +157,7 @@ public:
     FORCEINLINE void Clear() noexcept
     {
         Len = 0;
-        Characters[Len] = StringUtils::Null;
+        Characters[Len] = StringType::Null;
     }
 
     /**
@@ -162,7 +170,7 @@ public:
         Check(Len + 1 < Capacity());
 
         Characters[Len] = Char;
-        Characters[++Len] = StringUtils::Null;
+        Characters[++Len] = StringType::Null;
     }
 
     /**
@@ -172,7 +180,7 @@ public:
      */
     FORCEINLINE void Append(const CharType* InString) noexcept
     {
-        Append(InString, StringUtils::Length(InString));
+        Append(InString, StringType::Length(InString));
     }
 
     /**
@@ -197,10 +205,10 @@ public:
         Check(InString != nullptr);
         Check(Len + InLength < Capacity());
 
-        StringUtils::Copy(Characters + Len, InString, InLength);
+        StringType::Copy(Characters + Len, InString, InLength);
 
         Len = Len + InLength;
-        Characters[Len] = StringUtils::Null;
+        Characters[Len] = StringType::Null;
     }
 
     /**
@@ -231,7 +239,7 @@ public:
         }
 
         Len = NewLength;
-        Characters[Len] = StringUtils::Null;
+        Characters[Len] = StringType::Null;
     }
 
     /**
@@ -247,7 +255,7 @@ public:
         Check((Position < Len) || (Position == 0));
 
         SizeType CopySize = NMath::Min(BufferSize, Len - Position);
-        StringUtils::Copy(Buffer, Characters + Position, CopySize);
+        StringType::Copy(Buffer, Characters + Position, CopySize);
     }
 
     /**
@@ -271,7 +279,7 @@ public:
      */
     FORCEINLINE void FormatArgs(const CharType* Format, va_list ArgList) noexcept
     {
-        SizeType WrittenChars = StringUtils::FormatBufferV(Characters, CharCount - 1, Format, ArgList);
+        SizeType WrittenChars = StringType::FormatBufferV(Characters, CharCount - 1, Format, ArgList);
         if (WrittenChars < CharCount)
         {
             Len = WrittenChars;
@@ -281,7 +289,7 @@ public:
             Len = CharCount - 1;
         }
 
-        Characters[Len] = StringUtils::Null;
+        Characters[Len] = StringType::Null;
     }
 
     /**
@@ -305,7 +313,7 @@ public:
      */
     FORCEINLINE void AppendFormatArgs(const CharType* Format, va_list ArgList) noexcept
     {
-        const SizeType WrittenChars = StringUtils::FormatBufferV(Characters + Len, CharCount, Format, ArgList);
+        const SizeType WrittenChars = StringType::FormatBufferV(Characters + Len, CharCount, Format, ArgList);
         const SizeType NewLength = Len + WrittenChars;
         if (NewLength < CharCount)
         {
@@ -316,7 +324,7 @@ public:
             Len = CharCount - 1;
         }
 
-        Characters[Len] = StringUtils::Null;
+        Characters[Len] = StringType::Null;
     }
 
     /**
@@ -328,7 +336,7 @@ public:
         CharType* End = Characters + Len;
         while (It != End)
         {
-            *It = StringUtils::ToLower(*It);
+            *It = StringType::ToLower(*It);
             It++;
         }
     }
@@ -354,7 +362,7 @@ public:
         CharType* End = Characters + Len;
         while (It != End)
         {
-            *It = StringUtils::ToUpper(*It);
+            *It = StringType::ToUpper(*It);
             It++;
         }
     }
@@ -400,7 +408,7 @@ public:
         SizeType Index = 0;
         for (; Index < Len; Index++)
         {
-            if (!StringUtils::IsWhiteSpace(Characters[Index]))
+            if (!StringType::IsWhiteSpace(Characters[Index]))
             {
                 break;
             }
@@ -432,7 +440,7 @@ public:
     {
         for (SizeType Index = Len - 1; Index >= 0; Index--)
         {
-            if (StringUtils::IsWhiteSpace(Characters[Index]))
+            if (StringType::IsWhiteSpace(Characters[Index]))
             {
                 Len--;
             }
@@ -442,7 +450,7 @@ public:
             }
         }
 
-        Characters[Len] = StringUtils::Null;
+        Characters[Len] = StringType::Null;
     }
 
     /**
@@ -504,7 +512,7 @@ public:
      */
     FORCEINLINE int32 Compare(const CharType* InString) const noexcept
     {
-        return StringUtils::Compare(Characters, InString);
+        return StringType::Compare(Characters, InString);
     }
 
     /**
@@ -516,7 +524,7 @@ public:
      */
     FORCEINLINE int32 Compare(const CharType* InString, SizeType InLength) const noexcept
     {
-        return StringUtils::Compare(Characters, InString, InLength);
+        return StringType::Compare(Characters, InString, InLength);
     }
 
     /**
@@ -539,7 +547,7 @@ public:
      */
     FORCEINLINE int32 CompareNoCase(const CharType* InString) const noexcept
     {
-        return CompareNoCase(InString, StringUtils::Length(InString));
+        return CompareNoCase(InString, StringType::Length(InString));
     }
 
     /**
@@ -558,8 +566,8 @@ public:
 
         for (SizeType Index = 0; Index < Len; Index++)
         {
-            const CharType TempChar0 = StringUtils::ToLower(Characters[Index]);
-            const CharType TempChar1 = StringUtils::ToLower(InString[Index]);
+            const CharType TempChar0 = StringType::ToLower(Characters[Index]);
+            const CharType TempChar1 = StringType::ToLower(InString[Index]);
 
             if (TempChar0 != TempChar1)
             {
@@ -579,7 +587,7 @@ public:
      */
     FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return Find(InString, StringUtils::Length(InString), Position);
+        return Find(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -609,13 +617,13 @@ public:
     {
         Check((Position < Len) || (Position == 0));
 
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (Len == 0))
         {
             return 0;
         }
 
         const CharType* Start = CStr() + Position;
-        const CharType* Result = StringUtils::Find(Start, InString);
+        const CharType* Result = StringType::Find(Start, InString);
         if (!Result)
         {
             return NPos;
@@ -637,13 +645,13 @@ public:
     {
         Check((Position < Len) || (Position == 0));
 
-        if (StringUtils::IsTerminator(Char) || (Len == 0))
+        if (StringType::IsTerminator(Char) || (Len == 0))
         {
             return 0;
         }
 
         const CharType* Start = CStr() + Position;
-        const CharType* Result = StringUtils::FindChar(Start, Char);
+        const CharType* Result = StringType::FindChar(Start, Char);
         if (!Result)
         {
             return NPos;
@@ -663,7 +671,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFind(InString, StringUtils::Length(InString), Position);
+        return ReverseFind(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -694,7 +702,7 @@ public:
     {
         Check((Position < Len) || (Position == 0));
 
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (Len == 0))
         {
             return Len;
         }
@@ -714,7 +722,7 @@ public:
                 {
                     break;
                 }
-                else if (StringUtils::IsTerminator(*SubstringIt))
+                else if (StringType::IsTerminator(*SubstringIt))
                 {
                     return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
                 }
@@ -735,7 +743,7 @@ public:
     {
         Check((Position < Len) || (Position == 0));
 
-        if (StringUtils::IsTerminator(Char) || (Len == 0))
+        if (StringType::IsTerminator(Char) || (Len == 0))
         {
             return Len;
         }
@@ -744,16 +752,16 @@ public:
         const CharType* Start = CStr();
         if (Position == 0)
         {
-            Result = StringUtils::ReverseFindChar(Start, Char);
+            Result = StringType::ReverseFindChar(Start, Char);
         }
         else
         {
             // TODO: Get rid of const_cast
             CharType* TempCharacters = const_cast<CharType*>(Characters);
             CharType TempChar = TempCharacters[Position + 1];
-            TempCharacters[Position + 1] = StringUtils::Null;
+            TempCharacters[Position + 1] = StringType::Null;
 
-            Result = StringUtils::ReverseFindChar(TempCharacters, Char);
+            Result = StringType::ReverseFindChar(TempCharacters, Char);
 
             TempCharacters[Position + 1] = TempChar;
         }
@@ -777,7 +785,7 @@ public:
      */
     FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneOf(InString, StringUtils::Length(InString), Position);
+        return FindOneOf(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -807,13 +815,13 @@ public:
     {
         Check((Position < Len) || (Position == 0));
 
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (Len == 0))
         {
             return 0;
         }
 
         const CharType* Start = CStr() + Position;
-        const CharType* Result = StringUtils::FindOneOf(Start, InString);
+        const CharType* Result = StringType::FindOneOf(Start, InString);
         if (!Result)
         {
             return NPos;
@@ -833,7 +841,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneOf(InString, StringUtils::Length(InString), Position);
+        return ReverseFindOneOf(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -863,13 +871,13 @@ public:
     {
         Check((Position < Len) || (Position == 0));
 
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (Len == 0))
         {
             return Len;
         }
 
         SizeType Length = (Position == 0) ? Len : NMath::Min(Position, Len);
-        SizeType SubstringLength = StringUtils::Length(InString);
+        SizeType SubstringLength = StringType::Length(InString);
 
         const CharType* Start = CStr();
         const CharType* End = Start + Length;
@@ -900,7 +908,7 @@ public:
      */
     FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneNotOf(InString, StringUtils::Length(InString), Position);
+        return FindOneNotOf(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -930,12 +938,12 @@ public:
     {
         Check((Position < Len) || (Position == 0));
 
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (Len == 0))
         {
             return 0;
         }
 
-        SizeType Pos = static_cast<SizeType>(StringUtils::RangeLength(CStr() + Position, InString));
+        SizeType Pos = static_cast<SizeType>(StringType::RangeLength(CStr() + Position, InString));
         SizeType Ret = Pos + Position;
         if (Ret >= Len)
         {
@@ -956,7 +964,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneNotOf(InString, StringUtils::Length(InString), Position);
+        return ReverseFindOneNotOf(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -986,13 +994,13 @@ public:
     {
         Check((Position < Len) || (Position == 0));
 
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
+        if ((InLength == 0) || StringType::IsTerminator(*InString) || (Len == 0))
         {
             return Len;
         }
 
         SizeType Length = (Position == 0) ? Len : NMath::Min(Position, Len);
-        SizeType SubstringLength = StringUtils::Length(InString);
+        SizeType SubstringLength = StringType::Length(InString);
 
         const CharType* Start = CStr();
         const CharType* End = Start + Length;
@@ -1008,7 +1016,7 @@ public:
                 {
                     break;
                 }
-                else if (StringUtils::IsTerminator(*SubstringStart))
+                else if (StringType::IsTerminator(*SubstringStart))
                 {
                     return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
                 }
@@ -1135,7 +1143,7 @@ public:
      */
     FORCEINLINE void Insert(const CharType* InString, SizeType Position) noexcept
     {
-        Insert(InString, StringUtils::Length(InString), Position);
+        Insert(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -1165,12 +1173,12 @@ public:
         CharType* Dst = Src + InLength;
 
         const uint64 MoveSize = Len - Position;
-        StringUtils::Move(Dst, Src, MoveSize);
+        StringType::Move(Dst, Src, MoveSize);
 
-        StringUtils::Copy(Src, InString, InLength);
+        StringType::Copy(Src, InString, InLength);
 
         Len += InLength;
-        Characters[Len] = StringUtils::Null;
+        Characters[Len] = StringType::Null;
     }
 
     /**
@@ -1188,12 +1196,12 @@ public:
         CharType* Dst = Src + 1;
 
         const uint64 MoveSize = Len - Position;
-        StringUtils::Move(Dst, Src, MoveSize);
+        StringType::Move(Dst, Src, MoveSize);
 
         // Copy String
         *Src = Char;
 
-        Characters[++Len] = StringUtils::Null;
+        Characters[++Len] = StringType::Null;
     }
 
     /**
@@ -1204,7 +1212,7 @@ public:
      */
     FORCEINLINE void Replace(const CharType* InString, SizeType Position) noexcept
     {
-        Replace(InString, StringUtils::Length(InString), Position);
+        Replace(InString, StringType::Length(InString), Position);
     }
 
     /**
@@ -1229,7 +1237,7 @@ public:
     FORCEINLINE void Replace(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
         Check((Position < Len) && (Position + InLength < Len));
-        StringUtils::Copy(Data() + Position, InString, InLength);
+        StringType::Copy(Data() + Position, InString, InLength);
     }
 
     /**
@@ -1261,7 +1269,7 @@ public:
      */
     FORCEINLINE void Pop() noexcept
     {
-        Characters[--Len] = StringUtils::Null;
+        Characters[--Len] = StringType::Null;
     }
 
     /**
@@ -1840,9 +1848,9 @@ private:
     {
         Check(InLength < Capacity());
 
-        StringUtils::Copy(Characters, InString, InLength);
+        StringType::Copy(Characters, InString, InLength);
         Len = InLength;
-        Characters[Len] = StringUtils::Null;
+        Characters[Len] = StringType::Null;
     }
 
     FORCEINLINE void MoveFrom(TStaticString&& Other) noexcept
@@ -1851,7 +1859,7 @@ private:
         Other.Len = 0;
 
         FMemory::Memexchange(Characters, Other.Characters, SizeInBytes());
-        Characters[Len] = StringUtils::Null;
+        Characters[Len] = StringType::Null;
     }
 
     CharType Characters[CharCount];
@@ -1875,10 +1883,7 @@ template<
     int32 CharCount>
 struct TIsTStringType<TStaticString<CharType, CharCount>>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

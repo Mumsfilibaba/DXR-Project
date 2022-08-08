@@ -4,32 +4,27 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TIsSame
 
-template<typename T, typename U>
+template<
+    typename T,
+    typename U>
 struct TIsSame
 {
-    enum
-    {
-        Value = false
-    };
+    enum { Value = false };
 };
 
 template<typename T>
 struct TIsSame<T, T>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TIsNotSame
 
-template<typename T, typename U>
+template<
+    typename T,
+    typename U>
 struct TIsNotSame
 {
-    enum
-    {
-        Value = TNot<TIsSame<T, U>>::Value
-    };
+    enum { Value = TNot<TIsSame<T, U>>::Value };
 };

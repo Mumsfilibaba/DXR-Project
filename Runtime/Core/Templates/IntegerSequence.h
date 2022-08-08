@@ -5,17 +5,16 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TIntegerSequence
 
-template <typename T, T... Sequence>
+template <
+    typename T,
+    T... Sequence>
 struct TIntegerSequence
 {
-    typedef T Type;
-
     static_assert(TIsInteger<T>::Value, "TIntegerSequence must an integral type");
 
-    enum
-    {
-        Size = sizeof...(Sequence)
-    };
+    typedef T Type;
+ 
+    enum { Size = sizeof...(Sequence) };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -23,14 +22,18 @@ struct TIntegerSequence
 
 namespace Internal
 {
-    template <typename T, unsigned N>
+    template <
+        typename T,
+        unsigned N>
     struct TMakeIntegerSequenceImpl;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TMakeIntegerSequence
 
-template<typename T, T N>
+template<
+    typename T,
+    T N>
 using TMakeIntegerSequence = typename Internal::TMakeIntegerSequenceImpl<T, N>::Type;
 
 namespace Internal
@@ -38,10 +41,17 @@ namespace Internal
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // TSequenceHelper
 
-    template<uint32 N, typename FirstSequence, typename SecondSequence>
+    template<
+        uint32 N,
+        typename FirstSequence,
+        typename SecondSequence>
     struct TSequenceHelper;
 
-    template<uint32 N, typename T, T... First, T... Second>
+    template<
+        uint32 N,
+        typename T,
+        T... First,
+        T... Second>
     struct TSequenceHelper<N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> 
         : TIntegerSequence<T, First..., (T(N + Second))...>
     {
@@ -51,13 +61,18 @@ namespace Internal
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // TSequenceHelperType
 
-    template<uint32 N, typename FirstSequence, typename SecondSequence>
+    template<
+        uint32 N,
+        typename FirstSequence,
+        typename SecondSequence>
     using TSequenceHelperType = typename TSequenceHelper<N, FirstSequence, SecondSequence>::Type;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // TMakeIntegerSequenceImpl
 
-    template<typename T, uint32 N>
+    template<
+        typename T,
+        uint32 N>
     struct TMakeIntegerSequenceImpl 
         : TSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>
     {

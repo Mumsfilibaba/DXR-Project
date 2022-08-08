@@ -49,7 +49,7 @@
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/EnumUtilities.h"
 #include "Core/Templates/Identity.h"
-#include "Core/Templates/InitializerList.h"
+#include "Core/Templates/ContiguousContainerHelper.h"
 #include "Core/Templates/InPlace.h"
 #include "Core/Templates/Invoke.h"
 #include "Core/Templates/MemberPointerTraits.h"

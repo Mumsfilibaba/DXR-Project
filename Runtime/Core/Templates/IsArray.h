@@ -7,28 +7,19 @@
 template<typename T>
 struct TIsArray
 {
-    enum
-    {
-        Value = false
-    };
+    enum { Value = false };
 };
 
 template<typename T>
 struct TIsArray<T[]>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };
 
 template<typename T, const int32 N>
 struct TIsArray<T[N]>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -37,19 +28,13 @@ struct TIsArray<T[N]>
 template<typename T>
 struct TIsBoundedArray
 {
-    enum
-    {
-        Value = false
-    };
+    enum { Value = false };
 };
 
 template<typename T, const int32 N>
 struct TIsBoundedArray<T[N]>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -58,17 +43,11 @@ struct TIsBoundedArray<T[N]>
 template<typename T>
 struct TIsUnboundedArray
 {
-    enum
-    {
-        Value = false
-    };
+    enum { Value = false };
 };
 
 template<typename T>
 struct TIsUnboundedArray<T[]>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };

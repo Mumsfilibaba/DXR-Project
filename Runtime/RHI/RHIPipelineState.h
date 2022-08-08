@@ -1080,7 +1080,7 @@ struct FRHIRayTracingHitGroupInitializer
     FRHIRayTracingHitGroupInitializer(
         const FString& InName,
         ERayTracingHitGroupType InType,
-        const TArrayView<FRHIRayTracingShader*>& InRayTracingShaders)
+        TArrayView<FRHIRayTracingShader*> InRayTracingShaders)
         : Name(InName)
         , Type(InType)
         , Shaders(InRayTracingShaders)

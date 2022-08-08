@@ -8,6 +8,7 @@
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/Not.h"
 #include "Core/Templates/IsTArrayType.h"
+#include "Core/Templates/ContiguousContainerHelper.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TStaticArray - A fixed size array similar to std::array
@@ -20,12 +21,20 @@ struct TStaticArray
     using ElementType = T;
     using SizeType    = int32;
 
+    static_assert(
+        NumElements > 0,
+        "TStaticArray does not support a zero element count");
+    
+    static_assert(
+        TIsSigned<SizeType>::Value,
+        "TStaticArray only supports a SizeType that's signed");
+
     typedef TArrayIterator<TStaticArray, ElementType>                    IteratorType;
     typedef TArrayIterator<const TStaticArray, const ElementType>        ConstIteratorType;
     typedef TReverseArrayIterator<TStaticArray, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TStaticArray, const ElementType> ReverseConstIteratorType;
 
-    static_assert(NumElements > 0, "The number of elements has to be more than zero");
+public:
 
     /**
      * @brief: Retrieve the first element of the array
@@ -383,8 +392,13 @@ template<
     int32 NumElements>
 struct TIsTArrayType<TStaticArray<T, NumElements>>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
+};
+
+template<
+    typename T,
+    int32 NumElements>
+struct TIsContiguousContainer<TStaticArray<T, NumElements>>
+{
+    enum { Value = true };
 };

@@ -22,11 +22,17 @@ public:
     using ElementType = T;
     using SizeType    = int32;
 
+    static_assert(
+        TIsSigned<SizeType>::Value,
+        "TArray only supports a SizeType that's signed");
+
     /* Iterators */
     typedef TArrayIterator<TArray, ElementType>                    IteratorType;
     typedef TArrayIterator<const TArray, const ElementType>        ConstIteratorType;
     typedef TReverseArrayIterator<TArray, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TArray, const ElementType> ReverseConstIteratorType;
+
+public:
 
     /** 
      * @brief: Default constructor
@@ -89,7 +95,9 @@ public:
         , ArraySize(0)
         , ArrayCapacity(0)
     {
-        CopyConstructFrom(GetInitializerListData(InList) ,GetInitializerListSize(InList));
+        CopyConstructFrom(
+            FContiguousContainerHelper::GetData(InList),
+            FContiguousContainerHelper::GetSize(InList));
     }
 
     /** 
@@ -264,7 +272,9 @@ public:
      */
     FORCEINLINE void Reset(std::initializer_list<ElementType> InList) noexcept
     {
-        Reset(GetInitializerListData(InList), GetInitializerListSize(InList));
+        Reset(
+            FContiguousContainerHelper::GetData(InList),
+            FContiguousContainerHelper::GetSize(InList));
     }
 
     /** 
@@ -524,7 +534,10 @@ public:
      */
     FORCEINLINE void Insert(SizeType Position, std::initializer_list<ElementType> InList) noexcept
     {
-        Insert(Position, GetInitializerListData(InList), GetInitializerListSize(InList));
+        Insert(
+            Position,
+            FContiguousContainerHelper::GetData(InList),
+            FContiguousContainerHelper::GetSize(InList));
     }
 
     /**
@@ -535,7 +548,10 @@ public:
      */
     FORCEINLINE void Insert(ConstIteratorType Position, std::initializer_list<ElementType> InList) noexcept
     {
-        Insert(Position.GetIndex(), GetInitializerListData(InList), GetInitializerListSize(InList));
+        Insert(
+            Position.GetIndex(),
+            FContiguousContainerHelper::GetData(InList),
+            FContiguousContainerHelper::GetSize(InList));
     }
 
     /**
@@ -602,7 +618,9 @@ public:
      */
     FORCEINLINE void Append(std::initializer_list<ElementType> InList) noexcept
     {
-        Append(GetInitializerListData(InList), GetInitializerListSize(InList));
+        Append(
+            FContiguousContainerHelper::GetData(InList),
+            FContiguousContainerHelper::GetSize(InList));
     }
 
     /**
@@ -1558,10 +1576,15 @@ template<
     typename AllocatorType>
 struct TIsTArrayType<TArray<T, AllocatorType>>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
+};
+
+template<
+    typename T,
+    typename AllocatorType>
+struct TIsContiguousContainer<TArray<T, AllocatorType>>
+{
+    enum { Value = true };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

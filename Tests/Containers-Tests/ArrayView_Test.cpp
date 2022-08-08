@@ -2,6 +2,7 @@
 
 #if RUN_TARRAYVIEW_TEST
 
+#include <Core/CoreTypes.h>
 #include <Core/Containers/Array.h>
 #include <Core/Containers/StaticArray.h>
 #include <Core/Containers/ArrayView.h>
@@ -38,16 +39,35 @@ void TArrayView_Test()
     TArrayView<uint32> EmptyView;
 
     TArray<uint32> Arr0 = { 1, 2, 3, 4 };
-    TArrayView<uint32> ArrView0 = TArrayView<uint32>( Arr0 );
+    TArrayView<uint32> ArrView0 = TArrayView<uint32>(Arr0);
+
+    {
+        TArrayView<uint32> _ArrView = MakeArrayView(Arr0);
+    }
 
     TStaticArray<uint32, 4> Arr1 = { 11, 12, 13, 14 };
-    TArrayView<uint32> ArrView1 = TArrayView<uint32>( Arr1 );
+    TArrayView<uint32> ArrView1 = TArrayView<uint32>(Arr1);
+
+    {
+        TArrayView<uint32> _ArrView = MakeArrayView(Arr1);
+    }
 
     uint32 Arr2[] = { 21, 22, 23, 24 };
-    TArrayView<uint32> ArrView2 = TArrayView<uint32>( Arr2 );
+    TArrayView<uint32> ArrView2 = TArrayView<uint32>(Arr2);
+
+    {
+        TArrayView<uint32> _ArrView = MakeArrayView(Arr2);
+    }
 
     uint32* DynamicPtr = new uint32[]{ 31, 32, 33, 34, 35 };
-    TArrayView<uint32> ArrView3 = TArrayView<uint32>( DynamicPtr, 5 );
+    TArrayView<uint32> ArrView3 = TArrayView<uint32>(DynamicPtr, 5);
+    
+    {
+        TArrayView<uint32> _ArrView = MakeArrayView(DynamicPtr, 5);
+    }
+
+    const TArray<uint32> ConstArr0 = { 1, 2, 3, 4 };
+    TArrayView<const uint32> ConstArrView0 = TArrayView<const uint32>(ConstArr0);
 
     std::cout << "Testing At and operator[]" << std::endl;
     PrintArrayView( EmptyView );

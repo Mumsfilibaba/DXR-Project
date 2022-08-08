@@ -14,11 +14,8 @@
 template<typename T>
 struct TIsFunction
 {
-    enum
-    {
-        /* Functions and references cannot be const */
-        Value = (!TIsConst<const T>::Value) && (!TIsReference<T>::Value)
-    };
+    /* Functions and references cannot be const */
+    enum { Value = (!TIsConst<const T>::Value) && (!TIsReference<T>::Value) };
 };
 
 #if COMPILER_MSVC

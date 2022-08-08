@@ -3,10 +3,14 @@
 
 #include "Core/Templates/Move.h"
 #include "Core/Templates/IsTArrayType.h"
-#include "Core/Templates/InitializerList.h"
+#include "Core/Templates/RemoveCV.h"
+#include "Core/Templates/RemoveReference.h"
+#include "Core/Templates/RemovePointer.h"
+#include "Core/Templates/ContiguousContainerHelper.h"
+#include "Core/Templates/DeclVal.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TArrayView - View of an array similar to std::span
+// TArrayView - View of an array
 
 template<typename T>
 class TArrayView
@@ -15,11 +19,15 @@ public:
     using ElementType = T;
     using SizeType    = int32;
 
+    static_assert(TIsSigned<SizeType>::Value, "TArrayView only supports a SizeType that's signed");
+
     /* Iterators */
     typedef TArrayIterator<TArrayView, ElementType>                    IteratorType;
     typedef TArrayIterator<const TArrayView, const ElementType>        ConstIteratorType;
     typedef TReverseArrayIterator<TArrayView, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TArrayView, const ElementType> ReverseConstIteratorType;
+
+public:
 
     /**
      * @brief: Default construct an empty view 
@@ -31,36 +39,26 @@ public:
 
     /**
      * @brief: Construct a view from an array of ArrayType
-     *
-     * @param InArray: Array to create view from
-     */
-    FORCEINLINE TArrayView(const TArrayView& InArray) noexcept
-        : View(InArray.Data())
-        , ViewSize(InArray.Size())
-    { }
-
-    /**
-     * @brief: Construct a view from an array of ArrayType
      * 
-     * @param InArray: Array to create view from
+     * @param Container: Container to create view from (TArray, TArrayView, TStaticArray)
      */
     template<
-        typename ArrayType,
-        typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
-    FORCEINLINE TArrayView(const ArrayType& InArray) noexcept
-        : View(InArray.Data())
-        , ViewSize(InArray.Size())
+        typename ContainerType,
+        typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type,
+        typename = typename TEnableIf<TIsContiguousContainer<PureContainerType>::Value>::Type>
+    FORCEINLINE TArrayView(ContainerType&& Container) noexcept
+        : View(FContiguousContainerHelper::GetData(Forward<ContainerType>(Container)))
+        , ViewSize(SizeType(FContiguousContainerHelper::GetSize(Forward<ContainerType>(Container))))
     { }
 
     /**
-     * @brief: Construct a view from a raw-array
-     *
-     * @param InArray: Array to create view from
-     * @param NumElements: Number of elements in the array
+     * @brief: Construct a view from an array of initializer_list
+     * 
+     * @param InitList: initializer_list to create view from
      */
-    FORCEINLINE TArrayView(std::initializer_list<ElementType> InList) noexcept
-        : View(GetInitializerListData(InList))
-        , ViewSize(GetInitializerListSize(InList))
+    FORCEINLINE TArrayView(std::initializer_list<ElementType> InitList) noexcept
+        : View(FContiguousContainerHelper::GetData(InitList))
+        , ViewSize(SizeType(FContiguousContainerHelper::GetSize(InitList)))
     { }
 
     /**
@@ -406,23 +404,36 @@ private:
 template<typename T>
 struct TIsTArrayType<TArrayView<T>>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
+};
+
+template<typename T>
+struct TIsContiguousContainer<TArrayView<T>>
+{
+    enum { Value = true };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // MakeArrayView
 
+template<
+    typename ContainerType,
+    typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type,
+    typename = typename TEnableIf<TIsContiguousContainer<PureContainerType>::Value>::Type>
+auto MakeArrayView(ContainerType&& Container)
+{
+    using ElementType = typename TRemovePointer<decltype(FContiguousContainerHelper::GetData(DeclVal<PureContainerType>()))>::Type;
+    return TArrayView<ElementType>(Forward<ContainerType>(Container));
+}
+
 template<typename T>
-TArrayView<T> MakeArrayView(std::initializer_list<T> InitList)
+auto MakeArrayView(std::initializer_list<T> InitList)
 {
     return TArrayView<T>(InitList);
 }
 
 template<typename T>
-TArrayView<T> MakeArrayView(T* Array, int32 Size)
+auto MakeArrayView(T* Array, int32 Size)
 {
     return TArrayView<T>(Array, Size);
 }

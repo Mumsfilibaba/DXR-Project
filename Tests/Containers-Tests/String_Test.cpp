@@ -360,17 +360,17 @@ void TString_Test( const char* Args )
 
         FStringView FStringView( "Hello FStringView" );
 
-        String String0;
+        FString String0;
         PrintString( String0 );
-        String String1 = "Hello String";
+        FString String1 = "Hello String";
         PrintString( String1 );
-        String String2 = String( Args, 7 );
+        FString String2 = FString( Args, 7 );
         PrintString( String2 );
-        String String3 = String( FStringView );
+        FString String3 = FString( FStringView );
         PrintString( String3 );
-        String String4 = String1;
+        FString String4 = String1;
         PrintString( String4 );
-        String String5 = Move( String2 );
+        FString String5 = Move( String2 );
         PrintString( String5 );
 
         String0.Append( "Appended String" );
@@ -380,7 +380,7 @@ void TString_Test( const char* Args )
         String5.Append( String0 );
         PrintString( String5 );
 
-        String String6;
+        FString String6;
         String6.Format( "Formatted String=%.4f", 0.004f );
         PrintString( String6 );
 
@@ -390,10 +390,10 @@ void TString_Test( const char* Args )
         String6.AppendFormat( "Formatted String=%.4f", 0.0077f );
         PrintString( String6 );
 
-        String LowerString6 = String6.ToLower();
+        FString LowerString6 = String6.ToLower();
         PrintString( LowerString6 );
 
-        String UpperString6 = String6.ToUpper();
+        FString UpperString6 = String6.ToUpper();
         PrintString( UpperString6 );
 
         String6.Clear();
@@ -402,7 +402,7 @@ void TString_Test( const char* Args )
         String6.Append( "    Trimmable String    " );
         PrintString( String6 );
 
-        String TrimmedString6 = String6.Trim();
+        FString TrimmedString6 = String6.Trim();
         TrimmedString6.Append( '*' );
         PrintString( TrimmedString6 );
 
@@ -412,10 +412,10 @@ void TString_Test( const char* Args )
         String6.Append( "123456789" );
         PrintString( String6 );
 
-        String ReversedString6 = String6.Reverse();
+        FString ReversedString6 = String6.Reverse();
         PrintString( ReversedString6 );
 
-        String SearchString = "0123MeSearch89Me89";
+        FString SearchString = "0123MeSearch89Me89";
         PrintString( SearchString );
 
         std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;
@@ -433,10 +433,10 @@ void TString_Test( const char* Args )
 
         std::cout << "Position=" << SearchString.ReverseFindOneNotOf( "0123456789" ) << std::endl;
 
-        String CompareString0 = "COMPARE";
+        FString CompareString0 = "COMPARE";
         PrintString( CompareString0 );
 
-        String CompareString1 = "compare";
+        FString CompareString1 = "compare";
         PrintString( CompareString1 );
 
         std::cout << "Compare=" << CompareString0.Compare( CompareString1 ) << std::endl;
@@ -459,7 +459,7 @@ void TString_Test( const char* Args )
         CompareString0.Replace( 'X', 0 );
         PrintString( CompareString0 );
 
-        String CombinedString = CompareString0 + '5';
+        FString CombinedString = CompareString0 + '5';
         PrintString( CombinedString );
 
         CombinedString = '5' + CombinedString;
@@ -474,7 +474,7 @@ void TString_Test( const char* Args )
         CombinedString = CombinedString + CombinedString;
         PrintString( CombinedString );
 
-        String TestString = "Test";
+        FString TestString = "Test";
         PrintString( TestString );
 
         std::cout << "operator== : " << std::boolalpha << ("Test" == TestString) << std::endl;
@@ -673,7 +673,7 @@ void TString_Test( const char* Args )
             std::wcout << Index << L'=' << TestString[Index] << std::endl;
         }
 
-        String CharCompareString = WideToChar( CompareString0 );
+        FString CharCompareString = WideToChar( CompareString0 );
         PrintString( CharCompareString );
     }
 

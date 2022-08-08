@@ -22,7 +22,7 @@ bool TestVector3()
     float Dot = Point1.DotProduct( Point3 );
     if ( Dot != -3.0f )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -38,7 +38,7 @@ bool TestVector3()
 
     if ( Cross != FVector3( reinterpret_cast<float*>(&XmFloat3) ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -49,7 +49,7 @@ bool TestVector3()
 
     if ( Projected != FVector3( 4.0f, 0.0f, 0.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -64,7 +64,7 @@ bool TestVector3()
 
     if ( Reflect != FVector3( reinterpret_cast<float*>(&XmFloat3) ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -72,7 +72,7 @@ bool TestVector3()
     FVector3 MinPoint = Min( Point2, Point3 );
     if ( MinPoint != FVector3( -3.0f, -7.0f, -3.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -80,7 +80,7 @@ bool TestVector3()
     FVector3 MaxPoint = Max( Point2, Point3 );
     if ( MaxPoint != FVector3( 5.0f, -3.0f, 2.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -88,7 +88,7 @@ bool TestVector3()
     FVector3 Lerped = Lerp( FVector3( 0.0f ), FVector3( 1.0f ), 0.5f );
     if ( Lerped != FVector3( 0.5f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -96,7 +96,7 @@ bool TestVector3()
     FVector3 Clamped = Clamp( FVector3( -2.0f ), FVector3( 5.0f ), FVector3( -3.5f, 7.5f, 1.0f ) );
     if ( Clamped != FVector3( -2.0f, 5.0f, 1.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -104,7 +104,7 @@ bool TestVector3()
     FVector3 Saturated = Saturate( FVector3( -5.0f, 1.5f, 0.25f ) );
     if ( Saturated != FVector3( 0.0f, 1.0f, 0.25f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -114,21 +114,21 @@ bool TestVector3()
 
     if ( Norm != FVector3( 0.57735026919f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
     if ( !Norm.IsUnitVector() )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
     // NaN
     FVector3 NaN( 1.0f, 0.0f, NAN );
-    if ( !NaN.HasNan() )
+    if ( !NaN.HasNaN() )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -136,14 +136,14 @@ bool TestVector3()
     FVector3 Infinity( 1.0f, 0.0f, INFINITY );
     if ( !Infinity.HasInfinity() )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
     // Valid
     if ( Infinity.IsValid() || NaN.IsValid() )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -153,7 +153,7 @@ bool TestVector3()
 
     if ( Length != 3.46410161514f )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -161,7 +161,7 @@ bool TestVector3()
     float LengthSqrd = LengthVector.LengthSquared();
     if ( LengthSqrd != 12.0f )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -169,7 +169,7 @@ bool TestVector3()
     FVector3 Minus = -Point1;
     if ( Minus != FVector3( -1.0f, -2.0f, 2.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -177,14 +177,14 @@ bool TestVector3()
     FVector3 Add0 = Minus + FVector3( 3.0f, 1.0f, -1.0f );
     if ( Add0 != FVector3( 2.0f, -1.0f, 1.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
     FVector3 Add1 = Minus + 5.0f;
     if ( Add1 != FVector3( 4.0f, 3.0f, 7.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -192,14 +192,14 @@ bool TestVector3()
     FVector3 Sub0 = Add1 - FVector3( 3.0f, 1.0f, 8.0f );
     if ( Sub0 != FVector3( 1.0f, 2.0f, -1.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
     FVector3 Sub1 = Add1 - 5.0f;
     if ( Sub1 != FVector3( -1.0f, -2.0f, 2.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -207,14 +207,14 @@ bool TestVector3()
     FVector3 Mul0 = Sub0 * FVector3( 3.0f, 1.0f, 2.0f );
     if ( Mul0 != FVector3( 3.0f, 2.0f, -2.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
     FVector3 Mul1 = Sub0 * 5.0f;
     if ( Mul1 != FVector3( 5.0f, 10.0f, -5.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -222,14 +222,14 @@ bool TestVector3()
     FVector3 Div0 = Mul0 / FVector3( 3.0f, 1.0f, 2.0f );
     if ( Div0 != FVector3( 1.0f, 2.0f, -1.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
     const FVector3 Div1 = Mul1 / 5.0f;
     if ( Div1 != FVector3( 1.0f, 2.0f, -1.0f ) )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 
@@ -237,7 +237,7 @@ bool TestVector3()
     float Component = Div1[2];
     if ( Component != -1.0f )
     {
-        assert( false );
+        assert(false);
         return false;
     }
 

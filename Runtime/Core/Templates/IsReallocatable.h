@@ -13,8 +13,5 @@
 template<typename T>
 struct TIsReallocatable
 {
-    enum
-    {
-        Value = TIsTrivial<T>::Value
-    };
+    enum { Value = TIsTrivial<T>::Value };
 };

@@ -8,30 +8,22 @@ template<typename T>
 struct TIsSigned
 {
 private:
-    template<typename U, bool = TIsArithmetic<U>::Value>
+    template<
+        typename U,
+        bool = TIsArithmetic<U>::Value>
     struct TIsSignedImpl
     {
-        enum
-        {
-            Value = U(-1) < U(0)
-        };
+        enum { Value = U(-1) < U(0) };
     };
-
 
     template<typename U>
     struct TIsSignedImpl<U, false>
     {
-        enum
-        {
-            Value = false
-        };
+        enum { Value = false };
     };
 
 public:
-    enum
-    {
-        Value = TIsSignedImpl<T>::Value
-    };
+    enum { Value = TIsSignedImpl<T>::Value };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -41,28 +33,20 @@ template<typename T>
 struct TIsUnsigned
 {
 private:
-    template<typename U, bool = TIsArithmetic<U>::Value>
+    template<
+        typename U,
+        bool = TIsArithmetic<U>::Value>
     struct TIsUnsignedImpl
     {
-        enum
-        {
-            Value = U(0) < U(-1)
-        };
+        enum { Value = U(0) < U(-1) };
     };
-
 
     template<typename U>
     struct TIsUnsignedImpl<U, false>
     {
-        enum
-        {
-            Value = false
-        };
+        enum { Value = false };
     };
 
 public:
-    enum
-    {
-        Value = TIsUnsignedImpl<T>::Value
-    };
+    enum { Value = TIsUnsignedImpl<T>::Value };
 };

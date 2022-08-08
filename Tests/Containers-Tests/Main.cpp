@@ -50,7 +50,7 @@ void Tests( int32 Argc, const char* Argv[] )
     TFunction_Test();
 #endif
 
-#if RUN_TFIXEDARRAY_TEST
+#if RUN_TSTATICARRAY_TEST
     TStaticArray_Test();
 #endif
 
@@ -79,8 +79,11 @@ void Tests( int32 Argc, const char* Argv[] )
  * Main
  */
 
-int main( int Argc, const char* Argv[] )
+int main(int Argc, const char* Argv[])
 {
+    UNREFERENCED_VARIABLE(Argc);
+    UNREFERENCED_VARIABLE(Argv);
+
 #ifdef _WIN32
     _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif

@@ -17,14 +17,14 @@ bool TestMatrix2()
     FMatrix2 Identity = FMatrix2::Identity();
     if ( Identity != FMatrix2( 1.0f, 0.0f, 0.0f, 1.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Constructors
     FMatrix2 Test = FMatrix2( 5.0f );
     if ( Test != FMatrix2( 5.0f, 0.0f, 0.0f, 5.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     Test = FMatrix2(
@@ -32,7 +32,7 @@ bool TestMatrix2()
         FVector2( 0.0f, 1.0f ) );
     if ( Identity != Test )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     float Arr[9] =
@@ -44,14 +44,14 @@ bool TestMatrix2()
     Test = FMatrix2( Arr );
     if ( Test != FMatrix2( 1.0f, 2.0f, 3.0f, 4.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Transpose
     Test = Test.Transpose();
     if ( Test != FMatrix2( 1.0f, 3.0f, 2.0f, 4.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Determinant
@@ -63,13 +63,13 @@ bool TestMatrix2()
 
     if ( fDeterminant0 != fDeterminant1 )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     XMFLOAT3X3 Float3x3Matrix;
 
     // Rotation
-    for ( double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE )
+    for ( double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree )
     {
         FMatrix2 Rotation = FMatrix2::Rotation( (float)Angle );
         XMMATRIX XmRotation = XMMatrixRotationZ( (float)Angle );
@@ -78,7 +78,7 @@ bool TestMatrix2()
 
         if ( Rotation != ToMatrix2( Float3x3Matrix ) )
         {
-            assert( false ); return false;
+            assert(false); return false;
         }
     }
 
@@ -95,28 +95,28 @@ bool TestMatrix2()
 
     if ( Mult != ToMatrix2( Float3x3Matrix ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Division
     FMatrix2 Div0( 1.0f );
     if ( Div0 / 2.0f != FMatrix2( 0.5f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Sub
     FMatrix2 Sub( 1.0f );
     if ( Div0 - 0.5f != FMatrix2( 0.5f, -0.5f, -0.5f, 0.5f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     FMatrix2 Sub0( 1.0f );
     FMatrix2 Sub1( 1.0f );
     if ( Sub0 - Sub1 != FMatrix2( 0.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Add
@@ -124,14 +124,14 @@ bool TestMatrix2()
     FMatrix2 TempAdd( 0.5f, 0.5f, 0.5f, 0.5f );
     if ( Add + 0.5f != TempAdd )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     FMatrix2 Add0( 1.0f );
     FMatrix2 Add1( 1.0f );
     if ( Add0 + Add1 != FMatrix2( 2.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Inverse
@@ -146,7 +146,7 @@ bool TestMatrix2()
 
     if ( Inverse != ToMatrix2( Float3x3Matrix ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Adjoint
@@ -155,7 +155,7 @@ bool TestMatrix2()
 
     if ( Inverse != Inverse2 )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     FMatrix2 InvInverse = Inverse * fDeterminant0;
@@ -163,62 +163,62 @@ bool TestMatrix2()
 
     if ( InvInverse != XmInvInverse )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     if ( Adjoint != XmInvInverse )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // NaN
     FMatrix2 NaN( 1.0f, 0.0f, 0.0f, NAN );
-    if ( NaN.HasNan() != true )
+    if ( NaN.HasNaN() != true )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Infinity
     FMatrix2 Infinity( 1.0f, 0.0f, 0.0f, INFINITY );
     if ( Infinity.HasInfinity() != true )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Valid
     if ( NaN.IsValid() || Infinity.IsValid() )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Get Row
     FVector2 Row = Infinity.GetRow( 0 );
     if ( Row != FVector2( 1.0f, 0.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Column
     FVector2 Column = Infinity.GetColumn( 0 );
     if ( Column != FVector2( 1.0f, 0.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // SetIdentity
     Infinity.SetIdentity();
     if ( Infinity != FMatrix2::Identity() )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
-    // GetData
+    // Data
     FMatrix2 Matrix0 = FMatrix2::Identity();
-    FMatrix2 Matrix1 = FMatrix2( Matrix0.GetData() );
+    FMatrix2 Matrix1 = FMatrix2( Matrix0.Data() );
 
     if ( Matrix0 != Matrix1 )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Multiply a vector
@@ -234,7 +234,7 @@ bool TestMatrix2()
 
     if ( TranslatedVector != FVector2( reinterpret_cast<float*>(&XmFloat2) ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     return true;

@@ -16,7 +16,7 @@ bool TestMatrix4()
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Constructors
@@ -27,7 +27,7 @@ bool TestMatrix4()
         0.0f, 0.0f, 5.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 5.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     Test = FMatrix4(
@@ -37,7 +37,7 @@ bool TestMatrix4()
         FVector4( 0.0f, 0.0f, 0.0f, 1.0f ) );
     if ( Identity != Test )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     float Arr[16] =
@@ -55,7 +55,7 @@ bool TestMatrix4()
         9.0f, 10.0f, 11.0f, 12.0f,
         13.0f, 14.0f, 15.0f, 16.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Translation
@@ -66,7 +66,7 @@ bool TestMatrix4()
         0.0f, 0.0f, 1.0f, 0.0f,
         5.0f, 1.0f, -2.0f, 1.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Transformation
@@ -74,13 +74,13 @@ bool TestMatrix4()
     FVector3 Vec1 = Translation.TransformPosition( Vec0 );
     if ( Vec1 != FVector3( 6.0f, 2.0f, -1.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     Vec1 = Translation.TransformDirection( Vec0 );
     if ( Vec1 != FVector3( 1.0f, 1.0f, 1.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Transpose
@@ -91,7 +91,7 @@ bool TestMatrix4()
         3.0f, 7.0f, 11.0f, 15.0f,
         4.0f, 8.0f, 12.0f, 16.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Determinant
@@ -103,7 +103,7 @@ bool TestMatrix4()
 
     if ( fDeterminant0 != fDeterminant1 )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // LookAt / Look To
@@ -118,7 +118,7 @@ bool TestMatrix4()
 
     if ( LookAt != FMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Perspective Projection
@@ -135,7 +135,7 @@ bool TestMatrix4()
 
     if ( Projection != FMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Multiplication
@@ -147,7 +147,7 @@ bool TestMatrix4()
 
     if ( Mult != FMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     FMatrix4 _Mul0( 2.0 );
@@ -169,7 +169,7 @@ bool TestMatrix4()
 
     if ( _Mul0 != FMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Inverse
@@ -185,7 +185,7 @@ bool TestMatrix4()
 
     if ( Inverse != FMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Adjoint
@@ -194,7 +194,7 @@ bool TestMatrix4()
 
     if ( Inverse != Inverse2 )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     FMatrix4 InvInverse = Inverse * fDeterminant0;
@@ -202,12 +202,12 @@ bool TestMatrix4()
 
     if ( InvInverse != XmInvInverse )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     if ( Adjoint != XmInvInverse )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // NaN
@@ -216,9 +216,9 @@ bool TestMatrix4()
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, NAN );
-    if ( NaN.HasNan() != true )
+    if ( NaN.HasNaN() != true )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Infinity
@@ -229,27 +229,27 @@ bool TestMatrix4()
         0.0f, 0.0f, 0.0f, INFINITY );
     if ( Infinity.HasInfinity() != true )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Valid
     if ( NaN.IsValid() || Infinity.IsValid() )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Get Row
     FVector4 Row = Infinity.GetRow( 0 );
     if ( Row != FVector4( 1.0f, 0.0f, 0.0f, 0.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Column
     FVector4 Column = Infinity.GetColumn( 0 );
     if ( Column != FVector4( 1.0f, 0.0f, 0.0f, 0.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // SetIdentity
@@ -257,30 +257,30 @@ bool TestMatrix4()
     FMatrix4 TempIdentity = FMatrix4::Identity();
     if ( Infinity != FMatrix4::Identity() )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // GetTranslation
     FVector3 Position = Infinity.GetTranslation();
     if ( Position != FVector3( 0.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // GetRotationAndScale
     FMatrix3 RotationAndScale = Infinity.GetRotationAndScale();
     if ( RotationAndScale != FMatrix3::Identity() )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // GetData
     FMatrix4 Matrix0 = FMatrix4::Identity();
-    FMatrix4 Matrix1 = FMatrix4( Matrix0.GetData() );
+    FMatrix4 Matrix1 = FMatrix4( Matrix0.Data() );
 
     if ( Matrix0 != Matrix1 )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Multiply a vector
@@ -289,11 +289,11 @@ bool TestMatrix4()
 
     if ( TranslatedVector != FVector4( 5.0f, 5.0f, 5.0f, 1.0f ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     // Roll Pitch Yaw
-    for ( double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE )
+    for ( double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree )
     {
         FMatrix4 RollPitchYaw = FMatrix4::RotationRollPitchYaw( (float)Angle, (float)Angle, (float)Angle );
         XMMATRIX XmRollPitchYaw = XMMatrixRotationRollPitchYaw( (float)Angle, (float)Angle, (float)Angle );
@@ -302,12 +302,12 @@ bool TestMatrix4()
 
         if ( RollPitchYaw != FMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
         {
-            assert( false ); return false;
+            assert(false); return false;
         }
     }
 
     // RotationX
-    for ( double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE )
+    for ( double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree )
     {
         FMatrix4 Rotation = FMatrix4::RotationX( (float)Angle );
         XMMATRIX XmRotation = XMMatrixRotationX( (float)Angle );
@@ -316,12 +316,12 @@ bool TestMatrix4()
 
         if ( Rotation != FMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
         {
-            assert( false ); return false;
+            assert(false); return false;
         }
     }
 
     // RotationY
-    for ( double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE )
+    for ( double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree )
     {
         FMatrix4 Rotation = FMatrix4::RotationY( (float)Angle );
         XMMATRIX XmRotation = XMMatrixRotationY( (float)Angle );
@@ -330,12 +330,12 @@ bool TestMatrix4()
 
         if ( Rotation != FMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
         {
-            assert( false ); return false;
+            assert(false); return false;
         }
     }
 
     // RotationZ
-    for ( double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE )
+    for ( double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree )
     {
         FMatrix4 Rotation = FMatrix4::RotationZ( (float)Angle );
         XMMATRIX XmRotation = XMMatrixRotationZ( (float)Angle );
@@ -344,7 +344,7 @@ bool TestMatrix4()
 
         if ( Rotation != FMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
         {
-            assert( false ); return false;
+            assert(false); return false;
         }
     }
 
@@ -356,7 +356,7 @@ bool TestMatrix4()
 
     if ( Ortographic != FMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     float Left = -10.0f;
@@ -371,7 +371,7 @@ bool TestMatrix4()
 
     if ( Ortographic != FMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
     {
-        assert( false ); return false;
+        assert(false); return false;
     }
 
     return true;

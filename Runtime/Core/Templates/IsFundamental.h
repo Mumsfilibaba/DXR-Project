@@ -9,10 +9,7 @@
 template<typename T>
 struct TIsFundamental
 {
-    enum
-    {
-        Value = TOr<TIsArithmetic<T>, TIsVoid<T>, TIsNullptr<T>>::Value
-    };
+    enum { Value = TOr<TIsArithmetic<T>, TIsVoid<T>, TIsNullptr<T>>::Value };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -21,8 +18,5 @@ struct TIsFundamental
 template<typename T>
 struct TIsCompound
 {
-    enum
-    {
-        Value = !TIsFundamental<T>::Value
-    };
+    enum { Value = !TIsFundamental<T>::Value };
 };
