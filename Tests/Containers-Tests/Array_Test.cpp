@@ -1763,7 +1763,7 @@ bool TArray_Test(int32 Argc, const char** Argv)
         std::cout << '\n' << "Range At End" << '\n' << '\n';
         
         Strings2.RemoveRangeAt(Strings2.Size() - 3, 3);
-        CHECK(Strings2.Size() == 25);
+        CHECK(Strings2.Size() == 28);
         CHECK_ARRAY(Strings2,
             {
                 "Inserted String Again Reallocated",

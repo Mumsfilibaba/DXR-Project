@@ -14,12 +14,13 @@
 
 template<
     typename InStorageType = uint32,
-    typename AllocatorType = TDefaultArrayAllocator<InStorageType>>
+    typename InAllocatorType = TDefaultArrayAllocator<InStorageType>>
 class TBitArray
 {
 public:
-    using SizeType    = uint32;
-    using StorageType = InStorageType;
+    using SizeType      = uint32;
+    using StorageType   = InStorageType;
+    using AllocatorType = InAllocatorType;
 
     static_assert(
         TIsUnsigned<StorageType>::Value,
@@ -96,7 +97,7 @@ public:
 
         for (SizeType Index = 0; Index < InNumBits; Index++)
         {
-            AssignBit_Internal(Index, bValue);
+            AssignBitUnchecked(Index, bValue);
         }
     }
 
@@ -115,7 +116,7 @@ public:
         SizeType Index = 0;
         for (bool bValue :  InitList)
         {
-            AssignBit_Internal(Index++, bValue);
+            AssignBitUnchecked(Index++, bValue);
         }
     }
 
@@ -190,7 +191,7 @@ public:
     inline void Push(const bool bValue) noexcept
     {
         Reserve(NumBits + 1);
-        AssignBit_Internal(NumBits, bValue);
+        AssignBitUnchecked(NumBits, bValue);
         NumBits++;
     }
 
@@ -203,7 +204,7 @@ public:
     inline void AssignBit(SizeType BitPosition, const bool bValue) noexcept
     {
         Check(BitPosition < NumBits);
-        AssignBit_Internal(BitPosition, bValue);
+        AssignBitUnchecked(BitPosition, bValue);
     }
 
     /**
@@ -273,14 +274,14 @@ public:
      * @param OutIndex: Variable to store the index of the most significant bit
      * @return: Returns false if no bit is set
      */
-    FORCEINLINE bool MostSignificantBit(uint32& OutIndex) const
+    FORCEINLINE bool MostSignificantBit(SizeType& OutIndex) const
     {
-        for (int32 Index = static_cast<int32>(Capacity()) - 1; Index >= 0; --Index)
+        for (int32 Index = int32(Capacity()) - 1; Index >= 0; --Index)
         {
             const StorageType Element = GetStorage(Index);
-            if (NBits::MostSignificant(Element, OutIndex))
+            if (FBitHelper::MostSignificant(Element, OutIndex))
             {
-                OutIndex += Index * GetBitsPerStorage();
+                OutIndex = Index * GetBitsPerStorage();
                 return true;
             }
         }
@@ -349,9 +350,22 @@ public:
      * 
      * @param NumBits: Number of bits to be able to store
      */
-    inline void Reserve(SizeType InNumBits) noexcept
+    FORCEINLINE void Reserve(SizeType InNumBits) noexcept
     {
-        Reserve_Internal(InNumBits);
+        const SizeType MaxBits = Capacity();
+        if (InNumBits >= MaxBits)
+        {
+            const SizeType NewNumElements = GetRequiredStorageForBits(InNumBits);
+            Storage.Realloc(NumElements, NewNumElements);
+
+            StorageType* Pointer = Data();
+            for (SizeType Index = NumElements; Index < NewNumElements; ++Index)
+            {
+                Pointer[Index] = 0;
+            }
+
+            NumElements = NewNumElements;
+        }
     }
 
     /**
@@ -361,7 +375,7 @@ public:
      */
     inline void Resize(SizeType InNumBits) noexcept
     {
-        Reserve_Internal(InNumBits);
+        Reserve(InNumBits);
         NumBits = InNumBits;
     }
 
@@ -446,7 +460,7 @@ public:
     {
         if (Steps && NumBits)
         {
-            BitshiftRight_Internal(Steps, 0);
+            BitshiftRightUnchecked(Steps, 0);
         }
     }
 
@@ -459,7 +473,7 @@ public:
     {
         if (Steps && NumBits)
         {
-            BitshiftLeft_Internal(Steps, 0);
+            BitshiftLeftUnchecked(Steps, 0);
         }
     }
 
@@ -965,7 +979,7 @@ private:
         Other.NumElements = 0;
     }
 
-    FORCEINLINE void AssignBit_Internal(SizeType BitPosition, const bool bValue) noexcept
+    FORCEINLINE void AssignBitUnchecked(SizeType BitPosition, const bool bValue) noexcept
     {
         const SizeType ElementIndex   = GetStorageIndexOfBit(BitPosition);
         const SizeType IndexInElement = GetIndexOfBitInStorage(BitPosition);
@@ -980,7 +994,7 @@ private:
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
     // Right shift
 
-    FORCEINLINE void BitshiftRight_Internal(SizeType Steps, SizeType StartBit = 0) noexcept
+    FORCEINLINE void BitshiftRightUnchecked(SizeType Steps, SizeType StartBit = 0) noexcept
     {
         const SizeType StartElementIndex = GetStorageIndexOfBit(StartBit);
 
@@ -1053,7 +1067,7 @@ private:
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
     // Left shift
 
-    FORCEINLINE void BitshiftLeft_Internal(SizeType Steps, SizeType StartBit = 0) noexcept
+    FORCEINLINE void BitshiftLeftUnchecked(SizeType Steps, SizeType StartBit = 0) noexcept
     {
         const SizeType StartElementIndex = GetStorageIndexOfBit(StartBit);
 
@@ -1121,24 +1135,6 @@ private:
 
         const StorageType CurrentValue = *Pointer;
         *Pointer = (CurrentValue & InverseMask) | (StartValue & Mask);
-    }
-
-    FORCEINLINE void Reserve_Internal(SizeType InNumBits) noexcept
-    {
-        const SizeType MaxBits = Capacity();
-        if (InNumBits >= MaxBits)
-        {
-            const SizeType NewNumElements = GetRequiredStorageForBits(InNumBits);
-            Storage.Realloc(NumElements, NewNumElements);
-
-            StorageType* Pointer = Data();
-            for (SizeType Index = NumElements; Index < NewNumElements; ++Index)
-            {
-                Pointer[Index] = 0;
-            }
-
-            NumElements = NewNumElements;
-        }
     }
 
     FORCEINLINE void MaskOutLastStorageElement()

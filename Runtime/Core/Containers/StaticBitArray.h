@@ -201,7 +201,7 @@ public:
     {
         for (int32 Index = static_cast<int32>(Capacity()) - 1; Index >= 0; --Index)
         {
-            if (NBits::MostSignificant(Storage[Index], OutIndex))
+            if (FBitHelper::MostSignificant(Storage[Index], OutIndex))
             {
                 OutIndex += Index * GetBitsPerStorage();
                 return true;
@@ -221,7 +221,7 @@ public:
     {
         for (SizeType Index = 0; Index < Capacity(); ++Index)
         {
-            if (NBits::LeastSignificant(Storage[Index], OutIndex))
+            if (FBitHelper::LeastSignificant(Storage[Index], OutIndex))
             {
                 OutIndex += Index * GetBitsPerStorage();
                 return true;

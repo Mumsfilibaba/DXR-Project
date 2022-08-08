@@ -14,17 +14,15 @@
 
 struct FTest
 {
-    enum
-    {
-        SizeInBytes = 1024*1024
-    };
+    enum { SizeInBytes = 1024*1024 };
 
     FTest()
     {
         Pointer = FMemory::Malloc(SizeInBytes);
     }
 
-    FTest(int32 Value)
+    FTest(int32 InValue)
+        : Value(InValue)
     {
         Pointer = FMemory::Malloc(SizeInBytes);
         FMemory::Memset(Pointer, static_cast<uint8>(Value), SizeInBytes);
@@ -83,14 +81,14 @@ struct FTest
         return FMemory::Memcmp(Pointer, RHS.Pointer, SizeInBytes);
     }
 
-    bool operator==(int32 Rhs) const noexcept
+    bool operator==(int32 RHS) const noexcept
     {
-        return Value == Rhs;
+        return Value == RHS;
     }
 
-    bool operator!=(int32 Rhs) const noexcept
+    bool operator!=(int32 RHS) const noexcept
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     void* Pointer = nullptr;

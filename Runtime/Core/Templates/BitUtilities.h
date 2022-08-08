@@ -5,12 +5,12 @@
 #include "Core/CoreTypes.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helper functions for BitArray
+// FBitHelper
 
-namespace NBits
+struct FBitHelper
 {
     template<typename T, typename IndexType = uint32>
-    inline bool LeastSignificant(T Mask, IndexType& OutIndex) noexcept
+    static bool LeastSignificant(T Mask, IndexType& OutIndex) noexcept
     {
         OutIndex = ~0u;
 
@@ -29,7 +29,7 @@ namespace NBits
     }
 
     template<typename T, typename IndexType = uint32>
-    inline bool MostSignificant(T Mask, IndexType& OutIndex) noexcept
+    static bool MostSignificant(T Mask, IndexType& OutIndex) noexcept
     {
         if (Mask == 0)
         {
@@ -46,12 +46,12 @@ namespace NBits
     }
 
     template<typename StorageType>
-    inline typename TEnableIf<TIsUnsigned<StorageType>::Value, StorageType>::Type ReverseBits(StorageType Bits) noexcept
+    static typename TEnableIf<TIsUnsigned<StorageType>::Value, StorageType>::Type ReverseBits(StorageType Bits) noexcept
     {
         constexpr StorageType NumBits = sizeof(StorageType) * 8;
 
         StorageType BitCount = NumBits - 1;
-        StorageType NewBits  = Bits;
+        StorageType NewBits = Bits;
         Bits >>= 1;
 
         while (Bits)
@@ -65,4 +65,4 @@ namespace NBits
         NewBits <<= BitCount;
         return NewBits;
     }
-}
+};
