@@ -3,7 +3,7 @@
 
 #include "Core/Core.h"
 
-#ifdef COMPILER_MSVC
+#ifdef PLATFORM_COMPILER_MSVC
     #pragma warning(push)
     #pragma warning(disable : 4251)
 #endif
@@ -144,6 +144,6 @@ private:
     uint64 TimespanNS = 0;
 };
 
-#ifdef COMPILER_MSVC
+#ifdef PLATFORM_COMPILER_MSVC
     #pragma warning(pop)
 #endif

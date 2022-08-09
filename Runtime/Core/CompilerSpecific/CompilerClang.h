@@ -4,7 +4,7 @@
 // Clang compiler specific macros etc.
 // For now this file should only be included into CoreDefines.h
 
-#if COMPILER_CLANG
+#if PLATFORM_COMPILER_CLANG
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Architecture 

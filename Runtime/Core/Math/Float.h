@@ -3,9 +3,9 @@
 
 #include <cfloat>
 
-#if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4556) // Disable "value of intrinsic immediate argument '8' is out of range '0 - 7'"
+#if defined(PLATFORM_COMPILER_MSVC)
+    #pragma warning(push)
+    #pragma warning(disable : 4556) // Disable "value of intrinsic immediate argument '8' is out of range '0 - 7'"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -332,6 +332,6 @@ struct FFloat16
     };
 };
 
-#if defined(COMPILER_MSVC)
-#pragma warning(pop)
+#if defined(PLATFORM_COMPILER_MSVC)
+    #pragma warning(pop)
 #endif

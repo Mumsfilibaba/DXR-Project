@@ -5,7 +5,7 @@
 
 #include "CoreApplication/CoreApplication.h"
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
     #pragma warning(disable : 4275) // Non DLL-interface class used '...' as base for DLL-interface class '...'
     #pragma warning(disable : 4251) // Class '...' needs to have DLL-interface to be used by clients of class '...'
@@ -41,6 +41,6 @@ private:
 
 };
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(pop)
 #endif

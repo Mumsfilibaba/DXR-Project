@@ -3,7 +3,7 @@
 #include "IsConst.h"
 #include "IsReference.h"
 
-#if COMPILER_MSVC
+#if PLATFORM_COMPILER_MSVC
 #pragma warning(push)
 #pragma warning( disable : 4180 )
 #endif
@@ -18,6 +18,6 @@ struct TIsFunction
     enum { Value = (!TIsConst<const T>::Value) && (!TIsReference<T>::Value) };
 };
 
-#if COMPILER_MSVC
+#if PLATFORM_COMPILER_MSVC
     #pragma warning(pop)
 #endif

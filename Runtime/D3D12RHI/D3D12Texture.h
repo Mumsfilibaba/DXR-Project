@@ -4,7 +4,7 @@
 
 #include "RHI/RHIResources.h"
 
-#ifdef COMPILER_MSVC
+#ifdef PLATFORM_COMPILER_MSVC
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
@@ -319,6 +319,6 @@ FORCEINLINE FD3D12Resource* GetD3D12Resource(FRHITexture* Texture)
     return Texture ? reinterpret_cast<FD3D12Resource*>(Texture->GetRHIBaseResource()) : nullptr;
 }
 
-#ifdef COMPILER_MSVC
+#ifdef PLATFORM_COMPILER_MSVC
     #pragma warning(pop)
 #endif

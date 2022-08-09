@@ -4,10 +4,10 @@
 
 #include "Core/Time/Timespan.h"
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
@@ -34,8 +34,8 @@ struct FGenericThreadMisc
     static FORCEINLINE void Pause() { }
 };
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic pop
 #endif

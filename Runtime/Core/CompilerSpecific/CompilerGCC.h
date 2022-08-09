@@ -4,7 +4,7 @@
 // GCC compiler specific macros etc.
 // For now this file should only be included into CoreDefines.h
 
-#if COMPILER_GCC
+#if PLATFORM_COMPILER_GCC
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Architecture
