@@ -152,7 +152,7 @@ void FD3D12OfflineDescriptorHeap::SetName(const FString& InName)
     for (FDescriptorHeap& Heap : Heaps)
     {
         FString DbgName = Name + "[" + ToString(HeapIndex) + "]";
-        Heap.Heap->SetName(DbgName.CStr());
+        Heap.Heap->SetName(DbgName.GetCString());
     }
 }
 
@@ -166,7 +166,7 @@ bool FD3D12OfflineDescriptorHeap::AllocateHeap()
         if (!Name.IsEmpty())
         {
             FString DbgName = Name + ToString(Heaps.GetSize());
-            Heap->SetName(DbgName.CStr());
+            Heap->SetName(DbgName.GetCString());
         }
 
         Heaps.Emplace(Heap);

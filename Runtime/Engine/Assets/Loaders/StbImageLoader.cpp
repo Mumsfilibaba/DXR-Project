@@ -80,10 +80,10 @@ FImage2DPtr FSTBImageLoader::LoadFile(const FString& Filename)
     // Async lambda
     const auto LoadImageAsync = [Image, Filename]()
     {
-        FILE* File = fopen(Filename.CStr(), "rb");
+        FILE* File = fopen(Filename.GetCString(), "rb");
         if (!File)
         {
-            LOG_ERROR("[FSTBImageLoader]: Failed to open '%s'", Filename.CStr());
+            LOG_ERROR("[FSTBImageLoader]: Failed to open '%s'", Filename.GetCString());
             return;
         }
 
@@ -135,12 +135,12 @@ FImage2DPtr FSTBImageLoader::LoadFile(const FString& Filename)
         // Check if succeeded
         if (!Pixels)
         {
-            LOG_ERROR("[FSTBImageLoader]: Failed to load image '%s'", Filename.CStr());
+            LOG_ERROR("[FSTBImageLoader]: Failed to load image '%s'", Filename.GetCString());
             return;
         }
         else
         {
-            LOG_INFO("[FSTBImageLoader]: Loaded image '%s'", Filename.CStr());
+            LOG_INFO("[FSTBImageLoader]: Loaded image '%s'", Filename.GetCString());
         }
 
         Image->Image     = Move(Pixels);

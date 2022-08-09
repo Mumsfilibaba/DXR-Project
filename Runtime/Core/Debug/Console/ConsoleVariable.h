@@ -113,7 +113,7 @@ private:
 template<>
 inline void TConsoleVariable<int32>::SetString(const FString& InValue)
 {
-    Value = atoi(InValue.CStr());
+    Value = atoi(InValue.GetCString());
     OnChanged();
 }
 
@@ -137,7 +137,7 @@ inline FString TConsoleVariable<int32>::GetString() const
 template<>
 inline void TConsoleVariable<float>::SetString(const FString& InValue)
 {
-    Value = (float)atof(InValue.CStr());
+    Value = (float)atof(InValue.GetCString());
     OnChanged();
 }
 
@@ -164,7 +164,7 @@ inline void TConsoleVariable<bool>::SetString(const FString& InValue)
     FString Lower = InValue.ToLower();
 
     int32 Number = 0;
-    std::istringstream Stream(Lower.CStr());
+    std::istringstream Stream(Lower.GetCString());
     Stream >> Number;
 
     if (Stream.fail())

@@ -117,7 +117,7 @@ bool FEngineLoop::PreInitialize()
 
 	const FString ProjectLocation     = FString(ENGINE_LOCATION) + FString("/") + FString(PROJECT_NAME);
     const FString AssetFolderLocation = FString(ENGINE_LOCATION) + FString("/Assets");
-    if (!FProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr(), AssetFolderLocation.CStr()))
+    if (!FProjectManager::Initialize(PROJECT_NAME, ProjectLocation.GetCString(), AssetFolderLocation.GetCString()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
         return false;

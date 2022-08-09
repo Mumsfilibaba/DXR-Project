@@ -90,13 +90,13 @@ void FGameConsoleWindow::Tick()
             // First find the maximum length of each column for the selectable
             Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
             {
-                VariableNameWidth = NMath::Max(VariableNameWidth, ImGui::CalcTextSize(Candidate.Second.CStr()).x);
+                VariableNameWidth = NMath::Max(VariableNameWidth, ImGui::CalcTextSize(Candidate.Second.GetCString()).x);
 
                 IConsoleVariable* Variable = Candidate.First->AsVariable();
                 if (Variable)
                 {
                     FString Value = Variable->GetString();
-                    VariableValueWidth = NMath::Max(VariableValueWidth, ImGui::CalcTextSize(Value.CStr()).x);
+                    VariableValueWidth = NMath::Max(VariableValueWidth, ImGui::CalcTextSize(Value.GetCString()).x);
                 }
             });
 
@@ -111,9 +111,9 @@ void FGameConsoleWindow::Tick()
 
                 // VariableName
                 ImGui::PushID(i);
-                if (ImGui::Selectable(Candidate.Second.CStr(), &bIsActiveIndex))
+                if (ImGui::Selectable(Candidate.Second.GetCString(), &bIsActiveIndex))
                 {
-                    FCString::Copy(TextBuffer.GetData(), Candidate.Second.CStr());
+                    FCString::Copy(TextBuffer.GetData(), Candidate.Second.GetCString());
                     PopupSelectedText = Candidate.Second;
 
                     Candidates.Clear();
@@ -136,7 +136,7 @@ void FGameConsoleWindow::Tick()
                 if (Variable)
                 {
                     FString Value = Variable->GetString();
-                    ImGui::Text("%s", Value.CStr());
+                    ImGui::Text("%s", Value.GetCString());
 
                     if (Variable->IsBool())
                     {
@@ -203,7 +203,7 @@ void FGameConsoleWindow::Tick()
                     Color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
                 }
 
-                ImGui::TextColored(Color, "%s", Text.First.CStr());
+                ImGui::TextColored(Color, "%s", Text.First.GetCString());
             }
 
             if (bScrollDown)
@@ -252,7 +252,7 @@ void FGameConsoleWindow::Tick()
         {
             if (CandidatesIndex != -1)
             {
-                FCString::Copy(TextBuffer.GetData(), PopupSelectedText.CStr());
+                FCString::Copy(TextBuffer.GetData(), PopupSelectedText.GetCString());
 
                 Candidates.Clear();
                 CandidatesIndex = -1;
@@ -363,7 +363,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
                 const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
                 const int32 Count = WordLength;
                 Data->DeleteChars(Pos, Count);
-                Data->InsertChars(Data->CursorPos, Candidates[0].Second.CStr());
+                Data->InsertChars(Data->CursorPos, Candidates[0].Second.GetCString());
 
                 CandidatesIndex = -1;
                 bCandidateSelectionChanged = true;
@@ -374,7 +374,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
                 const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
                 const int32 Count = WordLength;
                 Data->DeleteChars(Pos, Count);
-                Data->InsertChars(Data->CursorPos, PopupSelectedText.CStr());
+                Data->InsertChars(Data->CursorPos, PopupSelectedText.GetCString());
 
                 PopupSelectedText = "";
 
@@ -422,7 +422,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
 
             if (PrevHistoryIndex != HistoryIndex)
             {
-                const char* HistoryStr = (HistoryIndex >= 0) ? History[HistoryIndex].CStr() : "";
+                const char* HistoryStr = (HistoryIndex >= 0) ? History[HistoryIndex].GetCString() : "";
                 Data->DeleteChars(0, Data->BufTextLen);
                 Data->InsertChars(0, HistoryStr);
             }

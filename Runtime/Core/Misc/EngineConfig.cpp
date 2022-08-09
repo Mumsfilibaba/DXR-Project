@@ -76,18 +76,18 @@ bool FConfigFile::ParseFile()
 
 bool FConfigFile::SaveFile()
 {
-    //    FILE* File = fopen( Filename.CStr(), "w" );
+    //    FILE* File = fopen( Filename.GetCString(), "w" );
     //    if ( File )
     //    {
     //        for ( auto& CurrentSectionPair : Sections )
     //        {
-    //            fprintf( File, "[%s]", CurrentSectionPair.first.CStr() );
+    //            fprintf( File, "[%s]", CurrentSectionPair.first.GetCString() );
     //
     //            FConfigSection& CurrentSection = CurrentSectionPair.second;
     //            for ( auto& ValuePair : CurrentSection.ConfigValues )
     //            {
     //                FConfigValue& Value = ValuePair.second;
-    //                fprintf( File, "%s=%s", ValuePair.first.CStr(), Value.CurrentValue.CStr() );
+    //                fprintf( File, "%s=%s", ValuePair.first.GetCString(), Value.CurrentValue.GetCString() );
     //
     //                Value.MakeCurrentSaved();
     //            }

@@ -70,7 +70,7 @@ public:
     FORCEINLINE void SetName(const FString& Name)
     {
         FWString WideDebugName = CharToWide(Name);
-        Queue->SetName(WideDebugName.CStr());
+        Queue->SetName(WideDebugName.GetCString());
     }
 
     FORCEINLINE ID3D12CommandQueue* GetQueue() const

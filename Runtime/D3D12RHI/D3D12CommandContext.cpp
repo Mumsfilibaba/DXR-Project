@@ -1552,7 +1552,7 @@ void FD3D12CommandContext::InsertMarker(const FStringView& Message)
 {
     if (FD3D12Library::SetMarkerOnCommandList)
     {
-        FD3D12Library::SetMarkerOnCommandList(CommandList.GetGraphicsCommandList(), PIX_COLOR(255, 255, 255), Message.CStr());
+        FD3D12Library::SetMarkerOnCommandList(CommandList.GetGraphicsCommandList(), PIX_COLOR(255, 255, 255), Message.GetCString());
     }
 }
 

@@ -184,7 +184,7 @@ struct FFloat16
     FORCEINLINE void SetFloat(float Float32)
     {
         // TODO: Ensure that the fast-path also works on macOS
-#if ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
+#if PLATFORM_ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
         __m128  Reg0 = _mm_set_ss(Float32);
         __m128i Reg1 = _mm_cvtps_ph(Reg0, _MM_FROUND_NO_EXC);
         Encoded = static_cast<uint16>(_mm_cvtsi128_si32(Reg1));
@@ -238,7 +238,7 @@ struct FFloat16
     FORCEINLINE void SetFloatFast(float Float32)
     {
         // TODO: Ensure that the fast-path also works on macOS
-#if ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
+#if PLATFORM_ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
         __m128  Reg0 = _mm_set_ss(Float32);
         __m128i Reg1 = _mm_cvtps_ph(Reg0, _MM_FROUND_NO_EXC);
         Encoded = static_cast<uint16>(_mm_cvtsi128_si32(Reg1));
@@ -253,7 +253,7 @@ struct FFloat16
     FORCEINLINE float GetFloat() const
     {
         // TODO: Ensure that this also works on macOS
-#if ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
+#if PLATFORM_ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
         __m128i Reg0 = _mm_cvtsi32_si128(static_cast<uint32>(Encoded));
         __m128  Reg1 = _mm_cvtph_ps(Reg0);
         return _mm_cvtss_f32(Reg1);

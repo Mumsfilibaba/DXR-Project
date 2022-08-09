@@ -24,7 +24,7 @@ struct FWindowsPlatformMisc final
 
     static FORCEINLINE void OutputDebugString(const FString& Message)
     {
-        OutputDebugStringA(Message.CStr());
+        OutputDebugStringA(Message.GetCString());
     }
 
     static FORCEINLINE bool IsDebuggerPresent()

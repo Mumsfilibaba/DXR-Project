@@ -97,7 +97,7 @@ public:
     FORCEINLINE void SetName(const FString& Name)
     {
         FWString WideName = CharToWide(Name);
-        RootSignature->SetName(WideName.CStr());
+        RootSignature->SetName(WideName.GetCString());
     }
 
     FORCEINLINE ID3D12RootSignature* GetD3D12RootSignature() const

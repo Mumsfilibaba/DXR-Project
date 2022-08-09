@@ -29,7 +29,7 @@ public:
     FORCEINLINE void SetName(const FString& Name)
     {
         FWString WideName = CharToWide(Name);
-        Resource->SetName(WideName.CStr());
+        Resource->SetName(WideName.GetCString());
     }
 
     FORCEINLINE ID3D12Resource*            GetD3D12Resource() const { return Resource.Get(); }

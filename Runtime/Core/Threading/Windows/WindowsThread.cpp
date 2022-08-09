@@ -53,7 +53,7 @@ int32 FWindowsThread::WaitForCompletion(uint64 TimeoutInMs)
 void FWindowsThread::SetName(const FString& InName)
 {
     FWString WideName = CharToWide(InName);
-    SetThreadDescription(Thread, WideName.CStr());
+    SetThreadDescription(Thread, WideName.GetCString());
     Name = InName;
 }
 
@@ -70,7 +70,7 @@ DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
         if (!CurrentThread->Name.IsEmpty())
         {
             FWString WideName = CharToWide(CurrentThread->Name);
-            SetThreadDescription(CurrentThread->Thread, WideName.CStr());
+            SetThreadDescription(CurrentThread->Thread, WideName.GetCString());
         }
 
         Check(CurrentThread->Function);

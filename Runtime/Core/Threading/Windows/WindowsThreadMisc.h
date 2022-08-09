@@ -2,6 +2,10 @@
 #include "Core/Core.h"
 #include "Core/Threading/Generic/GenericThreadMisc.h"
 
+#if PLATFORM_ARCHITECTURE_X86_X64
+    #include <immintrin.h>
+#endif
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsThreadMisc
 
@@ -32,5 +36,12 @@ struct FWindowsThreadMisc
     {
         DWORD Milliseconds = static_cast<DWORD>(Time.AsMilliseconds());
         ::Sleep(Milliseconds);
+    }
+
+    static FORCEINLINE void Pause() 
+    {
+#if PLATFORM_ARCHITECTURE_X86_X64
+        _mm_pause();
+#endif
     }
 };

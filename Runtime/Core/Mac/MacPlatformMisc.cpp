@@ -7,5 +7,5 @@
 
 void FMacPlatformMisc::OutputDebugString(const FString& Message)
 {
-    NSLog(@"%s\n", Message.CStr());
+    NSLog(@"%s\n", Message.GetCString());
 }

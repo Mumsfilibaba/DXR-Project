@@ -48,7 +48,7 @@ public:
             FString ErrorString;
             FPlatformMisc::GetLastErrorString(ErrorString);
 
-            LOG_ERROR("%s", ErrorString.CStr());
+            LOG_ERROR("%s", ErrorString.GetCString());
 
             return false;
         }

@@ -41,7 +41,7 @@ void FWindowsOutputDeviceConsole::Log(const FString& Message)
     if (ConsoleHandle)
     {
         TScopedLock Lock(ConsoleHandleCS);
-        WriteConsoleA(ConsoleHandle, Message.CStr(), static_cast<DWORD>(Message.Length()), nullptr, nullptr);
+        WriteConsoleA(ConsoleHandle, Message.GetCString(), static_cast<DWORD>(Message.Length()), nullptr, nullptr);
         WriteConsoleA(ConsoleHandle, "\n", 1, nullptr, nullptr);
     }
 }
@@ -72,7 +72,7 @@ void FWindowsOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Mess
         
         SetTextColor(NewColor);
 
-        WriteConsoleA(ConsoleHandle, Message.CStr(), static_cast<DWORD>(Message.Length()), nullptr, nullptr);
+        WriteConsoleA(ConsoleHandle, Message.GetCString(), static_cast<DWORD>(Message.Length()), nullptr, nullptr);
         WriteConsoleA(ConsoleHandle, "\n", 1, nullptr, nullptr);
 
         SetTextColor(EConsoleColor::White);
@@ -106,7 +106,7 @@ void FWindowsOutputDeviceConsole::SetTitle(const FString& InTitle)
     {
         TScopedLock Lock(ConsoleHandleCS);
 
-        SetConsoleTitleA(InTitle.CStr());
+        SetConsoleTitleA(InTitle.GetCString());
         Title = InTitle;
     }
 }

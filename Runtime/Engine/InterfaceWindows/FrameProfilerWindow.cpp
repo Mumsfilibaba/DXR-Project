@@ -61,7 +61,7 @@ void FFrameProfilerWindow::DrawFPS()
     ImGui::Begin("FPS Window", nullptr, Flags);
 
     const FString FpsString = ToString(FFrameProfiler::Get().GetFramesPerSecond());
-    ImGui::Text("%s", FpsString.CStr());
+    ImGui::Text("%s", FpsString.GetCString());
 
     ImGui::End();
 
@@ -194,7 +194,7 @@ void FFrameProfilerWindow::DrawCPUData(float Width)
             int32 Calls = Sample.second.TotalCalls;
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", Sample.first.CStr());
+            ImGui::Text("%s", Sample.first.GetCString());
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("%d", Calls);
             ImGui::TableSetColumnIndex(2);

@@ -309,7 +309,7 @@ public:
     FORCEINLINE void SetName(const FString& Name)
     {
         FWString WideName = CharToWide(Name);
-        CmdList->SetName(WideName.CStr());
+        CmdList->SetName(WideName.GetCString());
     }
 
     FORCEINLINE ID3D12GraphicsCommandList*  GetGraphicsCommandList()  const { return CmdList.Get(); }

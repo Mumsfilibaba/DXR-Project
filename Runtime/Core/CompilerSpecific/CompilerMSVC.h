@@ -9,18 +9,18 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Architecture
 
-#ifndef ARCHITECTURE_X86_X64
+#ifndef PLATFORM_ARCHITECTURE_X86_X64
     #if defined(_M_IX86) || defined(_M_X64)
-        #define ARCHITECTURE_X86_X64 (1)
+        #define PLATFORM_ARCHITECTURE_X86_X64 (1)
     #else
-        #define ARCHITECTURE_X86_X64 (0)
+        #define PLATFORM_ARCHITECTURE_X86_X64 (0)
     #endif
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Use SSE intrinsics if we can
 
-#if ARCHITECTURE_X86_X64
+#if PLATFORM_ARCHITECTURE_X86_X64
     #ifndef ENABLE_SEE_INTRIN
         #define ENABLE_SEE_INTRIN (1)
     #endif
@@ -55,7 +55,7 @@
 // Vector call
 
 #ifndef VECTORCALL
-    #if ARCHITECTURE_X86_X64
+    #if PLATFORM_ARCHITECTURE_X86_X64
         #define VECTORCALL __vectorcall
     #else
         #define VECTORCALL
@@ -85,14 +85,6 @@
 
 #ifndef MODULE_IMPORT
     #define MODULE_IMPORT __declspec(dllimport)
-#endif
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// PauseInstruction
-
-#ifndef PauseInstruction
-    #include <immintrin.h>
-    #define PauseInstruction _mm_pause
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

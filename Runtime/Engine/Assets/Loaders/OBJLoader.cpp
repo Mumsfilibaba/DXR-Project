@@ -60,15 +60,15 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
     std::vector<tinyobj::material_t> Materials;
     tinyobj::attrib_t                Attributes;
 
-    FString MTLFiledir = FString(Filename.CStr(), Filename.ReverseFind('/'));
-    if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.CStr(), MTLFiledir.CStr(), true, false))
+    FString MTLFiledir = FString(Filename.GetCString(), Filename.ReverseFind('/'));
+    if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.GetCString(), MTLFiledir.GetCString(), true, false))
     {
-        LOG_WARNING("[FOBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.CStr(), Warning.c_str(), Error.c_str());
+        LOG_WARNING("[FOBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.GetCString(), Warning.c_str(), Error.c_str());
         return false;
     }
     else
     {
-        LOG_INFO("[FOBJLoader]: Loaded '%s'", Filename.CStr());
+        LOG_INFO("[FOBJLoader]: Loaded '%s'", Filename.GetCString());
     }
 
     // Create All Materials in scene

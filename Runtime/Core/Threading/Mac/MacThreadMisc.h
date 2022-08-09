@@ -52,4 +52,9 @@ struct FMacThreadMisc
     {
 		return [NSThread isMainThread];
     }
+
+    static FORCEINLINE void Pause() 
+    {
+        __builtin_ia32_pause();
+    }
 };

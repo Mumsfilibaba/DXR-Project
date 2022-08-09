@@ -53,7 +53,7 @@ void FRendererInfoWindow::Tick()
     ImGui::Text("Adapter: ");
     ImGui::NextColumn();
 
-    ImGui::Text("%s", AdapterName.CStr());
+    ImGui::Text("%s", AdapterName.GetCString());
     ImGui::NextColumn();
 
     FRHICommandStatistics Statistics = GRenderer.GetStatistics();

@@ -123,7 +123,7 @@ public:
         : Characters()
         , Len(0)
     {
-        CopyFrom(InString.CStr(), InString.Length());
+        CopyFrom(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -135,7 +135,7 @@ public:
         : Characters()
         , Len(0)
     {
-        CopyFrom(Other.CStr(), Other.Length());
+        CopyFrom(Other.GetCString(), Other.Length());
     }
 
     /**
@@ -190,7 +190,7 @@ public:
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Append(const StringType& InString) noexcept
     {
-        Append(InString.CStr(), InString.Length());
+        Append(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -500,7 +500,7 @@ public:
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type Compare(const StringType& InString) const noexcept
     {
-        return Compare(InString.CStr());
+        return Compare(InString.GetCString());
     }
 
     /**
@@ -535,7 +535,7 @@ public:
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type CompareNoCase(const StringType& InString) const noexcept
     {
-        return CompareNoCase(InString.CStr(), InString.Length());
+        return CompareNoCase(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -621,7 +621,7 @@ public:
             return 0;
         }
 
-        const CharType* Start = CStr() + Position;
+        const CharType* Start = GetCString() + Position;
         const CharType* Result = StringType::Find(Start, InString);
         if (!Result)
         {
@@ -649,7 +649,7 @@ public:
             return 0;
         }
 
-        const CharType* Start = CStr() + Position;
+        const CharType* Start = GetCString() + Position;
         const CharType* Result = StringType::FindChar(Start, Char);
         if (!Result)
         {
@@ -708,7 +708,7 @@ public:
 
         SizeType Length = (Position == 0) ? Len : NMath::Min(Position, Len);
 
-        const CharType* Start = CStr();
+        const CharType* Start = GetCString();
         const CharType* End = Start + Length;
         while (End != Start)
         {
@@ -748,7 +748,7 @@ public:
         }
 
         const CharType* Result = nullptr;
-        const CharType* Start = CStr();
+        const CharType* Start = GetCString();
         if (Position == 0)
         {
             Result = StringType::ReverseFindChar(Start, Char);
@@ -799,7 +799,7 @@ public:
         const StringType& InString,
         SizeType Position = 0) const noexcept
     {
-        return FindOneOf(InString.CStr(), InString.Length(), Position);
+        return FindOneOf(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -819,7 +819,7 @@ public:
             return 0;
         }
 
-        const CharType* Start = CStr() + Position;
+        const CharType* Start = GetCString() + Position;
         const CharType* Result = StringType::FindOneOf(Start, InString);
         if (!Result)
         {
@@ -878,7 +878,7 @@ public:
         SizeType Length = (Position == 0) ? Len : NMath::Min(Position, Len);
         SizeType SubstringLength = StringType::Length(InString);
 
-        const CharType* Start = CStr();
+        const CharType* Start = GetCString();
         const CharType* End = Start + Length;
         while (End != Start)
         {
@@ -922,7 +922,7 @@ public:
         const StringType& InString,
         SizeType Position = 0) const noexcept
     {
-        return FindOneNotOf(InString.CStr(), InString.Length(), Position);
+        return FindOneNotOf(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -942,7 +942,7 @@ public:
             return 0;
         }
 
-        SizeType Pos = static_cast<SizeType>(StringType::RangeLength(CStr() + Position, InString));
+        SizeType Pos = static_cast<SizeType>(StringType::RangeLength(GetCString() + Position, InString));
         SizeType Ret = Pos + Position;
         if (Ret >= Len)
         {
@@ -1001,7 +1001,7 @@ public:
         SizeType Length = (Position == 0) ? Len : NMath::Min(Position, Len);
         SizeType SubstringLength = StringType::Length(InString);
 
-        const CharType* Start = CStr();
+        const CharType* Start = GetCString();
         const CharType* End = Start + Length;
         while (End != Start)
         {
@@ -1154,7 +1154,7 @@ public:
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Insert(const StringType& InString, SizeType Position) noexcept
     {
-        Insert(InString.CStr(), InString.Length(), Position);
+        Insert(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -1223,7 +1223,7 @@ public:
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Replace(const StringType& InString, SizeType Position) noexcept
     {
-        Replace(InString.CStr(), InString.Length(), Position);
+        Replace(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -1358,7 +1358,7 @@ public:
      *
      * @return: Returns a pointer to the data of the array
      */
-    NODISCARD FORCEINLINE const CharType* CStr() const noexcept
+    NODISCARD FORCEINLINE const CharType* GetCString() const noexcept
     {
         return Characters;
     }
@@ -1894,7 +1894,7 @@ inline NODISCARD WStaticString<CharCount> CharToWide(const StaticString<CharCoun
     WStaticString<CharCount> NewString;
     NewString.Resize(CharString.Length());
 
-    mbstowcs(NewString.GetData(), CharString.CStr(), CharString.Length());
+    mbstowcs(NewString.GetData(), CharString.GetCString(), CharString.Length());
 
     return NewString;
 }
@@ -1905,7 +1905,7 @@ inline NODISCARD StaticString<CharCount> WideToChar(const WStaticString<CharCoun
     StaticString<CharCount> NewString;
     NewString.Resize(WideString.Length());
 
-    wcstombs(NewString.GetData(), WideString.CStr(), WideString.Length());
+    wcstombs(NewString.GetData(), WideString.GetCString(), WideString.Length());
 
     return NewString;
 }

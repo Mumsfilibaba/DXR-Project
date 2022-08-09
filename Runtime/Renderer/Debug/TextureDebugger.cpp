@@ -78,7 +78,7 @@ void FTextureDebugWindow::Tick()
 
                 if (ImGui::IsItemHovered())
                 {
-                    ImGui::SetTooltip("%s", CurrImage->Image->GetName().CStr());
+                    ImGui::SetTooltip("%s", CurrImage->Image->GetName().GetCString());
                 }
 
                 ImGui::PopID();

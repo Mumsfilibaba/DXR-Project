@@ -1,6 +1,8 @@
 #pragma once
-#include "Core/Core.h"
 #include "AtomicInt.h"
+
+#include "Core/Core.h"
+#include "Platform/PlatformThreadMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FSpinLock
@@ -38,7 +40,7 @@ public:
 
             while (State.RelaxedLoad() == State_Locked)
             {
-                PauseInstruction();
+                FPlatformThreadMisc::Pause();
             }
         }
     }

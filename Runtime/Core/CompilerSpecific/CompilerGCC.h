@@ -9,18 +9,18 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Architecture
 
-#ifndef ARCHITECTURE_X86_X64
+#ifndef PLATFORM_ARCHITECTURE_X86_X64
     #if defined(__x86_64__) || defined(__i386__)
-        #define ARCHITECTURE_X86_X64 (1)
+        #define PLATFORM_ARCHITECTURE_X86_X64 (1)
     #else
-        #define ARCHITECTURE_X86_X64 (0)
+        #define PLATFORM_ARCHITECTURE_X86_X64 (0)
     #endif
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Use SSE intrinsics if we can
 
-#if ARCHITECTURE_X86_X64
+#if PLATFORM_ARCHITECTURE_X86_X64
     #ifndef ENABLE_SEE_INTRIN
         #define ENABLE_SEE_INTRIN (1)
     #endif
@@ -81,13 +81,6 @@
 
 #ifndef MODULE_IMPORT
     #define MODULE_IMPORT __attribute__((visibility("default")))
-#endif
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// PauseInstruction
-
-#ifndef PauseInstruction
-    #define PauseInstruction __builtin_ia32_pause
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

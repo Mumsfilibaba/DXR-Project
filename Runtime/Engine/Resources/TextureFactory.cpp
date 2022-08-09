@@ -75,7 +75,7 @@ FRHITexture2D* FTextureFactory::LoadFromImage2D(FImage2D* InImage, uint32 Create
     if (NewTexture)
     {
         // Set debug name
-        NewTexture->SetName(InImage->Path.CStr());
+        NewTexture->SetName(InImage->Path.GetCString());
     }
 
     return NewTexture;
@@ -91,15 +91,15 @@ FRHITexture2D* FTextureFactory::LoadFromFile(const FString& Filepath, uint32 Cre
     TUniquePtr<uint8> Pixels;
     if (Format == EFormat::R8G8B8A8_Unorm)
     {
-        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.CStr(), &Width, &Height, &ChannelCount, 4));
+        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.GetCString(), &Width, &Height, &ChannelCount, 4));
     }
     else if (Format == EFormat::R8_Unorm)
     {
-        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.CStr(), &Width, &Height, &ChannelCount, 1));
+        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.GetCString(), &Width, &Height, &ChannelCount, 1));
     }
     else if (Format == EFormat::R32G32B32A32_Float)
     {
-        Pixels = TUniquePtr<uint8>(reinterpret_cast<uint8*>(stbi_loadf(Filepath.CStr(), &Width, &Height, &ChannelCount, 4)));
+        Pixels = TUniquePtr<uint8>(reinterpret_cast<uint8*>(stbi_loadf(Filepath.GetCString(), &Width, &Height, &ChannelCount, 4)));
     }
     else
     {
@@ -110,12 +110,12 @@ FRHITexture2D* FTextureFactory::LoadFromFile(const FString& Filepath, uint32 Cre
     // Check if succeeded
     if (!Pixels)
     {
-        LOG_ERROR("[FTextureFactory]: Failed to load image '%s'", Filepath.CStr());
+        LOG_ERROR("[FTextureFactory]: Failed to load image '%s'", Filepath.GetCString());
         return nullptr;
     }
     else
     {
-        LOG_INFO("[FTextureFactory]: Loaded image '%s'", Filepath.CStr());
+        LOG_INFO("[FTextureFactory]: Loaded image '%s'", Filepath.GetCString());
     }
 
     return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);

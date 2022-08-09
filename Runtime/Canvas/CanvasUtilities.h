@@ -13,12 +13,12 @@ constexpr float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
 inline void DrawFloat3Control(const FString& Label, FVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f)
 {
-    ImGui::PushID(Label.CStr());
+    ImGui::PushID(Label.GetCString());
     ImGui::Columns(2, nullptr, false);
 
     // Text
     ImGui::SetColumnWidth(0, ColumnWidth);
-    ImGui::Text("%s", Label.CStr());
+    ImGui::Text("%s", Label.GetCString());
     ImGui::NextColumn();
 
     // Drag Floats

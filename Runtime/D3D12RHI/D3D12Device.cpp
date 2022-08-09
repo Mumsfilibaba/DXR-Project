@@ -79,7 +79,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
     Check(Device != nullptr);
 
     FString Message = "[D3D12] Device Removed";
-    D3D12_ERROR("%s", Message.CStr());
+    D3D12_ERROR("%s", Message.GetCString());
 
     ID3D12Device* DxDevice = Device->GetD3D12Device();
 
@@ -119,11 +119,11 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
             fputc('\n', File);
         }
 
-        D3D12_ERROR("%s", Message.CStr());
+        D3D12_ERROR("%s", Message.GetCString());
         for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
             Message = "    " + FString(ToString(CurrentNode->pCommandHistory[i]));
-            D3D12_ERROR("%s", Message.CStr());
+            D3D12_ERROR("%s", Message.GetCString());
             if (File)
             {
                 fwrite(Message.GetData(), 1, Message.GetSize(), File);
@@ -441,7 +441,7 @@ bool FD3D12Device::Initialize()
     else
     {
         const FString Description = Adapter->GetDescription();
-        D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", Description.CStr());
+        D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", Description.GetCString());
     }
 
     // Configure debug device (if active).

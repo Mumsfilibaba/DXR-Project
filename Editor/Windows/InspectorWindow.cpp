@@ -44,7 +44,7 @@ void CInspectorWindow::DrawSceneInfo()
         {
             ImGui::PushID( Actor );
 
-            if ( ImGui::TreeNode( Actor->GetName().CStr() ) )
+            if ( ImGui::TreeNode( Actor->GetName().GetCString() ) )
             {
                 // Transform
                 if ( ImGui::TreeNode( "Transform" ) )

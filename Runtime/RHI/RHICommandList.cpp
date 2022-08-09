@@ -67,7 +67,7 @@ void FRHIThread::WaitForOutstandingTasks()
     while (NumCompletedTasks.Load() < NumSubmittedTasks.Load())
     {
         WaitCondition.NotifyAll();
-        PauseInstruction();
+        FPlatformThreadMisc::Pause();
     }
 }
 

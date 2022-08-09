@@ -1084,7 +1084,7 @@ DECLARE_RHICOMMAND(FRHICommandInsertMarker)
             FDebug::OutputDebugString(FString(Marker) + '\n');
         }
 
-        LOG_INFO("%s", Marker.CStr());
+        LOG_INFO("%s", Marker.GetCString());
 
         CommandContext.InsertMarker(Marker);
     }

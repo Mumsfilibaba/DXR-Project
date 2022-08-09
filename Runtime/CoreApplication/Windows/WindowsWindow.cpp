@@ -95,7 +95,7 @@ bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 I
     Window = CreateWindowEx(
         NewStyleEx,
         FWindowsWindow::GetClassName(),
-        InTitle.CStr(),
+        InTitle.GetCString(),
         NewStyle,
         PositionX,
         PositionY,
@@ -279,7 +279,7 @@ void FWindowsWindow::SetTitle(const FString& Title)
     {
         if (IsValid())
         {
-            SetWindowTextA(Window, Title.CStr());
+            SetWindowTextA(Window, Title.GetCString());
         }
     }
 }
@@ -396,7 +396,7 @@ void FWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) cons
         FString Error;
         FPlatformMisc::GetLastErrorString(Error);
 
-        LOG_ERROR("[FWindowsWindow]: Failed to retrieve monitorinfo. Reason: %s", Error.CStr());
+        LOG_ERROR("[FWindowsWindow]: Failed to retrieve monitorinfo. Reason: %s", Error.GetCString());
     }
 }
 

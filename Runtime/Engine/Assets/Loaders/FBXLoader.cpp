@@ -100,10 +100,10 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     OutScene.Models.Clear();
     OutScene.Materials.Clear();
 
-    FILE* File = fopen(Filename.CStr(), "rb");
+    FILE* File = fopen(Filename.GetCString(), "rb");
     if (!File)
     {
-        LOG_ERROR("[FFBXLoader]: Failed to open '%s'", Filename.CStr());
+        LOG_ERROR("[FFBXLoader]: Failed to open '%s'", Filename.GetCString());
         return false;
     }
 
@@ -129,7 +129,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
 
     if (NumBytesRead != FileSize)
     {
-        LOG_ERROR("[FFBXLoader]: Failed to load '%s'", Filename.CStr());
+        LOG_ERROR("[FFBXLoader]: Failed to load '%s'", Filename.GetCString());
         return false;
     }
 
@@ -138,7 +138,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     ofbx::IScene* FBXScene = ofbx::load(Bytes, FileSize, (ofbx::u64)ofbx::LoadFlags::TRIANGULATE);
     if (!FBXScene)
     {
-        LOG_ERROR("[FMeshFactory]: Failed to load content '%s'", Filename.CStr());
+        LOG_ERROR("[FMeshFactory]: Failed to load content '%s'", Filename.GetCString());
         return false;
     }
 

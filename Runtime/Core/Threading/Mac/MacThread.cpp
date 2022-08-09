@@ -52,7 +52,7 @@ void FMacThread::SetName(const FString& InName)
     if (bCurrentThreadIsMyself)
     {
         Name = InName;
-        pthread_setname_np(Name.CStr());
+        pthread_setname_np(Name.GetCString());
     }
     else if (!bIsRunning)
     {
@@ -73,7 +73,7 @@ void* FMacThread::ThreadRoutine(void* ThreadParameter)
         // Can only set the current thread's name
         if (!CurrentThread->Name.IsEmpty())
         {
-            pthread_setname_np(CurrentThread->Name.CStr());
+            pthread_setname_np(CurrentThread->Name.GetCString());
         }
 
         Check(CurrentThread->Function);

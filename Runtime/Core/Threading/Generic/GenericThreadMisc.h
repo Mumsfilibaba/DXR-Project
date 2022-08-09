@@ -30,6 +30,8 @@ struct FGenericThreadMisc
     static FORCEINLINE void* GetThreadHandle() { return nullptr; }
 
     static FORCEINLINE void Sleep(FTimespan Time) { }
+
+    static FORCEINLINE void Pause() { }
 };
 
 #if defined(COMPILER_MSVC)

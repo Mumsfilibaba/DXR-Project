@@ -782,7 +782,7 @@ void FApplication::RenderStrings()
 
         for (const FString& String : DebugStrings)
         {
-            ImGui::Text("%s", String.CStr());
+            ImGui::Text("%s", String.GetCString());
         }
 
         DebugStrings.Clear();

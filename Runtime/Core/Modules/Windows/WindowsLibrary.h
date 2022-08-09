@@ -15,13 +15,13 @@ struct FWindowsLibrary final
     static FORCEINLINE void* LoadDynamicLib(const char* LibraryName)
     {
         const FString RealName = GetRealName(LibraryName);
-        return reinterpret_cast<void*>(LoadLibraryA(RealName.CStr()));
+        return reinterpret_cast<void*>(LoadLibraryA(RealName.GetCString()));
     }
 
     static FORCEINLINE void* GetLoadedHandle(const char* LibraryName)
     {
         const FString RealName = GetRealName(LibraryName);
-        return reinterpret_cast<void*>(GetModuleHandleA(RealName.CStr()));
+        return reinterpret_cast<void*>(GetModuleHandleA(RealName.GetCString()));
     }
 
     static FORCEINLINE void FreeDynamicLib(void* LibraryHandle)

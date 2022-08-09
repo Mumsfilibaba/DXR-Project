@@ -6,7 +6,7 @@
 #include <iostream>
 
 #define PrintString(Str) \
-    { std::cout << #Str << "= " << Str.CStr() << std::endl; }
+    { std::cout << #Str << "= " << Str.GetCString() << std::endl; }
 
 #define PrintStringView(Str)                       \
     {                                              \
@@ -19,7 +19,7 @@
     }
 
 #define PrintWideString(Str) \
-    { std::wcout << #Str << "= " << Str.CStr() << std::endl; }
+    { std::wcout << #Str << "= " << Str.GetCString() << std::endl; }
 
 #define PrintWideStringView(Str)                   \
     {                                              \

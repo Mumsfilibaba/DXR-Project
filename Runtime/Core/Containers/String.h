@@ -142,7 +142,7 @@ public:
     FORCEINLINE explicit TString(const StringType& InString) noexcept
         : Characters()
     {
-        CopyFrom(InString.CStr(), InString.Length());
+        CopyFrom(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -153,7 +153,7 @@ public:
     FORCEINLINE TString(const TString& Other) noexcept
         : Characters()
     {
-        CopyFrom(Other.CStr(), Other.Length());
+        CopyFrom(Other.GetCString(), Other.Length());
     }
 
     /**
@@ -292,7 +292,7 @@ public:
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Append(const StringType& InString) noexcept
     {
-        Append(InString.CStr(), InString.Length());
+        Append(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -685,7 +685,7 @@ public:
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type Compare(const StringType& InString) const noexcept
     {
-        return Compare(InString.CStr(), InString.Length());
+        return Compare(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -720,7 +720,7 @@ public:
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type CompareNoCase(const StringType& InString) const noexcept
     {
-        return CompareNoCase(InString.CStr(), InString.Length());
+        return CompareNoCase(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -811,7 +811,7 @@ public:
             return 0;
         }
 
-        const CharType* Start  = CStr() + Position;
+        const CharType* Start  = GetCString() + Position;
         const CharType* Result = StringType::Find(Start, InString);
         if (!Result)
         {
@@ -839,7 +839,7 @@ public:
             return 0;
         }
 
-        const CharType* Start  = CStr() + Position;
+        const CharType* Start  = GetCString() + Position;
         const CharType* Result = StringType::FindChar(Start, Char);
         if (!Result)
         {
@@ -900,7 +900,7 @@ public:
 
         SizeType Length = (Position == 0) ? nLength : NMath::Min(Position, nLength);
 
-        const CharType* Start = CStr();
+        const CharType* Start = GetCString();
         const CharType* End = Start + Length;
         while (End != Start)
         {
@@ -941,7 +941,7 @@ public:
         }
 
         const CharType* Result = nullptr;
-        const CharType* Start = CStr();
+        const CharType* Start = GetCString();
         if (Position == 0)
         {
             Result = StringType::ReverseFindChar(Start, Char);
@@ -992,7 +992,7 @@ public:
         const StringType& InString,
         SizeType Position = 0) const noexcept
     {
-        return FindOneOf(InString.CStr(), InString.Length(), Position);
+        return FindOneOf(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -1013,7 +1013,7 @@ public:
             return 0;
         }
 
-        const CharType* Start = CStr() + Position;
+        const CharType* Start = GetCString() + Position;
         const CharType* Result = StringType::FindOneOf(Start, InString);
         if (!Result)
         {
@@ -1077,7 +1077,7 @@ public:
 
         SizeType SubstringLength = StringType::Length(InString);
 
-        const CharType* Start = CStr();
+        const CharType* Start = GetCString();
         const CharType* End   = Start + ThisLength;
         while (End != Start)
         {
@@ -1121,7 +1121,7 @@ public:
         const StringType& InString,
         SizeType Position = 0) const noexcept
     {
-        return FindOneNotOf(InString.CStr(), InString.Length(), Position);
+        return FindOneNotOf(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -1142,7 +1142,7 @@ public:
             return 0;
         }
 
-        SizeType Pos = static_cast<SizeType>(StringType::RangeLength(CStr() + Position, InString));
+        SizeType Pos = static_cast<SizeType>(StringType::RangeLength(GetCString() + Position, InString));
         SizeType Ret = Pos + Position;
         if (Ret >= nLength)
         {
@@ -1206,7 +1206,7 @@ public:
 
         SizeType SubstringLength = StringType::Length(InString);
 
-        const CharType* Start = CStr();
+        const CharType* Start = GetCString();
         const CharType* End = Start + ThisLength;
         while (End != Start)
         {
@@ -1354,7 +1354,7 @@ public:
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Insert(const StringType& InString, SizeType Position) noexcept
     {
-        Insert(InString.CStr(), InString.Length(), Position);
+        Insert(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -1410,7 +1410,7 @@ public:
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Replace(const StringType& InString, SizeType Position) noexcept
     {
-        Replace(InString.CStr(), InString.Length(), Position);
+        Replace(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -1547,7 +1547,7 @@ public:
      *
      * @return: Returns a pointer containing a null-terminated string
      */
-    NODISCARD FORCEINLINE const CharType* CStr() const noexcept
+    NODISCARD FORCEINLINE const CharType* GetCString() const noexcept
     {
         return (!Characters.IsEmpty()) ? Characters.GetData() : StringType::Empty();
     }
@@ -2110,7 +2110,7 @@ inline NODISCARD FWString CharToWide(const FStringView& CharString) noexcept
     FWString NewString;
     NewString.Resize(CharString.Length());
 
-    mbstowcs(NewString.GetData(), CharString.CStr(), CharString.Length());
+    mbstowcs(NewString.GetData(), CharString.GetCString(), CharString.Length());
 
     return NewString;
 }
@@ -2120,7 +2120,7 @@ inline NODISCARD FWString CharToWide(const FString& CharString) noexcept
     FWString NewString;
     NewString.Resize(CharString.Length());
 
-    mbstowcs(NewString.GetData(), CharString.CStr(), CharString.Length());
+    mbstowcs(NewString.GetData(), CharString.GetCString(), CharString.Length());
 
     return NewString;
 }
@@ -2130,7 +2130,7 @@ inline NODISCARD FString WideToChar(const FFWStringView& WideString) noexcept
     FString NewString;
     NewString.Resize(WideString.Length());
 
-    wcstombs(NewString.GetData(), WideString.CStr(), WideString.Length());
+    wcstombs(NewString.GetData(), WideString.GetCString(), WideString.Length());
 
     return NewString;
 }
@@ -2140,7 +2140,7 @@ inline NODISCARD FString WideToChar(const FWString& WideString) noexcept
     FString NewString;
     NewString.Resize(WideString.Length());
 
-    wcstombs(NewString.GetData(), WideString.CStr(), WideString.Length());
+    wcstombs(NewString.GetData(), WideString.GetCString(), WideString.Length());
 
     return NewString;
 }
@@ -2156,7 +2156,7 @@ struct TStringHasher
     {
         // TODO: Investigate how good is this for wide chars
 
-        const CharType* Key = String.CStr();
+        const CharType* Key = String.GetCString();
         int32 Length = String.Length();
 
         int32  Index = 0;
@@ -2279,7 +2279,7 @@ inline NODISCARD typename TEnableIf<TIsIntegerNotBool<T>::Value, bool>::Type Fro
 {
     // TODO: Improve with more than base 10
     char* End;
-    OutElement = FStringParse::ParseInt<T>(Value.CStr(), &End, 10);
+    OutElement = FStringParse::ParseInt<T>(Value.GetCString(), &End, 10);
     return (*End != 0);
 }
 
@@ -2287,7 +2287,7 @@ template<>
 inline NODISCARD bool FromString<float>(const FString& Value, float& OutElement)
 {
     char* End;
-    OutElement = FStringParse::ParseFloat(Value.CStr(), &End);
+    OutElement = FStringParse::ParseFloat(Value.GetCString(), &End);
     return (*End != 0);
 }
 
@@ -2295,7 +2295,7 @@ template<>
 inline NODISCARD bool FromString<double>(const FString& Value, double& OutElement)
 {
     char* End;
-    OutElement = FStringParse::ParseDouble(Value.CStr(), &End);
+    OutElement = FStringParse::ParseDouble(Value.GetCString(), &End);
     return (*End != 0);
 }
 
@@ -2303,7 +2303,7 @@ template<>
 inline NODISCARD bool FromString<bool>(const FString& Value, bool& OutElement)
 {
     char* End;
-    OutElement = static_cast<bool>(FStringParse::ParseInt32(Value.CStr(), &End, 10));
+    OutElement = static_cast<bool>(FStringParse::ParseInt32(Value.GetCString(), &End, 10));
     if (*End)
     {
         return true;

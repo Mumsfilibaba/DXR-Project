@@ -70,7 +70,7 @@ public:
 
     FORCEINLINE void SetName(const FString& Name)
     {
-        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.CStr());
+        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.GetCString());
     }
 
     FORCEINLINE ID3D12Fence* GetFence() const

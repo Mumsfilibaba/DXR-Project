@@ -103,7 +103,7 @@ FGenericThreadRef FThreadManager::GetNamedThread(const FString& InName)
         }
     }
 
-    LOG_WARNING("No thread with the name '%s'", InName.CStr());
+    LOG_WARNING("No thread with the name '%s'", InName.GetCString());
     return nullptr;
 }
 

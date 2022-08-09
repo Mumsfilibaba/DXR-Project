@@ -20,7 +20,7 @@ struct COREAPPLICATION_API FWindowsApplicationMisc final
 
     static FORCEINLINE void MessageBox(const FString& Title, const FString& Message)
     {
-        MessageBoxA(0, Message.CStr(), Title.CStr(), MB_ICONERROR | MB_OK);
+        MessageBoxA(0, Message.GetCString(), Title.GetCString(), MB_ICONERROR | MB_OK);
     }
 
     static FORCEINLINE void RequestExit(int32 ExitCode)

@@ -27,7 +27,7 @@ public:
         const int32 Mode = RTLD_NOW;
 #endif
 		
-		const char* LibraryNameWithExtension = RealName.CStr();
+		const char* LibraryNameWithExtension = RealName.GetCString();
         return dlopen(LibraryNameWithExtension, Mode);
     }
 
@@ -40,7 +40,7 @@ public:
 #else
         const int32 Mode = RTLD_NOW | RTLD_NOLOAD;
 #endif
-        const char* LibraryNameWithExtension = RealName.CStr();
+        const char* LibraryNameWithExtension = RealName.GetCString();
         void* Handle = dlopen(LibraryNameWithExtension, Mode);
         
         // Handle is ref-counted so release the new ref-count in order to have parity with windows

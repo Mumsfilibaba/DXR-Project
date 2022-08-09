@@ -321,7 +321,7 @@ struct FD3D12RootSignatureAssociation
     {
         for (int32 i = 0; i < ShaderExportNames.GetSize(); i++)
         {
-            ShaderExportNamesRef[i] = ShaderExportNames[i].CStr();
+            ShaderExportNamesRef[i] = ShaderExportNames[i].GetCString();
         }
     }
 
@@ -348,17 +348,17 @@ struct FD3D12HitGroup
         FMemory::Memzero(&Desc);
 
         Desc.Type                   = D3D12_HIT_GROUP_TYPE_TRIANGLES;
-        Desc.HitGroupExport         = HitGroupName.CStr();
-        Desc.ClosestHitShaderImport = ClosestHit.CStr();
+        Desc.HitGroupExport         = HitGroupName.GetCString();
+        Desc.ClosestHitShaderImport = ClosestHit.GetCString();
 
         if (AnyHit != L"")
         {
-            Desc.AnyHitShaderImport = AnyHit.CStr();
+            Desc.AnyHitShaderImport = AnyHit.GetCString();
         }
 
         if (Desc.Type != D3D12_HIT_GROUP_TYPE_TRIANGLES)
         {
-            Desc.IntersectionShaderImport = Intersection.CStr();
+            Desc.IntersectionShaderImport = Intersection.GetCString();
         }
     }
 
@@ -384,7 +384,7 @@ struct FD3D12Library
         {
             D3D12_EXPORT_DESC& TempDesc = ExportDescs[i];
             TempDesc.Flags          = D3D12_EXPORT_FLAG_NONE;
-            TempDesc.Name           = ExportNames[i].CStr();
+            TempDesc.Name           = ExportNames[i].GetCString();
             TempDesc.ExportToRename = nullptr;
         }
 
@@ -468,7 +468,7 @@ struct FD3D12RayTracingPipelineStateStream
         PayLoadExportNamesRef.Resize(PayLoadExportNames.GetSize());
         for (int32 i = 0; i < PayLoadExportNames.GetSize(); i++)
         {
-            PayLoadExportNamesRef[i] = PayLoadExportNames[i].CStr();
+            PayLoadExportNamesRef[i] = PayLoadExportNames[i].GetCString();
         }
 
         ShaderConfigAssociation.pExports              = PayLoadExportNamesRef.GetData();
@@ -710,7 +710,7 @@ void* FD3D12RayTracingPipelineState::GetShaderIdentifer(const FString& ExportNam
     {
         FWString WideExportName = CharToWide(ExportName);
 
-        void* Result = StateObjectProperties->GetShaderIdentifier(WideExportName.CStr());
+        void* Result = StateObjectProperties->GetShaderIdentifier(WideExportName.GetCString());
         if (!Result)
         {
             return nullptr;

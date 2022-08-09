@@ -8,7 +8,7 @@
     #define VECTOR_ALIGN ALIGN_AS(16)
 #endif
 
-#if (!defined(DISABLE_SIMD) && ARCHITECTURE_X86_X64)
+#if (!defined(DISABLE_SIMD) && PLATFORM_ARCHITECTURE_X86_X64)
     #define USE_VECTOR_OP (1)
 
 /* Windows Specific */

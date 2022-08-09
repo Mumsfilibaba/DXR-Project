@@ -44,7 +44,7 @@ public:
         for (const FVertexInputElement& Element : Initializer.Elements)
         {
             D3D12_INPUT_ELEMENT_DESC D3D12Element;
-            D3D12Element.SemanticName         = SemanticNames.Emplace(Element.Semantic).CStr();
+            D3D12Element.SemanticName         = SemanticNames.Emplace(Element.Semantic).GetCString();
             D3D12Element.SemanticIndex        = Element.SemanticIndex;
             D3D12Element.Format               = ConvertFormat(Element.Format);
             D3D12Element.InputSlot            = Element.InputSlot;
@@ -147,7 +147,7 @@ public:
     void SetDebugName(const FString& InName)
     {
         FWString WideName = CharToWide(InName);
-        PipelineState->SetName(WideName.CStr());
+        PipelineState->SetName(WideName.GetCString());
     }
 
     FORCEINLINE ID3D12PipelineState* GetD3D12PipelineState() const { return PipelineState.Get(); }
@@ -227,7 +227,7 @@ public:
     virtual void SetName(const FString& InName) override
     {
         FWString WideName = CharToWide(InName);
-        StateObject->SetName(WideName.CStr());
+        StateObject->SetName(WideName.GetCString());
     }
 
     void* GetShaderIdentifer(const FString& ExportName);

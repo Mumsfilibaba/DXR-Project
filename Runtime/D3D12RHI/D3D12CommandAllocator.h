@@ -43,7 +43,7 @@ public:
     FORCEINLINE void SetName(const FString& Name)
     {
         FWString WideName = CharToWide(Name);
-        Allocator->SetName(WideName.CStr());
+        Allocator->SetName(WideName.GetCString());
     }
 
     FORCEINLINE ID3D12CommandAllocator* GetAllocator() const

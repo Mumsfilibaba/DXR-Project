@@ -72,8 +72,8 @@ public:
         typename StringType,
         typename = typename TEnableIf<TIsTStringType<StringType>::Value>::Type>
     FORCEINLINE explicit TStringView(const StringType& InString) noexcept
-        : ViewStart(InString.CStr())
-        , ViewEnd(InString.CStr() + InString.Length())
+        : ViewStart(InString.GetCString())
+        , ViewEnd(InString.GetCString() + InString.Length())
     { }
 
     /**
@@ -277,7 +277,7 @@ public:
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type Compare(const StringType& InString) const noexcept
     {
-        return Compare(InString.CStr(), InString.Length());
+        return Compare(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -334,7 +334,7 @@ public:
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type CompareNoCase(const StringType& InString) const noexcept
     {
-        return CompareNoCase(InString.CStr(), InString.Length());
+        return CompareNoCase(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -611,7 +611,7 @@ public:
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneOf(const StringType& InString, SizeType Position = 0) const noexcept
     {
-        return FindOneOf(InString.CStr(), InString.Length(), Position);
+        return FindOneOf(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -743,7 +743,7 @@ public:
         const StringType& InString,
         SizeType Position = 0) const noexcept
     {
-        return FindOneNotOf(InString.CStr(), InString.Length(), Position);
+        return FindOneNotOf(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -1064,7 +1064,7 @@ public:
      *
      * @return: Returns a pointer containing a null-terminated string
      */
-    NODISCARD FORCEINLINE const CharType* CStr() const noexcept
+    NODISCARD FORCEINLINE const CharType* GetCString() const noexcept
     {
         return (ViewStart == nullptr) ? StringType::Empty() : ViewStart;
     }

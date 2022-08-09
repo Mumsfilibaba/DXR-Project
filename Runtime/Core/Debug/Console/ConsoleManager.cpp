@@ -43,7 +43,7 @@ void FConsoleManager::RegisterCommand(const FString& Name, IConsoleCommand* Comm
 {
     if (!RegisterObject(Name, Command))
     {
-        LOG_WARNING("ConsoleCommand '%s' is already registered", Name.CStr());
+        LOG_WARNING("ConsoleCommand '%s' is already registered", Name.GetCString());
     }
 }
 
@@ -51,7 +51,7 @@ void FConsoleManager::RegisterVariable(const FString& Name, IConsoleVariable* Va
 {
     if (!RegisterObject(Name, Variable))
     {
-        LOG_WARNING("ConsoleVariable '%s' is already registered", Name.CStr());
+        LOG_WARNING("ConsoleVariable '%s' is already registered", Name.GetCString());
     }
 }
 
@@ -75,14 +75,14 @@ IConsoleCommand* FConsoleManager::FindCommand(const FString& Name)
     IConsoleObject* Object = FindConsoleObject(Name);
     if (!Object)
     {
-        LOG_ERROR("Could not find ConsoleCommand '%s'", Name.CStr());
+        LOG_ERROR("Could not find ConsoleCommand '%s'", Name.GetCString());
         return nullptr;
     }
 
     IConsoleCommand* Command = Object->AsCommand();
     if (!Command)
     {
-        LOG_ERROR("'%s' is not a ConsoleCommand'", Name.CStr());
+        LOG_ERROR("'%s' is not a ConsoleCommand'", Name.GetCString());
         return nullptr;
     }
     else
@@ -96,14 +96,14 @@ IConsoleVariable* FConsoleManager::FindVariable(const FString& Name)
     IConsoleObject* Object = FindConsoleObject(Name);
     if (!Object)
     {
-        LOG_ERROR("Could not find ConsoleVariable '%s'", Name.CStr());
+        LOG_ERROR("Could not find ConsoleVariable '%s'", Name.GetCString());
         return nullptr;
     }
 
     IConsoleVariable* Variable = Object->AsVariable();
     if (!Variable)
     {
-        LOG_ERROR("'%s' is not a ConsoleVariable", Name.CStr());
+        LOG_ERROR("'%s' is not a ConsoleVariable", Name.GetCString());
         return nullptr;
     }
     else
@@ -132,8 +132,8 @@ void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TP
         int32 Length = CandidateName.Length();
         if (Length <= ObjectName.Length())
         {
-            const char* Command = ObjectName.CStr();
-            const char* WordIt = CandidateName.CStr();
+            const char* Command = ObjectName.GetCString();
+            const char* WordIt = CandidateName.GetCString();
 
             int32 CharDiff = -1;
             while (Length > 0 && (CharDiff = (toupper(*WordIt) - toupper(*Command))) == 0)
@@ -178,7 +178,7 @@ void FConsoleManager::Execute(const FString& Command)
     }
     else
     {
-        FString VariableName(Command.CStr(), Pos);
+        FString VariableName(Command.GetCString(), Pos);
 
         IConsoleVariable* VariableObject = FindVariable(VariableName);
         if (!VariableObject)
@@ -189,16 +189,16 @@ void FConsoleManager::Execute(const FString& Command)
 
         Pos++;
 
-        FString Value(Command.CStr() + Pos, Command.Length() - Pos);
-        if (std::regex_match(Value.CStr(), std::regex("[-]?[0-9]+")))
+        FString Value(Command.GetCString() + Pos, Command.Length() - Pos);
+        if (std::regex_match(Value.GetCString(), std::regex("[-]?[0-9]+")))
         {
             VariableObject->SetString(Value);
         }
-        else if (std::regex_match(Value.CStr(), std::regex("[-]?[0-9]*[.][0-9]+")) && VariableObject->IsFloat())
+        else if (std::regex_match(Value.GetCString(), std::regex("[-]?[0-9]*[.][0-9]+")) && VariableObject->IsFloat())
         {
             VariableObject->SetString(Value);
         }
-        else if (std::regex_match(Value.CStr(), std::regex("(false)|(true)")) && VariableObject->IsBool())
+        else if (std::regex_match(Value.GetCString(), std::regex("(false)|(true)")) && VariableObject->IsBool())
         {
             VariableObject->SetString(Value);
         }
@@ -221,7 +221,7 @@ bool FConsoleManager::RegisterObject(const FString& Name, IConsoleObject* Object
     auto ExistingObject = ConsoleObjects.find(Name);
     if (ExistingObject == ConsoleObjects.end())
     {
-        LOG_INFO("Registered ConsoleObject '%s'", Name.CStr());
+        LOG_INFO("Registered ConsoleObject '%s'", Name.GetCString());
 
         ConsoleObjects.insert(std::make_pair(Name, Object));
         return true;
