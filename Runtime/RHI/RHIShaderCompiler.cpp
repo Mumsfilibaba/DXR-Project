@@ -291,7 +291,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     
     WCHAR TargetProfile[BufferLength];
-    FWCString::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FCStringWide::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     const FWString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
@@ -452,7 +452,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
 
     WCHAR TargetProfile[BufferLength];
-    FWCString::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FCStringWide::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     // Use the asset-folder as base for the shader-files
     const FWString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);

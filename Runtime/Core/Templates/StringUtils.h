@@ -10,8 +10,8 @@
 template<typename CharType>
 struct TCString;
 
-using FCString  = TCString<char>;
-using FWCString = TCString<wchar_t>;
+using FCString     = TCString<char>;
+using FCStringWide = TCString<wchar_t>;
 
 template<typename CharType>
 struct TStringParse;
