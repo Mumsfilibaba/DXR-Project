@@ -9,49 +9,43 @@
 
 struct FBitHelper
 {
-    template<typename T, typename IndexType = uint32>
-    static bool LeastSignificant(T Mask, IndexType& OutIndex) noexcept
+    template<typename IndexType, typename MaskType>
+    static CONSTEXPR IndexType LeastSignificant(MaskType Mask) noexcept
     {
-        OutIndex = ~0u;
-
+        IndexType Result = 0;
         while (Mask)
         {
-            OutIndex += 1;
             if ((Mask & 1) == 1)
             {
-                return true;
+                break;
             }
 
+            ++Result;
             Mask >>= 1;
         }
 
-        return false;
+        return Result;
     }
 
-    template<typename T, typename IndexType = uint32>
-    static bool MostSignificant(T Mask, IndexType& OutIndex) noexcept
+    template<typename IndexType, typename MaskType>
+    static CONSTEXPR IndexType MostSignificant(MaskType Mask) noexcept
     {
-        if (Mask == 0)
-        {
-            return false;
-        }
-
-        OutIndex = 0;
+        IndexType Result = 0;
         while (Mask >>= 1)
         {
-            ++(OutIndex);
+            ++(Result);
         }
 
-        return true;
+        return Result;
     }
 
     template<typename StorageType>
     static typename TEnableIf<TIsUnsigned<StorageType>::Value, StorageType>::Type ReverseBits(StorageType Bits) noexcept
     {
-        constexpr StorageType NumBits = sizeof(StorageType) * 8;
+        CONSTEXPR StorageType NumBits = sizeof(StorageType) * 8;
 
         StorageType BitCount = NumBits - 1;
-        StorageType NewBits = Bits;
+        StorageType NewBits  = Bits;
         Bits >>= 1;
 
         while (Bits)
@@ -64,5 +58,23 @@ struct FBitHelper
 
         NewBits <<= BitCount;
         return NewBits;
+    }
+
+    // TODO: Check if intrinsics are viable
+    template<typename IntegerType>
+    static CONSTEXPR IntegerType CountAssignedBits(IntegerType Element)
+    {
+        IntegerType NumBits = 0;
+        while (Element)
+        {
+            if ((Element & 1) == 1)
+            {
+                NumBits++;
+            }
+
+            Element >>= 1;
+        }
+
+        return NumBits;
     }
 };

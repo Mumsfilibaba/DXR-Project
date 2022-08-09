@@ -13,7 +13,7 @@
 // TBitArray - Array of packed bits
 
 template<
-    typename InStorageType = uint32,
+    typename InStorageType   = uint32,
     typename InAllocatorType = TDefaultArrayAllocator<InStorageType>>
 class TBitArray
 {
@@ -232,20 +232,14 @@ public:
      */
     FORCEINLINE SizeType CountAssignedBits() const noexcept
     {
-        SizeType CurrentBit = 0;
-
-        for (SizeType Bit = 0; Bit < GetBitsPerStorage(); ++Bit)
+        SizeType BitCount = 0;
+        for (SizeType Index = 0; Index < NumElements; ++Index)
         {
-            const SizeType Index = GetStorageIndexOfBit(Bit);
-
             const StorageType Element = GetStorage(Index);
-            if (Element & CreateMaskForBit(Bit))
-            {
-                CurrentBit++;
-            }
+            BitCount += FBitHelper::CountAssignedBits(Element);
         }
 
-        return CurrentBit;
+        return BitCount;
     }
 
     /**
@@ -255,7 +249,7 @@ public:
      */
     FORCEINLINE bool HasAnyBitSet() const noexcept
     {
-        return CountAssignedBits() != 0;
+        return (CountAssignedBits() != 0);
     }
 
     /**
@@ -265,49 +259,51 @@ public:
      */
     FORCEINLINE bool HasNoBitSet() const noexcept
     {
-        return CountAssignedBits() == 0;
+        return (CountAssignedBits() == 0);
     }
 
     /**
-     * Retrieve the most significant bit
+     * Retrieve the most significant bit. Will return zero if no bits are set, check HasAnyBitSet.
      *
-     * @param OutIndex: Variable to store the index of the most significant bit
-     * @return: Returns false if no bit is set
+     * @return: Returns the index of the most significant bit
      */
-    FORCEINLINE bool MostSignificantBit(SizeType& OutIndex) const
+    FORCEINLINE SizeType MostSignificant() const
     {
-        for (int32 Index = int32(Capacity()) - 1; Index >= 0; --Index)
+        SizeType Result = 0;
+        for (int32 Index = int32(NumElements) - 1; Index >= 0; --Index)
         {
-            const StorageType Element = GetStorage(Index);
-            if (FBitHelper::MostSignificant(Element, OutIndex))
+            const auto Element = GetStorage(Index);
+            if (Element)
             {
-                OutIndex = Index * GetBitsPerStorage();
-                return true;
+                const auto BitIndex = FBitHelper::MostSignificant<SizeType>(Element);
+                Result = BitIndex + (Index * GetBitsPerStorage());
+                break;
             }
         }
 
-        return false;
+        return Result;
     }
 
     /**
-     * Retrieve the least significant bit
+     * Retrieve the most significant bit. Will return zero if no bits are set, check HasAnyBitSet.
      *
-     * @param OutIndex: Variable to store the index of the least significant bit
-     * @return: Returns false if no bit is set
+     * @return: Returns the index of the least significant bit
      */
-    FORCEINLINE bool LeastSignificantBit(uint32& OutIndex) const
+    FORCEINLINE SizeType LeastSignificant() const
     {
-        for (uint32 Index = 0; Index < Capacity(); ++Index)
+        SizeType Result = 0;
+        for (SizeType Index = 0; Index < NumElements; ++Index)
         {
-            const StorageType Element = GetStorage(Index);
-            if (NBits::LeastSignificant(Element, OutIndex))
+            const auto Element = GetStorage(Index);
+            if (Element)
             {
-                OutIndex += Index * GetBitsPerStorage();
-                return true;
+                const auto BitIndex = FBitHelper::LeastSignificant<SizeType>(Element);
+                Result = BitIndex + (Index * GetBitsPerStorage());
+                break;
             }
         }
 
-        return false;
+        return Result;
     }
 
     /**
@@ -358,7 +354,7 @@ public:
             const SizeType NewNumElements = GetRequiredStorageForBits(InNumBits);
             Storage.Realloc(NumElements, NewNumElements);
 
-            StorageType* Pointer = Data();
+            StorageType* Pointer = Storage.GetAllocation();
             for (SizeType Index = NumElements; Index < NewNumElements; ++Index)
             {
                 Pointer[Index] = 0;
@@ -500,7 +496,7 @@ public:
      * @param Index: Index of the bit
      * @return: Returns a reference to the bit with the index
      */
-    FORCEINLINE const ConstBitReferenceType GetBitReference(SizeType BitIndex) const noexcept
+    FORCEINLINE ConstBitReferenceType GetBitReference(SizeType BitIndex) const noexcept
     {
         Check(BitIndex < NumBits);
 
@@ -731,11 +727,9 @@ public:
             return false;
         }
 
-        const StorageType* LhsData = Data();
-        const StorageType* RhsData = RHS.Data();
         for (SizeType Index = 0; Index < NumElements; ++Index)
         {
-            if (LhsData[Index] != RhsData[Index])
+            if (GetStorage(Index) != RHS.GetStorage(Index))
             {
                 return false;
             }
@@ -931,27 +925,27 @@ public:
     }
 
 private:
-    static FORCEINLINE SizeType GetStorageIndexOfBit(SizeType BitIndex) noexcept
+    static CONSTEXPR SizeType GetStorageIndexOfBit(SizeType BitIndex) noexcept
     {
         return (BitIndex / GetBitsPerStorage());
     }
 
-    static FORCEINLINE SizeType GetIndexOfBitInStorage(SizeType BitIndex) noexcept
+    static CONSTEXPR SizeType GetIndexOfBitInStorage(SizeType BitIndex) noexcept
     {
         return (BitIndex % GetBitsPerStorage());
     }
 
-    static FORCEINLINE StorageType CreateMaskForBit(SizeType BitIndex) noexcept
+    static CONSTEXPR StorageType CreateMaskForBit(SizeType BitIndex) noexcept
     {
         return StorageType(1) << GetIndexOfBitInStorage(BitIndex);
     }
 
-    static FORCEINLINE StorageType CreateMaskUpToBit(SizeType BitIndex) noexcept
+    static CONSTEXPR StorageType CreateMaskUpToBit(SizeType BitIndex) noexcept
     {
         return CreateMaskForBit(BitIndex) - 1;
     }
 
-    static FORCEINLINE SizeType GetRequiredStorageForBits(SizeType InNumBits) noexcept
+    static CONSTEXPR SizeType GetRequiredStorageForBits(SizeType InNumBits) noexcept
     {
         return (InNumBits + (GetBitsPerStorage() - 1)) / GetBitsPerStorage();
     }
@@ -985,7 +979,7 @@ private:
         const SizeType IndexInElement = GetIndexOfBitInStorage(BitPosition);
 
         const StorageType Mask  = CreateMaskForBit(IndexInElement);
-        const StorageType Value = bValue ? (StorageType(~0) & Mask) : StorageType(0);
+        const StorageType Value = bValue ? Mask : StorageType(0);
 
         StorageType& Element = GetStorage(ElementIndex);
         Element |= Value;
@@ -1139,10 +1133,11 @@ private:
 
     FORCEINLINE void MaskOutLastStorageElement()
     {
-        const SizeType LastElementIndex = GetStorageIndexOfBit(NumBits);
-        const SizeType LastBitIndex     = GetIndexOfBitInStorage(NumBits);
+        const SizeType LastValidBit     = NumBits ? (NumBits - 1) : 0;
+        const SizeType LastElementIndex = GetStorageIndexOfBit(LastValidBit);
+        const SizeType LastBitIndex     = GetIndexOfBitInStorage(LastValidBit);
 
-        const StorageType Mask = CreateMaskUpToBit(LastBitIndex);
+        const StorageType Mask = CreateMaskUpToBit(LastBitIndex) | CreateMaskForBit(LastBitIndex);
 
         StorageType& Element = GetStorage(LastElementIndex);
         Element &= Mask;
@@ -1176,3 +1171,11 @@ private:
     SizeType      NumBits     = 0;
     SizeType      NumElements = 0;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Predefined types
+
+typedef TBitArray<uint8>  FBitArray8;
+typedef TBitArray<uint16> FBitArray16;
+typedef TBitArray<uint32> FBitArray32;
+typedef TBitArray<uint64> FBitArray64;
