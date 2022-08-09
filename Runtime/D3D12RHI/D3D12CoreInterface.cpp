@@ -476,7 +476,7 @@ FRHISamplerState* FD3D12CoreInterface::RHICreateSamplerState(const FRHISamplerSt
 
     FMemory::Memcpy(Desc.BorderColor, Initializer.BorderColor.GetData(), sizeof(Desc.BorderColor));
 
-    TSharedRef<FD3D12SamplerState> Sampler = dbg_new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap);
+    FD3D12SamplerStateRef Sampler = dbg_new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap);
     if (!Sampler->CreateSampler(Desc))
     {
         return nullptr;
