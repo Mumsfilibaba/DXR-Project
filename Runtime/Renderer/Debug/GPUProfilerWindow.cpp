@@ -70,7 +70,7 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
 
         ImGui::PlotHistogram(
             "",
-            GPUFrameTime.Samples.Data(),
+            GPUFrameTime.Samples.GetData(),
             GPUFrameTime.SampleCount,
             GPUFrameTime.CurrentSample,
             nullptr,

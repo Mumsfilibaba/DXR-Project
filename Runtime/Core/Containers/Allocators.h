@@ -50,28 +50,28 @@ public:
      * 
      * @return: Returns the allocation
      */
-    FORCEINLINE ElementType* GetAllocation() noexcept { return nullptr; }
+    NODISCARD FORCEINLINE ElementType* GetAllocation() noexcept { return nullptr; }
 
     /**
      * @brief: Retrieve the allocation
      *
      * @return: Returns the allocation
      */
-    FORCEINLINE const ElementType* GetAllocation() const noexcept { return nullptr; }
+    NODISCARD FORCEINLINE const ElementType* GetAllocation() const noexcept { return nullptr; }
 
     /**
      * @brief: Returns the current state of the allocation
      *
      * @return: Returns true or false if there is an allocation
      */
-    FORCEINLINE bool HasAllocation() const noexcept { return false; }
+    NODISCARD FORCEINLINE bool HasAllocation() const noexcept { return false; }
 
     /**
      * @brief: Returns the current state of the allocation
      *
      * @return: Returns true or false if the allocation is allocated on the heap
      */
-    FORCEINLINE bool IsHeapAllocated() const noexcept { return false; }
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept { return false; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -81,7 +81,6 @@ template<typename T>
 class TDefaultArrayAllocator
 {
 public:
-
     using ElementType = T;
     using SizeType    = int32;
 
@@ -96,8 +95,6 @@ public:
 
     FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) noexcept
     {
-        UNREFERENCED_VARIABLE(CurrentCount);
-
         Allocation = FMemory::Realloc<ElementType>(Allocation, NewCount);
         return Allocation;
     }
@@ -121,22 +118,22 @@ public:
         Other.Allocation = nullptr;
     }
 
-    FORCEINLINE ElementType* GetAllocation() noexcept
+    NODISCARD FORCEINLINE ElementType* GetAllocation() noexcept
     {
         return Allocation;
     }
 
-    FORCEINLINE const ElementType* GetAllocation() const noexcept
+    NODISCARD FORCEINLINE const ElementType* GetAllocation() const noexcept
     {
         return Allocation;
     }
 
-    FORCEINLINE bool HasAllocation() const noexcept
+    NODISCARD FORCEINLINE bool HasAllocation() const noexcept
     {
         return (Allocation != nullptr);
     }
 
-    FORCEINLINE bool IsHeapAllocated() const noexcept
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept
     {
         return true;
     }
@@ -154,24 +151,23 @@ template<
 class TInlineAllocation
 {
 public:
-
     using SizeType = int32;
 
     TInlineAllocation() = default;
     ~TInlineAllocation() = default;
 
-    FORCEINLINE InlineType* GetElements() noexcept
+    NODISCARD FORCEINLINE InlineType* GetElements() noexcept
     {
         return reinterpret_cast<InlineType*>(InlineAllocation);
     }
 
-    FORCEINLINE const InlineType* GetElements() const noexcept
+    NODISCARD FORCEINLINE const InlineType* GetElements() const noexcept
     {
         return reinterpret_cast<const InlineType*>(InlineAllocation);
     }
 
 public:
-    CONSTEXPR SizeType GetSize() const noexcept
+    NODISCARD CONSTEXPR SizeType GetSize() const noexcept
     {
         return sizeof(InlineAllocation);
     }
@@ -181,7 +177,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TInlineArrayAllocator - InlineAllocator allocator that has a small fixed size memory, then allocates from TDefaultArrayAllocator
+// TInlineArrayAllocator
 
 template<
     typename T,
@@ -189,7 +185,6 @@ template<
 class TInlineArrayAllocator
 {
 public:
-
     using ElementType = T;
     using SizeType = int32;
 
@@ -252,22 +247,22 @@ public:
         DynamicAllocation.MoveFrom(Move(Other.DynamicAllocation));
     }
 
-    FORCEINLINE ElementType* GetAllocation() noexcept
+    NODISCARD FORCEINLINE ElementType* GetAllocation() noexcept
     {
         return IsHeapAllocated() ? DynamicAllocation.GetAllocation() : InlineAllocation.GetElements();
     }
 
-    FORCEINLINE const ElementType* GetAllocation() const noexcept
+    NODISCARD FORCEINLINE const ElementType* GetAllocation() const noexcept
     {
         return IsHeapAllocated() ? DynamicAllocation.GetAllocation() : InlineAllocation.GetElements();
     }
 
-    FORCEINLINE bool HasAllocation() const noexcept
+    NODISCARD FORCEINLINE bool HasAllocation() const noexcept
     {
         return DynamicAllocation.HasAllocation();
     }
 
-    FORCEINLINE bool IsHeapAllocated() const noexcept
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept
     {
         return DynamicAllocation.HasAllocation();
     }

@@ -216,7 +216,7 @@ bool FD3D12Viewport::Present(bool VerticalSync)
 
 bool FD3D12Viewport::RetriveBackBuffers()
 {
-    if (BackBuffers.Size() < static_cast<int32>(NumBackBuffers))
+    if (BackBuffers.GetSize() < static_cast<int32>(NumBackBuffers))
     {
         BackBuffers.Resize(NumBackBuffers);
         for (FD3D12TextureRef& Texture : BackBuffers)

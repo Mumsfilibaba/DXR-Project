@@ -101,5 +101,5 @@ FRHIShaderResourceView* const* FMaterial::GetShaderResourceViews() const
     ShaderResourceViews[5] = SafeGetDefaultSRV(AOMap);
     ShaderResourceViews[6] = SafeGetDefaultSRV(AlphaMask);
 
-    return ShaderResourceViews.Data();
+    return ShaderResourceViews.GetData();
 }

@@ -452,8 +452,8 @@ void FMetalCommandContext::PrepareForDraw()
     // Necessary to retrieve all states and the resource bindings
     if (CurrentGraphicsPipeline)
     {
-        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.Data()
-                                  offsets:CurrentVertexOffsets.Data()
+        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.GetData()
+                                  offsets:CurrentVertexOffsets.GetData()
                                 withRange:CurrentVertexBufferRange];
 
         FMetalDepthStencilState* DepthStencilState = CurrentGraphicsPipeline->GetMetalDepthStencilState();

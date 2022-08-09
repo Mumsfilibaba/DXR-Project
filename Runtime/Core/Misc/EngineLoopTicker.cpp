@@ -28,7 +28,7 @@ void FEngineLoopTicker::AddDelegate(const FTickDelegate& NewElement)
 
 void FEngineLoopTicker::RemoveDelegate(FDelegateHandle RemoveHandle)
 {
-    uint32 NumElements = TickDelegates.Size();
+    uint32 NumElements = TickDelegates.GetSize();
     for (uint32 Index = 0; Index < NumElements; Index++)
     {
         if (TickDelegates[Index].GetHandle() == RemoveHandle)

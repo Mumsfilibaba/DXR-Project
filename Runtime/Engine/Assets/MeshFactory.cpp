@@ -185,7 +185,7 @@ FMeshData FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
         FMeshUtilities::Subdivide(Sphere, Subdivisions);
     }
 
-    for (uint32 i = 0; i < static_cast<uint32>(Sphere.Vertices.Size()); i++)
+    for (uint32 i = 0; i < static_cast<uint32>(Sphere.Vertices.GetSize()); i++)
     {
         // Calculate the new position, normal and tangent
         FVector3 Position = Sphere.Vertices[i].Position;

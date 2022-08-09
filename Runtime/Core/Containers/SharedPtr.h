@@ -42,12 +42,12 @@ public:
         return NumStrongRefs--;
     }
 
-    FORCEINLINE CounterType GetWeakRefCount() const noexcept
+    NODISCARD FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
         return NumWeakRefs.Load();
     }
 
-    FORCEINLINE CounterType GetStrongRefCount() const noexcept
+    NODISCARD FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
         return NumStrongRefs.Load();
     }
@@ -77,6 +77,8 @@ public:
         typename OtherType,
         typename OtherDeleterType>
     friend class TPointerReferencedStorage;
+    
+    ~TPointerReferencedStorage() = default;
 
     FORCEINLINE TPointerReferencedStorage() noexcept
         : DeleterType()
@@ -91,7 +93,7 @@ public:
     {
         InitMove(Other.Ptr, Other.Counter);
 
-        Other.Ptr = nullptr;
+        Other.Ptr     = nullptr;
         Other.Counter = nullptr;
     }
 
@@ -106,11 +108,10 @@ public:
     {
         InitMove(Other.Ptr, Other.Counter);
 
-        Other.Ptr = nullptr;
+        Other.Ptr     = nullptr;
         Other.Counter = nullptr;
     }
 
-    ~TPointerReferencedStorage() = default;
 
     FORCEINLINE void InitStrong(ElementType* NewPtr, FPointerReferenceCounter* NewCounter) noexcept
     {
@@ -206,44 +207,44 @@ public:
 
     FORCEINLINE void Reset() noexcept
     {
-        Ptr = nullptr;
+        Ptr     = nullptr;
         Counter = nullptr;
     }
 
     FORCEINLINE void Swap(TPointerReferencedStorage& Other) noexcept
     {
-        ElementType* TempPtr = Ptr;
+        ElementType*              TempPtr     = Ptr;
         FPointerReferenceCounter* TempCounter = Counter;
 
-        Ptr = Other.Ptr;
+        Ptr     = Other.Ptr;
         Counter = Other.Counter;
 
-        Other.Ptr = TempPtr;
+        Other.Ptr     = TempPtr;
         Other.Counter = TempCounter;
     }
 
-    FORCEINLINE ElementType* GetPointer() const noexcept
+    NODISCARD FORCEINLINE ElementType* GetPointer() const noexcept
     {
         return Ptr;
     }
 
-    FORCEINLINE ElementType* const* GetAddressOfPointer() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* GetAddressOfPointer() const noexcept
     {
         return &Ptr;
     }
 
-    FORCEINLINE FPointerReferenceCounter* GetCounter() const noexcept
+    NODISCARD FORCEINLINE FPointerReferenceCounter* GetCounter() const noexcept
     {
         return Counter;
     }
 
-    FORCEINLINE CounterType GetWeakRefCount() const noexcept
+    NODISCARD FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
         Check(Counter != nullptr);
         return Counter->GetWeakRefCount();
     }
 
-    FORCEINLINE CounterType GetStrongRefCount() const noexcept
+    NODISCARD FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
         Check(Counter != nullptr);
         return Counter->GetStrongRefCount();
@@ -266,7 +267,7 @@ public:
     }
 
 private:
-    ElementType* Ptr;
+    ElementType*              Ptr;
     FPointerReferenceCounter* Counter;
 };
 
@@ -493,7 +494,7 @@ public:
      * 
      * @return: Returns true if the strong reference count is equal to one
      */
-    FORCEINLINE bool IsUnique() const noexcept
+    NODISCARD FORCEINLINE bool IsUnique() const noexcept
     {
         return (Storage.GetStrongRefCount() == 1);
     }
@@ -503,7 +504,7 @@ public:
      *
      * @return: Returns true if the pointer is not nullptr
      */
-    FORCEINLINE bool IsValid() const noexcept
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
         return (Get() != nullptr);
     }
@@ -513,7 +514,7 @@ public:
      * 
      * @return: Returns the stored pointer
      */
-    FORCEINLINE ElementType* Get() const noexcept
+    NODISCARD FORCEINLINE ElementType* Get() const noexcept
     {
         return Storage.GetPointer();
     }
@@ -523,7 +524,7 @@ public:
      *
      * @return: Returns the address of the stored pointer
      */
-    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return Storage.GetAddressOfPointer();
     }
@@ -533,7 +534,7 @@ public:
      * 
      * @return: The number of strong references
      */
-    FORCEINLINE CounterType GetStrongRefCount() const noexcept
+    NODISCARD FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
         return Storage.GetStrongRefCount();
     }
@@ -543,7 +544,7 @@ public:
      *
      * @return: The number of weak references
      */
-    FORCEINLINE CounterType GetWeakRefCount() const noexcept
+    NODISCARD FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
         return Storage.GetWeakRefCount();
     }
@@ -553,7 +554,7 @@ public:
      * 
      * @return: A reference to the object pointer to by the stored pointer
      */
-    FORCEINLINE ElementType& Dereference() const noexcept
+    NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
         Check(IsValid());
         return *Get();
@@ -566,7 +567,7 @@ public:
      *
      * @return: Returns the stored pointer
      */
-    FORCEINLINE ElementType* operator->() const noexcept
+    NODISCARD FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
@@ -575,7 +576,7 @@ public:
      *
      * @return: A reference to the object pointer to by the stored pointer
      */
-    FORCEINLINE ElementType& operator*() const noexcept
+    NODISCARD FORCEINLINE ElementType& operator*() const noexcept
     {
         return Dereference();
     }
@@ -585,14 +586,14 @@ public:
      *
      * @return: Returns the address of the stored pointer
      */
-    FORCEINLINE ElementType* const* operator&() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
 
      /** @brief: Retrieve element at a certain index */
     template<typename U = T>
-    FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
+    NODISCARD FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[](SizeType Index) const noexcept
     {
         Check(IsValid());
@@ -604,7 +605,7 @@ public:
      *
      * @return: Returns true if the pointer is not nullptr
      */
-    FORCEINLINE operator bool() const noexcept
+    NODISCARD FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
@@ -689,7 +690,7 @@ public:
     }
 
 private:
-    FORCEINLINE FPointerReferenceCounter* GetCounter() const noexcept
+    NODISCARD FORCEINLINE FPointerReferenceCounter* GetCounter() const noexcept
     {
         return Storage.GetCounter();
     }
@@ -701,85 +702,85 @@ private:
 // TSharedPtr operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, U* RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* LHS, const TSharedPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(T* LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, U* RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* LHS, const TSharedPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(T* LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, nullptr_type) noexcept
+NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(nullptr_type, const TSharedPtr<T>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(nullptr_type, const TSharedPtr<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, nullptr_type) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(nullptr_type, const TSharedPtr<T>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TSharedPtr<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
@@ -933,7 +934,7 @@ public:
      * 
      * @return: Returns true if the strong reference count is less than one
      */
-    FORCEINLINE bool IsExpired() const noexcept
+    NODISCARD FORCEINLINE bool IsExpired() const noexcept
     {
         return (GetStrongRefCount() < 1);
     }
@@ -943,7 +944,7 @@ public:
      * 
      * @return: A new SharedPtr that holds the same pointer as this WeakPtr
      */
-    FORCEINLINE TSharedPtr<T> MakeShared() noexcept
+    NODISCARD FORCEINLINE TSharedPtr<T> MakeShared() noexcept
     {
         return TSharedPtr<T>(*this);
     }
@@ -953,7 +954,7 @@ public:
      * 
      * @return: Returns true if the strong reference count is one
      */
-    FORCEINLINE bool IsUnique() const noexcept
+    NODISCARD FORCEINLINE bool IsUnique() const noexcept
     {
         return (Storage.GetStrongRefCount() == 1);
     }
@@ -963,7 +964,7 @@ public:
      * 
      * @return: Returns true if the pointer is not nullptr and the strong reference count is more than zero
      */
-    FORCEINLINE bool IsValid() const noexcept
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
         return (Get() != nullptr) && !IsExpired();
     }
@@ -973,7 +974,7 @@ public:
      * 
      * @return: Returns the stored pointer
      */
-    FORCEINLINE ElementType* Get() const noexcept
+    NODISCARD FORCEINLINE ElementType* Get() const noexcept
     {
         return Storage.GetPointer();
     }
@@ -983,7 +984,7 @@ public:
      *
      * @return: Returns the address of the stored pointer
      */
-    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return Storage.GetAddressOfPointer();
     }
@@ -993,7 +994,7 @@ public:
      *
      * @return: Returns the number of strong references
      */
-    FORCEINLINE CounterType GetStrongRefCount() const noexcept
+    NODISCARD FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
         return Storage.GetStrongRefCount();
     }
@@ -1003,7 +1004,7 @@ public:
      *
      * @return: Returns the number of weak references
      */
-    FORCEINLINE CounterType GetWeakRefCount() const noexcept
+    NODISCARD FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
         return Storage.GetWeakRefCount();
     }
@@ -1013,7 +1014,7 @@ public:
      *
      * @return: A reference to the object pointer to by the stored pointer
      */
-    FORCEINLINE ElementType& Dereference() const noexcept
+    NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
         Check(IsValid());
         return *Get();
@@ -1026,7 +1027,7 @@ public:
      *
      * @return: Returns the stored pointer
      */
-    FORCEINLINE ElementType* operator->() const noexcept
+    NODISCARD FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
@@ -1036,7 +1037,7 @@ public:
      *
      * @return: A reference to the object pointer to by the stored pointer
      */
-    FORCEINLINE ElementType& operator*() const noexcept
+    NODISCARD FORCEINLINE ElementType& operator*() const noexcept
     {
         return Dereference();
     }
@@ -1046,7 +1047,7 @@ public:
      *
      * @return: Returns the address of the stored pointer
      */
-    FORCEINLINE ElementType* const* operator&() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
@@ -1058,7 +1059,7 @@ public:
      * @return: A reference to the retrieved element
      */
     template<typename U = T>
-    FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
+    NODISCARD FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[](SizeType Index) const noexcept
     {
         Check(IsValid());
@@ -1070,7 +1071,7 @@ public:
      *
      * @return: Returns true if the pointer is not nullptr and the strong reference count is more than zero
      */
-    FORCEINLINE operator bool() const noexcept
+    NODISCARD FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
@@ -1155,7 +1156,7 @@ public:
     }
 
 private:
-    FORCEINLINE FPointerReferenceCounter* GetCounter() const noexcept
+    NODISCARD FORCEINLINE FPointerReferenceCounter* GetCounter() const noexcept
     {
         return Storage.GetCounter();
     }
@@ -1167,109 +1168,109 @@ private:
 // TWeakPtr operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, U* RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* LHS, const TWeakPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(T* LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, U* RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* LHS, const TWeakPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(T* LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, nullptr_type) noexcept
+NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(nullptr_type, const TWeakPtr<T>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(nullptr_type, const TWeakPtr<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, nullptr_type) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(nullptr_type, const TWeakPtr<T>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TWeakPtr<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
@@ -1278,13 +1279,13 @@ FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) no
 // Creation helpers
 
 template<typename T>
-FORCEINLINE TSharedPtr<T> MakeSharedPtr(T* InPointer) noexcept
+NODISCARD FORCEINLINE TSharedPtr<T> MakeSharedPtr(T* InPointer) noexcept
 {
     return TSharedPtr<T>(InPointer);
 }
 
 template<typename T, typename... ArgTypes>
-FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShared(ArgTypes&&... Args) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShared(ArgTypes&&... Args) noexcept
 {
     typedef typename TRemoveExtent<T>::Type Type;
 
@@ -1293,7 +1294,7 @@ FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TSharedPtr<T>>::Type MakeSha
 }
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShared(uint32 Size) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShared(uint32 Size) noexcept
 {
     typedef typename TRemoveExtent<T>::Type Type;
 
@@ -1307,7 +1308,7 @@ FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShar
 template<
     typename ToType,
     typename FromType>
-FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type StaticCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type StaticCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1318,7 +1319,7 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
 template<
     typename ToType,
     typename FromType>
-FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type StaticCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type StaticCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1329,7 +1330,7 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
 template<
     typename ToType,
     typename FromType>
-FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ConstCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ConstCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1340,7 +1341,7 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
 template<
     typename ToType,
     typename FromType>
-FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ConstCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ConstCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1351,7 +1352,7 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
 template<
     typename ToType, 
     typename FromType>
-FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ReinterpretCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ReinterpretCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1362,7 +1363,7 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
 template<
     typename ToType,
     typename FromType>
-FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ReinterpretCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ReinterpretCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1373,7 +1374,7 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
 template<
     typename ToType,
     typename FromType>
-FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type DynamicCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type DynamicCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1384,7 +1385,7 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
 template<
     typename ToType,
     typename FromType>
-FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type DynamicCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type DynamicCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 

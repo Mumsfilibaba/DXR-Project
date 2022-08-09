@@ -273,8 +273,8 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
     if (!Defines.IsEmpty())
     {
-        StrBuff.Reserve(Defines.Size() * 2);
-        DxcDefines.Reserve(Defines.Size());
+        StrBuff.Reserve(Defines.GetSize() * 2);
+        DxcDefines.Reserve(Defines.GetSize());
 
         for (const FShaderDefine& Define : Defines)
         {
@@ -300,10 +300,10 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
                                , WideFilePath.CStr()
                                , WideEntrypoint.CStr()
                                , TargetProfile
-                               , CompileArgs.Data()
-                               , CompileArgs.Size()
-                               , DxcDefines.Data()
-                               , DxcDefines.Size()
+                               , CompileArgs.GetData()
+                               , CompileArgs.GetSize()
+                               , DxcDefines.GetData()
+                               , DxcDefines.GetSize()
                                , IncludeHandler.Get()
                                , &Result);
     if (FAILED(hResult))
@@ -363,7 +363,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
 
     LOG_INFO("[FRHIShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
 
-    FMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
+    FMemory::Memcpy(OutByteCode.GetData(), CompiledBlob->GetBufferPointer(), BlobSize);
     
     // Convert SPIRV into MSL
     if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
@@ -434,8 +434,8 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
     if (!Defines.IsEmpty())
     {
-        StrBuff.Reserve(Defines.Size() * 2);
-        DxcDefines.Reserve(Defines.Size());
+        StrBuff.Reserve(Defines.GetSize() * 2);
+        DxcDefines.Reserve(Defines.GetSize());
 
         for (const FShaderDefine& Define : Defines)
         {
@@ -457,16 +457,16 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     // Use the asset-folder as base for the shader-files
     const FWString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
-    TComPtr<IDxcBlob>            SourceBlob = dbg_new CShaderBlob(ShaderSource.Data(), ShaderSource.SizeInBytes());
+    TComPtr<IDxcBlob>            SourceBlob = dbg_new CShaderBlob(ShaderSource.GetData(), ShaderSource.SizeInBytes());
     TComPtr<IDxcOperationResult> Result;
     hResult = Compiler->Compile( SourceBlob.Get()
                                , nullptr
                                , WideEntrypoint.CStr()
                                , TargetProfile
-                               , CompileArgs.Data()
-                               , CompileArgs.Size()
-                               , DxcDefines.Data()
-                               , DxcDefines.Size()
+                               , CompileArgs.GetData()
+                               , CompileArgs.GetSize()
+                               , DxcDefines.GetData()
+                               , DxcDefines.GetSize()
                                , IncludeHandler.Get()
                                , &Result);
     if (FAILED(hResult))
@@ -526,7 +526,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
 
     LOG_INFO("[FRHIShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
 
-    FMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
+    FMemory::Memcpy(OutByteCode.GetData(), CompiledBlob->GetBufferPointer(), BlobSize);
 
     // Convert SPIRV into MSL
     if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
@@ -571,8 +571,8 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
     {
         spvc_parsed_ir ParsedRepresentation = nullptr;
 
-        const uint32 WordCount = OutByteCode.Size() / ElementSize;
-        Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.Data()), WordCount, &ParsedRepresentation);
+        const uint32 WordCount = OutByteCode.GetSize() / ElementSize;
+        Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.GetData()), WordCount, &ParsedRepresentation);
         if (Result != SPVC_SUCCESS)
         {
             LOG_ERROR("Failed to parse Spirv");
@@ -597,7 +597,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
 
     // Start by adding the entrypoint to the shader, which is needed when we create native shader objects
     const FString Comment = "// " + Entrypoint + "\n\n";
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.Data()), Comment.Length() * sizeof(const char));
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.GetData()), Comment.Length() * sizeof(const char));
 
     const uint32 SourceLength = FCString::Length(MSLSource);
     NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const char));
@@ -617,7 +617,7 @@ bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const 
         return false;
     }
 
-    fwrite(ByteCode.Data(), ByteCode.Size(), sizeof(uint8), Output);
+    fwrite(ByteCode.GetData(), ByteCode.GetSize(), sizeof(uint8), Output);
 
     fclose(Output);
     return true;

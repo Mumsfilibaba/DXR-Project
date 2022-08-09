@@ -50,7 +50,7 @@ void FTextureDebugWindow::Tick()
         {
             ImGui::BeginChild("##ScrollBox", ImVec2(Width * 0.985f, Height * 0.125f), true, ImGuiWindowFlags_HorizontalScrollbar);
 
-            const int32 Count = DebugTextures.Size();
+            const int32 Count = DebugTextures.GetSize();
             if (SelectedTextureIndex >= Count)
             {
                 SelectedTextureIndex = -1;

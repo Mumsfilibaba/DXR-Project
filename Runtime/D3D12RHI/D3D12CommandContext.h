@@ -173,14 +173,14 @@ public:
     {
         if (!Barriers.IsEmpty())
         {
-            CommandList.ResourceBarrier(Barriers.Data(), Barriers.Size());
+            CommandList.ResourceBarrier(Barriers.GetData(), Barriers.GetSize());
             Barriers.Clear();
         }
     }
 
-    FORCEINLINE const D3D12_RESOURCE_BARRIER* GetBarriers() const { return Barriers.Data(); }
+    FORCEINLINE const D3D12_RESOURCE_BARRIER* GetBarriers() const { return Barriers.GetData(); }
 
-    FORCEINLINE uint32 GetNumBarriers() const { return Barriers.Size(); }
+    FORCEINLINE uint32 GetNumBarriers() const { return Barriers.GetSize(); }
 
 private:
     TArray<D3D12_RESOURCE_BARRIER> Barriers;
@@ -391,7 +391,7 @@ public:
 
     FORCEINLINE uint32 GetCurrentEpochValue() const
     {
-        uint32 MaxValue = NMath::Max<int32>((int32)CmdBatches.Size() - 1, 0);
+        uint32 MaxValue = NMath::Max<int32>((int32)CmdBatches.GetSize() - 1, 0);
         return NMath::Min<uint32>(NextCmdBatch - 1, MaxValue);
     }
 

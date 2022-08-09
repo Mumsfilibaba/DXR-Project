@@ -233,7 +233,7 @@ bool TestMatrix3()
 
     // GetData
     FMatrix3 Matrix0 = FMatrix3::Identity();
-    FMatrix3 Matrix1 = FMatrix3(Matrix0.Data());
+    FMatrix3 Matrix1 = FMatrix3(Matrix0.GetData());
 
     if (Matrix0 != Matrix1)
     {

@@ -317,9 +317,9 @@ struct FD3D12RootSignatureAssociation
         : ExportAssociation()
         , RootSignature(InRootSignature)
         , ShaderExportNames(InShaderExportNames)
-        , ShaderExportNamesRef(InShaderExportNames.Size())
+        , ShaderExportNamesRef(InShaderExportNames.GetSize())
     {
-        for (int32 i = 0; i < ShaderExportNames.Size(); i++)
+        for (int32 i = 0; i < ShaderExportNames.GetSize(); i++)
         {
             ShaderExportNamesRef[i] = ShaderExportNames[i].CStr();
         }
@@ -377,10 +377,10 @@ struct FD3D12Library
 {
     FD3D12Library(D3D12_SHADER_BYTECODE ByteCode, const TArray<FWString>& InExportNames)
         : ExportNames(InExportNames)
-        , ExportDescs(InExportNames.Size())
+        , ExportDescs(InExportNames.GetSize())
         , Desc()
     {
-        for (int32 i = 0; i < ExportDescs.Size(); i++)
+        for (int32 i = 0; i < ExportDescs.GetSize(); i++)
         {
             D3D12_EXPORT_DESC& TempDesc = ExportDescs[i];
             TempDesc.Flags          = D3D12_EXPORT_FLAG_NONE;
@@ -389,8 +389,8 @@ struct FD3D12Library
         }
 
         Desc.DXILLibrary = ByteCode;
-        Desc.pExports    = ExportDescs.Data();
-        Desc.NumExports  = ExportDescs.Size();
+        Desc.pExports    = ExportDescs.GetData();
+        Desc.NumExports  = ExportDescs.GetSize();
     }
 
     TArray<FWString>           ExportNames;
@@ -420,7 +420,7 @@ struct FD3D12RayTracingPipelineStateStream
 
     void Generate()
     {
-        uint32 NumSubObjects = Libraries.Size() + HitGroups.Size() + (RootSignatureAssociations.Size() * 2) + 4;
+        uint32 NumSubObjects = Libraries.GetSize() + HitGroups.GetSize() + (RootSignatureAssociations.GetSize() * 2) + 4;
         SubObjects.Resize(NumSubObjects);
 
         uint32 SubObjectIndex = 0;
@@ -444,8 +444,8 @@ struct FD3D12RayTracingPipelineStateStream
             LocalRootSubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
             LocalRootSubObject.pDesc = &Association.RootSignature;
 
-            Association.ExportAssociation.pExports              = Association.ShaderExportNamesRef.Data();
-            Association.ExportAssociation.NumExports            = Association.ShaderExportNamesRef.Size();
+            Association.ExportAssociation.pExports              = Association.ShaderExportNamesRef.GetData();
+            Association.ExportAssociation.NumExports            = Association.ShaderExportNamesRef.GetSize();
             Association.ExportAssociation.pSubobjectToAssociate = &SubObjects[SubObjectIndex - 1];
 
             D3D12_STATE_SUBOBJECT& SubObject = SubObjects[SubObjectIndex++];
@@ -465,14 +465,14 @@ struct FD3D12RayTracingPipelineStateStream
         ShaderConfigObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
         ShaderConfigObject.pDesc = &ShaderConfig;
 
-        PayLoadExportNamesRef.Resize(PayLoadExportNames.Size());
-        for (int32 i = 0; i < PayLoadExportNames.Size(); i++)
+        PayLoadExportNamesRef.Resize(PayLoadExportNames.GetSize());
+        for (int32 i = 0; i < PayLoadExportNames.GetSize(); i++)
         {
             PayLoadExportNamesRef[i] = PayLoadExportNames[i].CStr();
         }
 
-        ShaderConfigAssociation.pExports              = PayLoadExportNamesRef.Data();
-        ShaderConfigAssociation.NumExports            = PayLoadExportNamesRef.Size();
+        ShaderConfigAssociation.pExports              = PayLoadExportNamesRef.GetData();
+        ShaderConfigAssociation.NumExports            = PayLoadExportNamesRef.GetSize();
         ShaderConfigAssociation.pSubobjectToAssociate = &SubObjects[SubObjectIndex - 1];
 
         D3D12_STATE_SUBOBJECT& ShaderConfigAssociationSubObject = SubObjects[SubObjectIndex++];
@@ -678,8 +678,8 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     FMemory::Memzero(&RayTracingPipeline);
 
     RayTracingPipeline.Type          = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
-    RayTracingPipeline.pSubobjects   = PipelineStream.SubObjects.Data();
-    RayTracingPipeline.NumSubobjects = PipelineStream.SubObjects.Size();
+    RayTracingPipeline.pSubobjects   = PipelineStream.SubObjects.GetData();
+    RayTracingPipeline.NumSubobjects = PipelineStream.SubObjects.GetSize();
 
     TComPtr<ID3D12StateObject> TempStateObject;
     HRESULT Result = GetDevice()->GetD3D12Device5()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));

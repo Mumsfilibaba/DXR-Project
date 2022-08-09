@@ -31,7 +31,7 @@ struct FOBJTextureContext
         auto TextureIt = UniqueTextures.find(Fullpath);
         if (TextureIt == UniqueTextures.end())
         {
-            int8 TextureIndex = static_cast<int8>(Textures.Size());
+            int8 TextureIndex = static_cast<int8>(Textures.GetSize());
 
             FImage2DPtr NewTexture = Textures.Emplace(FSTBImageLoader::LoadFile(Fullpath));
             UniqueTextures.insert(std::make_pair(Fullpath, TextureIndex));
@@ -144,7 +144,7 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
 
                 if (UniqueVertices.count(TempVertex) == 0)
                 {
-                    UniqueVertices[TempVertex] = static_cast<uint32>(Data.Mesh.Vertices.Size());
+                    UniqueVertices[TempVertex] = static_cast<uint32>(Data.Mesh.Vertices.GetSize());
                     Data.Mesh.Vertices.Push(TempVertex);
                 }
 

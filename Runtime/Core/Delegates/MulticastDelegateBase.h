@@ -109,7 +109,7 @@ public:
 
         if (Object)
         {
-            for (int32 Index = 0; Index < Delegates.Size(); Index++)
+            for (int32 Index = 0; Index < Delegates.GetSize(); Index++)
             {
                 FDelegateBase& Delegate = Delegates[Index];
 
@@ -184,7 +184,7 @@ public:
      */
     FORCEINLINE uint32 GetCount() const noexcept
     {
-        return static_cast<uint32>(Delegates.Size());
+        return static_cast<uint32>(Delegates.GetSize());
     }
 
     /**

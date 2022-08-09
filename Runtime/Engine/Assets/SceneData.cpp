@@ -62,7 +62,7 @@ void FSceneData::AddToScene(FScene* Scene)
         }
     }
 
-    Check(Materials.Size() == CreatedMaterials.Size());
+    Check(Materials.GetSize() == CreatedMaterials.GetSize());
 
     for (const FModelData& ModelData : Models)
     {

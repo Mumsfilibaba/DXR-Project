@@ -134,7 +134,7 @@ void Delegate_Test()
     std::cout << std::endl << "----Testing Tuple----" << std::endl << std::endl;
     TTuple<int32, float, double, std::string> Tuple(5, 0.9f, 5.0, "A string") ;
 
-    std::cout << "Size=" << Tuple.Size() << std::endl;
+    std::cout << "Size=" << Tuple.GetSize() << std::endl;
 
     std::cout << "NumElements=" << TTuple<int, float, double>::NumElements << std::endl;
 

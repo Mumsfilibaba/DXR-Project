@@ -246,7 +246,7 @@ void FRenderer::FrustumCullingAndSortingInternal(
         TArray<float>& OutDistances,
         TArray<uint32>& OutCommands) -> void
     {
-        Check(OutDistances.Size() == OutCommands.Size());
+        Check(OutDistances.GetSize() == OutCommands.GetSize());
 
         FVector3 CameraPosition = Camera->GetPosition();
         FVector3 DistanceVector = WorldPosition - CameraPosition;
@@ -254,7 +254,7 @@ void FRenderer::FrustumCullingAndSortingInternal(
         const float NewDistance = DistanceVector.LengthSquared();
 
         int32 Index = 0;
-        for (; Index < OutCommands.Size(); ++Index)
+        for (; Index < OutCommands.GetSize(); ++Index)
         {
             const float Distance = OutDistances[Index];
             if (NewDistance < Distance)
@@ -325,7 +325,7 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
     ReadableMeshCommands.Reserve(NumThreads);
 
     const auto CameraPtr            = Scene.GetCamera();
-    const auto NumMeshCommands      = Scene.GetMeshDrawCommands().Size();
+    const auto NumMeshCommands      = Scene.GetMeshDrawCommands().GetSize();
     const auto NumCommandsPerThread = (NumMeshCommands / NumThreads) + 1;
 
     int32 RemainingCommands = NumMeshCommands;
@@ -532,7 +532,7 @@ void FRenderer::Tick(const FScene& Scene)
 
     if (!GFrustumCullEnabled.GetBool())
     {
-        for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.Size(); ++CommandIndex)
+        for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.GetSize(); ++CommandIndex)
         {
             const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
             if (Command.Material->HasAlphaMask())
@@ -1145,9 +1145,9 @@ bool FRenderer::InitBoundingBoxDebugPass()
         FVector3(-0.5f,  0.5f, -0.5f)
     };
 
-    FRHIBufferDataInitializer VertexData(Vertices.Data(), Vertices.SizeInBytes());
+    FRHIBufferDataInitializer VertexData(Vertices.GetData(), Vertices.SizeInBytes());
 
-    FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, Vertices.Size(), sizeof(FVector3), EResourceAccess::Common, &VertexData);
+    FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, Vertices.GetSize(), sizeof(FVector3), EResourceAccess::Common, &VertexData);
     AABBVertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!AABBVertexBuffer)
     {
@@ -1176,9 +1176,9 @@ bool FRenderer::InitBoundingBoxDebugPass()
         2, 7,
     };
 
-    FRHIBufferDataInitializer IndexData(Indices.Data(), Indices.SizeInBytes());
+    FRHIBufferDataInitializer IndexData(Indices.GetData(), Indices.SizeInBytes());
 
-    FRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint16, Indices.Size(), EResourceAccess::Common, &IndexData);
+    FRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint16, Indices.GetSize(), EResourceAccess::Common, &IndexData);
     AABBIndexBuffer = RHICreateIndexBuffer(IBInitializer);
     if (!AABBIndexBuffer)
     {

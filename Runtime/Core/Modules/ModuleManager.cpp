@@ -134,7 +134,7 @@ IModule* FModuleManager::GetModule(const char* ModuleName)
 
 void FModuleManager::ReleaseAllModules()
 {
-    const int32 NumModules = Modules.Size();
+    const int32 NumModules = Modules.GetSize();
     for (int32 Index = 0; Index < NumModules; Index++)
     {
         FModule& Module = Modules[Index];
@@ -208,7 +208,7 @@ void FModuleManager::UnloadModule(const char* ModuleName)
 
 uint32 FModuleManager::GetLoadedModuleCount()
 {
-    return static_cast<uint32>(Modules.Size());
+    return static_cast<uint32>(Modules.GetSize());
 }
 
 int32 FModuleManager::GetModuleIndex(const char* ModuleName)

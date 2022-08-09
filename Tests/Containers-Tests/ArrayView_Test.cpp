@@ -16,7 +16,7 @@ template<typename T>
 static void PrintArrayView(const TArrayView<T>& View)
 {
     std::cout << "------------------------------" << std::endl;
-    for (typename TArrayView<T>::SizeType i = 0; i < View.Size(); i++)
+    for (typename TArrayView<T>::SizeType i = 0; i < View.GetSize(); i++)
     {
         std::cout << View[i] << std::endl;
     }
@@ -101,7 +101,7 @@ void TArrayView_Test()
     std::cout << "ArrView0=" << std::boolalpha << ArrView5.IsEmpty() << std::endl;
 
     std::cout << "Testing Size/SizeInBytes" << std::endl;
-    std::cout << "Size: " << ArrView4.Size() << std::endl;
+    std::cout << "Size: " << ArrView4.GetSize() << std::endl;
     std::cout << "SizeInBytes: " << ArrView4.SizeInBytes() << std::endl;
 
     std::cout << "Testing Swap" << std::endl;

@@ -69,7 +69,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     FVector3 Normal = FVector3(0.0f, 0.0f, 1.0f);
 
     TArray<FVector3> SSAOKernel;
-    for (uint32 i = 0; i < 512 && SSAOKernel.Size() < 64; i++)
+    for (uint32 i = 0; i < 512 && SSAOKernel.GetSize() < 64; i++)
     {
         FVector3 Sample = FVector3(RandomFloats(Generator) * 2.0f - 1.0f, RandomFloats(Generator) * 2.0f - 1.0f, RandomFloats(Generator));
         Sample.Normalize();
@@ -131,7 +131,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::CopyDest);
 
-    CmdList.UpdateTexture2D(SSAONoiseTex.Get(), 4, 4, 0, SSAONoise.Data());
+    CmdList.UpdateTexture2D(SSAONoiseTex.Get(), 4, 4, 0, SSAONoise.GetData());
 
     CmdList.TransitionTexture(
         SSAONoiseTex.Get(),
@@ -140,7 +140,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
 
     GRHICommandExecutor.ExecuteCommandList(CmdList);
 
-    FRHIBufferDataInitializer SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
+    FRHIBufferDataInitializer SSAOSampleData(SSAOKernel.GetData(), SSAOKernel.SizeInBytes());
     
     FRHIGenericBufferInitializer SSAOSamplesInitializer(
         EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default,
@@ -160,7 +160,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
         SSAOSamples->SetName("SSAO Samples");
     }
 
-    FRHIBufferSRVInitializer SRVInitializer(SSAOSamples.Get(), 0, SSAOKernel.Size());
+    FRHIBufferSRVInitializer SRVInitializer(SSAOSamples.Get(), 0, SSAOKernel.GetSize());
     SSAOSamplesSRV = RHICreateShaderResourceView(SRVInitializer);
     if (!SSAOSamplesSRV)
     {

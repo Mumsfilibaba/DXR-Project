@@ -51,7 +51,7 @@ void* FMemory::Memzero(void* Dst, uint64 Size) noexcept
     return memset(Dst, 0, Size);
 }
 
-void* FMemory::Memcpy(void* restrict_ptr Dst, const void* restrict_ptr Src, uint64 Size) noexcept
+void* FMemory::Memcpy(void* RESTRICT Dst, const void* RESTRICT Src, uint64 Size) noexcept
 {
     return memcpy(Dst, Src, Size);
 }
@@ -66,7 +66,7 @@ bool FMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
     return (memcmp(LHS, RHS, Size) == 0);
 }
 
-void FMemory::Memswap(void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size) noexcept
+void FMemory::Memswap(void* RESTRICT LHS, void* RESTRICT RHS, uint64 Size) noexcept
 {
     Check(LHS != nullptr && RHS != nullptr);
 

@@ -31,7 +31,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRTV(const FRHIRenderTargetView
         ResourceDesc.DepthOrArraySize);
 
     const DXGI_FORMAT DXGIFormat = ConvertFormat(RTVInitializer.Format);
-    if (Subresource < uint32(RenderTargetViews.Size()))
+    if (Subresource < uint32(RenderTargetViews.GetSize()))
     {
         FD3D12RenderTargetView* ExistingView = RenderTargetViews[Subresource].Get();
         if (ExistingView)
@@ -136,7 +136,7 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDSV(const FRHIDepthStencilView
         ResourceDesc.DepthOrArraySize);
 
     const DXGI_FORMAT DXGIFormat = ConvertFormat(DSVInitializer.Format);
-    if (Subresource < uint32(DepthStencilViews.Size()))
+    if (Subresource < uint32(DepthStencilViews.GetSize()))
     {
         FD3D12DepthStencilView* ExistingView = DepthStencilViews[Subresource].Get();
         if (ExistingView)

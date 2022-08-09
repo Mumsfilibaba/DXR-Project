@@ -161,7 +161,7 @@ public:
      */
     FORCEINLINE void ResetWithZeros()
     {
-        FMemory::Memset(Data(), 0x00, CapacityInBytes());
+        FMemory::Memset(GetData(), 0x00, CapacityInBytes());
     }
 
     /**
@@ -169,7 +169,7 @@ public:
      */
     FORCEINLINE void ResetWithOnes()
     {
-        FMemory::Memset(Data(), 0xff, CapacityInBytes());
+        FMemory::Memset(GetData(), 0xff, CapacityInBytes());
         MaskOutLastStorageElement();
     }
 
@@ -178,7 +178,7 @@ public:
      * 
      * @return: Returns true if the array is empty
      */
-    FORCEINLINE bool IsEmpty() const noexcept
+    NODISCARD FORCEINLINE bool IsEmpty() const noexcept
     {
         return (NumBits == 0);
     }
@@ -230,7 +230,7 @@ public:
      * 
      * @return: Returns the number of bits that are true
      */
-    FORCEINLINE SizeType CountAssignedBits() const noexcept
+    NODISCARD FORCEINLINE SizeType CountAssignedBits() const noexcept
     {
         SizeType BitCount = 0;
         for (SizeType Index = 0; Index < NumElements; ++Index)
@@ -247,7 +247,7 @@ public:
      *
      * @return: Returns true if any bit is set
      */
-    FORCEINLINE bool HasAnyBitSet() const noexcept
+    NODISCARD FORCEINLINE bool HasAnyBitSet() const noexcept
     {
         return (CountAssignedBits() != 0);
     }
@@ -257,7 +257,7 @@ public:
      *
      * @return: Returns true if no bit is set
      */
-    FORCEINLINE bool HasNoBitSet() const noexcept
+    NODISCARD FORCEINLINE bool HasNoBitSet() const noexcept
     {
         return (CountAssignedBits() == 0);
     }
@@ -267,7 +267,7 @@ public:
      *
      * @return: Returns the index of the most significant bit
      */
-    FORCEINLINE SizeType MostSignificant() const
+    NODISCARD FORCEINLINE SizeType MostSignificant() const
     {
         SizeType Result = 0;
         for (int32 Index = int32(NumElements) - 1; Index >= 0; --Index)
@@ -289,7 +289,7 @@ public:
      *
      * @return: Returns the index of the least significant bit
      */
-    FORCEINLINE SizeType LeastSignificant() const
+    NODISCARD FORCEINLINE SizeType LeastSignificant() const
     {
         SizeType Result = 0;
         for (SizeType Index = 0; Index < NumElements; ++Index)
@@ -479,7 +479,7 @@ public:
      * @param Index: Index of the bit
      * @return: Returns a reference to the bit with the index
      */
-    FORCEINLINE BitReferenceType GetBitReference(SizeType BitIndex) noexcept
+    NODISCARD FORCEINLINE BitReferenceType GetBitReference(SizeType BitIndex) noexcept
     {
         Check(BitIndex < NumBits);
 
@@ -496,7 +496,7 @@ public:
      * @param Index: Index of the bit
      * @return: Returns a reference to the bit with the index
      */
-    FORCEINLINE ConstBitReferenceType GetBitReference(SizeType BitIndex) const noexcept
+    NODISCARD FORCEINLINE ConstBitReferenceType GetBitReference(SizeType BitIndex) const noexcept
     {
         Check(BitIndex < NumBits);
 
@@ -512,7 +512,7 @@ public:
      *
      * @return: Returns the number of bits in the array
      */
-    FORCEINLINE SizeType Size() const noexcept
+    NODISCARD FORCEINLINE SizeType GetSize() const noexcept
     {
         return NumBits;
     }
@@ -522,7 +522,7 @@ public:
      * 
      * @return: Returns the number of integers used to store the bits
      */
-    FORCEINLINE SizeType StorageSize() const noexcept
+    NODISCARD FORCEINLINE SizeType StorageSize() const noexcept
     {
         return NumElements;
     }
@@ -532,7 +532,7 @@ public:
      *
      * @return: Returns the maximum number of bits in the array
      */
-    FORCEINLINE SizeType Capacity() const noexcept
+    NODISCARD FORCEINLINE SizeType Capacity() const noexcept
     {
         return NumElements * GetBitsPerStorage();
     }
@@ -542,7 +542,7 @@ public:
      *
      * @return: Returns the capacity of the array in bytes
      */
-    FORCEINLINE SizeType CapacityInBytes() const noexcept
+    NODISCARD FORCEINLINE SizeType CapacityInBytes() const noexcept
     {
         return NumElements * sizeof(StorageType);
     }
@@ -552,7 +552,7 @@ public:
      * 
      * @return: Returns a pointer to the stored data
      */
-    FORCEINLINE StorageType* Data() noexcept
+    NODISCARD FORCEINLINE StorageType* GetData() noexcept
     {
         return Storage.GetAllocation();
     }
@@ -562,7 +562,7 @@ public:
      *
      * @return: Returns a pointer to the stored data
      */
-    FORCEINLINE const StorageType* Data() const noexcept
+    NODISCARD FORCEINLINE const StorageType* GetData() const noexcept
     {
         return Storage.GetAllocation();
     }
@@ -673,7 +673,7 @@ public:
      * @param Index: Index to the bit
      * @return: Returns a BitReference to the specified bit
      */
-    FORCEINLINE BitReferenceType operator[](SizeType Index) noexcept
+    NODISCARD FORCEINLINE BitReferenceType operator[](SizeType Index) noexcept
     {
         return GetBitReference(Index);
     }
@@ -684,7 +684,7 @@ public:
      * @param Index: Index to the bit
      * @return: Returns a BitReference to the specified bit
      */
-    FORCEINLINE const ConstBitReferenceType operator[](SizeType Index) const noexcept
+    NODISCARD FORCEINLINE const ConstBitReferenceType operator[](SizeType Index) const noexcept
     {
         return GetBitReference(Index);
     }
@@ -720,7 +720,7 @@ public:
      * @return: Returns true if the BitArrays are equal
      */
     template<typename OtherStorageType, typename OtherAllocatorType>
-    FORCEINLINE bool operator==(const TBitArray<OtherStorageType, OtherAllocatorType>& RHS) const noexcept
+    NODISCARD FORCEINLINE bool operator==(const TBitArray<OtherStorageType, OtherAllocatorType>& RHS) const noexcept
     {
         if (NumBits != RHS.NumBits)
         {
@@ -745,7 +745,7 @@ public:
      * @return: Returns false if the BitArrays are equal
      */
     template<typename OtherStorageType, typename OtherAllocatorType>
-    FORCEINLINE bool operator!=(const TBitArray<OtherStorageType, OtherAllocatorType>& RHS) const noexcept
+    NODISCARD FORCEINLINE bool operator!=(const TBitArray<OtherStorageType, OtherAllocatorType>& RHS) const noexcept
     {
         return !(*this == RHS);
     }
@@ -759,7 +759,7 @@ public:
      * @param RHS: Right-hand side to bitwise AND with
      * @return: Returns a BitArray with the result
      */
-    friend FORCEINLINE TBitArray operator&(const TBitArray& LHS, const TBitArray& RHS) noexcept
+    friend NODISCARD FORCEINLINE TBitArray operator&(const TBitArray& LHS, const TBitArray& RHS) noexcept
     {
         TBitArray NewArray(LHS);
         NewArray.BitwiseAnd(RHS);
@@ -773,7 +773,7 @@ public:
      * @param RHS: Right-hand side to bitwise OR with
      * @return: Returns a BitArray with the result
      */
-    friend FORCEINLINE TBitArray operator|(const TBitArray& LHS, const TBitArray& RHS) noexcept
+    friend NODISCARD FORCEINLINE TBitArray operator|(const TBitArray& LHS, const TBitArray& RHS) noexcept
     {
         TBitArray NewArray(LHS);
         NewArray.BitwiseOr(RHS);
@@ -787,7 +787,7 @@ public:
      * @param RHS: Right-hand side to bitwise XOR with
      * @return: Returns a BitArray with the result
      */
-    friend FORCEINLINE TBitArray operator^(const TBitArray& LHS, const TBitArray& RHS) noexcept
+    friend NODISCARD FORCEINLINE TBitArray operator^(const TBitArray& LHS, const TBitArray& RHS) noexcept
     {
         TBitArray NewArray(LHS);
         NewArray.BitwiseXor(RHS);
@@ -801,7 +801,7 @@ public:
      *
      * @return: A iterator that points to the first element
      */
-    FORCEINLINE IteratorType StartIterator() noexcept
+    NODISCARD FORCEINLINE IteratorType StartIterator() noexcept
     {
         return IteratorType(*this, 0);
     }
@@ -811,9 +811,9 @@ public:
      *
      * @return: A iterator that points to the element past the end
      */
-    FORCEINLINE IteratorType EndIterator() noexcept
+    NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType(*this, Size());
+        return IteratorType(*this, GetSize());
     }
 
     /**
@@ -821,7 +821,7 @@ public:
      *
      * @return: A iterator that points to the first element
      */
-    FORCEINLINE ConstIteratorType StartIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
         return ConstIteratorType(*this, 0);
     }
@@ -831,9 +831,9 @@ public:
      *
      * @return: A iterator that points to the element past the end
      */
-    FORCEINLINE ConstIteratorType EndIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType(*this, Size());
+        return ConstIteratorType(*this, GetSize());
     }
 
     /**
@@ -841,9 +841,9 @@ public:
      *
      * @return: A reverse-iterator that points to the last element
      */
-    FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType(*this, Size());
+        return ReverseIteratorType(*this, GetSize());
     }
 
     /**
@@ -851,7 +851,7 @@ public:
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
-    FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
         return ReverseIteratorType(*this, 0);
     }
@@ -861,9 +861,9 @@ public:
      *
      * @return: A reverse-iterator that points to the last element
      */
-    FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType(*this, Size());
+        return ReverseConstIteratorType(*this, GetSize());
     }
 
     /**
@@ -871,7 +871,7 @@ public:
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
-    FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, 0);
     }
@@ -883,7 +883,7 @@ public:
      *
      * @return: A iterator that points to the first element
      */
-    FORCEINLINE IteratorType begin() noexcept
+    NODISCARD FORCEINLINE IteratorType begin() noexcept
     {
         return StartIterator();
     }
@@ -893,7 +893,7 @@ public:
      *
      * @return: A iterator that points past the last element
      */
-    FORCEINLINE IteratorType end() noexcept
+    NODISCARD FORCEINLINE IteratorType end() noexcept
     {
         return EndIterator();
     }
@@ -903,7 +903,7 @@ public:
      *
      * @return: A iterator that points to the first element
      */
-    FORCEINLINE ConstIteratorType begin() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept
     {
         return StartIterator();
     }
@@ -913,39 +913,39 @@ public:
      *
      * @return: A iterator that points past the last element
      */
-    FORCEINLINE ConstIteratorType end() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept
     {
         return EndIterator();
     }
 
 public: 
-    static CONSTEXPR SizeType GetBitsPerStorage() noexcept
+    static NODISCARD CONSTEXPR SizeType GetBitsPerStorage() noexcept
     {
         return sizeof(StorageType) * 8;
     }
 
 private:
-    static CONSTEXPR SizeType GetStorageIndexOfBit(SizeType BitIndex) noexcept
+    static NODISCARD CONSTEXPR SizeType GetStorageIndexOfBit(SizeType BitIndex) noexcept
     {
         return (BitIndex / GetBitsPerStorage());
     }
 
-    static CONSTEXPR SizeType GetIndexOfBitInStorage(SizeType BitIndex) noexcept
+    static NODISCARD CONSTEXPR SizeType GetIndexOfBitInStorage(SizeType BitIndex) noexcept
     {
         return (BitIndex % GetBitsPerStorage());
     }
 
-    static CONSTEXPR StorageType CreateMaskForBit(SizeType BitIndex) noexcept
+    static NODISCARD CONSTEXPR StorageType CreateMaskForBit(SizeType BitIndex) noexcept
     {
         return StorageType(1) << GetIndexOfBitInStorage(BitIndex);
     }
 
-    static CONSTEXPR StorageType CreateMaskUpToBit(SizeType BitIndex) noexcept
+    static NODISCARD CONSTEXPR StorageType CreateMaskUpToBit(SizeType BitIndex) noexcept
     {
         return CreateMaskForBit(BitIndex) - 1;
     }
 
-    static CONSTEXPR SizeType GetRequiredStorageForBits(SizeType InNumBits) noexcept
+    static NODISCARD CONSTEXPR SizeType GetRequiredStorageForBits(SizeType InNumBits) noexcept
     {
         return (InNumBits + (GetBitsPerStorage() - 1)) / GetBitsPerStorage();
     }
@@ -992,10 +992,10 @@ private:
     {
         const SizeType StartElementIndex = GetStorageIndexOfBit(StartBit);
 
-        StorageType* Pointer = Data() + StartElementIndex;
+        StorageType* Pointer = GetData() + StartElementIndex;
 
         const SizeType RemainingElements = StorageSize() - StartElementIndex;
-        const SizeType RemainingBits     = Size() - StartBit;
+        const SizeType RemainingBits     = GetSize() - StartBit;
         if (Steps < RemainingBits)
         {
             // Mask value to ensure that we get zeros shifted in
@@ -1023,7 +1023,7 @@ private:
 
     FORCEINLINE void BitshiftRight_Simple(SizeType Steps, SizeType StartElementIndex, SizeType ElementsToShift)
     {
-        StorageType* Pointer = Data() + StartElementIndex + ElementsToShift;
+        StorageType* Pointer = GetData() + StartElementIndex + ElementsToShift;
 
         const SizeType CurrShift = Steps % GetBitsPerStorage();
         const SizeType PrevShift = GetBitsPerStorage() - CurrShift;
@@ -1044,7 +1044,7 @@ private:
         const SizeType StartElementIndex = GetStorageIndexOfBit(BitPosition);
         const SizeType ElementsToShift = NumElements - StartElementIndex;
 
-        StorageType* Pointer = Data() + StartElementIndex;
+        StorageType* Pointer = GetData() + StartElementIndex;
 
         // Mask value to ensure that we get zeros shifted in
         const StorageType StartValue  = *Pointer;
@@ -1065,10 +1065,10 @@ private:
     {
         const SizeType StartElementIndex = GetStorageIndexOfBit(StartBit);
 
-        StorageType* Pointer = Data() + StartElementIndex;
+        StorageType* Pointer = GetData() + StartElementIndex;
 
         const SizeType RemainingElements = StorageSize() - StartElementIndex;
-        const SizeType RemainingBits     = Size() - StartBit;
+        const SizeType RemainingBits     = GetSize() - StartBit;
         if (Steps < RemainingBits)
         {
             // Mask value to ensure that we get zeros shifted in
@@ -1096,7 +1096,7 @@ private:
 
     FORCEINLINE void BitshiftLeft_Simple(SizeType Steps, SizeType StartElementIndex, SizeType ElementsToShift)
     {
-        StorageType* Pointer = Data() + StartElementIndex;
+        StorageType* Pointer = GetData() + StartElementIndex;
 
         const SizeType CurrShift = Steps % GetBitsPerStorage();
         const SizeType PrevShift = GetBitsPerStorage() - CurrShift;
@@ -1117,7 +1117,7 @@ private:
         const SizeType StartElementIndex = GetStorageIndexOfBit(BitPosition);
         const SizeType ElementsToShift   = NumElements - StartElementIndex;
 
-        StorageType* Pointer = Data() + StartElementIndex;
+        StorageType* Pointer = GetData() + StartElementIndex;
 
         // Mask value to ensure that we get zeros shifted in
         const StorageType StartValue  = *Pointer;
@@ -1143,25 +1143,25 @@ private:
         Element &= Mask;
     }
 
-    FORCEINLINE StorageType& GetStorageForBit(SizeType BitIndex) noexcept
+    NODISCARD FORCEINLINE StorageType& GetStorageForBit(SizeType BitIndex) noexcept
     {
         const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
         return GetStorage(ElementIndex);
     }
 
-    FORCEINLINE const StorageType& GetStorageForBit(SizeType BitIndex) const noexcept
+    NODISCARD FORCEINLINE const StorageType& GetStorageForBit(SizeType BitIndex) const noexcept
     {
         const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
         return GetStorage(ElementIndex);
     }
 
-    FORCEINLINE StorageType& GetStorage(SizeType Index) noexcept
+    NODISCARD FORCEINLINE StorageType& GetStorage(SizeType Index) noexcept
     {
         StorageType* Pointer = Storage.GetAllocation();
         return Pointer[Index];
     }
 
-    FORCEINLINE const StorageType& GetStorage(SizeType Index) const noexcept
+    NODISCARD FORCEINLINE const StorageType& GetStorage(SizeType Index) const noexcept
     {
         const StorageType* Pointer = Storage.GetAllocation();
         return Pointer[Index];

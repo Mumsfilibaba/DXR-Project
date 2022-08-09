@@ -59,7 +59,7 @@ namespace Internal
             : Value(Move(InValue))
         { }
 
-        FORCEINLINE int32 Swap(TTupleLeaf& Other) noexcept
+        NODISCARD FORCEINLINE int32 Swap(TTupleLeaf& Other) noexcept
         {
             ::Swap<ValueType>(Value, Other.Value);
             return 0;
@@ -97,7 +97,7 @@ namespace Internal
             : Value(Forward<ArgTypes>(Args)...)
         { }
 
-        FORCEINLINE int32 Swap(TTupleLeaf&) noexcept
+        NODISCARD FORCEINLINE int32 Swap(TTupleLeaf&) noexcept
         {
             return 0;
         }
@@ -131,19 +131,16 @@ namespace Internal
     {
         using Type = ElementType;
 
-        enum
-        {
-            ElementIndex = Index
-        };
+        enum { ElementIndex = Index };
 
         template<typename TupleType>
-        static FORCEINLINE ElementType& Get(TupleType& Tuple) noexcept
+        static NODISCARD FORCEINLINE ElementType& Get(TupleType& Tuple) noexcept
         {
             return static_cast<TTupleLeaf<Index, ElementType>&>(Tuple).Value;
         }
 
         template<typename TupleType>
-        static FORCEINLINE const ElementType& Get(const TupleType& Tuple) noexcept
+        static NODISCARD FORCEINLINE const ElementType& Get(const TupleType& Tuple) noexcept
         {
             return static_cast<const TTupleLeaf<Index, ElementType>&>(Tuple).Value;
         }
@@ -182,19 +179,16 @@ namespace Internal
     {
         typedef WantedType Type;
 
-        enum
-        {
-            ElementIndex = Iteration
-        };
+        enum { ElementIndex = Iteration };
 
         template <typename TupleType>
-        static FORCEINLINE WantedType& Get(TupleType& Tuple) noexcept
+        static NODISCARD FORCEINLINE WantedType& Get(TupleType& Tuple) noexcept
         {
             return static_cast<TTupleLeaf<Iteration, WantedType>&>(Tuple).Value;
         }
 
         template <typename TupleType>
-        static FORCEINLINE const WantedType& Get(const TupleType& Tuple) noexcept
+        static NODISCARD FORCEINLINE const WantedType& Get(const TupleType& Tuple) noexcept
         {
             return static_cast<const TTupleLeaf<Iteration, WantedType>&>(Tuple).Value;
         }
@@ -257,7 +251,7 @@ namespace Internal
          * @return: Returns a reference to the data of the specified type
          */
         template<typename ElementType>
-        FORCEINLINE ElementType& Get() noexcept
+        NODISCARD FORCEINLINE ElementType& Get() noexcept
         {
             typedef TTupleGetByElement<ElementType, Types...> Type;
             return Type::Get(*this);
@@ -269,7 +263,7 @@ namespace Internal
           * @return: Returns a reference to the data of the specified type
           */
         template<typename ElementType>
-        FORCEINLINE const ElementType& Get() const noexcept
+        NODISCARD FORCEINLINE const ElementType& Get() const noexcept
         {
             typedef TTupleGetByElement<ElementType, Types...> Type;
             return Type::Get(*this);
@@ -281,7 +275,7 @@ namespace Internal
           * @return: Returns a reference with the specified index
           */
         template<uint32 Index>
-        FORCEINLINE auto& GetByIndex() noexcept
+        NODISCARD FORCEINLINE auto& GetByIndex() noexcept
         {
             typedef TTupleGetByIndex<Index, Types...> IndexType;
             return IndexType::Get(*this);
@@ -293,7 +287,7 @@ namespace Internal
           * @return: Returns a reference with the specified index
           */
         template<uint32 Index>
-        FORCEINLINE const auto& GetByIndex() const noexcept
+        NODISCARD FORCEINLINE const auto& GetByIndex() const noexcept
         {
             typedef TTupleGetByIndex<Index, Types...> IndexType;
             return IndexType::Get(*this);
@@ -351,12 +345,12 @@ namespace Internal
         {
             typedef FirstType Type;
 
-            static FORCEINLINE FirstType& Get(TTupleStorage& Tuple)
+            static NODISCARD FORCEINLINE FirstType& Get(TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
 
-            static FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple)
+            static NODISCARD FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
@@ -367,12 +361,12 @@ namespace Internal
         {
             typedef SecondType Type;
 
-            static FORCEINLINE SecondType& Get(TTupleStorage& Tuple)
+            static NODISCARD FORCEINLINE SecondType& Get(TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
 
-            static FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple)
+            static NODISCARD FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
@@ -394,12 +388,12 @@ namespace Internal
         {
             typedef FirstType Type;
 
-            static FORCEINLINE FirstType& Get(TTupleStorage& Tuple)
+            static NODISCARD FORCEINLINE FirstType& Get(TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
 
-            static FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple)
+            static NODISCARD FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
@@ -410,12 +404,12 @@ namespace Internal
         {
             typedef SecondType Type;
 
-            static FORCEINLINE SecondType& Get(TTupleStorage& Tuple)
+            static NODISCARD FORCEINLINE SecondType& Get(TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
 
-            static FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple)
+            static NODISCARD FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
@@ -472,7 +466,7 @@ namespace Internal
          * @return: Returns a reference to the data of the specified type
          */
         template<typename ElementType>
-        FORCEINLINE typename TGetByElementHelper<ElementType>::Type& Get() noexcept
+        NODISCARD FORCEINLINE typename TGetByElementHelper<ElementType>::Type& Get() noexcept
         {
             return TGetByElementHelper<ElementType>::Get(*this);
         }
@@ -483,7 +477,7 @@ namespace Internal
          * @return: Returns a reference to the data of the specified type
          */
         template<typename ElementType>
-        FORCEINLINE const typename TGetByElementHelper<ElementType>::Type& Get() const noexcept
+        NODISCARD FORCEINLINE const typename TGetByElementHelper<ElementType>::Type& Get() const noexcept
         {
             return TGetByElementHelper<ElementType>::Get(*this);
         }
@@ -494,7 +488,7 @@ namespace Internal
           * @return: Returns a reference with the specified index
           */
         template<uint32 Index>
-        FORCEINLINE typename TGetByIndexHelper<Index>::Type& GetByIndex() noexcept
+        NODISCARD FORCEINLINE typename TGetByIndexHelper<Index>::Type& GetByIndex() noexcept
         {
             return TGetByIndexHelper<Index>::Get(*this);
         }
@@ -505,7 +499,7 @@ namespace Internal
           * @return: Returns a reference with the specified index
           */
         template<uint32 Index>
-        FORCEINLINE const typename TGetByIndexHelper<Index>::Type& GetByIndex() const noexcept
+        NODISCARD FORCEINLINE const typename TGetByIndexHelper<Index>::Type& GetByIndex() const noexcept
         {
             return TGetByIndexHelper<Index>::Get(*this);
         }
@@ -553,7 +547,7 @@ namespace Internal
         template<
             typename FirstTupleType,
             typename SecondTupleType>
-        static FORCEINLINE bool IsEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
+        static NODISCARD FORCEINLINE bool IsEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
             return TTupleComparators<Index - 1>::IsEqual(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() == RHS.template GetByIndex<Index - 1>());
@@ -562,7 +556,7 @@ namespace Internal
         template<
             typename FirstTupleType,
             typename SecondTupleType>
-        static FORCEINLINE bool IsLessThan(const FirstTupleType& LHS, const SecondTupleType& RHS)
+        static NODISCARD FORCEINLINE bool IsLessThan(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
             return TTupleComparators<Index - 1>::IsLessThan(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() < RHS.template GetByIndex<Index - 1>());
@@ -571,7 +565,7 @@ namespace Internal
         template<
             typename FirstTupleType,
             typename SecondTupleType>
-        static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
+        static NODISCARD FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
             return TTupleComparators<Index - 1>::IsLessThanOrEqual(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() <= RHS.template GetByIndex<Index - 1>());
@@ -584,7 +578,7 @@ namespace Internal
         template<
             typename FirstTupleType,
             typename SecondTupleType>
-        static FORCEINLINE bool IsEqual(const FirstTupleType&, const SecondTupleType&)
+        static NODISCARD FORCEINLINE bool IsEqual(const FirstTupleType&, const SecondTupleType&)
         {
             return true;
         }
@@ -592,7 +586,7 @@ namespace Internal
         template<
             typename FirstTupleType,
             typename SecondTupleType>
-        static FORCEINLINE bool IsLessThan(const FirstTupleType&, const SecondTupleType&)
+        static NODISCARD FORCEINLINE bool IsLessThan(const FirstTupleType&, const SecondTupleType&)
         {
             return true;
         }
@@ -600,7 +594,7 @@ namespace Internal
         template<
             typename FirstTupleType,
             typename SecondTupleType>
-        static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType&, const SecondTupleType&)
+        static NODISCARD FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType&, const SecondTupleType&)
         {
             return true;
         }
@@ -623,10 +617,7 @@ public:
     using Super::GetByIndex;
     using Super::Swap;
 
-    enum
-    {
-        NumElements = sizeof...(Types)
-    };
+    enum { NumElements = sizeof...(Types) };
 
     TTuple() = default;
     TTuple(TTuple&&) = default;
@@ -652,7 +643,7 @@ public:
      * 
      * @return: Returns the number of elements for the tuples
      */
-    CONSTEXPR uint32 Size() const
+    NODISCARD CONSTEXPR uint32 GetSize() const
     {
         return NumElements;
     }
@@ -664,7 +655,7 @@ public:
 template<
     typename... FirstTypes,
     typename... SecondTypes>
-inline bool operator==(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
+inline NODISCARD bool operator==(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
     return Internal::TTupleComparators<sizeof...(FirstTypes)>::IsEqual(LHS, RHS);
 }
@@ -672,7 +663,7 @@ inline bool operator==(const TTuple<FirstTypes...>& LHS, const TTuple<SecondType
 template<
     typename... FirstTypes,
     typename... SecondTypes>
-inline bool operator!=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
+inline NODISCARD bool operator!=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
     return !(LHS == RHS);
 }
@@ -680,7 +671,7 @@ inline bool operator!=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondType
 template<
     typename... FirstTypes,
     typename... SecondTypes>
-inline bool operator<=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
+inline NODISCARD bool operator<=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
     return Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThanOrEqual(LHS, RHS);
 }
@@ -688,7 +679,7 @@ inline bool operator<=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondType
 template<
     typename... FirstTypes,
     typename... SecondTypes>
-inline bool operator<(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
+inline NODISCARD bool operator<(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
     return Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThan(LHS, RHS);
 }
@@ -696,7 +687,7 @@ inline bool operator<(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes
 template<
     typename... FirstTypes,
     typename... SecondTypes>
-inline bool operator>(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
+inline NODISCARD bool operator>(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
     return (Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThanOrEqual(LHS, RHS) == false);
 }
@@ -704,7 +695,7 @@ inline bool operator>(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes
 template<
     typename... FirstTypes,
     typename... SecondTypes>
-inline bool operator>=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
+inline NODISCARD bool operator>=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
     return (Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThan(LHS, RHS) == false);
 }
@@ -715,7 +706,7 @@ inline bool operator>=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondType
 template<
     uint32 SearchForIndex,
     typename... Types>
-inline auto& TupleGetByIndex(const TTuple<Types...>& Tuple) noexcept
+inline NODISCARD auto& TupleGetByIndex(const TTuple<Types...>& Tuple) noexcept
 {
     return Tuple.template GetByIndex<SearchForIndex>();
 }
@@ -723,13 +714,13 @@ inline auto& TupleGetByIndex(const TTuple<Types...>& Tuple) noexcept
 template<
     typename ElementType,
     typename... Types>
-inline auto& TupleGet(const TTuple<Types...>& Tuple) noexcept
+inline NODISCARD auto& TupleGet(const TTuple<Types...>& Tuple) noexcept
 {
     return Tuple.template Get<ElementType>();
 }
 
 template<typename... Types>
-inline TTuple<Types...> MakeTuple(Types&&... InTypes) noexcept
+inline NODISCARD TTuple<Types...> MakeTuple(Types&&... InTypes) noexcept
 {
     return TTuple<Types...>(Forward<Types>(InTypes)...);
 }

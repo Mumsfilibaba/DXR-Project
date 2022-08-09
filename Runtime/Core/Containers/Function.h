@@ -38,7 +38,6 @@ namespace NInternal
         }
 
     private:
-
          /** @brief: Arguments stored when calling bind and then applied to the function when invoked */
         TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
 
@@ -77,7 +76,7 @@ namespace NInternal
 // Creates a callable which can be stored in a TFunction 
 
 template<typename FunctionType, typename... ArgTypes>
-FORCEINLINE auto Bind(FunctionType Function, ArgTypes&&... Args)
+NODISCARD FORCEINLINE auto Bind(FunctionType Function, ArgTypes&&... Args)
 {
     return NInternal::TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
 }
@@ -91,11 +90,8 @@ class TFunction;
 template<typename ReturnType, typename... ArgTypes>
 class TFunction<ReturnType(ArgTypes...)>
 {
-    enum
-    {
-        // TODO: Look into padding so we can use larger structs?
-        InlineBytes = 24
-    };
+    // TODO: Look into padding so we can use larger structs?
+    enum { InlineBytes = 24 };
 
     using AllocatorType = TInlineArrayAllocator<int8, InlineBytes>;
 
@@ -208,7 +204,7 @@ public:
     }
 
     /** @return: Returns True if the pointer is not nullptr otherwise false */
-    FORCEINLINE bool IsValid() const noexcept
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
         return (Size > 0);
     }
@@ -264,7 +260,7 @@ public:
 public:
 
     /** @return: Returns True if the pointer is not nullptr otherwise false */
-    FORCEINLINE operator bool() const noexcept
+    NODISCARD FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
@@ -350,12 +346,12 @@ private:
         Other.Size = 0;
     }
 
-    FORCEINLINE IFunctor* GetFunctor() noexcept
+    NODISCARD FORCEINLINE IFunctor* GetFunctor() noexcept
     {
         return reinterpret_cast<IFunctor*>(Storage.GetAllocation());
     }
 
-    FORCEINLINE const IFunctor* GetFunctor() const noexcept
+    NODISCARD FORCEINLINE const IFunctor* GetFunctor() const noexcept
     {
         return reinterpret_cast<const IFunctor*>(Storage.GetAllocation());
     }

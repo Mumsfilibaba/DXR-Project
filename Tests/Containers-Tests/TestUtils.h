@@ -35,7 +35,7 @@
         int32 Index = 0;                                                                                                         \
         for (auto Element : InitList)                                                                                            \
         {                                                                                                                        \
-            if ((Index >= static_cast<int32>(Array.Size())) || (Array[Index] != Element))                                        \
+            if ((Index >= static_cast<int32>(Array.GetSize())) || (Array[Index] != Element))                                        \
             {                                                                                                                    \
                 std::cout << "[TEST FAILED] '" << MAKE_STRING(Array) << '[' << Index << ']' << " != " << Element[Index] << '\n'; \
                 assert(false);                                                                                                   \

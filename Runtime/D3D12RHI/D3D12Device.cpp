@@ -104,7 +104,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
     FILE* File = fopen(GDeviceRemovedDumpFile, "w");
     if (File)
     {
-        fwrite(Message.Data(), 1, Message.Size(), File);
+        fwrite(Message.GetData(), 1, Message.GetSize(), File);
         fputc('\n', File);
     }
 
@@ -115,7 +115,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         Message = "BreadCrumbs:";
         if (File)
         {
-            fwrite(Message.Data(), 1, Message.Size(), File);
+            fwrite(Message.GetData(), 1, Message.GetSize(), File);
             fputc('\n', File);
         }
 
@@ -126,7 +126,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
             D3D12_ERROR("%s", Message.CStr());
             if (File)
             {
-                fwrite(Message.Data(), 1, Message.Size(), File);
+                fwrite(Message.GetData(), 1, Message.GetSize(), File);
                 fputc('\n', File);
             }
         }

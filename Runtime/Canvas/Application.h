@@ -170,7 +170,7 @@ public:
 public:
 
      /** @brief: Get the number of registered users */
-    uint32 GetNumUsers() const { return static_cast<uint32>(RegisteredUsers.Size()); }
+    uint32 GetNumUsers() const { return static_cast<uint32>(RegisteredUsers.GetSize()); }
 
      /** @brief: Register a new user to the application */
     void RegisterUser(const TSharedPtr<FUser>& NewUser) { RegisteredUsers.Push(NewUser); }
@@ -191,7 +191,7 @@ public:
      /** @brief: Retrieve a user from user index */
     TSharedPtr<FUser> GetUserFromIndex(uint32 UserIndex) const
     {
-        if (UserIndex < (uint32)RegisteredUsers.Size())
+        if (UserIndex < (uint32)RegisteredUsers.GetSize())
         {
             return RegisteredUsers[UserIndex];
         }

@@ -216,7 +216,7 @@ bool TestMatrix2()
 
     // GetData
     FMatrix2 Matrix0 = FMatrix2::Identity();
-    FMatrix2 Matrix1 = FMatrix2(Matrix0.Data());
+    FMatrix2 Matrix1 = FMatrix2(Matrix0.GetData());
 
     if (Matrix0 != Matrix1)
     {

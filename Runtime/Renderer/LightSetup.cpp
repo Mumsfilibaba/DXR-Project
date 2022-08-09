@@ -255,8 +255,8 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
 
     if (!PointLightsData.IsEmpty())
     {
-        CmdList.UpdateBuffer(PointLightsBuffer.Get(), 0, PointLightsData.SizeInBytes(), PointLightsData.Data());
-        CmdList.UpdateBuffer(PointLightsPosRadBuffer.Get(), 0, PointLightsPosRad.SizeInBytes(), PointLightsPosRad.Data());
+        CmdList.UpdateBuffer(PointLightsBuffer.Get(), 0, PointLightsData.SizeInBytes(), PointLightsData.GetData());
+        CmdList.UpdateBuffer(PointLightsPosRadBuffer.Get(), 0, PointLightsPosRad.SizeInBytes(), PointLightsPosRad.GetData());
     }
 
     if (!ShadowCastingPointLightsData.IsEmpty())
@@ -265,12 +265,12 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
             ShadowCastingPointLightsBuffer.Get(),
             0,
             ShadowCastingPointLightsData.SizeInBytes(),
-            ShadowCastingPointLightsData.Data());
+            ShadowCastingPointLightsData.GetData());
         CmdList.UpdateBuffer(
             ShadowCastingPointLightsPosRadBuffer.Get(),
             0,
             ShadowCastingPointLightsPosRad.SizeInBytes(),
-            ShadowCastingPointLightsPosRad.Data());
+            ShadowCastingPointLightsPosRad.GetData());
     }
 
     CmdList.TransitionBuffer(

@@ -116,7 +116,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     uint32 SizeInBytes = FileContent.SizeInBytes();
     UNREFERENCED_VARIABLE(SizeInBytes);
 
-    ofbx::u8* Bytes = FileContent.Data();
+    ofbx::u8* Bytes = FileContent.GetData();
 
     const uint32 ChunkSize = 1024;
 
@@ -133,7 +133,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
         return false;
     }
 
-    Bytes = FileContent.Data();
+    Bytes = FileContent.GetData();
 
     ofbx::IScene* FBXScene = ofbx::load(Bytes, FileSize, (ofbx::u64)ofbx::LoadFlags::TRIANGULATE);
     if (!FBXScene)
@@ -181,7 +181,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
             MaterialData.Metallic  = 1.0f; // CurrentMaterial->getSpecularColor().b;
 
             //TODO: Other material properties
-            UniqueMaterials[CurrentMaterial] = OutScene.Materials.Size();
+            UniqueMaterials[CurrentMaterial] = OutScene.Materials.GetSize();
             OutScene.Materials.Emplace(MaterialData);
         }
 
@@ -264,7 +264,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
                 uint32 UniqueIndex = 0;
                 if (UniqueVertices.count(TempVertex) == 0)
                 {
-                    UniqueIndex = static_cast<uint32>(Data.Mesh.Vertices.Size());
+                    UniqueIndex = static_cast<uint32>(Data.Mesh.Vertices.GetSize());
                     UniqueVertices[TempVertex] = UniqueIndex;
                     Data.Mesh.Vertices.Push(TempVertex);
                 }

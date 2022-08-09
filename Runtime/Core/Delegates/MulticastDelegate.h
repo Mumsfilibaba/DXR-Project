@@ -157,7 +157,7 @@ public:
     {
         Super::Lock();
 
-        for (int32 Index = 0; Index < Delegates.Size(); Index++)
+        for (int32 Index = 0; Index < Delegates.GetSize(); Index++)
         {
             DelegateType& Delegate = static_cast<DelegateType&>(Delegates[Index]);
 

@@ -104,7 +104,7 @@ void FGameConsoleWindow::Tick()
             VariableValueWidth += Padding;
 
             // Draw UI
-            for (int32 i = 0; i < Candidates.Size(); i++)
+            for (int32 i = 0; i < Candidates.GetSize(); i++)
             {
                 const TPair<IConsoleObject*, FString>& Candidate = Candidates[i];
                 bIsActiveIndex = (CandidatesIndex == i);
@@ -113,7 +113,7 @@ void FGameConsoleWindow::Tick()
                 ImGui::PushID(i);
                 if (ImGui::Selectable(Candidate.Second.CStr(), &bIsActiveIndex))
                 {
-                    FCString::Copy(TextBuffer.Data(), Candidate.Second.CStr());
+                    FCString::Copy(TextBuffer.GetData(), Candidate.Second.CStr());
                     PopupSelectedText = Candidate.Second;
 
                     Candidates.Clear();
@@ -247,12 +247,12 @@ void FGameConsoleWindow::Tick()
             return This->TextCallback(Data);
         };
 
-        const bool bResult = ImGui::InputText("###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(this));
+        const bool bResult = ImGui::InputText("###Input", TextBuffer.GetData(), TextBuffer.GetSize(), InputFlags, Callback, reinterpret_cast<void*>(this));
         if (bResult && TextBuffer[0] != 0)
         {
             if (CandidatesIndex != -1)
             {
-                FCString::Copy(TextBuffer.Data(), PopupSelectedText.CStr());
+                FCString::Copy(TextBuffer.GetData(), PopupSelectedText.CStr());
 
                 Candidates.Clear();
                 CandidatesIndex = -1;
@@ -261,7 +261,7 @@ void FGameConsoleWindow::Tick()
             }
             else
             {
-                const FString Text = FString(TextBuffer.Data());
+                const FString Text = FString(TextBuffer.GetData());
                 FConsoleManager::Get().Execute(Text);
 
                 TextBuffer[0] = 0;
@@ -358,7 +358,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
         const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
         if (WordLength > 0)
         {
-            if (Candidates.Size() == 1)
+            if (Candidates.GetSize() == 1)
             {
                 const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
                 const int32 Count = WordLength;
@@ -401,7 +401,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
             {
                 if (HistoryIndex == -1)
                 {
-                    HistoryIndex = History.Size() - 1;
+                    HistoryIndex = History.GetSize() - 1;
                 }
                 else if (HistoryIndex > 0)
                 {
@@ -413,7 +413,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
                 if (HistoryIndex != -1)
                 {
                     HistoryIndex++;
-                    if (HistoryIndex >= static_cast<int32>(History.Size()))
+                    if (HistoryIndex >= static_cast<int32>(History.GetSize()))
                     {
                         HistoryIndex = -1;
                     }
@@ -434,7 +434,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
                 bCandidateSelectionChanged = true;
                 if (CandidatesIndex <= 0)
                 {
-                    CandidatesIndex = Candidates.Size() - 1;
+                    CandidatesIndex = Candidates.GetSize() - 1;
                 }
                 else
                 {
@@ -444,7 +444,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
             else if (Data->EventKey == ImGuiKey_DownArrow)
             {
                 bCandidateSelectionChanged = true;
-                if (CandidatesIndex >= int32(Candidates.Size()) - 1)
+                if (CandidatesIndex >= int32(Candidates.GetSize()) - 1)
                 {
                     CandidatesIndex = 0;
                 }

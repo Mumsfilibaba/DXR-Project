@@ -106,39 +106,39 @@ public:
 
     FORCEINLINE FD3D12ShaderParameter GetConstantBufferParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ConstantBufferParameters.Size())
-                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ConstantBufferParameters.Size());
+        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ConstantBufferParameters.GetSize())
+                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ConstantBufferParameters.GetSize());
         return ConstantBufferParameters[ParameterIndex];
     }
 
-    FORCEINLINE uint32 GetNumConstantBufferParameters() { return ConstantBufferParameters.Size(); }
+    FORCEINLINE uint32 GetNumConstantBufferParameters() { return ConstantBufferParameters.GetSize(); }
 
     FORCEINLINE FD3D12ShaderParameter GetShaderResourceParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ShaderResourceParameters.Size())
-                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ShaderResourceParameters.Size());
+        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ShaderResourceParameters.GetSize())
+                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ShaderResourceParameters.GetSize());
         return ShaderResourceParameters[ParameterIndex];
     }
 
-    FORCEINLINE uint32 GetNumShaderResourceParameters() { return ShaderResourceParameters.Size(); }
+    FORCEINLINE uint32 GetNumShaderResourceParameters() { return ShaderResourceParameters.GetSize(); }
 
     FORCEINLINE FD3D12ShaderParameter GetUnorderedAccessParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(UnorderedAccessParameters.Size())
-                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, UnorderedAccessParameters.Size());
+        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(UnorderedAccessParameters.GetSize())
+                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, UnorderedAccessParameters.GetSize());
         return UnorderedAccessParameters[ParameterIndex];
     }
 
-    FORCEINLINE uint32 GetNumUnorderedAccessParameters() { return UnorderedAccessParameters.Size(); }
+    FORCEINLINE uint32 GetNumUnorderedAccessParameters() { return UnorderedAccessParameters.GetSize(); }
 
     FORCEINLINE FD3D12ShaderParameter GetSamplerStateParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND( ParameterIndex < static_cast<uint32>(SamplerParameters.Size())
-                         ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, SamplerParameters.Size());
+        D3D12_ERROR_COND( ParameterIndex < static_cast<uint32>(SamplerParameters.GetSize())
+                         ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, SamplerParameters.GetSize());
         return SamplerParameters[ParameterIndex];
     }
 
-    FORCEINLINE uint32 GetNumSamplerStateParameters() { return SamplerParameters.Size(); }
+    FORCEINLINE uint32 GetNumSamplerStateParameters() { return SamplerParameters.GetSize(); }
 
 protected:
     template<typename TD3D12ReflectionInterface>

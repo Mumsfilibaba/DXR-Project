@@ -283,7 +283,7 @@ D3D12TextureType* FD3D12CoreInterface::CreateTexture(const InitializerType& Init
         }
         else if (ClearValue.IsColorValue())
         {
-            FMemory::Memcpy(D3D12ClearValue.Color, ClearValue.AsColor().Data(), sizeof(float[4]));
+            FMemory::Memcpy(D3D12ClearValue.Color, ClearValue.AsColor().GetData(), sizeof(float[4]));
         }
     }
 
@@ -474,7 +474,7 @@ FRHISamplerState* FD3D12CoreInterface::RHICreateSamplerState(const FRHISamplerSt
     Desc.MinLOD         = Initializer.MinLOD;
     Desc.MipLODBias     = Initializer.MipLODBias;
 
-    FMemory::Memcpy(Desc.BorderColor, Initializer.BorderColor.Data(), sizeof(Desc.BorderColor));
+    FMemory::Memcpy(Desc.BorderColor, Initializer.BorderColor.GetData(), sizeof(Desc.BorderColor));
 
     TSharedRef<FD3D12SamplerState> Sampler = dbg_new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap);
     if (!Sampler->CreateSampler(Desc))

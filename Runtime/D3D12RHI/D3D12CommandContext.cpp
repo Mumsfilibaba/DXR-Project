@@ -555,7 +555,7 @@ void FD3D12CommandContext::ClearRenderTargetView(const FRHIRenderTargetView& Ren
     FD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRTV(RenderTargetView);
     Check(D3D12RenderTargetView != nullptr);
 
-    CommandList.ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.Data(), 0, nullptr);
+    CommandList.ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.GetData(), 0, nullptr);
 }
 
 void FD3D12CommandContext::ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
@@ -615,7 +615,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
             // it is not certain that there will be a call to draw inside of the RenderPass
             if (RenderTargetView.LoadAction == EAttachmentLoadAction::Clear)
             {
-                CommandList.ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), RenderTargetView.ClearValue.Data(), 0, nullptr);
+                CommandList.ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), RenderTargetView.ClearValue.GetData(), 0, nullptr);
             }
             
             State.Graphics.RTCache.SetRenderTarget(D3D12RenderTargetView, Index);
@@ -1159,7 +1159,7 @@ void FD3D12CommandContext::SetRayTracingBindings( FRHIRayTracingScene* RayTracin
     {
         if (!GlobalResource->ConstantBuffers.IsEmpty())
         {
-            for (int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
+            for (int32 i = 0; i < GlobalResource->ConstantBuffers.GetSize(); i++)
             {
                 FD3D12ConstantBufferView& D3D12ConstantBufferView = static_cast<FD3D12ConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
                 State.DescriptorCache.SetConstantBufferView(ShaderVisibility_All, &D3D12ConstantBufferView, i);
@@ -1167,7 +1167,7 @@ void FD3D12CommandContext::SetRayTracingBindings( FRHIRayTracingScene* RayTracin
         }
         if (!GlobalResource->ShaderResourceViews.IsEmpty())
         {
-            for (int32 i = 0; i < GlobalResource->ShaderResourceViews.Size(); i++)
+            for (int32 i = 0; i < GlobalResource->ShaderResourceViews.GetSize(); i++)
             {
                 FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(GlobalResource->ShaderResourceViews[i]);
                 State.DescriptorCache.SetShaderResourceView(ShaderVisibility_All, D3D12ShaderResourceView, i);
@@ -1175,7 +1175,7 @@ void FD3D12CommandContext::SetRayTracingBindings( FRHIRayTracingScene* RayTracin
         }
         if (!GlobalResource->UnorderedAccessViews.IsEmpty())
         {
-            for (int32 i = 0; i < GlobalResource->UnorderedAccessViews.Size(); i++)
+            for (int32 i = 0; i < GlobalResource->UnorderedAccessViews.GetSize(); i++)
             {
                 FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(GlobalResource->UnorderedAccessViews[i]);
                 State.DescriptorCache.SetUnorderedAccessView(ShaderVisibility_All, D3D12UnorderedAccessView, i);
@@ -1183,7 +1183,7 @@ void FD3D12CommandContext::SetRayTracingBindings( FRHIRayTracingScene* RayTracin
         }
         if (!GlobalResource->SamplerStates.IsEmpty())
         {
-            for (int32 i = 0; i < GlobalResource->SamplerStates.Size(); i++)
+            for (int32 i = 0; i < GlobalResource->SamplerStates.GetSize(); i++)
             {
                 FD3D12SamplerState* DxSampler = static_cast<FD3D12SamplerState*>(GlobalResource->SamplerStates[i]);
                 State.DescriptorCache.SetSamplerState(ShaderVisibility_All, DxSampler, i);
@@ -1588,7 +1588,7 @@ void FD3D12CommandContext::StartCommandList()
     TRACE_FUNCTION_SCOPE();
 
     CmdBatch = &CmdBatches[NextCmdBatch];
-    NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
+    NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.GetSize();
 
     if (CmdBatch->AssignedFenceValue >= Fence.GetCompletedValue())
     {
@@ -1624,7 +1624,7 @@ void FD3D12CommandContext::EndCommandList()
     CmdBatch->AssignedFenceValue = NewFenceValue;
     CmdBatch = nullptr;
 
-    for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.Size(); ++QueryIndex)
+    for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.GetSize(); ++QueryIndex)
     {
         ResolveQueries[QueryIndex]->ResolveQueries(*this);
     }

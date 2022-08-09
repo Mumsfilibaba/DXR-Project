@@ -21,7 +21,7 @@ public:
         , VertexDescriptor(nil)
     {
         VertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
-        for (int32 Index = 0; Index < Initializer.Elements.Size(); ++Index)
+        for (int32 Index = 0; Index < Initializer.Elements.GetSize(); ++Index)
         {
             const auto& Element = Initializer.Elements[Index];
             VertexDescriptor.attributes[Index].format      = ConvertVertexFormat(Element.Format);

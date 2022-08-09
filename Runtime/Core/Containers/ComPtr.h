@@ -137,7 +137,7 @@ public:
      * 
      * @return: Returns the pointer that was previously held by the container
      */
-    FORCEINLINE ElementType* ReleaseOwnership() noexcept
+    NODISCARD FORCEINLINE ElementType* ReleaseOwnership() noexcept
     {
         ElementType* OldPtr = Ptr;
         Ptr = nullptr;
@@ -160,7 +160,7 @@ public:
      * 
      * @return: Returns the raw pointer
      */
-    FORCEINLINE ElementType* Get() const noexcept
+    NODISCARD FORCEINLINE ElementType* Get() const noexcept
     {
         return Ptr;
     }
@@ -170,7 +170,7 @@ public:
      * 
      * @return: The current reference count of the stored pointer
      */
-    FORCEINLINE uint64 GetRefCount() const noexcept
+    NODISCARD FORCEINLINE uint64 GetRefCount() const noexcept
     {
         Check(IsValid());
 
@@ -184,7 +184,7 @@ public:
      * 
      * @return: Returns the raw pointer
      */
-    FORCEINLINE ElementType* GetAndAddRef() noexcept
+    NODISCARD FORCEINLINE ElementType* GetAndAddRef() noexcept
     {
         AddRef();
         return Ptr;
@@ -195,7 +195,7 @@ public:
      * 
      * @return: Pointer to the stored pointer
      */
-    FORCEINLINE ElementType** ReleaseAndGetAddressOf() noexcept
+    NODISCARD FORCEINLINE ElementType** ReleaseAndGetAddressOf() noexcept
     {
         Ptr->Release();
         return &Ptr;
@@ -238,7 +238,7 @@ public:
      * 
      * @return: The address of the raw pointer
      */
-    FORCEINLINE ElementType** GetAddressOf() noexcept
+    NODISCARD FORCEINLINE ElementType** GetAddressOf() noexcept
     {
         return &Ptr;
     }
@@ -248,7 +248,7 @@ public:
      *
      * @return: The address of the raw pointer
      */
-    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return &Ptr;
     }
@@ -258,7 +258,7 @@ public:
      * 
      * @return: True if the pointer is not nullptr otherwise false
      */
-    FORCEINLINE bool IsValid() const noexcept
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
         return (Ptr != nullptr);
     }
@@ -270,7 +270,7 @@ public:
      *
      * @return: Returns the raw pointer
      */
-    FORCEINLINE ElementType* operator->() const noexcept
+    NODISCARD FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
@@ -280,7 +280,7 @@ public:
      *
      * @return: The address of the raw pointer
      */
-    FORCEINLINE ElementType** operator&() noexcept
+    NODISCARD FORCEINLINE ElementType** operator&() noexcept
     {
         return GetAddressOf();
     }
@@ -290,7 +290,7 @@ public:
      *
      * @return: The address of the raw pointer
      */
-    FORCEINLINE ElementType* const* operator&() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
@@ -300,7 +300,7 @@ public:
      *
      * @return: A reference to the object pointed to by the pointer
      */
-    FORCEINLINE ElementType& operator*() const noexcept
+    NODISCARD FORCEINLINE ElementType& operator*() const noexcept
     {
         return *Ptr;
     }
@@ -310,7 +310,7 @@ public:
      *
      * @return: True if the pointer is not nullptr otherwise false
      */
-    FORCEINLINE operator bool() const noexcept
+    NODISCARD FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
@@ -402,7 +402,6 @@ public:
     }
 
 private:
-
     FORCEINLINE void Release() noexcept
     {
         if (Ptr)
@@ -419,68 +418,68 @@ private:
 // TComPtr equality operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TComPtr<T>& LHS, U* RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TComPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* LHS, const TComPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(T* LHS, const TComPtr<U>& RHS) noexcept
 {
     return (LHS == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TComPtr<T>& LHS, U* RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TComPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* LHS, const TComPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(T* LHS, const TComPtr<U>& RHS) noexcept
 {
     return (LHS != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TComPtr<T>& LHS, const TComPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TComPtr<T>& LHS, const TComPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TComPtr<T>& LHS, const TComPtr<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TComPtr<T>& LHS, const TComPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TComPtr<T>& LHS, nullptr_type) noexcept
+NODISCARD FORCEINLINE bool operator==(const TComPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(nullptr_type, const TComPtr<T>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(nullptr_type, const TComPtr<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TComPtr<T>& LHS, nullptr_type) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TComPtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(nullptr_type, const TComPtr<T>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TComPtr<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }
 
  /** @brief: Converts a raw pointer into a TComPtr */
 template<typename T, typename U>
-FORCEINLINE TComPtr<T> MakeComPtr(U* InRefCountedObject)
+NODISCARD FORCEINLINE TComPtr<T> MakeComPtr(U* InRefCountedObject)
 {
     if (InRefCountedObject)
     {

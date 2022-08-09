@@ -395,7 +395,7 @@ void FApplication::InsertMessageHandler(TArray<TPair<TSharedPtr<MessageHandlerTy
     TPair NewPair(NewMessageHandler, NewPriority);
     if (!OutMessageHandlerArray.Contains(NewPair))
     {
-        for (int32 Index = 0; Index < OutMessageHandlerArray.Size(); )
+        for (int32 Index = 0; Index < OutMessageHandlerArray.GetSize(); )
         {
             const TPair<TSharedPtr<MessageHandlerType>, uint32> Handler = OutMessageHandlerArray[Index];
             if (NewPriority <= Handler.Second)
@@ -420,7 +420,7 @@ void FApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHand
 
 void FApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler)
 {
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FInputHandler>, uint32> Handler = InputHandlers[Index];
         if (Handler.First == InputHandler)
@@ -497,7 +497,7 @@ void FApplication::AddWindowMessageHandler(const TSharedPtr<FWindowMessageHandle
 
 void FApplication::RemoveWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& WindowMessageHandler)
 {
-    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FWindowMessageHandler>, uint32> Handler = WindowMessageHandlers[Index];
         if (Handler.First == WindowMessageHandler)
@@ -534,7 +534,7 @@ void FApplication::HandleKeyPressed(EKey KeyCode, bool bIsRepeat, FModifierKeySt
 void FApplication::HandleKeyEvent(const FKeyEvent& KeyEvent)
 {
     FKeyEvent Event = KeyEvent;
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FInputHandler>, uint32>& Handler = InputHandlers[Index];
         if (Handler.First->HandleKeyEvent(Event))
@@ -565,7 +565,7 @@ void FApplication::HandleKeyEvent(const FKeyEvent& KeyEvent)
 void FApplication::HandleKeyChar(uint32 Character)
 {
     FKeyCharEvent Event(Character);
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FInputHandler>, uint32>& Handler = InputHandlers[Index];
         if (Handler.First->HandleKeyTyped(Event))
@@ -581,7 +581,7 @@ void FApplication::HandleKeyChar(uint32 Character)
 void FApplication::HandleMouseMove(int32 x, int32 y)
 {
     FMouseMovedEvent MouseMovedEvent(x, y);
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FInputHandler>, uint32>& Handler = InputHandlers[Index];
         if (Handler.First->HandleMouseMove(MouseMovedEvent))
@@ -640,7 +640,7 @@ static uint32 GetMouseButtonIndex(EMouseButton Button)
 void FApplication::HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent)
 {
     FMouseButtonEvent Event = MouseButtonEvent;
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FInputHandler>, uint32>& Handler = InputHandlers[Index];
         if (Handler.First->HandleMouseButtonEvent(Event))
@@ -671,7 +671,7 @@ void FApplication::HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEv
 void FApplication::HandleMouseScrolled(float HorizontalDelta, float VerticalDelta)
 {
     FMouseScrolledEvent Event(HorizontalDelta, VerticalDelta);
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FInputHandler>, uint32>& Handler = InputHandlers[Index];
         if (Handler.First->HandleMouseScrolled(Event))
@@ -701,7 +701,7 @@ void FApplication::HandleMouseScrolled(float HorizontalDelta, float VerticalDelt
 void FApplication::HandleWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height)
 {
     FWindowResizeEvent WindowResizeEvent(Window, Width, Height);
-    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if (Handler.First->OnWindowResized(WindowResizeEvent))
@@ -714,7 +714,7 @@ void FApplication::HandleWindowResized(const FGenericWindowRef& Window, uint32 W
 void FApplication::HandleWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y)
 {
     FWindowMovedEvent WindowsMovedEvent(Window, x, y);
-    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if (Handler.First->OnWindowMoved(WindowsMovedEvent))
@@ -727,7 +727,7 @@ void FApplication::HandleWindowMoved(const FGenericWindowRef& Window, int32 x, i
 void FApplication::HandleWindowFocusChanged(const FGenericWindowRef& Window, bool bHasFocus)
 {
     FWindowFocusChangedEvent WindowFocusChangedEvent(Window, bHasFocus);
-    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if (Handler.First->OnWindowFocusChanged(WindowFocusChangedEvent))
@@ -752,7 +752,7 @@ void FApplication::HandleWindowMouseEntered(const FGenericWindowRef& Window)
 void FApplication::HandleWindowFrameMouseEvent(const FWindowFrameMouseEvent& WindowFrameMouseEvent)
 {
     FWindowFrameMouseEvent Event = WindowFrameMouseEvent;
-    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if (Handler.First->OnWindowFrameMouseEvent(Event))
@@ -796,7 +796,7 @@ void FApplication::RenderStrings()
 void FApplication::HandleWindowClosed(const FGenericWindowRef& Window)
 {
     FWindowClosedEvent WindowClosedEvent(Window);
-    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if (Handler.First->OnWindowClosed(WindowClosedEvent))

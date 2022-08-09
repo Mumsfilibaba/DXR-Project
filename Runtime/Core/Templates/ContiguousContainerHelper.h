@@ -24,7 +24,7 @@ struct FContiguousContainerHelper
         typename = typename TEnableIf<TIsContiguousContainer<ContainerType>::Value>::Type>
     static CONSTEXPR decltype(auto) GetData(ContainerType&& Container)
     {
-        return Container.Data();
+        return Container.GetData();
     }
 
     template<
@@ -32,7 +32,7 @@ struct FContiguousContainerHelper
         typename = typename TEnableIf<TIsContiguousContainer<ContainerType>::Value>::Type>
     static CONSTEXPR decltype(auto) GetSize(ContainerType&& Container)
     {
-        return Container.Size();
+        return Container.GetSize();
     }
 
     template <typename T, tsize N> 

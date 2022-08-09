@@ -693,7 +693,7 @@ public:
      *
      * @return: A pointer to the data
      */
-    FORCEINLINE float* Data() noexcept
+    FORCEINLINE float* GetData() noexcept
     {
         return reinterpret_cast<float*>(this);
     }
@@ -703,7 +703,7 @@ public:
      *
      * @return: A pointer to the data
      */
-    FORCEINLINE const float* Data() const noexcept
+    FORCEINLINE const float* GetData() const noexcept
     {
         return reinterpret_cast<const float*>(this);
     }

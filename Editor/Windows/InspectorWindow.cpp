@@ -38,7 +38,7 @@ void CInspectorWindow::DrawSceneInfo()
     // Actors
     if ( ImGui::TreeNode( "Actors" ) )
     {
-        ImGui::Text( "Total Actor Count: %d", GEngine->Scene->GetActors().Size() );
+        ImGui::Text( "Total Actor Count: %d", GEngine->Scene->GetActors().GetSize() );
 
         for ( FActor* Actor : GEngine->Scene->GetActors() )
         {

@@ -392,7 +392,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const
         } ShadowPerObjectBuffer;
 
         FPerShadowMap PerShadowMapData;
-        for (int32 Cube = 0; Cube < LightSetup.PointLightShadowMapsGenerationData.Size(); ++Cube)
+        for (int32 Cube = 0; Cube < LightSetup.PointLightShadowMapsGenerationData.GetSize(); ++Cube)
         {
             for (uint32 Face = 0; Face < 6; ++Face)
             {

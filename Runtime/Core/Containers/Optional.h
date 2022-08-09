@@ -128,7 +128,7 @@ public:
      * 
      * @return: Returns true if there is a value assigned
      */
-    FORCEINLINE bool HasValue() const noexcept
+    NODISCARD FORCEINLINE bool HasValue() const noexcept
     {
         return bHasValue;
     }
@@ -184,7 +184,7 @@ public:
      * 
      * @return: Returns a reference to the stored value
      */
-    FORCEINLINE ElementType& GetValue() noexcept
+    NODISCARD FORCEINLINE ElementType& GetValue() noexcept
     {
         Check(HasValue());
         return *Value.GetStorage();
@@ -195,7 +195,7 @@ public:
      *
      * @return: Returns a reference to the stored value
      */
-    FORCEINLINE const ElementType& GetValue() const noexcept
+    NODISCARD FORCEINLINE const ElementType& GetValue() const noexcept
     {
         Check(HasValue());
         return *Value.GetStorage();
@@ -206,7 +206,7 @@ public:
      *
      * @return: Returns a pointer to the stored value, or nullptr if no value is held
      */
-    FORCEINLINE ElementType* TryGetValue() noexcept
+    NODISCARD FORCEINLINE ElementType* TryGetValue() noexcept
     {
         return HasValue() ? Value.GetStorage() : nullptr;
     }
@@ -216,7 +216,7 @@ public:
      *
      * @return: Returns a pointer to the stored value, or nullptr if no value is held
      */
-    FORCEINLINE const ElementType* TryGetValue() const noexcept
+    NODISCARD FORCEINLINE const ElementType* TryGetValue() const noexcept
     {
         return HasValue() ? Value.GetStorage() : nullptr;
     }
@@ -228,7 +228,7 @@ public:
      * @return: Returns a reference to the stored value
      */
     template<typename OtherType>
-    FORCEINLINE const ElementType& GetValueOrDefault(const OtherType& Default) const noexcept
+    NODISCARD FORCEINLINE const ElementType& GetValueOrDefault(const OtherType& Default) const noexcept
     {
         return HasValue() ? *Value.GetStorage() : static_cast<const ElementType&>(Default);
     }
@@ -317,7 +317,7 @@ public:
      * 
      * @return: Returns true if the optional has a stored value
      */
-    FORCEINLINE operator bool() const noexcept
+    NODISCARD FORCEINLINE operator bool() const noexcept
     {
         return HasValue();
     }
@@ -327,7 +327,7 @@ public:
      *
      * @return: Returns a pointer to the stored value
      */
-    FORCEINLINE T* operator->() noexcept
+    NODISCARD FORCEINLINE T* operator->() noexcept
     {
         Check(HasValue());
         return Value.GetStorage();
@@ -338,7 +338,7 @@ public:
      *
      * @return: Returns a pointer to the stored value
      */
-    FORCEINLINE const T* operator->() const noexcept
+    NODISCARD FORCEINLINE const T* operator->() const noexcept
     {
         Check(HasValue());
         return Value.GetStorage();
@@ -349,7 +349,7 @@ public:
      *
      * @return: Returns a reference to the stored value
      */
-    FORCEINLINE T& operator*() noexcept
+    NODISCARD FORCEINLINE T& operator*() noexcept
     {
         Check(HasValue());
         return *Value.GetStorage();
@@ -360,7 +360,7 @@ public:
      *
      * @return: Returns a pointer to the stored value
      */
-    FORCEINLINE const T& operator*() const noexcept
+    NODISCARD FORCEINLINE const T& operator*() const noexcept
     {
         Check(HasValue());
         return *Value.GetStorage();
@@ -375,7 +375,7 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if the values are equal
      */
-    friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
+    friend NODISCARD FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!LHS.HasValue() && !RHS.HasValue())
         {
@@ -397,7 +397,7 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns false if the values are equal
      */
-    friend FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
+    friend NODISCARD FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS != RHS);
     }
@@ -409,7 +409,7 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if the LHS is less than RHS
      */
-    friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
+    friend NODISCARD FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!LHS.HasValue() && !RHS.HasValue())
         {
@@ -431,7 +431,7 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if the LHS is less than or equal to RHS
      */
-    friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
+    friend NODISCARD FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!LHS.HasValue() && !RHS.HasValue())
         {
@@ -453,7 +453,7 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if LHS is greater than RHS
      */
-    friend FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
+    friend NODISCARD FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS <= RHS);
     }
@@ -465,7 +465,7 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if the LHS is greater than or equal to RHS
      */
-    friend FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept
+    friend NODISCARD FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS < RHS);
     }
@@ -485,12 +485,12 @@ private:
         bHasValue = false;
     }
 
-    FORCEINLINE bool IsEqual(const TOptional& RHS) const noexcept
+    NODISCARD FORCEINLINE bool IsEqual(const TOptional& RHS) const noexcept
     {
         return (*Value.GetStorage()) == (*RHS.Value.GetStorage());
     }
 
-    FORCEINLINE bool IsLessThan(const TOptional& RHS) const noexcept
+    NODISCARD FORCEINLINE bool IsLessThan(const TOptional& RHS) const noexcept
     {
         return (*Value.GetStorage()) < (*RHS.Value.GetStorage());
     }

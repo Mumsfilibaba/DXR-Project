@@ -82,7 +82,7 @@ inline void DrawFloat3Control(const FString& Label, FVector3& OutValue, float Re
 
 FORCEINLINE bool DrawColorEdit3(const char* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
 {
-    return ImGui::ColorEdit3(Label, OutColor.Data(), Flags);
+    return ImGui::ColorEdit3(Label, OutColor.GetData(), Flags);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

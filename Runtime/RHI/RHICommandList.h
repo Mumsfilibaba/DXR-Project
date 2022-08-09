@@ -82,9 +82,9 @@ public:
     template<typename T>
     FORCEINLINE TArrayView<T> AllocateArray(const TArrayView<T>& Array) noexcept
     {
-        void* NewArray = Allocate(Array.Size() * sizeof(T), alignof(T));
-        FMemory::Memcpy(NewArray, Array.Data(), Array.SizeInBytes());
-        return TArrayView<T>(reinterpret_cast<T*>(NewArray), Array.Size());
+        void* NewArray = Allocate(Array.GetSize() * sizeof(T), alignof(T));
+        FMemory::Memcpy(NewArray, Array.GetData(), Array.SizeInBytes());
+        return TArrayView<T>(reinterpret_cast<T*>(NewArray), Array.GetSize());
     }
 
     FORCEINLINE void* AllocateCommand(int32 Size, int32 Alignment) noexcept
@@ -299,7 +299,7 @@ public:
             VertexBuffers.Memzero();
         }
 
-        EmplaceCommand<FRHICommandSetVertexBuffers>(VertexBuffers.Data(), VertexBuffers.Size(), BufferSlot);
+        EmplaceCommand<FRHICommandSetVertexBuffers>(VertexBuffers.GetData(), VertexBuffers.GetSize(), BufferSlot);
     }
 
     FORCEINLINE void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer) noexcept
@@ -351,7 +351,7 @@ public:
             ShaderResourceViews.Memzero();
         }
 
-        EmplaceCommand<FRHICommandSetShaderResourceViews>(Shader, ShaderResourceViews.Data(), ShaderResourceViews.Size(), ParameterIndex);
+        EmplaceCommand<FRHICommandSetShaderResourceViews>(Shader, ShaderResourceViews.GetData(), ShaderResourceViews.GetSize(), ParameterIndex);
     }
 
     FORCEINLINE void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) noexcept
@@ -372,7 +372,7 @@ public:
             UnorderedAccessViews.Memzero();
         }
 
-        EmplaceCommand<FRHICommandSetUnorderedAccessViews>(Shader, UnorderedAccessViews.Data(), UnorderedAccessViews.Size(), ParameterIndex);
+        EmplaceCommand<FRHICommandSetUnorderedAccessViews>(Shader, UnorderedAccessViews.GetData(), UnorderedAccessViews.GetSize(), ParameterIndex);
     }
 
     FORCEINLINE void SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) noexcept
@@ -393,7 +393,7 @@ public:
             ConstantBuffers.Memzero();
         }
 
-        EmplaceCommand<FRHICommandSetConstantBuffers>(Shader, ConstantBuffers.Data(), ConstantBuffers.Size(), ParameterIndex);
+        EmplaceCommand<FRHICommandSetConstantBuffers>(Shader, ConstantBuffers.GetData(), ConstantBuffers.GetSize(), ParameterIndex);
     }
 
     FORCEINLINE void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex) noexcept
@@ -414,7 +414,7 @@ public:
             SamplerStates.Memzero();
         }
 
-        EmplaceCommand<FRHICommandSetSamplerStates>(Shader, SamplerStates.Data(), SamplerStates.Size(), ParameterIndex);
+        EmplaceCommand<FRHICommandSetSamplerStates>(Shader, SamplerStates.GetData(), SamplerStates.GetSize(), ParameterIndex);
     }
 
     FORCEINLINE void UpdateBuffer(FRHIBuffer* Dst, uint32 OffsetInBytes, uint32 SizeInBytes, const void* InSourceData) noexcept

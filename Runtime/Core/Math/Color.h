@@ -44,12 +44,12 @@ struct FColor
         return Hash;
     }
 
-    FORCEINLINE uint8* Data()
+    FORCEINLINE uint8* GetData()
     {
         return reinterpret_cast<uint8*>(this);
     }
 
-    FORCEINLINE const uint8* Data() const
+    FORCEINLINE const uint8* GetData() const
     {
         return reinterpret_cast<const uint8*>(this);
     }
@@ -117,12 +117,12 @@ struct FFloatColor16
         return Hash;
     }
 
-    FORCEINLINE uint16* Data()
+    FORCEINLINE uint16* GetData()
     {
         return reinterpret_cast<uint16*>(this);
     }
 
-    FORCEINLINE const uint16* Data() const
+    FORCEINLINE const uint16* GetData() const
     {
         return reinterpret_cast<const uint16*>(this);
     }
@@ -190,12 +190,12 @@ struct FFloatColor
         return Hash;
     }
 
-    FORCEINLINE float* Data()
+    FORCEINLINE float* GetData()
     {
         return reinterpret_cast<float*>(this);
     }
 
-    FORCEINLINE const float* Data() const
+    FORCEINLINE const float* GetData() const
     {
         return reinterpret_cast<const float*>(this);
     }

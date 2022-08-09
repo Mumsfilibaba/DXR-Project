@@ -22,7 +22,6 @@ public:
     static_assert(
         TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value,
         "TStringView only supports 'char' and 'wchar_t'");
-    
     static_assert(
         TIsSigned<SizeType>::Value,
         "TStringView only supports a SizeType that's signed");
@@ -130,7 +129,7 @@ public:
      *
      * @return: Returns a copy of this string with the whitespace removed in the end and beginning
      */
-    FORCEINLINE TStringView Trim() noexcept
+    NODISCARD FORCEINLINE TStringView Trim() noexcept
     {
         TStringView NewStringView(*this);
         NewStringView.TrimInline();
@@ -151,7 +150,7 @@ public:
      *
      * @return: Returns a copy of this string with all the whitespace removed from the beginning
      */
-    FORCEINLINE TStringView TrimStart() noexcept
+    NODISCARD FORCEINLINE TStringView TrimStart() noexcept
     {
         TStringView NewStringView(*this);
         NewStringView.TrimStartInline();
@@ -182,7 +181,7 @@ public:
      *
      * @return: Returns a copy of this string with all the whitespace removed from the end
      */
-    FORCEINLINE TStringView TrimEnd() noexcept
+    NODISCARD FORCEINLINE TStringView TrimEnd() noexcept
     {
         TStringView NewStringView(*this);
         NewStringView.TrimEndInline();
@@ -215,7 +214,7 @@ public:
      * @param Num: Number of characters to trim
      * @return: Return a trimmed copy of the view
      */
-    FORCEINLINE TStringView ShrinkLeft(int32 Num = 1) noexcept
+    NODISCARD FORCEINLINE TStringView ShrinkLeft(int32 Num = 1) noexcept
     {
         TStringView NewStringView(*this);
         NewStringView.ShrinkLeftInline(Num);
@@ -245,7 +244,7 @@ public:
      * @param Num: Number of characters to trim
      * @return: Return a trimmed copy of the view
      */
-    FORCEINLINE TStringView ShrinkRight(int32 Num = 1) noexcept
+    NODISCARD FORCEINLINE TStringView ShrinkRight(int32 Num = 1) noexcept
     {
         TStringView NewStringView(*this);
         NewStringView.ShrinkRightInline(Num);
@@ -276,7 +275,7 @@ public:
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type Compare(const StringType& InString) const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type Compare(const StringType& InString) const noexcept
     {
         return Compare(InString.CStr(), InString.Length());
     }
@@ -287,7 +286,7 @@ public:
      * @param InString: String to compare with
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
-    FORCEINLINE int32 Compare(const CharType* InString) const noexcept
+    NODISCARD FORCEINLINE int32 Compare(const CharType* InString) const noexcept
     {
         return Compare(InString, StringType::Length(InString));
     }
@@ -299,7 +298,7 @@ public:
      * @param InLength: Length of the string to compare
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
-    FORCEINLINE int32 Compare(const CharType* InString, SizeType InLength) const noexcept
+    NODISCARD FORCEINLINE int32 Compare(const CharType* InString, SizeType InLength) const noexcept
     {
         SizeType ThisLength = Length();
         if (ThisLength != InLength)
@@ -333,7 +332,7 @@ public:
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type CompareNoCase(const StringType& InString) const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type CompareNoCase(const StringType& InString) const noexcept
     {
         return CompareNoCase(InString.CStr(), InString.Length());
     }
@@ -344,7 +343,7 @@ public:
      * @param InString: String to compare with
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
-    FORCEINLINE int32 CompareNoCase(const CharType* InString) const noexcept
+    NODISCARD FORCEINLINE int32 CompareNoCase(const CharType* InString) const noexcept
     {
         return CompareNoCase(InString, StringType::Length(InString));
     }
@@ -356,7 +355,7 @@ public:
      * @param InLength: Length of the string to compare
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
-    FORCEINLINE int32 CompareNoCase(const CharType* InString, SizeType InLength) const noexcept
+    NODISCARD FORCEINLINE int32 CompareNoCase(const CharType* InString, SizeType InLength) const noexcept
     {
         SizeType ThisLength = Length();
         if (ThisLength != InLength)
@@ -393,7 +392,7 @@ public:
      * @param Position: Position to start search at
      * @return: Returns the position of the first character in the search-string
      */
-    FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return Find(InString, StringType::Length(InString), Position);
     }
@@ -406,7 +405,7 @@ public:
      * @return: Returns the position of the first character in the search-string
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type Find(
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type Find(
         const StringType& InString,
         SizeType Position = 0) const noexcept
     {
@@ -421,7 +420,7 @@ public:
      * @param Position: Position to start search at
      * @return: Returns the position of the first character in the search-string
      */
-    FORCEINLINE SizeType Find(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Check((Position < Length()) || (Position == 0));
 
@@ -459,7 +458,7 @@ public:
      * @param Position: Position to start search at
      * @return: Returns the position of the first occurrence of the char
      */
-    FORCEINLINE SizeType Find(CharType Char, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType Find(CharType Char, SizeType Position = 0) const noexcept
     {
         Check((Position < Length()) || (Position == 0));
 
@@ -490,7 +489,7 @@ public:
      * @param Position: Position to start search at
      * @return: Returns the position of the first character in the search-string
      */
-    FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return ReverseFind(InString, StringType::Length(InString), Position);
     }
@@ -503,7 +502,7 @@ public:
      * @return: Returns the position of the first character in the search-string
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFind(
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFind(
         const StringType& InString,
         SizeType Position = 0) const noexcept
     {
@@ -519,7 +518,7 @@ public:
      * @param Position: Position to start search at
      * @return: Returns the position of the first character in the search-string
      */
-    FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Check((Position < Length()) || (Position == 0));
 
@@ -563,7 +562,7 @@ public:
      * @param Position: Position to start search at
      * @return: Returns the position of the first occurrence of the char
      */
-    FORCEINLINE SizeType ReverseFind(CharType Char, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType ReverseFind(CharType Char, SizeType Position = 0) const noexcept
     {
         Check((Position < Length()) || (Position == 0));
 
@@ -597,7 +596,7 @@ public:
      * @param Position: Position to start search at
      * @return: Returns the position of the first character in the search-string that is found
      */
-    FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return FindOneOf(InString, StringType::Length(InString), Position);
     }
@@ -610,7 +609,7 @@ public:
      * @return: Returns the position of the first character in the search-string that is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneOf(const StringType& InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneOf(const StringType& InString, SizeType Position = 0) const noexcept
     {
         return FindOneOf(InString.CStr(), InString.Length(), Position);
     }
@@ -623,7 +622,7 @@ public:
      * @param Position: Position to start search at
      * @return: Returns the position of the first character in the search-string that is found
      */
-    FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Check((Position < Length()) || (Position == 0));
 
@@ -658,7 +657,7 @@ public:
      * @param Position: Position to start search at
      * @return: Returns the position of the first character in the search-string that is found
      */
-    FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return ReverseFindOneOf(InString, StringType::Length(InString), Position);
     }
@@ -671,7 +670,7 @@ public:
      * @return: Returns the position of the first character in the search-string that is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneOf(const StringType& InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneOf(const StringType& InString, SizeType Position = 0) const noexcept
     {
         return ReverseFindOneOf(InString, InString.Length(), Position);
     }
@@ -684,7 +683,7 @@ public:
      * @param Position: Position to start search at
      * @return: Returns the position of the first character in the search-string that is found
      */
-    FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Check((Position < Length()) || (Position == 0));
 
@@ -727,7 +726,7 @@ public:
      * @param Position: Position to start the search at
      * @return: Return position the first character not a part of the search-string
      */
-    FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return FindOneNotOf(InString, StringType::Length(InString), Position);
     }
@@ -740,7 +739,7 @@ public:
      * @return: Return position the first character not a part of the search-string
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneNotOf(
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneNotOf(
         const StringType& InString,
         SizeType Position = 0) const noexcept
     {
@@ -755,7 +754,7 @@ public:
      * @param Position: Position to start the search at
      * @return: Return position the first character not a part of the search-string
      */
-    FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Check((Position < Length()) || (Position == 0));
 
@@ -794,7 +793,7 @@ public:
      * @param Position: Position to start the search at
      * @return: Return position the first character not a part of the search-string
      */
-    FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return ReverseFindOneNotOf(InString, StringType::Length(InString), Position);
     }
@@ -822,7 +821,7 @@ public:
      * @param Position: Position to start the search at
      * @return: Return position the first character not a part of the search-string
      */
-    FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Check((Position < Length()) || (Position == 0));
 
@@ -869,7 +868,7 @@ public:
      * @param Position: Position to start to search at
      * @return: Returns true if the string is found
      */
-    FORCEINLINE bool Contains(const CharType* InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE bool Contains(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return (Find(InString, Position) != NPos);
     }
@@ -882,7 +881,7 @@ public:
      * @return: Returns true if the string is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Contains(
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Contains(
         const StringType& InString,
         SizeType Position = 0) const noexcept
     {
@@ -896,7 +895,7 @@ public:
      * @param Position: Position to start to search at
      * @return: Returns true if the string is found
      */
-    FORCEINLINE bool Contains(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE bool Contains(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         return (Find(InString, InLength, Position) != NPos);
     }
@@ -908,7 +907,7 @@ public:
      * @param Position: Position to start to search at
      * @return: Returns true if the string is found
      */
-    FORCEINLINE bool Contains(CharType Char, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE bool Contains(CharType Char, SizeType Position = 0) const noexcept
     {
         return (Find(Char, Position) != NPos);
     }
@@ -920,7 +919,7 @@ public:
      * @param Position: Position to start to search at
      * @return: Returns true if the string is found
      */
-    FORCEINLINE bool ContainsOneOf(const CharType* InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE bool ContainsOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return (FindOneOf(InString, Position) != NPos);
     }
@@ -933,7 +932,7 @@ public:
      * @return: Returns true if the string is found
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type ContainsOneOf(
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type ContainsOneOf(
         const StringType& InString,
         SizeType InLength,
         SizeType Position = 0) const noexcept
@@ -949,7 +948,7 @@ public:
      * @param Position: Position to start to search at
      * @return: Returns true if the string is found
      */
-    FORCEINLINE bool ContainsOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE bool ContainsOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         return (FindOneOf(InString, InLength, Position) != NPos);
     }
@@ -959,7 +958,7 @@ public:
      *
      * @return: Returns true if the array is empty or false if it contains elements
      */
-    FORCEINLINE bool IsEmpty() const noexcept
+    NODISCARD FORCEINLINE bool IsEmpty() const noexcept
     {
         return (Length() == 0);
     }
@@ -969,10 +968,10 @@ public:
      *
      * @return: Returns a reference to the first element of the view
      */
-    FORCEINLINE const ElementType& FirstElement() const noexcept
+    NODISCARD FORCEINLINE const ElementType& FirstElement() const noexcept
     {
         Check(!IsEmpty());
-        return Data()[0];
+        return GetData()[0];
     }
 
     /**
@@ -980,10 +979,10 @@ public:
      *
      * @return: Returns a reference to the last element of the view
      */
-    FORCEINLINE const ElementType& LastElement() const noexcept
+    NODISCARD FORCEINLINE const ElementType& LastElement() const noexcept
     {
         Check(!IsEmpty());
-        return Data()[LastElementIndex()];
+        return GetData()[LastElementIndex()];
     }
 
     /**
@@ -992,10 +991,10 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    FORCEINLINE const CharType& At(SizeType Index) const noexcept
+    NODISCARD FORCEINLINE const CharType& At(SizeType Index) const noexcept
     {
         Check(Index < Length());
-        return Data()[Index];
+        return GetData()[Index];
     }
 
     /**
@@ -1014,7 +1013,7 @@ public:
      *
      * @return: Returns a the index to the last element of the view
      */
-    FORCEINLINE SizeType LastElementIndex() const noexcept
+    NODISCARD FORCEINLINE SizeType LastElementIndex() const noexcept
     {
         SizeType Len = Length();
         return (Len > 0) ? (Len - 1) : 0;
@@ -1025,7 +1024,7 @@ public:
      *
      * @return: The current size of the view
      */
-    FORCEINLINE SizeType Size() const noexcept
+    NODISCARD FORCEINLINE SizeType GetSize() const noexcept
     {
         return Length();
     }
@@ -1035,7 +1034,7 @@ public:
      *
      * @return: The current length of the view
      */
-    FORCEINLINE SizeType Length() const noexcept
+    NODISCARD FORCEINLINE SizeType Length() const noexcept
     {
         return static_cast<SizeType>(static_cast<intptr_t>(ViewEnd - ViewStart));
     }
@@ -1045,9 +1044,9 @@ public:
      *
      * @return: The current size of the container in bytes
      */
-    FORCEINLINE SizeType SizeInBytes() const noexcept
+    NODISCARD FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return Size() * sizeof(CharType);
+        return GetSize() * sizeof(CharType);
     }
 
     /**
@@ -1055,7 +1054,7 @@ public:
      *
      * @return: Returns a pointer to the data of the array
      */
-    FORCEINLINE const CharType* Data() const noexcept
+    NODISCARD FORCEINLINE const CharType* GetData() const noexcept
     {
         return ViewStart;
     }
@@ -1065,7 +1064,7 @@ public:
      *
      * @return: Returns a pointer containing a null-terminated string
      */
-    FORCEINLINE const CharType* CStr() const noexcept
+    NODISCARD FORCEINLINE const CharType* CStr() const noexcept
     {
         return (ViewStart == nullptr) ? StringType::Empty() : ViewStart;
     }
@@ -1077,10 +1076,10 @@ public:
      * @param NumCharacters: Number of characters in the sub-string
      * @return: Returns a sub-string view
      */
-    FORCEINLINE TStringView SubStringView(SizeType Offset, SizeType Count) const noexcept
+    NODISCARD FORCEINLINE TStringView SubStringView(SizeType Offset, SizeType Count) const noexcept
     {
         Check((Count < Length()) && (Offset + Count < Length()));
-        return TStringView(Data() + Offset, Count);
+        return TStringView(GetData() + Offset, Count);
     }
 
 public:
@@ -1091,7 +1090,7 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    FORCEINLINE const CharType& operator[](SizeType Index) const noexcept
+    NODISCARD FORCEINLINE const CharType& operator[](SizeType Index) const noexcept
     {
         return At(Index);
     }
@@ -1127,7 +1126,7 @@ public:
      *
      * @return: A iterator that points to the first element
      */
-    FORCEINLINE ConstIteratorType StartIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
         return ConstIteratorType(*this, 0);
     }
@@ -1137,9 +1136,9 @@ public:
      *
      * @return: A iterator that points to the element past the end
      */
-    FORCEINLINE ConstIteratorType EndIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType(*this, Size());
+        return ConstIteratorType(*this, GetSize());
     }
 
     /**
@@ -1147,9 +1146,9 @@ public:
      *
      * @return: A reverse-iterator that points to the last element
      */
-    FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType(*this, Size());
+        return ReverseConstIteratorType(*this, GetSize());
     }
 
     /**
@@ -1157,7 +1156,7 @@ public:
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
-    FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, 0);
     }
@@ -1169,7 +1168,7 @@ public:
      *
      * @return: A iterator that points to the first element
      */
-    FORCEINLINE ConstIteratorType begin() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept
     {
         return StartIterator();
     }
@@ -1179,7 +1178,7 @@ public:
      *
      * @return: A iterator that points past the last element
      */
-    FORCEINLINE ConstIteratorType end() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept
     {
         return EndIterator();
     }
@@ -1199,109 +1198,109 @@ using FFWStringView = TStringView<wchar_t>;
 // Operators
 
 template<typename CharType>
-inline bool operator==(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+inline NODISCARD bool operator==(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) == 0);
 }
 
 template<typename CharType>
-inline bool operator==(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator==(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (RHS.Compare(LHS) == 0);
 }
 
 template<typename CharType>
-inline bool operator==(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator==(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (LHS.Compare(RHS) == 0);
 }
 
 template<typename CharType>
-inline bool operator!=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+inline NODISCARD bool operator!=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
 template<typename CharType>
-inline bool operator!=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator!=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
 template<typename CharType>
-inline bool operator!=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator!=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
 template<typename CharType>
-inline bool operator<(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+inline NODISCARD bool operator<(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) < 0);
 }
 
 template<typename CharType>
-inline bool operator<(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator<(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (RHS.Compare(LHS) < 0);
 }
 
 template<typename CharType>
-inline bool operator<(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator<(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (LHS.Compare(RHS) < 0);
 }
 
 template<typename CharType>
-inline bool operator<=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+inline NODISCARD bool operator<=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) <= 0);
 }
 
 template<typename CharType>
-inline bool operator<=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator<=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (RHS.Compare(LHS) <= 0);
 }
 
 template<typename CharType>
-inline bool operator<=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator<=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (LHS.Compare(RHS) <= 0);
 }
 
 template<typename CharType>
-inline bool operator>(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+inline NODISCARD bool operator>(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) > 0);
 }
 
 template<typename CharType>
-inline bool operator>(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator>(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (RHS.Compare(LHS) > 0);
 }
 
 template<typename CharType>
-inline bool operator>(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator>(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (LHS.Compare(RHS) > 0);
 }
 
 template<typename CharType>
-inline bool operator>=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+inline NODISCARD bool operator>=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) >= 0);
 }
 
 template<typename CharType>
-inline bool operator>=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator>=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (RHS.Compare(LHS) >= 0);
 }
 
 template<typename CharType>
-inline bool operator>=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+inline NODISCARD bool operator>=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (LHS.Compare(RHS) >= 0);
 }

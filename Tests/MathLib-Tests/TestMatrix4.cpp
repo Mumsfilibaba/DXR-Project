@@ -278,7 +278,7 @@ bool TestMatrix4()
 
     // GetData
     FMatrix4 Matrix0 = FMatrix4::Identity();
-    FMatrix4 Matrix1 = FMatrix4(Matrix0.Data());
+    FMatrix4 Matrix1 = FMatrix4(Matrix0.GetData());
     if (Matrix0 != Matrix1)
     {
         TEST_FAILED();

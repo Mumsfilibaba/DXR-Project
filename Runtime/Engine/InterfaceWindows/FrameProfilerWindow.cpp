@@ -105,7 +105,7 @@ void FFrameProfilerWindow::DrawCPUData(float Width)
 
         ImGui::PlotHistogram(
             "",
-            CPUFrameTime.Samples.Data(),
+            CPUFrameTime.Samples.GetData(),
             CPUFrameTime.SampleCount,
             CPUFrameTime.CurrentSample,
             nullptr,
