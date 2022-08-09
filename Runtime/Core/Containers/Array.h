@@ -26,7 +26,6 @@ public:
         TIsSigned<SizeType>::Value,
         "TArray only supports a SizeType that's signed");
 
-    /* Iterators */
     typedef TArrayIterator<TArray, ElementType>                    IteratorType;
     typedef TArrayIterator<const TArray, const ElementType>        ConstIteratorType;
     typedef TReverseArrayIterator<TArray, ElementType>             ReverseIteratorType;
@@ -299,7 +298,7 @@ public:
         {
             if (NewSize >= ArrayCapacity)
             {
-                ReserveStorage(NewSize);
+                Reserve_Internal(NewSize);
             }
 
             // NewSize is always larger than array-size...
@@ -317,7 +316,7 @@ public:
             SizeType NumElementsToDestruct = ArraySize - NewSize;
             Check(NumElementsToDestruct > 0);
 
-            InternalPopRange(NumElementsToDestruct);
+            PopRange_Internal(NumElementsToDestruct);
         }
     }
 
@@ -333,7 +332,7 @@ public:
         {
             if (NewSize >= ArrayCapacity)
             {
-                ReserveStorage(NewSize);
+                Reserve_Internal(NewSize);
             }
 
             // NewSize is always larger than arraysize...
@@ -351,7 +350,7 @@ public:
             SizeType NumElementsToDestruct = ArraySize - NewSize;
             Check(NumElementsToDestruct > 0);
 
-            InternalPopRange(NumElementsToDestruct);
+            PopRange_Internal(NumElementsToDestruct);
         }
     }
 
@@ -370,7 +369,7 @@ public:
                 ArraySize = NewCapacity;
             }
 
-            ReserveStorage(NewCapacity);
+            Reserve_Internal(NewCapacity);
         }
     }
 
@@ -643,7 +642,7 @@ public:
     {
         if (!IsEmpty())
         {
-            InternalPopRange(NumElements);
+            PopRange_Internal(NumElements);
         }
     }
 
@@ -667,7 +666,7 @@ public:
 
         if (Position + NumElements == ArraySize)
         {
-            InternalPopRange(NumElements);
+            PopRange_Internal(NumElements);
         }
         else
         {
@@ -1411,7 +1410,7 @@ private:
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
     // Internal functions
 
-    FORCEINLINE void InitUnitialized(SizeType NumElements)
+    FORCEINLINE void CreateUnitialized(SizeType NumElements)
     {
         if (ArrayCapacity < NumElements)
         {
@@ -1424,19 +1423,19 @@ private:
 
     FORCEINLINE void EmptyConstruct(SizeType NumElements)
     {
-        InitUnitialized(NumElements);
+        CreateUnitialized(NumElements);
         DefaultConstructRange<ElementType>(Data(), NumElements);
     }
 
     FORCEINLINE void EmptyConstructFrom(SizeType NumElements, const ElementType& Element)
     {
-        InitUnitialized(NumElements);
+        CreateUnitialized(NumElements);
         ConstructRangeFrom<ElementType>(Data(), NumElements, Element);
     }
 
     FORCEINLINE void CopyConstructFrom(const ElementType* From, SizeType NumElements)
     {
-        InitUnitialized(NumElements);
+        CreateUnitialized(NumElements);
         CopyConstructRange<ElementType>(Data(), From, NumElements);
     }
 
@@ -1456,14 +1455,14 @@ private:
     }
 
     template<typename U = T>
-    FORCEINLINE typename TEnableIf<TIsReallocatable<U>::Value>::Type ReserveStorage(const SizeType NewCapacity) noexcept
+    FORCEINLINE typename TEnableIf<TIsReallocatable<U>::Value>::Type Reserve_Internal(const SizeType NewCapacity) noexcept
     {
         Allocator.Realloc(ArrayCapacity, NewCapacity);
         ArrayCapacity = NewCapacity;
     }
 
     template<typename U = T>
-    FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<U>>::Value>::Type ReserveStorage(const SizeType NewCapacity) noexcept
+    FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<U>>::Value>::Type Reserve_Internal(const SizeType NewCapacity) noexcept
     {
         if (ArrayCapacity)
         {
@@ -1492,7 +1491,7 @@ private:
         RelocateRange<ElementType>(Data() + Position + ElementNumElements, Data() + Position, ArraySize - Position);
     }
 
-    FORCEINLINE void InternalPopRange(SizeType NumElements) noexcept
+    FORCEINLINE void PopRange_Internal(SizeType NumElements) noexcept
     {
         ArraySize = ArraySize - NumElements;
         DestructRange<ElementType>(Data() + ArraySize, NumElements);
@@ -1508,7 +1507,7 @@ private:
         if (NewSize > ArrayCapacity)
         {
             const SizeType NewCapacity = GetGrowCapacity(NewSize, ArrayCapacity);
-            ReserveStorage(NewCapacity);
+            Reserve_Internal(NewCapacity);
         }
     }
 

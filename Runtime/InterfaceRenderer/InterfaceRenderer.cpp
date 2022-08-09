@@ -223,9 +223,10 @@ bool FInterfaceRenderer::InitContext(InterfaceContext Context)
         VertexBuffer->SetName("ImGui VertexBuffer");
     }
 
-    FRHIIndexBufferInitializer IBInitializer( EBufferUsageFlags::Default
-                                            , (sizeof(ImDrawIdx) == 2) ? EIndexFormat::uint16 : EIndexFormat::uint32
-                                            , 1024 * 1024);
+    FRHIIndexBufferInitializer IBInitializer(
+        EBufferUsageFlags::Default,
+        (sizeof(ImDrawIdx) == 2) ? EIndexFormat::uint16 : EIndexFormat::uint32,
+        1024 * 1024);
 
     IndexBuffer = RHICreateIndexBuffer(IBInitializer);
     if (!IndexBuffer)

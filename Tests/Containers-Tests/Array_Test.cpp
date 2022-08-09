@@ -1,13 +1,15 @@
 #include "Array_Test.h"
 
 #if RUN_TARRAY_TEST || RUN_TARRAY_BENCHMARKS
-#include <Core/Containers/Array.h>
-
 #include <iostream>
 #include <string>
 #include <vector>
 #include <chrono>
 #include <algorithm>
+
+#include "TestUtils.h"
+
+#include <Core/Containers/Array.h>
 
 #define ENABLE_INLINE_ALLOCATOR (0)
 
@@ -19,16 +21,15 @@ template<typename T>
 using TArrayAllocator = TDefaultArrayAllocator<T>;
 #endif
 
-/*
-* A clock
-*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FClock
 
-struct SClock
+struct FClock
 {
-    friend struct SScopedClock;
+    friend struct FScopedClock;
 
 public:
-    SClock()
+    FClock()
         : Duration( 0 )
         , TotalDuration( 0 )
     { }
@@ -50,7 +51,7 @@ public:
     }
 
 private:
-    inline void AddDuration( int64 InDuration )
+    inline void AddDuration(int64 InDuration)
     {
         Duration = InDuration;
         TotalDuration += Duration;
@@ -60,36 +61,38 @@ private:
     int64 TotalDuration = 0;
 };
 
-struct SScopedClock
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FScopedClock
+
+struct FScopedClock
 {
-    SScopedClock( SClock& InParent )
-        : Parent( InParent )
-        , t0( std::chrono::high_resolution_clock::now() )
+    FScopedClock(FClock& InParent)
+        : Parent(InParent)
+        , t0(std::chrono::high_resolution_clock::now())
         , t1()
     {
         t0 = std::chrono::high_resolution_clock::now();
     }
 
-    ~SScopedClock()
+    ~FScopedClock()
     {
         t1 = std::chrono::high_resolution_clock::now();
-        Parent.AddDuration( std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() );
+        Parent.AddDuration(std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count());
     }
 
-    SClock& Parent;
+    FClock& Parent;
     std::chrono::steady_clock::time_point t0;
     std::chrono::steady_clock::time_point t1;
 };
 
-/*
- * Vec3
- */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FVec3
 
-struct Vec3
+struct FVec3
 {
-    Vec3() = default;
+    FVec3() = default;
 
-    Vec3( double InX, double InY, double InZ )
+    FVec3( double InX, double InY, double InZ )
         : x( InX )
         , y( InY )
         , z( InZ )
@@ -101,14 +104,17 @@ struct Vec3
 
     operator std::string() const
     {
-        return std::to_string( x ) + ", " + std::to_string( y ) + ", " + std::to_string( z );
+        return std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z);
     }
 
-    bool operator==( const Vec3& Other ) const
+    bool operator==(const FVec3& Other) const
     {
         return (x == Other.x) && (y == Other.y) && (z == Other.z);
     }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TIsReallocatable
 
 template<>
 struct TIsReallocatable<std::string>
@@ -119,73 +125,71 @@ struct TIsReallocatable<std::string>
     };
 };
 
-/*
- * PrintArr
- */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// PrintArr
 
 template<typename T>
-void PrintArr( const TArray<T, TArrayAllocator<T>>& Arr, const std::string& Name = "" )
+void PrintArr(const TArray<T, TArrayAllocator<T>>& Arr, const std::string& Name = "")
 {
-    std::cout << Name << std::endl;
-    std::cout << "--------------------------------" << std::endl;
+    std::cout << Name << '\n';
+    std::cout << "--------------------------------" << '\n';
 
-    for ( auto i : Arr )
+    for (auto i : Arr)
     {
-        std::cout << (std::string)i << std::endl;
+        std::cout << (std::string)i << '\n';
     }
 
-    std::cout << "Size: " << Arr.Size() << std::endl;
-    std::cout << "Capacity: " << Arr.Capacity() << std::endl;
+    std::cout << "Size: " << Arr.Size() << '\n';
+    std::cout << "Capacity: " << Arr.Capacity() << '\n';
 
-    std::cout << "--------------------------------" << std::endl << std::endl;
+    std::cout << "--------------------------------" << '\n' << '\n';
 }
 
 template<>
-void PrintArr<int32>( const TArray<int32, TArrayAllocator<int32>>& Arr, const std::string& Name )
+void PrintArr<int32>(const TArray<int32, TArrayAllocator<int32>>& Arr, const std::string& Name)
 {
-    std::cout << Name << std::endl;
-    std::cout << "--------------------------------" << std::endl;
+    std::cout << Name << '\n';
+    std::cout << "--------------------------------" << '\n';
 
-    for ( auto i : Arr )
+    for (auto i : Arr)
     {
-        std::cout << i << std::endl;
+        std::cout << i << '\n';
     }
 
-    std::cout << "Size: " << Arr.Size() << std::endl;
-    std::cout << "Capacity: " << Arr.Capacity() << std::endl;
+    std::cout << "Size: " << Arr.Size() << '\n';
+    std::cout << "Capacity: " << Arr.Capacity() << '\n';
 
-    std::cout << "--------------------------------" << std::endl << std::endl;
+    std::cout << "--------------------------------" << '\n' << '\n';
 }
 
 template<typename T>
-void PrintArr( const std::vector<T>& Arr, const std::string& Name = "" )
+void PrintArr(const std::vector<T>& Arr, const std::string& Name = "")
 {
-    std::cout << Name << std::endl;
-    std::cout << "--------------------------------" << std::endl;
+    std::cout << Name << '\n';
+    std::cout << "--------------------------------" << '\n';
 
-    for ( auto i : Arr )
+    for (auto i : Arr)
     {
-        std::cout << i << std::endl;
+        std::cout << i << '\n';
     }
 
-    std::cout << "Size: " << Arr.size() << std::endl;
-    std::cout << "Capacity: " << Arr.capacity() << std::endl;
+    std::cout << "Size: " << Arr.size() << '\n';
+    std::cout << "Capacity: " << Arr.capacity() << '\n';
 
-    std::cout << "--------------------------------" << std::endl << std::endl;
+    std::cout << "--------------------------------" << '\n' << '\n';
 }
 
-#define PrintArr(Arr) PrintArr(Arr, #Arr)
+#define PRINT_ARRAY(Arr) PrintArr(Arr, #Arr)
 
 #if RUN_TARRAY_BENCHMARKS
 
-/*
- * Benchmark
- */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TArray_Benchmark
 
 void TArray_Benchmark()
 {
     // Performance
-    std::cout << std::endl << "Benchmark (std::string)" << std::endl;
+    std::cout << '\n' << "Benchmark (std::string)" << '\n';
 #if defined(DEBUG_BUILD)
     const uint32 TestCount = 10;
 #else
@@ -200,41 +204,41 @@ void TArray_Benchmark()
     #else
         const uint32 Iterations = 10000;
     #endif
-        std::cout << std::endl << "Insert/insert (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
+        std::cout << '\n' << "Insert/insert (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
                 std::vector<std::string> Strings0;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Strings0.insert( Strings0.begin(), "My name is jeff" );
+                    Strings0.insert(Strings0.begin(), "My name is jeff");
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
-            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "std::vector                :" << Duration << "ns" << '\n';
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << '\n';
         }
 
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
                 TArray<std::string, TArrayAllocator<std::string>> Strings1;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Strings1.Insert( 0, "My name is jeff" );
+                    Strings1.Insert(0, "My name is jeff");
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
-            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "TArray                     :" << Duration << "ns" << '\n';
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << '\n';
         }
     }
 #endif
@@ -247,41 +251,41 @@ void TArray_Benchmark()
     #else
         const uint32 Iterations = 10000;
     #endif
-        std::cout << std::endl << "EmplaceAt/emplace (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
+        std::cout << '\n' << "EmplaceAt/emplace (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
                 std::vector<std::string> Strings0;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Strings0.emplace( Strings0.begin(), "My name is jeff" );
+                    Strings0.emplace(Strings0.begin(), "My name is jeff");
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
-            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "std::vector                :" << Duration << "ns" << '\n';
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << '\n';
         }
 
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
                 TArray<std::string, TArrayAllocator<std::string>> Strings1;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Strings1.EmplaceAt( 0, "My name is jeff" );
+                    Strings1.EmplaceAt(0, "My name is jeff");
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
-            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "TArray                     :" << Duration << "ns" << '\n';
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << '\n';
         }
     }
 #endif
@@ -290,41 +294,41 @@ void TArray_Benchmark()
     // Push
     {
         const uint32 Iterations = 10000;
-        std::cout << std::endl << "Push/push_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
+        std::cout << '\n' << "Push/push_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
                 std::vector<std::string> Strings0;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Strings0.push_back( "My name is jeff" );
+                    Strings0.push_back("My name is jeff");
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
-            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "std::vector                :" << Duration << "ns" << '\n';
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << '\n';
         }
 
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
                 TArray<std::string, TArrayAllocator<std::string>> Strings1;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Strings1.Push( "My name is jeff" );
+                    Strings1.Push("My name is jeff");
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
-            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "TArray                     :" << Duration << "ns" << '\n';
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << '\n';
         }
     }
 #endif
@@ -333,86 +337,86 @@ void TArray_Benchmark()
     // Emplace
     {
         const uint32 Iterations = 10000;
-        std::cout << std::endl << "Emplace/emplace_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
+        std::cout << '\n' << "Emplace/emplace_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
                 std::vector<std::string> Strings0;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Strings0.emplace_back( "My name is jeff" );
+                    Strings0.emplace_back("My name is jeff");
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
-            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "std::vector                :" << Duration << "ns" << '\n';
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << '\n';
         }
 
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
                 TArray<std::string, TArrayAllocator<std::string>> Strings1;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Strings1.Emplace( "My name is jeff" );
+                    Strings1.Emplace("My name is jeff");
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
-            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "TArray                     :" << Duration << "ns" << '\n';
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << '\n';
         }
     }
 #endif
 
-    std::cout << std::endl << "Benchmark (Vec3)" << std::endl;
+    std::cout << '\n' << "Benchmark (FVec3)" << '\n';
 
     // Insert
 #if 1
     {
         const uint32 Iterations = 10000;
-        std::cout << std::endl << "Insert/insert (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
+        std::cout << '\n' << "Insert/insert (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
-                std::vector<Vec3> Vectors0;
+                std::vector<FVec3> Vectors0;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Vectors0.insert( Vectors0.begin(), Vec3( 3.0, 5.0, -6.0 ) );
+                    Vectors0.insert(Vectors0.begin(), FVec3(3.0, 5.0, -6.0));
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
-            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "std::vector                :" << Duration << "ns" << '\n';
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << '\n';
         }
 
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
-                TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
+                TArray<FVec3, TArrayAllocator<FVec3>> Vectors1;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Vectors1.Insert( 0, Vec3( 3.0, 5.0, -6.0 ) );
+                    Vectors1.Insert(0, FVec3(3.0, 5.0, -6.0));
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
-            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "TArray                     :" << Duration << "ns" << '\n';
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << '\n';
         }
     }
 #endif
@@ -421,41 +425,41 @@ void TArray_Benchmark()
     // EmplaceAt
     {
         const uint32 Iterations = 10000;
-        std::cout << std::endl << "EmplaceAt/emplace (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
+        std::cout << '\n' << "EmplaceAt/emplace (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
-                std::vector<Vec3> Vectors0;
+                std::vector<FVec3> Vectors0;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Vectors0.emplace( Vectors0.begin(), 3.0, 5.0, -6.0 );
+                    Vectors0.emplace(Vectors0.begin(), 3.0, 5.0, -6.0);
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
-            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "std::vector                :" << Duration << "ns" << '\n';
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << '\n';
         }
 
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
-                TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
+                TArray<FVec3, TArrayAllocator<FVec3>> Vectors1;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Vectors1.EmplaceAt( 0, double( j + 1 ), 5.0, -6.0 );
+                    Vectors1.EmplaceAt(0, double(j + 1), 5.0, -6.0);
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
-            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "TArray                     :" << Duration << "ns" << '\n';
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << '\n';
         }
     }
 #endif
@@ -464,41 +468,41 @@ void TArray_Benchmark()
     // Push
     {
         const uint32 Iterations = 10000;
-        std::cout << std::endl << "Push/push_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
+        std::cout << '\n' << "Push/push_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
-                std::vector<Vec3> Vectors0;
+                std::vector<FVec3> Vectors0;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Vectors0.push_back( Vec3( 3.0, 5.0, -6.0 ) );
+                    Vectors0.push_back(FVec3(3.0, 5.0, -6.0));
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
-            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "std::vector                :" << Duration << "ns" << '\n';
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << '\n';
         }
 
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
-                TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
+                TArray<FVec3, TArrayAllocator<FVec3>> Vectors1;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Vectors1.Push( Vec3( 3.0, 5.0, -6.0 ) );
+                    Vectors1.Push(FVec3(3.0, 5.0, -6.0));
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
-            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "TArray                     :" << Duration << "ns" << '\n';
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << '\n';
         }
     }
 #endif
@@ -507,41 +511,41 @@ void TArray_Benchmark()
     // Emplace
     {
         const uint32 Iterations = 10000;
-        std::cout << std::endl << "Emplace/emplace_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
+        std::cout << '\n' << "Emplace/emplace_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
-                std::vector<Vec3> Vectors0;
+                std::vector<FVec3> Vectors0;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Vectors0.emplace_back( 3.0, 5.0, -6.0 );
+                    Vectors0.emplace_back(3.0, 5.0, -6.0);
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
-            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "std::vector                :" << Duration << "ns" << '\n';
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << '\n';
         }
 
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < TestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < TestCount; i++)
             {
-                TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
+                TArray<FVec3, TArrayAllocator<FVec3>> Vectors1;
 
-                SScopedClock SScopedClock( Clock );
-                for ( uint32 j = 0; j < Iterations; j++ )
+                FScopedClock FScopedClock(Clock);
+                for (uint32 j = 0; j < Iterations; j++)
                 {
-                    Vectors1.Emplace( 3.0, 5.0, -6.0 );
+                    Vectors1.Emplace(3.0, 5.0, -6.0);
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
-            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+            std::cout << "TArray                     :" << Duration << "ns" << '\n';
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << '\n';
         }
     }
 #endif
@@ -555,51 +559,51 @@ void TArray_Benchmark()
     #endif
 
         const uint32 NumNumbers = 1000000;
-        std::cout << std::endl << "HeapSort/heap_sort (NumNumbers=" << NumNumbers << ", SortTestCount=" << SortTestCount << ")" << std::endl;
+        std::cout << '\n' << "HeapSort/heap_sort (NumNumbers=" << NumNumbers << ", SortTestCount=" << SortTestCount << ")" << '\n';
 
-        srand( (unsigned int)time( 0 ) );
+        srand((unsigned int)time(0));
 
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < SortTestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < SortTestCount; i++)
             {
                 TArray<int32, TArrayAllocator<int32>> Heap;
-                for ( uint32 n = 0; n < NumNumbers; n++ )
+                for (uint32 n = 0; n < NumNumbers; n++)
                 {
-                    Heap.Emplace( rand() );
+                    Heap.Emplace(rand());
                 }
 
                 {
-                    SScopedClock SScopedClock( Clock );
+                    FScopedClock FScopedClock(Clock);
                     Heap.HeapSort();
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / SortTestCount;
-            std::cout << "TArray      Sorting time: " << Duration << "ns" << std::endl;
-            std::cout << "TArray      Sorting time: " << Duration / (1000 * 1000) << "ms" << std::endl;
+            std::cout << "TArray      Sorting time: " << Duration << "ns" << '\n';
+            std::cout << "TArray      Sorting time: " << Duration / (1000 * 1000) << "ms" << '\n';
         }
 
         {
-            SClock Clock;
-            for ( uint32 i = 0; i < SortTestCount; i++ )
+            FClock Clock;
+            for (uint32 i = 0; i < SortTestCount; i++)
             {
                 std::vector<int32> Heap;
-                for ( uint32 n = 0; n < NumNumbers; n++ )
+                for (uint32 n = 0; n < NumNumbers; n++)
                 {
-                    Heap.emplace_back( rand() );
+                    Heap.emplace_back(rand());
                 }
 
                 {
-                    SScopedClock SScopedClock( Clock );
-                    std::make_heap( Heap.begin(), Heap.end() );
-                    std::sort_heap( Heap.begin(), Heap.end() );
+                    FScopedClock FScopedClock(Clock);
+                    std::make_heap(Heap.begin(), Heap.end());
+                    std::sort_heap(Heap.begin(), Heap.end());
                 }
             }
 
             auto Duration = Clock.GetTotalDuration() / SortTestCount;
-            std::cout << "std::vector Sorting time: " << Duration << "ns" << std::endl;
-            std::cout << "std::vector Sorting time: " << Duration / (1000 * 1000) << "ms" << std::endl;
+            std::cout << "std::vector Sorting time: " << Duration << "ns" << '\n';
+            std::cout << "std::vector Sorting time: " << Duration / (1000 * 1000) << "ms" << '\n';
         }
     }
 #endif
@@ -609,24 +613,32 @@ void TArray_Benchmark()
 
 #if RUN_TARRAY_TEST
 
-/*
- * Test
- */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TArray_Test
 
-void TArray_Test( int32 Argc, const char** Argv )
+bool TArray_Test(int32 Argc, const char** Argv)
 {
 #if 1
-    std::cout << std::endl << "----------TArray----------" << std::endl << std::endl;
+    std::cout << '\n' << "----------TArray----------" << '\n' << '\n';
     {
         std::string ArgvStr = Argc > 0 ? Argv[0] : "Filepath";
 
-        std::cout << "Testing TArray<std::string>" << std::endl;
+        std::cout << "Testing TArray<std::string>" << '\n';
 
-        std::cout << std::endl << "Testing Constructors" << std::endl << std::endl;
-        // Test constructors
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+        // Testing Constructors
+
+        std::cout << '\n' << "Testing Constructors:" << '\n' << '\n';
+
         TArray<std::string, TArrayAllocator<std::string>> Strings0;
-        TArray<std::string, TArrayAllocator<std::string>> Strings1( 5, "Hello" );
-        TArray<std::string, TArrayAllocator<std::string>> Strings2( Strings1.Data(), Strings1.Size() );
+        CHECK(Strings0.IsEmpty());
+
+        TArray<std::string, TArrayAllocator<std::string>> Strings1(5, "Hello");
+        CHECK_ARRAY(Strings1, { "Hello", "Hello", "Hello", "Hello", "Hello" });
+
+        TArray<std::string, TArrayAllocator<std::string>> Strings2(Strings1.Data(), Strings1.Size());
+        CHECK_ARRAY(Strings2, { "Hello", "Hello", "Hello", "Hello", "Hello" });
+
         TArray<std::string, TArrayAllocator<std::string>> Strings3 =
         {
             "Hello World",
@@ -634,125 +646,272 @@ void TArray_Test( int32 Argc, const char** Argv )
             "This is a longer teststring"
         };
 
-        PrintArr( Strings0 );
-        PrintArr( Strings1 );
-        PrintArr( Strings2 );
-        PrintArr( Strings3 );
+        CHECK_ARRAY(Strings3, { "Hello World", "TArray", "This is a longer teststring" });
 
         {
-            std::cout << "Test Copy Constructor" << std::endl << std::endl;
+            /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+            // Testing Copy Constructor
 
-            // Test copy an empty array
+            std::cout << '\n' << "Test Copy Constructor" << '\n' << '\n';
+
             TArray<std::string, TArrayAllocator<std::string>> Strings4 = Strings0;
-            // Test copy an array with data
+            CHECK(Strings4.IsEmpty());
+            
             TArray<std::string, TArrayAllocator<std::string>> Strings5 = Strings1;
 
-            PrintArr( Strings4 );
+            std::cout << '\n' << "Before move" << '\n' << '\n';
 
-            std::cout << "Before move" << std::endl << std::endl;
-            PrintArr( Strings5 );
+            CHECK(!Strings5.IsEmpty());
+            CHECK_ARRAY(Strings5, { "Hello", "Hello", "Hello", "Hello", "Hello" });
 
-            // Test move an array with data
-            std::cout << "Test Move Constructor" << std::endl << std::endl;
+            /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+            // Testing Move Constructor
 
-            TArray<std::string, TArrayAllocator<std::string>> Strings6 = Move( Strings5 );
+            std::cout << "Test Move Constructor" << '\n' << '\n';
 
-            std::cout << "After move" << std::endl << std::endl;
-            PrintArr( Strings5 );
-            PrintArr( Strings6 );
+            TArray<std::string, TArrayAllocator<std::string>> Strings6 = Move(Strings5);
+
+            std::cout << '\n' << "After move" << '\n' << '\n';
+
+            CHECK(Strings5.IsEmpty());
+            CHECK_ARRAY(Strings6, { "Hello", "Hello", "Hello", "Hello", "Hello" });
         }
 
-        // Reset
-        std::cout << std::endl << "Testing Reset" << std::endl << std::endl;
-        Strings0.Reset( 7, "This is a teststring" );
-        PrintArr( Strings0 );
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+        // Testing Reset
+        
+        std::cout << '\n' << "Testing Reset" << '\n' << '\n';
 
-        Strings1.Reset( { "Test-String #1", "Test-String #2", "Test-String #3" } );
-        PrintArr( Strings1 );
+        Strings0.Reset(7, "This is a teststring");
+        CHECK_ARRAY(Strings0,
+            {
+                "This is a teststring",
+                "This is a teststring",
+                "This is a teststring",
+                "This is a teststring",
+                "This is a teststring",
+                "This is a teststring",
+                "This is a teststring"
+            });
 
-        Strings2.Reset( Strings3.Data(), Strings3.Size() );
-        PrintArr( Strings2 );
+        Strings1.Reset({ "Test-String #1", "Test-String #2", "Test-String #3" });
+        CHECK_ARRAY(Strings1, { "Test-String #1", "Test-String #2", "Test-String #3" });
 
-        // Resize
-        std::cout << std::endl << "Testing Resize" << std::endl << std::endl;
+        Strings2.Reset(Strings3.Data(), Strings3.Size());
+        CHECK_ARRAY(Strings2, { "Hello World", "TArray", "This is a longer teststring" });
 
-        // Constructing a empty Array to test resize
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+        // Testing Resize
+
+        std::cout << '\n' << "Testing Resize" << '\n' << '\n';
+
         TArray<std::string, TArrayAllocator<std::string>> Strings4;
 
-        std::cout << "Before Resize" << std::endl << std::endl;
-        PrintArr( Strings4 );
-        PrintArr( Strings3 );
-        PrintArr( Strings1 );
+        Strings4.Resize(10, "New String");
+        CHECK_ARRAY(Strings4,
+            {
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String"
+            });
 
-        Strings4.Resize( 10, "New String" );
-        Strings3.Resize( 4, "Hi, hi" );
-        Strings1.Resize( 6, "Hello World" );
+        Strings3.Resize(4, "Hi, hi");
+        CHECK(Strings3.Size()     == 4);
+        CHECK(Strings3.Capacity() == 4);
+        CHECK_ARRAY(Strings3,
+            {
+                "Hello World",
+                "TArray",
+                "This is a longer teststring",
+                "Hi, hi"
+            });
 
-        std::cout << "After Resize" << std::endl << std::endl;
-        PrintArr( Strings4 );
-        PrintArr( Strings3 );
-        PrintArr( Strings1 );
+        Strings1.Resize(6, "Hello World");
+        CHECK(Strings1.Size()     == 6);
+        CHECK(Strings1.Capacity() == 6);
+        CHECK_ARRAY(Strings1, 
+            { 
+                "Test-String #1",
+                "Test-String #2",
+                "Test-String #3",
+                "Hello World",
+                "Hello World",
+                "Hello World"
+            });
 
-        std::cout << "Testing Shrinking Resize" << std::endl << std::endl;
-        Strings4.Resize( 2, "New String" );
-        PrintArr( Strings4 );
+        Strings3.Resize(5, "No i am your father");
+        CHECK(Strings3.Size()     == 5);
+        CHECK(Strings3.Capacity() == 5);
+        CHECK_ARRAY(Strings3,
+            {
+                "Hello World",
+                "TArray",
+                "This is a longer teststring",
+                "Hi, hi",
+                "No i am your father"
+            });
 
-        std::cout << "Testing Growing Resize" << std::endl << std::endl;
-        Strings4.Resize( 15, "New String" );
-        PrintArr( Strings4 );
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+        // Testing Shrinking Resize
 
-        // Reserve
-        std::cout << std::endl << "Testing Reserve" << std::endl << std::endl;
+        std::cout << "Testing Shrinking Resize" << '\n' << '\n';
+        
+        Strings4.Resize(2, "New String");
+        CHECK_ARRAY(Strings4, { "New String", "New String" });
 
-        std::cout << "Before Reserve" << std::endl << std::endl;
-        PrintArr( Strings4 );
+        std::cout << "Testing Growing Resize" << '\n' << '\n';
 
-        std::cout << "After Reserve" << std::endl << std::endl;
-        Strings4.Reserve( Strings4.Capacity() );
-        PrintArr( Strings4 );
+        Strings4.Resize(15, "New String");
+        CHECK_ARRAY(Strings4,
+            {
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String"
+            });
 
-        std::cout << "Shrinking" << std::endl << std::endl;
-        Strings4.Reserve( 5 );
-        PrintArr( Strings4 );
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+        // Testing Reserve
 
-        std::cout << "Growing" << std::endl << std::endl;
-        Strings4.Reserve( 10 );
-        PrintArr( Strings4 );
+        std::cout << '\n' << "Testing Reserve" << '\n' << '\n';
 
-        std::cout << "Resize" << std::endl << std::endl;
-        Strings4.Resize( Strings4.Capacity() - 2, "This spot is reserved" );
-        PrintArr( Strings4 );
+        Strings4.Reserve(Strings4.Capacity());
+        CHECK(Strings4.Size()     == 15);
+        CHECK(Strings4.Capacity() == 15);
+        CHECK_ARRAY(Strings4,
+            {
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String"
+            });
 
+        std::cout << "Shrinking" << '\n' << '\n';
+
+        Strings4.Reserve(5);
+        CHECK(Strings4.Size()     == 5);
+        CHECK(Strings4.Capacity() == 5);
+        CHECK_ARRAY(Strings4,
+            {
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String"
+            });
+
+        std::cout << "Growing" << '\n' << '\n';
+        
+        Strings4.Reserve(10);
+        CHECK(Strings4.Size()     == 5);
+        CHECK(Strings4.Capacity() == 10);
+        CHECK_ARRAY(Strings4,
+            {
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String"
+            });
+
+        std::cout << "Resize" << '\n' << '\n';
+
+        Strings4.Resize(Strings4.Capacity() - 2, "This spot is reserved");
+        CHECK(Strings4.Size()     == 8);
+        CHECK(Strings4.Capacity() == 10);
+        CHECK_ARRAY(Strings4,
+            {
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "This spot is reserved",
+                "This spot is reserved",
+                "This spot is reserved"
+            });
+
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
         // Shrink To Fit
-        std::cout << std::endl << "Testing ShrinkToFit" << std::endl << std::endl;
 
-        std::cout << std::endl << "Before ShrinkToFit" << std::endl << std::endl;
-        PrintArr( Strings4 );
+        std::cout << '\n' << "Testing ShrinkToFit" << '\n' << '\n';
 
         Strings4.ShrinkToFit();
+        CHECK(Strings4.Size()     == 8);
+        CHECK(Strings4.Capacity() == 8);
+        CHECK_ARRAY(Strings4,
+            {
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "This spot is reserved",
+                "This spot is reserved",
+                "This spot is reserved"
+            });
 
-        std::cout << std::endl << "After ShrinkToFit" << std::endl << std::endl;
-        PrintArr( Strings4 );
-
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
         // Assignment
-        std::cout << std::endl << "Testing Assignment" << std::endl << std::endl;
 
-        Strings3.Resize( 5, "No i am your father" );
+        std::cout << '\n' << "Testing Assignment" << '\n' << '\n';
 
-        std::cout << "Before Assignment" << std::endl << std::endl;
-        PrintArr( Strings0 );
-        PrintArr( Strings1 );
-        PrintArr( Strings2 );
-        PrintArr( Strings3 );
-        PrintArr( Strings4 );
-
-        std::cout << "Strings0 = Strings4" << std::endl;
         Strings0 = Strings4;
+        CHECK(Strings0.Size()     == 8);
+        CHECK(Strings0.Capacity() == 8);
+        CHECK_ARRAY(Strings0,
+            {
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "New String",
+                "This spot is reserved",
+                "This spot is reserved",
+                "This spot is reserved"
+            });
 
-        std::cout << "Strings1 = Move(Strings3)" << std::endl;
-        Strings1 = Move( Strings3 );
+        Strings1 = Move(Strings3);
+        CHECK(Strings1.Size()     == 5);
+        CHECK(Strings1.Capacity() == 5);
+        CHECK_ARRAY(Strings1,
+            {
+                "Hello World",
+                "TArray",
+                "This is a longer teststring",
+                "Hi, hi",
+                "No i am your father"
+            });
 
-        std::cout << "Strings2 = InitializerList" << std::endl << std::endl;
         Strings2 =
         {
             "Another String in a InitializerList",
@@ -760,131 +919,885 @@ void TArray_Test( int32 Argc, const char** Argv )
             "Letters to fill up space in a string"
         };
 
-        std::cout << "After Assignment" << std::endl << std::endl;
-        PrintArr( Strings0 );
-        PrintArr( Strings1 );
-        PrintArr( Strings2 );
-        PrintArr( Strings3 );
-        PrintArr( Strings4 );
+        CHECK(Strings2.Size()     == 3);
+        CHECK(Strings2.Capacity() == 5);
+        CHECK_ARRAY(Strings2,
+            {
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string"
+            });
 
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
         // PushBack
-        std::cout << std::endl << "Testing PushBack" << std::endl << std::endl;
-        for ( uint32 i = 0; i < 6; i++ )
-        {
-            Strings2.Push( "This is Pushed String #" + std::to_string( i ) );
-        }
-        PrintArr( Strings2 );
 
-        std::cout << std::endl << "Testing PushBack" << std::endl << std::endl;
-        for ( uint32 i = 0; i < 6; i++ )
+        std::cout << '\n' << "Testing PushBack" << '\n' << '\n';
+        
+        for (uint32 i = 0; i < 6; i++)
         {
-            Strings2.Push( ArgvStr );
+            Strings2.Push("This is Pushed String #" + std::to_string(i));
         }
-        PrintArr( Strings2 );
 
+        CHECK(Strings2.Size() == 9);
+        CHECK_ARRAY(Strings2,
+            {
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5"
+            });
+
+        std::cout << '\n' << "Testing PushBack" << '\n' << '\n';
+        for (uint32 i = 0; i < 6; i++)
+        {
+            Strings2.Push(ArgvStr);
+        }
+
+        PRINT_ARRAY(Strings2);
+
+        CHECK(Strings2.Size() == 15);
+        CHECK_ARRAY(Strings2,
+            {
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(), 
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str()
+            });
+
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
         // EmplaceBack
-        std::cout << std::endl << "Testing EmplaceBack" << std::endl << std::endl;
-        for ( uint32 i = 0; i < 6; i++ )
+        
+        std::cout << '\n' << "Testing EmplaceBack" << '\n' << '\n';
+        for (uint32 i = 0; i < 6; i++)
         {
-            Strings2.Emplace( "This is an Emplaced String #" + std::to_string( i ) );
+            Strings2.Emplace("This is an Emplaced String #" + std::to_string(i));
         }
-        PrintArr( Strings2 );
 
+        CHECK(Strings2.Size() == 21);
+        CHECK_ARRAY(Strings2,
+            {
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "This is an Emplaced String #3",
+                "This is an Emplaced String #4",
+                "This is an Emplaced String #5"
+            });
+
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
         // PopBack
-        std::cout << std::endl << "Testing PopBack" << std::endl << std::endl;
-        for ( uint32 i = 0; i < 3; i++ )
+
+        std::cout << '\n' << "Testing PopBack" << '\n' << '\n';
+        for (uint32 i = 0; i < 3; i++)
         {
             Strings2.Pop();
         }
-        PrintArr( Strings2 );
 
+        PRINT_ARRAY(Strings2);
+        
+        CHECK(Strings2.Size() == 18);
+        CHECK_ARRAY(Strings2,
+            {
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2"
+            });
 
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
         // Insert
-        std::cout << std::endl << "Testing Insert" << std::endl << std::endl;
 
-        std::cout << "Before Insert" << std::endl << std::endl;
-        PrintArr( Strings2 );
+        std::cout << '\n' << "Testing Insert" << '\n' << '\n';
 
-        std::cout << "At front" << std::endl << std::endl;
-        Strings2.Insert( 0, ArgvStr );
-        PrintArr( Strings2 );
-        Strings2.Insert( 0, "Inserted String" );
-        PrintArr( Strings2 );
-        Strings2.Insert( 0, { "Inserted String #1", "Inserted String #2" } );
-        PrintArr( Strings2 );
+        std::cout << '\n' << "At front" << '\n' << '\n';
+        Strings2.Insert(0, ArgvStr);
 
-        std::cout << "At Arbitrary" << std::endl << std::endl;
-        Strings2.Insert( 2, ArgvStr );
-        PrintArr( Strings2 );
-        Strings2.Insert( 2, "Inserted String Again" );
-        PrintArr( Strings2 );
-        Strings2.Insert( 2, { "Inserted String Again #1", "Inserted String Again #2" } );
-        PrintArr( Strings2 );
+        PRINT_ARRAY(Strings2);
 
-        std::cout << "At End" << std::endl << std::endl;
-        Strings2.Insert( Strings2.Size(), { "Inserted String At End #1", "Inserted String At End #2" } );
-        PrintArr( Strings2 );
+        CHECK(Strings2.Size() == 19);
+        CHECK_ARRAY(Strings2,
+            {
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2"
+            });
 
-        std::cout << "At front after reallocation" << std::endl << std::endl;
+        Strings2.Insert(0, "Inserted String");
+        CHECK(Strings2.Size() == 20);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2"
+            });
+
+        Strings2.Insert(0, { "Inserted String #1", "Inserted String #2" });
+        CHECK(Strings2.Size() == 22);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2"
+            });
+
+        std::cout << '\n' << "At Arbitrary" << '\n' << '\n';
+        Strings2.Insert(2, ArgvStr);
+        PRINT_ARRAY(Strings2);
+
+        CHECK(Strings2.Size() == 23);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String #1",
+                "Inserted String #2",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2"
+            });
+
+        Strings2.Insert(2, "Inserted String Again");
+        CHECK(Strings2.Size() == 24);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2"
+            });
+
+        Strings2.Insert(2, { "Inserted String Again #1", "Inserted String Again #2" });
+        CHECK(Strings2.Size() == 26);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1", 
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2"
+            });
+
+        std::cout << '\n' << "At End" << '\n' << '\n';
+
+        Strings2.Insert(Strings2.Size(), { "Inserted String At End #1", "Inserted String At End #2" });
+        CHECK(Strings2.Size() == 28);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1",
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1", 
+                "Inserted String At End #2"
+            });
+
+        std::cout << '\n' << "At front after reallocation" << '\n' << '\n';
+
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.Insert( 0, ArgvStr );
-        PrintArr( Strings2 );
+        CHECK(Strings2.Capacity() == 28);
+
+        Strings2.Insert(0, ArgvStr);
+        
+        PRINT_ARRAY(Strings2);
+
+        CHECK(Strings2.Size() == 29);
+        CHECK_ARRAY(Strings2,
+            {
+                ArgvStr.c_str(),
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1",
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+                "Inserted String At End #2"
+            });
+
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.Insert( 0, "Inserted String Reallocated" );
-        PrintArr( Strings2 );
+        CHECK(Strings2.Capacity() == 29);
+
+        Strings2.Insert(0, "Inserted String Reallocated");
+        CHECK(Strings2.Size() == 30);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1",
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+                "Inserted String At End #2"
+            });
+
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.Insert( 0, { "Inserted String Reallocated #1", "Inserted String Reallocated #2" } );
-        PrintArr( Strings2 );
+        CHECK(Strings2.Capacity() == 30);
 
-        std::cout << "At Arbitrary after reallocation" << std::endl << std::endl;
+        Strings2.Insert(0, { "Inserted String Reallocated #1", "Inserted String Reallocated #2" });
+        CHECK(Strings2.Size() == 32);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String Reallocated #1",
+                "Inserted String Reallocated #2",
+                "Inserted String Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1",
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+                "Inserted String At End #2"
+            });
+
+        std::cout << '\n' << "At Arbitrary after reallocation" << '\n' << '\n';
+
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.Insert( 2, ArgvStr );
-        PrintArr( Strings2 );
+        CHECK(Strings2.Capacity() == 32);
+
+        Strings2.Insert(2, ArgvStr);
+        PRINT_ARRAY(Strings2);
+
+        CHECK(Strings2.Size() == 33);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String Reallocated #1",
+                "Inserted String Reallocated #2",
+                ArgvStr.c_str(),
+                "Inserted String Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1",
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+                "Inserted String At End #2"
+            });
+
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.Insert( 2, "Inserted String Again Reallocated" );
-        PrintArr( Strings2 );
+        CHECK(Strings2.Capacity() == 33);
+
+        Strings2.Insert(2, "Inserted String Again Reallocated");
+        CHECK(Strings2.Size() == 34);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String Reallocated #1",
+                "Inserted String Reallocated #2",
+                "Inserted String Again Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1",
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+                "Inserted String At End #2"
+            });
+
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.Insert( 2, { "Inserted String Again Reallocated #1", "Inserted String Again Reallocated #2" } );
-        PrintArr( Strings2 );
+        CHECK(Strings2.Capacity() == 34);
 
-        std::cout << "At End after reallocation" << std::endl << std::endl;
+        Strings2.Insert(2, { "Inserted String Again Reallocated #1", "Inserted String Again Reallocated #2" });
+        CHECK(Strings2.Size() == 36);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String Reallocated #1",
+                "Inserted String Reallocated #2",
+                "Inserted String Again Reallocated #1",
+                "Inserted String Again Reallocated #2",
+                "Inserted String Again Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1",
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+                "Inserted String At End #2"
+            });
+
+        std::cout << '\n' << "At End after reallocation" << '\n' << '\n';
+
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.Insert( Strings2.Size(), { "Inserted String At End Reallocated #1", "Inserted String At End Reallocated #2" } );
-        PrintArr( Strings2 );
+        CHECK(Strings2.Capacity() == 36);
 
-        // Erase
-        std::cout << std::endl << "Testing Erase" << std::endl << std::endl;
-        std::cout << "Before Erase" << std::endl << std::endl;
-        PrintArr( Strings2 );
+        Strings2.Insert(Strings2.Size(), { "Inserted String At End Reallocated #1", "Inserted String At End Reallocated #2" });
+        CHECK(Strings2.Size() == 38);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String Reallocated #1",
+                "Inserted String Reallocated #2",
+                "Inserted String Again Reallocated #1",
+                "Inserted String Again Reallocated #2",
+                "Inserted String Again Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1",
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+                "Inserted String At End #2",
+                "Inserted String At End Reallocated #1", 
+                "Inserted String At End Reallocated #2"
+            });
 
-        std::cout << "At front" << std::endl << std::endl;
-        Strings2.RemoveAt( 0 );
-        PrintArr( Strings2 );
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+        // RemoveAt
 
-        std::cout << "At Arbitrary" << std::endl << std::endl;
-        Strings2.RemoveAt( 2 );
-        PrintArr( Strings2 );
+        std::cout << '\n' << "Testing RemoveAt" << '\n' << '\n';
 
-        std::cout << "Range At front" << std::endl << std::endl;
-        Strings2.RemoveRangeAt( 0, 2 );
-        PrintArr( Strings2 );
+        std::cout << '\n' << "At front" << '\n' << '\n';
 
-        std::cout << "Range At Arbitrary" << std::endl << std::endl;
-        Strings2.RemoveRangeAt( 4, 3 );
-        PrintArr( Strings2 );
+        Strings2.RemoveAt(0);
+        CHECK(Strings2.Size() == 37);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String Reallocated #2",
+                "Inserted String Again Reallocated #1",
+                "Inserted String Again Reallocated #2",
+                "Inserted String Again Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1",
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+                "Inserted String At End #2",
+                "Inserted String At End Reallocated #1",
+                "Inserted String At End Reallocated #2"
+            });
 
-        std::cout << "Range At End" << std::endl << std::endl;
-        Strings2.RemoveRangeAt( Strings2.Size() - 3, 3 );
-        PrintArr( Strings2 );
+        std::cout << '\n' << "At Arbitrary" << '\n' << '\n';
 
-        std::cout << "Testing Erase In Loop" << std::endl << std::endl;
+        Strings2.RemoveAt(2);
+        CHECK(Strings2.Size() == 36);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String Reallocated #2",
+                "Inserted String Again Reallocated #1",
+                "Inserted String Again Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1",
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+                "Inserted String At End #2",
+                "Inserted String At End Reallocated #1",
+                "Inserted String At End Reallocated #2"
+            });
+
+        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+        // RemoveRangeAt
+
+        std::cout << '\n' << "Testing RemoveRangeAt" << '\n' << '\n';
+
+        std::cout << '\n' << "Range At front" << '\n' << '\n';
+        
+        Strings2.RemoveRangeAt(0, 2);
+        CHECK(Strings2.Size() == 34);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String Again Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String #1",
+                "Inserted String #2",
+                "Inserted String Again #1",
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+                "Inserted String At End #2",
+                "Inserted String At End Reallocated #1",
+                "Inserted String At End Reallocated #2"
+            });
+
+        std::cout << '\n' << "Range At Arbitrary" << '\n' << '\n';
+
+        Strings2.RemoveRangeAt(4, 3);
+        CHECK(Strings2.Size() == 31);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String Again Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+                "Inserted String At End #2",
+                "Inserted String At End Reallocated #1",
+                "Inserted String At End Reallocated #2"
+            });
+
+        std::cout << '\n' << "Range At End" << '\n' << '\n';
+        
+        Strings2.RemoveRangeAt(Strings2.Size() - 3, 3);
+        CHECK(Strings2.Size() == 28);
+        CHECK_ARRAY(Strings2,
+            {
+                "Inserted String Again Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String Reallocated",
+                ArgvStr.c_str(),
+                "Inserted String Again #2",
+                "Inserted String Again",
+                ArgvStr.c_str(),
+                "Inserted String",
+                ArgvStr.c_str(),
+                "Another String in a InitializerList",
+                "Strings are kinda cool",
+                "Letters to fill up space in a string",
+                "This is Pushed String #0",
+                "This is Pushed String #1",
+                "This is Pushed String #2",
+                "This is Pushed String #3",
+                "This is Pushed String #4",
+                "This is Pushed String #5",
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                ArgvStr.c_str(),
+                "This is an Emplaced String #0",
+                "This is an Emplaced String #1",
+                "This is an Emplaced String #2",
+                "Inserted String At End #1",
+            });
+
+        std::cout << '\n' << "Testing Erase In Loop" << '\n' << '\n';
+
         TArray<std::string, TArrayAllocator<std::string>> LoopStrings =
         {
             "Str0",
@@ -895,15 +1808,15 @@ void TArray_Test( int32 Argc, const char** Argv )
             "Str5",
         };
 
-        std::cout << "Before" << std::endl << std::endl;
-        PrintArr( LoopStrings );
+        std::cout << "Before" << '\n' << '\n';
+        PRINT_ARRAY(LoopStrings);
 
         uint32 Index = 0;
-        for ( TArray<std::string, TArrayAllocator<std::string>>::IteratorType It = LoopStrings.StartIterator(); It != LoopStrings.EndIterator();)
+        for (TArray<std::string, TArrayAllocator<std::string>>::IteratorType It = LoopStrings.StartIterator(); It != LoopStrings.EndIterator();)
         {
-            if ( Index > 1 )
+            if (Index > 1)
             {
-                It = LoopStrings.RemoveAt( It );
+                It = LoopStrings.RemoveAt(It);
             }
             else
             {
@@ -913,393 +1826,395 @@ void TArray_Test( int32 Argc, const char** Argv )
             Index++;
         }
 
-        std::cout << "After" << std::endl << std::endl;
-        PrintArr( LoopStrings );
+        std::cout << "After" << '\n' << '\n';
+        PRINT_ARRAY(LoopStrings);
 
         // Swap
-        std::cout << std::endl << "Testing Swap" << std::endl << std::endl;
-        std::cout << "Before" << std::endl << std::endl;
-        PrintArr( Strings0 );
-        PrintArr( Strings2 );
+        std::cout << '\n' << "Testing Swap" << '\n' << '\n';
+        std::cout << "Before" << '\n' << '\n';
+        PRINT_ARRAY(Strings0);
+        PRINT_ARRAY(Strings2);
 
-        Strings0.Swap( Strings2 );
+        Strings0.Swap(Strings2);
 
-        std::cout << "After" << std::endl << std::endl;
-        PrintArr( Strings0 );
-        PrintArr( Strings2 );
+        std::cout << "After" << '\n' << '\n';
+        PRINT_ARRAY(Strings0);
+        PRINT_ARRAY(Strings2);
 
         // Iterators
-        std::cout << std::endl << "Testing Iterators" << std::endl;
+        std::cout << '\n' << "Testing Iterators" << '\n';
 
-        std::cout << std::endl << "Iterators" << std::endl << std::endl;
-        for ( auto It = Strings2.StartIterator(); It != Strings2.EndIterator(); It++ )
+        std::cout << '\n' << "Iterators" << '\n' << '\n';
+        for (auto It = Strings2.StartIterator(); It != Strings2.EndIterator(); It++)
         {
-            std::cout << (*It) << std::endl;
+            std::cout << (*It) << '\n';
         }
 
         TArray<std::string, TArrayAllocator<std::string>> EmptyArray;
-        for ( auto It = EmptyArray.StartIterator(); It != EmptyArray.EndIterator(); It++ )
+        for (auto It = EmptyArray.StartIterator(); It != EmptyArray.EndIterator(); It++)
         {
-            std::cout << (*It) << std::endl;
+            std::cout << (*It) << '\n';
         }
 
-        std::cout << std::endl;
+        std::cout << '\n';
 
-        for ( std::string& Str : Strings2 )
+        for (std::string& Str : Strings2)
         {
-            std::cout << Str << std::endl;
+            std::cout << Str << '\n';
         }
 
-        std::cout << std::endl << "Reverse Iterators" << std::endl << std::endl;
-        for ( auto It = Strings2.ReverseStartIterator(); It != Strings2.ReverseEndIterator(); It++ )
+        std::cout << '\n' << "Reverse Iterators" << '\n' << '\n';
+        for (auto It = Strings2.ReverseStartIterator(); It != Strings2.ReverseEndIterator(); It++)
         {
-            std::cout << (*It) << std::endl;
+            std::cout << (*It) << '\n';
         }
 
         // Fill 
-        std::cout << std::endl << "Testing Fill" << std::endl;
-        Strings2.Fill( "Fill Value" );
-        PrintArr( Strings2 );
+        std::cout << '\n' << "Testing Fill" << '\n';
+        Strings2.Fill("Fill Value");
+        PRINT_ARRAY(Strings2);
 
         // Append
-        std::cout << std::endl << "Testing Append" << std::endl;
-        Strings2.Append( { "Append #1", "Append #2", "Append #3", "Append #4", "Append #5", "Append #6" } );
-        PrintArr( Strings2 );
+        std::cout << '\n' << "Testing Append" << '\n';
+        Strings2.Append({ "Append #1", "Append #2", "Append #3", "Append #4", "Append #5", "Append #6" });
+        PRINT_ARRAY(Strings2);
 
         // PopBackRange
-        std::cout << std::endl << "Testing PopBackRange" << std::endl;
-        Strings2.PopRange( 3 );
-        PrintArr( Strings2 );
+        std::cout << '\n' << "Testing PopBackRange" << '\n';
+        Strings2.PopRange(3);
+        PRINT_ARRAY(Strings2);
 
-        std::cout << std::endl << "Testing Equal operator" << std::endl;
+        std::cout << '\n' << "Testing Equal operator" << '\n';
         TArray<std::string, TArrayAllocator<std::string>> EqualArray = Strings2;
-        std::cout << "operator==" << std::boolalpha << (EqualArray == Strings2) << std::endl;
+        std::cout << "operator==" << std::boolalpha << (EqualArray == Strings2) << '\n';
     }
 #endif
 
-    // TArray<vec3>
+    // TArray<FVec3>
 #if 1
     {
-        std::cout << std::endl << "Testing TArray<Vec3>" << std::endl;
-        std::cout << std::endl << "Testing Constructors" << std::endl;
+        std::cout << '\n' << "Testing TArray<FVec3>" << '\n';
+        std::cout << '\n' << "Testing Constructors" << '\n';
         // Test constructors
-        TArray<Vec3, TArrayAllocator<Vec3>> Vectors0;
-        TArray<Vec3, TArrayAllocator<Vec3>> Vectors1( 5, Vec3( 1.0, 1.0, 1.0 ) );
-        TArray<Vec3, TArrayAllocator<Vec3>> Vectors2( Vectors1.Data(), Vectors1.Size() );
-        TArray<Vec3, TArrayAllocator<Vec3>> Vectors3 =
+        TArray<FVec3, TArrayAllocator<FVec3>> Vectors0;
+        TArray<FVec3, TArrayAllocator<FVec3>> Vectors1(5, FVec3(1.0, 1.0, 1.0));
+        TArray<FVec3, TArrayAllocator<FVec3>> Vectors2(Vectors1.Data(), Vectors1.Size());
+        TArray<FVec3, TArrayAllocator<FVec3>> Vectors3 =
         {
-            Vec3( 1.0, 1.0, 1.0 ),
-            Vec3( 2.0, 2.0, 2.0 ),
-            Vec3( 3.0, 3.0, 3.0 )
+            FVec3(1.0, 1.0, 1.0),
+            FVec3(2.0, 2.0, 2.0),
+            FVec3(3.0, 3.0, 3.0)
         };
 
-        PrintArr( Vectors0 );
-        PrintArr( Vectors1 );
-        PrintArr( Vectors2 );
-        PrintArr( Vectors3 );
+        PRINT_ARRAY(Vectors0);
+        PRINT_ARRAY(Vectors1);
+        PRINT_ARRAY(Vectors2);
+        PRINT_ARRAY(Vectors3);
 
         {
             // Test copy an empty array
-            TArray<Vec3, TArrayAllocator<Vec3>> Vectors4 = Vectors0;
+            TArray<FVec3, TArrayAllocator<FVec3>> Vectors4 = Vectors0;
             // Test copy an array with data
-            TArray<Vec3, TArrayAllocator<Vec3>> Vectors5 = Vectors1;
+            TArray<FVec3, TArrayAllocator<FVec3>> Vectors5 = Vectors1;
 
-            PrintArr( Vectors4 );
+            PRINT_ARRAY(Vectors4);
 
-            std::cout << "Before move" << std::endl << std::endl;
-            PrintArr( Vectors5 );
+            std::cout << "Before move" << '\n' << '\n';
+            PRINT_ARRAY(Vectors5);
 
             // Test move an array with data
-            TArray<Vec3, TArrayAllocator<Vec3>> Vectors6 = Move( Vectors5 );
+            TArray<FVec3, TArrayAllocator<FVec3>> Vectors6 = Move(Vectors5);
 
-            std::cout << "After move" << std::endl << std::endl;
-            PrintArr( Vectors5 );
-            PrintArr( Vectors6 );
+            std::cout << "After move" << '\n' << '\n';
+            PRINT_ARRAY(Vectors5);
+            PRINT_ARRAY(Vectors6);
         }
 
         // Assign
-        std::cout << std::endl << "Testing Assign" << std::endl;
-        Vectors0.Reset( 7, Vec3( 5.0, 5.0, 5.0 ) );
-        PrintArr( Vectors0 );
+        std::cout << '\n' << "Testing Assign" << '\n';
+        Vectors0.Reset(7, FVec3(5.0, 5.0, 5.0));
+        PRINT_ARRAY(Vectors0);
 
-        Vectors1.Reset( { Vec3( 1.0, 5.0, 5.0 ), Vec3( 2.0, 5.0, 5.0 ), Vec3( 3.0, 5.0, 5.0 ) } );
-        PrintArr( Vectors1 );
+        Vectors1.Reset({ FVec3(1.0, 5.0, 5.0), FVec3(2.0, 5.0, 5.0), FVec3(3.0, 5.0, 5.0) });
+        PRINT_ARRAY(Vectors1);
 
-        Vectors2.Reset( Vectors3.Data(), Vectors3.Size() );
-        PrintArr( Vectors2 );
+        Vectors2.Reset(Vectors3.Data(), Vectors3.Size());
+        PRINT_ARRAY(Vectors2);
 
         // Resize
-        std::cout << std::endl << "Testing Resize" << std::endl << std::endl;
+        std::cout << '\n' << "Testing Resize" << '\n' << '\n';
 
         // Constructing a empty Array to test resize
-        TArray<Vec3, TArrayAllocator<Vec3>> Vectors4;
+        TArray<FVec3, TArrayAllocator<FVec3>> Vectors4;
 
-        std::cout << "Before Resize" << std::endl << std::endl;
-        PrintArr( Vectors4 );
-        PrintArr( Vectors3 );
-        PrintArr( Vectors1 );
+        std::cout << "Before Resize" << '\n' << '\n';
+        PRINT_ARRAY(Vectors4);
+        PRINT_ARRAY(Vectors3);
+        PRINT_ARRAY(Vectors1);
 
-        Vectors4.Resize( 10, Vec3( -10.0, -10.0, -10.0 ) );
-        Vectors3.Resize( 0 );
-        Vectors1.Resize( 6, Vec3( -5.0, 10.0, -15.0 ) );
+        Vectors4.Resize(10, FVec3(-10.0, -10.0, -10.0));
+        Vectors3.Resize(0);
+        Vectors1.Resize(6, FVec3(-5.0, 10.0, -15.0));
 
-        std::cout << "After Resize" << std::endl << std::endl;
-        PrintArr( Vectors4 );
-        PrintArr( Vectors3 );
-        PrintArr( Vectors1 );
+        std::cout << "After Resize" << '\n' << '\n';
+        PRINT_ARRAY(Vectors4);
+        PRINT_ARRAY(Vectors3);
+        PRINT_ARRAY(Vectors1);
 
-        std::cout << "Testing Shrinking Resize" << std::endl << std::endl;
-        Vectors4.Resize( 2, Vec3( -15.0, -15.0, -15.0 ) );
-        PrintArr( Vectors4 );
+        std::cout << "Testing Shrinking Resize" << '\n' << '\n';
+        Vectors4.Resize(2, FVec3(-15.0, -15.0, -15.0));
+        PRINT_ARRAY(Vectors4);
 
-        Vectors4.Resize( 15, Vec3( 23.0, 23.0, 23.0 ) );
-        PrintArr( Vectors4 );
+        Vectors4.Resize(15, FVec3(23.0, 23.0, 23.0));
+        PRINT_ARRAY(Vectors4);
 
         // Reserve
-        std::cout << std::endl << "Testing Reserve" << std::endl << std::endl;
+        std::cout << '\n' << "Testing Reserve" << '\n' << '\n';
 
-        std::cout << "Before Reserve" << std::endl << std::endl;
-        PrintArr( Vectors4 );
+        std::cout << "Before Reserve" << '\n' << '\n';
+        PRINT_ARRAY(Vectors4);
 
-        std::cout << "After Reserve" << std::endl << std::endl;
-        Vectors4.Reserve( Vectors4.Capacity() );
-        PrintArr( Vectors4 );
+        std::cout << "After Reserve" << '\n' << '\n';
+        Vectors4.Reserve(Vectors4.Capacity());
+        PRINT_ARRAY(Vectors4);
 
-        std::cout << "Shrinking" << std::endl << std::endl;
-        Vectors4.Reserve( 5 );
-        PrintArr( Vectors4 );
+        std::cout << "Shrinking" << '\n' << '\n';
+        Vectors4.Reserve(5);
+        PRINT_ARRAY(Vectors4);
 
-        std::cout << "Growing" << std::endl << std::endl;
-        Vectors4.Reserve( 10 );
-        PrintArr( Vectors4 );
+        std::cout << "Growing" << '\n' << '\n';
+        Vectors4.Reserve(10);
+        PRINT_ARRAY(Vectors4);
 
-        std::cout << "Resize" << std::endl << std::endl;
-        Vectors4.Resize( Vectors4.Capacity() - 2, Vec3( -1.0f, -1.0f, -1.0f ) );
-        PrintArr( Vectors4 );
+        std::cout << "Resize" << '\n' << '\n';
+        Vectors4.Resize(Vectors4.Capacity() - 2, FVec3(-1.0f, -1.0f, -1.0f));
+        PRINT_ARRAY(Vectors4);
 
         // Shrink To Fit
-        std::cout << std::endl << "Testing ShrinkToFit" << std::endl;
+        std::cout << '\n' << "Testing ShrinkToFit" << '\n';
 
-        std::cout << std::endl << "Before ShrinkToFit" << std::endl << std::endl;
-        PrintArr( Vectors4 );
+        std::cout << '\n' << "Before ShrinkToFit" << '\n' << '\n';
+        PRINT_ARRAY(Vectors4);
 
         Vectors4.ShrinkToFit();
 
-        std::cout << std::endl << "After ShrinkToFit" << std::endl << std::endl;
-        PrintArr( Vectors4 );
+        std::cout << '\n' << "After ShrinkToFit" << '\n' << '\n';
+        PRINT_ARRAY(Vectors4);
 
         // Assignment
-        std::cout << std::endl << "Testing Assignment" << std::endl << std::endl;
+        std::cout << '\n' << "Testing Assignment" << '\n' << '\n';
 
-        Vectors3.Resize( 3, Vec3( 42.0, 42.0, 42.0 ) );
+        Vectors3.Resize(3, FVec3(42.0, 42.0, 42.0));
 
-        std::cout << "Before Assignment" << std::endl << std::endl;
-        PrintArr( Vectors0 );
-        PrintArr( Vectors1 );
-        PrintArr( Vectors2 );
-        PrintArr( Vectors3 );
-        PrintArr( Vectors4 );
+        std::cout << "Before Assignment" << '\n' << '\n';
+        PRINT_ARRAY(Vectors0);
+        PRINT_ARRAY(Vectors1);
+        PRINT_ARRAY(Vectors2);
+        PRINT_ARRAY(Vectors3);
+        PRINT_ARRAY(Vectors4);
 
-        std::cout << "Vectors0 = Vectors4" << std::endl;
+        std::cout << "Vectors0 = Vectors4" << '\n';
         Vectors0 = Vectors4;
 
-        std::cout << "Vectors1 = Move(Vectors3)" << std::endl;
-        Vectors1 = Move( Vectors3 );
+        std::cout << "Vectors1 = Move(Vectors3)" << '\n';
+        Vectors1 = Move(Vectors3);
 
-        std::cout << "Vectors2 = InitializerList" << std::endl << std::endl;
+        std::cout << "Vectors2 = InitializerList" << '\n' << '\n';
         Vectors2 =
         {
-            Vec3( 9.0, 9.0, 9.0 ),
-            Vec3( 10.0, 10.0, 10.0 ),
-            Vec3( 11.0, 11.0, 11.0 )
+            FVec3(9.0, 9.0, 9.0),
+            FVec3(10.0, 10.0, 10.0),
+            FVec3(11.0, 11.0, 11.0)
         };
 
-        std::cout << "After Assignment" << std::endl << std::endl;
-        PrintArr( Vectors0 );
-        PrintArr( Vectors1 );
-        PrintArr( Vectors2 );
-        PrintArr( Vectors3 );
-        PrintArr( Vectors4 );
+        std::cout << "After Assignment" << '\n' << '\n';
+        PRINT_ARRAY(Vectors0);
+        PRINT_ARRAY(Vectors1);
+        PRINT_ARRAY(Vectors2);
+        PRINT_ARRAY(Vectors3);
+        PRINT_ARRAY(Vectors4);
 
         // PushBack
-        std::cout << std::endl << "Testing PushBack" << std::endl << std::endl;
-        for ( uint32 i = 0; i < 6; i++ )
+        std::cout << '\n' << "Testing PushBack" << '\n' << '\n';
+        for (uint32 i = 0; i < 6; i++)
         {
-            Vectors2.Push( Vec3( 7.0, 7.0, 7.0 ) );
+            Vectors2.Push(FVec3(7.0, 7.0, 7.0));
         }
-        PrintArr( Vectors2 );
+        PRINT_ARRAY(Vectors2);
 
-        Vec3 Vector( 5.0f, -45.0f, 5.0f );
-        std::cout << std::endl << "Testing PushBack" << std::endl << std::endl;
-        for ( uint32 i = 0; i < 6; i++ )
+        FVec3 Vector(5.0f, -45.0f, 5.0f);
+        std::cout << '\n' << "Testing PushBack" << '\n' << '\n';
+        for (uint32 i = 0; i < 6; i++)
         {
-            Vectors2.Push( Vector );
+            Vectors2.Push(Vector);
         }
-        PrintArr( Vectors2 );
+        PRINT_ARRAY(Vectors2);
 
         // EmplaceBack
-        std::cout << std::endl << "Testing EmplaceBack" << std::endl << std::endl;
-        for ( uint32 i = 0; i < 6; i++ )
+        std::cout << '\n' << "Testing EmplaceBack" << '\n' << '\n';
+        for (uint32 i = 0; i < 6; i++)
         {
-            Vectors2.Emplace( 1.0, 0.0, 1.0 );
+            Vectors2.Emplace(1.0, 0.0, 1.0);
         }
-        PrintArr( Vectors2 );
+        PRINT_ARRAY(Vectors2);
 
         // PopBack
-        std::cout << std::endl << "Testing PopBack" << std::endl << std::endl;
-        for ( uint32 i = 0; i < 3; i++ )
+        std::cout << '\n' << "Testing PopBack" << '\n' << '\n';
+        for (uint32 i = 0; i < 3; i++)
         {
             Vectors2.Pop();
         }
-        PrintArr( Vectors2 );
+        PRINT_ARRAY(Vectors2);
 
         // Insert
-        std::cout << std::endl << "Testing Insert" << std::endl << std::endl;
-        std::cout << "At front" << std::endl << std::endl;
-        Vectors2.Insert( 0, Vector );
-        Vectors2.Insert( 0, Vec3( -1.0, -1.0, -1.0 ) );
-        Vectors2.Insert( 0, { Vec3( 1.0f, 1.0f, 1.0f ), Vec3( 2.0f, 2.0f, 2.0f ) } );
-        PrintArr( Vectors2 );
+        std::cout << '\n' << "Testing Insert" << '\n' << '\n';
+        std::cout << "At front" << '\n' << '\n';
+        Vectors2.Insert(0, Vector);
+        Vectors2.Insert(0, FVec3(-1.0, -1.0, -1.0));
+        Vectors2.Insert(0, { FVec3(1.0f, 1.0f, 1.0f), FVec3(2.0f, 2.0f, 2.0f) });
+        PRINT_ARRAY(Vectors2);
 
-        std::cout << "At Arbitrary" << std::endl << std::endl;
-        Vectors2.Insert( 2, Vector );
-        Vectors2.Insert( 2, Vec3( -1.0, -1.0, -2.0 ) );
-        Vectors2.Insert( 2, { Vec3( 1.0f, 1.0f, 2.0f ), Vec3( 2.0f, 2.0f, 3.0f ) } );
-        PrintArr( Vectors2 );
+        std::cout << "At Arbitrary" << '\n' << '\n';
+        Vectors2.Insert(2, Vector);
+        Vectors2.Insert(2, FVec3(-1.0, -1.0, -2.0));
+        Vectors2.Insert(2, { FVec3(1.0f, 1.0f, 2.0f), FVec3(2.0f, 2.0f, 3.0f) });
+        PRINT_ARRAY(Vectors2);
 
-        std::cout << "At End" << std::endl << std::endl;
-        Vectors2.Insert( Vectors2.Size(), { Vec3( 1.0f, 1.0f, 3.0f ), Vec3( 2.0f, 2.0f, 4.0f ) } );
-        PrintArr( Vectors2 );
+        std::cout << "At End" << '\n' << '\n';
+        Vectors2.Insert(Vectors2.Size(), { FVec3(1.0f, 1.0f, 3.0f), FVec3(2.0f, 2.0f, 4.0f) });
+        PRINT_ARRAY(Vectors2);
 
-        std::cout << "At front after reallocation" << std::endl << std::endl;
+        std::cout << "At front after reallocation" << '\n' << '\n';
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.Insert( 0, Vector );
+        Vectors2.Insert(0, Vector);
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.Insert( 0, Vec3( -1.0, -1.0, -3.0 ) );
+        Vectors2.Insert(0, FVec3(-1.0, -1.0, -3.0));
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.Insert( 0, { Vec3( 1.0f, 1.0f, 4.0f ), Vec3( 2.0f, 2.0f, 5.0f ) } );
-        PrintArr( Vectors2 );
+        Vectors2.Insert(0, { FVec3(1.0f, 1.0f, 4.0f), FVec3(2.0f, 2.0f, 5.0f) });
+        PRINT_ARRAY(Vectors2);
 
-        std::cout << "At Arbitrary after reallocation" << std::endl << std::endl;
+        std::cout << "At Arbitrary after reallocation" << '\n' << '\n';
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.Insert( 2, Vector );
+        Vectors2.Insert(2, Vector);
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.Insert( 2, Vec3( -1.0, -1.0, -4.0 ) );
+        Vectors2.Insert(2, FVec3(-1.0, -1.0, -4.0));
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.Insert( 2, { Vec3( 1.0f, 1.0f, 5.0f ), Vec3( 2.0f, 2.0f, 6.0f ) } );
-        PrintArr( Vectors2 );
+        Vectors2.Insert(2, { FVec3(1.0f, 1.0f, 5.0f), FVec3(2.0f, 2.0f, 6.0f) });
+        PRINT_ARRAY(Vectors2);
 
-        std::cout << "At End after reallocation" << std::endl << std::endl;
+        std::cout << "At End after reallocation" << '\n' << '\n';
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.Insert( Vectors2.Size(), { Vec3( 6.0f, 6.0f, 6.0f ), Vec3( 2.0f, 2.0f, 7.0f ) } );
-        PrintArr( Vectors2 );
+        Vectors2.Insert(Vectors2.Size(), { FVec3(6.0f, 6.0f, 6.0f), FVec3(2.0f, 2.0f, 7.0f) });
+        PRINT_ARRAY(Vectors2);
 
         // Erase
-        std::cout << std::endl << "Testing Erase" << std::endl << std::endl;
-        PrintArr( Vectors2 );
+        std::cout << '\n' << "Testing Erase" << '\n' << '\n';
+        PRINT_ARRAY(Vectors2);
 
-        std::cout << "At front" << std::endl << std::endl;
-        Vectors2.RemoveAt( 0 );
-        PrintArr( Vectors2 );
+        std::cout << "At front" << '\n' << '\n';
+        Vectors2.RemoveAt(0);
+        PRINT_ARRAY(Vectors2);
 
-        std::cout << "At Arbitrary" << std::endl << std::endl;
-        Vectors2.RemoveAt( 2 );
-        PrintArr( Vectors2 );
+        std::cout << "At Arbitrary" << '\n' << '\n';
+        Vectors2.RemoveAt(2);
+        PRINT_ARRAY(Vectors2);
 
-        std::cout << "Range At front" << std::endl << std::endl;
-        Vectors2.RemoveRangeAt( 0, 2 );
-        PrintArr( Vectors2 );
+        std::cout << "Range At front" << '\n' << '\n';
+        Vectors2.RemoveRangeAt(0, 2);
+        PRINT_ARRAY(Vectors2);
 
-        std::cout << "Range At Arbitrary" << std::endl << std::endl;
-        Vectors2.RemoveRangeAt( 4, 3 );
-        PrintArr( Vectors2 );
+        std::cout << "Range At Arbitrary" << '\n' << '\n';
+        Vectors2.RemoveRangeAt(4, 3);
+        PRINT_ARRAY(Vectors2);
 
-        std::cout << "Range At End" << std::endl << std::endl;
-        Vectors2.RemoveRangeAt( Vectors2.Size() - 3, 3 );
-        PrintArr( Vectors2 );
+        std::cout << "Range At End" << '\n' << '\n';
+        Vectors2.RemoveRangeAt(Vectors2.Size() - 3, 3);
+        PRINT_ARRAY(Vectors2);
 
         // Swap
-        std::cout << std::endl << "Testing Swap" << std::endl << std::endl;
-        std::cout << "Before" << std::endl << std::endl;
-        PrintArr( Vectors0 );
-        PrintArr( Vectors2 );
+        std::cout << '\n' << "Testing Swap" << '\n' << '\n';
+        std::cout << "Before" << '\n' << '\n';
+        PRINT_ARRAY(Vectors0);
+        PRINT_ARRAY(Vectors2);
 
-        Vectors0.Swap( Vectors2 );
+        Vectors0.Swap(Vectors2);
 
-        std::cout << "After" << std::endl << std::endl;
-        PrintArr( Vectors0 );
-        PrintArr( Vectors2 );
+        std::cout << "After" << '\n' << '\n';
+        PRINT_ARRAY(Vectors0);
+        PRINT_ARRAY(Vectors2);
 
         // Fill 
-        std::cout << std::endl << "Testing Fill" << std::endl;
-        Vectors0.Fill( Vec3( 63.0f, 63.0f, 63.0f ) );
-        PrintArr( Vectors0 );
+        std::cout << '\n' << "Testing Fill" << '\n';
+        Vectors0.Fill(FVec3(63.0f, 63.0f, 63.0f));
+        PRINT_ARRAY(Vectors0);
 
         // Append
-        std::cout << std::endl << "Testing Append" << std::endl;
+        std::cout << '\n' << "Testing Append" << '\n';
         Vectors0.Append(
             {
-                Vec3( 103.0f, 103.0f, 103.0f ),
-                Vec3( 113.0f, 113.0f, 113.0f ),
-                Vec3( 123.0f, 123.0f, 123.0f ),
-                Vec3( 133.0f, 133.0f, 133.0f ),
-                Vec3( 143.0f, 143.0f, 143.0f ),
-                Vec3( 153.0f, 153.0f, 153.0f )
-            } );
-        PrintArr( Vectors0 );
+                FVec3(103.0f, 103.0f, 103.0f),
+                FVec3(113.0f, 113.0f, 113.0f),
+                FVec3(123.0f, 123.0f, 123.0f),
+                FVec3(133.0f, 133.0f, 133.0f),
+                FVec3(143.0f, 143.0f, 143.0f),
+                FVec3(153.0f, 153.0f, 153.0f)
+            });
+        PRINT_ARRAY(Vectors0);
 
         // PopBackRange
-        std::cout << std::endl << "Testing PopBackRange" << std::endl;
-        Vectors0.PopRange( 3 );
-        PrintArr( Vectors0 );
+        std::cout << '\n' << "Testing PopBackRange" << '\n';
+        Vectors0.PopRange(3);
+        PRINT_ARRAY(Vectors0);
 
-        std::cout << std::endl << "Testing Equal operator" << std::endl;
-        TArray<Vec3, TArrayAllocator<Vec3>> EqualArray = Vectors0;
-        std::cout << "operator==" << std::boolalpha << (EqualArray == Vectors0) << std::endl;
+        std::cout << '\n' << "Testing Equal operator" << '\n';
+        TArray<FVec3, TArrayAllocator<FVec3>> EqualArray = Vectors0;
+        std::cout << "operator==" << std::boolalpha << (EqualArray == Vectors0) << '\n';
     }
 #endif
 
     // Test Heapify
     {
-        std::cout << std::endl << "Testing Heapify" << std::endl;
+        std::cout << '\n' << "Testing Heapify" << '\n';
 
         {
             TArray<int32, TArrayAllocator<int32>> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
 
-            std::cout << std::endl << "Before" << std::endl;
-            PrintArr( Heap );
+            std::cout << '\n' << "Before" << '\n';
+            PRINT_ARRAY(Heap);
             Heap.Heapify();
 
-            std::cout << std::endl << "After" << std::endl;
-            PrintArr( Heap );
+            std::cout << '\n' << "After" << '\n';
+            PRINT_ARRAY(Heap);
 
-            std::cout << std::endl << "Testing HeapPush" << std::endl;
-            Heap.HeapPush( 19 );
-            PrintArr( Heap );
+            std::cout << '\n' << "Testing HeapPush" << '\n';
+            Heap.HeapPush(19);
+            PRINT_ARRAY(Heap);
 
-            Heap.HeapPush( 0 );
-            PrintArr( Heap );
+            Heap.HeapPush(0);
+            PRINT_ARRAY(Heap);
 
-            std::cout << std::endl << "Testing HeapPop" << std::endl;
+            std::cout << '\n' << "Testing HeapPop" << '\n';
             Heap.HeapPop();
-            PrintArr( Heap );
+            PRINT_ARRAY(Heap);
         }
 
-        std::cout << std::endl << "Testing HeapSort" << std::endl;
+        std::cout << '\n' << "Testing HeapSort" << '\n';
         {
             TArray<int32, TArrayAllocator<int32>> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
-            PrintArr( Heap );
+            PRINT_ARRAY(Heap);
             Heap.HeapSort();
-            PrintArr( Heap );
+            PRINT_ARRAY(Heap);
         }
     }
+
+    SUCCESS();
 }
 
 #endif // RUN_TARRAY_TEST

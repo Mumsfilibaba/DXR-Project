@@ -10,6 +10,7 @@
 #include "String_Test.h"
 #include "Optional_Test.h"
 #include "Variant_Test.h"
+#include "BitArray_Test.h"
 
 /**
  *  Check for memory leaks 
@@ -72,6 +73,14 @@ void Tests( int32 Argc, const char* Argv[] )
 
 #if RUN_TVARIANT_TEST
     TVariant_Test();
+#endif
+
+#if RUN_TBITARRAY_TEST
+    TBitArray_Test();
+#endif
+
+#if RUN_TSTATICBITARRAY_TEST
+    TStaticBitArray_Test();
 #endif
 }
 

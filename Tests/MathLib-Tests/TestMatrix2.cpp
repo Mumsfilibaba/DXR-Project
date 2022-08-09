@@ -1,3 +1,5 @@
+#include "MathTest.h"
+
 #include <Core/Math/Matrix2.h>
 
 #include <cstdio>
@@ -6,33 +8,33 @@
 #include <DirectXMath.h>
 using namespace DirectX;
 
-inline FMatrix2 ToMatrix2( const XMFLOAT3X3& Matrix )
+inline FMatrix2 ToMatrix2(const XMFLOAT3X3& Matrix)
 {
-    return FMatrix2( Matrix._11, Matrix._12, Matrix._21, Matrix._22 );
+    return FMatrix2(Matrix._11, Matrix._12, Matrix._21, Matrix._22);
 }
 
 bool TestMatrix2()
 {
     // Identity
     FMatrix2 Identity = FMatrix2::Identity();
-    if ( Identity != FMatrix2( 1.0f, 0.0f, 0.0f, 1.0f ) )
+    if (Identity != FMatrix2(1.0f, 0.0f, 0.0f, 1.0f))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Constructors
-    FMatrix2 Test = FMatrix2( 5.0f );
-    if ( Test != FMatrix2( 5.0f, 0.0f, 0.0f, 5.0f ) )
+    FMatrix2 Test = FMatrix2(5.0f);
+    if (Test != FMatrix2(5.0f, 0.0f, 0.0f, 5.0f))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     Test = FMatrix2(
-        FVector2( 1.0f, 0.0f ),
-        FVector2( 0.0f, 1.0f ) );
-    if ( Identity != Test )
+        FVector2(1.0f, 0.0f),
+        FVector2(0.0f, 1.0f));
+    if (Identity != Test)
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     float Arr[9] =
@@ -41,97 +43,97 @@ bool TestMatrix2()
         3.0f, 4.0f,
     };
 
-    Test = FMatrix2( Arr );
-    if ( Test != FMatrix2( 1.0f, 2.0f, 3.0f, 4.0f ) )
+    Test = FMatrix2(Arr);
+    if (Test != FMatrix2(1.0f, 2.0f, 3.0f, 4.0f))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Transpose
     Test = Test.Transpose();
-    if ( Test != FMatrix2( 1.0f, 3.0f, 2.0f, 4.0f ) )
+    if (Test != FMatrix2(1.0f, 3.0f, 2.0f, 4.0f))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Determinant
-    FMatrix2 Scale = FMatrix2::Scale( 6.0f );
+    FMatrix2 Scale = FMatrix2::Scale(6.0f);
     float fDeterminant0 = Scale.Determinant();
 
-    XMMATRIX XmScale = XMMatrixScaling( 6.0f, 6.0f, 1.0f );
-    float fDeterminant1 = XMVectorGetX( XMMatrixDeterminant( XmScale ) );
+    XMMATRIX XmScale = XMMatrixScaling(6.0f, 6.0f, 1.0f);
+    float fDeterminant1 = XMVectorGetX(XMMatrixDeterminant(XmScale));
 
-    if ( fDeterminant0 != fDeterminant1 )
+    if (fDeterminant0 != fDeterminant1)
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     XMFLOAT3X3 Float3x3Matrix;
 
     // Rotation
-    for ( double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree )
+    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
     {
-        FMatrix2 Rotation = FMatrix2::Rotation( (float)Angle );
-        XMMATRIX XmRotation = XMMatrixRotationZ( (float)Angle );
+        FMatrix2 Rotation = FMatrix2::Rotation((float)Angle);
+        XMMATRIX XmRotation = XMMatrixRotationZ((float)Angle);
 
-        XMStoreFloat3x3( &Float3x3Matrix, XmRotation );
+        XMStoreFloat3x3(&Float3x3Matrix, XmRotation);
 
-        if ( Rotation != ToMatrix2( Float3x3Matrix ) )
+        if (Rotation != ToMatrix2(Float3x3Matrix))
         {
-            assert(false); return false;
+            TEST_FAILED();
         }
     }
 
     // Multiplication
-    FMatrix2 Mat0 = FMatrix2::Rotation( NMath::kHalfPI_f );
-    FMatrix2 Mat1 = FMatrix2::Rotation( NMath::kHalfPI_f );
+    FMatrix2 Mat0 = FMatrix2::Rotation(NMath::kHalfPI_f);
+    FMatrix2 Mat1 = FMatrix2::Rotation(NMath::kHalfPI_f);
     FMatrix2 Mult = Mat0 * Mat1;
 
-    XMMATRIX XmMat0 = XMMatrixRotationZ( NMath::kHalfPI_f );
-    XMMATRIX XmMat1 = XMMatrixRotationZ( NMath::kHalfPI_f );
-    XMMATRIX XmMult = XMMatrixMultiply( XmMat0, XmMat1 );
+    XMMATRIX XmMat0 = XMMatrixRotationZ(NMath::kHalfPI_f);
+    XMMATRIX XmMat1 = XMMatrixRotationZ(NMath::kHalfPI_f);
+    XMMATRIX XmMult = XMMatrixMultiply(XmMat0, XmMat1);
 
-    XMStoreFloat3x3( &Float3x3Matrix, XmMult );
+    XMStoreFloat3x3(&Float3x3Matrix, XmMult);
 
-    if ( Mult != ToMatrix2( Float3x3Matrix ) )
+    if (Mult != ToMatrix2(Float3x3Matrix))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Division
-    FMatrix2 Div0( 1.0f );
-    if ( Div0 / 2.0f != FMatrix2( 0.5f ) )
+    FMatrix2 Div0(1.0f);
+    if (Div0 / 2.0f != FMatrix2(0.5f))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Sub
-    FMatrix2 Sub( 1.0f );
-    if ( Div0 - 0.5f != FMatrix2( 0.5f, -0.5f, -0.5f, 0.5f ) )
+    FMatrix2 Sub(1.0f);
+    if (Div0 - 0.5f != FMatrix2(0.5f, -0.5f, -0.5f, 0.5f))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
-    FMatrix2 Sub0( 1.0f );
-    FMatrix2 Sub1( 1.0f );
-    if ( Sub0 - Sub1 != FMatrix2( 0.0f ) )
+    FMatrix2 Sub0(1.0f);
+    FMatrix2 Sub1(1.0f);
+    if (Sub0 - Sub1 != FMatrix2(0.0f))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Add
-    FMatrix2 Add( 0.0f );
-    FMatrix2 TempAdd( 0.5f, 0.5f, 0.5f, 0.5f );
-    if ( Add + 0.5f != TempAdd )
+    FMatrix2 Add(0.0f);
+    FMatrix2 TempAdd(0.5f, 0.5f, 0.5f, 0.5f);
+    if (Add + 0.5f != TempAdd)
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
-    FMatrix2 Add0( 1.0f );
-    FMatrix2 Add1( 1.0f );
-    if ( Add0 + Add1 != FMatrix2( 2.0f ) )
+    FMatrix2 Add0(1.0f);
+    FMatrix2 Add1(1.0f);
+    if (Add0 + Add1 != FMatrix2(2.0f))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Inverse
@@ -139,102 +141,102 @@ bool TestMatrix2()
     fDeterminant0 = Mult.Determinant();
 
     XMVECTOR XmDeterminant;
-    XMMATRIX XmInverse = XMMatrixInverse( &XmDeterminant, XmMult );
-    fDeterminant1 = XMVectorGetX( XmDeterminant );
+    XMMATRIX XmInverse = XMMatrixInverse(&XmDeterminant, XmMult);
+    fDeterminant1 = XMVectorGetX(XmDeterminant);
 
-    XMStoreFloat3x3( &Float3x3Matrix, XmInverse );
+    XMStoreFloat3x3(&Float3x3Matrix, XmInverse);
 
-    if ( Inverse != ToMatrix2( Float3x3Matrix ) )
+    if (Inverse != ToMatrix2(Float3x3Matrix))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Adjoint
     FMatrix2 Adjoint = Mult.Adjoint();
     FMatrix2 Inverse2 = Adjoint * (1.0f / fDeterminant0);
 
-    if ( Inverse != Inverse2 )
+    if (Inverse != Inverse2)
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     FMatrix2 InvInverse = Inverse * fDeterminant0;
-    FMatrix2 XmInvInverse = ToMatrix2( Float3x3Matrix ) * fDeterminant1;
+    FMatrix2 XmInvInverse = ToMatrix2(Float3x3Matrix) * fDeterminant1;
 
-    if ( InvInverse != XmInvInverse )
+    if (InvInverse != XmInvInverse)
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
-    if ( Adjoint != XmInvInverse )
+    if (Adjoint != XmInvInverse)
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // NaN
-    FMatrix2 NaN( 1.0f, 0.0f, 0.0f, NAN );
-    if ( NaN.HasNaN() != true )
+    FMatrix2 NaN(1.0f, 0.0f, 0.0f, NAN);
+    if (NaN.HasNaN() != true)
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Infinity
-    FMatrix2 Infinity( 1.0f, 0.0f, 0.0f, INFINITY );
-    if ( Infinity.HasInfinity() != true )
+    FMatrix2 Infinity(1.0f, 0.0f, 0.0f, INFINITY);
+    if (Infinity.HasInfinity() != true)
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Valid
-    if ( NaN.IsValid() || Infinity.IsValid() )
+    if (NaN.IsValid() || Infinity.IsValid())
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Get Row
-    FVector2 Row = Infinity.GetRow( 0 );
-    if ( Row != FVector2( 1.0f, 0.0f ) )
+    FVector2 Row = Infinity.GetRow(0);
+    if (Row != FVector2(1.0f, 0.0f))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Column
-    FVector2 Column = Infinity.GetColumn( 0 );
-    if ( Column != FVector2( 1.0f, 0.0f ) )
+    FVector2 Column = Infinity.GetColumn(0);
+    if (Column != FVector2(1.0f, 0.0f))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // SetIdentity
     Infinity.SetIdentity();
-    if ( Infinity != FMatrix2::Identity() )
+    if (Infinity != FMatrix2::Identity())
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
-    // Data
+    // GetData
     FMatrix2 Matrix0 = FMatrix2::Identity();
-    FMatrix2 Matrix1 = FMatrix2( Matrix0.Data() );
+    FMatrix2 Matrix1 = FMatrix2(Matrix0.Data());
 
-    if ( Matrix0 != Matrix1 )
+    if (Matrix0 != Matrix1)
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     // Multiply a vector
-    FMatrix2 Rot = FMatrix2::Rotation( NMath::kHalfPI_f );
-    FVector2 TranslatedVector = Rot * FVector2( 1.0f, 2.0f );
+    FMatrix2 Rot = FMatrix2::Rotation(NMath::kHalfPI_f);
+    FVector2 TranslatedVector = Rot * FVector2(1.0f, 2.0f);
 
-    XMVECTOR XmTranslatedVector = XMVectorSet( 1.0f, 2.0f, 0.0f, 0.0f );
-    XMMATRIX XmRot = XMMatrixRotationZ( NMath::kHalfPI_f );
-    XmTranslatedVector = XMVector3Transform( XmTranslatedVector, XmRot );
+    XMVECTOR XmTranslatedVector = XMVectorSet(1.0f, 2.0f, 0.0f, 0.0f);
+    XMMATRIX XmRot = XMMatrixRotationZ(NMath::kHalfPI_f);
+    XmTranslatedVector = XMVector3Transform(XmTranslatedVector, XmRot);
 
     XMFLOAT2 XmFloat2;
-    XMStoreFloat2( &XmFloat2, XmTranslatedVector );
+    XMStoreFloat2(&XmFloat2, XmTranslatedVector);
 
-    if ( TranslatedVector != FVector2( reinterpret_cast<float*>(&XmFloat2) ) )
+    if (TranslatedVector != FVector2(reinterpret_cast<float*>(&XmFloat2)))
     {
-        assert(false); return false;
+        TEST_FAILED();
     }
 
     return true;

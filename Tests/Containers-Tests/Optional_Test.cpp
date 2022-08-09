@@ -1,6 +1,7 @@
 #include "Optional_Test.h"
 
 #if RUN_TOPIONAL_TEST
+#include "TestUtils.h"
 
 #include <Core/Containers/Optional.h>
 #include <Core/Memory/Memory.h>
@@ -13,17 +14,15 @@
 
 struct FTest
 {
-    enum
-    {
-        SizeInBytes = 1024*1024
-    };
+    enum { SizeInBytes = 1024*1024 };
 
     FTest()
     {
         Pointer = FMemory::Malloc(SizeInBytes);
     }
 
-    FTest(int32 Value)
+    FTest(int32 InValue)
+        : Value(InValue)
     {
         Pointer = FMemory::Malloc(SizeInBytes);
         FMemory::Memset(Pointer, static_cast<uint8>(Value), SizeInBytes);
@@ -40,14 +39,17 @@ struct FTest
 
     FTest(FTest&& Other)
         : Pointer(Other.Pointer)
+        , Value(Other.Value)
     {
         Other.Pointer = nullptr;
+        Other.Value   = 0;
     }
 
     ~FTest()
     {
         FMemory::Free(Pointer);
         Pointer = nullptr;
+        Value   = 0;
     }
 
     FTest& operator=(const FTest& RHS)
@@ -79,7 +81,18 @@ struct FTest
         return FMemory::Memcmp(Pointer, RHS.Pointer, SizeInBytes);
     }
 
+    bool operator==(int32 RHS) const noexcept
+    {
+        return Value == RHS;
+    }
+
+    bool operator!=(int32 RHS) const noexcept
+    {
+        return !(*this == RHS);
+    }
+
     void* Pointer = nullptr;
+    int32 Value   = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -115,7 +128,7 @@ struct FCopyable
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Tests
 
-void TOptional_Test()
+bool TOptional_Test()
 {
     std::cout << '\n' << "----------TOptional----------" << '\n' << '\n';
 
@@ -126,22 +139,12 @@ void TOptional_Test()
         TOptional<FTest> Optional0;
         TOptional<FTest> Optional1(InPlace, 65);
 
-        if (!Optional0)
-        {
-            std::cout << "Optional0 does NOT have a value" << '\n';
-        }
-
-        if (Optional1)
-        {
-            std::cout << "Optional1 does has a value" << '\n';
-        }
+        CHECK(!Optional0);
+        CHECK( Optional1);
 
         Optional1.Reset();
 
-        if (!Optional1)
-        {
-            std::cout << "Optional1 does has NOT a value" << '\n';
-        }
+        CHECK(!Optional1);
     }
 
     {
@@ -156,19 +159,20 @@ void TOptional_Test()
 
     {
         TOptional<FTest> Optional0(InPlace, 70);
-        Optional0.Emplace(245);
-        Optional0.Emplace(235);
-        Optional0.Emplace(225);
-        Optional0.Emplace(215);
-        Optional0.Emplace(205);
+        CHECK(*Optional0 == 70);
+        CHECK(Optional0.Emplace(245) == 245);
+        CHECK(Optional0.Emplace(235) == 235);
+        CHECK(Optional0.Emplace(225) == 225);
+        CHECK(Optional0.Emplace(215) == 215);
+        CHECK(Optional0.Emplace(205) == 205);
 
         TOptional<int32> Optional1;
-        std::cout << "Optional1.Emplace(10)" << Optional1.Emplace(10) << '\n';
-        std::cout << "Optional1.Emplace(20)" << Optional1.Emplace(20) << '\n';
-        std::cout << "Optional1.Emplace(30)" << Optional1.Emplace(30) << '\n';
-        std::cout << "Optional1.Emplace(40)" << Optional1.Emplace(40) << '\n';
-        std::cout << "Optional1.Emplace(50)" << Optional1.Emplace(50) << '\n';
-        std::cout << "Optional1.Emplace(60)" << Optional1.Emplace(60) << '\n';
+        CHECK(Optional1.Emplace(10) == 10);
+        CHECK(Optional1.Emplace(20) == 20);
+        CHECK(Optional1.Emplace(30) == 30);
+        CHECK(Optional1.Emplace(40) == 40);
+        CHECK(Optional1.Emplace(50) == 50);
+        CHECK(Optional1.Emplace(60) == 60);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -177,21 +181,23 @@ void TOptional_Test()
     {
         TOptional<int64> Optional0;
         TOptional<int64> Optional1(InPlace, 100);
+        CHECK(*Optional1 == 100);
 
-        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
+        CHECK(!Optional0.HasValue());
 
-        Optional0.Emplace(255);
+        CHECK(Optional0.Emplace(255) == 255);
 
-        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
+        CHECK(Optional0.HasValue());
+        CHECK(Optional1.HasValue());
 
         Optional0.Swap(Optional1);
 
-        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
-        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
+        CHECK(*Optional0 == 100);
+        CHECK(*Optional1 == 255);
 
         Optional0.Reset();
 
-        std::cout << "Optional0.GetValueOrDefault()=" << Optional0.GetValueOrDefault(50) << '\n';
+        CHECK(Optional0.GetValueOrDefault(50) == 50);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -200,43 +206,51 @@ void TOptional_Test()
     {
         TOptional<FTest> Optional0;
         TOptional<FTest> Optional1(InPlace, 100);
+        
+        CHECK(!Optional0.HasValue());
+        CHECK( Optional1.HasValue());
 
-        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
+        CHECK(*Optional1 == 100);
 
-        Optional0.Emplace(255);
-
-        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
-
-
-        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
-
-        Optional0.Swap(Optional1);
-
-        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
-        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
+        CHECK(Optional0.Emplace(255) == 255);
+        CHECK(Optional0.HasValue());
 
         Optional0.Swap(Optional1);
 
-        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
-        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
+        CHECK(*Optional0 == 100);
+        CHECK(*Optional1 == 255);
+        CHECK(Optional0.HasValue());
+        CHECK(Optional1.HasValue());
 
         Optional0.Swap(Optional1);
 
-        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
-        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
+        CHECK(*Optional0 == 255);
+        CHECK(*Optional1 == 100);
+        CHECK(Optional0.HasValue());
+        CHECK(Optional1.HasValue());
+
+        Optional0.Swap(Optional1);
+
+        CHECK(*Optional0 == 100);
+        CHECK(*Optional1 == 255);
+        CHECK(Optional0.HasValue());
+        CHECK(Optional1.HasValue());
     }
     
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // TryGetValue
+
     {
         TOptional<int32> Optional0;
         TOptional<int32> Optional1(InPlace);
-        std::cout << "OptionalInt0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
-        std::cout << "OptionalInt1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
+        CHECK(!Optional0.HasValue());
+        CHECK(Optional1.HasValue());
 
-        std::cout << "OptionalInt0.TryGetValue()=" << Optional0.TryGetValue() << '\n';
-        std::cout << "OptionalInt1.TryGetValue()=" << Optional1.TryGetValue() << '\n';
+        CHECK(Optional0.TryGetValue() == nullptr);
+        CHECK(Optional1.TryGetValue() != nullptr);
     }
 
-    return;
+    SUCCESS();
 }
 
 #endif

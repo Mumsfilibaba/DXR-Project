@@ -19,7 +19,6 @@ struct FWindowsThreadMisc
         FMemory::Memzero(&SystemInfo);
 
         GetSystemInfo(&SystemInfo);
-
         return static_cast<uint32>(SystemInfo.dwNumberOfProcessors);
     }
 

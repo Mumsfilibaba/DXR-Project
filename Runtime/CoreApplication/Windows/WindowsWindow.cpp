@@ -121,13 +121,11 @@ bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 I
             }
         }
 
-        // Save style for later
         StyleParams = InStyle;
 
-        // Set this to userdata
         SetLastError(0);
 
-        LONG_PTR Result = SetWindowLongPtrA(Window, GWLP_USERDATA, (LONG_PTR)this);
+        LONG_PTR Result = SetWindowLongPtrA(Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
         DWORD LastError = GetLastError();
         if (Result == 0 && LastError != 0)
@@ -455,7 +453,7 @@ void FWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
 
         const bool bHasFullscreenSize  = (FullscreenWidth == WindowShape.Width) && (FullscreenHeight == WindowShape.Height);
         const bool bHasFullscreenStyle = ((Style & BorderlessStyleMask) == 0) && ((Style & BorderlessStyleExMask) == 0); 
-        bIsFullscreen = bHasFullscreenSize && bHasFullscreenStyle; 
+        bIsFullscreen = (bHasFullscreenSize && bHasFullscreenStyle); 
     }
     else
     {

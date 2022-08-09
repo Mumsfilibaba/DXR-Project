@@ -312,8 +312,6 @@ public:
         CmdList->SetName(WideName.CStr());
     }
 
-    FORCEINLINE ID3D12CommandList*          GetCommandList() const { return CmdList.Get(); }
-
     FORCEINLINE ID3D12GraphicsCommandList*  GetGraphicsCommandList()  const { return CmdList.Get(); }
     FORCEINLINE ID3D12GraphicsCommandList1* GetGraphicsCommandList1() const { return CmdList1.Get(); }
     FORCEINLINE ID3D12GraphicsCommandList2* GetGraphicsCommandList2() const { return CmdList2.Get(); }
@@ -321,6 +319,7 @@ public:
     FORCEINLINE ID3D12GraphicsCommandList4* GetGraphicsCommandList4() const { return CmdList4.Get(); }
     FORCEINLINE ID3D12GraphicsCommandList5* GetGraphicsCommandList5() const { return CmdList5.Get(); }
     FORCEINLINE ID3D12GraphicsCommandList6* GetGraphicsCommandList6() const { return CmdList6.Get(); }
+    FORCEINLINE ID3D12CommandList*          GetCommandList()          const { return CmdList.Get(); }
 
 private:
     TComPtr<ID3D12GraphicsCommandList>  CmdList;

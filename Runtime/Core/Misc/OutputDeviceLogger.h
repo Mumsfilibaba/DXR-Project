@@ -11,19 +11,19 @@
 #define LOG_ERROR(...)                                                                              \
     do                                                                                              \
     {                                                                                               \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, FString::CreateFormated(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, FString::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
 #define LOG_WARNING(...)                                                                              \
     do                                                                                                \
     {                                                                                                 \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Warning, FString::CreateFormated(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Warning, FString::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
 #define LOG_INFO(...)                                                                              \
     do                                                                                             \
     {                                                                                              \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, FString::CreateFormated(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, FString::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -35,8 +35,8 @@ class CORE_API FOutputDeviceLogger
     FOutputDeviceLogger();
     ~FOutputDeviceLogger();
 
-public:
 
+public:
     /** @return: Returns the Logger singleton */
     static FOutputDeviceLogger* Get();
 

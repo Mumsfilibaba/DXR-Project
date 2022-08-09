@@ -40,7 +40,7 @@ public:
      * @param Format: Formatted string
      * @return: Returns the formatted string based on the format string
      */
-    static NOINLINE TStaticString CreateFormated(const CharType* Format, ...) noexcept
+    static NOINLINE TStaticString CreateFormatted(const CharType* Format, ...) noexcept
     {
         TStaticString NewString;
 
@@ -59,7 +59,7 @@ public:
      * @param ArgsList: Argument-list to be formatted based on the format-string
      * @return: Returns the formatted string based on the format string
      */
-    static FORCEINLINE void CreateFormatedArgs(const CharType* Format, va_list ArgsList) noexcept
+    static FORCEINLINE void CreateFormattedArgs(const CharType* Format, va_list ArgsList) noexcept
     {
         TStaticString NewString;
         NewString.FormatArgs(Format, ArgsList);
