@@ -7,14 +7,13 @@
   - [Loops](#loops)
   - [Templates](#templates)
   - [Classes](#classes)
+  - [Structs](#structs)
   - [Interfaces](#interfaces)
   - [Enums](#enums)
-  - [Structs](#structs)
   - [Union](#union)
   - [Virtual](#virtual)
   - [Naming Conventions](#naming-conventions)
   - [Platform Specific Code](#platform-specific-code)
-  - [FORCEINLINE macro](#forceinline-macro)
 
 ### If Statements
 * If statements should be written using the following style:
@@ -22,14 +21,14 @@
 ```
 if (condition)
 {
-  //Statements
+  // Statements
 }
 else
 {
-  //Statements
+  // Statements
 }
 ```
-* Note that single if-statements should be avoided. This is to minimize the amount of bugs in the application.
+* Avoid single-line if-statements. This is to minimize the amount of bugs in the application.
 
 * Conditional (ternary) operator are allowed
 ```
@@ -42,11 +41,23 @@ condition ? true : false;
 ```
 while (condition)
 {
-  //Statements
+  // Statements
 }
 ```
+```
+for (int32 Index = 0; Index < SomeNumber; ++Index)
+{
+  // Statements
+}
+```
+```
+do
+{
+  // Statements
+} while (condition)
+```
 
-* Note that single line loops should be avoided. This is to minimize the amount of bugs in the application.
+* Avoid single-line loops. This is to minimize the amount of bugs in the application.
 
 ### Templates
 * Templates should use the following style:
@@ -62,6 +73,7 @@ void SomeFunc()
 }
 ```
 * Note that the classname is using capital letter 'T' as prefix
+
 * Note the use of typename instead of class, typename is preferred over class
 
 * When forward declaring a template the following style should be used:
@@ -78,8 +90,12 @@ template<typename T> class TFunction;
 ### Classes
 * Classes should be written on using the following style:
 ```
-class CMyClass
+class FMyClass
 {
+  // Private constructor and destructor
+  FMyClass();
+  ~FMyClass();
+
 public:
   // Public functions and variable here ...
 
@@ -90,12 +106,13 @@ private:
   // Protected functions and variable here ...
 };
 ```
-* Classes use 'C' as prefix
+* Classes use 'F' as prefix
 
 * Note the order of the access modifers
 
-* Header files should be included in compilation units (.cpp). Only reason to include in the header is when a class/struct is 
-using the type more than just a pointer or reference, such as calling a function, accessing a variable or declaring the type directly. This means that forward declarations has to and should be used.
+* Note that the constructor is kept on top even though the private accessor is on the bottom. This is to increase readability. Try to keep constructors in the top. 
+
+* Header files should be included in compilation units (.cpp). Only reason to include in the header is when a class/struct is using the type more than just a pointer or reference, such as calling a function, accessing a variable or declaring the type directly. This means that forward declarations has to and should be used.
 
 * Classes that are meant to be used outside the engine- project, and are not header-only should use the export macro before the class-name
 ```
@@ -115,17 +132,31 @@ class CORE_API MyClass
 // etc.
 ```
 
+### Structs
+* Structs should be used when all members are public
+
+* Structs use 'F' as prefix, for example
+
+```
+struct FMyStruct
+{
+  int32 x;
+  int32 y;
+};
+```
+
 ### Interfaces
 * Interfaces do not contain any state (i.e no variables) and does not provide any function definition. All functions should be pure virtual.
 
 * Interfaces should use the capital letter 'I' as prefix.
 
-* Interfaces should use a virtual destructor if the interface will be deleted as the instance-type
+* Interfaces should use a virtual destructor if the interface will be deleted as the instance-type.
+
+* Prefer structs over classes. Since everything most likeley will be public anyway.
 
 ```
-class IMyInterface
+struct IMyInterface
 {
-public:
   virtual ~IMyInterface() = default;
   
   virtual void Func() = 0;
@@ -135,7 +166,9 @@ public:
 ### Enums
 * Enums should use the capital letter 'E' as prefix
 
-* Enum class should be preferred, unless they mostly will be used as integers
+* Enum class should be preferred, unless they mostly will be used as integers.
+
+* Enum classes with flags can use the 'ENUM_CLASS_OPERATORS' macro to make operations such as 'and', 'or' etc to work.
 
 * Example can be seen below:
 ```
@@ -144,6 +177,7 @@ enum class EMyEnum
   Car   = 0,
   Apple = 1,
 };
+ENUM_CLASS_OPERATORS(EMyEnum);
 ```
 
 * Enums **not** using the class keyword should prefix all enumerators with the name of the enum:
@@ -155,24 +189,11 @@ enum EMyEnum
 };
 ```
 
-### Structs
-* Structs should primarily be used for data only
-
-* Structs use 'S' as prefix, for example
-
-```
-struct SMyStruct
-{
-  int32 x;
-  int32 y;
-};
-```
-
 ### Union
-* Unions use 'U' as prefix, for example
+* Unions use 'F' as prefix, for example
 
 ```
-union UMyUnion
+union FMyUnion
 {
   int32 x;
   float y;
@@ -196,7 +217,7 @@ int* pMyPointer = nullptr;
 
 * This applies to classes and structues as well
 ```
-class CMyClass
+class FMyClass
 {
 private:
   int  MyInteger = 0;
@@ -210,7 +231,7 @@ bool GMyGlobal;
 ```
 * Mathematical components such as x, y, z etc. should **NOT** be capitalized.
 ```
-struct SMyMathStruct
+struct FMyMathStruct
 {
   float x = 0.0f;
   float y = 0.0f;
@@ -220,7 +241,7 @@ struct SMyMathStruct
 
 * Functions use pascalcase. Same with parameters and local variables.
 ```
-void FunctionsLookLikeThis( int FirstAParameter )
+void FunctionsLookLikeThis(int FirstAParameter)
 {
   int ALocalVariable = FirstAParameter;
 }
@@ -228,10 +249,10 @@ void FunctionsLookLikeThis( int FirstAParameter )
 
 * Memberfunctions also use pascalcase. Parameters with same name as a member variable should use the 'In' or 'New' prefix:
 ```
-class CMyClass
+class FMyClass
 {
 public:
-  void MyMemberFunction( int InVariable )
+  void MyMemberFunction(int InVariable)
   {
     Variable = InVariable;
   }
@@ -252,7 +273,7 @@ Application/Windows/
 
 * Prefer static classes
 ```
-class CFPlatformApplication
+class FGenericApplication
 {
 public:
   static void Func()
@@ -260,7 +281,7 @@ public:
   }
 };
 
-class FMacApplication : public CFPlatformApplication
+class FMacApplication : public FGenericApplication
 {
 public:
   static void Func()
@@ -268,33 +289,27 @@ public:
   }
 };
 
-typedef FMacApplication FPlatformApplication;
-
-class FWindowsApplication : public CFPlatformApplication
+class FWindowsApplication : public FGenericApplication
 {
 public:
   static void Func()
   {
   }
 };
-
-typedef FWindowsApplication FPlatformApplication;
 ```
 
 * Platform classes should be accompanied with a Platform-header like this:
 ```
-//FPlatformApplication.h
+// FPlatformApplication.h
 
 #pragma once
 #if PLATFORM_WINDOWS
   #include "Application/Windows/WindowsApplication.h"
+  typedef FWindowsApplication FPlatformApplication;
 #elif PLATFORM_MACOS
   #include "Application/Mac/MacApplication.h"
+  typedef FMacApplication FPlatformApplication;
 #else
   #error No platform defined
 #endif
 ```
-### FORCEINLINE macro
-* The FORCEINLINE- macro should be used on all one-line functions (for example setters and getters). The only time this does not apply is when the class or function is exported with the LAMBDA_API macro. When you are certain that the function will stay the same between versions, that is when the code in the .exe and .dll will be the same no matter what, it is ok to still use FORCEINLINE. However, it is better practise to make sure that a function is exported, e.i. define the function in the compilation unit (.cpp). 
-
-
