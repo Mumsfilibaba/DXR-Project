@@ -33,6 +33,19 @@
 #include "RHI/RHIShaderCompiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FEngineLoop
+
+FEngineLoop::FEngineLoop()
+    : FrameTimer()
+    , ConsoleWindow(nullptr)
+{ }
+
+FEngineLoop::~FEngineLoop()
+{ 
+    ConsoleWindow = nullptr;
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // LoadCoreModules
 
 bool FEngineLoop::LoadCoreModules()
@@ -81,18 +94,16 @@ bool FEngineLoop::LoadCoreModules()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // PreInitialize
 
-FOutputDeviceConsole* GConsoleWindow = nullptr;
-
-bool FEngineLoop::PreInitialize()
+bool FEngineLoop::PreInit()
 {
     // Create the console window
-    GConsoleWindow = FPlatformApplicationMisc::CreateOutputDeviceConsole();
-    if (GConsoleWindow)
+    ConsoleWindow = FPlatformApplicationMisc::CreateOutputDeviceConsole();
+    if (ConsoleWindow)
     {
-        FOutputDeviceLogger::Get()->AddOutputDevice(GConsoleWindow);
+        FOutputDeviceLogger::Get()->AddOutputDevice(ConsoleWindow);
         
-        GConsoleWindow->Show(true);
-        GConsoleWindow->SetTitle(FString(PROJECT_NAME) + ": Error Console");
+        ConsoleWindow->Show(true);
+        ConsoleWindow->SetTitle(FString(PROJECT_NAME) + ": Error Console");
     }
     else
     {
@@ -184,7 +195,7 @@ bool FEngineLoop::PreInitialize()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Initialize
 
-bool FEngineLoop::Initialize()
+bool FEngineLoop::Init()
 {
     NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
 
@@ -247,15 +258,18 @@ bool FEngineLoop::Initialize()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Tick
 
-void FEngineLoop::Tick(FTimespan Deltatime)
+void FEngineLoop::Tick()
 {
     TRACE_FUNCTION_SCOPE();
 
-    FApplication::Get().Tick(Deltatime);
+    // Tick the timer
+    FrameTimer.Tick();
 
-    FEngineLoopTicker::Get().Tick(Deltatime);
+    FApplication::Get().Tick(FrameTimer.GetDeltaTime());
 
-    GEngine->Tick(Deltatime);
+    FEngineLoopTicker::Get().Tick(FrameTimer.GetDeltaTime());
+
+    GEngine->Tick(FrameTimer.GetDeltaTime());
 
     FFrameProfiler::Get().Tick();
 
@@ -302,7 +316,7 @@ bool FEngineLoop::Release()
 
     FThreadManager::Release();
 
-    SAFE_DELETE(GConsoleWindow);
+    SAFE_DELETE(ConsoleWindow);
 
     FModuleManager::Shutdown();
 

@@ -86,6 +86,8 @@ function FTargetBuildRules(InName)
 
                 self.AddFiles( 
                 {
+                    (RuntimeFolderPath .. '/Main/IEngineLoop.h'),
+                    (RuntimeFolderPath .. '/Main/EngineLoop.h'),
                     (RuntimeFolderPath .. '/Main/EngineLoop.cpp'),
                     (RuntimeFolderPath .. '/Main/GenericMain.cpp'),
                     MainFile

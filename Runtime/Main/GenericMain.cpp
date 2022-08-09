@@ -8,14 +8,46 @@
 
 #include "Engine/Engine.h"
 
-// Main function for all implementations
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// GEngineLoop
+
+FEngineLoop GEngineLoop;
+
+FORCEINLINE bool EngineLoadCoreModules()
+{
+    return GEngineLoop.LoadCoreModules();
+}
+
+FORCEINLINE bool EnginePreInit()
+{
+    return GEngineLoop.PreInit();
+}
+
+FORCEINLINE bool EngineInit()
+{
+    return GEngineLoop.Init();
+}
+
+FORCEINLINE void EngineTick()
+{
+    GEngineLoop.Tick();
+}
+
+FORCEINLINE bool EngineRelease()
+{
+    return GEngineLoop.Release();
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// GenericMain
+
 int32 GenericMain()
 {
     struct FGenericMainGuard
     {
         ~FGenericMainGuard()
         {
-            if (!FEngineLoop::Release())
+            if (!EngineRelease())
             {
                 FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Release Failed");
             }
@@ -26,25 +58,22 @@ int32 GenericMain()
         // Make sure that the engine is released if the main function exits early
         FGenericMainGuard GenericMainGuard;
 
-        // Initialization
-        if (!FEngineLoop::PreInitialize())
+        if (!EnginePreInit())
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::PreInit Failed");
             return -1;
         }
 
-        if (!FEngineLoop::Initialize())
+        if (!EngineInit())
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Init Failed");
             return -1;
         }
 
         // Run loop
-        FTimer Timer;
         while (FApplication::Get().IsRunning())
         {
-            Timer.Tick();
-            FEngineLoop::Tick(Timer.GetDeltaTime());
+            EngineTick();
         }
     }
 
