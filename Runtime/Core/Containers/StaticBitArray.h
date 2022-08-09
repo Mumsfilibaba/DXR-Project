@@ -5,7 +5,7 @@
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Templates/BitReference.h"
-#include "Core/Templates/BitUtilities.h"
+#include "Core/Templates/BitHelper.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TStaticBitArray - Static array of packed bits

@@ -3,11 +3,11 @@
 #include "Allocators.h"
 
 #include "Core/Core.h"
-#include "Core/Templates/IsInteger.h"
-#include "Core/Templates/BitReference.h"
-#include "Core/Templates/BitUtilities.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Math/Math.h"
+#include "Core/Templates/IsInteger.h"
+#include "Core/Templates/BitHelper.h"
+#include "Core/Templates/BitReference.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TBitArray - Array of packed bits
