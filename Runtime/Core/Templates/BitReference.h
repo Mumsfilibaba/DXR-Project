@@ -10,8 +10,7 @@ public:
     FORCEINLINE TBitReference(StorageType& InStorage, StorageType InMask) noexcept
         : Storage(InStorage)
         , Mask(InMask)
-    {
-    }
+    { }
 
 public:
 
