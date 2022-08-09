@@ -1,6 +1,6 @@
 #include "ModuleManager.h"
 
-#include "Core/Templates/StringUtils.h"
+#include "Core/Templates/CStringHelper.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FModuleManager

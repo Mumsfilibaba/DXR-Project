@@ -1,6 +1,6 @@
 #include "ProjectManager.h"
 
-#include "Core/Templates/StringUtils.h"
+#include "Core/Templates/CStringHelper.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FProjectManager

@@ -3,7 +3,7 @@
 #include "Canvas/Application.h"
 
 #include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Templates/StringUtils.h"
+#include "Core/Templates/CStringHelper.h"
 
 #include <imgui.h>
 

@@ -6,7 +6,7 @@
 #include "Core/Templates/Move.h"
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/IsTStringType.h"
-#include "Core/Templates/StringUtils.h"
+#include "Core/Templates/CStringHelper.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TStringView - Class for viewing a string similar to std::string_view
