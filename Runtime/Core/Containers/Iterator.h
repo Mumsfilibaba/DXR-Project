@@ -88,7 +88,7 @@ public:
      * 
      * @return: Returns a raw pointer to the data 
      */
-    NODISCARD FORCEINLINE ElementType* Raw() const noexcept
+    NODISCARD FORCEINLINE ElementType* GetPointer() const noexcept
     {
         Check(IsValid());
         return Array.Get().GetData() + GetIndex();
@@ -113,7 +113,7 @@ public:
      */
     FORCEINLINE ElementType* operator->() const noexcept
     {
-        return Raw();
+        return GetPointer();
     }
 
     /**
@@ -123,7 +123,7 @@ public:
      */
     FORCEINLINE ElementType& operator*() const noexcept
     {
-        return *Raw();
+        return *GetPointer();
     }
 
     /**
@@ -354,7 +354,7 @@ public:
      *
      * @return: Returns a raw pointer to the data
      */
-    NODISCARD FORCEINLINE ElementType* Raw() const noexcept
+    NODISCARD FORCEINLINE ElementType* GetPointer() const noexcept
     {
         Check(IsValid());
         return Array.Get().GetData() + GetIndex();
@@ -379,7 +379,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType* operator->() const noexcept
     {
-        return Raw();
+        return GetPointer();
     }
 
     /**
@@ -389,7 +389,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator*() const noexcept
     {
-        return *Raw();
+        return *GetPointer();
     }
 
     /**
@@ -574,7 +574,7 @@ public:
         return (Node != nullptr) && (Node->GetPointer() != nullptr);
     }
 
-    FORCEINLINE ElementType* Raw() const noexcept
+    FORCEINLINE ElementType* GetPointer() const noexcept
     {
         Check(IsValid());
         return Node->GetPointer();
@@ -582,12 +582,12 @@ public:
 
     FORCEINLINE ElementType* operator->() const noexcept
     {
-        return Raw();
+        return GetPointer();
     }
 
     FORCEINLINE ElementType& operator*() const noexcept
     {
-        return *Raw();
+        return *GetPointer();
     }
 
     FORCEINLINE TTreeIterator operator++() noexcept
