@@ -466,14 +466,28 @@ NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TSharedRef<T>& RHS) no
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// MakeSharedRef - Converts a raw pointer into a TSharedRef
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE TSharedRef<T> MakeSharedRef(U* InRefCountedObject)
+{
+    if (InRefCountedObject)
+    {
+        InRefCountedObject->AddRef();
+        return TSharedRef<T>(static_cast<T*>(InRefCountedObject));
+    }
+
+    return nullptr;
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TSharedRef casting functions
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE TSharedRef<T> StaticCastSharedRef(const TSharedRef<U>& Pointer)
 {
     T* RawPointer = static_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
+    return MakeSharedRef<T>(RawPointer);
 }
 
 template<typename T, typename U>
@@ -487,8 +501,7 @@ template<typename T, typename U>
 NODISCARD FORCEINLINE TSharedRef<T> ConstCastSharedRef(const TSharedRef<U>& Pointer)
 {
     T* RawPointer = const_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
+    return MakeSharedRef<T>(RawPointer);
 }
 
 template<typename T, typename U>
@@ -502,8 +515,7 @@ template<typename T, typename U>
 NODISCARD FORCEINLINE TSharedRef<T> ReinterpretCastSharedRef(const TSharedRef<U>& Pointer)
 {
     T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
+    return MakeSharedRef<T>(RawPointer);
 }
 
 template<typename T, typename U>
@@ -511,19 +523,4 @@ NODISCARD FORCEINLINE TSharedRef<T> ReinterpretCastSharedRef(TSharedRef<U>&& Poi
 {
     T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
     return TSharedRef<T>(RawPointer);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Converts a raw pointer into a TSharedRef
-
-template<typename T, typename U>
-NODISCARD FORCEINLINE TSharedRef<T> MakeSharedRef(U* InRefCountedObject)
-{
-    if (InRefCountedObject)
-    {
-        InRefCountedObject->AddRef();
-        return TSharedRef<T>(static_cast<T*>(InRefCountedObject));
-    }
-
-    return nullptr;
 }
