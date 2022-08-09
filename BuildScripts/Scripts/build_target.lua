@@ -87,7 +87,7 @@ function FTargetBuildRules(InName)
                 self.AddFiles( 
                 {
                     (RuntimeFolderPath .. '/Main/EngineLoop.cpp'),
-                    (RuntimeFolderPath .. '/Main/EngineMain.cpp'),
+                    (RuntimeFolderPath .. '/Main/GenericMain.cpp'),
                     MainFile
                 })
 
@@ -127,7 +127,7 @@ function FTargetBuildRules(InName)
                 Executeble.Files = 
                 {
                     (RuntimeFolderPath .. '/Main/EngineLoop.cpp'),
-                    (RuntimeFolderPath .. '/Main/EngineMain.cpp'),
+                    (RuntimeFolderPath .. '/Main/GenericMain.cpp'),
                     MainFile
                 }
 

@@ -3,7 +3,7 @@
 
 #include <Appkit/Appkit.h>
 
-extern int EngineMain();
+extern int GenericMain();
 
 class FMacApplication;
 
@@ -38,7 +38,7 @@ static int32 GEngineMainResult = 0;
     SCOPED_AUTORELEASE_POOL();
     
     // Run the main loop
-    GEngineMainResult = EngineMain();
+    GEngineMainResult = GenericMain();
 }
 
 @end

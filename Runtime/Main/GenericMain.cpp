@@ -9,11 +9,11 @@
 #include "Engine/Engine.h"
 
 // Main function for all implementations
-int32 EngineMain()
+int32 GenericMain()
 {
-    struct FMainCleanupGuard
+    struct FGenericMainGuard
     {
-        ~FMainCleanupGuard()
+        ~FGenericMainGuard()
         {
             if (!FEngineLoop::Release())
             {
@@ -24,7 +24,7 @@ int32 EngineMain()
 
     {
         // Make sure that the engine is released if the main function exits early
-        FMainCleanupGuard EngineMainGuard;
+        FGenericMainGuard GenericMainGuard;
 
         // Initialization
         if (!FEngineLoop::PreInitialize())
