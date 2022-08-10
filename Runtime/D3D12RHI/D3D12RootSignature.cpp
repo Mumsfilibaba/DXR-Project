@@ -2,7 +2,7 @@
 #include "D3D12Core.h"
 #include "D3D12Device.h"
 #include "D3D12Shader.h"
-#include "D3D12Library.h"
+#include "DynamicD3D12.h"
 #include "D3D12CoreInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -312,7 +312,7 @@ bool FD3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
 {
     TComPtr<ID3D12RootSignatureDeserializer> Deserializer;
-    HRESULT Result = FD3D12Library::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
+    HRESULT Result = FDynamicD3D12::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12RootSignature]: FAILED to Retrieve Root Signature Desc");
@@ -381,7 +381,7 @@ bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 {
     TComPtr<ID3DBlob> ErrorBlob;
 
-    HRESULT Result = FD3D12Library::D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob);
+    HRESULT Result = FDynamicD3D12::D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob);
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12RootSignature]: FAILED to Serialize RootSignature. Error=%s", reinterpret_cast<const char*>(ErrorBlob->GetBufferPointer()));

@@ -1,25 +1,25 @@
 #include "D3D12Core.h"
-#include "D3D12Library.h"
+#include "DynamicD3D12.h"
 
 #include "Core/Modules/Platform/PlatformLibrary.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-void* FD3D12Library::DXGILib  = nullptr;
-void* FD3D12Library::D3D12Lib = nullptr;
-void* FD3D12Library::PIXLib   = nullptr;
+void* FDynamicD3D12::DXGILib  = nullptr;
+void* FDynamicD3D12::D3D12Lib = nullptr;
+void* FDynamicD3D12::PIXLib   = nullptr;
 
-PFN_CREATE_DXGI_FACTORY_2                              FD3D12Library::CreateDXGIFactory2                            = nullptr;
-PFN_DXGI_GET_DEBUG_INTERFACE_1                         FD3D12Library::DXGIGetDebugInterface1                        = nullptr;
+PFN_CREATE_DXGI_FACTORY_2                              FDynamicD3D12::CreateDXGIFactory2                            = nullptr;
+PFN_DXGI_GET_DEBUG_INTERFACE_1                         FDynamicD3D12::DXGIGetDebugInterface1                        = nullptr;
 
-PFN_D3D12_CREATE_DEVICE                                FD3D12Library::D3D12CreateDevice                             = nullptr;
-PFN_D3D12_GET_DEBUG_INTERFACE                          FD3D12Library::D3D12GetDebugInterface                        = nullptr;
-PFN_D3D12_SERIALIZE_ROOT_SIGNATURE                     FD3D12Library::D3D12SerializeRootSignature                   = nullptr;
-PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER           FD3D12Library::D3D12CreateRootSignatureDeserializer          = nullptr;
-PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           FD3D12Library::D3D12SerializeVersionedRootSignature          = nullptr;
-PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER FD3D12Library::D3D12CreateVersionedRootSignatureDeserializer = nullptr;
+PFN_D3D12_CREATE_DEVICE                                FDynamicD3D12::D3D12CreateDevice                             = nullptr;
+PFN_D3D12_GET_DEBUG_INTERFACE                          FDynamicD3D12::D3D12GetDebugInterface                        = nullptr;
+PFN_D3D12_SERIALIZE_ROOT_SIGNATURE                     FDynamicD3D12::D3D12SerializeRootSignature                   = nullptr;
+PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER           FDynamicD3D12::D3D12CreateRootSignatureDeserializer          = nullptr;
+PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           FDynamicD3D12::D3D12SerializeVersionedRootSignature          = nullptr;
+PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER FDynamicD3D12::D3D12CreateVersionedRootSignatureDeserializer = nullptr;
 
-PFN_SetMarkerOnCommandList                             FD3D12Library::SetMarkerOnCommandList                        = nullptr;
+PFN_SetMarkerOnCommandList                             FDynamicD3D12::SetMarkerOnCommandList                        = nullptr;
 
 #define D3D12_LOAD_FUNCTION(Function, LibraryHandle)                                                 \
     do                                                                                               \
@@ -33,9 +33,9 @@ PFN_SetMarkerOnCommandList                             FD3D12Library::SetMarkerO
     } while(false)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Library
+// FDynamicD3D12
 
-bool FD3D12Library::Initialize(bool bEnablePIX)
+bool FDynamicD3D12::Initialize(bool bEnablePIX)
 {
     DXGILib = FPlatformLibrary::LoadDynamicLib("dxgi");
     if (!DXGILib)
@@ -86,7 +86,7 @@ bool FD3D12Library::Initialize(bool bEnablePIX)
     return true;
 }
 
-void FD3D12Library::Release()
+void FDynamicD3D12::Release()
 {
     if (DXGILib)
     {

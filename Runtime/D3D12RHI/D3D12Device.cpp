@@ -5,7 +5,7 @@
 #include "D3D12CommandAllocator.h"
 #include "D3D12CommandQueue.h"
 #include "D3D12PipelineState.h"
-#include "D3D12Library.h"
+#include "DynamicD3D12.h"
 
 #include "Core/Windows/Windows.h"
 #include "Core/Modules/Platform/PlatformLibrary.h"
@@ -151,7 +151,7 @@ bool FD3D12Adapter::Initialize()
     if (Initializer.bEnableDebugLayer)
     {
         TComPtr<ID3D12Debug> DebugInterface;
-        if (FAILED(FD3D12Library::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
+        if (FAILED(FDynamicD3D12::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
         {
             D3D12_ERROR("[FD3D12Adapter]: FAILED to enable DebugLayer");
             return false;
@@ -164,7 +164,7 @@ bool FD3D12Adapter::Initialize()
         if (Initializer.bEnableDRED)
         {
             TComPtr<ID3D12DeviceRemovedExtendedDataSettings> DredSettings;
-            if (SUCCEEDED(FD3D12Library::D3D12GetDebugInterface(IID_PPV_ARGS(&DredSettings))))
+            if (SUCCEEDED(FDynamicD3D12::D3D12GetDebugInterface(IID_PPV_ARGS(&DredSettings))))
             {
                 DredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
                 DredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
@@ -204,7 +204,7 @@ bool FD3D12Adapter::Initialize()
 #endif
 
         TComPtr<IDXGIInfoQueue> InfoQueue;
-        if (SUCCEEDED(FD3D12Library::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
+        if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
         {
             InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
             InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
@@ -217,7 +217,7 @@ bool FD3D12Adapter::Initialize()
         if (Initializer.bEnablePIX)
         {
             TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
-            if (SUCCEEDED(FD3D12Library::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
+            if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
             {
                 DXGraphicsAnalysis = TempGraphicsAnalysis;
             }
@@ -229,7 +229,7 @@ bool FD3D12Adapter::Initialize()
     }
 
     // Create factory
-    if (FAILED(FD3D12Library::CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
+    if (FAILED(FDynamicD3D12::CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
     {
         D3D12_ERROR("[FD3D12Adapter]: FAILED to create factory");
         return false;
@@ -300,7 +300,7 @@ bool FD3D12Adapter::Initialize()
                     break;
                 }
 
-                Result = FD3D12Library::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
+                Result = FDynamicD3D12::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
                 if (SUCCEEDED(Result))
                 {
                     // Here it is probably better to have something else to find the best GPU
@@ -348,7 +348,7 @@ bool FD3D12Adapter::Initialize()
                     break;
                 }
 
-                Result = FD3D12Library::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
+                Result = FDynamicD3D12::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
                 if (SUCCEEDED(Result))
                 {
                     D3D12_INFO("[FD3D12Adapter]: Suitable Direct3D Adapter (%u): %ls", Index, Desc.Description);
@@ -433,7 +433,7 @@ FD3D12Device::~FD3D12Device()
 bool FD3D12Device::Initialize()
 {
     // Create Device
-    if (FAILED(FD3D12Library::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
+    if (FAILED(FDynamicD3D12::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create device");
         return false;

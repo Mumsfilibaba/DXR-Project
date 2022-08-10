@@ -11,7 +11,7 @@
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12TimestampQuery.h"
 #include "D3D12CommandContext.h"
-#include "D3D12Library.h"
+#include "DynamicD3D12.h"
 #include "D3D12Viewport.h"
 
 #include "Core/Math/Vector2.h"
@@ -1550,9 +1550,9 @@ void FD3D12CommandContext::Flush()
 
 void FD3D12CommandContext::InsertMarker(const FStringView& Message)
 {
-    if (FD3D12Library::SetMarkerOnCommandList)
+    if (FDynamicD3D12::SetMarkerOnCommandList)
     {
-        FD3D12Library::SetMarkerOnCommandList(CommandList.GetGraphicsCommandList(), PIX_COLOR(255, 255, 255), Message.GetCString());
+        FDynamicD3D12::SetMarkerOnCommandList(CommandList.GetGraphicsCommandList(), PIX_COLOR(255, 255, 255), Message.GetCString());
     }
 }
 

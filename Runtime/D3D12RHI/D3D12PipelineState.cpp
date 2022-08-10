@@ -371,11 +371,11 @@ struct FD3D12HitGroup
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Library
+// FDynamicD3D12
 
-struct FD3D12Library
+struct FDynamicD3D12
 {
-    FD3D12Library(D3D12_SHADER_BYTECODE ByteCode, const TArray<FStringWide>& InExportNames)
+    FDynamicD3D12(D3D12_SHADER_BYTECODE ByteCode, const TArray<FStringWide>& InExportNames)
         : ExportNames(InExportNames)
         , ExportDescs(InExportNames.GetSize())
         , Desc()
@@ -424,7 +424,7 @@ struct FD3D12RayTracingPipelineStateStream
         SubObjects.Resize(NumSubObjects);
 
         uint32 SubObjectIndex = 0;
-        for (FD3D12Library& Lib : Libraries)
+        for (FDynamicD3D12& Lib : Libraries)
         {
             D3D12_STATE_SUBOBJECT& SubObject = SubObjects[SubObjectIndex++];
             SubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
@@ -480,7 +480,7 @@ struct FD3D12RayTracingPipelineStateStream
         ShaderConfigAssociationSubObject.pDesc = &ShaderConfigAssociation;
     }
 
-    TArray<FD3D12Library>                  Libraries;
+    TArray<FDynamicD3D12>                  Libraries;
     TArray<FD3D12HitGroup>                 HitGroups;
     TArray<FD3D12RootSignatureAssociation> RootSignatureAssociations;
 

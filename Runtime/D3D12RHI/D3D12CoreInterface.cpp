@@ -14,7 +14,7 @@
 #include "D3D12Viewport.h"
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12TimestampQuery.h"
-#include "D3D12Library.h"
+#include "DynamicD3D12.h"
 
 #include "CoreApplication/Windows/WindowsWindow.h"
 
@@ -45,7 +45,7 @@ FD3D12CoreInterface::~FD3D12CoreInterface()
 
     Device.Reset();
 
-    FD3D12Library::Release();
+    FDynamicD3D12::Release();
 
     GD3D12Instance = nullptr;
 }
@@ -53,7 +53,7 @@ FD3D12CoreInterface::~FD3D12CoreInterface()
 bool FD3D12CoreInterface::Initialize(bool bEnableDebug)
 {
     // Load Library and Function-Pointers etc.
-    const bool bResult = FD3D12Library::Initialize(bEnableDebug);
+    const bool bResult = FDynamicD3D12::Initialize(bEnableDebug);
     if (!bResult)
     {
         return false;

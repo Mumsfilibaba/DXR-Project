@@ -12,9 +12,9 @@ typedef HRESULT(WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1)(UINT Flags, REFIID riid,
 typedef HRESULT(WINAPI* PFN_SetMarkerOnCommandList)(ID3D12GraphicsCommandList* commandList, UINT64 color, _In_ PCSTR formatString);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Library
+// FDynamicD3D12
 
-class FD3D12Library
+class FDynamicD3D12
 {
 public:
     static bool Initialize(bool bEnablePIX);
