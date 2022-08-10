@@ -2125,7 +2125,7 @@ inline NODISCARD FStringWide CharToWide(const FString& CharString) noexcept
     return NewString;
 }
 
-inline NODISCARD FString WideToChar(const FFWStringView& WideString) noexcept
+inline NODISCARD FString WideToChar(const FStringViewWide& WideString) noexcept
 {
     FString NewString;
     NewString.Resize(WideString.Length());

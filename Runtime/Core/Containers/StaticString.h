@@ -1869,10 +1869,10 @@ private:
 // Predefined types
 
 template<uint32 CharCount>
-using StaticString = TStaticString<char, CharCount>;
+using FStaticString = TStaticString<char, CharCount>;
 
 template<uint32 CharCount>
-using WStaticString = TStaticString<wchar_t, CharCount>;
+using FStaticStringWide = TStaticString<wchar_t, CharCount>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Add TStaticString to be a string-type
@@ -1889,9 +1889,9 @@ struct TIsTStringType<TStaticString<CharType, CharCount>>
 // Convert between char and wide
 
 template<int32 CharCount>
-inline NODISCARD WStaticString<CharCount> CharToWide(const StaticString<CharCount>& CharString) noexcept
+inline NODISCARD FStaticStringWide<CharCount> CharToWide(const FStaticString<CharCount>& CharString) noexcept
 {
-    WStaticString<CharCount> NewString;
+    FStaticStringWide<CharCount> NewString;
     NewString.Resize(CharString.Length());
 
     mbstowcs(NewString.GetData(), CharString.GetCString(), CharString.Length());
@@ -1900,9 +1900,9 @@ inline NODISCARD WStaticString<CharCount> CharToWide(const StaticString<CharCoun
 }
 
 template<int32 CharCount>
-inline NODISCARD StaticString<CharCount> WideToChar(const WStaticString<CharCount>& WideString) noexcept
+inline NODISCARD FStaticString<CharCount> WideToChar(const FStaticStringWide<CharCount>& WideString) noexcept
 {
-    StaticString<CharCount> NewString;
+    FStaticString<CharCount> NewString;
     NewString.Resize(WideString.Length());
 
     wcstombs(NewString.GetData(), WideString.GetCString(), WideString.Length());

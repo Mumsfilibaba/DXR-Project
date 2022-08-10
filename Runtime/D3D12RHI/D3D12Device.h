@@ -106,7 +106,7 @@ public:
     FD3D12AdapterInitializer GetInitializer()   const { return Initializer; }
     uint32                   GetAdapterIndex()  const { return AdapterIndex; }
     
-    FString                  GetDescription() const { return WideToChar(FFWStringView(AdapterDesc.Description)); }
+    FString                  GetDescription() const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
 
     bool                     IsDebugLayerEnabled() const { return Initializer.bEnableDebugLayer; }
     bool                     SupportsTearing()     const { return bAllowTearing; }
