@@ -9,19 +9,9 @@
 class FMacThread final 
     : public FGenericThread
 {
-private:
-    FMacThread(const TFunction<void()>& InFunction);
-    FMacThread(const TFunction<void()>& InFunction, const FString& InName);
-    ~FMacThread() = default;
-
 public:
-	static FMacThread* CreateMacThread(const TFunction<void()>& InFunction) { return new FMacThread(InFunction); }
-	static FMacThread* CreateMacThread(const TFunction<void()>& InFunction, const FString& InName) { return new FMacThread(InFunction, InName); }
-	
-public:
-	
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericThread Interface
+    FMacThread(const FThreadFunction& InFunction);
+    FMacThread(const FThreadFunction& InFunction, const FString& InName);
 
     virtual int32 WaitForCompletion(uint64 TimeoutInMs) override final;
 

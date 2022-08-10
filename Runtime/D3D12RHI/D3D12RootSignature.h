@@ -96,7 +96,7 @@ public:
 
     FORCEINLINE void SetName(const FString& Name)
     {
-        FWString WideName = CharToWide(Name);
+        FStringWide WideName = CharToWide(Name);
         RootSignature->SetName(WideName.GetCString());
     }
 

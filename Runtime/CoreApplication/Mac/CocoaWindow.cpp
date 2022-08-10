@@ -5,9 +5,9 @@
 #include "Core/Mac/Mac.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaWindow
+// FCocoaWindow
 
-@implementation CCocoaWindow
+@implementation FCocoaWindow
 
 - (instancetype) initWithContentRect:(NSRect)ContentRect StyleMask:(NSWindowStyleMask)StyleMask Backing:(NSBackingStoreType)BackingStoreType Defer:(BOOL)Flag
 {
@@ -73,7 +73,7 @@
         
         if (MacApplication)
         {
-            TSharedRef<CMacWindow> Window = MacApplication->GetWindowFromNSWindow(self);
+            TSharedRef<FMacWindow> Window = MacApplication->GetWindowFromNSWindow(self);
             MacApplication->CloseWindow(Window);
         }
     }

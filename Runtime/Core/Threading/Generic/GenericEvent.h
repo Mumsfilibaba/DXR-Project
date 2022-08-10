@@ -10,22 +10,14 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-typedef TSharedRef<class FGenericEvent> FGenericEventRef;
+typedef TSharedRef<struct FGenericEvent> FGenericEventRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericEvent
 
-class CORE_API FGenericEvent
+struct CORE_API FGenericEvent
     : public FRefCounted
 {
-    friend struct FGenericThreadMisc;
-
-protected:
-    FGenericEvent()  = default;
-    ~FGenericEvent() = default;
-
-public:
-    
     /** @brief: Trigger the event */
     virtual void Trigger() { }
 

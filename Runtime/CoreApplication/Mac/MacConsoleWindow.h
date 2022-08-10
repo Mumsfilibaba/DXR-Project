@@ -8,26 +8,16 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacConsoleWindow
 
-class COREAPPLICATION_API FMacConsoleWindow final : public FGenericConsoleWindow
+class COREAPPLICATION_API FMacConsoleWindow final 
+    : public FGenericConsoleWindow
 {
-private:
-
+public:
     FMacConsoleWindow();
     ~FMacConsoleWindow();
-
-public:
-
-	static FMacConsoleWindow* CreateMacConsole();
-	
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericConsoleWindow Interface
 
     virtual void Show(bool bShow) override final;
 
     virtual void Print(const FString& Message) override final;
-    
     virtual void PrintLine(const FString& Message) override final;
 
     virtual void Clear() override final;
@@ -39,7 +29,6 @@ public:
     virtual bool IsVisible() const override final;
 
 public:
-    
     int32 GetLineCount() const;
     
     void OnWindowDidClose();
@@ -54,7 +43,7 @@ private:
 	
 	void AppendStringAndScroll(NSString* String);
 	
-    CCocoaConsoleWindow*     WindowHandle;
+    FCocoaConsoleWindow*     WindowHandle;
     mutable FCriticalSection WindowCS;
 
     NSTextView*              TextView;

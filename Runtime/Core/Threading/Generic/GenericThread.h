@@ -12,6 +12,7 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
+typedef TFunction<void()>                FThreadFunction;
 typedef TSharedRef<class FGenericThread> FGenericThreadRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -20,16 +21,10 @@ typedef TSharedRef<class FGenericThread> FGenericThreadRef;
 class CORE_API FGenericThread 
     : public FRefCounted
 {
-    friend struct FGenericThreadMisc;
-
-protected:
-    FGenericThread(const TFunction<void()>& InFunction)
+public:
+    FGenericThread(const FThreadFunction& InFunction)
         : Function(InFunction)
     { }
-
-    ~FGenericThread() = default;
-
-public:
 
     /** @brief: Start the thread and start executing the entrypoint */
     virtual bool Start() { return true; }
@@ -38,7 +33,7 @@ public:
     virtual int32 WaitForCompletion(uint64 TimeoutInMs) { return 0; }
 
     /** @return: Waits for the thread and returns the return-value from the thread  */
-    virtual int32 WaitForCompletion(FTimespan Timeout) { return WaitForCompletion(static_cast<uint64>(Timeout.AsMilliseconds())); }
+    virtual int32 WaitForCompletion(FTimespan Timeout) { return WaitForCompletion(uint64(Timeout.AsMilliseconds())); }
     
     /** @return: Returns the native platform handle */
     virtual void* GetPlatformHandle() { return nullptr; }
@@ -46,10 +41,10 @@ public:
     virtual FString GetName() const { return ""; }
     virtual void    SetName(const FString& InName) { }
 
-    TFunction<void()> GetFunction() const { return Function; }
+    FThreadFunction GetFunction() const { return Function; }
 
 protected:
-    TFunction<void()> Function;
+    FThreadFunction Function;
 };
 
 #if defined(PLATFORM_COMPILER_MSVC)

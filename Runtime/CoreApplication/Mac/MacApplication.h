@@ -10,16 +10,16 @@
 #include <AppKit/AppKit.h>
 
 @class FCocoaAppDelegate;
-@class CCocoaWindow;
+@class FCocoaWindow;
 
-class CMacWindow;
+class FMacWindow;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SDeferredMacEvent
+// FDeferredMacEvent
 
-struct SDeferredMacEvent
+struct FDeferredMacEvent
 {
-    FORCEINLINE SDeferredMacEvent()
+    FORCEINLINE FDeferredMacEvent()
         : NotificationName(nil)
         , Event(nil)
         , Window(nil)
@@ -28,7 +28,7 @@ struct SDeferredMacEvent
 		, Character(uint32(-1))
     { }
 
-    FORCEINLINE SDeferredMacEvent(const SDeferredMacEvent& Other)
+    FORCEINLINE FDeferredMacEvent(const FDeferredMacEvent& Other)
         : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nil)
         , Event(Other.Event ? [Other.Event retain] : nil)
         , Window(Other.Window ? [Other.Window retain] : nil)
@@ -37,7 +37,7 @@ struct SDeferredMacEvent
 		, Character(Other.Character)
     { }
 
-    FORCEINLINE ~SDeferredMacEvent()
+    FORCEINLINE ~FDeferredMacEvent()
     {
         @autoreleasepool
         {
@@ -50,7 +50,7 @@ struct SDeferredMacEvent
 	NSNotificationName NotificationName;
     NSEvent*           Event;
 	
-	CCocoaWindow*      Window;
+	FCocoaWindow*      Window;
 	CGSize             Size;
 	CGPoint            Position;
 
@@ -62,17 +62,13 @@ struct SDeferredMacEvent
 
 class FMacApplication final : public FGenericApplication
 {
-private:
-
     FMacApplication();
     ~FMacApplication();
 
 public:
-
 	static FMacApplication* CreateMacApplication();
 
 public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericApplication Interface
 
@@ -83,27 +79,25 @@ public:
     virtual void SetActiveWindow(const FGenericWindowRef& Window) override final;
 
     virtual FGenericWindowRef GetWindowUnderCursor() const override final;
-
-    virtual FGenericWindowRef GetActiveWindow() const override final;
+    virtual FGenericWindowRef GetActiveWindow()      const override final;
 
 public:
+    TSharedRef<FMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
     
-    TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
-    
-    void CloseWindow(const TSharedRef<CMacWindow>& Window);
+    void CloseWindow(const TSharedRef<FMacWindow>& Window);
     
     void DeferEvent(NSObject* EventOrNotificationObject);
 
 private:
-    void ProcessDeferredEvent(const SDeferredMacEvent& Notification);
+    void ProcessDeferredEvent(const FDeferredMacEvent& Notification);
 
-    TArray<TSharedRef<CMacWindow>> Windows;
+    TArray<TSharedRef<FMacWindow>> Windows;
     mutable FCriticalSection       WindowsCS;
     
-    TArray<TSharedRef<CMacWindow>> ClosedWindows;
+    TArray<TSharedRef<FMacWindow>> ClosedWindows;
     FCriticalSection               ClosedWindowsCS;
 
-    TArray<SDeferredMacEvent>      DeferredEvents;
+    TArray<FDeferredMacEvent>      DeferredEvents;
     FCriticalSection               DeferredEventsCS;
 };
 

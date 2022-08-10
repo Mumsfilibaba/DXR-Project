@@ -8,14 +8,11 @@
 class COREAPPLICATION_API FGenericCursor 
     : public ICursor
 {
-protected:
+public:
     FGenericCursor()
         : bIsVisible(true)
     { }
 
-    ~FGenericCursor() = default;
-
-public:
     virtual bool IsVisible() const override final { return bIsVisible; }
 
 protected:

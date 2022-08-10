@@ -7,9 +7,6 @@
 struct FMacAtomic final 
     : public FGenericAtomic
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericAtomic Interface
-
     static FORCEINLINE int8 Read(volatile const int8* Source)
     {
         int8 Result;

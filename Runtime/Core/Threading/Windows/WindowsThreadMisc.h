@@ -12,10 +12,9 @@
 struct FWindowsThreadMisc 
     : public FGenericThreadMisc
 {
-    static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
-    static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InString);
-
-    static FGenericEvent* CreateEvent(bool bManualReset);
+    static FGenericThread* CreateThread(const FThreadFunction& InFunction);
+    static FGenericThread* CreateNamedThread(const FThreadFunction& InFunction, const FString& InString);
+    static FGenericEvent*  CreateEvent(bool bManualReset);
 
     static FORCEINLINE uint32 GetNumProcessors()
     {

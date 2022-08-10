@@ -9,9 +9,6 @@
 struct FMacPlatformMisc final 
     : public FGenericPlatformMisc
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericPlatformMisc Interface
-
     static void OutputDebugString(const FString& Message);
 
     static FORCEINLINE bool IsDebuggerPresent()

@@ -60,7 +60,7 @@ FWindowsApplication* FWindowsApplication::CreateWindowsApplication()
 }
 
 FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle)
-    : FGenericApplication(TSharedPtr<ICursor>(FWindowsCursor::CreateWindowsCursor()))
+    : FGenericApplication(TSharedPtr<ICursor>(dbg_new FWindowsCursor()))
     , Windows()
     , Messages()
     , MessagesCS()
@@ -163,7 +163,7 @@ bool FWindowsApplication::UnregisterRawInputDevices()
 
 FGenericWindowRef FWindowsApplication::CreateWindow()
 {
-    FWindowsWindowRef NewWindow = FWindowsWindow::CreateWindowsWindow(this);
+    FWindowsWindowRef NewWindow = dbg_new FWindowsWindow(this);
  
     {
         TScopedLock Lock(WindowsCS);

@@ -511,28 +511,28 @@ void TString_Test( const char* Args )
             std::cout << Index << '=' << TestString[Index] << std::endl;
         }
 
-        FWString WideCompareString = CharToWide( CompareString0 );
+        FStringWide WideCompareString = CharToWide( CompareString0 );
         PrintWideString( WideCompareString );
     }
 
     {
-        std::cout << std::endl << "----Testing FWString----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing FStringWide----" << std::endl << std::endl;
 
         FFWStringView FStringView( L"Hello FStringView" );
 
         const wchar_t* SomeWideStringInsteadOfArgs = L"/Users/SomeFolder/Blabla/BlaBla";
 
-        FWString String0;
+        FStringWide String0;
         PrintWideString( String0 );
-        FWString String1 = L"Hello String";
+        FStringWide String1 = L"Hello String";
         PrintWideString( String1 );
-        FWString String2 = FWString( SomeWideStringInsteadOfArgs, 7 );
+        FStringWide String2 = FStringWide( SomeWideStringInsteadOfArgs, 7 );
         PrintWideString( String2 );
-        FWString String3 = FWString( FStringView );
+        FStringWide String3 = FStringWide( FStringView );
         PrintWideString( String3 );
-        FWString String4 = String1;
+        FStringWide String4 = String1;
         PrintWideString( String4 );
-        FWString String5 = Move( String2 );
+        FStringWide String5 = Move( String2 );
         PrintWideString( String5 );
 
         String0.Append( L"Appended String" );
@@ -542,7 +542,7 @@ void TString_Test( const char* Args )
         String5.Append( String0 );
         PrintWideString( String5 );
 
-        FWString String6;
+        FStringWide String6;
         String6.Format( L"Formatted String=%.4f", 0.004f );
         PrintWideString( String6 );
 
@@ -552,10 +552,10 @@ void TString_Test( const char* Args )
         String6.AppendFormat( L"Formatted String=%.4f", 0.0077f );
         PrintWideString( String6 );
 
-        FWString LowerString6 = String6.ToLower();
+        FStringWide LowerString6 = String6.ToLower();
         PrintWideString( LowerString6 );
 
-        FWString UpperString6 = String6.ToUpper();
+        FStringWide UpperString6 = String6.ToUpper();
         PrintWideString( UpperString6 );
 
         String6.Clear();
@@ -564,7 +564,7 @@ void TString_Test( const char* Args )
         String6.Append( L"    Trimmable String    " );
         PrintWideString( String6 );
 
-        FWString TrimmedString6 = String6.Trim();
+        FStringWide TrimmedString6 = String6.Trim();
         TrimmedString6.Append( L'*' );
         PrintWideString( TrimmedString6 );
 
@@ -574,10 +574,10 @@ void TString_Test( const char* Args )
         String6.Append( L"123456789" );
         PrintWideString( String6 );
 
-        FWString ReversedString6 = String6.Reverse();
+        FStringWide ReversedString6 = String6.Reverse();
         PrintWideString( ReversedString6 );
 
-        FWString SearchString = L"0123MeSearch89Me89";
+        FStringWide SearchString = L"0123MeSearch89Me89";
         PrintWideString( SearchString );
 
         std::cout << "Position=" << SearchString.Find( L"Me" ) << std::endl;
@@ -595,10 +595,10 @@ void TString_Test( const char* Args )
 
         std::cout << "Position=" << SearchString.ReverseFindOneNotOf( L"0123456789" ) << std::endl;
 
-        FWString CompareString0 = L"COMPARE";
+        FStringWide CompareString0 = L"COMPARE";
         PrintWideString( CompareString0 );
 
-        FWString CompareString1 = L"compare";
+        FStringWide CompareString1 = L"compare";
         PrintWideString( CompareString1 );
 
         std::cout << "Compare=" << CompareString0.Compare( CompareString1 ) << std::endl;
@@ -621,7 +621,7 @@ void TString_Test( const char* Args )
         CompareString0.Replace( 'X', 0 );
         PrintWideString( CompareString0 );
 
-        FWString CombinedString = CompareString0 + L'5';
+        FStringWide CombinedString = CompareString0 + L'5';
         PrintWideString( CombinedString );
 
         CombinedString = L'5' + CombinedString;
@@ -636,7 +636,7 @@ void TString_Test( const char* Args )
         CombinedString = CombinedString + CombinedString;
         PrintWideString( CombinedString );
 
-        FWString TestString = L"Test";
+        FStringWide TestString = L"Test";
         PrintWideString( TestString );
 
         std::cout << "operator== : " << std::boolalpha << (L"Test" == TestString) << std::endl;

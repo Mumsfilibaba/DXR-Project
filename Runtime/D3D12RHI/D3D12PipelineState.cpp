@@ -313,7 +313,7 @@ bool FD3D12ComputePipelineState::Initialize()
 
 struct FD3D12RootSignatureAssociation
 {
-    FD3D12RootSignatureAssociation(ID3D12RootSignature* InRootSignature, const TArray<FWString>& InShaderExportNames)
+    FD3D12RootSignatureAssociation(ID3D12RootSignature* InRootSignature, const TArray<FStringWide>& InShaderExportNames)
         : ExportAssociation()
         , RootSignature(InRootSignature)
         , ShaderExportNames(InShaderExportNames)
@@ -329,7 +329,7 @@ struct FD3D12RootSignatureAssociation
 
     ID3D12RootSignature* RootSignature;
 
-    TArray<FWString> ShaderExportNames;
+    TArray<FStringWide> ShaderExportNames;
     TArray<LPCWSTR> ShaderExportNamesRef;
 };
 
@@ -338,7 +338,7 @@ struct FD3D12RootSignatureAssociation
 
 struct FD3D12HitGroup
 {
-    FD3D12HitGroup(const FWString& InHitGroupName, const FWString& InClosestHit, const FWString& InAnyHit, const FWString& InIntersection)
+    FD3D12HitGroup(const FStringWide& InHitGroupName, const FStringWide& InClosestHit, const FStringWide& InAnyHit, const FStringWide& InIntersection)
         : Desc()
         , HitGroupName(InHitGroupName)
         , ClosestHit(InClosestHit)
@@ -364,10 +364,10 @@ struct FD3D12HitGroup
 
     D3D12_HIT_GROUP_DESC Desc;
 
-    FWString HitGroupName;
-    FWString ClosestHit;
-    FWString AnyHit;
-    FWString Intersection;
+    FStringWide HitGroupName;
+    FStringWide ClosestHit;
+    FStringWide AnyHit;
+    FStringWide Intersection;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -375,7 +375,7 @@ struct FD3D12HitGroup
 
 struct FD3D12Library
 {
-    FD3D12Library(D3D12_SHADER_BYTECODE ByteCode, const TArray<FWString>& InExportNames)
+    FD3D12Library(D3D12_SHADER_BYTECODE ByteCode, const TArray<FStringWide>& InExportNames)
         : ExportNames(InExportNames)
         , ExportDescs(InExportNames.GetSize())
         , Desc()
@@ -393,7 +393,7 @@ struct FD3D12Library
         Desc.NumExports  = ExportDescs.GetSize();
     }
 
-    TArray<FWString>           ExportNames;
+    TArray<FStringWide>           ExportNames;
     TArray<D3D12_EXPORT_DESC> ExportDescs;
     D3D12_DXIL_LIBRARY_DESC   Desc;
 };
@@ -403,17 +403,17 @@ struct FD3D12Library
 
 struct FD3D12RayTracingPipelineStateStream
 {
-    void AddLibrary(D3D12_SHADER_BYTECODE ByteCode, const TArray<FWString>& ExportNames)
+    void AddLibrary(D3D12_SHADER_BYTECODE ByteCode, const TArray<FStringWide>& ExportNames)
     {
         Libraries.Emplace(ByteCode, ExportNames);
     }
 
-    void AddHitGroup(const FWString& HitGroupName, const FWString& ClosestHit, const FWString& AnyHit, const FWString& Intersection)
+    void AddHitGroup(const FStringWide& HitGroupName, const FStringWide& ClosestHit, const FStringWide& AnyHit, const FStringWide& Intersection)
     {
         HitGroups.Emplace(HitGroupName, ClosestHit, AnyHit, Intersection);
     }
 
-    void AddRootSignatureAssociation(ID3D12RootSignature* RootSignature, const TArray<FWString>& ShaderExportNames)
+    void AddRootSignatureAssociation(ID3D12RootSignature* RootSignature, const TArray<FStringWide>& ShaderExportNames)
     {
         RootSignatureAssociations.Emplace(RootSignature, ShaderExportNames);
     }
@@ -488,7 +488,7 @@ struct FD3D12RayTracingPipelineStateStream
     D3D12_RAYTRACING_SHADER_CONFIG         ShaderConfig;
     D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION ShaderConfigAssociation;
 
-    TArray<FWString>                        PayLoadExportNames;
+    TArray<FStringWide>                        PayLoadExportNames;
     TArray<LPCWSTR>                        PayLoadExportNamesRef;
 
     ID3D12RootSignature*                   GlobalRootSignature;
@@ -527,17 +527,17 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
             return false;
         }
 
-        FWString RayGenIdentifier = CharToWide(D3D12RayGen->GetIdentifier());
+        FStringWide RayGenIdentifier = CharToWide(D3D12RayGen->GetIdentifier());
         PipelineStream.AddLibrary(D3D12RayGen->GetByteCode(), { RayGenIdentifier });
         PipelineStream.AddRootSignatureAssociation(RayGenLocalRootSignature->GetD3D12RootSignature(), { RayGenIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(RayGenIdentifier);
     }
 
     // Collect and add all HitGroups
-    FWString HitGroupName;
-    FWString ClosestHitName;
-    FWString AnyHitName;
-    FWString IntersectionName;
+    FStringWide HitGroupName;
+    FStringWide ClosestHitName;
+    FStringWide AnyHitName;
+    FStringWide IntersectionName;
 
     TArray<FRHIRayAnyHitShader*>     AnyHitShaders;
     TArray<FRHIRayClosestHitShader*> ClosestHitShaders;
@@ -596,7 +596,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
             return false;
         }
 
-        FWString AnyHitIdentifier = CharToWide(D3D12AnyHit->GetIdentifier());
+        FStringWide AnyHitIdentifier = CharToWide(D3D12AnyHit->GetIdentifier());
         PipelineStream.AddLibrary(D3D12AnyHit->GetByteCode(), { AnyHitIdentifier });
         PipelineStream.AddRootSignatureAssociation(HitLocalRootSignature->GetD3D12RootSignature(), { AnyHitIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(AnyHitIdentifier);
@@ -619,7 +619,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
             return false;
         }
 
-        FWString ClosestHitIdentifier = CharToWide(D3D12ClosestHit->GetIdentifier());
+        FStringWide ClosestHitIdentifier = CharToWide(D3D12ClosestHit->GetIdentifier());
         PipelineStream.AddLibrary(D3D12ClosestHit->GetByteCode(), { ClosestHitIdentifier });
         PipelineStream.AddRootSignatureAssociation(HitLocalRootSignature->GetD3D12RootSignature(), { ClosestHitIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(ClosestHitIdentifier);
@@ -642,7 +642,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
             return false;
         }
 
-        FWString MissIdentifier = CharToWide(D3D12MissShader->GetIdentifier());
+        FStringWide MissIdentifier = CharToWide(D3D12MissShader->GetIdentifier());
         PipelineStream.AddLibrary(D3D12MissShader->GetByteCode(), { MissIdentifier });
         PipelineStream.AddRootSignatureAssociation(MissLocalRootSignature->GetD3D12RootSignature(), { MissIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(MissIdentifier);
@@ -708,7 +708,7 @@ void* FD3D12RayTracingPipelineState::GetShaderIdentifer(const FString& ExportNam
     const auto MapItem = ShaderIdentifers.find(ExportName);
     if (MapItem == ShaderIdentifers.end())
     {
-        FWString WideExportName = CharToWide(ExportName);
+        FStringWide WideExportName = CharToWide(ExportName);
 
         void* Result = StateObjectProperties->GetShaderIdentifier(WideExportName.GetCString());
         if (!Result)

@@ -40,7 +40,7 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
     {
         SCOPED_AUTORELEASE_POOL();
         
-        CCocoaWindow* WindowHandle = (CCocoaWindow*)(Initializer.WindowHandle);
+        FCocoaWindow* WindowHandle = (FCocoaWindow*)(Initializer.WindowHandle);
         
         NSRect Frame;
         Frame.size.width  = Initializer.Width;

@@ -146,7 +146,7 @@ public:
 
     void SetDebugName(const FString& InName)
     {
-        FWString WideName = CharToWide(InName);
+        FStringWide WideName = CharToWide(InName);
         PipelineState->SetName(WideName.GetCString());
     }
 
@@ -226,7 +226,7 @@ public:
 
     virtual void SetName(const FString& InName) override
     {
-        FWString WideName = CharToWide(InName);
+        FStringWide WideName = CharToWide(InName);
         StateObject->SetName(WideName.GetCString());
     }
 

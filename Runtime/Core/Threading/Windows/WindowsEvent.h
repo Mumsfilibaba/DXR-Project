@@ -9,9 +9,7 @@ typedef TSharedRef<class FWindowsEvent> FWindowsEventRef;
 class CORE_API FWindowsEvent final
     : public FGenericEvent
 {
-    friend struct FWindowsThreadMisc;
-
-private:
+public:
     FWindowsEvent()
         : Event(nullptr)
         , bManualReset(false)
@@ -19,7 +17,6 @@ private:
 
     ~FWindowsEvent();
 
-public:
     bool Create(bool bInManualReset)
     {
         Event = CreateEvent(nullptr, bInManualReset, FALSE, nullptr);

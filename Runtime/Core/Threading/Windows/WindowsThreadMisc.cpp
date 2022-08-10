@@ -5,12 +5,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsThreadMisc
 
-FGenericThread* FWindowsThreadMisc::CreateThread(const TFunction<void()>& InFunction)
+FGenericThread* FWindowsThreadMisc::CreateThread(const FThreadFunction& InFunction)
 {
     return dbg_new FWindowsThread(InFunction);
 }
 
-FGenericThread* FWindowsThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
+FGenericThread* FWindowsThreadMisc::CreateNamedThread(const FThreadFunction& InFunction, const FString& InName)
 {
     return dbg_new FWindowsThread(InFunction, InName);
 }

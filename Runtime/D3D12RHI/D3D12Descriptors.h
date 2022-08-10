@@ -38,7 +38,7 @@ public:
 
     FORCEINLINE void SetName(const FString& Name)
     {
-        FWString WideName = CharToWide(Name);
+        FStringWide WideName = CharToWide(Name);
         Heap->SetName(WideName.GetCString());
     }
 

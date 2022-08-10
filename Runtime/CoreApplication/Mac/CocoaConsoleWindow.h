@@ -8,9 +8,9 @@
 class FMacConsoleWindow;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaConsoleWindow
+// FCocoaConsoleWindow
 
-@interface CCocoaConsoleWindow : NSWindow<NSWindowDelegate>
+@interface FCocoaConsoleWindow : NSWindow<NSWindowDelegate>
 {
 	FMacConsoleWindow* ConsoleWindow;
 }

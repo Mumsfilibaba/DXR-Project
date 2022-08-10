@@ -7,11 +7,6 @@
 struct FMacInterlocked 
     : public FGenericInterlocked
 {
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericInterlocked Interface
-
     static FORCEINLINE int8 InterlockedAdd(volatile int8* Dest, int8 Value)
     {
         return static_cast<int8>(__sync_fetch_and_add(Dest, Value));

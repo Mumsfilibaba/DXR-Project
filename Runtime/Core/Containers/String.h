@@ -2091,7 +2091,7 @@ private:
 // Predefined types
 
 using FString  = TString<char>;
-using FWString = TString<wchar_t>;
+using FStringWide = TString<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Add TString to be a string-type
@@ -2105,9 +2105,9 @@ struct TIsTStringType<TString<CharType>>
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // char and wide conversion functions
 
-inline NODISCARD FWString CharToWide(const FStringView& CharString) noexcept
+inline NODISCARD FStringWide CharToWide(const FStringView& CharString) noexcept
 {
-    FWString NewString;
+    FStringWide NewString;
     NewString.Resize(CharString.Length());
 
     mbstowcs(NewString.GetData(), CharString.GetCString(), CharString.Length());
@@ -2115,9 +2115,9 @@ inline NODISCARD FWString CharToWide(const FStringView& CharString) noexcept
     return NewString;
 }
 
-inline NODISCARD FWString CharToWide(const FString& CharString) noexcept
+inline NODISCARD FStringWide CharToWide(const FString& CharString) noexcept
 {
-    FWString NewString;
+    FStringWide NewString;
     NewString.Resize(CharString.Length());
 
     mbstowcs(NewString.GetData(), CharString.GetCString(), CharString.Length());
@@ -2135,7 +2135,7 @@ inline NODISCARD FString WideToChar(const FFWStringView& WideString) noexcept
     return NewString;
 }
 
-inline NODISCARD FString WideToChar(const FWString& WideString) noexcept
+inline NODISCARD FString WideToChar(const FStringWide& WideString) noexcept
 {
     FString NewString;
     NewString.Resize(WideString.Length());
@@ -2230,42 +2230,42 @@ inline NODISCARD FString ToString<bool>(bool bElement)
 }
 
 template<typename T>
-typename NODISCARD TEnableIf<TIsFloatingPoint<T>::Value, FWString>::Type ToWideString(T Element)
+typename NODISCARD TEnableIf<TIsFloatingPoint<T>::Value, FStringWide>::Type ToWideString(T Element)
 {
-    return FWString::CreateFormatted(L"%f", Element);
+    return FStringWide::CreateFormatted(L"%f", Element);
 }
 
 template<typename T>
-typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, FWString>::Type ToWideString(T Element);
+typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, FStringWide>::Type ToWideString(T Element);
 
 template<>
-inline NODISCARD FWString ToWideString<int32>(int32 Element)
+inline NODISCARD FStringWide ToWideString<int32>(int32 Element)
 {
-    return FWString::CreateFormatted(L"%d", Element);
+    return FStringWide::CreateFormatted(L"%d", Element);
 }
 
 template<>
-inline NODISCARD FWString ToWideString<int64>(int64 Element)
+inline NODISCARD FStringWide ToWideString<int64>(int64 Element)
 {
-    return FWString::CreateFormatted(L"%lld", Element);
+    return FStringWide::CreateFormatted(L"%lld", Element);
 }
 
 template<>
-inline NODISCARD FWString ToWideString<uint32>(uint32 Element)
+inline NODISCARD FStringWide ToWideString<uint32>(uint32 Element)
 {
-    return FWString::CreateFormatted(L"%u", Element);
+    return FStringWide::CreateFormatted(L"%u", Element);
 }
 
 template<>
-inline NODISCARD FWString ToWideString<uint64>(uint64 Element)
+inline NODISCARD FStringWide ToWideString<uint64>(uint64 Element)
 {
-    return FWString::CreateFormatted(L"%llu", Element);
+    return FStringWide::CreateFormatted(L"%llu", Element);
 }
 
 template<>
-inline NODISCARD FWString ToWideString<bool>(bool bElement)
+inline NODISCARD FStringWide ToWideString<bool>(bool bElement)
 {
-    return FWString(bElement ? L"true" : L"false");
+    return FStringWide(bElement ? L"true" : L"false");
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

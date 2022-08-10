@@ -20,12 +20,9 @@ typedef TSharedRef<class FWindowsWindow> FWindowsWindowRef;
 class COREAPPLICATION_API FWindowsWindow final 
     : public FGenericWindow
 {
-private:
+public:
     FWindowsWindow(FWindowsApplication* InApplication);
     ~FWindowsWindow();
-
-public:
-    static FWindowsWindow* CreateWindowsWindow(FWindowsApplication* InApplication);
 
     static const char* GetClassName();
 

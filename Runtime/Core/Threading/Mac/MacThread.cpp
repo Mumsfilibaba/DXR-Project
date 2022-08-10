@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacThread
 
-FMacThread::FMacThread(const TFunction<void()>& InFunction)
+FMacThread::FMacThread(const FThreadFunction& InFunction)
     : FGenericThread(InFunction)
     , Name()
     , Thread()
@@ -14,7 +14,7 @@ FMacThread::FMacThread(const TFunction<void()>& InFunction)
     , bIsRunning(false)
 { }
 
-FMacThread::FMacThread(const TFunction<void()>& InFunction, const FString& InName)
+FMacThread::FMacThread(const FThreadFunction& InFunction, const FString& InName)
     : FGenericThread(InFunction)
     , Name(InName)
     , Thread()

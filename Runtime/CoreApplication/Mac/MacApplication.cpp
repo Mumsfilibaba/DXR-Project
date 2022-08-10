@@ -23,7 +23,7 @@ FMacApplication* FMacApplication::CreateMacApplication()
 }
 
 FMacApplication::FMacApplication()
-    : FGenericApplication(TSharedPtr<ICursor>(FMacCursor::CreateMacCursor()))
+    : FGenericApplication(TSharedPtr<ICursor>(dbg_new FMacCursor()))
     , Windows()
     , WindowsCS()
     , DeferredEvents()
@@ -94,7 +94,7 @@ FMacApplication::~FMacApplication()
 
 FGenericWindowRef FMacApplication::CreateWindow()
 {
-    TSharedRef<CMacWindow> NewWindow = CMacWindow::CreateMacWindow(this);
+    TSharedRef<FMacWindow> NewWindow = dbg_new FMacWindow(this);
     
     {
         TScopedLock Lock(WindowsCS);
@@ -110,7 +110,7 @@ void FMacApplication::Tick(float)
     
     FPlatformApplicationMisc::PumpMessages(true);
 	
-	TArray<SDeferredMacEvent> ProcessableEvents;
+	TArray<FDeferredMacEvent> ProcessableEvents;
     if (!DeferredEvents.IsEmpty())
 	{
 		TScopedLock Lock(DeferredEventsCS);
@@ -119,7 +119,7 @@ void FMacApplication::Tick(float)
 		DeferredEvents.Clear();
 	}
 	
-	for (const SDeferredMacEvent& CurrentEvent : ProcessableEvents)
+	for (const FDeferredMacEvent& CurrentEvent : ProcessableEvents)
 	{
 		ProcessDeferredEvent(CurrentEvent);
 	}
@@ -128,7 +128,7 @@ void FMacApplication::Tick(float)
     {
         TScopedLock Lock(ClosedWindowsCS);
         
-        for (const TSharedRef<CMacWindow>& Window : ClosedWindows)
+        for (const TSharedRef<FMacWindow>& Window : ClosedWindows)
         {
             MessageListener->HandleWindowClosed(Window);
         }
@@ -139,10 +139,10 @@ void FMacApplication::Tick(float)
 
 void FMacApplication::SetActiveWindow(const FGenericWindowRef& Window)
 {
-	__block TSharedRef<CMacWindow> MacWindow = StaticCastSharedRef<CMacWindow>(Window);
+	__block TSharedRef<FMacWindow> MacWindow = StaticCastSharedRef<FMacWindow>(Window);
     MakeMainThreadCall(^
     {
-		CCocoaWindow* CocoaWindow = MacWindow->GetWindowHandle();
+		FCocoaWindow* CocoaWindow = MacWindow->GetWindowHandle();
         [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
     }, false);
 }
@@ -165,16 +165,16 @@ FGenericWindowRef FMacApplication::GetWindowUnderCursor() const
     }
 }
 
-TSharedRef<CMacWindow> FMacApplication::GetWindowFromNSWindow(NSWindow* Window) const
+TSharedRef<FMacWindow> FMacApplication::GetWindowFromNSWindow(NSWindow* Window) const
 {
-    if (Window && [Window isKindOfClass:[CCocoaWindow class]])
+    if (Window && [Window isKindOfClass:[FCocoaWindow class]])
     {
         TScopedLock Lock(WindowsCS);
 
-        CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window);
-        for (const TSharedRef<CMacWindow>& MacWindow : Windows)
+        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Window);
+        for (const TSharedRef<FMacWindow>& MacWindow : Windows)
         {
-			if (CocoaWindow == reinterpret_cast<CCocoaWindow*>(MacWindow->GetPlatformHandle()))
+			if (CocoaWindow == reinterpret_cast<FCocoaWindow*>(MacWindow->GetPlatformHandle()))
             {
                 return MacWindow;
             }
@@ -184,7 +184,7 @@ TSharedRef<CMacWindow> FMacApplication::GetWindowFromNSWindow(NSWindow* Window) 
     return nullptr;
 }
 
-void FMacApplication::CloseWindow(const TSharedRef<CMacWindow>& Window)
+void FMacApplication::CloseWindow(const TSharedRef<FMacWindow>& Window)
 {
     {
         TScopedLock Lock(ClosedWindowsCS);
@@ -203,7 +203,7 @@ void FMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
     
 	if (EventOrNotificationObject)
 	{
-		SDeferredMacEvent NewDeferredEvent;
+		FDeferredMacEvent NewDeferredEvent;
 		
 		if ([EventOrNotificationObject isKindOfClass:[NSEvent class]])
 		{
@@ -211,9 +211,9 @@ void FMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 			NewDeferredEvent.Event  = [Event retain];
 			
 			NSWindow* Window = Event.window;
-			if ([Window isKindOfClass: [CCocoaWindow class]])
+			if ([Window isKindOfClass: [FCocoaWindow class]])
 			{
-				CCocoaWindow* EventWindow = reinterpret_cast<CCocoaWindow*>(Window);
+				FCocoaWindow* EventWindow = reinterpret_cast<FCocoaWindow*>(Window);
 				NewDeferredEvent.Window   = [EventWindow retain];
 			}
 		}
@@ -223,9 +223,9 @@ void FMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 			NewDeferredEvent.NotificationName = [Notification.name retain];
 			
 			NSObject* NotificationObject = Notification.object;
-			if ([NotificationObject isKindOfClass: [CCocoaWindow class]])
+			if ([NotificationObject isKindOfClass: [FCocoaWindow class]])
 			{
-				CCocoaWindow* EventWindow = reinterpret_cast<CCocoaWindow*>(NotificationObject);
+				FCocoaWindow* EventWindow = reinterpret_cast<FCocoaWindow*>(NotificationObject);
 				NewDeferredEvent.Window   = [EventWindow retain];
 				
 				const NSRect ContentRect  = EventWindow.contentView.frame;
@@ -255,11 +255,11 @@ void FMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 	}
 }
 
-void FMacApplication::ProcessDeferredEvent(const SDeferredMacEvent& Event)
+void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
 {
     SCOPED_AUTORELEASE_POOL();
     
-    TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(Event.Window);
+    TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(Event.Window);
 	
 	if (Event.NotificationName)
 	{
@@ -361,7 +361,7 @@ void FMacApplication::ProcessDeferredEvent(const SDeferredMacEvent& Event)
 				
 			case NSEventTypeMouseEntered:
 			{
-				TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(CurrentEvent.window);
+				TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(CurrentEvent.window);
 				if (Window)
 				{
 					MessageListener->HandleWindowMouseEntered(Window);
@@ -372,7 +372,7 @@ void FMacApplication::ProcessDeferredEvent(const SDeferredMacEvent& Event)
 				
 			case NSEventTypeMouseExited:
 			{
-				TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(CurrentEvent.window);
+				TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(CurrentEvent.window);
 				if (Window)
 				{
 					MessageListener->HandleWindowMouseLeft(Window);

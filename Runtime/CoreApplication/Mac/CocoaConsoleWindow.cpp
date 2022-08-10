@@ -4,9 +4,9 @@
 #include "Core/Mac/Mac.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaConsoleWindow
+// FCocoaConsoleWindow
 
-@implementation CCocoaConsoleWindow
+@implementation FCocoaConsoleWindow
 
 - (instancetype) init:(FMacConsoleWindow*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag
 {

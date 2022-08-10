@@ -6,12 +6,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacThreadMisc
 
-FGenericThread* FMacThreadMisc::CreateThread(const TFunction<void()>& InFunction)
+FGenericThread* FMacThreadMisc::CreateThread(const FThreadFunction& InFunction)
 {
-    return FMacThread::CreateMacThread(InFunction);
+    return new FMacThread(InFunction);
 }
 
-FGenericThread* FMacThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
+FGenericThread* FMacThreadMisc::CreateNamedThread(const FThreadFunction& InFunction, const FString& InName)
 {
-    return FMacThread::CreateMacThread(InFunction, InName);
+    return new FMacThread(InFunction, InName);
 }

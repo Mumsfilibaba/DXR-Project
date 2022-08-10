@@ -101,10 +101,6 @@ struct FWindowShape
 class FGenericWindow 
     : public FRefCounted
 {
-protected:
-    FGenericWindow()  = default;
-    ~FGenericWindow() = default;
-
 public:
     virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle Style) { return true; }
 

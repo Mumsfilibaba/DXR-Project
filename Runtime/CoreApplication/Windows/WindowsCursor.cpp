@@ -7,11 +7,6 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsCursor
 
-FWindowsCursor* FWindowsCursor::CreateWindowsCursor()
-{
-    return dbg_new FWindowsCursor();
-}
-
 void FWindowsCursor::SetCursor(ECursor Cursor)
 {
     LPSTR CursorName = NULL;

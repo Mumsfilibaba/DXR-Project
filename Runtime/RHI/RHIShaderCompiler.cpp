@@ -211,7 +211,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     OutByteCode.Clear();
 
     // Use the asset-folder as base for the shader-files
-    FWString WideFilePath   = CharToWide(AssetPath + '/' + Filename);
+    FStringWide WideFilePath   = CharToWide(AssetPath + '/' + Filename);
 
     TComPtr<IDxcCompiler> Compiler;
     HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
@@ -267,7 +267,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     const FString ArgumentsString = CreateArgString(CompileArgs.CreateView());
     
     // Convert defines
-    TArray<FWString>   StrBuff;
+    TArray<FStringWide>   StrBuff;
     TArray<DxcDefine> DxcDefines;
     
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
@@ -278,8 +278,8 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
 
         for (const FShaderDefine& Define : Defines)
         {
-            const FWString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
-            const FWString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
+            const FStringWide& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
+            const FStringWide& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
             DxcDefines.Push({ WideDefine.GetCString(), WideValue.GetCString() });
         }
     }
@@ -293,7 +293,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     WCHAR TargetProfile[BufferLength];
     FCStringWide::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
-    const FWString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+    const FStringWide WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
     TComPtr<IDxcOperationResult> Result;
     hResult = Compiler->Compile( SourceBlob.Get()
@@ -428,7 +428,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     const FString ArgumentsString = CreateArgString(CompileArgs.CreateView());
 
     // Convert defines
-    TArray<FWString>   StrBuff;
+    TArray<FStringWide>   StrBuff;
     TArray<DxcDefine> DxcDefines;
 
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
@@ -439,8 +439,8 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
 
         for (const FShaderDefine& Define : Defines)
         {
-            const FWString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
-            const FWString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
+            const FStringWide& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
+            const FStringWide& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
             DxcDefines.Push({ WideDefine.GetCString(), WideValue.GetCString() });
         }
     }
@@ -455,7 +455,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     FCStringWide::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     // Use the asset-folder as base for the shader-files
-    const FWString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+    const FStringWide WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
     TComPtr<IDxcBlob>            SourceBlob = dbg_new CShaderBlob(ShaderSource.GetData(), ShaderSource.SizeInBytes());
     TComPtr<IDxcOperationResult> Result;
@@ -625,7 +625,7 @@ bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const 
 
 FString FRHIShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
 {
-    FWString WArgumentsString;
+    FStringWide WArgumentsString;
     for (LPCWSTR Arg : Args)
     {
         WArgumentsString += Arg + ' ';

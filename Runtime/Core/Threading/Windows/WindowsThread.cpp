@@ -5,14 +5,14 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsThread
 
-FWindowsThread::FWindowsThread(const TFunction<void()>& InFunction)
+FWindowsThread::FWindowsThread(const FThreadFunction& InFunction)
     : FGenericThread(InFunction)
     , Thread(0)
     , hThreadID(0)
     , Name()
 { }
 
-FWindowsThread::FWindowsThread(const TFunction<void()>& InFunction, const FString& InName)
+FWindowsThread::FWindowsThread(const FThreadFunction& InFunction, const FString& InName)
     : FGenericThread(InFunction)
     , Thread(0)
     , hThreadID(0)
@@ -29,7 +29,14 @@ FWindowsThread::~FWindowsThread()
 
 bool FWindowsThread::Start()
 {
-    Thread = CreateThread(nullptr, 0, FWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), 0, &hThreadID);
+    Thread = CreateThread(
+        nullptr, 
+        0, 
+        FWindowsThread::ThreadRoutine, 
+        reinterpret_cast<void*>(this), 
+        0,
+        &hThreadID);
+
     if (!Thread)
     {
         LOG_ERROR("[FWindowsThread] Failed to create thread");
@@ -52,7 +59,7 @@ int32 FWindowsThread::WaitForCompletion(uint64 TimeoutInMs)
 
 void FWindowsThread::SetName(const FString& InName)
 {
-    FWString WideName = CharToWide(InName);
+    FStringWide WideName = CharToWide(InName);
     SetThreadDescription(Thread, WideName.GetCString());
     Name = InName;
 }
@@ -69,7 +76,7 @@ DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
     {
         if (!CurrentThread->Name.IsEmpty())
         {
-            FWString WideName = CharToWide(CurrentThread->Name);
+            FStringWide WideName = CharToWide(CurrentThread->Name);
             SetThreadDescription(CurrentThread->Thread, WideName.GetCString());
         }
 

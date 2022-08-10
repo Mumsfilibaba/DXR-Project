@@ -12,9 +12,6 @@ class FMacConditionVariable final
 public:
     typedef pthread_cond_t* PlatformHandle;
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericConditionVariable Interface
-
     FORCEINLINE FMacConditionVariable()
         : ConditionVariable()
     {

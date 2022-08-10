@@ -11,11 +11,6 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacConsoleWindow
 
-FMacConsoleWindow* FMacConsoleWindow::CreateMacConsole()
-{
-	return dbg_new FMacConsoleWindow();
-}
-
 FMacConsoleWindow::FMacConsoleWindow()
     : WindowHandle(nullptr)
 	, TextView(nullptr)
@@ -44,7 +39,7 @@ void FMacConsoleWindow::CreateConsole()
             
             NSRect ContentRect = NSMakeRect(0.0f, 0.0f, Width, Height);
             
-            WindowHandle = [[CCocoaConsoleWindow alloc] init:this ContentRect:ContentRect StyleMask:StyleMask Backing:NSBackingStoreBuffered Defer:NO];
+            WindowHandle = [[FCocoaConsoleWindow alloc] init:this ContentRect:ContentRect StyleMask:StyleMask Backing:NSBackingStoreBuffered Defer:NO];
             SetColor(EConsoleColor::White);
             
             NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];

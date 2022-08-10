@@ -9,11 +9,6 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsWindow
 
-FWindowsWindow* FWindowsWindow::CreateWindowsWindow(FWindowsApplication* InApplication)
-{
-    return dbg_new FWindowsWindow(InApplication);
-}
-
 const char* FWindowsWindow::GetClassName()
 {
     return "WindowClass";

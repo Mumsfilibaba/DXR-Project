@@ -13,11 +13,8 @@
 struct FMacThreadMisc 
     : public FGenericThreadMisc
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericThreadMisc Interface
-
-    static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
-    static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InString);
+    static FGenericThread* CreateThread(const FThreadFunction& InFunction);
+    static FGenericThread* CreateNamedThread(const FThreadFunction& InFunction, const FString& InString);
 
     static FORCEINLINE bool Initialize() 
     { 

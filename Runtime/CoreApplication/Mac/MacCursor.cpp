@@ -20,11 +20,6 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacCursor
 
-FMacCursor* FMacCursor::CreateMacCursor()
-{
-	return dbg_new FMacCursor();
-}
-
 void FMacCursor::SetCursor(ECursor Cursor)
 {
     NSCursor* SelectedCursor = nullptr;
@@ -81,7 +76,7 @@ void FMacCursor::SetPosition(FGenericWindow* InRelativeWindow, int32 x, int32 y)
     CGPoint NewPosition;
     if (InRelativeWindow)
     {
-		CCocoaWindow* RelativeWindow = reinterpret_cast<CCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
+		FCocoaWindow* RelativeWindow = reinterpret_cast<FCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
         const NSRect ContentRect = RelativeWindow.frame;
         const NSRect LocalRect   = NSMakeRect(x, ContentRect.size.height - y - 1, 0, 0);
         const NSRect GlobalRect  = [RelativeWindow convertRectToScreen:LocalRect];
@@ -105,7 +100,7 @@ void FMacCursor::GetPosition(FGenericWindow* InRelativeWindow, int32& OutX, int3
     NSPoint CursorPosition;
     if (InRelativeWindow)
     {
-        NSWindow* RelativeWindow = reinterpret_cast<CCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
+        NSWindow* RelativeWindow = reinterpret_cast<FCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
         CursorPosition = RelativeWindow.mouseLocationOutsideOfEventStream;
     }
     else

@@ -4,7 +4,7 @@
 class FMacApplication;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaWindow
+// FCocoaWindow
 
-@interface CCocoaWindow : NSWindow<NSWindowDelegate>
+@interface FCocoaWindow : NSWindow<NSWindowDelegate>
 @end

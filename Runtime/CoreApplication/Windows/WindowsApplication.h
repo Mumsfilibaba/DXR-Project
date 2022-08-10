@@ -62,15 +62,13 @@ struct IWindowsMessageListener
 class COREAPPLICATION_API FWindowsApplication final 
     : public FGenericApplication
 {
-private:
-    friend struct TDefaultDelete<FWindowsApplication>;
-
     FWindowsApplication(HINSTANCE InInstance);
-    ~FWindowsApplication();
+    virtual ~FWindowsApplication();
 
 public:
     static FWindowsApplication* CreateWindowsApplication();
 
+public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericApplication Interface
 

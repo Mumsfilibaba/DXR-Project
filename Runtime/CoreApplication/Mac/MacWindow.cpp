@@ -8,20 +8,20 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacWindow
+// FMacWindow
 
-CMacWindow* CMacWindow::CreateMacWindow(FMacApplication* InApplication)
+FMacWindow* FMacWindow::CreateMacWindow(FMacApplication* InApplication)
 {
-	return dbg_new CMacWindow(InApplication);
+	return dbg_new FMacWindow(InApplication);
 }
 
-CMacWindow::CMacWindow(FMacApplication* InApplication)
+FMacWindow::FMacWindow(FMacApplication* InApplication)
     : FGenericWindow()
     , Application(InApplication)
     , WindowHandle(nullptr)
 { }
 
-CMacWindow::~CMacWindow()
+FMacWindow::~FMacWindow()
 {
 	MakeMainThreadCall(^
 	{
@@ -30,7 +30,7 @@ CMacWindow::~CMacWindow()
 	}, true);
 }
 
-bool CMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle InStyle)
+bool FMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle InStyle)
 {
     NSUInteger WindowStyle = 0;
     if (InStyle.Style)
@@ -60,10 +60,10 @@ bool CMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHei
         SCOPED_AUTORELEASE_POOL();
         
         const NSRect WindowRect = NSMakeRect(CGFloat(x), CGFloat(y), CGFloat(InWidth), CGFloat(InHeight));
-        WindowHandle = [[CCocoaWindow alloc] initWithContentRect: WindowRect styleMask: WindowStyle backing: NSBackingStoreBuffered defer: NO];
+        WindowHandle = [[FCocoaWindow alloc] initWithContentRect: WindowRect styleMask: WindowStyle backing: NSBackingStoreBuffered defer: NO];
         if (!WindowHandle)
         {
-            LOG_ERROR("[CMacWindow]: Failed to create NSWindow");
+            LOG_ERROR("[FMacWindow]: Failed to create NSWindow");
             return;
         }
         
@@ -118,7 +118,7 @@ bool CMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHei
     return bResult;
 }
 
-void CMacWindow::Show(bool bMaximized)
+void FMacWindow::Show(bool bMaximized)
 {
 	MakeMainThreadCall(^
 	{
@@ -133,7 +133,7 @@ void CMacWindow::Show(bool bMaximized)
 	}, true);
 }
 
-void CMacWindow::Close()
+void FMacWindow::Close()
 {
 	if (StyleParams.IsClosable())
 	{
@@ -145,7 +145,7 @@ void CMacWindow::Close()
 	}
 }
 
-void CMacWindow::Minimize()
+void FMacWindow::Minimize()
 {
 	if (StyleParams.IsMinimizable())
 	{
@@ -157,7 +157,7 @@ void CMacWindow::Minimize()
 	}
 }
 
-void CMacWindow::Maximize()
+void FMacWindow::Maximize()
 {
 	if (StyleParams.IsMaximizable())
 	{
@@ -175,13 +175,13 @@ void CMacWindow::Maximize()
 	}
 }
 
-bool CMacWindow::IsActiveWindow() const
+bool FMacWindow::IsActiveWindow() const
 {
    NSWindow* KeyWindow = NSApp.keyWindow;
    return (KeyWindow == WindowHandle);
 }
 
-void CMacWindow::Restore()
+void FMacWindow::Restore()
 {
     MakeMainThreadCall(^
     {
@@ -199,7 +199,7 @@ void CMacWindow::Restore()
     }, true);
 }
 
-void CMacWindow::ToggleFullscreen()
+void FMacWindow::ToggleFullscreen()
 {
 	if (StyleParams.IsResizeable())
 	{
@@ -210,7 +210,7 @@ void CMacWindow::ToggleFullscreen()
 	}
 }
 
-void CMacWindow::SetTitle(const FString& InTitle)
+void FMacWindow::SetTitle(const FString& InTitle)
 {
 
     if (StyleParams.IsTitled())
@@ -225,7 +225,7 @@ void CMacWindow::SetTitle(const FString& InTitle)
 	}
 }
 
-void CMacWindow::GetTitle(FString& OutTitle)
+void FMacWindow::GetTitle(FString& OutTitle)
 {
     if (StyleParams.IsTitled())
     {
@@ -236,7 +236,7 @@ void CMacWindow::GetTitle(FString& OutTitle)
     }
 }
 
-void CMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
+void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
 	SCOPED_AUTORELEASE_POOL();
 	
@@ -260,7 +260,7 @@ void CMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 	}, true);
 }
 
-void CMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
+void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 {
 	SCOPED_AUTORELEASE_POOL();
 
@@ -278,7 +278,7 @@ void CMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 	OutWindowShape.Position.y = Frame.origin.y;
 }
 
-uint32 CMacWindow::GetWidth() const
+uint32 FMacWindow::GetWidth() const
 {
 	SCOPED_AUTORELEASE_POOL();
 
@@ -291,7 +291,7 @@ uint32 CMacWindow::GetWidth() const
 	return uint32(ContentRect.size.width);
 }
 
-uint32 CMacWindow::GetHeight() const
+uint32 FMacWindow::GetHeight() const
 {
 	SCOPED_AUTORELEASE_POOL();
 
@@ -304,14 +304,14 @@ uint32 CMacWindow::GetHeight() const
 	return uint32(ContentRect.size.height);
 }
 
-void CMacWindow::SetPlatformHandle(void* InPlatformHandle)
+void FMacWindow::SetPlatformHandle(void* InPlatformHandle)
 {
 	if (InPlatformHandle)
 	{
 		NSObject* Object = reinterpret_cast<NSObject*>(InPlatformHandle);
 
 		// Make sure that the handle sent in is of correct type
-		CCocoaWindow* NewWindow = NSClassCast<CCocoaWindow>(Object);
+		FCocoaWindow* NewWindow = NSClassCast<FCocoaWindow>(Object);
 		if (NewWindow)
 		{
 			WindowHandle = NewWindow;

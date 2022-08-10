@@ -191,8 +191,8 @@ bool FD3D12ShaderCompiler::CompileFromFile(
 {
     Code.Clear();
 
-    FWString WideFilePath = CharToWide(FilePath);
-    FWString WideEntrypoint = CharToWide(EntryPoint);
+    FStringWide WideFilePath = CharToWide(FilePath);
+    FStringWide WideEntrypoint = CharToWide(EntryPoint);
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
     HRESULT Result = DxLibrary->CreateBlobFromFile(WideFilePath.GetCString(), nullptr, &SourceBlob);
@@ -214,7 +214,7 @@ bool FD3D12ShaderCompiler::CompileShader(
     EShaderModel ShaderModel,
     TArray<uint8>& Code)
 {
-    FWString WideEntrypoint = CharToWide(EntryPoint);
+    FStringWide WideEntrypoint = CharToWide(EntryPoint);
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
     HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(ShaderSource.GetCString(), sizeof(char) * static_cast<uint32>(ShaderSource.GetSize()), CP_UTF8, &SourceBlob);
@@ -344,7 +344,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
 
     // Convert defines
     TArray<DxcDefine> DxDefines;
-    TArray<FWString> StrBuff;
+    TArray<FStringWide> StrBuff;
     if (Defines)
     {
         StrBuff.Reserve(Defines->GetSize() * 2);
@@ -352,8 +352,8 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
 
         for (const FShaderDefine& Define : *Defines)
         {
-            const FWString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
-            const FWString& WideValue = StrBuff.Emplace(CharToWide(Define.Value));
+            const FStringWide& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
+            const FStringWide& WideValue = StrBuff.Emplace(CharToWide(Define.Value));
             DxDefines.Push({ WideDefine.GetCString(), WideValue.GetCString() });
         }
     }
@@ -408,7 +408,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
         return false;
     }
 
-    FString AsciiFilePath = (FilePath != nullptr) ? WideToChar(FWString(FilePath)) : "";
+    FString AsciiFilePath = (FilePath != nullptr) ? WideToChar(FStringWide(FilePath)) : "";
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
         FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));

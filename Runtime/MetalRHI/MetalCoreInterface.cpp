@@ -427,7 +427,7 @@ FRHITimestampQuery* FMetalCoreInterface::RHICreateTimestampQuery()
 
 FRHIViewport* FMetalCoreInterface::RHICreateViewport(const FRHIViewportInitializer& Initializer)
 {
-    CCocoaWindow* Window = (CCocoaWindow*)Initializer.WindowHandle;
+    FCocoaWindow* Window = (FCocoaWindow*)Initializer.WindowHandle;
     
     __block NSRect Frame;
     __block NSRect ContentRect;

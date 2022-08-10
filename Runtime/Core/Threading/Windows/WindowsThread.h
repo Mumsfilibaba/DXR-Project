@@ -8,14 +8,11 @@
 class CORE_API FWindowsThread final 
     : public FGenericThread
 {
-    friend struct FWindowsThreadMisc;
-
-private:
-    FWindowsThread(const TFunction<void()>& InFunction);
-    FWindowsThread(const TFunction<void()>& InFunction, const FString& InName);
+public:
+    FWindowsThread(const FThreadFunction& InFunction);
+    FWindowsThread(const FThreadFunction& InFunction, const FString& InName);
     ~FWindowsThread();
 
-public:
     virtual bool Start() override final;
 
     virtual int32 WaitForCompletion(uint64 TimeoutInMs) override final;

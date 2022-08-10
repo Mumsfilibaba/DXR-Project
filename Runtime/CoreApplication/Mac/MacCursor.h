@@ -8,23 +8,11 @@
 
 class FMacCursor final : public FGenericCursor
 {
-private:
-
+public:
     FMacCursor()
         : FGenericCursor()
     { }
 
-	~FMacCursor() = default;
-
-public:
-
-	static FMacCursor* CreateMacCursor();
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericCursor Interface
-	
     virtual void SetCursor(ECursor Cursor) override final;
 
     virtual void SetPosition(FGenericWindow* RelativeWindow, int32 x, int32 y) const override final;

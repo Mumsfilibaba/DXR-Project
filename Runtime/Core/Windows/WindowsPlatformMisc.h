@@ -19,9 +19,6 @@
 struct FWindowsPlatformMisc final 
     : public FGenericPlatformMisc
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericPlatformMisc Interface
-
     static FORCEINLINE void OutputDebugString(const FString& Message)
     {
         OutputDebugStringA(Message.GetCString());
@@ -31,9 +28,6 @@ struct FWindowsPlatformMisc final
     {
         return ::IsDebuggerPresent();
     }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Windows Platform specific
 
     static FORCEINLINE void GetLastErrorString(FString& OutErrorString)
     {

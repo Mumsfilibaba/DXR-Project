@@ -9,15 +9,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacApplicationMisc
 
-class FMacApplicationMisc final : public FGenericApplicationMisc
+struct FMacApplicationMisc final : public FGenericApplicationMisc
 {
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericApplicationMisc Interface
-
-    static class FGenericApplication* CreateApplication();
-
+    static class FGenericApplication*   CreateApplication();
     static class FGenericConsoleWindow* CreateConsoleWindow();
 
     static void MessageBox(const FString& Title, const FString& Message);

@@ -12,9 +12,6 @@ class FMacCriticalSection final
 public:
     typedef pthread_mutex_t* PlatformHandle;
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericCriticalSection Interface
-
     FORCEINLINE FMacCriticalSection()
         : Mutex()
     {
