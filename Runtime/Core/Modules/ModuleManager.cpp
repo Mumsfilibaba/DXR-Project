@@ -1,6 +1,7 @@
 #include "ModuleManager.h"
 
 #include "Core/Templates/CStringHelper.h"
+#include "Core/Threading/ScopedLock.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FModuleManager
@@ -94,6 +95,8 @@ IModule* FModuleManager::LoadModule(const char* ModuleName)
 
     if (NewModule.Interface->Load())
     {
+        TScopedLock Lock(ModulesCS);
+
         LOG_INFO("Loaded module '%s'", ModuleName);
 
         ModuleLoadedDelegate.Broadcast(ModuleName, NewModule.Interface);
@@ -112,7 +115,9 @@ IModule* FModuleManager::LoadModule(const char* ModuleName)
 
 IModule* FModuleManager::GetModule(const char* ModuleName)
 {
-    const int32 Index = GetModuleIndex(ModuleName);
+    TScopedLock Lock(ModulesCS);
+    
+    const int32 Index = GetModuleIndexUnlocked(ModuleName);
     if (Index >= 0)
     {
         IModule* EngineModule = Modules[Index].Interface;
@@ -134,6 +139,8 @@ IModule* FModuleManager::GetModule(const char* ModuleName)
 
 void FModuleManager::ReleaseAllModules()
 {
+    TScopedLock Lock(ModulesCS);
+
     const int32 NumModules = Modules.GetSize();
     for (int32 Index = 0; Index < NumModules; Index++)
     {
@@ -155,7 +162,9 @@ void FModuleManager::ReleaseAllModules()
 
 PlatformModule FModuleManager::GetModuleHandle(const char* ModuleName)
 {
-    const int32 Index = GetModuleIndex(ModuleName);
+    TScopedLock Lock(ModulesCS);
+    
+    const int32 Index = GetModuleIndexUnlocked(ModuleName);
     if (Index >= 0)
     {
         return Modules[Index].Handle;
@@ -168,6 +177,8 @@ PlatformModule FModuleManager::GetModuleHandle(const char* ModuleName)
 
 void FModuleManager::RegisterStaticModule(const char* ModuleName, FInitializeStaticModuleDelegate InitDelegate)
 {
+    TScopedLock Lock(StaticModuleDelegatesCS);
+
     const bool bContains = StaticModuleDelegates.Contains([=](const TPair<FString, FInitializeStaticModuleDelegate>& Element)
     {
         return (Element.First == ModuleName);
@@ -181,13 +192,15 @@ void FModuleManager::RegisterStaticModule(const char* ModuleName, FInitializeSta
 
 bool FModuleManager::IsModuleLoaded(const char* ModuleName)
 {
-    const int32 Index = GetModuleIndex(ModuleName);
+    const int32 Index = GetModuleIndexUnlocked(ModuleName);
     return (Index >= 0);
 }
 
 void FModuleManager::UnloadModule(const char* ModuleName)
 {
-    const int32 Index = GetModuleIndex(ModuleName);
+    TScopedLock Lock(ModulesCS);
+
+    const int32 Index = GetModuleIndexUnlocked(ModuleName);
     if (Index >= 0)
     {
         FModule& Module = Modules[Index];
@@ -208,10 +221,11 @@ void FModuleManager::UnloadModule(const char* ModuleName)
 
 uint32 FModuleManager::GetLoadedModuleCount()
 {
-    return static_cast<uint32>(Modules.GetSize());
+    TScopedLock Lock(ModulesCS);
+    return GetLoadedModuleCountUnlocked();
 }
 
-int32 FModuleManager::GetModuleIndex(const char* ModuleName)
+int32 FModuleManager::GetModuleIndexUnlocked(const char* ModuleName)
 {
     const int32 Index = Modules.Find([=](const FModule& Element)
     {
@@ -224,6 +238,8 @@ int32 FModuleManager::GetModuleIndex(const char* ModuleName)
 
 FModuleManager::FInitializeStaticModuleDelegate* FModuleManager::GetStaticModuleDelegate(const char* ModuleName)
 {
+    TScopedLock Lock(StaticModuleDelegatesCS);
+
     const int32 Index = StaticModuleDelegates.Find([=](const TPair<FString, FInitializeStaticModuleDelegate>& Element)
     {
         return (Element.First == ModuleName);

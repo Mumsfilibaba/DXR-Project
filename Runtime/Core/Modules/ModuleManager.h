@@ -1,4 +1,6 @@
 #pragma once
+#include "Platform/PlatformLibrary.h"
+
 #include "Core/Core.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"
@@ -7,11 +9,10 @@
 #include "Core/Delegates/Delegate.h"
 #include "Core/Delegates/MulticastDelegate.h"
 #include "Core/Debug/Debug.h"
-
-#include "Platform/PlatformLibrary.h"
+#include "Core/Threading/Platform/CriticalSection.h"
 
 #ifdef GetModuleHandle
-#undef GetModuleHandle
+    #undef GetModuleHandle
 #endif
 
 struct IModule;
@@ -86,11 +87,10 @@ class CORE_API FModuleManager
             : Name(InName)
             , Interface(InInterface)
             , Handle(0)
-        {
-        }
+        { }
 
         FString        Name;
-        IModule* Interface;
+        IModule*       Interface;
         PlatformModule Handle;
     };
 
@@ -220,7 +220,7 @@ public:
     template<typename ModuleType>
     FORCEINLINE ModuleType* GetModule(const tchar* ModuleName)
     {
-        return static_cast<ModuleType*>(GetEngineModule(ModuleName));
+        return static_cast<ModuleType*>(GetModule(ModuleName));
     }
 
     /**
@@ -238,16 +238,24 @@ public:
 private:
     FInitializeStaticModuleDelegate* GetStaticModuleDelegate(const char* ModuleName);
 
-    int32 GetModuleIndex(const char* ModuleName);
+    int32 GetModuleIndexUnlocked(const char* ModuleName);
 
     void ReleaseAllModules();
+
+    FORCEINLINE uint32 GetLoadedModuleCountUnlocked()
+    {
+        return static_cast<uint32>(Modules.GetSize());
+    }
 
 private:
     FModuleLoadedDelegate     ModuleLoadedDelegate;
 
     typedef TPair<FString, FInitializeStaticModuleDelegate> FStaticModulePair;
     TArray<FStaticModulePair> StaticModuleDelegates;
+    FCriticalSection          StaticModuleDelegatesCS;
+
     TArray<FModule>           Modules;
+    FCriticalSection          ModulesCS;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
