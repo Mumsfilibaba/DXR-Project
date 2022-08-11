@@ -123,7 +123,11 @@ FRHITexture2D* FTextureFactory::LoadFromFile(const FString& Filepath, uint32 Cre
 
 FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format)
 {
-    if (Format != EFormat::R8_Unorm && Format != EFormat::R8G8B8A8_Unorm && Format != EFormat::R32G32B32A32_Float)
+    if (
+        Format != EFormat::R8_Unorm && 
+        Format != EFormat::R8G8_Unorm &&
+        Format != EFormat::R8G8B8A8_Unorm && 
+        Format != EFormat::R32G32B32A32_Float)
     {
         LOG_ERROR("[FTextureFactory]: Format not supported");
         return nullptr;
@@ -142,7 +146,16 @@ FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
 
     FRHITextureDataInitializer InitalData(Pixels, Format, Width, Height);
 
-    FRHITexture2DInitializer Initializer(Format, Width, Height, NumMips, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::PixelShaderResource, &InitalData);
+    FRHITexture2DInitializer Initializer(
+        Format, 
+        Width, 
+        Height, 
+        NumMips, 
+        1, 
+        ETextureUsageFlags::AllowSRV, 
+        EResourceAccess::PixelShaderResource,
+        &InitalData);
+
     FRHITexture2DRef Texture = RHICreateTexture2D(Initializer);
     if (!Texture)
     {
