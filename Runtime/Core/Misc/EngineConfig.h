@@ -128,15 +128,19 @@ private:
     template<typename T>
     bool GetTypedValue(const char* SectionName, const char* Name, T& OutValue)
     {
-        FString Value;
-        if (GetString(SectionName, Name, Value))
-        {
-            return FromString<T>(Value, OutValue);
-        }
-        else
-        {
-            return false;
-        }
+        UNREFERENCED_VARIABLE(SectionName);
+        UNREFERENCED_VARIABLE(Name);
+        UNREFERENCED_VARIABLE(OutValue);
+
+        //FString Value;
+        //if (GetString(SectionName, Name, Value))
+        //{
+        //    return FromString<T>(Value, OutValue);
+        //}
+        //else
+        //{
+        //}
+        return false;
     }
 
     // The filename

@@ -35,49 +35,49 @@ struct FContiguousContainerHelper
         return Container.GetSize();
     }
 
-    template <typename T, tsize N> 
+    template <typename T, TSIZE N> 
     static CONSTEXPR T* GetData(T(&Container)[N]) 
     { 
         return Container; 
     }
 
-    template <typename T, tsize N>
+    template <typename T, TSIZE N>
     static CONSTEXPR decltype(auto) GetSize(T(&Container)[N])
     {
         return N;
     }
     
-    template <typename T, tsize N>
+    template <typename T, TSIZE N>
     static CONSTEXPR T* GetData(T(&& Container)[N]) 
     { 
         return Container; 
     }
 
-    template <typename T, tsize N>
+    template <typename T, TSIZE N>
     static CONSTEXPR decltype(auto) GetSize(T(&& Container)[N])
     {
         return N;
     }
     
-    template <typename T, tsize N>
+    template <typename T, TSIZE N>
     static CONSTEXPR const T* GetData(const T(&Container)[N]) 
     { 
         return Container; 
     }
     
-    template <typename T, tsize N>
+    template <typename T, TSIZE N>
     static CONSTEXPR decltype(auto) GetSize(const T(& Container)[N])
     {
         return N;
     }
 
-    template <typename T, tsize N>
+    template <typename T, TSIZE N>
     static CONSTEXPR const T* GetData(const T(&& Container)[N]) 
     { 
         return Container; 
     }
 
-    template <typename T, tsize N>
+    template <typename T, TSIZE N>
     static CONSTEXPR decltype(auto) GetSize(const T(&& Container)[N])
     {
         return N;
