@@ -3,7 +3,7 @@
 #include "Canvas/Application.h"
 
 #include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Templates/CStringHelper.h"
+#include "Core/Templates/CString.h"
 
 #include <imgui.h>
 
@@ -113,7 +113,7 @@ void FGameConsoleWindow::Tick()
                 ImGui::PushID(i);
                 if (ImGui::Selectable(Candidate.Second.GetCString(), &bIsActiveIndex))
                 {
-                    FCString::Copy(TextBuffer.GetData(), Candidate.Second.GetCString());
+                    FCString::Strcpy(TextBuffer.GetData(), Candidate.Second.GetCString());
                     PopupSelectedText = Candidate.Second;
 
                     Candidates.Clear();
@@ -252,7 +252,7 @@ void FGameConsoleWindow::Tick()
         {
             if (CandidatesIndex != -1)
             {
-                FCString::Copy(TextBuffer.GetData(), PopupSelectedText.GetCString());
+                FCString::Strcpy(TextBuffer.GetData(), PopupSelectedText.GetCString());
 
                 Candidates.Clear();
                 CandidatesIndex = -1;

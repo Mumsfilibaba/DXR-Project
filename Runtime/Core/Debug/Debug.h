@@ -22,15 +22,12 @@ struct FDebug
     /**
      * Outputs a formatted debug string to the attached debugger
      *
-     * @param Format: Format to print to the attached debugger, followed by arguments for the string
+     * @param InFormat: Format to print to the attached debugger, followed by arguments for the string
      */
-    static FORCEINLINE void OutputDebugFormat(const char* Format, ...)
+    template<typename... ArgTypes>
+    static FORCEINLINE void OutputDebugFormat(const CHAR* InFormat, ArgTypes&&... Args)
     {
-        va_list ArgumentList;
-        va_start(ArgumentList, Format);
-        FString FormattedMessage = FString::CreateFormattedArgs(Format, ArgumentList);
-        va_end(ArgumentList);
-
+        FString FormattedMessage = FString::CreateFormatted(InFormat, Forward<ArgTypes>(Args)...);
         OutputDebugString(FormattedMessage);
     }
 

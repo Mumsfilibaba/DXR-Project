@@ -364,7 +364,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
 
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     wchar_t TargetProfile[BufferLength];
-    FCStringWide::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
     TComPtr<IDxcOperationResult> Result;
     HRESULT hResult = DxCompiler->Compile(
@@ -376,14 +376,12 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     if (FAILED(hResult))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Compile");
-        DEBUG_BREAK();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-        DEBUG_BREAK();
         return false;
     }
 

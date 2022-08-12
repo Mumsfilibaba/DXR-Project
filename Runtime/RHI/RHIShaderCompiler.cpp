@@ -291,21 +291,23 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     
     WCHAR TargetProfile[BufferLength];
-    FCStringWide::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     const FStringWide WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
     TComPtr<IDxcOperationResult> Result;
-    hResult = Compiler->Compile( SourceBlob.Get()
-                               , WideFilePath.GetCString()
-                               , WideEntrypoint.GetCString()
-                               , TargetProfile
-                               , CompileArgs.GetData()
-                               , CompileArgs.GetSize()
-                               , DxcDefines.GetData()
-                               , DxcDefines.GetSize()
-                               , IncludeHandler.Get()
-                               , &Result);
+    hResult = Compiler->Compile(
+        SourceBlob.Get(),
+        WideFilePath.GetCString(),
+        WideEntrypoint.GetCString(),
+        TargetProfile,
+        CompileArgs.GetData(),
+        CompileArgs.GetSize(),
+        DxcDefines.GetData(),
+        DxcDefines.GetSize(),
+        IncludeHandler.Get(),
+        &Result);
+
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
@@ -452,23 +454,25 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
 
     WCHAR TargetProfile[BufferLength];
-    FCStringWide::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     // Use the asset-folder as base for the shader-files
     const FStringWide WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
     TComPtr<IDxcBlob>            SourceBlob = dbg_new CShaderBlob(ShaderSource.GetData(), ShaderSource.SizeInBytes());
     TComPtr<IDxcOperationResult> Result;
-    hResult = Compiler->Compile( SourceBlob.Get()
-                               , nullptr
-                               , WideEntrypoint.GetCString()
-                               , TargetProfile
-                               , CompileArgs.GetData()
-                               , CompileArgs.GetSize()
-                               , DxcDefines.GetData()
-                               , DxcDefines.GetSize()
-                               , IncludeHandler.Get()
-                               , &Result);
+    hResult = Compiler->Compile(
+        SourceBlob.Get(),
+        nullptr,
+        WideEntrypoint.GetCString(),
+        TargetProfile,
+        CompileArgs.GetData(),
+        CompileArgs.GetSize(),
+        DxcDefines.GetData(),
+        DxcDefines.GetSize(),
+        IncludeHandler.Get(),
+        &Result);
+
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
@@ -599,7 +603,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
     const FString Comment = "// " + Entrypoint + "\n\n";
     TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.GetData()), Comment.Length() * sizeof(const char));
 
-    const uint32 SourceLength = FCString::Length(MSLSource);
+    const uint32 SourceLength = FCString::Strlen(MSLSource);
     NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const char));
 
     spvc_context_destroy(Context);

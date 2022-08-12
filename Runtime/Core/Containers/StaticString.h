@@ -33,34 +33,17 @@ public:
 public:
 
     /**
-     * @brief: Create a static string from a formatted string
-     * 
-     * @param Format: Formatted string
-     * @return: Returns the formatted string based on the format string
-     */
-    static NODISCARD NOINLINE TStaticString CreateFormatted(const CharType* Format, ...) noexcept
-    {
-        TStaticString NewString;
-
-        va_list ArgsList;
-        va_start(ArgsList, Format);
-        NewString.FormatArgs(Format, ArgsList);
-        va_end(ArgsList);
-
-        return NewString;
-    }
-
-    /**
      * @brief: Create a static string from a formatted string and an argument-list
      *
      * @param Format: Formatted string
-     * @param ArgsList: Argument-list to be formatted based on the format-string
+     * @param Args: Arguments to be formatted based on the format-string
      * @return: Returns the formatted string based on the format string
      */
-    static NODISCARD FORCEINLINE TStaticString CreateFormattedArgs(const CharType* Format, va_list ArgsList) noexcept
+    template<typename... ArgTypes>
+    static NODISCARD FORCEINLINE TStaticString CreateFormatted(const CharType* Format, ArgTypes&&... Args) noexcept
     {
         TStaticString NewString;
-        NewString.FormatArgs(Format, ArgsList);
+        NewString.Format(Format, Forward<ArgTypes>(Args)...);
         return NewString;
     }
 
@@ -88,7 +71,7 @@ public:
     {
         if (InString)
         {
-            CopyFrom(InString, TCString<CharType>::Length(InString));
+            CopyFrom(InString, TCString<CharType>::Strlen(InString));
         }
     }
 
@@ -165,8 +148,7 @@ public:
      */
     FORCEINLINE void Append(CharType Char) noexcept
     {
-        Check(Len + 1 < Capacity());
-
+        Check((Len + 1) < Capacity());
         Characters[Len]   = Char;
         Characters[++Len] = TChar<CharType>::Terminator;
     }
@@ -178,7 +160,7 @@ public:
      */
     FORCEINLINE void Append(const CharType* InString) noexcept
     {
-        Append(InString, TCString<CharType>::Length(InString));
+        Append(InString, TCString<CharType>::Strlen(InString));
     }
 
     /**
@@ -201,9 +183,9 @@ public:
     FORCEINLINE void Append(const CharType* InString, SizeType InLength) noexcept
     {
         Check(InString != nullptr);
-        Check(Len + InLength < Capacity());
+        Check((Len + InLength) < Capacity());
 
-        TCString<CharType>::Copy(Characters + Len, InString, InLength);
+        TCString<CharType>::Strncpy(Characters + Len, InString, InLength);
 
         Len = Len + InLength;
         Characters[Len] = TChar<CharType>::Terminator;
@@ -252,32 +234,20 @@ public:
         Check(Buffer != nullptr);
         Check((Position < Len) || (Position == 0));
 
-        SizeType CopySize = NMath::Min(BufferSize, Len - Position);
-        TCString<CharType>::Copy(Buffer, Characters + Position, CopySize);
-    }
-
-    /**
-     * @brief: Replace the string with a formatted string (similar to snprintf)
-     * 
-     * @param Format: Formatted string to replace the string with
-     */
-    NOINLINE void Format(const CharType* InFormat, ...) noexcept
-    {
-        va_list ArgList;
-        va_start(ArgList, InFormat);
-        FormatArgs(InFormat, ArgList);
-        va_end(ArgList);
+        const SizeType CopySize = NMath::Min(BufferSize, Len - Position);
+        TCString<CharType>::Strncpy(Buffer, Characters + Position, CopySize);
     }
 
     /**
      * @brief: Replace the string with a formatted string (similar to snprintf)
      *
-     * @param Format: Formatted string to replace the string with
-     * @param ArgList: Argument list filled with arguments for the formatted string
+     * @param InFormat: Formatted string to replace the string with
+     * @param Args: Arguments filled for the formatted string
      */
-    FORCEINLINE void FormatArgs(const CharType* Format, va_list ArgList) noexcept
+    template<typename... ArgTypes>
+    FORCEINLINE void Format(const CharType* InFormat, ArgTypes&&... Args) noexcept
     {
-        SizeType WrittenChars = TCString<CharType>::FormatBufferV(Characters, CharCount - 1, Format, ArgList);
+        SizeType WrittenChars = TCString<CharType>::Snprintf(Characters, CharCount - 1, InFormat, Forward<ArgTypes>(Args)...);
         if (WrittenChars < CharCount)
         {
             Len = WrittenChars;
@@ -292,26 +262,14 @@ public:
 
     /**
      * @brief: Appends a formatted string to the string
-     * 
-     * @param Format: Formatted string to append
-     */
-    NOINLINE void AppendFormat(const CharType* Format, ...) noexcept
-    {
-        va_list ArgList;
-        va_start(ArgList, Format);
-        AppendFormatArgs(Format, ArgList);
-        va_end(ArgList);
-    }
-
-    /**
-     * @brief: Appends a formatted string to the string
      *
      * @param Format: Formatted string to append
-     * @param ArgList: Argument-list for the formatted string
+     * @param Args: Arguments for the formatted string
      */
-    FORCEINLINE void AppendFormatArgs(const CharType* Format, va_list ArgList) noexcept
+    template<typename... ArgTypes>
+    FORCEINLINE void AppendFormat(const CharType* InFormat, ArgTypes&&... Args) noexcept
     {
-        const SizeType WrittenChars = TCString<CharType>::FormatBufferV(Characters + Len, CharCount, Format, ArgList);
+        const SizeType WrittenChars = TCString<CharType>::Snprintf(Characters + Len, CharCount, InFormat, Forward<ArgTypes>(Args)...);
         const SizeType NewLength    = Len + WrittenChars;
         if (NewLength < CharCount)
         {
@@ -514,7 +472,7 @@ public:
      */
     NODISCARD FORCEINLINE int32 Compare(const CharType* InString) const noexcept
     {
-        return TCString<CharType>::Compare(Characters, InString);
+        return TCString<CharType>::Strcmp(Characters, InString);
     }
 
     /**
@@ -526,7 +484,7 @@ public:
      */
     NODISCARD FORCEINLINE int32 Compare(const CharType* InString, SizeType InLength) const noexcept
     {
-        return TCString<CharType>::Compare(Characters, InString, InLength);
+        return TCString<CharType>::Strcmp(Characters, InString, InLength);
     }
 
     /**
@@ -588,7 +546,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return Find(InString, TCString<CharType>::Length(InString), Position);
+        return Find(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -623,7 +581,7 @@ public:
         }
 
         const CharType* Start  = GetCString() + Position;
-        const CharType* Result = TCString<CharType>::Find(Start, InString);
+        const CharType* Result = TCString<CharType>::Strstr(Start, InString);
         if (!Result)
         {
             return NPos;
@@ -651,7 +609,7 @@ public:
         }
 
         const CharType* Start  = GetCString() + Position;
-        const CharType* Result = TCString<CharType>::FindChar(Start, Char);
+        const CharType* Result = TCString<CharType>::Strchr(Start, Char);
         if (!Result)
         {
             return NPos;
@@ -671,7 +629,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFind(InString, TCString<CharType>::Length(InString), Position);
+        return ReverseFind(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -751,17 +709,16 @@ public:
         const CharType* Start  = GetCString();
         if (Position == 0)
         {
-            Result = TCString<CharType>::ReverseFindChar(Start, Char);
+            Result = TCString<CharType>::Strrchr(Start, Char);
         }
         else
         {
             // TODO: Get rid of const_cast
+            const CharType TempChar = Characters[Position + 1];
+
             CharType* TempCharacters = const_cast<CharType*>(Characters);
-            CharType  TempChar       = TempCharacters[Position + 1];
             TempCharacters[Position + 1] = TChar<CharType>::Terminator;
-
-            Result = TCString<CharType>::ReverseFindChar(TempCharacters, Char);
-
+            Result = TCString<CharType>::Strrchr(TempCharacters, Char);
             TempCharacters[Position + 1] = TempChar;
         }
 
@@ -784,7 +741,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneOf(InString, TCString<CharType>::Length(InString), Position);
+        return FindOneOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -819,7 +776,7 @@ public:
         }
 
         const CharType* Start  = GetCString() + Position;
-        const CharType* Result = TCString<CharType>::FindOneOf(Start, InString);
+        const CharType* Result = TCString<CharType>::Strpbrk(Start, InString);
         if (!Result)
         {
             return NPos;
@@ -839,7 +796,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneOf(InString, TCString<CharType>::Length(InString), Position);
+        return ReverseFindOneOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -874,7 +831,7 @@ public:
         }
 
         SizeType Length          = (Position == 0) ? Len : NMath::Min(Position, Len);
-        SizeType SubstringLength = TCString<CharType>::Length(InString);
+        SizeType SubstringLength = TCString<CharType>::Strlen(InString);
 
         const CharType* Start = GetCString();
         const CharType* End = Start + Length;
@@ -905,7 +862,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneNotOf(InString, TCString<CharType>::Length(InString), Position);
+        return FindOneNotOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -939,7 +896,7 @@ public:
             return 0;
         }
 
-        const SizeType Pos = static_cast<SizeType>(TCString<CharType>::RangeLength(GetCString() + Position, InString));
+        const SizeType Pos = static_cast<SizeType>(TCString<CharType>::Strspn(GetCString() + Position, InString));
         const SizeType Ret = Pos + Position;
         if (Ret >= Len)
         {
@@ -960,7 +917,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneNotOf(InString, TCString<CharType>::Length(InString), Position);
+        return ReverseFindOneNotOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -995,7 +952,7 @@ public:
         }
 
         const SizeType Length          = (Position == 0) ? Len : NMath::Min(Position, Len);
-        const SizeType SubstringLength = TCString<CharType>::Length(InString);
+        const SizeType SubstringLength = TCString<CharType>::Strlen(InString);
 
         const CharType* Start = GetCString();
         const CharType* End   = Start + Length;
@@ -1124,7 +1081,7 @@ public:
         CharType* Src = Dst + NumCharacters;
 
         const SizeType Num = Len - (Position + NumCharacters);
-        TCString<CharType>::Move(Dst, Src, Num);
+        TCString<CharType>::Strmove(Dst, Src, Num);
     }
 
     /**
@@ -1135,7 +1092,7 @@ public:
      */
     FORCEINLINE void Insert(const CharType* InString, SizeType Position) noexcept
     {
-        Insert(InString, TCString<CharType>::Length(InString), Position);
+        Insert(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -1165,8 +1122,8 @@ public:
         CharType* Dst = Src + InLength;
 
         const SizeType MoveSize = Len - Position;
-        TCString<CharType>::Move(Dst, Src, MoveSize);
-        TCString<CharType>::Copy(Src, InString, InLength);
+        TCString<CharType>::Strnmove(Dst, Src, MoveSize);
+        TCString<CharType>::Strncpy(Src, InString, InLength);
 
         Len += InLength;
         Characters[Len] = TChar<CharType>::Terminator;
@@ -1187,7 +1144,7 @@ public:
         CharType* Dst = Src + 1;
 
         const SizeType MoveSize = Len - Position;
-        TCString<CharType>::Move(Dst, Src, MoveSize);
+        TCString<CharType>::Strmove(Dst, Src, MoveSize);
 
         // Copy String
         *Src = Char;
@@ -1202,7 +1159,7 @@ public:
      */
     FORCEINLINE void Replace(const CharType* InString, SizeType Position) noexcept
     {
-        Replace(InString, TCString<CharType>::Length(InString), Position);
+        Replace(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -1227,7 +1184,7 @@ public:
     FORCEINLINE void Replace(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
         Check((Position < Len) && (Position + InLength < Len));
-        TCString<CharType>::Copy(GetData() + Position, InString, InLength);
+        TCString<CharType>::Strncpy(GetData() + Position, InString, InLength);
     }
 
     /**
@@ -1837,7 +1794,7 @@ private:
     {
         Check(InLength < Capacity());
 
-        TCString<CharType>::Copy(Characters, InString, InLength);
+        TCString<CharType>::Strncpy(Characters, InString, InLength);
         Len = InLength;
         Characters[Len] = TChar<CharType>::Terminator;
     }

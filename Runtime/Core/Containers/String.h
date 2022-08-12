@@ -62,32 +62,15 @@ public:
     /**
      * @brief: Create a string from a formatted string
      *
-     * @param Format: Formatted string
+     * @param InFormat: Formatted string
+     * @param Args: Arguments for the formatted string
      * @return: Returns the formatted string based on the format string
      */
-    static NODISCARD NOINLINE TString CreateFormatted(const CharType* Format, ...) noexcept
+    template<typename... ArgTypes>
+    static NODISCARD FORCEINLINE TString CreateFormatted(const CharType* InFormat, ArgTypes&&... Args) noexcept
     {
         TString NewString;
-
-        va_list ArgsList;
-        va_start(ArgsList, Format);
-        NewString.FormatArgs(Format, ArgsList);
-        va_end(ArgsList);
-
-        return NewString;
-    }
-
-    /**
-     * @brief: Create a string from a formatted string and an argument-list
-     *
-     * @param Format: Formatted string
-     * @param ArgsList: Argument-list to be formatted based on the format-string
-     * @return: Returns the formatted string based on the format string
-     */
-    static NODISCARD FORCEINLINE TString CreateFormattedArgs(const CharType* Format, va_list ArgsList) noexcept
-    {
-        TString NewString;
-        NewString.FormatArgs(Format, ArgsList);
+        NewString.Format(InFormat, Forward<ArgTypes>(Args)...);
         return NewString;
     }
 
@@ -110,7 +93,7 @@ public:
     {
         if (InString)
         {
-            CopyFrom(InString, TCString<CharType>::Length(InString));
+            CopyFrom(InString, TCString<CharType>::Strlen(InString));
         }
     }
 
@@ -279,7 +262,7 @@ public:
      */
     FORCEINLINE void Append(const CharType* InString) noexcept
     {
-        Append(InString, TCString<CharType>::Length(InString));
+        Append(InString, TCString<CharType>::Strlen(InString));
     }
 
     /**
@@ -362,22 +345,9 @@ public:
 
         if (Buffer && (BufferSize > 0))
         {
-            SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
-            TCString<CharType>::Copy(Buffer, Characters.GetData() + Position, CopySize);
+            const SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
+            TCString<CharType>::Strncpy(Buffer, Characters.GetData() + Position, CopySize);
         }
-    }
-
-    /**
-     * @brief: Replace the string with a formatted string (similar to snprintf)
-     *
-     * @param Format: Formatted string to replace the string with
-     */
-    NOINLINE void Format(const CharType* InFormat, ...) noexcept
-    {
-        va_list ArgList;
-        va_start(ArgList, InFormat);
-        FormatArgs(InFormat, ArgList);
-        va_end(ArgList);
     }
 
     /**
@@ -386,41 +356,28 @@ public:
      * @param Format: Formatted string to replace the string with
      * @param ArgList: Argument list filled with arguments for the formatted string
      */
-    inline void FormatArgs(const CharType* Format, va_list ArgsList) noexcept
+    template<typename... ArgTypes>
+    inline void Format(const CharType* InFormat, ArgTypes&&... Args) noexcept
     {
         CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
         SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
 
         CharType* DynamicBuffer = nullptr;
         CharType* WrittenString = Buffer;
-
-        SizeType WrittenChars = 0;
-
-        // Remember to copy the args since the arglist is consumed
-        {
-            va_list CopiedArgs;
-            va_copy(CopiedArgs, ArgsList);
-            WrittenChars = TCString<CharType>::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
-            va_end(CopiedArgs);
-        }
         
+        // Start by printing to the static buffer
+        SizeType WrittenChars = TCString<CharType>::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
+       
         // In case the buffer size is to small, increase the buffer size with a dynamic allocation until we have enough space
         while ((WrittenChars > BufferSize) || (WrittenChars == -1))
         {
-            BufferSize += BufferSize;
-
+            BufferSize   += WrittenChars;
             DynamicBuffer = reinterpret_cast<CharType*>(FMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
-
-            va_list CopiedArgs;
-            va_copy(CopiedArgs, ArgsList);
-            
-            WrittenChars = TCString<CharType>::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
-            
-            va_end(CopiedArgs);
+            WrittenChars  = TCString<CharType>::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
         }
 
-        int32 WrittenLength = TCString<CharType>::Length(WrittenString);
+        int32 WrittenLength = TCString<CharType>::Strlen(WrittenString);
         Characters.Reset(WrittenString, WrittenLength);
 
         if (DynamicBuffer)
@@ -435,22 +392,10 @@ public:
      * @brief: Appends a formatted string to the string
      *
      * @param Format: Formatted string to append
-     */
-    NOINLINE void AppendFormat(const CharType* Format, ...) noexcept
-    {
-        va_list ArgList;
-        va_start(ArgList, Format);
-        AppendFormatArgs(Format, ArgList);
-        va_end(ArgList);
-    }
-
-    /**
-     * @brief: Appends a formatted string to the string
-     *
-     * @param Format: Formatted string to append
      * @param ArgList: Argument-list for the formatted string
      */
-    inline void AppendFormatArgs(const CharType* Format, va_list ArgsList) noexcept
+    template<typename... ArgTypes>
+    inline void AppendFormat(const CharType* InFormat, ArgTypes&&... Args) noexcept
     {
         CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
         SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
@@ -458,28 +403,16 @@ public:
         CharType* DynamicBuffer = nullptr;
         CharType* WrittenString = Buffer;
 
-        SizeType WrittenChars = 0;
-
-        // Remember to copy the args since the arglist is consumed
-        {
-            va_list CopiedArgs;
-            va_copy(CopiedArgs, ArgsList);
-            WrittenChars = TCString<CharType>::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
-            va_end(CopiedArgs);
-        }
+        // Start by printing to the static buffer
+        SizeType WrittenChars = TCString<CharType>::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
         
         // In case the buffer size is to small, increase the buffer size with a dynamic allocation until we have enough space
         while ((WrittenChars > BufferSize) || (WrittenChars == -1))
         {
-            BufferSize += BufferSize;
-
+            BufferSize   += WrittenChars;
             DynamicBuffer = reinterpret_cast<CharType*>(FMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
-
-            va_list CopiedArgs;
-            va_copy(CopiedArgs, ArgsList);       
-            WrittenChars = TCString<CharType>::FormatBufferV(WrittenString, BufferSize, Format, CopiedArgs);
-            va_end(CopiedArgs);
+            WrittenChars  = TCString<CharType>::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
         }
 
         Characters.Pop();
@@ -691,7 +624,7 @@ public:
      */
     NODISCARD FORCEINLINE int32 Compare(const CharType* InString) const noexcept
     {
-        return TCString<CharType>::Compare(Characters.GetData(), InString);
+        return TCString<CharType>::Strcmp(Characters.GetData(), InString);
     }
 
     /**
@@ -703,7 +636,7 @@ public:
      */
     NODISCARD FORCEINLINE int32 Compare(const CharType* InString, SizeType InLength) const noexcept
     {
-        return TCString<CharType>::Compare(Characters.GetData(), InString, InLength);
+        return TCString<CharType>::Strncmp(Characters.GetData(), InString, InLength);
     }
 
     /**
@@ -726,7 +659,7 @@ public:
      */
     NODISCARD FORCEINLINE int32 CompareNoCase(const CharType* InString) const noexcept
     {
-        return CompareNoCase(InString, TCString<CharType>::Length(InString));
+        return CompareNoCase(InString, TCString<CharType>::Strlen(InString));
     }
 
     /**
@@ -770,7 +703,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return Find(InString, TCString<CharType>::Length(InString), Position);
+        return Find(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -805,7 +738,7 @@ public:
         }
 
         const CharType* Start  = GetCString() + Position;
-        const CharType* Result = TCString<CharType>::Find(Start, InString);
+        const CharType* Result = TCString<CharType>::Strstr(Start, InString);
         if (!Result)
         {
             return NPos;
@@ -833,7 +766,7 @@ public:
         }
 
         const CharType* Start  = GetCString() + Position;
-        const CharType* Result = TCString<CharType>::FindChar(Start, Char);
+        const CharType* Result = TCString<CharType>::Strchr(Start, Char);
         if (!Result)
         {
             return NPos;
@@ -853,7 +786,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFind(InString, TCString<CharType>::Length(InString), Position);
+        return ReverseFind(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -936,7 +869,7 @@ public:
         const CharType* Start  = GetCString();
         if (Position == 0)
         {
-            Result = TCString<CharType>::ReverseFindChar(Start, Char);
+            Result = TCString<CharType>::Strrchr(Start, Char);
         }
         else
         {
@@ -945,7 +878,7 @@ public:
             
             const CharType TempChar = TempCharacters[Position + 1];
             TempCharacters[Position + 1] = TChar<CharType>::Terminator;
-            Result = TCString<CharType>::ReverseFindChar(TempCharacters, Char);
+            Result = TCString<CharType>::Strrchr(TempCharacters, Char);
             TempCharacters[Position + 1] = TempChar;
         }
 
@@ -968,7 +901,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneOf(InString, TCString<CharType>::Length(InString), Position);
+        return FindOneOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -1004,7 +937,7 @@ public:
         }
 
         const CharType* Start  = GetCString() + Position;
-        const CharType* Result = TCString<CharType>::FindOneOf(Start, InString);
+        const CharType* Result = TCString<CharType>::Strpbrk(Start, InString);
         if (!Result)
         {
             return NPos;
@@ -1024,7 +957,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneOf(InString, TCString<CharType>::Length(InString), Position);
+        return ReverseFindOneOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -1064,7 +997,7 @@ public:
             ThisLength = NMath::Min(Position, ThisLength);
         }
 
-        const SizeType SubstringLength = TCString<CharType>::Length(InString);
+        const SizeType SubstringLength = TCString<CharType>::Strlen(InString);
 
         const CharType* Start = GetCString();
         const CharType* End   = Start + ThisLength;
@@ -1095,7 +1028,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneNotOf(InString, TCString<CharType>::Length(InString), Position);
+        return FindOneNotOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -1130,7 +1063,7 @@ public:
             return 0;
         }
 
-        const SizeType Pos = static_cast<SizeType>(TCString<CharType>::RangeLength(GetCString() + Position, InString));
+        const SizeType Pos = static_cast<SizeType>(TCString<CharType>::Strspn(GetCString() + Position, InString));
         const SizeType Ret = Pos + Position;
         if (Ret >= nLength)
         {
@@ -1151,7 +1084,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneNotOf(InString, TCString<CharType>::Length(InString), Position);
+        return ReverseFindOneNotOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -1191,7 +1124,7 @@ public:
             ThisLength = NMath::Min(Position, ThisLength);
         }
 
-        const SizeType SubstringLength = TCString<CharType>::Length(InString);
+        const SizeType SubstringLength = TCString<CharType>::Strlen(InString);
 
         const CharType* Start = GetCString();
         const CharType* End   = Start + ThisLength;
@@ -1326,7 +1259,7 @@ public:
      */
     FORCEINLINE void Insert(const CharType* InString, SizeType Position) noexcept
     {
-        Insert(InString, TCString<CharType>::Length(InString), Position);
+        Insert(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -1382,7 +1315,7 @@ public:
      */
     FORCEINLINE void Replace(const CharType* InString, SizeType Position) noexcept
     {
-        Replace(InString, TCString<CharType>::Length(InString), Position);
+        Replace(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -1407,7 +1340,7 @@ public:
     FORCEINLINE void Replace(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
         Check((Position < Length()) && (Position + InLength < Length()));
-        TCString<CharType>::Copy(GetData() + Position, InString, InLength);
+        TCString<CharType>::Strncpy(GetData() + Position, InString, InLength);
     }
 
     /**
@@ -1796,7 +1729,7 @@ public:
 
     friend NODISCARD FORCEINLINE TString operator+(const CharType* LHS, const TString& RHS) noexcept
     {
-        const typename TString::SizeType CombinedSize = TCString<CharType>::Length(LHS) + RHS.Length();
+        const typename TString::SizeType CombinedSize = TCString<CharType>::Strlen(LHS) + RHS.Length();
 
         TString NewString;
         NewString.Reserve(CombinedSize);
@@ -1807,7 +1740,7 @@ public:
 
     friend NODISCARD FORCEINLINE TString operator+(const TString& LHS, const CharType* RHS) noexcept
     {
-        const typename TString::SizeType CombinedSize = LHS.Length() + TCString<CharType>::Length(RHS);
+        const typename TString::SizeType CombinedSize = LHS.Length() + TCString<CharType>::Strlen(RHS);
 
         TString NewString;
         NewString.Reserve(CombinedSize);
@@ -2056,9 +1989,7 @@ private:
     FORCEINLINE void CopyFrom(const CharType* InString, SizeType InLength) noexcept
     {
         Characters.Resize(InLength);
-        
-        TCString<CharType>::Copy(Characters.GetData(), InString, InLength);
-        
+        TCString<CharType>::Strncpy(Characters.GetData(), InString, InLength);
         Characters.Emplace(TChar<CharType>::Terminator);
     }
 
@@ -2253,7 +2184,7 @@ template<>
 inline NODISCARD bool FromString<float>(const FString& Value, float& OutElement)
 {
     CHAR* End;
-    OutElement = FCString::ParseFloat(Value.GetCString(), &End);
+    OutElement = FCString::Strtof(Value.GetCString(), &End);
     return (*End != 0);
 }
 
@@ -2261,7 +2192,7 @@ template<>
 inline NODISCARD bool FromString<double>(const FString& Value, double& OutElement)
 {
     CHAR* End;
-    OutElement = FCString::ParseDouble(Value.GetCString(), &End);
+    OutElement = FCString::Strtod(Value.GetCString(), &End);
     return (*End != 0);
 }
 
@@ -2269,7 +2200,7 @@ template<>
 inline NODISCARD bool FromString<bool>(const FString& Value, bool& OutElement)
 {
     CHAR* End;
-    OutElement = static_cast<bool>(FCString::ParseInt32(Value.GetCString(), &End, 10));
+    OutElement = static_cast<bool>(FCString::Strtoi(Value.GetCString(), &End, 10));
     if (*End)
     {
         return true;

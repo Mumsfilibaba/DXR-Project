@@ -98,9 +98,9 @@ public:
 
     FORCEINLINE TCHAR* AllocateString(const TCHAR* String) noexcept
     {
-        int32  Length    = FCString::Length(String);
+        int32  Length    = FCString::Strlen(String);
         TCHAR* NewString = reinterpret_cast<TCHAR*>(Allocate(sizeof(TCHAR) * Length, alignof(TCHAR)));
-        return FCString::Copy(NewString, String);
+        return FCString::Strcpy(NewString, String);
     }
 
     template<typename CommandType, typename... ArgTypes>

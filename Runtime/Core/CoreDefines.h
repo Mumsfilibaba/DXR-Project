@@ -44,7 +44,7 @@
 
 #ifdef DEBUG_BUILD
     #ifndef ENABLE_ASSERTS 
-        #define ENABLE_ASSERTS 1
+        #define ENABLE_ASSERTS (1)
     #endif
 #endif
 

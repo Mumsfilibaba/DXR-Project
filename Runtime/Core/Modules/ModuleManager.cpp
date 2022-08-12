@@ -1,6 +1,6 @@
 #include "ModuleManager.h"
 
-#include "Core/Templates/CStringHelper.h"
+#include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

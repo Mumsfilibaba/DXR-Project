@@ -1,6 +1,6 @@
 #include "ProjectManager.h"
 
-#include "Core/Templates/CStringHelper.h"
+#include "Core/Templates/CString.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FProjectManager
@@ -11,8 +11,8 @@ char FProjectManager::AssetPath[MAX_ASSET_PATH_LENGTH];
 
 bool FProjectManager::Initialize(const char* InProjectName, const char* InProjectPath, const char* InAssetPath)
 {
-    FCString::Copy(reinterpret_cast<char*>(FMemory::Memzero(ProjectName, sizeof(ProjectName))), InProjectName);
-    FCString::Copy(reinterpret_cast<char*>(FMemory::Memzero(ProjectPath, sizeof(ProjectPath))), InProjectPath);
-    FCString::Copy(reinterpret_cast<char*>(FMemory::Memzero(AssetPath  , sizeof(AssetPath)))  , InAssetPath);
+    FCString::Strcpy(reinterpret_cast<char*>(FMemory::Memzero(ProjectName, sizeof(ProjectName))), InProjectName);
+    FCString::Strcpy(reinterpret_cast<char*>(FMemory::Memzero(ProjectPath, sizeof(ProjectPath))), InProjectPath);
+    FCString::Strcpy(reinterpret_cast<char*>(FMemory::Memzero(AssetPath  , sizeof(AssetPath)))  , InAssetPath);
     return true;
 }

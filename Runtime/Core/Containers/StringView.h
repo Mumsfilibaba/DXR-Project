@@ -7,7 +7,7 @@
 #include "Core/Templates/Move.h"
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/IsTStringType.h"
-#include "Core/Templates/CStringHelper.h"
+#include "Core/Templates/CString.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TStringView - Class for viewing a string similar to std::string_view
@@ -49,7 +49,7 @@ public:
      */
     FORCEINLINE TStringView(const CharType* InString) noexcept
         : ViewStart(InString)
-        , ViewEnd(InString + TCString<CharType>::Length(InString))
+        , ViewEnd(InString + TCString<CharType>::Strlen(InString))
     { }
 
     /**
@@ -121,7 +121,7 @@ public:
         Check((Position < Length()) || (Position == 0));
 
         const SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
-        TCString<CharType>::Copy(Buffer, ViewStart + Position, CopySize);
+        TCString<CharType>::Strncpy(Buffer, ViewStart + Position, CopySize);
     }
 
     /**
@@ -293,7 +293,7 @@ public:
      */
     NODISCARD FORCEINLINE int32 Compare(const CharType* InString) const noexcept
     {
-        return Compare(InString, TCString<CharType>::Length(InString));
+        return Compare(InString, TCString<CharType>::Strlen(InString));
     }
 
     /**
@@ -350,7 +350,7 @@ public:
      */
     NODISCARD FORCEINLINE int32 CompareNoCase(const CharType* InString) const noexcept
     {
-        return CompareNoCase(InString, TCString<CharType>::Length(InString));
+        return CompareNoCase(InString, TCString<CharType>::Strlen(InString));
     }
 
     /**
@@ -398,7 +398,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return Find(InString, TCString<CharType>::Length(InString), Position);
+        return Find(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -494,7 +494,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFind(InString, TCString<CharType>::Length(InString), Position);
+        return ReverseFind(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -600,7 +600,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneOf(InString, TCString<CharType>::Length(InString), Position);
+        return FindOneOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -662,7 +662,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneOf(InString, TCString<CharType>::Length(InString), Position);
+        return ReverseFindOneOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -702,7 +702,7 @@ public:
             ThisLength = NMath::Min(Position, ThisLength);
         }
 
-        const SizeType SubstringLength = TCString<CharType>::Length(InString);
+        const SizeType SubstringLength = TCString<CharType>::Strlen(InString);
 
         const CharType* ViewIterator = ViewStart + ThisLength;
         while (ViewIterator != ViewStart)
@@ -732,7 +732,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneNotOf(InString, TCString<CharType>::Length(InString), Position);
+        return FindOneNotOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -798,7 +798,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneNotOf(InString, TCString<CharType>::Length(InString), Position);
+        return ReverseFindOneNotOf(InString, TCString<CharType>::Strlen(InString), Position);
     }
 
     /**
@@ -838,7 +838,7 @@ public:
             ThisLength = NMath::Min(Position, ThisLength);
         }
 
-        SizeType SubstringLength = TCString<CharType>::Length(InString);
+        SizeType SubstringLength = TCString<CharType>::Strlen(InString);
 
         const CharType* ViewIterator = ViewStart + ThisLength;
         while (ViewIterator != ViewStart)
