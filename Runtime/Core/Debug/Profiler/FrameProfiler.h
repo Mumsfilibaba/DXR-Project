@@ -135,14 +135,14 @@ public:
      * 
      * @param Name: Name of the scope
      */ 
-    void BeginTraceScope(const char* Name);
+    void BeginTraceScope(const CHAR* Name);
 
     /**
      * @brief: Ends a scope for a function
      *
      * @param Name: Name of the scope
      */
-    void EndTraceScope(const char* Name);
+    void EndTraceScope(const CHAR* Name);
 
     /** CPU Profiler samples */
     void GetCPUSamples(ProfileSamplesTable& OutCPUSamples);
@@ -178,7 +178,7 @@ private:
 struct FScopedTrace
 {
 public:
-    FORCEINLINE FScopedTrace(const char* InName)
+    FORCEINLINE FScopedTrace(const CHAR* InName)
         : Name(InName)
     {
         FFrameProfiler::Get().BeginTraceScope(Name);
@@ -190,5 +190,5 @@ public:
     }
 
 private:
-    const char* Name = nullptr;
+    const CHAR* Name = nullptr;
 };

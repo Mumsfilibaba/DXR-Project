@@ -9,7 +9,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsWindow
 
-const char* FWindowsWindow::GetClassName()
+const CHAR* FWindowsWindow::GetClassName()
 {
     return "WindowClass";
 }

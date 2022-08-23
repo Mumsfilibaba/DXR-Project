@@ -702,7 +702,7 @@ public:
     FRHIThread();
     ~FRHIThread() = default;
 
-    static FORCEINLINE const char* GetStaticThreadName() { return "RHI Executor-Thread"; }
+    static FORCEINLINE const CHAR* GetStaticThreadName() { return "RHI Executor-Thread"; }
 
     bool Start();
     void StopExecution();

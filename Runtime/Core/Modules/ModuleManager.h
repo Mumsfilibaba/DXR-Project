@@ -113,7 +113,7 @@ public:
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a pointer to a IModule interface if the load is successful, otherwise nullptr
      */
-    IModule* LoadModule(const char* ModuleName);
+    IModule* LoadModule(const CHAR* ModuleName);
 
     /**
      * @brief: Retrieve a already loaded module interface
@@ -121,7 +121,7 @@ public:
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a pointer to a IModule interface if the interface is present, otherwise nullptr
      */
-    IModule* GetModule(const char* ModuleName);
+    IModule* GetModule(const CHAR* ModuleName);
 
     /**
      * @brief: Retrieve a already loaded module's native handle
@@ -129,7 +129,7 @@ public:
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a native handle to a module if the module is present otherwise a platform-defined invalid handle
      */
-    PlatformModule GetModuleHandle(const char* ModuleName);
+    PlatformModule GetModuleHandle(const CHAR* ModuleName);
 
     /*
      * Registers a static module
@@ -137,7 +137,7 @@ public:
      * @param ModuleName: Name of the module to load without platform extension or prefix
      * @param InitDelegate: Delegate to initialize the static delegate
      */
-    void RegisterStaticModule(const char* ModuleName, FInitializeStaticModuleDelegate InitDelegate);
+    void RegisterStaticModule(const CHAR* ModuleName, FInitializeStaticModuleDelegate InitDelegate);
 
     /**
      * @brief: Check if a module is already loaded
@@ -145,20 +145,20 @@ public:
      * @param ModuleName: Name of the module to load without platform extension or prefix
      * @return: Returns true if the module is loaded, otherwise false
      */
-    bool IsModuleLoaded(const char* ModuleName);
+    bool IsModuleLoaded(const CHAR* ModuleName);
 
     /**
      * @brief: Release a single module
      *
      * @param ModuleName: Name of the module to load without platform extension or prefix
      */
-    void UnloadModule(const char* ModuleName);
+    void UnloadModule(const CHAR* ModuleName);
 
     /** @return: Returns the number of loaded modules */
     uint32 GetLoadedModuleCount();
 
     /** Delegate for when a new module is loaded into the engine, name and IModule pointer is the arguments */
-    DECLARE_MULTICAST_DELEGATE(FModuleLoadedDelegate, const char*, IModule*);
+    DECLARE_MULTICAST_DELEGATE(FModuleLoadedDelegate, const CHAR*, IModule*);
     FModuleLoadedDelegate GetModuleLoadedDelegate() { return ModuleLoadedDelegate; }
 
     /**
@@ -167,7 +167,7 @@ public:
      * @param ModuleName: Name of the module to load without platform extension or prefix
      * @return: A reference to the IModule interface, on fail an assert is triggered
      */
-    FORCEINLINE IModule& LoadModuleRef(const char* ModuleName)
+    FORCEINLINE IModule& LoadModuleRef(const CHAR* ModuleName)
     {
         IModule* Module = LoadModule(ModuleName);
         Check(Module != nullptr);
@@ -236,9 +236,9 @@ public:
     }
 
 private:
-    FInitializeStaticModuleDelegate* GetStaticModuleDelegate(const char* ModuleName);
+    FInitializeStaticModuleDelegate* GetStaticModuleDelegate(const CHAR* ModuleName);
 
-    int32 GetModuleIndexUnlocked(const char* ModuleName);
+    int32 GetModuleIndexUnlocked(const CHAR* ModuleName);
 
     void ReleaseAllModules();
 

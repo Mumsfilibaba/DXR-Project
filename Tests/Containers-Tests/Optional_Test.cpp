@@ -27,7 +27,7 @@ struct FTest
         Pointer = FMemory::Malloc(SizeInBytes);
         FMemory::Memset(Pointer, static_cast<uint8>(Value), SizeInBytes);
 
-        char* Temp =reinterpret_cast<char*>(Pointer);
+        CHAR* Temp =reinterpret_cast<CHAR*>(Pointer);
         UNREFERENCED_VARIABLE(Temp);
     }
      

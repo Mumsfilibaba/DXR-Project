@@ -5,12 +5,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ConfigFile
 
-FConfigFile::FConfigFile(const char* InFilename)
+FConfigFile::FConfigFile(const CHAR* InFilename)
     : Filename(InFilename)
     , Sections()
 { }
 
-bool FConfigFile::SetString(const char* SectionName, const char* Name, const FString& NewValue)
+bool FConfigFile::SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue)
 {
     FConfigValue* Value = GetValue(SectionName, Name);
     if (Value)
@@ -25,22 +25,22 @@ bool FConfigFile::SetString(const char* SectionName, const char* Name, const FSt
     }
 }
 
-bool FConfigFile::SetInt(const char* SectionName, const char* Name, int32 NewValue)
+bool FConfigFile::SetInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue)
 {
     return SetString(SectionName, Name, ToString(NewValue));
 }
 
-bool FConfigFile::SetFloat(const char* SectionName, const char* Name, float NewValue)
+bool FConfigFile::SetFloat(const CHAR* SectionName, const CHAR* Name, float NewValue)
 {
     return SetString(SectionName, Name, ToString(NewValue));
 }
 
-bool FConfigFile::SetBoolean(const char* SectionName, const char* Name, bool bNewValue)
+bool FConfigFile::SetBoolean(const CHAR* SectionName, const CHAR* Name, bool bNewValue)
 {
     return SetString(SectionName, Name, ToString(bNewValue));
 }
 
-bool FConfigFile::GetString(const char* SectionName, const char* Name, FString& OutValue)
+bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue)
 {
     FConfigValue* Value = GetValue(SectionName, Name);
     if (Value)
@@ -54,17 +54,17 @@ bool FConfigFile::GetString(const char* SectionName, const char* Name, FString& 
     }
 }
 
-bool FConfigFile::GetInt(const char* SectionName, const char* Name, int32& OutValue)
+bool FConfigFile::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue)
 {
     return GetTypedValue(SectionName, Name, OutValue);
 }
 
-bool FConfigFile::GetFloat(const char* SectionName, const char* Name, float& OutValue)
+bool FConfigFile::GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue)
 {
     return GetTypedValue(SectionName, Name, OutValue);
 }
 
-bool FConfigFile::GetBoolean(const char* SectionName, const char* Name, bool& bOutValue)
+bool FConfigFile::GetBoolean(const CHAR* SectionName, const CHAR* Name, bool& bOutValue)
 {
     return GetTypedValue(SectionName, Name, bOutValue);
 }
@@ -111,7 +111,7 @@ void FConfigFile::Append(const FConfigFile& OtherFile)
     //    }
 }
 
-FConfigValue* FConfigFile::GetValue(const char* Name)
+FConfigValue* FConfigFile::GetValue(const CHAR* Name)
 {
     //    for ( auto& CurrentSection : Sections )
     //    {
@@ -122,7 +122,7 @@ FConfigValue* FConfigFile::GetValue(const char* Name)
     return nullptr;
 }
 
-FConfigValue* FConfigFile::GetValue(const char* SectionName, const char* Name)
+FConfigValue* FConfigFile::GetValue(const CHAR* SectionName, const CHAR* Name)
 {
     //    FConfigSection* Section = GetSection( SectionName );
     //    if ( Section )
@@ -133,7 +133,7 @@ FConfigValue* FConfigFile::GetValue(const char* SectionName, const char* Name)
     return nullptr;
 }
 
-FConfigSection* FConfigFile::GetSection(const char* SectionName)
+FConfigSection* FConfigFile::GetSection(const CHAR* SectionName)
 {
     //    auto Section = Sections.find( SectionName );
     //    if ( Section != Sections.end() )

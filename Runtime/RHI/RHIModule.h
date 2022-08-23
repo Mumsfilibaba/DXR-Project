@@ -14,7 +14,7 @@ enum class ERHIInstanceType : uint32
 	Metal   = 3,
 };
 
-inline const char* ToString(ERHIInstanceType RenderLayerApi)
+inline const CHAR* ToString(ERHIInstanceType RenderLayerApi)
 {
     switch (RenderLayerApi)
     {

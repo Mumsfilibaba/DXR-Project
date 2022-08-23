@@ -72,7 +72,7 @@ private:
     // Index in the history
     int32 HistoryIndex = -1;
 
-    TStaticArray<char, 256> TextBuffer;
+    TStaticArray<CHAR, 256> TextBuffer;
 
     bool bUpdateCursorPosition      = false;
     bool bIsActive                  = false;

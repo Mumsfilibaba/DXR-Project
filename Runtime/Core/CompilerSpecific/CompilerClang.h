@@ -70,7 +70,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Function signature as a const char* string
+// Function signature as a const CHAR* string
 
 #ifndef FUNCTION_SIGNATURE
     #define FUNCTION_SIGNATURE __PRETTY_FUNCTION__

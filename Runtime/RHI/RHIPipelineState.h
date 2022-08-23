@@ -33,7 +33,7 @@ enum class EDepthWriteMask : uint8
     All  = 1
 };
 
-inline const char* ToString(EDepthWriteMask DepthWriteMask)
+inline const CHAR* ToString(EDepthWriteMask DepthWriteMask)
 {
     switch (DepthWriteMask)
     {
@@ -58,7 +58,7 @@ enum class EStencilOp : uint8
     Decr    = 8
 };
 
-inline const char* ToString(EStencilOp StencilOp)
+inline const CHAR* ToString(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
@@ -221,7 +221,7 @@ enum class ECullMode : uint8
     Back  = 3
 };
 
-inline const char* ToString(ECullMode CullMode)
+inline const CHAR* ToString(ECullMode CullMode)
 {
     switch (CullMode)
     {
@@ -241,7 +241,7 @@ enum class EFillMode : uint8
     Solid     = 2
 };
 
-inline const char* ToString(EFillMode FillMode)
+inline const CHAR* ToString(EFillMode FillMode)
 {
     switch (FillMode)
     {
@@ -379,7 +379,7 @@ enum class EBlendType : uint8
     InvSrc1Alpha   = 17
 };
 
-inline const char* ToString(EBlendType  Blend)
+inline const CHAR* ToString(EBlendType  Blend)
 {
     switch (Blend)
     {
@@ -416,7 +416,7 @@ enum class EBlendOp : uint8
     Max         = 5
 };
 
-inline const char* ToString(EBlendOp BlendOp)
+inline const CHAR* ToString(EBlendOp BlendOp)
 {
     switch (BlendOp)
     {
@@ -452,7 +452,7 @@ enum class ELogicOp : uint8
     OrInverted   = 15
 };
 
-inline const char* ToString(ELogicOp LogicOp)
+inline const CHAR* ToString(ELogicOp LogicOp)
 {
     switch (LogicOp)
     {
@@ -710,7 +710,7 @@ enum class EVertexInputClass : uint8
     Instance = 1,
 };
 
-inline const char* ToString(EVertexInputClass BlendOp)
+inline const CHAR* ToString(EVertexInputClass BlendOp)
 {
     switch (BlendOp)
     {
@@ -832,7 +832,7 @@ enum EIndexBufferStripCutValue : uint8
     IndexBufferStripCutValue_0xffffffff = 2
 };
 
-inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
+inline const CHAR* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 {
     switch (IndexBufferStripCutValue)
     {

@@ -132,8 +132,8 @@ void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TP
         int32 Length = CandidateName.GetLength();
         if (Length <= ObjectName.GetLength())
         {
-            const char* Command = ObjectName.GetCString();
-            const char* WordIt = CandidateName.GetCString();
+            const CHAR* Command = ObjectName.GetCString();
+            const CHAR* WordIt = CandidateName.GetCString();
 
             int32 CharDiff = -1;
             while (Length > 0 && (CharDiff = (toupper(*WordIt) - toupper(*Command))) == 0)

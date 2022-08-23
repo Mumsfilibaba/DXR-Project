@@ -111,11 +111,11 @@ class RHI_API FRHIShaderCompiler
 private:
     friend class TOptional<FRHIShaderCompiler>;
 
-    FRHIShaderCompiler(const char* InAssetPath);
+    FRHIShaderCompiler(const CHAR* InAssetPath);
     ~FRHIShaderCompiler();
 
 public:
-    static bool Initialize(const char* AssetFolderPath);
+    static bool Initialize(const CHAR* AssetFolderPath);
     static void Release();
     
     static FRHIShaderCompiler& Get();
@@ -124,7 +124,7 @@ public:
     bool CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
 private:
-    static void ErrorCallback(void* Userdata, const char* Error);
+    static void ErrorCallback(void* Userdata, const CHAR* Error);
 
     bool ConvertSpirvToMetalShader(const FString& Entrypoint, TArray<uint8>& OutByteCode);
     bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);

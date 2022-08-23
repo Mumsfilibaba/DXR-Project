@@ -110,7 +110,7 @@ void Func(int32 Num)
     std::cout << Num << std::endl;
 }
 
-auto Func2(char) -> int(*)()
+auto Func2(CHAR) -> int(*)()
 {
     return nullptr;
 }
@@ -121,7 +121,7 @@ int main()
 {
     /* Is Same */
     static_assert(TIsSame<int, int>::Value == true);
-    static_assert(TIsSame<int, char>::Value == false);
+    static_assert(TIsSame<int, CHAR>::Value == false);
 
     /* Is Array */
     static_assert(TIsArray<int>::Value == false);
@@ -292,7 +292,7 @@ int main()
     static_assert(TIsInteger<float>::Value == false);
     static_assert(TIsInteger<double>::Value == false);
     static_assert(TIsInteger<long double>::Value == false);
-    static_assert(TIsInteger<char>::Value == true);
+    static_assert(TIsInteger<CHAR>::Value == true);
     static_assert(TIsInteger<int>::Value == true);
     static_assert(TIsInteger<const int>::Value == true);
     static_assert(TIsInteger<unsigned int>::Value == true);
@@ -306,7 +306,7 @@ int main()
     static_assert(TIsFloatingPoint<double>::Value == true);
     static_assert(TIsFloatingPoint<const double>::Value == true);
     static_assert(TIsFloatingPoint<long double>::Value == true);
-    static_assert(TIsFloatingPoint<char>::Value == false);
+    static_assert(TIsFloatingPoint<CHAR>::Value == false);
     static_assert(TIsFloatingPoint<int>::Value == false);
     static_assert(TIsFloatingPoint<const int>::Value == false);
     static_assert(TIsFloatingPoint<long long>::Value == false);
@@ -411,7 +411,7 @@ int main()
     static_assert(TIsInvokableR<int(), int*>::Value == false);
     static_assert(TIsInvokableR<void( int ), void, int>::Value == true);
     static_assert(TIsInvokableR<void( int ), void, void>::Value == false);
-    static_assert(TIsInvokableR<decltype(Func2), int(*)(), char>::Value == true);
+    static_assert(TIsInvokableR<decltype(Func2), int(*)(), CHAR>::Value == true);
     static_assert(TIsInvokableR<decltype(Func2), int(*)(), void>::Value == false);
 
     /* Is Member-pointer */

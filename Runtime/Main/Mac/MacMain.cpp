@@ -46,7 +46,7 @@ static int32 GEngineMainResult = 0;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Main
 
-int main(int NumArgs, const char** Args)
+int main(int NumArgs, const CHAR** Args)
 {
     UNREFERENCED_VARIABLE(NumArgs);
     UNREFERENCED_VARIABLE(Args);

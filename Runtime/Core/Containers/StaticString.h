@@ -627,11 +627,11 @@ public:
     }
 
     /**
-     * @brief: Returns the position of the first occurrence of char
+     * @brief: Returns the position of the first occurrence of CHAR
      * 
      * @param Char: Character to search for
      * @param Position: Position to start search at
-     * @return: Returns the position of the first occurrence of the char
+     * @return: Returns the position of the first occurrence of the CHAR
      */
     NODISCARD FORCEINLINE SizeType FindChar(CharType Char, SizeType Position = 0) const noexcept
     {
@@ -659,7 +659,7 @@ public:
     }
 
     /**
-     * @brief: Returns the position of the first char that passes the predicate
+     * @brief: Returns the position of the first CHAR that passes the predicate
      *
      * @param Predicate: Predicate that specifies valid chars
      * @param Position: Position to start search at
@@ -769,11 +769,11 @@ public:
     }
 
     /**
-     * @brief: Returns the position of the first occurrence of char. Searches the string in reverse.
+     * @brief: Returns the position of the first occurrence of CHAR. Searches the string in reverse.
      *
      * @param Char: Character to search for
      * @param Position: Position to start search at
-     * @return: Returns the position of the first occurrence of the char
+     * @return: Returns the position of the first occurrence of the CHAR
      */
     NODISCARD FORCEINLINE SizeType FindLastChar(CharType Char, SizeType Position = 0) const noexcept
     {
@@ -800,7 +800,7 @@ public:
     }
 
     /**
-     * @brief: Returns the position of the first char that passes the predicate
+     * @brief: Returns the position of the first CHAR that passes the predicate
      *
      * @param Predicate: Predicate that specifies valid chars
      * @param Position: Position to start search at
@@ -1688,7 +1688,7 @@ struct TIsTStringType<TStaticString<CharType, NUM_CHARS>>
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Convert between char and wide
+// Convert between CHAR and wide
 
 template<int32 NUM_CHARS>
 inline NODISCARD FStaticStringWide<NUM_CHARS> CharToWide(const FStaticString<NUM_CHARS>& CharString) noexcept

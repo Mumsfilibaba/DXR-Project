@@ -17,7 +17,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericLibrary Interface
 
-    static FORCEINLINE void* LoadDynamicLib(const char* LibraryName)
+    static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
     {
         FString RealName = GetRealName(LibraryName);
 
@@ -27,11 +27,11 @@ public:
         const int32 Mode = RTLD_NOW;
 #endif
 		
-		const char* LibraryNameWithExtension = RealName.GetCString();
+		const CHAR* LibraryNameWithExtension = RealName.GetCString();
         return dlopen(LibraryNameWithExtension, Mode);
     }
 
-    static FORCEINLINE void* GetLoadedHandle(const char* LibraryName)
+    static FORCEINLINE void* GetLoadedHandle(const CHAR* LibraryName)
     { 
         FString RealName = GetRealName(LibraryName);
 
@@ -40,7 +40,7 @@ public:
 #else
         const int32 Mode = RTLD_NOW | RTLD_NOLOAD;
 #endif
-        const char* LibraryNameWithExtension = RealName.GetCString();
+        const CHAR* LibraryNameWithExtension = RealName.GetCString();
         void* Handle = dlopen(LibraryNameWithExtension, Mode);
         
         // Handle is ref-counted so release the new ref-count in order to have parity with windows
@@ -57,29 +57,29 @@ public:
         dlclose(LibraryHandle);
     }
 
-    static FORCEINLINE void* LoadSymbolAddress(const char* SymbolName, void* LibraryHandle)
+    static FORCEINLINE void* LoadSymbolAddress(const CHAR* SymbolName, void* LibraryHandle)
     { 
         return dlsym(LibraryHandle, SymbolName);
     }
 
-    static FORCEINLINE const char* GetDynamicLibExtension()
+    static FORCEINLINE const CHAR* GetDynamicLibExtension()
     {
         return ".dylib";
     }
 
-    static FORCEINLINE FString GetRealName(const char* LibraryName) 
+    static FORCEINLINE FString GetRealName(const CHAR* LibraryName) 
     { 
         // TODO: MacOS seems to prefix all libraries with lib*, it would be nice if we could decide if this should happen or not
         return FString("lib") + LibraryName + GetDynamicLibExtension();
     }
 
-    static FORCEINLINE bool IsLibraryLoaded(const char* LibraryName)
+    static FORCEINLINE bool IsLibraryLoaded(const CHAR* LibraryName)
     { 
         return (GetLoadedHandle(LibraryName) != nullptr);
     }
 
     template<typename T>
-    static FORCEINLINE T LoadSymbolAddress(const char* SymbolName, void* LibraryHandle)
+    static FORCEINLINE T LoadSymbolAddress(const CHAR* SymbolName, void* LibraryHandle)
     { 
         return reinterpret_cast<T>(LoadSymbolAddress(SymbolName, LibraryHandle));
     }

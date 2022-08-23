@@ -89,7 +89,7 @@ enum class EFormat : uint16
     R8_Sint               = 70,
 };
 
-CONSTEXPR const char* ToString(EFormat Format)
+CONSTEXPR const CHAR* ToString(EFormat Format)
 {
     switch (Format)
     {
@@ -305,7 +305,7 @@ enum class EComparisonFunc
     Always       = 8
 };
 
-CONSTEXPR const char* ToString(EComparisonFunc ComparisonFunc)
+CONSTEXPR const CHAR* ToString(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -333,7 +333,7 @@ enum class EPrimitiveTopologyType
     Patch     = 4
 };
 
-CONSTEXPR const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
+CONSTEXPR const CHAR* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 {
     switch (PrimitveTopologyType)
     {
@@ -374,7 +374,7 @@ enum class EResourceAccess
 
 ENUM_CLASS_OPERATORS(EResourceAccess);
 
-CONSTEXPR const char* ToString(EResourceAccess ResourceState)
+CONSTEXPR const CHAR* ToString(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
@@ -411,7 +411,7 @@ enum class EPrimitiveTopology
     TriangleStrip = 5,
 };
 
-CONSTEXPR const char* ToString(EPrimitiveTopology ResourceState)
+CONSTEXPR const CHAR* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
@@ -439,7 +439,7 @@ enum class EShadingRate
     VRS_4x4 = 0xa,
 };
 
-CONSTEXPR const char* ToString(EShadingRate ShadingRate)
+CONSTEXPR const CHAR* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
@@ -466,7 +466,7 @@ enum class EDescriptorType : uint32
     Sampler         = 4
 };
 
-CONSTEXPR const char* ToString(EDescriptorType DescriptorType)
+CONSTEXPR const CHAR* ToString(EDescriptorType DescriptorType)
 {
     switch (DescriptorType)
     {

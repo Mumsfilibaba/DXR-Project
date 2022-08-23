@@ -158,7 +158,7 @@ private:
 
 TOptional<FRHIShaderCompiler> FRHIShaderCompiler::Instance;
 
-FRHIShaderCompiler::FRHIShaderCompiler(const char* InAssetPath)
+FRHIShaderCompiler::FRHIShaderCompiler(const CHAR* InAssetPath)
     : DXCLib(nullptr)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
@@ -189,7 +189,7 @@ FRHIShaderCompiler::~FRHIShaderCompiler()
     DxcCreateInstanceFunc = nullptr;
 }
 
-bool FRHIShaderCompiler::Initialize(const char* InAssetFolderPath)
+bool FRHIShaderCompiler::Initialize(const CHAR* InAssetFolderPath)
 {
     Instance.Emplace(InAssetFolderPath);
     return (Instance->DXCLib != nullptr) && (Instance->DxcCreateInstanceFunc != nullptr);
@@ -544,7 +544,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     return true;
 }
 
-void FRHIShaderCompiler::ErrorCallback(void* Userdata, const char* Error)
+void FRHIShaderCompiler::ErrorCallback(void* Userdata, const CHAR* Error)
 {
     UNREFERENCED_VARIABLE(Userdata);
 
@@ -591,7 +591,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
         }
     }
 
-    const char* MSLSource = nullptr;
+    const CHAR* MSLSource = nullptr;
     Result =  spvc_compiler_compile(CompilerMSL, &MSLSource);
     if (Result != SPVC_SUCCESS)
     {
@@ -601,10 +601,10 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
 
     // Start by adding the entrypoint to the shader, which is needed when we create native shader objects
     const FString Comment = "// " + Entrypoint + "\n\n";
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.GetData()), Comment.GetLength() * sizeof(const char));
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.GetData()), Comment.GetLength() * sizeof(const CHAR));
 
     const uint32 SourceLength = FCString::Strlen(MSLSource);
-    NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const char));
+    NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const CHAR));
 
     spvc_context_destroy(Context);
 

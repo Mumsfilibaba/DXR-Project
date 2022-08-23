@@ -18,7 +18,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helpers
 
-static const char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
+static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
     switch (BreadCrumbOp)
     {
@@ -69,7 +69,7 @@ static const char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
     }
 }
 
-static const char* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
+static const CHAR* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // DeviceRemovedHandler

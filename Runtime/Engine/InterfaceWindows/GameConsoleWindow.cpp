@@ -129,7 +129,7 @@ void FGameConsoleWindow::Tick()
 
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
 
-                const char* PostFix = "";
+                const CHAR* PostFix = "";
 
                 // Value
                 IConsoleVariable* Variable = Candidate.First->AsVariable();
@@ -310,11 +310,11 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
     {
     case ImGuiInputTextFlags_CallbackEdit:
     {
-        const char* WordEnd = Data->Buf + Data->CursorPos;
-        const char* WordStart = WordEnd;
+        const CHAR* WordEnd = Data->Buf + Data->CursorPos;
+        const CHAR* WordStart = WordEnd;
         while (WordStart > Data->Buf)
         {
-            const char c = WordStart[-1];
+            const CHAR c = WordStart[-1];
             if (c == ' ' || c == '\t' || c == ',' || c == ';')
             {
                 break;
@@ -339,13 +339,13 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
     }
     case ImGuiInputTextFlags_CallbackCompletion:
     {
-        const char* WordEnd = Data->Buf + Data->CursorPos;
-        const char* WordStart = WordEnd;
+        const CHAR* WordEnd = Data->Buf + Data->CursorPos;
+        const CHAR* WordStart = WordEnd;
         if (Data->BufTextLen > 0)
         {
             while (WordStart > Data->Buf)
             {
-                const char c = WordStart[-1];
+                const CHAR c = WordStart[-1];
                 if (c == ' ' || c == '\t' || c == ',' || c == ';')
                 {
                     break;
@@ -422,7 +422,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
 
             if (PrevHistoryIndex != HistoryIndex)
             {
-                const char* HistoryStr = (HistoryIndex >= 0) ? History[HistoryIndex].GetCString() : "";
+                const CHAR* HistoryStr = (HistoryIndex >= 0) ? History[HistoryIndex].GetCString() : "";
                 Data->DeleteChars(0, Data->BufTextLen);
                 Data->InsertChars(0, HistoryStr);
             }

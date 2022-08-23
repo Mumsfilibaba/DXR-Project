@@ -56,7 +56,7 @@ void FFrameProfiler::Reset()
     }
 }
 
-void FFrameProfiler::BeginTraceScope(const char* Name)
+void FFrameProfiler::BeginTraceScope(const CHAR* Name)
 {
     if (bEnabled)
     {
@@ -77,7 +77,7 @@ void FFrameProfiler::BeginTraceScope(const char* Name)
     }
 }
 
-void FFrameProfiler::EndTraceScope(const char* Name)
+void FFrameProfiler::EndTraceScope(const CHAR* Name)
 {
     if (bEnabled)
     {

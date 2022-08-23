@@ -35,7 +35,7 @@ enum class ERHIShadingRateTier : uint8
     Tier2        = 2,
 };
 
-inline const char* ToString(ERHIShadingRateTier Tier)
+inline const CHAR* ToString(ERHIShadingRateTier Tier)
 {
     switch (Tier)
     {
@@ -85,7 +85,7 @@ enum class ERHIRayTracingTier : uint8
     Tier1_1      = 2,
 };
 
-inline const char* ToString(ERHIRayTracingTier Tier)
+inline const CHAR* ToString(ERHIRayTracingTier Tier)
 {
     switch (Tier)
     {

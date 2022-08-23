@@ -828,7 +828,7 @@ public:
     }
 
     /**
-     * @brief: Returns the position of the first char that passes the predicate
+     * @brief: Returns the position of the first CHAR that passes the predicate
      *
      * @param Predicate: Predicate that specifies valid chars
      * @param Position: Position to start search at
@@ -1008,7 +1008,7 @@ public:
     }
 
     /**
-     * @brief: Returns the position of the first char that passes the predicate
+     * @brief: Returns the position of the first CHAR that passes the predicate
      *
      * @param Predicate: Predicate that specifies valid chars
      * @param Position: Position to start search at

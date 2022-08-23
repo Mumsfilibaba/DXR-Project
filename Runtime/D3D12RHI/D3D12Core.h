@@ -1052,7 +1052,7 @@ struct FD3D12GPUDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12 Helper Functions
 
-CONSTEXPR const char* ToString(D3D12_RESOURCE_DIMENSION Dimension)
+CONSTEXPR const CHAR* ToString(D3D12_RESOURCE_DIMENSION Dimension)
 {
     switch(Dimension)
     {

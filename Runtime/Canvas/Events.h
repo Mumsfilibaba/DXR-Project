@@ -56,9 +56,9 @@ struct FKeyCharEvent
         : Character(InCharacter)
     { }
 
-    FORCEINLINE char GetPrintableCharacter() const
+    FORCEINLINE CHAR GetPrintableCharacter() const
     {
-        return static_cast<char>(Character);
+        return static_cast<CHAR>(Character);
     }
 
     /** @brief: The character that where pressed, this is a ascii character in most cases */

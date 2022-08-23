@@ -866,7 +866,7 @@ void TArray_Benchmark()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TArray_Test
 
-bool TArray_Test(int32 Argc, const char** Argv)
+bool TArray_Test(int32 Argc, const CHAR** Argv)
 {
 #if 1
     std::cout << '\n' << "----------TArray----------" << '\n' << '\n';

@@ -12,13 +12,13 @@ struct FWindowsLibrary final
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericLibrary Interface
 
-    static FORCEINLINE void* LoadDynamicLib(const char* LibraryName)
+    static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
     {
         const FString RealName = GetRealName(LibraryName);
         return reinterpret_cast<void*>(LoadLibraryA(RealName.GetCString()));
     }
 
-    static FORCEINLINE void* GetLoadedHandle(const char* LibraryName)
+    static FORCEINLINE void* GetLoadedHandle(const CHAR* LibraryName)
     {
         const FString RealName = GetRealName(LibraryName);
         return reinterpret_cast<void*>(GetModuleHandleA(RealName.GetCString()));
@@ -29,28 +29,28 @@ struct FWindowsLibrary final
         FreeLibrary(reinterpret_cast<HMODULE>(LibraryHandle));
     }
 
-    static FORCEINLINE void* LoadSymbolAddress(const char* SymbolName, void* LibraryHandle)
+    static FORCEINLINE void* LoadSymbolAddress(const CHAR* SymbolName, void* LibraryHandle)
     {
         return GetProcAddress(reinterpret_cast<HMODULE>(LibraryHandle), SymbolName);
     }
 
-    static FORCEINLINE const char* GetDynamicLibExtension()
+    static FORCEINLINE const CHAR* GetDynamicLibExtension()
     {
         return ".dll";
     }
 
-    static FORCEINLINE FString GetRealName(const char* LibraryName)
+    static FORCEINLINE FString GetRealName(const CHAR* LibraryName)
     {
         return FString(LibraryName) + GetDynamicLibExtension();
     }
 
-    static FORCEINLINE bool IsLibraryLoaded(const char* LibraryName)
+    static FORCEINLINE bool IsLibraryLoaded(const CHAR* LibraryName)
     {
         return (GetLoadedHandle(LibraryName) != nullptr);
     }
 
     template<typename SymbolType>
-    static FORCEINLINE SymbolType LoadSymbolAddress(const char* SymbolName, void* LibraryHandle)
+    static FORCEINLINE SymbolType LoadSymbolAddress(const CHAR* SymbolName, void* LibraryHandle)
     {
         return reinterpret_cast<SymbolType>(LoadSymbolAddress(SymbolName, LibraryHandle));
     }

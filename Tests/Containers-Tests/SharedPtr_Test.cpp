@@ -35,7 +35,7 @@ public:
 };
 
 template<typename RefPointerType>
-void PrintRefCountFunc( const RefPointerType& Pointer, const char* Name )
+void PrintRefCountFunc( const RefPointerType& Pointer, const CHAR* Name )
 {
     std::cout << Name << " StrongRefCount=" << Pointer.GetStrongRefCount() << ", WeakRefCount=" << Pointer.GetWeakRefCount() << std::endl;
 }

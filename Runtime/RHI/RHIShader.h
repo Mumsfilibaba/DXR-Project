@@ -56,7 +56,7 @@ enum class EShaderStage : uint8
     RayCallable     = 14,
 };
 
-inline const char* ToString(EShaderStage ShaderStage)
+inline const CHAR* ToString(EShaderStage ShaderStage)
 {
     switch(ShaderStage)
     {

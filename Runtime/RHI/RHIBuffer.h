@@ -31,7 +31,7 @@ enum class EIndexFormat : uint8
     uint32  = 2,
 };
 
-inline const char* ToString(EIndexFormat IndexFormat)
+inline const CHAR* ToString(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)
     {

@@ -18,7 +18,7 @@ struct TIsInteger<bool>
 };
 
 template<>
-struct TIsInteger<char>
+struct TIsInteger<CHAR>
 {
     enum { Value = true };
 };
@@ -36,7 +36,7 @@ struct TIsInteger<unsigned char>
 };
 
 template<>
-struct TIsInteger<wchar_t>
+struct TIsInteger<WIDECHAR>
 {
     enum { Value = true };
 };

@@ -177,7 +177,7 @@ enum EModifierFlag
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Codes to string helpers
 
-inline const char* ToString(EMouseButton Button)
+inline const CHAR* ToString(EMouseButton Button)
 {
     switch (Button)
     {
@@ -190,7 +190,7 @@ inline const char* ToString(EMouseButton Button)
     }
 }
 
-inline const char* ToString(EKey key)
+inline const CHAR* ToString(EKey key)
 {
     switch (key)
     {

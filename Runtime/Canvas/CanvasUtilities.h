@@ -80,7 +80,7 @@ inline void DrawFloat3Control(const FString& Label, FVector3& OutValue, float Re
     ImGui::PopID();
 }
 
-FORCEINLINE bool DrawColorEdit3(const char* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
+FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
 {
     return ImGui::ColorEdit3(Label, OutColor.GetData(), Flags);
 }
@@ -112,7 +112,7 @@ inline void ImGui_PrintTime(float Nanoseconds)
 }
 
 #if 0
-inline void ImGui_PrintTiming(const char* Text, float Num)
+inline void ImGui_PrintTiming(const CHAR* Text, float Num)
 {
     ImGui::Text("%s: ", Text);
 
@@ -121,7 +121,7 @@ inline void ImGui_PrintTiming(const char* Text, float Num)
     ImGui_PrintTime(Num);
 }
 
-inline void ImGui_PrintTiming_SameLine(const char* Text, float Num)
+inline void ImGui_PrintTiming_SameLine(const CHAR* Text, float Num)
 {
     ImGui::Text("%s: ", Text);
     ImGui::SameLine();

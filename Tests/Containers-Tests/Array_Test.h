@@ -5,6 +5,6 @@
 #include <Core/CoreTypes.h>
 
 void TArray_Benchmark();
-bool TArray_Test(int32 Argc, const char** Argv);
+bool TArray_Test(int32 Argc, const CHAR** Argv);
 
 #endif

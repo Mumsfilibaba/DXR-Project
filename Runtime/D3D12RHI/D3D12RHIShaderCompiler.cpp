@@ -10,7 +10,7 @@
 DxcCreateInstanceProc DxcCreateInstanceFunc = nullptr;
 
 #ifndef MAKEFOURCC
-#define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | (unsigned char)(b) << 8 | (unsigned char)(c) << 16 | (unsigned char)(d) << 24)
+#define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned CHAR)(a) | (unsigned CHAR)(b) << 8 | (unsigned CHAR)(c) << 16 | (unsigned CHAR)(d) << 24)
 #endif
 
 enum DxilFourCC
@@ -217,7 +217,7 @@ bool FD3D12ShaderCompiler::CompileShader(
     FStringWide WideEntrypoint = CharToWide(EntryPoint);
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
-    HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(ShaderSource.GetCString(), sizeof(char) * static_cast<uint32>(ShaderSource.GetSize()), CP_UTF8, &SourceBlob);
+    HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(ShaderSource.GetCString(), sizeof(CHAR) * static_cast<uint32>(ShaderSource.GetSize()), CP_UTF8, &SourceBlob);
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
@@ -363,7 +363,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     LPCWSTR ShaderModelText = GetShaderModelText(ShaderModel);
 
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
-    wchar_t TargetProfile[BufferLength];
+    WIDECHAR TargetProfile[BufferLength];
     FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
     TComPtr<IDxcOperationResult> Result;
@@ -501,7 +501,7 @@ bool FD3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Sha
         return false;
     }
 
-    char Buffer[256];
+    CHAR Buffer[256];
     FMemory::Memzero(Buffer, sizeof(Buffer));
 
     size_t ConvertedChars;

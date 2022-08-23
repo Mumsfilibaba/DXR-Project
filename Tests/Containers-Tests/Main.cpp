@@ -34,7 +34,7 @@ void BenchMarks()
  * Tests
  */
 
-void Tests( int32 Argc, const char* Argv[] )
+void Tests( int32 Argc, const CHAR* Argv[] )
 {
     UNREFERENCED_VARIABLE( Argc );
     UNREFERENCED_VARIABLE( Argv );
@@ -88,7 +88,7 @@ void Tests( int32 Argc, const char* Argv[] )
  * Main
  */
 
-int main(int Argc, const char* Argv[])
+int main(int Argc, const CHAR* Argv[])
 {
     UNREFERENCED_VARIABLE(Argc);
     UNREFERENCED_VARIABLE(Argv);

@@ -70,7 +70,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Function signature as a const char* string
+// Function signature as a const CHAR* string
 
 #ifndef FUNCTION_SIGNATURE
     #define FUNCTION_SIGNATURE __FUNCTION__
@@ -114,7 +114,7 @@
 #pragma warning(error : 4458) // variable hides class member
 #pragma warning(error : 4554) // check operator precedence for possible error; use parentheses to clarify precedence
 #pragma warning(error : 4715) // not all paths return a value
-#pragma warning(error : 4840) // using string in variadic template (When it should be const char)
+#pragma warning(error : 4840) // using string in variadic template (When it should be const CHAR)
 
 #else
    #error "MSVC Compiler-file included in non MSVC- compiler"

@@ -7,7 +7,7 @@
 struct FClassDescription
 {
     /** Name of the class */
-    const char* Name = nullptr;
+    const CHAR* Name = nullptr;
     /** Size of the class in bytes */
     uint32 SizeInBytes = 0;
     /** Alignment of the class in bytes */
@@ -31,7 +31,7 @@ public:
         return IsSubClassOf(T::GetStaticClass());
     }
 
-    FORCEINLINE const char* GetName() const
+    FORCEINLINE const CHAR* GetName() const
     {
         return Name;
     }
@@ -47,7 +47,7 @@ public:
     }
 
 private:
-    const char*       Name;
+    const CHAR*       Name;
     const FClassType* SuperClass;
     
     uint32 SizeInBytes;

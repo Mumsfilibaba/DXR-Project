@@ -114,10 +114,10 @@ public:
     void EndGPUFrame(FRHICommandList& CmdList);
 
      /** @brief: Begin a GPU scope */
-    void BeginGPUTrace(FRHICommandList& CmdList, const char* Name);
+    void BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
 
      /** @brief: End a GPU scope */
-    void EndGPUTrace(FRHICommandList& CmdList, const char* Name);
+    void EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
 
     FORCEINLINE const FGPUProfileSample& GetGPUFrameTime() const
     {
@@ -151,7 +151,7 @@ private:
 struct FGPUScopedTrace
 {
 public:
-    FORCEINLINE FGPUScopedTrace(FRHICommandList& InCmdList, const char* InName)
+    FORCEINLINE FGPUScopedTrace(FRHICommandList& InCmdList, const CHAR* InName)
         : CmdList(InCmdList)
         , Name(InName)
     {
@@ -165,5 +165,5 @@ public:
 
 private:
     FRHICommandList& CmdList;
-    const char* Name = nullptr;
+    const CHAR* Name = nullptr;
 };

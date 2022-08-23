@@ -41,7 +41,7 @@ bool FInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    static const char* VSSource =
+    static const CHAR* VSSource =
         R"*(
         cbuffer VertexBuffer : register(b0, space1)
         {
@@ -89,7 +89,7 @@ bool FInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    static const char* PSSource =
+    static const CHAR* PSSource =
         R"*(
         struct PS_INPUT
         {

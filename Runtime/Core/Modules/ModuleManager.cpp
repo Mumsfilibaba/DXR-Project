@@ -32,7 +32,7 @@ void FModuleManager::Shutdown()
     ModuleManager.Reset();
 }
 
-IModule* FModuleManager::LoadModule(const char* ModuleName)
+IModule* FModuleManager::LoadModule(const CHAR* ModuleName)
 {
     Check(ModuleName != nullptr);
 
@@ -113,7 +113,7 @@ IModule* FModuleManager::LoadModule(const char* ModuleName)
     }
 }
 
-IModule* FModuleManager::GetModule(const char* ModuleName)
+IModule* FModuleManager::GetModule(const CHAR* ModuleName)
 {
     TScopedLock Lock(ModulesCS);
     
@@ -160,7 +160,7 @@ void FModuleManager::ReleaseAllModules()
     Modules.Clear();
 }
 
-PlatformModule FModuleManager::GetModuleHandle(const char* ModuleName)
+PlatformModule FModuleManager::GetModuleHandle(const CHAR* ModuleName)
 {
     TScopedLock Lock(ModulesCS);
     
@@ -175,7 +175,7 @@ PlatformModule FModuleManager::GetModuleHandle(const char* ModuleName)
     }
 }
 
-void FModuleManager::RegisterStaticModule(const char* ModuleName, FInitializeStaticModuleDelegate InitDelegate)
+void FModuleManager::RegisterStaticModule(const CHAR* ModuleName, FInitializeStaticModuleDelegate InitDelegate)
 {
     TScopedLock Lock(StaticModuleDelegatesCS);
 
@@ -190,13 +190,13 @@ void FModuleManager::RegisterStaticModule(const char* ModuleName, FInitializeSta
     }
 }
 
-bool FModuleManager::IsModuleLoaded(const char* ModuleName)
+bool FModuleManager::IsModuleLoaded(const CHAR* ModuleName)
 {
     const int32 Index = GetModuleIndexUnlocked(ModuleName);
     return (Index >= 0);
 }
 
-void FModuleManager::UnloadModule(const char* ModuleName)
+void FModuleManager::UnloadModule(const CHAR* ModuleName)
 {
     TScopedLock Lock(ModulesCS);
 
@@ -225,7 +225,7 @@ uint32 FModuleManager::GetLoadedModuleCount()
     return GetLoadedModuleCountUnlocked();
 }
 
-int32 FModuleManager::GetModuleIndexUnlocked(const char* ModuleName)
+int32 FModuleManager::GetModuleIndexUnlocked(const CHAR* ModuleName)
 {
     const auto Index = Modules.FindWithPredicate([=](const FModule& Element)
     {
@@ -235,7 +235,7 @@ int32 FModuleManager::GetModuleIndexUnlocked(const char* ModuleName)
     return static_cast<int32>(Index);
 }
 
-FModuleManager::FInitializeStaticModuleDelegate* FModuleManager::GetStaticModuleDelegate(const char* ModuleName)
+FModuleManager::FInitializeStaticModuleDelegate* FModuleManager::GetStaticModuleDelegate(const CHAR* ModuleName)
 {
     TScopedLock Lock(StaticModuleDelegatesCS);
 

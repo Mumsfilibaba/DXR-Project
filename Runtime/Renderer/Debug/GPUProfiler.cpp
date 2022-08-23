@@ -90,7 +90,7 @@ void FGPUProfiler::EndGPUFrame(FRHICommandList& CmdList)
     }
 }
 
-void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const char* Name)
+void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 {
     if (Timequeries && bEnabled)
     {
@@ -121,7 +121,7 @@ void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const char* Name)
     }
 }
 
-void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const char* Name)
+void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 {
     if (Timequeries && bEnabled)
     {

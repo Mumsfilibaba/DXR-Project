@@ -49,23 +49,23 @@ class CORE_API FConfigSection
     friend class FConfigFile;
 
 public:
-    FConfigSection(const char* Name);
+    FConfigSection(const CHAR* Name);
     ~FConfigSection() = default;
 
      /** @brief: Restores all values in the section */
     void Restore();
 
      /** @brief: Restores a specific value in the section */
-    bool Restore(const char* Name);
+    bool Restore(const CHAR* Name);
 
      /** @brief: Set a specific value to a new string */
-    void SetValue(const char* Name, const FString& NewValue);
+    void SetValue(const CHAR* Name, const FString& NewValue);
 
      /** @brief: Retrieve a value */
-    FConfigValue* GetValue(const char* Name);
+    FConfigValue* GetValue(const CHAR* Name);
 
      /** @brief: Retrieve a value */
-    const FConfigValue* GetValue(const char* Name) const;
+    const FConfigValue* GetValue(const CHAR* Name) const;
 
 private:
     TMap<FString, FConfigValue, FStringHasher> ConfigValues;
@@ -77,32 +77,32 @@ private:
 class CORE_API FConfigFile
 {
 public:
-    FConfigFile(const char* Filename);
+    FConfigFile(const CHAR* Filename);
     ~FConfigFile() = default;
 
      /** @brief: Set a string from the Engine config */
-    bool SetString(const char* SectionName, const char* Name, const FString& NewValue);
+    bool SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue);
 
      /** @brief: Set a int from the Engine config */
-    bool SetInt(const char* SectionName, const char* Name, int32 NewValue);
+    bool SetInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue);
 
      /** @brief: Set a float from the Engine config */
-    bool SetFloat(const char* SectionName, const char* Name, float NewValue);
+    bool SetFloat(const CHAR* SectionName, const CHAR* Name, float NewValue);
 
      /** @brief: Set a boolean from the Engine config */
-    bool SetBoolean(const char* SectionName, const char* Name, bool bNewValue);
+    bool SetBoolean(const CHAR* SectionName, const CHAR* Name, bool bNewValue);
 
      /** @brief: Retrieve a string from the Engine config */
-    bool GetString(const char* SectionName, const char* Name, FString& OutValue);
+    bool GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue);
 
      /** @brief: Retrieve a int from the Engine config */
-    bool GetInt(const char* SectionName, const char* Name, int32& OutValue);
+    bool GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue);
 
      /** @brief: Retrieve a float from the Engine config */
-    bool GetFloat(const char* SectionName, const char* Name, float& OutValue);
+    bool GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue);
 
      /** @brief: Retrieve a boolean from the Engine config */
-    bool GetBoolean(const char* SectionName, const char* Name, bool& bOutValue);
+    bool GetBoolean(const CHAR* SectionName, const CHAR* Name, bool& bOutValue);
 
      /** @brief: Loads the file and parses its contents */
     bool ParseFile();
@@ -116,17 +116,17 @@ public:
 private:
 
      /** @brief: Retrieve a section with a certain name */
-    FConfigSection* GetSection(const char* SectionName);
+    FConfigSection* GetSection(const CHAR* SectionName);
 
      /** @brief: Retrieve a variable just based on name */
-    FConfigValue* GetValue(const char* Name);
+    FConfigValue* GetValue(const CHAR* Name);
 
      /** @brief: Retrieve a variable from a certain section, with a certain name */
-    FConfigValue* GetValue(const char* SectionName, const char* Name);
+    FConfigValue* GetValue(const CHAR* SectionName, const CHAR* Name);
 
      /** @brief: Templated version of get value */
     template<typename T>
-    bool GetTypedValue(const char* SectionName, const char* Name, T& OutValue)
+    bool GetTypedValue(const CHAR* SectionName, const CHAR* Name, T& OutValue)
     {
         UNREFERENCED_VARIABLE(SectionName);
         UNREFERENCED_VARIABLE(Name);

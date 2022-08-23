@@ -24,7 +24,7 @@ public:
     FWindowsWindow(FWindowsApplication* InApplication);
     ~FWindowsWindow();
 
-    static const char* GetClassName();
+    static const CHAR* GetClassName();
 
 public:
     virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle Style) override final;

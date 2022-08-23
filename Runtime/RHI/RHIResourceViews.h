@@ -24,7 +24,7 @@ enum class EBufferSRVFormat : uint32
     Uint32 = 1,
 };
 
-inline const char* ToString(EBufferSRVFormat BufferSRVFormat)
+inline const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
 {
     switch (BufferSRVFormat)
     {
@@ -42,7 +42,7 @@ enum class EBufferUAVFormat : uint32
     Uint32 = 1,
 };
 
-inline const char* ToString(EBufferUAVFormat BufferSRVFormat)
+inline const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
 {
     switch (BufferSRVFormat)
     {
@@ -61,7 +61,7 @@ enum class EAttachmentLoadAction : uint8
     Clear    = 2, // Clear data when RenderPass begin
 };
 
-inline const char* ToString(EAttachmentLoadAction LoadAction)
+inline const CHAR* ToString(EAttachmentLoadAction LoadAction)
 {
     switch (LoadAction)
     {
@@ -81,7 +81,7 @@ enum class EAttachmentStoreAction : uint8
     Store    = 1, // Store the data after the RenderPass is finished
 };
 
-inline const char* ToString(EAttachmentStoreAction StoreAction)
+inline const CHAR* ToString(EAttachmentStoreAction StoreAction)
 {
     switch (StoreAction)
     {

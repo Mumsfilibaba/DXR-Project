@@ -21,7 +21,7 @@ enum class ESamplerMode : uint8
     MirrorOnce = 5,
 };
 
-inline const char* ToString(ESamplerMode SamplerMode)
+inline const CHAR* ToString(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
@@ -60,7 +60,7 @@ enum class ESamplerFilter : uint8
     Comparison_Anistrotopic                 = 18,
 };
 
-inline const char* ToString(ESamplerFilter SamplerFilter)
+inline const CHAR* ToString(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {

@@ -47,7 +47,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Function signature as a const char* string
+// Function signature as a const CHAR* string
 
 #ifndef FUNCTION_SIGNATURE
     #define FUNCTION_SIGNATURE "NO COMPILER DEFINED, DEFINE TO GET THE FUNCTION_SIGNATURE"

@@ -207,7 +207,7 @@ private:
 
 struct FRayTracingShaderIdentifer
 {
-    char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
+    CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

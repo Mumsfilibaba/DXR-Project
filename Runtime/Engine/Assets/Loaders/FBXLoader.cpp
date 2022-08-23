@@ -73,7 +73,7 @@ static FImage2DPtr LoadMaterialTexture(const FString& Path, const ofbx::Material
     if (MaterialTexture)
     {
         // Non-static buffer to support multi threading
-        char StringBuffer[256];
+        CHAR StringBuffer[256];
         MaterialTexture->getRelativeFileName().toString(StringBuffer);
 
         // Make sure that correct slashes are used
