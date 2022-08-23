@@ -17,12 +17,12 @@ void TStaticArray_Test()
     std::cout << "Testing At()" << std::endl;
     for ( uint32 i = 0; i < Num; i++ )
     {
-        Numbers.At( i ) = i;
+        Numbers.GetElementAt( i ) = i;
     }
 
     for ( uint32 i = 0; i < Num; i++ )
     {
-        std::cout << ConstNumbers.At( i ) << std::endl;
+        std::cout << ConstNumbers.GetElementAt( i ) << std::endl;
     }
 
     std::cout << "Testing operator[]" << std::endl;

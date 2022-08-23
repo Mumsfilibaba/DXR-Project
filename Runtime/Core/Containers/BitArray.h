@@ -8,6 +8,7 @@
 #include "Core/Templates/IsInteger.h"
 #include "Core/Templates/BitHelper.h"
 #include "Core/Templates/BitReference.h"
+#include "Core/Templates/ContiguousContainerHelper.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TBitArray - Array of packed bits
@@ -56,7 +57,6 @@ public:
         , NumElements(0)
     {
         AllocateAndZeroStorage(NumBits);
-
         StorageType& Element = GetStorage(0);
         Element = InValue;
     }
@@ -94,7 +94,6 @@ public:
         , NumElements(0)
     {
         AllocateAndZeroStorage(NumBits);
-
         for (SizeType Index = 0; Index < InNumBits; Index++)
         {
             AssignBitUnchecked(Index, bValue);
@@ -106,15 +105,15 @@ public:
      * 
      * @param InitList: Contains bools to indicate the sign of each bit
      */
-    FORCEINLINE TBitArray(std::initializer_list<bool> InitList) noexcept
+    FORCEINLINE TBitArray(std::initializer_list<bool> InList) noexcept
         : Storage()
-        , NumBits(static_cast<SizeType>(InitList.size()))
+        , NumBits(FContiguousContainerHelper::GetSize(InList))
         , NumElements(0)
     {
         AllocateAndZeroStorage(NumBits);
         
         SizeType Index = 0;
-        for (bool bValue :  InitList)
+        for (bool bValue : InList)
         {
             AssignBitUnchecked(Index++, bValue);
         }
@@ -174,6 +173,16 @@ public:
     }
 
     /**
+     * @brief: Checks if an index is a valid index
+     *
+     * @return: Returns true if the index is valid
+     */
+    NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const noexcept
+    {
+        return (Index >= 0) && (Index < NumBits);
+    }
+
+    /**
      * Check if the array is empty
      * 
      * @return: Returns true if the array is empty
@@ -188,7 +197,7 @@ public:
      * 
      * @param bValue: Value of the new bit
      */
-    inline void Push(const bool bValue) noexcept
+    void Push(const bool bValue) noexcept
     {
         Reserve(NumBits + 1);
         AssignBitUnchecked(NumBits, bValue);
@@ -201,7 +210,7 @@ public:
      * @param BitPosition: Position of the bit to set
      * @param bValue: Value to assign to the bit
      */
-    inline void AssignBit(SizeType BitPosition, const bool bValue) noexcept
+    void AssignBit(SizeType BitPosition, const bool bValue) noexcept
     {
         Check(BitPosition < NumBits);
         AssignBitUnchecked(BitPosition, bValue);
@@ -220,7 +229,6 @@ public:
         const SizeType IndexInElement = GetIndexOfBitInStorage(BitPosition);
 
         const StorageType Mask = CreateMaskForBit(IndexInElement);
-
         StorageType& Element = GetStorage(ElementIndex);
         Element ^= Mask;
     }
@@ -312,19 +320,16 @@ public:
      * @param BitPosition: Position of the bit to set
      * @param bValue: Value to assign to the bit
      */
-    inline void Insert(SizeType BitPosition, const bool bValue) noexcept
+    void Insert(SizeType BitPosition, const bool bValue) noexcept
     {
         Check(BitPosition <= NumBits);
 
         Reserve(NumBits + 1);
-
         BitshiftLeft_SimpleWithBitOffset(1, BitPosition);
 
         const SizeType ElementIndex = GetStorageIndexOfBit(BitPosition);
-
         StorageType& Element = GetStorage(ElementIndex);
         Element |= (StorageType(bValue) << BitPosition);
-
         NumBits++;
     }
 
@@ -348,7 +353,7 @@ public:
      */
     FORCEINLINE void Reserve(SizeType InNumBits) noexcept
     {
-        const SizeType MaxBits = Capacity();
+        const SizeType MaxBits = GetCapacity();
         if (InNumBits >= MaxBits)
         {
             const SizeType NewNumElements = GetRequiredStorageForBits(InNumBits);
@@ -378,7 +383,7 @@ public:
     /**
      * Shrink the allocated array to fit the number of bits and remove unnecessary space
      */
-    FORCEINLINE void ShrinkToFit() noexcept
+    FORCEINLINE void Shrink() noexcept
     {
         const SizeType RequiredElements = GetRequiredStorageForBits(NumBits);
         if (RequiredElements >= NumElements)
@@ -532,7 +537,7 @@ public:
      *
      * @return: Returns the maximum number of bits in the array
      */
-    NODISCARD FORCEINLINE SizeType Capacity() const noexcept
+    NODISCARD FORCEINLINE SizeType GetCapacity() const noexcept
     {
         return NumElements * GetBitsPerStorage();
     }
@@ -878,45 +883,14 @@ public:
 
 public:
 
-    /**
-     * STL start iterator, same as TBitArray::StartIterator
-     *
-     * @return: A iterator that points to the first element
-     */
-    NODISCARD FORCEINLINE IteratorType begin() noexcept
-    {
-        return StartIterator();
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // STL Iterators
 
-    /**
-     * STL end iterator, same as TBitArray::EndIterator
-     *
-     * @return: A iterator that points past the last element
-     */
-    NODISCARD FORCEINLINE IteratorType end() noexcept
-    {
-        return EndIterator();
-    }
+    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
 
-    /**
-     * STL start iterator, same as TBitArray::StartIterator
-     *
-     * @return: A iterator that points to the first element
-     */
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept
-    {
-        return StartIterator();
-    }
-
-    /**
-     * STL end iterator, same as TBitArray::EndIterator
-     *
-     * @return: A iterator that points past the last element
-     */
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept
-    {
-        return EndIterator();
-    }
+    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return EndIterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return EndIterator(); }
 
 public: 
     static NODISCARD CONSTEXPR SizeType GetBitsPerStorage() noexcept
@@ -1167,6 +1141,7 @@ private:
         return Pointer[Index];
     }
 
+private:
     AllocatorType Storage;
     SizeType      NumBits     = 0;
     SizeType      NumElements = 0;

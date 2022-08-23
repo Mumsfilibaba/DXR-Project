@@ -179,7 +179,7 @@ void FModuleManager::RegisterStaticModule(const char* ModuleName, FInitializeSta
 {
     TScopedLock Lock(StaticModuleDelegatesCS);
 
-    const bool bContains = StaticModuleDelegates.Contains([=](const TPair<FString, FInitializeStaticModuleDelegate>& Element)
+    const bool bContains = StaticModuleDelegates.ContainsWithPredicate([=](const FStaticModulePair& Element)
     {
         return (Element.First == ModuleName);
     });
@@ -227,25 +227,24 @@ uint32 FModuleManager::GetLoadedModuleCount()
 
 int32 FModuleManager::GetModuleIndexUnlocked(const char* ModuleName)
 {
-    const int32 Index = Modules.Find([=](const FModule& Element)
+    const auto Index = Modules.FindWithPredicate([=](const FModule& Element)
     {
         return (Element.Name == ModuleName);
     });
 
-    // Return explicit -1 in case TArray changes in the future
-    return (Index >= 0) ? Index : -1;
+    return static_cast<int32>(Index);
 }
 
 FModuleManager::FInitializeStaticModuleDelegate* FModuleManager::GetStaticModuleDelegate(const char* ModuleName)
 {
     TScopedLock Lock(StaticModuleDelegatesCS);
 
-    const int32 Index = StaticModuleDelegates.Find([=](const TPair<FString, FInitializeStaticModuleDelegate>& Element)
+    const auto Index = StaticModuleDelegates.FindWithPredicate([=](const FStaticModulePair& Element)
     {
         return (Element.First == ModuleName);
     });
 
-    if (Index >= 0)
+    if (StaticModuleDelegates.IsValidIndex(Index))
     {
         FInitializeStaticModuleDelegate& ModuleInitializer = StaticModuleDelegates[Index].Second;
         return &ModuleInitializer;

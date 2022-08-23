@@ -267,8 +267,8 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     const FString ArgumentsString = CreateArgString(CompileArgs.CreateView());
     
     // Convert defines
-    TArray<FStringWide>   StrBuff;
-    TArray<DxcDefine> DxcDefines;
+    TArray<FStringWide> StrBuff;
+    TArray<DxcDefine>   DxcDefines;
     
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
     if (!Defines.IsEmpty())
@@ -601,7 +601,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
 
     // Start by adding the entrypoint to the shader, which is needed when we create native shader objects
     const FString Comment = "// " + Entrypoint + "\n\n";
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.GetData()), Comment.Length() * sizeof(const char));
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.GetData()), Comment.GetLength() * sizeof(const char));
 
     const uint32 SourceLength = FCString::Strlen(MSLSource);
     NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const char));

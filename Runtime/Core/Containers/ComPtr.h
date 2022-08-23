@@ -6,11 +6,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TComPtr
 
-template<typename T>
+template<typename InComInterfaceType>
 class TComPtr
 {
 public:
-    using ElementType = T;
+    using ElementType = InComInterfaceType;
 
     template<typename OtherType>
     friend class TComPtr;

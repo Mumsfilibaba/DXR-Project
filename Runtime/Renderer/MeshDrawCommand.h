@@ -19,8 +19,5 @@ struct FMeshDrawCommand
 template<>
 struct TIsReallocatable<FMeshDrawCommand>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };

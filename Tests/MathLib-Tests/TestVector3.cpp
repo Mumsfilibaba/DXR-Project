@@ -135,7 +135,7 @@ bool TestVector3()
 
     // Length
     FVector3 LengthVector(2.0f, 2.0f, 2.0f);
-    float Length = LengthVector.Length();
+    float Length = LengthVector.GetLength();
 
     if (Length != 3.46410161514f)
     {

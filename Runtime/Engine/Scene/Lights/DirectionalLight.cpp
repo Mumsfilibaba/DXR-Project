@@ -146,7 +146,7 @@ void FDirectionalLight::UpdateCascades(FCamera& Camera)
         float Radius = 0.0f;
         for (uint32 j = 0; j < 8; j++)
         {
-            float Distance = ceil((FrustumCorners[j] - Center).Length());
+            float Distance = ceil((FrustumCorners[j] - Center).GetLength());
             Radius = NMath::Min(NMath::Max(Radius, Distance), 80.0f); // This should be dynamic
         }
 

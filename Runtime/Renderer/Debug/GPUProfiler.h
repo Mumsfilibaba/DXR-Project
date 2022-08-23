@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 #include "Core/Threading/Spinlock.h"
 
 #include "Renderer/RendererModule.h"
@@ -78,7 +78,7 @@ struct FGPUProfileSample
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-using GPUProfileSamplesTable = THashTable<FString, FGPUProfileSample, FStringHasher>;
+using GPUProfileSamplesTable = TMap<FString, FGPUProfileSample, FStringHasher>;
 
 class RENDERER_API FGPUProfiler
 {

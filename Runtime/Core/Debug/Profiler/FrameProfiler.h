@@ -5,7 +5,7 @@
 #include "RHI/RHITimestampQuery.h"
 
 #include "Core/Threading/Spinlock.h"
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Config
@@ -105,7 +105,7 @@ struct FProfileSample
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FFrameProfiler
 
-using ProfileSamplesTable = THashTable<FString, FProfileSample, FStringHasher>;
+using ProfileSamplesTable = TMap<FString, FProfileSample, FStringHasher>;
 
 class CORE_API FFrameProfiler
 {

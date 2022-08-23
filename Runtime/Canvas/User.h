@@ -118,20 +118,20 @@ private:
      /** @brief: Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const
     {
-        FKeyState TempState(KeyCode);
-        return KeyStates.Find(TempState, [](const FKeyState& LHS, const FKeyState& RHS) -> bool
+        FKeyState TmpState(KeyCode);
+        return KeyStates.FindWithPredicate([&](const FKeyState& KeyState)
         {
-            return (LHS.KeyCode == RHS.KeyCode);
+            return (TmpState.KeyCode == KeyState.KeyCode);
         });
     }
 
      /** @brief: Get the index in the key-state array */
     FORCEINLINE int32 GetMouseButtonStateIndexFromMouseButton(EMouseButton Button) const
     {
-        FMouseButtonState TempState(Button);
-        return MouseButtonStates.Find(TempState, [](const FMouseButtonState& LHS, const FMouseButtonState& RHS) -> bool
+        FMouseButtonState TmpState(Button);
+        return MouseButtonStates.FindWithPredicate([&](const FMouseButtonState& MouseState) -> bool
         {
-            return (LHS.Button == RHS.Button);
+            return (TmpState.Button == MouseState.Button);
         });
     }
 

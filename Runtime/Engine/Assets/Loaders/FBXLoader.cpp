@@ -4,7 +4,7 @@
 #include "Engine/Assets/MeshUtilities.h"
 
 #include "Core/Math/Matrix4.h"
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
@@ -18,7 +18,7 @@
 static FString ExtractPath(const FString& FullFilePath)
 {
     auto Pos = FullFilePath.ReverseFind('/');
-    if (Pos != FString::NPos)
+    if (Pos != FString::INVALID_INDEX)
     {
         return FullFilePath.SubString(0, Pos);
     }
@@ -146,8 +146,8 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     const float UnitScaleFactorRecip     = Settings->UnitScaleFactor;
 
     // Unique tables
-    THashTable<FVertex, uint32, FVertexHasher>  UniqueVertices;
-    THashTable<const ofbx::Material*, uint32> UniqueMaterials;
+    TMap<FVertex, uint32, FVertexHasher>  UniqueVertices;
+    TMap<const ofbx::Material*, uint32> UniqueMaterials;
 
     FString Path = ExtractPath(Filename);
 
@@ -317,8 +317,8 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
         }
     }
 
-    OutScene.Models.ShrinkToFit();
-    OutScene.Materials.ShrinkToFit();
+    OutScene.Models.Shrink();
+    OutScene.Materials.Shrink();
 
     FBXScene->destroy();
     return true;

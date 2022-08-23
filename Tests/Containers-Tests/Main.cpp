@@ -63,7 +63,7 @@ void Tests( int32 Argc, const char* Argv[] )
     Delegate_Test();
 #endif
 
-#if RUN_TSTRING_TEST
+#if (RUN_TSTRING_TEST || RUN_TSTATICSTRING_TEST || RUN_TSTRINGVIEW_TEST)
     TString_Test(Argv[0]);
 #endif
 

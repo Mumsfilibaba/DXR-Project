@@ -2,7 +2,7 @@
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/Array.h"
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FConfigValue
@@ -68,7 +68,7 @@ public:
     const FConfigValue* GetValue(const char* Name) const;
 
 private:
-    THashTable<FString, FConfigValue, FStringHasher> ConfigValues;
+    TMap<FString, FConfigValue, FStringHasher> ConfigValues;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -147,7 +147,7 @@ private:
     FString Filename;
 
     // All the sections
-    THashTable<FString, FConfigSection, FStringHasher> Sections;
+    TMap<FString, FConfigSection, FStringHasher> Sections;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

@@ -36,8 +36,8 @@ struct FMeshData
 
     inline void RefitContainers()
     {
-        Vertices.ShrinkToFit();
-        Indices.ShrinkToFit();
+        Vertices.Shrink();
+        Indices.Shrink();
     }
 
     TArray<FVertex> Vertices;

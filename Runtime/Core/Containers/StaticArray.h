@@ -15,14 +15,14 @@
 
 template<
     typename T,
-    int32 NumElements>
+    int32 NUM_ELEMENTS>
 struct TStaticArray
 {
     using ElementType = T;
     using SizeType    = int32;
 
     static_assert(
-        NumElements > 0,
+        NUM_ELEMENTS > 0,
         "TStaticArray does not support a zero element count");
     static_assert(
         TIsSigned<SizeType>::Value,
@@ -33,7 +33,19 @@ struct TStaticArray
     typedef TReverseArrayIterator<TStaticArray, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TStaticArray, const ElementType> ReverseConstIteratorType;
 
+    enum : SizeType { INVALID_INDEX = -1 };
+
 public:
+
+    /**
+     * @brief: Checks if an index is a valid index
+     *
+     * @return: Returns true if the index is valid
+     */
+    NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const noexcept
+    {
+        return (Index >= 0) && (Index < ViewSize);
+    }
 
     /**
      * @brief: Retrieve the first element of the array
@@ -62,7 +74,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& LastElement() noexcept
     {
-        return Elements[NumElements - 1];
+        return Elements[NUM_ELEMENTS - 1];
     }
 
     /**
@@ -72,7 +84,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& LastElement() const noexcept
     {
-        return Elements[NumElements - 1];
+        return Elements[NUM_ELEMENTS - 1];
     }
 
     /**
@@ -81,9 +93,9 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    NODISCARD FORCEINLINE ElementType& At(SizeType Index) noexcept
+    NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) noexcept
     {
-        Check(Index < NumElements);
+        Check(Index < NUM_ELEMENTS);
         return Elements[Index];
     }
 
@@ -93,9 +105,9 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    NODISCARD FORCEINLINE const ElementType& At(SizeType Index) const noexcept
+    NODISCARD FORCEINLINE const ElementType& GetElementAt(SizeType Index) const noexcept
     {
-        Check(Index < NumElements);
+        Check(Index < NUM_ELEMENTS);
         return Elements[Index];
     }
 
@@ -106,7 +118,7 @@ public:
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        FillRange(Elements, InputElement, GetSize());
+        ::AssignElements(Elements, InputElement, GetSize());
     }
 
     /**
@@ -116,6 +128,138 @@ public:
     FORCEINLINE typename TEnableIf<TIsTrivial<U>::Value>::Type Memzero()
     {
         FMemory::Memzero(Elements, SizeInBytes());
+    }
+
+    /**
+     * @brief: Returns the index of an element if it is present in the array, or -1 if it is not found
+     *
+     * @param Element: Element to search for
+     * @return: The index of the element if found or -1 if not
+     */
+    NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
+    {
+        const ElementType* RESTRICT CurrentAddress = GetData();
+        const ElementType* RESTRICT EndAddress     = GetData() + GetSize();
+        while (CurrentAddress != EndAddress)
+        {
+            if (Element == *CurrentAddress)
+            {
+                return static_cast<SizeType>(CurrentAddress - GetData());
+            }
+
+            ++CurrentAddress;
+        }
+
+        return INVALID_INDEX;
+    }
+
+    /**
+     * @brief: Returns the index of the element that satisfy the conditions of a comparator
+     *
+     * @param Predicate: Callable that compares an element in the array against some condition
+     * @return: The index of the element if found or INVALID_INDEX if not
+     */
+    template<class PredicateType>
+    NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
+    {
+        const ElementType* RESTRICT CurrentAddress = GetData();
+        const ElementType* RESTRICT EndAddress     = GetData() + GetSize();
+        while (CurrentAddress != EndAddress)
+        {
+            if (Predicate(*CurrentAddress))
+            {
+                return static_cast<SizeType>(CurrentAddress - GetData());
+            }
+
+            ++CurrentAddress;
+        }
+
+        return INVALID_INDEX;
+    }
+
+    /**
+     * @brief: Returns the index of an element if it is present in the array, or -1 if it is not found
+     *
+     * @param Element: Element to search for
+     * @return: The index of the element if found or -1 if not
+     */
+    NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
+    {
+        const ElementType* RESTRICT CurrentAddress = GetData() + GetSize();
+        const ElementType* RESTRICT EndAddress     = GetData();
+        while (CurrentAddress != EndAddress)
+        {
+            --CurrentAddress;
+            if (Element == *CurrentAddress)
+            {
+                return static_cast<SizeType>(CurrentAddress - GetData());
+            }
+        }
+
+        return INVALID_INDEX;
+    }
+
+    /**
+     * @brief: Returns the index of the element that satisfy the conditions of a comparator
+     *
+     * @param Predicate: Callable that compares an element in the array against some condition
+     * @return: The index of the element if found or INVALID_INDEX if not
+     */
+    template<class PredicateType>
+    NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
+    {
+        const ElementType* RESTRICT CurrentAddress = GetData() + GetSize();
+        const ElementType* RESTRICT EndAddress     = GetData();
+        while (CurrentAddress != EndAddress)
+        {
+            --CurrentAddress;
+            if (Predicate(*CurrentAddress))
+            {
+                return static_cast<SizeType>(CurrentAddress - GetData());
+            }
+        }
+
+        return INVALID_INDEX;
+    }
+
+    /**
+     * @brief: Check if an element exists in the array
+     * 
+     * @param Element: Element to check for
+     * @return: Returns true if the element is found in the array and false if not
+     */
+    NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const noexcept
+    {
+        return (Find(Element) != INVALID_INDEX);
+    }
+
+    /**
+     * @brief: Check if an element that satisfies the conditions of a comparator exists in the array
+     * 
+     * @param Predicate: Callable that compares an element in the array against some condition
+     * @return: Returns true if the comparator returned true for one element
+     */
+    template<class PredicateType>
+    NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const noexcept
+    {
+        return (FindWithPredicate(Forward<PredicateType>(Predicate)) != INVALID_INDEX);
+    }
+
+    /**
+     * @brief: Perform some function on each element in the array
+     * 
+     * @param Functor: Callable that takes one element and perform some operation on it
+     */
+    template<class FunctorType>
+    FORCEINLINE void Foreach(FunctorType&& Functor)
+    {
+        ElementType* RESTRICT CurrentAddress = GetData();
+        ElementType* RESTRICT EndAddress     = GetData() + GetSize();
+        while (CurrentAddress != EndAddress)
+        {
+            Functor(*CurrentAddress);
+            ++CurrentAddress;
+        }
     }
 
     /**
@@ -160,7 +304,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) noexcept
     {
-        return At(Index);
+        return GetElementAt(Index);
     }
 
     /**
@@ -171,7 +315,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
     {
-        return At(Index);
+        return GetElementAt(Index);
     }
 
     /**
@@ -188,7 +332,7 @@ public:
             return false;
         }
 
-        return CompareRange<ElementType>(GetData(), RHS.GetData(), GetSize());
+        return ::CompareElements<ElementType>(GetData(), RHS.GetData(), GetSize());
     }
 
     /**
@@ -212,7 +356,7 @@ public:
      */
     NODISCARD CONSTEXPR SizeType LastElementIndex() const noexcept
     {
-        return NumElements - 1;
+        return NUM_ELEMENTS - 1;
     }
 
     /**
@@ -222,7 +366,7 @@ public:
      */
     NODISCARD CONSTEXPR SizeType GetSize() const noexcept
     {
-        return NumElements;
+        return NUM_ELEMENTS;
     }
 
     /**
@@ -240,9 +384,9 @@ public:
      *
      * @return: The current capacity of the container
      */
-    NODISCARD CONSTEXPR SizeType Capacity() const noexcept
+    NODISCARD CONSTEXPR SizeType GetCapacity() const noexcept
     {
-        return NumElements;
+        return NUM_ELEMENTS;
     }
 
     /**
@@ -252,7 +396,7 @@ public:
      */
     NODISCARD CONSTEXPR SizeType CapacityInBytes() const noexcept
     {
-        return Capacity() * sizeof(ElementType);
+        return GetCapacity() * sizeof(ElementType);
     }
 
 public:
@@ -339,48 +483,17 @@ public:
 
 public:
 
-    /**
-     * @brief: STL start iterator, same as TArray::StartIterator
-     *
-     * @return: A iterator that points to the first element
-     */
-    NODISCARD FORCEINLINE IteratorType begin() noexcept
-    {
-        return StartIterator();
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // STL Iterators
 
-    /**
-     * @brief: STL end iterator, same as TArray::EndIterator
-     *
-     * @return: A iterator that points past the last element
-     */
-    NODISCARD FORCEINLINE IteratorType end() noexcept
-    {
-        return EndIterator();
-    }
+    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
 
-    /**
-     * @brief: STL start iterator, same as TArray::StartIterator
-     *
-     * @return: A iterator that points to the first element
-     */
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept
-    {
-        return StartIterator();
-    }
-
-    /**
-     * @brief: STL end iterator, same as TArray::EndIterator
-     *
-     * @return: A iterator that points past the last element
-     */
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept
-    {
-        return EndIterator();
-    }
+    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return EndIterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return EndIterator(); }
 
 public:
-    ElementType Elements[NumElements];
+    ElementType Elements[NUM_ELEMENTS];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -388,16 +501,16 @@ public:
 
 template<
     typename T,
-    int32 NumElements>
-struct TIsTArrayType<TStaticArray<T, NumElements>>
+    int32 NUM_ELEMENTS>
+struct TIsTArrayType<TStaticArray<T, NUM_ELEMENTS>>
 {
     enum { Value = true };
 };
 
 template<
     typename T,
-    int32 NumElements>
-struct TIsContiguousContainer<TStaticArray<T, NumElements>>
+    int32 NUM_ELEMENTS>
+struct TIsContiguousContainer<TStaticArray<T, NUM_ELEMENTS>>
 {
     enum { Value = true };
 };

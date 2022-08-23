@@ -445,7 +445,7 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    NODISCARD FORCEINLINE ElementType& At(SizeType Index) const noexcept
+    NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) const noexcept
     {
         Check(IsValid());
         return Get()[Index];
@@ -461,7 +461,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) const noexcept
     {
-        return At(Index);
+        return GetElementAt(Index);
     }
 
     /**

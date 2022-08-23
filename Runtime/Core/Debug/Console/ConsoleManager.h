@@ -5,7 +5,7 @@
 #include "Canvas/Events.h"
 #include "Canvas/InputHandler.h"
 
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/Optional.h"
@@ -142,7 +142,7 @@ private:
     IConsoleObject* FindConsoleObject(const FString& Name);
 
 private:
-    THashTable<FString, IConsoleObject*, FStringHasher> ConsoleObjects;
+    TMap<FString, IConsoleObject*, FStringHasher> ConsoleObjects;
 
     TArray<TPair<FString, EConsoleSeverity>> ConsoleMessages;
 

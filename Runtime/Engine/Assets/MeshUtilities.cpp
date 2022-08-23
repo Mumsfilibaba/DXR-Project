@@ -116,8 +116,8 @@ void FMeshUtilities::Subdivide(FMeshData& OutData, uint32 Subdivisions) noexcept
         Optimize(OutData, OldVertexCount);
     }
 
-    OutData.Vertices.ShrinkToFit();
-    OutData.Indices.ShrinkToFit();
+    OutData.Vertices.Shrink();
+    OutData.Indices.Shrink();
 }
 
 void FMeshUtilities::Optimize(FMeshData& OutData, uint32 StartVertex) noexcept

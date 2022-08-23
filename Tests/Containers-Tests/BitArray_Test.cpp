@@ -35,7 +35,7 @@ bool TBitArray_Test()
     {
         TBitArray<uint8> BitArray;
         CHECK(BitArray.GetSize()            == 0);
-        CHECK(BitArray.Capacity()        == 0);
+        CHECK(BitArray.GetCapacity()        == 0);
         CHECK(BitArray.StorageSize()     == 0);
         CHECK(BitArray.CapacityInBytes() == 0);
         CHECK(MakeStringFromBitArray(BitArray) == "");
@@ -44,7 +44,7 @@ bool TBitArray_Test()
     {
         TBitArray<uint32> BitArray;
         CHECK(BitArray.GetSize()            == 0);
-        CHECK(BitArray.Capacity()        == 0);
+        CHECK(BitArray.GetCapacity()        == 0);
         CHECK(BitArray.StorageSize()     == 0);
         CHECK(BitArray.CapacityInBytes() == 0);
         CHECK(MakeStringFromBitArray(BitArray) == "");
@@ -53,7 +53,7 @@ bool TBitArray_Test()
     {
         TBitArray BitArray(8, true);
         CHECK(BitArray.GetSize()            == 8);
-        CHECK(BitArray.Capacity()        == 32);
+        CHECK(BitArray.GetCapacity()        == 32);
         CHECK(BitArray.StorageSize()     == 1);
         CHECK(BitArray.CapacityInBytes() == 4);
         CHECK(MakeStringFromBitArray(BitArray) == "11111111");
@@ -62,7 +62,7 @@ bool TBitArray_Test()
     {
         TBitArray<uint8> BitArray(uint8(0b01010101));
         CHECK(BitArray.GetSize()            == 8);
-        CHECK(BitArray.Capacity()        == 8);
+        CHECK(BitArray.GetCapacity()        == 8);
         CHECK(BitArray.StorageSize()     == 1);
         CHECK(BitArray.CapacityInBytes() == 1);
         CHECK(MakeStringFromBitArray(BitArray) == "01010101");
@@ -303,7 +303,7 @@ bool TStaticBitArray_Test()
     {
         CONSTEXPR TStaticBitArray<11, uint8> BitArray;
         static_assert(BitArray.GetSize()            == 11);
-        static_assert(BitArray.Capacity()        == 16);
+        static_assert(BitArray.GetCapacity()        == 16);
         static_assert(BitArray.StorageSize()     == 2);
         static_assert(BitArray.CapacityInBytes() == 2);
         CHECK(MakeStringFromBitArray(BitArray) == "00000000000");
@@ -312,7 +312,7 @@ bool TStaticBitArray_Test()
     {
         CONSTEXPR TStaticBitArray<18, uint32> BitArray;
         static_assert(BitArray.GetSize()            == 18);
-        static_assert(BitArray.Capacity()        == 32);
+        static_assert(BitArray.GetCapacity()        == 32);
         static_assert(BitArray.StorageSize()     == 1);
         static_assert(BitArray.CapacityInBytes() == 4);
         CHECK(MakeStringFromBitArray(BitArray) == "000000000000000000");
@@ -321,7 +321,7 @@ bool TStaticBitArray_Test()
     {
         CONSTEXPR TStaticBitArray<9, uint8> BitArray(8, true);
         static_assert(BitArray.GetSize()            == 9);
-        static_assert(BitArray.Capacity()        == 16);
+        static_assert(BitArray.GetCapacity()        == 16);
         static_assert(BitArray.StorageSize()     == 2);
         static_assert(BitArray.CapacityInBytes() == 2);
         CHECK(MakeStringFromBitArray(BitArray) == "011111111");
@@ -330,7 +330,7 @@ bool TStaticBitArray_Test()
     {
         CONSTEXPR TStaticBitArray<8, uint8> BitArray(uint8(0b01010101));
         static_assert(BitArray.GetSize()            == 8);
-        static_assert(BitArray.Capacity()        == 8);
+        static_assert(BitArray.GetCapacity()        == 8);
         static_assert(BitArray.StorageSize()     == 1);
         static_assert(BitArray.CapacityInBytes() == 1);
         CHECK(MakeStringFromBitArray(BitArray) == "01010101");

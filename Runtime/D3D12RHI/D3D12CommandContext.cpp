@@ -164,7 +164,7 @@ void FD3D12GPUResourceUploader::Reset()
 
     // Clear garbage resource, and release memory we do not need
     GarbageResources.Clear();
-    if (GarbageResources.Capacity() >= MAX_RESERVED_GARBAGE_RESOURCES)
+    if (GarbageResources.GetCapacity() >= MAX_RESERVED_GARBAGE_RESOURCES)
     {
         GarbageResources.Reserve(NEW_RESERVED_GARBAGE_RESOURCES);
     }

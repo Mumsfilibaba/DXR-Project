@@ -2,7 +2,7 @@
 #include "Core/RefCounted.h"
 #include "Core/Containers/Optional.h"
 #include "Core/Containers/SharedRef.h"
-#include "Core/Containers/HashTable.h" // TODO: Rename to TMap
+#include "Core/Containers/Map.h"
 #include "Core/Threading/Platform/CriticalSection.h"
 
 #include "RHI/RHITexture.h"
@@ -92,13 +92,13 @@ public:
 
 private:
     // Textures
-    using FTextureMap = THashTable<FString, FTexture2DRef, FStringHasher>;
+    using FTextureMap = TMap<FString, FTexture2DRef, FStringHasher>;
 
     FTextureMap      Textures;
     FCriticalSection TexturesCS;
 
     // Models
-    using FMeshModelMap = THashTable<FString, FTexture2DRef, FStringHasher>;
+    using FMeshModelMap = TMap<FString, FTexture2DRef, FStringHasher>;
     
     FMeshModelMap    MeshModels;
     FCriticalSection MeshModelsCS;

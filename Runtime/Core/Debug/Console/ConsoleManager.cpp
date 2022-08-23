@@ -129,8 +129,8 @@ void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TP
     {
         const FString& ObjectName = Object.first;
 
-        int32 Length = CandidateName.Length();
-        if (Length <= ObjectName.Length())
+        int32 Length = CandidateName.GetLength();
+        if (Length <= ObjectName.GetLength())
         {
             const char* Command = ObjectName.GetCString();
             const char* WordIt = CandidateName.GetCString();
@@ -164,7 +164,7 @@ void FConsoleManager::Execute(const FString& Command)
     }
 
     int32 Pos = Command.FindOneOf(" ");
-    if (Pos == FString::NPos)
+    if (Pos == FString::INVALID_INDEX)
     {
         IConsoleCommand* CommandObject = FindCommand(Command);
         if (!CommandObject)
@@ -189,7 +189,7 @@ void FConsoleManager::Execute(const FString& Command)
 
         Pos++;
 
-        FString Value(Command.GetCString() + Pos, Command.Length() - Pos);
+        FString Value(Command.GetCString() + Pos, Command.GetLength() - Pos);
         if (std::regex_match(Value.GetCString(), std::regex("[-]?[0-9]+")))
         {
             VariableObject->SetString(Value);

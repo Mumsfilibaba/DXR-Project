@@ -1,5 +1,6 @@
 #pragma once
 #include "AddPointer.h"
+#include "ObjectHandling.h"
 
 #include "Core/Memory/Memory.h"
 
@@ -15,25 +16,25 @@
 template<typename InCharType>
 struct TChar 
 {
-    using CharType         = InCharType;
-    using PointerType      = typename TAddPointer<CharType>::Type;
+    using CHARTYPE         = InCharType;
+    using PointerType      = typename TAddPointer<CHARTYPE>::Type;
     using ConstPointerType = const PointerType;
 
-    static CONSTEXPR InCharType Terminator = 0;
+    static CONSTEXPR CHARTYPE Zero = 0;
 
-    static NODISCARD FORCEINLINE CharType ToUpper(CharType Char);
-    static NODISCARD FORCEINLINE CharType ToLower(CharType Char);
+    static NODISCARD FORCEINLINE CHARTYPE ToUpper(CHARTYPE Char);
+    static NODISCARD FORCEINLINE CHARTYPE ToLower(CHARTYPE Char);
 
-    static NODISCARD FORCEINLINE bool IsSpace(CharType Char);
-    static NODISCARD FORCEINLINE bool IsUpper(CharType Char);
-    static NODISCARD FORCEINLINE bool IsLower(CharType Char);
-    static NODISCARD FORCEINLINE bool IsAlnum(CharType Char);
-    static NODISCARD FORCEINLINE bool IsDigit(CharType Char);
-    static NODISCARD FORCEINLINE bool IsAlpha(CharType Char);
-    static NODISCARD FORCEINLINE bool IsPunct(CharType Char);
-    static NODISCARD FORCEINLINE bool IsHexDigit(CharType Char);
+    static NODISCARD FORCEINLINE bool IsSpace(CHARTYPE Char);
+    static NODISCARD FORCEINLINE bool IsUpper(CHARTYPE Char);
+    static NODISCARD FORCEINLINE bool IsLower(CHARTYPE Char);
+    static NODISCARD FORCEINLINE bool IsAlnum(CHARTYPE Char);
+    static NODISCARD FORCEINLINE bool IsDigit(CHARTYPE Char);
+    static NODISCARD FORCEINLINE bool IsAlpha(CHARTYPE Char);
+    static NODISCARD FORCEINLINE bool IsPunct(CHARTYPE Char);
+    static NODISCARD FORCEINLINE bool IsHexDigit(CHARTYPE Char);
 
-    static NODISCARD FORCEINLINE bool IsTerminator(CharType Char) { return (Char == Terminator); }
+    static NODISCARD FORCEINLINE bool IsZero(CHARTYPE Char) { return (Char == Zero); }
 };
 
 typedef TChar<CHAR>     FChar;
@@ -131,9 +132,14 @@ struct TCString
     static FORCEINLINE CHARTYPE* Strncpy(CHARTYPE* Dest, const CHARTYPE* Source, TSIZE InLength)  noexcept;
     static FORCEINLINE CHARTYPE* Strmove(CHARTYPE* Dest, const CHARTYPE* Source)                  noexcept;
     static FORCEINLINE CHARTYPE* Strnmove(CHARTYPE* Dest, const CHARTYPE* Source, TSIZE InLength) noexcept;
-    
+    static FORCEINLINE CHARTYPE* Strset(CHARTYPE* Dest, CHARTYPE Char)                            noexcept;
+    static FORCEINLINE CHARTYPE* Strnset(CHARTYPE* Dest, CHARTYPE Char, TSIZE InLength)           noexcept;
+
     static FORCEINLINE int32 Strcmp(const CHARTYPE* LHS, const CHARTYPE* RHS)                  noexcept;
     static FORCEINLINE int32 Strncmp(const CHARTYPE* LHS, const CHARTYPE* RHS, TSIZE InLength) noexcept;
+
+    static FORCEINLINE int32 Stricmp(const CHARTYPE* LHS, const CHARTYPE* RHS)                  noexcept;
+    static FORCEINLINE int32 Strnicmp(const CHARTYPE* LHS, const CHARTYPE* RHS, TSIZE InLength) noexcept;
 
     static FORCEINLINE int32  Strtoi(const CHARTYPE* String, CHARTYPE** End, int32 Base)    noexcept;
     static FORCEINLINE int64  Strtoi64(const CHARTYPE* String, CHARTYPE** End, int32 Base)  noexcept;
@@ -231,6 +237,18 @@ FORCEINLINE CHAR* TCString<CHAR>::Strnmove(CHAR* Dest, const CHAR* Source, uint6
 }
 
 template<>
+FORCEINLINE CHAR* TCString<CHAR>::Strset(CHARTYPE* Dest, CHARTYPE Char) noexcept
+{
+    return Strnset(Dest, Char, Strlen(Dest));
+}
+
+template<>
+FORCEINLINE CHAR* TCString<CHAR>::Strnset(CHARTYPE* Dest, CHARTYPE Char, TSIZE InLength) noexcept
+{
+    return reinterpret_cast<CHAR*>(FMemory::Memset(Dest, Char, InLength * sizeof(CHAR)));
+}
+
+template<>
 FORCEINLINE int32 TCString<CHAR>::Strcmp(const CHAR* LHS, const CHAR* RHS) noexcept
 {
     return static_cast<int32>(strcmp(LHS, RHS));
@@ -240,6 +258,18 @@ template<>
 FORCEINLINE int32 TCString<CHAR>::Strncmp(const CHAR* LHS, const CHAR* RHS, uint64 InLength) noexcept
 {
     return static_cast<int32>(strncmp(LHS, RHS, InLength));
+}
+
+template<>
+FORCEINLINE int32 TCString<CHAR>::Stricmp(const CHAR* LHS, const CHAR* RHS) noexcept
+{
+    return static_cast<int32>(_stricmp(LHS, RHS));
+}
+
+template<>
+FORCEINLINE int32 TCString<CHAR>::Strnicmp(const CHAR* LHS, const CHAR* RHS, uint64 InLength) noexcept
+{
+    return static_cast<int32>(_strnicmp(LHS, RHS, InLength));
 }
 
 template<>
@@ -386,6 +416,19 @@ FORCEINLINE WIDECHAR* TCString<WIDECHAR>::Strnmove(WIDECHAR* Dest, const WIDECHA
 }
 
 template<>
+FORCEINLINE WIDECHAR* TCString<WIDECHAR>::Strset(WIDECHAR* Dest, WIDECHAR Char) noexcept
+{
+    return Strnset(Dest, Char, Strlen(Dest));
+}
+
+template<>
+FORCEINLINE WIDECHAR* TCString<WIDECHAR>::Strnset(WIDECHAR* Dest, WIDECHAR Char, TSIZE InLength) noexcept
+{
+    ::AssignElements<WIDECHAR>(Dest, Char, InLength);
+    return reinterpret_cast<WIDECHAR*>(Dest);
+}
+
+template<>
 FORCEINLINE int32 TCString<WIDECHAR>::Strcmp(const WIDECHAR* LHS, const WIDECHAR* RHS) noexcept
 {
     return static_cast<int32>(wcscmp(LHS, RHS));
@@ -395,6 +438,18 @@ template<>
 FORCEINLINE int32 TCString<WIDECHAR>::Strncmp(const WIDECHAR* LHS, const WIDECHAR* RHS, uint64 InLength) noexcept
 {
     return static_cast<int32>(wcsncmp(LHS, RHS, InLength));
+}
+
+template<>
+FORCEINLINE int32 TCString<WIDECHAR>::Stricmp(const WIDECHAR* LHS, const WIDECHAR* RHS) noexcept
+{
+    return static_cast<int32>(_wcsicmp(LHS, RHS));
+}
+
+template<>
+FORCEINLINE int32 TCString<WIDECHAR>::Strnicmp(const WIDECHAR* LHS, const WIDECHAR* RHS, uint64 InLength) noexcept
+{
+    return static_cast<int32>(_wcsnicmp(LHS, RHS, InLength));
 }
 
 template<>

@@ -8,7 +8,7 @@
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 #include "Core/Containers/ArrayView.h"
 
 #define GBUFFER_ALBEDO_INDEX      (0)
@@ -58,7 +58,7 @@ public:
 
 private:
     TArray<TResource*>            Resources;
-    THashTable<TResource*, int32> ResourceIndices;
+    TMap<TResource*, int32> ResourceIndices;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -116,7 +116,7 @@ struct RENDERER_API FFrameResources
     TArray<FRHIRayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<FRayTracingShaderResources>     RTHitGroupResources;
-    THashTable<class FMesh*, uint32>       RTMeshToHitGroupIndex;
+    TMap<class FMesh*, uint32>       RTMeshToHitGroupIndex;
     TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
 
     TArrayView<const FMeshDrawCommand> GlobalMeshDrawCommands;

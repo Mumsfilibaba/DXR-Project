@@ -1,17 +1,16 @@
 #pragma once
 #include "Core/Utilities/HashUtilities.h"
 
-#include <unordered_map>
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TODO: Custom hash map implementation
+// TODO: Custom map implementation
 
 #if 1
+#include <unordered_map>
+
 template<
     typename KeyType,
     typename T,
     typename HashType = THash<KeyType>>
-using THashTable = std::unordered_map<KeyType, T, HashType>;
+using TMap = std::unordered_map<KeyType, T, HashType>;
 
 #else
 #include "Pair.h"
@@ -24,10 +23,10 @@ template<typename T>
 struct THash;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// THashTable
+// TMap
 
 template<typename ElementType, typename KeyType, typename HasherType = THash<KeyType>>
-class THashTable
+class TMap
 {
 public:
     ElementType* Find(const KeyType& Key)

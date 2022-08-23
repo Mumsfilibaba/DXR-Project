@@ -155,7 +155,7 @@ public:
      *
      * @return: The length of the vector
      */
-    FORCEINLINE float Length() const noexcept
+    FORCEINLINE float GetLength() const noexcept
     {
         const float fLengthSquared = LengthSquared();
         return NMath::Sqrt(fLengthSquared);

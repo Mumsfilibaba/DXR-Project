@@ -11,7 +11,7 @@
 // TStaticBitArray - Static array of packed bits
 
 template<
-    uint32 NumBits,
+    uint32 NUM_BITS,
     typename InStorageType = uint32>
 class TStaticBitArray
 {
@@ -20,7 +20,7 @@ public:
     using StorageType = InStorageType;
 
     static_assert(
-        NumBits > 0,
+        NUM_BITS > 0,
         "StaticBitArray must have some bits allocated");
     static_assert(
         TIsUnsigned<StorageType>::Value,
@@ -67,7 +67,7 @@ public:
     {
         ResetWithZeros();
 
-        NumValues = NMath::Min(NumValues, NumBits);
+        NumValues = NMath::Min(NumValues, NUM_BITS);
         for (SizeType Index = 0; Index < NumValues; ++Index)
         {
             Storage[Index] = InValues[Index];
@@ -80,7 +80,7 @@ public:
      * Constructor that sets a certain number of bits to specified value
      *
      * @param bValue: Value to set bits to
-     * @param NumBits: Number of bits to set
+     * @param NUM_BITS: Number of bits to set
      */
     CONSTEXPR explicit TStaticBitArray(SizeType InNumBits, bool bValue) noexcept
         : Storage()
@@ -142,7 +142,7 @@ public:
      */
     CONSTEXPR void AssignBit(SizeType BitPosition, const bool bValue) noexcept
     {
-        if (BitPosition < NumBits)
+        if (BitPosition < NUM_BITS)
         {
             AssignBitUnchecked(BitPosition, bValue);
         }
@@ -155,7 +155,7 @@ public:
      */
     CONSTEXPR void FlipBit(SizeType BitPosition) noexcept
     {
-        if (BitPosition < NumBits)
+        if (BitPosition < NUM_BITS)
         {
             const SizeType ElementIndex   = GetStorageIndexOfBit(BitPosition);
             const SizeType IndexInElement = GetIndexOfBitInStorage(BitPosition);
@@ -253,7 +253,7 @@ public:
      */
     CONSTEXPR void BitwiseAnd(const TStaticBitArray& Other) noexcept
     {
-        for (SizeType Index = 0; Index < Capacity(); Index++)
+        for (SizeType Index = 0; Index < GetCapacity(); Index++)
         {
             Storage[Index] &= Other.Storage[Index];
         }
@@ -266,7 +266,7 @@ public:
      */
     CONSTEXPR void BitwiseOr(const TStaticBitArray& Other) noexcept
     {
-        for (SizeType Index = 0; Index < Capacity(); Index++)
+        for (SizeType Index = 0; Index < GetCapacity(); Index++)
         {
             Storage[Index] |= Other.Storage[Index];
         }
@@ -279,7 +279,7 @@ public:
      */
     CONSTEXPR void BitwiseXor(const TStaticBitArray& Other) noexcept
     {
-        for (SizeType Index = 0; Index < Capacity(); Index++)
+        for (SizeType Index = 0; Index < GetCapacity(); Index++)
         {
             Storage[Index] |= Other.Storage[Index];
         }
@@ -292,7 +292,7 @@ public:
      */
     CONSTEXPR void BitwiseNot() noexcept
     {
-        for (SizeType Index = 0; Index < Capacity(); Index++)
+        for (SizeType Index = 0; Index < GetCapacity(); Index++)
         {
             Storage[Index] = ~Element;
         }
@@ -332,10 +332,10 @@ public:
      */
     NODISCARD CONSTEXPR BitReferenceType GetBitReference(SizeType BitIndex) noexcept
     {
-        Check(BitIndex < NumBits);
+        Check(BitIndex < NUM_BITS);
 
         const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
-        Check(ElementIndex < Capacity());
+        Check(ElementIndex < GetCapacity());
 
         return BitReferenceType(Storage[ElementIndex], ~Element);
     }
@@ -348,10 +348,10 @@ public:
      */
     NODISCARD CONSTEXPR const ConstBitReferenceType GetBitReference(SizeType Index) const noexcept
     {
-        Check(Index < NumBits);
+        Check(Index < NUM_BITS);
 
         const SizeType ElementIndex = GetStorageIndexOfBit(Index);
-        Check(ElementIndex < Capacity());
+        Check(ElementIndex < GetCapacity());
 
         return ConstBitReferenceType(Storage[ElementIndex], CreateMaskForBit(Index));
     }
@@ -561,7 +561,7 @@ public:
      */
     NODISCARD CONSTEXPR SizeType GetSize() const noexcept
     {
-        return NumBits;
+        return NUM_BITS;
     }
 
     /**
@@ -569,7 +569,7 @@ public:
      *
      * @return: Returns the maximum number of bits in the array
      */
-    NODISCARD CONSTEXPR SizeType Capacity() const noexcept
+    NODISCARD CONSTEXPR SizeType GetCapacity() const noexcept
     {
         return GetNumElements() * GetBitsPerStorage();
     }
@@ -698,45 +698,14 @@ public:
 
 public:
 
-    /**
-     * STL start iterator, same as TStaticBitArray::StartIterator
-     *
-     * @return: A iterator that points to the first element
-     */
-    NODISCARD FORCEINLINE IteratorType begin() noexcept
-    {
-        return StartIterator();
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // STL Iterators
 
-    /**
-     * STL end iterator, same as TStaticBitArray::EndIterator
-     *
-     * @return: A iterator that points past the last element
-     */
-    NODISCARD FORCEINLINE IteratorType end() noexcept
-    {
-        return EndIterator();
-    }
+    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
 
-    /**
-     * STL start iterator, same as TStaticBitArray::StartIterator
-     *
-     * @return: A iterator that points to the first element
-     */
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept
-    {
-        return StartIterator();
-    }
-
-    /**
-     * STL end iterator, same as TStaticBitArray::EndIterator
-     *
-     * @return: A iterator that points past the last element
-     */
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept
-    {
-        return EndIterator();
-    }
+    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return EndIterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return EndIterator(); }
 
 private:
     static NODISCARD CONSTEXPR SizeType GetStorageIndexOfBit(SizeType BitIndex) noexcept
@@ -756,7 +725,7 @@ private:
 
     static NODISCARD CONSTEXPR SizeType GetNumElements() noexcept
     {
-        return (NumBits + GetBitsPerStorage() - 1) / GetBitsPerStorage();
+        return (NUM_BITS + GetBitsPerStorage() - 1) / GetBitsPerStorage();
     }
 
     static NODISCARD CONSTEXPR StorageType CreateMaskForBit(SizeType BitIndex) noexcept
@@ -890,7 +859,7 @@ private:
 
     CONSTEXPR void MaskOutLastStorageElement()
     {
-        const SizeType LastValidBit     = NumBits - 1;
+        const SizeType LastValidBit     = NUM_BITS - 1;
         const SizeType LastElementIndex = GetStorageIndexOfBit(LastValidBit);
         const SizeType LastBitIndex     = GetIndexOfBitInStorage(LastValidBit);
 

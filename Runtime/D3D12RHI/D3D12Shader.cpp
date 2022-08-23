@@ -251,7 +251,7 @@ bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShade
     FString Identifier = FuncDesc.Name;
 
     auto NameStart = Identifier.ReverseFindOneOf("\x1?");
-    if (NameStart != FString::NPos)
+    if (NameStart != FString::INVALID_INDEX)
     {
         NameStart++;
     }

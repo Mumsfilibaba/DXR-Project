@@ -2,7 +2,7 @@
 #include "StbImageLoader.h"
 
 #include "Core/Math/MathCommon.h"
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Threading/AsyncTaskManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
@@ -43,7 +43,7 @@ struct FOBJTextureContext
         }
     }
 
-    THashTable<FString, int8, FStringHasher> UniqueTextures;
+    TMap<FString, int8, FStringHasher> UniqueTextures;
     TArray<FImage2DPtr>                      Textures;
 };
 
@@ -94,7 +94,7 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
 
     // Construct Scene
     FModelData Data;
-    THashTable<FVertex, uint32, FVertexHasher> UniqueVertices;
+    TMap<FVertex, uint32, FVertexHasher> UniqueVertices;
     for (const tinyobj::shape_t& Shape : Shapes)
     {
         // Start at index zero for each mesh and loop until all indices are processed
@@ -170,8 +170,8 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
         }
     }
 
-    OutScene.Models.ShrinkToFit();
-    OutScene.Materials.ShrinkToFit();
+    OutScene.Models.Shrink();
+    OutScene.Materials.Shrink();
 
     FAsyncTaskManager::Get().WaitForAll();
     return true;

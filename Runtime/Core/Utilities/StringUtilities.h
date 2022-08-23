@@ -7,7 +7,7 @@
 inline void ConvertBackslashes(FString& OutString)
 {
     auto Position = OutString.Find('\\');
-    while (Position != FString::NPos)
+    while (Position != FString::INVALID_INDEX)
     {
         OutString.Replace('/', Position);
         Position = OutString.Find('\\', Position + 1);

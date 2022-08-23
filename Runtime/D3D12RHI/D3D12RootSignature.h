@@ -5,7 +5,7 @@
 
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Utilities/HashUtilities.h"
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 
 typedef TSharedRef<class FD3D12RootSignature> FD3D12RootSignatureRef;
 

@@ -65,9 +65,8 @@ public:
     FORCEINLINE const D3D12_INPUT_LAYOUT_DESC& GetDesc() const { return Desc; }
 
 private:
-    D3D12_INPUT_LAYOUT_DESC Desc;
-
-    TArray<FString>                   SemanticNames;
+    D3D12_INPUT_LAYOUT_DESC          Desc;
+    TArray<FString>                  SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
 };
 
@@ -250,5 +249,5 @@ private:
     FD3D12RootSignatureRef MissLocalRootSignature;
     FD3D12RootSignatureRef HitLocalRootSignature;
 
-    THashTable<FString, FRayTracingShaderIdentifer, FStringHasher> ShaderIdentifers;
+    TMap<FString, FRayTracingShaderIdentifer, FStringHasher> ShaderIdentifers;
 };

@@ -128,8 +128,8 @@ FMeshData FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
         }
     }
 
-    Data.Vertices.ShrinkToFit();
-    Data.Indices.ShrinkToFit();
+    Data.Vertices.Shrink();
+    Data.Indices.Shrink();
 
     return Data;
 }
@@ -199,8 +199,8 @@ FMeshData FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
         Sphere.Vertices[i].TexCoord.x = (NMath::Atan2(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + NMath::kPI_f) / (2.0f * NMath::kPI_f);
     }
 
-    Sphere.Indices.ShrinkToFit();
-    Sphere.Vertices.ShrinkToFit();
+    Sphere.Indices.Shrink();
+    Sphere.Vertices.Shrink();
 
     FMeshUtilities::CalculateTangents(Sphere);
 
