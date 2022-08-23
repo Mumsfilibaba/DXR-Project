@@ -60,7 +60,7 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
     std::vector<tinyobj::material_t> Materials;
     tinyobj::attrib_t                Attributes;
 
-    FString MTLFiledir = FString(Filename.GetCString(), Filename.ReverseFind('/'));
+    FString MTLFiledir = FString(Filename.GetCString(), Filename.FindLastChar('/'));
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.GetCString(), MTLFiledir.GetCString(), true, false))
     {
         LOG_WARNING("[FOBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.GetCString(), Warning.c_str(), Error.c_str());

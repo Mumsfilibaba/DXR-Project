@@ -250,7 +250,11 @@ bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShade
     // HACK: Since the Nvidia driver can't handle these names, we have to change the names :(
     FString Identifier = FuncDesc.Name;
 
-    auto NameStart = Identifier.ReverseFindOneOf("\x1?");
+    auto NameStart = Identifier.FindLastCharWithPredicate([](CHAR Char) -> bool 
+    { 
+        return (Char == '\x1') || (Char == '?');
+    });
+
     if (NameStart != FString::INVALID_INDEX)
     {
         NameStart++;

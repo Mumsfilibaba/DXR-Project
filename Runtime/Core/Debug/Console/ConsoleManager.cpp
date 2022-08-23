@@ -163,7 +163,7 @@ void FConsoleManager::Execute(const FString& Command)
         History.RemoveAt(History.StartIterator());
     }
 
-    int32 Pos = Command.FindOneOf(" ");
+    int32 Pos = Command.FindChar(' ');
     if (Pos == FString::INVALID_INDEX)
     {
         IConsoleCommand* CommandObject = FindCommand(Command);

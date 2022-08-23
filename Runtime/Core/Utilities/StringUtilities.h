@@ -6,10 +6,10 @@
 
 inline void ConvertBackslashes(FString& OutString)
 {
-    auto Position = OutString.Find('\\');
+    auto Position = OutString.FindChar('\\');
     while (Position != FString::INVALID_INDEX)
     {
         OutString.Replace('/', Position);
-        Position = OutString.Find('\\', Position + 1);
+        Position = OutString.FindChar('\\', Position + 1);
     }
 }
