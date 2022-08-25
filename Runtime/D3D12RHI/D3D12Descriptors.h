@@ -5,7 +5,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Threading/Platform/CriticalSection.h"
+#include "Core/Platform/CriticalSection.h"
 
 class FD3D12DescriptorHeap;
 class FD3D12OnlineDescriptorManager;

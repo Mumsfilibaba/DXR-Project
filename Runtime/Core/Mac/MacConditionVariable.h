@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Threading/Generic/GenericConditionVariable.h"
+#include "Core/Generic/GenericConditionVariable.h"
 
 #include <pthread.h>
 

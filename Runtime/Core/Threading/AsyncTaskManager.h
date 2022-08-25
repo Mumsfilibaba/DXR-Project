@@ -1,10 +1,9 @@
 #pragma once
 #include "AtomicInt.h"
 
-#include "Platform/CriticalSection.h"
-#include "Platform/ConditionVariable.h"
-#include "Platform/PlatformThread.h"
-
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Platform/ConditionVariable.h"
+#include "Core/Platform/PlatformThread.h"
 #include "Core/Delegates/Delegate.h"
 
 typedef int64 DispatchID;

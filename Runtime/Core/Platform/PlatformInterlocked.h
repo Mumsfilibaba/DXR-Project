@@ -1,12 +1,12 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-    #include "Core/Threading/Windows/WindowsInterlocked.h"
+    #include "Core/Windows/WindowsInterlocked.h"
     typedef FWindowsInterlocked FPlatformInterlocked;
 #elif PLATFORM_MACOS
-    #include "Core/Threading/Mac/MacInterlocked.h"
+    #include "Core/Mac/MacInterlocked.h"
     typedef FMacInterlocked FPlatformInterlocked;
 #else
-    #include "Core/Threading/Generic/GenericInterlocked.h"
+    #include "Core/Generic/GenericInterlocked.h"
     typedef FGenericInterlocked FPlatformInterlocked;
 #endif

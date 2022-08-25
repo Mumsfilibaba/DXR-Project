@@ -16,7 +16,7 @@
 #include "Core/Math/Frustum.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Threading/Platform/PlatformThreadMisc.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 
 #include "Renderer/Debug/GPUProfiler.h"
 

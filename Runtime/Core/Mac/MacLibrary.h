@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Containers/String.h"
-#include "Core/Modules/Generic/GenericLibrary.h"
+#include "Core/Generic/GenericLibrary.h"
 
 #include <dlfcn.h>
 
@@ -10,13 +10,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacLibrary
 
-class FMacLibrary final : public FGenericLibrary
+struct FMacLibrary final : public FGenericLibrary
 {
-public:
-    
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericLibrary Interface
-
     static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
     {
         FString RealName = GetRealName(LibraryName);

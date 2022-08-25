@@ -3,7 +3,7 @@
 #include "Core/Containers/Optional.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Map.h"
-#include "Core/Threading/Platform/CriticalSection.h"
+#include "Core/Platform/CriticalSection.h"
 
 #include "RHI/RHITexture.h"
 

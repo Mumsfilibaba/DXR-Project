@@ -5,7 +5,7 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
-#include "Core/Threading/Platform/CriticalSection.h"
+#include "Core/Platform/CriticalSection.h"
 
 #include "CoreApplication/Generic/GenericApplication.h"
 

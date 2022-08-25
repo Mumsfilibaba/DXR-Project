@@ -6,7 +6,7 @@
 
 #include "Core/Memory/MemoryStack.h"
 #include "Core/Threading/ThreadManager.h"
-#include "Core/Threading/Platform/ConditionVariable.h"
+#include "Core/Platform/ConditionVariable.h"
 #include "Core/Containers/ArrayView.h"
 
 struct FRHIRenderTargetView;

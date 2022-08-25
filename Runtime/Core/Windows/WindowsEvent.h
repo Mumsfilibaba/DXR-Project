@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Threading/Generic/GenericEvent.h"
+#include "Core/Generic/GenericEvent.h"
 
 typedef TSharedRef<class FWindowsEvent> FWindowsEventRef;
 

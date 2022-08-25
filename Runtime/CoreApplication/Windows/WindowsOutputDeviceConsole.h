@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Windows/Windows.h"
-#include "Core/Threading/Platform/CriticalSection.h"
+#include "Core/Platform/CriticalSection.h"
 #include "Core/Misc/OutputDeviceConsole.h"
 
 #include "CoreApplication/CoreApplication.h"

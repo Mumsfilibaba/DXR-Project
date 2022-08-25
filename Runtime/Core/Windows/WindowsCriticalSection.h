@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Windows/Windows.h"
-#include "Core/Threading/Generic/GenericCriticalSection.h"
+#include "Core/Generic/GenericCriticalSection.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsCriticalSection

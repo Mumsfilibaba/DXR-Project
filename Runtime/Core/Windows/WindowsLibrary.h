@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Windows/Windows.h"
-#include "Core/Modules/Generic/GenericLibrary.h"
+#include "Core/Generic/GenericLibrary.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsLibrary
@@ -9,9 +9,6 @@
 struct FWindowsLibrary final 
     : public FGenericLibrary
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericLibrary Interface
-
     static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
     {
         const FString RealName = GetRealName(LibraryName);

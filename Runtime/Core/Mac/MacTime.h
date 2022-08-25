@@ -1,6 +1,6 @@
 #pragma once
+#include "Core/Generic/GenericTime.h"
 #include "Core/Time/Time.h"
-#include "Core/Time/Generic/GenericTime.h"
 
 #include <mach/mach_time.h>
 
@@ -10,9 +10,6 @@
 struct FMacTime 
     : public FGenericTime
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericTime Interface
-
     static FORCEINLINE uint64 QueryPerformanceCounter()
     {
         return mach_absolute_time();

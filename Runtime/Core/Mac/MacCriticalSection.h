@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Threading/Generic/GenericCriticalSection.h"
+#include "Core/Generic/GenericCriticalSection.h"
 
 #include <pthread.h>
 

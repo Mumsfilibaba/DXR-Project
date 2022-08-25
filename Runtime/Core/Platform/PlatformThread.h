@@ -1,12 +1,12 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-    #include "Core/Threading/Windows/WindowsThread.h"
+    #include "Core/Windows/WindowsThread.h"
     typedef FWindowsThread FPlatformThread;
 #elif PLATFORM_MACOS
-    #include "Core/Threading/Mac/MacThread.h"
+    #include "Core/Mac/MacThread.h"
     typedef FMacThread FPlatformThread;
 #else
-    #include "Core/Threading/Generic/GenericThread.h"
+    #include "Core/Generic/GenericThread.h"
     typedef FGenericThread FPlatformThread;
 #endif

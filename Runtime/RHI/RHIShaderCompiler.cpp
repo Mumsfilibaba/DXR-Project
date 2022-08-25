@@ -2,8 +2,8 @@
 
 #include "Core/Containers/ComPtr.h"
 #include "Core/Threading/AsyncTaskManager.h"
-#include "Core/Threading/Platform/PlatformInterlocked.h"
-#include "Core/Modules/Platform/PlatformLibrary.h"
+#include "Core/Platform/PlatformInterlocked.h"
+#include "Core/Platform/PlatformLibrary.h"
 
 #include <spirv_cross_c.h>
 
@@ -79,13 +79,12 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShaderBlob
+// FShaderBlob
 
-class CShaderBlob : public IDxcBlob
+class FShaderBlob : public IDxcBlob
 {
 public:
-
-    CShaderBlob(LPCVOID InData, SIZE_T InSize)
+    FShaderBlob(LPCVOID InData, SIZE_T InSize)
         : Data(nullptr)
         , Size(InSize)
         , References(1)
@@ -94,7 +93,7 @@ public:
         FMemory::Memcpy(Data, InData, Size);
     }
 
-    ~CShaderBlob()
+    ~FShaderBlob()
     {
         FMemory::Free(Data);
     }
@@ -459,7 +458,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     // Use the asset-folder as base for the shader-files
     const FStringWide WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
-    TComPtr<IDxcBlob>            SourceBlob = dbg_new CShaderBlob(ShaderSource.GetData(), ShaderSource.SizeInBytes());
+    TComPtr<IDxcBlob>            SourceBlob = dbg_new FShaderBlob(ShaderSource.GetData(), ShaderSource.SizeInBytes());
     TComPtr<IDxcOperationResult> Result;
     hResult = Compiler->Compile(
         SourceBlob.Get(),

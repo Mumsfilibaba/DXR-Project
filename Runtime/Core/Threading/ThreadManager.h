@@ -1,6 +1,5 @@
 #pragma once
-#include "Generic/GenericThread.h"
-
+#include "Core/Generic/GenericThread.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Optional.h"

@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Containers/Function.h"
-#include "Core/Threading/Generic/GenericThread.h"
+#include "Core/Generic/GenericThread.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsThread

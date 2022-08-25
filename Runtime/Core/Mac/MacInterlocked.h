@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Threading/Generic/GenericInterlocked.h"
+#include "Core/Generic/GenericInterlocked.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacInterlocked

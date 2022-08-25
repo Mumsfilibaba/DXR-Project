@@ -1,6 +1,5 @@
 #pragma once
-#include "Core/Threading/Generic/GenericInterlocked.h"
-
+#include "Core/Generic/GenericInterlocked.h"
 #include "Core/Windows/Windows.h"
 
 #include <intrin.h>
@@ -13,11 +12,7 @@ struct FWindowsInterlocked
 {
     // See: https://docs.microsoft.com/en-us/cpp/intrinsics/interlockedexchangeadd-intrinsic-functions?view=msvc-160
     //      https://docs.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-interlockedincrement16
-
     static_assert(sizeof(int32) == sizeof(long) && alignof(int32) == alignof(long), "int32 must have the same size and alignment as long");
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericInterlocked Interface
 
     static FORCEINLINE int8 InterlockedAdd(volatile int8* Dest, int8 Value)
     {

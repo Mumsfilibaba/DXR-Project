@@ -1,7 +1,7 @@
 #include "D3D12Core.h"
 #include "DynamicD3D12.h"
 
-#include "Core/Modules/Platform/PlatformLibrary.h"
+#include "Core/Platform/PlatformLibrary.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 

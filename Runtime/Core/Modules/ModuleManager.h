@@ -1,6 +1,4 @@
 #pragma once
-#include "Platform/PlatformLibrary.h"
-
 #include "Core/Core.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"
@@ -9,7 +7,8 @@
 #include "Core/Delegates/Delegate.h"
 #include "Core/Delegates/MulticastDelegate.h"
 #include "Core/Debug/Debug.h"
-#include "Core/Threading/Platform/CriticalSection.h"
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Platform/PlatformLibrary.h"
 
 #ifdef GetModuleHandle
     #undef GetModuleHandle

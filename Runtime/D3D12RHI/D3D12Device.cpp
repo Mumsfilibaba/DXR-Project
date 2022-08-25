@@ -8,7 +8,7 @@
 #include "DynamicD3D12.h"
 
 #include "Core/Windows/Windows.h"
-#include "Core/Modules/Platform/PlatformLibrary.h"
+#include "Core/Platform/PlatformLibrary.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 

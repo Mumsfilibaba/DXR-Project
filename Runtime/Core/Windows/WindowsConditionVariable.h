@@ -3,7 +3,7 @@
 
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Threading/Generic/GenericConditionVariable.h"
+#include "Core/Generic/GenericConditionVariable.h"
 #include "Core/Platform/PlatformMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

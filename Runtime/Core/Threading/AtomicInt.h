@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Templates/IsSigned.h"
-#include "Core/Threading/Platform/PlatformInterlocked.h"
-#include "Core/Threading/Platform/PlatformAtomic.h"
+#include "Core/Platform/PlatformInterlocked.h"
+#include "Core/Platform/PlatformAtomic.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TAtomicInt

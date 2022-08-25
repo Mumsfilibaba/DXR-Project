@@ -3,7 +3,7 @@
 
 #include "Core/Core.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Threading/Platform/CriticalSection.h"
+#include "Core/Platform/CriticalSection.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Logging macros

@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Threading/Generic/GenericThreadMisc.h"
+#include "Core/Generic/GenericThreadMisc.h"
 
 #if PLATFORM_ARCHITECTURE_X86_X64
     #include <immintrin.h>

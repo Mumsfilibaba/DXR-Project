@@ -2,7 +2,7 @@
 #include "AtomicInt.h"
 
 #include "Core/Core.h"
-#include "Platform/PlatformThreadMisc.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FSpinLock

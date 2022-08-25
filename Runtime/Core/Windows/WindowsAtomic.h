@@ -1,6 +1,6 @@
 #pragma once
-#include "Core/Threading/Generic/GenericAtomic.h"
-#include "Core/Threading/Platform/PlatformInterlocked.h"
+#include "Core/Generic/GenericAtomic.h"
+#include "Core/Platform/PlatformInterlocked.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsAtomic
@@ -8,9 +8,6 @@
 struct FWindowsAtomic final 
     : public FGenericAtomic
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericAtomic Interface
-
     static FORCEINLINE int8 Read(volatile const int8* Source)
     {
         return FPlatformInterlocked::InterlockedCompareExchange((int8*)Source, 0, 0);

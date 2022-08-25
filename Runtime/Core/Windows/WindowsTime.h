@@ -1,6 +1,6 @@
 #pragma once
+#include "Core/Generic/GenericTime.h"
 #include "Core/Windows/Windows.h"
-#include "Core/Time/Generic/GenericTime.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsTime
@@ -8,9 +8,6 @@
 struct FWindowsTime 
     : public FGenericTime
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericTime Interface
-
     static FORCEINLINE uint64 QueryPerformanceCounter()
     {
         LARGE_INTEGER Counter;

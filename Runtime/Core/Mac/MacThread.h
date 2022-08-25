@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Threading/Generic/GenericThread.h"
+#include "Core/Generic/GenericThread.h"
 
 #include <pthread.h>
 

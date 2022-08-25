@@ -1,7 +1,7 @@
 #pragma once
 #include "MacRunLoop.h"
 
-#include "Core/Threading/Generic/GenericThreadMisc.h"
+#include "Core/Generic/GenericThreadMisc.h"
 
 #include <unistd.h>
 #include <pthread.h>
