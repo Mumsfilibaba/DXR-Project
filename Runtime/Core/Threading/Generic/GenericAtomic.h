@@ -20,7 +20,7 @@ struct FGenericAtomic
      * @param Source: Pointer to variable to read from
      * @return: Returns the read value
      */
-    static FORCEINLINE int8  Read(volatile const int8* Source) { return 0; }
+    static FORCEINLINE int8 Read(volatile const int8* Source) { return 0; }
 
     /**
      * @brief: Reads a value atomically. All memory loads and stores are synced.
@@ -52,7 +52,7 @@ struct FGenericAtomic
      * @param Source: Pointer to variable to read from
      * @return: Returns the read value
      */
-    static FORCEINLINE int8  RelaxedRead(volatile const int8* Source) { return 0; }
+    static FORCEINLINE int8 RelaxedRead(volatile const int8* Source) { return 0; }
     
     /**
      * @brief: Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.

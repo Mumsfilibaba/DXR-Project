@@ -362,3 +362,26 @@ FORCEINLINE void AssignElements(ElementType* RESTRICT Dst, const ElementType& El
         }
     }
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// AssignElementsAndReturn
+
+template<typename ElementType, typename SizeType>
+FORCEINLINE ElementType* AssignElementsAndReturn(ElementType* RESTRICT Dst, const ElementType& Element, SizeType Count) noexcept
+{
+    if CONSTEXPR(TIsTrivial<ElementType>::Value && sizeof(ElementType) == sizeof(uint8))
+    {
+        return reinterpret_cast<ElementType*>(FMemory::Memset(Dst, static_cast<uint8>(Element), sizeof(ElementType) * Count));
+    }
+    else
+    {
+        while (Count)
+        {
+            *Dst = Element;
+            ++Dst;
+            --Count;
+        }
+
+        return Dst;
+    }
+}
