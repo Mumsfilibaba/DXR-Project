@@ -1,6 +1,6 @@
 #include "ConsoleManager.h"
 
-#include "Canvas/Application.h"
+#include "Application/Application.h"
 
 // TODO: Remove (Make own? Slow?)
 #include <regex>

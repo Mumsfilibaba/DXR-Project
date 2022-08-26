@@ -6,7 +6,7 @@
 
 #include "Renderer/Renderer.h"
 
-#include "Canvas/Application.h"
+#include "Application/Application.h"
 
 #include <imgui.h>
 

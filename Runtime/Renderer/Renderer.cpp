@@ -1,6 +1,6 @@
 #include "Renderer.h"
 
-#include "Canvas/Application.h"
+#include "Application/Application.h"
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 

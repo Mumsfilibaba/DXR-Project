@@ -2,7 +2,7 @@
 
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Canvas/Application.h"
+#include "Application/Application.h"
 
 #include <imgui.h>
 

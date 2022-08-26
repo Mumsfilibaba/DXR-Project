@@ -1,7 +1,7 @@
 #include "FrameProfilerWindow.h"
 
-#include "Canvas/CanvasUtilities.h"
-#include "Canvas/Application.h"
+#include "Application/WidgetUtilities.h"
+#include "Application/Application.h"
 
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Time/Timer.h"

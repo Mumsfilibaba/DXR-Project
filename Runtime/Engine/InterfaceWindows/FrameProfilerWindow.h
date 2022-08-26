@@ -1,5 +1,5 @@
 #pragma once
-#include "Canvas/Window.h"
+#include "Application/Window.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 

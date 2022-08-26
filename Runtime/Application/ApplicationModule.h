@@ -2,14 +2,14 @@
 #include "Core/Core.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// Canvas API
+// Application API
 
 #if MONOLITHIC_BUILD
-    #define CANVAS_API
+    #define APPLICATION_API
 #else
-    #if CANVAS_IMPL
-        #define CANVAS_API MODULE_EXPORT
+    #if APPLICATION_IMPL
+        #define APPLICATION_API MODULE_EXPORT
     #else
-        #define CANVAS_API MODULE_IMPORT
+        #define APPLICATION_API MODULE_IMPORT
     #endif
 #endif

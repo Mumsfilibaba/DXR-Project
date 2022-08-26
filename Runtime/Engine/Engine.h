@@ -3,9 +3,9 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Delegates/Event.h"
 
-#include "Canvas/Events.h"
-#include "Canvas/User.h"
-#include "Canvas/WindowMessageHandler.h"
+#include "Application/Events.h"
+#include "Application/User.h"
+#include "Application/WindowMessageHandler.h"
 
 #include "RHI/RHIViewport.h"
 

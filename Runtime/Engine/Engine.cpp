@@ -4,7 +4,7 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
 
-#include "Canvas/Application.h"
+#include "Application/Application.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 

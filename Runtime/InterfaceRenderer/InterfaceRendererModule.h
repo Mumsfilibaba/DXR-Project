@@ -1,5 +1,5 @@
 #pragma once
-#include "Canvas/IApplicationRenderer.h"
+#include "Application/IApplicationRenderer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FApplicationRendererModule

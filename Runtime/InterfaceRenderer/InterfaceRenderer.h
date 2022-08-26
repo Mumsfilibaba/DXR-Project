@@ -6,8 +6,8 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHIResourceViews.h"
 
-#include "Canvas/InputHandler.h"
-#include "Canvas/IApplicationRenderer.h"
+#include "Application/InputHandler.h"
+#include "Application/IApplicationRenderer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FInterfaceRenderer

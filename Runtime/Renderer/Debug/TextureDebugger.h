@@ -3,8 +3,8 @@
 
 #include "RHI/RHIResourceViews.h"
 
-#include "Canvas/DrawableImage.h"
-#include "Canvas/Window.h"
+#include "Application/DrawableImage.h"
+#include "Application/Window.h"
 
 #include <imgui.h>
 

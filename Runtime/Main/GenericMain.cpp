@@ -4,7 +4,7 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-#include "Canvas/Application.h"
+#include "Application/Application.h"
 
 #include "Engine/Engine.h"
 

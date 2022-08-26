@@ -15,7 +15,7 @@
 #include <Engine/Scene/Components/MeshComponent.h>
 #include <Engine/Resources/TextureFactory.h>
 
-#include <Canvas/Application.h>
+#include <Application/Application.h>
 
 #include <InterfaceRenderer/InterfaceRenderer.h>
 

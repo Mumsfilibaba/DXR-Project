@@ -1,7 +1,7 @@
 #pragma once
-#include "Canvas/Window.h"
-#include "Canvas/InputHandler.h"
-#include "Canvas/Events.h"
+#include "Application/Window.h"
+#include "Application/InputHandler.h"
+#include "Application/Events.h"
 
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/SharedRef.h"

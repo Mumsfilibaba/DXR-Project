@@ -1,7 +1,7 @@
 #pragma once
 #include "GPUProfiler.h"
 
-#include "Canvas/Window.h"
+#include "Application/Window.h"
 
 #include <imgui.h>
 

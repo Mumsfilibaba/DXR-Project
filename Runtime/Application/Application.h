@@ -18,7 +18,7 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FApplication
 
-class CANVAS_API FApplication 
+class APPLICATION_API FApplication 
     : public FGenericApplicationMessageHandler
 {
 protected:

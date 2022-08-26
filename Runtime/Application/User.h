@@ -1,6 +1,6 @@
 #pragma once
 #include "Events.h"
-#include "Canvas.h"
+#include "ApplicationModule.h"
 
 #include "Core/Input/InputStates.h"
 #include "Core/Containers/Array.h"
@@ -13,7 +13,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FUser
 
-class CANVAS_API FUser
+class APPLICATION_API FUser
 {
     friend class FApplication;
 

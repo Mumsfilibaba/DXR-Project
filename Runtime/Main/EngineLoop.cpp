@@ -19,7 +19,7 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Canvas/Application.h"
+#include "Application/Application.h"
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
@@ -64,8 +64,8 @@ bool FEngineLoop::LoadCoreModules()
         return false;
     }
 
-    IModule* CanvasModule = ModuleManager.LoadModule("Canvas");
-    if (!CanvasModule)
+    IModule* ApplicationModule = ModuleManager.LoadModule("Application");
+    if (!ApplicationModule)
     {
         return false;
     }
