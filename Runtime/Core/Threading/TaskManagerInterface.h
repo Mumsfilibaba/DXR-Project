@@ -22,13 +22,13 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FAsyncTaskManager
 
-class CORE_API FAsyncTaskManager
+class CORE_API FTaskManagerInterface
 {
-    FAsyncTaskManager();
-    ~FAsyncTaskManager();
+    FTaskManagerInterface();
+    ~FTaskManagerInterface();
 
 public:
-    static FAsyncTaskManager& Get();
+    static FTaskManagerInterface& Get();
 
     bool Initialize();
     void Release();
@@ -58,5 +58,5 @@ private:
 
     volatile bool      bIsRunning;
 
-    static FAsyncTaskManager Instance;
+    static FTaskManagerInterface Instance;
 };

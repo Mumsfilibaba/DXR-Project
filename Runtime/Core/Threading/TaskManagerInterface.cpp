@@ -7,19 +7,19 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FAsyncTaskManager
 
-FAsyncTaskManager FAsyncTaskManager::Instance;
+FTaskManagerInterface FTaskManagerInterface::Instance;
 
-FAsyncTaskManager::FAsyncTaskManager()
+FTaskManagerInterface::FTaskManagerInterface()
     : QueueCS()
     , bIsRunning(false)
 { }
 
-FAsyncTaskManager::~FAsyncTaskManager()
+FTaskManagerInterface::~FTaskManagerInterface()
 {
     KillWorkers();
 }
 
-bool FAsyncTaskManager::PopDispatch(FAsyncTask& OutTask)
+bool FTaskManagerInterface::PopDispatch(FAsyncTask& OutTask)
 {
     TScopedLock<FCriticalSection> Lock(QueueCS);
 
@@ -36,7 +36,7 @@ bool FAsyncTaskManager::PopDispatch(FAsyncTask& OutTask)
     }
 }
 
-void FAsyncTaskManager::KillWorkers()
+void FTaskManagerInterface::KillWorkers()
 {
     if (bIsRunning && !WorkerThreads.IsEmpty())
     {
@@ -45,11 +45,11 @@ void FAsyncTaskManager::KillWorkers()
     }
 }
 
-void FAsyncTaskManager::WorkThread()
+void FTaskManagerInterface::WorkThread()
 {
     LOG_INFO("Starting Work thread: %llu", FPlatformThreadMisc::GetThreadHandle());
 
-    FAsyncTaskManager& AsyncTaskManager = FAsyncTaskManager::Get();
+    FTaskManagerInterface& AsyncTaskManager = FTaskManagerInterface::Get();
     while (AsyncTaskManager.bIsRunning)
     {
         FAsyncTask CurrentTask;
@@ -69,7 +69,7 @@ void FAsyncTaskManager::WorkThread()
     LOG_INFO("End Work thread: %llu", FPlatformThreadMisc::GetThreadHandle());
 }
 
-bool FAsyncTaskManager::Initialize()
+bool FTaskManagerInterface::Initialize()
 {
     const uint32 ThreadCount = NMath::Max<int32>(FPlatformThreadMisc::GetNumProcessors() - 1, 1);
     WorkerThreads.Resize(ThreadCount);
@@ -90,7 +90,7 @@ bool FAsyncTaskManager::Initialize()
     {
         FString ThreadName = FString::CreateFormatted("WorkerThread[%d]", Thread);
 
-        FGenericThreadRef NewThread = FThreadManager::Get().CreateNamedThread(FAsyncTaskManager::WorkThread, ThreadName);
+        FGenericThreadRef NewThread = FThreadManager::Get().CreateNamedThread(FTaskManagerInterface::WorkThread, ThreadName);
         if (NewThread)
         {
             WorkerThreads[Thread] = NewThread;
@@ -106,7 +106,7 @@ bool FAsyncTaskManager::Initialize()
     return true;
 }
 
-DispatchID FAsyncTaskManager::Dispatch(const FAsyncTask& NewTask)
+DispatchID FTaskManagerInterface::Dispatch(const FAsyncTask& NewTask)
 {
     if (WorkerThreads.IsEmpty())
     {
@@ -131,7 +131,7 @@ DispatchID FAsyncTaskManager::Dispatch(const FAsyncTask& NewTask)
     return NewTaskID;
 }
 
-void FAsyncTaskManager::WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting)
+void FTaskManagerInterface::WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting)
 {
     while (DispatchCompleted.Load() < Task)
     {
@@ -151,12 +151,12 @@ void FAsyncTaskManager::WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting
     }
 }
 
-void FAsyncTaskManager::WaitForAll(bool bUseThisThreadWhileWaiting)
+void FTaskManagerInterface::WaitForAll(bool bUseThisThreadWhileWaiting)
 {
     WaitFor(DispatchAdded.Load(), bUseThisThreadWhileWaiting);
 }
 
-void FAsyncTaskManager::Release()
+void FTaskManagerInterface::Release()
 {
     KillWorkers();
 
@@ -168,7 +168,7 @@ void FAsyncTaskManager::Release()
     WorkerThreads.Clear();
 }
 
-FAsyncTaskManager& FAsyncTaskManager::Get()
+FTaskManagerInterface& FTaskManagerInterface::Get()
 {
     return Instance;
 }
