@@ -87,7 +87,7 @@ public:
      * @param RenderTargetView: RenderTargetView to clear
      * @param ClearColor: Color to set each pixel within the RenderTargetView to
      */
-    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor) = 0;
+    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) = 0;
 
     /**
      * @brief: Clears a DepthStencilView with a specific value
@@ -103,7 +103,7 @@ public:
      * @param UnorderedAccessView: UnorderedAccessView to clear
      * @param ClearColor: Value to set each pixel within the UnorderedAccessView to
      */
-    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) = 0;
+    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) = 0;
 
     virtual void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) = 0;
     virtual void EndRenderPass()                                                         = 0;
@@ -135,7 +135,7 @@ public:
      * 
      * @param Color: New blend-factor to use
      */
-    virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) = 0;
+    virtual void SetBlendFactor(const FVector4& Color) = 0;
 
     /**
      * @brief: Set the VertexBuffers to be used

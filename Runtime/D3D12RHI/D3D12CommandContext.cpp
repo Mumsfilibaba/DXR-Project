@@ -282,7 +282,7 @@ void FD3D12CommandContextState::ApplyGraphics(FD3D12CommandList& CommandList, FD
     // BlendFactor
     if (Graphics.bBindBlendFactor)
     {
-        CommandList.OMSetBlendFactor(Graphics.BlendFactor.Elements);
+        CommandList.OMSetBlendFactor(Graphics.BlendFactor.GetData());
         Graphics.bBindBlendFactor = false;
     }
 
@@ -545,7 +545,7 @@ void FD3D12CommandContext::EndTimeStamp(FRHITimestampQuery* TimestampQuery, uint
     D3D12TimestampQuery->EndQuery(D3D12CmdList, Index);
 }
 
-void FD3D12CommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
+void FD3D12CommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
 {
     FlushResourceBarriers();
 
@@ -571,7 +571,7 @@ void FD3D12CommandContext::ClearDepthStencilView(const FRHIDepthStencilView& Dep
     CommandList.ClearDepthStencilView(D3D12DepthStencilView->GetOfflineHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, Depth, Stencil);
 }
 
-void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor)
+void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
     D3D12_ERROR_COND(UnorderedAccessView != nullptr, "UnorderedAccessView cannot be nullptr when clearing the surface");
 
@@ -588,7 +588,7 @@ void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
     GetDevice()->GetD3D12Device()->CopyDescriptorsSimple(1, OnlineHandle_CPU, OfflineHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     const D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandle_GPU = OnlineDescriptorHeap->GetGPUDescriptorHandleAt(OnlineDescriptorHandleIndex);
-    CommandList.ClearUnorderedAccessViewFloat(OnlineHandle_GPU, D3D12UnorderedAccessView, ClearColor.Elements);
+    CommandList.ClearUnorderedAccessViewFloat(OnlineHandle_GPU, D3D12UnorderedAccessView, ClearColor.GetData());
 }
 
 void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer)
@@ -689,7 +689,7 @@ void FD3D12CommandContext::SetScissorRect(float Width, float Height, float x, fl
     State.Graphics.bBindScissorRects = true;
 }
 
-void FD3D12CommandContext::SetBlendFactor(const TStaticArray<float, 4>& Color)
+void FD3D12CommandContext::SetBlendFactor(const FVector4& Color)
 {
     State.Graphics.BlendFactor      = Color;
     State.Graphics.bBindBlendFactor = true;

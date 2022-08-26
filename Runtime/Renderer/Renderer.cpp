@@ -733,9 +733,7 @@ void FRenderer::Tick(const FScene& Scene)
         EResourceAccess::NonPixelShaderResource, 
         EResourceAccess::UnorderedAccess);
 
-    MainCmdList.ClearUnorderedAccessView(
-        Resources.SSAOBuffer->GetUnorderedAccessView(), 
-        { 1.0f, 1.0f, 1.0f, 1.0f });
+    MainCmdList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), FVector4{ 1.0f, 1.0f, 1.0f, 1.0f });
 
     if (GEnableSSAO.GetBool())
     {

@@ -292,7 +292,7 @@ void FInterfaceRenderer::Render(FRHICommandList& CmdList)
     CmdList.SetVertexBuffers(&VertexBuffer, 1, 0);
     CmdList.SetIndexBuffer(IndexBuffer.Get());
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-    CmdList.SetBlendFactor({ 0.0f, 0.0f, 0.0f, 0.0f });
+    CmdList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
     // TODO: Do not change to GenericRead, change to Vertex/Constant-Buffer
     CmdList.TransitionBuffer(VertexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);

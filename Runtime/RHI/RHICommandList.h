@@ -227,7 +227,6 @@ public:
         // Cannot execute CommandList in CommandList in CommandList
         FRHICommandList* NewCommandList = EmplaceObject<FRHICommandList>();
         NewCommandList->ExchangeState(CommandList);
-
         EmplaceCommand<FRHICommandExecuteCommandList>(NewCommandList);
     }
 
@@ -241,7 +240,7 @@ public:
         EmplaceCommand<FRHICommandEndTimeStamp>(TimestampQuery, Index);
     }
 
-    FORCEINLINE void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor) noexcept
+    FORCEINLINE void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) noexcept
     {
         Check(RenderTargetView.Texture != nullptr);
         EmplaceCommand<FRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
@@ -253,7 +252,7 @@ public:
         EmplaceCommand<FRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
     }
 
-    FORCEINLINE void ClearUnorderedAccessView(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) noexcept
+    FORCEINLINE void ClearUnorderedAccessView(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) noexcept
     {
         Check(UnorderedAccessView != nullptr);
         EmplaceCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
@@ -285,7 +284,7 @@ public:
         EmplaceCommand<FRHICommandSetScissorRect>(Width, Height, x, y);
     }
 
-    FORCEINLINE void SetBlendFactor(const TStaticArray<float, 4>& Color) noexcept
+    FORCEINLINE void SetBlendFactor(const FVector4& Color) noexcept
     {
         EmplaceCommand<FRHICommandSetBlendFactor>(Color);
     }

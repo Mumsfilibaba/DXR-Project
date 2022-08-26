@@ -119,7 +119,7 @@ DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
 
 DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
 {
-    FORCEINLINE FRHICommandClearRenderTargetView(const FRHIRenderTargetView& InRenderTargetView, const TStaticArray<float, 4>& InClearColor)
+    FORCEINLINE FRHICommandClearRenderTargetView(const FRHIRenderTargetView& InRenderTargetView, const FVector4& InClearColor)
         : RenderTargetView(InRenderTargetView)
         , ClearColor(InClearColor)
     { }
@@ -129,8 +129,8 @@ DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
         CommandContext.ClearRenderTargetView(RenderTargetView, ClearColor);
     }
 
-    FRHIRenderTargetView   RenderTargetView;
-    TStaticArray<float, 4> ClearColor;
+    FRHIRenderTargetView RenderTargetView;
+    FVector4             ClearColor;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -159,7 +159,7 @@ DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
 
 DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
 {
-    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const TStaticArray<float, 4>&InClearColor)
+    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const FVector4&InClearColor)
         : UnorderedAccessView(InUnorderedAccessView)
         , ClearColor(InClearColor)
     { }
@@ -170,7 +170,7 @@ DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
     }
 
     FRHIUnorderedAccessView* UnorderedAccessView;
-    TStaticArray<float, 4>   ClearColor;
+    FVector4                 ClearColor;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -258,7 +258,7 @@ DECLARE_RHICOMMAND(FRHICommandSetScissorRect)
 
 DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
 {
-    FORCEINLINE FRHICommandSetBlendFactor(const TStaticArray<float, 4>&InColor)
+    FORCEINLINE FRHICommandSetBlendFactor(const FVector4& InColor)
         : Color(InColor)
     { }
 
@@ -267,7 +267,7 @@ DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
         CommandContext.SetBlendFactor(Color);
     }
 
-    TStaticArray<float, 4> Color;
+    FVector4 Color;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -864,7 +864,7 @@ DECLARE_RHICOMMAND(FRHICommandTransitionTexture)
         CommandContext.TransitionTexture(Texture, BeforeState, AfterState);
     }
 
-    FRHITexture*      Texture;
+    FRHITexture*    Texture;
     EResourceAccess BeforeState;
     EResourceAccess AfterState;
 };

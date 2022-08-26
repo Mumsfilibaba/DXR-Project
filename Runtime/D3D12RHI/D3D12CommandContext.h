@@ -241,7 +241,7 @@ struct FD3D12CommandContextState
         D3D12_RECT                     ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
         uint32                         NumScissor;
 
-        TStaticArray<float, 4>         BlendFactor;
+        FVector4         BlendFactor;
 
         bool bBindRenderTargets     : 1;
         bool bBindBlendFactor       : 1;
@@ -294,9 +294,9 @@ public:
     virtual void BeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) override final;
     virtual void EndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)   override final;
 
-    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)         override final;
+    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)         override final;
     virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)                 override final;
-    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) override final;
+    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
 
     virtual void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) override final;
     virtual void EndRenderPass() override final;
@@ -304,7 +304,7 @@ public:
     virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final;
     virtual void SetScissorRect(float Width, float Height, float x, float y)                              override final;
 
-    virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) override final;
+    virtual void SetBlendFactor(const FVector4& Color) override final;
 
     virtual void SetVertexBuffers(FRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
     virtual void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer)                                                    override final;

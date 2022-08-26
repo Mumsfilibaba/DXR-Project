@@ -53,7 +53,7 @@ void FMetalCommandContext::EndTimeStamp(FRHITimestampQuery* Profiler, uint32 Ind
 {
 }
 
-void FMetalCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
+void FMetalCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -86,7 +86,7 @@ void FMetalCommandContext::ClearDepthStencilView(const FRHIDepthStencilView& Dep
 {
 }
 
-void FMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor)
+void FMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
 }
 
@@ -182,7 +182,7 @@ void FMetalCommandContext::SetScissorRect(float Width, float Height, float x, fl
     [GraphicsEncoder setScissorRect:ScissorRect];*/
 }
 
-void FMetalCommandContext::SetBlendFactor(const TStaticArray<float, 4>& Color)
+void FMetalCommandContext::SetBlendFactor(const FVector4& Color)
 {
 }
 
