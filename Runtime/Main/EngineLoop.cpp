@@ -8,7 +8,7 @@
     #include "EditorEngine.h"
 #endif
 
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleInterface.h"
 #include "Core/Modules/ApplicationModule.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/TaskManagerInterface.h"
@@ -50,7 +50,7 @@ FEngineLoop::~FEngineLoop()
 
 bool FEngineLoop::LoadCoreModules()
 {
-    FModuleManager& ModuleManager = FModuleManager::Get();
+    FModuleInterface& ModuleManager = FModuleInterface::Get();
 
     IModule* CoreModule = ModuleManager.LoadModule("Core");
     if (!CoreModule)
@@ -220,7 +220,7 @@ bool FEngineLoop::Init()
 
     NCoreDelegates::PreApplicationLoadedDelegate.Broadcast();
 
-    GApplicationModule = FModuleManager::Get().LoadModule<FApplicationInterfaceModule>(FProjectManager::GetProjectModuleName());
+    GApplicationModule = FModuleInterface::Get().LoadModule<FApplicationInterfaceModule>(FProjectManager::GetProjectModuleName());
     if (!GApplicationModule)
     {
         LOG_WARNING("Application Init failed, may not behave as intended");
@@ -230,7 +230,7 @@ bool FEngineLoop::Init()
         NCoreDelegates::PostApplicationLoadedDelegate.Broadcast();
     }
 
-    IApplicationRendererModule* InterfaceRendererModule = FModuleManager::Get().LoadModule<IApplicationRendererModule>("InterfaceRenderer");
+    IApplicationRendererModule* InterfaceRendererModule = FModuleInterface::Get().LoadModule<IApplicationRendererModule>("InterfaceRenderer");
     if (!InterfaceRendererModule)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load InterfaceRenderer");
@@ -318,7 +318,7 @@ bool FEngineLoop::Release()
 
     SAFE_DELETE(ConsoleWindow);
 
-    FModuleManager::Shutdown();
+    FModuleInterface::Shutdown();
 
     return true;
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Time/Timespan.h"
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleInterface.h"
 #include "Core/Delegates/DelegateInstance.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

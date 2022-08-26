@@ -1,7 +1,7 @@
 #pragma once
 #include "RHICore.h"
 
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIInstanceType

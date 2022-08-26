@@ -15,7 +15,7 @@ RHI_API FRHICoreInterface* GRHICoreInterface = nullptr;
 
 static FRHIModule* LoadNullRHI()
 {
-    return FModuleManager::Get().LoadModule<FRHIModule>("NullRHI");
+    return FModuleInterface::Get().LoadModule<FRHIModule>("NullRHI");
 }
 
 bool RHIInitialize(ERHIInstanceType InRenderApi)
@@ -24,11 +24,11 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
     FRHIModule* RHIModule = nullptr;
     if (InRenderApi == ERHIInstanceType::D3D12)
     {
-        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("D3D12RHI");
+        RHIModule = FModuleInterface::Get().LoadModule<FRHIModule>("D3D12RHI");
     }
 	else if (InRenderApi == ERHIInstanceType::Metal)
 	{
-		RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("MetalRHI");
+		RHIModule = FModuleInterface::Get().LoadModule<FRHIModule>("MetalRHI");
 	}
     else if (InRenderApi == ERHIInstanceType::Null)
     {

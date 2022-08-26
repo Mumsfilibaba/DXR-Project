@@ -1,6 +1,6 @@
 #include "CoreApplication.h"
 
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CoreApplicationModule

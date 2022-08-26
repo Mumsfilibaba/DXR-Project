@@ -1,52 +1,17 @@
 #include "ModuleManager.h"
 
-#include "Core/Templates/CString.h"
-#include "Core/Threading/ScopedLock.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FModuleManager
-
-static auto& GetModuleManagerInstance()
-{
-    static TOptional<FModuleManager> Instance(InPlace);
-    return Instance;
-}
-
-FModuleManager& FModuleManager::Get()
-{
-    auto& ModuleManager = GetModuleManagerInstance();
-    return ModuleManager.GetValue();
-}
-
-void FModuleManager::ReleaseAllLoadedModules()
-{
-    auto& ModuleManager = GetModuleManagerInstance();
-    ModuleManager->ReleaseAllModules();
-}
-
-void FModuleManager::Shutdown()
-{
-    ReleaseAllLoadedModules();
-
-    auto& ModuleManager = GetModuleManagerInstance();
-    ModuleManager.Reset();
-}
-
 IModule* FModuleManager::LoadModule(const CHAR* ModuleName)
 {
     Check(ModuleName != nullptr);
 
-    IModule* ExistingModule = GetModule(ModuleName);
-    if (ExistingModule)
+    if (IModule* ExistingModule = GetModule(ModuleName))
     {
         LOG_WARNING("Module '%s' is already loaded", ModuleName);
         return ExistingModule;
     }
 
-    FModule NewModule;
-
-    FInitializeStaticModuleDelegate* ModuleInitializer = GetStaticModuleDelegate(ModuleName);
-    if (ModuleInitializer)
+    FModuleData NewModule;
+    if (FInitializeStaticModuleDelegate* ModuleInitializer = GetStaticModuleDelegate(ModuleName))
     {
         if (ModuleInitializer->IsBound())
         {
@@ -84,7 +49,6 @@ IModule* FModuleManager::LoadModule(const CHAR* ModuleName)
         {
             LOG_ERROR("Failed to load module '%s', resulting interface was nullptr", ModuleName);
             FPlatformLibrary::FreeDynamicLib(Module);
-
             return nullptr;
         }
         else
@@ -99,10 +63,10 @@ IModule* FModuleManager::LoadModule(const CHAR* ModuleName)
 
         LOG_INFO("Loaded module '%s'", ModuleName);
 
-        ModuleLoadedDelegate.Broadcast(ModuleName, NewModule.Interface);
-
         NewModule.Name = ModuleName;
         Modules.Emplace(NewModule);
+        
+        HandleModuleLoaded(ModuleName, NewModule.Interface);
         return NewModule.Interface;
     }
     else
@@ -144,10 +108,8 @@ void FModuleManager::ReleaseAllModules()
     const int32 NumModules = Modules.GetSize();
     for (int32 Index = 0; Index < NumModules; Index++)
     {
-        FModule& Module = Modules[Index];
-
-        IModule* EngineModule = Module.Interface;
-        if (EngineModule)
+        FModuleData& Module = Modules[Index];
+        if (IModule* EngineModule = Module.Interface)
         {
             EngineModule->Unload();
             SAFE_DELETE(EngineModule);
@@ -203,10 +165,8 @@ void FModuleManager::UnloadModule(const CHAR* ModuleName)
     const int32 Index = GetModuleIndexUnlocked(ModuleName);
     if (Index >= 0)
     {
-        FModule& Module = Modules[Index];
-
-        IModule* EngineModule = Module.Interface;
-        if (EngineModule)
+        FModuleData& Module = Modules[Index];
+        if (IModule* EngineModule = Module.Interface)
         {
             EngineModule->Unload();
             SAFE_DELETE(EngineModule);
@@ -214,7 +174,6 @@ void FModuleManager::UnloadModule(const CHAR* ModuleName)
 
         FPlatformLibrary::FreeDynamicLib(Module.Handle);
         Module.Handle = nullptr;
-
         Modules.RemoveAt(Index);
     }
 }
@@ -227,7 +186,7 @@ uint32 FModuleManager::GetLoadedModuleCount()
 
 int32 FModuleManager::GetModuleIndexUnlocked(const CHAR* ModuleName)
 {
-    const auto Index = Modules.FindWithPredicate([=](const FModule& Element)
+    const auto Index = Modules.FindWithPredicate([=](const FModuleData& Element)
     {
         return (Element.Name == ModuleName);
     });
