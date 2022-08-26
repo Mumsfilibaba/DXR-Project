@@ -2,14 +2,14 @@
 #include "Application/IApplicationRenderer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FApplicationRendererModule
+// FApplicationInterfaceRendererModule
 
-class FApplicationRendererModule 
+class FApplicationInterfaceRendererModule 
     : public IApplicationRendererModule
 {
 public:
-    FApplicationRendererModule()  = default;
-    ~FApplicationRendererModule() = default;
+    FApplicationInterfaceRendererModule()  = default;
+    ~FApplicationInterfaceRendererModule() = default;
 
      /** @brief: Create the renderer */
     virtual IApplicationRenderer* CreateRenderer() override final;

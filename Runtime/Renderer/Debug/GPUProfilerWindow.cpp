@@ -4,7 +4,7 @@
 #include "Core/Debug/Console/ConsoleManager.h"
 
 #include "Application/WidgetUtilities.h"
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 
 #include <imgui.h>
 
@@ -174,7 +174,7 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
 void FGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();
+    FGenericWindowRef MainViewport = FApplicationInterface::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

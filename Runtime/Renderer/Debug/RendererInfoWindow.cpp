@@ -6,7 +6,7 @@
 
 #include "Renderer/Renderer.h"
 
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 
 #include <imgui.h>
 
@@ -25,7 +25,7 @@ TSharedRef<FRendererInfoWindow> FRendererInfoWindow::Make()
 
 void FRendererInfoWindow::Tick()
 {
-    FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();
+    FGenericWindowRef MainViewport = FApplicationInterface::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

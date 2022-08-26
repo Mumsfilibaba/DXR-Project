@@ -15,7 +15,7 @@
 #include <Engine/Scene/Components/MeshComponent.h>
 #include <Engine/Resources/TextureFactory.h>
 
-#include <Application/Application.h>
+#include <Application/ApplicationInterface.h>
 
 #include <InterfaceRenderer/InterfaceRenderer.h>
 
@@ -33,7 +33,7 @@ IMPLEMENT_ENGINE_MODULE(FSandbox, Sandbox);
 
 bool FSandbox::Init()
 {
-    if (!FApplicationModule::Init())
+    if (!FApplicationInterfaceModule::Init())
     {
         return false;
     }
@@ -421,14 +421,14 @@ bool FSandbox::Init()
 
 void FSandbox::Tick(FTimespan DeltaTime)
 {
-    FApplicationModule::Tick(DeltaTime);
+    FApplicationInterfaceModule::Tick(DeltaTime);
 
     // LOG_INFO("Tick: %f", DeltaTime.AsMilliseconds());
 
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
 
-    TSharedPtr<FUser> User = FApplication::Get().GetFirstUser();
+    TSharedPtr<FUser> User = FApplicationInterface::Get().GetFirstUser();
     if (User->IsKeyDown(EKey::Key_Right))
     {
         CurrentCamera->Rotate(0.0f, NMath::ToRadians(RotationSpeed * Delta), 0.0f);

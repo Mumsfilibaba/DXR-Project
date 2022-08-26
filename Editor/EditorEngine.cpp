@@ -29,7 +29,7 @@ bool FEditorEngine::Init()
     }
 
     /* Create Editor windows */
-    FApplication& Application = FApplication::Get();
+    FApplicationInterface& Application = FApplicationInterface::Get();
 
     TSharedRef<CInspectorWindow> InspectorWindow = CInspectorWindow::Make();
     Application.AddWindow( InspectorWindow );

@@ -1,6 +1,6 @@
 #include "GameConsoleWindow.h"
 
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Templates/CString.h"
@@ -15,7 +15,7 @@ TSharedRef<FGameConsoleWindow> FGameConsoleWindow::Make()
     TSharedRef<FGameConsoleWindow> NewWindow = dbg_new FGameConsoleWindow();
 
     NewWindow->InputHandler->HandleKeyEventDelegate.BindRaw(NewWindow.Get(), &FGameConsoleWindow::HandleKeyPressedEvent);
-    FApplication::Get().AddInputHandler(NewWindow->InputHandler, uint32(-1));
+    FApplicationInterface::Get().AddInputHandler(NewWindow->InputHandler, uint32(-1));
 
     return NewWindow;
 }
@@ -29,7 +29,7 @@ FGameConsoleWindow::FGameConsoleWindow()
 
 void FGameConsoleWindow::Tick()
 {
-    FGenericWindowRef MainWindow = FApplication::Get().GetMainViewport();
+    FGenericWindowRef MainWindow = FApplicationInterface::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainWindow->GetWidth();
 

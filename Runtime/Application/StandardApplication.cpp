@@ -1,4 +1,4 @@
-#include "Application.h"
+#include "StandardApplication.h"
 
 #include "Core/Input/InputStates.h"
 #include "Core/Misc/OutputDeviceLogger.h"
@@ -9,42 +9,10 @@
 #include <imgui.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FApplication
+// FStandardApplication
 
-TSharedPtr<FApplication> FApplication::Instance;
-
-bool FApplication::Create()
-{
-    TSharedPtr<FGenericApplication> Application = MakeSharedPtr(FPlatformApplicationMisc::CreateApplication());
-    if (!Application)
-    {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create FPlatformApplication");
-        return false;
-    }
-
-    Instance = MakeSharedPtr(dbg_new FApplication(Application));
-    if (!Instance->CreateContext())
-    {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create UI Context");
-        return false;
-    }
-
-    Application->SetMessageListener(Instance);
-
-    return true;
-}
-
-void FApplication::Release()
-{
-    if (Instance)
-    {
-        Instance->SetPlatformApplication(nullptr);
-        Instance.Reset();
-    }
-}
-
-FApplication::FApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
-    : FGenericApplicationMessageHandler()
+FStandardApplication::FStandardApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
+    : FApplicationInterface()
     , PlatformApplication(InPlatformApplication)
     , MainViewport()
     , Renderer()
@@ -57,7 +25,15 @@ FApplication::FApplication(const TSharedPtr<FGenericApplication>& InPlatformAppl
     , Context(nullptr)
 { }
 
-bool FApplication::CreateContext()
+FStandardApplication::~FStandardApplication()
+{
+	if (Context)
+	{
+		ImGui::DestroyContext(Context);
+	}
+}
+
+bool FStandardApplication::CreateContext()
 {
     IMGUI_CHECKVERSION();
 
@@ -229,20 +205,12 @@ bool FApplication::CreateContext()
     return true;
 }
 
-FApplication::~FApplication()
-{
-    if (Context)
-    {
-        ImGui::DestroyContext(Context);
-    }
-}
-
-FGenericWindowRef FApplication::CreateWindow()
+FGenericWindowRef FStandardApplication::CreateWindow()
 {
     return PlatformApplication->CreateWindow();
 }
 
-void FApplication::Tick(FTimespan DeltaTime)
+void FStandardApplication::Tick(FTimespan DeltaTime)
 {
     // Update UI
     ImGuiIO& UIState = ImGui::GetIO();
@@ -260,7 +228,7 @@ void FApplication::Tick(FTimespan DeltaTime)
     UIState.DisplaySize             = ImVec2(float(CurrentWindowShape.Width), float(CurrentWindowShape.Height));
     UIState.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
-    FIntVector2 Position = FApplication::Get().GetCursorPos(Window);
+    FIntVector2 Position = FStandardApplication::Get().GetCursorPos(Window);
     UIState.MousePos = ImVec2(static_cast<float>(Position.x), static_cast<float>(Position.y));
 
     FModifierKeyState KeyState = FPlatformApplicationMisc::GetModifierKeyState();
@@ -327,25 +295,25 @@ void FApplication::Tick(FTimespan DeltaTime)
     }
 }
 
-void FApplication::SetCursor(ECursor InCursor)
+void FStandardApplication::SetCursor(ECursor InCursor)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
     Cursor->SetCursor(InCursor);
 }
 
-void FApplication::SetCursorPos(const FIntVector2& Position)
+void FStandardApplication::SetCursorPos(const FIntVector2& Position)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
     Cursor->SetPosition(nullptr, Position.x, Position.y);
 }
 
-void FApplication::SetCursorPos(const FGenericWindowRef& RelativeWindow, const FIntVector2& Position)
+void FStandardApplication::SetCursorPos(const FGenericWindowRef& RelativeWindow, const FIntVector2& Position)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
     Cursor->SetPosition(RelativeWindow.Get(), Position.x, Position.y);
 }
 
-FIntVector2 FApplication::GetCursorPos() const
+FIntVector2 FStandardApplication::GetCursorPos() const
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
 
@@ -355,7 +323,7 @@ FIntVector2 FApplication::GetCursorPos() const
     return CursorPosition;
 }
 
-FIntVector2 FApplication::GetCursorPos(const FGenericWindowRef& RelativeWindow) const
+FIntVector2 FStandardApplication::GetCursorPos(const FGenericWindowRef& RelativeWindow) const
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
 
@@ -365,30 +333,30 @@ FIntVector2 FApplication::GetCursorPos(const FGenericWindowRef& RelativeWindow) 
     return CursorPosition;
 }
 
-void FApplication::ShowCursor(bool bIsVisible)
+void FStandardApplication::ShowCursor(bool bIsVisible)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
     Cursor->SetVisibility(bIsVisible);
 }
 
-bool FApplication::IsCursorVisibile() const
+bool FStandardApplication::IsCursorVisibile() const
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
     return Cursor->IsVisible();
 }
 
-void FApplication::SetCapture(const FGenericWindowRef& CaptureWindow)
+void FStandardApplication::SetCapture(const FGenericWindowRef& CaptureWindow)
 {
     PlatformApplication->SetCapture(CaptureWindow);
 }
 
-void FApplication::SetActiveWindow(const FGenericWindowRef& ActiveWindow)
+void FStandardApplication::SetActiveWindow(const FGenericWindowRef& ActiveWindow)
 {
     PlatformApplication->SetActiveWindow(ActiveWindow);
 }
 
 template<typename MessageHandlerType>
-void FApplication::InsertMessageHandler(TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray
+void FStandardApplication::InsertMessageHandler(TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray
                                                ,const TSharedPtr<MessageHandlerType>& NewMessageHandler
                                                ,uint32 NewPriority)
 {
@@ -413,12 +381,12 @@ void FApplication::InsertMessageHandler(TArray<TPair<TSharedPtr<MessageHandlerTy
     }
 }
 
-void FApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority)
+void FStandardApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority)
 {
     InsertMessageHandler(InputHandlers, NewInputHandler, Priority);
 }
 
-void FApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler)
+void FStandardApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler)
 {
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
     {
@@ -431,7 +399,7 @@ void FApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHand
     }
 }
 
-void FApplication::RegisterMainViewport(const FGenericWindowRef& NewMainViewport)
+void FStandardApplication::RegisterMainViewport(const FGenericWindowRef& NewMainViewport)
 {
     MainViewport = NewMainViewport;
     if (ViewportChangedEvent.IsBound())
@@ -450,7 +418,7 @@ void FApplication::RegisterMainViewport(const FGenericWindowRef& NewMainViewport
     }
 }
 
-void FApplication::SetRenderer(const TSharedRef<IApplicationRenderer>& NewRenderer)
+void FStandardApplication::SetRenderer(const TSharedRef<IApplicationRenderer>& NewRenderer)
 {
     Renderer = NewRenderer;
     if (Renderer)
@@ -462,7 +430,7 @@ void FApplication::SetRenderer(const TSharedRef<IApplicationRenderer>& NewRender
     }
 }
 
-void FApplication::AddWindow(const TSharedRef<FWindow>& NewWindow)
+void FStandardApplication::AddWindow(const TSharedRef<FWindow>& NewWindow)
 {
     if (NewWindow && !InterfaceWindows.Contains(NewWindow))
     {
@@ -471,17 +439,17 @@ void FApplication::AddWindow(const TSharedRef<FWindow>& NewWindow)
     }
 }
 
-void FApplication::RemoveWindow(const TSharedRef<FWindow>& Window)
+void FStandardApplication::RemoveWindow(const TSharedRef<FWindow>& Window)
 {
     InterfaceWindows.Remove(Window);
 }
 
-void FApplication::DrawString(const FString& NewString)
+void FStandardApplication::DrawString(const FString& NewString)
 {
     DebugStrings.Emplace(NewString);
 }
 
-void FApplication::DrawWindows(FRHICommandList& CommandList)
+void FStandardApplication::DrawWindows(FRHICommandList& CommandList)
 {
     // NOTE: Renderer is not forced to be valid 
     if (Renderer)
@@ -490,12 +458,12 @@ void FApplication::DrawWindows(FRHICommandList& CommandList)
     }
 }
 
-void FApplication::AddWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority)
+void FStandardApplication::AddWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority)
 {
     InsertMessageHandler(WindowMessageHandlers, NewWindowMessageHandler, Priority);
 }
 
-void FApplication::RemoveWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& WindowMessageHandler)
+void FStandardApplication::RemoveWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& WindowMessageHandler)
 {
     for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
     {
@@ -508,7 +476,7 @@ void FApplication::RemoveWindowMessageHandler(const TSharedPtr<FWindowMessageHan
     }
 }
 
-void FApplication::SetPlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
+void FStandardApplication::SetPlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
 {
     if (InPlatformApplication)
     {
@@ -519,19 +487,19 @@ void FApplication::SetPlatformApplication(const TSharedPtr<FGenericApplication>&
     PlatformApplication = InPlatformApplication;
 }
 
-void FApplication::HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState)
+void FStandardApplication::HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState)
 {
     FKeyEvent KeyEvent(KeyCode, false, false, ModierKeyState);
     HandleKeyEvent(KeyEvent);
 }
 
-void FApplication::HandleKeyPressed(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
+void FStandardApplication::HandleKeyPressed(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
 {
     FKeyEvent KeyEvent(KeyCode, true, bIsRepeat, ModierKeyState);
     HandleKeyEvent(KeyEvent);
 }
 
-void FApplication::HandleKeyEvent(const FKeyEvent& KeyEvent)
+void FStandardApplication::HandleKeyEvent(const FKeyEvent& KeyEvent)
 {
     FKeyEvent Event = KeyEvent;
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
@@ -562,7 +530,7 @@ void FApplication::HandleKeyEvent(const FKeyEvent& KeyEvent)
     // TODO: Update viewport
 }
 
-void FApplication::HandleKeyChar(uint32 Character)
+void FStandardApplication::HandleKeyChar(uint32 Character)
 {
     FKeyCharEvent Event(Character);
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
@@ -578,7 +546,7 @@ void FApplication::HandleKeyChar(uint32 Character)
     UIState.AddInputCharacter(Event.Character);
 }
 
-void FApplication::HandleMouseMove(int32 x, int32 y)
+void FStandardApplication::HandleMouseMove(int32 x, int32 y)
 {
     FMouseMovedEvent MouseMovedEvent(x, y);
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
@@ -599,7 +567,7 @@ void FApplication::HandleMouseMove(int32 x, int32 y)
     }
 }
 
-void FApplication::HandleMouseReleased(EMouseButton Button, FModifierKeyState ModierKeyState)
+void FStandardApplication::HandleMouseReleased(EMouseButton Button, FModifierKeyState ModierKeyState)
 {
     FGenericWindowRef CaptureWindow = PlatformApplication->GetCapture();
     if (CaptureWindow)
@@ -611,7 +579,7 @@ void FApplication::HandleMouseReleased(EMouseButton Button, FModifierKeyState Mo
     HandleMouseButtonEvent(MouseButtonEvent);
 }
 
-void FApplication::HandleMousePressed(EMouseButton Button, FModifierKeyState ModierKeyState)
+void FStandardApplication::HandleMousePressed(EMouseButton Button, FModifierKeyState ModierKeyState)
 {
     FGenericWindowRef CaptureWindow = PlatformApplication->GetCapture();
     if (!CaptureWindow)
@@ -637,7 +605,7 @@ static uint32 GetMouseButtonIndex(EMouseButton Button)
     }
 }
 
-void FApplication::HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent)
+void FStandardApplication::HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent)
 {
     FMouseButtonEvent Event = MouseButtonEvent;
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
@@ -668,7 +636,7 @@ void FApplication::HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEv
     }
 }
 
-void FApplication::HandleMouseScrolled(float HorizontalDelta, float VerticalDelta)
+void FStandardApplication::HandleMouseScrolled(float HorizontalDelta, float VerticalDelta)
 {
     FMouseScrolledEvent Event(HorizontalDelta, VerticalDelta);
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
@@ -698,7 +666,7 @@ void FApplication::HandleMouseScrolled(float HorizontalDelta, float VerticalDelt
     }
 }
 
-void FApplication::HandleWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height)
+void FStandardApplication::HandleWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height)
 {
     FWindowResizeEvent WindowResizeEvent(Window, Width, Height);
     for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
@@ -711,7 +679,7 @@ void FApplication::HandleWindowResized(const FGenericWindowRef& Window, uint32 W
     }
 }
 
-void FApplication::HandleWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y)
+void FStandardApplication::HandleWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y)
 {
     FWindowMovedEvent WindowsMovedEvent(Window, x, y);
     for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
@@ -724,7 +692,7 @@ void FApplication::HandleWindowMoved(const FGenericWindowRef& Window, int32 x, i
     }
 }
 
-void FApplication::HandleWindowFocusChanged(const FGenericWindowRef& Window, bool bHasFocus)
+void FStandardApplication::HandleWindowFocusChanged(const FGenericWindowRef& Window, bool bHasFocus)
 {
     FWindowFocusChangedEvent WindowFocusChangedEvent(Window, bHasFocus);
     for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
@@ -737,19 +705,19 @@ void FApplication::HandleWindowFocusChanged(const FGenericWindowRef& Window, boo
     }
 }
 
-void FApplication::HandleWindowMouseLeft(const FGenericWindowRef& Window)
+void FStandardApplication::HandleWindowMouseLeft(const FGenericWindowRef& Window)
 {
     FWindowFrameMouseEvent WindowFrameMouseEvent(Window, false);
     HandleWindowFrameMouseEvent(WindowFrameMouseEvent);
 }
 
-void FApplication::HandleWindowMouseEntered(const FGenericWindowRef& Window)
+void FStandardApplication::HandleWindowMouseEntered(const FGenericWindowRef& Window)
 {
     FWindowFrameMouseEvent WindowFrameMouseEvent(Window, true);
     HandleWindowFrameMouseEvent(WindowFrameMouseEvent);
 }
 
-void FApplication::HandleWindowFrameMouseEvent(const FWindowFrameMouseEvent& WindowFrameMouseEvent)
+void FStandardApplication::HandleWindowFrameMouseEvent(const FWindowFrameMouseEvent& WindowFrameMouseEvent)
 {
     FWindowFrameMouseEvent Event = WindowFrameMouseEvent;
     for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
@@ -762,7 +730,7 @@ void FApplication::HandleWindowFrameMouseEvent(const FWindowFrameMouseEvent& Win
     }
 }
 
-void FApplication::RenderStrings()
+void FStandardApplication::RenderStrings()
 {
     if (MainViewport && !DebugStrings.IsEmpty())
     {
@@ -793,7 +761,7 @@ void FApplication::RenderStrings()
     }
 }
 
-void FApplication::HandleWindowClosed(const FGenericWindowRef& Window)
+void FStandardApplication::HandleWindowClosed(const FGenericWindowRef& Window)
 {
     FWindowClosedEvent WindowClosedEvent(Window);
     for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
@@ -811,7 +779,7 @@ void FApplication::HandleWindowClosed(const FGenericWindowRef& Window)
     FPlatformApplicationMisc::RequestExit(0);
 }
 
-void FApplication::HandleApplicationExit(int32 ExitCode)
+void FStandardApplication::HandleApplicationExit(int32 ExitCode)
 {
     bIsRunning = false;
 

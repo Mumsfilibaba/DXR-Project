@@ -19,7 +19,7 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
@@ -145,7 +145,7 @@ bool FEngineLoop::PreInit()
         return false;
     }
 
-    if (!FApplication::Create())
+    if (!FApplicationInterface::Create())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return false;
@@ -220,7 +220,7 @@ bool FEngineLoop::Init()
 
     NCoreDelegates::PreApplicationLoadedDelegate.Broadcast();
 
-    GApplicationModule = FModuleManager::Get().LoadModule<FApplicationModule>(FProjectManager::GetProjectModuleName());
+    GApplicationModule = FModuleManager::Get().LoadModule<FApplicationInterfaceModule>(FProjectManager::GetProjectModuleName());
     if (!GApplicationModule)
     {
         LOG_WARNING("Application Init failed, may not behave as intended");
@@ -244,7 +244,7 @@ bool FEngineLoop::Init()
         return false;
     }
 
-    FApplication::Get().SetRenderer(InterfaceRenderer);
+    FApplicationInterface::Get().SetRenderer(InterfaceRenderer);
 
     // Final thing is to startup the engine
     if (!GEngine->Start())
@@ -265,7 +265,7 @@ void FEngineLoop::Tick()
     // Tick the timer
     FrameTimer.Tick();
 
-    FApplication::Get().Tick(FrameTimer.GetDeltaTime());
+    FApplicationInterface::Get().Tick(FrameTimer.GetDeltaTime());
 
     FEngineLoopTicker::Get().Tick(FrameTimer.GetDeltaTime());
 
@@ -292,9 +292,9 @@ bool FEngineLoop::Release()
     GRenderer.Release();
 
     // Release the Application. Protect against failed initialization where the global pointer was never initialized
-    if (FApplication::IsInitialized())
+    if (FApplicationInterface::IsInitialized())
     {
-        FApplication::Get().SetRenderer(nullptr);
+        FApplicationInterface::Get().SetRenderer(nullptr);
     }
 
     // Release the Engine. Protect against failed initialization where the global pointer was never initialized
@@ -312,7 +312,7 @@ bool FEngineLoop::Release()
 
     FTaskManagerInterface::Get().Release();
 
-    FApplication::Release();
+    FApplicationInterface::Release();
 
     FThreadManager::Release();
 

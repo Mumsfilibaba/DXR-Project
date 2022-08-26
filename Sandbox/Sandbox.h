@@ -7,7 +7,7 @@
 // FSandbox
 
 class FSandbox 
-    : public FApplicationModule
+    : public FApplicationInterfaceModule
 {
 public:
     FSandbox()  = default;

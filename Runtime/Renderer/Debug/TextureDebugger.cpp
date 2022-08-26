@@ -2,7 +2,7 @@
 
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 
 #include <imgui.h>
 
@@ -27,7 +27,7 @@ void FTextureDebugWindow::Tick()
         constexpr float InvAspectRatio = 16.0f / 9.0f;
         constexpr float AspectRatio = 9.0f / 16.0f;
 
-        FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();
+        FGenericWindowRef MainViewport = FApplicationInterface::Get().GetMainViewport();
 
         const uint32 WindowWidth = MainViewport->GetWidth();
         const uint32 WindowHeight = MainViewport->GetHeight();

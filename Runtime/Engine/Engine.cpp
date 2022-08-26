@@ -4,7 +4,7 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
 
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -43,7 +43,7 @@ bool FEngine::Initialize()
         WindowStyleFlag_Maximizable |
         WindowStyleFlag_Resizeable;
 
-    FApplication& Application = FApplication::Get();
+    FApplicationInterface& Application = FApplicationInterface::Get();
 
     const uint32 WindowWidth  = 1920;
     const uint32 WindowHeight = 1080;

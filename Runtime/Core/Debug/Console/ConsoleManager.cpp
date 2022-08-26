@@ -1,6 +1,6 @@
 #include "ConsoleManager.h"
 
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 
 // TODO: Remove (Make own? Slow?)
 #include <regex>

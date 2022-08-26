@@ -4,7 +4,7 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 
 #include "Engine/Engine.h"
 
@@ -71,7 +71,7 @@ int32 GenericMain()
         }
 
         // Run loop
-        while (FApplication::Get().IsRunning())
+        while (FApplicationInterface::Get().IsRunning())
         {
             EngineTick();
         }

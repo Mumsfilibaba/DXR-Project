@@ -1,12 +1,12 @@
 #include "InterfaceRendererModule.h"
 #include "InterfaceRenderer.h"
 
-IMPLEMENT_ENGINE_MODULE(FApplicationRendererModule, InterfaceRenderer);
+IMPLEMENT_ENGINE_MODULE(FApplicationInterfaceRendererModule, InterfaceRenderer);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FApplicationRendererModule
+// FApplicationInterfaceRendererModule
 
-IApplicationRenderer* FApplicationRendererModule::CreateRenderer()
+IApplicationRenderer* FApplicationInterfaceRendererModule::CreateRenderer()
 {
     return FInterfaceRenderer::Make();;
 }
