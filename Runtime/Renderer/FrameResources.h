@@ -81,48 +81,48 @@ struct RENDERER_API SFrameResources
     const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
     const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
 
-    CRHITexture2D* BackBuffer = nullptr;
+    FRHITexture2D* BackBuffer = nullptr;
 
-    TSharedRef<CRHIConstantBuffer> CameraBuffer;
-    TSharedRef<CRHIConstantBuffer> TransformBuffer;
+    TSharedRef<FRHIConstantBuffer> CameraBuffer;
+    TSharedRef<FRHIConstantBuffer> TransformBuffer;
 
-    TSharedRef<CRHISamplerState> PointLightShadowSampler;
-    TSharedRef<CRHISamplerState> DirectionalLightShadowSampler;
-    TSharedRef<CRHISamplerState> IrradianceSampler;
+    TSharedRef<FRHISamplerState> PointLightShadowSampler;
+    TSharedRef<FRHISamplerState> DirectionalLightShadowSampler;
+    TSharedRef<FRHISamplerState> IrradianceSampler;
 
-    TSharedRef<CRHITextureCube> Skybox;
+    TSharedRef<FRHITextureCube> Skybox;
 
-    TSharedRef<CRHITexture2D>    IntegrationLUT;
-    TSharedRef<CRHISamplerState> IntegrationLUTSampler;
+    TSharedRef<FRHITexture2D>    IntegrationLUT;
+    TSharedRef<FRHISamplerState> IntegrationLUTSampler;
 
-    TSharedRef<CRHITexture2D> SSAOBuffer;
-    TSharedRef<CRHITexture2D> FinalTarget;
-    TSharedRef<CRHITexture2D> GBuffer[5];
+    TSharedRef<FRHITexture2D> SSAOBuffer;
+    TSharedRef<FRHITexture2D> FinalTarget;
+    TSharedRef<FRHITexture2D> GBuffer[5];
 
     // Two resources that can be ping-ponged between
-    TSharedRef<CRHITexture2D> ReducedDepthBuffer[2];
+    TSharedRef<FRHITexture2D> ReducedDepthBuffer[2];
 
-    TSharedRef<CRHISamplerState> GBufferSampler;
-    TSharedRef<CRHISamplerState> FXAASampler;
+    TSharedRef<FRHISamplerState> GBufferSampler;
+    TSharedRef<FRHISamplerState> FXAASampler;
 
-    TSharedRef<CRHIVertexInputLayout> StdInputLayout;
+    TSharedRef<FRHIVertexInputLayout> StdInputLayout;
 
-    TSharedRef<CRHITexture2D>       RTOutput;
-    TSharedRef<CRHIRayTracingScene> RTScene;
+    TSharedRef<FRHITexture2D>       RTOutput;
+    TSharedRef<FRHIRayTracingScene> RTScene;
 
-    SRayTracingShaderResources GlobalResources;
-    SRayTracingShaderResources RayGenLocalResources;
-    SRayTracingShaderResources MissLocalResources;
-    TArray<CRHIRayTracingGeometryInstance> RTGeometryInstances;
+    FRayTracingShaderResources GlobalResources;
+    FRayTracingShaderResources RayGenLocalResources;
+    FRayTracingShaderResources MissLocalResources;
+    TArray<FRHIRayTracingGeometryInstance> RTGeometryInstances;
 
-    TArray<SRayTracingShaderResources>     RTHitGroupResources;
+    TArray<FRayTracingShaderResources>     RTHitGroupResources;
     THashTable<class CMesh*, uint32>       RTMeshToHitGroupIndex;
-    TResourceCache<CRHIShaderResourceView> RTMaterialTextureCache;
+    TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
 
     TArrayView<const SMeshDrawCommand> GlobalMeshDrawCommands;
     TArray<uint32>                     DeferredVisibleCommands;
     TArray<uint32>                     ForwardVisibleCommands;
 
-    TSharedRef<CRHIViewport> MainWindowViewport;
+    TSharedRef<FRHIViewport> MainWindowViewport;
 };
 

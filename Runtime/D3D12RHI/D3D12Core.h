@@ -7,10 +7,6 @@
 #include "Core/Logging/Log.h"
 #include "Core/Containers/ComPtr.h"
 
-#include <dxcapi.h>
-
-#define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
-
 #if MONOLITHIC_BUILD
     #define D3D12_RHI_API
 #else
@@ -19,6 +15,57 @@
     #else
         #define D3D12_RHI_API MODULE_IMPORT
     #endif
+#endif
+
+#define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
+
+// Windows 10 1507 
+#if (NTDDI_WIN10 && (WDK_NTDDI_VERSION >= NTDDI_WIN10))
+    #define WIN10_BUILD_10240 (1)
+#endif
+// Windows 10 1511 (November Update)
+#if (NTDDI_WIN10_TH2 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_TH2))
+    #define WIN10_BUILD_10586 (1)
+#endif
+// Windows 10 1607 (Anniversary Update)
+#if (NTDDI_WIN10_RS1 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS1))
+    #define WIN10_BUILD_14393 (1)
+#endif
+// Windows 10 1703 (Creators Update)
+#if (NTDDI_WIN10_RS2 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS2))
+    #define WIN10_BUILD_15063 (1)
+#endif
+// Windows 10 1709 (Fall Creators Update)
+#if (NTDDI_WIN10_RS3 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS3))
+    #define WIN10_BUILD_16299 (1)
+#endif
+// Windows 10 1803 (April 2018 Update)
+#if (NTDDI_WIN10_RS4 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS4))
+    #define WIN10_BUILD_17134 (1)
+#endif
+// Windows 10 1809 (October 2018 Update)
+#if (NTDDI_WIN10_RS5 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS5))
+    #define WIN10_BUILD_17763 (1)
+#endif
+// Windows 10 1903 (May 2019 Update)
+#if (NTDDI_WIN10_19H1 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_19H1))
+    #define WIN10_BUILD_18362 (1)
+#endif
+// Windows 10 2004 (May 2020 Update)
+#if (NTDDI_WIN10_VB && (WDK_NTDDI_VERSION >= NTDDI_WIN10_VB))
+    #define WIN10_BUILD_19041 (1)
+#endif
+// Windows 10 2104
+#if (NTDDI_WIN10_FE && (WDK_NTDDI_VERSION >= NTDDI_WIN10_FE))
+    #define WIN10_BUILD_20348 (1)
+#endif
+// Windows 11 21H2
+#if (NTDDI_WIN10_CO && (WDK_NTDDI_VERSION >= NTDDI_WIN10_CO))
+    #define WIN11_BUILD_22000 (1)
+#endif
+// Windows 11 22H2
+#if (NTDDI_WIN10_NI && (WDK_NTDDI_VERSION >= NTDDI_WIN10_NI))
+    #define WIN11_BUILD_22621 (1)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -88,19 +135,19 @@ template<typename D3D12TextureType>
 CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
 
 template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2D>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12Texture2D>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2DArray>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12Texture2DArray>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12TextureCube>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12TextureCube>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
@@ -112,7 +159,7 @@ CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12
 }
 
 template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture3D>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12Texture3D>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
 }
@@ -124,7 +171,7 @@ CONSTEXPR bool IsTextureCube()
 }
 
 template<>
-CONSTEXPR bool IsTextureCube<class CD3D12TextureCube>()
+CONSTEXPR bool IsTextureCube<class FD3D12TextureCube>()
 {
     return true;
 }
@@ -158,13 +205,13 @@ CONSTEXPR uint32 GetBufferAlignedSize(uint32 Size)
 }
 
 template<>
-CONSTEXPR uint32 GetBufferAlignedSize<class CD3D12ConstantBuffer>(uint32 Size)
+CONSTEXPR uint32 GetBufferAlignedSize<class FD3D12ConstantBuffer>(uint32 Size)
 {
     return NMath::AlignUp<uint32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 }
 
 template<>
-CONSTEXPR uint32 GetBufferAlignedSize<class CD3D12IndexBuffer>(uint32 Size)
+CONSTEXPR uint32 GetBufferAlignedSize<class FD3D12IndexBuffer>(uint32 Size)
 {
     return NMath::AlignUp<uint32>(Size, sizeof(uint32));
 }
@@ -175,7 +222,7 @@ CONSTEXPR uint32 GetBufferAlignedSize<class CD3D12IndexBuffer>(uint32 Size)
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    CMemory::Memzero(&HeapProperties);
+    FMemory::Memzero(&HeapProperties);
 
     HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
     HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -189,7 +236,7 @@ inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    CMemory::Memzero(&HeapProperties);
+    FMemory::Memzero(&HeapProperties);
 
     HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
     HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -331,7 +378,7 @@ CONSTEXPR D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass I
         case EVertexInputClass::Vertex:   return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
     }
 
-    return D3D12_INPUT_CLASSIFICATION();
+    return D3D12_INPUT_CLASSIFICATION(-1);
 }
 
 CONSTEXPR D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMask)
@@ -342,7 +389,7 @@ CONSTEXPR D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWrit
         case EDepthWriteMask::All:  return D3D12_DEPTH_WRITE_MASK_ALL;
     }
 
-    return D3D12_DEPTH_WRITE_MASK();
+    return D3D12_DEPTH_WRITE_MASK(-1);
 }
 
 CONSTEXPR D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
@@ -359,7 +406,7 @@ CONSTEXPR D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc Comparison
         case EComparisonFunc::Always:       return D3D12_COMPARISON_FUNC_ALWAYS;
     }
 
-    return D3D12_COMPARISON_FUNC();
+    return D3D12_COMPARISON_FUNC(-1);
 }
 
 CONSTEXPR D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
@@ -376,10 +423,10 @@ CONSTEXPR D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
         case EStencilOp::Decr:    return D3D12_STENCIL_OP_DECR;
     }
 
-    return D3D12_STENCIL_OP();
+    return D3D12_STENCIL_OP(-1);
 }
 
-CONSTEXPR D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilStateFace& DepthStencilOp)
+inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilStateFace& DepthStencilOp)
 {
     return
     {
@@ -835,33 +882,33 @@ inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HA
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12CpuDescriptorHandle
+// FD3D12CpuDescriptorHandle
 
-struct SD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
+struct FD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
 {
-    FORCEINLINE SD3D12CpuDescriptorHandle() noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle() noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE({ 0 })
     { }
 
-    FORCEINLINE explicit SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) noexcept
+    FORCEINLINE explicit FD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE(Other)
     { }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) })
     { }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) })
     { }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
     {
         ptr = static_cast<uint64>(static_cast<int64>(ptr) + static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize));
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& Offset(int64 OffsetScaledByIncrementSize) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& Offset(int64 OffsetScaledByIncrementSize) noexcept
     {
         ptr = static_cast<uint64>(static_cast<int64>(ptr) + OffsetScaledByIncrementSize);
         return *this;
@@ -877,31 +924,31 @@ struct SD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
         return (ptr != RHS.ptr);
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator-=(int64 RHS) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& operator-=(int64 RHS) noexcept
     {
         ptr -= RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator-=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& operator-=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr -= RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator+=(int64 RHS) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& operator+=(int64 RHS) noexcept
     {
         ptr += RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator+=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& operator+=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr += RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12CpuDescriptorHandle& operator=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr = RHS.ptr;
         return *this;
@@ -909,33 +956,33 @@ struct SD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12GpuDescriptorHandle
+// FD3D12GpuDescriptorHandle
 
-struct SD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
+struct FD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
 {
-    FORCEINLINE SD3D12GpuDescriptorHandle() noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle() noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE({ 0 })
     { }
 
-    FORCEINLINE explicit SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) noexcept
+    FORCEINLINE explicit FD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE(Other)
     { }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) })
     { }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) })
     { }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
     {
         ptr = static_cast<uint64>(static_cast<int64>(ptr) + static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize));
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& Offset(int64 OffsetScaledByIncrementSize) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& Offset(int64 OffsetScaledByIncrementSize) noexcept
     {
         ptr = static_cast<uint64>(static_cast<int64>(ptr) + OffsetScaledByIncrementSize);
         return *this;
@@ -951,31 +998,31 @@ struct SD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
         return (ptr != RHS.ptr);
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator-=(int64 RHS) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& operator-=(int64 RHS) noexcept
     {
         ptr -= RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator-=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& operator-=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr -= RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator+=(int64 RHS) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& operator+=(int64 RHS) noexcept
     {
         ptr += RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator+=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& operator+=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr += RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12GpuDescriptorHandle& operator=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr = RHS.ptr;
         return *this;

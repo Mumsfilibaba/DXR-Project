@@ -12,20 +12,20 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIComputeShader
 
-class CNullRHIComputeShader : public CRHIComputeShader
+class CNullRHIComputeShader : public FRHIComputeShader
 {
 public:
 
     CNullRHIComputeShader()
-        : CRHIComputeShader()
+        : FRHIComputeShader()
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIComputeShader Interface
+    // FRHIComputeShader Interface
 
-    virtual CIntVector3 GetThreadGroupXYZ() const override final { return CIntVector3(1, 1, 1); }
+    virtual FIntVector3 GetThreadGroupXYZ() const override final { return FIntVector3(1, 1, 1); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -43,7 +43,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIShader Interface
+    // FRHIShader Interface
 
     virtual void* GetRHIBaseShader() override final { return this; }
 };

@@ -9,20 +9,20 @@
 #include <d3d12shader.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIShaderCompiler
+// FD3D12ShaderCompiler
 
-class CD3D12RHIShaderCompiler : public IRHIShaderCompiler
+class FD3D12ShaderCompiler : public IRHIShaderCompiler
 {
 public:
-    CD3D12RHIShaderCompiler();
-    ~CD3D12RHIShaderCompiler();
+    FD3D12ShaderCompiler();
+    ~FD3D12ShaderCompiler();
 
     bool Init();
 
     virtual bool CompileFromFile(
         const String& FilePath,
         const String& EntryPoint,
-        const TArray<SShaderDefine>* Defines,
+        const TArray<FShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         TArray<uint8>& Code) override final;
@@ -30,15 +30,15 @@ public:
     virtual bool CompileShader(
         const String& ShaderSource,
         const String& EntryPoint,
-        const TArray<SShaderDefine>* Defines,
+        const TArray<FShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         TArray<uint8>& Code) override final;
 
-    bool GetReflection(CD3D12Shader* Shader, ID3D12ShaderReflection** Reflection);
-    bool GetLibraryReflection(CD3D12Shader* Shader, ID3D12LibraryReflection** Reflection);
+    bool GetReflection(FD3D12Shader* Shader, ID3D12ShaderReflection** Reflection);
+    bool GetLibraryReflection(FD3D12Shader* Shader, ID3D12LibraryReflection** Reflection);
 
-    bool HasRootSignature(CD3D12Shader* Shader);
+    bool HasRootSignature(FD3D12Shader* Shader);
 
 private:
     bool InternalCompileFromSource(
@@ -47,7 +47,7 @@ private:
         LPCWSTR Entrypoint,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        const TArray<SShaderDefine>* Defines,
+        const TArray<FShaderDefine>* Defines,
         TArray<uint8>& Code);
 
     bool InternalGetReflection(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject);
@@ -64,5 +64,5 @@ private:
     HMODULE DxCompilerDLL;
 };
 
-extern CD3D12RHIShaderCompiler* GD3D12ShaderCompiler;
+extern FD3D12ShaderCompiler* GD3D12ShaderCompiler;
 extern DxcCreateInstanceProc DxcCreateInstanceFunc;

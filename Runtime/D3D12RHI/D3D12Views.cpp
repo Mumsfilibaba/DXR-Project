@@ -3,10 +3,10 @@
 #include "D3D12Views.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12View
+// FD3D12View
 
-CD3D12View::CD3D12View(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
-    : CD3D12DeviceChild(InDevice)
+FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
+    : FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
     , Heap(InHeap)
     , OfflineHandle({ 0 })
@@ -14,18 +14,18 @@ CD3D12View::CD3D12View(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHe
     Check(Heap != nullptr);
 }
 
-CD3D12View::~CD3D12View()
+FD3D12View::~FD3D12View()
 {
     InvalidateAndFreeHandle();
 }
 
-bool CD3D12View::AllocateHandle()
+bool FD3D12View::AllocateHandle()
 {
     OfflineHandle = Heap->Allocate(OfflineHeapIndex);
     return OfflineHandle != 0;
 }
 
-void CD3D12View::InvalidateAndFreeHandle()
+void FD3D12View::InvalidateAndFreeHandle()
 {
     Heap->Free(OfflineHandle, OfflineHeapIndex);
     OfflineHeapIndex = 0;
@@ -33,122 +33,122 @@ void CD3D12View::InvalidateAndFreeHandle()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12ConstantBufferView
+// FD3D12ConstantBufferView
 
-CD3D12ConstantBufferView::CD3D12ConstantBufferView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
-    : CD3D12View(InDevice, InHeap)
+FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
+    : FD3D12View(InDevice, InHeap)
     , Desc()
 { }
 
-bool CD3D12ConstantBufferView::CreateView(CD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
+bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
     Check(OfflineHandle != 0);
 
-    Resource = MakeSharedRef<CD3D12Resource>(InResource);
+    Resource = MakeSharedRef<FD3D12Resource>(InResource);
     Desc = InDesc;
-    GetDevice()->CreateConstantBufferView(&Desc, OfflineHandle);
+    GetDevice()->GetD3D12Device()->CreateConstantBufferView(&Desc, OfflineHandle);
 
     return true;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12ShaderResourceView
+// FD3D12ShaderResourceView
 
-CD3D12ShaderResourceView::CD3D12ShaderResourceView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource)
-    : CRHIShaderResourceView(InResource)
-    , CD3D12View(InDevice, InHeap)
+FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource)
+    : FRHIShaderResourceView(InResource)
+    , FD3D12View(InDevice, InHeap)
     , Desc()
 { }
 
-bool CD3D12ShaderResourceView::CreateView(CD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
+bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
     Check(OfflineHandle != 0);
 
-    CD3D12View::Resource = MakeSharedRef<CD3D12Resource>(InResource);
+    FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
     Desc = InDesc;
 
     ID3D12Resource* NativeResource = nullptr;
-    if (CD3D12View::Resource)
+    if (FD3D12View::Resource)
     {
-        NativeResource = CD3D12View::Resource->GetResource();
+        NativeResource = FD3D12View::Resource->GetD3D12Resource();
     }
 
-    GetDevice()->CreateShaderResourceView(NativeResource, &Desc, OfflineHandle);
+    GetDevice()->GetD3D12Device()->CreateShaderResourceView(NativeResource, &Desc, OfflineHandle);
     return true;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12UnorderedAccessView
+// FD3D12UnorderedAccessView
 
-CD3D12UnorderedAccessView::CD3D12UnorderedAccessView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource)
-    : CRHIUnorderedAccessView(InResource)
-    , CD3D12View(InDevice, InHeap)
+FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource)
+    : FRHIUnorderedAccessView(InResource)
+    , FD3D12View(InDevice, InHeap)
     , Desc()
     , CounterResource(nullptr)
 { }
 
-bool CD3D12UnorderedAccessView::CreateView(CD3D12Resource* InCounterResource, CD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
+bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
     Check(OfflineHandle != 0);
 
     Desc = InDesc;
     CounterResource = InCounterResource;
-    CD3D12View::Resource = MakeSharedRef<CD3D12Resource>(InResource);
+    FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
 
     ID3D12Resource* NativeCounterResource = nullptr;
     if (CounterResource)
     {
-        NativeCounterResource = CounterResource->GetResource();
+        NativeCounterResource = CounterResource->GetD3D12Resource();
     }
 
     ID3D12Resource* NativeResource = nullptr;
-    if (CD3D12View::Resource)
+    if (FD3D12View::Resource)
     {
-        NativeResource = CD3D12View::Resource->GetResource();
+        NativeResource = FD3D12View::Resource->GetD3D12Resource();
     }
 
-    GetDevice()->CreateUnorderedAccessView(NativeResource, NativeCounterResource, &Desc, OfflineHandle);
+    GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(NativeResource, NativeCounterResource, &Desc, OfflineHandle);
     return true;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RenderTargetView
+// FD3D12RenderTargetView
 
-CD3D12RenderTargetView::CD3D12RenderTargetView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
-    : CD3D12View(InDevice, InHeap)
+FD3D12RenderTargetView::FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
+    : FD3D12View(InDevice, InHeap)
     , Desc()
 { }
 
-bool CD3D12RenderTargetView::CreateView(CD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
+bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
     Check(InResource != nullptr);
     Check(OfflineHandle != 0);
 
     Desc = InDesc;
 
-    CD3D12View::Resource = MakeSharedRef<CD3D12Resource>(InResource);
-    GetDevice()->CreateRenderTargetView(CD3D12View::Resource->GetResource(), &Desc, OfflineHandle);
+    FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
+    GetDevice()->GetD3D12Device()->CreateRenderTargetView(FD3D12View::Resource->GetD3D12Resource(), &Desc, OfflineHandle);
 
     return true;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12DepthStencilView
+// FD3D12DepthStencilView
 
-CD3D12DepthStencilView::CD3D12DepthStencilView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
-    : CD3D12View(InDevice, InHeap)
+FD3D12DepthStencilView::FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
+    : FD3D12View(InDevice, InHeap)
     , Desc()
 { }
 
-bool CD3D12DepthStencilView::CreateView(CD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
+bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
     Check(InResource != nullptr);
     Check(OfflineHandle != 0);
 
     Desc = InDesc;
 
-    CD3D12View::Resource = MakeSharedRef<CD3D12Resource>(InResource);
-    GetDevice()->CreateDepthStencilView(CD3D12View::Resource->GetResource(), &Desc, OfflineHandle);
+    Resource = MakeSharedRef<FD3D12Resource>(InResource);
+    GetDevice()->GetD3D12Device()->CreateDepthStencilView(Resource->GetD3D12Resource(), &Desc, OfflineHandle);
 
     return true;
 }

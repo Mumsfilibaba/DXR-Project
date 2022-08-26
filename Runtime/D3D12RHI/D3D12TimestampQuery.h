@@ -6,14 +6,14 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHITimestampQuery
 
-class CD3D12TimestampQuery : public CRHITimestampQuery, public CD3D12DeviceChild
+class FD3D12TimestampQuery : public FRHITimestampQuery, public FD3D12DeviceChild
 {
 public:
 
-    CD3D12TimestampQuery(CD3D12Device* InDevice);
-    ~CD3D12TimestampQuery() = default;
+    FD3D12TimestampQuery(FD3D12Device* InDevice);
+    ~FD3D12TimestampQuery() = default;
 
-    virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const override final;
+    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final;
 
     virtual uint64 GetFrequency() const override final
     {
@@ -23,14 +23,14 @@ public:
     void BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
     void EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
 
-    void ResolveQueries(class CD3D12CommandContext& CmdContext);
+    void ResolveQueries(class FD3D12CommandContext& CmdContext);
 
     FORCEINLINE ID3D12QueryHeap* GetQueryHeap() const
     {
         return QueryHeap.Get();
     }
 
-    static CD3D12TimestampQuery* Create(CD3D12Device* InDevice);
+    static FD3D12TimestampQuery* Create(FD3D12Device* InDevice);
 
 private:
 
@@ -38,10 +38,10 @@ private:
     bool AllocateReadResource();
 
     TComPtr<ID3D12QueryHeap> QueryHeap;
-    TSharedRef<CD3D12Resource>      WriteResource;
+    TSharedRef<FD3D12Resource>      WriteResource;
 
-    TArray<TSharedRef<CD3D12Resource>> ReadResources;
-    TArray<SRHITimestamp> TimeQueries;
+    TArray<TSharedRef<FD3D12Resource>> ReadResources;
+    TArray<FRHITimestamp> TimeQueries;
 
     UINT64 Frequency;
 };

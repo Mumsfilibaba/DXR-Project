@@ -32,7 +32,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
     // Point Shadow Maps
     {
-        CRHIConstantBufferInitializer CBInitializer(EBufferUsageFlags::Default, sizeof(SPerShadowMap));
+        FRHIConstantBufferInitializer CBInitializer(EBufferUsageFlags::Default, sizeof(SPerShadowMap));
 
         PerShadowMapBuffer = RHICreateConstantBuffer(CBInitializer);
         if (!PerShadowMapBuffer)
@@ -42,8 +42,8 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         }
 
         {
-            CShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
-            if (!CShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 CDebug::DebugBreak();
                 return false;
@@ -58,8 +58,8 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         }
 
         {
-            CShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
-            if (!CShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
+            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 CDebug::DebugBreak();
                 return false;
@@ -78,7 +78,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         DepthStencilStateInitializer.bDepthEnable   = true;
         DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
+        TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)
         {
             CDebug::DebugBreak();
@@ -88,7 +88,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         CRHIRasterizerStateInitializer RasterizerInitializer;
         RasterizerInitializer.CullMode = ECullMode::Back;
 
-        TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
+        TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
         if (!RasterizerState)
         {
             CDebug::DebugBreak();
@@ -97,14 +97,14 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
         CRHIBlendStateInitializer BlendStateInitializer;
 
-        TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
+        TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
             CDebug::DebugBreak();
             return false;
         }
 
-        CRHIGraphicsPipelineStateInitializer PSOInitializer;
+        FRHIGraphicsPipelineStateInitializer PSOInitializer;
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
         PSOInitializer.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
@@ -133,7 +133,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
     // Cascaded shadow map
     {
-        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SPerCascade));
+        FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SPerCascade));
 
         PerCascadeBuffer = RHICreateConstantBuffer(Initializer);
         if (!PerCascadeBuffer)
@@ -147,8 +147,8 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         }
 
         {
-            CShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
-            if (!CShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 CDebug::DebugBreak();
                 return false;
@@ -167,7 +167,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         DepthStencilStateInitializer.bDepthEnable   = true;
         DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
+        TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)
         {
             CDebug::DebugBreak();
@@ -177,7 +177,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         CRHIRasterizerStateInitializer RasterizerInitializer;
         RasterizerInitializer.CullMode = ECullMode::Back;
 
-        TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
+        TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
         if (!RasterizerState)
         {
             CDebug::DebugBreak();
@@ -185,14 +185,14 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         }
 
         CRHIBlendStateInitializer BlendStateInitializer;
-        TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
+        TSharedRef<FRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
             CDebug::DebugBreak();
             return false;
         }
 
-        CRHIGraphicsPipelineStateInitializer PSOInitializer;
+        FRHIGraphicsPipelineStateInitializer PSOInitializer;
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
         PSOInitializer.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
@@ -222,8 +222,8 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
     // Cascade Matrix Generation
     {
         {
-            CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-            if (!CShaderCompiler::Get().CompileFromFile("Shaders/CascadeMatrixGen.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/CascadeMatrixGen.hlsl", CompileInfo, ShaderCode))
             {
                 CDebug::DebugBreak();
                 return false;
@@ -254,7 +254,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
     // Create buffers for cascade matrix generation
     {
-        CRHIConstantBufferInitializer CBInitializer(EBufferUsageFlags::Default, sizeof(SCascadeGenerationInfo));
+        FRHIConstantBufferInitializer CBInitializer(EBufferUsageFlags::Default, sizeof(SCascadeGenerationInfo));
 
         CascadeGenerationData = RHICreateConstantBuffer(CBInitializer);
         if (!CascadeGenerationData)
@@ -267,7 +267,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CascadeGenerationData->SetName("Cascade GenerationData");
         }
 
-        CRHIGenericBufferInitializer GenericInitializer(EBufferUsageFlags::RWBuffer, NUM_SHADOW_CASCADES, sizeof(SCascadeMatrices), EResourceAccess::UnorderedAccess);
+        FRHIGenericBufferInitializer GenericInitializer(EBufferUsageFlags::RWBuffer, NUM_SHADOW_CASCADES, sizeof(SCascadeMatrices), EResourceAccess::UnorderedAccess);
 
         LightSetup.CascadeMatrixBuffer = RHICreateGenericBuffer(GenericInitializer);
         if (!LightSetup.CascadeMatrixBuffer)
@@ -296,7 +296,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        GenericInitializer = CRHIGenericBufferInitializer(EBufferUsageFlags::RWBuffer, NUM_SHADOW_CASCADES, sizeof(SCascadeSplits), EResourceAccess::UnorderedAccess);
+        GenericInitializer = FRHIGenericBufferInitializer(EBufferUsageFlags::RWBuffer, NUM_SHADOW_CASCADES, sizeof(SCascadeSplits), EResourceAccess::UnorderedAccess);
 
         LightSetup.CascadeSplitsBuffer = RHICreateGenericBuffer(GenericInitializer);
         if (!LightSetup.CascadeSplitsBuffer)
@@ -329,8 +329,8 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
     // Directional Light ShadowMask
     {
         {
-            CShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-            if (!CShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
             {
                 CDebug::DebugBreak();
                 return false;
@@ -362,7 +362,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
     return true;
 }
 
-void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene)
+void CShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene)
 {
     //PointLightFrame++;
     //if (PointLightFrame > 6)
@@ -399,8 +399,8 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
             {
                 const uint32 ArrayIndex = (Cube * kRHINumCubeFaces) + Face;
 
-                CRHIRenderPassInitializer RenderPass;
-                RenderPass.DepthStencilView = CRHIDepthStencilView(LightSetup.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
+                FRHIRenderPassInitializer RenderPass;
+                RenderPass.DepthStencilView = FRHIDepthStencilView(LightSetup.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
 
                 CmdList.BeginRenderPass(RenderPass);
 
@@ -480,7 +480,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
 }
 
-void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene)
+void CShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene)
 {
     // Generate matrices for directional light
     {
@@ -540,8 +540,8 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
         SPerCascade PerCascadeData;
         for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
         {
-            CRHIRenderPassInitializer RenderPass;
-            RenderPass.DepthStencilView = CRHIDepthStencilView(LightSetup.ShadowMapCascades[i].Get());
+            FRHIRenderPassInitializer RenderPass;
+            RenderPass.DepthStencilView = FRHIDepthStencilView(LightSetup.ShadowMapCascades[i].Get());
 
             CmdList.BeginRenderPass(RenderPass);
 
@@ -588,7 +588,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
     }
 }
 
-void CShadowMapRenderer::RenderShadowMasks(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources)
+void CShadowMapRenderer::RenderShadowMasks(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources)
 {
     // Generate Directional Shadow Mask
     {
@@ -616,7 +616,7 @@ void CShadowMapRenderer::RenderShadowMasks(CRHICommandList& CmdList, const SLigh
 
         CmdList.SetSamplerState(DirectionalShadowMaskShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 0);
 
-        const CIntVector3 ThreadGroupXYZ = DirectionalShadowMaskShader->GetThreadGroupXYZ();
+        const FIntVector3 ThreadGroupXYZ = DirectionalShadowMaskShader->GetThreadGroupXYZ();
         const uint32 ThreadsX = NMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetWidth(), ThreadGroupXYZ.x);
         const uint32 ThreadsY = NMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y);
         CmdList.Dispatch(ThreadsX, ThreadsY, 1);
@@ -654,7 +654,7 @@ void CShadowMapRenderer::Release()
 
 bool CShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, SLightSetup& LightSetup)
 {
-    CRHITexture2DInitializer CascadeInitializer(LightSetup.ShadowMaskFormat, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::NonPixelShaderResource);
+    FRHITexture2DInitializer CascadeInitializer(LightSetup.ShadowMaskFormat, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::NonPixelShaderResource);
     LightSetup.DirectionalShadowMask = RHICreateTexture2D(CascadeInitializer);
     if (LightSetup.DirectionalShadowMask)
     {
@@ -678,9 +678,9 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
         return false;
     }
 
-    const CTextureClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
+    const FTextureClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
 
-    CRHITextureCubeArrayInitializer PointLightInitializer( LightSetup.ShadowMapFormat
+    FRHITextureCubeArrayInitializer PointLightInitializer( LightSetup.ShadowMapFormat
                                                          , LightSetup.PointLightShadowSize
                                                          , LightSetup.MaxPointLightShadows
                                                          , 1
@@ -702,7 +702,7 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
 
     const uint16 CascadeSize = LightSetup.CascadeSize;
     
-    CRHITexture2DInitializer CascadeInitializer( LightSetup.ShadowMapFormat
+    FRHITexture2DInitializer CascadeInitializer( LightSetup.ShadowMapFormat
                                                , CascadeSize
                                                , CascadeSize
                                                , 1

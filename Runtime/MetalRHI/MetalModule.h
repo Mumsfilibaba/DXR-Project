@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalModule
 
-class CMetalModule final : public CRHIModule
+class CMetalModule final : public FRHIModule
 {
 public:
 

@@ -45,7 +45,7 @@ void CGPUProfiler::Tick()
 {
     if (Timequeries)
     {
-        SRHITimestamp Query;
+        FRHITimestamp Query;
         Timequeries->GetTimestampFromIndex(Query, FrameTime.TimeQueryIndex);
 
         const double Frequency = static_cast<double>(Timequeries->GetFrequency());
@@ -75,7 +75,7 @@ void CGPUProfiler::GetGPUSamples(GPUProfileSamplesTable& OutSamples)
     OutSamples = Samples.Get();
 }
 
-void CGPUProfiler::BeginGPUFrame(CRHICommandList& CmdList)
+void CGPUProfiler::BeginGPUFrame(FRHICommandList& CmdList)
 {
     if (Timequeries && bEnabled)
     {
@@ -83,7 +83,7 @@ void CGPUProfiler::BeginGPUFrame(CRHICommandList& CmdList)
     }
 }
 
-void CGPUProfiler::EndGPUFrame(CRHICommandList& CmdList)
+void CGPUProfiler::EndGPUFrame(FRHICommandList& CmdList)
 {
     if (Timequeries && bEnabled)
     {
@@ -91,7 +91,7 @@ void CGPUProfiler::EndGPUFrame(CRHICommandList& CmdList)
     }
 }
 
-void CGPUProfiler::BeginGPUTrace(CRHICommandList& CmdList, const char* Name)
+void CGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const char* Name)
 {
     if (Timequeries && bEnabled)
     {
@@ -122,7 +122,7 @@ void CGPUProfiler::BeginGPUTrace(CRHICommandList& CmdList, const char* Name)
     }
 }
 
-void CGPUProfiler::EndGPUTrace(CRHICommandList& CmdList, const char* Name)
+void CGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const char* Name)
 {
     if (Timequeries && bEnabled)
     {
@@ -140,7 +140,7 @@ void CGPUProfiler::EndGPUTrace(CRHICommandList& CmdList, const char* Name)
 
             if (TimeQueryIndex >= 0)
             {
-                SRHITimestamp Query;
+                FRHITimestamp Query;
                 Timequeries->GetTimestampFromIndex(Query, TimeQueryIndex);
 
                 const double Frequency = static_cast<double>(Timequeries->GetFrequency());

@@ -3,18 +3,18 @@
 #include "D3D12DeviceChild.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Fence
+// FD3D12Fence
 
-class CD3D12Fence : public CD3D12DeviceChild
+class FD3D12Fence : public FD3D12DeviceChild
 {
 public:
-    FORCEINLINE CD3D12Fence(CD3D12Device* InDevice)
-        : CD3D12DeviceChild(InDevice)
+    FORCEINLINE FD3D12Fence(FD3D12Device* InDevice)
+        : FD3D12DeviceChild(InDevice)
         , Fence(nullptr)
         , Event(0)
     { }
 
-    FORCEINLINE ~CD3D12Fence()
+    FORCEINLINE ~FD3D12Fence()
     {
         if (Event)
         {

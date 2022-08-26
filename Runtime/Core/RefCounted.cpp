@@ -3,23 +3,23 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RefCounted
 
-CRefCounted::CRefCounted()
+FRefCounted::FRefCounted()
     : StrongReferences(0)
 {
     AddRef();
 }
 
-CRefCounted::~CRefCounted()
+FRefCounted::~FRefCounted()
 {
     Check(StrongReferences.Load() == 0);
 }
 
-int32 CRefCounted::AddRef()
+int32 FRefCounted::AddRef()
 {
     return ++StrongReferences;
 }
 
-int32 CRefCounted::Release()
+int32 FRefCounted::Release()
 {
     int32 NewRefCount = --StrongReferences;
     if (StrongReferences.Load() <= 0)
@@ -30,7 +30,7 @@ int32 CRefCounted::Release()
     return NewRefCount;
 }
 
-int32 CRefCounted::GetRefCount() const
+int32 FRefCounted::GetRefCount() const
 {
     return StrongReferences.Load();
 }

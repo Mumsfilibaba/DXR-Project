@@ -19,7 +19,7 @@ enum : uint64
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CGenericThread
 
-class CORE_API CGenericThread : public CRefCounted
+class CORE_API CGenericThread : public FRefCounted
 {
     friend class CGenericThreadMisc;
 

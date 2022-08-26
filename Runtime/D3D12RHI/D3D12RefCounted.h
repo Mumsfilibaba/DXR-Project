@@ -4,17 +4,17 @@
 #include "Core/Threading/AtomicInt.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RefCounted
+// FD3D12RefCounted
 
-class D3D12_RHI_API CD3D12RefCounted : public ID3D12RefCounted
+class D3D12_RHI_API FD3D12RefCounted : public ID3D12RefCounted
 {
 protected:
 
-    CD3D12RefCounted()
+    FD3D12RefCounted()
         : StrongReferences(1)
     { }
 
-    virtual ~CD3D12RefCounted() = default;
+    virtual ~FD3D12RefCounted() = default;
 
 public:
 

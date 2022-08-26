@@ -12,7 +12,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIModule
 
-class CNullRHIModule final : public CRHIModule
+class CNullRHIModule final : public FRHIModule
 {
 public:
 

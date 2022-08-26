@@ -12,15 +12,15 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHITimestampQuery
 
-class CNullRHITimestampQuery : public CRHITimestampQuery
+class CNullRHITimestampQuery : public FRHITimestampQuery
 {
 public:
     CNullRHITimestampQuery() = default;
     ~CNullRHITimestampQuery() = default;
 
-    virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const override final
+    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final
     {
-        OutQuery = SRHITimestamp();
+        OutQuery = FRHITimestamp();
     }
 
     virtual uint64 GetFrequency() const override final

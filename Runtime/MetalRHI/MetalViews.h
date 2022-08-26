@@ -12,13 +12,10 @@
 class CMetalView : public CMetalObject
 {
 public:
-    
     explicit CMetalView(CMetalDeviceContext* InDeviceContext)
         : CMetalObject(InDeviceContext)
     { }
-    
-public:
-    
+
     id<MTLTexture> GetMTLTexture() const { return TextureView; }
     
 private:
@@ -32,7 +29,6 @@ private:
 class CMetalShaderResourceView : public CRHIShaderResourceView, public CMetalView
 {
 public:
-
     explicit CMetalShaderResourceView(CMetalDeviceContext* InDeviceContext, CRHIResource* InResource)
         : CRHIShaderResourceView(InResource)
         , CMetalView(InDeviceContext)
@@ -47,7 +43,6 @@ public:
 class CMetalUnorderedAccessView : public CRHIUnorderedAccessView, public CMetalView
 {
 public:
-
     explicit CMetalUnorderedAccessView(CMetalDeviceContext* InDeviceContext, CRHIResource* InResource)
         : CRHIUnorderedAccessView(InResource)
         , CMetalView(InDeviceContext)

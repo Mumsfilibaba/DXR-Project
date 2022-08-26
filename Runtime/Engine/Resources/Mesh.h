@@ -21,18 +21,18 @@ public:
 
     bool Init(const SMeshData& Data);
 
-    bool BuildAccelerationStructure(CRHICommandList& CmdList);
+    bool BuildAccelerationStructure(FRHICommandList& CmdList);
 
     static TSharedPtr<CMesh> Make(const SMeshData& Data);
 
 public:
     void CreateBoundingBox(const SMeshData& Data);
 
-    TSharedRef<CRHIVertexBuffer>       VertexBuffer;
-    TSharedRef<CRHIShaderResourceView> VertexBufferSRV;
-    TSharedRef<CRHIIndexBuffer>        IndexBuffer;
-    TSharedRef<CRHIShaderResourceView> IndexBufferSRV;
-    TSharedRef<CRHIRayTracingGeometry> RTGeometry;
+    TSharedRef<FRHIVertexBuffer>       VertexBuffer;
+    TSharedRef<FRHIShaderResourceView> VertexBufferSRV;
+    TSharedRef<FRHIIndexBuffer>        IndexBuffer;
+    TSharedRef<FRHIShaderResourceView> IndexBufferSRV;
+    TSharedRef<FRHIRayTracingGeometry> RTGeometry;
 
     uint32 VertexCount = 0;
     uint32 IndexCount = 0;

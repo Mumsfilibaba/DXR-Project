@@ -12,91 +12,84 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedef
 
-typedef TSharedRef<class CD3D12Texture>      D3D12TextureRef;
+typedef TSharedRef<class FD3D12Texture>      FD3D12TextureRef;
 
-typedef TSharedRef<CD3D12RenderTargetView>   D3D12RenderTargetViewRef;
-typedef TSharedRef<CD3D12DepthStencilView>   D3D12DepthStencilViewRef;
-typedef TSharedRef<CD3D12ShaderResourceView> D3D12ShaderResourceViewRef;
+typedef TSharedRef<FD3D12RenderTargetView>   FD3D12RenderTargetViewRef;
+typedef TSharedRef<FD3D12DepthStencilView>   FD3D12DepthStencilViewRef;
+typedef TSharedRef<FD3D12ShaderResourceView> FD3D12ShaderResourceViewRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Texture 
+// FD3D12Texture 
 
-class CD3D12Texture : public CD3D12DeviceChild
+class FD3D12Texture : public FD3D12DeviceChild
 {
 public:
 
-    CD3D12Texture(CD3D12Device* InDevice);
-    ~CD3D12Texture() = default;
+    FD3D12Texture(FD3D12Device* InDevice);
+    ~FD3D12Texture() = default;
 
-    CD3D12RenderTargetView* GetOrCreateRTV(const CRHIRenderTargetView& RTVInitializer);
-    CD3D12DepthStencilView* GetOrCreateDSV(const CRHIDepthStencilView& DSVInitializer);
+    FD3D12RenderTargetView* GetOrCreateRTV(const FRHIRenderTargetView& RTVInitializer);
+    FD3D12DepthStencilView* GetOrCreateDSV(const FRHIDepthStencilView& DSVInitializer);
 
-    void DestroyRTVs()
-    {
-        RenderTargetViews.Clear();
-    }
+    void DestroyRTVs() { RenderTargetViews.Clear(); }
+	void DestroyDSVs() { DepthStencilViews.Clear(); }
 
-	void DestroyDSVs()
-	{
-        DepthStencilViews.Clear();
-	}
-
-    void SetShaderResourceView(CD3D12ShaderResourceView* InShaderResourceView) 
+    void SetShaderResourceView(FD3D12ShaderResourceView* InShaderResourceView) 
     { 
         ShaderResourceView = InShaderResourceView; 
     }
     
-    void SetResource(CD3D12Resource* InResource) 
+    void SetResource(FD3D12Resource* InResource) 
     { 
         Resource = InResource; 
         RenderTargetViews.Clear();
         DepthStencilViews.Clear();
     }
 
-    CD3D12Resource*           GetD3D12Resource() const { return Resource.Get(); }
-    CD3D12ShaderResourceView* GetD3D12ShaderResourceView() const { return ShaderResourceView.Get(); }
+    FD3D12Resource*           GetD3D12Resource()           const { return Resource.Get(); }
+    FD3D12ShaderResourceView* GetD3D12ShaderResourceView() const { return ShaderResourceView.Get(); }
 
     DXGI_FORMAT GetDXGIFormat() const { return Resource ? Resource->GetDesc().Format : DXGI_FORMAT_UNKNOWN; }
 
 protected:
-    D3D12ResourceRef           Resource;
-    D3D12ShaderResourceViewRef ShaderResourceView;
+    FD3D12ResourceRef          Resource;
+    FD3D12ShaderResourceViewRef ShaderResourceView;
 
-    TArray<D3D12RenderTargetViewRef> RenderTargetViews;
-    TArray<D3D12DepthStencilViewRef> DepthStencilViews;
+    TArray<FD3D12RenderTargetViewRef> RenderTargetViews;
+    TArray<FD3D12DepthStencilViewRef> DepthStencilViews;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Texture2D
+// FD3D12Texture2D
 
-class CD3D12Texture2D : public CRHITexture2D, public CD3D12Texture
+class FD3D12Texture2D : public FRHITexture2D, public FD3D12Texture
 {
 public:
     
-    explicit CD3D12Texture2D(CD3D12Device* InDevice, const CRHITexture2DInitializer& Initializer)
-        : CRHITexture2D(Initializer)
-        , CD3D12Texture(InDevice)
+    explicit FD3D12Texture2D(FD3D12Device* InDevice, const FRHITexture2DInitializer& Initializer)
+        : FRHITexture2D(Initializer)
+        , FD3D12Texture(InDevice)
         , UnorderedAccessView(nullptr)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture2D Interface
+    // FRHITexture2D Interface
     
-    virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CD3D12Texture*>(this)); }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const String& InName) override final
     {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
         {
             D3D12Resource->SetName(InName);
@@ -105,7 +98,7 @@ public:
 
 public:
 
-    void SetUnorderedAccessView(CD3D12UnorderedAccessView* InUnorderedAccessView) { UnorderedAccessView = InUnorderedAccessView; }
+    void SetUnorderedAccessView(FD3D12UnorderedAccessView* InUnorderedAccessView) { UnorderedAccessView = InUnorderedAccessView; }
 
     void SetSize(uint16 InWidth, uint16 InHeight)
     {
@@ -114,37 +107,37 @@ public:
     }
 
 private:
-    TSharedRef<CD3D12UnorderedAccessView> UnorderedAccessView;
+    TSharedRef<FD3D12UnorderedAccessView> UnorderedAccessView;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Texture2DArray
+// FD3D12Texture2DArray
 
-class CD3D12Texture2DArray : public CRHITexture2DArray, public CD3D12Texture
+class FD3D12Texture2DArray : public FRHITexture2DArray, public FD3D12Texture
 {
 public:
 
-    explicit CD3D12Texture2DArray(CD3D12Device* InDevice, const CRHITexture2DArrayInitializer& Initializer)
-        : CRHITexture2DArray(Initializer)
-        , CD3D12Texture(InDevice)
+    explicit FD3D12Texture2DArray(FD3D12Device* InDevice, const FRHITexture2DArrayInitializer& Initializer)
+        : FRHITexture2DArray(Initializer)
+        , FD3D12Texture(InDevice)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture2DArray Interface
+    // FRHITexture2DArray Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CD3D12Texture*>(this)); }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const String& InName) override final
     {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
         {
             D3D12Resource->SetName(InName);
@@ -153,33 +146,33 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12TextureCube
+// FD3D12TextureCube
 
-class CD3D12TextureCube : public CRHITextureCube, public CD3D12Texture
+class FD3D12TextureCube : public FRHITextureCube, public FD3D12Texture
 {
 public:
 
-    explicit CD3D12TextureCube(CD3D12Device* InDevice, const CRHITextureCubeInitializer& Initializer)
-        : CRHITextureCube(Initializer)
-        , CD3D12Texture(InDevice)
+    explicit FD3D12TextureCube(FD3D12Device* InDevice, const FRHITextureCubeInitializer& Initializer)
+        : FRHITextureCube(Initializer)
+        , FD3D12Texture(InDevice)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITextureCube Interface
+    // FRHITextureCube Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CD3D12Texture*>(this)); }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const String& InName) override final
     {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
         {
             D3D12Resource->SetName(InName);
@@ -190,31 +183,31 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12TextureCubeArray
 
-class CD3D12TextureCubeArray : public CRHITextureCubeArray, public CD3D12Texture
+class CD3D12TextureCubeArray : public FRHITextureCubeArray, public FD3D12Texture
 {
 public:
     
-    explicit CD3D12TextureCubeArray(CD3D12Device* InDevice, const CRHITextureCubeArrayInitializer& Initializer)
-        : CRHITextureCubeArray(Initializer)
-        , CD3D12Texture(InDevice)
+    explicit CD3D12TextureCubeArray(FD3D12Device* InDevice, const FRHITextureCubeArrayInitializer& Initializer)
+        : FRHITextureCubeArray(Initializer)
+        , FD3D12Texture(InDevice)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITextureCubeArray Interface
+    // FRHITextureCubeArray Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CD3D12Texture*>(this)); }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const String& InName) override final
     {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
         {
             D3D12Resource->SetName(InName);
@@ -223,33 +216,33 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Texture3D
+// FD3D12Texture3D
 
-class CD3D12Texture3D final : public CRHITexture3D, public CD3D12Texture
+class FD3D12Texture3D final : public FRHITexture3D, public FD3D12Texture
 {
 public:
 
-    explicit CD3D12Texture3D(CD3D12Device* InDevice, const CRHITexture3DInitializer& Initializer)
-        : CRHITexture3D(Initializer)
-        , CD3D12Texture(InDevice)
+    explicit FD3D12Texture3D(FD3D12Device* InDevice, const FRHITexture3DInitializer& Initializer)
+        : FRHITexture3D(Initializer)
+        , FD3D12Texture(InDevice)
     { }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture3D Interface
+    // FRHITexture3D Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CD3D12Texture*>(this)); }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const String& InName) override final
     {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
         {
             D3D12Resource->SetName(InName);
@@ -260,14 +253,14 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // GetD3D12Texture
 
-inline CD3D12Texture* GetD3D12Texture(CRHITexture* Texture)
+inline FD3D12Texture* GetD3D12Texture(FRHITexture* Texture)
 {
-    return Texture ? reinterpret_cast<CD3D12Texture*>(Texture->GetRHIBaseTexture()) : nullptr;
+    return Texture ? reinterpret_cast<FD3D12Texture*>(Texture->GetRHIBaseTexture()) : nullptr;
 }
 
-inline CD3D12Resource* GetD3D12Resource(CRHITexture* Texture)
+inline FD3D12Resource* GetD3D12Resource(FRHITexture* Texture)
 {
-    return Texture ? reinterpret_cast<CD3D12Resource*>(Texture->GetRHIBaseResource()) : nullptr;
+    return Texture ? reinterpret_cast<FD3D12Resource*>(Texture->GetRHIBaseResource()) : nullptr;
 }
 
 #ifdef COMPILER_MSVC

@@ -110,7 +110,7 @@ bool CTextureDebugWindow::IsTickable()
     return GDrawTextureDebugger.GetBool();
 }
 
-void CTextureDebugWindow::AddTextureForDebugging(const TSharedRef<CRHIShaderResourceView>& ImageView, const TSharedRef<CRHITexture>& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
+void CTextureDebugWindow::AddTextureForDebugging(const TSharedRef<FRHIShaderResourceView>& ImageView, const TSharedRef<FRHITexture>& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     DebugTextures.Emplace(ImageView, Image, BeforeState, AfterState);
 }

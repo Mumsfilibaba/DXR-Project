@@ -5,15 +5,15 @@
 #include "RHI/RHIResources.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12SamplerState
+// FD3D12SamplerState
 
-class CD3D12SamplerState : public CRHISamplerState, public CD3D12DeviceChild
+class FD3D12SamplerState : public FRHISamplerState, public FD3D12DeviceChild
 {
 public:
 
-    CD3D12SamplerState(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap)
-        : CRHISamplerState()
-        , CD3D12DeviceChild(InDevice)
+    FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap)
+        : FRHISamplerState()
+        , FD3D12DeviceChild(InDevice)
         , OfflineHeap(InOfflineHeap)
         , OfflineHandle({ 0 })
         , Desc()
@@ -21,7 +21,7 @@ public:
         Check(InOfflineHeap != nullptr);
     }
 
-    ~CD3D12SamplerState()
+    ~FD3D12SamplerState()
     {
         OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
     }
@@ -34,7 +34,7 @@ public:
         if (OfflineHandle != 0)
         {
             Desc = InDesc;
-            GetDevice()->CreateSampler(&Desc, OfflineHandle);
+            GetDevice()->GetD3D12Device()->CreateSampler(&Desc, OfflineHandle);
             return true;
         }
         else
@@ -50,12 +50,12 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHISamplerState Interface
+    // FRHISamplerState Interface
 
-    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
 private:
-    CD3D12OfflineDescriptorHeap* OfflineHeap = nullptr;
+    FD3D12OfflineDescriptorHeap* OfflineHeap      = nullptr;
     uint32                       OfflineHeapIndex = 0;
     D3D12_CPU_DESCRIPTOR_HANDLE  OfflineHandle;
     D3D12_SAMPLER_DESC           Desc;

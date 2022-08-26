@@ -7,21 +7,14 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalSamplerState
 
-class CMetalSamplerState : public CRHISamplerState
+class CMetalSamplerState : public FRHISamplerState
 {
 public:
-
     CMetalSamplerState()  = default;
     ~CMetalSamplerState() = default;
     
-public:
+    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHISamplerState Interface
-
-    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
-    
-public:
     id<MTLSamplerState> GetMTLSamplerState() const { return SamplerState; }
     
 private:

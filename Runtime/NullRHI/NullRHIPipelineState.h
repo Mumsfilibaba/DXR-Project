@@ -14,7 +14,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIInputLayoutState
 
-class CNullRHIInputLayoutState : public CRHIVertexInputLayout
+class CNullRHIInputLayoutState : public FRHIVertexInputLayout
 {
 public:
 
@@ -25,7 +25,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIDepthStencilState
 
-class CNullRHIDepthStencilState : public CRHIDepthStencilState
+class CNullRHIDepthStencilState : public FRHIDepthStencilState
 {
 public:
 
@@ -36,7 +36,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIRasterizerState
 
-class CNullRHIRasterizerState : public CRHIRasterizerState
+class CNullRHIRasterizerState : public FRHIRasterizerState
 {
 public:
 
@@ -47,7 +47,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIBlendState
 
-class CNullRHIBlendState : public CRHIBlendState
+class CNullRHIBlendState : public FRHIBlendState
 {
 public:
 
@@ -58,7 +58,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIGraphicsPipelineState
 
-class CNullRHIGraphicsPipelineState : public CRHIGraphicsPipelineState
+class CNullRHIGraphicsPipelineState : public FRHIGraphicsPipelineState
 {
 public:
 
@@ -78,7 +78,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIComputePipelineState
 
-class CNullRHIComputePipelineState : public CRHIComputePipelineState
+class CNullRHIComputePipelineState : public FRHIComputePipelineState
 {
 public:
 
@@ -98,7 +98,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIRayTracingPipelineState
 
-class CNullRHIRayTracingPipelineState : public CRHIRayTracingPipelineState
+class CNullRHIRayTracingPipelineState : public FRHIRayTracingPipelineState
 {
 public:
 

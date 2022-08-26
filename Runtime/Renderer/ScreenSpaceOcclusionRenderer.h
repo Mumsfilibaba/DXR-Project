@@ -17,20 +17,20 @@ public:
     bool Init(SFrameResources& FrameResources);
     void Release();
 
-    void Render(CRHICommandList& CmdList, SFrameResources& FrameResources);
+    void Render(FRHICommandList& CmdList, SFrameResources& FrameResources);
 
     bool ResizeResources(SFrameResources& FrameResources);
 
 private:
     bool CreateRenderTarget(SFrameResources& FrameResources);
 
-    TSharedRef<CRHIComputePipelineState> PipelineState;
-    TSharedRef<CRHIComputeShader>        SSAOShader;
-    TSharedRef<CRHIComputePipelineState> BlurHorizontalPSO;
-    TSharedRef<CRHIComputeShader>        BlurHorizontalShader;
-    TSharedRef<CRHIComputePipelineState> BlurVerticalPSO;
-    TSharedRef<CRHIComputeShader>        BlurVerticalShader;
-    TSharedRef<CRHIGenericBuffer>     SSAOSamples;
-    TSharedRef<CRHIShaderResourceView>   SSAOSamplesSRV;
-    TSharedRef<CRHITexture2D>            SSAONoiseTex;
+    TSharedRef<FRHIComputePipelineState> PipelineState;
+    TSharedRef<FRHIComputeShader>        SSAOShader;
+    TSharedRef<FRHIComputePipelineState> BlurHorizontalPSO;
+    TSharedRef<FRHIComputeShader>        BlurHorizontalShader;
+    TSharedRef<FRHIComputePipelineState> BlurVerticalPSO;
+    TSharedRef<FRHIComputeShader>        BlurVerticalShader;
+    TSharedRef<FRHIGenericBuffer>     SSAOSamples;
+    TSharedRef<FRHIShaderResourceView>   SSAOSamplesSRV;
+    TSharedRef<FRHITexture2D>            SSAONoiseTex;
 };

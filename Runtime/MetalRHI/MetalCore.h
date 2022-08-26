@@ -120,27 +120,27 @@ CONSTEXPR MTLStoreAction ConvertAttachmentStoreAction(EAttachmentStoreAction Sto
     }
 }
 
-inline MTLTextureType GetMTLTextureType(CRHITexture* Texture)
+inline MTLTextureType GetMTLTextureType(FRHITexture* Texture)
 {
     Check(Texture != nullptr);
     
-    if (CRHITexture2D* Texture2D = Texture->GetTexture2D())
+    if (FRHITexture2D* Texture2D = Texture->GetTexture2D())
     {
         return Texture2D->IsMultiSampled() ? MTLTextureType2DMultisample : MTLTextureType2D;
     }
-    else if (CRHITexture2DArray* Texture2DArray = Texture->GetTexture2DArray())
+    else if (FRHITexture2DArray* Texture2DArray = Texture->GetTexture2DArray())
     {
         return Texture2DArray->IsMultiSampled() ? MTLTextureType2DMultisampleArray : MTLTextureType2DArray;
     }
-    else if (CRHITextureCube* TextureCube = Texture->GetTextureCube())
+    else if (FRHITextureCube* TextureCube = Texture->GetTextureCube())
     {
         return MTLTextureTypeCube;
     }
-    else if (CRHITextureCubeArray* TextureCubeArray = Texture->GetTextureCubeArray())
+    else if (FRHITextureCubeArray* TextureCubeArray = Texture->GetTextureCubeArray())
     {
         return MTLTextureTypeCubeArray;
     }
-    else if (CRHITexture3D* Texture3D = Texture->GetTexture3D())
+    else if (FRHITexture3D* Texture3D = Texture->GetTexture3D())
     {
         return MTLTextureType3D;
     }
