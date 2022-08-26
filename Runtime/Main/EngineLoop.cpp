@@ -11,7 +11,7 @@
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Modules/ApplicationModule.h"
 #include "Core/Threading/ThreadManager.h"
-#include "Core/Threading/AsyncTaskManager.h"
+#include "Core/Threading/TaskManagerInterface.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
 #include "Core/Misc/OutputDeviceConsole.h"
@@ -151,7 +151,7 @@ bool FEngineLoop::PreInit()
         return false;
     }
 
-    if (!FAsyncTaskManager::Get().Initialize())
+    if (!FTaskManagerInterface::Get().Initialize())
     {
         return false;
     }
@@ -310,7 +310,7 @@ bool FEngineLoop::Release()
 
     RHIRelease();
 
-    FAsyncTaskManager::Get().Release();
+    FTaskManagerInterface::Get().Release();
 
     FApplication::Release();
 

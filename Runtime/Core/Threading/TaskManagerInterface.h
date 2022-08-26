@@ -20,43 +20,22 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FAsyncTaskManager
+// FTaskManagerInterface
 
 class CORE_API FTaskManagerInterface
 {
-    FTaskManagerInterface();
-    ~FTaskManagerInterface();
+protected:
+    FTaskManagerInterface()  = default;
+    ~FTaskManagerInterface() = default;
 
 public:
     static FTaskManagerInterface& Get();
 
-    bool Initialize();
-    void Release();
+    virtual bool Initialize() = 0;
+    virtual void Release()    = 0;
 
-    DispatchID Dispatch(const FAsyncTask& NewTask);
+    virtual DispatchID Dispatch(const FAsyncTask& NewTask) = 0;
 
-    void WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting = true);
-    void WaitForAll(bool bUseThisThreadWhileWaiting = true);
-
-private:
-    static void WorkThread();
-
-    bool PopDispatch(FAsyncTask& OutTask);
-
-    void KillWorkers();
-
-    TArray<FGenericThreadRef> WorkerThreads;
-
-    TArray<FAsyncTask> Queue;
-    FCriticalSection   QueueCS;
-
-    FConditionVariable WakeCondition;
-    FCriticalSection   WakeMutex;
-
-    FAtomicInt64       DispatchAdded;
-    FAtomicInt64       DispatchCompleted;
-
-    volatile bool      bIsRunning;
-
-    static FTaskManagerInterface Instance;
+    virtual void WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting = true) = 0;
+    virtual void WaitForAll(bool bUseThisThreadWhileWaiting = true)               = 0;
 };

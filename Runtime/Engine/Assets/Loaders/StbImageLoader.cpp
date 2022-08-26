@@ -1,6 +1,6 @@
 #include "StbImageLoader.h"
 
-#include "Core/Threading/AsyncTaskManager.h"
+#include "Core/Threading/TaskManagerInterface.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -153,6 +153,6 @@ FImage2DPtr FSTBImageLoader::LoadFile(const FString& Filename)
     FAsyncTask NewTask;
     NewTask.Delegate.BindLambda(LoadImageAsync);
 
-    FAsyncTaskManager::Get().Dispatch(NewTask);
+    FTaskManagerInterface::Get().Dispatch(NewTask);
     return Image;
 }

@@ -4,7 +4,7 @@
 #include "Core/Math/MathCommon.h"
 #include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"
-#include "Core/Threading/AsyncTaskManager.h"
+#include "Core/Threading/TaskManagerInterface.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 #include "Engine/Assets/MeshUtilities.h"
@@ -173,6 +173,6 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
     OutScene.Models.Shrink();
     OutScene.Materials.Shrink();
 
-    FAsyncTaskManager::Get().WaitForAll();
+    FTaskManagerInterface::Get().WaitForAll();
     return true;
 }

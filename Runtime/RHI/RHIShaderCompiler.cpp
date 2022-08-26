@@ -1,7 +1,7 @@
 #include "RHIShaderCompiler.h"
 
 #include "Core/Containers/ComPtr.h"
-#include "Core/Threading/AsyncTaskManager.h"
+#include "Core/Threading/TaskManagerInterface.h"
 #include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformLibrary.h"
 

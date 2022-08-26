@@ -8,7 +8,7 @@
 #include "RayTracer.h"
 
 #include "Core/Time/Timer.h"
-#include "Core/Threading/AsyncTaskManager.h"
+#include "Core/Threading/TaskManagerInterface.h"
 
 #include "Engine/Scene/Actor.h"
 #include "Engine/Scene/Scene.h"

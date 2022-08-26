@@ -357,13 +357,13 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
         FAsyncTask AsyncTask;
         AsyncTask.Delegate.BindLambda(CullAndSort);
 
-        Tasks[Index] = FAsyncTaskManager::Get().Dispatch(AsyncTask);
+        Tasks[Index] = FTaskManagerInterface::Get().Dispatch(AsyncTask);
     }
 
     // Sync and insert
     for (uint32 Index = 0; Index < NumThreads; ++Index)
     {
-        FAsyncTaskManager::Get().WaitFor(Tasks[Index], true);
+        FTaskManagerInterface::Get().WaitFor(Tasks[Index], true);
         
         const TArray<uint32>& WriteForwardMeshCommands = WriteableForwardMeshCommands[Index];
         Resources.ForwardVisibleCommands.Append(WriteForwardMeshCommands);
@@ -511,7 +511,7 @@ void FRenderer::Tick(const FScene& Scene)
         PointShadowTask.Delegate.BindLambda(RenderPointShadows);
     }
 
-    FAsyncTaskManager::Get().Dispatch(PointShadowTask);
+    FTaskManagerInterface::Get().Dispatch(PointShadowTask);
 
     // Initialize directional light task
     const auto RenderDirShadows = [&]()
@@ -520,7 +520,7 @@ void FRenderer::Tick(const FScene& Scene)
     };
 
     DirShadowTask.Delegate.BindLambda(RenderDirShadows);
-    FAsyncTaskManager::Get().Dispatch(DirShadowTask);
+    FTaskManagerInterface::Get().Dispatch(DirShadowTask);
 
     // Perform frustum culling
     Resources.DeferredVisibleCommands.Clear();
@@ -608,7 +608,7 @@ void FRenderer::Tick(const FScene& Scene)
         };
 
         PrePassTask.Delegate.BindLambda(RenderPrePass);
-        FAsyncTaskManager::Get().Dispatch(PrePassTask);
+        FTaskManagerInterface::Get().Dispatch(PrePassTask);
     }
 
 #if 0
@@ -653,7 +653,7 @@ void FRenderer::Tick(const FScene& Scene)
         };
 
         RayTracingTask.Delegate.BindLambda(RenderRayTracing);
-        FAsyncTaskManager::Get().Dispatch(RayTracingTask);
+        FTaskManagerInterface::Get().Dispatch(RayTracingTask);
     }
 
     {
@@ -663,11 +663,11 @@ void FRenderer::Tick(const FScene& Scene)
         };
 
         BasePassTask.Delegate.BindLambda(RenderBasePass);
-        FAsyncTaskManager::Get().Dispatch(BasePassTask);
+        FTaskManagerInterface::Get().Dispatch(BasePassTask);
     }
 
     // TODO: We need to be able to be more flexible regarding this, so we wanna send in the task with the commandlist in order to be more flexible
-    FAsyncTaskManager::Get().WaitForAll();
+    FTaskManagerInterface::Get().WaitForAll();
 
     // Prepare Execution of commandlists
     MainCmdList.ExecuteCommandList(PreShadowsCmdList);
