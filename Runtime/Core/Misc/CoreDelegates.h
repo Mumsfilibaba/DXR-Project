@@ -5,7 +5,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Delegates for different stages of the engine-loop
 
-namespace NEngineLoopDelegates
+namespace NCoreDelegates
 {
     /**
      * @brief: Delegate that gets called after the RHI is initialized 
@@ -42,4 +42,10 @@ namespace NEngineLoopDelegates
      */
     DECLARE_MULTICAST_DELEGATE(FPostApplicationLoadedDelegate);
     extern CORE_API FPostApplicationLoadedDelegate PostApplicationLoadedDelegate;
+
+    /**
+     * @brief: Delegate that gets called after the Application-Module is loaded
+     */
+    DECLARE_MULTICAST_DELEGATE(FDeviceRemovedDelegate);
+    extern CORE_API FDeviceRemovedDelegate DeviceRemovedDelegate;
 };

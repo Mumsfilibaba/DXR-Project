@@ -12,7 +12,7 @@
 #include "Core/Modules/ApplicationModule.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/AsyncTaskManager.h"
-#include "Core/Misc/EngineLoopDelegates.h"
+#include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
 #include "Core/Misc/OutputDeviceConsole.h"
 #include "Core/Misc/OutputDeviceLogger.h"
@@ -175,7 +175,7 @@ bool FEngineLoop::PreInit()
         return false;
     }
 
-    NEngineLoopDelegates::PostInitRHIDelegate.Broadcast();
+    NCoreDelegates::PostInitRHIDelegate.Broadcast();
 
     if (!FGPUProfiler::Init())
     {
@@ -187,7 +187,7 @@ bool FEngineLoop::PreInit()
         return false;
     }
 
-    NEngineLoopDelegates::PreInitFinishedDelegate.Broadcast();
+    NCoreDelegates::PreInitFinishedDelegate.Broadcast();
 
     return true;
 }
@@ -197,7 +197,7 @@ bool FEngineLoop::PreInit()
 
 bool FEngineLoop::Init()
 {
-    NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
+    NCoreDelegates::PreEngineInitDelegate.Broadcast();
 
 #if PROJECT_EDITOR
     GEngine = FEditorEngine::Make();
@@ -210,7 +210,7 @@ bool FEngineLoop::Init()
         return false;
     }
 
-    NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
+    NCoreDelegates::PreEngineInitDelegate.Broadcast();
 
     if (!GRenderer.Init())
     {
@@ -218,7 +218,7 @@ bool FEngineLoop::Init()
         return false;
     }
 
-    NEngineLoopDelegates::PreApplicationLoadedDelegate.Broadcast();
+    NCoreDelegates::PreApplicationLoadedDelegate.Broadcast();
 
     GApplicationModule = FModuleManager::Get().LoadModule<FApplicationModule>(FProjectManager::GetProjectModuleName());
     if (!GApplicationModule)
@@ -227,7 +227,7 @@ bool FEngineLoop::Init()
     }
     else
     {
-        NEngineLoopDelegates::PostApplicationLoadedDelegate.Broadcast();
+        NCoreDelegates::PostApplicationLoadedDelegate.Broadcast();
     }
 
     IApplicationRendererModule* InterfaceRendererModule = FModuleManager::Get().LoadModule<IApplicationRendererModule>("InterfaceRenderer");

@@ -1,9 +1,9 @@
-#include "EngineLoopDelegates.h"
+#include "CoreDelegates.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EngineLoop delegates
 
-namespace NEngineLoopDelegates
+namespace NCoreDelegates
 {
     CORE_API FPostInitRHIDelegate PostInitRHIDelegate;
 
@@ -16,4 +16,6 @@ namespace NEngineLoopDelegates
     CORE_API FPreApplicationLoadedDelegate PreApplicationLoadedDelegate;
 
     CORE_API FPostApplicationLoadedDelegate PostApplicationLoadedDelegate;
+
+    CORE_API FDeviceRemovedDelegate DeviceRemovedDelegate;
 }

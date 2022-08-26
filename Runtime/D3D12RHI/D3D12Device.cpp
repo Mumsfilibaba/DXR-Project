@@ -9,6 +9,7 @@
 
 #include "Core/Windows/Windows.h"
 #include "Core/Platform/PlatformLibrary.h"
+#include "Core/Misc/CoreDelegates.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -139,6 +140,8 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
     {
         fclose(File);
     }
+
+    NCoreDelegates::DeviceRemovedDelegate.Broadcast();
 
     FPlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
 }
