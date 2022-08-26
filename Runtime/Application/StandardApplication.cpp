@@ -404,7 +404,7 @@ void FStandardApplication::RegisterMainViewport(const FGenericWindowRef& NewMain
     MainViewport = NewMainViewport;
     if (ViewportChangedEvent.IsBound())
     {
-        ViewportChangedEvent.Broadcast(MainViewport);
+        ForwardViewportChangedEvent(NewMainViewport);
     }
 
     ImGuiIO& InterfaceState = ImGui::GetIO();
@@ -480,8 +480,8 @@ void FStandardApplication::SetPlatformApplication(const TSharedPtr<FGenericAppli
 {
     if (InPlatformApplication)
     {
-        Check(this == Instance);
-        InPlatformApplication->SetMessageListener(Instance);
+        Check(this == GInstance);
+        InPlatformApplication->SetMessageListener(GInstance);
     }
 
     PlatformApplication = InPlatformApplication;
@@ -782,6 +782,5 @@ void FStandardApplication::HandleWindowClosed(const FGenericWindowRef& Window)
 void FStandardApplication::HandleApplicationExit(int32 ExitCode)
 {
     bIsRunning = false;
-
-    ExitEvent.Broadcast(ExitCode);
+    ForwardExitEvent(ExitCode);
 }

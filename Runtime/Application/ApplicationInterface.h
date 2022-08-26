@@ -157,6 +157,9 @@ public:
     virtual TSharedPtr<FUser> GetUserFromIndex(uint32 UserIndex) const = 0;
 
 protected:
+    void ForwardExitEvent(int32 ExitCode) { ExitEvent.Broadcast(ExitCode); }
+    void ForwardViewportChangedEvent(const FGenericWindowRef& NewMainViewport) { ViewportChangedEvent.Broadcast(NewMainViewport); }
+
 	FExitEvent            ExitEvent;
 	FViewportChangedEvent ViewportChangedEvent;
 

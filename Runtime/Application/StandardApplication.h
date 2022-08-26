@@ -11,6 +11,8 @@ public:
     FStandardApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication);
     virtual ~FStandardApplication();
     
+    bool CreateContext();
+    
     virtual FGenericWindowRef CreateWindow() override final;
 
     virtual void Tick(FTimespan DeltaTime) override final;
@@ -123,8 +125,6 @@ protected:
         TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray,
         const TSharedPtr<MessageHandlerType>& NewMessageHandler,
         uint32 NewPriority);
-
-    bool CreateContext();
 
     void HandleKeyEvent(const FKeyEvent& KeyEvent);
     void HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent);
