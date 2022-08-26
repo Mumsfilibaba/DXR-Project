@@ -106,7 +106,7 @@ private:
     template<typename MetalTextureType, typename InitializerType>
     MetalTextureType* CreateTexture(const InitializerType& Initializer);
     
-    template<typename MetalBufferType, typename InitializerType>
+    template<typename MetalBufferType, typename InitializerType, const uint32 BufferAlignment = kBufferAlignment>
     MetalBufferType* CreateBuffer(const InitializerType& Initializer);
     
 	CMetalDeviceContext*  DeviceContext;

@@ -192,11 +192,9 @@ void CMetalCommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffe
     {
         const uint32 Index = BufferSlot + BufferIndex;
         
+        CMetalVertexBuffer* CurrentBuffer = static_cast<CMetalVertexBuffer*>(VertexBuffers[Index]);
+        CurrentVertexBuffers[Index] = CurrentBuffer ? CurrentBuffer->GetMTLBuffer() : nil;
         CurrentVertexOffsets[Index] = 0;
-
-        CMetalVertexBuffer* Buffer = static_cast<CMetalVertexBuffer*>(VertexBuffers[Index]);
-        CurrentVertexBuffers[Index] = Buffer ? Buffer->GetMTLBuffer() : nil;
-        
     }
     
     CurrentVertexBufferRange = NSMakeRange(NMath::Min<uint32>(BufferSlot, CurrentVertexBufferRange.location), NMath::Max<uint32>(BufferCount, CurrentVertexBufferRange.length));
@@ -314,7 +312,9 @@ void CMetalCommandContext::SetSamplerState(CRHIShader* Shader, CRHISamplerState*
     Check(ParameterIndex < kMaxConstantBuffers);
 
     const EShaderVisibility Visibility = MetalShader->GetVisbility();
-    CurrentSamplerStates[Visibility][ParameterIndex] = MakeSharedRef<CMetalSamplerState>(SamplerState);
+    
+    CMetalSamplerState* MetalSamplerState = static_cast<CMetalSamplerState*>(SamplerState);
+    CurrentSamplerStates[Visibility][ParameterIndex] = MetalSamplerState ? MetalSamplerState->GetMTLSamplerState() : nil;
 }
 
 void CMetalCommandContext::SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
@@ -329,8 +329,12 @@ void CMetalCommandContext::SetSamplerStates(CRHIShader* Shader, CRHISamplerState
     const EShaderVisibility Visibility = MetalShader->GetVisbility();
     for (uint32 Index = 0; Index < NumSamplerStates; ++Index)
     {
-        CurrentSamplerStates[Visibility][ParameterIndex + Index] = MakeSharedRef<CMetalSamplerState>(SamplerStates[Index]);
+        CMetalSamplerState* MetalSamplerState = static_cast<CMetalSamplerState*>(SamplerStates[Index]);
+        CurrentSamplerStates[Visibility][ParameterIndex + Index] = MetalSamplerState ? MetalSamplerState->GetMTLSamplerState() : nil;
     }
+
+    CurrentSamplerStateRange[Visibility] = NSMakeRange( NMath::Min<uint32>(ParameterIndex, CurrentSamplerStateRange[Visibility].location)
+                                                      , NMath::Max<uint32>(NumSamplerStates, CurrentSamplerStateRange[Visibility].length));
 }
 
 void CMetalCommandContext::UpdateBuffer(CRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
@@ -452,10 +456,6 @@ void CMetalCommandContext::PrepareForDraw()
     // Necessary to retrieve all states and the resource bindings
     if (CurrentGraphicsPipeline)
     {
-        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.Data()
-                                  offsets:CurrentVertexOffsets.Data()
-                                withRange:CurrentVertexBufferRange];
-
         CMetalDepthStencilState* DepthStencilState = CurrentGraphicsPipeline->GetMetalDepthStencilState();
         Check(DepthStencilState != nullptr);
         
@@ -467,11 +467,32 @@ void CMetalCommandContext::PrepareForDraw()
         [GraphicsEncoder setFrontFacingWinding:RasterizerState->GetMTLFrontFaceWinding()];
         [GraphicsEncoder setTriangleFillMode:RasterizerState->GetMTLFillMode()];
         
-        [GraphicsEncoder setRenderPipelineState:CurrentGraphicsPipeline->GetMTLPipelineState()];
+        //[GraphicsEncoder setRenderPipelineState:CurrentGraphicsPipeline->GetMTLPipelineState()];
         
-        // Vertex-Shader stage
-        // [GraphicsEncoder set]
+        // Vertex-Buffers stage
+        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.Data()
+                                  offsets:CurrentVertexOffsets.Data()
+                                withRange:CurrentVertexBufferRange];
+        
+        /*
+        // Set resources for each shaderstage
+        for (EShaderVisibility ShaderStage = ShaderVisibility_Compute; ShaderStage < ShaderVisibility_Count; ShaderStage = EShaderVisibility(ShaderStage + 1))
+        {
+            id<MTLSamplerState>* SamplerStates = CurrentSamplerStates[ShaderVisibility_Vertex].Data();
+            [GraphicsEncoder setVertexSamplerStates:SamplerStates withRange:CurrentSamplerStateRange[ShaderVisibility_Vertex]];
 
+            const uint32 NumConstantBuffer = CurrentGraphicsPipeline->GetNumBuffers(ShaderStage);
+            for (uint32 Index = 0; Index < kMaxConstantBuffers; ++Index)
+            {
+                //const uint8 BindingIndex = CurrentGraphicsPipeline->GetConstantBufferBinding(Index);
+                //CurrentBuffers[ShaderStage][BindingIndex] = CurrentConstantBuffers[ShaderStage] ? CurrentConstantBuffers[ShaderStage]->GetMTLBuffer() : nil;
+            }
+
+            [GraphicsEncoder setVertexBuffers:CurrentBuffers[ShaderStage].Data()
+                                      offsets:nil
+                                    withRange:NSMakeRange(0, 0)];
+        }
+         */
     }
 }
 
@@ -482,7 +503,7 @@ void CMetalCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
     PrepareForDraw();
     
     Check(CurrentPrimitiveType != MTLPrimitiveType(-1));
-    [GraphicsEncoder drawPrimitives:CurrentPrimitiveType vertexStart:StartVertexLocation vertexCount:VertexCount];
+    //[GraphicsEncoder drawPrimitives:CurrentPrimitiveType vertexStart:StartVertexLocation vertexCount:VertexCount];
 }
 
 void CMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
@@ -494,6 +515,7 @@ void CMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocat
     Check(CurrentIndexBuffer   != nullptr);
     Check(CurrentPrimitiveType != MTLPrimitiveType(-1));
     
+    /*
     [GraphicsEncoder drawIndexedPrimitives:CurrentPrimitiveType
                                 indexCount:IndexCount
                                  indexType:(CurrentIndexBuffer->GetFormat() == EIndexFormat::uint32) ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16
@@ -501,7 +523,7 @@ void CMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocat
                          indexBufferOffset:CurrentIndexBuffer->GetStride() * StartIndexLocation
                              instanceCount:1
                                 baseVertex:BaseVertexLocation
-                              baseInstance:0];
+                              baseInstance:0];*/
 }
 
 void CMetalCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
@@ -511,11 +533,11 @@ void CMetalCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 I
     PrepareForDraw();
     
     Check(CurrentPrimitiveType != MTLPrimitiveType(-1));
-    [GraphicsEncoder drawPrimitives:CurrentPrimitiveType
+    /*[GraphicsEncoder drawPrimitives:CurrentPrimitiveType
                         vertexStart:StartVertexLocation
                         vertexCount:VertexCountPerInstance
                       instanceCount:InstanceCount
-                       baseInstance:StartInstanceLocation];
+                       baseInstance:StartInstanceLocation];*/
 }
 
 void CMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
@@ -527,14 +549,14 @@ void CMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
     Check(CurrentIndexBuffer   != nullptr);
     Check(CurrentPrimitiveType != MTLPrimitiveType(-1));
     
-    [GraphicsEncoder drawIndexedPrimitives:CurrentPrimitiveType
+    /*[GraphicsEncoder drawIndexedPrimitives:CurrentPrimitiveType
                                 indexCount:IndexCountPerInstance
                                  indexType:(CurrentIndexBuffer->GetFormat() == EIndexFormat::uint32) ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16
                                indexBuffer:CurrentIndexBuffer->GetMTLBuffer()
                          indexBufferOffset:CurrentIndexBuffer->GetStride() * StartIndexLocation
                              instanceCount:InstanceCount
                                 baseVertex:BaseVertexLocation
-                              baseInstance:StartInstanceLocation];
+                              baseInstance:StartInstanceLocation];*/
 }
 
 void CMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
@@ -547,16 +569,33 @@ void CMetalCommandContext::DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTra
 
 void CMetalCommandContext::ClearState()
 {
+    // Viewport
     CMemory::Memzero(&CurrentViewport);
-    
-    CurrentIndexBuffer      = nullptr;
-    CurrentGraphicsPipeline = nullptr;
-    
+        
+    // VertexBuffers
     CurrentVertexBuffers.Fill(nil);
     CurrentVertexOffsets.Memzero();
     CurrentVertexBufferRange = NSMakeRange(0, 0);
+
+    CurrentIndexBuffer = nullptr;
     
-    CurrentPrimitiveType = MTLPrimitiveType(-1);
+    // Pipeline
+    CurrentPrimitiveType    = MTLPrimitiveType(-1);
+    CurrentGraphicsPipeline = nullptr;
+    
+    // Resources
+    for (uint32 ShaderStage = 0; ShaderStage < ShaderVisibility_Count; ++ShaderStage)
+    {
+        CurrentSamplerStates[ShaderStage].Fill(nil);
+        CurrentSamplerStateRange[ShaderStage] = NSMakeRange(0, 0);
+        
+        CurrentSRVs[ShaderStage].Fill(nullptr);
+        CurrentUAVs[ShaderStage].Fill(nullptr);
+        CurrentConstantBuffers[ShaderStage].Fill(nullptr);
+        
+        CurrentBuffers[ShaderStage].Fill(nil);
+        CurrentTextures[ShaderStage].Fill(nil);
+    }
     
     Flush();
 }

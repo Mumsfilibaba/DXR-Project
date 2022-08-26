@@ -9,13 +9,33 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalShaderResourceView
 
-class CMetalShaderResourceView : public CMetalObject, public CRHIShaderResourceView
+class CMetalView : public CMetalObject
+{
+public:
+    
+    explicit CMetalView(CMetalDeviceContext* InDeviceContext)
+        : CMetalObject(InDeviceContext)
+    { }
+    
+public:
+    
+    id<MTLTexture> GetMTLTexture() const { return TextureView; }
+    
+private:
+    id<MTLTexture> TextureView;
+    id<MTLBuffer>  Buffer;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMetalShaderResourceView
+
+class CMetalShaderResourceView : public CRHIShaderResourceView, public CMetalView
 {
 public:
 
     explicit CMetalShaderResourceView(CMetalDeviceContext* InDeviceContext, CRHIResource* InResource)
-        : CMetalObject(InDeviceContext)
-        , CRHIShaderResourceView(InResource)
+        : CRHIShaderResourceView(InResource)
+        , CMetalView(InDeviceContext)
     { }
 
     ~CMetalShaderResourceView() = default;
@@ -24,13 +44,13 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalUnorderedAccessView
 
-class CMetalUnorderedAccessView : public CMetalObject, public CRHIUnorderedAccessView
+class CMetalUnorderedAccessView : public CRHIUnorderedAccessView, public CMetalView
 {
 public:
 
     explicit CMetalUnorderedAccessView(CMetalDeviceContext* InDeviceContext, CRHIResource* InResource)
-        : CMetalObject(InDeviceContext)
-        , CRHIUnorderedAccessView(InResource)
+        : CRHIUnorderedAccessView(InResource)
+        , CMetalView(InDeviceContext)
     { }
 
     ~CMetalUnorderedAccessView() = default;

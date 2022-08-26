@@ -177,29 +177,27 @@ private:
     id<MTLRenderCommandEncoder> GraphicsEncoder;
     MTLViewport                 CurrentViewport;
     
+    // PipelineState
+    TSharedRef<CMetalIndexBuffer>           CurrentIndexBuffer;
+    TSharedRef<CMetalGraphicsPipelineState> CurrentGraphicsPipeline;
+    MTLPrimitiveType                        CurrentPrimitiveType;
+
     // VertexBuffer- state
     TStaticArray<id<MTLBuffer>, kRHIMaxVertexBuffers> CurrentVertexBuffers;
     TStaticArray<NSUInteger   , kRHIMaxVertexBuffers> CurrentVertexOffsets;
     NSRange CurrentVertexBufferRange;
     
-    // PipelineState
-    TSharedRef<CMetalIndexBuffer>           CurrentIndexBuffer;
-    TSharedRef<CMetalGraphicsPipelineState> CurrentGraphicsPipeline;
-    MTLPrimitiveType                        CurrentPrimitiveType;
+    // SamplerState
+    TStaticArray<id<MTLSamplerState>, kMaxSamplerStates> CurrentSamplerStates[ShaderVisibility_Count];
+    NSRange CurrentSamplerStateRange[ShaderVisibility_Count];
     
-    // Resources
-    enum
-    {
-        kMaxSRVs            = 16,
-        kMaxUAVs            = 16,
-        kMaxConstantBuffers = 16,
-        kMaxSamplerStates   = 16,
-    };
-    
-    TStaticArray<TSharedRef<CMetalSamplerState>       , kMaxSamplerStates>   CurrentSamplerStates[ShaderVisibility_Count];
+    // Buffers and Textures
     TStaticArray<TSharedRef<CMetalShaderResourceView> , kMaxSRVs>            CurrentSRVs[ShaderVisibility_Count];
     TStaticArray<TSharedRef<CMetalUnorderedAccessView>, kMaxUAVs>            CurrentUAVs[ShaderVisibility_Count];
     TStaticArray<TSharedRef<CMetalConstantBuffer>     , kMaxConstantBuffers> CurrentConstantBuffers[ShaderVisibility_Count];
+    
+    TStaticArray<id<MTLBuffer> , kMaxBuffers>  CurrentBuffers[ShaderVisibility_Count];
+    TStaticArray<id<MTLTexture>, kMaxTextures> CurrentTextures[ShaderVisibility_Count];
     
     // Contexts
     CMetalCopyCommandContext CopyContext;

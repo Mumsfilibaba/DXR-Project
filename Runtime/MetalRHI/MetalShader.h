@@ -10,7 +10,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EShaderVisibility
 
-enum EShaderVisibility
+enum EShaderVisibility : uint8
 {
     ShaderVisibility_Compute  = 0,
     ShaderVisibility_Vertex   = 1,

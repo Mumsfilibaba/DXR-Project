@@ -25,7 +25,7 @@ public:
     id<MTLSamplerState> GetMTLSamplerState() const { return SamplerState; }
     
 private:
-    id<MTLSamplerState> SamplerState;
+    id<MTLSamplerState> SamplerState = nil;
 };
 
 #pragma clang diagnostic pop

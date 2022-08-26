@@ -181,10 +181,10 @@ CRHIGenericBuffer* CMetalCoreInterface::RHICreateGenericBuffer(const CRHIGeneric
 
 CRHIConstantBuffer* CMetalCoreInterface::RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
 {
-    return CreateBuffer<CMetalConstantBuffer>(Initializer);
+    return CreateBuffer<CMetalConstantBuffer, CRHIConstantBufferInitializer, kConstantBufferAlignment>(Initializer);
 }
 
-template<typename MetalBufferType, typename InitializerType>
+template<typename MetalBufferType, typename InitializerType, const uint32 BufferAlignment>
 MetalBufferType* CMetalCoreInterface::CreateBuffer(const InitializerType& Initializer)
 {
     SCOPED_AUTORELEASE_POOL();
@@ -201,8 +201,10 @@ MetalBufferType* CMetalCoreInterface::CreateBuffer(const InitializerType& Initia
         ResourceOptions |= MTLResourceStorageModePrivate | MTLResourceCPUCacheModeWriteCombined;
     }
     
+    const auto BufferLength = NMath::AlignUp(NewBuffer->GetSize(), BufferAlignment);
+    
     id<MTLDevice> Device       = GetDeviceContext()->GetMTLDevice();
-    id<MTLBuffer> NewMTLBuffer = [Device newBufferWithLength:NewBuffer->GetSize() options:ResourceOptions];
+    id<MTLBuffer> NewMTLBuffer = [Device newBufferWithLength:BufferLength options:ResourceOptions];
     if (!NewMTLBuffer)
     {
         return nullptr;

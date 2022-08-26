@@ -20,7 +20,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Metal Log Macros
+// MetalRHI Log Macros
 
 #if !PRODUCTION_BUILD
     #define METAL_ERROR(...)                      \
@@ -80,7 +80,24 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RHI conversion functions 
+// MetalRHI constants
+
+enum : uint32
+{
+    kMaxSRVs            = 16,
+    kMaxUAVs            = 16,
+    kMaxConstantBuffers = 16,
+    kMaxSamplerStates   = 16,
+    
+    kMaxTextures        = 32,
+    kMaxBuffers         = 48,
+    
+    kBufferAlignment         = 16,
+    kConstantBufferAlignment = 256,
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// MetalRHI conversion functions
 
 CONSTEXPR MTLLoadAction ConvertAttachmentLoadAction(EAttachmentLoadAction LoadAction)
 {

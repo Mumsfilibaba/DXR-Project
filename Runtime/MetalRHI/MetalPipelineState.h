@@ -143,6 +143,20 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SMetalResourceBinding
+
+struct SMetalResourceBinding
+{
+    SMetalResourceBinding() = default;
+    
+    SMetalResourceBinding(uint8 InBinding)
+        : Binding(InBinding)
+    { }
+
+    uint8 Binding = 0;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalGraphicsPipelineState
 
 class CMetalGraphicsPipelineState : public CRHIGraphicsPipelineState, public CMetalObject
@@ -157,6 +171,15 @@ public:
         , PipelineState(nil)
     {
         SCOPED_AUTORELEASE_POOL();
+        
+        NumBuffers.Memzero();
+        
+        for (EShaderVisibility ShaderStage = ShaderVisibility_Compute; ShaderStage < ShaderVisibility_Count; ShaderStage = EShaderVisibility(ShaderStage + 1))
+        {
+            BufferBindings[ShaderStage].Memzero();
+            TextureBindings[ShaderStage].Fill(SMetalResourceBinding(0));
+            SamplerBindings[ShaderStage].Fill(SMetalResourceBinding(0));
+        }
         
         DepthStencilState = MakeSharedRef<CMetalDepthStencilState>(Initializer.DepthStencilState);
         Check(DepthStencilState != nullptr);
@@ -186,6 +209,7 @@ public:
         Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
 
         NSError* Error = nil;
+        MTLRenderPipelineReflection* PipelineReflection = nil;
         PipelineState = [DeviceContext->GetMTLDevice() newRenderPipelineStateWithDescriptor:Descriptor
                                                                                     options:MTLPipelineOptionArgumentInfo
                                                                                  reflection:&PipelineReflection
@@ -194,13 +218,81 @@ public:
         const String ErrorString([Error localizedDescription]);
         METAL_ERROR_COND(PipelineState != nil, "[MetalRHI] Failed to created pipeline state, error %s", ErrorString.CStr());
         
-        NSRelease(Descriptor);
+        // Vertex- Function Resources
+        for (MTLArgument* Argument in PipelineReflection.vertexArguments)
+        {
+            if (!Argument.active)
+            {
+                continue;
+            }
+            
+            if (Argument.type == MTLArgumentTypeBuffer)
+            {
+                // SetConstantBuffer(Shader*, Index = n) -> Maps to Buffer(n)
+                // SetShaderResourceView(Shader*, Index = 5) -> Maps to Buffer(?) Texture(?)
+                // SetUnorderedAccessView(Shader*, Index = 5)
+                
+                // NOTE: Might not be the best way, but for now it works since all shaders will have this name of vertexbuffers
+                if ([Argument.name containsString:@"vertexBuffer."])
+                {
+                    VertexBuffers.Emplace(static_cast<uint8>(Argument.index));
+                }
+                else
+                {
+                    const auto Index = NumBuffers[ShaderVisibility_Vertex]++;
+                    Check(Index < BufferBindings[ShaderVisibility_Vertex].Size());
+                    
+                    BufferBindings[ShaderVisibility_Vertex][Index] = static_cast<uint8>(Argument.index);
+                }
+            }
+            else if (Argument.type == MTLArgumentTypeTexture)
+            {
+                TextureBindings[ShaderVisibility_Vertex].Emplace(static_cast<uint8>(Argument.index));
+            }
+            else if (Argument.type == MTLArgumentTypeSampler)
+            {
+                SamplerBindings[ShaderVisibility_Vertex].Emplace(static_cast<uint8>(Argument.index));
+            }
+        }
+        
+        VertexBuffers.ShrinkToFit();
+        TextureBindings[ShaderVisibility_Vertex].ShrinkToFit();
+        SamplerBindings[ShaderVisibility_Vertex].ShrinkToFit();
+        
+        // Pixel- Function Resources
+        for (MTLArgument* Argument in PipelineReflection.fragmentArguments)
+        {
+            if (!Argument.active)
+            {
+                continue;
+            }
+            
+            if (Argument.type == MTLArgumentTypeBuffer)
+            {
+                const auto Index = NumBuffers[ShaderVisibility_Pixel]++;
+                Check(Index < BufferBindings[ShaderVisibility_Pixel].Size());
+                
+                BufferBindings[ShaderVisibility_Pixel][Index] = static_cast<uint8>(Argument.index);
+            }
+            else if (Argument.type == MTLArgumentTypeTexture)
+            {
+                TextureBindings[ShaderVisibility_Pixel].Emplace(static_cast<uint8>(Argument.index));
+            }
+            else if (Argument.type == MTLArgumentTypeSampler)
+            {
+                SamplerBindings[ShaderVisibility_Pixel].Emplace(static_cast<uint8>(Argument.index));
+            }
+        }
+        
+        TextureBindings[ShaderVisibility_Pixel].ShrinkToFit();
+        SamplerBindings[ShaderVisibility_Pixel].ShrinkToFit();
+        
+        NSSafeRelease(Descriptor);
     }
     
     ~CMetalGraphicsPipelineState()
     {
         NSSafeRelease(PipelineState);
-        NSSafeRelease(PipelineReflection);
     }
 
 public:
@@ -222,13 +314,24 @@ public:
     
     id<MTLRenderPipelineState> GetMTLPipelineState() const { return PipelineState; }
     
+    uint32 GetNumBuffers(EShaderVisibility ShaderVisibility) const { return NumBuffers[ShaderVisibility]; }
+    
+    uint32 GetBufferBinding(EShaderVisibility ShaderVisibility, uint32 BufferIndex) const { return BufferBindings[ShaderVisibility][BufferIndex]; }
+    
 private:
     TSharedRef<CMetalBlendState>        BlendState;
     TSharedRef<CMetalDepthStencilState> DepthStencilState;
     TSharedRef<CMetalRasterizerState>   RasterizerState;
     
     id<MTLRenderPipelineState>          PipelineState;
-    MTLRenderPipelineReflection*        PipelineReflection;
+    
+    TArray<SMetalResourceBinding>       VertexBuffers;
+    
+    TStaticArray<uint8, kMaxConstantBuffers>    BufferBindings[ShaderVisibility_Count];
+    TStaticArray<uint8, ShaderVisibility_Count> NumBuffers;
+    
+    TArray<SMetalResourceBinding>       TextureBindings[ShaderVisibility_Count];
+    TArray<SMetalResourceBinding>       SamplerBindings[ShaderVisibility_Count];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
