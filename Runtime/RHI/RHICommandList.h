@@ -289,16 +289,10 @@ public:
         EmplaceCommand<FRHICommandSetBlendFactor>(Color);
     }
 
-    // TODO: Use arrayview
-    FORCEINLINE void SetVertexBuffers(FRHIVertexBuffer* const* InVertexBuffers, uint32 NumVertexBuffers, uint32 BufferSlot) noexcept
+    FORCEINLINE void SetVertexBuffers(const TArrayView<FRHIVertexBuffer* const> InVertexBuffers, uint32 BufferSlot) noexcept
     {
-        TArrayView<FRHIVertexBuffer*> VertexBuffers = AllocateArray(MakeArrayView((FRHIVertexBuffer**)InVertexBuffers, NumVertexBuffers));
-        if (!InVertexBuffers)
-        {
-            VertexBuffers.Memzero();
-        }
-
-        EmplaceCommand<FRHICommandSetVertexBuffers>(VertexBuffers.GetData(), VertexBuffers.GetSize(), BufferSlot);
+        TArrayView<FRHIVertexBuffer* const> VertexBuffers = AllocateArray(InVertexBuffers);
+        EmplaceCommand<FRHICommandSetVertexBuffers>(VertexBuffers, BufferSlot);
     }
 
     FORCEINLINE void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer) noexcept
@@ -325,7 +319,7 @@ public:
     {
         Check(Num32BitConstants <= kRHIMaxShaderConstants);
 
-        int32 Size       = Num32BitConstants * sizeof(uint32);
+        const int32 Size = Num32BitConstants * sizeof(uint32);
         void* SourceData = Allocate(Size, alignof(uint32));
         FMemory::Memcpy(SourceData, Shader32BitConstants, Size);
 
@@ -337,20 +331,10 @@ public:
         EmplaceCommand<FRHICommandSetShaderResourceView>(Shader, ShaderResourceView, ParameterIndex);
     }
 
-    // TODO: Use arrayview
-    FORCEINLINE void SetShaderResourceViews(
-        FRHIShader* Shader,
-        FRHIShaderResourceView* const* InShaderResourceViews,
-        uint32 NumShaderResourceViews,
-        uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) noexcept
     {
-        TArrayView<FRHIShaderResourceView*> ShaderResourceViews = AllocateArray(MakeArrayView((FRHIShaderResourceView**)InShaderResourceViews, NumShaderResourceViews));
-        if (!InShaderResourceViews)
-        {
-            ShaderResourceViews.Memzero();
-        }
-
-        EmplaceCommand<FRHICommandSetShaderResourceViews>(Shader, ShaderResourceViews.GetData(), ShaderResourceViews.GetSize(), ParameterIndex);
+        TArrayView<FRHIShaderResourceView* const> ShaderResourceViews = AllocateArray(InShaderResourceViews);
+        EmplaceCommand<FRHICommandSetShaderResourceViews>(Shader, ShaderResourceViews, ParameterIndex);
     }
 
     FORCEINLINE void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) noexcept
@@ -358,20 +342,10 @@ public:
         EmplaceCommand<FRHICommandSetUnorderedAccessView>(Shader, UnorderedAccessView, ParameterIndex);
     }
 
-    // TODO: Use arrayview
-    FORCEINLINE void SetUnorderedAccessViews(
-        FRHIShader* Shader,
-        FRHIUnorderedAccessView* const* InUnorderedAccessViews,
-        uint32 NumUnorderedAccessViews,
-        uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex) noexcept
     {
-        TArrayView<FRHIUnorderedAccessView*> UnorderedAccessViews = AllocateArray(MakeArrayView((FRHIUnorderedAccessView**)InUnorderedAccessViews, NumUnorderedAccessViews));
-        if (!InUnorderedAccessViews)
-        {
-            UnorderedAccessViews.Memzero();
-        }
-
-        EmplaceCommand<FRHICommandSetUnorderedAccessViews>(Shader, UnorderedAccessViews.GetData(), UnorderedAccessViews.GetSize(), ParameterIndex);
+        TArrayView<FRHIUnorderedAccessView* const> UnorderedAccessViews = AllocateArray(InUnorderedAccessViews);
+        EmplaceCommand<FRHICommandSetUnorderedAccessViews>(Shader, InUnorderedAccessViews, ParameterIndex);
     }
 
     FORCEINLINE void SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) noexcept
@@ -379,20 +353,10 @@ public:
         EmplaceCommand<FRHICommandSetConstantBuffer>(Shader, ConstantBuffer, ParameterIndex);
     }
 
-    // TODO: Use arrayview
-    FORCEINLINE void SetConstantBuffers(
-        FRHIShader* Shader,
-        FRHIConstantBuffer* const* InConstantBuffers,
-        uint32 NumConstantBuffers,
-        uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIConstantBuffer* const> InConstantBuffers, uint32 ParameterIndex) noexcept
     {
-        TArrayView<FRHIConstantBuffer*> ConstantBuffers = AllocateArray(MakeArrayView((FRHIConstantBuffer**)InConstantBuffers, NumConstantBuffers));
-        if (!InConstantBuffers)
-        {
-            ConstantBuffers.Memzero();
-        }
-
-        EmplaceCommand<FRHICommandSetConstantBuffers>(Shader, ConstantBuffers.GetData(), ConstantBuffers.GetSize(), ParameterIndex);
+        TArrayView<FRHIConstantBuffer* const> ConstantBuffers = AllocateArray(InConstantBuffers);
+        EmplaceCommand<FRHICommandSetConstantBuffers>(Shader, InConstantBuffers, ParameterIndex);
     }
 
     FORCEINLINE void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex) noexcept
@@ -400,20 +364,10 @@ public:
         EmplaceCommand<FRHICommandSetSamplerState>(Shader, SamplerState, ParameterIndex);
     }
 
-    // TODO: Use arrayview
-    FORCEINLINE void SetSamplerStates(
-        FRHIShader* Shader,
-        FRHISamplerState* const* InSamplerStates,
-        uint32 NumSamplerStates,
-        uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) noexcept
     {
-        TArrayView<FRHISamplerState*> SamplerStates = AllocateArray(MakeArrayView((FRHISamplerState**)InSamplerStates, NumSamplerStates));
-        if (!InSamplerStates)
-        {
-            SamplerStates.Memzero();
-        }
-
-        EmplaceCommand<FRHICommandSetSamplerStates>(Shader, SamplerStates.GetData(), SamplerStates.GetSize(), ParameterIndex);
+        TArrayView<FRHISamplerState* const> SamplerStates = AllocateArray(InSamplerStates);
+        EmplaceCommand<FRHICommandSetSamplerStates>(Shader, InSamplerStates, ParameterIndex);
     }
 
     FORCEINLINE void UpdateBuffer(FRHIBuffer* Dst, uint32 OffsetInBytes, uint32 SizeInBytes, const void* InSourceData) noexcept
@@ -468,7 +422,7 @@ public:
         EmplaceCommand<FRHICommandBuildRayTracingGeometry>(Geometry, VertexBuffer, IndexBuffer, bUpdate);
     }
 
-    FORCEINLINE void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) noexcept
+    FORCEINLINE void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance> Instances, bool bUpdate) noexcept
     {
         Check((Scene != nullptr) && (!bUpdate || (bUpdate && IsEnumFlagSet(Scene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))));
         EmplaceCommand<FRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);

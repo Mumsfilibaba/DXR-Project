@@ -209,7 +209,7 @@ void FSkyboxRenderPass::Render(FRHICommandList& CmdList, const FFrameResources& 
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-    CmdList.SetVertexBuffers(&SkyboxVertexBuffer, 1, 0);
+    CmdList.SetVertexBuffers(MakeArrayView(&SkyboxVertexBuffer, 1), 0);
     CmdList.SetIndexBuffer(SkyboxIndexBuffer.Get());
     CmdList.SetGraphicsPipelineState(PipelineState.Get());
 

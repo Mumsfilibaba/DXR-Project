@@ -140,11 +140,10 @@ public:
     /**
      * @brief: Set the VertexBuffers to be used
      * 
-     * @param VertexBuffers: Array of VertexBuffers to use
-     * @param VertexBufferCount: Number of VertexBuffers in the array
+     * @param VertexBuffers: ArrayView of VertexBuffers to use
      * @param BufferSlot: Slot to start bind the array to
      */
-    virtual void SetVertexBuffers(FRHIVertexBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot) = 0;
+    virtual void SetVertexBuffers(const TArrayView<FRHIVertexBuffer* const> InVertexBuffers, uint32 BufferSlot) = 0;
     
     /**
      * @brief: Set the current IndexBuffer 
@@ -197,15 +196,10 @@ public:
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
-     * @param ShaderResourceViews: Array of ShaderResourceViews to bind
-     * @param NumShaderResourceViews: Number of ShaderResourceViews in the array
+     * @param ShaderResourceViews: ArrayView of ShaderResourceViews to bind
      * @param ParameterIndex: ShaderResourceView-index to bind to
      */
-    virtual void SetShaderResourceViews(
-        FRHIShader* Shader,
-        FRHIShaderResourceView* const* ShaderResourceViews,
-        uint32 NumShaderResourceViews,
-        uint32 ParameterIndex) = 0;
+    virtual void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -221,15 +215,10 @@ public:
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
-     * @param UnorderedAccessViews: Array of UnorderedAccessViews to bind
-     * @param NumUnorderedAccessViews: Number of UnorderedAccessViews in the array
+     * @param InUnorderedAccessViews: ArrayView of UnorderedAccessViews to bind
      * @param ParameterIndex: UnorderedAccessView-index to bind to
      */
-    virtual void SetUnorderedAccessViews(
-        FRHIShader* Shader,
-        FRHIUnorderedAccessView* const* UnorderedAccessViews,
-        uint32 NumUnorderedAccessViews,
-        uint32 ParameterIndex) = 0;
+    virtual void SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -245,15 +234,10 @@ public:
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
-     * @param ConstantBuffers: Array of ConstantBuffers to bind
-     * @param NumConstantBuffers: Number of ConstantBuffers in the array
+     * @param ConstantBuffers: ArrayView of ConstantBuffers to bind
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    virtual void SetConstantBuffers(
-        FRHIShader* Shader,
-        FRHIConstantBuffer* const* ConstantBuffers,
-        uint32 NumConstantBuffers,
-        uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIConstantBuffer* const> InConstantBuffers, uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -269,15 +253,10 @@ public:
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
-     * @param SamplerStates: Array of SamplerStates to bind
-     * @param NumConstantBuffers: Number of ConstantBuffers in the array
+     * @param SamplerStates: ArrayView of SamplerStates to bind
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    virtual void SetSamplerStates(
-        FRHIShader* Shader,
-        FRHISamplerState* const* SamplerStates,
-        uint32 NumSamplerStates,
-        uint32 ParameterIndex) = 0;
+    virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Updates the contents of a Buffer

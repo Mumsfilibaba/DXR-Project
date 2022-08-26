@@ -457,7 +457,7 @@ void FRenderer::PerformAABBDebugPass(FRHICommandList& InCmdList)
 
     InCmdList.SetConstantBuffer(AABBVertexShader.Get(), Resources.CameraBuffer.Get(), 0);
 
-    InCmdList.SetVertexBuffers(&AABBVertexBuffer, 1, 0);
+    InCmdList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
     InCmdList.SetIndexBuffer(AABBIndexBuffer.Get());
 
     for (const auto CommandIndex : Resources.DeferredVisibleCommands)

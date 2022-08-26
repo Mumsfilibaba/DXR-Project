@@ -289,7 +289,7 @@ void FInterfaceRenderer::Render(FRHICommandList& CmdList)
 
     CmdList.Set32BitShaderConstants(PShader.Get(), &MVP, 16);
 
-    CmdList.SetVertexBuffers(&VertexBuffer, 1, 0);
+    CmdList.SetVertexBuffers(MakeArrayView(&VertexBuffer, 1), 0);
     CmdList.SetIndexBuffer(IndexBuffer.Get());
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     CmdList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });

@@ -168,7 +168,7 @@ void FForwardRenderer::Render(FRHICommandList& CmdList, const FFrameResources& F
     {
         const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
 
-        CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
+        CmdList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
         CmdList.SetIndexBuffer(Command.IndexBuffer);
 
         if (Command.Material->IsBufferDirty())

@@ -459,7 +459,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const
                         FAABB Box(Top, Bottom);
                         if (CameraFrustum.CheckAABB(Box))
                         {
-                            CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
+                            CmdList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
                             CmdList.SetIndexBuffer(Command.IndexBuffer);
 
                             ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
@@ -474,7 +474,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const
                 {
                     for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
                     {
-                        CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
+                        CmdList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
                         CmdList.SetIndexBuffer(Command.IndexBuffer);
 
                         ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
@@ -630,7 +630,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
             // Draw all objects to shadow-map
             for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
             {
-                CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
+                CmdList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
                 CmdList.SetIndexBuffer(Command.IndexBuffer);
 
                 ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();

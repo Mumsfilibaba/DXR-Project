@@ -492,7 +492,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, FFrameResources&
             const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
             if (Command.Material->ShouldRenderInPrePass())
             {
-                CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
+                CmdList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
                 CmdList.SetIndexBuffer(Command.IndexBuffer);
 
                 PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
@@ -635,7 +635,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const FFrameRes
     {
         const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
 
-        CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
+        CmdList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
         CmdList.SetIndexBuffer(Command.IndexBuffer);
 
         if (Command.Material->IsBufferDirty())

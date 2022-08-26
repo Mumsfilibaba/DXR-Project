@@ -705,17 +705,19 @@ void FD3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTop
     }
 }
 
-void FD3D12CommandContext::SetVertexBuffers(FRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
+void FD3D12CommandContext::SetVertexBuffers(const TArrayView<FRHIVertexBuffer* const> InVertexBuffers, uint32 BufferSlot)
 {
-    D3D12_ERROR_COND(BufferSlot + BufferCount < D3D12_MAX_VERTEX_BUFFER_SLOTS, "Trying to set a VertexBuffer to an invalid slot");
+    D3D12_ERROR_COND(
+        (BufferSlot + InVertexBuffers.GetSize()) < D3D12_MAX_VERTEX_BUFFER_SLOTS,
+        "Trying to set a VertexBuffer to an invalid slot");
 
-    for (uint32 Index = 0; Index < BufferCount; ++Index)
+    for (int32 Index = 0; Index < InVertexBuffers.GetSize(); ++Index)
     {
-        FD3D12VertexBuffer* D3D12VertexBuffer = static_cast<FD3D12VertexBuffer*>(VertexBuffers[Index]);
+        FD3D12VertexBuffer* D3D12VertexBuffer = static_cast<FD3D12VertexBuffer*>(InVertexBuffers[Index]);
         State.SetVertexBuffer(D3D12VertexBuffer, BufferSlot + Index);
     }
 
-    State.Graphics.VBCache.NumVertexBuffers = NMath::Max(State.Graphics.VBCache.NumVertexBuffers, BufferSlot + BufferCount);
+    State.Graphics.VBCache.NumVertexBuffers = NMath::Max(State.Graphics.VBCache.NumVertexBuffers, BufferSlot + InVertexBuffers.GetSize());
 }
 
 void FD3D12CommandContext::SetIndexBuffer(FRHIIndexBuffer* IndexBuffer)
@@ -756,26 +758,36 @@ void FD3D12CommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderR
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
+    D3D12_ERROR_COND(
+        ParameterInfo.Space == 0,
+        "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(
+        ParameterInfo.NumDescriptors == 1,
+        "Trying to bind more descriptors than supported to ParameterIndex=%u",
+        ParameterIndex);
 
     FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(ShaderResourceView);
     State.DescriptorCache.SetShaderResourceView(D3D12Shader->GetShaderVisibility(), D3D12ShaderResourceView, ParameterInfo.Register);
 }
 
-void FD3D12CommandContext::SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex)
+void FD3D12CommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumShaderResourceViews, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
+    D3D12_ERROR_COND(
+        ParameterInfo.Space == 0,
+        "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(
+        ParameterInfo.NumDescriptors == uint32(InShaderResourceViews.GetSize()),
+        "Trying to bind more descriptors than supported to ParameterIndex=%u",
+        ParameterIndex);
 
-    for (uint32 i = 0; i < NumShaderResourceViews; i++)
+    for (int32 Index = 0; Index < InShaderResourceViews.GetSize(); ++Index)
     {
-        FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(ShaderResourceView[i]);
-        State.DescriptorCache.SetShaderResourceView(D3D12Shader->GetShaderVisibility(), D3D12ShaderResourceView, ParameterInfo.Register + i);
+        FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(InShaderResourceViews[Index]);
+        State.DescriptorCache.SetShaderResourceView(D3D12Shader->GetShaderVisibility(), D3D12ShaderResourceView, ParameterInfo.Register + Index);
     }
 }
 
@@ -785,26 +797,36 @@ void FD3D12CommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorde
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
+    D3D12_ERROR_COND(
+        ParameterInfo.Space == 0,
+        "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(
+        ParameterInfo.NumDescriptors == 1,
+        "Trying to bind more descriptors than supported to ParameterIndex=%u",
+        ParameterIndex);
 
     FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
     State.DescriptorCache.SetUnorderedAccessView(D3D12Shader->GetShaderVisibility(), D3D12UnorderedAccessView, ParameterInfo.Register);
 }
 
-void FD3D12CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
+void FD3D12CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumUnorderedAccessViews, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
+    D3D12_ERROR_COND(
+        ParameterInfo.Space == 0,
+        "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(
+        ParameterInfo.NumDescriptors == uint32(InUnorderedAccessViews.GetSize()),
+        "Trying to bind more descriptors than supported to ParameterIndex=%u",
+        ParameterIndex);
 
-    for (uint32 i = 0; i < NumUnorderedAccessViews; i++)
+    for (int32 Index = 0; Index < InUnorderedAccessViews.GetSize(); ++Index)
     {
-        FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessViews[i]);
-        State.DescriptorCache.SetUnorderedAccessView(D3D12Shader->GetShaderVisibility(), D3D12UnorderedAccessView, ParameterInfo.Register + i);
+        FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(InUnorderedAccessViews[Index]);
+        State.DescriptorCache.SetUnorderedAccessView(D3D12Shader->GetShaderVisibility(), D3D12UnorderedAccessView, ParameterInfo.Register + Index);
     }
 }
 
@@ -814,8 +836,13 @@ void FD3D12CommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuf
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
+    D3D12_ERROR_COND(
+        ParameterInfo.Space == 0,
+        "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(
+        ParameterInfo.NumDescriptors == 1,
+        "Trying to bind more descriptors than supported to ParameterIndex=%u",
+        ParameterIndex);
 
     if (ConstantBuffer)
     {
@@ -828,20 +855,25 @@ void FD3D12CommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuf
     }
 }
 
-void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, FRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
+void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIConstantBuffer* const> InConstantBuffers, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumConstantBuffers, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
+    D3D12_ERROR_COND(
+        ParameterInfo.Space == 0,
+        "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(
+        ParameterInfo.NumDescriptors == uint32(InConstantBuffers.GetSize()),
+        "Trying to bind more descriptors than supported to ParameterIndex=%u",
+        ParameterIndex);
 
-    for (uint32 i = 0; i < NumConstantBuffers; i++)
+    for (int32 Index = 0; Index < InConstantBuffers.GetSize(); ++Index)
     {
-        if (ConstantBuffers[i])
+        if (InConstantBuffers[Index])
         {
-            FD3D12ConstantBufferView& D3D12ConstantBufferView = static_cast<FD3D12ConstantBuffer*>(ConstantBuffers[i])->GetView();
+            FD3D12ConstantBufferView& D3D12ConstantBufferView = static_cast<FD3D12ConstantBuffer*>(InConstantBuffers[Index])->GetView();
             State.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), &D3D12ConstantBufferView, ParameterInfo.Register);
         }
         else
@@ -857,25 +889,35 @@ void FD3D12CommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState*
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
+    D3D12_ERROR_COND(
+        ParameterInfo.Space == 0,
+        "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(
+        ParameterInfo.NumDescriptors == 1,
+        "Trying to bind more descriptors than supported to ParameterIndex=%u",
+        ParameterIndex);
 
     FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(SamplerState);
     State.DescriptorCache.SetSamplerState(D3D12Shader->GetShaderVisibility(), D3D12SamplerState, ParameterInfo.Register);
 }
 
-void FD3D12CommandContext::SetSamplerStates(FRHIShader* Shader, FRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
+void FD3D12CommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumSamplerStates, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
+    D3D12_ERROR_COND(
+        ParameterInfo.Space == 0,
+        "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(
+        ParameterInfo.NumDescriptors == uint32(InSamplerStates.GetSize()),
+        "Trying to bind more descriptors than supported to ParameterIndex=%u",
+        ParameterIndex);
 
-    for (uint32 i = 0; i < NumSamplerStates; i++)
+    for (int32 Index = 0; Index < InSamplerStates.GetSize(); ++Index)
     {
-        FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(SamplerStates[i]);
+        FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(InSamplerStates[Index]);
         State.DescriptorCache.SetSamplerState(D3D12Shader->GetShaderVisibility(), D3D12SamplerState, ParameterInfo.Register);
     }
 }
@@ -977,7 +1019,12 @@ void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Destination, FRHIBuffer* Sourc
     FD3D12Buffer* D3D12Source = GetD3D12Buffer(Source);
     Check(D3D12Source != nullptr);
 
-    CommandList.CopyBufferRegion(D3D12Destination->GetD3D12Resource(), CopyInfo.DestinationOffset, D3D12Source->GetD3D12Resource(), CopyInfo.SourceOffset, CopyInfo.SizeInBytes);
+    CommandList.CopyBufferRegion(
+        D3D12Destination->GetD3D12Resource(),
+        CopyInfo.DestinationOffset,
+        D3D12Source->GetD3D12Resource(),
+        CopyInfo.SourceOffset,
+        CopyInfo.SizeInBytes);
 
     CmdBatch->AddInUseResource(Destination);
     CmdBatch->AddInUseResource(Source);
@@ -1037,7 +1084,13 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Destination, FRHITextu
 
     FlushResourceBarriers();
 
-    CommandList.CopyTextureRegion(&DestinationLocation, CopyInfo.Destination.x, CopyInfo.Destination.y, CopyInfo.Destination.z, &SourceLocation, &SourceBox);
+    CommandList.CopyTextureRegion(
+        &DestinationLocation,
+        CopyInfo.Destination.x,
+        CopyInfo.Destination.y,
+        CopyInfo.Destination.z,
+        &SourceLocation, 
+        &SourceBox);
 
     CmdBatch->AddInUseResource(Destination);
     CmdBatch->AddInUseResource(Source);
@@ -1090,13 +1143,14 @@ void FD3D12CommandContext::BuildRayTracingScene(FRHIRayTracingScene* RayTracingS
     CmdBatch->AddInUseResource(RayTracingScene);
 }
 
-void FD3D12CommandContext::SetRayTracingBindings( FRHIRayTracingScene* RayTracingScene
-                                                , FRHIRayTracingPipelineState* PipelineState
-                                                , const FRayTracingShaderResources* GlobalResource
-                                                , const FRayTracingShaderResources* RayGenLocalResources
-                                                , const FRayTracingShaderResources* MissLocalResources
-                                                , const FRayTracingShaderResources* HitGroupResources
-                                                , uint32 NumHitGroupResources)
+void FD3D12CommandContext::SetRayTracingBindings(
+    FRHIRayTracingScene* RayTracingScene,
+    FRHIRayTracingPipelineState* PipelineState,
+    const FRayTracingShaderResources* GlobalResource,
+    const FRayTracingShaderResources* RayGenLocalResources,
+    const FRayTracingShaderResources* MissLocalResources,
+    const FRayTracingShaderResources* HitGroupResources,
+    uint32 NumHitGroupResources)
 {
     FD3D12RayTracingScene*         D3D12Scene         = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
     FD3D12RayTracingPipelineState* D3D12PipelineState = static_cast<FD3D12RayTracingPipelineState*>(PipelineState);
@@ -1127,8 +1181,11 @@ void FD3D12CommandContext::SetRayTracingBindings( FRHIRayTracingScene* RayTracin
         NumSamplersNeeded    += HitGroupResources[i].NumSamplers();
     }
 
-    D3D12_ERROR_COND( NumDescriptorsNeeded < D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
-                    , "NumDescriptorsNeeded=%u, but the maximum is '%u'", NumDescriptorsNeeded, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
+    D3D12_ERROR_COND(
+        NumDescriptorsNeeded < D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT,
+        "NumDescriptorsNeeded=%u, but the maximum is '%u'",
+        NumDescriptorsNeeded,
+        D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
 
     FD3D12OnlineDescriptorManager* ResourceHeap = CmdBatch->GetResourceDescriptorManager();
     if (!ResourceHeap->HasSpace(NumDescriptorsNeeded))
@@ -1138,8 +1195,11 @@ void FD3D12CommandContext::SetRayTracingBindings( FRHIRayTracingScene* RayTracin
         // ResourceHeap->AllocateFreshHeap();
     }
 
-    D3D12_ERROR_COND( NumSamplersNeeded < D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT
-                    , "NumDescriptorsNeeded=%u, but the maximum is '%u'", NumSamplersNeeded, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
+    D3D12_ERROR_COND(
+        NumSamplersNeeded < D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT,
+        "NumDescriptorsNeeded=%u, but the maximum is '%u'",
+        NumSamplersNeeded,
+        D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
 
     FD3D12OnlineDescriptorManager* SamplerHeap = CmdBatch->GetSamplerDescriptorManager();
     if (!SamplerHeap->HasSpace(NumSamplersNeeded))
@@ -1270,7 +1330,10 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     const uint32 StartDescriptorHandleIndex = ResourceDescriptors->AllocateHandles(UavDescriptorHandleCount + 1);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE SrvHandle_CPU = ResourceDescriptors->GetCPUDescriptorHandleAt(StartDescriptorHandleIndex);
-    GetDevice()->GetD3D12Device()->CreateShaderResourceView(D3D12Texture->GetResource()->GetD3D12Resource(), &SrvDesc, SrvHandle_CPU);
+    GetDevice()->GetD3D12Device()->CreateShaderResourceView(
+        D3D12Texture->GetResource()->GetD3D12Resource(), 
+        &SrvDesc, 
+        SrvHandle_CPU);
 
     const uint32 UavStartDescriptorHandleIndex = StartDescriptorHandleIndex + 1;
     for (uint32 i = 0; i < Desc.MipLevels; i++)
@@ -1285,7 +1348,11 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
         }
 
         const D3D12_CPU_DESCRIPTOR_HANDLE UavHandle_CPU = ResourceDescriptors->GetCPUDescriptorHandleAt(UavStartDescriptorHandleIndex + i);
-        GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(StagingTexture->GetD3D12Resource(), nullptr, &UavDesc, UavHandle_CPU);
+        GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(
+            StagingTexture->GetD3D12Resource(), 
+            nullptr, 
+            &UavDesc, 
+            UavHandle_CPU);
     }
 
     for (uint32 i = Desc.MipLevels; i < UavDescriptorHandleCount; i++)
