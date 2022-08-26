@@ -186,7 +186,7 @@ void FGameConsoleWindow::Tick()
         }
         else
         {
-            const TArray<TPair<FString, EConsoleSeverity>>& ConsoleMessages = FConsoleManager::Get().GetMessages();
+            const TArray<TPair<FString, EConsoleSeverity>>& ConsoleMessages = FConsoleInterface::Get().GetMessages();
             for (const TPair<FString, EConsoleSeverity>& Text : ConsoleMessages)
             {
                 ImVec4 Color;
@@ -262,7 +262,7 @@ void FGameConsoleWindow::Tick()
             else
             {
                 const FString Text = FString(TextBuffer.GetData());
-                FConsoleManager::Get().Execute(Text);
+                FConsoleInterface::Get().Execute(Text);
 
                 TextBuffer[0] = 0;
                 bScrollDown = true;
@@ -334,7 +334,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
         }
 
         const FStringView CandidateName(WordStart, WordLength);
-        FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
+        FConsoleInterface::Get().FindCandidates(CandidateName, Candidates);
         break;
     }
     case ImGuiInputTextFlags_CallbackCompletion:
@@ -390,7 +390,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
     {
         if (Candidates.IsEmpty())
         {
-            const TArray<FString>& History = FConsoleManager::Get().GetHistory();
+            const TArray<FString>& History = FConsoleInterface::Get().GetHistory();
             if (History.IsEmpty())
             {
                 HistoryIndex = -1;

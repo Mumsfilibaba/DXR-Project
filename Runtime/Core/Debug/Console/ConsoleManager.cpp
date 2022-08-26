@@ -10,7 +10,7 @@
 
 FAutoConsoleCommand GClearHistory(
     "ClearHistory",
-    FCommandDelegateType::CreateRaw(&FConsoleManager::Get(), &FConsoleManager::ClearHistory));
+    FCommandDelegateType::CreateRaw(&FConsoleInterface::Get(), &FConsoleInterface::ClearHistory));
 
 TAutoConsoleVariable<FString> GEcho(
     "Echo",
@@ -19,25 +19,13 @@ TAutoConsoleVariable<FString> GEcho(
     {
         if (InVariable->IsString())
         {
-            FConsoleManager& ConsoleManager = FConsoleManager::Get();
+            FConsoleInterface& ConsoleManager = FConsoleInterface::Get();
             ConsoleManager.PrintMessage(InVariable->GetString(), EConsoleSeverity::Info);
         }
     }));
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FConsoleManager
-
-static auto& GetConsoleManagerInstance()
-{
-    static TOptional<FConsoleManager> GInstance(InPlace);
-    return GInstance;
-}
-
-FConsoleManager& FConsoleManager::Get()
-{
-    auto& ConsoleManager = GetConsoleManagerInstance();
-    return ConsoleManager.GetValue();
-}
 
 void FConsoleManager::RegisterCommand(const FString& Name, IConsoleCommand* Command)
 {
