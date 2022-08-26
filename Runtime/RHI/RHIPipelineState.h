@@ -789,7 +789,6 @@ struct SVertexInputElement
 class FRHIVertexInputLayoutInitializer
 {
 public:
-
     FRHIVertexInputLayoutInitializer()
         : Elements()
     { }

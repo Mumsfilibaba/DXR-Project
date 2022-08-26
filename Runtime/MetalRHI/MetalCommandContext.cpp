@@ -234,7 +234,7 @@ void CMetalCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderR
     CurrentSRVs[Visibility][ParameterIndex] = MakeSharedRef<CMetalShaderResourceView>(ShaderResourceView);
 }
 
-void CMetalCommandContext::SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex)
+void CMetalCommandContext::SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* ShaderResourceViews, uint32 NumShaderResourceViews, uint32 ParameterIndex)
 {
     Check(Shader              != nullptr);
     Check(ShaderResourceViews != nullptr);
@@ -570,7 +570,7 @@ void CMetalCommandContext::DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTra
 void CMetalCommandContext::ClearState()
 {
     // Viewport
-    CMemory::Memzero(&CurrentViewport);
+    FMemory::Memzero(&CurrentViewport);
         
     // VertexBuffers
     CurrentVertexBuffers.Fill(nil);

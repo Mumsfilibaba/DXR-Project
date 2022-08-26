@@ -16,7 +16,7 @@ class CMetalInputLayoutState : public FRHIVertexInputLayout, public CMetalObject
 {
 public:
 
-    CMetalInputLayoutState(CMetalDeviceContext* DeviceContext, const CRHIVertexInputLayoutInitializer& Initializer)
+    CMetalInputLayoutState(CMetalDeviceContext* DeviceContext, const FRHIVertexInputLayoutInitializer& Initializer)
         : CMetalObject(DeviceContext)
         , VertexDescriptor(nil)
     {
@@ -163,7 +163,7 @@ class CMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public CMe
 {
 public:
 
-    CMetalGraphicsPipelineState(CMetalDeviceContext* DeviceContext, const CRHIGraphicsPipelineStateInitializer& Initializer)
+    CMetalGraphicsPipelineState(CMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInitializer& Initializer)
         : CMetalObject(DeviceContext)
         , BlendState(nullptr)
         , DepthStencilState(nullptr)
