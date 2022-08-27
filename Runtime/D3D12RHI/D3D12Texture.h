@@ -44,6 +44,9 @@ public:
 
     DXGI_FORMAT               GetDXGIFormat() const { return Resource ? Resource->GetDesc().Format : DXGI_FORMAT_UNKNOWN; }
 
+    void    SetName(const FString& InName);
+    FString GetName() const;
+
     void SetShaderResourceView(FD3D12ShaderResourceView* InShaderResourceView) 
     { 
         ShaderResourceView = InShaderResourceView; 
@@ -78,15 +81,9 @@ public:
         , UnorderedAccessView(nullptr)
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRefCounted Interface
-
     virtual int32 AddRef()      override final       { return FD3D12RefCounted::AddRef(); }
     virtual int32 Release()     override final       { return FD3D12RefCounted::Release(); }
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture2D Interface
     
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetResource()); }
@@ -96,12 +93,13 @@ public:
     virtual FRHIDescriptorHandle     GetBindlessSRVHandle()   const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const FString& InName) override final
-    {
-        FD3D12Resource* D3D12Resource = GetResource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
+    { 
+        FD3D12Texture::SetName(InName); 
+    }
+
+    virtual FString GetName() const override final 
+    { 
+        return FD3D12Texture::GetName();
     }
 
     void SetUnorderedAccessView(FD3D12UnorderedAccessView* InUnorderedAccessView) { UnorderedAccessView = InUnorderedAccessView; }
@@ -147,15 +145,9 @@ public:
         , FD3D12Texture(InDevice)
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRefCounted Interface
-
     virtual int32 AddRef()      override final       { return FD3D12RefCounted::AddRef(); }
     virtual int32 Release()     override final       { return FD3D12RefCounted::Release(); }
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture2DArray Interface
 
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetResource()); }
@@ -165,11 +157,12 @@ public:
 
     virtual void SetName(const FString& InName) override final
     {
-        FD3D12Resource* D3D12Resource = GetResource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
+        FD3D12Texture::SetName(InName);
+    }
+
+    virtual FString GetName() const override final
+    {
+        return FD3D12Texture::GetName();
     }
 };
 
@@ -186,15 +179,9 @@ public:
         , FD3D12Texture(InDevice)
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRefCounted Interface
-
     virtual int32 AddRef()      override final       { return FD3D12RefCounted::AddRef(); }
     virtual int32 Release()     override final       { return FD3D12RefCounted::Release(); }
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITextureCube Interface
 
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetResource()); }
@@ -204,11 +191,12 @@ public:
 
     virtual void SetName(const FString& InName) override final
     {
-        FD3D12Resource* D3D12Resource = GetResource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
+        FD3D12Texture::SetName(InName);
+    }
+
+    virtual FString GetName() const override final
+    {
+        return FD3D12Texture::GetName();
     }
 };
 
@@ -225,15 +213,9 @@ public:
         , FD3D12Texture(InDevice)
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRefCounted Interface
-
     virtual int32 AddRef()      override final       { return FD3D12RefCounted::AddRef(); }
     virtual int32 Release()     override final       { return FD3D12RefCounted::Release(); }
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITextureCubeArray Interface
 
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetResource()); }
@@ -243,11 +225,12 @@ public:
 
     virtual void SetName(const FString& InName) override final
     {
-        FD3D12Resource* D3D12Resource = GetResource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
+        FD3D12Texture::SetName(InName);
+    }
+
+    virtual FString GetName() const override final
+    {
+        return FD3D12Texture::GetName();
     }
 };
 
@@ -264,15 +247,9 @@ public:
         , FD3D12Texture(InDevice)
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRefCounted Interface
-
     virtual int32 AddRef()      override final       { return FD3D12RefCounted::AddRef(); }
     virtual int32 Release()     override final       { return FD3D12RefCounted::Release(); }
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture3D Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetResource()); }
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
@@ -282,11 +259,12 @@ public:
 
     virtual void SetName(const FString& InName) override final
     {
-        FD3D12Resource* D3D12Resource = GetResource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
+        FD3D12Texture::SetName(InName);
+    }
+
+    virtual FString GetName() const override final
+    {
+        return FD3D12Texture::GetName();
     }
 };
 

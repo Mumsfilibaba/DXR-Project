@@ -26,11 +26,8 @@ public:
     void* MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
     void  UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
 
-    FORCEINLINE void SetName(const FString& Name)
-    {
-        FStringWide WideName = CharToWide(Name);
-        Resource->SetName(WideName.GetCString());
-    }
+    void    SetName(const FString& Name);
+    FString GetName() const;
 
     FORCEINLINE ID3D12Resource*            GetD3D12Resource() const { return Resource.Get(); }
 
@@ -47,7 +44,6 @@ public:
 
 private:
     TComPtr<ID3D12Resource>   Resource;
-
     D3D12_RESOURCE_STATES     ResourceState;
     D3D12_HEAP_TYPE           HeapType;
     D3D12_RESOURCE_DESC       Desc;

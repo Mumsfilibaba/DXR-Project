@@ -212,6 +212,24 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDSV(const FRHIDepthStencilView
     }
 }
 
+void FD3D12Texture::SetName(const FString& InName)
+{
+    if (Resource)
+    {
+        Resource->SetName(InName);
+    }
+}
+
+FString FD3D12Texture::GetName() const
+{
+    if (Resource)
+    {
+        return Resource->GetName();
+    }
+
+    return "";
+}
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12BackBufferTexture
 

@@ -400,12 +400,12 @@ public:
 
     virtual FIntVector3 GetExtent() const { return FIntVector3(1, 1, 1); }
     
-    virtual uint32      GetWidth()  const { return 1; }
-    virtual uint32      GetHeight() const { return 1; }
-    virtual uint32      GetDepth()  const { return 1; }
+    virtual uint32 GetWidth()  const { return 1; }
+    virtual uint32 GetHeight() const { return 1; }
+    virtual uint32 GetDepth()  const { return 1; }
 
-    virtual uint32      GetArraySize()  const { return 1; }
-    virtual uint32      GetNumSamples() const { return 1; }
+    virtual uint32 GetArraySize()  const { return 1; }
+    virtual uint32 GetNumSamples() const { return 1; }
 
     virtual void    SetName(const FString& InName) { }
     virtual FString GetName() const { return ""; }

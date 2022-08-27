@@ -33,12 +33,13 @@ bool FD3D12Resource::Initialize(D3D12_RESOURCE_STATES InitialState, const D3D12_
     HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
-    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource( &HeapProperties
-                                                                           , D3D12_HEAP_FLAG_NONE
-                                                                           , &Desc
-                                                                           , InitialState
-                                                                           , OptimizedClearValue
-                                                                           , IID_PPV_ARGS(&Resource));
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource(
+        &HeapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &Desc,
+        InitialState,
+        OptimizedClearValue,
+        IID_PPV_ARGS(&Resource));
     if (SUCCEEDED(Result))
     {
         if (Desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
@@ -80,4 +81,34 @@ void* FD3D12Resource::MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range
 void FD3D12Resource::UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range)
 {
     Resource->Unmap(SubresourceIndex, Range);
+}
+
+void FD3D12Resource::SetName(const FString& Name)
+{
+    if (Resource)
+    {
+        HRESULT Result = Resource->SetPrivateData(WKPDID_D3DDebugObjectName, Name.GetSize(), Name.GetCString());
+        D3D12_ERROR_COND(SUCCEEDED(Result), "Failed to set resource name");
+    }
+}
+
+FString FD3D12Resource::GetName() const
+{
+    if (Resource)
+    {
+        UINT NameLength;
+        
+        HRESULT Result = Resource->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, nullptr);
+        D3D12_ERROR_COND(SUCCEEDED(Result), "Failed to get size of resource name");
+
+        FString NewName;
+        NewName.Resize(NameLength);
+
+        Result = Resource->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, NewName.GetData());
+        D3D12_ERROR_COND(SUCCEEDED(Result), "Failed to get resource name");
+
+        return NewName;
+    }
+
+    return "";
 }

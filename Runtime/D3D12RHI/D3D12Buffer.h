@@ -22,15 +22,16 @@ class FD3D12Buffer
     , public FD3D12RefCounted
 {
 public:
-    FD3D12Buffer(FD3D12Device* InDevice)
-        : FD3D12DeviceChild(InDevice)
-        , Resource(nullptr)
-    { }
+    explicit FD3D12Buffer(FD3D12Device* InDevice);
+    ~FD3D12Buffer() = default;
 
     virtual void SetResource(FD3D12Resource* InResource) { Resource = InResource; }
+    
+    void    SetName(const FString& InName);
+    FString GetName() const;
 
-    uint64          GetSizeInBytes()   const { return Resource ? static_cast<uint64>(Resource->GetDesc().Width) : 0u; }
     FD3D12Resource* GetD3D12Resource() const { return Resource.Get(); }
+    uint64          GetSizeInBytes()   const { return Resource ? static_cast<uint64>(Resource->GetDesc().Width) : 0u; }
 
 protected:
     FD3D12ResourceRef Resource;
@@ -50,36 +51,22 @@ public:
         , View()
     { }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRefCounted Interface
-
     virtual int32 AddRef()      override final       { return FD3D12RefCounted::AddRef(); }
     virtual int32 Release()     override final       { return FD3D12RefCounted::Release(); }
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIVertexBuffer Interface
 
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FD3D12Buffer*>(this)); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
     virtual void SetName(const FString& InName) override final
     {
-        FD3D12Resource* D3D12Resource = GetD3D12Resource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
+        FD3D12Buffer::SetName(InName);
     }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FD3D12Buffer Interface
+    virtual FString GetName() const override final
+    {
+        return FD3D12Buffer::GetName();
+    }
 
     virtual void SetResource(FD3D12Resource* InResource) override final
     {
@@ -91,9 +78,10 @@ public:
         View.BufferLocation = FD3D12Buffer::Resource->GetGPUVirtualAddress();
     }
 
-public:
-
-    FORCEINLINE const D3D12_VERTEX_BUFFER_VIEW& GetView() const { return View; }
+    FORCEINLINE const D3D12_VERTEX_BUFFER_VIEW& GetView() const 
+    { 
+        return View; 
+    }
 
 private:
     D3D12_VERTEX_BUFFER_VIEW View;
@@ -113,36 +101,22 @@ public:
         , View()
     { }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRefCounted Interface
-
     virtual int32 AddRef()      override final       { return FD3D12RefCounted::AddRef(); }
     virtual int32 Release()     override final       { return FD3D12RefCounted::Release(); }
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIIndexBuffer Interface
 
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FD3D12Buffer*>(this)); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
     virtual void SetName(const FString& InName) override final
     {
-        FD3D12Resource* D3D12Resource = GetD3D12Resource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
+        FD3D12Buffer::SetName(InName);
     }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FD3D12Buffer Interface
+    virtual FString GetName() const override final
+    {
+        return FD3D12Buffer::GetName();
+    }
 
     virtual void SetResource(FD3D12Resource* InResource) override final
     {
@@ -159,9 +133,10 @@ public:
         }
     }
 
-public:
-
-    FORCEINLINE const D3D12_INDEX_BUFFER_VIEW& GetView() const { return View; }
+    FORCEINLINE const D3D12_INDEX_BUFFER_VIEW& GetView() const 
+    { 
+        return View; 
+    }
 
 private:
     D3D12_INDEX_BUFFER_VIEW View;
@@ -181,19 +156,9 @@ public:
         , View(InDevice, InOfflineHeap)
     { }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRefCounted Interface
-
     virtual int32 AddRef()      override final       { return FD3D12RefCounted::AddRef(); }
     virtual int32 Release()     override final       { return FD3D12RefCounted::Release(); }
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIConstantBuffer Interface
 
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FD3D12Buffer*>(this)); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
@@ -202,17 +167,13 @@ public:
 
     virtual void SetName(const FString& InName) override final
     {
-        FD3D12Resource* D3D12Resource = GetD3D12Resource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
+        FD3D12Buffer::SetName(InName);
     }
 
-public:
-    
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FD3D12Buffer Interface
+    virtual FString GetName() const override final
+    {
+        return FD3D12Buffer::GetName();
+    }
 
     virtual void SetResource(FD3D12Resource* InResource) override final
     {
@@ -236,7 +197,6 @@ public:
     }
 
 public:
-
     FD3D12ConstantBufferView&       GetView()       { return View; }
     const FD3D12ConstantBufferView& GetView() const { return View; }
 
@@ -257,30 +217,21 @@ public:
         , FD3D12Buffer(InDevice)
     { }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRefCounted Interface
-
     virtual int32 AddRef()      override final       { return FD3D12RefCounted::AddRef(); }
     virtual int32 Release()     override final       { return FD3D12RefCounted::Release(); }
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIGenericBuffer Interface
 
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FD3D12Buffer*>(this)); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
     virtual void SetName(const FString& InName) override final
     {
-        FD3D12Resource* D3D12Resource = GetD3D12Resource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
+        FD3D12Buffer::SetName(InName);
+    }
+
+    virtual FString GetName() const override final
+    {
+        return FD3D12Buffer::GetName();
     }
 };
 

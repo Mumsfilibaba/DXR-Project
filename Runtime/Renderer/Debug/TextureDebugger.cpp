@@ -130,13 +130,12 @@ void FRenderTargetDebugWindow::Tick()
                         SelectedTextureIndex = Index;
                     }
 
-                    ImGui::Separator();
-
                     if (ImGui::IsItemHovered())
                     {
                         ImGui::SetTooltip("%s", CurrImage->Image->GetName().GetCString());
                     }
 
+                    ImGui::Separator();
                     ImGui::PopID();
                 }
             }
