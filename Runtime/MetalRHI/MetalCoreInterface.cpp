@@ -184,11 +184,11 @@ FRHIGenericBuffer* FMetalCoreInterface::RHICreateGenericBuffer(const FRHIGeneric
 
 FRHIConstantBuffer* FMetalCoreInterface::RHICreateConstantBuffer(const FRHIConstantBufferInitializer& Initializer)
 {
-    return CreateBuffer<CMetalConstantBuffer, FRHIConstantBufferInitializer, kConstantBufferAlignment>(Initializer);
+    return CreateBuffer<FMetalConstantBuffer, FRHIConstantBufferInitializer, kConstantBufferAlignment>(Initializer);
 }
 
 template<typename MetalBufferType, typename InitializerType, const uint32 BufferAlignment>
-MetalBufferType* CMetalCoreInterface::CreateBuffer(const InitializerType& Initializer)
+MetalBufferType* FMetalCoreInterface::CreateBuffer(const InitializerType& Initializer)
 {
     SCOPED_AUTORELEASE_POOL();
     

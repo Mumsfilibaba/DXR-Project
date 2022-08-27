@@ -320,9 +320,9 @@ void FMetalCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
         CurrentSamplerStates[Visibility][ParameterIndex + Index] = MakeSharedRef<FMetalSamplerState>(InSamplerStates[Index]);
     }
 
-    CurrentSamplerStateRange[Visibility] = NSMakeRange(
+    /*CurrentSamplerStates[Visibility] = NSMakeRange(
         NMath::Min<uint32>(ParameterIndex, CurrentSamplerStateRange[Visibility].location),
-        NMath::Max<uint32>(NumSamplerStates, CurrentSamplerStateRange[Visibility].length));
+        NMath::Max<uint32>(InSamplerStates.GetSize(), CurrentSamplerStateRange[Visibility].length));*/
 }
 
 void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
@@ -463,8 +463,8 @@ void FMetalCommandContext::PrepareForDraw()
         // [GraphicsEncoder setRenderPipelineState:CurrentGraphicsPipeline->GetMTLPipelineState()];
         
         // Vertex-Buffers stage
-        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.Data()
-                                  offsets:CurrentVertexOffsets.Data()
+        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.GetData()
+                                  offsets:CurrentVertexOffsets.GetData()
                                 withRange:CurrentVertexBufferRange];
         
         /*
@@ -586,7 +586,7 @@ void FMetalCommandContext::ClearState()
     for (uint32 ShaderStage = 0; ShaderStage < ShaderVisibility_Count; ++ShaderStage)
     {
         CurrentSamplerStates[ShaderStage].Fill(nil);
-        CurrentSamplerStateRange[ShaderStage] = NSMakeRange(0, 0);
+        // CurrentSamplerStateRange[ShaderStage] = NSMakeRange(0, 0);
         
         CurrentSRVs[ShaderStage].Fill(nullptr);
         CurrentUAVs[ShaderStage].Fill(nullptr);

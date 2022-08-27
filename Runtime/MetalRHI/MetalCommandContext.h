@@ -175,19 +175,14 @@ private:
     MTLViewport                 CurrentViewport;
     
     // PipelineState
-    TSharedRef<CMetalIndexBuffer>           CurrentIndexBuffer;
-    TSharedRef<CMetalGraphicsPipelineState> CurrentGraphicsPipeline;
+    TSharedRef<FMetalIndexBuffer>           CurrentIndexBuffer;
+    TSharedRef<FMetalGraphicsPipelineState> CurrentGraphicsPipeline;
     MTLPrimitiveType                        CurrentPrimitiveType;
 
     // VertexBuffer- state
     TStaticArray<id<MTLBuffer>, kRHIMaxVertexBuffers> CurrentVertexBuffers;
     TStaticArray<NSUInteger   , kRHIMaxVertexBuffers> CurrentVertexOffsets;
     NSRange CurrentVertexBufferRange;
-    
-    // PipelineState
-    TSharedRef<FMetalIndexBuffer>           CurrentIndexBuffer;
-    TSharedRef<FMetalGraphicsPipelineState> CurrentGraphicsPipeline;
-    MTLPrimitiveType                        CurrentPrimitiveType;
     
     // Resources
     enum

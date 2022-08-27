@@ -175,8 +175,8 @@ public:
         for (EShaderVisibility ShaderStage = ShaderVisibility_Compute; ShaderStage < ShaderVisibility_Count; ShaderStage = EShaderVisibility(ShaderStage + 1))
         {
             BufferBindings[ShaderStage].Memzero();
-            TextureBindings[ShaderStage].Fill(SMetalResourceBinding(0));
-            SamplerBindings[ShaderStage].Fill(SMetalResourceBinding(0));
+            TextureBindings[ShaderStage].Fill(FMetalResourceBinding(0));
+            SamplerBindings[ShaderStage].Fill(FMetalResourceBinding(0));
         }
         
         DepthStencilState = MakeSharedRef<FMetalDepthStencilState>(Initializer.DepthStencilState);
@@ -238,7 +238,7 @@ public:
                 else
                 {
                     const auto Index = NumBuffers[ShaderVisibility_Vertex]++;
-                    Check(Index < BufferBindings[ShaderVisibility_Vertex].Size());
+                    Check(Index < BufferBindings[ShaderVisibility_Vertex].GetSize());
                     
                     BufferBindings[ShaderVisibility_Vertex][Index] = static_cast<uint8>(Argument.index);
                 }
@@ -253,9 +253,9 @@ public:
             }
         }
         
-        VertexBuffers.ShrinkToFit();
-        TextureBindings[ShaderVisibility_Vertex].ShrinkToFit();
-        SamplerBindings[ShaderVisibility_Vertex].ShrinkToFit();
+        VertexBuffers.Shrink();
+        TextureBindings[ShaderVisibility_Vertex].Shrink();
+        SamplerBindings[ShaderVisibility_Vertex].Shrink();
         
         // Pixel- Function Resources
         for (MTLArgument* Argument in PipelineReflection.fragmentArguments)
@@ -268,7 +268,7 @@ public:
             if (Argument.type == MTLArgumentTypeBuffer)
             {
                 const auto Index = NumBuffers[ShaderVisibility_Pixel]++;
-                Check(Index < BufferBindings[ShaderVisibility_Pixel].Size());
+                Check(Index < BufferBindings[ShaderVisibility_Pixel].GetSize());
                 
                 BufferBindings[ShaderVisibility_Pixel][Index] = static_cast<uint8>(Argument.index);
             }
@@ -282,8 +282,8 @@ public:
             }
         }
         
-        TextureBindings[ShaderVisibility_Pixel].ShrinkToFit();
-        SamplerBindings[ShaderVisibility_Pixel].ShrinkToFit();
+        TextureBindings[ShaderVisibility_Pixel].Shrink();
+        SamplerBindings[ShaderVisibility_Pixel].Shrink();
         
         NSSafeRelease(Descriptor);
     }
@@ -321,13 +321,13 @@ private:
     
     id<MTLRenderPipelineState>          PipelineState;
     
-    TArray<SMetalResourceBinding>       VertexBuffers;
+    TArray<FMetalResourceBinding>       VertexBuffers;
     
     TStaticArray<uint8, kMaxConstantBuffers>    BufferBindings[ShaderVisibility_Count];
     TStaticArray<uint8, ShaderVisibility_Count> NumBuffers;
     
-    TArray<SMetalResourceBinding>       TextureBindings[ShaderVisibility_Count];
-    TArray<SMetalResourceBinding>       SamplerBindings[ShaderVisibility_Count];
+    TArray<FMetalResourceBinding>       TextureBindings[ShaderVisibility_Count];
+    TArray<FMetalResourceBinding>       SamplerBindings[ShaderVisibility_Count];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

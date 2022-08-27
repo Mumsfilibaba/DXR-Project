@@ -7,13 +7,13 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalView
+// FMetalView
 
-class CMetalView : public CMetalObject
+class FMetalView : public FMetalObject
 {
 public:
-    explicit CMetalView(CMetalDeviceContext* InDeviceContext)
-        : CMetalObject(InDeviceContext)
+    explicit FMetalView(FMetalDeviceContext* InDeviceContext)
+        : FMetalObject(InDeviceContext)
     { }
 
     id<MTLTexture> GetMTLTexture() const { return TextureView; }
@@ -26,13 +26,13 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalShaderResourceView
 
-class FMetalShaderResourceView : public FRHIShaderResourceView, public CMetalView
+class FMetalShaderResourceView : public FRHIShaderResourceView, public FMetalView
 {
 public:
 
     explicit FMetalShaderResourceView(FMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
         : FRHIShaderResourceView(InResource)
-        , CMetalView(InDeviceContext)
+        , FMetalView(InDeviceContext)
     { }
 
     ~FMetalShaderResourceView() = default;
@@ -41,12 +41,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalUnorderedAccessView
 
-class FMetalUnorderedAccessView : public FRHIUnorderedAccessView, public CMetalView
+class FMetalUnorderedAccessView : public FRHIUnorderedAccessView, public FMetalView
 {
 public:
-    explicit FMetalUnorderedAccessView(CMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
+    explicit FMetalUnorderedAccessView(FMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
         : FRHIUnorderedAccessView(InResource)
-        , CMetalView(InDeviceContext)
+        , FMetalView(InDeviceContext)
     { }
 
     ~FMetalUnorderedAccessView() = default;
