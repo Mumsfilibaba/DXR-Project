@@ -12,33 +12,33 @@
 //    int NumSkyLightMips;
 //};
 
-ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
+ConstantBuffer<FCamera> CameraBuffer : register(b0, space0);
 
 cbuffer PointLightsBuffer : register(b1, space0)
 {
-    PointLight PointLights[32];
+    FPointLight PointLights[32];
 }
 
 cbuffer PointLightsPosRadBuffer : register(b2, space0)
 {
-    PositionRadius PointLightsPosRad[32];
+    FPositionRadius PointLightsPosRad[32];
 }
 
 cbuffer ShadowCastingPointLightsBuffer : register(b3, space0)
 {
-    ShadowPointLight ShadowCastingPointLights[8];
+    FShadowPointLight ShadowCastingPointLights[8];
 }
 
 cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4, space0)
 {
-    PositionRadius ShadowCastingPointLightsPosRad[8];
+    FPositionRadius ShadowCastingPointLightsPosRad[8];
 }
 
-ConstantBuffer<DirectionalLight> DirLightBuffer : register(b5, space0);
+ConstantBuffer<FDirectionalLight> DirLightBuffer : register(b5, space0);
 
 // Per Object Buffers
-ConstantBuffer<Transform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
-ConstantBuffer<SMaterial> MaterialBuffer : register(b6);
+ConstantBuffer<FTransform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
+ConstantBuffer<FMaterial> MaterialBuffer : register(b6);
 
 // Per Frame Samplers
 SamplerState MaterialSampler   : register(s0);
@@ -217,8 +217,8 @@ float4 PSMain(PSInput Input) : SV_Target0
     // Pointlights
     for (int i = 0; i < 0; i++)
     {
-        const PointLight     Light       = PointLights[i];
-        const PositionRadius LightPosRad = PointLightsPosRad[i];
+        const FPointLight     Light       = PointLights[i];
+        const FPositionRadius LightPosRad = PointLightsPosRad[i];
 
         float3 L = LightPosRad.Position - WorldPosition;
         float DistanceSqrd = dot(L, L);
@@ -233,8 +233,8 @@ float4 PSMain(PSInput Input) : SV_Target0
     
     for (int i = 0; i < 4; i++)
     {
-        const ShadowPointLight Light       = ShadowCastingPointLights[i];
-        const PositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[i];
+        const FShadowPointLight Light       = ShadowCastingPointLights[i];
+        const FPositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[i];
      
         float ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(i), ShadowMapSampler0, WorldPosition, N, Light, LightPosRad);
         if (ShadowFactor > 0.001f)
@@ -253,7 +253,7 @@ float4 PSMain(PSInput Input) : SV_Target0
     
     // DirectionalLights
     {
-        const DirectionalLight Light = DirLightBuffer;
+        const FDirectionalLight Light = DirLightBuffer;
         
         // TODO: FIX Shadows in forward
         

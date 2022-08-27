@@ -5,16 +5,16 @@
 
 #define NUM_THREADS 4
 
-ConstantBuffer<Camera>                 CameraBuffer : register(b0);
-ConstantBuffer<SCascadeGenerationInfo> Settings     : register(b1);
+ConstantBuffer<FCamera>                 CameraBuffer : register(b0);
+ConstantBuffer<FCascadeGenerationInfo> Settings     : register(b1);
 
-RWStructuredBuffer<SCascadeMatrices> MatrixBuffer : register(u0);
-RWStructuredBuffer<SCascadeSplit>    SplitBuffer  : register(u1);
+RWStructuredBuffer<FCascadeMatrices> MatrixBuffer : register(u0);
+RWStructuredBuffer<FCascadeSplit>    SplitBuffer  : register(u1);
 
 Texture2D<float2> MinMaxDepthTex : register(t0);
 
 [numthreads(NUM_THREADS, 1, 1)]
-void Main(ComputeShaderInput Input)
+void Main(FComputeShaderInput Input)
 {
     const int CascadeIndex = int(Input.DispatchThreadID.x);
     
@@ -130,14 +130,14 @@ void Main(ComputeShaderInput Input)
     OrtoMat[3][1] += RoundedOffset.y;
     
     // Create final matrices
-    SCascadeMatrices Matrices;
+    FCascadeMatrices Matrices;
     Matrices.View     = ViewMat;
     Matrices.ViewProj = mul(ViewMat, OrtoMat);
     
     MatrixBuffer[CascadeIndex] = Matrices;
     
     // Write splits
-    SCascadeSplit Split;
+    FCascadeSplit Split;
     Split.Split     = NearPlane + SplitDist * ClipRange;
     Split.FarPlane  = CascadeExtents.z;
     Split.MinExtent = MinExtents;

@@ -126,7 +126,7 @@ static const float3x3 RotateUV[6] =
 
 [RootSignature(RootSig)]
 [numthreads(BLOCK_SIZE, BLOCK_SIZE, 1)]
-void Main(ComputeShaderInput Input)
+void Main(FComputeShaderInput Input)
 {
     // One bilinear sample is insufficient when scaling down by more than 2x.
     // You will slightly undersample in the case where the source dimension

@@ -19,7 +19,7 @@ ConstantBuffer<SPerObject> PerObjectBuffer : register(b0, D3D12_SHADER_REGISTER_
 
 ConstantBuffer<SPerCascade> PerCascadeBuffer : register(b0);
 
-StructuredBuffer<SCascadeMatrices> CascadeMatrixBuffer : register(t0);
+StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 
 // VS
 struct VSInput

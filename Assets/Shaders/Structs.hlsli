@@ -3,7 +3,7 @@
 
 #define NUM_SHADOW_CASCADES (4)
 
-struct ComputeShaderInput
+struct FComputeShaderInput
 {
     uint3 GroupID          : SV_GroupID;
     uint3 GroupThreadID    : SV_GroupThreadID;
@@ -11,7 +11,7 @@ struct ComputeShaderInput
     uint  GroupIndex       : SV_GroupIndex;
 };
 
-struct Camera
+struct FCamera
 {
     float4x4 ViewProjection;
     float4x4 View;
@@ -19,27 +19,30 @@ struct Camera
     float4x4 Projection;
     float4x4 ProjectionInverse;
     float4x4 ViewProjectionInverse;
-    float3 Position;
-    float  NearPlane;
-    float3 Forward;
-    float  FarPlane;
-    float3 Right;
-    float  AspectRatio;
+    
+    float3   Position;
+    float    NearPlane;
+    
+    float3   Forward;
+    float    FarPlane;
+
+    float3   Right;
+    float    AspectRatio;
 };
 
-struct PositionRadius
+struct FPositionRadius
 {
     float3 Position;
     float  Radius;
 };
 
-struct PointLight
+struct FPointLight
 {
     float3 Color;
     float  Padding0;
 };
 
-struct ShadowPointLight
+struct FShadowPointLight
 {
     float3 Color;
     float  ShadowBias;
@@ -49,39 +52,43 @@ struct ShadowPointLight
     float  Padding1;
 };
 
-struct SCascadeMatrices
+struct FCascadeMatrices
 {
     float4x4 ViewProj;
     float4x4 View;
 };
 
-struct SCascadeSplit
+struct FCascadeSplit
 {
     float3 MinExtent;
     float  Split;
+    
     float3 MaxExtent;
     float  FarPlane;
 };
 
-struct SCascadeGenerationInfo
+struct FCascadeGenerationInfo
 {
     float3 LightDirection;
     float  CascadeSplitLambda;
+    
     float3 LightUp;
     float  CascadeResolution;
 };
 
-struct DirectionalLight
+struct FDirectionalLight
 {
     float3 Color;
     float  ShadowBias;
+    
     float3 Direction;
     float  MaxShadowBias;
+
     float3 Up;
     float  LightSize;
 };
 
-struct Vertex
+struct FVertex
 {
     float3 Position;
     float3 Normal;
@@ -89,18 +96,20 @@ struct Vertex
     float2 TexCoord;
 };
 
-struct Transform
+struct FTransform
 {
     float4x4 Transform;
     float4x4 TransformInv;
 };
 
-struct SMaterial
+struct FMaterial
 {
     float3 Albedo;
+    
     float  Roughness;
     float  Metallic;
     float  AO;
+
     int    EnableHeight;
     int    EnableMask;
 };

@@ -7,7 +7,7 @@
 #include "Poisson.hlsli"
 
 /*
-* Calculate PointLight Shadow
+* Calculate FPointLight Shadow
 */
 
 #define POINT_LIGHT_SAMPLES 4
@@ -27,7 +27,7 @@ float PointLightShadowFactor(
     in SamplerComparisonState Sampler,
     float3 WorldPosition, 
     float3 Normal,
-    ShadowPointLight Light, PositionRadius LightPos)
+    FShadowPointLight Light, FPositionRadius LightPos)
 {
     const float3 DirToLight = WorldPosition - LightPos.Position;
     const float3 LightDir   = normalize(LightPos.Position - WorldPosition);
@@ -56,7 +56,7 @@ float PointLightShadowFactor(
     in SamplerComparisonState Sampler,
     float3 WorldPosition,
     float3 Normal,
-    ShadowPointLight Light, PositionRadius LightPos)
+    FShadowPointLight Light, FPositionRadius LightPos)
 {
     const float3 DirToLight = WorldPosition - LightPos.Position;
     const float3 LightDir   = normalize(LightPos.Position - WorldPosition);
@@ -82,7 +82,7 @@ float PointLightShadowFactor(
 }
 
 /*
-* Calculate DirectionalLight Shadows
+* Calculate FDirectionalLight Shadows
 */
 
 #define PCF_RANGE 2
@@ -184,7 +184,7 @@ float StandardShadow(
 //    in SamplerComparisonState Sampler,
 //    float3 WorldPosition, 
 //    float3 N,
-//    DirectionalLight Light, 
+//    FDirectionalLight Light, 
 //    uint CascadeIndex)
 //{
 //    float4 LightSpacePosition = mul(float4(WorldPosition, 1.0f), Light.CascadeViewProj[CascadeIndex]);

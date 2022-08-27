@@ -6,13 +6,13 @@
 
 #define NUM_THREADS (16)
 
-// Camera and Light
-ConstantBuffer<Camera>           CameraBuffer : register(b0);
-ConstantBuffer<DirectionalLight> LightBuffer  : register(b1);
+// FCamera and Light
+ConstantBuffer<FCamera>           CameraBuffer : register(b0);
+ConstantBuffer<FDirectionalLight> LightBuffer  : register(b1);
 
 // Shadow information
-StructuredBuffer<SCascadeMatrices> ShadowMatricesBuffer : register(t0);
-StructuredBuffer<SCascadeSplit>    ShadowSplitsBuffer   : register(t1);
+StructuredBuffer<FCascadeMatrices> ShadowMatricesBuffer : register(t0);
+StructuredBuffer<FCascadeSplit>    ShadowSplitsBuffer   : register(t1);
 
 // G-Buffer
 Texture2D<float3> NormalTex : register(t2);
@@ -190,7 +190,7 @@ float PCSSDirectionalLight(in Texture2D<float> ShadowMap, uint CascadeIndex, flo
 }
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
-void Main(ComputeShaderInput Input)
+void Main(FComputeShaderInput Input)
 {
     const uint2 Pixel = Input.DispatchThreadID.xy;
     

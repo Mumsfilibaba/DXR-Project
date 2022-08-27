@@ -21,7 +21,7 @@ static const float KERNEL[KERNEL_SIZE] =
 };
 
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
-void Main(ComputeShaderInput Input)
+void Main(FComputeShaderInput Input)
 {
     const int2 TexCoords = int2(Input.DispatchThreadID.xy);
     if (TexCoords.x > ScreenSize.x || TexCoords.y > ScreenSize.y)

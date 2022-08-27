@@ -514,7 +514,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, FFrameResources&
 
         GPU_TRACE_SCOPE(CmdList, "Depth Reduction");
 
-        struct SReductionConstants
+        struct FReductionConstants
         {
             FMatrix4 CamProjection;
             float NearPlane;

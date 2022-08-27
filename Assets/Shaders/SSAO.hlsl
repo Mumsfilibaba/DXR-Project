@@ -22,13 +22,13 @@ cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
     int    KernelSize;
 };
 
-ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
+ConstantBuffer<FCamera> CameraBuffer : register(b0, space0);
 
 #define THREAD_COUNT 32
 #define MAX_SAMPLES  64
 
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
-void Main(ComputeShaderInput Input)
+void Main(FComputeShaderInput Input)
 {
     const uint2 OutputTexCoords = Input.DispatchThreadID.xy;
     if (Input.DispatchThreadID.x > uint(ScreenSize.x) || Input.DispatchThreadID.y > uint(ScreenSize.y))

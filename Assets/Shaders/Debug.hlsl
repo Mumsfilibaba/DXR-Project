@@ -6,7 +6,7 @@ cbuffer TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTAN
     float4x4 TransformMat;
 };
 
-ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
+ConstantBuffer<FCamera> CameraBuffer : register(b0, space0);
 
 float4 VSMain(float3 Position : POSITION0) : SV_Position
 {

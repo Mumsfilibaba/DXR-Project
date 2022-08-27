@@ -51,8 +51,8 @@ TextureCubeArray<float> PointLightShadowMaps : register(t9);
 Texture2D<float3> SSAO : register(t10);
 
 // Shadow Cascade Data - FOR DEBUG
-StructuredBuffer<SCascadeMatrices> CascadeMatrixBuffer : register(t14);
-StructuredBuffer<SCascadeSplit>    CascadeSplitsBuffer : register(t15);
+StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t14);
+StructuredBuffer<FCascadeSplit>    CascadeSplitsBuffer : register(t15);
 
 SamplerState LUTSampler        : register(s0);
 SamplerState IrradianceSampler : register(s1);
@@ -68,29 +68,29 @@ cbuffer Constants : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
     int ScreenHeight;
 };
 
-ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
+ConstantBuffer<FCamera> CameraBuffer : register(b0, space0);
 
 cbuffer PointLightsBuffer : register(b1, space0)
 {
-    PointLight PointLights[MAX_LIGHTS_PER_TILE];
+    FPointLight PointLights[MAX_LIGHTS_PER_TILE];
 }
 
 cbuffer PointLightsPosRadBuffer : register(b2, space0)
 {
-    PositionRadius PointLightsPosRad[MAX_LIGHTS_PER_TILE];
+    FPositionRadius PointLightsPosRad[MAX_LIGHTS_PER_TILE];
 }
 
 cbuffer ShadowCastingPointLightsBuffer : register(b3, space0)
 {
-    ShadowPointLight ShadowCastingPointLights[8];
+    FShadowPointLight ShadowCastingPointLights[8];
 }
 
 cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4, space0)
 {
-    PositionRadius ShadowCastingPointLightsPosRad[8];
+    FPositionRadius ShadowCastingPointLightsPosRad[8];
 }
 
-ConstantBuffer<DirectionalLight> DirLightBuffer : register(b5, space0);
+ConstantBuffer<FDirectionalLight> DirLightBuffer : register(b5, space0);
 
 RWTexture2D<float4> Output : register(u0, space0);
 
@@ -113,7 +113,7 @@ float GetNumTilesY()
 }
 
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
-void Main(ComputeShaderInput Input)
+void Main(FComputeShaderInput Input)
 {
     uint ThreadIndex = Input.GroupThreadID.y * THREAD_COUNT + Input.GroupThreadID.x;
     if (ThreadIndex == 0)
@@ -243,8 +243,8 @@ void Main(ComputeShaderInput Input)
     for (uint i = 0; i < GroupPointLightCounter; i++)
     {
         int Index = GroupPointLightIndices[i];
-        const PointLight     Light       = PointLights[Index];
-        const PositionRadius LightPosRad = PointLightsPosRad[Index];
+        const FPointLight     Light       = PointLights[Index];
+        const FPositionRadius LightPosRad = PointLightsPosRad[Index];
 
         float3 L = LightPosRad.Position - WorldPosition;
         float DistanceSqrd = dot(L, L);
@@ -260,8 +260,8 @@ void Main(ComputeShaderInput Input)
     for (uint i = 0; i < GroupShadowPointLightCounter; i++)
     {
         int Index = GroupShadowPointLightIndices[i];
-        const ShadowPointLight Light       = ShadowCastingPointLights[Index];
-        const PositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[Index];
+        const FShadowPointLight Light       = ShadowCastingPointLights[Index];
+        const FPositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[Index];
      
         float ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(Index), ShadowMapSampler0, WorldPosition, N, Light, LightPosRad);
         if (ShadowFactor > 0.001f)
@@ -282,7 +282,7 @@ void Main(ComputeShaderInput Input)
     float CascadeWeights[NUM_SHADOW_CASCADES];
     float ShadowFactor;
     {
-        const DirectionalLight Light = DirLightBuffer;
+        const FDirectionalLight Light = DirLightBuffer;
         float3 L = normalize(-Light.Direction);
         
         // NOTE: For debugging

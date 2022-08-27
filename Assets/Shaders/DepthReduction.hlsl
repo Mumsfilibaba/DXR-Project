@@ -6,8 +6,7 @@
 #define TOTAL_THREAD_COUNT (THREAD_COUNT * THREAD_COUNT)
 
 // Handles first reduction
-Texture2D<float> DepthBuffer : register(t0);
-
+Texture2D<float>  DepthBuffer : register(t0);
 Texture2D<float2> InputMinMax : register(t0);
 
 RWTexture2D<float2> OutputMinMax : register(u0);
@@ -15,15 +14,15 @@ RWTexture2D<float2> OutputMinMax : register(u0);
 cbuffer Constants : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     float4x4 CamProjection;
-    float NearPlane;
-    float FarPlane;
+    float    NearPlane;
+    float    FarPlane;
 };
 
 groupshared float GroupMinZ[TOTAL_THREAD_COUNT];
 groupshared float GroupMaxZ[TOTAL_THREAD_COUNT];
 
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
-void ReductionMainInital(ComputeShaderInput Input)
+void ReductionMainInital(FComputeShaderInput Input)
 {
     uint Width;
     uint Height;
@@ -71,9 +70,9 @@ void ReductionMainInital(ComputeShaderInput Input)
     }
 }
 
-// Handles the rest of the reductions
+// Handles the rest of the Reductions
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
-void ReductionMain(ComputeShaderInput Input)
+void ReductionMain(FComputeShaderInput Input)
 {
     uint Width;
     uint Height;
@@ -94,7 +93,7 @@ void ReductionMain(ComputeShaderInput Input)
     
     GroupMemoryBarrierWithGroupSync();
     
-    // Parallel reduction
+    // Parallel Reduction
     for (uint i = TOTAL_THREAD_COUNT / 2; i > 0; i >>= 1)
     {
         if (GroupThreadIndex < i)

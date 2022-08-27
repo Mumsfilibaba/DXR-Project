@@ -3,13 +3,13 @@
 #include "Constants.hlsli"
 
 // PerFrame
-ConstantBuffer<Camera> CameraBuffer : register(b0);
+ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
 // PerObject Samplers
 SamplerState MaterialSampler : register(s0);
 
-ConstantBuffer<Transform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
-ConstantBuffer<SMaterial> MaterialBuffer  : register(b1);
+ConstantBuffer<FTransform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
+ConstantBuffer<FMaterial> MaterialBuffer  : register(b1);
 
 Texture2D<float4> AlbedoMap    : register(t0);
 Texture2D<float4> NormalTex    : register(t1);
