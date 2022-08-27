@@ -22,7 +22,6 @@ FMaterial::FMaterial(const FMaterialDesc& InProperties)
 void FMaterial::Initialize()
 {
     FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(FMaterialDesc));
-
     MaterialBuffer = RHICreateConstantBuffer(Initializer);
     if (MaterialBuffer)
     {
