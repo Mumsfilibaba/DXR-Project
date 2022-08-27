@@ -3,7 +3,7 @@
 #include "D3D12Device.h"
 #include "D3D12Shader.h"
 #include "DynamicD3D12.h"
-#include "D3D12CoreInterface.h"
+#include "D3D12Interface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12_SHADER_VISIBILITY

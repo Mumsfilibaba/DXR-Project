@@ -3,7 +3,7 @@
 #include "D3D12CommandList.h"
 #include "D3D12Core.h"
 #include "D3D12Shader.h"
-#include "D3D12CoreInterface.h"
+#include "D3D12Interface.h"
 #include "D3D12Buffer.h"
 #include "D3D12Texture.h"
 #include "D3D12PipelineState.h"
@@ -1382,7 +1382,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     
     FlushResourceBarriers();
 
-    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
+    FD3D12Interface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
     if (bIsTextureCube)
     {
         FD3D12ComputePipelineStateRef PipelineState = D3D12CoreInterface->GetGenerateMipsPipelineTexureCube();

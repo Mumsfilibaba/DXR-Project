@@ -13,7 +13,7 @@
 
 class FD3D12Device;
 class FD3D12Adapter;
-class FD3D12CoreInterface;
+class FD3D12Interface;
 class FD3D12RootSignature;
 class FD3D12ComputePipelineState;
 class FD3D12OnlineDescriptorHeap;
@@ -84,7 +84,7 @@ class FD3D12Adapter
     : public FD3D12RefCounted
 {
 public:
-    FD3D12Adapter(FD3D12CoreInterface* InCoreInterface, const FD3D12AdapterInitializer& InInitializer)
+    FD3D12Adapter(FD3D12Interface* InCoreInterface, const FD3D12AdapterInitializer& InInitializer)
         : FD3D12RefCounted()
         , Initializer(InInitializer)
         , AdapterIndex(0)
@@ -111,7 +111,7 @@ public:
     bool                     IsDebugLayerEnabled() const { return Initializer.bEnableDebugLayer; }
     bool                     SupportsTearing()     const { return bAllowTearing; }
 
-    FD3D12CoreInterface*     GetCoreInterface() const { return CoreInterface; }
+    FD3D12Interface*     GetCoreInterface() const { return CoreInterface; }
 
     IDXGIAdapter1* GetDXGIAdapter()  const { return Adapter.Get(); }
 
@@ -129,7 +129,7 @@ private:
     
     bool                     bAllowTearing;
 
-    FD3D12CoreInterface*         CoreInterface;
+    FD3D12Interface*         CoreInterface;
 
     TComPtr<IDXGIAdapter1>       Adapter;
     

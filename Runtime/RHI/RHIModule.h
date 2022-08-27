@@ -48,10 +48,10 @@ public:
      *
      * @return: Returns the newly created RHIInstance
      */
-    virtual class FRHICoreInterface* CreateInterface() = 0;
+    virtual class FRHIInterface* CreateInterface() = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Global Variable
 
-extern RHI_API class FRHICoreInterface* GRHIInterface;
+extern RHI_API class FRHIInterface* GRHIInterface;

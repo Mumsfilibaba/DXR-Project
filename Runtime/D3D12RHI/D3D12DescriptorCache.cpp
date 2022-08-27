@@ -1,6 +1,6 @@
 #include "D3D12DescriptorCache.h"
 #include "D3D12Descriptors.h"
-#include "D3D12CoreInterface.h"
+#include "D3D12Interface.h"
 #include "D3D12CommandContext.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
@@ -22,7 +22,7 @@ FD3D12DescriptorCache::FD3D12DescriptorCache(FD3D12Device* InDevice)
 
 bool FD3D12DescriptorCache::Initialize()
 {
-    FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
+    FD3D12Interface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
     
     D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
     FMemory::Memzero(&CBVDesc);

@@ -3,7 +3,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalDeviceContext
 
-FMetalDeviceContext::FMetalDeviceContext(FMetalCoreInterface* InCoreInterface, id<MTLDevice> InDevice)
+FMetalDeviceContext::FMetalDeviceContext(FMetalInterface* InCoreInterface, id<MTLDevice> InDevice)
     : CoreInterface(InCoreInterface)
     , Device(InDevice)
     , CommandQueue([InDevice newCommandQueue])
@@ -17,7 +17,7 @@ FMetalDeviceContext::~FMetalDeviceContext()
     NSSafeRelease(CommandQueue);
 }
 
-FMetalDeviceContext* FMetalDeviceContext::CreateContext(FMetalCoreInterface* InCoreInterface)
+FMetalDeviceContext* FMetalDeviceContext::CreateContext(FMetalInterface* InCoreInterface)
 {
     SCOPED_AUTORELEASE_POOL();
     

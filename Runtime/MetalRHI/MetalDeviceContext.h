@@ -1,7 +1,7 @@
 #pragma once
 #include "MetalCore.h"
 
-class FMetalCoreInterface;
+class FMetalInterface;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalDeviceContext
@@ -10,23 +10,23 @@ class FMetalDeviceContext
 {
 protected:
 	
-	friend class FMetalCoreInterface;
+	friend class FMetalInterface;
 	
-	FMetalDeviceContext(FMetalCoreInterface* InCoreInterface, id<MTLDevice> InDevice);
+	FMetalDeviceContext(FMetalInterface* InCoreInterface, id<MTLDevice> InDevice);
 	~FMetalDeviceContext();
 
 public:
     
-	static FMetalDeviceContext* CreateContext(FMetalCoreInterface* InCoreInterface);
+	static FMetalDeviceContext* CreateContext(FMetalInterface* InCoreInterface);
 	
 	FORCEINLINE id<MTLDevice> GetMTLDevice() const { return Device; }
 	
 	FORCEINLINE id<MTLCommandQueue> GetMTLCommandQueue() const { return CommandQueue; }
 
-	FORCEINLINE FMetalCoreInterface* GetMetalCoreInterface() const { return CoreInterface; }
+	FORCEINLINE FMetalInterface* GetMetalCoreInterface() const { return CoreInterface; }
 	
 private:
-	FMetalCoreInterface* CoreInterface;
+	FMetalInterface* CoreInterface;
 	
 	id<MTLDevice>        Device;
 	id<MTLCommandQueue>  CommandQueue;

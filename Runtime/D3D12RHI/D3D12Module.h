@@ -13,5 +13,5 @@ public:
     FD3D12Module()  = default;
     ~FD3D12Module() = default;
 
-    virtual class FRHICoreInterface* CreateInterface() override final;
+    virtual class FRHIInterface* CreateInterface() override final;
 };

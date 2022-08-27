@@ -62,7 +62,7 @@ class FMetalCommandContext final : public FMetalObject, public IRHICommandContex
 {
 private:
 
-    friend class FMetalCoreInterface;
+    friend class FMetalInterface;
 
     FMetalCommandContext(FMetalDeviceContext* InDeviceContext);
     ~FMetalCommandContext() = default;

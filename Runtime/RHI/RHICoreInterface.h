@@ -126,16 +126,16 @@ struct FRayTracingSupport
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHICoreInterface
+// FRHIInterface
 
-class FRHICoreInterface
+class FRHIInterface
 {
 protected:
-    FRHICoreInterface(ERHIInstanceType InRHIType)
+    FRHIInterface(ERHIInstanceType InRHIType)
         : RHIType(InRHIType)
     { }
 
-    virtual ~FRHICoreInterface() = default;
+    virtual ~FRHIInterface() = default;
 
 public:
 

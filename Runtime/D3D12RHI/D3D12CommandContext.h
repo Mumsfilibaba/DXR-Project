@@ -277,7 +277,7 @@ class FD3D12CommandContext
     , public FD3D12DeviceChild
 {
 private:
-    friend class FD3D12CoreInterface;
+    friend class FD3D12Interface;
 
     FD3D12CommandContext(FD3D12Device* InDevice);
     ~FD3D12CommandContext();

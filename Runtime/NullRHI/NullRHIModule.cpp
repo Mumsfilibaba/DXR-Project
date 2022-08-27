@@ -1,12 +1,12 @@
 #include "NullRHIModule.h"
-#include "NullRHICoreInterface.h"
+#include "NullRHIInterface.h"
 
 IMPLEMENT_ENGINE_MODULE(FNullRHIModule, NullRHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FNullRHIModule
 
-FRHICoreInterface* FNullRHIModule::CreateInterface()
+FRHIInterface* FNullRHIModule::CreateInterface()
 {
-    return dbg_new FNullRHICoreInterface();
+    return dbg_new FNullRHIInterface();
 }

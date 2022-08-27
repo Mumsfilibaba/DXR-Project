@@ -8,7 +8,7 @@ IMPLEMENT_ENGINE_MODULE(FDefaultModule, RHI);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Globals
 
-RHI_API FRHICoreInterface* GRHIInterface = nullptr;
+RHI_API FRHIInterface* GRHIInterface = nullptr;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RHI Functions
@@ -55,7 +55,7 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
         false;
 #endif
 
-    FRHICoreInterface* RHICoreInterface = RHIModule->CreateInterface();
+    FRHIInterface* RHICoreInterface = RHIModule->CreateInterface();
     if (!(RHICoreInterface && RHICoreInterface->Initialize(bEnableDebug)))
     {
         LOG_ERROR("[InitRHI] Failed to init RHIInterface, the application has to terminate");

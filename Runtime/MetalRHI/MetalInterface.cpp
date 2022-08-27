@@ -1,28 +1,28 @@
-#include "MetalCoreInterface.h"
+#include "MetalInterface.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalCoreInterface
+// FMetalInterface
 
-FMetalCoreInterface::FMetalCoreInterface()
-	: FRHICoreInterface(ERHIInstanceType::Metal)
+FMetalInterface::FMetalInterface()
+	: FRHIInterface(ERHIInstanceType::Metal)
 	, CommandContext()
 { }
 
-FMetalCoreInterface::~FMetalCoreInterface()
+FMetalInterface::~FMetalInterface()
 {
 	SAFE_DELETE(CommandContext);
 	SAFE_DELETE(DeviceContext);
 }
 
-FMetalCoreInterface* FMetalCoreInterface::CreateMetalCoreInterface()
+FMetalInterface* FMetalInterface::CreateMetalCoreInterface()
 {
-	return dbg_new FMetalCoreInterface();
+	return dbg_new FMetalInterface();
 }
 
-bool FMetalCoreInterface::Initialize(bool bEnableDebug)
+bool FMetalInterface::Initialize(bool bEnableDebug)
 {
 	UNREFERENCED_VARIABLE(bEnableDebug);
 	
@@ -45,33 +45,33 @@ bool FMetalCoreInterface::Initialize(bool bEnableDebug)
     return true;
 }
 
-FRHITexture2D* FMetalCoreInterface::RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)
+FRHITexture2D* FMetalInterface::RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)
 {
     return CreateTexture<FMetalTexture2D>(Initializer);
 }
 
-FRHITexture2DArray* FMetalCoreInterface::RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)
+FRHITexture2DArray* FMetalInterface::RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)
 {
     return CreateTexture<FMetalTexture2DArray>(Initializer);
 }
 
-FRHITextureCube* FMetalCoreInterface::RHICreateTextureCube(const FRHITextureCubeInitializer& Initializer)
+FRHITextureCube* FMetalInterface::RHICreateTextureCube(const FRHITextureCubeInitializer& Initializer)
 {
     return CreateTexture<FMetalTextureCube>(Initializer);
 }
 
-FRHITextureCubeArray* FMetalCoreInterface::RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer)
+FRHITextureCubeArray* FMetalInterface::RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer)
 {
     return CreateTexture<FMetalTextureCubeArray>(Initializer);
 }
 
-FRHITexture3D* FMetalCoreInterface::RHICreateTexture3D(const FRHITexture3DInitializer& Initializer)
+FRHITexture3D* FMetalInterface::RHICreateTexture3D(const FRHITexture3DInitializer& Initializer)
 {
     return CreateTexture<FMetalTexture3D>(Initializer);
 }
 
 template<typename MetalTextureType, typename InitializerType>
-MetalTextureType* FMetalCoreInterface::CreateTexture(const InitializerType& Initializer)
+MetalTextureType* FMetalInterface::CreateTexture(const InitializerType& Initializer)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -162,33 +162,33 @@ MetalTextureType* FMetalCoreInterface::CreateTexture(const InitializerType& Init
     return NewTexture.ReleaseOwnership();
 }
 
-FRHISamplerState* FMetalCoreInterface::RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer)
+FRHISamplerState* FMetalInterface::RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer)
 {
     return dbg_new FMetalSamplerState();
 }
 
-FRHIVertexBuffer* FMetalCoreInterface::RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
+FRHIVertexBuffer* FMetalInterface::RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
 {
     return CreateBuffer<FMetalVertexBuffer>(Initializer);
 }
 
-FRHIIndexBuffer* FMetalCoreInterface::RHICreateIndexBuffer(const FRHIIndexBufferInitializer& Initializer)
+FRHIIndexBuffer* FMetalInterface::RHICreateIndexBuffer(const FRHIIndexBufferInitializer& Initializer)
 {
     return CreateBuffer<FMetalIndexBuffer>(Initializer);
 }
 
-FRHIGenericBuffer* FMetalCoreInterface::RHICreateGenericBuffer(const FRHIGenericBufferInitializer& Initializer)
+FRHIGenericBuffer* FMetalInterface::RHICreateGenericBuffer(const FRHIGenericBufferInitializer& Initializer)
 {
     return CreateBuffer<FMetalGenericBuffer>(Initializer);
 }
 
-FRHIConstantBuffer* FMetalCoreInterface::RHICreateConstantBuffer(const FRHIConstantBufferInitializer& Initializer)
+FRHIConstantBuffer* FMetalInterface::RHICreateConstantBuffer(const FRHIConstantBufferInitializer& Initializer)
 {
     return CreateBuffer<FMetalConstantBuffer, FRHIConstantBufferInitializer, kConstantBufferAlignment>(Initializer);
 }
 
 template<typename MetalBufferType, typename InitializerType, const uint32 BufferAlignment>
-MetalBufferType* FMetalCoreInterface::CreateBuffer(const InitializerType& Initializer)
+MetalBufferType* FMetalInterface::CreateBuffer(const InitializerType& Initializer)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -253,137 +253,137 @@ MetalBufferType* FMetalCoreInterface::CreateBuffer(const InitializerType& Initia
     return NewBuffer.ReleaseOwnership();
 }
 
-FRHIRayTracingScene* FMetalCoreInterface::RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)
+FRHIRayTracingScene* FMetalInterface::RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)
 {
     return dbg_new FMetalRayTracingScene(GetDeviceContext(), Initializer);
 }
 
-FRHIRayTracingGeometry* FMetalCoreInterface::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
+FRHIRayTracingGeometry* FMetalInterface::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
 {
     return dbg_new FMetalRayTracingGeometry(Initializer);
 }
 
-FRHIShaderResourceView* FMetalCoreInterface::RHICreateShaderResourceView(const FRHITextureSRVInitializer& Initializer)
+FRHIShaderResourceView* FMetalInterface::RHICreateShaderResourceView(const FRHITextureSRVInitializer& Initializer)
 {
     return dbg_new FMetalShaderResourceView(GetDeviceContext(), Initializer.Texture);
 }
 
-FRHIShaderResourceView* FMetalCoreInterface::RHICreateShaderResourceView(const FRHIBufferSRVInitializer& Initializer)
+FRHIShaderResourceView* FMetalInterface::RHICreateShaderResourceView(const FRHIBufferSRVInitializer& Initializer)
 {
     return dbg_new FMetalShaderResourceView(GetDeviceContext(), Initializer.Buffer);
 }
 
-FRHIUnorderedAccessView* FMetalCoreInterface::RHICreateUnorderedAccessView(const FRHITextureUAVInitializer& Initializer)
+FRHIUnorderedAccessView* FMetalInterface::RHICreateUnorderedAccessView(const FRHITextureUAVInitializer& Initializer)
 {
     return dbg_new FMetalUnorderedAccessView(GetDeviceContext(), Initializer.Texture);
 }
 
-FRHIUnorderedAccessView* FMetalCoreInterface::RHICreateUnorderedAccessView(const FRHIBufferUAVInitializer& Initializer)
+FRHIUnorderedAccessView* FMetalInterface::RHICreateUnorderedAccessView(const FRHIBufferUAVInitializer& Initializer)
 {
     return dbg_new FMetalUnorderedAccessView(GetDeviceContext(), Initializer.Buffer);
 }
 
-FRHIComputeShader* FMetalCoreInterface::RHICreateComputeShader(const TArray<uint8>& ShaderCode)
+FRHIComputeShader* FMetalInterface::RHICreateComputeShader(const TArray<uint8>& ShaderCode)
 {
     return dbg_new FMetalComputeShader(GetDeviceContext(), ShaderCode);
 }
 
-FRHIVertexShader* FMetalCoreInterface::RHICreateVertexShader(const TArray<uint8>& ShaderCode)
+FRHIVertexShader* FMetalInterface::RHICreateVertexShader(const TArray<uint8>& ShaderCode)
 {
     return dbg_new FMetalVertexShader(GetDeviceContext(), ShaderCode);
 }
 
-FRHIHullShader* FMetalCoreInterface::RHICreateHullShader(const TArray<uint8>& ShaderCode)
+FRHIHullShader* FMetalInterface::RHICreateHullShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIDomainShader* FMetalCoreInterface::RHICreateDomainShader(const TArray<uint8>& ShaderCode)
+FRHIDomainShader* FMetalInterface::RHICreateDomainShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIGeometryShader* FMetalCoreInterface::RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
+FRHIGeometryShader* FMetalInterface::RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIMeshShader* FMetalCoreInterface::RHICreateMeshShader(const TArray<uint8>& ShaderCode)
+FRHIMeshShader* FMetalInterface::RHICreateMeshShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIAmplificationShader* FMetalCoreInterface::RHICreateAmplificationShader(const TArray<uint8>& ShaderCode)
+FRHIAmplificationShader* FMetalInterface::RHICreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIPixelShader* FMetalCoreInterface::RHICreatePixelShader(const TArray<uint8>& ShaderCode)
+FRHIPixelShader* FMetalInterface::RHICreatePixelShader(const TArray<uint8>& ShaderCode)
 {
     return dbg_new FMetalPixelShader(GetDeviceContext(), ShaderCode);
 }
 
-FRHIRayGenShader* FMetalCoreInterface::RHICreateRayGenShader(const TArray<uint8>& ShaderCode)
+FRHIRayGenShader* FMetalInterface::RHICreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
     return dbg_new FMetalRayGenShader(GetDeviceContext(), ShaderCode);
 }
 
-FRHIRayAnyHitShader* FMetalCoreInterface::RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayAnyHitShader* FMetalInterface::RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
     return dbg_new FMetalRayAnyHitShader(GetDeviceContext(), ShaderCode);
 }
 
-FRHIRayClosestHitShader* FMetalCoreInterface::RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayClosestHitShader* FMetalInterface::RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
     return dbg_new FMetalRayClosestHitShader(GetDeviceContext(), ShaderCode);
 }
 
-FRHIRayMissShader* FMetalCoreInterface::RHICreateRayMissShader(const TArray<uint8>& ShaderCode)
+FRHIRayMissShader* FMetalInterface::RHICreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
     return dbg_new FMetalRayMissShader(GetDeviceContext(), ShaderCode);
 }
 
-FRHIDepthStencilState* FMetalCoreInterface::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer)
+FRHIDepthStencilState* FMetalInterface::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer)
 {
     return dbg_new FMetalDepthStencilState(GetDeviceContext(), Initializer);
 }
 
-FRHIRasterizerState* FMetalCoreInterface::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer)
+FRHIRasterizerState* FMetalInterface::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer)
 {
     return dbg_new FMetalRasterizerState(GetDeviceContext(), Initializer);
 }
 
-FRHIBlendState* FMetalCoreInterface::RHICreateBlendState(const FRHIBlendStateInitializer& Initializer)
+FRHIBlendState* FMetalInterface::RHICreateBlendState(const FRHIBlendStateInitializer& Initializer)
 {
     return dbg_new FMetalBlendState();
 }
 
-FRHIVertexInputLayout* FMetalCoreInterface::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
+FRHIVertexInputLayout* FMetalInterface::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
 {
     return dbg_new FMetalInputLayoutState(GetDeviceContext(), Initializer);
 }
 
-FRHIGraphicsPipelineState* FMetalCoreInterface::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& Initializer)
+FRHIGraphicsPipelineState* FMetalInterface::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& Initializer)
 {
     return dbg_new FMetalGraphicsPipelineState(GetDeviceContext(), Initializer);
 }
 
-FRHIComputePipelineState* FMetalCoreInterface::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer)
+FRHIComputePipelineState* FMetalInterface::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer)
 {
     return dbg_new FMetalComputePipelineState();
 }
 
-FRHIRayTracingPipelineState* FMetalCoreInterface::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Initializer)
+FRHIRayTracingPipelineState* FMetalInterface::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Initializer)
 {
     return dbg_new FMetalRayTracingPipelineState();
 }
 
-FRHITimestampQuery* FMetalCoreInterface::RHICreateTimestampQuery()
+FRHITimestampQuery* FMetalInterface::RHICreateTimestampQuery()
 {
     return dbg_new FMetalTimestampQuery();
 }
 
-FRHIViewport* FMetalCoreInterface::RHICreateViewport(const FRHIViewportInitializer& Initializer)
+FRHIViewport* FMetalInterface::RHICreateViewport(const FRHIViewportInitializer& Initializer)
 {
     FCocoaWindow* Window = (FCocoaWindow*)Initializer.WindowHandle;
     
@@ -402,27 +402,27 @@ FRHIViewport* FMetalCoreInterface::RHICreateViewport(const FRHIViewportInitializ
     return dbg_new FMetalViewport(GetDeviceContext(), NewInitializer);
 }
 
-IRHICommandContext* FMetalCoreInterface::RHIGetDefaultCommandContext()
+IRHICommandContext* FMetalInterface::RHIGetDefaultCommandContext()
 {
     return CommandContext;
 }
 
-FString FMetalCoreInterface::GetAdapterDescription() const
+FString FMetalInterface::GetAdapterDescription() const
 {
     return FString();
 }
 
-void FMetalCoreInterface::RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport) const
+void FMetalInterface::RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport) const
 {
     OutSupport = FRayTracingSupport();
 }
 
-void FMetalCoreInterface::RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const
+void FMetalInterface::RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const
 {
     OutSupport = FShadingRateSupport();
 }
 
-bool FMetalCoreInterface::RHIQueryUAVFormatSupport(EFormat Format) const
+bool FMetalInterface::RHIQueryUAVFormatSupport(EFormat Format) const
 {
     return true;
 }

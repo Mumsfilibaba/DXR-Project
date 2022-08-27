@@ -18,7 +18,7 @@ class FNullRHICommandContext final
     : public IRHICommandContext
 {
 private:
-    friend class FNullRHICoreInterface;
+    friend class FNullRHIInterface;
 
     FNullRHICommandContext()  = default;
     ~FNullRHICommandContext() = default;

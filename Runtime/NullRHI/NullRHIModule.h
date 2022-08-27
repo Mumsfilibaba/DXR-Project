@@ -18,5 +18,5 @@ struct FNullRHIModule final
     FNullRHIModule()  = default;
     ~FNullRHIModule() = default;
 
-    virtual class FRHICoreInterface* CreateInterface() override final;
+    virtual class FRHIInterface* CreateInterface() override final;
 };

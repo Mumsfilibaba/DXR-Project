@@ -1,12 +1,12 @@
 #include "MetalModule.h"
-#include "MetalCoreInterface.h"
+#include "MetalInterface.h"
 
 IMPLEMENT_ENGINE_MODULE(FMetalModule, MetalRHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalModule
 
-FRHICoreInterface* FMetalModule::CreateInterface()
+FRHIInterface* FMetalModule::CreateInterface()
 {
-    return FMetalCoreInterface::CreateMetalCoreInterface();
+    return FMetalInterface::CreateMetalCoreInterface();
 }

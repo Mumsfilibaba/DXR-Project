@@ -11,5 +11,5 @@ struct FMetalModule final : public FRHIModule
     FMetalModule()  = default;
     ~FMetalModule() = default;
 
-    virtual class FRHICoreInterface* CreateInterface() override final;
+    virtual class FRHIInterface* CreateInterface() override final;
 };

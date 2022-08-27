@@ -21,24 +21,24 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHICoreInterface
+// FNullRHIInterface
 
-class FNullRHICoreInterface final 
-    : public FRHICoreInterface
+class FNullRHIInterface final 
+    : public FRHIInterface
 {
 public:
-    FNullRHICoreInterface()
-        : FRHICoreInterface(ERHIInstanceType::Null)
+    FNullRHIInterface()
+        : FRHIInterface(ERHIInstanceType::Null)
         , CommandContext(FNullRHICommandContext::CreateNullRHIContext())
     { }
 
-    ~FNullRHICoreInterface()
+    ~FNullRHIInterface()
     {
         SAFE_DELETE(CommandContext);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHICoreInterface Interface
+    // FRHIInterface Interface
 
     virtual bool Initialize(bool bEnableDebug) override final { return true; }
 
