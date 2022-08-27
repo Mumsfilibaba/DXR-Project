@@ -20,11 +20,12 @@ class FRHIShaderResourceView;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef TSharedRef<class FRHITexture>        FRHITextureRef;
-typedef TSharedRef<class FRHITexture2D>      FRHITexture2DRef;
-typedef TSharedRef<class FRHITexture2DArray> FRHITexture2DArrayRef;
-typedef TSharedRef<class FRHITextureCube>    FRHITextureCubeRef;
-typedef TSharedRef<class FRHITexture3D>      FRHITexture3DRef;
+typedef TSharedRef<class FRHITexture>          FRHITextureRef;
+typedef TSharedRef<class FRHITexture2D>        FRHITexture2DRef;
+typedef TSharedRef<class FRHITexture2DArray>   FRHITexture2DArrayRef;
+typedef TSharedRef<class FRHITextureCube>      FRHITextureCubeRef;
+typedef TSharedRef<class FRHITextureCubeArray> FRHITextureCubeArrayRef;
+typedef TSharedRef<class FRHITexture3D>        FRHITexture3DRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ETextureUsageFlags

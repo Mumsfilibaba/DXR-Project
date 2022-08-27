@@ -109,7 +109,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         }
 
         FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
+        PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();
         PSOInitializer.BlendState                             = BlendState.Get();
         PSOInitializer.DepthStencilState                      = GeometryDepthStencilState.Get();
         PSOInitializer.RasterizerState                        = GeometryRasterizerState.Get();
@@ -182,7 +182,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         }
 
         FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
+        PSOInitializer.VertexInputLayout                  = FrameResources.MeshInputLayout.Get();
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
         PSOInitializer.RasterizerState                    = RasterizerState.Get();
@@ -467,7 +467,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, FFrameResources&
 
         GPU_TRACE_SCOPE(CmdList, "Pre Pass");
 
-        struct SPerObject
+        struct FPerObject
         {
             FMatrix4 Matrix;
         } PerObjectBuffer;
@@ -479,7 +479,6 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, FFrameResources&
 
         CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
         
-        // NOTE: For now, MetalRHI require a RenderPass to be started for these two to be valid
         CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
         CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
@@ -618,7 +617,6 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const FFrameRes
 
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     
-    // NOTE: For now, MetalRHI require a renderpass to be started for these two to be valid
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 

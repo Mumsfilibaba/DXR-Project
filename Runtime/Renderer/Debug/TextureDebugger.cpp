@@ -14,7 +14,7 @@ TAutoConsoleVariable<bool> GDrawTextureDebugger("Renderer.DrawTextureDebugger", 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TextureDebugWindow
 
-TSharedRef<FTextureDebugWindow> FTextureDebugWindow::Make()
+TSharedRef<FTextureDebugWindow> FTextureDebugWindow::Create()
 {
     return dbg_new FTextureDebugWindow();
 }
@@ -110,7 +110,7 @@ bool FTextureDebugWindow::IsTickable()
     return GDrawTextureDebugger.GetBool();
 }
 
-void FTextureDebugWindow::AddTextureForDebugging(const TSharedRef<FRHIShaderResourceView>& ImageView, const TSharedRef<FRHITexture>& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FTextureDebugWindow::AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     DebugTextures.Emplace(ImageView, Image, BeforeState, AfterState);
 }

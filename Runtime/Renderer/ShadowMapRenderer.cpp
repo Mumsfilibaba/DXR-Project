@@ -108,7 +108,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
         PSOInitializer.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
-        PSOInitializer.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
+        PSOInitializer.VertexInputLayout                  = FrameResources.MeshInputLayout.Get();
         PSOInitializer.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
         PSOInitializer.RasterizerState                    = RasterizerState.Get();
         PSOInitializer.SampleCount                        = 1;
@@ -196,7 +196,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
         PSOInitializer.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
-        PSOInitializer.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
+        PSOInitializer.VertexInputLayout                  = FrameResources.MeshInputLayout.Get();
         PSOInitializer.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
         PSOInitializer.RasterizerState                    = RasterizerState.Get();
         PSOInitializer.SampleCount                        = 1;

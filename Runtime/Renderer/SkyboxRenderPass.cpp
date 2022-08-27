@@ -162,7 +162,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     }
 
     FRHIGraphicsPipelineStateInitializer PSOInitializer;
-    PSOInitializer.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
+    PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();
     PSOInitializer.BlendState                             = BlendState.Get();
     PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
     PSOInitializer.RasterizerState                        = RasterizerState.Get();

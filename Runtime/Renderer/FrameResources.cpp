@@ -35,7 +35,7 @@ void FFrameResources::Release()
 
     GBufferSampler.Reset();
 
-    StdInputLayout.Reset();
+    MeshInputLayout.Reset();
 
     RTScene.Reset();
     RTOutput.Reset();

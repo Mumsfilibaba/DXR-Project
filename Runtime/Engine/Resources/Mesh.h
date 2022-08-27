@@ -28,10 +28,10 @@ public:
 public:
     void CreateBoundingBox(const FMeshData& Data);
 
-    TSharedRef<FRHIVertexBuffer>       VertexBuffer;
-    TSharedRef<FRHIShaderResourceView> VertexBufferSRV;
-    TSharedRef<FRHIIndexBuffer>        IndexBuffer;
-    TSharedRef<FRHIShaderResourceView> IndexBufferSRV;
+    FRHIVertexBufferRef       VertexBuffer;
+    FRHIShaderResourceViewRef VertexBufferSRV;
+    FRHIIndexBufferRef        IndexBuffer;
+    FRHIShaderResourceViewRef IndexBufferSRV;
     TSharedRef<FRHIRayTracingGeometry> RTGeometry;
 
     uint32 VertexCount = 0;

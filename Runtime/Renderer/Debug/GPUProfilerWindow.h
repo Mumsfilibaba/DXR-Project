@@ -11,7 +11,7 @@ class FGPUProfilerWindow
     INTERFACE_GENERATE_BODY();
 
 public:
-    static TSharedRef<FGPUProfilerWindow> Make();
+    static TSharedRef<FGPUProfilerWindow> Create();
 
      /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;

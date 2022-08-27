@@ -40,7 +40,7 @@ private:
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIGraphicsPipelineStateRef PipelineStateNoBlending;
     FRHIPixelShaderRef           PShader;
-    TSharedRef<FRHIVertexBuffer>          VertexBuffer;
-    TSharedRef<FRHIIndexBuffer>           IndexBuffer;
+    FRHIVertexBufferRef          VertexBuffer;
+    FRHIIndexBufferRef           IndexBuffer;
     FRHISamplerStateRef          PointSampler;
 };

@@ -14,7 +14,7 @@ class FTextureDebugWindow
     INTERFACE_GENERATE_BODY();
 
 public:
-    static TSharedRef<FTextureDebugWindow> Make();
+    static TSharedRef<FTextureDebugWindow> Create();
 
      /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;
@@ -23,7 +23,7 @@ public:
     virtual bool IsTickable() override final;
 
      /** @brief: Add image for debug drawing */
-    void AddTextureForDebugging(const TSharedRef<FRHIShaderResourceView>& ImageView, const TSharedRef<FRHITexture>& Image, EResourceAccess BeforeState, EResourceAccess AfterState);
+    void AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState);
 
     void ClearImages()
     {

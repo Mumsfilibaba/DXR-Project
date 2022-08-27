@@ -105,8 +105,17 @@ public:
      */
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) = 0;
 
+    /**
+     * @brief: Begins a new RenderPass
+     *
+     * @param RenderPassInitializer: Description of RenderTargets and DepthStencils to bind for drawing
+     */
     virtual void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) = 0;
-    virtual void EndRenderPass()                                                         = 0;
+
+    /**
+     * @brief: Ends the current RenderPass
+     */
+    virtual void EndRenderPass() = 0;
 
     /**
      * @brief: Set the current viewport settings

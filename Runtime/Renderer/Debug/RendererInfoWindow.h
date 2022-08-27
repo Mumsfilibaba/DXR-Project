@@ -11,7 +11,7 @@ class FRendererInfoWindow
     INTERFACE_GENERATE_BODY();
 
 public:
-    static TSharedRef<FRendererInfoWindow> Make();
+    static TSharedRef<FRendererInfoWindow> Create();
 
      /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;

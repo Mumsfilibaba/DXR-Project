@@ -120,6 +120,4 @@ private:
 
     uint64 DirLightFrame   = 0;
     uint64 PointLightFrame = 0;
-
-    //uint64 FrameIndex = 0;
 };

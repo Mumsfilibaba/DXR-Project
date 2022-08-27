@@ -85,7 +85,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     FRHIGraphicsPipelineStateInitializer PSOInitializer;
     PSOInitializer.ShaderState.VertexShader               = VShader.Get();
     PSOInitializer.ShaderState.PixelShader                = PShader.Get();
-    PSOInitializer.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
+    PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();
     PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
     PSOInitializer.BlendState                             = BlendState.Get();
     PSOInitializer.RasterizerState                        = RasterizerState.Get();

@@ -57,7 +57,7 @@ public:
     }
 
 private:
-    TArray<TResource*>            Resources;
+    TArray<TResource*>      Resources;
     TMap<TResource*, int32> ResourceIndices;
 };
 
@@ -83,32 +83,35 @@ struct RENDERER_API FFrameResources
 
     FRHITexture2D* BackBuffer = nullptr;
 
-    FRHIConstantBufferRef CameraBuffer;
-    FRHIConstantBufferRef TransformBuffer;
+    // GlobalBuffers
+    FRHIConstantBufferRef    CameraBuffer;
+    FRHIConstantBufferRef    TransformBuffer;
 
-    FRHISamplerStateRef PointLightShadowSampler;
-    FRHISamplerStateRef DirectionalLightShadowSampler;
-    FRHISamplerStateRef IrradianceSampler;
+    // Samplers
+    FRHISamplerStateRef      PointLightShadowSampler;
+    FRHISamplerStateRef      DirectionalLightShadowSampler;
+    FRHISamplerStateRef      IrradianceSampler;
+    FRHISamplerStateRef      GBufferSampler;
+    FRHISamplerStateRef      FXAASampler;
 
-    FRHITextureCubeRef Skybox;
+    FRHITextureCubeRef       Skybox;
 
-    FRHITexture2DRef    IntegrationLUT;
-    FRHISamplerStateRef IntegrationLUTSampler;
+    FRHITexture2DRef         IntegrationLUT;
+    FRHISamplerStateRef      IntegrationLUTSampler;
 
-    FRHITexture2DRef SSAOBuffer;
-    FRHITexture2DRef FinalTarget;
-    FRHITexture2DRef GBuffer[5];
+    // GBuffer
+    FRHITexture2DRef         SSAOBuffer;
+    FRHITexture2DRef         FinalTarget;
+    FRHITexture2DRef         GBuffer[5];
 
     // Two resources that can be ping-ponged between
-    FRHITexture2DRef ReducedDepthBuffer[2];
+    FRHITexture2DRef         ReducedDepthBuffer[2];
 
-    FRHISamplerStateRef GBufferSampler;
-    FRHISamplerStateRef FXAASampler;
+    FRHIVertexInputLayoutRef MeshInputLayout;
 
-    FRHIVertexInputLayoutRef StdInputLayout;
-
-    FRHITexture2DRef       RTOutput;
-    FRHIRayTracingSceneRef RTScene;
+    // RayTracing
+    FRHITexture2DRef         RTOutput;
+    FRHIRayTracingSceneRef   RTScene;
 
     FRayTracingShaderResources GlobalResources;
     FRayTracingShaderResources RayGenLocalResources;
@@ -116,13 +119,13 @@ struct RENDERER_API FFrameResources
     TArray<FRHIRayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<FRayTracingShaderResources>     RTHitGroupResources;
-    TMap<class FMesh*, uint32>       RTMeshToHitGroupIndex;
+    TMap<class FMesh*, uint32>             RTMeshToHitGroupIndex;
     TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
 
     TArrayView<const FMeshDrawCommand> GlobalMeshDrawCommands;
     TArray<uint32>                     DeferredVisibleCommands;
     TArray<uint32>                     ForwardVisibleCommands;
 
-    FRHIViewportRef MainWindowViewport;
+    FRHIViewportRef                    MainWindowViewport;
 };
 

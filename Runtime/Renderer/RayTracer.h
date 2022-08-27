@@ -20,9 +20,8 @@ public:
     void PreRender(FRHICommandList& CmdList, FFrameResources& Resources, const FScene& Scene);
 
 private:
-    TSharedRef<FRHIRayTracingPipelineState> Pipeline;
-
-    TSharedRef<FRHIRayGenShader>        RayGenShader;
-    TSharedRef<FRHIRayMissShader>       RayMissShader;
-    TSharedRef<FRHIRayClosestHitShader> RayClosestHitShader;
+    FRHIRayTracingPipelineStateRef Pipeline;
+    FRHIRayGenShaderRef            RayGenShader;
+    FRHIRayMissShaderRef           RayMissShader;
+    FRHIRayClosestHitShaderRef     RayClosestHitShader;
 };

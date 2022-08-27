@@ -18,7 +18,7 @@ TAutoConsoleVariable<bool> GDrawRendererInfo("Renderer.DrawRendererInfo", false)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RendererInfoWindow
 
-TSharedRef<FRendererInfoWindow> FRendererInfoWindow::Make()
+TSharedRef<FRendererInfoWindow> FRendererInfoWindow::Create()
 {
     return dbg_new FRendererInfoWindow();
 }

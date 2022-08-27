@@ -66,11 +66,8 @@ public:
     void Release();
 
     void PerformFrustumCullingAndSort(const FScene& Scene);
-
     void PerformFXAA(FRHICommandList& InCmdList);
-    
     void PerformBackBufferBlit(FRHICommandList& InCmdList);
-
     void PerformAABBDebugPass(FRHICommandList& InCmdList);
 
     FORCEINLINE TSharedRef<FTextureDebugWindow> GetTextureDebugger() const
@@ -87,9 +84,7 @@ private:
     void OnWindowResize(const FWindowResizeEvent& Event);
 
     bool InitBoundingBoxDebugPass();
-
     bool InitAA();
-    
     bool InitShadingImage();
 
     NOINLINE void FrustumCullingAndSortingInternal(
@@ -104,21 +99,7 @@ private:
     TSharedRef<FRendererInfoWindow> InfoWindow;
     TSharedRef<FGPUProfilerWindow>  GPUProfilerWindow;
 
-    FRHICommandList PreShadowsCmdList;
-    FRHICommandList PointShadowCmdList;
-    FRHICommandList DirShadowCmdList;
-    FRHICommandList PrepareGBufferCmdList;
-    FRHICommandList PrePassCmdList;
-    FRHICommandList ShadingRateCmdList;
-    FRHICommandList RayTracingCmdList;
-    FRHICommandList BasePassCmdList;
-    FRHICommandList MainCmdList;
-
-    FAsyncTask PointShadowTask;
-    FAsyncTask DirShadowTask;
-    FAsyncTask PrePassTask;
-    FAsyncTask BasePassTask;
-    FAsyncTask RayTracingTask;
+    FRHICommandList CommandList;
 
     FDeferredRenderer             DeferredRenderer;
     FShadowMapRenderer            ShadowMapRenderer;
@@ -135,8 +116,8 @@ private:
     FRHIComputePipelineStateRef ShadingRatePipeline;
     FRHIComputeShaderRef        ShadingRateShader;
 
-    TSharedRef<FRHIVertexBuffer>          AABBVertexBuffer;
-    TSharedRef<FRHIIndexBuffer>           AABBIndexBuffer;
+    FRHIVertexBufferRef          AABBVertexBuffer;
+    FRHIIndexBufferRef           AABBIndexBuffer;
     FRHIGraphicsPipelineStateRef AABBDebugPipelineState;
     FRHIVertexShaderRef          AABBVertexShader;
     FRHIPixelShaderRef           AABBPixelShader;
@@ -148,7 +129,7 @@ private:
     FRHIGraphicsPipelineStateRef FXAADebugPSO;
     FRHIPixelShaderRef           FXAADebugShader;
 
-    TSharedRef<FRHITimestampQuery> TimestampQueries;
+    FRHITimestampQueryRef TimestampQueries;
 
     FRHICommandStatistics FrameStatistics;
 };
@@ -158,8 +139,8 @@ private:
 extern RENDERER_API FRenderer GRenderer;
 
 inline void AddDebugTexture(
-    const TSharedRef<FRHIShaderResourceView>& ImageView,
-    const TSharedRef<FRHITexture>& Image,
+    const FRHIShaderResourceViewRef& ImageView,
+    const FRHITextureRef& Image,
     EResourceAccess BeforeState,
     EResourceAccess AfterState)
 {
