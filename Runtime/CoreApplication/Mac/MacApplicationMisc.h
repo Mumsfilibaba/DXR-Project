@@ -9,11 +9,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacApplicationMisc
 
-struct FMacApplicationMisc final : public FGenericApplicationMisc
+struct FMacApplicationMisc final
+    : public FGenericApplicationMisc
 {
-    static class FGenericApplication*   CreateApplication();
-    static class FGenericConsoleWindow* CreateConsoleWindow();
-
+    static class  FGenericApplication*  CreateApplication();
+    static struct FOutputDeviceConsole* CreateOutputDeviceConsole();
+ 
     static void MessageBox(const FString& Title, const FString& Message);
 
     static FORCEINLINE void RequestExit(int32 ExitCode)

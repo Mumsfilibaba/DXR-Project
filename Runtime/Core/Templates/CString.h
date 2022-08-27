@@ -20,57 +20,68 @@ struct TChar
 
     static CONSTEXPR CHARTYPE Zero = 0;
 
-    static NODISCARD FORCEINLINE CHARTYPE ToUpper(CHARTYPE Char)
+    NODISCARD
+    static FORCEINLINE CHARTYPE ToUpper(CHARTYPE Char)
     {
         return FPlatformString::ToUpper(Char);
     }
 
-    static NODISCARD FORCEINLINE CHARTYPE ToLower(CHARTYPE Char)
+    NODISCARD
+    static FORCEINLINE CHARTYPE ToLower(CHARTYPE Char)
     {
         return FPlatformString::ToLower(Char);
     }
 
-    static NODISCARD FORCEINLINE bool IsSpace(CHARTYPE Char)
+    NODISCARD
+    static FORCEINLINE bool IsSpace(CHARTYPE Char)
     {
         return FPlatformString::IsSpace(Char);
     }
     
-    static NODISCARD FORCEINLINE bool IsUpper(CHARTYPE Char)
+    NODISCARD
+    static FORCEINLINE bool IsUpper(CHARTYPE Char)
     {
         return FPlatformString::IsUpper(Char);
     }
     
-    static NODISCARD FORCEINLINE bool IsLower(CHARTYPE Char)
+    NODISCARD
+    static FORCEINLINE bool IsLower(CHARTYPE Char)
     {
         return FPlatformString::IsLower(Char);
     }
     
-    static NODISCARD FORCEINLINE bool IsAlnum(CHARTYPE Char)
+    NODISCARD
+    static FORCEINLINE bool IsAlnum(CHARTYPE Char)
     {
         return FPlatformString::IsAlnum(Char);
     }
     
-    static NODISCARD FORCEINLINE bool IsDigit(CHARTYPE Char)
+    NODISCARD
+    static FORCEINLINE bool IsDigit(CHARTYPE Char)
     {
         return FPlatformString::IsDigit(Char);
     }
     
-    static NODISCARD FORCEINLINE bool IsAlpha(CHARTYPE Char)
+    NODISCARD
+    static FORCEINLINE bool IsAlpha(CHARTYPE Char)
     {
         return FPlatformString::IsAlpha(Char);
     }
     
-    static NODISCARD FORCEINLINE bool IsPunct(CHARTYPE Char)
+    NODISCARD
+    static FORCEINLINE bool IsPunct(CHARTYPE Char)
     {
         return FPlatformString::IsPunct(Char);
     }
     
-    static NODISCARD FORCEINLINE bool IsHexDigit(CHARTYPE Char)
+    NODISCARD
+    static FORCEINLINE bool IsHexDigit(CHARTYPE Char)
     {
         return FPlatformString::IsHexDigit(Char);
     }
 
-    static NODISCARD FORCEINLINE bool IsZero(CHARTYPE Char) 
+    NODISCARD
+    static FORCEINLINE bool IsZero(CHARTYPE Char) 
     { 
         return (Char == Zero); 
     }

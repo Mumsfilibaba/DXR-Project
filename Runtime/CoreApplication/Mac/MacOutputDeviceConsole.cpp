@@ -1,29 +1,29 @@
-#include "MacConsoleWindow.h"
+#include "MacOutputDeviceConsole.h"
 #include "MacApplication.h"
 #include "CocoaConsoleWindow.h"
 
 #include "Core/Mac/Mac.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Threading/Mac/MacRunLoop.h"
+#include "Core/Mac/MacRunLoop.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacConsoleWindow
+// FMacOutputDeviceConsole
 
-FMacConsoleWindow::FMacConsoleWindow()
+FMacOutputDeviceConsole::FMacOutputDeviceConsole()
     : WindowHandle(nullptr)
 	, TextView(nullptr)
 	, ScrollView(nullptr)
 	, ConsoleColor(nullptr)
 { }
 
-FMacConsoleWindow::~FMacConsoleWindow()
+FMacOutputDeviceConsole::~FMacOutputDeviceConsole()
 {
 	DestroyConsole();
 }
 
-void FMacConsoleWindow::CreateConsole()
+void FMacOutputDeviceConsole::CreateConsole()
 {
     if (!WindowHandle)
     {
@@ -31,7 +31,11 @@ void FMacConsoleWindow::CreateConsole()
         {
             SCOPED_AUTORELEASE_POOL();
             
-            const NSUInteger StyleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskMiniaturizable;
+            const NSUInteger StyleMask = 
+                NSWindowStyleMaskTitled | 
+                NSWindowStyleMaskClosable | 
+                NSWindowStyleMaskResizable | 
+                NSWindowStyleMaskMiniaturizable;
             
             // TODO: Control with console vars?
             const CGFloat Width  = 640.0f;
@@ -40,7 +44,7 @@ void FMacConsoleWindow::CreateConsole()
             NSRect ContentRect = NSMakeRect(0.0f, 0.0f, Width, Height);
             
             WindowHandle = [[FCocoaConsoleWindow alloc] init:this ContentRect:ContentRect StyleMask:StyleMask Backing:NSBackingStoreBuffered Defer:NO];
-            SetColor(EConsoleColor::White);
+            SetTextColor(EConsoleColor::White);
             
             NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
             
@@ -68,10 +72,11 @@ void FMacConsoleWindow::CreateConsole()
             
             ScrollView.documentView = TextView;
             
-            NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorFullScreenAuxiliary
-                                                | NSWindowCollectionBehaviorDefault
-                                                | NSWindowCollectionBehaviorManaged
-                                                | NSWindowCollectionBehaviorParticipatesInCycle;
+            NSWindowCollectionBehavior Behavior = 
+                NSWindowCollectionBehaviorFullScreenAuxiliary |
+                NSWindowCollectionBehaviorDefault |
+                NSWindowCollectionBehaviorManaged |
+                NSWindowCollectionBehaviorParticipatesInCycle;
             
             WindowHandle.collectionBehavior = Behavior;
             
@@ -96,7 +101,7 @@ void FMacConsoleWindow::CreateConsole()
     }
 }
 
-void FMacConsoleWindow::DestroyConsole()
+void FMacOutputDeviceConsole::DestroyConsole()
 {
     if (IsVisible())
     {
@@ -114,7 +119,7 @@ void FMacConsoleWindow::DestroyConsole()
 	}
 }
 
-void FMacConsoleWindow::DestroyResources()
+void FMacOutputDeviceConsole::DestroyResources()
 {
 	SCOPED_AUTORELEASE_POOL();
 	
@@ -122,13 +127,13 @@ void FMacConsoleWindow::DestroyResources()
     NSSafeRelease(ScrollView);
 }
 
-void FMacConsoleWindow::Show(bool bShow)
+void FMacOutputDeviceConsole::Show(bool bShow)
 {
-    TScopedLock Lock(WindowCS);
-    
-	if (IsVisible() != bShow)
-	{
-		if (bShow)
+    if (IsVisible() != bShow)
+    {
+        // TScopedLock Lock(WindowCS);
+        
+        if (bShow)
 		{
 			CreateConsole();
 		}
@@ -139,7 +144,7 @@ void FMacConsoleWindow::Show(bool bShow)
 	}
 }
 
-void FMacConsoleWindow::Print(const FString& Message)
+void FMacOutputDeviceConsole::Log(const FString& Message)
 {
     if (WindowHandle)
     {
@@ -147,7 +152,7 @@ void FMacConsoleWindow::Print(const FString& Message)
         {
             SCOPED_AUTORELEASE_POOL();
 
-            NSString* String = Message.GetNSString();
+            NSString* String = [Message.GetNSString() stringByAppendingString:@"\n"];
 			AppendStringAndScroll(String);
 			
             FPlatformApplicationMisc::PumpMessages(true);
@@ -155,25 +160,45 @@ void FMacConsoleWindow::Print(const FString& Message)
     }
 }
 
-void FMacConsoleWindow::PrintLine(const FString& Message)
+void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
 {
     if (WindowHandle)
     {
+        EConsoleColor NewColor;
+        if (Severity == ELogSeverity::Info)
+        {
+            NewColor = EConsoleColor::Green;
+        }
+        else if (Severity == ELogSeverity::Warning)
+        {
+            NewColor = EConsoleColor::Yellow;
+        }
+        else if (Severity == ELogSeverity::Error)
+        {
+            NewColor = EConsoleColor::Red;
+        }
+        else
+        {
+            NewColor = EConsoleColor::White;
+        }
+        
         MakeMainThreadCall(^
         {
             SCOPED_AUTORELEASE_POOL();
 
-            NSString* String      = Message.GetNSString();
-            NSString* FinalString = [String stringByAppendingString:@"\n"];
-        
-            AppendStringAndScroll(FinalString);
-        
+            SetTextColor(NewColor);
+
+            NSString* String = [Message.GetNSString() stringByAppendingString:@"\n"];
+			AppendStringAndScroll(String);
+			
+            SetTextColor(EConsoleColor::White);
+
             FPlatformApplicationMisc::PumpMessages(true);
         }, true);
     }
 }
 
-void FMacConsoleWindow::Clear()
+void FMacOutputDeviceConsole::Flush()
 {
     if (WindowHandle)
     {
@@ -185,7 +210,7 @@ void FMacConsoleWindow::Clear()
     }
 }
 
-void FMacConsoleWindow::SetTitle(const FString& InTitle)
+void FMacOutputDeviceConsole::SetTitle(const FString& InTitle)
 {
     if (WindowHandle)
     {
@@ -199,14 +224,13 @@ void FMacConsoleWindow::SetTitle(const FString& InTitle)
     }
 }
 
-void FMacConsoleWindow::SetColor(EConsoleColor Color)
+void FMacOutputDeviceConsole::SetTextColor(EConsoleColor Color)
 {
-    TScopedLock Lock(WindowCS);
-    
     if (WindowHandle)
     {
         SCOPED_AUTORELEASE_POOL();
         
+        // TScopedLock Lock(WindowCS);
         if (ConsoleColor)
         {
             [ConsoleColor release];
@@ -245,12 +269,7 @@ void FMacConsoleWindow::SetColor(EConsoleColor Color)
     }
 }
 
-bool FMacConsoleWindow::IsVisible() const
-{
-    return (WindowHandle != nil);
-}
-
-int32 FMacConsoleWindow::GetLineCount() const
+int32 FMacOutputDeviceConsole::GetLineCount() const
 {
 	if (WindowHandle)
 	{
@@ -274,16 +293,15 @@ int32 FMacConsoleWindow::GetLineCount() const
 	}
 }
 
-void FMacConsoleWindow::OnWindowDidClose()
+void FMacOutputDeviceConsole::OnWindowDidClose()
 {
 	DestroyResources();
-	bIsVisible = false;
     
     // Exit the application, this gives the same behaviour as on Windows
     FPlatformApplicationMisc::RequestExit(0);
 }
 
-void FMacConsoleWindow::AppendStringAndScroll(NSString* String)
+void FMacOutputDeviceConsole::AppendStringAndScroll(NSString* String)
 {
 	if (WindowHandle)
 	{
@@ -296,7 +314,6 @@ void FMacConsoleWindow::AppendStringAndScroll(NSString* String)
 			
             NSAttributedString* AttributedString = nil;
             {
-                TScopedLock Lock(WindowCS);
                 AttributedString = [[NSAttributedString alloc] initWithString:String attributes:ConsoleColor];
             }
 				

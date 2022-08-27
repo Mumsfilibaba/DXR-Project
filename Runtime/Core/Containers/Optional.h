@@ -375,7 +375,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if the values are equal
      */
-    friend NODISCARD FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!LHS.HasValue() && !RHS.HasValue())
         {
@@ -397,7 +398,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns false if the values are equal
      */
-    friend NODISCARD FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS != RHS);
     }
@@ -409,7 +411,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if the LHS is less than RHS
      */
-    friend NODISCARD FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!LHS.HasValue() && !RHS.HasValue())
         {
@@ -431,7 +434,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if the LHS is less than or equal to RHS
      */
-    friend NODISCARD FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!LHS.HasValue() && !RHS.HasValue())
         {
@@ -453,7 +457,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if LHS is greater than RHS
      */
-    friend NODISCARD FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS <= RHS);
     }
@@ -465,7 +470,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if the LHS is greater than or equal to RHS
      */
-    friend NODISCARD FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS < RHS);
     }

@@ -1,7 +1,7 @@
 #include "MacThread.h"
 #include "MacThreadMisc.h"
 
-#include "Core/Logging/Logger.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacThread

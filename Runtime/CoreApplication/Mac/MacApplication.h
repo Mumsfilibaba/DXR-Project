@@ -3,7 +3,7 @@
 
 #include "Core/Mac/Mac.h"
 #include "Core/Containers/Array.h"
-#include "Core/Threading/Platform/CriticalSection.h"
+#include "Core/Platform/CriticalSection.h"
 
 #include "CoreApplication/Generic/GenericApplication.h"
 
@@ -60,7 +60,8 @@ struct FDeferredMacEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacApplication
 
-class FMacApplication final : public FGenericApplication
+class FMacApplication final
+    : public FGenericApplication
 {
     FMacApplication();
     ~FMacApplication();
@@ -69,6 +70,7 @@ public:
 	static FMacApplication* CreateMacApplication();
 
 public:
+
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericApplication Interface
 

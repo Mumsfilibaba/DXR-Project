@@ -1569,18 +1569,21 @@ private:
     }
 
 public:
-    static NODISCARD FORCEINLINE SizeType LeftIndex(SizeType Index)
+    NODISCARD
+    static FORCEINLINE SizeType LeftIndex(SizeType Index)
     {
         return (2 * Index + 1);
     }
 
-    static NODISCARD FORCEINLINE SizeType RightIndex(SizeType Index)
+    NODISCARD
+    static FORCEINLINE SizeType RightIndex(SizeType Index)
     {
         return (2 * Index + 2);
     }
 
     // Calculate how much the array should grow, will always be at least one
-    static NODISCARD FORCEINLINE SizeType CalculateExpandCapacity(SizeType NumElements, SizeType CurrentCapacity) noexcept
+    NODISCARD
+    static FORCEINLINE SizeType CalculateExpandCapacity(SizeType NumElements, SizeType CurrentCapacity) noexcept
     {
         constexpr SizeType FirstAlloc = 4;
 

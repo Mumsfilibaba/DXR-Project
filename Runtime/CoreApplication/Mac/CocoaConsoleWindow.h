@@ -1,22 +1,22 @@
 #pragma once 
-#include "CoreApplication/Generic/GenericConsoleWindow.h"
+#include "Core/Misc/OutputDeviceConsole.h"
 
 #include <stdarg.h>
 
 #include <AppKit/AppKit.h>
 
-class FMacConsoleWindow;
+class FMacOutputDeviceConsole;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FCocoaConsoleWindow
 
 @interface FCocoaConsoleWindow : NSWindow<NSWindowDelegate>
 {
-	FMacConsoleWindow* ConsoleWindow;
+	FMacOutputDeviceConsole* ConsoleWindow;
 }
 
 // Instance
-- (instancetype)init:(FMacConsoleWindow*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag;
+- (instancetype)init:(FMacOutputDeviceConsole*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag;
 
 // Static
 +(NSString*)convertStringWithArgs:(const CHAR*)Format Args : (va_list)Args;

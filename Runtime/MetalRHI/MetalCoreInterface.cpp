@@ -153,31 +153,6 @@ MetalTextureType* FMetalCoreInterface::CreateTexture(const InitializerType& Init
                 // TODO: we do not want to wait here
                 [CommandBuffer commit];
                 [CommandBuffer waitUntilCompleted];
-
-                id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:InitialData->Size options:MTLResourceOptionCPUCacheModeDefault];
-                FMemory::Memcpy(StagingBuffer.contents, InitialData->TextureData, InitialData->Size);
-                
-                id<MTLCommandQueue>       CommandQueue  = GetDeviceContext()->GetMTLCommandQueue();
-                id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
-                id<MTLBlitCommandEncoder> CopyEncoder   = [CommandBuffer blitCommandEncoder];
-                
-                const NSUInteger BytesPerRow = NSUInteger(Extent.x) * GetByteStrideFromFormat(Initializer.Format);
-                
-                [CopyEncoder copyFromBuffer:StagingBuffer
-                            sourceOffset:0
-                        sourceBytesPerRow:BytesPerRow
-                        sourceBytesPerImage:0
-                                sourceSize:Region.size
-                                toTexture:NewMTLTexture
-                        destinationSlice:0
-                        destinationLevel:0
-                        destinationOrigin:Region.origin];
-                
-                [CopyEncoder endEncoding];
-
-                // TODO: we do not want to wait here
-                [CommandBuffer commit];
-                [CommandBuffer waitUntilCompleted];
             
                 [StagingBuffer release];
             }
@@ -261,25 +236,6 @@ MetalBufferType* FMetalCoreInterface::CreateBuffer(const InitializerType& Initia
                                    toBuffer:NewMTLBuffer
                           destinationOffset:0
                                        size:InitialData->Size];
-                
-                [CopyEncoder endEncoding];
-
-                // TODO: we do not want to wait here
-                [CommandBuffer commit];
-                [CommandBuffer waitUntilCompleted];
-
-                id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:InitialData->Size options:MTLResourceOptionCPUCacheModeDefault];
-                CMemory::Memcpy(StagingBuffer.contents, InitialData->BufferData, InitialData->Size);
-                
-                id<MTLCommandQueue>       CommandQueue  = GetDeviceContext()->GetMTLCommandQueue();
-                id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
-                id<MTLBlitCommandEncoder> CopyEncoder   = [CommandBuffer blitCommandEncoder];
-                
-                [CopyEncoder copyFromBuffer:StagingBuffer
-                            sourceOffset:0
-                                toBuffer:NewMTLBuffer
-                        destinationOffset:0
-                                    size:InitialData->Size];
                 
                 [CopyEncoder endEncoding];
 
@@ -382,7 +338,7 @@ FRHIRayClosestHitShader* FMetalCoreInterface::RHICreateRayClosestHitShader(const
 
 FRHIRayMissShader* FMetalCoreInterface::RHICreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    return dbg_new CMetalRayMissShader(GetDeviceContext(), ShaderCode);
+    return dbg_new FMetalRayMissShader(GetDeviceContext(), ShaderCode);
 }
 
 FRHIDepthStencilState* FMetalCoreInterface::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer)

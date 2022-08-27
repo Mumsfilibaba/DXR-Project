@@ -42,7 +42,8 @@ public:
      * @return: Returns the formatted string based on the format string
      */
     template<typename... ArgTypes>
-    static NODISCARD FORCEINLINE TStaticString CreateFormatted(const CharType* Format, ArgTypes&&... Args) noexcept
+    NODISCARD
+    static FORCEINLINE TStaticString CreateFormatted(const CharType* Format, ArgTypes&&... Args) noexcept
     {
         TStaticString NewString;
         NewString.Format(Format, Forward<ArgTypes>(Args)...);
@@ -1403,28 +1404,32 @@ public:
     }
 
 public:
-    friend NODISCARD FORCEINLINE TStaticString operator+(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TStaticString operator+(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         TStaticString NewString = LHS;
         NewString.Append(RHS);
         return NewString;
     }
 
-    friend NODISCARD FORCEINLINE TStaticString operator+(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TStaticString operator+(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         TStaticString NewString = LHS;
         NewString.Append(RHS);
         return NewString;
     }
 
-    friend NODISCARD FORCEINLINE TStaticString operator+(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TStaticString operator+(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         TStaticString NewString = LHS;
         NewString.Append(RHS);
         return NewString;
     }
 
-    friend NODISCARD FORCEINLINE TStaticString operator+(CharType LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TStaticString operator+(CharType LHS, const TStaticString& RHS) noexcept
     {
         TStaticString NewString;
         NewString.Append(LHS);
@@ -1432,99 +1437,118 @@ public:
         return NewString;
     }
 
-    friend NODISCARD FORCEINLINE TStaticString operator+(const TStaticString& LHS, CharType RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TStaticString operator+(const TStaticString& LHS, CharType RHS) noexcept
     {
         TStaticString NewString = LHS;
         NewString.Append(RHS);
         return NewString;
     }
 
-    friend NODISCARD FORCEINLINE bool operator==(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator==(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) == 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator==(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator==(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return (RHS.Compare(LHS) == 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator==(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator==(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return (LHS.Compare(RHS) == 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator!=(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator!=(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return !(LHS == RHS);
     }
 
-    friend NODISCARD FORCEINLINE bool operator!=(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator!=(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return !(LHS == RHS);
     }
 
-    friend NODISCARD FORCEINLINE bool operator!=(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator!=(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return !(LHS == RHS);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) < 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return (RHS.Compare(LHS) < 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return (LHS.Compare(RHS) < 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<=(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<=(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) <= 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<=(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<=(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return (RHS.Compare(LHS) <= 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<=(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<=(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return (LHS.Compare(RHS) <= 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) > 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return (RHS.Compare(LHS) > 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return (LHS.Compare(RHS) > 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>=(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>=(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) >= 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>=(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>=(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return (RHS.Compare(LHS) >= 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>=(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>=(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return (LHS.Compare(RHS) >= 0);
     }
@@ -1691,7 +1715,8 @@ struct TIsTStringType<TStaticString<CharType, NUM_CHARS>>
 // Convert between CHAR and wide
 
 template<int32 NUM_CHARS>
-inline NODISCARD FStaticStringWide<NUM_CHARS> CharToWide(const FStaticString<NUM_CHARS>& CharString) noexcept
+NODISCARD
+inline FStaticStringWide<NUM_CHARS> CharToWide(const FStaticString<NUM_CHARS>& CharString) noexcept
 {
     FStaticStringWide<NUM_CHARS> NewString;
     NewString.Resize(CharString.GetLength());
@@ -1700,7 +1725,8 @@ inline NODISCARD FStaticStringWide<NUM_CHARS> CharToWide(const FStaticString<NUM
 }
 
 template<int32 NUM_CHARS>
-inline NODISCARD FStaticString<NUM_CHARS> WideToChar(const FStaticStringWide<NUM_CHARS>& WideString) noexcept
+NODISCARD
+inline FStaticString<NUM_CHARS> WideToChar(const FStaticStringWide<NUM_CHARS>& WideString) noexcept
 {
     FStaticString<NUM_CHARS> NewString;
     NewString.Resize(WideString.GetLength());

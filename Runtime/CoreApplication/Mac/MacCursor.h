@@ -6,7 +6,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacCursor
 
-class FMacCursor final : public FGenericCursor
+class FMacCursor final 
+    : public FGenericCursor
 {
 public:
     FMacCursor()

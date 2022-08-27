@@ -44,7 +44,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const noexcept
     {
-        return (Index >= 0) && (Index < ViewSize);
+        return (Index >= 0) && (Index < NUM_ELEMENTS);
     }
 
     /**

@@ -1060,109 +1060,127 @@ using FStringViewWide = TStringView<WIDECHAR>;
 // Operators
 
 template<typename CharType>
-inline NODISCARD bool operator==(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+NODISCARD
+inline bool operator==(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) == 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator==(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator==(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (RHS.Compare(LHS) == 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator==(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator==(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (LHS.Compare(RHS) == 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator!=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+NODISCARD
+inline bool operator!=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator!=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator!=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator!=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator!=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator<(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+NODISCARD
+inline bool operator<(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) < 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator<(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator<(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (RHS.Compare(LHS) < 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator<(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator<(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (LHS.Compare(RHS) < 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator<=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+NODISCARD
+inline bool operator<=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) <= 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator<=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator<=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (RHS.Compare(LHS) <= 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator<=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator<=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (LHS.Compare(RHS) <= 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator>(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+NODISCARD
+inline bool operator>(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) > 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator>(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator>(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (RHS.Compare(LHS) > 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator>(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator>(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (LHS.Compare(RHS) > 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator>=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+NODISCARD
+inline bool operator>=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) >= 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator>=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator>=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (RHS.Compare(LHS) >= 0);
 }
 
 template<typename CharType>
-inline NODISCARD bool operator>=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+NODISCARD
+inline bool operator>=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
     return (LHS.Compare(RHS) >= 0);
 }

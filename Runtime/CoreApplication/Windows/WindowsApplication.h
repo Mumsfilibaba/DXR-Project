@@ -69,6 +69,7 @@ public:
     static FWindowsApplication* CreateWindowsApplication();
 
 public:
+
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericApplication Interface
 

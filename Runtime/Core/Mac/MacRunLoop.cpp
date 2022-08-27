@@ -3,7 +3,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Threading/Spinlock.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Threading/Platform/PlatformThreadMisc.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 
 #include <Foundation/Foundation.h>
 
@@ -141,7 +141,7 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
             {
                 GMainThread->WakeUp();
                 GMainThread->RunInMode((CFStringRef)NSDefaultRunLoopMode);
-            } while (dispatch_semaphore_wait(WaitSemaphore, dispatch_time(0, 100000ull)));
+            } while (dispatch_semaphore_wait(WaitSemaphore, dispatch_time(0, 10000ull)));
             
             Block_release(WaitableBlock);
             dispatch_release(WaitSemaphore);

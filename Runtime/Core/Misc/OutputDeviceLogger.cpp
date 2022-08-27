@@ -22,7 +22,7 @@ FOutputDeviceLogger* FOutputDeviceLogger::Get()
 
 void FOutputDeviceLogger::Log(const FString& Message)
 {
-    TScopedLock Lock(OutputDevicesCS);
+    // TScopedLock Lock(OutputDevicesCS);
 
     if (!OutputDevices.IsEmpty())
     {
@@ -35,7 +35,7 @@ void FOutputDeviceLogger::Log(const FString& Message)
 
 void FOutputDeviceLogger::Log(ELogSeverity Severity, const FString& Message)
 {
-    TScopedLock Lock(OutputDevicesCS);
+    // TScopedLock Lock(OutputDevicesCS);
 
     if (!OutputDevices.IsEmpty())
     {

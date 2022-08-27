@@ -4,6 +4,7 @@
 #include "Core/Threading/TaskManagerInterface.h"
 #include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformLibrary.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 #include <spirv_cross_c.h>
 

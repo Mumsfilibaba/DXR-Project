@@ -764,7 +764,8 @@ public:
      * @param RHS: Right-hand side to bitwise AND with
      * @return: Returns a BitArray with the result
      */
-    friend NODISCARD FORCEINLINE TBitArray operator&(const TBitArray& LHS, const TBitArray& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TBitArray operator&(const TBitArray& LHS, const TBitArray& RHS) noexcept
     {
         TBitArray NewArray(LHS);
         NewArray.BitwiseAnd(RHS);
@@ -778,7 +779,8 @@ public:
      * @param RHS: Right-hand side to bitwise OR with
      * @return: Returns a BitArray with the result
      */
-    friend NODISCARD FORCEINLINE TBitArray operator|(const TBitArray& LHS, const TBitArray& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TBitArray operator|(const TBitArray& LHS, const TBitArray& RHS) noexcept
     {
         TBitArray NewArray(LHS);
         NewArray.BitwiseOr(RHS);
@@ -792,7 +794,8 @@ public:
      * @param RHS: Right-hand side to bitwise XOR with
      * @return: Returns a BitArray with the result
      */
-    friend NODISCARD FORCEINLINE TBitArray operator^(const TBitArray& LHS, const TBitArray& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TBitArray operator^(const TBitArray& LHS, const TBitArray& RHS) noexcept
     {
         TBitArray NewArray(LHS);
         NewArray.BitwiseXor(RHS);
@@ -893,33 +896,39 @@ public:
     NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return EndIterator(); }
 
 public: 
-    static NODISCARD CONSTEXPR SizeType GetBitsPerStorage() noexcept
+    NODISCARD
+    static CONSTEXPR SizeType GetBitsPerStorage() noexcept
     {
         return sizeof(StorageType) * 8;
     }
 
 private:
-    static NODISCARD CONSTEXPR SizeType GetStorageIndexOfBit(SizeType BitIndex) noexcept
+    NODISCARD
+    static CONSTEXPR SizeType GetStorageIndexOfBit(SizeType BitIndex) noexcept
     {
         return (BitIndex / GetBitsPerStorage());
     }
 
-    static NODISCARD CONSTEXPR SizeType GetIndexOfBitInStorage(SizeType BitIndex) noexcept
+    NODISCARD
+    static CONSTEXPR SizeType GetIndexOfBitInStorage(SizeType BitIndex) noexcept
     {
         return (BitIndex % GetBitsPerStorage());
     }
 
-    static NODISCARD CONSTEXPR StorageType CreateMaskForBit(SizeType BitIndex) noexcept
+    NODISCARD
+    static CONSTEXPR StorageType CreateMaskForBit(SizeType BitIndex) noexcept
     {
         return StorageType(1) << GetIndexOfBitInStorage(BitIndex);
     }
 
-    static NODISCARD CONSTEXPR StorageType CreateMaskUpToBit(SizeType BitIndex) noexcept
+    NODISCARD
+    static CONSTEXPR StorageType CreateMaskUpToBit(SizeType BitIndex) noexcept
     {
         return CreateMaskForBit(BitIndex) - 1;
     }
 
-    static NODISCARD CONSTEXPR SizeType GetRequiredStorageForBits(SizeType InNumBits) noexcept
+    NODISCARD
+    static CONSTEXPR SizeType GetRequiredStorageForBits(SizeType InNumBits) noexcept
     {
         return (InNumBits + (GetBitsPerStorage() - 1)) / GetBitsPerStorage();
     }

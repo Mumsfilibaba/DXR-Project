@@ -5,7 +5,7 @@
 #include "RHI/RHIViewport.h"
 
 #include "Core/Containers/ArrayView.h"
-#include "Core/Threading/Mac/MacRunLoop.h"
+#include "Core/Mac/MacRunLoop.h"
 
 #include "CoreApplication/Mac/CocoaWindow.h"
 #include "CoreApplication/Mac/CocoaWindowView.h"
@@ -25,25 +25,19 @@
 class FMetalViewport : public FMetalObject, public FRHIViewport
 {
 public:
-    
     FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer);
     ~FMetalViewport();
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIViewport Interface
-
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
-
-    // TODO: This needs to be a command for Vulkan and Metal since we can be using the texture and present will change the resource
-    virtual bool Present(bool bVerticalSync) override final;
 
     virtual FRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
     
-public:
+    // TODO: This needs to be a command for Vulkan and Metal since we can be using the texture and present will change the resource
+    bool Present(bool bVerticalSync);
 
-    // @return: Returns the current drawable, will relase it during next call to present
+public:
+    
+    /** @return: Returns the current drawable, will release it during next call to present */
     id<CAMetalDrawable> GetDrawable();
     id<MTLTexture>      GetDrawableTexture();
     
@@ -57,9 +51,7 @@ public:
     
 private:
     TSharedRef<FMetalTexture2D> BackBuffer;
-    
     FMetalWindowView*           MetalView;
-    
     id<CAMetalDrawable>         Drawable;
 };
 

@@ -2,18 +2,13 @@
 #include "CocoaWindow.h"
 
 #include "Core/Mac/Mac.h"
-#include "Core/Logging/Logger.h"
-#include "Core/Threading/Mac/MacRunLoop.h"
+#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Mac/MacRunLoop.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacWindow
-
-FMacWindow* FMacWindow::CreateMacWindow(FMacApplication* InApplication)
-{
-	return dbg_new FMacWindow(InApplication);
-}
 
 FMacWindow::FMacWindow(FMacApplication* InApplication)
     : FGenericWindow()

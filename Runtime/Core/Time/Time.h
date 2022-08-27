@@ -1,4 +1,4 @@
 #pragma once
 #include "Timer.h"
-#include "Timestamp.h"
+#include "Timespan.h"
 #include "TimeUtilities.h"

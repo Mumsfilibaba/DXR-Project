@@ -416,6 +416,7 @@ bool FSandbox::Init()
     //Light4->SetRotation(0.0f, 0.0f, 0.0f);
     CurrentScene->AddLight(Light4);
 
+    LOG_INFO("Finished loading game");
     return true;
 }
 

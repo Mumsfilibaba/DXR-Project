@@ -152,7 +152,7 @@ FORCEINLINE void CopyAssignElement(ElementType* RESTRICT Destination, const Elem
 template<typename ElementType, typename SizeType>
 FORCEINLINE void MoveConstructElements(void* StartAddress, const ElementType* Source, SizeType Count) noexcept
 {
-    if CONSTEXPR (TIsReallocatable<ElementType>>::Value)
+    if CONSTEXPR (TIsReallocatable<ElementType>::Value)
     {
         FMemory::Memexchange(StartAddress, Source, sizeof(ElementType) * Count);
     }
@@ -175,7 +175,7 @@ FORCEINLINE void MoveConstructElements(void* StartAddress, const ElementType* So
 template<typename ElementType>
 FORCEINLINE void MoveConstructElement(void* StartAddress, const ElementType* Source) noexcept
 {
-    MoveConstructElements<T>(StartAddress, Source, 1);
+    MoveConstructElements<ElementType>(StartAddress, Source, 1);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -184,7 +184,7 @@ FORCEINLINE void MoveConstructElement(void* StartAddress, const ElementType* Sou
 template<typename ElementType, typename SizeType>
 FORCEINLINE void MoveAssignElements(ElementType* Destination, const ElementType* Source, SizeType Count) noexcept
 {
-    if CONSTEXPR(TIsReallocatable<ElementType>>::Value)
+    if CONSTEXPR(TIsReallocatable<ElementType>::Value)
     {
         FMemory::Memexchange(Destination, Source, sizeof(ElementType) * Count);
     }

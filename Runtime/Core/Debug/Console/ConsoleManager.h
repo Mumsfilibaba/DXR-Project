@@ -11,23 +11,23 @@ public:
     FConsoleManager()  = default;
     ~FConsoleManager() = default;
 
-    virtual void RegisterCommand(const FString& Name, IConsoleCommand* Command);
-    virtual void RegisterVariable(const FString& Name, IConsoleVariable* Variable);
+    virtual void RegisterCommand(const FString& Name, IConsoleCommand* Command)    override final;
+    virtual void RegisterVariable(const FString& Name, IConsoleVariable* Variable) override final;
 
-    virtual void UnregisterObject(const FString& Name);
+    virtual void UnregisterObject(const FString& Name) override final;
 
-    virtual bool IsConsoleObject(const FString& Name) const;
+    virtual bool IsConsoleObject(const FString& Name) const override final;
 
-    virtual IConsoleCommand*  FindCommand(const FString& Name);
-    virtual IConsoleVariable* FindVariable(const FString& Name);
+    virtual IConsoleCommand*  FindCommand(const FString& Name)  override final;
+    virtual IConsoleVariable* FindVariable(const FString& Name) override final;
 
-    virtual void FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates);
+    virtual void FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates) override final;
 
-    virtual void PrintMessage(const FString& Message, EConsoleSeverity Severity);
+    virtual void PrintMessage(const FString& Message, EConsoleSeverity Severity) override final;
 
-    virtual void ClearHistory();
+    virtual void ClearHistory() override final;
 
-    virtual void Execute(const FString& Command);
+    virtual void Execute(const FString& Command) override final;
 
     virtual const TArray<TPair<FString, EConsoleSeverity>>& GetMessages() const override final
     { 

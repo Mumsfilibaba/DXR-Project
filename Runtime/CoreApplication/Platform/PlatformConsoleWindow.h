@@ -2,11 +2,11 @@
 
 #if PLATFORM_WINDOWS
     #include "CoreApplication/Windows/WindowsOutputDeviceConsole.h"
-    typedef FWindowsOutputDeviceConsole FPlatformConsoleWindow;
+    typedef FWindowsOutputDeviceConsole FPlatformOutputDeviceConsole;
 #elif PLATFORM_MACOS
-    #include "CoreApplication/Mac/MacConsoleWindow.h"
-    typedef FMacOutputDeviceConsole FPlatformConsoleWindow;
+    #include "CoreApplication/Mac/MacOutputDeviceConsole.h"
+    typedef FMacOutputDeviceConsole FPlatformOutputDeviceConsole;
 #else
-    #include "CoreApplication/Generic/GenericConsoleWindow.h"
-    typedef FOutputDeviceConsole FPlatformConsoleWindow;
+    #include "CoreApplication/Misc/FOutputDeviceConsole.h"
+    typedef FOutputDeviceConsole FPlatformOutputDeviceConsole;
 #endif

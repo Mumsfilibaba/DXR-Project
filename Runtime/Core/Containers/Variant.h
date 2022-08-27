@@ -167,12 +167,14 @@ class TVariant
     template<typename T>
     struct TVariantComparators
     {
-        static NODISCARD bool IsEqual(const void* LHS, const void* RHS) noexcept
+        NODISCARD
+    static bool IsEqual(const void* LHS, const void* RHS) noexcept
         {
             return (*reinterpret_cast<const T*>(LHS)) == (*reinterpret_cast<const T*>(RHS));
         }
 
-        static NODISCARD bool IsLessThan(const void* LHS, const void* RHS) noexcept
+        NODISCARD
+    static bool IsLessThan(const void* LHS, const void* RHS) noexcept
         {
             return (*reinterpret_cast<const T*>(LHS)) < (*reinterpret_cast<const T*>(RHS));
         }
@@ -180,7 +182,8 @@ class TVariant
 
     struct TVariantComparatorsTable
     {
-        static NODISCARD bool IsEqual(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
+        NODISCARD
+    static bool IsEqual(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
         {
             static constexpr bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsEqual... };
 
@@ -188,7 +191,8 @@ class TVariant
             return Table[Index](LHS, RHS);
         }
 
-        static NODISCARD bool IsLessThan(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
+        NODISCARD
+    static bool IsLessThan(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
         {
             static constexpr bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsLessThan... };
 
@@ -458,7 +462,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if the variants are equal
      */
-    friend NODISCARD FORCEINLINE bool operator==(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator==(const TVariant& LHS, const TVariant& RHS) noexcept
     {
         if (LHS.TypeIndex != RHS.TypeIndex)
         {
@@ -481,7 +486,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns false if the variants are equal
      */
-    friend NODISCARD FORCEINLINE bool operator!=(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator!=(const TVariant& LHS, const TVariant& RHS) noexcept
     {
         return !(LHS == RHS);
     }
@@ -493,7 +499,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if LHS is less than RHS
      */
-    friend NODISCARD FORCEINLINE bool operator<(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<(const TVariant& LHS, const TVariant& RHS) noexcept
     {
         if (LHS.TypeIndex != RHS.TypeIndex)
         {
@@ -516,7 +523,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if LHS is less than or equal to RHS
      */
-    friend NODISCARD FORCEINLINE bool operator<=(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<=(const TVariant& LHS, const TVariant& RHS) noexcept
     {
         if (LHS.TypeIndex != RHS.TypeIndex)
         {
@@ -539,7 +547,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if LHS is greater than RHS
      */
-    friend NODISCARD FORCEINLINE bool operator>(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>(const TVariant& LHS, const TVariant& RHS) noexcept
     {
         return !(LHS <= RHS);
     }
@@ -551,7 +560,8 @@ public:
      * @param RHS: Right side to compare with
      * @return: Returns true if LHS is greater than or equal to RHS
      */
-    friend NODISCARD FORCEINLINE bool operator>=(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>=(const TVariant& LHS, const TVariant& RHS) noexcept
     {
         return !(LHS < RHS);
     }

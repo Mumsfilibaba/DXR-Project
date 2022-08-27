@@ -68,7 +68,6 @@ private:
     ~FMetalCommandContext() = default;
 
 public:
-
     static FMetalCommandContext* CreateMetalContext(FMetalDeviceContext* InDeviceContext);
 
     virtual void StartContext()  override final;
@@ -120,9 +119,8 @@ public:
     virtual void CopyTexture(FRHITexture* Dst, FRHITexture* Src)                                                   override final;
     virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) override final;
 
-    virtual void DestroyResource(class IRHIResource* Resource) override final;
-
-    virtual void DiscardContents(class FRHITexture* Texture) override final;
+    virtual void DestroyResource(class IRefCounted* Resource) override final;
+    virtual void DiscardContents(class FRHITexture* Texture)   override final;
 
     virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)       override final;
     virtual void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final;
@@ -153,11 +151,13 @@ public:
 
     virtual void DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
 
+    virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) override final;
+    
     virtual void ClearState() override final;
 
     virtual void Flush() override final;
 
-    virtual void InsertMarker(const FString& Message) override final;
+    virtual void InsertMarker(const FStringView& Message) override final;
 
     // NOTE: Only supported in D3D12RHI for now
     virtual void BeginExternalCapture() override final { }

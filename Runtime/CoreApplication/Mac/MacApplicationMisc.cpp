@@ -1,6 +1,6 @@
 #include "MacApplicationMisc.h"
 #include "MacApplication.h"
-#include "MacConsoleWindow.h"
+#include "MacOutputDeviceConsole.h"
 
 #include "Core/Mac/Mac.h"
 #include "Core/Input/InputCodes.h"
@@ -13,9 +13,9 @@ FGenericApplication* FMacApplicationMisc::CreateApplication()
     return FMacApplication::CreateMacApplication();
 }
 
-FGenericConsoleWindow* FMacApplicationMisc::CreateConsoleWindow()
+FOutputDeviceConsole* FMacApplicationMisc::CreateOutputDeviceConsole()
 {
-    return dbg_new FMacConsoleWindow();
+    return dbg_new FMacOutputDeviceConsole();
 }
 
 void FMacApplicationMisc::MessageBox(const FString& Title, const FString& Message)
@@ -39,10 +39,12 @@ void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
     
     Check(NSApp != nil);
 	
-    NSEvent* Event = nil;
     do
     {
-        Event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
+        NSEvent* Event = [NSApp nextEventMatchingMask:NSEventMaskAny
+                                            untilDate:[NSDate distantPast]
+                                               inMode:NSDefaultRunLoopMode
+                                              dequeue:YES];
         if (!Event)
         {
             break;

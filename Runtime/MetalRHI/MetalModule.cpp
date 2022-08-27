@@ -1,6 +1,5 @@
 #include "MetalModule.h"
 #include "MetalCoreInterface.h"
-#include "MetalShaderCompiler.h"
 
 IMPLEMENT_ENGINE_MODULE(FMetalModule, MetalRHI);
 
@@ -10,9 +9,4 @@ IMPLEMENT_ENGINE_MODULE(FMetalModule, MetalRHI);
 FRHICoreInterface* FMetalModule::CreateInterface()
 {
     return FMetalCoreInterface::CreateMetalCoreInterface();
-}
-
-IRHIShaderCompiler* FMetalModule::CreateCompiler()
-{
-    return dbg_new FMetalShaderCompiler();
 }

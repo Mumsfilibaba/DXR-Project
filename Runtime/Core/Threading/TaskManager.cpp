@@ -25,7 +25,6 @@ bool FTaskManager::PopDispatch(FAsyncTask& OutTask)
     {
         OutTask = Queue.FirstElement();
         Queue.RemoveAt(0);
-
         return true;
     }
     else
@@ -51,7 +50,6 @@ void FTaskManager::WorkThread()
     while (TaskManager.bIsRunning)
     {
         FAsyncTask CurrentTask;
-
         if (!TaskManager.PopDispatch(CurrentTask))
         {
             TScopedLock<FCriticalSection> Lock(TaskManager.WakeMutex);
@@ -74,12 +72,12 @@ bool FTaskManager::Initialize()
 
     if (ThreadCount == 1)
     {
-        LOG_INFO("[FAsyncTaskManager]: No workers available, tasks will be executing on the main thread");
+        LOG_INFO("[FTaskManager]: No workers available, tasks will be executing on the main thread");
         WorkerThreads.Clear();
         return true;
     }
 
-    LOG_INFO("[FAsyncTaskManager]: Starting '%u' Workers", ThreadCount);
+    LOG_INFO("[FTaskManager]: Starting '%u' Workers", ThreadCount);
 
     // Start so that workers now that they should be running
     bIsRunning = true;
@@ -87,9 +85,7 @@ bool FTaskManager::Initialize()
     for (uint32 Thread = 0; Thread < ThreadCount; ++Thread)
     {
         FString ThreadName = FString::CreateFormatted("WorkerThread[%d]", Thread);
-
-        FGenericThreadRef NewThread = FThreadManager::Get().CreateNamedThread(FTaskManager::WorkThread, ThreadName);
-        if (NewThread)
+        if (FGenericThreadRef NewThread = FThreadManager::Get().CreateNamedThread(FTaskManager::WorkThread, ThreadName))
         {
             WorkerThreads[Thread] = NewThread;
             NewThread->Start();
@@ -125,7 +121,7 @@ DispatchID FTaskManager::Dispatch(const FAsyncTask& NewTask)
         Queue.Emplace(NewTask);
     }
 
-    WakeCondition.NotifyOne();
+    WakeCondition.NotifyAll();
     return NewTaskID;
 }
 

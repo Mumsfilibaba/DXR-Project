@@ -15,8 +15,7 @@
 class FMetalInputLayoutState : public FRHIVertexInputLayout, public FMetalObject
 {
 public:
-
-    FMetalInputLayoutState(FMetalDeviceContext* DeviceContext, const CRHIVertexInputLayoutInitializer& Initializer)
+    FMetalInputLayoutState(FMetalDeviceContext* DeviceContext, const FRHIVertexInputLayoutInitializer& Initializer)
         : FMetalObject(DeviceContext)
         , VertexDescriptor(nil)
     {
@@ -148,8 +147,7 @@ public:
 class FMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public FMetalObject
 {
 public:
-
-    FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const CRHIGraphicsPipelineStateInitializer& Initializer)
+    FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInitializer& Initializer)
         : FMetalObject(DeviceContext)
         , BlendState(nullptr)
         , DepthStencilState(nullptr)

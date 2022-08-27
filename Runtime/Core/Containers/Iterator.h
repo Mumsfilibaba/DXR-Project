@@ -696,7 +696,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        const BitArrayType::SizeType Count = BitArray.Get().Count();
+        const auto Count = BitArray.Get().Count();
         return (Index >= 0) && (Index <= Count);
     }
 
@@ -871,7 +871,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        const BitArrayType::SizeType Count = BitArray.Get().Count();
+        const auto Count = BitArray.Get().Count();
         return (Index >= 0) && (Index <= Count);
     }
 

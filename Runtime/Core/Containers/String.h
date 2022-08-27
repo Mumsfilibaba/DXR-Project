@@ -67,7 +67,8 @@ public:
      * @return: Returns the formatted string based on the format string
      */
     template<typename... ArgTypes>
-    static NODISCARD FORCEINLINE TString CreateFormatted(const CharType* InFormat, ArgTypes&&... Args) noexcept
+    NODISCARD
+    static FORCEINLINE TString CreateFormatted(const CharType* InFormat, ArgTypes&&... Args) noexcept
     {
         TString NewString;
         NewString.Format(InFormat, Forward<ArgTypes>(Args)...);
@@ -1167,7 +1168,7 @@ public:
      * @param Position: Position to start remove at
      * @param NumCharacters: Number of characters to remove
      */
-    NODISCARD FORCEINLINE void Remove(SizeType Position, SizeType Count) noexcept
+    FORCEINLINE void Remove(SizeType Position, SizeType Count) noexcept
     {
         Check((Position < GetLength()) && (Position + Count < GetLength()));
         Characters.RemoveRangeAt(Position, Count);
@@ -1632,7 +1633,8 @@ public:
     }
 	
 public:
-    friend NODISCARD FORCEINLINE TString operator+(const TString& LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TString operator+(const TString& LHS, const TString& RHS) noexcept
     {
         const typename TString::SizeType CombinedSize = LHS.GetLength() + RHS.GetLength();
 
@@ -1643,7 +1645,8 @@ public:
         return NewString;
     }
 
-    friend NODISCARD FORCEINLINE TString operator+(const CharType* LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TString operator+(const CharType* LHS, const TString& RHS) noexcept
     {
         const typename TString::SizeType CombinedSize = TCString<CharType>::Strlen(LHS) + RHS.GetLength();
 
@@ -1654,7 +1657,8 @@ public:
         return NewString;
     }
 
-    friend NODISCARD FORCEINLINE TString operator+(const TString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TString operator+(const TString& LHS, const CharType* RHS) noexcept
     {
         const typename TString::SizeType CombinedSize = LHS.GetLength() + TCString<CharType>::Strlen(RHS);
 
@@ -1665,7 +1669,8 @@ public:
         return NewString;
     }
 
-    friend NODISCARD FORCEINLINE TString operator+(CharType LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TString operator+(CharType LHS, const TString& RHS) noexcept
     {
         const typename TString::SizeType CombinedSize = RHS.GetLength() + 1;
 
@@ -1676,7 +1681,8 @@ public:
         return NewString;
     }
 
-    friend NODISCARD FORCEINLINE TString operator+(const TString& LHS, CharType RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE TString operator+(const TString& LHS, CharType RHS) noexcept
     {
         const typename TString::SizeType CombinedSize = LHS.GetLength() + 1;
 
@@ -1687,92 +1693,110 @@ public:
         return NewString;
     }
     
-    friend NODISCARD FORCEINLINE bool operator==(const TString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator==(const TString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) == 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator==(const CharType* LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator==(const CharType* LHS, const TString& RHS) noexcept
     {
         return (RHS.Compare(LHS) == 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator==(const TString& LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator==(const TString& LHS, const TString& RHS) noexcept
     {
         return (LHS.Compare(RHS) == 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator!=(const TString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator!=(const TString& LHS, const CharType* RHS) noexcept
     {
         return !(LHS == RHS);
     }
 
-    friend NODISCARD FORCEINLINE bool operator!=(const CharType* LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator!=(const CharType* LHS, const TString& RHS) noexcept
     {
         return !(LHS == RHS);
     }
 
-    friend NODISCARD FORCEINLINE bool operator!=(const TString& LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator!=(const TString& LHS, const TString& RHS) noexcept
     {
         return !(LHS == RHS);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<(const TString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<(const TString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) < 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<(const CharType* LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<(const CharType* LHS, const TString& RHS) noexcept
     {
         return (RHS.Compare(LHS) < 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<(const TString& LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<(const TString& LHS, const TString& RHS) noexcept
     {
         return (LHS.Compare(RHS) < 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<=(const TString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<=(const TString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) <= 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<=(const CharType* LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<=(const CharType* LHS, const TString& RHS) noexcept
     {
         return (RHS.Compare(LHS) <= 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator<=(const TString& LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator<=(const TString& LHS, const TString& RHS) noexcept
     {
         return (LHS.Compare(RHS) <= 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>(const TString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>(const TString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) > 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>(const CharType* LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>(const CharType* LHS, const TString& RHS) noexcept
     {
         return (RHS.Compare(LHS) > 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>(const TString& LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>(const TString& LHS, const TString& RHS) noexcept
     {
         return (LHS.Compare(RHS) > 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>=(const TString& LHS, const CharType* RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>=(const TString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) >= 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>=(const CharType* LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>=(const CharType* LHS, const TString& RHS) noexcept
     {
         return (RHS.Compare(LHS) >= 0);
     }
 
-    friend NODISCARD FORCEINLINE bool operator>=(const TString& LHS, const TString& RHS) noexcept
+    NODISCARD
+    friend FORCEINLINE bool operator>=(const TString& LHS, const TString& RHS) noexcept
     {
         return (LHS.Compare(RHS) >= 0);
     }
@@ -1911,7 +1935,8 @@ struct TIsTStringType<TString<CharType>>
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CHAR and wide conversion functions
 
-inline NODISCARD FStringWide CharToWide(const FStringView& CharString) noexcept
+NODISCARD
+inline FStringWide CharToWide(const FStringView& CharString) noexcept
 {
     FStringWide NewString;
     NewString.Resize(CharString.GetLength());
@@ -1919,7 +1944,8 @@ inline NODISCARD FStringWide CharToWide(const FStringView& CharString) noexcept
     return NewString;
 }
 
-inline NODISCARD FStringWide CharToWide(const FString& CharString) noexcept
+NODISCARD
+inline FStringWide CharToWide(const FString& CharString) noexcept
 {
     FStringWide NewString;
     NewString.Resize(CharString.GetLength());
@@ -1927,7 +1953,8 @@ inline NODISCARD FStringWide CharToWide(const FString& CharString) noexcept
     return NewString;
 }
 
-inline NODISCARD FString WideToChar(const FStringViewWide& WideString) noexcept
+NODISCARD
+inline FString WideToChar(const FStringViewWide& WideString) noexcept
 {
     FString NewString;
     NewString.Resize(WideString.GetLength());
@@ -1935,7 +1962,8 @@ inline NODISCARD FString WideToChar(const FStringViewWide& WideString) noexcept
     return NewString;
 }
 
-inline NODISCARD FString WideToChar(const FStringWide& WideString) noexcept
+NODISCARD
+inline FString WideToChar(const FStringWide& WideString) noexcept
 {
     FString NewString;
     NewString.Resize(WideString.GetLength());
@@ -1992,43 +2020,50 @@ template<typename T>
 typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, FString>::Type ToString(T Element);
 
 template<>
-inline NODISCARD FString ToString<int32>(int32 Element)
+NODISCARD
+inline FString ToString<int32>(int32 Element)
 {
     return FString::CreateFormatted("%d", Element);
 }
 
 template<>
-inline NODISCARD FString ToString<int64>(int64 Element)
+NODISCARD
+inline FString ToString<int64>(int64 Element)
 {
     return FString::CreateFormatted("%lld", Element);
 }
 
 template<>
-inline NODISCARD FString ToString<uint32>(uint32 Element)
+NODISCARD
+inline FString ToString<uint32>(uint32 Element)
 {
     return FString::CreateFormatted("%u", Element);
 }
 
 template<>
-inline NODISCARD FString ToString<uint64>(uint64 Element)
+NODISCARD
+inline FString ToString<uint64>(uint64 Element)
 {
     return FString::CreateFormatted("%llu", Element);
 }
 
 template<>
-inline NODISCARD FString ToString<void*>(void* Element)
+NODISCARD
+inline FString ToString<void*>(void* Element)
 {
     return FString::CreateFormatted("%p", Element);
 }
 
 template<>
-inline NODISCARD FString ToString<bool>(bool bElement)
+NODISCARD
+inline FString ToString<bool>(bool bElement)
 {
     return FString(bElement ? "true" : "false");
 }
 
 template<typename T>
-typename NODISCARD TEnableIf<TIsFloatingPoint<T>::Value, FStringWide>::Type ToWideString(T Element)
+NODISCARD
+typename TEnableIf<TIsFloatingPoint<T>::Value, FStringWide>::Type ToWideString(T Element)
 {
     return FStringWide::CreateFormatted(L"%f", Element);
 }
@@ -2037,31 +2072,36 @@ template<typename T>
 typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, FStringWide>::Type ToWideString(T Element);
 
 template<>
-inline NODISCARD FStringWide ToWideString<int32>(int32 Element)
+NODISCARD
+inline FStringWide ToWideString<int32>(int32 Element)
 {
     return FStringWide::CreateFormatted(L"%d", Element);
 }
 
 template<>
-inline NODISCARD FStringWide ToWideString<int64>(int64 Element)
+NODISCARD
+inline FStringWide ToWideString<int64>(int64 Element)
 {
     return FStringWide::CreateFormatted(L"%lld", Element);
 }
 
 template<>
-inline NODISCARD FStringWide ToWideString<uint32>(uint32 Element)
+NODISCARD
+inline FStringWide ToWideString<uint32>(uint32 Element)
 {
     return FStringWide::CreateFormatted(L"%u", Element);
 }
 
 template<>
-inline NODISCARD FStringWide ToWideString<uint64>(uint64 Element)
+NODISCARD
+inline FStringWide ToWideString<uint64>(uint64 Element)
 {
     return FStringWide::CreateFormatted(L"%llu", Element);
 }
 
 template<>
-inline NODISCARD FStringWide ToWideString<bool>(bool bElement)
+NODISCARD
+inline FStringWide ToWideString<bool>(bool bElement)
 {
     return FStringWide(bElement ? L"true" : L"false");
 }
@@ -2073,7 +2113,8 @@ template<typename T>
 inline typename TEnableIf<TNot<TIsIntegerNotBool<T>>::Value, bool>::Type FromString(const FString& Value, T& OutElement);
 
 template<>
-inline NODISCARD bool FromString<float>(const FString& Value, float& OutElement)
+NODISCARD
+inline bool FromString<float>(const FString& Value, float& OutElement)
 {
     CHAR* End;
     OutElement = FCString::Strtof(Value.GetCString(), &End);
@@ -2081,7 +2122,8 @@ inline NODISCARD bool FromString<float>(const FString& Value, float& OutElement)
 }
 
 template<>
-inline NODISCARD bool FromString<double>(const FString& Value, double& OutElement)
+NODISCARD
+inline bool FromString<double>(const FString& Value, double& OutElement)
 {
     CHAR* End;
     OutElement = FCString::Strtod(Value.GetCString(), &End);
@@ -2089,7 +2131,8 @@ inline NODISCARD bool FromString<double>(const FString& Value, double& OutElemen
 }
 
 template<>
-inline NODISCARD bool FromString<bool>(const FString& Value, bool& OutElement)
+NODISCARD
+inline bool FromString<bool>(const FString& Value, bool& OutElement)
 {
     CHAR* End;
     OutElement = static_cast<bool>(FCString::Strtoi(Value.GetCString(), &End, 10));
