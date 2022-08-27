@@ -8,7 +8,7 @@ IMPLEMENT_ENGINE_MODULE(FDefaultModule, RHI);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Globals
 
-RHI_API FRHICoreInterface* GRHICoreInterface = nullptr;
+RHI_API FRHICoreInterface* GRHIInterface = nullptr;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RHI Functions
@@ -62,7 +62,7 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
         return false;
     }
 
-    GRHICoreInterface = RHICoreInterface;
+    GRHIInterface = RHICoreInterface;
 
     // Initialize the CommandListExecutor
     if (!GRHICommandExecutor.Initialize())
@@ -81,9 +81,9 @@ void RHIRelease()
 {
     GRHICommandExecutor.Release();
 
-    if (GRHICoreInterface)
+    if (GRHIInterface)
     {
-        GRHICoreInterface->Destroy();
-        GRHICoreInterface = nullptr;
+        GRHIInterface->Destroy();
+        GRHIInterface = nullptr;
     }
 }

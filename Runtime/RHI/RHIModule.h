@@ -54,4 +54,4 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Global Variable
 
-extern RHI_API class FRHICoreInterface* GRHICoreInterface;
+extern RHI_API class FRHICoreInterface* GRHIInterface;

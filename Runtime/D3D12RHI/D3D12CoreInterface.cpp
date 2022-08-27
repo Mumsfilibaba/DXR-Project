@@ -236,7 +236,6 @@ template<typename D3D12TextureType, typename InitializerType>
 D3D12TextureType* FD3D12CoreInterface::CreateTexture(const InitializerType& Initializer)
 {
     TSharedRef<D3D12TextureType> NewTexture = dbg_new D3D12TextureType(GetDevice(), Initializer);
-    NewTexture->AddRef();
 
     D3D12_RESOURCE_DESC Desc;
     FMemory::Memzero(&Desc);

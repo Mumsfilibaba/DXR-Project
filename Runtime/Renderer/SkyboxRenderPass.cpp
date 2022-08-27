@@ -55,31 +55,33 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     }
 
     // Create Texture Cube
-    const FString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
-    FRHITexture2DRef Panorama = FTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
-    if (!Panorama)
     {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        Panorama->SetName(PanoramaSourceFilename);
-    }
+        const FString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
+        FRHITexture2DRef Panorama = FTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
+        if (!Panorama)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            Panorama->SetName(PanoramaSourceFilename);
+        }
 
-    FrameResources.Skybox = FTextureFactory::CreateTextureCubeFromPanorma(
-        Panorama.Get(), 
-        1024,
-        TextureFactoryFlag_GenerateMips, 
-        EFormat::R16G16B16A16_Float);
+        FrameResources.Skybox = FTextureFactory::CreateTextureCubeFromPanorma(
+            Panorama.Get(),
+            1024,
+            TextureFactoryFlag_GenerateMips,
+            EFormat::R16G16B16A16_Float);
 
-    if (!FrameResources.Skybox)
-    {
-        return false;
-    }
-    else
-    {
-        FrameResources.Skybox->SetName("Skybox");
+        if (!FrameResources.Skybox)
+        {
+            return false;
+        }
+        else
+        {
+            FrameResources.Skybox->SetName("Skybox");
+        }
     }
 
     FRHISamplerStateInitializer Initializer;

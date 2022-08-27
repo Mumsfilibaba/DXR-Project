@@ -178,12 +178,18 @@ FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
 
 FRHITextureCube* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format)
 {
-    Check((PanoramaSource->GetFlags() & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None);
+    Check(IsEnumFlagSet(PanoramaSource->GetFlags(), ETextureUsageFlags::AllowSRV));
 
-    const bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const uint32 NumMips = (GenerateNumMips) ? NMath::Max<uint32>(NMath::Log2(CubeMapSize), 1u) : 1u;
+    const bool bGenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
 
-    FRHITextureCubeInitializer Initializer(Format, CubeMapSize, NumMips, 1, ETextureUsageFlags::AllowUAV, EResourceAccess::Common);
+    const uint32 NumMips = (bGenerateNumMips) ? NMath::Max<uint32>(NMath::Log2(CubeMapSize), 1u) : 1u;
+    FRHITextureCubeInitializer Initializer(
+        Format,
+        CubeMapSize, 
+        NumMips,
+        1,
+        ETextureUsageFlags::AllowUAV,
+        EResourceAccess::Common);
 
     FRHITextureCubeRef StagingTexture = RHICreateTextureCube(Initializer);
     if (!StagingTexture)
@@ -200,10 +206,6 @@ FRHITextureCube* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* Pa
     if (!StagingTextureUAV)
     {
         return nullptr;
-    }
-    else
-    {
-        StagingTexture->SetName("TextureCube From Panorama StagingTexture UAV");
     }
 
     Initializer.UsageFlags = ETextureUsageFlags::AllowSRV;
@@ -244,7 +246,7 @@ FRHITextureCube* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* Pa
 
         CommandList.CopyTexture(Texture.Get(), StagingTexture.Get());
 
-        if (GenerateNumMips)
+        if (bGenerateNumMips)
         {
             CommandList.GenerateMips(Texture.Get());
         }

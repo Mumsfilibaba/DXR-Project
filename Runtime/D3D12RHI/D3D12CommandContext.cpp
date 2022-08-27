@@ -514,7 +514,7 @@ void FD3D12CommandContext::StartContext()
     // Lock to the thread that started the context
     CommandContextCS.Lock();
 
-    StartCommandList();
+    AquireCommandList();
 }
 
 void FD3D12CommandContext::FinishContext()
@@ -1266,7 +1266,6 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
 
     D3D12_RESOURCE_DESC Desc = D3D12Texture->GetResource()->GetDesc();
     Desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
     D3D12_ERROR_COND(Desc.MipLevels > 1, "MipLevels must be more than one in order to generate any MipLevels");
 
     // TODO: Create this placed from a Heap? See what performance is 
@@ -1402,7 +1401,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     ID3D12DescriptorHeap* OnlineResourceHeap = ResourceDescriptors->GetHeap()->GetD3D12Heap();
     CommandList.SetDescriptorHeaps(&OnlineResourceHeap, 1);
 
-    struct SConstantBuffer
+    struct FConstantBuffer
     {
         uint32   SrcMipLevel;
         uint32   NumMipLevels;
@@ -1459,7 +1458,6 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
 
     FlushResourceBarriers();
 
-    CmdBatch->AddInUseResource(Texture);
     CmdBatch->AddInUseResource(StagingTexture.Get());
 }
 
@@ -1564,12 +1562,12 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
     FMemory::Memzero(&RayDispatchDesc);
 
     RayDispatchDesc.RayGenerationShaderRecord = D3D12Scene->GetRayGenShaderRecord();
-    RayDispatchDesc.MissShaderTable = D3D12Scene->GetMissShaderTable();
-    RayDispatchDesc.HitGroupTable = D3D12Scene->GetHitGroupTable();
+    RayDispatchDesc.MissShaderTable           = D3D12Scene->GetMissShaderTable();
+    RayDispatchDesc.HitGroupTable             = D3D12Scene->GetHitGroupTable();
 
-    RayDispatchDesc.Width = Width;
+    RayDispatchDesc.Width  = Width;
     RayDispatchDesc.Height = Height;
-    RayDispatchDesc.Depth = Depth;
+    RayDispatchDesc.Depth  = Depth;
 
     DXRCommandList->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
     DXRCommandList->DispatchRays(&RayDispatchDesc);
@@ -1584,7 +1582,7 @@ void FD3D12CommandContext::PresentViewport(FRHIViewport* Viewport, bool bVertica
     D3D12Viewport->Present(bVerticalSync);
 
     // Start recording again
-    StartCommandList();
+    AquireCommandList();
 }
 
 void FD3D12CommandContext::ClearState()
@@ -1648,7 +1646,7 @@ void FD3D12CommandContext::InternalClearState()
     State.ClearAll();
 }
 
-void FD3D12CommandContext::StartCommandList()
+void FD3D12CommandContext::AquireCommandList()
 {
     Check(State.bIsReady == false);
 

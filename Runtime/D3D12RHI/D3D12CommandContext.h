@@ -381,7 +381,7 @@ public:
     virtual void* GetRHIBaseCommandList() override final { return reinterpret_cast<void*>(&CommandList); }
 
 public:
-    void StartCommandList();
+    void AquireCommandList();
     void EndCommandList();
 
     void UpdateBuffer(FD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
