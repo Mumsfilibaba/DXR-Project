@@ -5,6 +5,7 @@
 #include "Core/Templates/IsInteger.h"
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/IsFloatingPoint.h"
+#include "Core/Templates/IsReallocatable.h"
 
 #include <algorithm>
 #include <cmath>

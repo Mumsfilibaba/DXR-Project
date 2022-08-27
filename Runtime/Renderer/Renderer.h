@@ -6,6 +6,7 @@
 #include "SkyboxRenderPass.h"
 #include "ForwardRenderer.h"
 #include "RayTracer.h"
+#include "DebugRenderer.h"
 
 #include "Core/Time/Timer.h"
 #include "Core/Threading/TaskManagerInterface.h"
@@ -68,7 +69,6 @@ public:
     void PerformFrustumCullingAndSort(const FScene& Scene);
     void PerformFXAA(FRHICommandList& InCmdList);
     void PerformBackBufferBlit(FRHICommandList& InCmdList);
-    void PerformAABBDebugPass(FRHICommandList& InCmdList);
 
     FORCEINLINE TSharedRef<FRenderTargetDebugWindow> GetTextureDebugger() const
     {
@@ -83,7 +83,6 @@ public:
 private:
     void OnWindowResize(const FWindowResizeEvent& Event);
 
-    bool InitBoundingBoxDebugPass();
     bool InitAA();
     bool InitShadingImage();
 
@@ -108,6 +107,7 @@ private:
     FSkyboxRenderPass             SkyboxRenderPass;
     FForwardRenderer              ForwardRenderer;
     FRayTracer                    RayTracer;
+    FDebugRenderer                DebugRenderer;
 
     FFrameResources Resources;
     FLightSetup     LightSetup;
@@ -115,12 +115,6 @@ private:
     FRHITexture2DRef            ShadingImage;
     FRHIComputePipelineStateRef ShadingRatePipeline;
     FRHIComputeShaderRef        ShadingRateShader;
-
-    FRHIVertexBufferRef          AABBVertexBuffer;
-    FRHIIndexBufferRef           AABBIndexBuffer;
-    FRHIGraphicsPipelineStateRef AABBDebugPipelineState;
-    FRHIVertexShaderRef          AABBVertexShader;
-    FRHIPixelShaderRef           AABBPixelShader;
 
     FRHIGraphicsPipelineStateRef PostPSO;
     FRHIPixelShaderRef           PostShader;

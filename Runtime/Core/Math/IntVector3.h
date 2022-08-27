@@ -335,6 +335,8 @@ public:
     int16 z;
 };
 
+MARK_AS_REALLOCATABLE(FInt16Vector3);
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FIntVector3
 
@@ -668,3 +670,5 @@ public:
      /** @brief: The z-coordinate */
     int32 z;
 };
+
+MARK_AS_REALLOCATABLE(FIntVector3);

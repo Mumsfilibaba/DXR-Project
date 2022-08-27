@@ -59,3 +59,5 @@ struct FAABB
     FVector3 Top;
     FVector3 Bottom;
 };
+
+MARK_AS_REALLOCATABLE(FAABB);

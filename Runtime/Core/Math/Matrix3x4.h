@@ -117,3 +117,5 @@ public:
         float Elements[3][4];
     };
 };
+
+MARK_AS_REALLOCATABLE(FMatrix3x4);

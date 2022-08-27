@@ -34,9 +34,6 @@ public:
     static_assert(
         TIsSigned<SizeType>::Value,
         "TArrayIterator wants a signed SizeType");
-    static_assert(
-        TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value,
-        "TArrayIterator require ArrayType and ElementType to have the same constness");
 
     /**
      * @brief: Create a new iterator

@@ -729,3 +729,5 @@ public:
         float f[3][3];
     };
 };
+
+MARK_AS_REALLOCATABLE(FMatrix3);

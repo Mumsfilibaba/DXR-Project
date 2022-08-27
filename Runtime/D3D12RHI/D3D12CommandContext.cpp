@@ -700,8 +700,8 @@ void FD3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTop
     const D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = ConvertPrimitiveTopology(InPrimitveTopology);
     if (State.Graphics.PrimitiveTopology != PrimitiveTopology)
     {
-        State.Graphics.PrimitiveTopology = PrimitiveTopology;
-        State.Graphics.bBindBlendFactor  = true;
+        State.Graphics.PrimitiveTopology      = PrimitiveTopology;
+        State.Graphics.bBindPrimitiveTopology = true;
     }
 }
 

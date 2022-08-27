@@ -109,6 +109,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
         1,
         ETextureUsageFlags::AllowSRV,
         EResourceAccess::NonPixelShaderResource);
+
     SSAONoiseTex = RHICreateTexture2D(SSAONoiseInitializer);
     if (!SSAONoiseTex)
     {

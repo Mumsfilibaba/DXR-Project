@@ -77,6 +77,8 @@ struct FColor
     uint8 A;
 };
 
+MARK_AS_REALLOCATABLE(FColor);
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FFloatColor16
 
@@ -150,6 +152,8 @@ struct FFloatColor16
     FFloat16 A;
 };
 
+MARK_AS_REALLOCATABLE(FFloatColor16);
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FFloatColor
 
@@ -222,3 +226,5 @@ struct FFloatColor
     /* @brief: Alpha channel */
     float A;
 };
+
+MARK_AS_REALLOCATABLE(FFloatColor);

@@ -190,3 +190,5 @@ public:
     /** @brief: The w-coordinate */
     float w;
 };
+
+MARK_AS_REALLOCATABLE(FPlane);

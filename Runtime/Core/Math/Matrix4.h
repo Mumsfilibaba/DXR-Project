@@ -1479,3 +1479,5 @@ public:
         float f[4][4];
     };
 };
+
+MARK_AS_REALLOCATABLE(FMatrix4);

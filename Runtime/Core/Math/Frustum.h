@@ -45,3 +45,5 @@ public:
 private:
     FPlane Planes[6];
 };
+
+MARK_AS_REALLOCATABLE(FFrustum);

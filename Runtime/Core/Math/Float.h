@@ -99,6 +99,8 @@ struct FFloat64
     };
 };
 
+MARK_AS_REALLOCATABLE(FFloat64);
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FFloat32
 
@@ -161,6 +163,8 @@ struct FFloat32
         };
     };
 };
+
+MARK_AS_REALLOCATABLE(FFloat32);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FFloat16
@@ -331,6 +335,8 @@ struct FFloat16
         };
     };
 };
+
+MARK_AS_REALLOCATABLE(FFloat16);
 
 #if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(pop)

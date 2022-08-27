@@ -327,6 +327,8 @@ public:
     int16 y;
 };
 
+MARK_AS_REALLOCATABLE(FInt16Vector2);
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FIntVector2
 
@@ -652,3 +654,5 @@ public:
      /** @brief: The y-coordinate */
     int32 y;
 };
+
+MARK_AS_REALLOCATABLE(FIntVector2);

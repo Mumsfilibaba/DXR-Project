@@ -10,7 +10,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variables
 
-TAutoConsoleVariable<bool> GDrawTextureDebugger("Renderer.Debug.ViewRenderTargets", true);
+TAutoConsoleVariable<bool> GDrawTextureDebugger("Renderer.Debug.ViewRenderTargets", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRenderTargetDebugWindow
@@ -51,36 +51,39 @@ void FRenderTargetDebugWindow::Tick()
             const int32 ImageIndex = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
 
             // Draw Image (Clamped to the window size)
-            if (FDrawableImage* CurrImage = &DebugTextures[ImageIndex])
+            if (!DebugTextures.IsEmpty())
             {
-                const float TexWidth       = float(CurrImage->Image->GetWidth());
-                const float TexHeight      = float(CurrImage->Image->GetHeight());
-                const float AspectRatio    = TexHeight / TexWidth;
-                const float InvAspectRatio = TexWidth / TexHeight;
-
-                float ImageWidth  = 0.0f;
-                float ImageHeight = 0.0f;
-                if (TexWidth > TexHeight)
+                if (FDrawableImage* CurrImage = &DebugTextures[ImageIndex])
                 {
-                    ImageWidth  = NMath::Max(MinImageSize, NMath::Min(TexWidth, float(Width)));
-                    ImageHeight = NMath::Max(MinImageSize, ImageWidth * AspectRatio);
-                }
-                else
-                {
-                    ImageHeight = NMath::Max(MinImageSize, NMath::Min(TexHeight, float(Height)));
-                    ImageWidth  = NMath::Max(MinImageSize, ImageHeight * InvAspectRatio);
-                }
+                    const float TexWidth       = float(CurrImage->Image->GetWidth());
+                    const float TexHeight      = float(CurrImage->Image->GetHeight());
+                    const float AspectRatio    = TexHeight / TexWidth;
+                    const float InvAspectRatio = TexWidth / TexHeight;
 
-                {
-                    const ImVec2 ImageSize     = ImVec2(ImageWidth, ImageHeight);
-                    const ImVec2 ContentRegion = ImGui::GetContentRegionAvail();
-                    const ImVec2 NewPosition   = ImVec2(
-                        (ContentRegion.x - ImageSize.x) * 0.5f,
-                        (ContentRegion.y - ImageSize.y) * 0.5f);
-                    ImGui::SetCursorPos(NewPosition);
-                }
+                    float ImageWidth  = 0.0f;
+                    float ImageHeight = 0.0f;
+                    if (TexWidth > TexHeight)
+                    {
+                        ImageWidth  = NMath::Max(MinImageSize, NMath::Min(TexWidth, float(Width)));
+                        ImageHeight = NMath::Max(MinImageSize, ImageWidth * AspectRatio);
+                    }
+                    else
+                    {
+                        ImageHeight = NMath::Max(MinImageSize, NMath::Min(TexHeight, float(Height)));
+                        ImageWidth  = NMath::Max(MinImageSize, ImageHeight * InvAspectRatio);
+                    }
 
-                ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
+                    {
+                        const ImVec2 ImageSize     = ImVec2(ImageWidth, ImageHeight);
+                        const ImVec2 ContentRegion = ImGui::GetContentRegionAvail();
+                        const ImVec2 NewPosition   = ImVec2(
+                            (ContentRegion.x - ImageSize.x) * 0.5f,
+                            (ContentRegion.y - ImageSize.y) * 0.5f);
+                        ImGui::SetCursorPos(NewPosition);
+                    }
+
+                    ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
+                }
             }
             
             // Draw Image menu on top

@@ -62,6 +62,7 @@ struct FR10G10B10A2
 };
 
 static_assert(sizeof(FR10G10B10A2) == sizeof(uint32), "FR10G10B10A2 is assumed to have the same size as a uint32");
+MARK_AS_REALLOCATABLE(FR10G10B10A2);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRG16F
@@ -106,6 +107,7 @@ struct FRG16F
 };
 
 static_assert(sizeof(FRG16F) == sizeof(uint32), "FRG16F is assumed to have the same size as a uint32");
+MARK_AS_REALLOCATABLE(FRG16F);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRGBA16F
@@ -158,3 +160,4 @@ struct FRGBA16F
 };
 
 static_assert(sizeof(FRGBA16F) == sizeof(uint64), "FRGBA16F is assumed to have the same size as a uint64");
+MARK_AS_REALLOCATABLE(FRGBA16F);
