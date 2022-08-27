@@ -40,7 +40,9 @@ public:
      *
      * @param Other: SharedRef to copy from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType, 
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedRef(const TSharedRef<OtherType>& Other) noexcept
         : Ptr(Other.Ptr)
     {
@@ -63,7 +65,9 @@ public:
      *
      * @param Other: SharedRef to move from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedRef(TSharedRef<OtherType>&& Other) noexcept
         : Ptr(Other.Ptr)
     {
@@ -84,7 +88,9 @@ public:
      *
      * @param InPointer: Pointer to reference
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType, 
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedRef(OtherType* InPtr) noexcept
         : Ptr(InPtr)
     { }
@@ -133,7 +139,7 @@ public:
      *
      * @return: Returns the pointer that was previously held by the container
      */
-    FORCEINLINE ElementType* ReleaseOwnership() noexcept
+    NODISCARD FORCEINLINE ElementType* ReleaseOwnership() noexcept
     {
         ElementType* OldPtr = Ptr;
         Ptr = nullptr;
@@ -156,7 +162,7 @@ public:
      *
      * @return: Returns the raw pointer
      */
-    FORCEINLINE ElementType* Get() const noexcept
+    NODISCARD FORCEINLINE ElementType* Get() const noexcept
     {
         return Ptr;
     }
@@ -166,7 +172,7 @@ public:
      *
      * @return: The current reference count of the stored pointer
      */
-    FORCEINLINE uint64 GetRefCount() const noexcept
+    NODISCARD FORCEINLINE uint64 GetRefCount() const noexcept
     {
         Check(IsValid());
         return Ptr->GetRefCount();
@@ -177,7 +183,7 @@ public:
      *
      * @return: Pointer to the stored pointer
      */
-    FORCEINLINE ElementType** ReleaseAndGetAddressOf() noexcept
+    NODISCARD FORCEINLINE ElementType** ReleaseAndGetAddressOf() noexcept
     {
         Ptr->Release();
         return &Ptr;
@@ -188,7 +194,7 @@ public:
      *
      * @return: Returns the raw pointer
      */
-    FORCEINLINE ElementType* GetAndAddRef() noexcept
+    NODISCARD FORCEINLINE ElementType* GetAndAddRef() noexcept
     {
         AddRef();
         return Ptr;
@@ -200,7 +206,7 @@ public:
      * @return: A pointer of the casted type
      */
     template<typename CastType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<CastType*, ElementType*>::Value, CastType*>::Type GetAs() const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsConvertible<CastType*, ElementType*>::Value, CastType*>::Type GetAs() const noexcept
     {
         return static_cast<CastType*>(Ptr);
     }
@@ -210,7 +216,7 @@ public:
      *
      * @return: The address of the raw pointer
      */
-    FORCEINLINE ElementType** GetAddressOf() noexcept
+    NODISCARD FORCEINLINE ElementType** GetAddressOf() noexcept
     {
         return &Ptr;
     }
@@ -220,7 +226,7 @@ public:
      *
      * @return: The address of the raw pointer
      */
-    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return &Ptr;
     }
@@ -230,7 +236,7 @@ public:
      *
      * @return: A reference to the object pointed to by the pointer
      */
-    FORCEINLINE ElementType& Dereference() const noexcept
+    NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
         return *Ptr;
     }
@@ -240,7 +246,7 @@ public:
      *
      * @return: True if the pointer is not nullptr otherwise false
      */
-    FORCEINLINE bool IsValid() const noexcept
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
         return (Ptr != nullptr);
     }
@@ -252,7 +258,7 @@ public:
      *
      * @return: Returns the raw pointer
      */
-    FORCEINLINE ElementType* operator->() const noexcept
+    NODISCARD FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
@@ -262,7 +268,7 @@ public:
      *
      * @return: The address of the raw pointer
      */
-    FORCEINLINE ElementType** operator&() noexcept
+    NODISCARD FORCEINLINE ElementType** operator&() noexcept
     {
         return GetAddressOf();
     }
@@ -272,7 +278,7 @@ public:
      *
      * @return: The address of the raw pointer
      */
-    FORCEINLINE ElementType* const* operator&() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
@@ -282,7 +288,7 @@ public:
      *
      * @return: A reference to the object pointed to by the pointer
      */
-    FORCEINLINE ElementType& operator*() const noexcept
+    NODISCARD FORCEINLINE ElementType& operator*() const noexcept
     {
         return Dereference();
     }
@@ -292,7 +298,7 @@ public:
      *
      * @return: True if the pointer is not nullptr otherwise false
      */
-    FORCEINLINE operator bool() const noexcept
+    NODISCARD FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
@@ -377,14 +383,13 @@ public:
      *
      * @return: A reference to this object
      */
-    FORCEINLINE TSharedRef& operator=(NullptrType) noexcept
+    FORCEINLINE TSharedRef& operator=(nullptr_type) noexcept
     {
         TSharedRef().Swap(*this);
         return *this;
     }
 
 private:
-
     FORCEINLINE void Release() noexcept
     {
         if (Ptr)
@@ -401,118 +406,70 @@ private:
 // TSharedRef operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedRef<T>& LHS, U* RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TSharedRef<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* LHS, const TSharedRef<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(T* LHS, const TSharedRef<U>& RHS) noexcept
 {
     return (LHS == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, U* RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* LHS, const TSharedRef<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(T* LHS, const TSharedRef<U>& RHS) noexcept
 {
     return (LHS != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TSharedRef<T>& LHS, NullptrType) noexcept
+NODISCARD FORCEINLINE bool operator==(const TSharedRef<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TSharedRef<T>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(nullptr_type, const TSharedRef<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, NullptrType) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TSharedRef<T>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TSharedRef<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TSharedRef casting functions
+// MakeSharedRef - Converts a raw pointer into a TSharedRef
 
 template<typename T, typename U>
-FORCEINLINE TSharedRef<T> StaticCastSharedRef(const TSharedRef<U>& Pointer)
-{
-    T* RawPointer = static_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> StaticCastSharedRef(TSharedRef<U>&& Pointer)
-{
-    T* RawPointer = static_cast<T*>(Pointer.Get());
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ConstCastSharedRef(const TSharedRef<U>& Pointer)
-{
-    T* RawPointer = const_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ConstCastSharedRef(TSharedRef<U>&& Pointer)
-{
-    T* RawPointer = const_cast<T*>(Pointer.Get());
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ReinterpretCastSharedRef(const TSharedRef<U>& Pointer)
-{
-    T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ReinterpretCastSharedRef(TSharedRef<U>&& Pointer)
-{
-    T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
-    return TSharedRef<T>(RawPointer);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Converts a raw pointer into a TSharedRef
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> MakeSharedRef(U* InRefCountedObject)
+NODISCARD FORCEINLINE TSharedRef<T> MakeSharedRef(U* InRefCountedObject)
 {
     if (InRefCountedObject)
     {
@@ -521,4 +478,49 @@ FORCEINLINE TSharedRef<T> MakeSharedRef(U* InRefCountedObject)
     }
 
     return nullptr;
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TSharedRef casting functions
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE TSharedRef<T> StaticCastSharedRef(const TSharedRef<U>& Pointer)
+{
+    T* RawPointer = static_cast<T*>(Pointer.Get());
+    return MakeSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE TSharedRef<T> StaticCastSharedRef(TSharedRef<U>&& Pointer)
+{
+    T* RawPointer = static_cast<T*>(Pointer.Get());
+    return TSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE TSharedRef<T> ConstCastSharedRef(const TSharedRef<U>& Pointer)
+{
+    T* RawPointer = const_cast<T*>(Pointer.Get());
+    return MakeSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE TSharedRef<T> ConstCastSharedRef(TSharedRef<U>&& Pointer)
+{
+    T* RawPointer = const_cast<T*>(Pointer.Get());
+    return TSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE TSharedRef<T> ReinterpretCastSharedRef(const TSharedRef<U>& Pointer)
+{
+    T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
+    return MakeSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE TSharedRef<T> ReinterpretCastSharedRef(TSharedRef<U>&& Pointer)
+{
+    T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
+    return TSharedRef<T>(RawPointer);
 }

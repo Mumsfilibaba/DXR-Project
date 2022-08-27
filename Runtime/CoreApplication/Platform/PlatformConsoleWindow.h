@@ -1,12 +1,12 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-    #include "CoreApplication/Windows/WindowsConsoleWindow.h"
-    typedef CWindowsConsoleWindow PlatformConsoleWindow;
+    #include "CoreApplication/Windows/WindowsOutputDeviceConsole.h"
+    typedef FWindowsOutputDeviceConsole FPlatformOutputDeviceConsole;
 #elif PLATFORM_MACOS
-    #include "CoreApplication/Mac/MacConsoleWindow.h"
-    typedef CMacConsoleWindow PlatformConsoleWindow;
+    #include "CoreApplication/Mac/MacOutputDeviceConsole.h"
+    typedef FMacOutputDeviceConsole FPlatformOutputDeviceConsole;
 #else
-    #include "CoreApplication/Generic/GenericConsoleWindow.h"
-    typedef CGenericConsoleWindow PlatformConsoleWindow;
+    #include "CoreApplication/Misc/FOutputDeviceConsole.h"
+    typedef FOutputDeviceConsole FPlatformOutputDeviceConsole;
 #endif

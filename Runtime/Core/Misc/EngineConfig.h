@@ -2,31 +2,29 @@
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/Array.h"
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Holds a single config-value
+// FConfigValue
 
-class CConfigValue
+struct FConfigValue
 {
-public:
+    FConfigValue() = default;
+    FConfigValue(FConfigValue&& Other) = default;
+    FConfigValue(const FConfigValue& Other) = default;
+    ~FConfigValue() = default;
 
-    CConfigValue() = default;
-    CConfigValue(CConfigValue&& Other) = default;
-    CConfigValue(const CConfigValue& Other) = default;
-    ~CConfigValue() = default;
-
-    CConfigValue& operator=(CConfigValue&& RHS) = default;
-    CConfigValue& operator=(const CConfigValue& RHS) = default;
+    FConfigValue& operator=(FConfigValue&& RHS) = default;
+    FConfigValue& operator=(const FConfigValue& RHS) = default;
 
      /** @brief: Create value from string */
-    explicit CConfigValue(String&& InString)
+    explicit FConfigValue(FString&& InString)
         : SavedValue(InString)
         , CurrentValue(Move(InString))
     { }
 
      /** @brief: Create value from string */
-    explicit CConfigValue(const String& InString)
+    explicit FConfigValue(const FString& InString)
         : SavedValue(InString)
         , CurrentValue(InString)
     { }
@@ -38,75 +36,73 @@ public:
     FORCEINLINE void MakeCurrentSaved() { SavedValue = CurrentValue; }
 
      /** @brief: Current value in the config file */
-    String SavedValue;
+    FString SavedValue;
      /** @brief: Current value in the runtime, this will be saved when the file is flushed to disk */
-    String CurrentValue;
+    FString CurrentValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A section of a config-file
+// FConfigSection - A section of a config-file
 
-class CORE_API CConfigSection
+class CORE_API FConfigSection
 {
-    friend class CConfigFile;
+    friend class FConfigFile;
 
 public:
-
-    CConfigSection(const char* Name);
-    ~CConfigSection() = default;
+    FConfigSection(const CHAR* Name);
+    ~FConfigSection() = default;
 
      /** @brief: Restores all values in the section */
     void Restore();
 
      /** @brief: Restores a specific value in the section */
-    bool Restore(const char* Name);
+    bool Restore(const CHAR* Name);
 
      /** @brief: Set a specific value to a new string */
-    void SetValue(const char* Name, const String& NewValue);
+    void SetValue(const CHAR* Name, const FString& NewValue);
 
      /** @brief: Retrieve a value */
-    CConfigValue* GetValue(const char* Name);
+    FConfigValue* GetValue(const CHAR* Name);
 
      /** @brief: Retrieve a value */
-    const CConfigValue* GetValue(const char* Name) const;
+    const FConfigValue* GetValue(const CHAR* Name) const;
 
 private:
-    THashTable<String, CConfigValue, SStringHasher> ConfigValues;
+    TMap<FString, FConfigValue, FStringHasher> ConfigValues;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Represent an engine-configuration file
+// FConfigFile - Represent an engine-configuration file
 
-class CORE_API CConfigFile
+class CORE_API FConfigFile
 {
 public:
-
-    CConfigFile(const char* Filename);
-    ~CConfigFile() = default;
+    FConfigFile(const CHAR* Filename);
+    ~FConfigFile() = default;
 
      /** @brief: Set a string from the Engine config */
-    bool SetString(const char* SectionName, const char* Name, const String& NewValue);
+    bool SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue);
 
      /** @brief: Set a int from the Engine config */
-    bool SetInt(const char* SectionName, const char* Name, int32 NewValue);
+    bool SetInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue);
 
      /** @brief: Set a float from the Engine config */
-    bool SetFloat(const char* SectionName, const char* Name, float NewValue);
+    bool SetFloat(const CHAR* SectionName, const CHAR* Name, float NewValue);
 
      /** @brief: Set a boolean from the Engine config */
-    bool SetBoolean(const char* SectionName, const char* Name, bool bNewValue);
+    bool SetBoolean(const CHAR* SectionName, const CHAR* Name, bool bNewValue);
 
      /** @brief: Retrieve a string from the Engine config */
-    bool GetString(const char* SectionName, const char* Name, String& OutValue);
+    bool GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue);
 
      /** @brief: Retrieve a int from the Engine config */
-    bool GetInt(const char* SectionName, const char* Name, int32& OutValue);
+    bool GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue);
 
      /** @brief: Retrieve a float from the Engine config */
-    bool GetFloat(const char* SectionName, const char* Name, float& OutValue);
+    bool GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue);
 
      /** @brief: Retrieve a boolean from the Engine config */
-    bool GetBoolean(const char* SectionName, const char* Name, bool& bOutValue);
+    bool GetBoolean(const CHAR* SectionName, const CHAR* Name, bool& bOutValue);
 
      /** @brief: Loads the file and parses its contents */
     bool ParseFile();
@@ -115,42 +111,46 @@ public:
     bool SaveFile();
 
      /** @brief: Appends all the sections into this config file */
-    void Append(const CConfigFile& OtherFile);
+    void Append(const FConfigFile& OtherFile);
 
 private:
 
      /** @brief: Retrieve a section with a certain name */
-    CConfigSection* GetSection(const char* SectionName);
+    FConfigSection* GetSection(const CHAR* SectionName);
 
      /** @brief: Retrieve a variable just based on name */
-    CConfigValue* GetValue(const char* Name);
+    FConfigValue* GetValue(const CHAR* Name);
 
      /** @brief: Retrieve a variable from a certain section, with a certain name */
-    CConfigValue* GetValue(const char* SectionName, const char* Name);
+    FConfigValue* GetValue(const CHAR* SectionName, const CHAR* Name);
 
      /** @brief: Templated version of get value */
     template<typename T>
-    bool GetTypedValue(const char* SectionName, const char* Name, T& OutValue)
+    bool GetTypedValue(const CHAR* SectionName, const CHAR* Name, T& OutValue)
     {
-        String Value;
-        if (GetString(SectionName, Name, Value))
-        {
-            return FromString<T>(Value, OutValue);
-        }
-        else
-        {
-            return false;
-        }
+        UNREFERENCED_VARIABLE(SectionName);
+        UNREFERENCED_VARIABLE(Name);
+        UNREFERENCED_VARIABLE(OutValue);
+
+        //FString Value;
+        //if (GetString(SectionName, Name, Value))
+        //{
+        //    return FromString<T>(Value, OutValue);
+        //}
+        //else
+        //{
+        //}
+        return false;
     }
 
     // The filename
-    String Filename;
+    FString Filename;
 
     // All the sections
-    THashTable<String, CConfigSection, SStringHasher> Sections;
+    TMap<FString, FConfigSection, FStringHasher> Sections;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Main-Engine configuration
 
-extern CORE_API CConfigFile GEngineConfig;
+extern CORE_API FConfigFile GEngineConfig;

@@ -5,10 +5,10 @@
 #include "Engine/Assets/SceneData.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CStbImageLoader
+// FSTBImageLoader
 
-class ENGINE_API CStbImageLoader
+class ENGINE_API FSTBImageLoader
 {
 public:
-    static TSharedPtr<SImage2D> LoadFile(const String& Filename);
+    static FImage2DPtr LoadFile(const FString& Filename);
 };

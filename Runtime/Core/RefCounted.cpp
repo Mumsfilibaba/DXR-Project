@@ -1,13 +1,11 @@
 #include "RefCounted.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RefCounted
+// FRefCounted
 
 FRefCounted::FRefCounted()
-    : StrongReferences(0)
-{
-    AddRef();
-}
+    : StrongReferences(1)
+{ }
 
 FRefCounted::~FRefCounted()
 {
@@ -16,18 +14,22 @@ FRefCounted::~FRefCounted()
 
 int32 FRefCounted::AddRef()
 {
-    return ++StrongReferences;
+    Check(StrongReferences.Load() > 0);
+    ++StrongReferences;
+    return StrongReferences.Load();
 }
 
 int32 FRefCounted::Release()
 {
-    int32 NewRefCount = --StrongReferences;
-    if (StrongReferences.Load() <= 0)
+    const int32 RefCount = --StrongReferences;
+    Check(RefCount >= 0);
+
+    if (RefCount < 1)
     {
         delete this;
     }
 
-    return NewRefCount;
+    return RefCount;
 }
 
 int32 FRefCounted::GetRefCount() const

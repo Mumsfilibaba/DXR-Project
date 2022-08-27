@@ -4,23 +4,23 @@
 // GCC compiler specific macros etc.
 // For now this file should only be included into CoreDefines.h
 
-#if COMPILER_GCC
+#if PLATFORM_COMPILER_GCC
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Architecture
 
-#ifndef ARCHITECTURE_X86_X64
+#ifndef PLATFORM_ARCHITECTURE_X86_X64
     #if defined(__x86_64__) || defined(__i386__)
-        #define ARCHITECTURE_X86_X64 (1)
+        #define PLATFORM_ARCHITECTURE_X86_X64 (1)
     #else
-        #define ARCHITECTURE_X86_X64 (0)
+        #define PLATFORM_ARCHITECTURE_X86_X64 (0)
     #endif
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Use SSE intrinsics if we can
 
-#if ARCHITECTURE_X86_X64
+#if PLATFORM_ARCHITECTURE_X86_X64
     #ifndef ENABLE_SEE_INTRIN
         #define ENABLE_SEE_INTRIN (1)
     #endif
@@ -61,12 +61,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Restrict
 
-#ifndef restrict_ptr
-    #define restrict_ptr __restrict
+#ifndef RESTRICT
+    #define RESTRICT __restrict
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Function signature as a const char* string
+// Function signature as a const CHAR* string
 
 #ifndef FUNCTION_SIGNATURE
     #define FUNCTION_SIGNATURE __PRETTY_FUNCTION__
@@ -84,10 +84,10 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Pause the thread
+// DEBUG_BREAK
 
-#ifndef PauseInstruction
-    #define PauseInstruction __builtin_ia32_pause
+#ifndef DEBUG_BREAK
+    #define DEBUG_BREAK __builtin_trap
 #endif
 
 // Define the rest of the defines to a default value

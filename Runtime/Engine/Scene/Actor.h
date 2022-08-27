@@ -4,25 +4,24 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix3x4.h"
 #include "Core/Math/Matrix4.h"
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 
 #include "Engine/CoreObject/CoreObject.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CActorTransform
+// FActorTransform
 
-class ENGINE_API CActorTransform
+class ENGINE_API FActorTransform
 {
 public:
-
-    CActorTransform();
-    ~CActorTransform() = default;
+    FActorTransform();
+    ~FActorTransform() = default;
 
     void SetTranslation(float x, float y, float z);
-    void SetTranslation(const CVector3& InPosition);
+    void SetTranslation(const FVector3& InPosition);
 
     void SetScale(float x, float y, float z);
-    void SetScale(const CVector3& InScale);
+    void SetScale(const FVector3& InScale);
 
     FORCEINLINE void SetUniformScale(float InScale)
     {
@@ -30,65 +29,64 @@ public:
     }
 
     void SetRotation(float x, float y, float z);
-    void SetRotation(const CVector3& InRotation);
+    void SetRotation(const FVector3& InRotation);
 
-    FORCEINLINE const CVector3& GetTranslation() const
+    FORCEINLINE const FVector3& GetTranslation() const
     {
         return Translation;
     }
 
-    FORCEINLINE const CVector3& GetScale() const
+    FORCEINLINE const FVector3& GetScale() const
     {
         return Scale;
     }
 
-    FORCEINLINE const CVector3& GetRotation() const
+    FORCEINLINE const FVector3& GetRotation() const
     {
         return Rotation;
     }
 
-    FORCEINLINE const CMatrix4& GetMatrix() const
+    FORCEINLINE const FMatrix4& GetMatrix() const
     {
         return Matrix;
     }
 
-    FORCEINLINE CMatrix4 GetMatrixInverse() const
+    FORCEINLINE FMatrix4 GetMatrixInverse() const
     {
-        CMatrix4 MatrixInverse = Matrix.Invert();
+        FMatrix4 MatrixInverse = Matrix.Invert();
         return MatrixInverse.Transpose();
     }
 
-    FORCEINLINE CMatrix3x4 GetTinyMatrix() const
+    FORCEINLINE FMatrix3x4 GetTinyMatrix() const
     {
-        return CMatrix3x4( Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03
+        return FMatrix3x4( Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03
                          , Matrix.m10, Matrix.m11, Matrix.m12, Matrix.m13
                          , Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23);
     }
 
 private:
-
     void CalculateMatrix();
 
-    CMatrix4 Matrix;
-    CVector3 Translation;
-    CVector3 Scale;
-    CVector3 Rotation;
+    FMatrix4 Matrix;
+    FVector3 Translation;
+    FVector3 Scale;
+    FVector3 Rotation;
 };
 
-class CScene;
-class CComponent;
+class FScene;
+class FComponent;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CActor
+// FActor
 
-class ENGINE_API CActor : public CCoreObject
+class ENGINE_API FActor 
+    : public FCoreObject
 {
-    CORE_OBJECT(CActor, CCoreObject);
+    CORE_OBJECT(FActor, FCoreObject);
 
 public:
-
-    CActor(class CScene* InSceneOwner);
-    ~CActor();
+    FActor(class FScene* InSceneOwner);
+    ~FActor();
 
     /**
      * @brief: Start actor, called in the beginning of the run, perform initialization here
@@ -100,21 +98,21 @@ public:
      *
      * @param DeltaTime: Time since the last call to tick
      */
-    virtual void Tick(CTimestamp DeltaTime);
+    virtual void Tick(FTimespan DeltaTime);
 
     /**
      * @brief: Add a new component to the actor 
      * 
      * @param InComponent: Component to add to the Actor
      */
-    void AddComponent(CComponent* InComponent);
+    void AddComponent(FComponent* InComponent);
 
     /**
      * @brief: Set name of the actor 
      * 
      * @param InName: Name of the actor
      */
-    void SetName(const String& InName);
+    void SetName(const FString& InName);
 
     /**
      * @brief: Check if the actor has a component of the component-class 
@@ -122,7 +120,7 @@ public:
      * @param ComponentClass: ClassObject to of the component to retrieve 
      * @return: Returns true if the actor contains a component of a certain type
      */
-    bool HasComponentOfClass(class CClassType* ComponentClass) const;
+    bool HasComponentOfClass(class FClassType* ComponentClass) const;
 
     /**
      * @brief: Check if the actor has a component of the component-class
@@ -141,7 +139,7 @@ public:
      * @param ComponentClass: ClassObject to of the component to retrieve
      * @return: Returns a pointer to the requested component, or nullptr if no component of the type exist
      */
-    CComponent* GetComponentOfClass(class CClassType* ComponentClass) const;
+    FComponent* GetComponentOfClass(class FClassType* ComponentClass) const;
 
     /**
      * @brief: Retrieve a component from the actor of the component-class
@@ -159,7 +157,7 @@ public:
      * 
      * @param InTransform: New transform of the actor
      */
-    FORCEINLINE void SetTransform(const CActorTransform& InTransform)
+    FORCEINLINE void SetTransform(const FActorTransform& InTransform)
     {
         Transform = InTransform;
     }
@@ -169,7 +167,7 @@ public:
      * 
      * @return: Returns the name of the actor
      */
-    FORCEINLINE const String& GetName() const
+    FORCEINLINE const FString& GetName() const
     {
         return Name;
     }
@@ -179,7 +177,7 @@ public:
      *
      * @return: Returns the Scene that owns the actor
      */
-    FORCEINLINE CScene* GetScene() const
+    FORCEINLINE FScene* GetScene() const
     {
         return SceneOwner;
     }
@@ -189,7 +187,7 @@ public:
      *
      * @return: Returns the transform of the actor
      */
-    FORCEINLINE CActorTransform& GetTransform()
+    FORCEINLINE FActorTransform& GetTransform()
     {
         return Transform;
     }
@@ -199,7 +197,7 @@ public:
      *
      * @return: Returns the transform of the actor
      */
-    FORCEINLINE const CActorTransform& GetTransform() const
+    FORCEINLINE const FActorTransform& GetTransform() const
     {
         return Transform;
     }
@@ -225,13 +223,13 @@ public:
     }
 
 private:
-    String              Name;
+    FString             Name;
 
-    CScene*             SceneOwner = nullptr;
+    FScene*             SceneOwner = nullptr;
 
-    CActorTransform     Transform;
+    FActorTransform     Transform;
 
-    TArray<CComponent*> Components;
+    TArray<FComponent*> Components;
 
     bool bIsStartable : 1;
     bool bIsTickable  : 1;

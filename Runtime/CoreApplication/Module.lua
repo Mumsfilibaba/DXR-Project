@@ -3,7 +3,7 @@ include '../../BuildScripts/Scripts/build_module.lua'
 ---------------------------------------------------------------------------------------------------
 -- CoreApplication Module
 
-local CoreApplicationModule = CModuleBuildRules('CoreApplication')
+local CoreApplicationModule = FModuleBuildRules('CoreApplication')
 CoreApplicationModule.AddModuleDependencies( 
 {
     'Core'

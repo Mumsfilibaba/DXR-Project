@@ -2,15 +2,16 @@
 #include "Light.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CSpotLight
+// FSpotLight
 
-class ENGINE_API CSpotLight : public CLight
+class ENGINE_API FSpotLight 
+    : public FLight
 {
-    CORE_OBJECT(CSpotLight, CLight);
+    CORE_OBJECT(FSpotLight, FLight);
 
 public:
-    CSpotLight();
-    ~CSpotLight();
+    FSpotLight();
+    ~FSpotLight();
 
     void SetConeAngle(float InConeAngle);
 

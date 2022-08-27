@@ -4,29 +4,29 @@
 // Detect compiler
 
 #ifdef _MSC_VER
-    #ifndef COMPILER_MSVC
-        #define COMPILER_MSVC (1)
+    #ifndef PLATFORM_COMPILER_MSVC
+        #define PLATFORM_COMPILER_MSVC (1)
     #endif
 #endif
 
 #ifdef __clang__
-    #ifndef COMPILER_CLANG
-        #define COMPILER_CLANG (1)
+    #ifndef PLATFORM_COMPILER_CLANG
+        #define PLATFORM_COMPILER_CLANG (1)
     #endif
 #endif
 
 #ifdef __GNUC__
-    #ifndef COMPILER_GCC
-        #define COMPILER_GCC (1)
+    #ifndef PLATFORM_COMPILER_GCC
+        #define PLATFORM_COMPILER_GCC (1)
     #endif
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Undefined compiler
 
-#if (!COMPILER_MSVC) || (!COMPILER_CLANG) || (!COMPILER_GCC)
-    #ifndef COMPILER_UNDEFINED
-        #define COMPILER_UNDEFINED
+#if (!PLATFORM_COMPILER_MSVC) || (!PLATFORM_COMPILER_CLANG) || (!PLATFORM_COMPILER_GCC)
+    #ifndef PLATFORM_COMPILER_UNDEFINED
+        #define PLATFORM_COMPILER_UNDEFINED
     #endif
 #endif
 
@@ -44,7 +44,7 @@
 
 #ifdef DEBUG_BUILD
     #ifndef ENABLE_ASSERTS 
-        #define ENABLE_ASSERTS 1
+        #define ENABLE_ASSERTS (1)
     #endif
 #endif
 
@@ -61,8 +61,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Macro for deleting objects safely
 
-#ifndef SafeDelete
-    #define SafeDelete(OutObject)      \
+#ifndef SAFE_DELETE
+    #define SAFE_DELETE(OutObject)     \
         do                             \
         {                              \
             if ((OutObject))           \
@@ -73,8 +73,8 @@
         } while (false)
 #endif
 
-#ifndef SafeRelease
-    #define SafeRelease(OutObject)      \
+#ifndef SAFE_RELEASE
+    #define SAFE_RELEASE(OutObject)     \
         do                              \
         {                               \
             if ((OutObject))            \
@@ -85,8 +85,8 @@
         } while (false)
 #endif
 
-#ifndef SafeAddRef
-    #define SafeAddRef(OutObject)      \
+#ifndef SAFE_ADD_REF
+    #define SAFE_ADD_REF(OutObject)    \
         do                             \
         {                              \
             if ((OutObject))           \
@@ -99,8 +99,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper Macros
 
-#ifndef ArrayCount
-    #define ArrayCount(Array) (sizeof(Array) / sizeof(Array[0]))
+#ifndef ARRAY_COUNT
+    #define ARRAY_COUNT(Array) (sizeof(Array) / sizeof(Array[0]))
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -137,7 +137,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Constexpr
+// constexpr
 
 #define ENABLE_CONSTEXPR (1)
 
@@ -148,15 +148,31 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// nodiscard
+
+#define ENABLE_NODISCARD (1)
+
+#if ENABLE_NODISCARD
+    #define NODISCARD [[nodiscard]]
+#else
+    #define NODISCARD
+#endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Standard alignment of memory-allocations
+
+#define STANDARD_ALIGNMENT (__STDCPP_DEFAULT_NEW_ALIGNMENT__)
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Compiler Specific
 
-#if COMPILER_MSVC
+#if PLATFORM_COMPILER_MSVC
     #include "Core/CompilerSpecific/CompilerMSVC.h"
-#elif COMPILER_CLANG
+#elif PLATFORM_COMPILER_CLANG
     #include "Core/CompilerSpecific/CompilerClang.h" 
-#elif COMPILER_GCC 
+#elif PLATFORM_COMPILER_GCC 
     #include "Core/CompilerSpecific/CompilerGCC.h"
-#elif COMPILER_UNDEFINED 
+#elif PLATFORM_COMPILER_UNDEFINED 
     #include "Core/CompilerSpecific/CompilerDefault.h"
     #error "Unknown Compiler"
 #endif

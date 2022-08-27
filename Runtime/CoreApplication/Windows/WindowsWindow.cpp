@@ -1,26 +1,21 @@
 #include "WindowsWindow.h"
 
-#include "Core/Logging/Log.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformMisc.h"
 
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsWindow
+// FWindowsWindow
 
-CWindowsWindow* CWindowsWindow::CreateWindowsWindow(CWindowsApplication* InApplication)
-{
-    return dbg_new CWindowsWindow(InApplication);
-}
-
-const char* CWindowsWindow::GetClassName()
+const CHAR* FWindowsWindow::GetClassName()
 {
     return "WindowClass";
 }
 
-CWindowsWindow::CWindowsWindow(CWindowsApplication* InApplication)
-    : CGenericWindow()
+FWindowsWindow::FWindowsWindow(FWindowsApplication* InApplication)
+    : FGenericWindow()
     , Application(InApplication)
     , Window(0)
     , bIsFullscreen(false)
@@ -29,7 +24,7 @@ CWindowsWindow::CWindowsWindow(CWindowsApplication* InApplication)
     , StyleEx(0)
 { }
 
-CWindowsWindow::~CWindowsWindow()
+FWindowsWindow::~FWindowsWindow()
 {
     if (IsValid())
     {
@@ -37,7 +32,7 @@ CWindowsWindow::~CWindowsWindow()
     }
 }
 
-bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
+bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle InStyle)
 {
     // Determine the window style for WinAPI
     DWORD NewStyle   = 0;
@@ -92,21 +87,22 @@ bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 In
     int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
     HINSTANCE Instance = Application->GetInstance();
-    Window = CreateWindowEx( NewStyleEx
-                           , CWindowsWindow::GetClassName()
-                           , InTitle.CStr()
-                           , NewStyle
-                           , PositionX
-                           , PositionY
-                           , RealWidth
-                           , RealHeight
-                           , nullptr
-                           , nullptr
-                           , Instance
-                           , nullptr);
+    Window = CreateWindowEx(
+        NewStyleEx,
+        FWindowsWindow::GetClassName(),
+        InTitle.GetCString(),
+        NewStyle,
+        PositionX,
+        PositionY,
+        RealWidth,
+        RealHeight,
+        nullptr,
+        nullptr,
+        Instance,
+        nullptr);
     if (Window == 0)
     {
-        LOG_ERROR("[CWindowsWindow]: FAILED to create window\n");
+        LOG_ERROR("[FWindowsWindow]: FAILED to create window\n");
         return false;
     }
     else
@@ -120,31 +116,29 @@ bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 In
             }
         }
 
-        // Save style for later
         StyleParams = InStyle;
 
-        // Set this to userdata
         SetLastError(0);
 
-        LONG_PTR Result = SetWindowLongPtrA(Window, GWLP_USERDATA, (LONG_PTR)this);
+        LONG_PTR Result = SetWindowLongPtrA(Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
         DWORD LastError = GetLastError();
         if (Result == 0 && LastError != 0)
         {
-            LOG_ERROR("[CWindowsWindow]: FAILED to Setup window-data\n");
+            LOG_ERROR("[FWindowsWindow]: FAILED to Setup window-data\n");
             return false;
         }
 
         UpdateWindow(Window);
 
-        SWindowShape NewWindowShape(RealWidth, RealHeight, PositionX, PositionY);
+        FWindowShape NewWindowShape(RealWidth, RealHeight, PositionX, PositionY);
         SetWindowShape(NewWindowShape, true);
 
         return true;
     }
 }
 
-void CWindowsWindow::Show(bool bMaximized)
+void FWindowsWindow::Show(bool bMaximized)
 {
     Check(Window != 0);
 
@@ -161,7 +155,7 @@ void CWindowsWindow::Show(bool bMaximized)
     }
 }
 
-void CWindowsWindow::Close()
+void FWindowsWindow::Close()
 {
     Check(Window != 0);
 
@@ -174,7 +168,7 @@ void CWindowsWindow::Close()
     }
 }
 
-void CWindowsWindow::Minimize()
+void FWindowsWindow::Minimize()
 {
     Check(Window != 0);
 
@@ -187,7 +181,7 @@ void CWindowsWindow::Minimize()
     }
 }
 
-void CWindowsWindow::Maximize()
+void FWindowsWindow::Maximize()
 {
     if (StyleParams.IsMaximizable())
     {
@@ -198,7 +192,7 @@ void CWindowsWindow::Maximize()
     }
 }
 
-void CWindowsWindow::Restore()
+void FWindowsWindow::Restore()
 {
     Check(Window != 0);
 
@@ -212,7 +206,7 @@ void CWindowsWindow::Restore()
     }
 }
 
-void CWindowsWindow::ToggleFullscreen()
+void FWindowsWindow::ToggleFullscreen()
 {
     Check(Window != 0);
 
@@ -261,18 +255,18 @@ void CWindowsWindow::ToggleFullscreen()
     }
 }
 
-bool CWindowsWindow::IsValid() const
+bool FWindowsWindow::IsValid() const
 {
     return IsWindow(Window) == TRUE;
 }
 
-bool CWindowsWindow::IsActiveWindow() const
+bool FWindowsWindow::IsActiveWindow() const
 {
     HWND hActive = GetForegroundWindow();
     return (hActive == Window);
 }
 
-void CWindowsWindow::SetTitle(const String& Title)
+void FWindowsWindow::SetTitle(const FString& Title)
 {
     Check(Window != 0);
 
@@ -280,23 +274,23 @@ void CWindowsWindow::SetTitle(const String& Title)
     {
         if (IsValid())
         {
-            SetWindowTextA(Window, Title.CStr());
+            SetWindowTextA(Window, Title.GetCString());
         }
     }
 }
 
-void CWindowsWindow::GetTitle(String& OutTitle)
+void FWindowsWindow::GetTitle(FString& OutTitle)
 {
     if (IsValid())
     {
         int32 Size = GetWindowTextLengthA(Window);
         OutTitle.Resize(Size);
 
-        GetWindowTextA(Window, OutTitle.Data(), Size);
+        GetWindowTextA(Window, OutTitle.GetData(), Size);
     }
 }
 
-void CWindowsWindow::MoveTo(int32 x, int32 y)
+void FWindowsWindow::MoveTo(int32 x, int32 y)
 {
     RECT BorderRect = { 0, 0, 0, 0 };
     AdjustWindowRectEx(&BorderRect, Style, false, StyleEx);
@@ -307,7 +301,7 @@ void CWindowsWindow::MoveTo(int32 x, int32 y)
     SetWindowPos(Window, nullptr, x, y, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
 }
 
-void CWindowsWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
+void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
     Check(Window != 0);
 
@@ -350,7 +344,7 @@ void CWindowsWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
     }
 }
 
-void CWindowsWindow::GetWindowShape(SWindowShape& OutWindowShape) const
+void FWindowsWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 {
     Check(Window != 0);
 
@@ -374,11 +368,11 @@ void CWindowsWindow::GetWindowShape(SWindowShape& OutWindowShape) const
             Height = static_cast<uint32>(Rect.bottom - Rect.top);
         }
 
-        OutWindowShape = SWindowShape(Width, Height, PositionX, PositionY);
+        OutWindowShape = FWindowShape(Width, Height, PositionX, PositionY);
     }
 }
 
-void CWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
+void FWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
 {
     HMONITOR Monitor = MonitorFromWindow(Window, MONITOR_DEFAULTTOPRIMARY);
 
@@ -394,14 +388,14 @@ void CWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) cons
     }
     else
     {
-        String Error;
-        PlatformMisc::GetLastErrorString(Error);
+        FString Error;
+        FPlatformMisc::GetLastErrorString(Error);
 
-        LOG_ERROR("[CWindowsWindow]: Failed to retrieve monitorinfo. Reason: %s", Error.CStr());
+        LOG_ERROR("[FWindowsWindow]: Failed to retrieve monitorinfo. Reason: %s", Error.GetCString());
     }
 }
 
-uint32 CWindowsWindow::GetWidth() const
+uint32 FWindowsWindow::GetWidth() const
 {
     if (IsValid())
     {
@@ -416,7 +410,7 @@ uint32 CWindowsWindow::GetWidth() const
     return 0;
 }
 
-uint32 CWindowsWindow::GetHeight() const
+uint32 FWindowsWindow::GetHeight() const
 {
     if (IsValid())
     {
@@ -431,7 +425,7 @@ uint32 CWindowsWindow::GetHeight() const
     return 0;
 }
 
-void CWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
+void FWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
 {
     HWND InWindowHandle = reinterpret_cast<HWND>(InPlatformHandle);
     if (IsWindow(InWindowHandle))
@@ -446,7 +440,7 @@ void CWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
         uint32 FullscreenHeight;
         GetFullscreenInfo(FullscreenWidth, FullscreenHeight);
 
-        SWindowShape WindowShape;
+        FWindowShape WindowShape;
         GetWindowShape(WindowShape);
 
         const LONG BorderlessStyleMask   = (~WS_BORDER | ~WS_DLGFRAME | ~WS_THICKFRAME);
@@ -454,10 +448,10 @@ void CWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
 
         const bool bHasFullscreenSize  = (FullscreenWidth == WindowShape.Width) && (FullscreenHeight == WindowShape.Height);
         const bool bHasFullscreenStyle = ((Style & BorderlessStyleMask) == 0) && ((Style & BorderlessStyleExMask) == 0); 
-        bIsFullscreen = bHasFullscreenSize && bHasFullscreenStyle; 
+        bIsFullscreen = (bHasFullscreenSize && bHasFullscreenStyle); 
     }
     else
     {
-        LOG_ERROR("[CWindowsWindow]: Tried to set an invalid WindowHandle");
+        LOG_ERROR("[FWindowsWindow]: Tried to set an invalid WindowHandle");
     }
 }

@@ -3,19 +3,19 @@
 
 #include <Appkit/Appkit.h>
 
-extern int EngineMain();
+extern int GenericMain();
 
-class CMacApplication;
+class FMacApplication;
 
 static int32 GEngineMainResult = 0;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaAppDelegate
+// FCocoaAppDelegate
 
-@interface CCocoaAppDelegate : NSObject<NSApplicationDelegate>
+@interface FCocoaAppDelegate : NSObject<NSApplicationDelegate>
 @end
 
-@implementation CCocoaAppDelegate
+@implementation FCocoaAppDelegate
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*) Sender
 {
@@ -38,7 +38,7 @@ static int32 GEngineMainResult = 0;
     SCOPED_AUTORELEASE_POOL();
     
     // Run the main loop
-    GEngineMainResult = EngineMain();
+    GEngineMainResult = GenericMain();
 }
 
 @end
@@ -46,13 +46,13 @@ static int32 GEngineMainResult = 0;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Main
 
-int main(int NumArgs, const char** Args)
+int main(int NumArgs, const CHAR** Args)
 {
     UNREFERENCED_VARIABLE(NumArgs);
     UNREFERENCED_VARIABLE(Args);
     
     [NSApplication sharedApplication];
-    [NSApplication sharedApplication].delegate = [CCocoaAppDelegate new];
+    [NSApplication sharedApplication].delegate = [FCocoaAppDelegate new];
     
     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     [NSApplication sharedApplication].presentationOptions = NSApplicationPresentationDefault;

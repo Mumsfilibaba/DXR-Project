@@ -3,28 +3,28 @@
 #include <Engine/Scene/Components/Component.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMovingBallComponent
+// FMovingBallComponent
 
-class CMovingBallComponent : public CComponent
+class FMovingBallComponent : public FComponent
 {
-    CORE_OBJECT(CMovingBallComponent, CComponent);
+    CORE_OBJECT(FMovingBallComponent, FComponent);
 
 public:
 
-    CMovingBallComponent(CActor* InActorOwner, float InSpeed)
-        : CComponent(InActorOwner, false, true)
+    FMovingBallComponent(FActor* InActorOwner, float InSpeed)
+        : FComponent(InActorOwner, false, true)
         , Speed(InSpeed)
         , CurrentSpeed(InSpeed)
     { }
 
-    virtual void Tick(CTimestamp DeltaTime)
+    virtual void Tick(FTimespan DeltaTime)
     {
         const float fDelta = float(DeltaTime.AsSeconds());
 
-        CActor* Actor = GetActor();
+        FActor* Actor = GetActor();
         
-        CActorTransform& ActorTransform = Actor->GetTransform();
-        ActorTransform.SetTranslation(ActorTransform.GetTranslation() + CVector3(0.0f, CurrentSpeed * fDelta, 0.0f));
+        FActorTransform& ActorTransform = Actor->GetTransform();
+        ActorTransform.SetTranslation(ActorTransform.GetTranslation() + FVector3(0.0f, CurrentSpeed * fDelta, 0.0f));
 
         if (ActorTransform.GetTranslation().y >= 60.0f)
         {

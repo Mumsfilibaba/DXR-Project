@@ -3,9 +3,9 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Delegates/Event.h"
 
-#include "Canvas/Events.h"
-#include "Canvas/CanvasUser.h"
-#include "Canvas/WindowMessageHandler.h"
+#include "Application/Events.h"
+#include "Application/User.h"
+#include "Application/WindowMessageHandler.h"
 
 #include "RHI/RHIViewport.h"
 
@@ -13,18 +13,12 @@
 #include "Engine/Resources/Material.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Engine - Class representing the engine
+// FEngine - Class representing the engine
 
-class ENGINE_API CEngine
+struct ENGINE_API FEngine
 {
-public:
-
-    /**
-     * @brief: Create a new engine instance 
-     * 
-     * @return: Returns a new engine instance
-     */
-    static CEngine* Make();
+    FEngine();
+    virtual ~FEngine() = default;
 
     /**
      * @brief: Initialize the engine 
@@ -45,7 +39,7 @@ public:
      * 
      * @param DeltaTime: Time since the last tick
      */
-    virtual void Tick(CTimestamp DeltaTime);
+    virtual void Tick(FTimespan DeltaTime);
 
     /** 
      * Release engine resources
@@ -54,41 +48,39 @@ public:
      */
     virtual bool Release();
 
-    /** Request exit from the engine */
+    /**
+     * Request exit from the engine 
+     */
     void Exit();
 
-    /** Destroy the engine */
+    /**
+     * Destroy the engine 
+     */
     void Destroy();
 
     /** The main window of the app */
-    TSharedRef<CGenericWindow> MainWindow;
+    FGenericWindowRef MainWindow;
 
     /** The main viewport */
-    TSharedRef<FRHIViewport> MainViewport;
+    FRHIViewportRef MainViewport;
 
     /** User */
-    TSharedPtr<CCanvasUser> User;
+    TSharedPtr<FUser> User;
 
     /** The current scene */
-    TSharedPtr<CScene> Scene;
+    TSharedPtr<FScene> Scene;
 
     /** A completely white texture */
-    TSharedRef<FRHITexture2D> BaseTexture;
+    FRHITexture2DRef BaseTexture;
 
     /** A completely flat normal map*/
-    TSharedRef<FRHITexture2D> BaseNormal;
+    FRHITexture2DRef BaseNormal;
 
     /** Base sampler used by all materials */
-    TSharedRef<FRHISamplerState> BaseMaterialSampler;
+    FRHISamplerStateRef BaseMaterialSampler;
 
     /** Base material */
-    TSharedPtr<CMaterial> BaseMaterial;
-
-protected:
-
-    CEngine();
-    virtual ~CEngine() = default;
+    TSharedPtr<FMaterial> BaseMaterial;
 };
 
-/** Global Engine Pointer */
-extern ENGINE_API CEngine* GEngine;
+extern ENGINE_API FEngine* GEngine;

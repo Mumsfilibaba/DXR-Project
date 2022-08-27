@@ -1,9 +1,10 @@
 #include "RHIShaderCompiler.h"
 
 #include "Core/Containers/ComPtr.h"
-#include "Core/Threading/AsyncTaskManager.h"
-#include "Core/Threading/Platform/PlatformInterlocked.h"
-#include "Core/Modules/Platform/PlatformLibrary.h"
+#include "Core/Threading/TaskManagerInterface.h"
+#include "Core/Platform/PlatformInterlocked.h"
+#include "Core/Platform/PlatformLibrary.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 #include <spirv_cross_c.h>
 
@@ -79,13 +80,12 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShaderBlob
+// FShaderBlob
 
-class CShaderBlob : public IDxcBlob
+class FShaderBlob : public IDxcBlob
 {
 public:
-
-    CShaderBlob(LPCVOID InData, SIZE_T InSize)
+    FShaderBlob(LPCVOID InData, SIZE_T InSize)
         : Data(nullptr)
         , Size(InSize)
         , References(1)
@@ -94,7 +94,7 @@ public:
         FMemory::Memcpy(Data, InData, Size);
     }
 
-    ~CShaderBlob()
+    ~FShaderBlob()
     {
         FMemory::Free(Data);
     }
@@ -131,13 +131,13 @@ public:
 
     virtual ULONG AddRef()
     {
-        PlatformInterlocked::InterlockedIncrement(&References);
+        FPlatformInterlocked::InterlockedIncrement(&References);
         return static_cast<ULONG>(References);
     }
 
     virtual ULONG Release()
     {
-        ULONG NumRefs = static_cast<ULONG>(PlatformInterlocked::InterlockedDecrement(&References));
+        ULONG NumRefs = static_cast<ULONG>(FPlatformInterlocked::InterlockedDecrement(&References));
         if (NumRefs == 0)
         {
             delete this;
@@ -158,19 +158,19 @@ private:
 
 TOptional<FRHIShaderCompiler> FRHIShaderCompiler::Instance;
 
-FRHIShaderCompiler::FRHIShaderCompiler(const char* InAssetPath)
+FRHIShaderCompiler::FRHIShaderCompiler(const CHAR* InAssetPath)
     : DXCLib(nullptr)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
 { 
-    DXCLib = PlatformLibrary::LoadDynamicLib("dxcompiler");
+    DXCLib = FPlatformLibrary::LoadDynamicLib("dxcompiler");
     if (!DXCLib)
     {
         LOG_ERROR("Failed to load 'dxcompiler'");
         return;
     }
 
-    DxcCreateInstanceFunc = PlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
+    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
     if (!DxcCreateInstanceFunc)
     {
         LOG_ERROR("Failed to load 'DxcCreateInstance'");
@@ -182,14 +182,14 @@ FRHIShaderCompiler::~FRHIShaderCompiler()
 {
     if (DXCLib)
     {
-        PlatformLibrary::FreeDynamicLib(DXCLib);
+        FPlatformLibrary::FreeDynamicLib(DXCLib);
         DXCLib = nullptr;
     }
 
     DxcCreateInstanceFunc = nullptr;
 }
 
-bool FRHIShaderCompiler::Initialize(const char* InAssetFolderPath)
+bool FRHIShaderCompiler::Initialize(const CHAR* InAssetFolderPath)
 {
     Instance.Emplace(InAssetFolderPath);
     return (Instance->DXCLib != nullptr) && (Instance->DxcCreateInstanceFunc != nullptr);
@@ -206,12 +206,12 @@ FRHIShaderCompiler& FRHIShaderCompiler::Get()
     return Instance.GetValue();
 }
 
-bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     OutByteCode.Clear();
 
     // Use the asset-folder as base for the shader-files
-    WString WideFilePath   = CharToWide(AssetPath + '/' + Filename);
+    FStringWide WideFilePath   = CharToWide(AssetPath + '/' + Filename);
 
     TComPtr<IDxcCompiler> Compiler;
     HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
@@ -238,11 +238,11 @@ bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCo
     }
     
     TComPtr<IDxcBlobEncoding> SourceBlob;
-    hResult = Library->CreateBlobFromFile(WideFilePath.CStr(), nullptr, &SourceBlob);
+    hResult = Library->CreateBlobFromFile(WideFilePath.GetCString(), nullptr, &SourceBlob);
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Source Data");
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     
@@ -264,23 +264,23 @@ bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCo
     }
 
     // Create a single string for printing all the shader arguments
-    const String ArgumentsString = CreateArgString(CompileArgs.CreateView());
+    const FString ArgumentsString = CreateArgString(CompileArgs.CreateView());
     
     // Convert defines
-    TArray<WString>   StrBuff;
-    TArray<DxcDefine> DxcDefines;
+    TArray<FStringWide> StrBuff;
+    TArray<DxcDefine>   DxcDefines;
     
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
     if (!Defines.IsEmpty())
     {
-        StrBuff.Reserve(Defines.Size() * 2);
-        DxcDefines.Reserve(Defines.Size());
+        StrBuff.Reserve(Defines.GetSize() * 2);
+        DxcDefines.Reserve(Defines.GetSize());
 
         for (const FShaderDefine& Define : Defines)
         {
-            const WString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
-            const WString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
-            DxcDefines.Push({ WideDefine.CStr(), WideValue.CStr() });
+            const FStringWide& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
+            const FStringWide& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
+            DxcDefines.Push({ WideDefine.GetCString(), WideValue.GetCString() });
         }
     }
     
@@ -291,32 +291,34 @@ bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCo
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
     
     WCHAR TargetProfile[BufferLength];
-    WStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
-    const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+    const FStringWide WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
     TComPtr<IDxcOperationResult> Result;
-    hResult = Compiler->Compile( SourceBlob.Get()
-                               , WideFilePath.CStr()
-                               , WideEntrypoint.CStr()
-                               , TargetProfile
-                               , CompileArgs.Data()
-                               , CompileArgs.Size()
-                               , DxcDefines.Data()
-                               , DxcDefines.Size()
-                               , IncludeHandler.Get()
-                               , &Result);
+    hResult = Compiler->Compile(
+        SourceBlob.Get(),
+        WideFilePath.GetCString(),
+        WideEntrypoint.GetCString(),
+        TargetProfile,
+        CompileArgs.GetData(),
+        CompileArgs.GetSize(),
+        DxcDefines.GetData(),
+        DxcDefines.GetSize(),
+        IncludeHandler.Get(),
+        &Result);
+
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -343,12 +345,12 @@ bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCo
     
     if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
     {
-        const String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader '%s', with arguments '%s' and with the following output: %s", Filename.CStr(), ArgumentsString.CStr(), Output.CStr());
+        const FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
+        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader '%s', with arguments '%s' and with the following output: %s", Filename.GetCString(), ArgumentsString.GetCString(), Output.GetCString());
     }
     else
     {
-        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader '%s', with arguments '%s'.", Filename.CStr(), ArgumentsString.CStr());
+        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader '%s', with arguments '%s'.", Filename.GetCString(), ArgumentsString.GetCString());
     }
 
     TComPtr<IDxcBlob> CompiledBlob;
@@ -363,7 +365,7 @@ bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCo
 
     LOG_INFO("[FRHIShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
 
-    FMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
+    FMemory::Memcpy(OutByteCode.GetData(), CompiledBlob->GetBufferPointer(), BlobSize);
     
     // Convert SPIRV into MSL
     if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
@@ -379,7 +381,7 @@ bool FRHIShaderCompiler::CompileFromFile(const String& Filename, const FShaderCo
     return true;
 }
 
-bool FRHIShaderCompiler::CompileFromSource(const String& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     OutByteCode.Clear();
 
@@ -425,23 +427,23 @@ bool FRHIShaderCompiler::CompileFromSource(const String& ShaderSource, const FSh
     }
 
     // Create a single string for printing all the shader arguments
-    const String ArgumentsString = CreateArgString(CompileArgs.CreateView());
+    const FString ArgumentsString = CreateArgString(CompileArgs.CreateView());
 
     // Convert defines
-    TArray<WString>   StrBuff;
+    TArray<FStringWide>   StrBuff;
     TArray<DxcDefine> DxcDefines;
 
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
     if (!Defines.IsEmpty())
     {
-        StrBuff.Reserve(Defines.Size() * 2);
-        DxcDefines.Reserve(Defines.Size());
+        StrBuff.Reserve(Defines.GetSize() * 2);
+        DxcDefines.Reserve(Defines.GetSize());
 
         for (const FShaderDefine& Define : Defines)
         {
-            const WString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
-            const WString& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
-            DxcDefines.Push({ WideDefine.CStr(), WideValue.CStr() });
+            const FStringWide& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
+            const FStringWide& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
+            DxcDefines.Push({ WideDefine.GetCString(), WideValue.GetCString() });
         }
     }
 
@@ -452,34 +454,36 @@ bool FRHIShaderCompiler::CompileFromSource(const String& ShaderSource, const FSh
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
 
     WCHAR TargetProfile[BufferLength];
-    WStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     // Use the asset-folder as base for the shader-files
-    const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+    const FStringWide WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
-    TComPtr<IDxcBlob>            SourceBlob = dbg_new CShaderBlob(ShaderSource.Data(), ShaderSource.SizeInBytes());
+    TComPtr<IDxcBlob>            SourceBlob = dbg_new FShaderBlob(ShaderSource.GetData(), ShaderSource.SizeInBytes());
     TComPtr<IDxcOperationResult> Result;
-    hResult = Compiler->Compile( SourceBlob.Get()
-                               , nullptr
-                               , WideEntrypoint.CStr()
-                               , TargetProfile
-                               , CompileArgs.Data()
-                               , CompileArgs.Size()
-                               , DxcDefines.Data()
-                               , DxcDefines.Size()
-                               , IncludeHandler.Get()
-                               , &Result);
+    hResult = Compiler->Compile(
+        SourceBlob.Get(),
+        nullptr,
+        WideEntrypoint.GetCString(),
+        TargetProfile,
+        CompileArgs.GetData(),
+        CompileArgs.GetSize(),
+        DxcDefines.GetData(),
+        DxcDefines.GetSize(),
+        IncludeHandler.Get(),
+        &Result);
+
     if (FAILED(hResult))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
         LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -506,12 +510,12 @@ bool FRHIShaderCompiler::CompileFromSource(const String& ShaderSource, const FSh
 
     if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
     {
-        const String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader from source, with arguments '%s' and with the following output: %s", ArgumentsString.CStr(), Output.CStr());
+        const FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
+        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader from source, with arguments '%s' and with the following output: %s", ArgumentsString.GetCString(), Output.GetCString());
     }
     else
     {
-        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader from source, with arguments '%s'.", ArgumentsString.CStr());
+        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader from source, with arguments '%s'.", ArgumentsString.GetCString());
     }
 
     TComPtr<IDxcBlob> CompiledBlob;
@@ -526,7 +530,7 @@ bool FRHIShaderCompiler::CompileFromSource(const String& ShaderSource, const FSh
 
     LOG_INFO("[FRHIShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
 
-    FMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
+    FMemory::Memcpy(OutByteCode.GetData(), CompiledBlob->GetBufferPointer(), BlobSize);
 
     // Convert SPIRV into MSL
     if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
@@ -540,14 +544,14 @@ bool FRHIShaderCompiler::CompileFromSource(const String& ShaderSource, const FSh
     return true;
 }
 
-void FRHIShaderCompiler::ErrorCallback(void* Userdata, const char* Error)
+void FRHIShaderCompiler::ErrorCallback(void* Userdata, const CHAR* Error)
 {
     UNREFERENCED_VARIABLE(Userdata);
 
     LOG_ERROR("[SPIRV-Cross Error] %s", Error);
 }
 
-bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TArray<uint8>& OutByteCode)
+bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TArray<uint8>& OutByteCode)
 {
     if (OutByteCode.IsEmpty() || Entrypoint.IsEmpty())
     {
@@ -571,8 +575,8 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TAr
     {
         spvc_parsed_ir ParsedRepresentation = nullptr;
 
-        const uint32 WordCount = OutByteCode.Size() / ElementSize;
-        Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.Data()), WordCount, &ParsedRepresentation);
+        const uint32 WordCount = OutByteCode.GetSize() / ElementSize;
+        Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.GetData()), WordCount, &ParsedRepresentation);
         if (Result != SPVC_SUCCESS)
         {
             LOG_ERROR("Failed to parse Spirv");
@@ -587,7 +591,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TAr
         }
     }
 
-    const char* MSLSource = nullptr;
+    const CHAR* MSLSource = nullptr;
     Result =  spvc_compiler_compile(CompilerMSL, &MSLSource);
     if (Result != SPVC_SUCCESS)
     {
@@ -596,11 +600,11 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TAr
     }
 
     // Start by adding the entrypoint to the shader, which is needed when we create native shader objects
-    const String Comment = "// " + Entrypoint + "\n\n";
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.Data()), Comment.Length() * sizeof(const char));
+    const FString Comment = "// " + Entrypoint + "\n\n";
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.GetData()), Comment.GetLength() * sizeof(const CHAR));
 
-    const uint32 SourceLength = CStringUtils::Length(MSLSource);
-    NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const char));
+    const uint32 SourceLength = FCString::Strlen(MSLSource);
+    NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const CHAR));
 
     spvc_context_destroy(Context);
 
@@ -608,24 +612,24 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const String& Entrypoint, TAr
     return true;
 }
 
-bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename)
+bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const FString& Filename)
 {
-    FILE* Output = fopen(Filename.CStr(), "w");
+    FILE* Output = fopen(Filename.GetCString(), "w");
     if (!Output)
     {
-        LOG_ERROR("Failed to open file '%s'", Filename.CStr());
+        LOG_ERROR("Failed to open file '%s'", Filename.GetCString());
         return false;
     }
 
-    fwrite(ByteCode.Data(), ByteCode.Size(), sizeof(uint8), Output);
+    fwrite(ByteCode.GetData(), ByteCode.GetSize(), sizeof(uint8), Output);
 
     fclose(Output);
     return true;
 }
 
-String FRHIShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
+FString FRHIShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
 {
-    WString WArgumentsString;
+    FStringWide WArgumentsString;
     for (LPCWSTR Arg : Args)
     {
         WArgumentsString += Arg + ' ';

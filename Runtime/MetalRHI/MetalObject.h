@@ -1,25 +1,25 @@
 #pragma once
 #include "MetalCore.h"
 
-class CMetalDeviceContext;
+class FMetalDeviceContext;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalObject
+// FMetalObject
 
-class CMetalObject
+class FMetalObject
 {
 public:
 
-    CMetalObject(CMetalDeviceContext* InDeviceContext)
+    FMetalObject(FMetalDeviceContext* InDeviceContext)
         : DeviceContext(InDeviceContext)
     {
         Check(DeviceContext != nullptr);
     }
 
-    ~CMetalObject() = default;
+    ~FMetalObject() = default;
 
-    FORCEINLINE CMetalDeviceContext* GetDeviceContext() const { return DeviceContext; }
+    FORCEINLINE FMetalDeviceContext* GetDeviceContext() const { return DeviceContext; }
 
 private:
-    CMetalDeviceContext* DeviceContext;
+    FMetalDeviceContext* DeviceContext;
 };

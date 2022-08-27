@@ -1,7 +1,7 @@
 #include "FrameProfilerWindow.h"
 
-#include "Canvas/CanvasUtilities.h"
-#include "Canvas/CanvasApplication.h"
+#include "Application/WidgetUtilities.h"
+#include "Application/ApplicationInterface.h"
 
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Time/Timer.h"
@@ -17,12 +17,12 @@ TAutoConsoleVariable<bool> GDrawFrameProfiler("Renderer.DrawFrameProfiler", fals
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FrameProfilerWindow
 
-TSharedRef<CFrameProfilerWindow> CFrameProfilerWindow::Make()
+TSharedRef<FFrameProfilerWindow> FFrameProfilerWindow::Make()
 {
-    return dbg_new CFrameProfilerWindow();
+    return dbg_new FFrameProfilerWindow();
 }
 
-void CFrameProfilerWindow::Tick()
+void FFrameProfilerWindow::Tick()
 {
     if (GDrawFps.GetBool())
     {
@@ -35,14 +35,14 @@ void CFrameProfilerWindow::Tick()
     }
 }
 
-bool CFrameProfilerWindow::IsTickable()
+bool FFrameProfilerWindow::IsTickable()
 {
     return GDrawFps.GetBool() || GDrawFrameProfiler.GetBool();
 }
 
-void CFrameProfilerWindow::DrawFPS()
+void FFrameProfilerWindow::DrawFPS()
 {
-    const uint32 WindowWidth = CCanvasApplication::Get().GetMainViewport()->GetWidth();
+    const uint32 WindowWidth = FApplicationInterface::Get().GetMainViewport()->GetWidth();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(5.0f, 5.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
@@ -60,8 +60,8 @@ void CFrameProfilerWindow::DrawFPS()
 
     ImGui::Begin("FPS Window", nullptr, Flags);
 
-    const String FpsString = ToString(CFrameProfiler::Get().GetFramesPerSecond());
-    ImGui::Text("%s", FpsString.CStr());
+    const FString FpsString = ToString(FFrameProfiler::Get().GetFramesPerSecond());
+    ImGui::Text("%s", FpsString.GetCString());
 
     ImGui::End();
 
@@ -70,7 +70,7 @@ void CFrameProfilerWindow::DrawFPS()
     ImGui::PopStyleVar();
 }
 
-void CFrameProfilerWindow::DrawCPUData(float Width)
+void FFrameProfilerWindow::DrawCPUData(float Width)
 {
     const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
     if (ImGui::BeginTable("Frame Statistics", 1, TableFlags))
@@ -78,7 +78,7 @@ void CFrameProfilerWindow::DrawCPUData(float Width)
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
 
-        const SProfileSample& CPUFrameTime = CFrameProfiler::Get().GetCPUFrameTime();
+        const FProfileSample& CPUFrameTime = FFrameProfiler::Get().GetCPUFrameTime();
 
         float Avg = CPUFrameTime.GetAverage();
         float Min = CPUFrameTime.Min;
@@ -105,7 +105,7 @@ void CFrameProfilerWindow::DrawCPUData(float Width)
 
         ImGui::PlotHistogram(
             "",
-            CPUFrameTime.Samples.Data(),
+            CPUFrameTime.Samples.GetData(),
             CPUFrameTime.SampleCount,
             CPUFrameTime.CurrentSample,
             nullptr,
@@ -183,7 +183,7 @@ void CFrameProfilerWindow::DrawCPUData(float Width)
         ImGui::TableHeadersRow();
 
         // Retrieve a copy of the CPU samples
-        CFrameProfiler::Get().GetCPUSamples(Samples);
+        FFrameProfiler::Get().GetCPUSamples(Samples);
         for (auto& Sample : Samples)
         {
             ImGui::TableNextRow();
@@ -194,7 +194,7 @@ void CFrameProfilerWindow::DrawCPUData(float Width)
             int32 Calls = Sample.second.TotalCalls;
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", Sample.first.CStr());
+            ImGui::Text("%s", Sample.first.GetCString());
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("%d", Calls);
             ImGui::TableSetColumnIndex(2);
@@ -211,10 +211,10 @@ void CFrameProfilerWindow::DrawCPUData(float Width)
     }
 }
 
-void CFrameProfilerWindow::DrawWindow()
+void FFrameProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    TSharedRef<CGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
+    FGenericWindowRef MainViewport = FApplicationInterface::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();
@@ -240,21 +240,21 @@ void CFrameProfilerWindow::DrawWindow()
     {
         if (ImGui::Button("Start Profile"))
         {
-            CFrameProfiler::Get().Enable();
+            FFrameProfiler::Get().Enable();
         }
 
         ImGui::SameLine();
 
         if (ImGui::Button("Stop Profile"))
         {
-            CFrameProfiler::Get().Disable();
+            FFrameProfiler::Get().Disable();
         }
 
         ImGui::SameLine();
 
         if (ImGui::Button("Reset"))
         {
-            CFrameProfiler::Get().Reset();
+            FFrameProfiler::Get().Reset();
         }
 
         DrawCPUData(Width);

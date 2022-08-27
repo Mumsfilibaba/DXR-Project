@@ -1,7 +1,7 @@
 #pragma once
-#include "Canvas/CanvasWindow.h"
-#include "Canvas/InputHandler.h"
-#include "Canvas/Events.h"
+#include "Application/Window.h"
+#include "Application/InputHandler.h"
+#include "Application/Events.h"
 
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/SharedRef.h"
@@ -14,19 +14,19 @@
 #include <imgui.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CConsoleInputHandler
+// FConsoleInputHandler
 
-class CConsoleInputHandler final : public CInputHandler
+class FConsoleInputHandler final 
+    : public FInputHandler
 {
 public:
+    DECLARE_DELEGATE(FHandleKeyEventDelegate, const FKeyEvent&);
+    FHandleKeyEventDelegate HandleKeyEventDelegate;
 
-    DECLARE_DELEGATE(CHandleKeyEventDelegate, const SKeyEvent&);
-    CHandleKeyEventDelegate HandleKeyEventDelegate;
+    FConsoleInputHandler() = default;
+    ~FConsoleInputHandler() = default;
 
-    CConsoleInputHandler() = default;
-    ~CConsoleInputHandler() = default;
-
-    virtual bool HandleKeyEvent(const SKeyEvent& KeyEvent) override final
+    virtual bool HandleKeyEvent(const FKeyEvent& KeyEvent) override final
     {
         HandleKeyEventDelegate.Execute(KeyEvent);
         return bConsoleToggled;
@@ -36,47 +36,46 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGameConsoleWindow
+// FGameConsoleWindow
 
-class CGameConsoleWindow final : public CCanvasWindow
+class FGameConsoleWindow final 
+    : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
-
-    static TSharedRef<CGameConsoleWindow> Make();
+    static TSharedRef<FGameConsoleWindow> Make();
 
     virtual void Tick() override final;
 
     virtual bool IsTickable() override final;
 
 private:
-
-    CGameConsoleWindow();
-    ~CGameConsoleWindow() = default;
+    FGameConsoleWindow();
+    ~FGameConsoleWindow() = default;
 
     /** Callback from the input */
     int32 TextCallback(struct ImGuiInputTextCallbackData* Data);
 
     /** Called when a key is pressed */
-    void HandleKeyPressedEvent(const SKeyEvent& Event);
+    void HandleKeyPressedEvent(const FKeyEvent& Event);
 
-    TSharedPtr<CConsoleInputHandler> InputHandler;
+    TSharedPtr<FConsoleInputHandler> InputHandler;
 
     // Text to display in the input box when browsing through the history
-    String PopupSelectedText;
+    FString PopupSelectedText;
 
     // The current candidates of registered console-objects
-    TArray<TPair<IConsoleObject*, String>> Candidates;
+    TArray<TPair<IConsoleObject*, FString>> Candidates;
     int32 CandidatesIndex = -1;
 
     // Index in the history
     int32 HistoryIndex = -1;
 
-    TStaticArray<char, 256> TextBuffer;
+    TStaticArray<CHAR, 256> TextBuffer;
 
-    bool bUpdateCursorPosition = false;
-    bool bIsActive = false;
+    bool bUpdateCursorPosition      = false;
+    bool bIsActive                  = false;
     bool bCandidateSelectionChanged = false;
-    bool bScrollDown = false;
+    bool bScrollDown                = false;
 };

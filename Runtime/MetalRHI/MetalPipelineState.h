@@ -10,18 +10,17 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalInputLayoutState
+// FMetalInputLayoutState
 
-class CMetalInputLayoutState : public FRHIVertexInputLayout, public CMetalObject
+class FMetalInputLayoutState : public FRHIVertexInputLayout, public FMetalObject
 {
 public:
-
-    CMetalInputLayoutState(CMetalDeviceContext* DeviceContext, const FRHIVertexInputLayoutInitializer& Initializer)
-        : CMetalObject(DeviceContext)
+    FMetalInputLayoutState(FMetalDeviceContext* DeviceContext, const FRHIVertexInputLayoutInitializer& Initializer)
+        : FMetalObject(DeviceContext)
         , VertexDescriptor(nil)
     {
         VertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
-        for (int32 Index = 0; Index < Initializer.Elements.Size(); ++Index)
+        for (int32 Index = 0; Index < Initializer.Elements.GetSize(); ++Index)
         {
             const auto& Element = Initializer.Elements[Index];
             VertexDescriptor.attributes[Index].format      = ConvertVertexFormat(Element.Format);
@@ -34,7 +33,7 @@ public:
         }
     }
     
-    ~CMetalInputLayoutState() = default;
+    ~FMetalInputLayoutState() = default;
     
 public:
     MTLVertexDescriptor* GetMTLVertexDescriptor() const { return VertexDescriptor; }
@@ -45,14 +44,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalDepthStencilState
+// FMetalDepthStencilState
 
-class CMetalDepthStencilState : public FRHIDepthStencilState, public CMetalObject
+class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalObject
 {
 public:
     
-    CMetalDepthStencilState(CMetalDeviceContext* DeviceContext, const CRHIDepthStencilStateInitializer& Initializer)
-        : CMetalObject(DeviceContext)
+    FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInitializer& Initializer)
+        : FMetalObject(DeviceContext)
         , DepthStencilState()
     {
         SCOPED_AUTORELEASE_POOL();
@@ -91,7 +90,7 @@ public:
         NSRelease(Descriptor);
     }
     
-    ~CMetalDepthStencilState()
+    ~FMetalDepthStencilState()
     {
         NSSafeRelease(DepthStencilState);
     }
@@ -105,20 +104,20 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalRasterizerState
+// FMetalRasterizerState
 
-class CMetalRasterizerState : public FRHIRasterizerState, public CMetalObject
+class FMetalRasterizerState : public FRHIRasterizerState, public FMetalObject
 {
 public:
 
-    CMetalRasterizerState(CMetalDeviceContext* DeviceContext, const CRHIRasterizerStateInitializer& Initializer)
-        : CMetalObject(DeviceContext)
+    FMetalRasterizerState(FMetalDeviceContext* DeviceContext, const FRHIRasterizerStateInitializer& Initializer)
+        : FMetalObject(DeviceContext)
         , FillMode(ConvertFillMode(Initializer.FillMode))
         , FrontFaceWinding(Initializer.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
     {
     }
 
-    ~CMetalRasterizerState() = default;
+    ~FMetalRasterizerState() = default;
 
 public:
 
@@ -132,24 +131,24 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalBlendState
+// FMetalBlendState
 
-class CMetalBlendState : public FRHIBlendState
+class FMetalBlendState : public FRHIBlendState
 {
 public:
 
-    CMetalBlendState()  = default;
-    ~CMetalBlendState() = default;
+    FMetalBlendState()  = default;
+    ~FMetalBlendState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMetalResourceBinding
+// FMetalResourceBinding
 
-struct SMetalResourceBinding
+struct FMetalResourceBinding
 {
-    SMetalResourceBinding() = default;
+    FMetalResourceBinding() = default;
     
-    SMetalResourceBinding(uint8 InBinding)
+    FMetalResourceBinding(uint8 InBinding)
         : Binding(InBinding)
     { }
 
@@ -157,14 +156,13 @@ struct SMetalResourceBinding
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalGraphicsPipelineState
+// FMetalGraphicsPipelineState
 
-class CMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public CMetalObject
+class FMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public FMetalObject
 {
 public:
-
-    CMetalGraphicsPipelineState(CMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInitializer& Initializer)
-        : CMetalObject(DeviceContext)
+    FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInitializer& Initializer)
+        : FMetalObject(DeviceContext)
         , BlendState(nullptr)
         , DepthStencilState(nullptr)
         , RasterizerState(nullptr)
@@ -181,19 +179,19 @@ public:
             SamplerBindings[ShaderStage].Fill(SMetalResourceBinding(0));
         }
         
-        DepthStencilState = MakeSharedRef<CMetalDepthStencilState>(Initializer.DepthStencilState);
+        DepthStencilState = MakeSharedRef<FMetalDepthStencilState>(Initializer.DepthStencilState);
         Check(DepthStencilState != nullptr);
         
-        RasterizerState = MakeSharedRef<CMetalRasterizerState>(Initializer.RasterizerState);
+        RasterizerState = MakeSharedRef<FMetalRasterizerState>(Initializer.RasterizerState);
         Check(RasterizerState != nullptr);
         
         MTLRenderPipelineDescriptor* Descriptor = [MTLRenderPipelineDescriptor new];
-        if (CMetalShader* VertexShader = GetMetalShader(Initializer.ShaderState.VertexShader))
+        if (FMetalShader* VertexShader = GetMetalShader(Initializer.ShaderState.VertexShader))
         {
             Descriptor.vertexFunction = VertexShader->GetMTLFunction();
         }
 
-        if (CMetalShader* PixelShader = GetMetalShader(Initializer.ShaderState.PixelShader))
+        if (FMetalShader* PixelShader = GetMetalShader(Initializer.ShaderState.PixelShader))
         {
             Descriptor.fragmentFunction = PixelShader->GetMTLFunction();
         }
@@ -205,7 +203,7 @@ public:
         
         Descriptor.depthAttachmentPixelFormat = ConvertFormat(Initializer.PipelineFormats.DepthStencilFormat);
         
-        CMetalInputLayoutState* InputLayout = static_cast<CMetalInputLayoutState*>(Initializer.VertexInputLayout);
+        FMetalInputLayoutState* InputLayout = static_cast<FMetalInputLayoutState*>(Initializer.VertexInputLayout);
         Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
 
         NSError* Error = nil;
@@ -215,8 +213,8 @@ public:
                                                                                  reflection:&PipelineReflection
                                                                                       error:&Error];
         
-        const String ErrorString([Error localizedDescription]);
-        METAL_ERROR_COND(PipelineState != nil, "[MetalRHI] Failed to created pipeline state, error %s", ErrorString.CStr());
+        const FString ErrorString([Error localizedDescription]);
+        METAL_ERROR_COND(PipelineState != nil, "[MetalRHI] Failed to created pipeline state, error %s", ErrorString.GetCString());
         
         // Vertex- Function Resources
         for (MTLArgument* Argument in PipelineReflection.vertexArguments)
@@ -290,7 +288,7 @@ public:
         NSSafeRelease(Descriptor);
     }
     
-    ~CMetalGraphicsPipelineState()
+    ~FMetalGraphicsPipelineState()
     {
         NSSafeRelease(PipelineState);
     }
@@ -298,19 +296,17 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
-    virtual void SetName(const String& InName) override final { }
+    virtual void SetName(const FString& InName) override final { }
 
-    virtual String GetName() const override final { return ""; }
+    virtual FString GetName() const override final { return ""; }
     
 public:
     
-    CMetalBlendState* GetMetalBlendState() const { return BlendState.Get(); }
-    
-    CMetalDepthStencilState* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
-    
-    CMetalRasterizerState* GetMetalRasterizerState() const { return RasterizerState.Get(); }
+    FMetalBlendState*        GetMetalBlendState()        const { return BlendState.Get(); }
+    FMetalDepthStencilState* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
+    FMetalRasterizerState*   GetMetalRasterizerState()   const { return RasterizerState.Get(); }
     
     id<MTLRenderPipelineState> GetMTLPipelineState() const { return PipelineState; }
     
@@ -319,9 +315,9 @@ public:
     uint32 GetBufferBinding(EShaderVisibility ShaderVisibility, uint32 BufferIndex) const { return BufferBindings[ShaderVisibility][BufferIndex]; }
     
 private:
-    TSharedRef<CMetalBlendState>        BlendState;
-    TSharedRef<CMetalDepthStencilState> DepthStencilState;
-    TSharedRef<CMetalRasterizerState>   RasterizerState;
+    TSharedRef<FMetalBlendState>        BlendState;
+    TSharedRef<FMetalDepthStencilState> DepthStencilState;
+    TSharedRef<FMetalRasterizerState>   RasterizerState;
     
     id<MTLRenderPipelineState>          PipelineState;
     
@@ -335,43 +331,43 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalComputePipelineState
+// FMetalComputePipelineState
 
-class CMetalComputePipelineState : public FRHIComputePipelineState
+class FMetalComputePipelineState : public FRHIComputePipelineState
 {
 public:
 
-    CMetalComputePipelineState()  = default;
-    ~CMetalComputePipelineState() = default;
+    FMetalComputePipelineState()  = default;
+    ~FMetalComputePipelineState() = default;
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
-    virtual void SetName(const String& InName) override final { }
+    virtual void SetName(const FString& InName) override final { }
 
-    virtual String GetName() const override final { return ""; }
+    virtual FString GetName() const override final { return ""; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalRayTracingPipelineState
+// FMetalRayTracingPipelineState
 
-class CMetalRayTracingPipelineState : public FRHIRayTracingPipelineState
+class FMetalRayTracingPipelineState : public FRHIRayTracingPipelineState
 {
 public:
 
-    CMetalRayTracingPipelineState()  = default;
-    ~CMetalRayTracingPipelineState() = default;
+    FMetalRayTracingPipelineState()  = default;
+    ~FMetalRayTracingPipelineState() = default;
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
-    virtual void SetName(const String& InName) override final { }
+    virtual void SetName(const FString& InName) override final { }
 
-    virtual String GetName() const override final { return ""; }
+    virtual FString GetName() const override final { return ""; }
 };
 
 #pragma clang diagnostic pop

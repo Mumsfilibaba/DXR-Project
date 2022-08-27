@@ -3,15 +3,15 @@
 #include "Windows/InspectorWindow.h"
 #include "Windows/EditorMenuWidget.h"
 
-class CEditorEngine : public CEngine
+class FEditorEngine : public FEngine
 {
 public:
 
-    static CEditorEngine* Make();
+    static FEditorEngine* Make();
 
     /* Init engine */
     virtual bool Init() override;
 
     /* Tick should be called once per frame */
-    virtual void Tick( CTimestamp DeltaTime ) override;
+    virtual void Tick( FTimespan DeltaTime ) override;
 };

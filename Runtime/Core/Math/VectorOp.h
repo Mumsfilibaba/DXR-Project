@@ -8,7 +8,7 @@
     #define VECTOR_ALIGN ALIGN_AS(16)
 #endif
 
-#if (!defined(DISABLE_SIMD) && ARCHITECTURE_X86_X64)
+#if (!defined(DISABLE_SIMD) && PLATFORM_ARCHITECTURE_X86_X64)
     #define USE_VECTOR_OP (1)
 
 /* Windows Specific */
@@ -262,31 +262,31 @@ namespace NVectorOp
 
     FORCEINLINE bool VECTORCALL Equal(Float128 A, Float128 B) noexcept
     {
-        int Mask = _mm_movemask_ps(_mm_cmpeq_ps(A, B));
+        const auto Mask = _mm_movemask_ps(_mm_cmpeq_ps(A, B));
         return 0xf == (Mask & 0xf);
     }
 
     FORCEINLINE bool VECTORCALL GreaterThan(Float128 A, Float128 B) noexcept
     {
-        int Mask = _mm_movemask_ps(_mm_cmpgt_ps(A, B));
+        const auto Mask = _mm_movemask_ps(_mm_cmpgt_ps(A, B));
         return 0xf == (Mask & 0xf);
     }
 
     FORCEINLINE bool VECTORCALL GreaterThanOrEqual(Float128 A, Float128 B) noexcept
     {
-        int Mask = _mm_movemask_ps(_mm_cmpge_ps(A, B));
+        const auto Mask = _mm_movemask_ps(_mm_cmpge_ps(A, B));
         return 0xf == (Mask & 0xf);
     }
 
     FORCEINLINE bool VECTORCALL LessThan(Float128 A, Float128 B) noexcept
     {
-        int Mask = _mm_movemask_ps(_mm_cmplt_ps(A, B));
+        const auto Mask = _mm_movemask_ps(_mm_cmplt_ps(A, B));
         return 0xf == (Mask & 0xf);
     }
 
     FORCEINLINE bool VECTORCALL LessThanOrEqual(Float128 A, Float128 B) noexcept
     {
-        int Mask = _mm_movemask_ps(_mm_cmple_ps(A, B));
+        const auto Mask = _mm_movemask_ps(_mm_cmple_ps(A, B));
         return 0xf == (Mask & 0xf);
     }
 

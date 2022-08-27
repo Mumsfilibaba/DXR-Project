@@ -1,16 +1,16 @@
 #pragma once
-#include "Canvas/ICanvasRenderer.h"
+#include "Application/IApplicationRenderer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CInterfaceRendererModule
+// FApplicationInterfaceRendererModule
 
-class CInterfaceRendererModule : public IInterfaceRendererModule
+class FApplicationInterfaceRendererModule 
+    : public IApplicationRendererModule
 {
 public:
-
-    CInterfaceRendererModule() = default;
-    ~CInterfaceRendererModule() = default;
+    FApplicationInterfaceRendererModule()  = default;
+    ~FApplicationInterfaceRendererModule() = default;
 
      /** @brief: Create the renderer */
-    virtual ICanvasRenderer* CreateRenderer() override final;
+    virtual IApplicationRenderer* CreateRenderer() override final;
 };

@@ -1,6 +1,14 @@
 #pragma once
 
+// TODO: Custom set implementation
+
 #if 1
+#include <set>
+
+template<
+    typename KeyType,
+    typename PredicateType = std::less<KeyType>>
+using TSet = std::set<KeyType, PredicateType>;
 
 #else
 #include "Iterator.h"

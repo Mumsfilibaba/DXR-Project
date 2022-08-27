@@ -4,17 +4,16 @@
 #include "Core/Core.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMeshFactory
+// FMeshFactory
 
-class ENGINE_API CMeshFactory
+struct ENGINE_API FMeshFactory
 {
-public:
-    static SMeshData CreateCube(float Width = 1.0f, float Height = 1.0f, float Depth = 1.0f) noexcept;
-    static SMeshData CreatePlane(uint32 Width = 1, uint32 Height = 1) noexcept;
-    static SMeshData CreateSphere(uint32 Subdivisions = 0, float Radius = 0.5f) noexcept;
-    static SMeshData CreateCone(uint32 Sides = 5, float Radius = 0.5f, float Height = 1.0f) noexcept;
-    //static SMeshData createTorus() noexcept;
-    //static SMeshData createTeapot() noexcept;
-    static SMeshData CreatePyramid() noexcept;
-    static SMeshData CreateCylinder(uint32 Sides = 5, float Radius = 0.5f, float Height = 1.0f) noexcept;
+    static FMeshData CreateCube(float Width = 1.0f, float Height = 1.0f, float Depth = 1.0f) noexcept;
+    static FMeshData CreatePlane(uint32 Width = 1, uint32 Height = 1) noexcept;
+    static FMeshData CreateSphere(uint32 Subdivisions = 0, float Radius = 0.5f) noexcept;
+    static FMeshData CreateCone(uint32 Sides = 5, float Radius = 0.5f, float Height = 1.0f) noexcept;
+    //static FMeshData createTorus() noexcept;
+    //static FMeshData createTeapot() noexcept;
+    static FMeshData CreatePyramid() noexcept;
+    static FMeshData CreateCylinder(uint32 Sides = 5, float Radius = 0.5f, float Height = 1.0f) noexcept;
 };

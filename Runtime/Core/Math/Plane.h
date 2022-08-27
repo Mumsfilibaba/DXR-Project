@@ -4,16 +4,16 @@
 // TODO: Finish this class
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CPlane
+// FPlane
 
-class VECTOR_ALIGN CPlane
+class VECTOR_ALIGN FPlane
 {
 public:
 
     /**
      * @brief: Default constructor
      */
-    FORCEINLINE CPlane() noexcept
+    FORCEINLINE FPlane() noexcept
         : x(0.0f)
         , y(1.0f)
         , z(0.0f)
@@ -25,7 +25,7 @@ public:
      * 
      * @param Plane: Vector4 representing a plane
      */
-    FORCEINLINE explicit CPlane(const CVector4& Plane) noexcept
+    FORCEINLINE explicit FPlane(const FVector4& Plane) noexcept
         : x(Plane.x)
         , y(Plane.y)
         , z(Plane.z)
@@ -38,7 +38,7 @@ public:
      * @param Normal: Normal of a plane
      * @param InW: Offset from origin in direction of the normal
      */
-    FORCEINLINE explicit CPlane(const CVector3& Normal, float InW) noexcept
+    FORCEINLINE explicit FPlane(const FVector3& Normal, float InW) noexcept
         : x(Normal.x)
         , y(Normal.y)
         , z(Normal.z)
@@ -53,7 +53,7 @@ public:
      * @param InZ: z-component of a Vector4
      * @param InW: w-component of a Vector4
      */
-    FORCEINLINE explicit CPlane(float InX, float InY, float InZ, float InW) noexcept
+    FORCEINLINE explicit FPlane(float InX, float InY, float InZ, float InW) noexcept
         : x(InX)
         , y(InY)
         , z(InZ)
@@ -66,7 +66,7 @@ public:
      * @param Other: plane to compare against
      * @return: True if equal, false if not
      */
-    inline bool IsEqual(const CPlane& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    inline bool IsEqual(const FPlane& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
 #if !USE_VECTOR_OP
         Epsilon = NMath::Abs(Epsilon);
@@ -97,9 +97,9 @@ public:
      */
     FORCEINLINE void Normalize() noexcept
     {
-        CVector3 Normal = GetNormal();
+        FVector3 Normal = GetNormal();
 
-        const float ReciprocalLength = 1.0f / Normal.Length();
+        const float ReciprocalLength = 1.0f / Normal.GetLength();
         x *= ReciprocalLength;
         y *= ReciprocalLength;
         z *= ReciprocalLength;
@@ -114,9 +114,9 @@ public:
      * @param Point: Point to perform dot-product with
      * @return: Returns the dot-product
      */
-    FORCEINLINE float DotProductCoord(const CVector3& Point) const noexcept
+    FORCEINLINE float DotProductCoord(const FVector3& Point) const noexcept
     {
-        CVector3 Normal = GetNormal();
+        FVector3 Normal = GetNormal();
         return Normal.DotProduct(Point) + w;
 
         // TODO: Implement SIMD
@@ -127,9 +127,9 @@ public:
      * 
      * @return: Returns the normal of the plane
      */
-    FORCEINLINE CVector3 GetNormal() const noexcept
+    FORCEINLINE FVector3 GetNormal() const noexcept
     {
-        return *reinterpret_cast<const CVector3*>(this);
+        return *reinterpret_cast<const FVector3*>(this);
     }
 
     /**
@@ -137,7 +137,7 @@ public:
      * 
      * @return: A pointer to the data representing the plane
      */
-    FORCEINLINE float* Data() noexcept
+    FORCEINLINE float* GetData() noexcept
     {
         return reinterpret_cast<float*>(this);
     }
@@ -147,7 +147,7 @@ public:
      *
      * @return: A pointer to the data representing the plane
      */
-    FORCEINLINE const float* Data() const noexcept
+    FORCEINLINE const float* GetData() const noexcept
     {
         return reinterpret_cast<const float*>(this);
     }
@@ -160,7 +160,7 @@ public:
      * @param Other: The plane to compare with
      * @return: True if equal, false if not
      */
-    FORCEINLINE bool operator==(const CPlane& Other) const noexcept
+    FORCEINLINE bool operator==(const FPlane& Other) const noexcept
     {
         return IsEqual(Other);
     }
@@ -171,7 +171,7 @@ public:
      * @param Other: The plane to compare with
      * @return: False if equal, true if not
      */
-    FORCEINLINE bool operator!=(const CPlane& Other) const noexcept
+    FORCEINLINE bool operator!=(const FPlane& Other) const noexcept
     {
         return !IsEqual(Other);
     }

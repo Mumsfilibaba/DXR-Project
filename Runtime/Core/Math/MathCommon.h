@@ -19,7 +19,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // MacOS specific
 
-#elif (PLATFORM_MACOS && ARCHITECTURE_X86_X64)
+#elif (PLATFORM_MACOS && PLATFORM_ARCHITECTURE_X86_X64)
     #include <immintrin.h>
 #else
 
@@ -56,7 +56,7 @@ namespace NMath
 
     FORCEINLINE float VECTORCALL Sqrt(float Value)
     {
-#if ARCHITECTURE_X86_X64
+#if PLATFORM_ARCHITECTURE_X86_X64
         return _mm_cvtss_f32(_mm_sqrt_ss(_mm_load_ss(&Value)));
 #else
         return std::sqrtf(Value);
@@ -191,4 +191,4 @@ namespace NMath
     {
         return ((1 << kBits) - 1);
     }
-}
+};

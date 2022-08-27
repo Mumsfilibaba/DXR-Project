@@ -3,8 +3,8 @@
 #include "Core/Time/Timer.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Canvas/CanvasUtilities.h"
-#include "Canvas/CanvasApplication.h"
+#include "Application/WidgetUtilities.h"
+#include "Application/ApplicationInterface.h"
 
 #include <imgui.h>
 
@@ -16,12 +16,12 @@ TAutoConsoleVariable<bool> GDrawGPUProfiler("Renderer.DrawGPUProfiler", false);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // GPUProfilerWindow
 
-TSharedRef<CGPUProfilerWindow> CGPUProfilerWindow::Make()
+TSharedRef<FGPUProfilerWindow> FGPUProfilerWindow::Make()
 {
-    return dbg_new CGPUProfilerWindow();
+    return dbg_new FGPUProfilerWindow();
 }
 
-void CGPUProfilerWindow::Tick()
+void FGPUProfilerWindow::Tick()
 {
     if (GDrawGPUProfiler.GetBool())
     {
@@ -29,12 +29,12 @@ void CGPUProfilerWindow::Tick()
     }
 }
 
-bool CGPUProfilerWindow::IsTickable()
+bool FGPUProfilerWindow::IsTickable()
 {
     return GDrawGPUProfiler.GetBool();
 }
 
-void CGPUProfilerWindow::DrawGPUData(float Width)
+void FGPUProfilerWindow::DrawGPUData(float Width)
 {
     const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
 
@@ -43,7 +43,7 @@ void CGPUProfilerWindow::DrawGPUData(float Width)
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
 
-        const SGPUProfileSample& GPUFrameTime = CGPUProfiler::Get().GetGPUFrameTime();
+        const FGPUProfileSample& GPUFrameTime = FGPUProfiler::Get().GetGPUFrameTime();
 
         float Avg = GPUFrameTime.GetAverage();
         float Min = GPUFrameTime.Min;
@@ -70,7 +70,7 @@ void CGPUProfilerWindow::DrawGPUData(float Width)
 
         ImGui::PlotHistogram(
             "",
-            GPUFrameTime.Samples.Data(),
+            GPUFrameTime.Samples.GetData(),
             GPUFrameTime.SampleCount,
             GPUFrameTime.CurrentSample,
             nullptr,
@@ -146,7 +146,7 @@ void CGPUProfilerWindow::DrawGPUData(float Width)
         ImGui::TableSetupColumn("Max");
         ImGui::TableHeadersRow();
 
-        CGPUProfiler::Get().GetGPUSamples(Samples);
+        FGPUProfiler::Get().GetGPUSamples(Samples);
         for (auto& Sample : Samples)
         {
             ImGui::TableNextRow();
@@ -156,7 +156,7 @@ void CGPUProfilerWindow::DrawGPUData(float Width)
             float Max = Sample.second.Max;
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", Sample.first.CStr());
+            ImGui::Text("%s", Sample.first.GetCString());
             ImGui::TableSetColumnIndex(1);
             ImGui_PrintTime(Avg);
             ImGui::TableSetColumnIndex(2);
@@ -171,10 +171,10 @@ void CGPUProfilerWindow::DrawGPUData(float Width)
     }
 }
 
-void CGPUProfilerWindow::DrawWindow()
+void FGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    TSharedRef<CGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
+    FGenericWindowRef MainViewport = FApplicationInterface::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();
@@ -200,21 +200,21 @@ void CGPUProfilerWindow::DrawWindow()
     {
         if (ImGui::Button("Start Profile"))
         {
-            CGPUProfiler::Get().Enable();
+            FGPUProfiler::Get().Enable();
         }
 
         ImGui::SameLine();
 
         if (ImGui::Button("Stop Profile"))
         {
-            CGPUProfiler::Get().Disable();
+            FGPUProfiler::Get().Disable();
         }
 
         ImGui::SameLine();
 
         if (ImGui::Button("Reset"))
         {
-            CGPUProfiler::Get().Reset();
+            FGPUProfiler::Get().Reset();
         }
 
         DrawGPUData(Width);

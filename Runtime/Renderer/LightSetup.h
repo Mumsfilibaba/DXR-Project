@@ -11,20 +11,20 @@
 #include "Core/Math/Vector4.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SPointLightData
+// FPointLightData
 
-struct SPointLightData
+struct FPointLightData
 {
-    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
+    FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
     float Padding0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SShadowCastingPointLightData
+// FShadowCastingPointLightData
 
-struct SShadowCastingPointLightData
+struct FShadowCastingPointLightData
 {
-    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
+    FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
     float ShadowBias = 0.005f;
 
     float FarPlane = 10.0f;
@@ -34,37 +34,37 @@ struct SShadowCastingPointLightData
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SPointLightShadowMapGenerationData
+// FPointLightShadowMapGenerationData
 
-struct SPointLightShadowMapGenerationData
+struct FPointLightShadowMapGenerationData
 {
-    TStaticArray<CMatrix4, 6> Matrix;
-    TStaticArray<CMatrix4, 6> ViewMatrix;
-    TStaticArray<CMatrix4, 6> ProjMatrix;
+    TStaticArray<FMatrix4, 6> Matrix;
+    TStaticArray<FMatrix4, 6> ViewMatrix;
+    TStaticArray<FMatrix4, 6> ProjMatrix;
 
     float    FarPlane;
-    CVector3 Position;
+    FVector3 Position;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SDirectionalLightData
+// FDirectionalLightData
 
-struct SDirectionalLightData
+struct FDirectionalLightData
 {
-    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
+    FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
     float ShadowBias = 0.005f;
 
-    CVector3 Direction = CVector3(0.0f, -1.0f, 0.0f);
+    FVector3 Direction = FVector3(0.0f, -1.0f, 0.0f);
     float MaxShadowBias = 0.05f;
 
-    CVector3 Up = CVector3(0.0f, 0.0f, -1.0f);
+    FVector3 Up = FVector3(0.0f, 0.0f, -1.0f);
     float LightSize;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SLightSetup
+// FLightSetup
 
-struct RENDERER_API SLightSetup
+struct RENDERER_API FLightSetup
 {
     const EFormat ShadowMaskFormat = EFormat::R8_Unorm;
     const EFormat ShadowMapFormat  = EFormat::D16_Unorm;
@@ -80,53 +80,53 @@ struct RENDERER_API SLightSetup
     const uint16 SpecularIrradianceSize = 256;
     const uint16 PointLightShadowSize   = 512;
 
-    SLightSetup() = default;
-    ~SLightSetup() = default;
+    FLightSetup() = default;
+    ~FLightSetup() = default;
 
     bool Init();
 
-    void BeginFrame(FRHICommandList& CmdList, const CScene& Scene);
+    void BeginFrame(FRHICommandList& CmdList, const FScene& Scene);
     void Release();
 
-    TArray<CVector4>        PointLightsPosRad;
-    TArray<SPointLightData> PointLightsData;
+    TArray<FVector4>        PointLightsPosRad;
+    TArray<FPointLightData> PointLightsData;
 
-    TSharedRef<FRHIConstantBuffer> PointLightsBuffer;
-    TSharedRef<FRHIConstantBuffer> PointLightsPosRadBuffer;
+    FRHIConstantBufferRef PointLightsBuffer;
+    FRHIConstantBufferRef PointLightsPosRadBuffer;
 
-    TArray<SPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
+    TArray<FPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
 
-    TArray<CVector4>                     ShadowCastingPointLightsPosRad;
-    TArray<SShadowCastingPointLightData> ShadowCastingPointLightsData;
+    TArray<FVector4>                     ShadowCastingPointLightsPosRad;
+    TArray<FShadowCastingPointLightData> ShadowCastingPointLightsData;
 
-    TSharedRef<FRHIConstantBuffer> ShadowCastingPointLightsBuffer;
-    TSharedRef<FRHIConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
+    FRHIConstantBufferRef ShadowCastingPointLightsBuffer;
+    FRHIConstantBufferRef ShadowCastingPointLightsPosRadBuffer;
 
     TSharedRef<FRHITextureCubeArray> PointLightShadowMaps;
 
     // NOTE: Only one directional light
-    SDirectionalLightData DirectionalLightData;
+    FDirectionalLightData DirectionalLightData;
     bool DirectionalLightDataDirty = true;
 
     float CascadeSplitLambda;
 
-    TSharedRef<FRHIConstantBuffer> DirectionalLightsBuffer;
+    FRHIConstantBufferRef DirectionalLightsBuffer;
 
-    TSharedRef<FRHITexture2D> ShadowMapCascades[4];
-    TSharedRef<FRHITexture2D> DirectionalShadowMask;
+    FRHITexture2DRef ShadowMapCascades[4];
+    FRHITexture2DRef DirectionalShadowMask;
 
     TSharedRef<FRHIGenericBuffer>       CascadeMatrixBuffer;
     TSharedRef<FRHIShaderResourceView>  CascadeMatrixBufferSRV;
-    TSharedRef<FRHIUnorderedAccessView> CascadeMatrixBufferUAV;
+    FRHIUnorderedAccessViewRef CascadeMatrixBufferUAV;
 
     TSharedRef<FRHIGenericBuffer>       CascadeSplitsBuffer;
     TSharedRef<FRHIShaderResourceView>  CascadeSplitsBufferSRV;
-    TSharedRef<FRHIUnorderedAccessView> CascadeSplitsBufferUAV;
+    FRHIUnorderedAccessViewRef CascadeSplitsBufferUAV;
 
-    TSharedRef<FRHITextureCube>         IrradianceMap;
-    TSharedRef<FRHIUnorderedAccessView> IrradianceMapUAV;
+    FRHITextureCubeRef         IrradianceMap;
+    FRHIUnorderedAccessViewRef IrradianceMapUAV;
 
-    TSharedRef<FRHITextureCube>                 SpecularIrradianceMap;
-    TArray<TSharedRef<FRHIUnorderedAccessView>> SpecularIrradianceMapUAVs;
+    FRHITextureCubeRef                 SpecularIrradianceMap;
+    TArray<FRHIUnorderedAccessViewRef> SpecularIrradianceMapUAVs;
     TArray<FRHIUnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
 };

@@ -5,14 +5,14 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalSamplerState
+// FMetalSamplerState
 
-class CMetalSamplerState : public FRHISamplerState
+class FMetalSamplerState : public FRHISamplerState
 {
 public:
-    CMetalSamplerState()  = default;
-    ~CMetalSamplerState() = default;
-    
+    FMetalSamplerState()  = default;
+    ~FMetalSamplerState() = default;
+
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
     id<MTLSamplerState> GetMTLSamplerState() const { return SamplerState; }

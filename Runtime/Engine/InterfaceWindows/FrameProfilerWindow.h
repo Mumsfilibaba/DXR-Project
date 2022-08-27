@@ -1,29 +1,28 @@
 #pragma once
-#include "Canvas/CanvasWindow.h"
+#include "Application/Window.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
 #include <imgui.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CFrameProfilerWindow
+// FFrameProfilerWindow
 
-class CFrameProfilerWindow : public CCanvasWindow
+class FFrameProfilerWindow 
+    : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
-
-    static TSharedRef<CFrameProfilerWindow> Make();
+    static TSharedRef<FFrameProfilerWindow> Make();
 
     virtual void Tick() override final;
 
     virtual bool IsTickable() override final;
 
 private:
-
-    CFrameProfilerWindow() = default;
-    ~CFrameProfilerWindow() = default;
+    FFrameProfilerWindow() = default;
+    ~FFrameProfilerWindow() = default;
 
      /** @brief: Draw a simple FPS counter */
     void DrawFPS();

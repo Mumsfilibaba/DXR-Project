@@ -1,6 +1,6 @@
 #include "DelegateInstance.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDelegateHandle
+// FDelegateHandle
 
-CORE_API DelegateHandle CDelegateHandle::NextID = 0;
+CORE_API FAtomicInt64 FDelegateHandle::NextID = 0;

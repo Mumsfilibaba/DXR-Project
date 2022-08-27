@@ -1,18 +1,18 @@
 #include "Component.h"
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CComponent
+// FComponent
 
-CComponent::CComponent(CActor* InActorOwner)
-    : CCoreObject()
+FComponent::FComponent(FActor* InActorOwner)
+    : FCoreObject()
     , ActorOwner(InActorOwner)
     , bIsStartable(true)
     , bIsTickable(true)
@@ -22,8 +22,8 @@ CComponent::CComponent(CActor* InActorOwner)
     CORE_OBJECT_INIT();
 }
 
-CComponent::CComponent(CActor* InActorOwner, bool bInIsStartable, bool bInIsTickable)
-    : CCoreObject()
+FComponent::FComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTickable)
+    : FCoreObject()
     , ActorOwner(InActorOwner)
     , bIsStartable(bInIsStartable)
     , bIsTickable(bInIsTickable)
@@ -33,16 +33,16 @@ CComponent::CComponent(CActor* InActorOwner, bool bInIsStartable, bool bInIsTick
     CORE_OBJECT_INIT();
 }
 
-void CComponent::Start()
+void FComponent::Start()
 {
 }
 
-void CComponent::Tick(CTimestamp DeltaTime)
+void FComponent::Tick(FTimespan DeltaTime)
 {
 }
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic pop
 #endif

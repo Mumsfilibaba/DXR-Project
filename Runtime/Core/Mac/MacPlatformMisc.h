@@ -4,26 +4,16 @@
 #include <sys/sysctl.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacPlatformMisc
+// FMacPlatformMisc
 
-class CMacPlatformMisc final : public CGenericPlatformMisc
+struct FMacPlatformMisc final 
+    : public FGenericPlatformMisc
 {
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericPlatformMisc Interface
-
-    static FORCEINLINE void DebugBreak()
-    {
-        __builtin_trap();
-    }
-
-    static void OutputDebugString(const String& Message);
+    static void OutputDebugString(const FString& Message);
 
     static FORCEINLINE bool IsDebuggerPresent()
     {
         // See: https://developer.apple.com/library/archive/qa/qa1361/_index.html for original implementation
-                
         int32 Mib[4]
         {
             CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()

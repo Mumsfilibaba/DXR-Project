@@ -9,7 +9,7 @@
 
 enum EFBXFlags : uint8
 {
-    FBXFlags_None = 0,
+    FBXFlags_None             = 0,
     FBXFlags_ApplyScaleFactor = BIT(1),
     FBXFlags_EnsureLeftHanded = BIT(2),
 
@@ -17,11 +17,11 @@ enum EFBXFlags : uint8
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CFBXLoader
+// FFBXLoader
 
 // TODO: Extend to save as well? 
-class ENGINE_API CFBXLoader
+class ENGINE_API FFBXLoader
 {
 public:
-    static bool LoadFile(const String& Filename, SSceneData& OutScene, uint32 Flags = EFBXFlags::FBXFlags_Default) noexcept;
+    static bool LoadFile(const FString& Filename, FSceneData& OutScene, uint32 Flags = EFBXFlags::FBXFlags_Default) noexcept;
 };

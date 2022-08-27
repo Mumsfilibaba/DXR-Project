@@ -1,21 +1,19 @@
 #pragma once
 #include "Core/Input/InputCodes.h"
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericKeyMapping
+// FGenericKeyMapping
 
-class CGenericKeyMapping
+struct FGenericKeyMapping
 {
-public:
-
     /** @brief: Initialize key-tables */
     static FORCEINLINE void Initialize() { }
 
@@ -36,8 +34,8 @@ public:
     static FORCEINLINE uint32 GetScanCodeFromKeyCode(EKey KeyCode) { return 0; }
 };
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic pop
 #endif

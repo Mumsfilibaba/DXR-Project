@@ -6,32 +6,32 @@
 
 #include "Renderer/MeshDrawCommand.h"
 
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 #include "Core/Containers/Array.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Scene
+// FScene
 
-class ENGINE_API CScene
+class ENGINE_API FScene
 {
 public:
 
     /**
      * @brief: Default constructor
      */
-    CScene();
+    FScene();
 
     /**
      * @brief: Destructor
      */
-    ~CScene();
+    ~FScene();
 
     /**
      * @brief: Create a new actor and add it to the scene 
      * 
      * @return: Returns the newly created actor
      */
-    class CActor* MakeActor();
+    class FActor* MakeActor();
 
     /**
      * @brief: Start game 
@@ -39,35 +39,35 @@ public:
     void Start();
 
      /** @brief: Ticks all actors in the scene, should be called once per frame */
-    void Tick(CTimestamp DeltaTime);
+    void Tick(FTimespan DeltaTime);
 
     /**
      * @brief: Adds a camera into the scene 
      * 
      * @param InCamera: Camera to add to the scene
      */
-    void AddCamera(CCamera* InCamera);
+    void AddCamera(FCamera* InCamera);
 
     /**
      * @brief: Adds an actor into the scene 
      * 
      * @param InActor: Actor to add to the scene
      */
-    void AddActor(CActor* InActor);
+    void AddActor(FActor* InActor);
 
     /**
      * @brief: Adds an light into the scene
      *
      * @param InLight: Light to add to the scene
      */
-    void AddLight(CLight* InLight);
+    void AddLight(FLight* InLight);
 
     /**
      * @brief: Function called when adding a component
      * 
      * @param NewComponent: New component just added to the scene
      */
-    void OnAddedComponent(CComponent* NewComponent);
+    void OnAddedComponent(FComponent* NewComponent);
 
     /**
      * @brief: Retrieve all components of a certain type
@@ -80,7 +80,7 @@ public:
         // TODO: Cache this result
 
         TArray<ComponentType> Components;
-        for (CActor* Actor : Actors)
+        for (FActor* Actor : Actors)
         {
             ComponentType* Component = Actor->GetComponentOfType<ComponentType>();
             if (Component)
@@ -97,7 +97,7 @@ public:
      * 
      * @return: Returns a reference to an array of all actors in the scene
      */
-    FORCEINLINE const TArray<CActor*>& GetActors() const
+    FORCEINLINE const TArray<FActor*>& GetActors() const
     {
         return Actors;
     }
@@ -107,7 +107,7 @@ public:
      *
      * @return: Returns a reference to an array of all lights in the scene
      */
-    FORCEINLINE const TArray<CLight*>& GetLights() const
+    FORCEINLINE const TArray<FLight*>& GetLights() const
     {
         return Lights;
     }
@@ -117,7 +117,7 @@ public:
      *
      * @return: Returns a reference to an array of all MeshDrawCommands in the scene
      */
-    FORCEINLINE const TArray<SMeshDrawCommand>& GetMeshDrawCommands() const
+    FORCEINLINE const TArray<FMeshDrawCommand>& GetMeshDrawCommands() const
     {
         return MeshDrawCommands;
     }
@@ -127,17 +127,17 @@ public:
      * 
      * @return: Returns a pointer to the camera of the scene
      */
-    FORCEINLINE CCamera* GetCamera() const
+    FORCEINLINE FCamera* GetCamera() const
     {
         return CurrentCamera;
     }
 
 private:
-    void AddMeshComponent(class CMeshComponent* Component);
+    void AddMeshComponent(class FMeshComponent* Component);
 
-    TArray<CActor*> Actors;
-    TArray<CLight*> Lights;
-    TArray<SMeshDrawCommand> MeshDrawCommands;
+    TArray<FActor*> Actors;
+    TArray<FLight*> Lights;
+    TArray<FMeshDrawCommand> MeshDrawCommands;
 
-    CCamera* CurrentCamera = nullptr;
+    FCamera* CurrentCamera = nullptr;
 };

@@ -5,7 +5,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Fence
 
-class FD3D12Fence : public FD3D12DeviceChild
+class FD3D12Fence 
+    : public FD3D12DeviceChild
 {
 public:
     FORCEINLINE FD3D12Fence(FD3D12Device* InDevice)
@@ -67,9 +68,9 @@ public:
         return SUCCEEDED(Result);
     }
 
-    FORCEINLINE void SetName(const String& Name)
+    FORCEINLINE void SetName(const FString& Name)
     {
-        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.CStr());
+        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.GetLength(), Name.GetCString());
     }
 
     FORCEINLINE ID3D12Fence* GetFence() const

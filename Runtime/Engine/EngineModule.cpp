@@ -1,5 +1,5 @@
 #include "EngineModule.h"
 
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleInterface.h"
 
-IMPLEMENT_ENGINE_MODULE(CDefaultEngineModule, Engine);
+IMPLEMENT_ENGINE_MODULE(FDefaultModule, Engine);

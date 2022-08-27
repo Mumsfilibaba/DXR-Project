@@ -8,7 +8,7 @@
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 #include "Core/Containers/ArrayView.h"
 
 #define GBUFFER_ALBEDO_INDEX      (0)
@@ -34,7 +34,7 @@ public:
         auto TextureIndexPair = ResourceIndices.find(Resource);
         if (TextureIndexPair == ResourceIndices.end())
         {
-            int32 NewIndex = Resources.Size();
+            int32 NewIndex = Resources.GetSize();
             ResourceIndices[Resource] = NewIndex;
             Resources.Emplace(Resource);
 
@@ -51,23 +51,23 @@ public:
         return Resources[Index];
     }
 
-    uint32 Size() const
+    uint32 GetSize() const
     {
-        return Resources.Size();
+        return Resources.GetSize();
     }
 
 private:
     TArray<TResource*>            Resources;
-    THashTable<TResource*, int32> ResourceIndices;
+    TMap<TResource*, int32> ResourceIndices;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SFrameResources
+// FFrameResources
 
-struct RENDERER_API SFrameResources
+struct RENDERER_API FFrameResources
 {
-    SFrameResources()  = default;
-    ~SFrameResources() = default;
+    FFrameResources()  = default;
+    ~FFrameResources() = default;
 
     void Release();
 
@@ -83,32 +83,32 @@ struct RENDERER_API SFrameResources
 
     FRHITexture2D* BackBuffer = nullptr;
 
-    TSharedRef<FRHIConstantBuffer> CameraBuffer;
-    TSharedRef<FRHIConstantBuffer> TransformBuffer;
+    FRHIConstantBufferRef CameraBuffer;
+    FRHIConstantBufferRef TransformBuffer;
 
-    TSharedRef<FRHISamplerState> PointLightShadowSampler;
-    TSharedRef<FRHISamplerState> DirectionalLightShadowSampler;
-    TSharedRef<FRHISamplerState> IrradianceSampler;
+    FRHISamplerStateRef PointLightShadowSampler;
+    FRHISamplerStateRef DirectionalLightShadowSampler;
+    FRHISamplerStateRef IrradianceSampler;
 
-    TSharedRef<FRHITextureCube> Skybox;
+    FRHITextureCubeRef Skybox;
 
-    TSharedRef<FRHITexture2D>    IntegrationLUT;
-    TSharedRef<FRHISamplerState> IntegrationLUTSampler;
+    FRHITexture2DRef    IntegrationLUT;
+    FRHISamplerStateRef IntegrationLUTSampler;
 
-    TSharedRef<FRHITexture2D> SSAOBuffer;
-    TSharedRef<FRHITexture2D> FinalTarget;
-    TSharedRef<FRHITexture2D> GBuffer[5];
+    FRHITexture2DRef SSAOBuffer;
+    FRHITexture2DRef FinalTarget;
+    FRHITexture2DRef GBuffer[5];
 
     // Two resources that can be ping-ponged between
-    TSharedRef<FRHITexture2D> ReducedDepthBuffer[2];
+    FRHITexture2DRef ReducedDepthBuffer[2];
 
-    TSharedRef<FRHISamplerState> GBufferSampler;
-    TSharedRef<FRHISamplerState> FXAASampler;
+    FRHISamplerStateRef GBufferSampler;
+    FRHISamplerStateRef FXAASampler;
 
-    TSharedRef<FRHIVertexInputLayout> StdInputLayout;
+    FRHIVertexInputLayoutRef StdInputLayout;
 
-    TSharedRef<FRHITexture2D>       RTOutput;
-    TSharedRef<FRHIRayTracingScene> RTScene;
+    FRHITexture2DRef       RTOutput;
+    FRHIRayTracingSceneRef RTScene;
 
     FRayTracingShaderResources GlobalResources;
     FRayTracingShaderResources RayGenLocalResources;
@@ -116,13 +116,13 @@ struct RENDERER_API SFrameResources
     TArray<FRHIRayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<FRayTracingShaderResources>     RTHitGroupResources;
-    THashTable<class CMesh*, uint32>       RTMeshToHitGroupIndex;
+    TMap<class FMesh*, uint32>       RTMeshToHitGroupIndex;
     TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
 
-    TArrayView<const SMeshDrawCommand> GlobalMeshDrawCommands;
+    TArrayView<const FMeshDrawCommand> GlobalMeshDrawCommands;
     TArray<uint32>                     DeferredVisibleCommands;
     TArray<uint32>                     ForwardVisibleCommands;
 
-    TSharedRef<FRHIViewport> MainWindowViewport;
+    FRHIViewportRef MainWindowViewport;
 };
 

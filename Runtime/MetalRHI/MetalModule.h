@@ -4,15 +4,12 @@
 #include "RHI/RHIModule.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalModule
+// FMetalModule
 
-class CMetalModule final : public FRHIModule
+struct FMetalModule final : public FRHIModule
 {
-public:
+    FMetalModule()  = default;
+    ~FMetalModule() = default;
 
-    CMetalModule()  = default;
-    ~CMetalModule() = default;
-
-    virtual class CRHICoreInterface*  CreateInterface() override final;
-    virtual class IRHIShaderCompiler* CreateCompiler()  override final;
+    virtual class FRHICoreInterface* CreateInterface() override final;
 };

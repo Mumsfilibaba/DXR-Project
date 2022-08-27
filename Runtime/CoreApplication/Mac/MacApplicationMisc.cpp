@@ -1,6 +1,6 @@
 #include "MacApplicationMisc.h"
 #include "MacApplication.h"
-#include "MacConsoleWindow.h"
+#include "MacOutputDeviceConsole.h"
 
 #include "Core/Mac/Mac.h"
 #include "Core/Input/InputCodes.h"
@@ -8,22 +8,22 @@
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
 
-CGenericApplication* CMacApplicationMisc::CreateApplication()
+FGenericApplication* FMacApplicationMisc::CreateApplication()
 {
-    return CMacApplication::CreateMacApplication();
+    return FMacApplication::CreateMacApplication();
 }
 
-CGenericConsoleWindow* CMacApplicationMisc::CreateConsoleWindow()
+FOutputDeviceConsole* FMacApplicationMisc::CreateOutputDeviceConsole()
 {
-    return CMacConsoleWindow::CreateMacConsole();
+    return dbg_new FMacOutputDeviceConsole();
 }
 
-void CMacApplicationMisc::MessageBox(const String& Title, const String& Message)
+void FMacApplicationMisc::MessageBox(const FString& Title, const FString& Message)
 {
     SCOPED_AUTORELEASE_POOL();
     
-    CFStringRef CaptionRef = CFStringCreateWithCString(0, Title.CStr(),   static_cast<CFStringEncoding>(Title.Length()));
-    CFStringRef TextRef    = CFStringCreateWithCString(0, Message.CStr(), static_cast<CFStringEncoding>(Message.Length()));
+    CFStringRef CaptionRef = CFStringCreateWithCString(0, Title.GetCString(),   static_cast<CFStringEncoding>(Title.GetLength()));
+    CFStringRef TextRef    = CFStringCreateWithCString(0, Message.GetCString(), static_cast<CFStringEncoding>(Message.GetLength()));
         
     CFOptionFlags Result = 0;
     CFOptionFlags Flags  = kCFUserNotificationStopAlertLevel;
@@ -33,16 +33,18 @@ void CMacApplicationMisc::MessageBox(const String& Title, const String& Message)
     CFRelease(TextRef);
 }
 
-void CMacApplicationMisc::PumpMessages(bool bUntilEmpty)
+void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
     SCOPED_AUTORELEASE_POOL();
     
     Check(NSApp != nil);
 	
-    NSEvent* Event = nil;
     do
     {
-        Event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
+        NSEvent* Event = [NSApp nextEventMatchingMask:NSEventMaskAny
+                                            untilDate:[NSDate distantPast]
+                                               inMode:NSDefaultRunLoopMode
+                                              dequeue:YES];
         if (!Event)
         {
             break;
@@ -57,7 +59,7 @@ void CMacApplicationMisc::PumpMessages(bool bUntilEmpty)
     } while (bUntilEmpty);
 }
 
-SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
+FModifierKeyState FMacApplicationMisc::GetModifierKeyState()
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -89,5 +91,5 @@ SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
         Mask |= EModifierFlag::ModifierFlag_CapsLock;
     }
         
-    return SModifierKeyState(Mask);
+    return FModifierKeyState(Mask);
 }

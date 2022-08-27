@@ -2,5 +2,5 @@
 #include "Config.h"
 
 #if RUN_TOPIONAL_TEST
-void TOptional_Test();
+bool TOptional_Test();
 #endif

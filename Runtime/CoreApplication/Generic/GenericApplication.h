@@ -6,65 +6,55 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/SharedRef.h"
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericApplication
+// FGenericApplication
 
-class COREAPPLICATION_API CGenericApplication
+class COREAPPLICATION_API FGenericApplication
 {
-    friend class CGenericApplicationMisc;
-    
-    friend struct TDefaultDelete<CGenericApplication>;
-
-protected:
-
-    CGenericApplication(const TSharedPtr<ICursor>& InCursor)
+public:
+    FGenericApplication(const TSharedPtr<ICursor>& InCursor)
         : Cursor(InCursor)
         , MessageListener(nullptr)
     { }
 
-    virtual ~CGenericApplication() = default;
+    virtual ~FGenericApplication() = default;
 
-public:
-
-    virtual TSharedRef<CGenericWindow> CreateWindow() { return nullptr; }
+    virtual FGenericWindowRef CreateWindow() { return nullptr; }
 
     virtual void Tick(float Delta) { }
 
     virtual bool SupportsHighPrecisionMouse() const { return false; }
 
-    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<CGenericWindow>& Window) { return true; }
+    virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) { return true; }
 
-    virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) { }
+    virtual void SetActiveWindow(const FGenericWindowRef& Window) { }
+    virtual void SetCapture(const FGenericWindowRef& Window)      { }
 
-    virtual TSharedRef<CGenericWindow> GetActiveWindow() const { return nullptr; }
+    virtual FGenericWindowRef GetWindowUnderCursor() const { return nullptr; }
+    virtual FGenericWindowRef GetCapture()           const { return nullptr; }
+    virtual FGenericWindowRef GetActiveWindow()      const { return nullptr; }
 
-    virtual void SetCapture(const TSharedRef<CGenericWindow>& Window) { }
+    virtual void SetMessageListener(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) { MessageListener = InMessageHandler; }
 
-    virtual TSharedRef<CGenericWindow> GetCapture() const { return nullptr; }
-
-    virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const { return nullptr; }
-
-    virtual void SetMessageListener(const TSharedPtr<CGenericApplicationMessageHandler>& InMessageHandler) { MessageListener = InMessageHandler; }
-
-    TSharedPtr<CGenericApplicationMessageHandler> GetMessageListener() const { return MessageListener; }
+    TSharedPtr<FGenericApplicationMessageHandler> GetMessageListener() const { return MessageListener; }
 
     TSharedPtr<ICursor> GetCursor() const { return Cursor; }
 
 protected:
     TSharedPtr<ICursor>                           Cursor;
-    TSharedPtr<CGenericApplicationMessageHandler> MessageListener;
+    TSharedPtr<FGenericApplicationMessageHandler> MessageListener;
 };
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic pop
 #endif

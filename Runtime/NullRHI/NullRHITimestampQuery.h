@@ -1,36 +1,30 @@
 #pragma once
 #include "RHI/RHITimestampQuery.h"
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHITimestampQuery
+// FNullRHITimestampQuery
 
-class CNullRHITimestampQuery : public FRHITimestampQuery
+struct FNullRHITimestampQuery 
+    : public FRHITimestampQuery
 {
-public:
-    CNullRHITimestampQuery() = default;
-    ~CNullRHITimestampQuery() = default;
+    FNullRHITimestampQuery()  = default;
+    ~FNullRHITimestampQuery() = default;
 
-    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final
-    {
-        OutQuery = FRHITimestamp();
-    }
+    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final { OutQuery = FRHITimestamp(); }
 
-    virtual uint64 GetFrequency() const override final
-    {
-        return 1;
-    }
+    virtual uint64 GetFrequency() const override final { return 1; }
 };
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic pop
 #endif

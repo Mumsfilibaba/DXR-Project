@@ -12,13 +12,18 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* TUniquePtr - Scalar values. Similar to std::unique_ptr */
 
-template<typename T, typename DeleterType = TDefaultDelete<T>>
-class TUniquePtr : private DeleterType // Using inheritance instead of composition to avoid extra memory usage
+template<
+    typename T,
+    typename DeleterType = TDefaultDelete<T>>
+class TUniquePtr 
+    : private DeleterType // Using inheritance instead of composition to avoid extra memory usage
 {
 public:
     using ElementType = T;
 
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     friend class TUniquePtr;
 
     TUniquePtr(const TUniquePtr& Other) = delete;
@@ -35,7 +40,7 @@ public:
     /**
      * @brief: Construct from nullptr
      */
-    FORCEINLINE TUniquePtr(NullptrType) noexcept
+    FORCEINLINE TUniquePtr(nullptr_type) noexcept
         : DeleterType()
         , Ptr(nullptr)
     { }
@@ -67,7 +72,10 @@ public:
      *
      * @param Other: UniquePtr to move from
      */
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TUniquePtr(TUniquePtr<OtherType, OtherDeleterType>&& Other) noexcept
         : DeleterType(Move(Other))
         , Ptr(Other.Ptr)
@@ -133,7 +141,7 @@ public:
      * 
      * @return: Returns the stored pointer
      */
-    FORCEINLINE ElementType* Get() const noexcept
+    NODISCARD FORCEINLINE ElementType* Get() const noexcept
     {
         return Ptr;
     }
@@ -143,7 +151,7 @@ public:
      *
      * @return: Returns the address of the stored pointer
      */
-    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return &Ptr;
     }
@@ -153,7 +161,7 @@ public:
      * 
      * @return: A reference to the object pointed to by the stored pointer
      */
-    FORCEINLINE ElementType& Dereference() const noexcept
+    NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
         Check(IsValid());
         return *Ptr;
@@ -164,7 +172,7 @@ public:
      * 
      * @return: Returns true if the stored pointer is not nullptr
      */
-    FORCEINLINE bool IsValid() const noexcept
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
         return (Ptr != nullptr);
     }
@@ -176,7 +184,7 @@ public:
      *
      * @return: Returns the stored pointer
      */
-    FORCEINLINE ElementType* operator->() const noexcept
+    NODISCARD FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
@@ -186,7 +194,7 @@ public:
      *
      * @return: A reference to the object pointed to by the stored pointer
      */
-    FORCEINLINE ElementType& operator*() const noexcept
+    NODISCARD FORCEINLINE ElementType& operator*() const noexcept
     {
         return Dereference();
     }
@@ -196,7 +204,7 @@ public:
      *
      * @return: Returns the address of the stored pointer
      */
-    FORCEINLINE ElementType* const* operator&() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
@@ -231,8 +239,11 @@ public:
      * @param RHS: UniquePtr to move from
      * @return: A reference to this instance
      */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type operator=(TUniquePtr<OtherType, OtherDeleterType>&& RHS) noexcept
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type 
+        operator=(TUniquePtr<OtherType, OtherDeleterType>&& RHS) noexcept
     {
         TUniquePtr(Move(RHS)).Swap(*this);
         return *this;
@@ -241,7 +252,7 @@ public:
     /**
      * @brief: Assignment operator that takes a nullptr
      */
-    FORCEINLINE TUniquePtr& operator=(NullptrType) noexcept
+    FORCEINLINE TUniquePtr& operator=(nullptr_type) noexcept
     {
         TUniquePtr().Swap(*this);
         return *this;
@@ -252,13 +263,12 @@ public:
      *
      * @return: Returns true if the stored pointer is not nullptr
      */
-    FORCEINLINE operator bool() const noexcept
+    NODISCARD FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
 
 private:
-    
     FORCEINLINE void InternalRelease() noexcept
     {
         if (Ptr)
@@ -274,14 +284,19 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* TUniquePtr - Array values. Similar to std::unique_ptr */
 
-template<typename T, typename DeleterType>
-class TUniquePtr<T[], DeleterType> : private DeleterType
+template<
+    typename T,
+    typename DeleterType>
+class TUniquePtr<T[], DeleterType> 
+    : private DeleterType
 {
 public:
     using ElementType = T;
-    using SizeType = int32;
+    using SizeType    = int32;
 
-    template<typename OtherType, typename OtherDeleterType>
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
     friend class TUniquePtr;
 
     TUniquePtr(const TUniquePtr& Other) = delete;
@@ -298,7 +313,7 @@ public:
     /**
      * @brief: Construct from nullptr
      */
-    FORCEINLINE TUniquePtr(NullptrType) noexcept
+    FORCEINLINE TUniquePtr(nullptr_type) noexcept
         : DeleterType()
         , Ptr(nullptr)
     { }
@@ -330,7 +345,10 @@ public:
      *
      * @param Other: UniquePtr to move from
      */
-    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    template<
+        typename OtherType,
+        typename OtherDeleterType,
+        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TUniquePtr(TUniquePtr<OtherType[], OtherDeleterType>&& Other) noexcept
         : DeleterType(Move(Other))
         , Ptr(Other.Ptr)
@@ -351,7 +369,7 @@ public:
      *
      * @return: Returns the pointer previously stored
      */
-    FORCEINLINE ElementType* Release() noexcept
+    NODISCARD FORCEINLINE ElementType* Release() noexcept
     {
         ElementType* OldPointer = Ptr;
         Ptr = nullptr;
@@ -396,7 +414,7 @@ public:
      *
      * @return: Returns the stored pointer
      */
-    FORCEINLINE ElementType* Get() const noexcept
+    NODISCARD FORCEINLINE ElementType* Get() const noexcept
     {
         return Ptr;
     }
@@ -406,7 +424,7 @@ public:
      *
      * @return: Returns the address of the stored pointer
      */
-    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return &Ptr;
     }
@@ -416,7 +434,7 @@ public:
      *
      * @return: Returns true if the stored pointer is not nullptr
      */
-    FORCEINLINE bool IsValid() const noexcept
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
         return (Ptr != nullptr);
     }
@@ -427,7 +445,7 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    FORCEINLINE ElementType& At(SizeType Index) const noexcept
+    NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) const noexcept
     {
         Check(IsValid());
         return Get()[Index];
@@ -441,9 +459,9 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    FORCEINLINE ElementType& operator[](SizeType Index) const noexcept
+    NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) const noexcept
     {
-        return At(Index);
+        return GetElementAt(Index);
     }
 
     /**
@@ -451,7 +469,7 @@ public:
      *
      * @return: Returns the address of the stored pointer
      */
-    FORCEINLINE ElementType* const* operator&() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
@@ -486,8 +504,11 @@ public:
      * @param RHS: UniquePtr to move from
      * @return: A reference to this instance
      */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type operator=(TUniquePtr<OtherType[], OtherDeleterType>&& RHS) noexcept
+    template<
+        typename OtherType,
+        typename OtherDeleterType>
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value,  TUniquePtr&>::Type 
+        operator=(TUniquePtr<OtherType[], OtherDeleterType>&& RHS) noexcept
     {
         TUniquePtr(Move(RHS)).Swap(*this);
         return *this;
@@ -498,7 +519,7 @@ public:
      *
      * @return: A reference to this instance
      */
-    FORCEINLINE TUniquePtr& operator=(NullptrType) noexcept
+    FORCEINLINE TUniquePtr& operator=(nullptr_type) noexcept
     {
         TUniquePtr().Swap(*this);
         return *this;
@@ -509,13 +530,12 @@ public:
      *
      * @return: Returns true if the stored pointer is not nullptr
      */
-    FORCEINLINE operator bool() const noexcept
+    NODISCARD FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
 
 private:
-
     FORCEINLINE void InternalRelease() noexcept
     {
         if (Ptr)
@@ -531,62 +551,74 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Operators
 
-template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, U* RHS) noexcept
+template<
+    typename T,
+    typename U>
+NODISCARD FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-template<typename T, typename U>
-FORCEINLINE bool operator==(T* LHS, const TUniquePtr<U>& RHS) noexcept
+template<
+    typename T,
+    typename U>
+NODISCARD FORCEINLINE bool operator==(T* LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, U* RHS) noexcept
+template<
+    typename T,
+    typename U>
+NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-template<typename T, typename U>
-FORCEINLINE bool operator!=(T* LHS, const TUniquePtr<U>& RHS) noexcept
+template<
+    typename T,
+    typename U>
+NODISCARD FORCEINLINE bool operator!=(T* LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+template<
+    typename T,
+    typename U>
+NODISCARD FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+template<
+    typename T,
+    typename U>
+NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, NullptrType) noexcept
+NODISCARD FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TUniquePtr<T>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator==(nullptr_type, const TUniquePtr<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, NullptrType) noexcept
+NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TUniquePtr<T>& RHS) noexcept
+NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TUniquePtr<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }
@@ -594,15 +626,17 @@ FORCEINLINE bool operator!=(NullptrType, const TUniquePtr<T>& RHS) noexcept
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* MakeUnique - Creates a new object together with a UniquePtr */
 
-template<typename T, typename... ArgTypes>
-FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TUniquePtr<T>>::Type MakeUnique(ArgTypes&&... Args) noexcept
+template<
+    typename T,
+    typename... ArgTypes>
+NODISCARD FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TUniquePtr<T>>::Type MakeUnique(ArgTypes&&... Args) noexcept
 {
     T* UniquePtr = dbg_new T(Forward<ArgTypes>(Args)...);
     return TUniquePtr<T>(UniquePtr);
 }
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TUniquePtr<T>>::Type MakeUnique(uint32 Size) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TUniquePtr<T>>::Type MakeUnique(uint32 Size) noexcept
 {
     typedef typename TRemoveExtent<T>::Type Type;
 

@@ -18,15 +18,13 @@ enum class ECursor
     NotAllowed = 9,
 };
 
-class CGenericWindow;
+class FGenericWindow;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ICursor
 
-class ICursor
+struct ICursor
 {
-public:
-
     virtual ~ICursor() = default;
 
      /**
@@ -43,7 +41,7 @@ public:
       * @param x: New x-position of the cursor
       * @param y: New y-position of the cursor
       */
-    virtual void SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 y) const = 0;
+    virtual void SetPosition(FGenericWindow* RelativeWindow, int32 x, int32 y) const = 0;
 
      /**
       * @brief: Retrieve the cursor position of a window
@@ -52,7 +50,7 @@ public:
       * @param OutX: The x-position of the cursor
       * @param OutY: The y-position of the cursor
       */
-    virtual void GetPosition(CGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const = 0;
+    virtual void GetPosition(FGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const = 0;
 
      /**
       * @brief: Set the cursor visibility

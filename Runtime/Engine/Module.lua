@@ -3,7 +3,7 @@ include '../../BuildScripts/Scripts/build_module.lua'
 ---------------------------------------------------------------------------------------------------
 -- Engine Module
 
-local EngineModule = CModuleBuildRules('Engine')
+local EngineModule = FModuleBuildRules('Engine')
 EngineModule.AddSystemIncludes( 
 {
     CreateExternalDependencyPath('imgui'),
@@ -16,7 +16,7 @@ EngineModule.AddModuleDependencies(
 {
     'Core',
     'CoreApplication',
-    'Canvas',
+    'Application',
     'RHI',
 })
 

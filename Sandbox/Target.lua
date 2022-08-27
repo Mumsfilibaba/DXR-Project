@@ -3,12 +3,12 @@ include '../BuildScripts/Scripts/build_workspace.lua'
 ---------------------------------------------------------------------------------------------------
 -- Sanbox Project
 
-local SandboxProject = CTargetBuildRules('Sandbox')
+local SandboxProject = FTargetBuildRules('Sandbox')
 SandboxProject.AddModuleDependencies(
 {
     'Core',
     'CoreApplication',
-    'Canvas',
+    'Application',
     'RHI',
     'Engine',
     'Renderer',

@@ -3,15 +3,24 @@
 
 #include "D3D12Resource.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHITimestampQuery
+typedef TSharedRef<class FD3D12TimestampQuery> FD3D12TimestampQueryRef;
 
-class FD3D12TimestampQuery : public FRHITimestampQuery, public FD3D12DeviceChild
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12TimestampQuery
+
+class FD3D12TimestampQuery 
+    : public FRHITimestampQuery
+    , public FD3D12DeviceChild
 {
 public:
 
     FD3D12TimestampQuery(FD3D12Device* InDevice);
     ~FD3D12TimestampQuery() = default;
+
+    static FD3D12TimestampQuery* Create(FD3D12Device* InDevice);
+    
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // FRHITimestampQuery Interface
 
     virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final;
 
@@ -30,17 +39,15 @@ public:
         return QueryHeap.Get();
     }
 
-    static FD3D12TimestampQuery* Create(FD3D12Device* InDevice);
-
 private:
 
     // TODO: The download resource should be allocated in the context
     bool AllocateReadResource();
 
     TComPtr<ID3D12QueryHeap> QueryHeap;
-    TSharedRef<FD3D12Resource>      WriteResource;
+    FD3D12ResourceRef      WriteResource;
 
-    TArray<TSharedRef<FD3D12Resource>> ReadResources;
+    TArray<FD3D12ResourceRef> ReadResources;
     TArray<FRHITimestamp> TimeQueries;
 
     UINT64 Frequency;

@@ -9,11 +9,11 @@ ETargetType =
 }
 
 -- Target build rules
-function CTargetBuildRules(InName)
+function FTargetBuildRules(InName)
     printf('Creating Target \'%s\'', InName)
     
     -- Init parent class
-    local self = CBuildRules(InName)
+    local self = FBuildRules(InName)
     if self == nil then
         printf('Target Error: Failed to create BuildRule')
         return nil
@@ -86,8 +86,10 @@ function CTargetBuildRules(InName)
 
                 self.AddFiles( 
                 {
+                    (RuntimeFolderPath .. '/Main/IEngineLoop.h'),
+                    (RuntimeFolderPath .. '/Main/EngineLoop.h'),
                     (RuntimeFolderPath .. '/Main/EngineLoop.cpp'),
-                    (RuntimeFolderPath .. '/Main/EngineMain.cpp'),
+                    (RuntimeFolderPath .. '/Main/GenericMain.cpp'),
                     MainFile
                 })
 
@@ -113,7 +115,7 @@ function CTargetBuildRules(InName)
                 -- Standalone-executable
                 printf('    ---Generating Standablone client executable\n')
                 
-                local Executeble = CBuildRules(self.Name .. 'Standalone')
+                local Executeble = FBuildRules(self.Name .. 'Standalone')
                 Executeble.Kind = 'WindowedApp'
 
                 Executeble.AddLinkLibraries(
@@ -127,7 +129,7 @@ function CTargetBuildRules(InName)
                 Executeble.Files = 
                 {
                     (RuntimeFolderPath .. '/Main/EngineLoop.cpp'),
-                    (RuntimeFolderPath .. '/Main/EngineMain.cpp'),
+                    (RuntimeFolderPath .. '/Main/GenericMain.cpp'),
                     MainFile
                 }
 

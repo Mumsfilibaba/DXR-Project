@@ -13,10 +13,10 @@ struct FRHITimestamp
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITimestampQuery
 
-class FRHITimestampQuery : public FRHIResource
+class FRHITimestampQuery 
+    : public FRHIResource
 {
 protected:
-
     FRHITimestampQuery()  = default;
     ~FRHITimestampQuery() = default;
 

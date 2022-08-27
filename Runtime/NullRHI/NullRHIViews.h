@@ -1,44 +1,42 @@
 #pragma once
 #include "RHI/RHIResourceViews.h"
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIShaderResourceView
+// FNullRHIShaderResourceView
 
-class CNullRHIShaderResourceView : public FRHIShaderResourceView
-{
-public:
-
-    explicit CNullRHIShaderResourceView(FRHIResource* InResource)
+struct FNullRHIShaderResourceView
+    : public FRHIShaderResourceView
+{ 
+    explicit FNullRHIShaderResourceView(FRHIResource* InResource)
         : FRHIShaderResourceView(InResource)
     { }
 
-    ~CNullRHIShaderResourceView() = default;
+    ~FNullRHIShaderResourceView() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIUnorderedAccessView
+// FNullRHIUnorderedAccessView
 
-class CNullRHIUnorderedAccessView : public FRHIUnorderedAccessView
+struct FNullRHIUnorderedAccessView 
+    : public FRHIUnorderedAccessView
 {
-public:
-
-    explicit CNullRHIUnorderedAccessView(FRHIResource* InResource)
+    explicit FNullRHIUnorderedAccessView(FRHIResource* InResource)
         : FRHIUnorderedAccessView(InResource)
     { }
 
-    ~CNullRHIUnorderedAccessView() = default;
+    ~FNullRHIUnorderedAccessView() = default;
 };
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic pop
 #endif

@@ -1,29 +1,50 @@
 #pragma once
+#include "Core/CoreDefines.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// NonCopyable
+// FNonCopyable
 
-class NonCopyable
+struct FNonCopyable
 {
-public:
+    FNonCopyable()  = default;
+    ~FNonCopyable() = default;
 
-    NonCopyable()  = default;
-    ~NonCopyable() = default;
-
-    NonCopyable(const NonCopyable&)            = delete;
-    NonCopyable& operator=(const NonCopyable&) = delete;
+    FNonCopyable(const FNonCopyable&)            = delete;
+    FNonCopyable& operator=(const FNonCopyable&) = delete;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// NonMovable
+// FNonMovable
 
-class NonMovable
+struct FNonMovable
 {
-public:
+    FNonMovable()  = default;
+    ~FNonMovable() = default;
 
-    NonMovable()  = default;
-    ~NonMovable() = default;
-
-    NonMovable(const NonMovable&)            = delete;
-    NonMovable& operator=(const NonMovable&) = delete;
+    FNonMovable(const FNonMovable&)            = delete;
+    FNonMovable& operator=(const FNonMovable&) = delete;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FNonCopyAndNonMovable
+
+struct FNonCopyAndNonMovable
+{
+    FNonCopyAndNonMovable()  = default;
+    ~FNonCopyAndNonMovable() = default;
+
+    FNonCopyAndNonMovable(const FNonCopyAndNonMovable&)            = delete;
+    FNonCopyAndNonMovable& operator=(const FNonCopyAndNonMovable&) = delete;
+
+    FNonCopyAndNonMovable(FNonCopyAndNonMovable&&)            = delete;
+    FNonCopyAndNonMovable& operator=(FNonCopyAndNonMovable&&) = delete;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// GetClassAsData
+
+template<typename NewType, typename ClassType>
+CONSTEXPR NewType* GetClassAsData(ClassType* Class) noexcept
+{
+    return reinterpret_cast<NewType*>(Class);
+}

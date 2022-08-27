@@ -1,7 +1,7 @@
 #pragma once
 #include "RHICore.h"
 
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIInstanceType
@@ -14,7 +14,7 @@ enum class ERHIInstanceType : uint32
 	Metal   = 3,
 };
 
-inline const char* ToString(ERHIInstanceType RenderLayerApi)
+inline const CHAR* ToString(ERHIInstanceType RenderLayerApi)
 {
     switch (RenderLayerApi)
     {
@@ -34,10 +34,10 @@ RHI_API void RHIRelease();
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIModule
 
-class RHI_API FRHIModule : public CDefaultEngineModule
+class RHI_API FRHIModule 
+    : public FDefaultModule
 {
 protected:
-
     FRHIModule()  = default;
     ~FRHIModule() = default;
 
@@ -48,18 +48,10 @@ public:
      *
      * @return: Returns the newly created RHIInstance
      */
-    virtual class CRHICoreInterface* CreateInterface() = 0;
-
-    /**
-     * @brief: Creates the RHI shader compiler
-     *
-     * @return: Returns the shader compiler for this RHI Module
-     */
-    virtual class IRHIShaderCompiler* CreateCompiler() = 0;
+    virtual class FRHICoreInterface* CreateInterface() = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Global variables
+// Global Variable
 
-extern RHI_API class CRHICoreInterface*  GRHIInstance;
-extern RHI_API class IRHIShaderCompiler* GShaderCompiler;
+extern RHI_API class FRHICoreInterface* GRHICoreInterface;

@@ -14,23 +14,14 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsPlatformMisc
+// FWindowsPlatformMisc
 
-class CWindowsPlatformMisc final : public CGenericPlatformMisc
+struct FWindowsPlatformMisc final 
+    : public FGenericPlatformMisc
 {
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericPlatformMisc Interface
-
-    static FORCEINLINE void DebugBreak()
+    static FORCEINLINE void OutputDebugString(const FString& Message)
     {
-        __debugbreak();
-    }
-
-    static FORCEINLINE void OutputDebugString(const String& Message)
-    {
-        OutputDebugStringA(Message.CStr());
+        OutputDebugStringA(Message.GetCString());
     }
 
     static FORCEINLINE bool IsDebuggerPresent()
@@ -38,9 +29,7 @@ public:
         return ::IsDebuggerPresent();
     }
 
-public:
-
-    static FORCEINLINE void GetLastErrorString(String& OutErrorString)
+    static FORCEINLINE void GetLastErrorString(FString& OutErrorString)
     {
         int32 LastError = ::GetLastError();
 

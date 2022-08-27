@@ -5,14 +5,9 @@
 #include "Core/Containers/SharedRef.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsCursor
+// FWindowsCursor
 
-CWindowsCursor* CWindowsCursor::CreateWindowsCursor()
-{
-    return dbg_new CWindowsCursor();
-}
-
-void CWindowsCursor::SetCursor(ECursor Cursor)
+void FWindowsCursor::SetCursor(ECursor Cursor)
 {
     LPSTR CursorName = NULL;
     switch (Cursor)
@@ -58,12 +53,12 @@ void CWindowsCursor::SetCursor(ECursor Cursor)
     // TODO: Log error
 }
 
-void CWindowsCursor::SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 y) const
+void FWindowsCursor::SetPosition(FGenericWindow* RelativeWindow, int32 x, int32 y) const
 {
     POINT CursorPos = { x, y };
     if (RelativeWindow)
     {
-        TSharedRef<CWindowsWindow> WinWindow = MakeSharedRef<CWindowsWindow>(RelativeWindow);
+        FWindowsWindowRef WinWindow = MakeSharedRef<FWindowsWindow>(RelativeWindow);
 
         HWND hRelative = WinWindow->GetWindowHandle();
         if (!ClientToScreen(hRelative, &CursorPos))
@@ -75,7 +70,7 @@ void CWindowsCursor::SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 
     ::SetCursorPos(CursorPos.x, CursorPos.y);
 }
 
-void CWindowsCursor::GetPosition(CGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const
+void FWindowsCursor::GetPosition(FGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const
 {
     POINT CursorPos = { };
     if (!GetCursorPos(&CursorPos))
@@ -85,7 +80,7 @@ void CWindowsCursor::GetPosition(CGenericWindow* RelativeWindow, int32& OutX, in
 
     if (RelativeWindow)
     {
-        TSharedRef<CWindowsWindow> WinRelative = MakeSharedRef<CWindowsWindow>(RelativeWindow);
+        FWindowsWindowRef WinRelative = MakeSharedRef<FWindowsWindow>(RelativeWindow);
 
         HWND Relative = WinRelative->GetWindowHandle();
         if (!ScreenToClient(Relative, &CursorPos))
@@ -98,7 +93,7 @@ void CWindowsCursor::GetPosition(CGenericWindow* RelativeWindow, int32& OutX, in
     OutY = CursorPos.y;
 }
 
-void CWindowsCursor::SetVisibility(bool bVisible)
+void FWindowsCursor::SetVisibility(bool bVisible)
 {
     // TODO: Investigate if we need to do more in order to keep track of the ShowCursor calls
     if (bVisible)

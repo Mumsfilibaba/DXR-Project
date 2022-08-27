@@ -15,8 +15,5 @@ struct TIdentity
 template<bool InValue>
 struct TValue
 {
-    enum
-    {
-        Value = InValue
-    };
+    enum { Value = InValue };
 };

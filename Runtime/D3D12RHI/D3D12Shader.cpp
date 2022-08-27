@@ -43,18 +43,18 @@ FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, 
     , ByteCode()
     , Visibility(InVisibility)
 {
-    ByteCode.BytecodeLength = InCode.SizeInBytes();
+    ByteCode.BytecodeLength  = InCode.SizeInBytes();
     ByteCode.pShaderBytecode = FMemory::Malloc(ByteCode.BytecodeLength);
 
-    FMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
+    FMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.GetData(), ByteCode.BytecodeLength);
 }
 
 FD3D12Shader::~FD3D12Shader()
 {
-    FMemory::Free((void*)ByteCode.pShaderBytecode);
+    FMemory::Free(ByteCode.pShaderBytecode);
 
     ByteCode.pShaderBytecode = nullptr;
-    ByteCode.BytecodeLength = 0;
+    ByteCode.BytecodeLength  = 0;
 }
 
 template<typename TD3D12ReflectionInterface>
@@ -248,16 +248,19 @@ bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShade
     }
 
     // HACK: Since the Nvidia driver can't handle these names, we have to change the names :(
-    String Identifier = FuncDesc.Name;
+    FString Identifier = FuncDesc.Name;
 
-    auto NameStart = Identifier.ReverseFindOneOf("\x1?");
-    if (NameStart != String::NPos)
+    auto NameStart = Identifier.FindLastCharWithPredicate([](CHAR Char) -> bool 
+    { 
+        return (Char == '\x1') || (Char == '?');
+    });
+
+    if (NameStart != FString::INVALID_INDEX)
     {
         NameStart++;
     }
 
     const auto NameEnd = Identifier.Find("@");
-
     Shader->Identifier = Identifier.SubString(NameStart, NameEnd - NameStart);
     return true;
 }

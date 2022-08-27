@@ -1,7 +1,7 @@
 include 'build_common.lua'
 
 -- Build rules for a project
-function CBuildRules(InName)
+function FBuildRules(InName)
 
     -- Needs to have a valid modulename
     if InName == nil then

@@ -1,15 +1,14 @@
 #pragma once
-#include "Timestamp.h"
+#include "Timespan.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CTimer
+// FTimer
 
-class CORE_API CTimer
+class CORE_API FTimer
 {
 public:
-
-    CTimer();
-    ~CTimer() = default;
+    FTimer();
+    ~FTimer() = default;
 
     /** @brief: Measure time between this and last call to tick */
     void Tick();
@@ -17,23 +16,23 @@ public:
     /** @brief: Resets the time to zero */
     FORCEINLINE void Reset()
     {
-        DeltaTime = CTimestamp(0);
-        TotalTime = CTimestamp(0);
+        DeltaTime = FTimespan(0);
+        TotalTime = FTimespan(0);
     }
 
-    FORCEINLINE const CTimestamp& GetDeltaTime() const
+    FORCEINLINE const FTimespan& GetDeltaTime() const
     {
         return DeltaTime;
     }
 
-    FORCEINLINE const CTimestamp& GetTotalTime() const
+    FORCEINLINE const FTimespan& GetTotalTime() const
     {
         return TotalTime;
     }
 
 private:
-    CTimestamp TotalTime;
-    CTimestamp DeltaTime;
+    FTimespan TotalTime;
+    FTimespan DeltaTime;
 
     uint64     LastTime  = 0;
     uint64     Frequency = 0;

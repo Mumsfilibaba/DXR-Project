@@ -1,14 +1,14 @@
 #include "CocoaConsoleWindow.h"
-#include "MacConsoleWindow.h"
+#include "MacOutputDeviceConsole.h"
 
 #include "Core/Mac/Mac.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaConsoleWindow
+// FCocoaConsoleWindow
 
-@implementation CCocoaConsoleWindow
+@implementation FCocoaConsoleWindow
 
-- (instancetype) init:(CMacConsoleWindow*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag
+- (instancetype) init:(FMacOutputDeviceConsole*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag
 {
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:NSBackingStoreBuffered defer:NO];
     if (self)
@@ -38,7 +38,7 @@
 	ConsoleWindow->OnWindowDidClose();
 }
 
-+ (NSString*) convertStringWithArgs:(const char*) Format Args:(va_list)Args
++ (NSString*) convertStringWithArgs:(const CHAR*) Format Args:(va_list)Args
 {
     SCOPED_AUTORELEASE_POOL();
     

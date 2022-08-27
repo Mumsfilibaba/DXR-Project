@@ -6,7 +6,7 @@
 
 #include "Renderer/Renderer.h"
 
-#include "Canvas/CanvasApplication.h"
+#include "Application/ApplicationInterface.h"
 
 #include <imgui.h>
 
@@ -18,14 +18,14 @@ TAutoConsoleVariable<bool> GDrawRendererInfo("Renderer.DrawRendererInfo", false)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RendererInfoWindow
 
-TSharedRef<CRendererInfoWindow> CRendererInfoWindow::Make()
+TSharedRef<FRendererInfoWindow> FRendererInfoWindow::Make()
 {
-    return dbg_new CRendererInfoWindow();
+    return dbg_new FRendererInfoWindow();
 }
 
-void CRendererInfoWindow::Tick()
+void FRendererInfoWindow::Tick()
 {
-    TSharedRef<CGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
+    FGenericWindowRef MainViewport = FApplicationInterface::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();
@@ -49,14 +49,14 @@ void CRendererInfoWindow::Tick()
     ImGui::Columns(2, nullptr, false);
     ImGui::SetColumnWidth(0, 100.0f);
 
-    const String AdapterName = RHIGetAdapterName();
+    const FString AdapterName = RHIGetAdapterName();
     ImGui::Text("Adapter: ");
     ImGui::NextColumn();
 
-    ImGui::Text("%s", AdapterName.CStr());
+    ImGui::Text("%s", AdapterName.GetCString());
     ImGui::NextColumn();
 
-    SRendererStatistics Statistics = GRenderer.GetStatistics();
+    FRHICommandStatistics Statistics = GRenderer.GetStatistics();
 
     ImGui::Text("DrawCalls: ");
     ImGui::NextColumn();
@@ -73,14 +73,15 @@ void CRendererInfoWindow::Tick()
     ImGui::Text("Command Count: ");
     ImGui::NextColumn();
 
-    ImGui::Text("%d", Statistics.NumRenderCommands);
+    // TODO: Fix NumCommands
+    ImGui::Text("%d", 0);
 
     ImGui::Columns(1);
 
     ImGui::End();
 }
 
-bool CRendererInfoWindow::IsTickable()
+bool FRendererInfoWindow::IsTickable()
 {
     return GDrawRendererInfo.GetBool();
 }

@@ -11,7 +11,7 @@
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/Decay.h"
 
-namespace NBindInternal
+namespace NInternal
 {
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // BindPayload - Stores the payload resulted from a call to bind
@@ -20,12 +20,10 @@ namespace NBindInternal
     class TBindPayload
     {
     public:
-
         FORCEINLINE TBindPayload(FunctionType InFunc, PayloadTypes&&... PayloadArgs) noexcept
             : Payload(Forward<PayloadTypes>(PayloadArgs)...)
             , Func(Move(InFunc))
-        {
-        }
+        { }
 
         template<typename... ArgTypes>
         FORCEINLINE auto Execute(ArgTypes&&... Args) noexcept
@@ -40,7 +38,6 @@ namespace NBindInternal
         }
 
     private:
-
          /** @brief: Arguments stored when calling bind and then applied to the function when invoked */
         TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
 
@@ -54,11 +51,9 @@ namespace NBindInternal
     class TBindPayload<FunctionType>
     {
     public:
-
         FORCEINLINE TBindPayload(FunctionType InFunc) noexcept
             : Func(Move(InFunc))
-        {
-        }
+        { }
 
         template<typename... ArgTypes>
         FORCEINLINE auto Execute(ArgTypes&&... Args) noexcept
@@ -81,9 +76,9 @@ namespace NBindInternal
 // Creates a callable which can be stored in a TFunction 
 
 template<typename FunctionType, typename... ArgTypes>
-FORCEINLINE auto Bind(FunctionType Function, ArgTypes&&... Args)
+NODISCARD FORCEINLINE auto Bind(FunctionType Function, ArgTypes&&... Args)
 {
-    return NBindInternal::TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
+    return NInternal::TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -95,45 +90,40 @@ class TFunction;
 template<typename ReturnType, typename... ArgTypes>
 class TFunction<ReturnType(ArgTypes...)>
 {
-    enum
-    {
-        // TODO: Look into padding so we can use larger structs?
-        InlineBytes = 24
-    };
+    // TODO: Look into padding so we can use larger structs?
+    enum { InlineBytes = 24 };
 
     using AllocatorType = TInlineArrayAllocator<int8, InlineBytes>;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Generic functor interface
     
-    class IFunctor
+    struct IFunctor
     {
-    public:
         virtual ~IFunctor() = default;
 
         virtual ReturnType Invoke(ArgTypes&&... Args) noexcept = 0;
-        virtual IFunctor* Clone(void* Memory) const noexcept = 0;
+
+        virtual IFunctor*  Clone(void* Memory) const noexcept  = 0;
     };
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Generic functor implementation
 
     template<typename FunctorType>
-    class TGenericFunctor : public IFunctor
+    class TGenericFunctor 
+        : public IFunctor
     {
     public:
-
         FORCEINLINE TGenericFunctor(const FunctorType& InFunctor) noexcept
             : IFunctor()
             , Functor(InFunctor)
-        {
-        }
+        { }
 
         FORCEINLINE TGenericFunctor(const TGenericFunctor& Other) noexcept
             : IFunctor()
             , Functor(Other.Functor)
-        {
-        }
+        { }
 
         FORCEINLINE TGenericFunctor(TGenericFunctor&& Other) noexcept
             : IFunctor()
@@ -158,18 +148,14 @@ class TFunction<ReturnType(ArgTypes...)>
 
 public:
 
-    /**
-     * @brief:  Default constructor
-     */
+    /** @brief:  Default constructor */
     FORCEINLINE TFunction() noexcept
         : Storage()
         , Size(0)
     { }
 
-    /**
-     * @brief: Create from nullptr. Same as default constructor.
-     */
-    FORCEINLINE TFunction(NullptrType) noexcept
+    /** @brief: Create from nullptr. Same as default constructor. */
+    FORCEINLINE TFunction(nullptr_type) noexcept
         : Storage()
         , Size(0)
     { }
@@ -211,20 +197,14 @@ public:
         MoveFrom(Move(Other));
     }
 
-    /**
-     * @brief: Destructor
-     */
+    /** @brief: Destructor */
     FORCEINLINE ~TFunction()
     {
         Release();
     }
 
-    /**
-     * @brief: Checks weather the pointer is valid or not
-     *
-     * @return: True if the pointer is not nullptr otherwise false
-     */
-    FORCEINLINE bool IsValid() const noexcept
+    /** @return: Returns True if the pointer is not nullptr otherwise false */
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
         return (Size > 0);
     }
@@ -279,12 +259,8 @@ public:
 
 public:
 
-    /**
-     * @brief: Checks weather the pointer is valid or not
-     *
-     * @return: True if the pointer is not nullptr otherwise false
-     */
-    FORCEINLINE operator bool() const noexcept
+    /** @return: Returns True if the pointer is not nullptr otherwise false */
+    NODISCARD FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
@@ -318,14 +294,13 @@ public:
      *
      * @return: A reference to this object
      */
-    FORCEINLINE TFunction& operator=(NullptrType) noexcept
+    FORCEINLINE TFunction& operator=(nullptr_type) noexcept
     {
         Release();
         return *this;
     }
 
 private:
-
     FORCEINLINE void Release() noexcept
     {
         if (IsValid())
@@ -371,16 +346,16 @@ private:
         Other.Size = 0;
     }
 
-    FORCEINLINE IFunctor* GetFunctor() noexcept
+    NODISCARD FORCEINLINE IFunctor* GetFunctor() noexcept
     {
         return reinterpret_cast<IFunctor*>(Storage.GetAllocation());
     }
 
-    FORCEINLINE const IFunctor* GetFunctor() const noexcept
+    NODISCARD FORCEINLINE const IFunctor* GetFunctor() const noexcept
     {
         return reinterpret_cast<const IFunctor*>(Storage.GetAllocation());
     }
 
     AllocatorType Storage;
-    int32 Size;
+    int32         Size;
 };

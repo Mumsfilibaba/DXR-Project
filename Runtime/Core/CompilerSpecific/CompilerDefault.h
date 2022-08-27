@@ -7,8 +7,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Architecture
 
-#ifndef ARCHITECTURE_X86_X64
-    #define ARCHITECTURE_X86_X64 (0)
+#ifndef PLATFORM_ARCHITECTURE_X86_X64
+    #define PLATFORM_ARCHITECTURE_X86_X64 (0)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -42,12 +42,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Restrict
 
-#ifndef restrict_ptr
-    #define restrict_ptr
+#ifndef RESTRICT
+    #define RESTRICT
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Function signature as a const char* string
+// Function signature as a const CHAR* string
 
 #ifndef FUNCTION_SIGNATURE
     #define FUNCTION_SIGNATURE "NO COMPILER DEFINED, DEFINE TO GET THE FUNCTION_SIGNATURE"
@@ -65,8 +65,8 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Pause the thread
+// DEBUG_BREAK
 
-#ifndef PauseInstruction
-    #define PauseInstruction() ((void)0)
+#ifndef DEBUG_BREAK
+    #define DEBUG_BREAK() ((void)0)
 #endif

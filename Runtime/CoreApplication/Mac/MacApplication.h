@@ -3,23 +3,23 @@
 
 #include "Core/Mac/Mac.h"
 #include "Core/Containers/Array.h"
-#include "Core/Threading/Platform/CriticalSection.h"
+#include "Core/Platform/CriticalSection.h"
 
 #include "CoreApplication/Generic/GenericApplication.h"
 
 #include <AppKit/AppKit.h>
 
-@class CCocoaAppDelegate;
-@class CCocoaWindow;
+@class FCocoaAppDelegate;
+@class FCocoaWindow;
 
-class CMacWindow;
+class FMacWindow;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SDeferredMacEvent
+// FDeferredMacEvent
 
-struct SDeferredMacEvent
+struct FDeferredMacEvent
 {
-    FORCEINLINE SDeferredMacEvent()
+    FORCEINLINE FDeferredMacEvent()
         : NotificationName(nil)
         , Event(nil)
         , Window(nil)
@@ -28,7 +28,7 @@ struct SDeferredMacEvent
 		, Character(uint32(-1))
     { }
 
-    FORCEINLINE SDeferredMacEvent(const SDeferredMacEvent& Other)
+    FORCEINLINE FDeferredMacEvent(const FDeferredMacEvent& Other)
         : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nil)
         , Event(Other.Event ? [Other.Event retain] : nil)
         , Window(Other.Window ? [Other.Window retain] : nil)
@@ -37,7 +37,7 @@ struct SDeferredMacEvent
 		, Character(Other.Character)
     { }
 
-    FORCEINLINE ~SDeferredMacEvent()
+    FORCEINLINE ~FDeferredMacEvent()
     {
         @autoreleasepool
         {
@@ -50,7 +50,7 @@ struct SDeferredMacEvent
 	NSNotificationName NotificationName;
     NSEvent*           Event;
 	
-	CCocoaWindow*      Window;
+	FCocoaWindow*      Window;
 	CGSize             Size;
 	CGPoint            Position;
 
@@ -58,53 +58,49 @@ struct SDeferredMacEvent
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacApplication
+// FMacApplication
 
-class CMacApplication final : public CGenericApplication
+class FMacApplication final
+    : public FGenericApplication
 {
-private:
-
-    CMacApplication();
-    ~CMacApplication();
+    FMacApplication();
+    ~FMacApplication();
 
 public:
-
-	static CMacApplication* CreateMacApplication();
+	static FMacApplication* CreateMacApplication();
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericApplication Interface
+    // FGenericApplication Interface
 
-    virtual TSharedRef<CGenericWindow> CreateWindow() override final;
+    virtual FGenericWindowRef CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
 
-    virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) override final;
+    virtual void SetActiveWindow(const FGenericWindowRef& Window) override final;
 
-    virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
-
-    virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
+    virtual FGenericWindowRef GetWindowUnderCursor() const override final;
+    virtual FGenericWindowRef GetActiveWindow()      const override final;
 
 public:
+    TSharedRef<FMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
     
-    TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
-    
-    void CloseWindow(const TSharedRef<CMacWindow>& Window);
+    void CloseWindow(const TSharedRef<FMacWindow>& Window);
     
     void DeferEvent(NSObject* EventOrNotificationObject);
 
 private:
-    void ProcessDeferredEvent(const SDeferredMacEvent& Notification);
+    void ProcessDeferredEvent(const FDeferredMacEvent& Notification);
 
-    TArray<TSharedRef<CMacWindow>> Windows;
-    mutable CCriticalSection       WindowsCS;
+    TArray<TSharedRef<FMacWindow>> Windows;
+    mutable FCriticalSection       WindowsCS;
     
-    TArray<TSharedRef<CMacWindow>> ClosedWindows;
-    CCriticalSection               ClosedWindowsCS;
+    TArray<TSharedRef<FMacWindow>> ClosedWindows;
+    FCriticalSection               ClosedWindowsCS;
 
-    TArray<SDeferredMacEvent>      DeferredEvents;
-    CCriticalSection               DeferredEventsCS;
+    TArray<FDeferredMacEvent>      DeferredEvents;
+    FCriticalSection               DeferredEventsCS;
 };
 
-extern CMacApplication* MacApplication;
+extern FMacApplication* MacApplication;

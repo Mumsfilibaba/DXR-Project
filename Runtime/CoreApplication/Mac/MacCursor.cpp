@@ -18,14 +18,9 @@
 @end
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacCursor
+// FMacCursor
 
-CMacCursor* CMacCursor::CreateMacCursor()
-{
-	return dbg_new CMacCursor();
-}
-
-void CMacCursor::SetCursor(ECursor Cursor)
+void FMacCursor::SetCursor(ECursor Cursor)
 {
     NSCursor* SelectedCursor = nullptr;
     switch(Cursor)
@@ -76,12 +71,12 @@ void CMacCursor::SetCursor(ECursor Cursor)
     [SelectedCursor set];
 }
 
-void CMacCursor::SetPosition(CGenericWindow* InRelativeWindow, int32 x, int32 y) const
+void FMacCursor::SetPosition(FGenericWindow* InRelativeWindow, int32 x, int32 y) const
 {
     CGPoint NewPosition;
     if (InRelativeWindow)
     {
-		CCocoaWindow* RelativeWindow = reinterpret_cast<CCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
+		FCocoaWindow* RelativeWindow = reinterpret_cast<FCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
         const NSRect ContentRect = RelativeWindow.frame;
         const NSRect LocalRect   = NSMakeRect(x, ContentRect.size.height - y - 1, 0, 0);
         const NSRect GlobalRect  = [RelativeWindow convertRectToScreen:LocalRect];
@@ -100,12 +95,12 @@ void CMacCursor::SetPosition(CGenericWindow* InRelativeWindow, int32 x, int32 y)
     }
 }
 
-void CMacCursor::GetPosition(CGenericWindow* InRelativeWindow, int32& OutX, int32& OutY) const
+void FMacCursor::GetPosition(FGenericWindow* InRelativeWindow, int32& OutX, int32& OutY) const
 {
     NSPoint CursorPosition;
     if (InRelativeWindow)
     {
-        NSWindow* RelativeWindow = reinterpret_cast<CCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
+        NSWindow* RelativeWindow = reinterpret_cast<FCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
         CursorPosition = RelativeWindow.mouseLocationOutsideOfEventStream;
     }
     else
@@ -117,7 +112,7 @@ void CMacCursor::GetPosition(CGenericWindow* InRelativeWindow, int32& OutX, int3
     OutY = CursorPosition.y;
 }
 
-void CMacCursor::SetVisibility(bool bVisible)
+void FMacCursor::SetVisibility(bool bVisible)
 {
     if (bVisible)
     {

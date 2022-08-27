@@ -1,5 +1,5 @@
 #pragma once
-#include "Core.h"
+#include "IRefCounted.h"
 
 #include "Core/Threading/AtomicInt.h"
 #include "Core/Templates/IsBaseOf.h"
@@ -8,36 +8,21 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRefCounted
 
-class CORE_API FRefCounted
+class CORE_API FRefCounted 
+    : public IRefCounted
 {
-public:
-
+protected:
     FRefCounted();
     virtual ~FRefCounted();
 
-    /**
-     * @brief: Adds a reference
-     * 
-     * @return: Returns the new reference count
-     */
-    int32 AddRef();
-    
-    /**
-     * @brief: Removes a reference
-     *
-     * @return: Returns the new reference count
-     */
-    int32 Release();
+public:
+    virtual int32 AddRef()  override;
+    virtual int32 Release() override;
 
-    /**
-     * @brief: Retrieve the reference count
-     *
-     * @return: Returns the current reference count
-     */
-    int32 GetRefCount() const;
+    virtual int32 GetRefCount() const override;
 
 private:
-    mutable AtomicInt32 StrongReferences;
+    mutable FAtomicInt32 StrongReferences;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

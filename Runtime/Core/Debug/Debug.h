@@ -5,24 +5,39 @@
      #undef OutputDebugString
 #endif
 
+#ifdef OutputDebugFormat
+     #undef OutputDebugFormat
+#endif
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Class for easy access to debugging functions 
+// FDebug - Class for easy access to debugging functions 
 
-class CDebug
+struct FDebug
 {
-public:
-    static FORCEINLINE void DebugBreak()
+    static FORCEINLINE void OutputDebugString(const FString& Message)
     {
-        PlatformMisc::DebugBreak();
+        FPlatformMisc::OutputDebugString(Message);
     }
 
-    static FORCEINLINE void OutputDebugString(const String& Message)
+    /**
+     * Outputs a formatted debug string to the attached debugger
+     *
+     * @param InFormat: Format to print to the attached debugger, followed by arguments for the string
+     */
+    template<typename... ArgTypes>
+    static FORCEINLINE void OutputDebugFormat(const CHAR* InFormat, ArgTypes&&... Args)
     {
-        PlatformMisc::OutputDebugString(Message);
+        FString FormattedMessage = FString::CreateFormatted(InFormat, Forward<ArgTypes>(Args)...);
+        OutputDebugString(FormattedMessage);
     }
 
+    /**
+     * Checks weather or not the application is running inside a debugger
+     *
+     * @return: Returns true if the debugger is present, otherwise false
+     */
     static FORCEINLINE bool IsDebuggerPresent()
     {
-        return PlatformMisc::IsDebuggerPresent();
+        return FPlatformMisc::IsDebuggerPresent();
     }
 };

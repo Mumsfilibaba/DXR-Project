@@ -4,17 +4,18 @@
 #include "Engine/CoreObject/CoreObject.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CLight
+// FLight
 
-class ENGINE_API CLight : public CCoreObject
+class ENGINE_API FLight 
+    : public FCoreObject
 {
-    CORE_OBJECT(CLight, CCoreObject);
+    CORE_OBJECT(FLight, FCoreObject);
 
 public:
-    CLight();
-    virtual ~CLight() = default;
+    FLight();
+    virtual ~FLight() = default;
 
-    void SetColor(const CVector3& InColor);
+    void SetColor(const FVector3& InColor);
     void SetColor(float r, float g, float b);
 
     void SetIntensity(float InIntensity);
@@ -34,7 +35,7 @@ public:
         return Intensity;
     }
 
-    FORCEINLINE const CVector3& GetColor() const
+    FORCEINLINE const FVector3& GetColor() const
     {
         return Color;
     }
@@ -60,7 +61,7 @@ public:
     }
 
 protected:
-    CVector3 Color;
+    FVector3 Color;
     float Intensity = 1.0f;
     float ShadowNearPlane;
     float ShadowFarPlane;

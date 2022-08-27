@@ -1,16 +1,17 @@
 #pragma once
 #include "RHITypes.h"
-#include "IRHIResource.h"
+#include "RHICore.h"
 
+#include "Core/IRefCounted.h"
 #include "Core/Threading/AtomicInt.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIResource
 
-class RHI_API FRHIResource : public IRHIResource
+class RHI_API FRHIResource 
+    : public IRefCounted
 {
 protected:
-
     FRHIResource()
         : StrongReferences(1)
     { }
@@ -18,15 +19,14 @@ protected:
     virtual ~FRHIResource() = default;
 
 public:
-
-    virtual int32 AddRef() override final
+    virtual int32 AddRef() override
     {
         Check(StrongReferences.Load() > 0);
         ++StrongReferences;
         return StrongReferences.Load();
     }
 
-    virtual int32 Release() override final
+    virtual int32 Release() override
     {
         const int32 RefCount = --StrongReferences;
         Check(RefCount >= 0);
@@ -39,6 +39,11 @@ public:
         return RefCount;
     }
 
+    virtual int32 GetRefCount() const override
+    {
+        return StrongReferences.Load();
+    }
+
 protected:
-    mutable AtomicInt32 StrongReferences;
+    mutable FAtomicInt32 StrongReferences;
 };

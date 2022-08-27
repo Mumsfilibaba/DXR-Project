@@ -3,18 +3,18 @@
 
 #include "RHI/RHIResourceViews.h"
 
-#include "Canvas/CanvasImage.h"
-#include "Canvas/CanvasWindow.h"
+#include "Application/DrawableImage.h"
+#include "Application/Window.h"
 
 #include <imgui.h>
 
-class CTextureDebugWindow : public CCanvasWindow
+class FTextureDebugWindow 
+    : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
-
-    static TSharedRef<CTextureDebugWindow> Make();
+    static TSharedRef<FTextureDebugWindow> Make();
 
      /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;
@@ -31,12 +31,11 @@ public:
     }
 
 private:
-
-    CTextureDebugWindow() = default;
-    ~CTextureDebugWindow() = default;
+    FTextureDebugWindow()  = default;
+    ~FTextureDebugWindow() = default;
 
      /** @brief: Debug images */
-    TArray<SCanvasImage> DebugTextures;
+    TArray<FDrawableImage> DebugTextures;
 
      /** @brief: The selected image */
     int32 SelectedTextureIndex = -1;

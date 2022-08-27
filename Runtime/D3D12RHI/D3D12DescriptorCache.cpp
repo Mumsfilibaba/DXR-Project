@@ -1,35 +1,26 @@
 #include "D3D12DescriptorCache.h"
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12CoreInterface.h"
 #include "D3D12CommandContext.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Templates/EnumUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12DescriptorCache
 
 FD3D12DescriptorCache::FD3D12DescriptorCache(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
+    , CurrentCommandList(nullptr)
     , NullCBV(nullptr)
     , NullSRV(nullptr)
     , NullUAV(nullptr)
+    , NullRTV(nullptr)
     , NullSampler(nullptr)
-    , ShaderResourceViewCache()
-    , UnorderedAccessViewCache()
-    , ConstantBufferViewCache()
-    , SamplerStateCache()
     , RangeSizes()
 { }
 
-FD3D12DescriptorCache::~FD3D12DescriptorCache()
-{
-    SafeDelete(NullCBV);
-    SafeRelease(NullSRV);
-    SafeRelease(NullUAV);
-    SafeRelease(NullSampler);
-}
-
-bool FD3D12DescriptorCache::Init()
+bool FD3D12DescriptorCache::Initialize()
 {
     FD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
     
@@ -91,6 +82,25 @@ bool FD3D12DescriptorCache::Init()
         return false;
     }
 
+    D3D12_RENDER_TARGET_VIEW_DESC RTVDesc;
+    FMemory::Memzero(&RTVDesc);
+
+    RTVDesc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
+    RTVDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    RTVDesc.Texture2D.MipSlice   = 0;
+    RTVDesc.Texture2D.PlaneSlice = 0;
+
+    NullRTV = dbg_new FD3D12RenderTargetView(GetDevice(), D3D12CoreInterface->GetRenderTargetOfflineDescriptorHeap());
+    if (!NullRTV->AllocateHandle())
+    {
+        return false;
+    }
+
+    if (!NullRTV->CreateView(nullptr, RTVDesc))
+    {
+        return false;
+    }
+
     D3D12_SAMPLER_DESC SamplerDesc;
     FMemory::Memzero(&SamplerDesc);
 
@@ -120,232 +130,260 @@ bool FD3D12DescriptorCache::Init()
     }
 
     // Start by resetting the descriptor cache
-    Reset();
+    Clear();
     return true;
 }
 
-void FD3D12DescriptorCache::CommitGraphicsDescriptors(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature)
+void FD3D12DescriptorCache::PrepareGraphicsDescriptors(FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature, FD3D12PipelineStageMask PipelineMask)
 {
     // TRACE_FUNCTION_SCOPE();
 
-    Check(CmdBatch      != nullptr);
-    Check(RootSignature != nullptr);
-
-    // Vertex and render-targets
-    VertexBufferCache.CommitState(CmdList, CmdBatch);
-    RenderTargetCache.CommitState(CmdList);
+    Check(CmdBatch           != nullptr);
+    Check(CurrentCommandList != nullptr);
+    Check(RootSignature      != nullptr);
 
     // Allocate descriptors for resources and samplers 
     ID3D12Device*              DxDevice  = GetDevice()->GetD3D12Device();
-    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+    ID3D12GraphicsCommandList* DxCmdList = CurrentCommandList->GetGraphicsCommandList();
 
-    FD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    FD3D12OnlineDescriptorHeap* SamplerHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
+    FD3D12OnlineDescriptorManager* ResourceManager = CmdBatch->GetResourceDescriptorManager();
+    FD3D12OnlineDescriptorManager* SamplerManager  = CmdBatch->GetSamplerDescriptorManager();
 
-    AllocateDescriptorsAndSetHeaps(DxCmdList, ResourceHeap, SamplerHeap);
+    AllocateDescriptorsAndSetHeaps(DxCmdList, ResourceManager, SamplerManager, PipelineMask);
 
     // Copy and bind resources and samplers
-    for (uint32 Index = 0; Index < ShaderVisibility_Count; ++Index)
+    for (uint32 ShaderStage = ShaderVisibility_Vertex; ShaderStage < ShaderVisibility_Count; ++ShaderStage)
     {
-        const EShaderVisibility ShaderVisibility = static_cast<EShaderVisibility>(Index);
+        const EShaderVisibility ShaderVisibility = static_cast<EShaderVisibility>(ShaderStage);
+        if (PipelineMask.CheckShaderVisibility(ShaderVisibility))
+        {
+            int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_CBV);
+            CopyAndBindGraphicsDescriptors(DxDevice, DxCmdList, ConstantBufferViewCache, ParameterIndex, ShaderVisibility);
 
-        int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_CBV);
-        CopyAndBindGraphicsDescriptors(DxDevice, DxCmdList, ConstantBufferViewCache, ParameterIndex, ShaderVisibility);
+            ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_SRV);
+            CopyAndBindGraphicsDescriptors(DxDevice, DxCmdList, ShaderResourceViewCache, ParameterIndex, ShaderVisibility);
 
-        ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_SRV);
-        CopyAndBindGraphicsDescriptors(DxDevice, DxCmdList, ShaderResourceViewCache, ParameterIndex, ShaderVisibility);
+            ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_UAV);
+            CopyAndBindGraphicsDescriptors(DxDevice, DxCmdList, UnorderedAccessViewCache, ParameterIndex, ShaderVisibility);
 
-        ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_UAV);
-        CopyAndBindGraphicsDescriptors(DxDevice, DxCmdList, UnorderedAccessViewCache, ParameterIndex, ShaderVisibility);
-
-        ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_Sampler);
-        CopyAndBindGraphicsDescriptors(DxDevice, DxCmdList, SamplerStateCache, ParameterIndex, ShaderVisibility);
+            ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_Sampler);
+            CopyAndBindGraphicsDescriptors(DxDevice, DxCmdList, SamplerStateCache, ParameterIndex, ShaderVisibility);
+        }
     }
 }
 
-void FD3D12DescriptorCache::CommitComputeDescriptors(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature)
+void FD3D12DescriptorCache::PrepareComputeDescriptors(FD3D12CommandBatch* CmdBatch, FD3D12RootSignature* RootSignature)
 {
     // TRACE_FUNCTION_SCOPE();
 
-    Check(CmdBatch      != nullptr);
-    Check(RootSignature != nullptr);
+    Check(CmdBatch           != nullptr);
+    Check(CurrentCommandList != nullptr);
+    Check(RootSignature      != nullptr);
 
     ID3D12Device*              DxDevice  = GetDevice()->GetD3D12Device();
-    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+    ID3D12GraphicsCommandList* DxCmdList = CurrentCommandList->GetGraphicsCommandList();
 
-    FD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    FD3D12OnlineDescriptorHeap* SamplerHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
+    FD3D12OnlineDescriptorManager* ResourceDescriptors = CmdBatch->GetResourceDescriptorManager();
+    FD3D12OnlineDescriptorManager* SamplerDescriptors  = CmdBatch->GetSamplerDescriptorManager();
 
-    AllocateDescriptorsAndSetHeaps(DxCmdList, ResourceHeap, SamplerHeap);
+    AllocateDescriptorsAndSetHeaps(DxCmdList, ResourceDescriptors, SamplerDescriptors, FD3D12PipelineStageMask::ComputeMask());
 
-    const EShaderVisibility ShaderVisibility = ShaderVisibility_All;
-
-    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_CBV);
+    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, EResourceType::ResourceType_CBV);
     CopyAndBindComputeDescriptors(DxDevice, DxCmdList, ConstantBufferViewCache, ParameterIndex);
 
-    ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_SRV);
+    ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, EResourceType::ResourceType_SRV);
     CopyAndBindComputeDescriptors(DxDevice, DxCmdList, ShaderResourceViewCache, ParameterIndex);
 
-    ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_UAV);
+    ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, EResourceType::ResourceType_UAV);
     CopyAndBindComputeDescriptors(DxDevice, DxCmdList, UnorderedAccessViewCache, ParameterIndex);
 
-    ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility, EResourceType::ResourceType_Sampler);
+    ParameterIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, EResourceType::ResourceType_Sampler);
     CopyAndBindComputeDescriptors(DxDevice, DxCmdList, SamplerStateCache, ParameterIndex);
 }
 
-void FD3D12DescriptorCache::Reset()
+void FD3D12DescriptorCache::SetRenderTargets(FD3D12RenderTargetViewCache& RenderTargets, FD3D12DepthStencilView* DepthStencil)
 {
-    VertexBufferCache.Reset();
-    RenderTargetCache.Reset();
+    Check(CurrentCommandList != nullptr);
 
-    ConstantBufferViewCache.Reset(NullCBV);
-    ShaderResourceViewCache.Reset(NullSRV);
-    UnorderedAccessViewCache.Reset(NullUAV);
-    SamplerStateCache.Reset(NullSampler);
+    D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetViewHandles[D3D12_MAX_RENDER_TARGET_COUNT];
+    for (uint32 Index = 0; Index < RenderTargets.NumRenderTargets; ++Index)
+    {
+        FD3D12RenderTargetView* CurrentView = RenderTargets.RenderTargetViews[Index];
+        if (!CurrentView)
+        {
+            CurrentView = NullRTV.Get();
+        }
 
-    PreviousDescriptorHeaps[0] = nullptr;
-    PreviousDescriptorHeaps[1] = nullptr;
+        Check(CurrentView != nullptr);
+        RenderTargetViewHandles[Index] = CurrentView->GetOfflineHandle();
+    }
+
+    if (DepthStencil)
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilHandle = DepthStencil->GetOfflineHandle();
+        CurrentCommandList->OMSetRenderTargets(RenderTargetViewHandles, RenderTargets.NumRenderTargets, false, &DepthStencilHandle);
+    }
+    else
+    {
+        CurrentCommandList->OMSetRenderTargets(RenderTargetViewHandles, RenderTargets.NumRenderTargets, false, nullptr);
+    }
 }
 
-void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommandList* CmdList, FD3D12OnlineDescriptorHeap* ResourceHeap, FD3D12OnlineDescriptorHeap* SamplerHeap)
+void FD3D12DescriptorCache::SetVertexBuffers(FD3D12VertexBufferCache& VertexBuffers)
 {
-    uint32 NumConstantBuffersViews = ConstantBufferViewCache.CountNeededDescriptors();
-    uint32 NumShaderResourceViews  = ShaderResourceViewCache.CountNeededDescriptors();
-    uint32 NumUnorderedAccessViews = UnorderedAccessViewCache.CountNeededDescriptors();
+    Check(CurrentCommandList != nullptr);
+    CurrentCommandList->IASetVertexBuffers(0, VertexBuffers.VBViews, VertexBuffers.NumVertexBuffers);
+}
 
-    uint32 NumResourceDescriptors = NumConstantBuffersViews + NumShaderResourceViews + NumUnorderedAccessViews;
-    if (!ResourceHeap->HasSpace(NumResourceDescriptors))
+void FD3D12DescriptorCache::SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer)
+{
+    Check(CurrentCommandList != nullptr);
+    CurrentCommandList->IASetIndexBuffer(&IndexBuffer.IBView);
+}
+
+void FD3D12DescriptorCache::Clear()
+{
+    CurrentCommandList         = nullptr;
+    PreviousDescriptorHeaps[0] = nullptr;
+    PreviousDescriptorHeaps[1] = nullptr;
+
+    ConstantBufferViewCache.Reset(NullCBV);
+    ShaderResourceViewCache.Reset(NullSRV.Get());
+    UnorderedAccessViewCache.Reset(NullUAV.Get());
+    SamplerStateCache.Reset(NullSampler.Get());
+}
+
+void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(
+    ID3D12GraphicsCommandList* CmdList,
+    FD3D12OnlineDescriptorManager* ResourceDescriptors,
+    FD3D12OnlineDescriptorManager* SamplerDescriptors,
+    FD3D12PipelineStageMask PipelineMask)
+{
+    // Count descriptors
+    uint32 NumResourceDescriptors = 0;
+    uint32 NumSamplerDescriptors  = 0;
+    for (uint32 ShaderStage = 0; ShaderStage < ShaderVisibility_Count; ++ShaderStage)
     {
-        ConstantBufferViewCache.InvalidateAll();
-        ShaderResourceViewCache.InvalidateAll();
-        UnorderedAccessViewCache.InvalidateAll();
+        const EShaderVisibility ShaderVisibility = static_cast<EShaderVisibility>(ShaderStage);
+        if (PipelineMask.CheckShaderVisibility(ShaderVisibility))
+        {
+            NumResourceDescriptors += ConstantBufferViewCache.GetNumDescriptorsForStage(ShaderVisibility);
+            NumResourceDescriptors += ShaderResourceViewCache.GetNumDescriptorsForStage(ShaderVisibility);
+            NumResourceDescriptors += UnorderedAccessViewCache.GetNumDescriptorsForStage(ShaderVisibility);
 
-        ResourceHeap->AllocateFreshHeap();
-
-        NumConstantBuffersViews = ConstantBufferViewCache.CountNeededDescriptors();
-        NumShaderResourceViews  = ShaderResourceViewCache.CountNeededDescriptors();
-        NumUnorderedAccessViews = UnorderedAccessViewCache.CountNeededDescriptors();
-        NumResourceDescriptors  = NumConstantBuffersViews + NumShaderResourceViews + NumUnorderedAccessViews;
+            NumSamplerDescriptors += SamplerStateCache.GetNumDescriptorsForStage(ShaderVisibility);
+        }
     }
 
-    ConstantBufferViewCache.PrepareForCopy();
-    ShaderResourceViewCache.PrepareForCopy();
-    UnorderedAccessViewCache.PrepareForCopy();
-
-    uint32 NumSamplerDescriptors = SamplerStateCache.CountNeededDescriptors();
-    if (!SamplerHeap->HasSpace(NumSamplerDescriptors))
+    if (!ResourceDescriptors->HasSpace(NumResourceDescriptors))
     {
-        SamplerStateCache.InvalidateAll();
-        SamplerHeap->AllocateFreshHeap();
+        Check(false);
 
-        NumSamplerDescriptors = SamplerStateCache.CountNeededDescriptors();
+        // ConstantBufferViewCache.InvalidateAll();
+        // ShaderResourceViewCache.InvalidateAll();
+        // UnorderedAccessViewCache.InvalidateAll();
+
+        // ResourceDescriptors->AllocateFreshHeap();
+
+        // NumConstantBuffersViews = ConstantBufferViewCache.CountNeededDescriptors();
+        // NumShaderResourceViews  = ShaderResourceViewCache.CountNeededDescriptors();
+        // NumUnorderedAccessViews = UnorderedAccessViewCache.CountNeededDescriptors();
+        // NumResourceDescriptors  = NumConstantBuffersViews + NumShaderResourceViews + NumUnorderedAccessViews;
     }
 
-    SamplerStateCache.PrepareForCopy();
-    
-    uint32 ResourceDescriptorHandle = ResourceHeap->AllocateHandles(NumResourceDescriptors);
-    D3D12_ERROR_COND( NumResourceDescriptors <= D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
-                    ,"Trying to bind more Resource Descriptors (NumDescriptors=%u) than the maximum (MaxResourceDescriptors=%u)"
-                    , NumResourceDescriptors
-                    , D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
+    if (!SamplerDescriptors->HasSpace(NumSamplerDescriptors))
+    {
+        Check(false);
 
-    uint32 SamplerDescriptorHandle  = SamplerHeap->AllocateHandles(NumSamplerDescriptors);
-    D3D12_ERROR_COND( NumSamplerDescriptors <= D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT
-                    , "Trying to bind more Sampler Descriptors (NumDescriptors=%u) than the maximum (MaxSamplerDescriptors=%u)"
-                    , NumSamplerDescriptors
-                    , D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT);
+        // SamplerStateCache.InvalidateAll();
+        // SamplerDescriptors->AllocateFreshHeap();
 
+        // NumSamplerDescriptors = SamplerStateCache.CountNeededDescriptors();
+    }
+
+    // Allocate handles
+    uint32 ResourceDescriptorHandle = ResourceDescriptors->AllocateHandles(NumResourceDescriptors);
+    D3D12_ERROR_COND(
+        NumResourceDescriptors <= D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT,
+        "Trying to bind more Resource Descriptors (NumDescriptors=%u) than the maximum (MaxResourceDescriptors=%u)",
+        NumResourceDescriptors,
+        D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
+
+    uint32 SamplerDescriptorHandle = SamplerDescriptors->AllocateHandles(NumSamplerDescriptors);
+    D3D12_ERROR_COND(
+        NumSamplerDescriptors <= D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT,
+        "Trying to bind more Sampler Descriptors (NumDescriptors=%u) than the maximum (MaxSamplerDescriptors=%u)",
+        NumSamplerDescriptors,
+        D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT);
+
+    // Bind the heaps
     ID3D12DescriptorHeap* DescriptorHeaps[] =
     {
-        ResourceHeap->GetNativeHeap(),
-        SamplerHeap->GetNativeHeap()
+        ResourceDescriptors->GetD3D12Heap(),
+        SamplerDescriptors->GetD3D12Heap()
     };
 
     if (PreviousDescriptorHeaps[0] != DescriptorHeaps[0] || PreviousDescriptorHeaps[1] != DescriptorHeaps[1])
     {
-        CmdList->SetDescriptorHeaps(ArrayCount(DescriptorHeaps), DescriptorHeaps);
+        CmdList->SetDescriptorHeaps(ARRAY_COUNT(DescriptorHeaps), DescriptorHeaps);
 
         PreviousDescriptorHeaps[0] = DescriptorHeaps[0];
         PreviousDescriptorHeaps[1] = DescriptorHeaps[1];
     }
 
-    if (NumConstantBuffersViews > 0)
+    // Copy over the descriptors to the descriptor tables
+    for (uint32 ShaderStage = 0; ShaderStage < ShaderVisibility_Count; ++ShaderStage)
     {
-        D3D12_CPU_DESCRIPTOR_HANDLE HostHandle   = ResourceHeap->GetCPUDescriptorHandleAt(ResourceDescriptorHandle);
-        D3D12_GPU_DESCRIPTOR_HANDLE DeviceHandle = ResourceHeap->GetGPUDescriptorHandleAt(ResourceDescriptorHandle);
-
-        ConstantBufferViewCache.SetAllocatedDescriptorHandles(HostHandle, DeviceHandle, ResourceHeap->GetDescriptorHandleIncrementSize());
-        ResourceDescriptorHandle += NumConstantBuffersViews;
-    }
-
-    if (NumShaderResourceViews > 0)
-    {
-        D3D12_CPU_DESCRIPTOR_HANDLE HostHandle   = ResourceHeap->GetCPUDescriptorHandleAt(ResourceDescriptorHandle);
-        D3D12_GPU_DESCRIPTOR_HANDLE DeviceHandle = ResourceHeap->GetGPUDescriptorHandleAt(ResourceDescriptorHandle);
-
-        ShaderResourceViewCache.SetAllocatedDescriptorHandles(HostHandle, DeviceHandle, ResourceHeap->GetDescriptorHandleIncrementSize());
-        ResourceDescriptorHandle += NumShaderResourceViews;
-    }
-
-    if (NumUnorderedAccessViews > 0)
-    {
-        D3D12_CPU_DESCRIPTOR_HANDLE HostHandle   = ResourceHeap->GetCPUDescriptorHandleAt(ResourceDescriptorHandle);
-        D3D12_GPU_DESCRIPTOR_HANDLE DeviceHandle = ResourceHeap->GetGPUDescriptorHandleAt(ResourceDescriptorHandle);
-        UnorderedAccessViewCache.SetAllocatedDescriptorHandles(HostHandle, DeviceHandle, ResourceHeap->GetDescriptorHandleIncrementSize());
-    }
-
-    if (NumSamplerDescriptors > 0)
-    {
-        D3D12_CPU_DESCRIPTOR_HANDLE HostHandle   = SamplerHeap->GetCPUDescriptorHandleAt(SamplerDescriptorHandle);
-        D3D12_GPU_DESCRIPTOR_HANDLE DeviceHandle = SamplerHeap->GetGPUDescriptorHandleAt(SamplerDescriptorHandle);
-        SamplerStateCache.SetAllocatedDescriptorHandles(HostHandle, DeviceHandle, SamplerHeap->GetDescriptorHandleIncrementSize());
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12VertexBufferCache
-
-void FD3D12VertexBufferCache::CommitState(FD3D12CommandList& CmdList, FD3D12CommandBatch* CmdBatch)
-{
-    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
-    if (bVertexBuffersDirty)
-    {
-        TStaticArray<D3D12_VERTEX_BUFFER_VIEW, D3D12_MAX_VERTEX_BUFFER_SLOTS> VertexBufferViews;
-
-        for (uint32 Index = 0; Index < NumVertexBuffers; ++Index)
+        const EShaderVisibility ShaderVisibility = static_cast<EShaderVisibility>(ShaderStage);
+        if (PipelineMask.CheckShaderVisibility(ShaderVisibility))
         {
-            FD3D12VertexBuffer* VertexBuffer = VertexBuffers[Index];
-            if (VertexBuffer)
+            // ConstantBuffers
+            uint32 NumDescriptors = ConstantBufferViewCache.GetNumDescriptorsForStage(ShaderVisibility);
+            if (NumDescriptors > 0)
             {
-                VertexBufferViews[Index] = VertexBuffer->GetView();
-                CmdBatch->AddInUseResource(VertexBuffer);
+                ConstantBufferViewCache.PrepareDescriptorsForCopy(ShaderVisibility);
+                
+                const D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle = ResourceDescriptors->GetCPUDescriptorHandleAt(ResourceDescriptorHandle);
+                const D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle = ResourceDescriptors->GetGPUDescriptorHandleAt(ResourceDescriptorHandle);
+
+                ConstantBufferViewCache.SetDescriptorTable(ShaderVisibility, CPUHandle, GPUHandle);
+                ResourceDescriptorHandle += NumDescriptors;
             }
-            else
+
+            // ShaderResourceViews
+            NumDescriptors = ShaderResourceViewCache.GetNumDescriptorsForStage(ShaderVisibility);
+            if (NumDescriptors > 0)
             {
-                FMemory::Memzero(&VertexBufferViews[Index]);
+                ShaderResourceViewCache.PrepareDescriptorsForCopy(ShaderVisibility);
+                
+                const D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle = ResourceDescriptors->GetCPUDescriptorHandleAt(ResourceDescriptorHandle);
+                const D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle = ResourceDescriptors->GetGPUDescriptorHandleAt(ResourceDescriptorHandle);
+
+                ShaderResourceViewCache.SetDescriptorTable(ShaderVisibility, CPUHandle, GPUHandle);
+                ResourceDescriptorHandle += NumDescriptors;
+            }
+
+            // UnorderedAccessViews
+            NumDescriptors = UnorderedAccessViewCache.GetNumDescriptorsForStage(ShaderVisibility);
+            if (NumDescriptors > 0)
+            {
+                UnorderedAccessViewCache.PrepareDescriptorsForCopy(ShaderVisibility);
+                
+                const D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle = ResourceDescriptors->GetCPUDescriptorHandleAt(ResourceDescriptorHandle);
+                const D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle = ResourceDescriptors->GetGPUDescriptorHandleAt(ResourceDescriptorHandle);
+                UnorderedAccessViewCache.SetDescriptorTable(ShaderVisibility, CPUHandle, GPUHandle);
+            }
+
+            // SamplerStates
+            NumDescriptors = SamplerStateCache.GetNumDescriptorsForStage(ShaderVisibility);
+            if (NumDescriptors > 0)
+            {
+                SamplerStateCache.PrepareDescriptorsForCopy(ShaderVisibility);
+                
+                const D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle = SamplerDescriptors->GetCPUDescriptorHandleAt(SamplerDescriptorHandle);
+                const D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle = SamplerDescriptors->GetGPUDescriptorHandleAt(SamplerDescriptorHandle);
+                SamplerStateCache.SetDescriptorTable(ShaderVisibility, CPUHandle, GPUHandle);
             }
         }
-
-        DxCmdList->IASetVertexBuffers(0, NumVertexBuffers, VertexBufferViews.Data());
-        bVertexBuffersDirty = false;
-    }
-
-    if (bIndexBufferDirty)
-    {
-        D3D12_INDEX_BUFFER_VIEW IndexBufferView;
-        if (!IndexBuffer)
-        {
-            IndexBufferView.Format         = DXGI_FORMAT_R32_UINT;
-            IndexBufferView.BufferLocation = 0;
-            IndexBufferView.SizeInBytes    = 0;
-        }
-        else
-        {
-            IndexBufferView = IndexBuffer->GetView();
-            CmdBatch->AddInUseResource(IndexBuffer);
-        }
-
-        DxCmdList->IASetIndexBuffer(&IndexBufferView);
-        bIndexBufferDirty = false;
     }
 }

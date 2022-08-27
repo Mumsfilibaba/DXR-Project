@@ -9,8 +9,5 @@
 template<typename T>
 struct TIsArithmetic
 {
-    enum
-    {
-        Value = TOr<TIsInteger<T>, TIsFloatingPoint<T>>::Value
-    };
+    enum { Value = TOr<TIsInteger<T>, TIsFloatingPoint<T>>::Value };
 };

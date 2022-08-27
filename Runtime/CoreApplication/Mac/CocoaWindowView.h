@@ -2,7 +2,7 @@
 #include <Appkit/Appkit.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaWindowView
+// FCocoaWindowView
 
-@interface CCocoaWindowView : NSView<NSTextInputClient>
+@interface FCocoaWindowView : NSView<NSTextInputClient>
 @end

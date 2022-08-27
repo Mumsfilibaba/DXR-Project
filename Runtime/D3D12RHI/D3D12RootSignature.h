@@ -1,14 +1,13 @@
 #pragma once
-#include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
 #include "D3D12Shader.h"
+#include "D3D12RefCounted.h"
 
-#include "Core/RefCounted.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Utilities/HashUtilities.h"
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 
-class FD3D12RootSignature;
+typedef TSharedRef<class FD3D12RootSignature> FD3D12RootSignatureRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERootSignatureType
@@ -70,13 +69,16 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RootSignature
 
-class FD3D12RootSignature : public FD3D12DeviceChild, public FRefCounted
+class FD3D12RootSignature 
+    : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
 public:
-
     FD3D12RootSignature(FD3D12Device* InDevice);
     ~FD3D12RootSignature() = default;
-
+    
+    static bool Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
+    
     bool Initialize(const FD3D12RootSignatureResourceCount& RootSignatureInfo);
     bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
     bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
@@ -92,29 +94,29 @@ public:
         return ConstantRootParameterIndex;
     }
 
-    FORCEINLINE void SetName(const String& Name)
+    FORCEINLINE void SetName(const FString& Name)
     {
-        WString WideName = CharToWide(Name);
-        RootSignature->SetName(WideName.CStr());
+        FStringWide WideName = CharToWide(Name);
+        RootSignature->SetName(WideName.GetCString());
     }
 
-    FORCEINLINE ID3D12RootSignature* GetRootSignature() const
+    FORCEINLINE ID3D12RootSignature* GetD3D12RootSignature() const
     {
         return RootSignature.Get();
     }
 
-    FORCEINLINE ID3D12RootSignature** GetAddressOfRootSignature()
+    FORCEINLINE ID3D12RootSignature** GetD3D12RootSignatureAddress()
     {
         return RootSignature.GetAddressOf();
     }
 
-    static bool Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
-
 private:
     void CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+
     bool InternalInit(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     TComPtr<ID3D12RootSignature> RootSignature;
+
     int32 RootParameterMap[ShaderVisibility_Count][ResourceType_Count];
     // TODO: Enable this for all shader visibilities
     int32 ConstantRootParameterIndex;
@@ -123,26 +125,22 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RootSignatureCache
 
-class FD3D12RootSignatureCache : public FD3D12DeviceChild
+class FD3D12RootSignatureCache
+    : public FD3D12DeviceChild
 {
 public:
     FD3D12RootSignatureCache(FD3D12Device* Device);
     ~FD3D12RootSignatureCache();
 
-    static FD3D12RootSignatureCache& Get();
-
-    bool Initialize();
-
-    void ReleaseAll();
-
     FD3D12RootSignature* GetOrCreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount);
+    
+    bool Initialize();
+    void ReleaseAll();
 
 private:
     FD3D12RootSignature* CreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount);
 
     // TODO: Use a hash instead, this is beacuse == operator does not make sense, use it anyway?
-    TArray<TSharedRef<FD3D12RootSignature>>  RootSignatures;
+    TArray<FD3D12RootSignatureRef>           RootSignatures;
     TArray<FD3D12RootSignatureResourceCount> ResourceCounts;
-
-    static FD3D12RootSignatureCache* Instance;
 };

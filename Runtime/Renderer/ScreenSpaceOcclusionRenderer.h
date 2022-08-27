@@ -6,31 +6,31 @@
 #include "Engine/Scene/Scene.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CScreenSpaceOcclusionRenderer
+// FScreenSpaceOcclusionRenderer
 
-class RENDERER_API CScreenSpaceOcclusionRenderer
+class RENDERER_API FScreenSpaceOcclusionRenderer
 {
 public:
-    CScreenSpaceOcclusionRenderer() = default;
-    ~CScreenSpaceOcclusionRenderer() = default;
+    FScreenSpaceOcclusionRenderer() = default;
+    ~FScreenSpaceOcclusionRenderer() = default;
 
-    bool Init(SFrameResources& FrameResources);
+    bool Init(FFrameResources& FrameResources);
     void Release();
 
-    void Render(FRHICommandList& CmdList, SFrameResources& FrameResources);
+    void Render(FRHICommandList& CmdList, FFrameResources& FrameResources);
 
-    bool ResizeResources(SFrameResources& FrameResources);
+    bool ResizeResources(FFrameResources& FrameResources);
 
 private:
-    bool CreateRenderTarget(SFrameResources& FrameResources);
+    bool CreateRenderTarget(FFrameResources& FrameResources);
 
-    TSharedRef<FRHIComputePipelineState> PipelineState;
-    TSharedRef<FRHIComputeShader>        SSAOShader;
-    TSharedRef<FRHIComputePipelineState> BlurHorizontalPSO;
-    TSharedRef<FRHIComputeShader>        BlurHorizontalShader;
-    TSharedRef<FRHIComputePipelineState> BlurVerticalPSO;
-    TSharedRef<FRHIComputeShader>        BlurVerticalShader;
-    TSharedRef<FRHIGenericBuffer>     SSAOSamples;
-    TSharedRef<FRHIShaderResourceView>   SSAOSamplesSRV;
-    TSharedRef<FRHITexture2D>            SSAONoiseTex;
+    FRHIComputePipelineStateRef        PipelineState;
+    FRHIComputeShaderRef               SSAOShader;
+    FRHIComputePipelineStateRef        BlurHorizontalPSO;
+    FRHIComputeShaderRef               BlurHorizontalShader;
+    FRHIComputePipelineStateRef        BlurVerticalPSO;
+    FRHIComputeShaderRef               BlurVerticalShader;
+    TSharedRef<FRHIGenericBuffer>      SSAOSamples;
+    TSharedRef<FRHIShaderResourceView> SSAOSamplesSRV;
+    FRHITexture2DRef                   SSAONoiseTex;
 };

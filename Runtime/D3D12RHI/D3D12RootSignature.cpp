@@ -2,7 +2,7 @@
 #include "D3D12Core.h"
 #include "D3D12Device.h"
 #include "D3D12Shader.h"
-#include "D3D12Library.h"
+#include "DynamicD3D12.h"
 #include "D3D12CoreInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -312,7 +312,7 @@ bool FD3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
 {
     TComPtr<ID3D12RootSignatureDeserializer> Deserializer;
-    HRESULT Result = FD3D12Library::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
+    HRESULT Result = FDynamicD3D12::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12RootSignature]: FAILED to Retrieve Root Signature Desc");
@@ -381,10 +381,10 @@ bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 {
     TComPtr<ID3DBlob> ErrorBlob;
 
-    HRESULT Result = FD3D12Library::D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob);
+    HRESULT Result = FDynamicD3D12::D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12RootSignature]: FAILED to Serialize RootSignature. Error=%s", reinterpret_cast<const char*>(ErrorBlob->GetBufferPointer()));
+        D3D12_ERROR("[FD3D12RootSignature]: FAILED to Serialize RootSignature. Error=%s", reinterpret_cast<const CHAR*>(ErrorBlob->GetBufferPointer()));
         return false;
     }
 
@@ -394,20 +394,15 @@ bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RootSignatureCache
 
-FD3D12RootSignatureCache* FD3D12RootSignatureCache::Instance = nullptr;
-
 FD3D12RootSignatureCache::FD3D12RootSignatureCache(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , RootSignatures()
     , ResourceCounts()
-{
-    Instance = this;
-}
+{ }
 
 FD3D12RootSignatureCache::~FD3D12RootSignatureCache()
 {
     ReleaseAll();
-    Instance = nullptr;
 }
 
 bool FD3D12RootSignatureCache::Initialize()
@@ -429,7 +424,7 @@ bool FD3D12RootSignatureCache::Initialize()
     FD3D12RootSignature* GraphicsRootSignature = CreateRootSignature(GraphicsKey);
     if (!GraphicsRootSignature)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -449,7 +444,7 @@ bool FD3D12RootSignatureCache::Initialize()
     FD3D12RootSignature* ComputeRootSignature = CreateRootSignature(ComputeKey);
     if (!ComputeRootSignature)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -475,7 +470,7 @@ bool FD3D12RootSignatureCache::Initialize()
     FD3D12RootSignature* RTGlobalRootSignature = CreateRootSignature(RTGlobalKey);
     if (!RTGlobalRootSignature)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -494,7 +489,7 @@ bool FD3D12RootSignatureCache::Initialize()
     FD3D12RootSignature* RTLocalRootSignature = CreateRootSignature(RTLocalKey);
     if (!RTLocalRootSignature)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -507,7 +502,7 @@ bool FD3D12RootSignatureCache::Initialize()
 
 void FD3D12RootSignatureCache::ReleaseAll()
 {
-    for (TSharedRef<FD3D12RootSignature> RootSignature : RootSignatures)
+    for (FD3D12RootSignatureRef RootSignature : RootSignatures)
     {
         RootSignature.Reset();
     }
@@ -518,9 +513,9 @@ void FD3D12RootSignatureCache::ReleaseAll()
 
 FD3D12RootSignature* FD3D12RootSignatureCache::GetOrCreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount)
 {
-    Check(RootSignatures.Size() == ResourceCounts.Size());
+    Check(RootSignatures.GetSize() == ResourceCounts.GetSize());
 
-    for (int32 i = 0; i < ResourceCounts.Size(); i++)
+    for (int32 i = 0; i < ResourceCounts.GetSize(); i++)
     {
         if (ResourceCount.IsCompatible(ResourceCounts[i]))
         {
@@ -554,15 +549,9 @@ FD3D12RootSignature* FD3D12RootSignatureCache::GetOrCreateRootSignature(const FD
     return CreateRootSignature(NewResourceCount);
 }
 
-FD3D12RootSignatureCache& FD3D12RootSignatureCache::Get()
-{
-    Check(Instance != nullptr);
-    return *Instance;
-}
-
 FD3D12RootSignature* FD3D12RootSignatureCache::CreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount)
 {
-    TSharedRef<FD3D12RootSignature> NewRootSignature = dbg_new FD3D12RootSignature(GetDevice());
+    FD3D12RootSignatureRef NewRootSignature = dbg_new FD3D12RootSignature(GetDevice());
     if (!NewRootSignature->Initialize(ResourceCount))
     {
         return nullptr;

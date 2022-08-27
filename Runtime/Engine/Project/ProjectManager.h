@@ -6,36 +6,35 @@
 #define MAX_ASSET_PATH_LENGTH   (512)
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CProjectManager
+// FProjectManager
 
-class ENGINE_API CProjectManager
+class ENGINE_API FProjectManager
 {
 public:
+    static bool Initialize(const CHAR* ProjectName, const CHAR* ProjectPath, const CHAR* AssetPath);
 
-    static bool Initialize(const char* ProjectName, const char* ProjectPath, const char* AssetPath);
-
-    static FORCEINLINE const char* GetProjectName()
+    static FORCEINLINE const CHAR* GetProjectName()
     {
         return ProjectName;
     }
 
-    static FORCEINLINE const char* GetProjectModuleName()
+    static FORCEINLINE const CHAR* GetProjectModuleName()
     {
         return ProjectName;
     }
 
-    static FORCEINLINE const char* GetProjectPath()
+    static FORCEINLINE const CHAR* GetProjectPath()
     {
         return ProjectPath;
     }
     
-    static FORCEINLINE const char* GetAssetPath()
+    static FORCEINLINE const CHAR* GetAssetPath()
     {
         return AssetPath;
     }
 
 private:
-    static char ProjectName[MAX_PROJECT_NAME_LENGTH];
-    static char ProjectPath[MAX_PROJECT_PATH_LENGTH];
-    static char AssetPath[MAX_ASSET_PATH_LENGTH];
+    static CHAR ProjectName[MAX_PROJECT_NAME_LENGTH];
+    static CHAR ProjectPath[MAX_PROJECT_PATH_LENGTH];
+    static CHAR AssetPath[MAX_ASSET_PATH_LENGTH];
 };

@@ -1,21 +1,22 @@
 #pragma once
 #include "Core/Mac/Mac.h"
-#include "Core/Logging/Log.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Debug/Debug.h"
 
 #include "RHI/RHITexture.h"
 #include "RHI/RHIResourceViews.h"
+#include "RHI/RHIPipelineState.h"
 
 #include <Metal/Metal.h>
 #include <QuartzCore/QuartzCore.h>
 
 #if MONOLITHIC_BUILD
-    #define METAL_RHI_API
+    #define METALRHI_API
 #else
     #if METALRHI_IMPL
-        #define METAL_RHI_API MODULE_EXPORT
+        #define METALRHI_API MODULE_EXPORT
     #else
-        #define METAL_RHI_API MODULE_IMPORT
+        #define METALRHI_API MODULE_IMPORT
     #endif
 #endif
 
@@ -27,7 +28,7 @@
         do                                        \
         {                                         \
             LOG_ERROR("[MetalRHI] " __VA_ARGS__); \
-            CDebug::DebugBreak();                 \
+            DEBUG_BREAK();                 \
         } while (false)
     
     #define METAL_ERROR_COND(bCondition, ...) \

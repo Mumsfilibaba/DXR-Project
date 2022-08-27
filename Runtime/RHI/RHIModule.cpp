@@ -3,20 +3,19 @@
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
 
-IMPLEMENT_ENGINE_MODULE(CDefaultEngineModule, RHI);
+IMPLEMENT_ENGINE_MODULE(FDefaultModule, RHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Globals
 
-RHI_API CRHICoreInterface*  GRHIInstance    = nullptr;
-RHI_API IRHIShaderCompiler* GShaderCompiler = nullptr;
+RHI_API FRHICoreInterface* GRHICoreInterface = nullptr;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RHI Functions
 
 static FRHIModule* LoadNullRHI()
 {
-    return CModuleManager::Get().LoadEngineModule<FRHIModule>("NullRHI");
+    return FModuleInterface::Get().LoadModule<FRHIModule>("NullRHI");
 }
 
 bool RHIInitialize(ERHIInstanceType InRenderApi)
@@ -25,11 +24,11 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
     FRHIModule* RHIModule = nullptr;
     if (InRenderApi == ERHIInstanceType::D3D12)
     {
-        RHIModule = CModuleManager::Get().LoadEngineModule<FRHIModule>("D3D12RHI");
+        RHIModule = FModuleInterface::Get().LoadModule<FRHIModule>("D3D12RHI");
     }
 	else if (InRenderApi == ERHIInstanceType::Metal)
 	{
-		RHIModule = CModuleManager::Get().LoadEngineModule<FRHIModule>("MetalRHI");
+		RHIModule = FModuleInterface::Get().LoadModule<FRHIModule>("MetalRHI");
 	}
     else if (InRenderApi == ERHIInstanceType::Null)
     {
@@ -56,40 +55,35 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
         false;
 #endif
 
-    CRHICoreInterface* RHIInterface = RHIModule->CreateInterface();
-    if (!(RHIInterface && RHIInterface->Initialize(bEnableDebug)))
+    FRHICoreInterface* RHICoreInterface = RHIModule->CreateInterface();
+    if (!(RHICoreInterface && RHICoreInterface->Initialize(bEnableDebug)))
     {
         LOG_ERROR("[InitRHI] Failed to init RHIInterface, the application has to terminate");
         return false;
     }
 
-    GRHIInstance = RHIInterface;
+    GRHICoreInterface = RHICoreInterface;
 
-    IRHIShaderCompiler* Compiler = RHIModule->CreateCompiler();
-    if (!Compiler)
+    // Initialize the CommandListExecutor
+    if (!GRHICommandExecutor.Initialize())
     {
-        LOG_ERROR("[InitRHI] Failed to init RHIShaderCompiler, the application has to terminate");
         return false;
     }
 
-    GShaderCompiler = Compiler;
-
     // Set the context to the command queue
     IRHICommandContext* CmdContext = RHIGetDefaultCommandContext();
-    FRHICommandQueue::Get().SetContext(CmdContext);
+    GRHICommandExecutor.SetContext(CmdContext);
 
     return true;
 }
 
 void RHIRelease()
 {
-    FRHICommandQueue::Get().SetContext(nullptr);
+    GRHICommandExecutor.Release();
 
-    if (GRHIInstance)
+    if (GRHICoreInterface)
     {
-        GRHIInstance->Destroy();
-        GRHIInstance = nullptr;
+        GRHICoreInterface->Destroy();
+        GRHICoreInterface = nullptr;
     }
-
-    SafeDelete(GShaderCompiler);
 }

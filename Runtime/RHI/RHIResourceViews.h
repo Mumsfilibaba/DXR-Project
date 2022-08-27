@@ -1,15 +1,19 @@
 #pragma once
-#include "RHIResources.h"
+#include "RHITexture.h"
+#include "RHIBuffer.h"
 
 #include "Core/Memory/Memory.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/StaticArray.h"
 
+class FRHITexture;
+class FRHIBuffer;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef TSharedRef<class FRHIShaderResourceView>  RHIShaderResourceViewRef;
-typedef TSharedRef<class FRHIUnorderedAccessView> RHIUnorderedAccessViewRef;
+typedef TSharedRef<class FRHIShaderResourceView>  FRHIShaderResourceViewRef;
+typedef TSharedRef<class FRHIUnorderedAccessView> FRHIUnorderedAccessViewRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EBufferSRVFormat
@@ -20,7 +24,7 @@ enum class EBufferSRVFormat : uint32
     Uint32 = 1,
 };
 
-inline const char* ToString(EBufferSRVFormat BufferSRVFormat)
+inline const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
 {
     switch (BufferSRVFormat)
     {
@@ -38,7 +42,7 @@ enum class EBufferUAVFormat : uint32
     Uint32 = 1,
 };
 
-inline const char* ToString(EBufferUAVFormat BufferSRVFormat)
+inline const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
 {
     switch (BufferSRVFormat)
     {
@@ -57,7 +61,7 @@ enum class EAttachmentLoadAction : uint8
     Clear    = 2, // Clear data when RenderPass begin
 };
 
-inline const char* ToString(EAttachmentLoadAction LoadAction)
+inline const CHAR* ToString(EAttachmentLoadAction LoadAction)
 {
     switch (LoadAction)
     {
@@ -77,7 +81,7 @@ enum class EAttachmentStoreAction : uint8
     Store    = 1, // Store the data after the RenderPass is finished
 };
 
-inline const char* ToString(EAttachmentStoreAction StoreAction)
+inline const CHAR* ToString(EAttachmentStoreAction StoreAction)
 {
     switch (StoreAction)
     {
@@ -88,13 +92,11 @@ inline const char* ToString(EAttachmentStoreAction StoreAction)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITextureSRVInitializer
+// FRHITextureSRVInitializer
 
-class CRHITextureSRVInitializer
+struct FRHITextureSRVInitializer
 {
-public:
-
-    CRHITextureSRVInitializer()
+    FRHITextureSRVInitializer()
         : Texture(nullptr)
         , MinLODClamp(0.0f)
         , Format(EFormat::Unknown)
@@ -104,13 +106,14 @@ public:
         , NumSlices(0)
     { }
 
-    CRHITextureSRVInitializer( FRHITexture* InTexture
-                             , float InMinLODClamp
-                             , EFormat InFormat
-                             , uint8 InFirstMipLevel
-                             , uint8 InNumMips
-                             , uint16 InFirstArraySlice
-                             , uint16 InNumSlices)
+    FRHITextureSRVInitializer(
+        FRHITexture* InTexture,
+        float InMinLODClamp,
+        EFormat InFormat,
+        uint8 InFirstMipLevel,
+        uint8 InNumMips,
+        uint16 InFirstArraySlice,
+        uint16 InNumSlices)
         : Texture(InTexture)
         , MinLODClamp(InMinLODClamp)
         , Format(InFormat)
@@ -132,7 +135,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHITextureSRVInitializer& RHS) const
+    bool operator==(const FRHITextureSRVInitializer& RHS) const
     {
         return (Texture         == RHS.Texture)
             && (MinLODClamp     == RHS.MinLODClamp)
@@ -143,7 +146,7 @@ public:
             && (NumSlices       == RHS.NumSlices);
     }
 
-    bool operator!=(const CRHITextureSRVInitializer& RHS) const
+    bool operator!=(const FRHITextureSRVInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -162,27 +165,26 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBufferSRVInitializer
+// FRHIBufferSRVInitializer
 
-class CRHIBufferSRVInitializer
+struct FRHIBufferSRVInitializer
 {
-public:
-
-    CRHIBufferSRVInitializer()
+    FRHIBufferSRVInitializer()
         : Buffer(nullptr)
-	    , Format(EBufferSRVFormat::None)
-	    , FirstElement(0)
-	    , NumElements(0)
+        , Format(EBufferSRVFormat::None)
+        , FirstElement(0)
+        , NumElements(0)
     { }
 
-    CRHIBufferSRVInitializer( FRHIBuffer* InBuffer
-                            , uint32 InFirstElement
-                            , uint32 InNumElements
-                            , EBufferSRVFormat InFormat = EBufferSRVFormat::None)
+    FRHIBufferSRVInitializer(
+        FRHIBuffer* InBuffer,
+        uint32 InFirstElement,
+        uint32 InNumElements,
+        EBufferSRVFormat InFormat = EBufferSRVFormat::None)
         : Buffer(InBuffer)
-	    , Format(InFormat)
-	    , FirstElement(InFirstElement)
-	    , NumElements(InNumElements)
+        , Format(InFormat)
+        , FirstElement(InFirstElement)
+        , NumElements(InNumElements)
     { }
 
     uint64 GetHash() const
@@ -194,7 +196,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHIBufferSRVInitializer& RHS) const
+    bool operator==(const FRHIBufferSRVInitializer& RHS) const
     {
         return (Buffer       == RHS.Buffer) 
             && (Format       == RHS.Format)
@@ -202,7 +204,7 @@ public:
             && (NumElements  == RHS.NumElements);
     }
 
-    bool operator!=(const CRHIBufferSRVInitializer& RHS) const
+    bool operator!=(const FRHIBufferSRVInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -216,13 +218,11 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITextureUAVInitializer
+// FRHITextureUAVInitializer
 
-class CRHITextureUAVInitializer
+struct FRHITextureUAVInitializer
 {
-public:
-
-    CRHITextureUAVInitializer()
+    FRHITextureUAVInitializer()
         : Texture(nullptr)
         , Format(EFormat::Unknown)
         , MipLevel(0)
@@ -230,11 +230,12 @@ public:
         , NumSlices(0)
     { }
 
-    CRHITextureUAVInitializer( FRHITexture* InTexture
-                             , EFormat InFormat
-                             , uint32 InMipLevel
-                             , uint32 InFirstArraySlice
-                             , uint32 InNumSlices)
+    FRHITextureUAVInitializer(
+        FRHITexture* InTexture,
+        EFormat InFormat,
+        uint32 InMipLevel,
+        uint32 InFirstArraySlice,
+        uint32 InNumSlices)
         : Texture(InTexture)
         , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
@@ -242,7 +243,7 @@ public:
         , NumSlices(uint16(InNumSlices))
     { }
 
-    CRHITextureUAVInitializer(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel)
+    FRHITextureUAVInitializer(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel)
         : Texture(InTexture)
         , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
@@ -260,7 +261,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHITextureUAVInitializer& RHS) const
+    bool operator==(const FRHITextureUAVInitializer& RHS) const
     {
         return (Texture         == RHS.Texture)
             && (Format          == RHS.Format)
@@ -269,7 +270,7 @@ public:
             && (NumSlices       == RHS.NumSlices);
     }
 
-    bool operator!=(const CRHITextureUAVInitializer& RHS) const
+    bool operator!=(const FRHITextureUAVInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -285,26 +286,25 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBufferUAVInitializer
+// FRHIBufferUAVInitializer
 
-class CRHIBufferUAVInitializer
+struct FRHIBufferUAVInitializer
 {
-public:
-
-    CRHIBufferUAVInitializer()
+    FRHIBufferUAVInitializer()
         : Buffer(nullptr)
-		, Format(EBufferUAVFormat::None)
-		, FirstElement(0)
+        , Format(EBufferUAVFormat::None)
+        , FirstElement(0)
         , NumElements(0)
     { }
 
-    CRHIBufferUAVInitializer( FRHIBuffer* InBuffer
-                            , uint32 InFirstElement
-                            , uint32 InNumElements
-                            , EBufferUAVFormat InFormat = EBufferUAVFormat::None)
+    FRHIBufferUAVInitializer(
+        FRHIBuffer* InBuffer,
+        uint32 InFirstElement,
+        uint32 InNumElements,
+        EBufferUAVFormat InFormat = EBufferUAVFormat::None)
         : Buffer(InBuffer)
-	    , Format(InFormat)
-	    , FirstElement(InFirstElement)
+        , Format(InFormat)
+        , FirstElement(InFirstElement)
         , NumElements(InNumElements)
     { }
 
@@ -317,7 +317,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHIBufferUAVInitializer& RHS) const
+    bool operator==(const FRHIBufferUAVInitializer& RHS) const
     {
         return (Buffer       == RHS.Buffer) 
             && (Format       == RHS.Format)
@@ -325,7 +325,7 @@ public:
             && (NumElements  == RHS.NumElements);
     }
 
-    bool operator!=(const CRHIBufferUAVInitializer& RHS) const
+    bool operator!=(const FRHIBufferUAVInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -339,21 +339,20 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIResourceView
+// FRHIResourceView
 
-class CRHIResourceView : public FRHIResource
+class FRHIResourceView 
+    : public FRHIResource
 {
 protected:
-
-    explicit CRHIResourceView(FRHIResource* InResource)
+    explicit FRHIResourceView(FRHIResource* InResource)
         : FRHIResource()
         , Resource(InResource)
     { }
 
-    ~CRHIResourceView() = default;
+    ~FRHIResourceView() = default;
 
 public:
-
     FRHIResource* GetResource() const { return Resource; }
 
 protected:
@@ -363,12 +362,12 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIShaderResourceView
 
-class FRHIShaderResourceView : public CRHIResourceView
+class FRHIShaderResourceView 
+    : public FRHIResourceView
 {
 protected:
-
     explicit FRHIShaderResourceView(FRHIResource* InResource)
-        : CRHIResourceView(InResource)
+        : FRHIResourceView(InResource)
     { }
 
     ~FRHIShaderResourceView() = default;
@@ -381,28 +380,25 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIUnorderedAccessView
 
-class FRHIUnorderedAccessView : public CRHIResourceView
+class FRHIUnorderedAccessView 
+    : public FRHIResourceView
 {
 protected:
-
     explicit FRHIUnorderedAccessView(FRHIResource* InResource)
-        : CRHIResourceView(InResource)
+        : FRHIResourceView(InResource)
     { }
 
     ~FRHIUnorderedAccessView() = default;
 
 public:
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRenderTargetView
 
-class FRHIRenderTargetView
+struct FRHIRenderTargetView
 {
-public:
-
     FRHIRenderTargetView()
         : Texture(nullptr)
         , Format(EFormat::Unknown)
@@ -413,10 +409,11 @@ public:
         , ClearValue()
     { }
     
-    explicit FRHIRenderTargetView( FRHITexture* InTexture
-                                 , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
-                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const CFloatColor& InClearValue = CFloatColor(0.0f, 0.0f, 0.0f, 1.0f))
+    explicit FRHIRenderTargetView(
+        FRHITexture* InTexture,
+        EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
+        const FFloatColor& InClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f))
         : Texture(InTexture)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(0)
@@ -426,13 +423,14 @@ public:
         , ClearValue(InClearValue)
     { }
 
-    explicit FRHIRenderTargetView( FRHITexture* InTexture
-                                 , EFormat InFormat
-                                 , uint32 InArrayIndex
-                                 , uint32 InMipLevel
-                                 , EAttachmentLoadAction InLoadAction
-                                 , EAttachmentStoreAction InStoreAction
-                                 , const CFloatColor& InClearValue)
+    explicit FRHIRenderTargetView(
+        FRHITexture* InTexture,
+        EFormat InFormat,
+        uint32 InArrayIndex,
+        uint32 InMipLevel,
+        EAttachmentLoadAction InLoadAction,
+        EAttachmentStoreAction InStoreAction,
+        const FFloatColor& InClearValue)
         : Texture(InTexture)
         , Format(InFormat)
         , ArrayIndex(uint16(InArrayIndex))
@@ -480,16 +478,14 @@ public:
     EAttachmentLoadAction  LoadAction;
     EAttachmentStoreAction StoreAction;
 
-    CFloatColor            ClearValue;
+    FFloatColor            ClearValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIDepthStencilView
 
-class FRHIDepthStencilView
+struct FRHIDepthStencilView
 {
-public:
-
     FRHIDepthStencilView()
         : Texture(nullptr)
         , Format(EFormat::Unknown)
@@ -500,10 +496,11 @@ public:
         , ClearValue()
     { }
 
-    explicit FRHIDepthStencilView( FRHITexture* InTexture
-                                 , EAttachmentLoadAction InLoadAction  = EAttachmentLoadAction::Clear
-                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const CTextureDepthStencilValue& InClearValue = CTextureDepthStencilValue(1.0f, 0))
+    explicit FRHIDepthStencilView(
+        FRHITexture* InTexture,
+        EAttachmentLoadAction InLoadAction  = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
+        const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(0)
@@ -513,12 +510,13 @@ public:
         , ClearValue(InClearValue)
     { }
 
-    explicit FRHIDepthStencilView( FRHITexture* InTexture
-                                 , uint16 InArrayIndex
-                                 , uint8 InMipLevel
-                                 , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
-                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const CTextureDepthStencilValue& InClearValue = CTextureDepthStencilValue(1.0f, 0))
+    explicit FRHIDepthStencilView(
+        FRHITexture* InTexture,
+        uint16 InArrayIndex,
+        uint8 InMipLevel,
+        EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
+        const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(uint16(InArrayIndex))
@@ -528,13 +526,14 @@ public:
         , ClearValue(InClearValue)
     { }
 
-    explicit FRHIDepthStencilView( FRHITexture* InTexture
-                                 , uint16 InArrayIndex
-                                 , uint8 InMipLevel
-                                 , EFormat InFormat
-                                 , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
-                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
-                                 , const CTextureDepthStencilValue& InClearValue = CTextureDepthStencilValue(1.0f, 0))
+    explicit FRHIDepthStencilView(
+        FRHITexture* InTexture,
+        uint16 InArrayIndex,
+        uint8 InMipLevel,
+        EFormat InFormat,
+        EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear, 
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
+        const FTextureDepthStencilValue& InClearValue = FTextureDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , Format(InFormat)
         , ArrayIndex(uint16(InArrayIndex))
@@ -582,5 +581,5 @@ public:
     EAttachmentLoadAction     LoadAction;
     EAttachmentStoreAction    StoreAction;
 
-    CTextureDepthStencilValue ClearValue;
+    FTextureDepthStencilValue ClearValue;
 };

@@ -6,8 +6,5 @@
 template<typename T>
 struct TNot
 {
-    enum
-    {
-        Value = !T::Value
-    };
+    enum { Value = !T::Value };
 };

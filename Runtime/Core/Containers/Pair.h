@@ -5,7 +5,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Stores two variables of two template types
 
-template<typename FirstType, typename SecondType>
+template<
+    typename FirstType,
+    typename SecondType>
 struct TPair
 {
     /* Defaults */
@@ -30,7 +32,9 @@ struct TPair
      * @param InFirst: Instance of the first type to move
      * @param InSecond: Instance of the second type to move
      */
-    template<typename OtherFirstType = FirstType, typename OtherSecondType = SecondType>
+    template<
+        typename OtherFirstType  = FirstType,
+        typename OtherSecondType = SecondType>
     FORCEINLINE explicit TPair(OtherFirstType&& InFirst, OtherSecondType&& InSecond)
         : First(Forward<OtherFirstType>(InFirst))
         , Second(Forward<OtherSecondType>(InSecond))
@@ -41,7 +45,9 @@ struct TPair
      * 
      * @param Other: Pair to copy
      */
-    template<typename OtherFirstType, typename OtherSecondType>
+    template<
+        typename OtherFirstType,
+        typename OtherSecondType>
     FORCEINLINE explicit TPair(const TPair<OtherFirstType, OtherSecondType>& Other)
         : First(Other.First)
         , Second(Other.Second)
@@ -52,7 +58,9 @@ struct TPair
      *
      * @param Other: Pair to move
      */
-    template<typename OtherFirstType, typename OtherSecondType>
+    template<
+        typename OtherFirstType,
+        typename OtherSecondType>
     FORCEINLINE explicit TPair(TPair<OtherFirstType, OtherSecondType>&& Other)
         : First(Move(Other.First))
         , Second(Move(Other.Second))
@@ -89,10 +97,12 @@ public:
      * @param RHS: Pair to copy
      * @return: A reference to this instance
      */
-    template<typename OtherFirstType, typename OtherSecondType>
+    template<
+        typename OtherFirstType,
+        typename OtherSecondType>
     FORCEINLINE TPair& operator=(const TPair<OtherFirstType, OtherSecondType>& RHS) noexcept
     {
-        First = RHS.First;
+        First  = RHS.First;
         Second = RHS.Second;
         return *this;
     }
@@ -115,52 +125,72 @@ public:
      * @param RHS: Pair to move
      * @return: A reference to this instance
      */
-    template<typename OtherFirstType, typename OtherSecondType>
+    template<
+        typename OtherFirstType,
+        typename OtherSecondType>
     FORCEINLINE TPair& operator=(TPair<OtherFirstType, OtherSecondType>&& RHS) noexcept
     {
-        First = Move(RHS.First);
+        First  = Move(RHS.First);
         Second = Move(RHS.Second);
         return *this;
     }
 
-    FirstType First;
+    FirstType  First;
     SecondType Second;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Operators for TPair
 
-template<typename FirstType, typename SecondType>
+template<
+    typename FirstType,
+    typename SecondType>
+NODISCARD
 inline bool operator==(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
     return (LHS.First == RHS.First) && (LHS.Second == RHS.Second);
 }
 
-template<typename FirstType, typename SecondType>
+template<
+    typename FirstType,
+    typename SecondType>
+NODISCARD
 inline bool operator!=(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
-template<typename FirstType, typename SecondType>
+template<
+    typename FirstType,
+    typename SecondType>
+NODISCARD
 inline bool operator<=(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
     return (LHS.First <= RHS.First) && (LHS.Second <= RHS.Second);
 }
 
-template<typename FirstType, typename SecondType>
+template<
+    typename FirstType,
+    typename SecondType>
+NODISCARD
 inline bool operator<(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
     return (LHS.First < RHS.First) && (LHS.Second < RHS.Second);
 }
 
-template<typename FirstType, typename SecondType>
+template<
+    typename FirstType,
+    typename SecondType>
+NODISCARD
 inline bool operator>=(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
     return (LHS.First >= RHS.First) && (LHS.Second >= RHS.Second);
 }
 
-template<typename FirstType, typename SecondType>
+template<
+    typename FirstType,
+    typename SecondType>
+NODISCARD
 inline bool operator>(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
     return (LHS.First > RHS.First) && (LHS.Second > RHS.Second);
@@ -169,13 +199,19 @@ inline bool operator>(const TPair<FirstType, SecondType>& LHS, const TPair<First
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Create helpers
 
-template<typename FirstType, typename SecondType>
+template<
+    typename FirstType,
+    typename SecondType>
+NODISCARD
 inline TPair<FirstType, SecondType> MakePair(const FirstType& First, const SecondType& Second) noexcept
 {
     return TPair<FirstType, SecondType>(First, Second);
 }
 
-template<typename FirstType, typename SecondType>
+template<
+    typename FirstType,
+    typename SecondType>
+NODISCARD
 inline TPair<FirstType, SecondType> MakePair(FirstType&& First, SecondType&& Second) noexcept
 {
     return TPair<FirstType, SecondType>(Forward<FirstType>(First), Forward<SecondType>(Second));

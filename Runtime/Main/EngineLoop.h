@@ -1,22 +1,36 @@
 #pragma once
+#include "IEngineLoop.h"
+
 #include "Core/Time/Timer.h"
 
-class CEngineLoop
+struct FOutputDeviceConsole;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FEngineLoop
+
+class FEngineLoop 
+    : public IEngineLoop
 {
 public:
+    FEngineLoop();
+    ~FEngineLoop();
 
      /** @brief: Loads all the core modules */
-    static bool LoadCoreModules();
+    virtual bool LoadCoreModules() override final;
 
      /** @brief: Creates the application and load modules */
-    static bool PreInitialize();
+    virtual bool PreInit() override final;
 
      /** @brief: Initializes and starts up the engine */
-    static bool Initialize();
+    virtual bool Init() override final;
 
      /** @brief: Ticks the engine */
-    static void Tick( CTimestamp Deltatime );
+    virtual void Tick() override final;
 
      /** @brief: Releases the engine */
-    static bool Release();
+    virtual bool Release() override final;
+
+private:
+    FTimer                FrameTimer;
+    FOutputDeviceConsole* ConsoleWindow;
 };

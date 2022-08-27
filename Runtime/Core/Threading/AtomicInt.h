@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Templates/IsSigned.h"
-#include "Core/Threading/Platform/PlatformInterlocked.h"
-#include "Core/Threading/Platform/PlatformAtomic.h"
+#include "Core/Platform/PlatformInterlocked.h"
+#include "Core/Platform/PlatformAtomic.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TAtomicInt
@@ -11,7 +11,6 @@ template<typename T>
 class TAtomicInt
 {
 public:
-
     typedef T Type;
 
     static_assert(TIsSigned<T>::Value, "AtomicInt only supports signed types");
@@ -51,7 +50,7 @@ public:
      */
     FORCEINLINE T Increment() noexcept
     {
-        return PlatformInterlocked::InterlockedIncrement(&Value);
+        return FPlatformInterlocked::InterlockedIncrement(&Value);
     }
 
     /**
@@ -61,7 +60,7 @@ public:
      */
     FORCEINLINE T Decrement() noexcept
     {
-        return PlatformInterlocked::InterlockedDecrement(&Value);
+        return FPlatformInterlocked::InterlockedDecrement(&Value);
     }
 
     /**
@@ -71,7 +70,7 @@ public:
      */
     FORCEINLINE T Add(T RHS) noexcept
     {
-        PlatformInterlocked::InterlockedAdd(&Value, RHS);
+        FPlatformInterlocked::InterlockedAdd(&Value, RHS);
         return Value;
     }
 
@@ -82,7 +81,7 @@ public:
      */
     FORCEINLINE T Subtract(T RHS) noexcept
     {
-        PlatformInterlocked::InterlockedSub(&Value, RHS);
+        FPlatformInterlocked::InterlockedSub(&Value, RHS);
         return Value;
     }
 
@@ -93,7 +92,7 @@ public:
      */
     FORCEINLINE T And(T RHS) noexcept
     {
-        PlatformInterlocked::InterlockedAnd(&Value, RHS);
+        FPlatformInterlocked::InterlockedAnd(&Value, RHS);
         return Value;
     }
 
@@ -104,7 +103,7 @@ public:
      */
     FORCEINLINE T Or(T RHS) noexcept
     {
-        PlatformInterlocked::InterlockedOr(&Value, RHS);
+        FPlatformInterlocked::InterlockedOr(&Value, RHS);
         return Value;
     }
 
@@ -115,7 +114,7 @@ public:
      */
     FORCEINLINE T Xor(T RHS) noexcept
     {
-        PlatformInterlocked::InterlockedXor(&Value, RHS);
+        FPlatformInterlocked::InterlockedXor(&Value, RHS);
         return Value;
     }
 
@@ -126,7 +125,7 @@ public:
      */
     FORCEINLINE T Load() const noexcept
     {
-        return PlatformAtomic::Read(&Value);
+        return FPlatformAtomic::Read(&Value);
     }
 
     /**
@@ -136,7 +135,7 @@ public:
      */
     FORCEINLINE T RelaxedLoad() const noexcept
     {
-        return PlatformAtomic::RelaxedRead(&Value);
+        return FPlatformAtomic::RelaxedRead(&Value);
     }
 
     /**
@@ -147,7 +146,7 @@ public:
      */
     FORCEINLINE T Exchange(T InValue) noexcept
     {
-        return PlatformInterlocked::InterlockedExchange(&Value, InValue);
+        return FPlatformInterlocked::InterlockedExchange(&Value, InValue);
     }
 
     /**
@@ -157,7 +156,7 @@ public:
      */
     FORCEINLINE void Store(T InValue) noexcept
     {
-        PlatformAtomic::Store(&Value, InValue);
+        FPlatformAtomic::Store(&Value, InValue);
     }
 
     /**
@@ -167,7 +166,7 @@ public:
      */
     FORCEINLINE void RelaxedStore(T InValue) noexcept
     {
-        PlatformAtomic::RelaxedStore(&Value, InValue);
+        FPlatformAtomic::RelaxedStore(&Value, InValue);
     }
 
 public:
@@ -305,7 +304,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Predefined types
 
-typedef TAtomicInt<int8>  AtomicInt8;
-typedef TAtomicInt<int16> AtomicInt16;
-typedef TAtomicInt<int32> AtomicInt32;
-typedef TAtomicInt<int64> AtomicInt64;
+typedef TAtomicInt<int8>  FAtomicInt8;
+typedef TAtomicInt<int16> FAtomicInt16;
+typedef TAtomicInt<int32> FAtomicInt32;
+typedef TAtomicInt<int64> FAtomicInt64;

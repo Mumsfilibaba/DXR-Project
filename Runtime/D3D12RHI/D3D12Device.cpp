@@ -1,14 +1,15 @@
 #include "D3D12Device.h"
 #include "D3D12RHIShaderCompiler.h"
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12CommandQueue.h"
 #include "D3D12PipelineState.h"
-#include "D3D12Library.h"
+#include "DynamicD3D12.h"
 
 #include "Core/Windows/Windows.h"
-#include "Core/Modules/Platform/PlatformLibrary.h"
+#include "Core/Platform/PlatformLibrary.h"
+#include "Core/Misc/CoreDelegates.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -18,7 +19,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helpers
 
-static const char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
+static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
     switch (BreadCrumbOp)
     {
@@ -69,7 +70,7 @@ static const char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
     }
 }
 
-static const char* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
+static const CHAR* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // DeviceRemovedHandler
@@ -78,8 +79,8 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 {
     Check(Device != nullptr);
 
-    String Message = "[D3D12] Device Removed";
-    D3D12_ERROR("%s", Message.CStr());
+    FString Message = "[D3D12] Device Removed";
+    D3D12_ERROR("%s", Message.GetCString());
 
     ID3D12Device* DxDevice = Device->GetD3D12Device();
 
@@ -104,7 +105,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
     FILE* File = fopen(GDeviceRemovedDumpFile, "w");
     if (File)
     {
-        fwrite(Message.Data(), 1, Message.Size(), File);
+        fwrite(Message.GetData(), 1, Message.GetSize(), File);
         fputc('\n', File);
     }
 
@@ -115,18 +116,18 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         Message = "BreadCrumbs:";
         if (File)
         {
-            fwrite(Message.Data(), 1, Message.Size(), File);
+            fwrite(Message.GetData(), 1, Message.GetSize(), File);
             fputc('\n', File);
         }
 
-        D3D12_ERROR("%s", Message.CStr());
+        D3D12_ERROR("%s", Message.GetCString());
         for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
-            Message = "    " + String(ToString(CurrentNode->pCommandHistory[i]));
-            D3D12_ERROR("%s", Message.CStr());
+            Message = "    " + FString(ToString(CurrentNode->pCommandHistory[i]));
+            D3D12_ERROR("%s", Message.GetCString());
             if (File)
             {
-                fwrite(Message.Data(), 1, Message.Size(), File);
+                fwrite(Message.GetData(), 1, Message.GetSize(), File);
                 fputc('\n', File);
             }
         }
@@ -140,7 +141,9 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         fclose(File);
     }
 
-    PlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
+    NCoreDelegates::DeviceRemovedDelegate.Broadcast();
+
+    FPlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -151,7 +154,7 @@ bool FD3D12Adapter::Initialize()
     if (Initializer.bEnableDebugLayer)
     {
         TComPtr<ID3D12Debug> DebugInterface;
-        if (FAILED(FD3D12Library::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
+        if (FAILED(FDynamicD3D12::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
         {
             D3D12_ERROR("[FD3D12Adapter]: FAILED to enable DebugLayer");
             return false;
@@ -164,7 +167,7 @@ bool FD3D12Adapter::Initialize()
         if (Initializer.bEnableDRED)
         {
             TComPtr<ID3D12DeviceRemovedExtendedDataSettings> DredSettings;
-            if (SUCCEEDED(FD3D12Library::D3D12GetDebugInterface(IID_PPV_ARGS(&DredSettings))))
+            if (SUCCEEDED(FDynamicD3D12::D3D12GetDebugInterface(IID_PPV_ARGS(&DredSettings))))
             {
                 DredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
                 DredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
@@ -194,7 +197,7 @@ bool FD3D12Adapter::Initialize()
             TComPtr<ID3D12Debug5> DebugInterface5;
             if (FAILED(DebugInterface.GetAs(&DebugInterface5)))
             {
-                D3D12_ERROR("[FD3D12Adapter]: FAILED to enable auto-naming of objects");
+                D3D12_WARNING("[FD3D12Adapter]: FAILED to enable auto-naming of objects");
             }
             else
             {
@@ -204,7 +207,7 @@ bool FD3D12Adapter::Initialize()
 #endif
 
         TComPtr<IDXGIInfoQueue> InfoQueue;
-        if (SUCCEEDED(FD3D12Library::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
+        if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
         {
             InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
             InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
@@ -217,7 +220,7 @@ bool FD3D12Adapter::Initialize()
         if (Initializer.bEnablePIX)
         {
             TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
-            if (SUCCEEDED(FD3D12Library::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
+            if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
             {
                 DXGraphicsAnalysis = TempGraphicsAnalysis;
             }
@@ -229,7 +232,7 @@ bool FD3D12Adapter::Initialize()
     }
 
     // Create factory
-    if (FAILED(FD3D12Library::CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
+    if (FAILED(FDynamicD3D12::CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
     {
         D3D12_ERROR("[FD3D12Adapter]: FAILED to create factory");
         return false;
@@ -300,7 +303,8 @@ bool FD3D12Adapter::Initialize()
                     break;
                 }
 
-                if (SUCCEEDED(FD3D12Library::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr)))
+                Result = FDynamicD3D12::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
+                if (SUCCEEDED(Result))
                 {
                     // Here it is probably better to have something else to find the best GPU
                     if (Level >= BestFeatureLevel && Desc.DedicatedVideoMemory > BestVideoMem)
@@ -311,8 +315,9 @@ bool FD3D12Adapter::Initialize()
                         BestFeatureLevel = Level;
                         BestVideoMem     = Desc.DedicatedVideoMemory;
                         FinalAdapter     = TempAdapter;
-                        break;
                     }
+                    
+                    break;
                 }
             }
         }
@@ -346,13 +351,19 @@ bool FD3D12Adapter::Initialize()
                     break;
                 }
 
-                if (SUCCEEDED(FD3D12Library::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr)))
+                Result = FDynamicD3D12::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
+                if (SUCCEEDED(Result))
                 {
                     D3D12_INFO("[FD3D12Adapter]: Suitable Direct3D Adapter (%u): %ls", Index, Desc.Description);
 
-                    AdapterIndex     = Index;
-                    BestFeatureLevel = Level;
-                    FinalAdapter     = TempAdapter;
+                    // When we loop based on DXGI_GPU_PREFERENCE we get the best one first, so cannot check for equal here
+                    if (Level > BestFeatureLevel)
+                    {
+                        AdapterIndex     = Index;
+                        BestFeatureLevel = Level;
+                        FinalAdapter     = TempAdapter;
+                    }
+
                     break;
                 }
             }
@@ -425,15 +436,15 @@ FD3D12Device::~FD3D12Device()
 bool FD3D12Device::Initialize()
 {
     // Create Device
-    if (FAILED(FD3D12Library::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
+    if (FAILED(FDynamicD3D12::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to create device");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create device");
         return false;
     }
     else
     {
-        const String Description = Adapter->GetDescription();
-        D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", Description.CStr());
+        const FString Description = Adapter->GetDescription();
+        D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", Description.GetCString());
     }
 
     // Configure debug device (if active).
@@ -454,7 +465,7 @@ bool FD3D12Device::Initialize()
             D3D12_INFO_QUEUE_FILTER Filter;
             FMemory::Memzero(&Filter);
 
-            Filter.DenyList.NumIDs  = ArrayCount(Hide);
+            Filter.DenyList.NumIDs  = ARRAY_COUNT(Hide);
             Filter.DenyList.pIDList = Hide;
             InfoQueue->AddStorageFilterEntries(&Filter);
         }
@@ -463,72 +474,63 @@ bool FD3D12Device::Initialize()
 #if WIN10_BUILD_14393
     if (FAILED(Device.GetAs<ID3D12Device1>(&Device1)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device1");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device1");
     }
 #endif
 
 #if WIN10_BUILD_15063
     if (FAILED(Device.GetAs<ID3D12Device2>(&Device2)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device2");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device2");
     }
 #endif
 
 #if WIN10_BUILD_16299
     if (FAILED(Device.GetAs<ID3D12Device3>(&Device3)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device3");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device3");
     }
 #endif
 
 #if WIN10_BUILD_17134
     if (FAILED(Device.GetAs<ID3D12Device4>(&Device4)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device4");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device4");
     }
 #endif
 
 #if WIN10_BUILD_17763
     if (FAILED(Device.GetAs<ID3D12Device5>(&Device5)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device5");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device5");
     }
 #endif
 
 #if WIN10_BUILD_18362
     if (FAILED(Device.GetAs<ID3D12Device6>(&Device6)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device6");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device6");
     }
 #endif
 
 #if WIN10_BUILD_19041
     if (FAILED(Device.GetAs<ID3D12Device7>(&Device7)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device7");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device7");
     }
 #endif
 
 #if WIN10_BUILD_20348
     if (FAILED(Device.GetAs<ID3D12Device8>(&Device8)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device8");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device8");
     }
 #endif
 
 #if WIN11_BUILD_22000
     if (FAILED(Device.GetAs<ID3D12Device9>(&Device9)))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to retrieve ID3D12Device9");
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device9");
     }
 #endif
 
@@ -546,7 +548,7 @@ bool FD3D12Device::Initialize()
 
     D3D12_FEATURE_DATA_FEATURE_LEVELS FeatureLevels =
     {
-        ArrayCount(SupportedFeatureLevels), SupportedFeatureLevels, D3D_FEATURE_LEVEL_11_0
+        ARRAY_COUNT(SupportedFeatureLevels), SupportedFeatureLevels, D3D_FEATURE_LEVEL_11_0
     };
 
     HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
@@ -557,6 +559,35 @@ bool FD3D12Device::Initialize()
     else
     {
         ActiveFeatureLevel = MinFeatureLevel;
+    }
+
+    // Create RootSignature cache
+    if (!RootSignatureCache.Initialize())
+    {
+        return false;
+    } 
+
+    // Create DescriptorHeaps
+    GlobalResourceHeap = dbg_new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    if (!GlobalResourceHeap->Initialize())
+    {
+        D3D12_ERROR("Failed to create global resource descriptor heap");
+        return false;
+    }
+    else
+    {
+        GlobalResourceHeap->SetName("Global Resource Descriptor Heap");
+    }
+
+    GlobalSamplerHeap = dbg_new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    if (!GlobalSamplerHeap->Initialize())
+    {
+        D3D12_ERROR("Failed to create global sampler descriptor heap");
+        return false;
+    }
+    else
+    {
+        GlobalSamplerHeap->SetName("Global Sampler Descriptor Heap");
     }
 
     return true;

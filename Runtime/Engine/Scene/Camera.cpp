@@ -5,7 +5,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Camera
 
-CCamera::CCamera()
+FCamera::FCamera()
     : View()
     , Projection()
     , ViewProjection()
@@ -22,15 +22,15 @@ CCamera::CCamera()
     UpdateMatrices();
 }
 
-void CCamera::Move(float x, float y, float z)
+void FCamera::Move(float x, float y, float z)
 {
-    const CVector3 TempRight = Right * x;
-    const CVector3 TempUp = Up * y;
-    const CVector3 TempForward = Forward * z;
+    const FVector3 TempRight = Right * x;
+    const FVector3 TempUp = Up * y;
+    const FVector3 TempForward = Forward * z;
     Position = Position + TempRight + TempUp + TempForward;
 }
 
-void CCamera::Rotate(float Pitch, float Yaw, float Roll)
+void FCamera::Rotate(float Pitch, float Yaw, float Roll)
 {
     Rotation.x += Pitch;
     Rotation.x = NMath::Max<float>(NMath::ToRadians(-89.0f), NMath::Min<float>(NMath::ToRadians(89.0f), Rotation.x));
@@ -38,29 +38,29 @@ void CCamera::Rotate(float Pitch, float Yaw, float Roll)
     Rotation.y += Yaw;
     Rotation.z += Roll;
 
-    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw(Rotation);
-    CVector3 TempForward(0.0f, 0.0f, 1.0f);
+    FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation);
+    FVector3 TempForward(0.0f, 0.0f, 1.0f);
     Forward = RotationMatrix.TransformDirection(TempForward);
     Forward.Normalize();
 
-    CVector3 TempUp(0.0f, 1.0f, 0.0f);
+    FVector3 TempUp(0.0f, 1.0f, 0.0f);
     Right = Forward.CrossProduct(TempUp);
     Right.Normalize();
     Up = Right.CrossProduct(Forward);
     Up.Normalize();
 }
 
-void CCamera::UpdateMatrices()
+void FCamera::UpdateMatrices()
 {
     FOV = NMath::ToRadians(80.0f);
     Width = 1920.0f;
     Height = 1080.0f;
 
-    Projection = CMatrix4::PerspectiveProjection(FOV, Width, Height, NearPlane, FarPlane);
-    View = CMatrix4::LookTo(Position, Forward, Up);
+    Projection = FMatrix4::PerspectiveProjection(FOV, Width, Height, NearPlane, FarPlane);
+    View = FMatrix4::LookTo(Position, Forward, Up);
     ViewInverse = View.Invert();
 
-    CMatrix3 View3x3 = View.GetRotationAndScale();
+    FMatrix3 View3x3 = View.GetRotationAndScale();
     ProjectionInverse = Projection.Invert();
     ViewProjection = View * Projection;
     ViewProjectionInverse = ViewProjection.Invert();

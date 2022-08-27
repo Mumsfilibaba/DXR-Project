@@ -1,6 +1,6 @@
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12CoreInterface.h"
 #include "D3D12RayTracing.h"
 
@@ -91,7 +91,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, FD3D12Ver
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr))
         {
-            CDebug::DebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -122,7 +122,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, FD3D12Ver
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
-            CDebug::DebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -171,7 +171,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
     FMemory::Memzero(&Inputs);
 
     Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    Inputs.NumDescs    = InInstances.Size();
+    Inputs.NumDescs    = InInstances.GetSize();
     Inputs.Type        = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
     Inputs.Flags       = ConvertAccelerationStructureBuildFlags(GetFlags());
     
@@ -207,7 +207,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr))
         {
-            CDebug::DebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -258,7 +258,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
-            CDebug::DebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -269,11 +269,11 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         CmdContext.TransitionResource(ScratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(InInstances.Size());
-    for (int32 Instance = 0; Instance < InstanceDescs.Size(); Instance++)
+    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(InInstances.GetSize());
+    for (int32 Instance = 0; Instance < InstanceDescs.GetSize(); Instance++)
     {
         FD3D12RayTracingGeometry* D3D12Geometry = static_cast<FD3D12RayTracingGeometry*>(InInstances[Instance].Geometry);
-        FMemory::Memcpy(&InstanceDescs[Instance].Transform, &InInstances[Instance].Transform, sizeof(CMatrix3x4));
+        FMemory::Memcpy(&InstanceDescs[Instance].Transform, &InInstances[Instance].Transform, sizeof(FMatrix3x4));
 
         InstanceDescs[Instance].AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
         InstanceDescs[Instance].InstanceID                          = InInstances[Instance].InstanceIndex;
@@ -303,7 +303,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
-            CDebug::DebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -315,7 +315,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
     }
 
     CmdContext.TransitionResource(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-    CmdContext.UpdateBuffer(InstanceBuffer.Get(), 0, InstanceDescs.SizeInBytes(), InstanceDescs.Data());
+    CmdContext.UpdateBuffer(InstanceBuffer.Get(), 0, InstanceDescs.SizeInBytes(), InstanceDescs.GetData());
     CmdContext.TransitionResource(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc;
@@ -342,14 +342,15 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
     return true;
 }
 
-bool FD3D12RayTracingScene::BuildBindingTable( FD3D12CommandContext& CmdContext
-                                             , FD3D12RayTracingPipelineState* PipelineState
-                                             , FD3D12OnlineDescriptorHeap* ResourceHeap
-                                             , FD3D12OnlineDescriptorHeap* SamplerHeap
-                                             , const FRayTracingShaderResources* RayGenLocalResources
-                                             , const FRayTracingShaderResources* MissLocalResources
-                                             , const FRayTracingShaderResources* HitGroupResources
-                                             , uint32 NumHitGroupResources)
+bool FD3D12RayTracingScene::BuildBindingTable(
+    FD3D12CommandContext& CmdContext,
+    FD3D12RayTracingPipelineState* PipelineState,
+    FD3D12OnlineDescriptorHeap* ResourceHeap,
+    FD3D12OnlineDescriptorHeap* SamplerHeap,
+    const FRayTracingShaderResources* RayGenLocalResources,
+    const FRayTracingShaderResources* MissLocalResources,
+    const FRayTracingShaderResources* HitGroupResources,
+    uint32 NumHitGroupResources)
 {
     Check(ResourceHeap         != nullptr);
     Check(SamplerHeap          != nullptr);
@@ -357,22 +358,24 @@ bool FD3D12RayTracingScene::BuildBindingTable( FD3D12CommandContext& CmdContext
     Check(RayGenLocalResources != nullptr);
 
     FD3D12ShaderBindingTableEntry RayGenEntry;
-    ShaderBindingTableBuilder.PopulateEntry( PipelineState
-                                           , PipelineState->GetRayGenLocalRootSignature()
-                                           , ResourceHeap
-                                           , SamplerHeap
-                                           , RayGenEntry
-                                           , *RayGenLocalResources);
+    ShaderBindingTableBuilder.PopulateEntry(
+        PipelineState,
+        PipelineState->GetRayGenLocalRootSignature(),
+        ResourceHeap,
+        SamplerHeap,
+        RayGenEntry,
+        *RayGenLocalResources);
 
     Check(MissLocalResources != nullptr);
 
     FD3D12ShaderBindingTableEntry MissEntry;
-    ShaderBindingTableBuilder.PopulateEntry( PipelineState
-                                           , PipelineState->GetMissLocalRootSignature()
-                                           , ResourceHeap
-                                           , SamplerHeap
-                                           , MissEntry
-                                           , *MissLocalResources);
+    ShaderBindingTableBuilder.PopulateEntry(
+        PipelineState,
+        PipelineState->GetMissLocalRootSignature(),
+        ResourceHeap,
+        SamplerHeap,
+        MissEntry,
+        *MissLocalResources);
 
     Check(HitGroupResources != nullptr);
     Check(NumHitGroupResources <= D3D12_MAX_HIT_GROUPS);
@@ -380,12 +383,13 @@ bool FD3D12RayTracingScene::BuildBindingTable( FD3D12CommandContext& CmdContext
     FD3D12ShaderBindingTableEntry HitGroupEntries[D3D12_MAX_HIT_GROUPS];
     for (uint32 i = 0; i < NumHitGroupResources; i++)
     {
-        ShaderBindingTableBuilder.PopulateEntry( PipelineState
-                                               , PipelineState->GetHitLocalRootSignature()
-                                               , ResourceHeap
-                                               , SamplerHeap
-                                               , HitGroupEntries[i]
-                                               , HitGroupResources[i]);
+        ShaderBindingTableBuilder.PopulateEntry(
+            PipelineState,
+            PipelineState->GetHitLocalRootSignature(),
+            ResourceHeap,
+            SamplerHeap,
+            HitGroupEntries[i],
+            HitGroupResources[i]);
     }
 
     ShaderBindingTableBuilder.CopyDescriptors();
@@ -415,7 +419,7 @@ bool FD3D12RayTracingScene::BuildBindingTable( FD3D12CommandContext& CmdContext
         FD3D12ResourceRef Buffer = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
-            CDebug::DebugBreak();
+            DEBUG_BREAK();
             return false;
         }
         else
@@ -434,8 +438,8 @@ bool FD3D12RayTracingScene::BuildBindingTable( FD3D12CommandContext& CmdContext
     CmdContext.TransitionResource(BindingTable.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     ShaderBindingTableBuilder.Reset();
-    BindingTableHeaps[0] = ResourceHeap->GetNativeHeap();
-    BindingTableHeaps[1] = SamplerHeap->GetNativeHeap();
+    BindingTableHeaps[0] = ResourceHeap->GetD3D12Heap();
+    BindingTableHeaps[1] = SamplerHeap->GetD3D12Heap();
 
     BindingTableStride = sizeof(FD3D12ShaderBindingTableEntry);
     NumHitGroups = NumHitGroupResources;
@@ -482,12 +486,13 @@ FD3D12ShaderBindingTableBuilder::FD3D12ShaderBindingTableBuilder(FD3D12Device* I
     Reset();
 }
 
-void FD3D12ShaderBindingTableBuilder::PopulateEntry( FD3D12RayTracingPipelineState* PipelineState
-                                                   , FD3D12RootSignature* RootSignature
-                                                   , FD3D12OnlineDescriptorHeap* ResourceHeap
-                                                   , FD3D12OnlineDescriptorHeap* SamplerHeap
-                                                   , FD3D12ShaderBindingTableEntry& OutShaderBindingEntry
-                                                   , const FRayTracingShaderResources& Resources)
+void FD3D12ShaderBindingTableBuilder::PopulateEntry(
+    FD3D12RayTracingPipelineState* PipelineState,
+    FD3D12RootSignature* RootSignature,
+    FD3D12OnlineDescriptorHeap* ResourceHeap,
+    FD3D12OnlineDescriptorHeap* SamplerHeap,
+    FD3D12ShaderBindingTableEntry& OutShaderBindingEntry,
+    const FRayTracingShaderResources& Resources)
 {
     Check(PipelineState != nullptr);
     Check(RootSignature != nullptr);
@@ -501,7 +506,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry( FD3D12RayTracingPipelineSta
         uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_CBV);
         Check(RootIndex < 4);
 
-        uint32 NumDescriptors = Resources.ConstantBuffers.Size();
+        uint32 NumDescriptors = Resources.ConstantBuffers.GetSize();
         uint32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
         OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
 
@@ -519,7 +524,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry( FD3D12RayTracingPipelineSta
         uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_SRV);
         Check(RootIndex < 4);
 
-        uint32 NumDescriptors = Resources.ShaderResourceViews.Size();
+        uint32 NumDescriptors = Resources.ShaderResourceViews.GetSize();
         uint32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
         OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
 
@@ -537,7 +542,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry( FD3D12RayTracingPipelineSta
         uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_UAV);
         Check(RootIndex < 4);
 
-        uint32 NumDescriptors = Resources.UnorderedAccessViews.Size();
+        uint32 NumDescriptors = Resources.UnorderedAccessViews.GetSize();
         uint32 Handle = ResourceHeap->AllocateHandles(NumDescriptors);
         OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
 
@@ -555,7 +560,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry( FD3D12RayTracingPipelineSta
         uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_Sampler);
         Check(RootIndex < 4);
 
-        uint32 NumDescriptors = Resources.SamplerStates.Size();
+        uint32 NumDescriptors = Resources.SamplerStates.GetSize();
         uint32 Handle = SamplerHeap->AllocateHandles(NumDescriptors);
         OutShaderBindingEntry.RootDescriptorTables[RootIndex] = SamplerHeap->GetGPUDescriptorHandleAt(Handle);
 
@@ -572,26 +577,28 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry( FD3D12RayTracingPipelineSta
 
 void FD3D12ShaderBindingTableBuilder::CopyDescriptors()
 {
-    GetDevice()->GetD3D12Device()->CopyDescriptors( GPUResourceIndex
-                                                  , GPUResourceHandles
-                                                  , GPUResourceHandleSizes
-                                                  , CPUResourceIndex
-                                                  , ResourceHandles
-                                                  , CPUHandleSizes
-                                                  , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    GetDevice()->GetD3D12Device()->CopyDescriptors(
+        GPUResourceIndex,
+        GPUResourceHandles,
+        GPUResourceHandleSizes,
+        CPUResourceIndex,
+        ResourceHandles,
+        CPUHandleSizes,
+        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    GetDevice()->GetD3D12Device()->CopyDescriptors( GPUSamplerIndex
-                                                  , GPUSamplerHandles
-                                                  , GPUSamplerHandleSizes
-                                                  , CPUSamplerIndex
-                                                  , SamplerHandles
-                                                  , CPUHandleSizes
-                                                  , D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+    GetDevice()->GetD3D12Device()->CopyDescriptors(
+        GPUSamplerIndex,
+        GPUSamplerHandles,
+        GPUSamplerHandleSizes,
+        CPUSamplerIndex,
+        SamplerHandles,
+        CPUHandleSizes,
+        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 }
 
 void FD3D12ShaderBindingTableBuilder::Reset()
 {
-    for (uint32 i = 0; i < ArrayCount(CPUHandleSizes); i++)
+    for (uint32 i = 0; i < ARRAY_COUNT(CPUHandleSizes); i++)
     {
         CPUHandleSizes[i] = 1;
     }

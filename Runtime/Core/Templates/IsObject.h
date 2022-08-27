@@ -11,8 +11,5 @@
 template<typename T>
 struct TIsObject
 {
-    enum
-    {
-        Value = TOr<TIsScalar<T>, TIsArray<T>, TIsUnion<T>, TIsClass<T>>::Value
-    };
+    enum { Value = TOr<TIsScalar<T>, TIsArray<T>, TIsUnion<T>, TIsClass<T>>::Value };
 };

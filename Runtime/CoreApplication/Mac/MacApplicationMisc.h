@@ -7,20 +7,15 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacApplicationMisc
+// FMacApplicationMisc
 
-class CMacApplicationMisc final : public CGenericApplicationMisc
+struct FMacApplicationMisc final
+    : public FGenericApplicationMisc
 {
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericApplicationMisc Interface
-
-    static class CGenericApplication* CreateApplication();
-
-    static class CGenericConsoleWindow* CreateConsoleWindow();
-
-    static void MessageBox(const String& Title, const String& Message);
+    static class  FGenericApplication*  CreateApplication();
+    static struct FOutputDeviceConsole* CreateOutputDeviceConsole();
+ 
+    static void MessageBox(const FString& Title, const FString& Message);
 
     static FORCEINLINE void RequestExit(int32 ExitCode)
     {
@@ -29,7 +24,7 @@ public:
 
     static void PumpMessages(bool bUntilEmpty);
 
-    static SModifierKeyState GetModifierKeyState();
+    static FModifierKeyState GetModifierKeyState();
 };
 
 #pragma clang diagnostic pop

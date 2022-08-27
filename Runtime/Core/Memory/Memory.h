@@ -2,34 +2,21 @@
 #include "Core/Core.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Standard alignment of memory-allocations
+// FMemory
 
-#define STANDARD_ALIGNMENT (__STDCPP_DEFAULT_NEW_ALIGNMENT__)
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Conversion from mega-bytes to bytes
-
-namespace NMemoryUtils
+struct CORE_API FMemory
 {
     template<typename T>
-    CONSTEXPR T BytesToMegaBytes(T Bytes)
+    static CONSTEXPR T BytesToMegaBytes(T Bytes)
     {
         return Bytes / T(1024 * 1024);
     }
 
     template<typename T>
-    CONSTEXPR T MegaBytesToBytes(T MegaBytes)
+    static CONSTEXPR T MegaBytesToBytes(T MegaBytes)
     {
         return MegaBytes * T(1024 * 1024);
     }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Class handling memory
-
-class CORE_API FMemory
-{
-public:
 
     /**
      * @brief: Allocate memory
@@ -38,6 +25,14 @@ public:
      * @return: Returns the newly allocated memory
      */
     static void* Malloc(uint64 Size) noexcept;
+
+    /**
+     * @brief: Allocate memory and zero it
+     *
+     * @param Size: The number of bytes to allocate
+     * @return: Returns the newly allocated memory
+     */
+    static void* MallocZeroed(uint64 Size) noexcept;
 
     /**
      * @brief: Reallocate memory
@@ -73,7 +68,7 @@ public:
      * @param Size: Size of the memory to copy
      * @return: Returns the destination pointer
      */
-    static void* Memcpy(void* restrict_ptr Dst, const void* restrict_ptr Src, uint64 Size) noexcept;
+    static void* Memcpy(void* RESTRICT Dst, const void* RESTRICT Src, uint64 Size) noexcept;
 
     /**
      * @brief: Set memory to a byte value
@@ -94,8 +89,6 @@ public:
      */
     static void* Memzero(void* Dst, uint64 Size) noexcept;
 
-    // TODO: Check if we need all the information from memcmp and refactor in that case
-
     /**
      * @brief: Compare two memory ranges
      *
@@ -109,11 +102,11 @@ public:
     /**
      * @brief: Swaps the contents of two memory ranges
      *
-     * @param LHS: Memory range 1
-     * @param RHS: Memory range 2
+     * @param LHS: First of the memory ranges to swap
+     * @param RHS: Second of the memory ranges to swap
      * @param Size: Size of the memory ranges
      */
-    static void Memswap(void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size) noexcept;
+    static void Memswap(void* RESTRICT LHS, void* RESTRICT RHS, uint64 Size) noexcept;
 
     /**
      * @brief: Copy memory range from one memory range to another and then set the source to zero
@@ -122,7 +115,7 @@ public:
      * @param Src: Src memory range
      * @param Size: Size of the memory range
      */
-    static FORCEINLINE void Memexchange(void* restrict_ptr Dst, void* restrict_ptr Src, uint64 Size) noexcept
+    static FORCEINLINE void Memexchange(void* RESTRICT Dst, void* RESTRICT Src, uint64 Size) noexcept
     {
         if (Dst != Src)
         {
@@ -199,7 +192,7 @@ public:
      * @return: Returns the destination pointer
      */
     template<typename T>
-    static FORCEINLINE T* Memcpy(T* restrict_ptr Dst, const T* restrict_ptr Src) noexcept
+    static FORCEINLINE T* Memcpy(T* RESTRICT Dst, const T* RESTRICT Src) noexcept
     {
         return reinterpret_cast<T*>(Memcpy(reinterpret_cast<void*>(Dst), reinterpret_cast<const void*>(Src), sizeof(T)));
     }
@@ -213,7 +206,7 @@ public:
      * @return: Returns the destination pointer
      */
     template<typename T>
-    static FORCEINLINE T* MemcpyTyped(T* restrict_ptr Dst, const T* restrict_ptr Src, uint32 NumElements) noexcept
+    static FORCEINLINE T* MemcpyTyped(T* RESTRICT Dst, const T* RESTRICT Src, uint32 NumElements) noexcept
     {
         return reinterpret_cast<T*>(Memcpy(reinterpret_cast<void*>(Dst), reinterpret_cast<const void*>(Src), sizeof(T) * NumElements));
     }
@@ -239,7 +232,7 @@ public:
      * @param Src: Src memory range
      */
     template<typename T>
-    static FORCEINLINE T* Memexchange(void* restrict_ptr Dst, void* restrict_ptr Src) noexcept
+    static FORCEINLINE T* Memexchange(T* RESTRICT Dst, T* RESTRICT Src) noexcept
     {
         return Memexchange(reinterpret_cast<void*>(Dst), reinterpret_cast<void*>(Src), sizeof(T));
     }

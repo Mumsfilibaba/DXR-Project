@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef TSharedRef<class FRHISamplerState> RHISamplerStateRef;
+typedef TSharedRef<class FRHISamplerState> FRHISamplerStateRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ESamplerMode
@@ -21,7 +21,7 @@ enum class ESamplerMode : uint8
     MirrorOnce = 5,
 };
 
-inline const char* ToString(ESamplerMode SamplerMode)
+inline const CHAR* ToString(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
@@ -60,7 +60,7 @@ enum class ESamplerFilter : uint8
     Comparison_Anistrotopic                 = 18,
 };
 
-inline const char* ToString(ESamplerFilter SamplerFilter)
+inline const CHAR* ToString(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
@@ -87,13 +87,11 @@ inline const char* ToString(ESamplerFilter SamplerFilter)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHISamplerStateInitializer
+// FRHISamplerStateInitializer
 
-class CRHISamplerStateInitializer
+struct FRHISamplerStateInitializer
 {
-public:
-
-    CRHISamplerStateInitializer()
+    FRHISamplerStateInitializer()
         : AddressU(ESamplerMode::Clamp)
         , AddressV(ESamplerMode::Clamp)
         , AddressW(ESamplerMode::Clamp)
@@ -106,7 +104,7 @@ public:
         , BorderColor()
     { }
 
-    CRHISamplerStateInitializer(ESamplerMode InAddressMode, ESamplerFilter InFilter)
+    FRHISamplerStateInitializer(ESamplerMode InAddressMode, ESamplerFilter InFilter)
         : AddressU(InAddressMode)
         , AddressV(InAddressMode)
         , AddressW(InAddressMode)
@@ -119,16 +117,17 @@ public:
         , BorderColor(0.0f, 0.0f, 0.0f, 1.0f)
     { }
 
-    CRHISamplerStateInitializer( ESamplerMode InAddressU
-                               , ESamplerMode InAddressV
-                               , ESamplerMode InAddressW
-                               , ESamplerFilter InFilter
-                               , EComparisonFunc InComparisonFunc
-                               , float InMipLODBias
-                               , uint8 InMaxAnisotropy
-                               , float InMinLOD
-                               , float InMaxLOD
-                               , const CFloatColor& InBorderColor)
+    FRHISamplerStateInitializer(
+        ESamplerMode InAddressU,
+        ESamplerMode InAddressV,
+        ESamplerMode InAddressW,
+        ESamplerFilter InFilter,
+        EComparisonFunc InComparisonFunc,
+        float InMipLODBias,
+        uint8 InMaxAnisotropy,
+        float InMinLOD,
+        float InMaxLOD,
+        const FFloatColor& InBorderColor)
         : AddressU(InAddressU)
         , AddressV(InAddressV)
         , AddressW(InAddressW)
@@ -156,7 +155,7 @@ public:
         return Hash;
     }
 
-    bool operator==(const CRHISamplerStateInitializer& RHS) const
+    bool operator==(const FRHISamplerStateInitializer& RHS) const
     {
         return (AddressU       == RHS.AddressU)
             && (AddressV       == RHS.AddressV)
@@ -170,7 +169,7 @@ public:
             && (BorderColor    == RHS.BorderColor);
     }
 
-    bool operator!=(const CRHISamplerStateInitializer& RHS) const
+    bool operator!=(const FRHISamplerStateInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -190,16 +189,16 @@ public:
     float           MinLOD;
     float           MaxLOD;
 
-    CFloatColor     BorderColor;
+    FFloatColor     BorderColor;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHISamplerState
 
-class FRHISamplerState : public FRHIResource
+class FRHISamplerState 
+    : public FRHIResource
 {
 protected:
-
     FRHISamplerState()  = default;
     ~FRHISamplerState() = default;
 
@@ -207,4 +206,9 @@ public:
 
     /** @return: Returns the Bindless descriptor-handle if the RHI-supports descriptor-handles */
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+
+    const FRHISamplerStateInitializer& GetInitializer() const { return Initializer; } 
+
+private:
+    FRHISamplerStateInitializer Initializer;
 };

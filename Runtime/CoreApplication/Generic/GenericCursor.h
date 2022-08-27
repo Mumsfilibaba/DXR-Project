@@ -3,19 +3,15 @@
 #include "CoreApplication/ICursor.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericCursor
+// FGenericCursor
 
-class COREAPPLICATION_API CGenericCursor : public ICursor
+class COREAPPLICATION_API FGenericCursor 
+    : public ICursor
 {
-protected:
-
-    CGenericCursor()
+public:
+    FGenericCursor()
         : bIsVisible(true)
     { }
-
-    ~CGenericCursor() = default;
-
-public:
 
     virtual bool IsVisible() const override final { return bIsVisible; }
 

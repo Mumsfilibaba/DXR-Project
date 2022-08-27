@@ -1,10 +1,10 @@
 #pragma once
 #include <AppKit/AppKit.h>
 
-class CMacApplication;
+class FMacApplication;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaWindow
+// FCocoaWindow
 
-@interface CCocoaWindow : NSWindow<NSWindowDelegate>
+@interface FCocoaWindow : NSWindow<NSWindowDelegate>
 @end

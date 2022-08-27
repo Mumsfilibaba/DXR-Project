@@ -1,6 +1,6 @@
 #pragma once
-#include "Core/Containers/HashTable.h"
-#include "Core/Threading/Lockable.h"
+#include "Core/Containers/Map.h"
+#include "Core/Threading/Spinlock.h"
 
 #include "Renderer/RendererModule.h"
 
@@ -11,14 +11,14 @@
 #define NUM_GPU_PROFILER_SAMPLES (200)
 
 #if ENABLE_GPU_PROFILER
-#define GPU_TRACE_SCOPE(CmdList, Name) SGPUScopedTrace PREPROCESS_CONCAT(GPUScopedTrace_Line_, __LINE__)(CmdList, Name)
+    #define GPU_TRACE_SCOPE(CmdList, Name) FGPUScopedTrace PREPROCESS_CONCAT(GPUScopedTrace_Line_, __LINE__)(CmdList, Name)
 #else
-#define GPU_TRACE_SCOPE(CmdList, Name)
+    #define GPU_TRACE_SCOPE(CmdList, Name)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-struct SGPUProfileSample
+struct FGPUProfileSample
 {
     void AddSample(float NewSample)
     {
@@ -27,10 +27,10 @@ struct SGPUProfileSample
         Min = NMath::Min(NewSample, Min);
         Max = NMath::Max(NewSample, Max);
 
-        SampleCount = NMath::Min<int32>(Samples.Size(), SampleCount + 1);
+        SampleCount = NMath::Min<int32>(Samples.GetSize(), SampleCount + 1);
 
         CurrentSample++;
-        if (CurrentSample >= int32(Samples.Size()))
+        if (CurrentSample >= int32(Samples.GetSize()))
         {
             CurrentSample = 0;
         }
@@ -78,9 +78,9 @@ struct SGPUProfileSample
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-using GPUProfileSamplesTable = THashTable<String, SGPUProfileSample, SStringHasher>;
+using GPUProfileSamplesTable = TMap<FString, FGPUProfileSample, FStringHasher>;
 
-class RENDERER_API CGPUProfiler
+class RENDERER_API FGPUProfiler
 {
 public:
 
@@ -90,7 +90,7 @@ public:
      /** @brief: Release the resources */
     static void Release();
 
-    static FORCEINLINE CGPUProfiler& Get() { return Instance; }
+    static FORCEINLINE FGPUProfiler& Get() { return Instance; }
 
      /** @brief: Enables the collection of samples (Resume) */
     void Enable();
@@ -114,20 +114,20 @@ public:
     void EndGPUFrame(FRHICommandList& CmdList);
 
      /** @brief: Begin a GPU scope */
-    void BeginGPUTrace(FRHICommandList& CmdList, const char* Name);
+    void BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
 
      /** @brief: End a GPU scope */
-    void EndGPUTrace(FRHICommandList& CmdList, const char* Name);
+    void EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
 
-    FORCEINLINE const SGPUProfileSample& GetGPUFrameTime() const
+    FORCEINLINE const FGPUProfileSample& GetGPUFrameTime() const
     {
         return FrameTime;
     }
 
 private:
 
-    CGPUProfiler();
-    ~CGPUProfiler() = default;
+    FGPUProfiler();
+    ~FGPUProfiler() = default;
 
      /** @brief: Queries for GPUTimeStamps */
     TSharedRef<FRHITimestampQuery> Timequeries;
@@ -135,35 +135,35 @@ private:
     uint32 CurrentTimeQueryIndex = 0;
 
      /** @brief: Sample for the GPU FrameTime */
-    SGPUProfileSample FrameTime;
+    FGPUProfileSample FrameTime;
 
-     /** @brief: Lockable table for GPU- samples */
-    Lockable<GPUProfileSamplesTable> Samples;
+     /** @brief: Table for GPU- samples */
+    GPUProfileSamplesTable Samples;
+    FSpinLock              SamplesLock;
 
     bool bEnabled;
 
-    static CGPUProfiler Instance;
+    static FGPUProfiler Instance;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-struct SGPUScopedTrace
+struct FGPUScopedTrace
 {
 public:
-
-    FORCEINLINE SGPUScopedTrace(FRHICommandList& InCmdList, const char* InName)
+    FORCEINLINE FGPUScopedTrace(FRHICommandList& InCmdList, const CHAR* InName)
         : CmdList(InCmdList)
         , Name(InName)
     {
-        CGPUProfiler::Get().BeginGPUTrace(CmdList, Name);
+        FGPUProfiler::Get().BeginGPUTrace(CmdList, Name);
     }
 
-    FORCEINLINE ~SGPUScopedTrace()
+    FORCEINLINE ~FGPUScopedTrace()
     {
-        CGPUProfiler::Get().EndGPUTrace(CmdList, Name);
+        FGPUProfiler::Get().EndGPUTrace(CmdList, Name);
     }
 
 private:
     FRHICommandList& CmdList;
-    const char* Name = nullptr;
+    const CHAR* Name = nullptr;
 };

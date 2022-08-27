@@ -2,38 +2,38 @@
 
 #include "Core/Misc/EngineLoopTicker.h"
 
-CORE_API CApplicationModule* GApplicationModule;
+CORE_API FApplicationInterfaceModule* GApplicationModule;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CApplicationModule
+// FApplicationInterfaceModule
 
-bool CApplicationModule::Init()
+bool FApplicationInterfaceModule::Init()
 {
-    CTickDelegate TickDelegate = CTickDelegate::CreateRaw(this, &CApplicationModule::Tick);
+    FTickDelegate TickDelegate = FTickDelegate::CreateRaw(this, &FApplicationInterfaceModule::Tick);
     TickHandle = TickDelegate.GetHandle();
 
-    CEngineLoopTicker::Get().AddElement(TickDelegate);
+    FEngineLoopTicker::Get().AddDelegate(TickDelegate);
 
     return true;
 }
 
-void CApplicationModule::Tick(CTimestamp)
+void FApplicationInterfaceModule::Tick(FTimespan)
 {
 }
 
-bool CApplicationModule::Release()
+bool FApplicationInterfaceModule::Release()
 {
-    CEngineLoopTicker::Get().RemoveElement(TickHandle);
+    FEngineLoopTicker::Get().RemoveDelegate(TickHandle);
     return true;
 }
 
 // TODO: Remove init and release? 
-bool CApplicationModule::Load()
+bool FApplicationInterfaceModule::Load()
 {
     return Init();
 }
 
-bool CApplicationModule::Unload()
+bool FApplicationInterfaceModule::Unload()
 {
     return Release();
 }

@@ -6,17 +6,11 @@
 template<typename T>
 struct TIsVolatile
 {
-    enum
-    {
-        Value = false
-    };
+    enum { Value = false };
 };
 
 template<typename T>
 struct TIsVolatile<volatile T>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };

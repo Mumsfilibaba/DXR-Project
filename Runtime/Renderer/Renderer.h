@@ -8,7 +8,7 @@
 #include "RayTracer.h"
 
 #include "Core/Time/Timer.h"
-#include "Core/Threading/AsyncTaskManager.h"
+#include "Core/Threading/TaskManagerInterface.h"
 
 #include "Engine/Scene/Actor.h"
 #include "Engine/Scene/Scene.h"
@@ -25,23 +25,25 @@
 #include "Debug/RendererInfoWindow.h"
 #include "Debug/GPUProfilerWindow.h"
 
-#include "Canvas/WindowMessageHandler.h"
+#include "Application/WindowMessageHandler.h"
+
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRendererWindowHandler
+// FRendererWindowHandler
 
-class CRendererWindowHandler final : public CWindowMessageHandler
+class FRendererWindowHandler final 
+    : public FWindowMessageHandler
 {
 public:
 
-    DECLARE_DELEGATE(CWindowResizedDelegate, const SWindowResizeEvent& ResizeEvent);
+    DECLARE_DELEGATE(CWindowResizedDelegate, const FWindowResizeEvent& ResizeEvent);
     CWindowResizedDelegate WindowResizedDelegate;
 
-    CRendererWindowHandler() = default;
-    ~CRendererWindowHandler() = default;
+    FRendererWindowHandler() = default;
+    ~FRendererWindowHandler() = default;
 
-    virtual bool OnWindowResized(const SWindowResizeEvent& ResizeEvent) override final
+    virtual bool OnWindowResized(const FWindowResizeEvent& ResizeEvent) override final
     {
         WindowResizedDelegate.Execute(ResizeEvent);
         return true;
@@ -49,39 +51,21 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRendererStatistics
+// FRenderer
 
-struct SRendererStatistics
-{
-    uint32 NumDrawCalls = 0;
-    uint32 NumDispatchCalls = 0;
-    uint32 NumRenderCommands = 0;
-
-    void Reset()
-    {
-        NumDrawCalls      = 0;
-        NumDispatchCalls  = 0;
-        NumRenderCommands = 0;
-    }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRenderer
-
-class RENDERER_API CRenderer
+class RENDERER_API FRenderer
 {
 public:
-
-    CRenderer();
-    ~CRenderer() = default;
+    FRenderer();
+    ~FRenderer() = default;
 
     bool Init();
 
-    void Tick(const CScene& Scene);
+    void Tick(const FScene& Scene);
 
     void Release();
 
-    void PerformFrustumCullingAndSort(const CScene& Scene);
+    void PerformFrustumCullingAndSort(const FScene& Scene);
 
     void PerformFXAA(FRHICommandList& InCmdList);
     
@@ -89,19 +73,18 @@ public:
 
     void PerformAABBDebugPass(FRHICommandList& InCmdList);
 
-    FORCEINLINE TSharedRef<CTextureDebugWindow> GetTextureDebugger() const
+    FORCEINLINE TSharedRef<FTextureDebugWindow> GetTextureDebugger() const
     {
         return TextureDebugger;
     }
 
-    FORCEINLINE const SRendererStatistics& GetStatistics() const
+    FORCEINLINE const FRHICommandStatistics& GetStatistics() const
     {
         return FrameStatistics;
     }
 
 private:
-
-    void OnWindowResize(const SWindowResizeEvent& Event);
+    void OnWindowResize(const FWindowResizeEvent& Event);
 
     bool InitBoundingBoxDebugPass();
 
@@ -109,16 +92,17 @@ private:
     
     bool InitShadingImage();
 
-    NOINLINE void FrustumCullingAndSortingInternal( const CCamera* Camera
-                                                  , const TPair<uint32, uint32>& DrawCommands
-                                                  , TArray<uint32>& OutDeferredDrawCommands
-                                                  , TArray<uint32>& OutForwardDrawCommands);
+    NOINLINE void FrustumCullingAndSortingInternal(
+        const FCamera* Camera,
+        const TPair<uint32, uint32>& DrawCommands,
+        TArray<uint32>& OutDeferredDrawCommands,
+        TArray<uint32>& OutForwardDrawCommands);
 
-    TSharedPtr<CRendererWindowHandler> WindowHandler;
+    TSharedPtr<FRendererWindowHandler> WindowHandler;
 
-    TSharedRef<CTextureDebugWindow> TextureDebugger;
-    TSharedRef<CRendererInfoWindow> InfoWindow;
-    TSharedRef<CGPUProfilerWindow>  GPUProfilerWindow;
+    TSharedRef<FTextureDebugWindow> TextureDebugger;
+    TSharedRef<FRendererInfoWindow> InfoWindow;
+    TSharedRef<FGPUProfilerWindow>  GPUProfilerWindow;
 
     FRHICommandList PreShadowsCmdList;
     FRHICommandList PointShadowCmdList;
@@ -130,53 +114,54 @@ private:
     FRHICommandList BasePassCmdList;
     FRHICommandList MainCmdList;
 
-    CAsyncTask PointShadowTask;
-    CAsyncTask DirShadowTask;
-    CAsyncTask PrePassTask;
-    CAsyncTask BasePassTask;
-    CAsyncTask RayTracingTask;
+    FAsyncTask PointShadowTask;
+    FAsyncTask DirShadowTask;
+    FAsyncTask PrePassTask;
+    FAsyncTask BasePassTask;
+    FAsyncTask RayTracingTask;
 
-    CDeferredRenderer             DeferredRenderer;
-    CShadowMapRenderer            ShadowMapRenderer;
-    CScreenSpaceOcclusionRenderer SSAORenderer;
-    CLightProbeRenderer           LightProbeRenderer;
-    CSkyboxRenderPass             SkyboxRenderPass;
-    CForwardRenderer              ForwardRenderer;
-    CRayTracer                    RayTracer;
+    FDeferredRenderer             DeferredRenderer;
+    FShadowMapRenderer            ShadowMapRenderer;
+    FScreenSpaceOcclusionRenderer SSAORenderer;
+    FLightProbeRenderer           LightProbeRenderer;
+    FSkyboxRenderPass             SkyboxRenderPass;
+    FForwardRenderer              ForwardRenderer;
+    FRayTracer                    RayTracer;
 
-    SFrameResources Resources;
-    SLightSetup     LightSetup;
+    FFrameResources Resources;
+    FLightSetup     LightSetup;
 
-    TSharedRef<FRHITexture2D>            ShadingImage;
-    TSharedRef<FRHIComputePipelineState> ShadingRatePipeline;
-    TSharedRef<FRHIComputeShader>        ShadingRateShader;
+    FRHITexture2DRef            ShadingImage;
+    FRHIComputePipelineStateRef ShadingRatePipeline;
+    FRHIComputeShaderRef        ShadingRateShader;
 
     TSharedRef<FRHIVertexBuffer>          AABBVertexBuffer;
     TSharedRef<FRHIIndexBuffer>           AABBIndexBuffer;
-    TSharedRef<FRHIGraphicsPipelineState> AABBDebugPipelineState;
-    TSharedRef<FRHIVertexShader>          AABBVertexShader;
-    TSharedRef<FRHIPixelShader>           AABBPixelShader;
+    FRHIGraphicsPipelineStateRef AABBDebugPipelineState;
+    FRHIVertexShaderRef          AABBVertexShader;
+    FRHIPixelShaderRef           AABBPixelShader;
 
-    TSharedRef<FRHIGraphicsPipelineState> PostPSO;
-    TSharedRef<FRHIPixelShader>           PostShader;
-    TSharedRef<FRHIGraphicsPipelineState> FXAAPSO;
-    TSharedRef<FRHIPixelShader>           FXAAShader;
-    TSharedRef<FRHIGraphicsPipelineState> FXAADebugPSO;
-    TSharedRef<FRHIPixelShader>           FXAADebugShader;
+    FRHIGraphicsPipelineStateRef PostPSO;
+    FRHIPixelShaderRef           PostShader;
+    FRHIGraphicsPipelineStateRef FXAAPSO;
+    FRHIPixelShaderRef           FXAAShader;
+    FRHIGraphicsPipelineStateRef FXAADebugPSO;
+    FRHIPixelShaderRef           FXAADebugShader;
 
     TSharedRef<FRHITimestampQuery> TimestampQueries;
 
-    SRendererStatistics FrameStatistics;
+    FRHICommandStatistics FrameStatistics;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-extern RENDERER_API CRenderer GRenderer;
+extern RENDERER_API FRenderer GRenderer;
 
-inline void AddDebugTexture( const TSharedRef<FRHIShaderResourceView>& ImageView
-                           , const TSharedRef<FRHITexture>& Image
-                           , EResourceAccess BeforeState
-                           , EResourceAccess AfterState)
+inline void AddDebugTexture(
+    const TSharedRef<FRHIShaderResourceView>& ImageView,
+    const TSharedRef<FRHITexture>& Image,
+    EResourceAccess BeforeState,
+    EResourceAccess AfterState)
 {
     GRenderer.GetTextureDebugger()->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
 }

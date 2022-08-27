@@ -8,38 +8,38 @@
     #undef MessageBox
 #endif
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 // TODO: Enable other types of Modal windows for supported platforms
 
+struct FOutputDeviceConsole;
+class  FGenericApplication;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericApplicationMisc
+// FGenericApplicationMisc
 
-class COREAPPLICATION_API CGenericApplicationMisc
+struct COREAPPLICATION_API FGenericApplicationMisc
 {
-public:
+    static FOutputDeviceConsole* CreateOutputDeviceConsole() { return nullptr; }
+    static FGenericApplication*  CreateApplication();
 
-    static class CGenericApplication* CreateApplication();
-
-    static class CGenericConsoleWindow* CreateConsoleWindow();
-
-    static FORCEINLINE void MessageBox(const String& Title, const String& Message) { }
+    static FORCEINLINE void MessageBox(const FString& Title, const FString& Message) { }
 
     static FORCEINLINE void RequestExit(int32 ExitCode) { }
 
     static FORCEINLINE void PumpMessages(bool bUntilEmpty) { }
 
-    static FORCEINLINE SModifierKeyState GetModifierKeyState() { return SModifierKeyState(); }
+    static FORCEINLINE FModifierKeyState GetModifierKeyState() { return FModifierKeyState(); }
 };
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic pop
 #endif

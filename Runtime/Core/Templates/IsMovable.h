@@ -9,10 +9,7 @@
 template<typename T>
 struct TIsMoveConstructable
 {
-    enum
-    {
-        Value = TIsConstructible<T, typename TAddRValueReference<T>::Type>::Value
-    };
+    enum { Value = TIsConstructible<T, typename TAddRValueReference<T>::Type>::Value };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -21,8 +18,5 @@ struct TIsMoveConstructable
 template<typename T>
 struct TIsMoveAssignable
 {
-    enum
-    {
-        Value = TIsAssignable<T, typename TAddRValueReference<T>::Type>::Value
-    };
+    enum { Value = TIsAssignable<T, typename TAddRValueReference<T>::Type>::Value };
 };

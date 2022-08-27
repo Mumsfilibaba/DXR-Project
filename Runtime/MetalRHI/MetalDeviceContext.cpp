@@ -1,9 +1,9 @@
 #include "MetalDeviceContext.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalDeviceContext
+// FMetalDeviceContext
 
-CMetalDeviceContext::CMetalDeviceContext(CMetalCoreInterface* InCoreInterface, id<MTLDevice> InDevice)
+FMetalDeviceContext::FMetalDeviceContext(FMetalCoreInterface* InCoreInterface, id<MTLDevice> InDevice)
     : CoreInterface(InCoreInterface)
     , Device(InDevice)
     , CommandQueue([InDevice newCommandQueue])
@@ -11,13 +11,13 @@ CMetalDeviceContext::CMetalDeviceContext(CMetalCoreInterface* InCoreInterface, i
     Check(CommandQueue != nullptr);
 }
 
-CMetalDeviceContext::~CMetalDeviceContext()
+FMetalDeviceContext::~FMetalDeviceContext()
 {
     NSSafeRelease(Device);
     NSSafeRelease(CommandQueue);
 }
 
-CMetalDeviceContext* CMetalDeviceContext::CreateContext(CMetalCoreInterface* InCoreInterface)
+FMetalDeviceContext* FMetalDeviceContext::CreateContext(FMetalCoreInterface* InCoreInterface)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -39,13 +39,13 @@ CMetalDeviceContext* CMetalDeviceContext::CreateContext(CMetalCoreInterface* InC
         SelectedDevice = MTLCreateSystemDefaultDevice();
     }
     
-    const String DeviceName = SelectedDevice.name;
-    METAL_INFO("Selected Device=%s", DeviceName.CStr());
+    const FString DeviceName = SelectedDevice.name;
+    METAL_INFO("Selected Device=%s", DeviceName.GetCString());
 
     const bool bSupportRayTracing           = SelectedDevice.supportsRaytracing;
     const bool bSupportRayTracingFromRender = SelectedDevice.supportsRaytracingFromRender;
     METAL_INFO("bSupportRayTracing=%s, bSupportRayTracingFromRender=%s", bSupportRayTracing ? "true" : "false", bSupportRayTracingFromRender ? "true" : "false");
     
     NSRelease(AvailableDevices);
-	return dbg_new CMetalDeviceContext(InCoreInterface, SelectedDevice);
+	return dbg_new FMetalDeviceContext(InCoreInterface, SelectedDevice);
 }

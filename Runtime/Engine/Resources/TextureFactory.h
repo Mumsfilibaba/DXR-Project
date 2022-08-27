@@ -15,17 +15,16 @@ enum ETextureFactoryFlags : uint32
 };
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CTextureFactory
+// FTextureFactory
 
-class ENGINE_API CTextureFactory
+struct ENGINE_API FTextureFactory
 {
-public:
     static bool Init();
     static void Release();
 
     // TODO: Supports R8G8B8A8 and R32G32B32A32 for now, support more formats? Such as Float16?
-    static class FRHITexture2D* LoadFromImage2D(struct SImage2D* InImage, uint32 CreateFlags);
-    static class FRHITexture2D* LoadFromFile(const String& Filepath, uint32 CreateFlags, EFormat Format);
+    static class FRHITexture2D* LoadFromImage2D(struct FImage2D* InImage, uint32 CreateFlags);
+    static class FRHITexture2D* LoadFromFile(const FString& Filepath, uint32 CreateFlags, EFormat Format);
     static class FRHITexture2D* LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format);
 
     static class FRHITextureCube* CreateTextureCubeFromPanorma(class FRHITexture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format);

@@ -3,16 +3,16 @@
 #include "VectorOp.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CVector4
+// FVector4
 
-class VECTOR_ALIGN CVector4
+class VECTOR_ALIGN FVector4
 {
 public:
 
     /**
      * @brief: Default constructor (Initialize components to zero) 
      */
-    FORCEINLINE CVector4() noexcept
+    FORCEINLINE FVector4() noexcept
         : x(0.0f)
         , y(0.0f)
         , z(0.0f)
@@ -27,7 +27,7 @@ public:
      * @param InZ: The z-coordinate
      * @param InW: The w-coordinate
      */
-    FORCEINLINE explicit CVector4(float InX, float InY, float InZ, float InW) noexcept
+    FORCEINLINE explicit FVector4(float InX, float InY, float InZ, float InW) noexcept
         : x(InX)
         , y(InY)
         , z(InZ)
@@ -39,7 +39,7 @@ public:
      *
      * @param Arr: Array with 4 elements
      */
-    FORCEINLINE explicit CVector4(const float* Arr) noexcept
+    FORCEINLINE explicit FVector4(const float* Arr) noexcept
         : x(Arr[0])
         , y(Arr[1])
         , z(Arr[2])
@@ -51,7 +51,7 @@ public:
      *
      * @param Scalar: Value to set all components to
      */
-    FORCEINLINE explicit CVector4(float Scalar) noexcept
+    FORCEINLINE explicit FVector4(float Scalar) noexcept
         : x(Scalar)
         , y(Scalar)
         , z(Scalar)
@@ -63,7 +63,7 @@ public:
      *
      * @param XYZ: Value to set first components to
      */
-    FORCEINLINE CVector4(const CVector3& XYZ) noexcept
+    FORCEINLINE FVector4(const FVector3& XYZ) noexcept
         : x(XYZ.x)
         , y(XYZ.y)
         , z(XYZ.z)
@@ -76,7 +76,7 @@ public:
      * @param XYZ: Value to set first components to
      * @param InW: Value to set the w-component to
      */
-    FORCEINLINE explicit CVector4(const CVector3& XYZ, float InW) noexcept
+    FORCEINLINE explicit FVector4(const FVector3& XYZ, float InW) noexcept
         : x(XYZ.x)
         , y(XYZ.y)
         , z(XYZ.z)
@@ -116,9 +116,9 @@ public:
      *
      * @return: A copy of this vector normalized
      */
-    inline CVector4 GetNormalized() const noexcept
+    inline FVector4 GetNormalized() const noexcept
     {
-        CVector4 Result(*this);
+        FVector4 Result(*this);
         Result.Normalize();
         return Result;
     }
@@ -129,7 +129,7 @@ public:
      * @param Other: vector to compare against
      * @return: True if equal, false if not
      */
-    inline bool IsEqual(const CVector4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    inline bool IsEqual(const FVector4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
 #if !USE_VECTOR_OP
         Epsilon = NMath::Abs(Epsilon);
@@ -217,7 +217,7 @@ public:
      *
      * @return: The length of the vector
      */
-    FORCEINLINE float Length() const noexcept
+    FORCEINLINE float GetLength() const noexcept
     {
         const float fLengthSquared = LengthSquared();
         return NMath::Sqrt(fLengthSquared);
@@ -239,7 +239,7 @@ public:
      * @param Other: The vector to perform dot product with
      * @return: The dot product
      */
-    FORCEINLINE float DotProduct(const CVector4& Other) const noexcept
+    FORCEINLINE float DotProduct(const FVector4& Other) const noexcept
     {
 #if !USE_VECTOR_OP
         return (x * Other.x) + (y * Other.y) + (z * Other.z) + (w * Other.w);
@@ -258,15 +258,15 @@ public:
      * @param Other: The vector to perform cross product with
      * @return: The cross product
      */
-    inline CVector4 CrossProduct(const CVector4& Other) const noexcept
+    inline FVector4 CrossProduct(const FVector4& Other) const noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4((y * Other.z) - (z * Other.y)
+        return FVector4((y * Other.z) - (z * Other.y)
                        ,(z * Other.x) - (x * Other.z)
                        ,(x * Other.y) - (y * Other.x)
                        ,0.0f);
 #else
-        CVector4 NewVector;
+        FVector4 NewVector;
 
         NVectorOp::Float128 Temp0  = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Temp1  = NVectorOp::LoadAligned(&Other);
@@ -285,14 +285,14 @@ public:
      * @param Other: The vector to project onto
      * @return: The projected vector
      */
-    inline CVector4 ProjectOn(const CVector4& Other) const noexcept
+    inline FVector4 ProjectOn(const FVector4& Other) const noexcept
     {
 #if !USE_VECTOR_OP
         float AdotB = DotProduct(Other);
         float BdotB = Other.LengthSquared();
         return (AdotB / BdotB) * Other;
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(&Other);
@@ -316,14 +316,14 @@ public:
      * @param Normal: Vector to reflect around
      * @return: The reflected vector
      */
-    inline CVector4 Reflect(const CVector4& Normal) const noexcept
+    inline FVector4 Reflect(const FVector4& Normal) const noexcept
     {
 #if !USE_VECTOR_OP
         float VdotN = DotProduct(Normal);
         float NdotN = Normal.LengthSquared();
         return *this - ((2.0f * (VdotN / NdotN)) * Normal);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&Normal));
@@ -350,7 +350,7 @@ public:
      *
      * @return: A pointer to the data
      */
-    FORCEINLINE float* Data() noexcept
+    FORCEINLINE float* GetData() noexcept
     {
         return reinterpret_cast<float*>(this);
     }
@@ -360,7 +360,7 @@ public:
      *
      * @return: A pointer to the data
      */
-    FORCEINLINE const float* Data() const noexcept
+    FORCEINLINE const float* GetData() const noexcept
     {
         return reinterpret_cast<const float*>(this);
     }
@@ -374,15 +374,16 @@ public:
      * @param Second: Second vector to compare with
      * @return: A vector with the smallest components of First and Second
      */
-    friend FORCEINLINE CVector4 Min(const CVector4& First, const CVector4& Second) noexcept
+    friend FORCEINLINE FVector4 Min(const FVector4& First, const FVector4& Second) noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(NMath::Min(First.x, Second.x)
-                       ,NMath::Min(First.y, Second.y)
-                       ,NMath::Min(First.z, Second.z)
-                       ,NMath::Min(First.w, Second.w));
+        return FVector4(
+            NMath::Min(First.x, Second.x),
+            NMath::Min(First.y, Second.y),
+            NMath::Min(First.z, Second.z),
+            NMath::Min(First.w, Second.w));
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&First));
         NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(&Second);
@@ -400,15 +401,16 @@ public:
      * @param Second: Second vector to compare with
      * @return: A vector with the largest components of First and Second
      */
-    friend FORCEINLINE CVector4 Max(const CVector4& First, const CVector4& Second) noexcept
+    friend FORCEINLINE FVector4 Max(const FVector4& First, const FVector4& Second) noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(NMath::Max(First.x, Second.x)
-                       ,NMath::Max(First.y, Second.y)
-                       ,NMath::Max(First.z, Second.z)
-                       ,NMath::Max(First.w, Second.w));
+        return FVector4(
+            NMath::Max(First.x, Second.x),
+            NMath::Max(First.y, Second.y),
+            NMath::Max(First.z, Second.z),
+            NMath::Max(First.w, Second.w));
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&First));
         NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(&Second);
@@ -427,15 +429,16 @@ public:
      * @param Factor: Factor to interpolate with. Zero returns First, One returns seconds
      * @return: A vector with the result of interpolation
      */
-    friend FORCEINLINE CVector4 Lerp(const CVector4& First, const CVector4& Second, float t) noexcept
+    friend FORCEINLINE FVector4 Lerp(const FVector4& First, const FVector4& Second, float t) noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4((1.0f - t) * First.x + t * Second.x
-                       ,(1.0f - t) * First.y + t * Second.y
-                       ,(1.0f - t) * First.z + t * Second.z
-                       ,(1.0f - t) * First.w + t * Second.w);
+        return FVector4(
+            (1.0f - t) * First.x + t * Second.x,
+            (1.0f - t) * First.y + t * Second.y,
+            (1.0f - t) * First.z + t * Second.z,
+            (1.0f - t) * First.w + t * Second.w);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&First));
         NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&Second));
@@ -461,15 +464,16 @@ public:
      * @param Value: Vector to clamp
      * @return: A vector with the result of clamping
      */
-    friend FORCEINLINE CVector4 Clamp(const CVector4& Min, const CVector4& Max, const CVector4& Value) noexcept
+    friend FORCEINLINE FVector4 Clamp(const FVector4& Min, const FVector4& Max, const FVector4& Value) noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(NMath::Min(NMath::Max(Value.x, Min.x), Max.x)
-                       ,NMath::Min(NMath::Max(Value.y, Min.y), Max.y)
-                       ,NMath::Min(NMath::Max(Value.z, Min.z), Max.z)
-                       ,NMath::Min(NMath::Max(Value.w, Min.w), Max.w));
+        return FVector4(
+            NMath::Min(NMath::Max(Value.x, Min.x), Max.x),
+            NMath::Min(NMath::Max(Value.y, Min.y), Max.y),
+            NMath::Min(NMath::Max(Value.z, Min.z), Max.z),
+            NMath::Min(NMath::Max(Value.w, Min.w), Max.w));
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 Min128   = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&Min));
         NVectorOp::Float128 Max128   = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&Max));
@@ -488,15 +492,16 @@ public:
      * @param Value: Value to saturate
      * @return: A vector with the result of saturation
      */
-    friend FORCEINLINE CVector4 Saturate(const CVector4& Value) noexcept
+    friend FORCEINLINE FVector4 Saturate(const FVector4& Value) noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(NMath::Min(NMath::Max(Value.x, 0.0f), 1.0f)
-                       ,NMath::Min(NMath::Max(Value.y, 0.0f), 1.0f)
-                       ,NMath::Min(NMath::Max(Value.z, 0.0f), 1.0f)
-                       ,NMath::Min(NMath::Max(Value.w, 0.0f), 1.0f));
+        return FVector4(
+            NMath::Min(NMath::Max(Value.x, 0.0f), 1.0f),
+            NMath::Min(NMath::Max(Value.y, 0.0f), 1.0f),
+            NMath::Min(NMath::Max(Value.z, 0.0f), 1.0f),
+            NMath::Min(NMath::Max(Value.w, 0.0f), 1.0f));
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 Zeros       = NVectorOp::MakeZeros();
         NVectorOp::Float128 Ones        = NVectorOp::MakeOnes();
@@ -516,12 +521,12 @@ public:
      *
      * @return: A negated vector
      */
-    FORCEINLINE CVector4 operator-() const noexcept
+    FORCEINLINE FVector4 operator-() const noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(-x, -y, -z, -w);
+        return FVector4(-x, -y, -z, -w);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 Zeros = NVectorOp::MakeZeros();
         NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
@@ -538,12 +543,12 @@ public:
      * @param RHS: The vector to add
      * @return: A vector with the result of addition
      */
-    FORCEINLINE CVector4 operator+(const CVector4& RHS) const noexcept
+    FORCEINLINE FVector4 operator+(const FVector4& RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(x + RHS.x, y + RHS.y, z + RHS.z, w + RHS.w);
+        return FVector4(x + RHS.x, y + RHS.y, z + RHS.z, w + RHS.w);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
@@ -560,7 +565,7 @@ public:
      * @param RHS: The vector to add
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector4& operator+=(const CVector4& RHS) noexcept
+    FORCEINLINE FVector4& operator+=(const FVector4& RHS) noexcept
     {
 #if !USE_VECTOR_OP
         return *this = *this + RHS;
@@ -580,12 +585,12 @@ public:
      * @param RHS: The scalar to add
      * @return: A vector with the result of addition
      */
-    FORCEINLINE CVector4 operator+(float RHS) const noexcept
+    FORCEINLINE FVector4 operator+(float RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(x + RHS, y + RHS, z + RHS, w + RHS);
+        return FVector4(x + RHS, y + RHS, z + RHS, w + RHS);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
@@ -602,7 +607,7 @@ public:
      * @param RHS: The scalar to add
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector4& operator+=(float RHS) noexcept
+    FORCEINLINE FVector4& operator+=(float RHS) noexcept
     {
 #if !USE_VECTOR_OP
         return *this = *this + RHS;
@@ -622,12 +627,12 @@ public:
      * @param RHS: The vector to subtract
      * @return: A vector with the result of subtraction
      */
-    FORCEINLINE CVector4 operator-(const CVector4& RHS) const noexcept
+    FORCEINLINE FVector4 operator-(const FVector4& RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(x - RHS.x, y - RHS.y, z - RHS.z, w - RHS.w);
+        return FVector4(x - RHS.x, y - RHS.y, z - RHS.z, w - RHS.w);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
@@ -644,7 +649,7 @@ public:
      * @param RHS: The vector to subtract
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector4& operator-=(const CVector4& RHS) noexcept
+    FORCEINLINE FVector4& operator-=(const FVector4& RHS) noexcept
     {
 #if !USE_VECTOR_OP
         return *this = *this - RHS;
@@ -664,12 +669,12 @@ public:
      * @param RHS: The scalar to subtract
      * @return: A vector with the result of the subtraction
      */
-    FORCEINLINE CVector4 operator-(float RHS) const noexcept
+    FORCEINLINE FVector4 operator-(float RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(x - RHS, y - RHS, z - RHS, w - RHS);
+        return FVector4(x - RHS, y - RHS, z - RHS, w - RHS);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
@@ -686,7 +691,7 @@ public:
      * @param RHS: The scalar to subtract
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector4& operator-=(float RHS) noexcept
+    FORCEINLINE FVector4& operator-=(float RHS) noexcept
     {
 #if !USE_VECTOR_OP
         return *this = *this - RHS;
@@ -707,12 +712,12 @@ public:
      * @param RHS: The vector to multiply with
      * @return: A vector with the result of the multiplication
      */
-    FORCEINLINE CVector4 operator*(const CVector4& RHS) const noexcept
+    FORCEINLINE FVector4 operator*(const FVector4& RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(x * RHS.x, y * RHS.y, z * RHS.z, w * RHS.w);
+        return FVector4(x * RHS.x, y * RHS.y, z * RHS.z, w * RHS.w);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
@@ -729,7 +734,7 @@ public:
      * @param RHS: The vector to multiply with
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector4& operator*=(const CVector4& RHS) noexcept
+    FORCEINLINE FVector4& operator*=(const FVector4& RHS) noexcept
     {
 #if !USE_VECTOR_OP
         return *this = *this * RHS;
@@ -749,12 +754,12 @@ public:
      * @param RHS: The scalar to multiply with
      * @return: A vector with the result of the multiplication
      */
-    FORCEINLINE CVector4 operator*(float RHS) const noexcept
+    FORCEINLINE FVector4 operator*(float RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(x * RHS, y * RHS, z * RHS, w * RHS);
+        return FVector4(x * RHS, y * RHS, z * RHS, w * RHS);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
@@ -772,12 +777,12 @@ public:
      * @param RHS: The vector to multiply with
      * @return: A vector with the result of the multiplication
      */
-    friend FORCEINLINE CVector4 operator*(float LHS, const CVector4& RHS) noexcept
+    friend FORCEINLINE FVector4 operator*(float LHS, const FVector4& RHS) noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(RHS.x * LHS, RHS.y * LHS, RHS.z * LHS, RHS.w * LHS);
+        return FVector4(RHS.x * LHS, RHS.y * LHS, RHS.z * LHS, RHS.w * LHS);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 This    = NVectorOp::LoadAligned(&RHS);
         NVectorOp::Float128 Scalars = NVectorOp::Load(LHS);
@@ -794,7 +799,7 @@ public:
      * @param RHS: The scalar to multiply with
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector4 operator*=(float RHS) noexcept
+    FORCEINLINE FVector4 operator*=(float RHS) noexcept
     {
 #if !USE_VECTOR_OP
         return *this = *this * RHS;
@@ -814,12 +819,12 @@ public:
      * @param RHS: The vector to divide with
      * @return: A vector with the result of the division
      */
-    FORCEINLINE CVector4 operator/(const CVector4& RHS) const noexcept
+    FORCEINLINE FVector4 operator/(const FVector4& RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(x / RHS.x, y / RHS.y, z / RHS.z, w / RHS.w);
+        return FVector4(x / RHS.x, y / RHS.y, z / RHS.z, w / RHS.w);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
@@ -836,7 +841,7 @@ public:
      * @param RHS: The vector to divide with
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector4& operator/=(const CVector4& RHS) noexcept
+    FORCEINLINE FVector4& operator/=(const FVector4& RHS) noexcept
     {
 #if !USE_VECTOR_OP
         return *this = *this / RHS;
@@ -856,12 +861,12 @@ public:
      * @param RHS: The scalar to divide with
      * @return: A vector with the result of the division
      */
-    FORCEINLINE CVector4 operator/(float RHS) const noexcept
+    FORCEINLINE FVector4 operator/(float RHS) const noexcept
     {
 #if !USE_VECTOR_OP
-        return CVector4(x / RHS, y / RHS, z / RHS, w / RHS);
+        return FVector4(x / RHS, y / RHS, z / RHS, w / RHS);
 #else
-        CVector4 Result;
+        FVector4 Result;
 
         NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
         NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
@@ -878,7 +883,7 @@ public:
      * @param RHS: The scalar to divide with
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector4& operator/=(float RHS) noexcept
+    FORCEINLINE FVector4& operator/=(float RHS) noexcept
     {
 #if !USE_VECTOR_OP
         return *this = *this / RHS;
@@ -898,7 +903,7 @@ public:
      * @param Other: The vector to compare with
      * @return: True if equal, false if not
      */
-    FORCEINLINE bool operator==(const CVector4& Other) const noexcept
+    FORCEINLINE bool operator==(const FVector4& Other) const noexcept
     {
         return IsEqual(Other);
     }
@@ -909,7 +914,7 @@ public:
      * @param Other: The vector to compare with
      * @return: False if equal, true if not
      */
-    FORCEINLINE bool operator!=(const CVector4& Other) const noexcept
+    FORCEINLINE bool operator!=(const FVector4& Other) const noexcept
     {
         return !IsEqual(Other);
     }
@@ -959,14 +964,14 @@ public:
 namespace NMath
 {
     template<>
-    FORCEINLINE CVector4 ToDegrees(CVector4 Radians)
+    FORCEINLINE FVector4 ToDegrees(FVector4 Radians)
     {
-        return CVector4(ToDegrees(Radians.x), ToDegrees(Radians.y), ToDegrees(Radians.z), ToDegrees(Radians.w));
+        return FVector4(ToDegrees(Radians.x), ToDegrees(Radians.y), ToDegrees(Radians.z), ToDegrees(Radians.w));
     }
 
     template<>
-    FORCEINLINE CVector4 ToRadians(CVector4 Degrees)
+    FORCEINLINE FVector4 ToRadians(FVector4 Degrees)
     {
-        return CVector4(ToRadians(Degrees.x), ToRadians(Degrees.y), ToRadians(Degrees.z), ToRadians(Degrees.w));
+        return FVector4(ToRadians(Degrees.x), ToRadians(Degrees.y), ToRadians(Degrees.z), ToRadians(Degrees.w));
     }
 }

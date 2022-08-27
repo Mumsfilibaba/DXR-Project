@@ -4,20 +4,20 @@
 #include <Engine/Scene/Camera.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CSandbox
+// FSandbox
 
-class CSandbox : public CApplicationModule
+class FSandbox 
+    : public FApplicationInterfaceModule
 {
 public:
-
-    CSandbox()  = default;
-    ~CSandbox() = default;
+    FSandbox()  = default;
+    ~FSandbox() = default;
 
     virtual bool Init() override;
 
-    virtual void Tick(CTimestamp DeltaTime) override;
+    virtual void Tick(FTimespan DeltaTime) override;
 
 private:
-    CCamera* CurrentCamera = nullptr;
-    CVector3 CameraSpeed;
+    FCamera* CurrentCamera = nullptr;
+    FVector3 CameraSpeed;
 };

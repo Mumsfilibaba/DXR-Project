@@ -9,11 +9,11 @@
 #define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetShaderResourceView() : nullptr)
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMaterialDesc
+// FMaterialDesc
 
-struct SMaterialDesc
+struct FMaterialDesc
 {
-    CVector3 Albedo = CVector3(1.0f);
+    FVector3 Albedo = FVector3(1.0f);
     float Roughness = 0.0f;
 
     float Metallic     = 0.0f;
@@ -23,21 +23,21 @@ struct SMaterialDesc
 };
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMaterial
+// FMaterial
 
-class ENGINE_API CMaterial
+class ENGINE_API FMaterial
 {
 public:
-    CMaterial(const SMaterialDesc& InProperties);
-    ~CMaterial() = default;
+    FMaterial(const FMaterialDesc& InProperties);
+    ~FMaterial() = default;
 
-    void Init();
+    void Initialize();
 
-    void BuildBuffer(class FRHICommandList& CmdList);
+    void BuildBuffer(class FRHICommandList& CommandList);
 
     FORCEINLINE bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
 
-    void SetAlbedo(const CVector3& Albedo);
+    void SetAlbedo(const FVector3& Albedo);
     void SetAlbedo(float r, float g, float b);
 
     void SetMetallic(float Metallic);
@@ -49,7 +49,7 @@ public:
     void EnableHeightMap(bool bInEnableHeightMap);
     void EnableAlphaMask(bool bInEnableAlphaMask);
 
-    void SetDebugName(const String& InDebugName);
+    void SetDebugName(const FString& InDebugName);
 
     // ShaderResourceView are sorted in the way that the deferred rendering pass wants them
     // This means that one can call BindShaderResourceViews directly with this function
@@ -85,29 +85,29 @@ public:
         return HeightMap;
     }
 
-    FORCEINLINE const SMaterialDesc& GetMaterialProperties() const
+    FORCEINLINE const FMaterialDesc& GetMaterialProperties() const
     {
         return Properties;
     }
 
 public:
-    TSharedRef<FRHITexture2D> AlbedoMap;
-    TSharedRef<FRHITexture2D> NormalMap;
-    TSharedRef<FRHITexture2D> RoughnessMap;
-    TSharedRef<FRHITexture2D> HeightMap;
-    TSharedRef<FRHITexture2D> AOMap;
-    TSharedRef<FRHITexture2D> MetallicMap;
-    TSharedRef<FRHITexture2D> AlphaMask;
+    FRHITexture2DRef AlbedoMap;
+    FRHITexture2DRef NormalMap;
+    FRHITexture2DRef RoughnessMap;
+    FRHITexture2DRef HeightMap;
+    FRHITexture2DRef AOMap;
+    FRHITexture2DRef MetallicMap;
+    FRHITexture2DRef AlphaMask;
 
 private:
-    String DebugName;
+    FString DebugName;
 
     bool bMaterialBufferIsDirty = true;
     bool bRenderInForwardPass   = false;
 
-    SMaterialDesc        	       Properties;
-    TSharedRef<FRHIConstantBuffer> MaterialBuffer;
-    TSharedRef<FRHISamplerState>   Sampler;
+    FMaterialDesc         Properties;
+    FRHIConstantBufferRef MaterialBuffer;
+    FRHISamplerStateRef   Sampler;
 
     mutable TStaticArray<FRHIShaderResourceView*, 7> ShaderResourceViews;
 };

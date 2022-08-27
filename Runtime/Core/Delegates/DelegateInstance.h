@@ -3,17 +3,18 @@
 #include "Core/Templates/Move.h"
 #include "Core/Templates/FunctionType.h"
 #include "Core/Containers/Tuple.h"
+#include "Core/Threading/AtomicInt.h"
 
 typedef int64 DelegateHandle;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDelegateHandle - A handle for a delegate
+// FDelegateHandle - A handle for a delegate
 
-class CDelegateHandle
+class FDelegateHandle
 {
-    enum
+    enum : DelegateHandle
     {
-        InvalidHandle = -1
+        InvalidHandle = DelegateHandle(-1)
     };
 
 public:
@@ -26,14 +27,14 @@ public:
     /**
      * @brief: Default constructor
      */
-    FORCEINLINE CDelegateHandle()
+    FORCEINLINE FDelegateHandle()
         : Handle(InvalidHandle)
     { }
 
     /**
      * @brief: Construct a new delegate handle which generates a new ID
      */
-    FORCEINLINE explicit CDelegateHandle(EGenerateID)
+    FORCEINLINE explicit FDelegateHandle(EGenerateID)
         : Handle(GenerateID())
     { }
 
@@ -79,7 +80,7 @@ public:
      * @param RHS: Other delegate-handle to compare with
      * @return: Returns true if the delegate-handles are equal to each other
      */
-    FORCEINLINE bool operator==(CDelegateHandle RHS) const
+    FORCEINLINE bool operator==(FDelegateHandle RHS) const
     {
         return (Handle == RHS.Handle);
     }
@@ -90,13 +91,12 @@ public:
      * @param RHS: Other delegate-handle to compare with
      * @return: Returns false if the delegate-handles are equal to each other
      */
-    FORCEINLINE bool operator!=(CDelegateHandle RHS) const
+    FORCEINLINE bool operator!=(FDelegateHandle RHS) const
     {
         return !(*this == RHS);
     }
 
 private:
-
     static FORCEINLINE DelegateHandle GenerateID()
     {
         return ++NextID;
@@ -104,16 +104,14 @@ private:
 
     DelegateHandle Handle;
 
-    static CORE_API DelegateHandle NextID;
+    static CORE_API FAtomicInt64 NextID;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IDelegateInstance
 
-class IDelegateInstance
+struct IDelegateInstance
 {
-public:
-
     virtual ~IDelegateInstance() noexcept = default;
 
     /**
@@ -136,7 +134,7 @@ public:
      * 
      * @return: Returns the delegate-handle of this delegate-instance
      */
-    virtual CDelegateHandle GetHandle() const = 0;
+    virtual FDelegateHandle GetHandle() const = 0;
 
     /**
      * @brief: Clones the delegate and stores it in the specified memory 
@@ -151,8 +149,15 @@ public:
 // TDelegateInstance
 
 template<typename ReturnType, typename... ArgTypes>
-class TDelegateInstance : public IDelegateInstance
+class TDelegateInstance 
+    : public IDelegateInstance
 {
+protected:
+    FORCEINLINE TDelegateInstance()
+        : IDelegateInstance()
+        , Handle(FDelegateHandle::EGenerateID::New)
+    { }
+
 public:
 
     /**
@@ -164,7 +169,6 @@ public:
     virtual ReturnType Execute(ArgTypes... Args) = 0;
 
 public:
-
     virtual const void* GetBoundObject() const override
     {
         return nullptr;
@@ -175,19 +179,13 @@ public:
         return false;
     }
 
-    virtual CDelegateHandle GetHandle() const override final
+    virtual FDelegateHandle GetHandle() const override final
     {
         return Handle;
     }
 
 protected:
-
-    FORCEINLINE TDelegateInstance()
-        : IDelegateInstance()
-        , Handle(CDelegateHandle::EGenerateID::New)
-    { }
-
-    CDelegateHandle Handle;
+    FDelegateHandle Handle;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -197,13 +195,13 @@ template<typename FunctionType, typename... PayloadTypes>
 class TFunctionDelegateInstance;
 
 template<typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
-class TFunctionDelegateInstance<ReturnType(ArgTypes...), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TFunctionDelegateInstance<ReturnType(ArgTypes...), PayloadTypes...> 
+    : public TDelegateInstance<ReturnType, ArgTypes...>
 {
-    using Super = TDelegateInstance<ReturnType, ArgTypes...>;
+    using Super        = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TFunctionType<ReturnType(ArgTypes..., PayloadTypes...)>::Type;
 
 public:
-
     TFunctionDelegateInstance(const TFunctionDelegateInstance&) = default;
 
     FORCEINLINE TFunctionDelegateInstance(FunctionType InFunction, PayloadTypes&&... InPayload)
@@ -223,9 +221,7 @@ public:
     }
 
 private:
-
     TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
-
     FunctionType Function;
 };
 
@@ -233,13 +229,13 @@ private:
 // TFunctionDelegateInstance
 
 template<typename ReturnType, typename... ArgTypes>
-class TFunctionDelegateInstance<ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TFunctionDelegateInstance<ReturnType(ArgTypes...)> 
+    : public TDelegateInstance<ReturnType, ArgTypes...>
 {
-    using Super = TDelegateInstance<ReturnType, ArgTypes...>;
+    using Super        = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TFunctionType<ReturnType(ArgTypes...)>::Type;
 
 public:
-
     TFunctionDelegateInstance(const TFunctionDelegateInstance&) = default;
 
     FORCEINLINE TFunctionDelegateInstance(FunctionType InFunction)
@@ -268,13 +264,13 @@ template<bool IsConst, typename InstanceType, typename ClassType, typename Funct
 class TMemberDelegateInstance;
 
 template<bool IsConst, typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
-class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...), PayloadTypes...> 
+    : public TDelegateInstance<ReturnType, ArgTypes...>
 {
-    using Super = TDelegateInstance<ReturnType, ArgTypes...>;
+    using Super        = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TMemberFunctionType<IsConst, ClassType, ReturnType(ArgTypes..., PayloadTypes...)>::Type;
 
 public:
-
     TMemberDelegateInstance(const TMemberDelegateInstance&) = default;
 
     FORCEINLINE TMemberDelegateInstance(InstanceType* InThis, FunctionType InFunction, PayloadTypes&&... InPayload)
@@ -307,9 +303,7 @@ public:
     }
 
 private:
-
     TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
-
     InstanceType* This = nullptr;
     FunctionType  Function;
 };
@@ -318,13 +312,13 @@ private:
 // TMemberDelegateInstance
 
 template<bool IsConst, typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
-class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...)> 
+    : public TDelegateInstance<ReturnType, ArgTypes...>
 {
-    using Super = TDelegateInstance<ReturnType, ArgTypes...>;
+    using Super        = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TMemberFunctionType<IsConst, ClassType, ReturnType(ArgTypes...)>::Type;
 
 public:
-
     TMemberDelegateInstance(const TMemberDelegateInstance&) = default;
 
     FORCEINLINE TMemberDelegateInstance(InstanceType* InThis, FunctionType InFunction)
@@ -367,12 +361,12 @@ template<typename FunctorType, typename FunctionType, typename... PayloadTypes>
 class TLambdaDelegateInstance;
 
 template<typename FunctorType, typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
-class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...), PayloadTypes...> 
+    : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super = TDelegateInstance<ReturnType, ArgTypes...>;
 
 public:
-
     TLambdaDelegateInstance(const TLambdaDelegateInstance&) = default;
 
     FORCEINLINE TLambdaDelegateInstance(FunctorType&& InFunctor, PayloadTypes&&... InPayload)
@@ -392,9 +386,7 @@ public:
     }
 
 private:
-
     TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
-
     FunctorType Functor;
 };
 
@@ -402,12 +394,12 @@ private:
 // TLambdaDelegateInstance
 
 template<typename FunctorType, typename ReturnType, typename... ArgTypes>
-class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...)> 
+    : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super = TDelegateInstance<ReturnType, ArgTypes...>;
 
 public:
-
     TLambdaDelegateInstance(const TLambdaDelegateInstance&) = default;
 
     FORCEINLINE TLambdaDelegateInstance(FunctorType&& InFunctor)

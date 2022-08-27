@@ -16,20 +16,20 @@
 
 #include "Interface/InterfaceApplication.h"
 
-CEditorEngine* CEditorEngine::Make()
+FEditorEngine* FEditorEngine::Make()
 {
-    return dbg_new CEditorEngine();
+    return dbg_new FEditorEngine();
 }
 
-bool CEditorEngine::Init()
+bool FEditorEngine::Init()
 {
-    if ( !CEngine::Init() )
+    if ( !FEngine::Init() )
     {
         return false;
     }
 
     /* Create Editor windows */
-    CCanvasApplication& Application = CCanvasApplication::Get();
+    FApplicationInterface& Application = FApplicationInterface::Get();
 
     TSharedRef<CInspectorWindow> InspectorWindow = CInspectorWindow::Make();
     Application.AddWindow( InspectorWindow );
@@ -40,7 +40,7 @@ bool CEditorEngine::Init()
     return true;
 }
 
-void CEditorEngine::Tick( CTimestamp Deltatime )
+void FEditorEngine::Tick( FTimespan Deltatime )
 {
-    CEngine::Tick( Deltatime );
+    FEngine::Tick( Deltatime );
 }

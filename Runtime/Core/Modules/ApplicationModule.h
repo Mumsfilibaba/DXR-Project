@@ -1,18 +1,18 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Time/Timestamp.h"
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Time/Timespan.h"
+#include "Core/Modules/ModuleInterface.h"
 #include "Core/Delegates/DelegateInstance.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CApplicationModule
+// FApplicationInterfaceModule
 
-class CORE_API CApplicationModule : public IEngineModule
+class CORE_API FApplicationInterfaceModule 
+    : public IModule
 {
 public:
-
-    CApplicationModule() = default;
-    virtual ~CApplicationModule() = default;
+    FApplicationInterfaceModule() = default;
+    virtual ~FApplicationInterfaceModule() = default;
 
     /** @return: Returns true if the initialization is successful */
     virtual bool Init();
@@ -22,7 +22,7 @@ public:
      * 
      * @param DeltaTime: Time since last time the application was ticked
      */
-    virtual void Tick(CTimestamp Deltatime);
+    virtual void Tick(FTimespan Deltatime);
 
     /** @return: Returns true if the release is successful */
     virtual bool Release();
@@ -34,10 +34,10 @@ public:
     virtual bool Unload() override;
 
 protected:
-    CDelegateHandle TickHandle;
+    FDelegateHandle TickHandle;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Global application pointer
 
-extern CORE_API CApplicationModule* GApplicationModule;
+extern CORE_API FApplicationInterfaceModule* GApplicationModule;

@@ -5,21 +5,21 @@
 #include "RHI/RHICommandList.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDeferredRenderer
+// FDeferredRenderer
 
-class RENDERER_API CForwardRenderer
+class RENDERER_API FForwardRenderer
 {
 public:
-    CForwardRenderer() = default;
-    ~CForwardRenderer() = default;
+    FForwardRenderer()  = default;
+    ~FForwardRenderer() = default;
 
-    bool Init(SFrameResources& FrameResources);
+    bool Init(FFrameResources& FrameResources);
     void Release();
 
-    void Render(FRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
+    void Render(FRHICommandList& CmdList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
 
 private:
-    TSharedRef<FRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<FRHIVertexShader>          VShader;
-    TSharedRef<FRHIPixelShader>           PShader;
+    FRHIGraphicsPipelineStateRef PipelineState;
+    FRHIVertexShaderRef          VShader;
+    FRHIPixelShaderRef           PShader;
 };

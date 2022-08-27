@@ -3,24 +3,35 @@
 
 #include "Core/Templates/Move.h"
 #include "Core/Templates/IsTArrayType.h"
-#include "Core/Templates/InitializerList.h"
+#include "Core/Templates/RemoveCV.h"
+#include "Core/Templates/RemoveReference.h"
+#include "Core/Templates/RemovePointer.h"
+#include "Core/Templates/ContiguousContainerHelper.h"
+#include "Core/Templates/DeclVal.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TArrayView - View of an array similar to std::span
+// TArrayView - View of an array
 
 template<typename T>
 class TArrayView
 {
 public:
-
     using ElementType = T;
     using SizeType    = int32;
+
+    static_assert(
+        TIsSigned<SizeType>::Value,
+        "TArrayView only supports a SizeType that's signed");
 
     /* Iterators */
     typedef TArrayIterator<TArrayView, ElementType>                    IteratorType;
     typedef TArrayIterator<const TArrayView, const ElementType>        ConstIteratorType;
     typedef TReverseArrayIterator<TArrayView, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TArrayView, const ElementType> ReverseConstIteratorType;
+
+    enum : SizeType { INVALID_INDEX = -1 };
+
+public:
 
     /**
      * @brief: Default construct an empty view 
@@ -32,34 +43,26 @@ public:
 
     /**
      * @brief: Construct a view from an array of ArrayType
-     *
-     * @param InArray: Array to create view from
-     */
-    FORCEINLINE TArrayView(const TArrayView& InArray) noexcept
-        : View(InArray.Data())
-        , ViewSize(InArray.Size())
-    { }
-
-    /**
-     * @brief: Construct a view from an array of ArrayType
      * 
-     * @param InArray: Array to create view from
+     * @param Container: Container to create view from (TArray, TArrayView, TStaticArray)
      */
-    template<typename ArrayType, typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
-    FORCEINLINE TArrayView(const ArrayType& InArray) noexcept
-        : View(InArray.Data())
-        , ViewSize(InArray.Size())
+    template<
+        typename ContainerType,
+        typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type,
+        typename = typename TEnableIf<TIsContiguousContainer<PureContainerType>::Value>::Type>
+    FORCEINLINE TArrayView(ContainerType&& Container) noexcept
+        : View(FContiguousContainerHelper::GetData(Forward<ContainerType>(Container)))
+        , ViewSize(SizeType(FContiguousContainerHelper::GetSize(Forward<ContainerType>(Container))))
     { }
 
     /**
-     * @brief: Construct a view from a raw-array
-     *
-     * @param InArray: Array to create view from
-     * @param NumElements: Number of elements in the array
+     * @brief: Construct a view from an array of initializer_list
+     * 
+     * @param InitList: initializer_list to create view from
      */
-    FORCEINLINE TArrayView(std::initializer_list<ElementType> InList) noexcept
-        : View(GetInitializerListData(InList))
-        , ViewSize(GetInitializerListSize(InList))
+    FORCEINLINE TArrayView(std::initializer_list<ElementType> InitList) noexcept
+        : View(FContiguousContainerHelper::GetData(InitList))
+        , ViewSize(SizeType(FContiguousContainerHelper::GetSize(InitList)))
     { }
 
     /**
@@ -75,11 +78,21 @@ public:
     { }
 
     /**
-     * @brief: Check if the view contains elements or not
-     * 
-     * @return: Returns true if the view is empty
+     * @brief: Checks if an index is a valid index
+     *
+     * @return: Returns true if the index is valid
      */
-    FORCEINLINE bool IsEmpty() const noexcept
+    NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const noexcept
+    {
+        return (Index >= 0) && (Index < ViewSize);
+    }
+
+    /**
+     * @brief: Check if the container contains any elements
+     *
+     * @return: Returns true if the array is empty or false if it contains elements
+     */
+    NODISCARD FORCEINLINE bool IsEmpty() const noexcept
     {
         return (ViewSize == 0);
     }
@@ -89,10 +102,10 @@ public:
      *
      * @return: Returns a reference to the first element of the view
      */
-    FORCEINLINE ElementType& FirstElement() const noexcept
+    NODISCARD FORCEINLINE ElementType& FirstElement() const noexcept
     {
         Check(IsEmpty());
-        return Data()[0];
+        return *GetData();
     }
 
     /**
@@ -100,10 +113,10 @@ public:
      *
      * @return: Returns a reference to the last element of the view
      */
-    FORCEINLINE ElementType& LastElement() const noexcept
+    NODISCARD FORCEINLINE ElementType& LastElement() const noexcept
     {
         Check(IsEmpty());
-        return Data()[ViewSize - 1];
+        return *(GetData() + (ViewSize - 1));
     }
 
     /**
@@ -112,10 +125,142 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    FORCEINLINE ElementType& At(SizeType Index) const noexcept
+    NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) const noexcept
     {
         Check(Index < ViewSize);
-        return Data()[Index];
+        return *(GetData() + Index);
+    }
+
+    /**
+     * @brief: Returns the index of an element if it is present in the array, or -1 if it is not found
+     *
+     * @param Element: Element to search for
+     * @return: The index of the element if found or -1 if not
+     */
+    NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
+    {
+        const ElementType* RESTRICT CurrentAddress = GetData();
+        const ElementType* RESTRICT EndAddress     = GetData() + ViewSize;
+        while (CurrentAddress != EndAddress)
+        {
+            if (Element == *CurrentAddress)
+            {
+                return static_cast<SizeType>(CurrentAddress - GetData());
+            }
+
+            ++CurrentAddress;
+        }
+
+        return INVALID_INDEX;
+    }
+
+    /**
+     * @brief: Returns the index of the element that satisfy the conditions of a comparator
+     *
+     * @param Predicate: Callable that compares an element in the array against some condition
+     * @return: The index of the element if found or INVALID_INDEX if not
+     */
+    template<class PredicateType>
+    NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
+    {
+        const ElementType* RESTRICT CurrentAddress = GetData();
+        const ElementType* RESTRICT EndAddress     = GetData() + ViewSize;
+        while (CurrentAddress != EndAddress)
+        {
+            if (Predicate(*CurrentAddress))
+            {
+                return static_cast<SizeType>(CurrentAddress - GetData());
+            }
+
+            ++CurrentAddress;
+        }
+
+        return INVALID_INDEX;
+    }
+
+    /**
+     * @brief: Returns the index of an element if it is present in the array, or -1 if it is not found
+     *
+     * @param Element: Element to search for
+     * @return: The index of the element if found or -1 if not
+     */
+    NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
+    {
+        const ElementType* RESTRICT CurrentAddress = GetData() + ViewSize;
+        const ElementType* RESTRICT EndAddress     = GetData();
+        while (CurrentAddress != EndAddress)
+        {
+            --CurrentAddress;
+            if (Element == *CurrentAddress)
+            {
+                return static_cast<SizeType>(CurrentAddress - GetData());
+            }
+        }
+
+        return INVALID_INDEX;
+    }
+
+    /**
+     * @brief: Returns the index of the element that satisfy the conditions of a comparator
+     *
+     * @param Predicate: Callable that compares an element in the array against some condition
+     * @return: The index of the element if found or INVALID_INDEX if not
+     */
+    template<class PredicateType>
+    NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
+    {
+        const ElementType* RESTRICT CurrentAddress = GetData() + ViewSize;
+        const ElementType* RESTRICT EndAddress     = GetData();
+        while (CurrentAddress != EndAddress)
+        {
+            --CurrentAddress;
+            if (Predicate(*CurrentAddress))
+            {
+                return static_cast<SizeType>(CurrentAddress - GetData());
+            }
+        }
+
+        return INVALID_INDEX;
+    }
+
+    /**
+     * @brief: Check if an element exists in the array
+     * 
+     * @param Element: Element to check for
+     * @return: Returns true if the element is found in the array and false if not
+     */
+    NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const noexcept
+    {
+        return (Find(Element) != INVALID_INDEX);
+    }
+
+    /**
+     * @brief: Check if an element that satisfies the conditions of a comparator exists in the array
+     * 
+     * @param Predicate: Callable that compares an element in the array against some condition
+     * @return: Returns true if the comparator returned true for one element
+     */
+    template<class PredicateType>
+    NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const noexcept
+    {
+        return (FindWithPredicate(Forward<PredicateType>(Predicate)) != INVALID_INDEX);
+    }
+
+    /**
+     * @brief: Perform some function on each element in the array
+     * 
+     * @param Functor: Callable that takes one element and perform some operation on it
+     */
+    template<class FunctorType>
+    FORCEINLINE void Foreach(FunctorType&& Functor) const
+    {
+        ElementType* RESTRICT CurrentAddress = GetData();
+        ElementType* RESTRICT EndAddress     = GetData() + ViewSize;
+        while (CurrentAddress != EndAddress)
+        {
+            Functor(*CurrentAddress);
+            ++CurrentAddress;
+        }
     }
 
     /**
@@ -137,8 +282,18 @@ public:
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        ElementType* Elements = Data();
-        FillRange(Elements, InputElement, Size());
+        ElementType* Elements = GetData();
+        ::AssignElements(Elements, InputElement, GetSize());
+    }
+
+    /**
+     * @brief: Sets the array to zero
+     */
+    template<typename U = ElementType>
+    FORCEINLINE typename TEnableIf<TIsTrivial<U>::Value>::Type Memzero()
+    {
+        ElementType* Elements = GetData();
+        FMemory::Memzero(Elements, SizeInBytes());
     }
 
     /**
@@ -146,7 +301,7 @@ public:
      *
      * @return: Returns a the index to the last element of the view
      */
-    FORCEINLINE SizeType LastElementIndex() const noexcept
+    NODISCARD FORCEINLINE SizeType LastElementIndex() const noexcept
     {
         return (ViewSize > 0) ? (ViewSize - 1) : 0;
     }
@@ -156,7 +311,7 @@ public:
      *
      * @return: The current size of the container
      */
-    FORCEINLINE SizeType Size() const noexcept
+    NODISCARD FORCEINLINE SizeType GetSize() const noexcept
     {
         return ViewSize;
     }
@@ -166,9 +321,9 @@ public:
      *
      * @return: The current size of the container in bytes
      */
-    FORCEINLINE SizeType SizeInBytes() const noexcept
+    NODISCARD FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return Size() * sizeof(ElementType);
+        return GetSize() * sizeof(ElementType);
     }
 
     /**
@@ -176,7 +331,7 @@ public:
      *
      * @return: Returns a pointer to the data of the view
      */
-    FORCEINLINE ElementType* Data() const noexcept
+    NODISCARD FORCEINLINE ElementType* GetData() const noexcept
     {
         return View;
     }
@@ -188,7 +343,7 @@ public:
      * @param NumElements: Number of elements to include in the view
      * @return: A new array-view pointing to the specified elements
      */
-    FORCEINLINE TArrayView SubView(SizeType Offset, SizeType NumElements) const noexcept
+    NODISCARD FORCEINLINE TArrayView SubView(SizeType Offset, SizeType NumElements) const noexcept
     {
         Check((NumElements < ViewSize) && (Offset + NumElements < ViewSize));
         return TArrayView(View + Offset, NumElements);
@@ -203,14 +358,14 @@ public:
      * @return: Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
     {
-        if (Size() != RHS.Size())
+        if (GetSize() != RHS.GetSize())
         {
             return false;
         }
 
-        return CompareRange<ElementType>(Data(), RHS.Data(), Size());
+        return ::CompareElements<ElementType>(GetData(), RHS.GetData(), GetSize());
     }
 
     /**
@@ -220,7 +375,7 @@ public:
      * @return: Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
     {
         return !(*this == RHS);
     }
@@ -231,9 +386,9 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    FORCEINLINE ElementType& operator[](SizeType Index) noexcept
+    NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) noexcept
     {
-        return At(Index);
+        return GetElementAt(Index);
     }
 
     /**
@@ -242,9 +397,9 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
+    NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
     {
-        return At(Index);
+        return GetElementAt(Index);
     }
 
     /**
@@ -267,7 +422,7 @@ public:
      *
      * @return: A iterator that points to the first element
      */
-    FORCEINLINE IteratorType StartIterator() noexcept
+    NODISCARD FORCEINLINE IteratorType StartIterator() noexcept
     {
         return IteratorType(*this, 0);
     }
@@ -277,9 +432,9 @@ public:
      *
      * @return: A iterator that points to the element past the end
      */
-    FORCEINLINE IteratorType EndIterator() noexcept
+    NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType(*this, Size());
+        return IteratorType(*this, GetSize());
     }
 
     /**
@@ -287,7 +442,7 @@ public:
      *
      * @return: A iterator that points to the first element
      */
-    FORCEINLINE ConstIteratorType StartIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
         return ConstIteratorType(*this, 0);
     }
@@ -297,9 +452,9 @@ public:
      *
      * @return: A iterator that points to the element past the end
      */
-    FORCEINLINE ConstIteratorType EndIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType(*this, Size());
+        return ConstIteratorType(*this, GetSize());
     }
 
     /**
@@ -307,9 +462,9 @@ public:
      *
      * @return: A reverse-iterator that points to the last element
      */
-    FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType(*this, Size());
+        return ReverseIteratorType(*this, GetSize());
     }
 
     /**
@@ -317,7 +472,7 @@ public:
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
-    FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
         return ReverseIteratorType(*this, 0);
     }
@@ -327,9 +482,9 @@ public:
      *
      * @return: A reverse-iterator that points to the last element
      */
-    FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType(*this, Size());
+        return ReverseConstIteratorType(*this, GetSize());
     }
 
     /**
@@ -337,52 +492,21 @@ public:
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
-    FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, 0);
     }
 
 public:
 
-    /**
-     * @brief: STL start iterator, same as TArrayView::StartIterator
-     *
-     * @return: A iterator that points to the first element
-     */
-    FORCEINLINE IteratorType begin() noexcept
-    {
-        return StartIterator();
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // STL Iterators
 
-    /**
-     * @brief: STL end iterator, same as TArrayView::EndIterator
-     *
-     * @return: A iterator that points past the last element
-     */
-    FORCEINLINE IteratorType end() noexcept
-    {
-        return EndIterator();
-    }
+    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
 
-    /**
-     * @brief: STL start iterator, same as TArrayView::StartIterator
-     *
-     * @return: A iterator that points to the first element
-     */
-    FORCEINLINE ConstIteratorType begin() const noexcept
-    {
-        return StartIterator();
-    }
-
-    /**
-     * @brief: STL end iterator, same as TArrayView::EndIterator
-     *
-     * @return: A iterator that points past the last element
-     */
-    FORCEINLINE ConstIteratorType end() const noexcept
-    {
-        return EndIterator();
-    }
+    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return EndIterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return EndIterator(); }
 
 private:
     ElementType* View;
@@ -395,8 +519,36 @@ private:
 template<typename T>
 struct TIsTArrayType<TArrayView<T>>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };
+
+template<typename T>
+struct TIsContiguousContainer<TArrayView<T>>
+{
+    enum { Value = true };
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// MakeArrayView
+
+template<
+    typename ContainerType,
+    typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type,
+    typename = typename TEnableIf<TIsContiguousContainer<PureContainerType>::Value>::Type>
+auto MakeArrayView(ContainerType&& Container)
+{
+    using ElementType = typename TRemovePointer<decltype(FContiguousContainerHelper::GetData(DeclVal<PureContainerType>()))>::Type;
+    return TArrayView<ElementType>(Forward<ContainerType>(Container));
+}
+
+template<typename T>
+auto MakeArrayView(std::initializer_list<T> InitList)
+{
+    return TArrayView<T>(InitList);
+}
+
+template<typename T>
+auto MakeArrayView(T* Array, int32 Size)
+{
+    return TArrayView<T>(Array, Size);
+}

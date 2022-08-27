@@ -10,6 +10,7 @@
 #include "String_Test.h"
 #include "Optional_Test.h"
 #include "Variant_Test.h"
+#include "BitArray_Test.h"
 
 /**
  *  Check for memory leaks 
@@ -33,7 +34,7 @@ void BenchMarks()
  * Tests
  */
 
-void Tests( int32 Argc, const char* Argv[] )
+void Tests( int32 Argc, const CHAR* Argv[] )
 {
     UNREFERENCED_VARIABLE( Argc );
     UNREFERENCED_VARIABLE( Argv );
@@ -50,7 +51,7 @@ void Tests( int32 Argc, const char* Argv[] )
     TFunction_Test();
 #endif
 
-#if RUN_TFIXEDARRAY_TEST
+#if RUN_TSTATICARRAY_TEST
     TStaticArray_Test();
 #endif
 
@@ -62,7 +63,7 @@ void Tests( int32 Argc, const char* Argv[] )
     Delegate_Test();
 #endif
 
-#if RUN_TSTRING_TEST
+#if (RUN_TSTRING_TEST || RUN_TSTATICSTRING_TEST || RUN_TSTRINGVIEW_TEST)
     TString_Test(Argv[0]);
 #endif
 
@@ -73,14 +74,25 @@ void Tests( int32 Argc, const char* Argv[] )
 #if RUN_TVARIANT_TEST
     TVariant_Test();
 #endif
+
+#if RUN_TBITARRAY_TEST
+    TBitArray_Test();
+#endif
+
+#if RUN_TSTATICBITARRAY_TEST
+    TStaticBitArray_Test();
+#endif
 }
 
 /**
  * Main
  */
 
-int main( int Argc, const char* Argv[] )
+int main(int Argc, const CHAR* Argv[])
 {
+    UNREFERENCED_VARIABLE(Argc);
+    UNREFERENCED_VARIABLE(Argv);
+
 #ifdef _WIN32
     _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif

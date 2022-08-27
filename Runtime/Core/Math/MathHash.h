@@ -15,9 +15,9 @@ namespace std
     // Vectors
 
     template<>
-    struct hash<CVector4>
+    struct hash<FVector4>
     {
-        size_t operator()(const CVector4& Value) const
+        size_t operator()(const FVector4& Value) const
         {
             THash<float> Hasher;
 
@@ -30,9 +30,9 @@ namespace std
     };
 
     template<>
-    struct hash<CVector3>
+    struct hash<FVector3>
     {
-        size_t operator()(const CVector3& Value) const
+        size_t operator()(const FVector3& Value) const
         {
             THash<float> Hasher;
 
@@ -44,9 +44,9 @@ namespace std
     };
 
     template<>
-    struct hash<CVector2>
+    struct hash<FVector2>
     {
-        size_t operator()(const CVector2& Value) const
+        size_t operator()(const FVector2& Value) const
         {
             THash<float> Hasher;
 
@@ -60,9 +60,9 @@ namespace std
     // Floats
     
     template<>
-    struct hash<SFloat16>
+    struct hash<FFloat16>
     {
-        size_t operator()(const SFloat16& Value) const
+        size_t operator()(const FFloat16& Value) const
         {
             THash<uint16> Hasher;
             return Hasher(Value.Encoded);
@@ -70,9 +70,9 @@ namespace std
     };
 
     template<>
-    struct hash<SFloat32>
+    struct hash<FFloat32>
     {
-        size_t operator()(const SFloat32& Value) const
+        size_t operator()(const FFloat32& Value) const
         {
             THash<uint32> Hasher;
             return Hasher(Value.Encoded);
@@ -80,9 +80,9 @@ namespace std
     };
 
     template<>
-    struct hash<SFloat64>
+    struct hash<FFloat64>
     {
-        size_t operator()(const SFloat64& Value) const
+        size_t operator()(const FFloat64& Value) const
         {
             THash<uint64> Hasher;
             return Hasher(Value.Encoded);

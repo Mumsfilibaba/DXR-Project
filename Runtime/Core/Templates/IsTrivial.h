@@ -11,10 +11,7 @@
 template<typename T>
 struct TIsTriviallyCopyable
 {
-    enum
-    {
-        Value = __is_trivially_copyable(T)
-    };
+    enum { Value = __is_trivially_copyable(T) };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -23,10 +20,7 @@ struct TIsTriviallyCopyable
 template<typename T, typename... ArgTypes>
 struct TIsTriviallyConstructable
 {
-    enum
-    {
-        Value = __is_trivially_constructible(T, ArgTypes...)
-    };
+    enum { Value = __is_trivially_constructible(T, ArgTypes...) };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -35,10 +29,7 @@ struct TIsTriviallyConstructable
 template<typename T>
 struct TIsTriviallyDestructable
 {
-    enum
-    {
-        Value = __is_trivially_destructible(T)
-    };
+    enum { Value = __is_trivially_destructible(T) };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -47,8 +38,5 @@ struct TIsTriviallyDestructable
 template<typename T>
 struct TIsTrivial
 {
-    enum
-    {
-        Value = TAnd<TIsTriviallyConstructable<T>, TIsTriviallyCopyable<T>, TIsTriviallyDestructable<T>>::Value
-    };
+    enum { Value = TAnd<TIsTriviallyConstructable<T>, TIsTriviallyCopyable<T>, TIsTriviallyDestructable<T>>::Value };
 };

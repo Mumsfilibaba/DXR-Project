@@ -4,23 +4,23 @@
 // MSVC compiler specific macros etc.
 // For now this file should only be included into CoreDefines.h
 
-#if COMPILER_MSVC
+#if PLATFORM_COMPILER_MSVC
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Architecture
 
-#ifndef ARCHITECTURE_X86_X64
+#ifndef PLATFORM_ARCHITECTURE_X86_X64
     #if defined(_M_IX86) || defined(_M_X64)
-        #define ARCHITECTURE_X86_X64 (1)
+        #define PLATFORM_ARCHITECTURE_X86_X64 (1)
     #else
-        #define ARCHITECTURE_X86_X64 (0)
+        #define PLATFORM_ARCHITECTURE_X86_X64 (0)
     #endif
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Use SSE intrinsics if we can
 
-#if ARCHITECTURE_X86_X64
+#if PLATFORM_ARCHITECTURE_X86_X64
     #ifndef ENABLE_SEE_INTRIN
         #define ENABLE_SEE_INTRIN (1)
     #endif
@@ -55,7 +55,7 @@
 // Vector call
 
 #ifndef VECTORCALL
-    #if ARCHITECTURE_X86_X64
+    #if PLATFORM_ARCHITECTURE_X86_X64
         #define VECTORCALL __vectorcall
     #else
         #define VECTORCALL
@@ -65,12 +65,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Restrict
 
-#ifndef restrict_ptr
-   #define restrict_ptr __restrict
+#ifndef RESTRICT
+   #define RESTRICT __restrict
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Function signature as a const char* string
+// Function signature as a const CHAR* string
 
 #ifndef FUNCTION_SIGNATURE
     #define FUNCTION_SIGNATURE __FUNCTION__
@@ -88,11 +88,10 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Pause the thread
+// DEBUG_BREAK
 
-#ifndef PauseInstruction
-    #include <immintrin.h>
-    #define PauseInstruction _mm_pause
+#ifndef DEBUG_BREAK
+    #define DEBUG_BREAK __debugbreak
 #endif
 
 // Define the rest of the defines to a default value
@@ -115,7 +114,7 @@
 #pragma warning(error : 4458) // variable hides class member
 #pragma warning(error : 4554) // check operator precedence for possible error; use parentheses to clarify precedence
 #pragma warning(error : 4715) // not all paths return a value
-#pragma warning(error : 4840) // using string in variadic template (When it should be const char)
+#pragma warning(error : 4840) // using string in variadic template (When it should be const CHAR)
 
 #else
    #error "MSVC Compiler-file included in non MSVC- compiler"

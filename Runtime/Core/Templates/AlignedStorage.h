@@ -10,14 +10,11 @@
 template<typename T>
 struct TAlignmentOf
 {
-    enum
-    {
-        Value = alignof(T)
-    };
+    enum { Value = alignof(T) };
 };
 
 template<typename T>
-inline constexpr int32 AlignmentOf = TAlignmentOf<T>::Value;
+inline CONSTEXPR int32 AlignmentOf = TAlignmentOf<T>::Value;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TAlignedStorage
@@ -26,13 +23,6 @@ template<int32 kNumBytes, int32 kAlignment>
 class TAlignedStorage
 {
 public:
-
-    enum
-    {
-        NumBytes  = kNumBytes,
-        Alignment = kAlignment
-    };
-
     TAlignedStorage() = default;
     TAlignedStorage(const TAlignedStorage&) = default;
     TAlignedStorage(TAlignedStorage&&) = default;
@@ -64,7 +54,7 @@ public:
     }
 
 private:
-    ALIGN_AS(Alignment) Byte Storage[NumBytes];
+    ALIGN_AS(kAlignment) uint8 Storage[kNumBytes];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -74,7 +64,6 @@ template<typename T>
 class TTypedStorage
 {
 public:
-
     using StorageType = TAlignedStorage<sizeof(T), AlignmentOf<T>>;
 
     TTypedStorage() = default;

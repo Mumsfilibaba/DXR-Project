@@ -1,13 +1,13 @@
 #include "StbImageLoader.h"
 
-#include "Core/Threading/AsyncTaskManager.h"
-#include "Core/Logging/Log.h"
+#include "Core/Threading/TaskManagerInterface.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CStbImageLoader
+// FSTBImageLoader
 
 static EFormat GetByteFormat(int32 Channels)
 {
@@ -73,23 +73,23 @@ static EFormat GetFloatFormat(int32 Channels)
     }
 }
 
-TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const String& Filename)
+FImage2DPtr FSTBImageLoader::LoadFile(const FString& Filename)
 {
-    TSharedPtr<SImage2D> Image = MakeShared<SImage2D>(Filename, uint16(0), uint16(0), EFormat::Unknown);
+    FImage2DPtr Image = MakeShared<FImage2D>(Filename, uint16(0), uint16(0), EFormat::Unknown);
 
     // Async lambda
     const auto LoadImageAsync = [Image, Filename]()
     {
-        FILE* File = fopen(Filename.CStr(), "rb");
+        FILE* File = fopen(Filename.GetCString(), "rb");
         if (!File)
         {
-            LOG_ERROR("[CStbImageLoader]: Failed to open '%s'", Filename.CStr());
+            LOG_ERROR("[FSTBImageLoader]: Failed to open '%s'", Filename.GetCString());
             return;
         }
 
         // Retrieve info about the file
-        int32 Width = 0;
-        int32 Height = 0;
+        int32 Width        = 0;
+        int32 Height       = 0;
         int32 ChannelCount = 0;
         stbi_info_from_file(File, &Width, &Height, &ChannelCount);
 
@@ -135,12 +135,12 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const String& Filename)
         // Check if succeeded
         if (!Pixels)
         {
-            LOG_ERROR("[CStbImageLoader]: Failed to load image '%s'", Filename.CStr());
+            LOG_ERROR("[FSTBImageLoader]: Failed to load image '%s'", Filename.GetCString());
             return;
         }
         else
         {
-            LOG_INFO("[CStbImageLoader]: Loaded image '%s'", Filename.CStr());
+            LOG_INFO("[FSTBImageLoader]: Loaded image '%s'", Filename.GetCString());
         }
 
         Image->Image     = Move(Pixels);
@@ -150,10 +150,9 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const String& Filename)
         Image->bIsLoaded = true;
     };
 
-    CAsyncTask NewTask;
+    FAsyncTask NewTask;
     NewTask.Delegate.BindLambda(LoadImageAsync);
 
-    CAsyncTaskManager::Get().Dispatch(NewTask);
-
+    FTaskManagerInterface::Get().Dispatch(NewTask);
     return Image;
 }

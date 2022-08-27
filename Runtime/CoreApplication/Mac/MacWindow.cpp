@@ -2,26 +2,21 @@
 #include "CocoaWindow.h"
 
 #include "Core/Mac/Mac.h"
-#include "Core/Logging/Log.h"
-#include "Core/Threading/Mac/MacRunLoop.h"
+#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Mac/MacRunLoop.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacWindow
+// FMacWindow
 
-CMacWindow* CMacWindow::CreateMacWindow(CMacApplication* InApplication)
-{
-	return dbg_new CMacWindow(InApplication);
-}
-
-CMacWindow::CMacWindow(CMacApplication* InApplication)
-    : CGenericWindow()
+FMacWindow::FMacWindow(FMacApplication* InApplication)
+    : FGenericWindow()
     , Application(InApplication)
     , WindowHandle(nullptr)
 { }
 
-CMacWindow::~CMacWindow()
+FMacWindow::~FMacWindow()
 {
 	MakeMainThreadCall(^
 	{
@@ -30,7 +25,7 @@ CMacWindow::~CMacWindow()
 	}, true);
 }
 
-bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
+bool FMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle InStyle)
 {
     NSUInteger WindowStyle = 0;
     if (InStyle.Style)
@@ -60,10 +55,10 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
         SCOPED_AUTORELEASE_POOL();
         
         const NSRect WindowRect = NSMakeRect(CGFloat(x), CGFloat(y), CGFloat(InWidth), CGFloat(InHeight));
-        WindowHandle = [[CCocoaWindow alloc] initWithContentRect: WindowRect styleMask: WindowStyle backing: NSBackingStoreBuffered defer: NO];
+        WindowHandle = [[FCocoaWindow alloc] initWithContentRect: WindowRect styleMask: WindowStyle backing: NSBackingStoreBuffered defer: NO];
         if (!WindowHandle)
         {
-            LOG_ERROR("[CMacWindow]: Failed to create NSWindow");
+            LOG_ERROR("[FMacWindow]: Failed to create NSWindow");
             return;
         }
         
@@ -118,7 +113,7 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
     return bResult;
 }
 
-void CMacWindow::Show(bool bMaximized)
+void FMacWindow::Show(bool bMaximized)
 {
 	MakeMainThreadCall(^
 	{
@@ -129,35 +124,35 @@ void CMacWindow::Show(bool bMaximized)
 			[WindowHandle zoom:WindowHandle];
 		}
 
-		PlatformApplicationMisc::PumpMessages(true);
+		FPlatformApplicationMisc::PumpMessages(true);
 	}, true);
 }
 
-void CMacWindow::Close()
+void FMacWindow::Close()
 {
 	if (StyleParams.IsClosable())
 	{
 		MakeMainThreadCall(^
 		{
 			[WindowHandle performClose:WindowHandle];
-			PlatformApplicationMisc::PumpMessages(true);
+			FPlatformApplicationMisc::PumpMessages(true);
 		}, true);
 	}
 }
 
-void CMacWindow::Minimize()
+void FMacWindow::Minimize()
 {
 	if (StyleParams.IsMinimizable())
 	{
 		MakeMainThreadCall(^
 		{
 			[WindowHandle miniaturize:WindowHandle];
-			PlatformApplicationMisc::PumpMessages(true);
+			FPlatformApplicationMisc::PumpMessages(true);
 		}, true);
 	}
 }
 
-void CMacWindow::Maximize()
+void FMacWindow::Maximize()
 {
 	if (StyleParams.IsMaximizable())
 	{
@@ -170,18 +165,18 @@ void CMacWindow::Maximize()
 
 			[WindowHandle zoom:WindowHandle];
 
-			PlatformApplicationMisc::PumpMessages(true);
+			FPlatformApplicationMisc::PumpMessages(true);
 		}, true);
 	}
 }
 
-bool CMacWindow::IsActiveWindow() const
+bool FMacWindow::IsActiveWindow() const
 {
    NSWindow* KeyWindow = NSApp.keyWindow;
    return (KeyWindow == WindowHandle);
 }
 
-void CMacWindow::Restore()
+void FMacWindow::Restore()
 {
     MakeMainThreadCall(^
     {
@@ -195,11 +190,11 @@ void CMacWindow::Restore()
             [WindowHandle zoom:WindowHandle];
         }
     
-        PlatformApplicationMisc::PumpMessages(true);
+        FPlatformApplicationMisc::PumpMessages(true);
     }, true);
 }
 
-void CMacWindow::ToggleFullscreen()
+void FMacWindow::ToggleFullscreen()
 {
 	if (StyleParams.IsResizeable())
 	{
@@ -210,7 +205,7 @@ void CMacWindow::ToggleFullscreen()
 	}
 }
 
-void CMacWindow::SetTitle(const String& InTitle)
+void FMacWindow::SetTitle(const FString& InTitle)
 {
 
     if (StyleParams.IsTitled())
@@ -225,7 +220,7 @@ void CMacWindow::SetTitle(const String& InTitle)
 	}
 }
 
-void CMacWindow::GetTitle(String& OutTitle)
+void FMacWindow::GetTitle(FString& OutTitle)
 {
     if (StyleParams.IsTitled())
     {
@@ -236,7 +231,7 @@ void CMacWindow::GetTitle(String& OutTitle)
     }
 }
 
-void CMacWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
+void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
 	SCOPED_AUTORELEASE_POOL();
 	
@@ -256,11 +251,11 @@ void CMacWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
 			[WindowHandle setFrameOrigin:NSMakePoint(Shape.Position.x, Shape.Position.y - Frame.size.height + 1)];
 		}
 		
-		PlatformApplicationMisc::PumpMessages(true);
+		FPlatformApplicationMisc::PumpMessages(true);
 	}, true);
 }
 
-void CMacWindow::GetWindowShape(SWindowShape& OutWindowShape) const
+void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 {
 	SCOPED_AUTORELEASE_POOL();
 
@@ -278,7 +273,7 @@ void CMacWindow::GetWindowShape(SWindowShape& OutWindowShape) const
 	OutWindowShape.Position.y = Frame.origin.y;
 }
 
-uint32 CMacWindow::GetWidth() const
+uint32 FMacWindow::GetWidth() const
 {
 	SCOPED_AUTORELEASE_POOL();
 
@@ -291,7 +286,7 @@ uint32 CMacWindow::GetWidth() const
 	return uint32(ContentRect.size.width);
 }
 
-uint32 CMacWindow::GetHeight() const
+uint32 FMacWindow::GetHeight() const
 {
 	SCOPED_AUTORELEASE_POOL();
 
@@ -304,14 +299,14 @@ uint32 CMacWindow::GetHeight() const
 	return uint32(ContentRect.size.height);
 }
 
-void CMacWindow::SetPlatformHandle(void* InPlatformHandle)
+void FMacWindow::SetPlatformHandle(void* InPlatformHandle)
 {
 	if (InPlatformHandle)
 	{
 		NSObject* Object = reinterpret_cast<NSObject*>(InPlatformHandle);
 
 		// Make sure that the handle sent in is of correct type
-		CCocoaWindow* NewWindow = NSClassCast<CCocoaWindow>(Object);
+		FCocoaWindow* NewWindow = NSClassCast<FCocoaWindow>(Object);
 		if (NewWindow)
 		{
 			WindowHandle = NewWindow;

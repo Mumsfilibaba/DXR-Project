@@ -5,23 +5,24 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
-#include "Core/Threading/Platform/CriticalSection.h"
+#include "Core/Platform/CriticalSection.h"
 
 #include "CoreApplication/Generic/GenericApplication.h"
 
 #define ENABLE_DPI_AWARENESS (1)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SWindowsMessage
+// FWindowsMessage
 
-struct SWindowsMessage
+struct FWindowsMessage
 {
-    FORCEINLINE SWindowsMessage( HWND InWindow
-                               , uint32 InMessage
-                               , WPARAM InwParam
-                               , LPARAM InlParam
-                               , int32 InMouseDeltaX
-                               , int32 InMouseDeltaY)
+    FORCEINLINE FWindowsMessage(
+        HWND InWindow,
+        uint32 InMessage,
+        WPARAM InwParam,
+        LPARAM InlParam,
+        int32 InMouseDeltaX,
+        int32 InMouseDeltaY)
         : Window(InWindow)
         , Message(InMessage)
         , wParam(InwParam)
@@ -44,10 +45,8 @@ struct SWindowsMessage
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IWindowsMessageListener
 
-class IWindowsMessageListener
+struct IWindowsMessageListener
 {
-public:
-
     virtual ~IWindowsMessageListener() = default;
 
     /*
@@ -58,57 +57,48 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsApplication
+// FWindowsApplication
 
-class COREAPPLICATION_API CWindowsApplication final : public CGenericApplication
+class COREAPPLICATION_API FWindowsApplication final 
+    : public FGenericApplication
 {
-private:
+    FWindowsApplication(HINSTANCE InInstance);
+    virtual ~FWindowsApplication();
 
-    friend struct TDefaultDelete<CWindowsApplication>;
-
-    CWindowsApplication(HINSTANCE InInstance);
-    ~CWindowsApplication();
+public:
+    static FWindowsApplication* CreateWindowsApplication();
 
 public:
 
-    static CWindowsApplication* CreateWindowsApplication();
-
-public:
-    
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericApplication Interface
+    // FGenericApplication Interface
 
-    virtual TSharedRef<CGenericWindow> CreateWindow() override final;
+    virtual FGenericWindowRef CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
 
 	virtual bool SupportsHighPrecisionMouse() const override final { return false; }
 
-    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<CGenericWindow>& Window) override final;
+    virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) override final;
 
-    virtual void SetCapture(const TSharedRef<CGenericWindow>& Window) override final;
+    virtual void SetCapture(const FGenericWindowRef& Window)      override final;
+    virtual void SetActiveWindow(const FGenericWindowRef& Window) override final;
 
-    virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) override final;
-
-    virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
-
-    virtual TSharedRef<CGenericWindow> GetCapture() const override final;
-
-    virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
+    virtual FGenericWindowRef GetWindowUnderCursor() const override final;
+    virtual FGenericWindowRef GetCapture()           const override final;
+    virtual FGenericWindowRef GetActiveWindow()      const override final;
 
 public:
-
-    TSharedRef<CWindowsWindow> GetWindowsWindowFromHWND(HWND Window) const;
+    FWindowsWindowRef GetWindowsWindowFromHWND(HWND Window) const;
 
     void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
     void AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener);
-
     void RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener);
 
     bool IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener) const;
 
-    void CloseWindow(const TSharedRef<CWindowsWindow>& Window); 
+    void CloseWindow(const FWindowsWindowRef& Window); 
 
     FORCEINLINE HINSTANCE GetInstance() const 
     { 
@@ -116,38 +106,32 @@ public:
     }
 
 private:
-
     static LRESULT StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
     bool RegisterWindowClass();
-
     bool RegisterRawInputDevices(HWND Window);
-    
     bool UnregisterRawInputDevices();
 
     LRESULT ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
-    
     LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
 private:
+    TArray<FWindowsMessage>   Messages;
+    FCriticalSection          MessagesCS;
 
-    TArray<SWindowsMessage>            Messages;
-    CCriticalSection                   MessagesCS;
+    TArray<FWindowsWindowRef> Windows;
+    mutable FCriticalSection  WindowsCS;
 
-    TArray<TSharedRef<CWindowsWindow>> Windows;
-    mutable CCriticalSection           WindowsCS;
+    TArray<FWindowsWindowRef> ClosedWindows;
+    FCriticalSection          ClosedWindowsCS;
 
-    TArray<TSharedRef<CWindowsWindow>> ClosedWindows;
-    CCriticalSection                   ClosedWindowsCS;
-
-    bool      bIsTrackingMouse;
-    
-    HINSTANCE InstanceHandle;
+    HINSTANCE                 InstanceHandle;
+    bool                      bIsTrackingMouse;
 
     TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
-    mutable CCriticalSection                    WindowsMessageListenersCS;
+    mutable FCriticalSection                    WindowsMessageListenersCS;
 };
 
-extern CWindowsApplication* WindowsApplication;
+extern FWindowsApplication* WindowsApplication;

@@ -3,120 +3,104 @@
 
 #include "Core/Utilities/StringUtilities.h"
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIInputLayoutState
+// FNullRHIInputLayoutState
 
-class CNullRHIInputLayoutState : public FRHIVertexInputLayout
+struct FNullRHIInputLayoutState 
+    : public FRHIVertexInputLayout
 {
-public:
-
-    CNullRHIInputLayoutState()  = default;
-    ~CNullRHIInputLayoutState() = default;
+    FNullRHIInputLayoutState()  = default;
+    ~FNullRHIInputLayoutState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIDepthStencilState
+// FNullRHIDepthStencilState
 
-class CNullRHIDepthStencilState : public FRHIDepthStencilState
+struct FNullRHIDepthStencilState 
+    : public FRHIDepthStencilState
 {
-public:
-
-    CNullRHIDepthStencilState()  = default;
-    ~CNullRHIDepthStencilState() = default;
+    FNullRHIDepthStencilState()  = default;
+    ~FNullRHIDepthStencilState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIRasterizerState
+// FNullRHIRasterizerState
 
-class CNullRHIRasterizerState : public FRHIRasterizerState
+struct FNullRHIRasterizerState 
+    : public FRHIRasterizerState
 {
-public:
-
-    CNullRHIRasterizerState()  = default;
-    ~CNullRHIRasterizerState() = default;
+    FNullRHIRasterizerState()  = default;
+    ~FNullRHIRasterizerState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIBlendState
+// FNullRHIBlendState
 
-class CNullRHIBlendState : public FRHIBlendState
+struct FNullRHIBlendState 
+    : public FRHIBlendState
 {
-public:
-
-    CNullRHIBlendState()  = default;
-    ~CNullRHIBlendState() = default;
+    FNullRHIBlendState()  = default;
+    ~FNullRHIBlendState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIGraphicsPipelineState
+// FNullRHIGraphicsPipelineState
 
-class CNullRHIGraphicsPipelineState : public FRHIGraphicsPipelineState
+struct FNullRHIGraphicsPipelineState 
+    : public FRHIGraphicsPipelineState
 {
-public:
-
-    CNullRHIGraphicsPipelineState()  = default;
-    ~CNullRHIGraphicsPipelineState() = default;
-
-public:
+    FNullRHIGraphicsPipelineState()  = default;
+    ~FNullRHIGraphicsPipelineState() = default;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
-    virtual void SetName(const String& InName) override final { }
-
-    virtual String GetName() const override final { return ""; }
+    virtual void    SetName(const FString& InName) override final { }
+    virtual FString GetName() const override final                { return ""; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIComputePipelineState
+// FNullRHIComputePipelineState
 
-class CNullRHIComputePipelineState : public FRHIComputePipelineState
+struct FNullRHIComputePipelineState 
+    : public FRHIComputePipelineState
 {
-public:
-
-    CNullRHIComputePipelineState()  = default;
-    ~CNullRHIComputePipelineState() = default;
-
-public:
+    FNullRHIComputePipelineState()  = default;
+    ~FNullRHIComputePipelineState() = default;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
-    virtual void SetName(const String& InName) override final { }
-
-    virtual String GetName() const override final { return ""; }
+    virtual void    SetName(const FString& InName) override final { }
+    virtual FString GetName() const override final                { return ""; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIRayTracingPipelineState
+// FNullRHIRayTracingPipelineState
 
-class CNullRHIRayTracingPipelineState : public FRHIRayTracingPipelineState
+struct FNullRHIRayTracingPipelineState 
+    : public FRHIRayTracingPipelineState
 {
-public:
-
-    CNullRHIRayTracingPipelineState()  = default;
-    ~CNullRHIRayTracingPipelineState() = default;
-
-public:
+    FNullRHIRayTracingPipelineState()  = default;
+    ~FNullRHIRayTracingPipelineState() = default;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIPipelineState Interface
+    // FRHIPipelineState Interface
 
-    virtual void SetName(const String& InName) override final { }
-
-    virtual String GetName() const override final { return ""; }
+    virtual void    SetName(const FString& InName) override final { }
+    virtual FString GetName() const override final                { return ""; }
 };
 
-#if defined(COMPILER_MSVC)
+#if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
+#elif defined(PLATFORM_COMPILER_CLANG)
     #pragma clang diagnostic pop
 #endif

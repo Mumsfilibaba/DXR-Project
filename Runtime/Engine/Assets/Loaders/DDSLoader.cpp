@@ -1,10 +1,10 @@
 #include "DDSLoader.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDDSLoader
+// FDDSLoader
 
-TSharedPtr<SImage2D> CDDSLoader::LoadFile(const String& Filename)
+FImage2DPtr FDDSLoader::LoadFile(const FString& Filename)
 {
     UNREFERENCED_VARIABLE(Filename);
-    return TSharedPtr<SImage2D>();
+    return FImage2DPtr();
 }

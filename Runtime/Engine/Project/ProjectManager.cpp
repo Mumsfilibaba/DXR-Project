@@ -1,19 +1,18 @@
 #include "ProjectManager.h"
 
-#include "Core/Templates/StringUtils.h"
+#include "Core/Templates/CString.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CProjectManager
+// FProjectManager
 
-char CProjectManager::ProjectName[MAX_PROJECT_NAME_LENGTH];
-char CProjectManager::ProjectPath[MAX_PROJECT_PATH_LENGTH];
-char CProjectManager::AssetPath[MAX_ASSET_PATH_LENGTH];
+CHAR FProjectManager::ProjectName[MAX_PROJECT_NAME_LENGTH];
+CHAR FProjectManager::ProjectPath[MAX_PROJECT_PATH_LENGTH];
+CHAR FProjectManager::AssetPath[MAX_ASSET_PATH_LENGTH];
 
-bool CProjectManager::Initialize(const char* InProjectName, const char* InProjectPath, const char* InAssetPath)
+bool FProjectManager::Initialize(const CHAR* InProjectName, const CHAR* InProjectPath, const CHAR* InAssetPath)
 {
-    CStringUtils::Copy(reinterpret_cast<char*>(FMemory::Memzero(ProjectName, sizeof(ProjectName))), InProjectName);
-    CStringUtils::Copy(reinterpret_cast<char*>(FMemory::Memzero(ProjectPath, sizeof(ProjectPath))), InProjectPath);
-    CStringUtils::Copy(reinterpret_cast<char*>(FMemory::Memzero(AssetPath  , sizeof(AssetPath)))  , InAssetPath);
-    
+    FCString::Strcpy(reinterpret_cast<CHAR*>(FMemory::Memzero(ProjectName, sizeof(ProjectName))), InProjectName);
+    FCString::Strcpy(reinterpret_cast<CHAR*>(FMemory::Memzero(ProjectPath, sizeof(ProjectPath))), InProjectPath);
+    FCString::Strcpy(reinterpret_cast<CHAR*>(FMemory::Memzero(AssetPath  , sizeof(AssetPath)))  , InAssetPath);
     return true;
 }

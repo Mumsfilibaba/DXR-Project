@@ -8,8 +8,5 @@
 template<typename T>
 struct TIsTStringType
 {
-    enum
-    {
-        Value = false
-    };
+    enum { Value = false };
 };

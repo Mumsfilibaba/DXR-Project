@@ -9,67 +9,62 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TIsInvokable
 
-template<typename FuncType, typename... ArgTypes>
+template<
+    typename FuncType,
+    typename... ArgTypes>
 struct TIsInvokable
 {
 private:
-
-    template<typename Fn, typename = void, typename... Args>
+    template<
+        typename Fn,
+        typename = void, 
+        typename... Args>
     struct TIsInvokableHelper
     {
-        enum
-        {
-            Value = false
-        };
+        enum { Value = false };
     };
 
-    template<typename Fn, typename... Args>
+    template<
+        typename Fn,
+        typename... Args>
     struct TIsInvokableHelper<Fn, typename TVoid<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...)) >::Type, Args...>
     {
-        enum
-        {
-            Value = true
-        };
+        enum { Value = true };
     };
 
 public:
-
-    enum
-    {
-        Value = TIsInvokableHelper<FuncType, void, ArgTypes...>::Value
-    };
+    enum { Value = TIsInvokableHelper<FuncType, void, ArgTypes...>::Value };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TIsInvokableR
 
-template<typename FuncType, typename ReturnType, typename... ArgTypes>
+template<
+    typename FuncType,
+    typename ReturnType, 
+    typename... ArgTypes>
 struct TIsInvokableR
 {
 private:
-
-    template<typename Fn, typename Ret, typename = void, typename... Args>
+    template<
+        typename Fn,
+        typename Ret, 
+        typename = void, 
+        typename... Args>
     struct TIsInvokableRHelper
     {
-        enum
-        {
-            Value = false
-        };
+        enum { Value = false };
     };
 
-    template<typename Fn, typename Ret, typename... Args>
+    template<
+        typename Fn,
+        typename Ret,
+        typename... Args>
     struct TIsInvokableRHelper<Fn, Ret, typename TVoid<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...))>::Type, Args...>
     {
-        enum
-        {
-            Value = TIsConvertible<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...)), Ret>::Value
-        };
+        enum { Value = TIsConvertible<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...)), Ret>::Value };
     };
 
 public:
-
-    enum
-    {
-        Value = TIsInvokableRHelper<FuncType, ReturnType, void, ArgTypes...>::Value
-    };
+    enum { Value = TIsInvokableRHelper<FuncType, ReturnType, void, ArgTypes...>::Value };
 };

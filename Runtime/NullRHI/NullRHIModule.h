@@ -10,15 +10,13 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIModule
+// FNullRHIModule
 
-class CNullRHIModule final : public FRHIModule
+struct FNullRHIModule final 
+    : public FRHIModule
 {
-public:
+    FNullRHIModule()  = default;
+    ~FNullRHIModule() = default;
 
-    CNullRHIModule()  = default;
-    ~CNullRHIModule() = default;
-
-    virtual class CRHICoreInterface*  CreateInterface() override final;
-    virtual class IRHIShaderCompiler* CreateCompiler() override final;
+    virtual class FRHICoreInterface* CreateInterface() override final;
 };

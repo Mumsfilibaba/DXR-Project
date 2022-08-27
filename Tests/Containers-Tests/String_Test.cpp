@@ -1,4 +1,5 @@
 #include "String_Test.h"
+#include "TestUtils.h"
 
 #include <Core/Containers/StaticString.h>
 #include <Core/Containers/String.h>
@@ -6,12 +7,12 @@
 #include <iostream>
 
 #define PrintString(Str) \
-    { std::cout << #Str << "= " << Str.CStr() << std::endl; }
+    { std::cout << #Str << "= " << Str.GetCString() << std::endl; }
 
 #define PrintStringView(Str)                       \
     {                                              \
         std::cout << #Str << "= ";                 \
-        for ( int32 i = 0; i < Str.Length(); i++ ) \
+        for ( int32 i = 0; i < Str.GetLength(); i++ ) \
         {                                          \
             std::cout << Str[i];                   \
         }                                          \
@@ -19,841 +20,1225 @@
     }
 
 #define PrintWideString(Str) \
-    { std::wcout << #Str << "= " << Str.CStr() << std::endl; }
+    { std::wcout << #Str << "= " << Str.GetCString() << std::endl; }
 
 #define PrintWideStringView(Str)                   \
     {                                              \
         std::wcout << #Str << "= ";                \
-        for ( int32 i = 0; i < Str.Length(); i++ ) \
+        for ( int32 i = 0; i < Str.GetLength(); i++ ) \
         {                                          \
             std::wcout << Str[i];                  \
         }                                          \
         std::wcout << std::endl;                   \
     }
 
-void TString_Test( const char* Args )
+#if RUN_TSTRING_TEST
+static bool TString_Test_Internal(const CHAR* Args);
+#endif
+#if RUN_TSTATICSTRING_TEST
+static bool TStaticString_Test_Internal(const CHAR* Args);
+#endif
+#if RUN_TSTRINGVIEW_TEST
+static bool TStringView_Test_Internal(const CHAR* Args);
+#endif
+
+#if (RUN_TSTRING_TEST || RUN_TSTATICSTRING_TEST || RUN_TSTRINGVIEW_TEST)
+void TString_Test(const CHAR* Args)
+{
+    UNREFERENCED_VARIABLE(Args);
+
+#if RUN_TSTRING_TEST
+    TString_Test_Internal(Args);
+#endif
+#if RUN_TSTATICSTRING_TEST
+    TStaticString_Test_Internal(Args);
+#endif
+#if RUN_TSTRINGVIEW_TEST
+    TStringView_Test_Internal(Args);
+#endif
+}
+#endif
+
+#if RUN_TSTRING_TEST
+bool TString_Test_Internal(const CHAR* Args)
 {
     {
-        std::cout << std::endl << "----Testing StaticString----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing FString----" << std::endl << std::endl;
 
-        StringView StringView( "Hello StringView" );
+        FStringView StringView("Hello FStringView");
 
-        StaticString<64> StaticString0;
-        PrintString( StaticString0 );
-        StaticString<64> StaticString1 = "Hello String";
-        PrintString( StaticString1 );
-        StaticString<64> StaticString2 = StaticString<64>( Args, 7 );
-        PrintString( StaticString2 );
-        StaticString<64> StaticString3 = StaticString<64>( StringView );
-        PrintString( StaticString3 );
-        StaticString<64> StaticString4 = StaticString1;
-        PrintString( StaticString4 );
-        StaticString<64> StaticString5 = Move( StaticString2 );
-        PrintString( StaticString5 );
+        FString String0;
+        CHECK_STRING(String0, "");
+        CHECK(String0.GetLength()   == 0);
+        CHECK(String0.GetCapacity() == 0);
 
-        StaticString0.Append( "Appended String" );
-        PrintString( StaticString0 );
-        StaticString0.Append( '_' );
-        PrintString( StaticString0 );
-        StaticString5.Append( StaticString0 );
-        PrintString( StaticString5 );
+        FString String1 = "Hello String";
+        CHECK_STRING(String1, "Hello String");
+        CHECK(String1.GetLength()   == 12);
+        CHECK(String1.GetCapacity() == 13);
 
-        StaticString<64> StaticString6;
-        StaticString6.Format( "Formatted String=%.4f", 0.004f );
-        PrintString( StaticString6 );
+        FString String2 = FString(Args, 7);
+        CHECK_STRING_N(String2, Args, 7);
 
-        StaticString6.Append( '_' );
-        PrintString( StaticString6 );
+        FString String3 = FString(StringView);
+        CHECK_STRING(String3, "Hello FStringView");
+        FString String4 = String1;
+        CHECK_STRING(String4, "Hello String");
+        FString String5 = Move(String2);
+        CHECK_STRING(String2, "");
+        CHECK_STRING_N(String5, Args, 7);
 
-        StaticString6.AppendFormat( "Formatted String=%.4f", 0.0077f );
-        PrintString( StaticString6 );
+        String0.Append("Appended String");
+        CHECK_STRING(String0, "Appended String");
+        String0.Append('_');
+        CHECK_STRING(String0, "Appended String_");
+        String5.Append(String0);
+        const std::string ArgString = std::string(Args, 7) + "Appended String_";
+        CHECK_STRING(String5, ArgString.c_str());
 
-        StaticString<64> LowerStaticString6 = StaticString6.ToLower();
-        PrintString( LowerStaticString6 );
+        FString String6;
+        String6.Format("Formatted String=%.4f", 0.004f);
+        CHECK_STRING(String6, "Formatted String=0.0040");
 
-        StaticString<64> UpperStaticString6 = StaticString6.ToUpper();
-        PrintString( UpperStaticString6 );
+        String6.Append('_');
+        CHECK_STRING(String6, "Formatted String=0.0040_");
 
-        StaticString6.Clear();
-        PrintString( StaticString6 );
+        String6.AppendFormat("Formatted String=%.4f", 0.0077f);
+        CHECK_STRING(String6, "Formatted String=0.0040_Formatted String=0.0077");
 
-        StaticString6.Append( "    Trimmable String    " );
-        PrintString( StaticString6 );
+        FString LowerString6 = String6.ToLower();
+        CHECK_STRING(LowerString6, "formatted string=0.0040_formatted string=0.0077");
 
-        StaticString<64> TrimmedStaticString6 = StaticString6.Trim();
-        TrimmedStaticString6.Append( '*' );
-        PrintString( TrimmedStaticString6 );
+        FString UpperString6 = String6.ToUpper();
+        CHECK_STRING(UpperString6, "FORMATTED STRING=0.0040_FORMATTED STRING=0.0077");
 
-        StaticString6.Clear();
-        PrintString( StaticString6 );
+        String6.Clear();
+        CHECK_STRING(String6, "");
 
-        StaticString6.Append( "123456789" );
-        PrintString( StaticString6 );
+        String6.Append("    Trimmable String    ");
+        CHECK_STRING(String6, "    Trimmable String    ");
 
-        StaticString<64> ReversedStaticString6 = StaticString6.Reverse();
-        PrintString( ReversedStaticString6 );
+        FString TrimmedString6 = String6.Trim();
+        TrimmedString6.Append('*');
+        CHECK_STRING(TrimmedString6, "Trimmable String*");
 
-        StaticString<64> SearchString = "0123MeSearch89Me89";
-        PrintString( SearchString );
+        String6.Clear();
+        CHECK_STRING(String6, "");
 
-        std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.Find( 'M' ) << std::endl;
+        String6.Append("123456789");
+        CHECK_STRING(String6, "123456789");
 
-        std::cout << "Position=" << SearchString.FindOneOf( "ec" ) << std::endl;
-        std::cout << "Position=" << SearchString.FindOneOf( "Mc" ) << std::endl;
+        FString ReversedString6 = String6.Reverse();
+        CHECK_STRING(ReversedString6, "987654321");
 
-        std::cout << "Position=" << SearchString.FindOneNotOf( "0123456789" ) << std::endl;
+        FString String7 = "NewString";
+        CHECK_STRING(String7, "NewString");
 
-        std::cout << "Position=" << SearchString.ReverseFind( "Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.ReverseFind( 'M' ) << std::endl;
+        String7.Reset(12);
+        CHECK(String7.GetSize()     == 12);
+        CHECK(String7.GetCapacity() == 13);
+        CHECK_STRING(String7, "");
 
-        std::cout << "Position=" << SearchString.ReverseFindOneOf( "hMc" ) << std::endl;
+        String7.Reset(6, 'c');
+        CHECK(String7.GetSize()     == 6);
+        CHECK(String7.GetCapacity() == 13);
+        CHECK_STRING(String7, "cccccc");
 
-        std::cout << "Position=" << SearchString.ReverseFindOneNotOf( "0123456789" ) << std::endl;
+        FString SearchString = "0123MeSearch89Me89";
+        CHECK_STRING(SearchString, "0123MeSearch89Me89");
+        CHECK(SearchString.Find("Me")                 == 4);
+        CHECK(SearchString.FindChar('M')                 == 4);
+        CHECK(SearchString.Contains("Me")             == true);
+        CHECK(SearchString.Contains('M')                 == true);
+        CHECK(SearchString.StartsWith("0123Me")       == true);
+        CHECK(SearchString.StartsWithNoCase("0123ME") == true);
+        CHECK(SearchString.EndsWith("Me89")           == true);
+        CHECK(SearchString.EndsWithNoCase("ME89")     == true);
+        
+        CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
+        {
+            return (Char == 'e') || (Char == 'c');
+        }) == 5);
+        
+        CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
+        {
+            return (Char == 'M') || (Char == 'c');
+        }) == 4);
 
-        StaticString<64> CompareString0 = "COMPARE";
-        PrintString( CompareString0 );
+        CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
+        {
+            const CHAR Buffer[] = "0123456789";
+            for (CHAR Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
 
-        StaticString<64> CompareString1 = "compare";
-        PrintString( CompareString1 );
+            return true;
+        }) == 4);
 
-        std::cout << "Compare=" << CompareString0.Compare( CompareString1 ) << std::endl;
-        std::cout << "CompareNoCase=" << CompareString0.CompareNoCase( CompareString1 ) << std::endl;
+        CHECK(SearchString.FindLast("Me") == 14);
+        CHECK(SearchString.FindLastChar('M') == 14);
 
-        CompareString1.Resize( 20, 'A' );
-        PrintString( CompareString1 );
+        CHECK(SearchString.FindLastCharWithPredicate([](CHAR Char) -> bool
+        {
+            return (Char == 'h') || (Char == 'M') || (Char == 'c');
+        }) == 14);
 
-        char Buffer[6];
+        CHECK(SearchString.FindLastCharWithPredicate([](CHAR Char) -> bool
+        {
+            const CHAR Buffer[] = "0123456789";
+            for (CHAR Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }) == 15);
+
+        FString CompareString0 = "COMPARE";
+        CHECK_STRING(CompareString0, "COMPARE");
+
+        FString CompareString1 = "compare";
+        CHECK_STRING(CompareString1, "compare");
+        CHECK(CompareString0.Compare(CompareString1)       != 0);
+        CHECK(CompareString0.CompareNoCase(CompareString1) == 0);
+
+        CompareString1.Resize(20, 'A');
+        CHECK_STRING(CompareString1, "compareAAAAAAAAAAAAA");
+
+        CompareString1.Resize(16, 'A');
+        CHECK_STRING(CompareString1, "compareAAAAAAAAA");
+
+        CompareString1.Resize(7);
+        CHECK_STRING(CompareString1, "compare");
+
+        CompareString1.Resize(20);
+        CHECK_STRING(CompareString1, "compare");
+
+        CompareString1.Resize(7);
+        CHECK_STRING(CompareString1, "compare");
+
+        CompareString1.Resize(20, 'A');
+        CHECK_STRING(CompareString1, "compareAAAAAAAAAAAAA");
+
+        CHAR Buffer[6];
         Buffer[5] = 0;
-        CompareString1.Copy( Buffer, 5, 3 );
-        std::cout << "Buffer=" << Buffer << std::endl;
+        CompareString1.CopyToBuffer(Buffer, 5, 3);
+        CHECK(FCString::Strcmp(Buffer, "pareA") == 0);
 
-        CompareString0.Insert( "lower", 4 );
-        PrintString( CompareString0 );
+        CompareString0.Insert("lower", 4);
+        CHECK_STRING(CompareString0, "COMPlowerARE");
 
-        CompareString0.Replace( "upper", 4 );
-        PrintString( CompareString0 );
+        CompareString0.Replace("upper", 4);
+        CHECK_STRING(CompareString0, "COMPupperARE");
 
-        CompareString0.Replace( 'X', 0 );
-        PrintString( CompareString0 );
+        CompareString0.Replace('X', 0);
+        CHECK_STRING(CompareString0, "XOMPupperARE");
 
-        StaticString<64> CombinedString = CompareString0 + '5';
-        PrintString( CombinedString );
+        FString CombinedString = CompareString0 + '5';
+        CHECK_STRING(CombinedString, "XOMPupperARE5");
 
         CombinedString = '5' + CombinedString;
-        PrintString( CombinedString );
+        CHECK_STRING(CombinedString, "5XOMPupperARE5");
 
         CombinedString = CombinedString + "Appended";
-        PrintString( CombinedString );
+        CHECK_STRING(CombinedString, "5XOMPupperARE5Appended");
 
         CombinedString = "Inserted" + CombinedString;
-        PrintString( CombinedString );
+        CHECK_STRING(CombinedString, "Inserted5XOMPupperARE5Appended");
 
         CombinedString = CombinedString + CombinedString;
-        PrintString( CombinedString );
+        CHECK_STRING(CombinedString, "Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
 
-        StaticString<64> TestString = "Test";
-        PrintString( TestString );
+        FString TestString = "Test";
+        CHECK_STRING(TestString, "Test");
 
-        std::cout << "operator== : " << std::boolalpha << ("Test" == TestString) << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (TestString == "Test") << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (CombinedString == CombinedString) << std::endl;
+        CHECK(("Test" == TestString) == true);
+        CHECK((TestString == "Test") == true);
+        CHECK((CombinedString == CombinedString) == true);
 
-        std::cout << "operator!= : " << std::boolalpha << ("Test" != TestString) << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (TestString != "Test") << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (CombinedString != CombinedString) << std::endl;
+        CHECK(("Test" != TestString) == false);
+        CHECK((TestString != "Test") == false);
+        CHECK((CombinedString != CombinedString) == false);
 
-        std::cout << "operator<= : " << std::boolalpha << ("Test" <= TestString) << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (TestString <= "Test") << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (CombinedString <= CombinedString) << std::endl;
+        CHECK(("Test" <= TestString) == true);
+        CHECK((TestString <= "Test") == true);
+        CHECK((CombinedString <= CombinedString) == true);
 
-        std::cout << "operator< : " << std::boolalpha << ("Test" < TestString) << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (TestString < "Test") << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (CombinedString < CombinedString) << std::endl;
+        CHECK(("Test" < TestString) == false);
+        CHECK((TestString < "Test") == false);
+        CHECK((CombinedString < CombinedString) == false);
 
-        std::cout << "operator>= : " << std::boolalpha << ("Test" >= TestString) << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (TestString >= "Test") << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (CombinedString >= CombinedString) << std::endl;
+        CHECK(("Test" >= TestString) == true);
+        CHECK((TestString >= "Test") == true);
+        CHECK((CombinedString >= CombinedString) == true);
 
-        std::cout << "operator> : " << std::boolalpha << ("Test" > TestString) << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (TestString > "Test") << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (CombinedString > CombinedString) << std::endl;
+        CHECK(("Test" > TestString) == false);
+        CHECK((TestString > "Test") == false);
+        CHECK((CombinedString > CombinedString) == false);
 
-        for ( char C : TestString )
+        for (CHAR C : TestString)
         {
             std::cout << C << std::endl;
         }
 
-        for ( int32 Index = 0; Index < TestString.Length(); Index++ )
+        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
         {
             std::cout << Index << '=' << TestString[Index] << std::endl;
         }
 
-        WStaticString<64> WideCompareString = CharToWide<64>( CompareString0 );
-        PrintWideString( WideCompareString );
+        FStringWide WideCompareString = CharToWide(CombinedString);
+        CHECK_STRING(WideCompareString, L"Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
     }
 
     {
-        std::cout << std::endl << "----Testing WStaticString----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing FStringWide----" << std::endl << std::endl;
 
-        WStringView StringView( L"Hello StringView" );
+        FStringViewWide StringView(L"Hello FStringView");
 
-        const wchar_t* SomeWideStringInsteadOfArgs = L"/Users/SomeFolder/Blabla/BlaBla";
+        const WIDECHAR* SomeWideStringInsteadOfArgs = L"/Users/SomeFolder/Blabla/BlaBla";
 
-        WStaticString<64> StaticString0;
-        PrintWideString( StaticString0 );
-        WStaticString<64> StaticString1 = L"Hello String";
-        PrintWideString( StaticString1 );
-        WStaticString<64> StaticString2 = WStaticString<64>( SomeWideStringInsteadOfArgs, 7 );
-        PrintWideString( StaticString2 );
-        WStaticString<64> StaticString3 = WStaticString<64>( StringView );
-        PrintWideString( StaticString3 );
-        WStaticString<64> StaticString4 = StaticString1;
-        PrintWideString( StaticString4 );
-        WStaticString<64> StaticString5 = Move( StaticString2 );
-        PrintWideString( StaticString5 );
+        FStringWide String0;
+        CHECK_STRING(String0, L"");
+        CHECK(String0.GetLength()   == 0);
+        CHECK(String0.GetCapacity() == 0);
 
-        StaticString0.Append( L"Appended String" );
-        PrintWideString( StaticString0 );
-        StaticString0.Append( L'_' );
-        PrintWideString( StaticString0 );
-        StaticString5.Append( StaticString0 );
-        PrintWideString( StaticString5 );
+        FStringWide String1 = L"Hello String";
+        CHECK_STRING(String1, L"Hello String");
+        CHECK(String1.GetLength()   == 12);
+        CHECK(String1.GetCapacity() == 13);
 
-        WStaticString<64> StaticString6;
-        StaticString6.Format( L"Formatted String=%.4f", 0.004f );
-        PrintWideString( StaticString6 );
+        FStringWide String2 = FStringWide(SomeWideStringInsteadOfArgs, 7);
+        CHECK_STRING_N(String2, SomeWideStringInsteadOfArgs, 7);
 
-        StaticString6.Append( '_' );
-        PrintWideString( StaticString6 );
+        FStringWide String3 = FStringWide(StringView);
+        CHECK_STRING(String3, L"Hello FStringView");
+        FStringWide String4 = String1;
+        CHECK_STRING(String4, L"Hello String");
+        FStringWide String5 = Move(String2);
+        CHECK_STRING(String2, L"");
+        CHECK_STRING_N(String5, SomeWideStringInsteadOfArgs, 7);
 
-        StaticString6.AppendFormat( L"Formatted String=%.4f", 0.0077f );
-        PrintWideString( StaticString6 );
+        String0.Append(L"Appended String");
+        CHECK_STRING(String0, L"Appended String");
+        String0.Append(L'_');
+        CHECK_STRING(String0, L"Appended String_");
+        String5.Append(String0);
+        const std::wstring ArgString = std::wstring(SomeWideStringInsteadOfArgs, 7) + L"Appended String_";
+        CHECK_STRING(String5, ArgString.c_str());
 
-        WStaticString<64> LowerStaticString6 = StaticString6.ToLower();
-        PrintWideString( LowerStaticString6 );
+        FStringWide String6;
+        String6.Format(L"Formatted String=%.4f", 0.004f);
+        CHECK_STRING(String6, L"Formatted String=0.0040");
 
-        WStaticString<64> UpperStaticString6 = StaticString6.ToUpper();
-        PrintWideString( UpperStaticString6 );
+        String6.Append(L'_');
+        CHECK_STRING(String6, L"Formatted String=0.0040_");
 
-        StaticString6.Clear();
-        PrintWideString( StaticString6 );
+        String6.AppendFormat(L"Formatted String=%.4f", 0.0077f);
+        CHECK_STRING(String6, L"Formatted String=0.0040_Formatted String=0.0077");
 
-        StaticString6.Append( L"    Trimmable String    " );
-        PrintWideString( StaticString6 );
+        FStringWide LowerString6 = String6.ToLower();
+        CHECK_STRING(LowerString6, L"formatted string=0.0040_formatted string=0.0077");
 
-        WStaticString<64> TrimmedStaticString6 = StaticString6.Trim();
-        TrimmedStaticString6.Append( '*' );
-        PrintWideString( TrimmedStaticString6 );
+        FStringWide UpperString6 = String6.ToUpper();
+        CHECK_STRING(UpperString6, L"FORMATTED STRING=0.0040_FORMATTED STRING=0.0077");
 
-        StaticString6.Clear();
-        PrintWideString( StaticString6 );
+        String6.Clear();
+        CHECK_STRING(String6, L"");
 
-        StaticString6.Append( L"123456789" );
-        PrintWideString( StaticString6 );
+        String6.Append(L"    Trimmable String    ");
+        CHECK_STRING(String6, L"    Trimmable String    ");
 
-        WStaticString<64> ReversedStaticString6 = StaticString6.Reverse();
-        PrintWideString( ReversedStaticString6 );
+        FStringWide TrimmedString6 = String6.Trim();
+        TrimmedString6.Append(L'*');
+        CHECK_STRING(TrimmedString6, L"Trimmable String*");
 
-        WStaticString<64> SearchString = L"0123MeSearch89Me89";
-        PrintWideString( SearchString );
+        String6.Clear();
+        CHECK_STRING(String6, L"");
 
-        std::cout << "Position=" << SearchString.Find( L"Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.Find( L'M' ) << std::endl;
+        String6.Append(L"123456789");
+        CHECK_STRING(String6, L"123456789");
 
-        std::cout << "Position=" << SearchString.FindOneOf( L"ec" ) << std::endl;
-        std::cout << "Position=" << SearchString.FindOneOf( L"Mc" ) << std::endl;
+        FStringWide ReversedString6 = String6.Reverse();
+        CHECK_STRING(ReversedString6, L"987654321");
 
-        std::cout << "Position=" << SearchString.FindOneNotOf( L"0123456789" ) << std::endl;
+        FStringWide String7 = L"NewString";
+        CHECK_STRING(String7, L"NewString");
 
-        std::cout << "Position=" << SearchString.ReverseFind( L"Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.ReverseFind( L'M' ) << std::endl;
+        String7.Reset(12);
+        CHECK(String7.GetSize()     == 12);
+        CHECK(String7.GetCapacity() == 13);
+        CHECK_STRING(String7, L"");
 
-        std::cout << "Position=" << SearchString.ReverseFindOneOf( L"hMc" ) << std::endl;
+        String7.Reset(6, L'c');
+        CHECK(String7.GetSize()     == 6);
+        CHECK(String7.GetCapacity() == 13);
+        CHECK_STRING(String7, L"cccccc");
 
-        std::cout << "Position=" << SearchString.ReverseFindOneNotOf( L"0123456789" ) << std::endl;
+        FStringWide SearchString = L"0123MeSearch89Me89";
+        CHECK_STRING(SearchString, L"0123MeSearch89Me89");
+        CHECK(SearchString.Find(L"Me")                        == 4);
+        CHECK(SearchString.FindChar(L'M')                 == 4);
+        CHECK(SearchString.Contains(L"Me")                     == true);
+        CHECK(SearchString.Contains(L'M')                 == true);
+        CHECK(SearchString.StartsWith(L"0123Me")       == true);
+        CHECK(SearchString.StartsWithNoCase(L"0123ME") == true);
+        CHECK(SearchString.EndsWith(L"Me89")           == true);
+        CHECK(SearchString.EndsWithNoCase(L"ME89")     == true);
 
-        WStaticString<64> CompareString0 = L"COMPARE";
-        PrintWideString( CompareString0 );
+        CHECK(SearchString.FindCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            return (Char == L'e') || (Char == L'c');
+        }) == 5);
 
-        WStaticString<64> CompareString1 = L"compare";
-        PrintWideString( CompareString1 );
+        CHECK(SearchString.FindCharWithPredicate([](WIDECHAR  Char) -> bool
+        {
+            return (Char == L'M') || (Char == L'c');
+        }) == 4);
 
-        std::cout << "Compare=" << CompareString0.Compare( CompareString1 ) << std::endl;
-        std::cout << "CompareNoCase=" << CompareString0.CompareNoCase( CompareString1 ) << std::endl;
+        CHECK(SearchString.FindCharWithPredicate([](WIDECHAR  Char) -> bool
+        {
+            const WIDECHAR  Buffer[] = L"0123456789";
+            for (WIDECHAR  Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
 
-        CompareString1.Resize( 20, 'A' );
-        PrintWideString( CompareString1 );
+            return true;
+        }) == 4);
 
-        wchar_t Buffer[6];
+        CHECK(SearchString.FindLast(L"Me") == 14);
+        CHECK(SearchString.FindLastChar(L'M') == 14);
+
+        CHECK(SearchString.FindLastCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            return (Char == L'h') || (Char == L'M') || (Char == L'c');
+        }) == 14);
+
+        CHECK(SearchString.FindLastCharWithPredicate([](WIDECHAR  Char) -> bool
+        {
+            const WIDECHAR  Buffer[] = L"0123456789";
+            for (WIDECHAR Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }) == 15);
+
+        FStringWide CompareString0 = L"COMPARE";
+        CHECK_STRING(CompareString0, L"COMPARE");
+
+        FStringWide CompareString1 = L"compare";
+        CHECK_STRING(CompareString1, L"compare");
+        CHECK(CompareString0.Compare(CompareString1)       != 0);
+        CHECK(CompareString0.CompareNoCase(CompareString1) == 0);
+
+        CompareString1.Resize(20, L'A');
+        CHECK_STRING(CompareString1, L"compareAAAAAAAAAAAAA");
+
+        CompareString1.Resize(16, L'A');
+        CHECK_STRING(CompareString1, L"compareAAAAAAAAA");
+
+        CompareString1.Resize(7);
+        CHECK_STRING(CompareString1, L"compare");
+
+        CompareString1.Resize(20);
+        CHECK_STRING(CompareString1, L"compare");
+
+        CompareString1.Resize(7);
+        CHECK_STRING(CompareString1, L"compare");
+
+        CompareString1.Resize(20, L'A');
+        CHECK_STRING(CompareString1, L"compareAAAAAAAAAAAAA");
+
+        WIDECHAR Buffer[6];
         Buffer[5] = 0;
-        CompareString1.Copy( Buffer, 5, 3 );
-        std::wcout << L"Buffer=" << Buffer << std::endl;
+        CompareString1.CopyToBuffer(Buffer, 5, 3);
+        CHECK(FCStringWide::Strcmp(Buffer, L"pareA") == 0);
 
-        CompareString0.Insert( L"lower", 4 );
-        PrintWideString( CompareString0 );
+        CompareString0.Insert(L"lower", 4);
+        CHECK_STRING(CompareString0, L"COMPlowerARE");
 
-        CompareString0.Replace( L"upper", 4 );
-        PrintWideString( CompareString0 );
+        CompareString0.Replace(L"upper", 4);
+        CHECK_STRING(CompareString0, L"COMPupperARE");
 
-        CompareString0.Replace( L'X', 0 );
-        PrintWideString( CompareString0 );
+        CompareString0.Replace(L'X', 0);
+        CHECK_STRING(CompareString0, L"XOMPupperARE");
 
-        WStaticString<64> CombinedString = CompareString0 + L'5';
-        PrintWideString( CombinedString );
+        FStringWide CombinedString = CompareString0 + L'5';
+        CHECK_STRING(CombinedString, L"XOMPupperARE5");
 
         CombinedString = L'5' + CombinedString;
-        PrintWideString( CombinedString );
+        CHECK_STRING(CombinedString, L"5XOMPupperARE5");
 
         CombinedString = CombinedString + L"Appended";
-        PrintWideString( CombinedString );
+        CHECK_STRING(CombinedString, L"5XOMPupperARE5Appended");
 
         CombinedString = L"Inserted" + CombinedString;
-        PrintWideString( CombinedString );
+        CHECK_STRING(CombinedString, L"Inserted5XOMPupperARE5Appended");
 
         CombinedString = CombinedString + CombinedString;
-        PrintWideString( CombinedString );
+        CHECK_STRING(CombinedString, L"Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
 
-        WStaticString<64> TestString = L"Test";
-        PrintWideString( TestString );
+        FStringWide TestString = L"Test";
+        CHECK_STRING(TestString, L"Test");
 
-        std::cout << "operator== : " << std::boolalpha << (L"Test" == TestString) << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (TestString == L"Test") << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (CombinedString == CombinedString) << std::endl;
+        CHECK((L"Test" == TestString) == true);
+        CHECK((TestString == L"Test") == true);
+        CHECK((CombinedString == CombinedString) == true);
 
-        std::cout << "operator!= : " << std::boolalpha << (L"Test" != TestString) << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (TestString != L"Test") << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (CombinedString != CombinedString) << std::endl;
+        CHECK((L"Test" != TestString) == false);
+        CHECK((TestString != L"Test") == false);
+        CHECK((CombinedString != CombinedString) == false);
 
-        std::cout << "operator<= : " << std::boolalpha << (L"Test" <= TestString) << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (TestString <= L"Test") << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (CombinedString <= CombinedString) << std::endl;
+        CHECK((L"Test" <= TestString) == true);
+        CHECK((TestString <= L"Test") == true);
+        CHECK((CombinedString <= CombinedString) == true);
 
-        std::cout << "operator< : " << std::boolalpha << (L"Test" < TestString) << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (TestString < L"Test") << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (CombinedString < CombinedString) << std::endl;
+        CHECK((L"Test" < TestString) == false);
+        CHECK((TestString < L"Test") == false);
+        CHECK((CombinedString < CombinedString) == false);
 
-        std::cout << "operator>= : " << std::boolalpha << (L"Test" >= TestString) << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (TestString >= L"Test") << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (CombinedString >= CombinedString) << std::endl;
+        CHECK((L"Test" >= TestString) == true);
+        CHECK((TestString >= L"Test") == true);
+        CHECK((CombinedString >= CombinedString) == true);
 
-        std::cout << "operator> : " << std::boolalpha << (L"Test" > TestString) << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (TestString > L"Test") << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (CombinedString > CombinedString) << std::endl;
+        CHECK((L"Test" > TestString) == false);
+        CHECK((TestString > L"Test") == false);
+        CHECK((CombinedString > CombinedString) == false);
 
-        for ( wchar_t C : TestString )
+        for (WIDECHAR C : TestString)
         {
             std::wcout << C << std::endl;
         }
 
-        for ( int32 Index = 0; Index < TestString.Length(); Index++ )
+        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
         {
             std::wcout << Index << L'=' << TestString[Index] << std::endl;
         }
 
-        StaticString<64> CharCompareString = WideToChar<64>( CompareString0 );
-        PrintString( CharCompareString );
+        FString WideCompareString = WideToChar(CombinedString);
+        CHECK_STRING(WideCompareString, "Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
     }
 
-    {
-        std::cout << std::endl << "----Testing String----" << std::endl << std::endl;
-
-        StringView StringView( "Hello StringView" );
-
-        String String0;
-        PrintString( String0 );
-        String String1 = "Hello String";
-        PrintString( String1 );
-        String String2 = String( Args, 7 );
-        PrintString( String2 );
-        String String3 = String( StringView );
-        PrintString( String3 );
-        String String4 = String1;
-        PrintString( String4 );
-        String String5 = Move( String2 );
-        PrintString( String5 );
-
-        String0.Append( "Appended String" );
-        PrintString( String0 );
-        String0.Append( '_' );
-        PrintString( String0 );
-        String5.Append( String0 );
-        PrintString( String5 );
-
-        String String6;
-        String6.Format( "Formatted String=%.4f", 0.004f );
-        PrintString( String6 );
-
-        String6.Append( '_' );
-        PrintString( String6 );
-
-        String6.AppendFormat( "Formatted String=%.4f", 0.0077f );
-        PrintString( String6 );
-
-        String LowerString6 = String6.ToLower();
-        PrintString( LowerString6 );
-
-        String UpperString6 = String6.ToUpper();
-        PrintString( UpperString6 );
-
-        String6.Clear();
-        PrintString( String6 );
-
-        String6.Append( "    Trimmable String    " );
-        PrintString( String6 );
-
-        String TrimmedString6 = String6.Trim();
-        TrimmedString6.Append( '*' );
-        PrintString( TrimmedString6 );
-
-        String6.Clear();
-        PrintString( String6 );
-
-        String6.Append( "123456789" );
-        PrintString( String6 );
-
-        String ReversedString6 = String6.Reverse();
-        PrintString( ReversedString6 );
-
-        String SearchString = "0123MeSearch89Me89";
-        PrintString( SearchString );
-
-        std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.Find( 'M' ) << std::endl;
-
-        std::cout << "Position=" << SearchString.FindOneOf( "ec" ) << std::endl;
-        std::cout << "Position=" << SearchString.FindOneOf( "Mc" ) << std::endl;
-
-        std::cout << "Position=" << SearchString.FindOneNotOf( "0123456789" ) << std::endl;
-
-        std::cout << "Position=" << SearchString.ReverseFind( "Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.ReverseFind( 'M' ) << std::endl;
-
-        std::cout << "Position=" << SearchString.ReverseFindOneOf( "hMc" ) << std::endl;
-
-        std::cout << "Position=" << SearchString.ReverseFindOneNotOf( "0123456789" ) << std::endl;
-
-        String CompareString0 = "COMPARE";
-        PrintString( CompareString0 );
-
-        String CompareString1 = "compare";
-        PrintString( CompareString1 );
-
-        std::cout << "Compare=" << CompareString0.Compare( CompareString1 ) << std::endl;
-        std::cout << "CompareNoCase=" << CompareString0.CompareNoCase( CompareString1 ) << std::endl;
-
-        CompareString1.Resize( 20, 'A' );
-        PrintString( CompareString1 );
-
-        char Buffer[6];
-        Buffer[5] = 0;
-        CompareString1.Copy( Buffer, 5, 3 );
-        std::cout << "Buffer=" << Buffer << std::endl;
-
-        CompareString0.Insert( "lower", 4 );
-        PrintString( CompareString0 );
-
-        CompareString0.Replace( "upper", 4 );
-        PrintString( CompareString0 );
-
-        CompareString0.Replace( 'X', 0 );
-        PrintString( CompareString0 );
-
-        String CombinedString = CompareString0 + '5';
-        PrintString( CombinedString );
-
-        CombinedString = '5' + CombinedString;
-        PrintString( CombinedString );
-
-        CombinedString = CombinedString + "Appended";
-        PrintString( CombinedString );
-
-        CombinedString = "Inserted" + CombinedString;
-        PrintString( CombinedString );
-
-        CombinedString = CombinedString + CombinedString;
-        PrintString( CombinedString );
-
-        String TestString = "Test";
-        PrintString( TestString );
-
-        std::cout << "operator== : " << std::boolalpha << ("Test" == TestString) << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (TestString == "Test") << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (CombinedString == CombinedString) << std::endl;
-
-        std::cout << "operator!= : " << std::boolalpha << ("Test" != TestString) << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (TestString != "Test") << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (CombinedString != CombinedString) << std::endl;
-
-        std::cout << "operator<= : " << std::boolalpha << ("Test" <= TestString) << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (TestString <= "Test") << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (CombinedString <= CombinedString) << std::endl;
-
-        std::cout << "operator< : " << std::boolalpha << ("Test" < TestString) << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (TestString < "Test") << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (CombinedString < CombinedString) << std::endl;
-
-        std::cout << "operator>= : " << std::boolalpha << ("Test" >= TestString) << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (TestString >= "Test") << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (CombinedString >= CombinedString) << std::endl;
-
-        std::cout << "operator> : " << std::boolalpha << ("Test" > TestString) << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (TestString > "Test") << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (CombinedString > CombinedString) << std::endl;
-
-        for ( char C : TestString )
-        {
-            std::cout << C << std::endl;
-        }
-
-        for ( int32 Index = 0; Index < TestString.Length(); Index++ )
-        {
-            std::cout << Index << '=' << TestString[Index] << std::endl;
-        }
-
-        WString WideCompareString = CharToWide( CompareString0 );
-        PrintWideString( WideCompareString );
-    }
-
-    {
-        std::cout << std::endl << "----Testing WString----" << std::endl << std::endl;
-
-        WStringView StringView( L"Hello StringView" );
-
-        const wchar_t* SomeWideStringInsteadOfArgs = L"/Users/SomeFolder/Blabla/BlaBla";
-
-        WString String0;
-        PrintWideString( String0 );
-        WString String1 = L"Hello String";
-        PrintWideString( String1 );
-        WString String2 = WString( SomeWideStringInsteadOfArgs, 7 );
-        PrintWideString( String2 );
-        WString String3 = WString( StringView );
-        PrintWideString( String3 );
-        WString String4 = String1;
-        PrintWideString( String4 );
-        WString String5 = Move( String2 );
-        PrintWideString( String5 );
-
-        String0.Append( L"Appended String" );
-        PrintWideString( String0 );
-        String0.Append( L'_' );
-        PrintWideString( String0 );
-        String5.Append( String0 );
-        PrintWideString( String5 );
-
-        WString String6;
-        String6.Format( L"Formatted String=%.4f", 0.004f );
-        PrintWideString( String6 );
-
-        String6.Append( '_' );
-        PrintWideString( String6 );
-
-        String6.AppendFormat( L"Formatted String=%.4f", 0.0077f );
-        PrintWideString( String6 );
-
-        WString LowerString6 = String6.ToLower();
-        PrintWideString( LowerString6 );
-
-        WString UpperString6 = String6.ToUpper();
-        PrintWideString( UpperString6 );
-
-        String6.Clear();
-        PrintWideString( String6 );
-
-        String6.Append( L"    Trimmable String    " );
-        PrintWideString( String6 );
-
-        WString TrimmedString6 = String6.Trim();
-        TrimmedString6.Append( L'*' );
-        PrintWideString( TrimmedString6 );
-
-        String6.Clear();
-        PrintWideString( String6 );
-
-        String6.Append( L"123456789" );
-        PrintWideString( String6 );
-
-        WString ReversedString6 = String6.Reverse();
-        PrintWideString( ReversedString6 );
-
-        WString SearchString = L"0123MeSearch89Me89";
-        PrintWideString( SearchString );
-
-        std::cout << "Position=" << SearchString.Find( L"Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.Find( L'M' ) << std::endl;
-
-        std::cout << "Position=" << SearchString.FindOneOf( L"ec" ) << std::endl;
-        std::cout << "Position=" << SearchString.FindOneOf( L"Mc" ) << std::endl;
-
-        std::cout << "Position=" << SearchString.FindOneNotOf( L"0123456789" ) << std::endl;
-
-        std::cout << "Position=" << SearchString.ReverseFind( L"Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.ReverseFind( L'M' ) << std::endl;
-
-        std::cout << "Position=" << SearchString.ReverseFindOneOf( L"hMc" ) << std::endl;
-
-        std::cout << "Position=" << SearchString.ReverseFindOneNotOf( L"0123456789" ) << std::endl;
-
-        WString CompareString0 = L"COMPARE";
-        PrintWideString( CompareString0 );
-
-        WString CompareString1 = L"compare";
-        PrintWideString( CompareString1 );
-
-        std::cout << "Compare=" << CompareString0.Compare( CompareString1 ) << std::endl;
-        std::cout << "CompareNoCase=" << CompareString0.CompareNoCase( CompareString1 ) << std::endl;
-
-        CompareString1.Resize( 20, 'A' );
-        PrintWideString( CompareString1 );
-
-        wchar_t Buffer[6];
-        Buffer[5] = 0;
-        CompareString1.Copy( Buffer, 5, 3 );
-        std::wcout << "Buffer=" << Buffer << std::endl;
-
-        CompareString0.Insert( L"lower", 4 );
-        PrintWideString( CompareString0 );
-
-        CompareString0.Replace( L"upper", 4 );
-        PrintWideString( CompareString0 );
-
-        CompareString0.Replace( 'X', 0 );
-        PrintWideString( CompareString0 );
-
-        WString CombinedString = CompareString0 + L'5';
-        PrintWideString( CombinedString );
-
-        CombinedString = L'5' + CombinedString;
-        PrintWideString( CombinedString );
-
-        CombinedString = CombinedString + L"Appended";
-        PrintWideString( CombinedString );
-
-        CombinedString = L"Inserted" + CombinedString;
-        PrintWideString( CombinedString );
-
-        CombinedString = CombinedString + CombinedString;
-        PrintWideString( CombinedString );
-
-        WString TestString = L"Test";
-        PrintWideString( TestString );
-
-        std::cout << "operator== : " << std::boolalpha << (L"Test" == TestString) << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (TestString == L"Test") << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (CombinedString == CombinedString) << std::endl;
-
-        std::cout << "operator!= : " << std::boolalpha << (L"Test" != TestString) << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (TestString != L"Test") << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (CombinedString != CombinedString) << std::endl;
-
-        std::cout << "operator<= : " << std::boolalpha << (L"Test" <= TestString) << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (TestString <= L"Test") << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (CombinedString <= CombinedString) << std::endl;
-
-        std::cout << "operator< : " << std::boolalpha << (L"Test" < TestString) << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (TestString < L"Test") << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (CombinedString < CombinedString) << std::endl;
-
-        std::cout << "operator>= : " << std::boolalpha << (L"Test" >= TestString) << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (TestString >= L"Test") << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (CombinedString >= CombinedString) << std::endl;
-
-        std::cout << "operator> : " << std::boolalpha << (L"Test" > TestString) << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (TestString > L"Test") << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (CombinedString > CombinedString) << std::endl;
-
-        for ( wchar_t C : TestString )
-        {
-            std::wcout << C << std::endl;
-        }
-
-        for ( int32 Index = 0; Index < TestString.Length(); Index++ )
-        {
-            std::wcout << Index << L'=' << TestString[Index] << std::endl;
-        }
-
-        String CharCompareString = WideToChar( CompareString0 );
-        PrintString( CharCompareString );
-    }
-
-    {
-        std::cout << std::endl << "----Testing StringView----" << std::endl << std::endl;
-
-        const char* LongString = "This is a long string";
-
-        StringView StringView0;
-        PrintStringView( StringView0 );
-        StringView StringView1 = LongString;
-        PrintStringView( StringView1 );
-        StringView StringView2 = StringView( LongString + 5, 4 );
-        PrintStringView( StringView2 );
-
-        char Buffer[6] = { };
-        Buffer[5] = 0;
-        StringView1.Copy( Buffer, 5, 4 );
-        std::cout << "Buffer=" << Buffer << std::endl;
-
-        StringView StringView3 = "    Trimmable String    ";
-        PrintStringView( StringView3 );
-
-        StringView StringView4 = StringView3.Trim();
-        PrintStringView( StringView4 );
-
-        StringView StringView5 = StringView( "COMPAREPostfix", 7 );
-        PrintStringView( StringView5 );
-
-        StringView StringView6 = StringView( "comparePostfix", 7 );
-        PrintStringView( StringView6 );
-
-        std::cout << "Compare=" << StringView5.Compare( StringView6 ) << std::endl;
-        std::cout << "CompareNoCase=" << StringView5.CompareNoCase( StringView6 ) << std::endl;
-
-        StringView6.Clear();
-        PrintStringView( StringView6 );
-
-        StringView SearchString = "0123MeSearch89Me89";
-        PrintStringView( SearchString );
-
-        std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.Find( 'M' ) << std::endl;
-
-        std::cout << "Position=" << SearchString.FindOneOf( "ec" ) << std::endl;
-        std::cout << "Position=" << SearchString.FindOneOf( "Mc" ) << std::endl;
-
-        std::cout << "Position=" << SearchString.FindOneNotOf( "0123456789" ) << std::endl;
-
-        std::cout << "Position=" << SearchString.ReverseFind( "Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.ReverseFind( 'M' ) << std::endl;
-
-        std::cout << "Position=" << SearchString.ReverseFindOneOf( "hMc" ) << std::endl;
-        std::cout << "Position=" << SearchString.ReverseFindOneNotOf( "0123456789" ) << std::endl;
-
-        StringView TestString = "Test";
-        PrintStringView( TestString );
-
-        std::cout << "operator== : " << std::boolalpha << ("Test" == TestString) << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (TestString == "Test") << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (TestString == TestString) << std::endl;
-
-        std::cout << "operator!= : " << std::boolalpha << ("Test" != TestString) << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (TestString != "Test") << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (TestString != TestString) << std::endl;
-
-        std::cout << "operator<= : " << std::boolalpha << ("Test" <= TestString) << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (TestString <= "Test") << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (TestString <= TestString) << std::endl;
-
-        std::cout << "operator< : " << std::boolalpha << ("Test" < TestString) << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (TestString < "Test") << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (TestString < TestString) << std::endl;
-
-        std::cout << "operator>= : " << std::boolalpha << ("Test" >= TestString) << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (TestString >= "Test") << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (TestString >= TestString) << std::endl;
-
-        std::cout << "operator> : " << std::boolalpha << ("Test" > TestString) << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (TestString > "Test") << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (TestString > TestString) << std::endl;
-
-        for ( char C : TestString )
-        {
-            std::cout << C << std::endl;
-        }
-
-        for ( int32 Index = 0; Index < TestString.Length(); Index++ )
-        {
-            std::cout << Index << '=' << TestString[Index] << std::endl;
-        }
-    }
-
-    {
-        std::cout << std::endl << "----Testing WStringView----" << std::endl << std::endl;
-
-        const wchar_t* LongString = L"This is a long string";
-
-        WStringView StringView0;
-        PrintWideStringView( StringView0 );
-        WStringView StringView1 = LongString;
-        PrintWideStringView( StringView1 );
-        WStringView StringView2 = WStringView( LongString + 5, 4 );
-        PrintWideStringView( StringView2 );
-
-        wchar_t Buffer[6] = { };
-        Buffer[5] = 0;
-        StringView1.Copy( Buffer, 5, 4 );
-        std::cout << "Buffer=" << Buffer << std::endl;
-
-        WStringView StringView3 = L"    Trimmable String    ";
-        PrintWideStringView( StringView3 );
-
-        WStringView StringView4 = StringView3.Trim();
-        PrintWideStringView( StringView4 );
-
-        WStringView StringView5 = WStringView( L"COMPAREPostfix", 7 );
-        PrintWideStringView( StringView5 );
-
-        WStringView StringView6 = WStringView( L"comparePostfix", 7 );
-        PrintWideStringView( StringView6 );
-
-        std::cout << "Compare=" << StringView5.Compare( StringView6 ) << std::endl;
-        std::cout << "CompareNoCase=" << StringView5.CompareNoCase( StringView6 ) << std::endl;
-
-        StringView6.Clear();
-        PrintWideStringView( StringView6 );
-
-        WStringView SearchString = L"0123MeSearch89Me89";
-        PrintWideStringView( SearchString );
-
-        std::cout << "Position=" << SearchString.Find( L"Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.Find( L'M' ) << std::endl;
-
-        std::cout << "Position=" << SearchString.FindOneOf( L"ec" ) << std::endl;
-        std::cout << "Position=" << SearchString.FindOneOf( L"Mc" ) << std::endl;
-
-        std::cout << "Position=" << SearchString.FindOneNotOf( L"0123456789" ) << std::endl;
-
-        std::cout << "Position=" << SearchString.ReverseFind( L"Me" ) << std::endl;
-        std::cout << "Position=" << SearchString.ReverseFind( L'M' ) << std::endl;
-
-        std::cout << "Position=" << SearchString.ReverseFindOneOf( L"hMc" ) << std::endl;
-        std::cout << "Position=" << SearchString.ReverseFindOneNotOf( L"0123456789" ) << std::endl;
-
-        WStringView TestString = L"Test";
-        PrintWideStringView( TestString );
-
-        std::cout << "operator== : " << std::boolalpha << (L"Test" == TestString) << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (TestString == L"Test") << std::endl;
-        std::cout << "operator== : " << std::boolalpha << (TestString == TestString) << std::endl;
-
-        std::cout << "operator!= : " << std::boolalpha << (L"Test" != TestString) << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (TestString != L"Test") << std::endl;
-        std::cout << "operator!= : " << std::boolalpha << (TestString != TestString) << std::endl;
-
-        std::cout << "operator<= : " << std::boolalpha << (L"Test" <= TestString) << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (TestString <= L"Test") << std::endl;
-        std::cout << "operator<= : " << std::boolalpha << (TestString <= TestString) << std::endl;
-
-        std::cout << "operator< : " << std::boolalpha << (L"Test" < TestString) << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (TestString < L"Test") << std::endl;
-        std::cout << "operator< : " << std::boolalpha << (TestString < TestString) << std::endl;
-
-        std::cout << "operator>= : " << std::boolalpha << (L"Test" >= TestString) << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (TestString >= L"Test") << std::endl;
-        std::cout << "operator>= : " << std::boolalpha << (TestString >= TestString) << std::endl;
-
-        std::cout << "operator> : " << std::boolalpha << (L"Test" > TestString) << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (TestString > L"Test") << std::endl;
-        std::cout << "operator> : " << std::boolalpha << (TestString > TestString) << std::endl;
-
-        for ( wchar_t C : TestString )
-        {
-            std::wcout << C << std::endl;
-        }
-
-        for ( int32 Index = 0; Index < TestString.Length(); Index++ )
-        {
-            std::wcout << Index << '=' << TestString[Index] << std::endl;
-        }
-    }
+    SUCCESS();
 }
+#endif
+
+#if RUN_TSTATICSTRING_TEST
+bool TStaticString_Test_Internal(const CHAR* Args)
+{
+    {
+        std::cout << std::endl << "----Testing FStaticString----" << std::endl << std::endl;
+
+        FStringView StringView("Hello FStringView");
+
+        FStaticString<64> StaticString0;
+        CHECK_STRING(StaticString0, "");
+        FStaticString<64> StaticString1 = "Hello String";
+        CHECK_STRING(StaticString1, "Hello String");
+        FStaticString<64> StaticString2 = FStaticString<64>(Args, 7);
+        CHECK_STRING_N(StaticString2, Args, 7);
+        FStaticString<64> StaticString3 = FStaticString<64>(StringView);
+        CHECK_STRING(StaticString3, "Hello FStringView");
+        FStaticString<64> StaticString4 = StaticString1;
+        CHECK_STRING(StaticString4, "Hello String");
+        FStaticString<64> StaticString5 = Move(StaticString2);
+        CHECK_STRING(StaticString2, "");
+        CHECK_STRING_N(StaticString5, Args, 7);
+
+        StaticString0.Append("Appended String");
+        CHECK_STRING(StaticString0, "Appended String");
+        StaticString0.Append('_');
+        CHECK_STRING(StaticString0, "Appended String_");
+        StaticString5.Append(StaticString0);
+        const std::string ArgString = std::string(Args, 7) + "Appended String_";
+        CHECK_STRING(StaticString5, ArgString.c_str());
+
+        FStaticString<64> StaticString6;
+        StaticString6.Format("Formatted String=%.4f", 0.004f);
+        CHECK_STRING(StaticString6, "Formatted String=0.0040");
+
+        StaticString6.Append('_');
+        CHECK_STRING(StaticString6, "Formatted String=0.0040_");
+
+        StaticString6.AppendFormat("Formatted String=%.4f", 0.0077f);
+        CHECK_STRING(StaticString6, "Formatted String=0.0040_Formatted String=0.0077");
+
+        FStaticString<64> LowerStaticString6 = StaticString6.ToLower();
+        CHECK_STRING(LowerStaticString6, "formatted string=0.0040_formatted string=0.0077");
+
+        FStaticString<64> UpperStaticString6 = StaticString6.ToUpper();
+        CHECK_STRING(UpperStaticString6, "FORMATTED STRING=0.0040_FORMATTED STRING=0.0077");
+
+        StaticString6.Clear();
+        CHECK_STRING(StaticString6, "");
+
+        StaticString6.Append("    Trimmable String    ");
+        CHECK_STRING(StaticString6, "    Trimmable String    ");
+
+        FStaticString<64> TrimmedStaticString6 = StaticString6.Trim();
+        TrimmedStaticString6.Append('*');
+        CHECK_STRING(TrimmedStaticString6, "Trimmable String*");
+
+        StaticString6.Clear();
+        CHECK_STRING(StaticString6, "");
+
+        StaticString6.Append("123456789");
+        CHECK_STRING(StaticString6, "123456789");
+
+        FStaticString<64> ReversedStaticString6 = StaticString6.Reverse();
+        CHECK_STRING(ReversedStaticString6, "987654321");
+
+        FStaticString<64> SearchString = "0123MeSearch89Me89";
+        CHECK_STRING(SearchString, "0123MeSearch89Me89");
+
+        CHECK(SearchString.Find("Me")                 == 4);
+        CHECK(SearchString.FindChar('M')                 == 4);
+        CHECK(SearchString.Contains("Me")             == true);
+        CHECK(SearchString.Contains('M')                 == true);
+        CHECK(SearchString.StartsWith("0123Me")       == true);
+        CHECK(SearchString.StartsWithNoCase("0123ME") == true);
+        CHECK(SearchString.EndsWith("Me89")           == true);
+        CHECK(SearchString.EndsWithNoCase("ME89")     == true);
+
+        CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
+        {
+            return (Char == 'e') || (Char == 'c');
+        }) == 5);
+
+        CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
+        {
+            return (Char == 'M') || (Char == 'c');
+        }) == 4);
+
+        CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
+        {
+            const CHAR Buffer[] = "0123456789";
+            for (CHAR Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }) == 4);
+
+        CHECK(SearchString.FindLast("Me") == 14);
+        CHECK(SearchString.FindLastChar('M') == 14);
+
+        CHECK(SearchString.FindLastCharWithPredicate([](CHAR Char) -> bool
+        {
+            return (Char == 'h') || (Char == 'M') || (Char == 'c');
+        }) == 14);
+
+        CHECK(SearchString.FindLastCharWithPredicate([](CHAR Char) -> bool
+        {
+            const CHAR Buffer[] = "0123456789";
+            for (CHAR Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }) == 15);
+
+        FStaticString<64> CompareString0 = "COMPARE";
+        CHECK_STRING(CompareString0, "COMPARE");
+
+        FStaticString<64> CompareString1 = "compare";
+        CHECK_STRING(CompareString1, "compare");
+
+        CHECK(CompareString0.Compare(CompareString1)       != 0);
+        CHECK(CompareString0.CompareNoCase(CompareString1) == 0);
+
+        CompareString1.Resize(20, 'A');
+        CHECK_STRING(CompareString1, "compareAAAAAAAAAAAAA");
+
+        CompareString1.Resize(16, 'A');
+        CHECK_STRING(CompareString1, "compareAAAAAAAAA");
+
+        CompareString1.Resize(7);
+        CHECK_STRING(CompareString1, "compare");
+
+        CompareString1.Resize(20);
+        CHECK_STRING(CompareString1, "compare");
+
+        CompareString1.Resize(7);
+        CHECK_STRING(CompareString1, "compare");
+
+        CompareString1.Resize(20, 'A');
+        CHECK_STRING(CompareString1, "compareAAAAAAAAAAAAA");
+
+        CHAR Buffer[6];
+        Buffer[5] = 0;
+        CompareString1.CopyToBuffer(Buffer, 5, 3);
+        CHECK(FCString::Strcmp(Buffer, "pareA") == 0);
+
+        CompareString0.Insert("lower", 4);
+        CHECK_STRING(CompareString0, "COMPlowerARE");
+
+        CompareString0.Replace("upper", 4);
+        CHECK_STRING(CompareString0, "COMPupperARE");
+
+        CompareString0.Replace('X', 0);
+        CHECK_STRING(CompareString0, "XOMPupperARE");
+
+        FStaticString<64> CombinedString = (CompareString0 + '5');
+        CHECK_STRING(CombinedString, "XOMPupperARE5");
+
+        CombinedString = '5' + CombinedString;
+        CHECK_STRING(CombinedString, "5XOMPupperARE5");
+
+        CombinedString = CombinedString + "Appended";
+        CHECK_STRING(CombinedString, "5XOMPupperARE5Appended");
+
+        CombinedString = "Inserted" + CombinedString;
+        CHECK_STRING(CombinedString, "Inserted5XOMPupperARE5Appended");
+
+        CombinedString = CombinedString + CombinedString;
+        CHECK_STRING(CombinedString, "Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
+
+        FStaticString<64> TestString = "Test";
+        CHECK_STRING(TestString, "Test");
+
+        CHECK(("Test" == TestString) == true);
+        CHECK((TestString == "Test") == true);
+        CHECK((CombinedString == CombinedString) == true);
+
+        CHECK(("Test" != TestString) == false);
+        CHECK((TestString != "Test") == false);
+        CHECK((CombinedString != CombinedString) == false);
+
+        CHECK(("Test" <= TestString) == true);
+        CHECK((TestString <= "Test") == true);
+        CHECK((CombinedString <= CombinedString) == true);
+
+        CHECK(("Test" < TestString) == false);
+        CHECK((TestString < "Test") == false);
+        CHECK((CombinedString < CombinedString) == false);
+
+        CHECK(("Test" >= TestString) == true);
+        CHECK((TestString >= "Test") == true);
+        CHECK((CombinedString >= CombinedString) == true);
+
+        CHECK(("Test" > TestString) == false);
+        CHECK((TestString > "Test") == false);
+        CHECK((CombinedString > CombinedString) == false);
+
+        for (CHAR C : TestString)
+        {
+            std::cout << C << std::endl;
+        }
+
+        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
+        {
+            std::cout << Index << L'=' << TestString[Index] << std::endl;
+        }
+
+        FStaticStringWide<64> WideCompareString = CharToWide(CombinedString);
+        CHECK_STRING(WideCompareString, L"Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
+    }
+
+    {
+        std::cout << std::endl << "----Testing FStaticStringWide----" << std::endl << std::endl;
+
+        FStringViewWide StringView(L"Hello FStringView");
+
+        const WIDECHAR* SomeWideStringInsteadOfArgs = L"/Users/SomeFolder/Blabla/BlaBla";
+
+        FStaticStringWide<64> StaticString0;
+        CHECK_STRING(StaticString0, L"");
+        FStaticStringWide<64> StaticString1 = L"Hello String";
+        CHECK_STRING(StaticString1, L"Hello String");
+        FStaticStringWide<64> StaticString2 = FStaticStringWide<64>(SomeWideStringInsteadOfArgs, 7);
+        CHECK_STRING_N(StaticString2, SomeWideStringInsteadOfArgs, 7);
+        FStaticStringWide<64> StaticString3 = FStaticStringWide<64>(StringView);
+        CHECK_STRING(StaticString3, L"Hello FStringView");
+        FStaticStringWide<64> StaticString4 = StaticString1;
+        CHECK_STRING(StaticString4, L"Hello String");
+        FStaticStringWide<64> StaticString5 = Move(StaticString2);
+        CHECK_STRING(StaticString2, L"");
+        CHECK_STRING_N(StaticString5, SomeWideStringInsteadOfArgs, 7);
+
+        StaticString0.Append(L"Appended String");
+        CHECK_STRING(StaticString0, L"Appended String");
+        StaticString0.Append(L'_');
+        CHECK_STRING(StaticString0, L"Appended String_");
+        StaticString5.Append(StaticString0);
+        const std::wstring ArgString = std::wstring(SomeWideStringInsteadOfArgs, 7) + L"Appended String_";
+        CHECK_STRING(StaticString5, ArgString.c_str());
+
+        FStaticStringWide<64> StaticString6;
+        StaticString6.Format(L"Formatted String=%.4f", 0.004f);
+        CHECK_STRING(StaticString6, L"Formatted String=0.0040");
+
+        StaticString6.Append(L'_');
+        CHECK_STRING(StaticString6, L"Formatted String=0.0040_");
+
+        StaticString6.AppendFormat(L"Formatted String=%.4f", 0.0077f);
+        CHECK_STRING(StaticString6, L"Formatted String=0.0040_Formatted String=0.0077");
+
+        FStaticStringWide<64> LowerStaticString6 = StaticString6.ToLower();
+        CHECK_STRING(LowerStaticString6, L"formatted string=0.0040_formatted string=0.0077");
+
+        FStaticStringWide<64> UpperStaticString6 = StaticString6.ToUpper();
+        CHECK_STRING(UpperStaticString6, L"FORMATTED STRING=0.0040_FORMATTED STRING=0.0077");
+
+        StaticString6.Clear();
+        CHECK_STRING(StaticString6, L"");
+
+        StaticString6.Append(L"    Trimmable String    ");
+        CHECK_STRING(StaticString6, L"    Trimmable String    ");
+
+        FStaticStringWide<64> TrimmedStaticString6 = StaticString6.Trim();
+        TrimmedStaticString6.Append(L'*');
+        CHECK_STRING(TrimmedStaticString6, L"Trimmable String*");
+
+        StaticString6.Clear();
+        CHECK_STRING(StaticString6, L"");
+
+        StaticString6.Append(L"123456789");
+        CHECK_STRING(StaticString6, L"123456789");
+
+        FStaticStringWide<64> ReversedStaticString6 = StaticString6.Reverse();
+        CHECK_STRING(ReversedStaticString6, L"987654321");
+
+        FStaticStringWide<64> SearchString = L"0123MeSearch89Me89";
+        CHECK_STRING(SearchString, L"0123MeSearch89Me89");
+
+        CHECK(SearchString.Find(L"Me")                 == 4);
+        CHECK(SearchString.FindChar(L'M')              == 4);
+        CHECK(SearchString.Contains(L"Me")             == true);
+        CHECK(SearchString.Contains(L'M')              == true);
+        CHECK(SearchString.StartsWith(L"0123Me")       == true);
+        CHECK(SearchString.StartsWithNoCase(L"0123ME") == true);
+        CHECK(SearchString.EndsWith(L"Me89")           == true);
+        CHECK(SearchString.EndsWithNoCase(L"ME89")     == true);
+
+        CHECK(SearchString.FindCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            return (Char == L'e') || (Char == L'c');
+        }) == 5);
+
+        CHECK(SearchString.FindCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            return (Char == L'M') || (Char == L'c');
+        }) == 4);
+
+        CHECK(SearchString.FindCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            const WIDECHAR Buffer[] = L"0123456789";
+            for (WIDECHAR Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }) == 4);
+
+        CHECK(SearchString.FindLast(L"Me") == 14);
+        CHECK(SearchString.FindLastChar(L'M') == 14);
+
+        CHECK(SearchString.FindLastCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            return (Char == L'h') || (Char == L'M') || (Char == L'c');
+        }) == 14);
+
+        CHECK(SearchString.FindLastCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            const WIDECHAR Buffer[] = L"0123456789";
+            for (WIDECHAR Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }) == 15);
+
+        FStaticStringWide<64> CompareString0 = L"COMPARE";
+        CHECK_STRING(CompareString0, L"COMPARE");
+
+        FStaticStringWide<64> CompareString1 = L"compare";
+        CHECK_STRING(CompareString1, L"compare");
+
+        CHECK(CompareString0.Compare(CompareString1)       != 0);
+        CHECK(CompareString0.CompareNoCase(CompareString1) == 0);
+
+        CompareString1.Resize(20, L'A');
+        CHECK_STRING(CompareString1, L"compareAAAAAAAAAAAAA");
+
+        CompareString1.Resize(16, L'A');
+        CHECK_STRING(CompareString1, L"compareAAAAAAAAA");
+
+        CompareString1.Resize(7);
+        CHECK_STRING(CompareString1, L"compare");
+
+        CompareString1.Resize(20);
+        CHECK_STRING(CompareString1, L"compare");
+
+        CompareString1.Resize(7);
+        CHECK_STRING(CompareString1, L"compare");
+
+        CompareString1.Resize(20, L'A');
+        CHECK_STRING(CompareString1, L"compareAAAAAAAAAAAAA");
+
+        WIDECHAR Buffer[6];
+        Buffer[5] = 0;
+        CompareString1.CopyToBuffer(Buffer, 5, 3);
+        CHECK(FCStringWide::Strcmp(Buffer, L"pareA") == 0);
+
+        CompareString0.Insert(L"lower", 4);
+        CHECK_STRING(CompareString0, L"COMPlowerARE");
+
+        CompareString0.Replace(L"upper", 4);
+        CHECK_STRING(CompareString0, L"COMPupperARE");
+
+        CompareString0.Replace(L'X', 0);
+        CHECK_STRING(CompareString0, L"XOMPupperARE");
+
+        FStaticStringWide<64> CombinedString = (CompareString0 + L'5');
+        CHECK_STRING(CombinedString, L"XOMPupperARE5");
+
+        CombinedString = L'5' + CombinedString;
+        CHECK_STRING(CombinedString, L"5XOMPupperARE5");
+
+        CombinedString = CombinedString + L"Appended";
+        CHECK_STRING(CombinedString, L"5XOMPupperARE5Appended");
+
+        CombinedString = L"Inserted" + CombinedString;
+        CHECK_STRING(CombinedString, L"Inserted5XOMPupperARE5Appended");
+
+        CombinedString = CombinedString + CombinedString;
+        CHECK_STRING(CombinedString, L"Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
+
+        FStaticStringWide<64> TestString = L"Test";
+        CHECK_STRING(TestString, L"Test");
+
+        CHECK((L"Test" == TestString) == true);
+        CHECK((TestString == L"Test") == true);
+        CHECK((CombinedString == CombinedString) == true);
+
+        CHECK((L"Test" != TestString) == false);
+        CHECK((TestString != L"Test") == false);
+        CHECK((CombinedString != CombinedString) == false);
+
+        CHECK((L"Test" <= TestString) == true);
+        CHECK((TestString <= L"Test") == true);
+        CHECK((CombinedString <= CombinedString) == true);
+
+        CHECK((L"Test" < TestString) == false);
+        CHECK((TestString < L"Test") == false);
+        CHECK((CombinedString < CombinedString) == false);
+
+        CHECK((L"Test" >= TestString) == true);
+        CHECK((TestString >= L"Test") == true);
+        CHECK((CombinedString >= CombinedString) == true);
+
+        CHECK((L"Test" > TestString) == false);
+        CHECK((TestString > L"Test") == false);
+        CHECK((CombinedString > CombinedString) == false);
+
+        for (WIDECHAR C : TestString)
+        {
+            std::cout << C << std::endl;
+        }
+
+        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
+        {
+            std::cout << Index << '=' << TestString[Index] << std::endl;
+        }
+
+        FStaticString<64> WideCompareString = WideToChar(CombinedString);
+        CHECK_STRING(WideCompareString, "Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
+    }
+    
+    SUCCESS();
+}
+#endif
+
+#if RUN_TSTRINGVIEW_TEST
+bool TStringView_Test_Internal(const CHAR* Args)
+{
+    UNREFERENCED_VARIABLE(Args);
+
+    {
+        std::cout << std::endl << "----Testing FStringView----" << std::endl << std::endl;
+
+        const CHAR* LongString = "This is a long string";
+
+        FStringView StringView0;
+        CHECK_STRING(StringView0, "");
+        FStringView StringView1 = LongString;
+        CHECK_STRING(StringView1, "This is a long string");
+        FStringView StringView2 = FStringView(LongString + 5, 4);
+        CHECK_STRING(StringView2, "is a");
+
+        CHAR Buffer[6] = { };
+        Buffer[5] = 0;
+        StringView1.CopyToBuffer(Buffer, 5, 3);
+        CHECK(FCString::Strcmp(Buffer, "s is ") == 0);
+
+        FStringView StringView3 = "    Trimmable String    ";
+        CHECK_STRING(StringView3, "    Trimmable String    ");
+
+        FStringView StringView4 = StringView3.Trim();
+        CHECK_STRING(StringView4, "Trimmable String");
+
+        FStringView StringView5 = FStringView("COMPAREPostfix", 7);
+        CHECK_STRING(StringView5, "COMPARE");
+
+        FStringView StringView6 = FStringView("comparePostfix", 7);
+        CHECK_STRING(StringView6, "compare");
+
+        std::cout << "Compare=" << StringView5.Compare(StringView6) << std::endl;
+        std::cout << "CompareNoCase=" << StringView5.CompareNoCase(StringView6) << std::endl;
+
+        CHECK(StringView5.Compare(StringView6)       != 0);
+        CHECK(StringView5.CompareNoCase(StringView6) == 0);
+
+        StringView6.Clear();
+        PrintStringView(StringView6);
+
+        FStringView SearchString = "0123MeSearch89Me89";
+        CHECK_STRING(SearchString, "0123MeSearch89Me89");
+
+        CHECK(SearchString.Find("Me")                 == 4);
+        CHECK(SearchString.FindChar('M')              == 4);
+        CHECK(SearchString.Contains("Me")             == true);
+        CHECK(SearchString.Contains('M')              == true);
+        CHECK(SearchString.StartsWith("0123Me")       == true);
+        CHECK(SearchString.StartsWithNoCase("0123ME") == true);
+        CHECK(SearchString.EndsWith("Me89")           == true);
+        CHECK(SearchString.EndsWithNoCase("ME89")     == true);
+
+        CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
+        {
+            return (Char == 'e') || (Char == 'c');
+        }) == 5);
+
+        CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
+        {
+            return (Char == 'M') || (Char == 'c');
+        }) == 4);
+
+        CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
+        {
+            const CHAR Buffer[] = "0123456789";
+            for (CHAR Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }) == 4);
+
+        CHECK(SearchString.FindLast("Me")    == 14);
+        CHECK(SearchString.FindLastChar('M') == 14);
+
+        CHECK(SearchString.FindLastCharWithPredicate([](CHAR Char) -> bool
+        {
+            return (Char == 'h') || (Char == 'M') || (Char == 'c');
+        }) == 14);
+
+        CHECK(SearchString.FindLastCharWithPredicate([](CHAR Char) -> bool
+        {
+            const CHAR Buffer[] = "0123456789";
+            for (CHAR Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }) == 15);
+
+        FStringView TestString = "Test";
+        CHECK_STRING(TestString, "Test");
+
+        CHECK(("Test" == TestString) == true);
+        CHECK((TestString == "Test") == true);
+
+        CHECK(("Test" != TestString) == false);
+        CHECK((TestString != "Test") == false);
+
+        CHECK(("Test" <= TestString) == true);
+        CHECK((TestString <= "Test") == true);
+
+        CHECK(("Test" < TestString) == false);
+        CHECK((TestString < "Test") == false);
+
+        CHECK(("Test" >= TestString) == true);
+        CHECK((TestString >= "Test") == true);
+
+        CHECK(("Test" > TestString) == false);
+        CHECK((TestString > "Test") == false);
+
+        for (CHAR C : TestString)
+        {
+            std::cout << C << std::endl;
+        }
+
+        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
+        {
+            std::cout << Index << '=' << TestString[Index] << std::endl;
+        }
+    }
+
+    {
+        std::cout << std::endl << "----Testing FStringViewWide----" << std::endl << std::endl;
+
+        const WIDECHAR* LongString = L"This is a long string";
+
+        FStringViewWide StringView0;
+        CHECK_STRING(StringView0, L"");
+        FStringViewWide StringView1 = LongString;
+        CHECK_STRING(StringView1, L"This is a long string");
+        FStringViewWide StringView2 = FStringViewWide(LongString + 5, 4);
+        CHECK_STRING(StringView2, L"is a");
+
+        WIDECHAR Buffer[6] = { };
+        Buffer[5] = 0;
+        StringView1.CopyToBuffer(Buffer, 5, 3);
+        CHECK(FCStringWide::Strcmp(Buffer, L"s is ") == 0);
+
+        FStringViewWide StringView3 = L"    Trimmable String    ";
+        CHECK_STRING(StringView3, L"    Trimmable String    ");
+
+        FStringViewWide StringView4 = StringView3.Trim();
+        CHECK_STRING(StringView4, L"Trimmable String");
+
+        FStringViewWide StringView5 = FStringViewWide(L"COMPAREPostfix", 7);
+        CHECK_STRING(StringView5, L"COMPARE");
+
+        FStringViewWide StringView6 = FStringViewWide(L"comparePostfix", 7);
+        CHECK_STRING(StringView6, L"compare");
+
+        CHECK(StringView5.Compare(StringView6)       != 0);
+        CHECK(StringView5.CompareNoCase(StringView6) == 0);
+
+        StringView6.Clear();
+        PrintStringView(StringView6);
+
+        FStringViewWide SearchString = L"0123MeSearch89Me89";
+        CHECK_STRING(SearchString, L"0123MeSearch89Me89");
+
+        CHECK(SearchString.Find(L"Me")                 == 4);
+        CHECK(SearchString.FindChar(L'M')              == 4);
+        CHECK(SearchString.Contains(L"Me")             == true);
+        CHECK(SearchString.Contains(L'M')              == true);
+        CHECK(SearchString.StartsWith(L"0123Me")       == true);
+        CHECK(SearchString.StartsWithNoCase(L"0123ME") == true);
+        CHECK(SearchString.EndsWith(L"Me89")           == true);
+        CHECK(SearchString.EndsWithNoCase(L"ME89")     == true);
+
+        CHECK(SearchString.FindCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            return (Char == L'e') || (Char == L'c');
+        }) == 5);
+
+        CHECK(SearchString.FindCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            return (Char == L'M') || (Char == L'c');
+        }) == 4);
+
+        CHECK(SearchString.FindCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            const WIDECHAR Buffer[] = L"0123456789";
+            for (WIDECHAR Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }) == 4);
+
+        CHECK(SearchString.FindLast(L"Me") == 14);
+        CHECK(SearchString.FindLastChar(L'M') == 14);
+
+        CHECK(SearchString.FindLastCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            return (Char == L'h') || (Char == L'M') || (Char == L'c');
+        }) == 14);
+
+        CHECK(SearchString.FindLastCharWithPredicate([](WIDECHAR Char) -> bool
+        {
+            const WIDECHAR Buffer[] = L"0123456789";
+            for (WIDECHAR Current : Buffer)
+            {
+                if (Char == Current)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }) == 15);
+
+        FStringViewWide TestString = L"Test";
+        CHECK_STRING(TestString, L"Test");
+
+        CHECK((L"Test" == TestString) == true);
+        CHECK((TestString == L"Test") == true);
+
+        CHECK((L"Test" != TestString) == false);
+        CHECK((TestString != L"Test") == false);
+
+        CHECK((L"Test" <= TestString) == true);
+        CHECK((TestString <= L"Test") == true);
+
+        CHECK((L"Test" < TestString) == false);
+        CHECK((TestString < L"Test") == false);
+
+        CHECK((L"Test" >= TestString) == true);
+        CHECK((TestString >= L"Test") == true);
+
+        CHECK((L"Test" > TestString) == false);
+        CHECK((TestString > L"Test") == false);
+
+        for (WIDECHAR C : TestString)
+        {
+            std::wcout << C << std::endl;
+        }
+
+        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
+        {
+            std::wcout << Index << L'=' << TestString[Index] << std::endl;
+        }
+    }
+
+    SUCCESS();
+}
+#endif

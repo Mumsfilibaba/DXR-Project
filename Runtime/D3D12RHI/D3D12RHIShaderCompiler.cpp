@@ -1,16 +1,16 @@
 #include "D3D12RHIShaderCompiler.h"
 
 #include "Core/Utilities/StringUtilities.h"
-#include "Core/Logging/Log.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Windows/Windows.h"
-#include "Core/Modules/Platform/PlatformLibrary.h"
+#include "Core/Platform/PlatformLibrary.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 DxcCreateInstanceProc DxcCreateInstanceFunc = nullptr;
 
 #ifndef MAKEFOURCC
-#define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | (unsigned char)(b) << 8 | (unsigned char)(c) << 16 | (unsigned char)(d) << 24)
+#define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned CHAR)(a) | (unsigned CHAR)(b) << 8 | (unsigned CHAR)(c) << 16 | (unsigned CHAR)(d) << 24)
 #endif
 
 enum DxilFourCC
@@ -159,8 +159,7 @@ private:
 FD3D12ShaderCompiler* GD3D12ShaderCompiler = nullptr;
 
 FD3D12ShaderCompiler::FD3D12ShaderCompiler()
-    : IRHIShaderCompiler()
-    , DxCompiler(nullptr)
+    : DxCompiler(nullptr)
     , DxLibrary(nullptr)
     , DxLinker(nullptr)
     , DxIncludeHandler(nullptr)
@@ -183,8 +182,8 @@ FD3D12ShaderCompiler::~FD3D12ShaderCompiler()
 }
 
 bool FD3D12ShaderCompiler::CompileFromFile(
-    const String& FilePath,
-    const String& EntryPoint,
+    const FString& FilePath,
+    const FString& EntryPoint,
     const TArray<FShaderDefine>* Defines,
     EShaderStage ShaderStage,
     EShaderModel ShaderModel,
@@ -192,43 +191,41 @@ bool FD3D12ShaderCompiler::CompileFromFile(
 {
     Code.Clear();
 
-    WString WideFilePath = CharToWide(FilePath);
-    WString WideEntrypoint = CharToWide(EntryPoint);
+    FStringWide WideFilePath = CharToWide(FilePath);
+    FStringWide WideEntrypoint = CharToWide(EntryPoint);
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
-    HRESULT Result = DxLibrary->CreateBlobFromFile(WideFilePath.CStr(), nullptr, &SourceBlob);
+    HRESULT Result = DxLibrary->CreateBlobFromFile(WideFilePath.GetCString(), nullptr, &SourceBlob);
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
-
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    return InternalCompileFromSource(SourceBlob.Get(), WideFilePath.CStr(), WideEntrypoint.CStr(), ShaderStage, ShaderModel, Defines, Code);
+    return InternalCompileFromSource(SourceBlob.Get(), WideFilePath.GetCString(), WideEntrypoint.GetCString(), ShaderStage, ShaderModel, Defines, Code);
 }
 
 bool FD3D12ShaderCompiler::CompileShader(
-    const String& ShaderSource,
-    const String& EntryPoint,
+    const FString& ShaderSource,
+    const FString& EntryPoint,
     const TArray<FShaderDefine>* Defines,
     EShaderStage ShaderStage,
     EShaderModel ShaderModel,
     TArray<uint8>& Code)
 {
-    WString WideEntrypoint = CharToWide(EntryPoint);
+    FStringWide WideEntrypoint = CharToWide(EntryPoint);
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
-    HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(ShaderSource.CStr(), sizeof(char) * static_cast<uint32>(ShaderSource.Size()), CP_UTF8, &SourceBlob);
+    HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(ShaderSource.GetCString(), sizeof(CHAR) * static_cast<uint32>(ShaderSource.GetSize()), CP_UTF8, &SourceBlob);
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
-
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    return InternalCompileFromSource(SourceBlob.Get(), nullptr, WideEntrypoint.CStr(), ShaderStage, ShaderModel, Defines, Code);
+    return InternalCompileFromSource(SourceBlob.Get(), nullptr, WideEntrypoint.GetCString(), ShaderStage, ShaderModel, Defines, Code);
 }
 
 bool FD3D12ShaderCompiler::GetReflection(FD3D12Shader* Shader, ID3D12ShaderReflection** Reflection)
@@ -276,11 +273,11 @@ bool FD3D12ShaderCompiler::Init()
     DxCompilerDLL = ::LoadLibrary("dxcompiler.dll");
     if (!DxCompilerDLL)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to load dxcompiler.dll");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load dxcompiler.dll");
         return false;
     }
 
-    DxcCreateInstanceFunc = PlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DxCompilerDLL);
+    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DxCompilerDLL);
     if (!DxcCreateInstanceFunc)
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to load DxcCreateInstance");
@@ -347,17 +344,17 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
 
     // Convert defines
     TArray<DxcDefine> DxDefines;
-    TArray<WString> StrBuff;
+    TArray<FStringWide> StrBuff;
     if (Defines)
     {
-        StrBuff.Reserve(Defines->Size() * 2);
-        DxDefines.Reserve(Defines->Size());
+        StrBuff.Reserve(Defines->GetSize() * 2);
+        DxDefines.Reserve(Defines->GetSize());
 
         for (const FShaderDefine& Define : *Defines)
         {
-            const WString& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
-            const WString& WideValue = StrBuff.Emplace(CharToWide(Define.Value));
-            DxDefines.Push({ WideDefine.CStr(), WideValue.CStr() });
+            const FStringWide& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
+            const FStringWide& WideValue = StrBuff.Emplace(CharToWide(Define.Value));
+            DxDefines.Push({ WideDefine.GetCString(), WideValue.GetCString() });
         }
     }
 
@@ -366,29 +363,25 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     LPCWSTR ShaderModelText = GetShaderModelText(ShaderModel);
 
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
-    wchar_t TargetProfile[BufferLength];
-    WStringUtils::FormatBuffer(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+    WIDECHAR TargetProfile[BufferLength];
+    FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
     TComPtr<IDxcOperationResult> Result;
     HRESULT hResult = DxCompiler->Compile(
         SourceBlob, FilePath, Entrypoint,
         TargetProfile,
-        Args.Data(), Args.Size(),
-        DxDefines.Data(), DxDefines.Size(),
+        Args.GetData(), Args.GetSize(),
+        DxDefines.GetData(), DxDefines.GetSize(),
         DxIncludeHandler.Get(), &Result);
     if (FAILED(hResult))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Compile");
-
-        CDebug::DebugBreak();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-
-        CDebug::DebugBreak();
         return false;
     }
 
@@ -413,15 +406,15 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
         return false;
     }
 
-    String AsciiFilePath = (FilePath != nullptr) ? WideToChar(WString(FilePath)) : "";
+    FString AsciiFilePath = (FilePath != nullptr) ? WideToChar(FStringWide(FilePath)) : "";
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
-        String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        D3D12_INFO("[FD3D12ShaderCompiler]: Successfully compiled shader '%s' with the following output: %s", AsciiFilePath.CStr(), Output.CStr());
+        FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
+        D3D12_INFO("[FD3D12ShaderCompiler]: Successfully compiled shader '%s' with the following output: %s", AsciiFilePath.GetCString(), Output.GetCString());
     }
     else
     {
-        D3D12_INFO("[FD3D12ShaderCompiler]: Successfully compiled shader '%s'.", AsciiFilePath.CStr());
+        D3D12_INFO("[FD3D12ShaderCompiler]: Successfully compiled shader '%s'.", AsciiFilePath.GetCString());
     }
 
     TComPtr<IDxcBlob> CompiledBlob;
@@ -436,7 +429,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
 
     D3D12_INFO("[FD3D12ShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
 
-    FMemory::Memcpy(Code.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
+    FMemory::Memcpy(Code.GetData(), CompiledBlob->GetBufferPointer(), BlobSize);
 
     if (ShaderStageIsRayTracing(ShaderStage))
     {
@@ -508,17 +501,17 @@ bool FD3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Sha
         return false;
     }
 
-    char Buffer[256];
+    CHAR Buffer[256];
     FMemory::Memzero(Buffer, sizeof(Buffer));
 
     size_t ConvertedChars;
     wcstombs_s(&ConvertedChars, Buffer, 256, Entrypoint, _TRUNCATE);
 
-    String FuncName(FuncDesc.Name);
+    FString FuncName(FuncDesc.Name);
     auto result = FuncName.Find(Buffer);
-    if (result == String::NPos)
+    if (result == FString::INVALID_INDEX)
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: First exported function does not have correct entrypoint '%s'. Name=%s", Buffer, FuncName.CStr());
+        D3D12_ERROR("[FD3D12ShaderCompiler]: First exported function does not have correct entrypoint '%s'. Name=%s", Buffer, FuncName.GetCString());
         return false;
     }
 

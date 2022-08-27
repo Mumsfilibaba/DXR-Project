@@ -1,22 +1,22 @@
 #pragma once
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 
 #include "Engine/CoreObject/CoreObject.h"
 
-class CActor;
+class FActor;
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CComponent
+// FComponent
 
-class ENGINE_API CComponent : public CCoreObject
+class ENGINE_API FComponent
+    : public FCoreObject
 {
-    CORE_OBJECT(CComponent, CCoreObject);
+    CORE_OBJECT(FComponent, FCoreObject);
 
 public:
-
-    CComponent(CActor* InActorOwner);
-    CComponent(CActor* InActorOwner, bool bInIsStartable, bool bInIsTickable);
-    virtual ~CComponent() = default;
+    FComponent(FActor* InActorOwner);
+    FComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTickable);
+    virtual ~FComponent() = default;
 
     /**
      * @brief: Start component, called in the beginning of the run, perform initialization here
@@ -28,14 +28,14 @@ public:
      * 
      * @param DeltaTime: Time since the last call to tick
      */
-    virtual void Tick(CTimestamp DeltaTime);
+    virtual void Tick(FTimespan DeltaTime);
 
     /**
      * @brief: Retrieve the actor that the component belongs to
      * 
      * @return: Returns a pointer to the actor that the component belongs to
      */
-    FORCEINLINE CActor* GetActor() const
+    FORCEINLINE FActor* GetActor() const
     {
         return ActorOwner;
     }
@@ -61,7 +61,7 @@ public:
     }
 
 private:
-    CActor* ActorOwner = nullptr;
+    FActor* ActorOwner = nullptr;
 
     bool bIsStartable : 1;
     bool bIsTickable  : 1;

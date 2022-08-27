@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CTransform
 
-CActorTransform::CActorTransform()
+FActorTransform::FActorTransform()
     : Matrix()
     , Translation(0.0f, 0.0f, 0.0f)
     , Scale(1.0f, 1.0f, 1.0f)
@@ -15,54 +15,54 @@ CActorTransform::CActorTransform()
     CalculateMatrix();
 }
 
-void CActorTransform::SetTranslation(float x, float y, float z)
+void FActorTransform::SetTranslation(float x, float y, float z)
 {
-    SetTranslation(CVector3(x, y, z));
+    SetTranslation(FVector3(x, y, z));
 }
 
-void CActorTransform::SetTranslation(const CVector3& InPosition)
+void FActorTransform::SetTranslation(const FVector3& InPosition)
 {
     Translation = InPosition;
     CalculateMatrix();
 }
 
-void CActorTransform::SetScale(float x, float y, float z)
+void FActorTransform::SetScale(float x, float y, float z)
 {
-    SetScale(CVector3(x, y, z));
+    SetScale(FVector3(x, y, z));
 }
 
-void CActorTransform::SetScale(const CVector3& InScale)
+void FActorTransform::SetScale(const FVector3& InScale)
 {
     Scale = InScale;
     CalculateMatrix();
 }
 
-void CActorTransform::SetRotation(float x, float y, float z)
+void FActorTransform::SetRotation(float x, float y, float z)
 {
-    SetRotation(CVector3(x, y, z));
+    SetRotation(FVector3(x, y, z));
 }
 
-void CActorTransform::SetRotation(const CVector3& InRotation)
+void FActorTransform::SetRotation(const FVector3& InRotation)
 {
     Rotation = InRotation;
     CalculateMatrix();
 }
 
-void CActorTransform::CalculateMatrix()
+void FActorTransform::CalculateMatrix()
 {
-    CMatrix4 ScaleMatrix       = CMatrix4::Scale(Scale);
-    CMatrix4 RotationMatrix    = CMatrix4::RotationRollPitchYaw(Rotation);
-    CMatrix4 TranslationMatrix = CMatrix4::Translation(Translation);
+    FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale);
+    FMatrix4 RotationMatrix    = FMatrix4::RotationRollPitchYaw(Rotation);
+    FMatrix4 TranslationMatrix = FMatrix4::Translation(Translation);
     
     Matrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
     Matrix = Matrix.Transpose();
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CActor
+// FActor
 
-CActor::CActor(class CScene* InSceneOwner)
-    : CCoreObject()
+FActor::FActor(class FScene* InSceneOwner)
+    : FCoreObject()
     , Name()
     , SceneOwner(InSceneOwner)
     , Transform()
@@ -73,19 +73,19 @@ CActor::CActor(class CScene* InSceneOwner)
     CORE_OBJECT_INIT();
 }
 
-CActor::~CActor()
+FActor::~FActor()
 {
-    for (CComponent* CurrentComponent : Components)
+    for (FComponent* CurrentComponent : Components)
     {
-        SafeDelete(CurrentComponent);
+        SAFE_DELETE(CurrentComponent);
     }
 
     Components.Clear();
 }
 
-void CActor::Start()
+void FActor::Start()
 {
-    for (CComponent* Component : Components)
+    for (FComponent* Component : Components)
     {
         if (Component->IsStartable())
         {
@@ -94,9 +94,9 @@ void CActor::Start()
     }
 }
 
-void CActor::Tick(CTimestamp DeltaTime)
+void FActor::Tick(FTimespan DeltaTime)
 {
-    for (CComponent* Component : Components)
+    for (FComponent* Component : Components)
     {
         if (Component->IsTickable())
         {
@@ -105,7 +105,7 @@ void CActor::Tick(CTimestamp DeltaTime)
     }
 }
 
-void CActor::AddComponent(CComponent* InComponent)
+void FActor::AddComponent(FComponent* InComponent)
 {
     Check(InComponent != nullptr);
     Components.Emplace(InComponent);
@@ -116,14 +116,14 @@ void CActor::AddComponent(CComponent* InComponent)
     }
 }
 
-void CActor::SetName(const String& InName)
+void FActor::SetName(const FString& InName)
 {
     Name = InName;
 }
 
-bool CActor::HasComponentOfClass(class CClassType* ComponentClass) const
+bool FActor::HasComponentOfClass(class FClassType* ComponentClass) const
 {
-    for (CComponent* Component : Components)
+    for (FComponent* Component : Components)
     {
         if (IsSubClassOf(Component, ComponentClass))
         {
@@ -134,9 +134,9 @@ bool CActor::HasComponentOfClass(class CClassType* ComponentClass) const
     return false;
 }
 
-CComponent* CActor::GetComponentOfClass(class CClassType* ComponentClass) const
+FComponent* FActor::GetComponentOfClass(class FClassType* ComponentClass) const
 {
-    for (CComponent* Component : Components)
+    for (FComponent* Component : Components)
     {
         if (IsSubClassOf(Component, ComponentClass))
         {

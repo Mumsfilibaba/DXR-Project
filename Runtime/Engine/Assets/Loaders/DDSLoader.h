@@ -4,10 +4,10 @@
 #include "Engine/Assets/SceneData.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDDSLoader
+// FDDSLoader
 
-class ENGINE_API CDDSLoader
+class ENGINE_API FDDSLoader
 {
 public:
-    static TSharedPtr<SImage2D> LoadFile(const String& Filename);
+    static FImage2DPtr LoadFile(const FString& Filename);
 };

@@ -1,5 +1,4 @@
 #pragma once
-#include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
 #include "D3D12Constants.h"
 
@@ -10,7 +9,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EShaderVisibility
 
-enum EShaderVisibility
+enum EShaderVisibility : int32
 {
     ShaderVisibility_All      = 0,
     ShaderVisibility_Vertex   = 1,
@@ -24,7 +23,7 @@ enum EShaderVisibility
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EResourceType
 
-enum EResourceType
+enum EResourceType : int32
 {
     ResourceType_CBV     = 0,
     ResourceType_SRV     = 1,
@@ -64,7 +63,7 @@ struct FD3D12ShaderParameter
 {
     FD3D12ShaderParameter() = default;
 
-    FORCEINLINE FD3D12ShaderParameter(const String& InName, uint32 InRegister, uint32 InSpace, uint32 InNumDescriptors, uint32 InSizeInBytes)
+    FORCEINLINE FD3D12ShaderParameter(const FString& InName, uint32 InRegister, uint32 InSpace, uint32 InNumDescriptors, uint32 InSizeInBytes)
         : Name(InName)
         , Register(InRegister)
         , Space(InSpace)
@@ -72,7 +71,7 @@ struct FD3D12ShaderParameter
         , SizeInBytes(InSizeInBytes)
     { }
 
-    String Name;
+    FString Name;
     uint32 Register       = 0;
     uint32 Space          = 0;
     uint32 NumDescriptors = 0;
@@ -82,20 +81,19 @@ struct FD3D12ShaderParameter
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Shader
 
-class FD3D12Shader : public FD3D12DeviceChild
+class FD3D12Shader 
+    : public FD3D12DeviceChild
 {
 public:
     FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility ShaderVisibility);
     ~FD3D12Shader();
 
 public:
-
     static bool GetShaderReflection(class FD3D12Shader* Shader);
 
     EShaderVisibility GetShaderVisibility() const { return Visibility; }
 
-    const FShaderResourceCount& GetResourceCount() const { return ResourceCount; }
-
+    const FShaderResourceCount& GetResourceCount()        const { return ResourceCount; }
     const FShaderResourceCount& GetRTLocalResourceCount() const { return RTLocalResourceCount; }
 
     D3D12_SHADER_BYTECODE GetByteCode() const { return ByteCode; }
@@ -108,42 +106,41 @@ public:
 
     FORCEINLINE FD3D12ShaderParameter GetConstantBufferParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ConstantBufferParameters.Size())
-                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ConstantBufferParameters.Size());
+        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ConstantBufferParameters.GetSize())
+                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ConstantBufferParameters.GetSize());
         return ConstantBufferParameters[ParameterIndex];
     }
 
-    FORCEINLINE uint32 GetNumConstantBufferParameters() { return ConstantBufferParameters.Size(); }
+    FORCEINLINE uint32 GetNumConstantBufferParameters() { return ConstantBufferParameters.GetSize(); }
 
     FORCEINLINE FD3D12ShaderParameter GetShaderResourceParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ShaderResourceParameters.Size())
-                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ShaderResourceParameters.Size());
+        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ShaderResourceParameters.GetSize())
+                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ShaderResourceParameters.GetSize());
         return ShaderResourceParameters[ParameterIndex];
     }
 
-    FORCEINLINE uint32 GetNumShaderResourceParameters() { return ShaderResourceParameters.Size(); }
+    FORCEINLINE uint32 GetNumShaderResourceParameters() { return ShaderResourceParameters.GetSize(); }
 
     FORCEINLINE FD3D12ShaderParameter GetUnorderedAccessParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(UnorderedAccessParameters.Size())
-                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, UnorderedAccessParameters.Size());
+        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(UnorderedAccessParameters.GetSize())
+                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, UnorderedAccessParameters.GetSize());
         return UnorderedAccessParameters[ParameterIndex];
     }
 
-    FORCEINLINE uint32 GetNumUnorderedAccessParameters() { return UnorderedAccessParameters.Size(); }
+    FORCEINLINE uint32 GetNumUnorderedAccessParameters() { return UnorderedAccessParameters.GetSize(); }
 
     FORCEINLINE FD3D12ShaderParameter GetSamplerStateParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND( ParameterIndex < static_cast<uint32>(SamplerParameters.Size())
-                         ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, SamplerParameters.Size());
+        D3D12_ERROR_COND( ParameterIndex < static_cast<uint32>(SamplerParameters.GetSize())
+                         ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, SamplerParameters.GetSize());
         return SamplerParameters[ParameterIndex];
     }
 
-    FORCEINLINE uint32 GetNumSamplerStateParameters() { return SamplerParameters.Size(); }
+    FORCEINLINE uint32 GetNumSamplerStateParameters() { return SamplerParameters.GetSize(); }
 
 protected:
-
     template<typename TD3D12ReflectionInterface>
     static bool GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, FD3D12Shader* Shader, uint32 NumBoundResources);
 
@@ -164,160 +161,130 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12VertexShader
 
-class FD3D12VertexShader : public FRHIVertexShader, public FD3D12Shader
+class FD3D12VertexShader 
+    : public FRHIVertexShader
+    , public FD3D12Shader
 {
 public:
-
     FD3D12VertexShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIVertexShader()
         , FD3D12Shader(InDevice, InCode, ShaderVisibility_Vertex)
     { }
 
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12Shader* D3D12Shader = static_cast<FD3D12Shader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12PixelShader
 
-class FD3D12PixelShader : public FRHIPixelShader, public FD3D12Shader
+class FD3D12PixelShader 
+    : public FRHIPixelShader
+    , public FD3D12Shader
 {
 public:
-
     FD3D12PixelShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIPixelShader()
         , FD3D12Shader(InDevice, InCode, ShaderVisibility_Pixel)
     { }
 
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12Shader* D3D12Shader = static_cast<FD3D12Shader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayTracingShader
 
-class FD3D12RayTracingShader : public FD3D12Shader
+class FD3D12RayTracingShader 
+    : public FD3D12Shader
 {
 public:
     FD3D12RayTracingShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FD3D12Shader(InDevice, InCode, ShaderVisibility_All)
     { }
 
-public:
-
     static bool GetRayTracingShaderReflection(class FD3D12RayTracingShader* Shader);
     
-    FORCEINLINE const String& GetIdentifier() const { return Identifier; }
+    FORCEINLINE const FString& GetIdentifier() const { return Identifier; }
 
 protected:
-    String Identifier;
+    FString Identifier;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayGenShader
 
-class FD3D12RayGenShader : public FRHIRayGenShader, public FD3D12RayTracingShader
+class FD3D12RayGenShader 
+    : public FRHIRayGenShader
+    , public FD3D12RayTracingShader
 {
 public:
-
     FD3D12RayGenShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIRayGenShader()
         , FD3D12RayTracingShader(InDevice, InCode)
     { }
 
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12RayTracingShader* D3D12Shader = static_cast<FD3D12RayTracingShader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayAnyHitShader
 
-class FD3D12RayAnyHitShader : public FRHIRayAnyHitShader, public FD3D12RayTracingShader
+class FD3D12RayAnyHitShader 
+    : public FRHIRayAnyHitShader
+    , public FD3D12RayTracingShader
 {
 public:
-    
     FD3D12RayAnyHitShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIRayAnyHitShader()
         , FD3D12RayTracingShader(InDevice, InCode)
     { }
 
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12RayTracingShader* D3D12Shader = static_cast<FD3D12RayTracingShader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayClosestHitShader
 
-class FD3D12RayClosestHitShader : public FRHIRayClosestHitShader, public FD3D12RayTracingShader
+class FD3D12RayClosestHitShader 
+    : public FRHIRayClosestHitShader
+    , public FD3D12RayTracingShader
 {
 public:
-    
     FD3D12RayClosestHitShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIRayClosestHitShader()
         , FD3D12RayTracingShader(InDevice, InCode)
     { }
 
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12RayTracingShader* D3D12Shader = static_cast<FD3D12RayTracingShader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayMissShader
 
-class FD3D12RayMissShader : public FRHIRayMissShader, public FD3D12RayTracingShader
+class FD3D12RayMissShader 
+    : public FRHIRayMissShader
+    , public FD3D12RayTracingShader
 {
 public:
-
     FD3D12RayMissShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIRayMissShader()
         , FD3D12RayTracingShader(InDevice, InCode)
@@ -329,12 +296,7 @@ public:
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12RayTracingShader* D3D12Shader = static_cast<FD3D12RayTracingShader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -343,7 +305,6 @@ public:
 class FD3D12ComputeShader : public FRHIComputeShader, public FD3D12Shader
 {
 public:
-
     FD3D12ComputeShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
         : FRHIComputeShader()
         , FD3D12Shader(InDevice, InCode, ShaderVisibility_All)
@@ -352,18 +313,11 @@ public:
 
     bool Init();
 
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIShader Interface
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
-
-    virtual void* GetRHIBaseShader() override final
-    {
-        FD3D12Shader* D3D12Shader = static_cast<FD3D12Shader*>(this);
-        return reinterpret_cast<void*>(D3D12Shader);
-    }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
 
     virtual FIntVector3 GetThreadGroupXYZ() const override final { return ThreadGroupXYZ; }
 
@@ -379,7 +333,7 @@ inline FD3D12Shader* GetD3D12Shader(FRHIShader* Shader)
     return Shader ? reinterpret_cast<FD3D12Shader*>(Shader->GetRHIBaseShader()) : nullptr;
 }
 
-inline FD3D12RayTracingShader* D3D12RayTracingShaderCast(FRHIRayTracingShader* Shader)
+inline FD3D12RayTracingShader* GetD3D12RayTracingShader(FRHIRayTracingShader* Shader)
 {
     return Shader ? reinterpret_cast<FD3D12RayTracingShader*>(Shader->GetRHIBaseShader()) : nullptr;
 }

@@ -3,20 +3,19 @@
 
 #include <Foundation/Foundation.h>
 
-#define SCOPED_AUTORELEASE_POOL() const CScopedAutoreleasePool PREPROCESS_CONCAT(AutoReleasePool_, __LINE__)
+#define SCOPED_AUTORELEASE_POOL() const FScopedAutoreleasePool PREPROCESS_CONCAT(AutoReleasePool_, __LINE__)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CScopedAutoreleasePool
+// FScopedAutoreleasePool
 
-class CScopedAutoreleasePool
+class FScopedAutoreleasePool
 {
 public:
-
-    FORCEINLINE CScopedAutoreleasePool()
+    FORCEINLINE FScopedAutoreleasePool()
         : Pool([NSAutoreleasePool new])
     { }
 
-    FORCEINLINE ~CScopedAutoreleasePool()
+    FORCEINLINE ~FScopedAutoreleasePool()
     {
         [Pool release];
     }

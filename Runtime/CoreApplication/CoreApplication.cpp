@@ -1,8 +1,8 @@
 #include "CoreApplication.h"
 
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CoreApplicationModule
 
-IMPLEMENT_ENGINE_MODULE(CDefaultEngineModule, CoreApplication);
+IMPLEMENT_ENGINE_MODULE(FDefaultModule, CoreApplication);

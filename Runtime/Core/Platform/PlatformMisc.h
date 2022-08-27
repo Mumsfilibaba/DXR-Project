@@ -2,11 +2,11 @@
 
 #if PLATFORM_WINDOWS
     #include "Core/Windows/WindowsPlatformMisc.h"
-    typedef CWindowsPlatformMisc PlatformMisc;
+    typedef FWindowsPlatformMisc FPlatformMisc;
 #elif PLATFORM_MACOS
     #include "Core/Mac/MacPlatformMisc.h"
-    typedef CMacPlatformMisc PlatformMisc;
+    typedef FMacPlatformMisc FPlatformMisc;
 #else
     #include "Core/Generic/GenericPlatformMisc.h"
-    typedef CGenericPlatformMisc PlatformMisc;
+    typedef FGenericPlatformMisc FPlatformMisc;
 #endif

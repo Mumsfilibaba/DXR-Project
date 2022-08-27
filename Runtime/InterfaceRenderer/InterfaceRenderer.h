@@ -6,19 +6,19 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHIResourceViews.h"
 
-#include "Canvas/InputHandler.h"
-#include "Canvas/ICanvasRenderer.h"
+#include "Application/InputHandler.h"
+#include "Application/IApplicationRenderer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CInterfaceRenderer
+// FInterfaceRenderer
 
-class CInterfaceRenderer final : public ICanvasRenderer
+class FInterfaceRenderer final
+    : public IApplicationRenderer
 {
 public:
+    static FInterfaceRenderer* Make();
 
-    static CInterfaceRenderer* Make();
-
-     /** @brief: Init the context */
+     /** @brief: Initialize the context */
     virtual bool InitContext(InterfaceContext Context) override final;
 
      /** @brief: Start the update of the UI, after the call to this function, calls to UI window's tick are valid */
@@ -31,17 +31,16 @@ public:
     virtual void Render(class FRHICommandList& Commandlist) override final;
 
 private:
+    FInterfaceRenderer() = default;
+    ~FInterfaceRenderer() = default;
 
-    CInterfaceRenderer() = default;
-    ~CInterfaceRenderer() = default;
+    TArray<FDrawableImage*> RenderedImages;
 
-    TArray<SCanvasImage*> RenderedImages;
-
-    TSharedRef<FRHITexture2D>             FontTexture;
-    TSharedRef<FRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<FRHIGraphicsPipelineState> PipelineStateNoBlending;
-    TSharedRef<FRHIPixelShader>           PShader;
+    FRHITexture2DRef             FontTexture;
+    FRHIGraphicsPipelineStateRef PipelineState;
+    FRHIGraphicsPipelineStateRef PipelineStateNoBlending;
+    FRHIPixelShaderRef           PShader;
     TSharedRef<FRHIVertexBuffer>          VertexBuffer;
     TSharedRef<FRHIIndexBuffer>           IndexBuffer;
-    TSharedRef<FRHISamplerState>          PointSampler;
+    FRHISamplerStateRef          PointSampler;
 };

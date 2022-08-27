@@ -6,17 +6,11 @@
 template<typename T>
 struct TIsConst
 {
-    enum
-    {
-        Value = false
-    };
+    enum { Value = false };
 };
 
 template<typename T>
 struct TIsConst<const T>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };

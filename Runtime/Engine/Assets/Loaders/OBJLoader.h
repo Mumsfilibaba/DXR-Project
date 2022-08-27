@@ -5,10 +5,10 @@
 #include "Engine/Assets/SceneData.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// COBJLoader
+// FOBJLoader
 
-class ENGINE_API COBJLoader
+class ENGINE_API FOBJLoader
 {
 public:
-    static bool LoadFile(const String& Filename, SSceneData& OutScene, bool ReverseHandedness = false);
+    static bool LoadFile(const FString& Filename, FSceneData& OutScene, bool ReverseHandedness = false);
 };

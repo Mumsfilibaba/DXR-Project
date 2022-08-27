@@ -24,31 +24,32 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalShaderResourceView
+// FMetalShaderResourceView
 
-class CMetalShaderResourceView : public FRHIShaderResourceView, public CMetalView
+class FMetalShaderResourceView : public FRHIShaderResourceView, public CMetalView
 {
 public:
-    explicit CMetalShaderResourceView(CMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
+
+    explicit FMetalShaderResourceView(FMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
         : FRHIShaderResourceView(InResource)
         , CMetalView(InDeviceContext)
     { }
 
-    ~CMetalShaderResourceView() = default;
+    ~FMetalShaderResourceView() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalUnorderedAccessView
+// FMetalUnorderedAccessView
 
-class CMetalUnorderedAccessView : public FRHIUnorderedAccessView, public CMetalView
+class FMetalUnorderedAccessView : public FRHIUnorderedAccessView, public CMetalView
 {
 public:
-    explicit CMetalUnorderedAccessView(CMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
+    explicit FMetalUnorderedAccessView(CMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
         : FRHIUnorderedAccessView(InResource)
         , CMetalView(InDeviceContext)
     { }
 
-    ~CMetalUnorderedAccessView() = default;
+    ~FMetalUnorderedAccessView() = default;
 };
 
 #pragma clang diagnostic pop

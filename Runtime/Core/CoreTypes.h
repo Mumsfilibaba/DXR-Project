@@ -31,7 +31,22 @@ typedef long long int64;
 static_assert(sizeof(int64) == 8, "int64 has to be equal to 8 byte in size");
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Types based on CoreTypes
+// Pointer Types
 
-typedef uint8 Byte;
-static_assert(sizeof(Byte) == 1, "Byte has to be equal to 1 byte in size");
+typedef int64 intptr;
+static_assert(sizeof(intptr) == sizeof(void*), "The size of intptr has to be equal to the size of int64");
+
+typedef uint64 uintptr;
+static_assert(sizeof(uintptr) == sizeof(void*), "The size of intptr has to be equal to the size of uint64");
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Char Type
+
+typedef wchar_t WIDECHAR;
+typedef char    CHAR;
+typedef CHAR    TCHAR;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Size Type
+
+typedef uint64 TSIZE;

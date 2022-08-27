@@ -2,7 +2,7 @@
 
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Canvas/CanvasApplication.h"
+#include "Application/ApplicationInterface.h"
 
 #include <imgui.h>
 
@@ -14,12 +14,12 @@ TAutoConsoleVariable<bool> GDrawTextureDebugger("Renderer.DrawTextureDebugger", 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TextureDebugWindow
 
-TSharedRef<CTextureDebugWindow> CTextureDebugWindow::Make()
+TSharedRef<FTextureDebugWindow> FTextureDebugWindow::Make()
 {
-    return dbg_new CTextureDebugWindow();
+    return dbg_new FTextureDebugWindow();
 }
 
-void CTextureDebugWindow::Tick()
+void FTextureDebugWindow::Tick()
 {
     if (GDrawTextureDebugger.GetBool())
     {
@@ -27,7 +27,7 @@ void CTextureDebugWindow::Tick()
         constexpr float InvAspectRatio = 16.0f / 9.0f;
         constexpr float AspectRatio = 9.0f / 16.0f;
 
-        TSharedRef<CGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
+        FGenericWindowRef MainViewport = FApplicationInterface::Get().GetMainViewport();
 
         const uint32 WindowWidth = MainViewport->GetWidth();
         const uint32 WindowHeight = MainViewport->GetHeight();
@@ -50,7 +50,7 @@ void CTextureDebugWindow::Tick()
         {
             ImGui::BeginChild("##ScrollBox", ImVec2(Width * 0.985f, Height * 0.125f), true, ImGuiWindowFlags_HorizontalScrollbar);
 
-            const int32 Count = DebugTextures.Size();
+            const int32 Count = DebugTextures.GetSize();
             if (SelectedTextureIndex >= Count)
             {
                 SelectedTextureIndex = -1;
@@ -70,7 +70,7 @@ void CTextureDebugWindow::Tick()
                 ImVec4 BgCol = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
                 ImVec4 TintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-                SCanvasImage* CurrImage = &DebugTextures[i];
+                FDrawableImage* CurrImage = &DebugTextures[i];
                 if (ImGui::ImageButton(CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol))
                 {
                     SelectedTextureIndex = i;
@@ -78,7 +78,7 @@ void CTextureDebugWindow::Tick()
 
                 if (ImGui::IsItemHovered())
                 {
-                    ImGui::SetTooltip("%s", CurrImage->Image->GetName().CStr());
+                    ImGui::SetTooltip("%s", CurrImage->Image->GetName().GetCString());
                 }
 
                 ImGui::PopID();
@@ -95,7 +95,7 @@ void CTextureDebugWindow::Tick()
             const float ImageHeight = ImageWidth * AspectRatio;
             const int32 ImageIndex = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
 
-            SCanvasImage* CurrImage = &DebugTextures[ImageIndex];
+            FDrawableImage* CurrImage = &DebugTextures[ImageIndex];
             ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
         }
 
@@ -105,12 +105,12 @@ void CTextureDebugWindow::Tick()
     }
 }
 
-bool CTextureDebugWindow::IsTickable()
+bool FTextureDebugWindow::IsTickable()
 {
     return GDrawTextureDebugger.GetBool();
 }
 
-void CTextureDebugWindow::AddTextureForDebugging(const TSharedRef<FRHIShaderResourceView>& ImageView, const TSharedRef<FRHITexture>& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FTextureDebugWindow::AddTextureForDebugging(const TSharedRef<FRHIShaderResourceView>& ImageView, const TSharedRef<FRHITexture>& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     DebugTextures.Emplace(ImageView, Image, BeforeState, AfterState);
 }

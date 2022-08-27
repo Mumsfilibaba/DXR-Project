@@ -11,7 +11,6 @@ template<typename T>
 class TReferenceWrapper
 {
 public:
-
     typedef T Type;
 
     TReferenceWrapper(const TReferenceWrapper&) = default;

@@ -16,14 +16,14 @@
 #include <imgui.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CInterfaceRenderer
+// FInterfaceRenderer
 
-CInterfaceRenderer* CInterfaceRenderer::Make()
+FInterfaceRenderer* FInterfaceRenderer::Make()
 {
-    return dbg_new CInterfaceRenderer();;
+    return dbg_new FInterfaceRenderer();;
 }
 
-bool CInterfaceRenderer::InitContext(InterfaceContext Context)
+bool FInterfaceRenderer::InitContext(InterfaceContext Context)
 {
     INIT_CONTEXT(Context);
 
@@ -35,13 +35,13 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-    FontTexture = CTextureFactory::LoadFromMemory(Pixels, Width, Height, 0, EFormat::R8G8B8A8_Unorm);
+    FontTexture = FTextureFactory::LoadFromMemory(Pixels, Width, Height, 0, EFormat::R8G8B8A8_Unorm);
     if (!FontTexture)
     {
         return false;
     }
 
-    static const char* VSSource =
+    static const CHAR* VSSource =
         R"*(
         cbuffer VertexBuffer : register(b0, space1)
         {
@@ -77,19 +77,19 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromSource(VSSource, CompileInfo, ShaderCode))
         {
-            CDebug::DebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
 
-    TSharedRef<FRHIVertexShader> VShader = RHICreateVertexShader(ShaderCode);
+    FRHIVertexShaderRef VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    static const char* PSSource =
+    static const CHAR* PSSource =
         R"*(
         struct PS_INPUT
         {
@@ -111,7 +111,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromSource(PSSource, CompileInfo, ShaderCode))
         {
-            CDebug::DebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -119,7 +119,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     PShader = RHICreatePixelShader(ShaderCode);
     if (!PShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -130,35 +130,35 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EVertexInputClass::Vertex, 0 },
     };
 
-    TSharedRef<FRHIVertexInputLayout> InputLayout = RHICreateVertexInputLayout(InputLayoutInfo);
+    FRHIVertexInputLayoutRef InputLayout = RHICreateVertexInputLayout(InputLayoutInfo);
     if (!InputLayout)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
+    FRHIDepthStencilStateInitializer DepthStencilStateInfo;
     DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TSharedRef<FRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+    FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIRasterizerStateInitializer RasterizerStateInfo;
+    FRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<FRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIBlendStateInitializer BlendStateInfo;
+    FRHIBlendStateInitializer BlendStateInfo;
     BlendStateInfo.bIndependentBlendEnable        = false;
     BlendStateInfo.RenderTargets[0].bBlendEnable  = true;
     BlendStateInfo.RenderTargets[0].SrcBlend      = EBlendType ::SrcAlpha;
@@ -168,19 +168,19 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     BlendStateInfo.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
     BlendStateInfo.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
-    TSharedRef<FRHIBlendState> BlendStateBlending = RHICreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendStateBlending = RHICreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     BlendStateInfo.RenderTargets[0].bBlendEnable = false;
 
-    TSharedRef<FRHIBlendState> BlendStateNoBlending = RHICreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendStateNoBlending = RHICreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -198,7 +198,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -207,7 +207,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     PipelineStateNoBlending = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineStateNoBlending)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
@@ -223,9 +223,10 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         VertexBuffer->SetName("ImGui VertexBuffer");
     }
 
-    FRHIIndexBufferInitializer IBInitializer( EBufferUsageFlags::Default
-                                            , (sizeof(ImDrawIdx) == 2) ? EIndexFormat::uint16 : EIndexFormat::uint32
-                                            , 1024 * 1024);
+    FRHIIndexBufferInitializer IBInitializer(
+        EBufferUsageFlags::Default,
+        (sizeof(ImDrawIdx) == 2) ? EIndexFormat::uint16 : EIndexFormat::uint32,
+        1024 * 1024);
 
     IndexBuffer = RHICreateIndexBuffer(IBInitializer);
     if (!IndexBuffer)
@@ -237,7 +238,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         IndexBuffer->SetName("ImGui IndexBuffer");
     }
 
-    CRHISamplerStateInitializer CreateInfo;
+    FRHISamplerStateInitializer CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;
@@ -252,19 +253,19 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     return true;
 }
 
-void CInterfaceRenderer::BeginTick()
+void FInterfaceRenderer::BeginTick()
 {
     // Begin new frame
     ImGui::NewFrame();
 }
 
-void CInterfaceRenderer::EndTick()
+void FInterfaceRenderer::EndTick()
 {
     // EndFrame
     ImGui::EndFrame();
 }
 
-void CInterfaceRenderer::Render(FRHICommandList& CmdList)
+void FInterfaceRenderer::Render(FRHICommandList& CmdList)
 {
     // Render ImgGui draw data
     ImGui::Render();
@@ -288,10 +289,10 @@ void CInterfaceRenderer::Render(FRHICommandList& CmdList)
 
     CmdList.Set32BitShaderConstants(PShader.Get(), &MVP, 16);
 
-    CmdList.SetVertexBuffers(&VertexBuffer, 1, 0);
+    CmdList.SetVertexBuffers(MakeArrayView(&VertexBuffer, 1), 0);
     CmdList.SetIndexBuffer(IndexBuffer.Get());
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-    CmdList.SetBlendFactor({ 0.0f, 0.0f, 0.0f, 0.0f });
+    CmdList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
     // TODO: Do not change to GenericRead, change to Vertex/Constant-Buffer
     CmdList.TransitionBuffer(VertexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
@@ -331,7 +332,7 @@ void CInterfaceRenderer::Render(FRHICommandList& CmdList)
             const ImDrawCmd* Cmd = &DrawCmdList->CmdBuffer[CmdIndex];
             if (Cmd->TextureId)
             {
-                SCanvasImage* Image = reinterpret_cast<SCanvasImage*>(Cmd->TextureId);
+                FDrawableImage* Image = reinterpret_cast<FDrawableImage*>(Cmd->TextureId);
                 RenderedImages.Emplace(Image);
 
                 if (Image->BeforeState != EResourceAccess::PixelShaderResource)
@@ -364,7 +365,7 @@ void CInterfaceRenderer::Render(FRHICommandList& CmdList)
         GlobalVertexOffset += DrawCmdList->VtxBuffer.Size;
     }
 
-    for (SCanvasImage* Image : RenderedImages)
+    for (FDrawableImage* Image : RenderedImages)
     {
         Check(Image != nullptr);
 

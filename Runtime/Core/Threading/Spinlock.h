@@ -1,11 +1,13 @@
 #pragma once
-#include "Core/Core.h"
 #include "AtomicInt.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A simple lock that does not use OS functions to lock a thread. Good for short locking periods in high contingency areas
+#include "Core/Core.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 
-class CSpinLock
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FSpinLock
+
+class FSpinLock
 {
     enum
     {
@@ -14,14 +16,13 @@ class CSpinLock
     };
 
 public:
+    FSpinLock(const FSpinLock&) = delete;
+    FSpinLock& operator=(const FSpinLock&) = delete;
 
-    CSpinLock(const CSpinLock&) = delete;
-    CSpinLock& operator=(const CSpinLock&) = delete;
-
-    ~CSpinLock() = default;
+    ~FSpinLock() = default;
 
     /** @brief: Default constructor */
-    FORCEINLINE CSpinLock() noexcept
+    FORCEINLINE FSpinLock() noexcept
         : State(State_Unlocked)
     { }
 
@@ -39,7 +40,7 @@ public:
 
             while (State.RelaxedLoad() == State_Locked)
             {
-                PauseInstruction();
+                FPlatformThreadMisc::Pause();
             }
         }
     }
@@ -58,5 +59,5 @@ public:
     }
 
 private:
-    AtomicInt32 State;
+    FAtomicInt32 State;
 };

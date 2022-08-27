@@ -5,25 +5,25 @@
 #include "RHI/RHICommandList.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CLightProbeRenderer
+// FLightProbeRenderer
 
-class RENDERER_API CLightProbeRenderer
+class RENDERER_API FLightProbeRenderer
 {
 public:
-    CLightProbeRenderer() = default;
-    ~CLightProbeRenderer() = default;
+    FLightProbeRenderer() = default;
+    ~FLightProbeRenderer() = default;
 
-    bool Init(SLightSetup& LightSetup, SFrameResources& FrameResources);
+    bool Init(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
     void Release();
 
-    void RenderSkyLightProbe(FRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& Resources);
+    void RenderSkyLightProbe(FRHICommandList& CmdList, const FLightSetup& LightSetup, const FFrameResources& Resources);
 
 private:
-    bool CreateSkyLightResources(SLightSetup& LightSetup);
+    bool CreateSkyLightResources(FLightSetup& LightSetup);
 
-    TSharedRef<FRHIComputePipelineState> IrradianceGenPSO;
-    TSharedRef<FRHIComputeShader>        IrradianceGenShader;
-    TSharedRef<FRHIComputePipelineState> SpecularIrradianceGenPSO;
-    TSharedRef<FRHIComputeShader>        SpecularIrradianceGenShader;
+    FRHIComputePipelineStateRef IrradianceGenPSO;
+    FRHIComputeShaderRef        IrradianceGenShader;
+    FRHIComputePipelineStateRef SpecularIrradianceGenPSO;
+    FRHIComputeShaderRef        SpecularIrradianceGenShader;
 };

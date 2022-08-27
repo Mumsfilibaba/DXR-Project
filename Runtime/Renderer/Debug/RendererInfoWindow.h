@@ -1,17 +1,17 @@
 #pragma once
-#include "Canvas/CanvasWindow.h"
+#include "Application/Window.h"
 
 #include "Core/Containers/SharedRef.h"
 
 #include <imgui.h>
 
-class CRendererInfoWindow : public CCanvasWindow
+class FRendererInfoWindow 
+    : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
-
-    static TSharedRef<CRendererInfoWindow> Make();
+    static TSharedRef<FRendererInfoWindow> Make();
 
      /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;
@@ -20,6 +20,5 @@ public:
     virtual bool IsTickable() override final;
 
 private:
-
-    CRendererInfoWindow() = default;
+    FRendererInfoWindow() = default;
 };

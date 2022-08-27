@@ -1,178 +1,152 @@
 #include "RHICommandList.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Platform/PlatformThreadMisc.h"
+
+RHI_API FRHICommandListExecutor GRHICommandExecutor;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCommandAllocator
+// FRHIThread
 
-FCommandAllocator::FCommandAllocator(uint32 StartSize)
-    : CurrentMemory(nullptr)
-    , Size(StartSize)
-    , Offset(0)
-    , DiscardedMemory()
+FRHIThread::FRHIThread()
+    : Thread(nullptr)
+    , WaitCS()
+    , WaitCondition()
+    , bIsRunning(false)
+{ }
+
+bool FRHIThread::Start()
 {
-    CurrentMemory = reinterpret_cast<uint8*>(FMemory::Malloc(Size));
-    Check(CurrentMemory != nullptr);
+    TFunction<void()> ThreadFunction = Bind(&FRHIThread::Worker, this);
 
-    AverageMemoryUsage = Size;
-}
-
-FCommandAllocator::~FCommandAllocator()
-{
-    ReleaseDiscardedMemory();
-
-    SafeDelete(CurrentMemory);
-}
-
-void* FCommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
-{
-    Check(CurrentMemory != nullptr);
-
-    const uint64 AlignedSize = NMath::AlignUp(SizeInBytes, Alignment);
-    const uint64 NewOffset = Offset + AlignedSize;
-    if (NewOffset <= Size)
+    Thread = FThreadManager::Get().CreateNamedThread(ThreadFunction, GetStaticThreadName());
+    if (!Thread)
     {
-        void* Result = CurrentMemory + Offset;
-        Offset = NewOffset;
-        return Result;
-    }
-    else
-    {
-        // Discard the current pointer 
-        DiscardedMemory.Emplace(CurrentMemory);
-
-        // Allocate a new block of memory
-        const uint64 NewSize = NMath::Max(Size + Size, AlignedSize);
-
-        CurrentMemory = reinterpret_cast<uint8*>(FMemory::Malloc(NewSize));
-        Check(CurrentMemory != nullptr);
-
-        Size = NewSize;
-        AverageMemoryUsage = Size;
-        Offset = AlignedSize;
-
-        // Return the newly allocated block
-        return CurrentMemory;
-    }
-}
-
-void FCommandAllocator::Reset()
-{
-    ReleaseDiscardedMemory();
-
-    // Moving average for the memory usage
-    const float Alpha = 0.2f;
-    AverageMemoryUsage = uint64(Offset * Alpha) + uint64((1.0f - Alpha) * AverageMemoryUsage);
-
-    // Resize if to much memory is used 
-    const uint64 SlackSize = Size - AverageMemoryUsage;
-    if (NMemoryUtils::BytesToMegaBytes(SlackSize) > 1)
-    {
-        SafeDelete(CurrentMemory);
-
-        const uint64 NewSize = AverageMemoryUsage + NMemoryUtils::MegaBytesToBytes(1);
-
-        CurrentMemory = reinterpret_cast<uint8*>(FMemory::Malloc(NewSize));
-        Check(CurrentMemory != nullptr);
-
-        Size = NewSize;
-        AverageMemoryUsage = Size;
+        return false;
     }
 
-    // Reset
-    Offset = 0;
-}
-
-void FCommandAllocator::ReleaseDiscardedMemory()
-{
-    for (uint8* Memory : DiscardedMemory)
+    bIsRunning = true;
+    if (!Thread->Start())
     {
-        SafeDelete(Memory);
+        return false;
     }
 
-    DiscardedMemory.MakeEmpty();
+    return true;
+}
+
+void FRHIThread::StopExecution()
+{
+    WaitForOutstandingTasks();
+
+    bIsRunning = false;
+    WaitCondition.NotifyAll();
+
+    Check(Thread != nullptr);
+    Thread->WaitForCompletion(FTimespan::Infinity());
+
+    Thread.Reset();
+}
+
+void FRHIThread::Execute(FRHIThreadTask&& NewTask)
+{
+    Check(bIsRunning);
+
+    {
+        // Set the work to execute
+        TScopedLock TaskLock(TasksCS);
+        Tasks.Emplace(Move(NewTask));
+        NumSubmittedTasks++;
+    }
+
+    // Then notify worker
+    WaitCondition.NotifyAll();
+}
+
+void FRHIThread::WaitForOutstandingTasks()
+{
+    while (NumCompletedTasks.Load() < NumSubmittedTasks.Load())
+    {
+        WaitCondition.NotifyAll();
+        FPlatformThreadMisc::Pause();
+    }
+}
+
+void FRHIThread::Worker()
+{
+    while(bIsRunning)
+    {
+        TScopedLock WaitLock(WaitCS);
+        WaitCondition.Wait(WaitLock);
+
+        FRHIThreadTask CurrentTask;
+        {
+            TScopedLock Lock(TasksCS);
+            if (!Tasks.IsEmpty())
+            {
+                CurrentTask = Move(Tasks.FirstElement());
+                Tasks.RemoveAt(0);
+            }
+        }
+        
+        if (CurrentTask)
+        {
+            TRACE_FUNCTION_SCOPE();
+            CurrentTask.CommandList->Execute();
+            NumCompletedTasks++;
+        }
+    }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHICommandQueue
+// FRHICommandListExecutor
 
-FRHICommandQueue FRHICommandQueue::Instance;
+FRHICommandListExecutor::FRHICommandListExecutor()
+    : ExecutorThread()
+    , Statistics()
+    , CommandContext(nullptr)
+{ }
 
-FRHICommandQueue& FRHICommandQueue::Get()
+bool FRHICommandListExecutor::Initialize()
 {
-    return Instance;
-}
-
-FRHICommandQueue::FRHICommandQueue()
-    : CmdContext(nullptr)
-    , NumDrawCalls(0)
-    , NumDispatchCalls(0)
-    , NumCommands(0)
-{
-}
-
-void FRHICommandQueue::ExecuteCommandList(FRHICommandList& CmdList)
-{
-    // Execute
-    GetContext().StartContext();
-
+    if (!ExecutorThread.Start())
     {
-        TRACE_FUNCTION_SCOPE();
-
-        ResetStatistics();
-
-        InternalExecuteCommandList(CmdList);
+        return false;
     }
 
-    GetContext().FinishContext();
+    return true;
 }
 
-void FRHICommandQueue::ExecuteCommandLists(FRHICommandList* const* CmdLists, uint32 NumCmdLists)
+void FRHICommandListExecutor::Release()
 {
-    // Execute
-    GetContext().StartContext();
-
-    {
-        TRACE_FUNCTION_SCOPE();
-
-        ResetStatistics();
-
-        for (uint32 i = 0; i < NumCmdLists; i++)
-        {
-            FRHICommandList* CurrentCmdList = CmdLists[i];
-            InternalExecuteCommandList(*CurrentCmdList);
-        }
-    }
-
-    GetContext().FinishContext();
+    ExecutorThread.StopExecution();
 }
 
-void FRHICommandQueue::WaitForGPU()
+void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 {
-    if (CmdContext)
+    if (CommandList.HasCommands())
     {
-        CmdContext->Flush();
+        Statistics.NumDrawCalls     += CommandList.GetNumDrawCalls();
+        Statistics.NumDispatchCalls += CommandList.GetNumDispatchCalls();
+
+        FRHICommandList* NewCommandList = dbg_new FRHICommandList();
+        NewCommandList->ExchangeState(CommandList);
+        NewCommandList->SetCommandContext(CommandContext);
+
+        ExecutorThread.Execute(FRHIThreadTask(NewCommandList));
     }
 }
 
-void FRHICommandQueue::InternalExecuteCommandList(FRHICommandList& CmdList)
+void FRHICommandListExecutor::WaitForOutstandingTasks()
 {
-    if (CmdList.FirstCommand)
+    ExecutorThread.WaitForOutstandingTasks();
+}
+
+void FRHICommandListExecutor::WaitForGPU()
+{
+    WaitForOutstandingTasks();
+
+    if (CommandContext)
     {
-        FRHICommand* CurrentCommand = CmdList.FirstCommand;
-        while (CurrentCommand != nullptr)
-        {
-            FRHICommand* PreviousCommand = CurrentCommand;
-            CurrentCommand = CurrentCommand->NextCommand;
-            PreviousCommand->ExecuteAndRelease(GetContext());
-        }
-
-        NumDrawCalls     += CmdList.GetNumDrawCalls();
-        NumDispatchCalls += CmdList.GetNumDispatchCalls();
-        NumCommands      += CmdList.GetNumCommands();
-
-        CmdList.FirstCommand = nullptr;
-        CmdList.LastCommand  = nullptr;
-        CmdList.Reset();
+        CommandContext->Flush();
     }
 }

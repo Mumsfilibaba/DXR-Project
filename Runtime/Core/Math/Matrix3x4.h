@@ -4,16 +4,16 @@
 // TODO: Fill this out properly with functions etc
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMatrix3x4
+// FMatrix3x4
 
-class CMatrix3x4
+class FMatrix3x4
 {
 public:
 
     /**
      * @brief: Default constructor (Initialize components to zero) 
      */
-    FORCEINLINE CMatrix3x4() noexcept
+    FORCEINLINE FMatrix3x4() noexcept
         : m00(0.0f), m01(0.0f), m02(0.0f), m03(0.0f)
         , m10(0.0f), m11(0.0f), m12(0.0f), m13(0.0f)
         , m20(0.0f), m21(0.0f), m22(0.0f), m23(0.0f)
@@ -35,9 +35,10 @@ public:
      * @param In22: Value to set on row 2 and column 2
      * @param In23: Value to set on row 2 and column 3
      */
-    FORCEINLINE explicit CMatrix3x4(float In00, float In01, float In02, float In03
-                                   ,float In10, float In11, float In12, float In13
-                                   ,float In20, float In21, float In22, float In23) noexcept
+    FORCEINLINE explicit FMatrix3x4(
+        float In00, float In01, float In02, float In03,
+        float In10, float In11, float In12, float In13,
+        float In20, float In21, float In22, float In23) noexcept
         : m00(In00), m01(In01), m02(In02), m03(In03)
         , m10(In10), m11(In11), m12(In12), m13(In13)
         , m20(In20), m21(In21), m22(In22), m23(In23)
@@ -49,7 +50,7 @@ public:
      * @param Other: matrix to compare against
      * @return: True if equal, false if not
      */
-    inline bool IsEqual(const CMatrix3x4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    inline bool IsEqual(const FMatrix3x4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
         Epsilon = NMath::Abs(Epsilon);
 
@@ -85,7 +86,7 @@ public:
      * @param Other: The matrix to compare with
      * @return: True if equal, false if not
      */
-    FORCEINLINE bool operator==(const CMatrix3x4& Other) const noexcept
+    FORCEINLINE bool operator==(const FMatrix3x4& Other) const noexcept
     {
         return IsEqual(Other);
     }
@@ -96,7 +97,7 @@ public:
      * @param Other: The matrix to compare with
      * @return: False if equal, true if not
      */
-    FORCEINLINE bool operator!=(const CMatrix3x4& Other) const noexcept
+    FORCEINLINE bool operator!=(const FMatrix3x4& Other) const noexcept
     {
         return !IsEqual(Other);
     }

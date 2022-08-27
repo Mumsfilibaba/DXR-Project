@@ -3,12 +3,13 @@
 #include "RHIResources.h"
 #include "RHIResourceViews.h"
 
+class FRHIViewport;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIRenderPassInitializer
 
-class FRHIRenderPassInitializer
+struct FRHIRenderPassInitializer
 {
-public:
     FRHIRenderPassInitializer()
         : ShadingRateTexture(nullptr)
         , DepthStencilView()
@@ -17,11 +18,12 @@ public:
         , RenderTargets()
     { }
 
-    FRHIRenderPassInitializer( const TStaticArray<FRHIRenderTargetView, kRHIMaxRenderTargetCount>& InRenderTargets
-                             , uint32 InNumRenderTargets
-                             , FRHIDepthStencilView InDepthStencilView
-                             , FRHITexture2D* InShadingRateTexture = nullptr
-                             , EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1)
+    FRHIRenderPassInitializer(
+        const TStaticArray<FRHIRenderTargetView, kRHIMaxRenderTargetCount>& InRenderTargets,
+        uint32 InNumRenderTargets,
+        FRHIDepthStencilView InDepthStencilView,
+        FRHITexture2D* InShadingRateTexture = nullptr,
+        EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1)
         : ShadingRateTexture(InShadingRateTexture)
         , DepthStencilView(InDepthStencilView)
         , StaticShadingRate(InStaticShadingRate)
@@ -60,8 +62,7 @@ class IRHICommandContext
 {
 public:
 
-    virtual void StartContext() = 0;
-
+    virtual void StartContext()  = 0;
     virtual void FinishContext() = 0;
 
     /**
@@ -86,7 +87,7 @@ public:
      * @param RenderTargetView: RenderTargetView to clear
      * @param ClearColor: Color to set each pixel within the RenderTargetView to
      */
-    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor) = 0;
+    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) = 0;
 
     /**
      * @brief: Clears a DepthStencilView with a specific value
@@ -102,11 +103,10 @@ public:
      * @param UnorderedAccessView: UnorderedAccessView to clear
      * @param ClearColor: Value to set each pixel within the UnorderedAccessView to
      */
-    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) = 0;
+    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) = 0;
 
     virtual void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) = 0;
-
-    virtual void EndRenderPass() = 0;
+    virtual void EndRenderPass()                                                         = 0;
 
     /**
      * @brief: Set the current viewport settings
@@ -135,16 +135,15 @@ public:
      * 
      * @param Color: New blend-factor to use
      */
-    virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) = 0;
+    virtual void SetBlendFactor(const FVector4& Color) = 0;
 
     /**
      * @brief: Set the VertexBuffers to be used
      * 
-     * @param VertexBuffers: Array of VertexBuffers to use
-     * @param VertexBufferCount: Number of VertexBuffers in the array
+     * @param VertexBuffers: ArrayView of VertexBuffers to use
      * @param BufferSlot: Slot to start bind the array to
      */
-    virtual void SetVertexBuffers(FRHIVertexBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot) = 0;
+    virtual void SetVertexBuffers(const TArrayView<FRHIVertexBuffer* const> InVertexBuffers, uint32 BufferSlot) = 0;
     
     /**
      * @brief: Set the current IndexBuffer 
@@ -197,11 +196,10 @@ public:
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
-     * @param ShaderResourceViews: Array of ShaderResourceViews to bind
-     * @param NumShaderResourceViews: Number of ShaderResourceViews in the array
+     * @param ShaderResourceViews: ArrayView of ShaderResourceViews to bind
      * @param ParameterIndex: ShaderResourceView-index to bind to
      */
-    virtual void SetShaderResourceViews(FRHIShader* Shader, FRHIShaderResourceView* const* ShaderResourceViews, uint32 NumShaderResourceViews, uint32 ParameterIndex) = 0;
+    virtual void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -217,11 +215,10 @@ public:
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
-     * @param UnorderedAccessViews: Array of UnorderedAccessViews to bind
-     * @param NumUnorderedAccessViews: Number of UnorderedAccessViews in the array
+     * @param InUnorderedAccessViews: ArrayView of UnorderedAccessViews to bind
      * @param ParameterIndex: UnorderedAccessView-index to bind to
      */
-    virtual void SetUnorderedAccessViews(FRHIShader* Shader, FRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex) = 0;
+    virtual void SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -237,11 +234,10 @@ public:
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
-     * @param ConstantBuffers: Array of ConstantBuffers to bind
-     * @param NumConstantBuffers: Number of ConstantBuffers in the array
+     * @param ConstantBuffers: ArrayView of ConstantBuffers to bind
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    virtual void SetConstantBuffers(FRHIShader* Shader, FRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIConstantBuffer* const> InConstantBuffers, uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -257,11 +253,10 @@ public:
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
-     * @param SamplerStates: Array of SamplerStates to bind
-     * @param NumConstantBuffers: Number of ConstantBuffers in the array
+     * @param SamplerStates: ArrayView of SamplerStates to bind
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    virtual void SetSamplerStates(FRHIShader* Shader, FRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) = 0;
+    virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Updates the contents of a Buffer
@@ -319,11 +314,12 @@ public:
     virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) = 0;
 
     /**
-     * @brief: Destroys a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command-list is completed
+     * @brief: Destroys a resource, this can be used to not having to deal with resource life time, 
+     * the resource will be destroyed when the underlying command-list is completed
      * 
      * @param Resource: Resource to destroy
      */
-    virtual void DestroyResource(class IRHIResource* Resource) = 0;
+    virtual void DestroyResource(class IRefCounted* Resource) = 0;
 
     /**
      * @brief: Signal the driver that the contents can be discarded
@@ -352,13 +348,14 @@ public:
     virtual void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) = 0;
 
      /** @brief: Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
-    virtual void SetRayTracingBindings( FRHIRayTracingScene* RayTracingScene
-                                      , FRHIRayTracingPipelineState* PipelineState
-                                      , const FRayTracingShaderResources* GlobalResource
-                                      , const FRayTracingShaderResources* RayGenLocalResources
-                                      , const FRayTracingShaderResources* MissLocalResources
-                                      , const FRayTracingShaderResources* HitGroupResources
-                                      , uint32 NumHitGroupResources) = 0;
+    virtual void SetRayTracingBindings(
+        FRHIRayTracingScene* RayTracingScene,
+        FRHIRayTracingPipelineState* PipelineState,
+        const FRayTracingShaderResources* GlobalResource,
+        const FRayTracingShaderResources* RayGenLocalResources,
+        const FRayTracingShaderResources* MissLocalResources,
+        const FRayTracingShaderResources* HitGroupResources,
+        uint32 NumHitGroupResources) = 0;
 
     /**
      * @brief: Generate MipLevels for a texture. Works with Texture2D and TextureCubes.
@@ -400,16 +397,32 @@ public:
     virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) = 0;
 
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) = 0;
-
-    virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
-
-    virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) = 0;
     
-    virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) = 0;
+    virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
+    
+    virtual void DrawInstanced(
+        uint32 VertexCountPerInstance,
+        uint32 InstanceCount,
+        uint32 StartVertexLocation,
+        uint32 StartInstanceLocation) = 0;
+    
+    virtual void DrawIndexedInstanced(
+        uint32 IndexCountPerInstance,
+        uint32 InstanceCount,
+        uint32 StartIndexLocation,
+        uint32 BaseVertexLocation,
+        uint32 StartInstanceLocation) = 0;
 
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
 
-    virtual void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
+    virtual void DispatchRays(
+        FRHIRayTracingScene* Scene,
+        FRHIRayTracingPipelineState* PipelineState,
+        uint32 Width,
+        uint32 Height,
+        uint32 Depth) = 0;
+
+    virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) = 0;
 
     /** @brief: Clears the state of the context, clearing all bound references currently bound */
     virtual void ClearState() = 0;
@@ -418,7 +431,7 @@ public:
     virtual void Flush() = 0;
 
     /** @brief: Inserts a marker on the GPU timeline */
-    virtual void InsertMarker(const String& Message) = 0;
+    virtual void InsertMarker(const FStringView& Message) = 0;
 
     /** @brief:  Begins a PIX capture event, currently only available on D3D12  */
     virtual void BeginExternalCapture() = 0;

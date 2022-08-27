@@ -1,32 +1,32 @@
 #pragma once
 #include "MetalCore.h"
 
-class CMetalCoreInterface;
+class FMetalCoreInterface;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalDeviceContext
+// FMetalDeviceContext
 
-class CMetalDeviceContext 
+class FMetalDeviceContext 
 {
 protected:
 	
-	friend class CMetalCoreInterface;
+	friend class FMetalCoreInterface;
 	
-	CMetalDeviceContext(CMetalCoreInterface* InCoreInterface, id<MTLDevice> InDevice);
-	~CMetalDeviceContext();
+	FMetalDeviceContext(FMetalCoreInterface* InCoreInterface, id<MTLDevice> InDevice);
+	~FMetalDeviceContext();
 
 public:
     
-	static CMetalDeviceContext* CreateContext(CMetalCoreInterface* InCoreInterface);
+	static FMetalDeviceContext* CreateContext(FMetalCoreInterface* InCoreInterface);
 	
 	FORCEINLINE id<MTLDevice> GetMTLDevice() const { return Device; }
 	
 	FORCEINLINE id<MTLCommandQueue> GetMTLCommandQueue() const { return CommandQueue; }
 
-	FORCEINLINE CMetalCoreInterface* GetMetalCoreInterface() const { return CoreInterface; }
+	FORCEINLINE FMetalCoreInterface* GetMetalCoreInterface() const { return CoreInterface; }
 	
 private:
-	CMetalCoreInterface* CoreInterface;
+	FMetalCoreInterface* CoreInterface;
 	
 	id<MTLDevice>        Device;
 	id<MTLCommandQueue>  CommandQueue;

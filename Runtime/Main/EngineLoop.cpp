@@ -8,16 +8,18 @@
     #include "EditorEngine.h"
 #endif
 
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleInterface.h"
 #include "Core/Modules/ApplicationModule.h"
 #include "Core/Threading/ThreadManager.h"
-#include "Core/Threading/AsyncTaskManager.h"
-#include "Core/Misc/EngineLoopDelegates.h"
+#include "Core/Threading/TaskManagerInterface.h"
+#include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
+#include "Core/Misc/OutputDeviceConsole.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Canvas/CanvasApplication.h"
+#include "Application/ApplicationInterface.h"
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
@@ -31,38 +33,56 @@
 #include "RHI/RHIShaderCompiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FEngineLoop
+
+FEngineLoop::FEngineLoop()
+    : FrameTimer()
+    , ConsoleWindow(nullptr)
+{ }
+
+FEngineLoop::~FEngineLoop()
+{ 
+    ConsoleWindow = nullptr;
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // LoadCoreModules
 
-bool CEngineLoop::LoadCoreModules()
+bool FEngineLoop::LoadCoreModules()
 {
-    CModuleManager& ModuleManager = CModuleManager::Get();
+    FModuleInterface& ModuleManager = FModuleInterface::Get();
 
-    IEngineModule* CoreModule            = ModuleManager.LoadEngineModule("Core");
-    IEngineModule* CoreApplicationModule = ModuleManager.LoadEngineModule("CoreApplication");
-    if (!CoreModule || !CoreApplicationModule)
+    IModule* CoreModule = ModuleManager.LoadModule("Core");
+    if (!CoreModule)
     {
         return false;
     }
 
-    IEngineModule* CanvasModule = ModuleManager.LoadEngineModule("Canvas");
-    if (!CanvasModule)
+    IModule* CoreApplicationModule = ModuleManager.LoadModule("CoreApplication");
+    if (!CoreApplicationModule)
     {
         return false;
     }
 
-    IEngineModule* EngineModule = ModuleManager.LoadEngineModule("Engine");
+    IModule* ApplicationModule = ModuleManager.LoadModule("Application");
+    if (!ApplicationModule)
+    {
+        return false;
+    }
+
+    IModule* EngineModule = ModuleManager.LoadModule("Engine");
     if (!EngineModule)
     {
         return false;
     }
 
-    IEngineModule* RHIModule = ModuleManager.LoadEngineModule("RHI");
+    IModule* RHIModule = ModuleManager.LoadModule("RHI");
     if (!RHIModule)
     {
         return false;
     }
 
-    IEngineModule* RendererModule = ModuleManager.LoadEngineModule("Renderer");
+    IModule* RendererModule = ModuleManager.LoadModule("Renderer");
     if (!RendererModule)
     {
         return false;
@@ -74,66 +94,72 @@ bool CEngineLoop::LoadCoreModules()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // PreInitialize
 
-bool CEngineLoop::PreInitialize()
+bool FEngineLoop::PreInit()
 {
-    NErrorDevice::GConsoleWindow = PlatformApplicationMisc::CreateConsoleWindow();
-    if (!NErrorDevice::GConsoleWindow)
+    // Create the console window
+    ConsoleWindow = FPlatformApplicationMisc::CreateOutputDeviceConsole();
+    if (ConsoleWindow)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize ConsoleWindow");
-        return false;
+        FOutputDeviceLogger::Get()->AddOutputDevice(ConsoleWindow);
+        
+        ConsoleWindow->Show(true);
+        ConsoleWindow->SetTitle(FString(PROJECT_NAME) + ": Error Console");
     }
     else
     {
-        NErrorDevice::GConsoleWindow->Show(true);
-        NErrorDevice::GConsoleWindow->SetTitle(String(PROJECT_NAME) + ": Error Console");
-    }
-
-    if (!LoadCoreModules())
-    {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to Load Core-Modules");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize ConsoleWindow");
         return false;
     }
 
-    LOG_INFO("IsDebuggerAttached=%s", PlatformMisc::IsDebuggerPresent() ? "true" : "false");
-    
-    // TODO: Use a separate profiler for booting the engine
-    CFrameProfiler::Enable();
-    TRACE_FUNCTION_SCOPE();
-
-	const String ProjectLocation     = String(ENGINE_LOCATION) + String("/") + String(PROJECT_NAME);
-    const String AssetFolderLocation = String(ENGINE_LOCATION) + String("/Assets");
-    if (!CProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr(), AssetFolderLocation.CStr()))
+    // Load the Core-Modules
+    if (!LoadCoreModules())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Load Core-Modules");
         return false;
     }
 
 #if !PRODUCTION_BUILD
-    LOG_INFO("ProjectName=%s", CProjectManager::GetProjectName());
-    LOG_INFO("ProjectPath=%s", CProjectManager::GetProjectPath());
+    LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
 #endif
 
-    if (!CThreadManager::Initialize())
+    // TODO: Use a separate profiler for booting the engine
+    FFrameProfiler::Enable();
+    TRACE_FUNCTION_SCOPE();
+
+	const FString ProjectLocation     = FString(ENGINE_LOCATION) + FString("/") + FString(PROJECT_NAME);
+    const FString AssetFolderLocation = FString(ENGINE_LOCATION) + FString("/Assets");
+    if (!FProjectManager::Initialize(PROJECT_NAME, ProjectLocation.GetCString(), AssetFolderLocation.GetCString()))
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
         return false;
     }
 
-    if (!CCanvasApplication::CreateApplication())
+#if !PRODUCTION_BUILD
+    LOG_INFO("ProjectName=%s", FProjectManager::GetProjectName());
+    LOG_INFO("ProjectPath=%s", FProjectManager::GetProjectPath());
+#endif
+
+    if (!FThreadManager::Initialize())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");
         return false;
     }
 
-    if (!CAsyncTaskManager::Get().Initialize())
+    if (!FApplicationInterface::Create())
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
+        return false;
+    }
+
+    if (!FTaskManagerInterface::Get().Initialize())
     {
         return false;
     }
 
-   // Initialize the shadercompiler before RHI since RHI might need to compile shaders
-    if (!FRHIShaderCompiler::Initialize(CProjectManager::GetAssetPath()))
+   // Initialize the ShaderCompiler before RHI since RHI might need to compile shaders
+    if (!FRHIShaderCompiler::Initialize(FProjectManager::GetAssetPath()))
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return false;
     }
         
@@ -149,19 +175,19 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    NEngineLoopDelegates::PostInitRHIDelegate.Broadcast();
+    NCoreDelegates::PostInitRHIDelegate.Broadcast();
 
-    if (!CGPUProfiler::Init())
+    if (!FGPUProfiler::Init())
     {
-        LOG_ERROR("CGPUProfiler failed to be initialized");
+        LOG_ERROR("FGPUProfiler failed to be initialized");
     }
 
-    if (!CTextureFactory::Init())
+    if (!FTextureFactory::Init())
     {
         return false;
     }
 
-    NEngineLoopDelegates::PreInitFinishedDelegate.Broadcast();
+    NCoreDelegates::PreInitFinishedDelegate.Broadcast();
 
     return true;
 }
@@ -169,14 +195,14 @@ bool CEngineLoop::PreInitialize()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Initialize
 
-bool CEngineLoop::Initialize()
+bool FEngineLoop::Init()
 {
-    NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
+    NCoreDelegates::PreEngineInitDelegate.Broadcast();
 
 #if PROJECT_EDITOR
-    GEngine = CEditorEngine::Make();
+    GEngine = FEditorEngine::Make();
 #else
-    GEngine = CEngine::Make();
+    GEngine = dbg_new FEngine();
 #endif
     if (!GEngine->Initialize())
     {
@@ -184,41 +210,41 @@ bool CEngineLoop::Initialize()
         return false;
     }
 
-    NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
+    NCoreDelegates::PreEngineInitDelegate.Broadcast();
 
     if (!GRenderer.Init())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
         return false;
     }
 
-    NEngineLoopDelegates::PreApplicationLoadedDelegate.Broadcast();
+    NCoreDelegates::PreApplicationLoadedDelegate.Broadcast();
 
-    GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>(CProjectManager::GetProjectModuleName());
+    GApplicationModule = FModuleInterface::Get().LoadModule<FApplicationInterfaceModule>(FProjectManager::GetProjectModuleName());
     if (!GApplicationModule)
     {
         LOG_WARNING("Application Init failed, may not behave as intended");
     }
     else
     {
-        NEngineLoopDelegates::PostApplicationLoadedDelegate.Broadcast();
+        NCoreDelegates::PostApplicationLoadedDelegate.Broadcast();
     }
 
-    IInterfaceRendererModule* InterfaceRendererModule = CModuleManager::Get().LoadEngineModule<IInterfaceRendererModule>("InterfaceRenderer");
+    IApplicationRendererModule* InterfaceRendererModule = FModuleInterface::Get().LoadModule<IApplicationRendererModule>("InterfaceRenderer");
     if (!InterfaceRendererModule)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to load InterfaceRenderer");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load InterfaceRenderer");
         return false;
     }
 
-    TSharedRef<ICanvasRenderer> InterfaceRenderer = InterfaceRendererModule->CreateRenderer();
+    TSharedRef<IApplicationRenderer> InterfaceRenderer = InterfaceRendererModule->CreateRenderer();
     if (!InterfaceRenderer)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "FAILED to create InterfaceRenderer");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create InterfaceRenderer");
         return false;
     }
 
-    CCanvasApplication::Get().SetRenderer(InterfaceRenderer);
+    FApplicationInterface::Get().SetRenderer(InterfaceRenderer);
 
     // Final thing is to startup the engine
     if (!GEngine->Start())
@@ -232,19 +258,22 @@ bool CEngineLoop::Initialize()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Tick
 
-void CEngineLoop::Tick(CTimestamp Deltatime)
+void FEngineLoop::Tick()
 {
     TRACE_FUNCTION_SCOPE();
 
-    CCanvasApplication::Get().Tick(Deltatime);
+    // Tick the timer
+    FrameTimer.Tick();
 
-    CEngineLoopTicker::Get().Tick(Deltatime);
+    FApplicationInterface::Get().Tick(FrameTimer.GetDeltaTime());
 
-    GEngine->Tick(Deltatime);
+    FEngineLoopTicker::Get().Tick(FrameTimer.GetDeltaTime());
 
-    CFrameProfiler::Get().Tick();
+    GEngine->Tick(FrameTimer.GetDeltaTime());
 
-    CGPUProfiler::Get().Tick();
+    FFrameProfiler::Get().Tick();
+
+    FGPUProfiler::Get().Tick();
 
     GRenderer.Tick(*GEngine->Scene);
 }
@@ -252,20 +281,20 @@ void CEngineLoop::Tick(CTimestamp Deltatime)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Release
 
-bool CEngineLoop::Release()
+bool FEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
-    FRHICommandQueue::Get().WaitForGPU();
+    GRHICommandExecutor.WaitForGPU();
 
-    CGPUProfiler::Release();
+    FGPUProfiler::Release();
 
     GRenderer.Release();
 
     // Release the Application. Protect against failed initialization where the global pointer was never initialized
-    if (CCanvasApplication::IsInitialized())
+    if (FApplicationInterface::IsInitialized())
     {
-        CCanvasApplication::Get().SetRenderer(nullptr);
+        FApplicationInterface::Get().SetRenderer(nullptr);
     }
 
     // Release the Engine. Protect against failed initialization where the global pointer was never initialized
@@ -277,21 +306,19 @@ bool CEngineLoop::Release()
         GEngine = nullptr;
     }
 
-    CTextureFactory::Release();
+    FTextureFactory::Release();
 
     RHIRelease();
 
-    CAsyncTaskManager::Get().Release();
+    FTaskManagerInterface::Get().Release();
 
-    CCanvasApplication::Release();
+    FApplicationInterface::Release();
 
-    CThreadManager::Release();
+    FThreadManager::Release();
 
-    CModuleManager::ReleaseAllLoadedModules();
+    SAFE_DELETE(ConsoleWindow);
 
-    SafeRelease(NErrorDevice::GConsoleWindow);
-
-    CModuleManager::Destroy();
+    FModuleInterface::Shutdown();
 
     return true;
 }

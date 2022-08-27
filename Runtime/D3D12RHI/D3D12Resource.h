@@ -1,7 +1,7 @@
 #pragma once
 #include "D3D12DeviceChild.h"
+#include "D3D12RefCounted.h"
 
-#include "Core/RefCounted.h"
 #include "Core/Utilities/StringUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -12,10 +12,11 @@ typedef TSharedRef<class FD3D12Resource> FD3D12ResourceRef;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Resource
 
-class FD3D12Resource : public FD3D12DeviceChild, public FRefCounted
+class FD3D12Resource 
+    : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
 public:
-
     FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource);
     FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType);
     ~FD3D12Resource() = default;
@@ -25,10 +26,10 @@ public:
     void* MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
     void  UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
 
-    FORCEINLINE void SetName(const String& Name)
+    FORCEINLINE void SetName(const FString& Name)
     {
-        WString WideName = CharToWide(Name);
-        Resource->SetName(WideName.CStr());
+        FStringWide WideName = CharToWide(Name);
+        Resource->SetName(WideName.GetCString());
     }
 
     FORCEINLINE ID3D12Resource*            GetD3D12Resource() const { return Resource.Get(); }

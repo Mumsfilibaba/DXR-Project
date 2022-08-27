@@ -4,7 +4,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CommandAllocator 
 
-class FD3D12CommandAllocator : public FD3D12DeviceChild
+class FD3D12CommandAllocator 
+    : public FD3D12DeviceChild
 {
 public:
 
@@ -39,10 +40,10 @@ public:
         return SUCCEEDED(Result);
     }
 
-    FORCEINLINE void SetName(const String& Name)
+    FORCEINLINE void SetName(const FString& Name)
     {
-        WString WideName = CharToWide(Name);
-        Allocator->SetName(WideName.CStr());
+        FStringWide WideName = CharToWide(Name);
+        Allocator->SetName(WideName.GetCString());
     }
 
     FORCEINLINE ID3D12CommandAllocator* GetAllocator() const

@@ -12,350 +12,376 @@
 #include "Core/Memory/Memory.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Construct the objects in the range by calling the default constructor */
+// DefaultConstructElements
 
-template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type DefaultConstructRange(void* StartAddress, uint32 Count) noexcept
+template<typename ElementType, typename SizeType>
+FORCEINLINE void DefaultConstructElements(void* StartAddress, SizeType Count) noexcept
 {
-    while (Count)
+    if CONSTEXPR (TIsTrivial<ElementType>::Value)
     {
-        new(StartAddress) T();
-        StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-        --Count;
+        FMemory::Memzero(StartAddress, sizeof(ElementType) * Count);
     }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// For trivial types, construct the objects in the range by calling Memory::Memzero
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type DefaultConstructRange(void* StartAddress, uint32 Count) noexcept
-{
-    FMemory::Memzero(StartAddress, sizeof(T) * Count);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Default construct a single object
-
-template<typename T>
-FORCEINLINE void DefaultConstruct(void* Address) noexcept
-{
-    DefaultConstructRange<T>(Address, 1);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Construct range and initialize all values to a certain l-value
-
-template<typename T>
-FORCEINLINE void ConstructRangeFrom(void* restrict_ptr StartAddress, uint32 Count, const T& Element) noexcept
-{
-    while (Count)
+    else
     {
-        new(StartAddress) T(Element);
-        StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-        --Count;
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Construct range and initialize all values to a certain r-value
-
-template<typename T>
-FORCEINLINE void ConstructRangeFrom(void* restrict_ptr StartAddress, uint32 Count, T&& Element) noexcept
-{
-    while (Count)
-    {
-        new(StartAddress) T(Forward<T>(Element));
-        StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-        --Count;
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Construct the objects in the range by calling the copy constructor
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyConstructRange(void* restrict_ptr StartAddress, const T* restrict_ptr Source, uint32 Count) noexcept
-{
-    while (Count)
-    {
-        new(StartAddress) T(*Source);
-        StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-        ++Source;
-        --Count;
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// For trivial objects, construct the objects in the range by calling Memory::Memcpy
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type CopyConstructRange(void* restrict_ptr StartAddress, const T* restrict_ptr Source, uint32 Count) noexcept
-{
-    FMemory::Memcpy(StartAddress, Source, sizeof(T) * Count);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Copy-construct a single object
-
-template<typename T>
-FORCEINLINE void CopyConstruct(void* const restrict_ptr Address, const T* restrict_ptr Source) noexcept
-{
-    CopyConstructRange<T>(Address, Source, 1);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Copy assign objects in range with the copy assignment operator
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyAssignRange(T* restrict_ptr Destination, const T* restrict_ptr Source, uint32 Count) noexcept
-{
-    while (Count)
-    {
-        *Destination = *Source;
-        ++Destination;
-        ++Source;
-        --Count;
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// For trivial objects, copy assign objects in range with Memory::Memcpy
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type CopyAssignRange(T* restrict_ptr Destination, const T* restrict_ptr Source, uint32 Count) noexcept
-{
-    FMemory::Memcpy(Destination, Source, sizeof(T) * Count);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Copy-assign a single object
-
-template<typename T>
-FORCEINLINE void CopyConstruct(T* restrict_ptr Destination, const T* restrict_ptr Source) noexcept
-{
-    CopyConstructRange<T>(Destination, Source, 1);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Construct the objects in the range by calling the move constructor
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<T>>::Value>::Type MoveConstructRange(void* StartAddress, const T* Source, uint32 Count) noexcept
-{
-    while (Count)
-    {
-        new(StartAddress) T(Move(*Source));
-        StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-        ++Source;
-        --Count;
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// For trivial objects, construct the objects in the range by calling Memory::Memcpy and then Memory::Memzero on the source
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type MoveConstructRange(void* StartAddress, const T* Source, uint32 Count) noexcept
-{
-    FMemory::Memexchange(StartAddress, Source, sizeof(T) * Count);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Move-construct a single object
-
-template<typename T>
-FORCEINLINE void MoveConstruct(void* const StartAddress, const T* Source) noexcept
-{
-    MoveConstructRange<T>(StartAddress, Source, 1);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Move assign objects in range with the move assignment operator
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<T>>::Value>::Type MoveAssignRange(T* Destination, const T* Source, uint32 Count) noexcept
-{
-    while (Count)
-    {
-        *Destination = Move(*Source);
-        ++Destination;
-        ++Source;
-        --Count;
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// For trivial objects, move assign objects in range with Memory::Memcpy and Memory::Memzero
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type MoveAssignRange(T* Destination, const T* Source, uint32 Count) noexcept
-{
-    FMemory::Memexchange(Destination, Source, sizeof(T) * Count);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Move-assign a single object
-
-template<typename T>
-FORCEINLINE void MoveAssign(T* Destination, const T* Source) noexcept
-{
-    MoveAssignRange<T>(Destination, Source, 1);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Destruct the objects in the range by calling the destructor
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type DestructRange(const T* StartObject, uint32 Count) noexcept
-{
-    while (Count)
-    {
-        (StartObject++)->~T();
-        --Count;
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// For trivial objects, do nothing
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type DestructRange(const T*, uint32) noexcept
-{
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Destruct a single object
-
-template<typename T>
-FORCEINLINE void Destruct(const T* const Object) noexcept
-{
-    DestructRange<T>(Object, 1);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsMoveConstructable<T>>::Value>::Type RelocateRange(void* StartAddress, T* Source, uint32 Count) noexcept
-{
-    // Ensures that the function works for overlapping ranges
-    if ((Source < StartAddress) && (StartAddress < Source + Count))
-    {
-        StartAddress = reinterpret_cast<T*>(StartAddress) + Count;
-        Source = Source + Count;
-
+        ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
         while (Count)
         {
-            --Source;
-            StartAddress = reinterpret_cast<T*>(StartAddress) - 1;
-
-            new(StartAddress) T(Move(*Source));
-            Source->~T();
-
+            new(CurrentElement) ElementType();
+            ++CurrentElement;
             --Count;
         }
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// DefaultConstructElement
+
+template<typename ElementType>
+FORCEINLINE void DefaultConstructElement(void* Address) noexcept
+{
+    DefaultConstructElements<ElementType>(Address, 1);
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ConstructElementsFrom
+
+template<typename ElementType, typename SizeType>
+FORCEINLINE void ConstructElementsFrom(void* RESTRICT StartAddress, SizeType Count, const ElementType& Element) noexcept
+{
+    if CONSTEXPR(TIsTrivial<ElementType>::Value && sizeof(ElementType) == sizeof(uint8))
+    {
+        FMemory::Memset(StartAddress, static_cast<uint8>(Element), sizeof(ElementType) * Count);
+    }
+    else
+    {
+        ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
+        while (Count)
+        {
+            new(CurrentElement) ElementType(Element);
+            ++CurrentElement;
+            --Count;
+        }
+    }
+}
+
+template<typename ElementType, typename SizeType>
+FORCEINLINE void ConstructElementsFrom(void* RESTRICT StartAddress, SizeType Count, ElementType&& Element) noexcept
+{
+    if CONSTEXPR(TIsTrivial<ElementType>::Value && sizeof(ElementType) == sizeof(uint8))
+    {
+        FMemory::Memset(StartAddress, static_cast<uint8>(Forward<ElementType>(Element)), sizeof(ElementType) * Count);
+    }
+    else
+    {
+        ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
+        while (Count)
+        {
+            new(CurrentElement) ElementType(Forward<ElementType>(Element));
+            ++CurrentElement;
+            --Count;
+        }
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CopyConstructElements
+
+template<typename ElementType, typename SizeType>
+FORCEINLINE void CopyConstructElements(void* RESTRICT StartAddress, const ElementType* RESTRICT Source, SizeType Count) noexcept
+{
+    if CONSTEXPR (TIsTrivial<ElementType>::Value)
+    {
+        FMemory::Memcpy(StartAddress, Source, sizeof(ElementType) * Count);
+    }
+    else
+    {
+        ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
+        while (Count)
+        {
+            new(CurrentElement) ElementType(*Source);
+            ++CurrentElement;
+            ++Source;
+            --Count;
+        }
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CopyConstructElement
+
+template<typename ElementType>
+FORCEINLINE void CopyConstructElement(void* const RESTRICT Address, const ElementType* RESTRICT Source) noexcept
+{
+    CopyConstructElements<ElementType>(Address, Source, 1);
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CopyAssignElements
+
+template<typename ElementType, typename SizeType>
+FORCEINLINE void CopyAssignElements(ElementType* RESTRICT Destination, const ElementType* RESTRICT Source, SizeType Count) noexcept
+{
+    if CONSTEXPR (TIsTrivial<ElementType>::Value)
+    {
+        FMemory::Memcpy(Destination, Source, sizeof(ElementType) * Count);
     }
     else
     {
         while (Count)
         {
-            new(StartAddress) T(Move(*Source));
-            Source->~T();
-
-            StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
+            *Destination = *Source;
+            ++Destination;
             ++Source;
-
             --Count;
         }
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty 
+// CopyAssignElement
 
-template<typename T>
-FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsCopyConstructable<T>, TNot<TIsMoveConstructable<T>>>::Value>::Type RelocateRange(void* StartAddress, T* Source, uint32 Count) noexcept
+template<typename ElementType>
+FORCEINLINE void CopyAssignElement(ElementType* RESTRICT Destination, const ElementType* RESTRICT Source) noexcept
 {
-    // Ensures that the function works for overlapping ranges
-    if ((Source < StartAddress) && (StartAddress < Source + Count))
-    {
-        StartAddress = reinterpret_cast<T*>(StartAddress) + Count;
-        Source = Source + Count;
+    CopyAssignElements<ElementType>(Destination, Source, 1);
+}
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// MoveConstructElements
+
+template<typename ElementType, typename SizeType>
+FORCEINLINE void MoveConstructElements(void* StartAddress, const ElementType* Source, SizeType Count) noexcept
+{
+    if CONSTEXPR (TIsReallocatable<ElementType>::Value)
+    {
+        FMemory::Memexchange(StartAddress, Source, sizeof(ElementType) * Count);
+    }
+    else
+    {
+        ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
         while (Count)
         {
-            StartAddress = reinterpret_cast<T*>(StartAddress) - 1;
-            --Source;
-
-            new(StartAddress) T(*Source);
-            Source->~T();
-
+            new(CurrentElement) ElementType(Move(*Source));
+            ++CurrentElement;
+            ++Source;
             --Count;
         }
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// MoveConstructElement
+
+template<typename ElementType>
+FORCEINLINE void MoveConstructElement(void* StartAddress, const ElementType* Source) noexcept
+{
+    MoveConstructElements<ElementType>(StartAddress, Source, 1);
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// MoveAssignElements
+
+template<typename ElementType, typename SizeType>
+FORCEINLINE void MoveAssignElements(ElementType* Destination, const ElementType* Source, SizeType Count) noexcept
+{
+    if CONSTEXPR(TIsReallocatable<ElementType>::Value)
+    {
+        FMemory::Memexchange(Destination, Source, sizeof(ElementType) * Count);
     }
     else
     {
         while (Count)
         {
-            new(StartAddress) T(*Source);
-            Source->~T();
-
-            StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
+            *Destination = Move(*Source);
+            ++Destination;
             ++Source;
-
             --Count;
         }
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty
+// MoveAssignElement
 
-template<typename T>
-FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type RelocateRange(void* StartAddress, T* Source, uint32 Count) noexcept
+template<typename ElementType>
+FORCEINLINE void MoveAssignElement(ElementType* Destination, const ElementType* Source) noexcept
 {
-    FMemory::Memmove(StartAddress, reinterpret_cast<const void*>(Source), sizeof(T) * Count);
+    MoveAssignElements<ElementType>(Destination, Source, 1);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Compares elements in the range if they are equal or not
+// DestroyElements
 
-template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value, bool>::Type CompareRange(const T* LHS, const T* RHS, uint32 Count) noexcept
+template<typename ElementType, typename SizeType>
+FORCEINLINE void DestroyElements(ElementType* StartObject, SizeType Count) noexcept
 {
-    while (Count)
+    if CONSTEXPR (TNot<TIsTrivial<ElementType>>::Value)
     {
-        if (!(*(LHS++) == *(RHS++)))
+        while (Count)
         {
-            return false;
+            typedef ElementType ElementTypeDestructorType;
+            StartObject->~ElementTypeDestructorType();
+            ++StartObject;
+            --Count;
+        }
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// DestroyElements
+
+template<typename ElementType>
+FORCEINLINE void DestroyElement(ElementType* Object) noexcept
+{
+    DestroyElements<ElementType>(Object, 1);
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// RelocateElements
+
+template<typename ElementType, typename SizeType>
+FORCEINLINE void RelocateElements(void* StartAddress, ElementType* Source, SizeType Count) noexcept
+{
+    static_assert(
+        TIsReallocatable<ElementType>::Value || TIsMoveConstructable<ElementType>::Value || TIsCopyConstructable<ElementType>::Value,
+        "ElementType cannot be relocated");
+
+    if CONSTEXPR (TIsReallocatable<ElementType>::Value)
+    {
+        FMemory::Memmove(StartAddress, Source, sizeof(ElementType) * Count);
+    }
+    else
+    {
+        typedef ElementType ElementTypeDestructorType;
+        if CONSTEXPR (TIsMoveConstructable<ElementType>::Value)
+        {
+            // Ensures that the function works for overlapping ranges
+            ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
+            if ((Source < CurrentElement) && (CurrentElement < Source + Count))
+            {
+                CurrentElement += Count;
+                Source         += Count;
+
+                while (Count)
+                {
+                    --Source;
+                    --CurrentElement;
+                    new(CurrentElement) ElementType(Move(*Source));
+                    Source->~ElementTypeDestructorType();
+                    --Count;
+                }
+            }
+            else
+            {
+                while (Count)
+                {
+                    new(CurrentElement) ElementType(Move(*Source));
+                    Source->~ElementTypeDestructorType();
+                    ++CurrentElement;
+                    ++Source;
+                    --Count;
+                }
+            }
+        }
+        else
+        {
+            // Ensures that the function works for overlapping ranges
+            ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
+            if ((Source < CurrentElement) && (CurrentElement < Source + Count))
+            {
+                CurrentElement += Count;
+                Source         += Count;
+
+                while (Count)
+                {
+                    --CurrentElement;
+                    --Source;
+                    new(CurrentElement) ElementType(*Source);
+                    Source->~ElementTypeDestructorType();
+                    --Count;
+                }
+            }
+            else
+            {
+                while (Count)
+                {
+                    new(CurrentElement) ElementType(*Source);
+                    Source->~ElementTypeDestructorType();
+                    ++CurrentElement;
+                    ++Source;
+                    --Count;
+                }
+            }
+        }
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CompareElements
+
+template<typename ElementType, typename SizeType>
+FORCEINLINE bool CompareElements(const ElementType* LHS, const ElementType* RHS, SizeType Count) noexcept
+{
+    if CONSTEXPR (TIsTrivial<ElementType>::Value)
+    {
+        return FMemory::Memcmp<ElementType>(LHS, RHS, Count);
+    }
+    else
+    {
+        while (Count)
+        {
+            if (!(*(LHS++) == *(RHS++)))
+            {
+                return false;
+            }
+
+            --Count;
         }
 
-        --Count;
+        return true;
     }
-
-    return true;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Compares elements in the range if they are equal or not
+// AssignElements
 
-template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value, bool>::Type CompareRange(const T* LHS, const T* RHS, uint32 Count) noexcept
+template<typename ElementType, typename SizeType>
+FORCEINLINE void AssignElements(ElementType* RESTRICT Dst, const ElementType& Element, SizeType Count) noexcept
 {
-    return FMemory::Memcmp<T>(LHS, RHS, Count);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Fill objects in range with the copy assignment operator
-
-template<typename T>
-FORCEINLINE void FillRange(T* restrict_ptr Destination, const T& Source, uint32 Count) noexcept
-{
-    while (Count)
+    if CONSTEXPR (TIsTrivial<ElementType>::Value && sizeof(ElementType) == sizeof(uint8))
     {
-        *Destination = Source;
-        ++Destination;
-        --Count;
+        FMemory::Memset(Dst, static_cast<uint8>(Element), sizeof(ElementType) * Count);
+    }
+    else
+    {
+        while (Count)
+        {
+            *Dst = Element;
+            ++Dst;
+            --Count;
+        }
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// AssignElementsAndReturn
+
+template<typename ElementType, typename SizeType>
+FORCEINLINE ElementType* AssignElementsAndReturn(ElementType* RESTRICT Dst, const ElementType& Element, SizeType Count) noexcept
+{
+    if CONSTEXPR(TIsTrivial<ElementType>::Value && sizeof(ElementType) == sizeof(uint8))
+    {
+        return reinterpret_cast<ElementType*>(FMemory::Memset(Dst, static_cast<uint8>(Element), sizeof(ElementType) * Count));
+    }
+    else
+    {
+        while (Count)
+        {
+            *Dst = Element;
+            ++Dst;
+            --Count;
+        }
+
+        return Dst;
     }
 }

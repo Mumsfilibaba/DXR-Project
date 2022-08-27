@@ -10,22 +10,17 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsApplicationMisc
+// FWindowsApplicationMisc
 
-class COREAPPLICATION_API CWindowsApplicationMisc final : public CGenericApplicationMisc
+struct COREAPPLICATION_API FWindowsApplicationMisc final 
+    : public FGenericApplicationMisc
 {
-public:
+    static FOutputDeviceConsole* CreateOutputDeviceConsole();
+    static FGenericApplication*  CreateApplication();
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericApplicationMisc Interface
-
-    static class CGenericApplication* CreateApplication();
-
-    static class CGenericConsoleWindow* CreateConsoleWindow();
-
-    static FORCEINLINE void MessageBox(const String& Title, const String& Message)
+    static FORCEINLINE void MessageBox(const FString& Title, const FString& Message)
     {
-        MessageBoxA(0, Message.CStr(), Title.CStr(), MB_ICONERROR | MB_OK);
+        MessageBoxA(0, Message.GetCString(), Title.GetCString(), MB_ICONERROR | MB_OK);
     }
 
     static FORCEINLINE void RequestExit(int32 ExitCode)
@@ -35,5 +30,5 @@ public:
 
     static void PumpMessages(bool bUntilEmpty);
 
-    static SModifierKeyState GetModifierKeyState();
+    static FModifierKeyState GetModifierKeyState();
 };

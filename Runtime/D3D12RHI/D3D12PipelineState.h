@@ -1,19 +1,38 @@
 #pragma once
+#include "D3D12Shader.h"
+#include "D3D12RootSignature.h"
+#include "D3D12DeviceChild.h"
+
 #include "RHI/RHIResources.h"
 
 #include "Core/Utilities/StringUtilities.h"
 
-#include "D3D12Shader.h"
-#include "D3D12Core.h"
-#include "D3D12RootSignature.h"
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedefs
+
+typedef TSharedRef<class FD3D12GraphicsPipelineState>   FD3D12GraphicsPipelineStateRef;
+typedef TSharedRef<class FD3D12ComputePipelineState>    FD3D12ComputePipelineStateRef;
+typedef TSharedRef<class FD3D12RayTracingPipelineState> FD3D12RayTracingPipelineStateRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ED3D12PipelineType
+
+enum class ED3D12PipelineType
+{
+    Unknown    = 0,
+    Graphics   = 1,
+    Compute    = 2,
+    RayTracing = 3,
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12VertexInputLayout
 
-class FD3D12VertexInputLayout : public FRHIVertexInputLayout, public FD3D12DeviceChild
+class FD3D12VertexInputLayout 
+    : public FRHIVertexInputLayout
+    , public FD3D12DeviceChild
 {
 public:
-
     FD3D12VertexInputLayout(FD3D12Device* InDevice, const FRHIVertexInputLayoutInitializer& Initializer)
         : FRHIVertexInputLayout()
         , FD3D12DeviceChild(InDevice)
@@ -21,11 +40,11 @@ public:
         , ElementDesc()
         , Desc()
     {
-        SemanticNames.Reserve(Initializer.Elements.Size());
-        for (const SVertexInputElement& Element : Initializer.Elements)
+        SemanticNames.Reserve(Initializer.Elements.GetSize());
+        for (const FVertexInputElement& Element : Initializer.Elements)
         {
             D3D12_INPUT_ELEMENT_DESC D3D12Element;
-            D3D12Element.SemanticName         = SemanticNames.Emplace(Element.Semantic).CStr();
+            D3D12Element.SemanticName         = SemanticNames.Emplace(Element.Semantic).GetCString();
             D3D12Element.SemanticIndex        = Element.SemanticIndex;
             D3D12Element.Format               = ConvertFormat(Element.Format);
             D3D12Element.InputSlot            = Element.InputSlot;
@@ -39,26 +58,26 @@ public:
         Desc.pInputElementDescs = GetElementData();
     }
 
-    const D3D12_INPUT_ELEMENT_DESC* GetElementData() const { return ElementDesc.Data(); }
+    const D3D12_INPUT_ELEMENT_DESC* GetElementData() const { return ElementDesc.GetData(); }
 
-    uint32 GetElementCount() const { return ElementDesc.Size(); }
+    uint32 GetElementCount() const { return ElementDesc.GetSize(); }
 
     FORCEINLINE const D3D12_INPUT_LAYOUT_DESC& GetDesc() const { return Desc; }
 
 private:
-    D3D12_INPUT_LAYOUT_DESC Desc;
-
-    TArray<String>                   SemanticNames;
+    D3D12_INPUT_LAYOUT_DESC          Desc;
+    TArray<FString>                  SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12DepthStencilState
 
-class FD3D12DepthStencilState : public FRHIDepthStencilState, public FD3D12DeviceChild
+class FD3D12DepthStencilState 
+    : public FRHIDepthStencilState
+    , public FD3D12DeviceChild
 {
 public:
-    
     FD3D12DepthStencilState(FD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
         : FRHIDepthStencilState()
         , FD3D12DeviceChild(InDevice)
@@ -74,10 +93,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RasterizerState
 
-class FD3D12RasterizerState : public FRHIRasterizerState, public FD3D12DeviceChild
+class FD3D12RasterizerState 
+    : public FRHIRasterizerState
+    , public FD3D12DeviceChild
 {
 public:
-
     FD3D12RasterizerState(FD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
         : FRHIRasterizerState()
         , FD3D12DeviceChild(InDevice)
@@ -93,10 +113,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12BlendState
 
-class FD3D12BlendState : public FRHIBlendState, public FD3D12DeviceChild
+class FD3D12BlendState 
+    : public FRHIBlendState
+    , public FD3D12DeviceChild
 {
 public:
-
     FD3D12BlendState(FD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
         : FRHIBlendState()
         , FD3D12DeviceChild(InDevice)
@@ -110,69 +131,75 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12PipelineState
+
+class FD3D12PipelineState 
+    : public FD3D12DeviceChild
+{
+public:
+    FD3D12PipelineState(FD3D12Device* InDevice)
+        : FD3D12DeviceChild(InDevice)
+    { }
+
+    ~FD3D12PipelineState() = default;
+
+    void SetDebugName(const FString& InName)
+    {
+        FStringWide WideName = CharToWide(InName);
+        PipelineState->SetName(WideName.GetCString());
+    }
+
+    FORCEINLINE ID3D12PipelineState* GetD3D12PipelineState() const { return PipelineState.Get(); }
+    FORCEINLINE FD3D12RootSignature* GetRootSignature()      const { return RootSignature.Get(); }
+
+protected:
+    TComPtr<ID3D12PipelineState> PipelineState;
+    FD3D12RootSignatureRef       RootSignature;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12GraphicsPipelineState
 
-class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12DeviceChild
+class FD3D12GraphicsPipelineState
+    : public FRHIGraphicsPipelineState
+    , public FD3D12PipelineState
 {
 public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
     ~FD3D12GraphicsPipelineState() = default;
 
-    bool Init(const FRHIGraphicsPipelineStateInitializer& Initializer);
+    bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
 
-    virtual void SetName(const String& InName) override final
-    {
-        WString WideName = CharToWide(InName);
-        PipelineState->SetName(WideName.CStr());
-    }
+public:
+    
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // FRHIPipelineState
 
-    FORCEINLINE ID3D12PipelineState* GetPipeline() const
-    {
-        return PipelineState.Get();
-    }
-
-    FORCEINLINE FD3D12RootSignature* GetRootSignature() const
-    {
-        return RootSignature.Get();
-    }
-
-private:
-    TComPtr<ID3D12PipelineState>    PipelineState;
-    TSharedRef<FD3D12RootSignature> RootSignature;
+    virtual void SetName(const FString& InName) override final { FD3D12PipelineState::SetDebugName(InName); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12ComputePipelineState
 
-class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12DeviceChild
+class FD3D12ComputePipelineState 
+    : public FRHIComputePipelineState
+    , public FD3D12PipelineState
 {
 public:
-
     FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader);
     ~FD3D12ComputePipelineState() = default;
 
-    bool Init();
+    bool Initialize();
 
-    virtual void SetName(const String& InName) override final
-    {
-        WString WideName = CharToWide(InName);
-        PipelineState->SetName(WideName.CStr());
-    }
+public:
 
-    FORCEINLINE ID3D12PipelineState* GetPipeline() const
-    {
-        return PipelineState.Get();
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // FRHIPipelineState
 
-    FORCEINLINE FD3D12RootSignature* GetRootSignature() const
-    {
-        return RootSignature.Get();
-    }
+    virtual void SetName(const FString& InName) override final { FD3D12PipelineState::SetDebugName(InName); }
 
 private:
-    TComPtr<ID3D12PipelineState>    PipelineState;
     TSharedRef<FD3D12ComputeShader> Shader;
-    TSharedRef<FD3D12RootSignature> RootSignature;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -180,67 +207,47 @@ private:
 
 struct FRayTracingShaderIdentifer
 {
-    char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
+    CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayTracingPipelineState
 
-class FD3D12RayTracingPipelineState : public FRHIRayTracingPipelineState, public FD3D12DeviceChild
+class FD3D12RayTracingPipelineState 
+    : public FRHIRayTracingPipelineState
+    , public FD3D12DeviceChild
 {
 public:
     FD3D12RayTracingPipelineState(FD3D12Device* InDevice);
     ~FD3D12RayTracingPipelineState() = default;
 
-    bool Init(const FRHIRayTracingPipelineStateInitializer& Initializer);
+    bool Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer);
 
-    virtual void SetName(const String& InName) override
+    virtual void SetName(const FString& InName) override
     {
-        WString WideName = CharToWide(InName);
-        StateObject->SetName(WideName.CStr());
+        FStringWide WideName = CharToWide(InName);
+        StateObject->SetName(WideName.GetCString());
     }
 
-    void* GetShaderIdentifer(const String& ExportName);
+    void* GetShaderIdentifer(const FString& ExportName);
 
-    FORCEINLINE ID3D12StateObject* GetStateObject() const
-    {
-        return StateObject.Get();
-    }
+    FORCEINLINE ID3D12StateObjectProperties* GetD3D12StateObjectProperties() const { return StateObjectProperties.Get(); }
+    FORCEINLINE ID3D12StateObject*           GetD3D12StateObject()           const { return StateObject.Get(); }
 
-    FORCEINLINE ID3D12StateObjectProperties* GetStateObjectProperties() const
-    {
-        return StateObjectProperties.Get();
-    }
-
-    FORCEINLINE FD3D12RootSignature* GetGlobalRootSignature() const
-    {
-        return GlobalRootSignature.Get();
-    }
-
-    FORCEINLINE FD3D12RootSignature* GetRayGenLocalRootSignature() const
-    {
-        return RayGenLocalRootSignature.Get();
-    }
-
-    FORCEINLINE FD3D12RootSignature* GetMissLocalRootSignature() const
-    {
-        return MissLocalRootSignature.Get();
-    }
-
-    FORCEINLINE FD3D12RootSignature* GetHitLocalRootSignature() const
-    {
-        return HitLocalRootSignature.Get();
-    }
+    FORCEINLINE FD3D12RootSignature* GetGlobalRootSignature()      const { return GlobalRootSignature.Get(); }
+    FORCEINLINE FD3D12RootSignature* GetRayGenLocalRootSignature() const { return RayGenLocalRootSignature.Get(); }
+    FORCEINLINE FD3D12RootSignature* GetMissLocalRootSignature()   const { return MissLocalRootSignature.Get(); }
+    FORCEINLINE FD3D12RootSignature* GetHitLocalRootSignature()    const { return HitLocalRootSignature.Get(); }
 
 private:
     TComPtr<ID3D12StateObject>           StateObject;
     TComPtr<ID3D12StateObjectProperties> StateObjectProperties;
 
     // TODO: There could be more than one root signature for locals
-    TSharedRef<FD3D12RootSignature> GlobalRootSignature;
-    TSharedRef<FD3D12RootSignature> RayGenLocalRootSignature;
-    TSharedRef<FD3D12RootSignature> MissLocalRootSignature;
-    TSharedRef<FD3D12RootSignature> HitLocalRootSignature;
+    FD3D12RootSignatureRef GlobalRootSignature;
+    FD3D12RootSignatureRef RayGenLocalRootSignature;
+    FD3D12RootSignatureRef MissLocalRootSignature;
+    FD3D12RootSignatureRef HitLocalRootSignature;
 
-    THashTable<String, FRayTracingShaderIdentifer, SStringHasher> ShaderIdentifers;
+    TMap<FString, FRayTracingShaderIdentifer, FStringHasher> ShaderIdentifers;
 };

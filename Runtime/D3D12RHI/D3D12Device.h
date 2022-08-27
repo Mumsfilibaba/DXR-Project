@@ -1,5 +1,7 @@
 #pragma once
 #include "D3D12RefCounted.h"
+#include "D3D12Descriptors.h"
+#include "D3D12RootSignature.h"
 
 #include "Core/Containers/SharedRef.h"
 
@@ -16,9 +18,6 @@ class FD3D12RootSignature;
 class FD3D12ComputePipelineState;
 class FD3D12OnlineDescriptorHeap;
 class FD3D12OfflineDescriptorHeap;
-
-#define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
-#define D3D12_ENABLE_PIX_MARKERS              (1)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedef
@@ -44,11 +43,12 @@ struct FD3D12AdapterInitializer
         , bPreferDGPU(true)
     { }
 
-    FD3D12AdapterInitializer( bool bInEnableDebugLayer
-                            , bool bInEnableGPUValidation
-                            , bool bInEnableDRED
-                            , bool bInEnablePIX
-                            , bool bInPreferDGPU)
+    FD3D12AdapterInitializer(
+        bool bInEnableDebugLayer,
+        bool bInEnableGPUValidation,
+        bool bInEnableDRED,
+        bool bInEnablePIX,
+        bool bInPreferDGPU)
         : bEnableDebugLayer(bInEnableDebugLayer)
         , bEnableGPUValidation(bInEnableGPUValidation)
         , bEnableDRED(bInEnableDRED)
@@ -80,10 +80,10 @@ struct FD3D12AdapterInitializer
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Adapter
 
-class FD3D12Adapter : public FD3D12RefCounted
+class FD3D12Adapter 
+    : public FD3D12RefCounted
 {
 public:
-
     FD3D12Adapter(FD3D12CoreInterface* InCoreInterface, const FD3D12AdapterInitializer& InInitializer)
         : FD3D12RefCounted()
         , Initializer(InInitializer)
@@ -106,10 +106,9 @@ public:
     FD3D12AdapterInitializer GetInitializer()   const { return Initializer; }
     uint32                   GetAdapterIndex()  const { return AdapterIndex; }
     
-    String                   GetDescription() const { return WideToChar(WStringView(AdapterDesc.Description)); }
+    FString                  GetDescription() const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
 
     bool                     IsDebugLayerEnabled() const { return Initializer.bEnableDebugLayer; }
-
     bool                     SupportsTearing()     const { return bAllowTearing; }
 
     FD3D12CoreInterface*     GetCoreInterface() const { return CoreInterface; }
@@ -148,13 +147,14 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Device
 
-class FD3D12Device : public FD3D12RefCounted
+class FD3D12Device 
+    : public FD3D12RefCounted
 {
 public:
-    
     FD3D12Device(FD3D12Adapter* InAdapter)
         : FD3D12RefCounted()
         , Adapter(InAdapter)
+        , RootSignatureCache(this)
         , Device(nullptr)
 #if WIN10_BUILD_14393
         , Device1(nullptr)
@@ -190,12 +190,20 @@ public:
     ~FD3D12Device();
 
 public:
+     
+    bool                      Initialize();
+
+    void                      AddWastedBufferSpace(uint64 WastedSize)    { WastedBufferSpace += WastedSize; }
+    void                      RemoveWastedBufferSpace(uint64 WastedSize) { WastedBufferSpace += WastedSize; }
+
+    int32                     GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
+
+    FD3D12Adapter*            GetAdapter()            const { return Adapter; }
     
-    bool           Initialize();
-
-    int32          GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
-
-    FD3D12Adapter* GetAdapter() const { return Adapter; }
+    FD3D12DescriptorHeap*     GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
+    FD3D12DescriptorHeap*     GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
+    
+    FD3D12RootSignatureCache& GetRootSignatureCache() { return RootSignatureCache; }
 
     ID3D12Device*  GetD3D12Device()  const { return Device.Get(); }
 #if WIN10_BUILD_14393
@@ -227,7 +235,11 @@ public:
 #endif
 
 private:
-    FD3D12Adapter*         Adapter;
+    FD3D12Adapter*           Adapter;
+    FD3D12RootSignatureCache RootSignatureCache;
+    
+    FD3D12DescriptorHeapRef  GlobalResourceHeap;
+    FD3D12DescriptorHeapRef  GlobalSamplerHeap;
 
     TComPtr<ID3D12Device>  Device;
 #if WIN10_BUILD_14393
@@ -257,6 +269,8 @@ private:
 #if WIN11_BUILD_22000
     TComPtr<ID3D12Device9> Device9;
 #endif
+
+    uint64                 WastedBufferSpace = 0;
 
     D3D_FEATURE_LEVEL      MinFeatureLevel;
     D3D_FEATURE_LEVEL      ActiveFeatureLevel;

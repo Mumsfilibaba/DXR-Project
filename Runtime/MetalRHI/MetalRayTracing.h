@@ -7,40 +7,39 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalRayTracingGeometry
+// FMetalRayTracingGeometry
 
-class CMetalRayTracingGeometry : public FRHIRayTracingGeometry
+class FMetalRayTracingGeometry : public FRHIRayTracingGeometry
 {
 public:
 
-    CMetalRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
+    FMetalRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
         : FRHIRayTracingGeometry(Initializer)
     { }
 
-    ~CMetalRayTracingGeometry() = default;
+    ~FMetalRayTracingGeometry() = default;
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FRHIRayTracingGeometry Interface
 
-    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
-
+    virtual void* GetRHIBaseBVHBuffer()             { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalRayTracingScene
+// FMetalRayTracingScene
 
-class CMetalRayTracingScene : public FRHIRayTracingScene
+class FMetalRayTracingScene : public FRHIRayTracingScene
 {
 public:
-    CMetalRayTracingScene(CMetalDeviceContext* InDeviceContext, const FRHIRayTracingSceneInitializer& Initializer)
+    FMetalRayTracingScene(FMetalDeviceContext* InDeviceContext, const FRHIRayTracingSceneInitializer& Initializer)
         : FRHIRayTracingScene(Initializer)
-        , View(dbg_new CMetalShaderResourceView(InDeviceContext, this))
+        , View(dbg_new FMetalShaderResourceView(InDeviceContext, this))
     { }
 
-    ~CMetalRayTracingScene() = default;
+    ~FMetalRayTracingScene() = default;
 
 public:
 
@@ -48,15 +47,13 @@ public:
     // FRHIRayTracingScene Interface
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
-
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final{ return FRHIDescriptorHandle(); }
-
-    virtual void* GetRHIBaseBVHBuffer() override final { return nullptr; }
-
+    virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final{ return FRHIDescriptorHandle(); }
+ 
+    virtual void* GetRHIBaseBVHBuffer()             override final { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(this); }
 
 private:
-    TSharedRef<CMetalShaderResourceView> View;
+    TSharedRef<FMetalShaderResourceView> View;
 };
 
 #pragma clang diagnostic pop

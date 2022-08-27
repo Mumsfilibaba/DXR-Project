@@ -2,9 +2,9 @@
 #include "MacApplication.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaWindowView
+// FCocoaWindowView
 
-@implementation CCocoaWindowView
+@implementation FCocoaWindowView
 
 - (instancetype)initWithFrame:(NSRect)Frame
 {
@@ -159,20 +159,20 @@
     }
 }
 
-- (void) insertText:(id) String replacementRange:(NSRange) ReplacementRange
+- (void) insertText:(id) FString replacementRange:(NSRange) ReplacementRange
 {
     SCOPED_AUTORELEASE_POOL();
     
     // Get characters
     NSString* Characters = nullptr;
-    if ([String isKindOfClass:[NSAttributedString class]])
+    if ([FString isKindOfClass:[NSAttributedString class]])
     {
-        NSAttributedString* AttributedString = (NSAttributedString*)String;
+        NSAttributedString* AttributedString = (NSAttributedString*)FString;
         Characters = AttributedString.string;
     }
     else
     {
-        Characters = (NSString*)String;
+        Characters = (NSString*)FString;
     }
     
     if (MacApplication)
@@ -212,7 +212,7 @@
     return NSMakeRange(NSNotFound, 0);
 }
 
-- (void)setMarkedText:(nonnull id)String selectedRange:(NSRange)SelectedRange replacementRange:(NSRange)ReplacementRange
+- (void)setMarkedText:(nonnull id)FString selectedRange:(NSRange)SelectedRange replacementRange:(NSRange)ReplacementRange
 {
 }
 

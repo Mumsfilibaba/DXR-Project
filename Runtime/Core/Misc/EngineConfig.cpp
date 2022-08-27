@@ -1,24 +1,18 @@
 #include "EngineConfig.h"
 
-#include "Core/Logging/Log.h"
-
-#include <stdio.h>
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
+#include "Core/Misc/OutputDeviceLogger.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ConfigFile
 
-CConfigFile::CConfigFile(const char* InFilename)
+FConfigFile::FConfigFile(const CHAR* InFilename)
     : Filename(InFilename)
     , Sections()
-{
-}
+{ }
 
-bool CConfigFile::SetString(const char* SectionName, const char* Name, const String& NewValue)
+bool FConfigFile::SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue)
 {
-    CConfigValue* Value = GetValue(SectionName, Name);
+    FConfigValue* Value = GetValue(SectionName, Name);
     if (Value)
     {
         Value->CurrentValue = NewValue;
@@ -31,24 +25,24 @@ bool CConfigFile::SetString(const char* SectionName, const char* Name, const Str
     }
 }
 
-bool CConfigFile::SetInt(const char* SectionName, const char* Name, int32 NewValue)
+bool FConfigFile::SetInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue)
 {
     return SetString(SectionName, Name, ToString(NewValue));
 }
 
-bool CConfigFile::SetFloat(const char* SectionName, const char* Name, float NewValue)
+bool FConfigFile::SetFloat(const CHAR* SectionName, const CHAR* Name, float NewValue)
 {
     return SetString(SectionName, Name, ToString(NewValue));
 }
 
-bool CConfigFile::SetBoolean(const char* SectionName, const char* Name, bool bNewValue)
+bool FConfigFile::SetBoolean(const CHAR* SectionName, const CHAR* Name, bool bNewValue)
 {
     return SetString(SectionName, Name, ToString(bNewValue));
 }
 
-bool CConfigFile::GetString(const char* SectionName, const char* Name, String& OutValue)
+bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue)
 {
-    CConfigValue* Value = GetValue(SectionName, Name);
+    FConfigValue* Value = GetValue(SectionName, Name);
     if (Value)
     {
         OutValue = Value->CurrentValue;
@@ -60,40 +54,40 @@ bool CConfigFile::GetString(const char* SectionName, const char* Name, String& O
     }
 }
 
-bool CConfigFile::GetInt(const char* SectionName, const char* Name, int32& OutValue)
+bool FConfigFile::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue)
 {
     return GetTypedValue(SectionName, Name, OutValue);
 }
 
-bool CConfigFile::GetFloat(const char* SectionName, const char* Name, float& OutValue)
+bool FConfigFile::GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue)
 {
     return GetTypedValue(SectionName, Name, OutValue);
 }
 
-bool CConfigFile::GetBoolean(const char* SectionName, const char* Name, bool& bOutValue)
+bool FConfigFile::GetBoolean(const CHAR* SectionName, const CHAR* Name, bool& bOutValue)
 {
     return GetTypedValue(SectionName, Name, bOutValue);
 }
 
-bool CConfigFile::ParseFile()
+bool FConfigFile::ParseFile()
 {
     return false;
 }
 
-bool CConfigFile::SaveFile()
+bool FConfigFile::SaveFile()
 {
-    //    FILE* File = fopen( Filename.CStr(), "w" );
+    //    FILE* File = fopen( Filename.GetCString(), "w" );
     //    if ( File )
     //    {
     //        for ( auto& CurrentSectionPair : Sections )
     //        {
-    //            fprintf( File, "[%s]", CurrentSectionPair.first.CStr() );
+    //            fprintf( File, "[%s]", CurrentSectionPair.first.GetCString() );
     //
-    //            CConfigSection& CurrentSection = CurrentSectionPair.second;
+    //            FConfigSection& CurrentSection = CurrentSectionPair.second;
     //            for ( auto& ValuePair : CurrentSection.ConfigValues )
     //            {
-    //                CConfigValue& Value = ValuePair.second;
-    //                fprintf( File, "%s=%s", ValuePair.first.CStr(), Value.CurrentValue.CStr() );
+    //                FConfigValue& Value = ValuePair.second;
+    //                fprintf( File, "%s=%s", ValuePair.first.GetCString(), Value.CurrentValue.GetCString() );
     //
     //                Value.MakeCurrentSaved();
     //            }
@@ -109,28 +103,28 @@ bool CConfigFile::SaveFile()
     return false;
 }
 
-void CConfigFile::Append(const CConfigFile& OtherFile)
+void FConfigFile::Append(const FConfigFile& OtherFile)
 {
     //    for ( auto& OtherSection : OtherFile.Sections )
     //    {
-    //        CConfigSection& Section = Sections[OtherSection.first];
+    //        FConfigSection& Section = Sections[OtherSection.first];
     //    }
 }
 
-CConfigValue* CConfigFile::GetValue(const char* Name)
+FConfigValue* FConfigFile::GetValue(const CHAR* Name)
 {
     //    for ( auto& CurrentSection : Sections )
     //    {
-    //        CConfigSection& ConfigSection = CurrentSection.second;
+    //        FConfigSection& ConfigSection = CurrentSection.second;
     //        return ConfigSection.GetValue( Name );
     //    }
 
     return nullptr;
 }
 
-CConfigValue* CConfigFile::GetValue(const char* SectionName, const char* Name)
+FConfigValue* FConfigFile::GetValue(const CHAR* SectionName, const CHAR* Name)
 {
-    //    CConfigSection* Section = GetSection( SectionName );
+    //    FConfigSection* Section = GetSection( SectionName );
     //    if ( Section )
     //    {
     //        return Section->GetValue( Name );
@@ -139,7 +133,7 @@ CConfigValue* CConfigFile::GetValue(const char* SectionName, const char* Name)
     return nullptr;
 }
 
-CConfigSection* CConfigFile::GetSection(const char* SectionName)
+FConfigSection* FConfigFile::GetSection(const CHAR* SectionName)
 {
     //    auto Section = Sections.find( SectionName );
     //    if ( Section != Sections.end() )

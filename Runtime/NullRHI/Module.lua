@@ -3,7 +3,7 @@ include '../../BuildScripts/Scripts/build_module.lua'
 ---------------------------------------------------------------------------------------------------
 -- NullRHI Module
 
-local NullRHIModule = CModuleBuildRules('NullRHI')
+local NullRHIModule = FModuleBuildRules('NullRHI')
 NullRHIModule.bRuntimeLinking = false
 
 NullRHIModule.AddModuleDependencies( 

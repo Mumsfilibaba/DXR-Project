@@ -108,14 +108,14 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
     filter 'architecture:x86_x64'
         defines
         {
-            'ARCHITECTURE_X86_X64=(1)',
+            'PLATFORM_ARCHITECTURE_X86_X64=(1)',
         }
     filter {}
 
     filter 'architecture:ARM'
         defines
         {
-            'ARCHITECTURE_ARM=(1)',
+            'PLATFORM_ARCHITECTURE_ARM=(1)',
         }
     filter {}
 

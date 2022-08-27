@@ -7,19 +7,13 @@
 template<typename T>
 struct TIsLValueReference
 {
-    enum
-    {
-        Value = false
-    };
+    enum { Value = false };
 };
 
 template<typename T>
 struct TIsLValueReference<T&>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -28,19 +22,13 @@ struct TIsLValueReference<T&>
 template<typename T>
 struct TIsRValueReference
 {
-    enum
-    {
-        Value = false
-    };
+    enum { Value = false };
 };
 
 template<typename T>
 struct TIsRValueReference<T&&>
 {
-    enum
-    {
-        Value = true
-    };
+    enum { Value = true };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -49,8 +37,5 @@ struct TIsRValueReference<T&&>
 template<typename T>
 struct TIsReference
 {
-    enum
-    {
-        Value = TOr<TIsLValueReference<T>, TIsRValueReference<T>>::Value
-    };
+    enum { Value = TOr<TIsLValueReference<T>, TIsRValueReference<T>>::Value };
 };

@@ -14,17 +14,16 @@
 
 struct TextureFactoryData
 {
-    TSharedRef<FRHIComputePipelineState> PanoramaPSO;
-    TSharedRef<FRHIComputeShader>        ComputeShader;
-    FRHICommandList CmdList;
+    FRHIComputePipelineStateRef PanoramaPSO;
+    FRHIComputeShaderRef        ComputeShader;
 };
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CTextureFactory
+// FTextureFactory
 
 static TextureFactoryData GlobalFactoryData;
 
-bool CTextureFactory::Init()
+bool FTextureFactory::Init()
 {
     // Compile and create shader
     TArray<uint8> Code;
@@ -42,7 +41,7 @@ bool CTextureFactory::Init()
     }
 
     // Create pipeline
-    GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState(CRHIComputePipelineStateInitializer(GlobalFactoryData.ComputeShader.Get()));
+    GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(GlobalFactoryData.ComputeShader.Get()));
     if (GlobalFactoryData.PanoramaPSO)
     {
         GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");
@@ -54,13 +53,13 @@ bool CTextureFactory::Init()
     }
 }
 
-void CTextureFactory::Release()
+void FTextureFactory::Release()
 {
     GlobalFactoryData.PanoramaPSO.Reset();
     GlobalFactoryData.ComputeShader.Reset();
 }
 
-FRHITexture2D* CTextureFactory::LoadFromImage2D(SImage2D* InImage, uint32 CreateFlags)
+FRHITexture2D* FTextureFactory::LoadFromImage2D(FImage2D* InImage, uint32 CreateFlags)
 {
     if (!InImage || (InImage && !InImage->bIsLoaded))
     {
@@ -76,13 +75,13 @@ FRHITexture2D* CTextureFactory::LoadFromImage2D(SImage2D* InImage, uint32 Create
     if (NewTexture)
     {
         // Set debug name
-        NewTexture->SetName(InImage->Path.CStr());
+        NewTexture->SetName(InImage->Path.GetCString());
     }
 
     return NewTexture;
 }
 
-FRHITexture2D* CTextureFactory::LoadFromFile(const String& Filepath, uint32 CreateFlags, EFormat Format)
+FRHITexture2D* FTextureFactory::LoadFromFile(const FString& Filepath, uint32 CreateFlags, EFormat Format)
 {
     int32 Width        = 0;
     int32 Height       = 0;
@@ -92,80 +91,92 @@ FRHITexture2D* CTextureFactory::LoadFromFile(const String& Filepath, uint32 Crea
     TUniquePtr<uint8> Pixels;
     if (Format == EFormat::R8G8B8A8_Unorm)
     {
-        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.CStr(), &Width, &Height, &ChannelCount, 4));
+        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.GetCString(), &Width, &Height, &ChannelCount, 4));
     }
     else if (Format == EFormat::R8_Unorm)
     {
-        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.CStr(), &Width, &Height, &ChannelCount, 1));
+        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.GetCString(), &Width, &Height, &ChannelCount, 1));
     }
     else if (Format == EFormat::R32G32B32A32_Float)
     {
-        Pixels = TUniquePtr<uint8>(reinterpret_cast<uint8*>(stbi_loadf(Filepath.CStr(), &Width, &Height, &ChannelCount, 4)));
+        Pixels = TUniquePtr<uint8>(reinterpret_cast<uint8*>(stbi_loadf(Filepath.GetCString(), &Width, &Height, &ChannelCount, 4)));
     }
     else
     {
-        LOG_ERROR("[CTextureFactory]: Format not supported");
+        LOG_ERROR("[FTextureFactory]: Format not supported");
         return nullptr;
     }
 
     // Check if succeeded
     if (!Pixels)
     {
-        LOG_ERROR("[CTextureFactory]: Failed to load image '%s'", Filepath.CStr());
+        LOG_ERROR("[FTextureFactory]: Failed to load image '%s'", Filepath.GetCString());
         return nullptr;
     }
     else
     {
-        LOG_INFO("[CTextureFactory]: Loaded image '%s'", Filepath.CStr());
+        LOG_INFO("[FTextureFactory]: Loaded image '%s'", Filepath.GetCString());
     }
 
     return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);
 }
 
-FRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format)
+FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format)
 {
-    if (Format != EFormat::R8_Unorm && Format != EFormat::R8G8B8A8_Unorm && Format != EFormat::R32G32B32A32_Float)
+    if (
+        Format != EFormat::R8_Unorm && 
+        Format != EFormat::R8G8_Unorm &&
+        Format != EFormat::R8G8B8A8_Unorm && 
+        Format != EFormat::R32G32B32A32_Float)
     {
-        LOG_ERROR("[CTextureFactory]: Format not supported");
+        LOG_ERROR("[FTextureFactory]: Format not supported");
         return nullptr;
     }
 
     Check(Pixels != nullptr);
 
     const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
+    
     const uint32 NumMips = GenerateMips ? NMath::Max<uint32>(NMath::Log2(NMath::Max(Width, Height)), 1u) : 1;
-
     Check(NumMips != 0);
 
     const uint32 Stride   = GetByteStrideFromFormat(Format);
     const uint32 RowPitch = Width * Stride;
-
     Check(RowPitch > 0);
 
     FRHITextureDataInitializer InitalData(Pixels, Format, Width, Height);
 
-    FRHITexture2DInitializer Initializer(Format, Width, Height, NumMips, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::PixelShaderResource, &InitalData);
-    TSharedRef<FRHITexture2D> Texture = RHICreateTexture2D(Initializer);
+    FRHITexture2DInitializer Initializer(
+        Format, 
+        Width, 
+        Height, 
+        NumMips, 
+        1, 
+        ETextureUsageFlags::AllowSRV, 
+        EResourceAccess::PixelShaderResource,
+        &InitalData);
+
+    FRHITexture2DRef Texture = RHICreateTexture2D(Initializer);
     if (!Texture)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return nullptr;
     }
 
     if (GenerateMips)
     {
-        FRHICommandList& CmdList = GlobalFactoryData.CmdList;
-        CmdList.TransitionTexture(Texture.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
-        CmdList.GenerateMips(Texture.Get());
-        CmdList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+        FRHICommandList CommandList;
+        CommandList.TransitionTexture(Texture.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
+        CommandList.GenerateMips(Texture.Get());
+        CommandList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-        FRHICommandQueue::Get().ExecuteCommandList(CmdList);
+        GRHICommandExecutor.ExecuteCommandList(CommandList);
     }
 
     return Texture.ReleaseOwnership();
 }
 
-FRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format)
+FRHITextureCube* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format)
 {
     Check((PanoramaSource->GetFlags() & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None);
 
@@ -174,7 +185,7 @@ FRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* Pa
 
     FRHITextureCubeInitializer Initializer(Format, CubeMapSize, NumMips, 1, ETextureUsageFlags::AllowUAV, EResourceAccess::Common);
 
-    TSharedRef<FRHITextureCube> StagingTexture = RHICreateTextureCube(Initializer);
+    FRHITextureCubeRef StagingTexture = RHICreateTextureCube(Initializer);
     if (!StagingTexture)
     {
         return nullptr;
@@ -184,8 +195,8 @@ FRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* Pa
         StagingTexture->SetName("TextureCube From Panorama StagingTexture");
     }
 
-    CRHITextureUAVInitializer UAVInitializer(StagingTexture.Get(), Format, 0, 0, 6);
-    TSharedRef<FRHIUnorderedAccessView> StagingTextureUAV = RHICreateUnorderedAccessView(UAVInitializer);
+    FRHITextureUAVInitializer UAVInitializer(StagingTexture.Get(), Format, 0, 0, 6);
+    FRHIUnorderedAccessViewRef StagingTextureUAV = RHICreateUnorderedAccessView(UAVInitializer);
     if (!StagingTextureUAV)
     {
         return nullptr;
@@ -197,50 +208,54 @@ FRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* Pa
 
     Initializer.UsageFlags = ETextureUsageFlags::AllowSRV;
 
-    TSharedRef<FRHITextureCube> Texture = RHICreateTextureCube(Initializer);
+    FRHITextureCubeRef Texture = RHICreateTextureCube(Initializer);
     if (!Texture)
     {
         return nullptr;
     }
 
-    FRHICommandList& CmdList = GlobalFactoryData.CmdList;
-
-    CmdList.TransitionTexture(PanoramaSource, EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
-    CmdList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
-
-    CmdList.SetComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
-
-    struct ConstantBuffer
     {
-        uint32 CubeMapSize;
-    } CB0;
-    CB0.CubeMapSize = CubeMapSize;
+        FRHICommandList CommandList;
+        CommandList.TransitionTexture(PanoramaSource, EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
-    CmdList.Set32BitShaderConstants(GlobalFactoryData.ComputeShader.Get(), &CB0, 1);
-    CmdList.SetUnorderedAccessView(GlobalFactoryData.ComputeShader.Get(), StagingTextureUAV.Get(), 0);
+        CommandList.SetComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
 
-    FRHIShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
-    CmdList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
+        struct ConstantBuffer
+        {
+            uint32 CubeMapSize;
+        } CB0;
+        CB0.CubeMapSize = CubeMapSize;
 
-    constexpr uint32 LocalWorkGroupCount = 16;
-    const uint32 ThreadsX = NMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
-    const uint32 ThreadsY = NMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
-    CmdList.Dispatch(ThreadsX, ThreadsY, 6);
+        CommandList.Set32BitShaderConstants(GlobalFactoryData.ComputeShader.Get(), &CB0, 1);
+        CommandList.SetUnorderedAccessView(GlobalFactoryData.ComputeShader.Get(), StagingTextureUAV.Get(), 0);
 
-    CmdList.TransitionTexture(PanoramaSource, EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
-    CmdList.TransitionTexture(StagingTexture.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
-    CmdList.TransitionTexture(Texture.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
+        FRHIShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
+        CommandList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
 
-    CmdList.CopyTexture(Texture.Get(), StagingTexture.Get());
+        constexpr uint32 LocalWorkGroupCount = 16;
+        const uint32 ThreadsX = NMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
+        const uint32 ThreadsY = NMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
+        CommandList.Dispatch(ThreadsX, ThreadsY, 6);
 
-    if (GenerateNumMips)
-    {
-        CmdList.GenerateMips(Texture.Get());
+        CommandList.TransitionTexture(PanoramaSource, EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+        CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
+        CommandList.TransitionTexture(Texture.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
+
+        CommandList.CopyTexture(Texture.Get(), StagingTexture.Get());
+
+        if (GenerateNumMips)
+        {
+            CommandList.GenerateMips(Texture.Get());
+        }
+
+        CommandList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+
+        CommandList.DestroyResource(StagingTexture.Get());
+        CommandList.DestroyResource(StagingTextureUAV.Get());
+
+        GRHICommandExecutor.ExecuteCommandList(CommandList);
     }
-
-    CmdList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
-
-    FRHICommandQueue::Get().ExecuteCommandList(CmdList);
 
     return Texture.ReleaseOwnership();
 }

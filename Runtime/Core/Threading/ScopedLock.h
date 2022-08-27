@@ -6,7 +6,7 @@
 // TScopedLock
 
 template<typename LockType>
-class TScopedLock : NonCopyable, NonMovable
+class TScopedLock : FNonCopyAndNonMovable
 {
 public:
     

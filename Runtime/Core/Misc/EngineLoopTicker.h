@@ -1,16 +1,19 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
 #include "Core/Containers/Array.h"
 #include "Core/Delegates/Delegate.h"
 
-DECLARE_DELEGATE(CTickDelegate, CTimestamp);
+DECLARE_DELEGATE(FTickDelegate, FTimespan);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Enables systems to bind to the tick function, this enables modules to be called every frame */
+// FEngineLoopTicker
 
-class CORE_API CEngineLoopTicker
+class CORE_API FEngineLoopTicker
 {
+    FEngineLoopTicker();
+    ~FEngineLoopTicker() = default;
+
 public:
 
     /**
@@ -18,34 +21,30 @@ public:
      * 
      * @return: Returns the EngineLoopTicker instance
      */
-    static CEngineLoopTicker& Get();
+    static FEngineLoopTicker& Get();
 
     /**
      * @brief: Ensures that all delegates are fired
      * 
      * @param DeltaTime: Time since last time the delegates was fired
      */
-    void Tick(CTimestamp Deltatime);
+    void Tick(FTimespan Deltatime);
 
     /**
      * @brief: Add a new element that should be called when the EngineLoop ticks 
      * 
-     * @param NewElement: Delegate to add to the engine-loop ticker
+     * @param NewDelegate: Delegate to add to the engine-loop ticker
      */
-    void AddElement(const CTickDelegate& NewElement);
+    void AddDelegate(const FTickDelegate& NewDelegate);
 
     /**
      * @brief: Remove all instances of a delegate from the Tick-loop 
      * 
      * @param RemoveHandle: DelegateHandle of the delegate to remove
      */
-    void RemoveElement(CDelegateHandle RemoveHandle);
+    void RemoveDelegate(FDelegateHandle RemoveHandle);
 
 private:
-
-    CEngineLoopTicker() = default;
-    ~CEngineLoopTicker() = default;
-
     // TODO: These should be stored in some priority, also there should be the possibility to add a delay for systems that does not need to be called every frame
-    TArray<CTickDelegate> TickDelegates;
+    TArray<FTickDelegate> TickDelegates;
 };

@@ -5,25 +5,25 @@
 #include "Core/Math/FormatStructs.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SVertex
+// FVertex
 
-struct SVertex
+struct FVertex
 {
-    SVertex()
+    FVertex()
         : Position()
         , Normal()
         , Tangent()
         , TexCoord()
     { }
 
-    SVertex(const CVector3& InPosition, const CVector3& InNormal, const CVector3& InTangent, const CVector2& InTexCoord)
+    FVertex(const FVector3& InPosition, const FVector3& InNormal, const FVector3& InTangent, const FVector2& InTexCoord)
         : Position(InPosition)
         , Normal(InNormal)
         , Tangent(InTangent)
         , TexCoord(InTexCoord)
     { }
 
-    bool operator==(const SVertex& Other) const
+    bool operator==(const FVertex& Other) const
     {
         return (Position == Other.Position) 
             && (Normal   == Other.Normal) 
@@ -31,30 +31,30 @@ struct SVertex
             && (TexCoord == Other.TexCoord);
     }
 
-    bool operator!=(const SVertex& Other) const
+    bool operator!=(const FVertex& Other) const
     {
         return !(*this == Other);
     }
 
-    CVector3 Position;
-    CVector3 Normal;
-    CVector3 Tangent;
-    CVector2 TexCoord;
+    FVector3 Position;
+    FVector3 Normal;
+    FVector3 Tangent;
+    FVector2 TexCoord;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SVertexHasher
+// FVertexHasher
 
-struct SVertexHasher
+struct FVertexHasher
 {
-    inline size_t operator()(const SVertex& Vertex) const
+    inline size_t operator()(const FVertex& Vertex) const
     {
-        THash<CVector3> Hasher;
+        THash<FVector3> Hasher;
 
         size_t Hash = Hasher(Vertex.Position);
-        HashCombine<CVector3>(Hash, Vertex.Normal);
-        HashCombine<CVector3>(Hash, Vertex.Tangent);
-        HashCombine<CVector2>(Hash, Vertex.TexCoord);
+        HashCombine<FVector3>(Hash, Vertex.Normal);
+        HashCombine<FVector3>(Hash, Vertex.Tangent);
+        HashCombine<FVector2>(Hash, Vertex.TexCoord);
         return Hash;
     }
 };

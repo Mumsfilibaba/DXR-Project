@@ -6,17 +6,17 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12CommandQueue
 
-class FD3D12CommandQueue : public FD3D12DeviceChild
+class FD3D12CommandQueue 
+    : public FD3D12DeviceChild
 {
 public:
-
-    FORCEINLINE FD3D12CommandQueue(FD3D12Device* InDevice)
+    FD3D12CommandQueue(FD3D12Device* InDevice)
         : FD3D12DeviceChild(InDevice)
         , Queue(nullptr)
         , Desc()
     { }
 
-    FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type)
+    FORCEINLINE bool Initialize(D3D12_COMMAND_LIST_TYPE Type)
     {
         D3D12_COMMAND_QUEUE_DESC QueueDesc;
         FMemory::Memzero(&QueueDesc);
@@ -67,10 +67,10 @@ public:
         Queue->ExecuteCommandLists(1, CommandLists);
     }
 
-    FORCEINLINE void SetName(const String& Name)
+    FORCEINLINE void SetName(const FString& Name)
     {
-        WString WideDebugName = CharToWide(Name);
-        Queue->SetName(WideDebugName.CStr());
+        FStringWide WideDebugName = CharToWide(Name);
+        Queue->SetName(WideDebugName.GetCString());
     }
 
     FORCEINLINE ID3D12CommandQueue* GetQueue() const

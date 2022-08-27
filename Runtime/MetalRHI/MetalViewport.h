@@ -5,7 +5,7 @@
 #include "RHI/RHIViewport.h"
 
 #include "Core/Containers/ArrayView.h"
-#include "Core/Threading/Mac/MacRunLoop.h"
+#include "Core/Mac/MacRunLoop.h"
 
 #include "CoreApplication/Mac/CocoaWindow.h"
 #include "CoreApplication/Mac/CocoaWindowView.h"
@@ -14,39 +14,32 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalWindowView
+// FMetalWindowView
 
-@interface CMetalWindowView : CCocoaWindowView
+@interface FMetalWindowView : FCocoaWindowView
 @end
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMetalViewport
+// FMetalViewport
 
-class CMetalViewport : public CMetalObject, public FRHIViewport
+class FMetalViewport : public FMetalObject, public FRHIViewport
 {
 public:
-    
-    CMetalViewport(CMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer);
-    ~CMetalViewport();
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIViewport Interface
+    FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer);
+    ~FMetalViewport();
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
 
-    // TODO: This needs to be a command for Vulkan and Metal since we can be using the texture and present will change the resource
-    virtual bool Present(bool bVerticalSync) override final;
-
     virtual FRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
     
-public:
+    // TODO: This needs to be a command for Vulkan and Metal since we can be using the texture and present will change the resource
+    bool Present(bool bVerticalSync);
 
-    // @return: Returns the current drawable, will relase it during next call to present
-    id<CAMetalDrawable> GetDrawable();
+public:
     
-    id<MTLTexture> GetDrawableTexture();
+    /** @return: Returns the current drawable, will release it during next call to present */
+    id<CAMetalDrawable> GetDrawable();
+    id<MTLTexture>      GetDrawableTexture();
     
     CAMetalLayer* GetMetalLayer() const
     {
@@ -54,13 +47,11 @@ public:
         return MetalView ? (CAMetalLayer*)MetalView.layer : nil;
     }
 
-    CMetalWindowView* GetMetalView() const { return MetalView; }
+    FMetalWindowView* GetMetalView() const { return MetalView; }
     
 private:
-    TSharedRef<CMetalTexture2D> BackBuffer;
-    
-    CMetalWindowView*           MetalView;
-    
+    TSharedRef<FMetalTexture2D> BackBuffer;
+    FMetalWindowView*           MetalView;
     id<CAMetalDrawable>         Drawable;
 };
 

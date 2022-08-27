@@ -1,3 +1,5 @@
+#include "MathTest.h"
+
 #include <Core/Math/Vector2.h>
 
 #include <cstdio>
@@ -5,205 +7,179 @@
 bool TestVector2()
 {
     // Constructors
-    CVector2 Point0;
-
-    CVector2 Point1( 1.0f, 2.0f );
+    FVector2 Point0;
+    FVector2 Point1(1.0f, 2.0f);
 
     float Arr[2] = { 5.0f, -7.0f };
-    CVector2 Point2( Arr );
-
-    CVector2 Point3( -3.0f );
+    FVector2 Point2(Arr);
+    FVector2 Point3(-3.0f);
 
     // Dot
-    float Dot = Point1.DotProduct( Point3 );
-    if ( Dot != -9.0f )
+    float Dot = Point1.DotProduct(Point3);
+    if (Dot != -9.0f)
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Project On
-    CVector2 v0 = CVector2( 2.0f, 5.0f );
-    CVector2 v1 = CVector2( 1.0f, 0.0f );
-    CVector2 Projected = v0.ProjectOn( v1 );
+    FVector2 v0 = FVector2(2.0f, 5.0f);
+    FVector2 v1 = FVector2(1.0f, 0.0f);
+    FVector2 Projected = v0.ProjectOn(v1);
 
-    if ( Projected != CVector2( 2.0f, 0.0f ) )
+    if (Projected != FVector2(2.0f, 0.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Min
-    CVector2 MinPoint = Min( Point2, Point3 );
-    if ( MinPoint != CVector2( -3.0f, -7.0f ) )
+    FVector2 MinPoint = Min(Point2, Point3);
+    if (MinPoint != FVector2(-3.0f, -7.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Max
-    CVector2 MaxPoint = Max( Point2, Point3 );
-    if ( MaxPoint != CVector2( 5.0f, -3.0f ) )
+    FVector2 MaxPoint = Max(Point2, Point3);
+    if (MaxPoint != FVector2(5.0f, -3.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Lerp
-    CVector2 Lerped = Lerp( CVector2( 0.0f ), CVector2( 1.0f ), 0.5f );
-    if ( Lerped != CVector2( 0.5f, 0.5f ) )
+    FVector2 Lerped = Lerp(FVector2(0.0f), FVector2(1.0f), 0.5f);
+    if (Lerped != FVector2(0.5f, 0.5f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Clamp
-    CVector2 Clamped = Clamp( CVector2( -2.0f ), CVector2( 5.0f ), CVector2( -3.5f, 7.5f ) );
-    if ( Clamped != CVector2( -2.0f, 5.0f ) )
+    FVector2 Clamped = Clamp(FVector2(-2.0f), FVector2(5.0f), FVector2(-3.5f, 7.5f));
+    if (Clamped != FVector2(-2.0f, 5.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Saturate
-    CVector2 Saturated = Saturate( CVector2( -5.0f, 1.5f ) );
-    if ( Saturated != CVector2( 0.0f, 1.0f ) )
+    FVector2 Saturated = Saturate(FVector2(-5.0f, 1.5f));
+    if (Saturated != FVector2(0.0f, 1.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Normalize
-    CVector2 Norm( 1.0f );
+    FVector2 Norm(1.0f);
     Norm.Normalize();
 
-    if ( Norm != CVector2( 0.70710678118f, 0.70710678118f ) )
+    if (Norm != FVector2(0.70710678118f, 0.70710678118f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
-    if ( !Norm.IsUnitVector() )
+    if (!Norm.IsUnitVector())
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // NaN
-    CVector2 NaN( 1.0f, NAN );
-    if ( !NaN.HasNan() )
+    FVector2 NaN(1.0f, NAN);
+    if (!NaN.HasNaN())
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Infinity
-    CVector2 Infinity( 1.0f, INFINITY );
-    if ( !Infinity.HasInfinity() )
+    FVector2 Infinity(1.0f, INFINITY);
+    if (!Infinity.HasInfinity())
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Valid
-    if ( Infinity.IsValid() || NaN.IsValid() )
+    if (Infinity.IsValid() || NaN.IsValid())
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Length
-    CVector2 LengthVector( 2.0f, 2.0f );
-    float Length = LengthVector.Length();
+    FVector2 LengthVector(2.0f, 2.0f);
+    float Length = LengthVector.GetLength();
 
-    if ( Length != 2.82842712475f )
+    if (Length != 2.82842712475f)
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Length Squared
     float LengthSqrd = LengthVector.LengthSquared();
-    if ( LengthSqrd != 8.0f )
+    if (LengthSqrd != 8.0f)
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Unary minus
-    CVector2 Minus = -Point1;
-    if ( Minus != CVector2( -1.0f, -2.0f ) )
+    FVector2 Minus = -Point1;
+    if (Minus != FVector2(-1.0f, -2.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Add
-    CVector2 Add0 = Minus + CVector2( 3.0f, 1.0f );
-    if ( Add0 != CVector2( 2.0f, -1.0f ) )
+    FVector2 Add0 = Minus + FVector2(3.0f, 1.0f);
+    if (Add0 != FVector2(2.0f, -1.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
-    CVector2 Add1 = Minus + 5.0f;
-    if ( Add1 != CVector2( 4.0f, 3.0f ) )
+    FVector2 Add1 = Minus + 5.0f;
+    if (Add1 != FVector2(4.0f, 3.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Subtraction
-    CVector2 Sub0 = Add1 - CVector2( 3.0f, 1.0f );
-    if ( Sub0 != CVector2( 1.0f, 2.0f ) )
+    FVector2 Sub0 = Add1 - FVector2(3.0f, 1.0f);
+    if (Sub0 != FVector2(1.0f, 2.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
-    CVector2 Sub1 = Add1 - 5.0f;
-    if ( Sub1 != CVector2( -1.0f, -2.0f ) )
+    FVector2 Sub1 = Add1 - 5.0f;
+    if (Sub1 != FVector2(-1.0f, -2.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Multiplication
-    CVector2 Mul0 = Sub0 * CVector2( 3.0f, 1.0f );
-    if ( Mul0 != CVector2( 3.0f, 2.0f ) )
+    FVector2 Mul0 = Sub0 * FVector2(3.0f, 1.0f);
+    if (Mul0 != FVector2(3.0f, 2.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
-    CVector2 Mul1 = Sub0 * 5.0f;
-    if ( Mul1 != CVector2( 5.0f, 10.0f ) )
+    FVector2 Mul1 = Sub0 * 5.0f;
+    if (Mul1 != FVector2(5.0f, 10.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Division
-    CVector2 Div0 = Mul0 / CVector2( 3.0f, 1.0f );
-    if ( Div0 != CVector2( 1.0f, 2.0f ) )
+    FVector2 Div0 = Mul0 / FVector2(3.0f, 1.0f);
+    if (Div0 != FVector2(1.0f, 2.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
-    const CVector2 Div1 = Mul1 / 5.0f;
-    if ( Div1 != CVector2( 1.0f, 2.0f ) )
+    const FVector2 Div1 = Mul1 / 5.0f;
+    if (Div1 != FVector2(1.0f, 2.0f))
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     // Get Component
     float Component = Div1[1];
-    if ( Component != 2.0f )
+    if (Component != 2.0f)
     {
-        assert( false );
-        return false;
+        TEST_FAILED();
     }
 
     return true;

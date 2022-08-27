@@ -5,7 +5,7 @@
 #include "RHI/RHITimestampQuery.h"
 
 #include "Core/Threading/Spinlock.h"
-#include "Core/Containers/HashTable.h"
+#include "Core/Containers/Map.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Config
@@ -17,17 +17,17 @@
 // Macros
 
 #if ENABLE_PROFILER
-#define TRACE_SCOPE(Name)      SScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
-#define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(FUNCTION_SIGNATURE)
+    #define TRACE_SCOPE(Name)      FScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
+    #define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(FUNCTION_SIGNATURE)
 #else
-#define TRACE_SCOPE(Name)
-#define TRACE_FUNCTION_SCOPE()
+    #define TRACE_SCOPE(Name)
+    #define TRACE_FUNCTION_SCOPE()
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SProfileSample
+// FProfileSample
 
-struct SProfileSample
+struct FProfileSample
 {
     FORCEINLINE void Begin()
     {
@@ -38,7 +38,7 @@ struct SProfileSample
     {
         Clock.Tick();
 
-        float Delta = static_cast<float>(Clock.GetDeltaTime().AsNanoSeconds());
+        const float Delta = static_cast<float>(Clock.GetDeltaTime().AsNanoseconds());
         AddSample(Delta);
 
         TotalCalls++;
@@ -51,10 +51,10 @@ struct SProfileSample
         Min = NMath::Min(NewSample, Min);
         Max = NMath::Max(NewSample, Max);
 
-        SampleCount = NMath::Min<int32>(Samples.Size(), SampleCount + 1);
+        SampleCount = NMath::Min<int32>(Samples.GetSize(), SampleCount + 1);
 
         CurrentSample++;
-        if (CurrentSample >= int32(Samples.Size()))
+        if (CurrentSample >= int32(Samples.GetSize()))
         {
             CurrentSample = 0;
         }
@@ -92,7 +92,7 @@ struct SProfileSample
 
     TStaticArray<float, NUM_PROFILER_SAMPLES> Samples;
 
-    CTimer Clock;
+    FTimer Clock;
 
     float Max = -FLT_MAX;
     float Min = FLT_MAX;
@@ -103,11 +103,11 @@ struct SProfileSample
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CFrameProfiler
+// FFrameProfiler
 
-using ProfileSamplesTable = THashTable<String, SProfileSample, SStringHasher>;
+using ProfileSamplesTable = TMap<FString, FProfileSample, FStringHasher>;
 
-class CORE_API CFrameProfiler
+class CORE_API FFrameProfiler
 {
 public:
 
@@ -116,7 +116,7 @@ public:
      * 
      * @return: Returns a reference to the Frame-Profiler instance
      */
-    static CFrameProfiler& Get();
+    static FFrameProfiler& Get();
 
     /** Enables the collection of samples (Resume) */
     static void Enable();
@@ -135,14 +135,14 @@ public:
      * 
      * @param Name: Name of the scope
      */ 
-    void BeginTraceScope(const char* Name);
+    void BeginTraceScope(const CHAR* Name);
 
     /**
      * @brief: Ends a scope for a function
      *
      * @param Name: Name of the scope
      */
-    void EndTraceScope(const char* Name);
+    void EndTraceScope(const CHAR* Name);
 
     /** CPU Profiler samples */
     void GetCPUSamples(ProfileSamplesTable& OutCPUSamples);
@@ -152,16 +152,16 @@ public:
         return Fps;
     }
 
-    FORCEINLINE const SProfileSample& GetCPUFrameTime() const
+    FORCEINLINE const FProfileSample& GetCPUFrameTime() const
     {
         return CPUFrameTime;
     }
 
 private:
 
-    SProfileSample CPUFrameTime;
+    FProfileSample CPUFrameTime;
 
-    CTimer Clock;
+    FTimer Clock;
 
     int32 CurrentFps = 0;
     int32 Fps        = 0;
@@ -169,27 +169,26 @@ private:
     bool bEnabled = true;
 
     ProfileSamplesTable SamplesTable;
-    CSpinLock           SamplesTableLock;
+    FSpinLock           SamplesTableLock;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SScopedTrace
+// FScopedTrace
 
-struct SScopedTrace
+struct FScopedTrace
 {
 public:
-
-    FORCEINLINE SScopedTrace(const char* InName)
+    FORCEINLINE FScopedTrace(const CHAR* InName)
         : Name(InName)
     {
-        CFrameProfiler::Get().BeginTraceScope(Name);
+        FFrameProfiler::Get().BeginTraceScope(Name);
     }
 
-    FORCEINLINE ~SScopedTrace()
+    FORCEINLINE ~FScopedTrace()
     {
-        CFrameProfiler::Get().EndTraceScope(Name);
+        FFrameProfiler::Get().EndTraceScope(Name);
     }
 
 private:
-    const char* Name = nullptr;
+    const CHAR* Name = nullptr;
 };

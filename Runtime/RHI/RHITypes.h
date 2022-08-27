@@ -89,7 +89,7 @@ enum class EFormat : uint16
     R8_Sint               = 70,
 };
 
-CONSTEXPR const char* ToString(EFormat Format)
+CONSTEXPR const CHAR* ToString(EFormat Format)
 {
     switch (Format)
     {
@@ -305,7 +305,7 @@ enum class EComparisonFunc
     Always       = 8
 };
 
-CONSTEXPR const char* ToString(EComparisonFunc ComparisonFunc)
+CONSTEXPR const CHAR* ToString(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -333,7 +333,7 @@ enum class EPrimitiveTopologyType
     Patch     = 4
 };
 
-CONSTEXPR const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
+CONSTEXPR const CHAR* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 {
     switch (PrimitveTopologyType)
     {
@@ -374,7 +374,7 @@ enum class EResourceAccess
 
 ENUM_CLASS_OPERATORS(EResourceAccess);
 
-CONSTEXPR const char* ToString(EResourceAccess ResourceState)
+CONSTEXPR const CHAR* ToString(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
@@ -411,7 +411,7 @@ enum class EPrimitiveTopology
     TriangleStrip = 5,
 };
 
-CONSTEXPR const char* ToString(EPrimitiveTopology ResourceState)
+CONSTEXPR const CHAR* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
@@ -439,7 +439,7 @@ enum class EShadingRate
     VRS_4x4 = 0xa,
 };
 
-CONSTEXPR const char* ToString(EShadingRate ShadingRate)
+CONSTEXPR const CHAR* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
@@ -466,7 +466,7 @@ enum class EDescriptorType : uint32
     Sampler         = 4
 };
 
-CONSTEXPR const char* ToString(EDescriptorType DescriptorType)
+CONSTEXPR const CHAR* ToString(EDescriptorType DescriptorType)
 {
     switch (DescriptorType)
     {
@@ -547,16 +547,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CTextureDepthStencilValue
+// FTextureDepthStencilValue
 
-class CTextureDepthStencilValue
+struct FTextureDepthStencilValue
 {
-public:
-
     /**
      * @brief: Default Constructor
      */
-    CTextureDepthStencilValue()
+    FTextureDepthStencilValue()
         : Depth(1.0f)
         , Stencil(0)
     { }
@@ -567,7 +565,7 @@ public:
      * @param InDepth: Depth-value
      * @param InStencil: Stencil-value
      */
-    CTextureDepthStencilValue(float InDepth, uint8 InStencil)
+    FTextureDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     { }
@@ -586,7 +584,7 @@ public:
      * @param RHS: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CTextureDepthStencilValue& RHS) const
+    bool operator==(const FTextureDepthStencilValue& RHS) const
     {
         return (Depth == RHS.Depth) && (Stencil && RHS.Stencil);
     }
@@ -597,7 +595,7 @@ public:
      * @param RHS: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CTextureDepthStencilValue& RHS) const
+    bool operator!=(const FTextureDepthStencilValue& RHS) const
     {
         return !(*this == RHS);
     }
@@ -612,14 +610,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FTextureClearValue
 
-class FTextureClearValue
+struct FTextureClearValue
 {
-public:
-
     enum class EType : uint8
     {
-        Color = 1,
-        DepthStencil = 2
+        Color        = 1,
+        DepthStencil = 2,
     };
 
     /**
@@ -687,28 +683,28 @@ public:
     bool IsDepthStencilValue() const { return (Type == EType::DepthStencil); }
 
     /** @return: Returns a FloatColor */
-    CFloatColor& AsColor()
+    FFloatColor& AsColor()
     {
         Check(IsColorValue());
         return ColorValue;
     }
 
     /** @return: Returns a FloatColor */
-    const CFloatColor& AsColor() const
+    const FFloatColor& AsColor() const
     {
         Check(IsColorValue());
         return ColorValue;
     }
 
     /** @return: Returns a DepthStencilClearValue */
-    CTextureDepthStencilValue& AsDepthStencil()
+    FTextureDepthStencilValue& AsDepthStencil()
     {
         Check(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
     /** @return: Returns a DepthStencilClearValue */
-    const CTextureDepthStencilValue& AsDepthStencil() const
+    const FTextureDepthStencilValue& AsDepthStencil() const
     {
         Check(IsDepthStencilValue());
         return DepthStencilValue;
@@ -780,10 +776,10 @@ public:
     union
     {
         /** @brief: Color-value */
-        CFloatColor ColorValue;
+        FFloatColor ColorValue;
 
         /** @brief: DepthStencil-value */
-        CTextureDepthStencilValue DepthStencilValue;
+        FTextureDepthStencilValue DepthStencilValue;
     };
 };
 
@@ -806,13 +802,13 @@ struct FRHICopyBufferInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyTextureSubresourceInfo
+// FRHICopyTextureSubresourceInfo
 
-struct SRHICopyTextureSubresourceInfo
+struct FRHICopyTextureSubresourceInfo
 {
-    SRHICopyTextureSubresourceInfo() = default;
+    FRHICopyTextureSubresourceInfo() = default;
 
-    FORCEINLINE SRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
+    FORCEINLINE FRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
         : x(InX)
         , y(InY)
         , z(InZ)
@@ -830,9 +826,9 @@ struct SRHICopyTextureSubresourceInfo
 
 struct FRHICopyTextureInfo
 {
-    SRHICopyTextureSubresourceInfo Source;
-    SRHICopyTextureSubresourceInfo Destination;
-    uint32 Width = 0;
+    FRHICopyTextureSubresourceInfo Source;
+    FRHICopyTextureSubresourceInfo Destination;
+    uint32 Width  = 0;
     uint32 Height = 0;
-    uint32 Depth = 0;
+    uint32 Depth  = 0;
 };

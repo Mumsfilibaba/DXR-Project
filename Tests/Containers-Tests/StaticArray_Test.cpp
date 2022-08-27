@@ -1,6 +1,6 @@
 #include "StaticArray_Test.h"
 
-#if RUN_TFIXEDARRAY_TEST
+#if RUN_TSTATICARRAY_TEST
 #include <Core/Containers/StaticArray.h>
 
 #include <iostream>
@@ -17,12 +17,12 @@ void TStaticArray_Test()
     std::cout << "Testing At()" << std::endl;
     for ( uint32 i = 0; i < Num; i++ )
     {
-        Numbers.At( i ) = i;
+        Numbers.GetElementAt( i ) = i;
     }
 
     for ( uint32 i = 0; i < Num; i++ )
     {
-        std::cout << ConstNumbers.At( i ) << std::endl;
+        std::cout << ConstNumbers.GetElementAt( i ) << std::endl;
     }
 
     std::cout << "Testing operator[]" << std::endl;
@@ -45,7 +45,7 @@ void TStaticArray_Test()
     std::cout << "[" << Num - 1 << "]:" << Numbers.LastElement() << std::endl;
 
     std::cout << "Testing Size" << std::endl;
-    std::cout << "Size:" << Numbers.Size() << std::endl;
+    std::cout << "Size:" << Numbers.GetSize() << std::endl;
 
     std::cout << "Testing Fill" << std::endl;
     Numbers.Fill( 5 );
@@ -76,7 +76,7 @@ void TStaticArray_Test()
     Numbers1.Swap( Numbers2 );
 
     std::cout << "LastIndex=" << Numbers1.LastElementIndex();
-    std::cout << "Size=" << Numbers1.Size();
+    std::cout << "Size=" << Numbers1.GetSize();
     std::cout << "SizeInBytes=" << Numbers1.SizeInBytes();
 
     std::cout << "operator== : " << std::boolalpha << (Numbers1 == Numbers2) << std::endl;

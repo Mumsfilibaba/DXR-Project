@@ -1,23 +1,23 @@
 #include "WindowsApplication.h"
 #include "WindowsApplicationMisc.h"
-#include "WindowsConsoleWindow.h"
+#include "WindowsOutputDeviceConsole.h"
 
 #include "Core/Input/ModifierKeyState.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsApplicationMisc
+// FWindowsApplicationMisc
 
-CGenericApplication* CWindowsApplicationMisc::CreateApplication()
+FGenericApplication* FWindowsApplicationMisc::CreateApplication()
 {
-    return CWindowsApplication::CreateWindowsApplication();
+    return FWindowsApplication::CreateWindowsApplication();
 }
 
-CGenericConsoleWindow* CWindowsApplicationMisc::CreateConsoleWindow()
+FOutputDeviceConsole* FWindowsApplicationMisc::CreateOutputDeviceConsole()
 {
-    return CWindowsConsoleWindow::CreateWindowsConsole();
+    return dbg_new FWindowsOutputDeviceConsole();
 }
 
-void CWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
+void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
     MSG Message;
 
@@ -43,7 +43,7 @@ void CWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
     } while (bUntilEmpty);
 }
 
-SModifierKeyState CWindowsApplicationMisc::GetModifierKeyState()
+FModifierKeyState FWindowsApplicationMisc::GetModifierKeyState()
 {
     uint8 ModifierMask = 0;
     if (GetKeyState(VK_CONTROL) & 0x8000)
@@ -76,5 +76,5 @@ SModifierKeyState CWindowsApplicationMisc::GetModifierKeyState()
         ModifierMask |= EModifierFlag::ModifierFlag_NumLock;
     }
 
-    return SModifierKeyState(ModifierMask);
+    return FModifierKeyState(ModifierMask);
 }

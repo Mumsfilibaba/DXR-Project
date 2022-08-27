@@ -2,15 +2,13 @@
 #include "Core/Core.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// State of which modifier keys are pressed
+// FModifierKeyState
 
-struct SModifierKeyState
+struct FModifierKeyState
 {
-public:
+    FModifierKeyState() = default;
 
-    SModifierKeyState() = default;
-
-    FORCEINLINE SModifierKeyState(uint8 InModifierMask)
+    FORCEINLINE FModifierKeyState(uint8 InModifierMask)
         : ModifierMask(InModifierMask)
     { }
 
@@ -19,12 +17,12 @@ public:
          /** @brief: Flags */
         struct
         {
-            uint8 bIsCtrlDown : 1;
-            uint8 bIsAltDown : 1;
-            uint8 bIsShiftDown : 1;
+            uint8 bIsCtrlDown     : 1;
+            uint8 bIsAltDown      : 1;
+            uint8 bIsShiftDown    : 1;
             uint8 bIsCapsLockDown : 1;
             uint8 bIsSuperKeyDown : 1;
-            uint8 bIsNumPadDown : 1;
+            uint8 bIsNumPadDown   : 1;
         };
 
          /** @brief: Mask */
