@@ -19,8 +19,10 @@ Texture2D<float4> MetallicTex  : register(t4);
 Texture2D<float4> AOTex        : register(t5);
 Texture2D<float>  AlphaMaskTex : register(t6);
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // VertexShader
-struct VSInput
+
+struct FVSInput
 {
     float3 Position : POSITION0;
     float3 Normal   : NORMAL0;
@@ -28,7 +30,7 @@ struct VSInput
     float2 TexCoord : TEXCOORD0;
 };
 
-struct VSOutput
+struct FVSOutput
 {
     float3 Normal          : NORMAL0;
     float3 ViewNormal      : NORMAL1;
@@ -40,9 +42,9 @@ struct VSOutput
     float4 Position        : SV_Position;
 };
 
-VSOutput VSMain(VSInput Input)
+FVSOutput VSMain(FVSInput Input)
 {
-    VSOutput Output;
+    FVSOutput Output;
     
     const float4x4 TransformInv = TransformBuffer.TransformInv;
     float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
@@ -70,8 +72,10 @@ VSOutput VSMain(VSInput Input)
     return Output;
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // PixelShader
-struct PSInput
+
+struct FPSInput
 {
     float3 Normal          : NORMAL0;
     float3 ViewNormal      : NORMAL1;
@@ -82,7 +86,7 @@ struct PSInput
     float3 TangentPosition : TANGENTPOSITION0;
 };
 
-struct PSOutput
+struct FPSOutput
 {
     float4 Albedo     : SV_Target0;
     float4 Normal     : SV_Target1;
@@ -130,7 +134,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     return FinalTexCoords;
 }
 
-PSOutput PSMain(PSInput Input)
+FPSOutput PSMain(FPSInput Input)
 {
     float2 TexCoords = Input.TexCoord;
     TexCoords.y = 1.0f - TexCoords.y;
@@ -171,7 +175,7 @@ PSOutput PSMain(PSInput Input)
     const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Roughness;
     const float FinalRoughness   = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
     
-    PSOutput Output;
+    FPSOutput Output;
     Output.Albedo     = float4(SampledAlbedo, 1.0f);
     Output.Normal     = float4(MappedNormal, 1.0f);
     Output.Material   = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);

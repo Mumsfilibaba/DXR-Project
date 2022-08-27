@@ -20,7 +20,7 @@ void FFrustum::Create(float FarPlane, const FMatrix4& View, const FMatrix4& Proj
 
     // Create the frustum Matrix from the view Matrix and updated projection Matrix.
     FMatrix4 TempView = View.Transpose();
-    FMatrix4 Matrix = TempView * TempProjection;
+    FMatrix4 Matrix   = TempView * TempProjection;
 
     // Calculate near plane of frustum.
     Planes[0].x = Matrix.m03 + Matrix.m02;

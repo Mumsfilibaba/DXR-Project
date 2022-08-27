@@ -19,6 +19,8 @@ struct FPointLightData
     float    Padding0;
 };
 
+MARK_AS_REALLOCATABLE(FPointLightData);
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FShadowCastingPointLightData
 
@@ -33,6 +35,8 @@ struct FShadowCastingPointLightData
     float    Padding1;
 };
 
+MARK_AS_REALLOCATABLE(FShadowCastingPointLightData);
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FPointLightShadowMapGenerationData
 
@@ -45,6 +49,8 @@ struct FPointLightShadowMapGenerationData
     float    FarPlane;
     FVector3 Position;
 };
+
+MARK_AS_REALLOCATABLE(FPointLightShadowMapGenerationData);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FDirectionalLightData
@@ -60,6 +66,8 @@ struct FDirectionalLightData
     FVector3 Up = FVector3(0.0f, 0.0f, -1.0f);
     float    LightSize;
 };
+
+MARK_AS_REALLOCATABLE(FDirectionalLightData);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FLightSetup

@@ -594,15 +594,15 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CmdList, FFrameResources&
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Depth Reduction");
 }
 
-void FDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const FFrameResources& FrameResources)
+void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin GeometryPass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin GeometryPass");
 
     TRACE_SCOPE("GeometryPass");
 
-    GPU_TRACE_SCOPE(CmdList, "Base Pass");
+    GPU_TRACE_SCOPE(CommandList, "Base Pass");
 
-    const float RenderWidth = float(FrameResources.MainWindowViewport->GetWidth());
+    const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
 
     FRHIRenderPassInitializer RenderPass;
@@ -611,17 +611,19 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const FFrameRes
     RenderPass.RenderTargets[2] = FRHIRenderTargetView(FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX].Get());
     RenderPass.RenderTargets[3] = FRHIRenderTargetView(FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get());
     RenderPass.NumRenderTargets = 4;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);
+    RenderPass.DepthStencilView = FRHIDepthStencilView(
+        FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(),
+        EAttachmentLoadAction::Load);
 
-    CmdList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPass);
 
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     
-    CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
+    CommandList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+    CommandList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
     // Setup Pipeline
-    CmdList.SetGraphicsPipelineState(PipelineState.Get());
+    CommandList.SetGraphicsPipelineState(PipelineState.Get());
 
     struct STransformBuffer
     {
@@ -633,42 +635,42 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CmdList, const FFrameRes
     {
         const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
 
-        CmdList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
-        CmdList.SetIndexBuffer(Command.IndexBuffer);
+        CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
+        CommandList.SetIndexBuffer(Command.IndexBuffer);
 
         if (Command.Material->IsBufferDirty())
         {
-            Command.Material->BuildBuffer(CmdList);
+            Command.Material->BuildBuffer(CommandList);
         }
 
-        CmdList.SetConstantBuffer(BaseVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+        CommandList.SetConstantBuffer(BaseVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
         FRHIConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
-        CmdList.SetConstantBuffer(BasePixelShader.Get(), MaterialBuffer, 0);
+        CommandList.SetConstantBuffer(BasePixelShader.Get(), MaterialBuffer, 0);
 
-        TransformPerObject.Transform = Command.CurrentActor->GetTransform().GetMatrix();
+        TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
 
         FRHIShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[0], 0);
-        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[1], 1);
-        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[2], 2);
-        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[3], 3);
-        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[4], 4);
-        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[5], 5);
-        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[6], 6);
+        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[0], 0);
+        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[1], 1);
+        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[2], 2);
+        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[3], 3);
+        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[4], 4);
+        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[5], 5);
+        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[6], 6);
 
         FRHISamplerState* Sampler = Command.Material->GetMaterialSampler();
-        CmdList.SetSamplerState(BasePixelShader.Get(), Sampler, 0);
+        CommandList.SetSamplerState(BasePixelShader.Get(), Sampler, 0);
 
-        CmdList.Set32BitShaderConstants(BaseVertexShader.Get(), &TransformPerObject, 32);
+        CommandList.Set32BitShaderConstants(BaseVertexShader.Get(), &TransformPerObject, 32);
 
-        CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+        CommandList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
     }
 
-    CmdList.EndRenderPass();
+    CommandList.EndRenderPass();
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End GeometryPass");
 }
 
 void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, const FFrameResources& FrameResources, const FLightSetup& LightSetup)

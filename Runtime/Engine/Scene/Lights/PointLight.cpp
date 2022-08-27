@@ -55,17 +55,17 @@ void FPointLight::CalculateMatrices()
         return;
     }
 
-    FVector3 Directions[6] =
+    const FVector3 Directions[6] =
     {
-        { FVector3(1.0f,  0.0f,  0.0f) },
+        { FVector3( 1.0f,  0.0f,  0.0f) },
         { FVector3(-1.0f,  0.0f,  0.0f) },
-        { FVector3(0.0f,  1.0f,  0.0f) },
-        { FVector3(0.0f, -1.0f,  0.0f) },
-        { FVector3(0.0f,  0.0f,  1.0f) },
-        { FVector3(0.0f,  0.0f, -1.0f) },
+        { FVector3( 0.0f,  1.0f,  0.0f) },
+        { FVector3( 0.0f, -1.0f,  0.0f) },
+        { FVector3( 0.0f,  0.0f,  1.0f) },
+        { FVector3( 0.0f,  0.0f, -1.0f) },
     };
 
-    FVector3 UpVectors[6] =
+    const FVector3 UpVectors[6] =
     {
         { FVector3(0.0f, 1.0f,  0.0f) },
         { FVector3(0.0f, 1.0f,  0.0f) },
@@ -75,11 +75,12 @@ void FPointLight::CalculateMatrices()
         { FVector3(0.0f, 1.0f,  0.0f) },
     };
 
-    for (uint32 i = 0; i < 6; i++)
+    for (uint32 Face = 0; Face < 6; ++Face)
     {
-        FMatrix4 LightProjection = FMatrix4::PerspectiveProjection(NMath::kPI_f / 2.0f, 1.0f, ShadowNearPlane, ShadowFarPlane);
-        FMatrix4 LightView = FMatrix4::LookTo(Position, Directions[i], UpVectors[i]);
-        ViewMatrices[i] = LightView.Transpose();
-        Matrices[i] = (LightView * LightProjection).Transpose();
+        const FMatrix4 LightProjection = FMatrix4::PerspectiveProjection(NMath::kPI_f / 2.0f, 1.0f, ShadowNearPlane, ShadowFarPlane);
+        const FMatrix4 LightView       = FMatrix4::LookTo(Position, Directions[Face], UpVectors[Face]);
+        ViewMatrices[Face] = LightView.Transpose();
+        ProjMatrices[Face] = LightProjection;
+        Matrices[Face]     = (LightView * LightProjection).Transpose();
     }
 }

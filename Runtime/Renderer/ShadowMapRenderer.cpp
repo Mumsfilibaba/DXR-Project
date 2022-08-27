@@ -403,7 +403,6 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const
 
                 CmdList.BeginRenderPass(RenderPass);
 
-                // NOTE: For now, MetalRHI require a renderpass to be started for these two to be valid
                 const uint32 PointLightShadowSize = LightSetup.PointLightShadowSize;
                 CmdList.SetViewport(
                     static_cast<float>(PointLightShadowSize),
@@ -412,6 +411,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const
                     1.0f, 
                     0.0f,
                     0.0f);
+
                 CmdList.SetScissorRect(
                     static_cast<float>(PointLightShadowSize),
                     static_cast<float>(PointLightShadowSize),
@@ -441,7 +441,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const
                 CmdList.SetConstantBuffer(PointLightPixelShader.Get(), PerShadowMapBuffer.Get(), 0);
 
                 // Draw all objects to depth buffer
-                IConsoleVariable* GlobalFrustumCullEnabled = FConsoleInterface::Get().FindVariable("Renderer.EnableFrustumCulling");
+                static IConsoleVariable* GlobalFrustumCullEnabled = FConsoleInterface::Get().FindVariable("Renderer.EnableFrustumCulling");
                 if (GlobalFrustumCullEnabled && GlobalFrustumCullEnabled->GetBool())
                 {
                     FFrustum CameraFrustum = FFrustum(Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face]);
@@ -450,10 +450,10 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CmdList, const
                         FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
                         TransformMatrix = TransformMatrix.Transpose();
 
-                        FVector3 Top = FVector3(&Command.Mesh->BoundingBox.Top.x);
+                        FVector3 Top = FVector3(Command.Mesh->BoundingBox.Top);
                         Top = TransformMatrix.TransformPosition(Top);
 
-                        FVector3 Bottom = FVector3(&Command.Mesh->BoundingBox.Bottom.x);
+                        FVector3 Bottom = FVector3(Command.Mesh->BoundingBox.Bottom);
                         Bottom = TransformMatrix.TransformPosition(Bottom);
 
                         FAABB Box(Top, Bottom);

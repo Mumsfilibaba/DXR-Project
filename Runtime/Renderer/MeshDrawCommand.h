@@ -16,8 +16,4 @@ struct FMeshDrawCommand
     class FRHIRayTracingGeometry* Geometry     = nullptr;
 };
 
-template<>
-struct TIsReallocatable<FMeshDrawCommand>
-{
-    enum { Value = true };
-};
+MARK_AS_REALLOCATABLE(FMeshDrawCommand);

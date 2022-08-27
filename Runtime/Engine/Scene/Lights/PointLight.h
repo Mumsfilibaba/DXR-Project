@@ -61,6 +61,8 @@ private:
     FMatrix4 Matrices[6];
     FMatrix4 ViewMatrices[6];
     FMatrix4 ProjMatrices[6];
+    
     FVector3 Position;
+
     bool     bShadowCaster = false;
 };

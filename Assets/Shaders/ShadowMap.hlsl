@@ -22,7 +22,7 @@ ConstantBuffer<SPerCascade> PerCascadeBuffer : register(b0);
 StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 
 // VS
-struct VSInput
+struct FVSInput
 {
     float3 Position : POSITION0;
     float3 Normal   : NORMAL0;
@@ -42,7 +42,7 @@ struct GSOutput
 // Cascade Shadow Generation //
 ///////////////////////////////
 
-float4 Cascade_VSMain(VSInput Input) : SV_POSITION
+float4 Cascade_VSMain(FVSInput Input) : SV_POSITION
 {
     float4x4 LightViewProjection = CascadeMatrixBuffer[PerCascadeBuffer.CascadeIndex].ViewProj;
     
@@ -65,15 +65,15 @@ cbuffer LightBuffer : register(b0, space0)
     float  LightFarPlane;
 }
 
-struct VSOutput
+struct FVSOutput
 {
     float3 WorldPosition : POSITION0;
     float4 Position      : SV_POSITION;
 };
 
-VSOutput Point_VSMain(VSInput Input)
+FVSOutput Point_VSMain(FVSInput Input)
 {
-    VSOutput Output = (VSOutput)0;
+    FVSOutput Output = (FVSOutput)0;
     
     float4 WorldPosition = mul(float4(Input.Position, 1.0f), PerObjectBuffer.ModelMatrix);
     Output.WorldPosition = WorldPosition.xyz;
@@ -93,7 +93,7 @@ float Point_PSMain(float3 WorldPosition : POSITION0) : SV_Depth
 // Variance Shadow Generation //
 ////////////////////////////////
 
-float4 VSM_VSMain(VSInput Input) : SV_Position
+float4 VSM_VSMain(FVSInput Input) : SV_Position
 {
     float4 WorldPosition = mul(float4(Input.Position, 1.0f), PerObjectBuffer.ModelMatrix);
     return mul(WorldPosition, LightProjection);

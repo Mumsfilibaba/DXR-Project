@@ -84,7 +84,7 @@ bool FLightSetup::Init()
     return true;
 }
 
-void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
+void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
 {
     PointLightsPosRad.Clear();
     PointLightsData.Clear();
@@ -92,7 +92,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
     ShadowCastingPointLightsData.Clear();
     PointLightShadowMapsGenerationData.Clear();
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Update Lights");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Update Lights");
 
     TRACE_SCOPE("Update LightBuffers");
 
@@ -101,7 +101,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
 
     for (FLight* Light : Scene.GetLights())
     {
-        float Intensity = Light->GetIntensity();
+        const float Intensity = Light->GetIntensity();
         FVector3 Color = Light->GetColor();
         Color = Color * Intensity;
 
@@ -111,8 +111,8 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
             Check(CurrentLight != nullptr);
 
             constexpr float MinLuma = 0.005f;
-            float Dot = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
-            float Radius = sqrt(Dot / MinLuma);
+            const float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
+            const float Radius = NMath::Sqrt(Dot / MinLuma);
 
             FVector3 Position = CurrentLight->GetPosition();
             FVector4 PosRad   = FVector4(Position, Radius);
@@ -180,7 +180,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
 
     if (PointLightsData.SizeInBytes() > (int32)PointLightsBuffer->GetSize())
     {
-        CmdList.DestroyResource(PointLightsBuffer.Get());
+        CommandList.DestroyResource(PointLightsBuffer.Get());
 
         FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, PointLightsData.CapacityInBytes());
         PointLightsBuffer = RHICreateConstantBuffer(Initializer);
@@ -192,7 +192,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
 
     if (PointLightsPosRad.SizeInBytes() > (int32)PointLightsPosRadBuffer->GetSize())
     {
-        CmdList.DestroyResource(PointLightsPosRadBuffer.Get());
+        CommandList.DestroyResource(PointLightsPosRadBuffer.Get());
 
         FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, PointLightsPosRad.CapacityInBytes());
         PointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
@@ -204,7 +204,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
 
     if (ShadowCastingPointLightsData.SizeInBytes() > (int32)ShadowCastingPointLightsBuffer->GetSize())
     {
-        CmdList.DestroyResource(ShadowCastingPointLightsBuffer.Get());
+        CommandList.DestroyResource(ShadowCastingPointLightsBuffer.Get());
 
         FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, ShadowCastingPointLightsData.CapacityInBytes());
         ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(Initializer);
@@ -216,7 +216,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
 
     if (ShadowCastingPointLightsPosRad.SizeInBytes() > (int32)ShadowCastingPointLightsPosRadBuffer->GetSize())
     {
-        CmdList.DestroyResource(ShadowCastingPointLightsPosRadBuffer.Get());
+        CommandList.DestroyResource(ShadowCastingPointLightsPosRadBuffer.Get());
 
         FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, ShadowCastingPointLightsPosRad.CapacityInBytes());
         ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
@@ -226,75 +226,75 @@ void FLightSetup::BeginFrame(FRHICommandList& CmdList, const FScene& Scene)
         }
     }
 
-    CmdList.TransitionBuffer(
+    CommandList.TransitionBuffer(
         DirectionalLightsBuffer.Get(),
         EResourceAccess::VertexAndConstantBuffer,
         EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(
+    CommandList.TransitionBuffer(
         PointLightsBuffer.Get(),
         EResourceAccess::VertexAndConstantBuffer, 
         EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(
+    CommandList.TransitionBuffer(
         PointLightsPosRadBuffer.Get(),
         EResourceAccess::VertexAndConstantBuffer,
         EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(
+    CommandList.TransitionBuffer(
         ShadowCastingPointLightsBuffer.Get(),
         EResourceAccess::VertexAndConstantBuffer,
         EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(
+    CommandList.TransitionBuffer(
         ShadowCastingPointLightsPosRadBuffer.Get(),
         EResourceAccess::VertexAndConstantBuffer, 
         EResourceAccess::CopyDest);
 
     if (DirectionalLightDataDirty)
     {
-        CmdList.UpdateBuffer(DirectionalLightsBuffer.Get(), 0, sizeof(DirectionalLightData), &DirectionalLightData);
+        CommandList.UpdateBuffer(DirectionalLightsBuffer.Get(), 0, sizeof(DirectionalLightData), &DirectionalLightData);
         DirectionalLightDataDirty = false;
     }
 
     if (!PointLightsData.IsEmpty())
     {
-        CmdList.UpdateBuffer(PointLightsBuffer.Get(), 0, PointLightsData.SizeInBytes(), PointLightsData.GetData());
-        CmdList.UpdateBuffer(PointLightsPosRadBuffer.Get(), 0, PointLightsPosRad.SizeInBytes(), PointLightsPosRad.GetData());
+        CommandList.UpdateBuffer(PointLightsBuffer.Get(), 0, PointLightsData.SizeInBytes(), PointLightsData.GetData());
+        CommandList.UpdateBuffer(PointLightsPosRadBuffer.Get(), 0, PointLightsPosRad.SizeInBytes(), PointLightsPosRad.GetData());
     }
 
     if (!ShadowCastingPointLightsData.IsEmpty())
     {
-        CmdList.UpdateBuffer(
+        CommandList.UpdateBuffer(
             ShadowCastingPointLightsBuffer.Get(),
             0,
             ShadowCastingPointLightsData.SizeInBytes(),
             ShadowCastingPointLightsData.GetData());
-        CmdList.UpdateBuffer(
+        CommandList.UpdateBuffer(
             ShadowCastingPointLightsPosRadBuffer.Get(),
             0,
             ShadowCastingPointLightsPosRad.SizeInBytes(),
             ShadowCastingPointLightsPosRad.GetData());
     }
 
-    CmdList.TransitionBuffer(
+    CommandList.TransitionBuffer(
         DirectionalLightsBuffer.Get(),
         EResourceAccess::CopyDest,
         EResourceAccess::VertexAndConstantBuffer);
-    CmdList.TransitionBuffer(
+    CommandList.TransitionBuffer(
         PointLightsBuffer.Get(),
         EResourceAccess::CopyDest,
         EResourceAccess::VertexAndConstantBuffer);
-    CmdList.TransitionBuffer(
+    CommandList.TransitionBuffer(
         PointLightsPosRadBuffer.Get(), 
         EResourceAccess::CopyDest,
         EResourceAccess::VertexAndConstantBuffer);
-    CmdList.TransitionBuffer(
+    CommandList.TransitionBuffer(
         ShadowCastingPointLightsBuffer.Get(),
         EResourceAccess::CopyDest,
         EResourceAccess::VertexAndConstantBuffer);
-    CmdList.TransitionBuffer(
+    CommandList.TransitionBuffer(
         ShadowCastingPointLightsPosRadBuffer.Get(),
         EResourceAccess::CopyDest,
         EResourceAccess::VertexAndConstantBuffer);
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Update Lights");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Update Lights");
 }
 
 void FLightSetup::Release()
@@ -311,9 +311,9 @@ void FLightSetup::Release()
 
     PointLightShadowMaps.Reset();
 
-    for (uint32 i = 0; i < 4; i++)
+    for (FRHITexture2DRef& ShadowMap : ShadowMapCascades)
     {
-        ShadowMapCascades[i].Reset();
+        ShadowMap.Reset();
     }
 
     IrradianceMap.Reset();

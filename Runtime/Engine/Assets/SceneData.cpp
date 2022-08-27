@@ -42,6 +42,7 @@ void FSceneData::AddToScene(FScene* Scene)
 
             Material->AlphaMask = (MaterialData.AlphaMaskTexture >= 0) ? RHITextures[MaterialData.AlphaMaskTexture] : GEngine->BaseTexture;
             Material->AlphaMask = (Material->AlphaMask)                ? Material->AlphaMask                        : GEngine->BaseTexture;
+            Material->EnableAlphaMask(Material->HasAlphaMask());
 
             Material->AOMap = (MaterialData.AOTexture >= 0) ? RHITextures[MaterialData.AOTexture] : GEngine->BaseTexture;
             Material->AOMap = (Material->AOMap)             ? Material->AOMap                     : GEngine->BaseTexture;
@@ -56,6 +57,7 @@ void FSceneData::AddToScene(FScene* Scene)
             Material->RoughnessMap = (Material->RoughnessMap)             ? Material->RoughnessMap                     : GEngine->BaseTexture;
 
             Material->HeightMap = GEngine->BaseTexture;
+            
             Material->Initialize();
 
             CreatedMaterials.Push(Material);

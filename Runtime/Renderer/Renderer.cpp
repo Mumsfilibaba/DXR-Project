@@ -34,7 +34,7 @@ TAutoConsoleVariable<bool> GPrePassEnabled("Renderer.EnablePrePass", true);
 TAutoConsoleVariable<bool> GDrawAABBs("Renderer.EnableDrawAABBs", false);
 TAutoConsoleVariable<bool> GVSyncEnabled("Renderer.EnableVerticalSync", false);
 TAutoConsoleVariable<bool> GFrustumCullEnabled("Renderer.EnableFrustumCulling", true);
-TAutoConsoleVariable<bool> GRayTracingEnabled("Renderer.EnableRayTracing", true);
+TAutoConsoleVariable<bool> GRayTracingEnabled("Renderer.EnableRayTracing", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FCameraBuffer
@@ -518,7 +518,7 @@ void FRenderer::Tick(const FScene& Scene)
         for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.GetSize(); ++CommandIndex)
         {
             const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
-            if (Command.Material->HasAlphaMask())
+            if (Command.Material->ShouldRenderInForwardPass())
             {
                 Resources.ForwardVisibleCommands.Emplace(CommandIndex);
             }

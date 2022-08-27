@@ -64,7 +64,7 @@ Texture2D<float> MetallicTex  : register(t9);
 Texture2D<float> AOTex        : register(t10);
 Texture2D<float> AlphaTex     : register(t11);
 
-struct VSInput
+struct FVSInput
 {
     float3 Position : POSITION0;
     float3 Normal   : NORMAL0;
@@ -72,7 +72,7 @@ struct VSInput
     float2 TexCoord : TEXCOORD0;
 };
 
-struct VSOutput
+struct FVSOutput
 {
     float3 WorldPosition   : POSITION0;
     float3 Normal          : NORMAL0;
@@ -84,9 +84,9 @@ struct VSOutput
     float4 Position        : SV_Position;
 };
 
-VSOutput VSMain(VSInput Input)
+FVSOutput VSMain(FVSInput Input)
 {
-    VSOutput Output;
+    FVSOutput Output;
     
     float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformBuffer.Transform).xyz);
     Output.Normal = Normal;
@@ -113,7 +113,7 @@ VSOutput VSMain(VSInput Input)
     return Output;
 }
 
-struct PSInput
+struct FPSInput
 {
     float3 WorldPosition   : POSITION0;
     float3 Normal          : NORMAL0;
@@ -165,7 +165,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     return FinalTexCoords;
 }
 
-float4 PSMain(PSInput Input) : SV_Target0
+float4 PSMain(FPSInput Input) : SV_Target0
 {
     float2 TexCoords = Input.TexCoord;
     TexCoords.y = 1.0f - TexCoords.y;

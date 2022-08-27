@@ -12,10 +12,13 @@
 struct FCascadeGenerationInfo
 {
     FVector3 LightDirection;
-    float CascadeSplitLambda;
+    float    CascadeSplitLambda;
+    
     FVector3 LightUp;
-    float CascadeResolution;
+    float    CascadeResolution;
 };
+
+MARK_AS_REALLOCATABLE(FCascadeGenerationInfo);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FCascadeMatrices
@@ -25,6 +28,8 @@ struct FCascadeMatrices
     FMatrix4 ViewProjection;
     FMatrix4 View;
 };
+
+MARK_AS_REALLOCATABLE(FCascadeMatrices);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FCascadeSplits
@@ -37,6 +42,8 @@ struct FCascadeSplits
     float    FarPlane;
 };
 
+MARK_AS_REALLOCATABLE(FCascadeSplits);
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FPerShadowMap
 
@@ -46,6 +53,8 @@ struct FPerShadowMap
     FVector3 Position;
     float    FarPlane;
 };
+
+MARK_AS_REALLOCATABLE(FPerShadowMap);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FPerCascade
@@ -57,6 +66,8 @@ struct FPerCascade
     int32 Padding1;
     int32 Padding2;
 };
+
+MARK_AS_REALLOCATABLE(FPerCascade);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FShadowMapRenderer

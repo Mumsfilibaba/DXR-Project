@@ -13,13 +13,13 @@
 
 struct FMaterialDesc
 {
-    FVector3 Albedo = FVector3(1.0f);
-    float Roughness = 0.0f;
+    FVector3 Albedo       = FVector3(1.0f);
+    float    Roughness    = 0.0f;
 
-    float Metallic     = 0.0f;
-    float AO           = 0.5f;
-    int32 EnableHeight = 0;
-    int32 EnableMask   = 0;
+    float    Metallic     = 0.0f;
+    float    AO           = 0.5f;
+    int32    EnableHeight = 0;
+    int32    EnableMask   = 0;
 };
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/

@@ -79,7 +79,7 @@ public:
         return NearPlane;
     }
 
-    float GetFarPlane()  const
+    float GetFarPlane() const
     {
         return FarPlane;
     }
