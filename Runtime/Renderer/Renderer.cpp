@@ -23,18 +23,18 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variables
 
-TAutoConsoleVariable<bool> GEnableSSAO("Renderer.EnableSSAO", true);
+TAutoConsoleVariable<bool> GEnableSSAO("Renderer.Feature.SSAO", true);
 
-TAutoConsoleVariable<bool> GEnableFXAA("Renderer.EnableFXAA", true);
-TAutoConsoleVariable<bool> GFXAADebug("Renderer.FXAADebug", false);
+TAutoConsoleVariable<bool> GEnableFXAA("Renderer.Feature.FXAA", true);
+TAutoConsoleVariable<bool> GFXAADebug("Renderer.Debug.FXAADebug", false);
 
-TAutoConsoleVariable<bool> GEnableVariableRateShading("Renderer.EnableVariableRateShading", false);
+TAutoConsoleVariable<bool> GEnableVariableRateShading("Renderer.Feature.VariableRateShading", false);
 
-TAutoConsoleVariable<bool> GPrePassEnabled("Renderer.EnablePrePass", true);
-TAutoConsoleVariable<bool> GDrawAABBs("Renderer.EnableDrawAABBs", false);
-TAutoConsoleVariable<bool> GVSyncEnabled("Renderer.EnableVerticalSync", false);
-TAutoConsoleVariable<bool> GFrustumCullEnabled("Renderer.EnableFrustumCulling", true);
-TAutoConsoleVariable<bool> GRayTracingEnabled("Renderer.EnableRayTracing", false);
+TAutoConsoleVariable<bool> GPrePassEnabled("Renderer.Feature.PrePass", true);
+TAutoConsoleVariable<bool> GDrawAABBs("Renderer.Debug.DrawAABBs", false);
+TAutoConsoleVariable<bool> GVSyncEnabled("Renderer.Feature.VerticalSync", false);
+TAutoConsoleVariable<bool> GFrustumCullEnabled("Renderer.Feature.FrustumCulling", true);
+TAutoConsoleVariable<bool> GRayTracingEnabled("Renderer.Feature.RayTracing", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FCameraBuffer
@@ -215,7 +215,7 @@ bool FRenderer::Init()
     Application.AddWindowMessageHandler(WindowHandler, uint32(-1));
 
     // Register Windows
-    TextureDebugger = FTextureDebugWindow::Create();
+    TextureDebugger = FRenderTargetDebugWindow::Create();
     Application.AddWindow(TextureDebugger);
 
     InfoWindow = FRendererInfoWindow::Create();

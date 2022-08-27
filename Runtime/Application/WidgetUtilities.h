@@ -11,6 +11,22 @@ constexpr float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
+inline bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f)
+{
+    ImGuiStyle& Style = ImGui::GetStyle();
+
+    const float Size  = ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f;
+    const float Avail = ImGui::GetContentRegionAvail().x;
+
+    const float Offset = (Avail - Size) * Alignment;
+    if (Offset > 0.0f)
+    {
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + Offset);
+    }
+
+    return ImGui::Button(Label);
+}
+
 inline void DrawFloat3Control(const FString& Label, FVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f)
 {
     ImGui::PushID(Label.GetCString());

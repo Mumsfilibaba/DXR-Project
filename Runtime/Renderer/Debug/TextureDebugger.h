@@ -8,13 +8,13 @@
 
 #include <imgui.h>
 
-class FTextureDebugWindow 
+class FRenderTargetDebugWindow 
     : public FWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
-    static TSharedRef<FTextureDebugWindow> Create();
+    static TSharedRef<FRenderTargetDebugWindow> Create();
 
      /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;
@@ -31,12 +31,12 @@ public:
     }
 
 private:
-    FTextureDebugWindow()  = default;
-    ~FTextureDebugWindow() = default;
+    FRenderTargetDebugWindow()  = default;
+    ~FRenderTargetDebugWindow() = default;
 
      /** @brief: Debug images */
     TArray<FDrawableImage> DebugTextures;
 
      /** @brief: The selected image */
-    int32 SelectedTextureIndex = -1;
+    int32 SelectedTextureIndex = 0;
 };

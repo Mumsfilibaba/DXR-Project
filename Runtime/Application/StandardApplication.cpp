@@ -86,7 +86,7 @@ bool FStandardApplication::CreateContext()
     Style.FrameBorderSize  = 1.0f;
     Style.ChildBorderSize  = 1.0f;
     Style.PopupBorderSize  = 1.0f;
-    Style.ScrollbarSize    = 14.0f;
+    Style.ScrollbarSize    = 10.0f;
     Style.GrabMinSize      = 20.0f;
 
     // Rounding
@@ -97,14 +97,14 @@ bool FStandardApplication::CreateContext()
     Style.TabRounding       = 4.0f;
     Style.ScrollbarRounding = 6.0f;
 
-    Style.Colors[ImGuiCol_WindowBg].x = 0.2f;
-    Style.Colors[ImGuiCol_WindowBg].y = 0.2f;
-    Style.Colors[ImGuiCol_WindowBg].z = 0.2f;
-    Style.Colors[ImGuiCol_WindowBg].w = 0.9f;
+    Style.Colors[ImGuiCol_WindowBg].x = 0.075f;
+    Style.Colors[ImGuiCol_WindowBg].y = 0.075f;
+    Style.Colors[ImGuiCol_WindowBg].z = 0.075f;
+    Style.Colors[ImGuiCol_WindowBg].w = 0.925f;
 
-    Style.Colors[ImGuiCol_Text].x = 1.0f;
-    Style.Colors[ImGuiCol_Text].y = 1.0f;
-    Style.Colors[ImGuiCol_Text].z = 1.0f;
+    Style.Colors[ImGuiCol_Text].x = 0.95f;
+    Style.Colors[ImGuiCol_Text].y = 0.95f;
+    Style.Colors[ImGuiCol_Text].z = 0.95f;
     Style.Colors[ImGuiCol_Text].w = 1.0f;
 
     Style.Colors[ImGuiCol_PlotHistogram].x = 0.9f;
@@ -117,9 +117,9 @@ bool FStandardApplication::CreateContext()
     Style.Colors[ImGuiCol_PlotHistogramHovered].z = 0.75f;
     Style.Colors[ImGuiCol_PlotHistogramHovered].w = 1.0f;
 
-    Style.Colors[ImGuiCol_TitleBg].x = 0.3f;
-    Style.Colors[ImGuiCol_TitleBg].y = 0.3f;
-    Style.Colors[ImGuiCol_TitleBg].z = 0.3f;
+    Style.Colors[ImGuiCol_TitleBg].x = 0.025f;
+    Style.Colors[ImGuiCol_TitleBg].y = 0.025f;
+    Style.Colors[ImGuiCol_TitleBg].z = 0.025f;
     Style.Colors[ImGuiCol_TitleBg].w = 1.0f;
 
     Style.Colors[ImGuiCol_TitleBgActive].x = 0.15f;
@@ -127,19 +127,19 @@ bool FStandardApplication::CreateContext()
     Style.Colors[ImGuiCol_TitleBgActive].z = 0.15f;
     Style.Colors[ImGuiCol_TitleBgActive].w = 1.0f;
 
-    Style.Colors[ImGuiCol_FrameBg].x = 0.4f;
-    Style.Colors[ImGuiCol_FrameBg].y = 0.4f;
-    Style.Colors[ImGuiCol_FrameBg].z = 0.4f;
+    Style.Colors[ImGuiCol_FrameBg].x = 0.1f;
+    Style.Colors[ImGuiCol_FrameBg].y = 0.1f;
+    Style.Colors[ImGuiCol_FrameBg].z = 0.1f;
     Style.Colors[ImGuiCol_FrameBg].w = 1.0f;
 
-    Style.Colors[ImGuiCol_FrameBgHovered].x = 0.3f;
-    Style.Colors[ImGuiCol_FrameBgHovered].y = 0.3f;
-    Style.Colors[ImGuiCol_FrameBgHovered].z = 0.3f;
+    Style.Colors[ImGuiCol_FrameBgHovered].x = 0.2f;
+    Style.Colors[ImGuiCol_FrameBgHovered].y = 0.2f;
+    Style.Colors[ImGuiCol_FrameBgHovered].z = 0.2f;
     Style.Colors[ImGuiCol_FrameBgHovered].w = 1.0f;
 
-    Style.Colors[ImGuiCol_FrameBgActive].x = 0.24f;
-    Style.Colors[ImGuiCol_FrameBgActive].y = 0.24f;
-    Style.Colors[ImGuiCol_FrameBgActive].z = 0.24f;
+    Style.Colors[ImGuiCol_FrameBgActive].x = 0.15f;
+    Style.Colors[ImGuiCol_FrameBgActive].y = 0.15f;
+    Style.Colors[ImGuiCol_FrameBgActive].z = 0.15f;
     Style.Colors[ImGuiCol_FrameBgActive].w = 1.0f;
 
     Style.Colors[ImGuiCol_Button].x = 0.4f;

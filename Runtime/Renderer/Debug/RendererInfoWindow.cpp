@@ -27,9 +27,9 @@ void FRendererInfoWindow::Tick()
 {
     FGenericWindowRef MainViewport = FApplicationInterface::Get().GetMainViewport();
 
-    const uint32 WindowWidth = MainViewport->GetWidth();
+    const uint32 WindowWidth  = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();
-    const float Width = 300.0f;
+    const float Width  = 300.0f;
     const float Height = WindowHeight * 0.8f;
 
     ImGui::SetNextWindowPos(ImVec2(float(WindowWidth), 10.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));

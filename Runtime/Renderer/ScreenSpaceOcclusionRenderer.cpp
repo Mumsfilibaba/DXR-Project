@@ -15,9 +15,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variable
 
-TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAORadius", 0.4f);
-TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAOBias", 0.025f);
-TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAOKernelSize", 32);
+TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAO.Radius", 0.4f);
+TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAO.Bias", 0.025f);
+TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAO.KernelSize", 32);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FScreenSpaceOcclusionRenderer

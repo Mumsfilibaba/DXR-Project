@@ -70,7 +70,7 @@ public:
     void PerformBackBufferBlit(FRHICommandList& InCmdList);
     void PerformAABBDebugPass(FRHICommandList& InCmdList);
 
-    FORCEINLINE TSharedRef<FTextureDebugWindow> GetTextureDebugger() const
+    FORCEINLINE TSharedRef<FRenderTargetDebugWindow> GetTextureDebugger() const
     {
         return TextureDebugger;
     }
@@ -95,7 +95,7 @@ private:
 
     TSharedPtr<FRendererWindowHandler> WindowHandler;
 
-    TSharedRef<FTextureDebugWindow> TextureDebugger;
+    TSharedRef<FRenderTargetDebugWindow> TextureDebugger;
     TSharedRef<FRendererInfoWindow> InfoWindow;
     TSharedRef<FGPUProfilerWindow>  GPUProfilerWindow;
 

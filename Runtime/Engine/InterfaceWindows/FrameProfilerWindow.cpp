@@ -188,9 +188,9 @@ void FFrameProfilerWindow::DrawCPUData(float Width)
         {
             ImGui::TableNextRow();
 
-            float Avg = Sample.second.GetAverage();
-            float Min = Sample.second.Min;
-            float Max = Sample.second.Max;
+            float Avg   = Sample.second.GetAverage();
+            float Min   = Sample.second.Min;
+            float Max   = Sample.second.Max;
             int32 Calls = Sample.second.TotalCalls;
 
             ImGui::TableSetColumnIndex(0);
