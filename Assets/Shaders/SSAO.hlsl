@@ -37,7 +37,7 @@ void Main(FComputeShaderInput Input)
     }
     
     const float2 TexCoords = (float2(OutputTexCoords) + 0.5f) / ScreenSize;
-    const float  Depth     = GBufferDepth.SampleLevel(GBufferSampler, TexCoords, 0);
+    const float  Depth = GBufferDepth.SampleLevel(GBufferSampler, TexCoords, 0);
     if (Depth >= 1.0f)
     {
         Output[OutputTexCoords] = 1.0f;
@@ -59,17 +59,17 @@ void Main(FComputeShaderInput Input)
     const float FinalBias       = max(Bias, 0.0f);
     const int   FinalKernelSize = max(KernelSize, 4);
     
-    uint Width = uint(ScreenSize.x);
+    uint Width      = uint(ScreenSize.x);
     uint RandomSeed = InitRandom(OutputTexCoords, Width, 0);
     
     float Occlusion = 0.0f;
-    for (int i = 0; i < FinalKernelSize; i++)
+    for (int i = 0; i < FinalKernelSize; ++i)
     {
         int Index = NextRandomInt(RandomSeed) % MAX_SAMPLES;
         
         const float3 Sample = Samples[Index];
         float3 SamplePos = mul(Sample, TBN);
-        SamplePos = ViewPosition + SamplePos * FinalRadius;
+        SamplePos = ViewPosition + (SamplePos * FinalRadius);
             
         float4 Offset = mul(CameraBuffer.Projection, float4(SamplePos, 1.0f));
         Offset.xyz = Offset.xyz / Offset.w;

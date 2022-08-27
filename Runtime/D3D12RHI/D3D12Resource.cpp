@@ -89,6 +89,11 @@ void FD3D12Resource::SetName(const FString& Name)
     {
         HRESULT Result = Resource->SetPrivateData(WKPDID_D3DDebugObjectName, Name.GetSize(), Name.GetCString());
         D3D12_ERROR_COND(SUCCEEDED(Result), "Failed to set resource name");
+
+        // Calling SetName as well since NVIDIA Nsight does not recognize the name otherwise
+        FStringWide WideName = CharToWide(Name);
+        Result = Resource->SetName(WideName.GetCString());
+        D3D12_ERROR_COND(SUCCEEDED(Result), "Failed to set resource name");
     }
 }
 
