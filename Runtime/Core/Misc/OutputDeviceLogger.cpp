@@ -22,11 +22,15 @@ FOutputDeviceLogger* FOutputDeviceLogger::Get()
 
 void FOutputDeviceLogger::Log(const FString& Message)
 {
-    // TScopedLock Lock(OutputDevicesCS);
-
-    if (!OutputDevices.IsEmpty())
+    TArray<FOutputDevice*> CurrentOutputDevices;
     {
-        for (FOutputDevice* OutputDevice : OutputDevices)
+        TScopedLock Lock(OutputDevicesCS);
+        CurrentOutputDevices = OutputDevices;
+    }
+
+    if (!CurrentOutputDevices.IsEmpty())
+    {
+        for (FOutputDevice* OutputDevice : CurrentOutputDevices)
         {
             OutputDevice->Log(Message);
         }
@@ -35,11 +39,15 @@ void FOutputDeviceLogger::Log(const FString& Message)
 
 void FOutputDeviceLogger::Log(ELogSeverity Severity, const FString& Message)
 {
-    // TScopedLock Lock(OutputDevicesCS);
-
-    if (!OutputDevices.IsEmpty())
+    TArray<FOutputDevice*> CurrentOutputDevices;
     {
-        for (FOutputDevice* OutputDevice : OutputDevices)
+        TScopedLock Lock(OutputDevicesCS);
+        CurrentOutputDevices = OutputDevices;
+    }
+
+    if (!CurrentOutputDevices.IsEmpty())
+    {
+        for (FOutputDevice* OutputDevice : CurrentOutputDevices)
         {
             OutputDevice->Log(Severity, Message);
         }
@@ -48,11 +56,15 @@ void FOutputDeviceLogger::Log(ELogSeverity Severity, const FString& Message)
 
 void FOutputDeviceLogger::Flush()
 {
-    TScopedLock Lock(OutputDevicesCS);
-
-    if (!OutputDevices.IsEmpty())
+    TArray<FOutputDevice*> CurrentOutputDevices;
     {
-        for (FOutputDevice* OutputDevice : OutputDevices)
+        TScopedLock Lock(OutputDevicesCS);
+        CurrentOutputDevices = OutputDevices;
+    }
+
+    if (!CurrentOutputDevices.IsEmpty())
+    {
+        for (FOutputDevice* OutputDevice : CurrentOutputDevices)
         {
             OutputDevice->Flush();
         }

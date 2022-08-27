@@ -71,7 +71,6 @@ public:
     }
 
 private:
-    // TODO: Support multiple output devices;
     TArray<FOutputDevice*> OutputDevices;
     FCriticalSection       OutputDevicesCS;
 };
