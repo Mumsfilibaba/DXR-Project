@@ -16,4 +16,6 @@ struct ENGINE_API FMeshFactory
     //static FMeshData createTeapot() noexcept;
     static FMeshData CreatePyramid() noexcept;
     static FMeshData CreateCylinder(uint32 Sides = 5, float Radius = 0.5f, float Height = 1.0f) noexcept;
+
+    static TArray<uint16> ConvertSmallIndices(const TArray<uint32>& Indicies) noexcept;
 };

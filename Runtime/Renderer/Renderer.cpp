@@ -32,6 +32,7 @@ TAutoConsoleVariable<bool> GEnableVariableRateShading("Renderer.Feature.Variable
 
 TAutoConsoleVariable<bool> GPrePassEnabled("Renderer.Feature.PrePass", true);
 TAutoConsoleVariable<bool> GDrawAABBs("Renderer.Debug.DrawAABBs", false);
+TAutoConsoleVariable<bool> GDrawPointLights("Renderer.Debug.DrawPointLights", true);
 TAutoConsoleVariable<bool> GVSyncEnabled("Renderer.Feature.VerticalSync", false);
 TAutoConsoleVariable<bool> GFrustumCullEnabled("Renderer.Feature.FrustumCulling", true);
 TAutoConsoleVariable<bool> GRayTracingEnabled("Renderer.Feature.RayTracing", false);
@@ -788,6 +789,16 @@ void FRenderer::Tick(const FScene& Scene)
         EResourceAccess::PixelShaderResource,
         EResourceAccess::PixelShaderResource);
 
+    if (GDrawPointLights.GetBool())
+    {
+        DebugRenderer.RenderPointLights(CommandList, Resources, Scene);
+    }
+
+    if (GDrawAABBs.GetBool())
+    {
+        DebugRenderer.RenderObjectAABBs(CommandList, Resources);
+    }
+
     if (GEnableFXAA.GetBool())
     {
         PerformFXAA(CommandList);
@@ -795,11 +806,6 @@ void FRenderer::Tick(const FScene& Scene)
     else
     {
         PerformBackBufferBlit(CommandList);
-    }
-
-    if (GDrawAABBs.GetBool())
-    {
-        DebugRenderer.RenderObjectAABBs(CommandList, Resources);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin UI Render");

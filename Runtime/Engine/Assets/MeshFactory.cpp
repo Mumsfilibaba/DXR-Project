@@ -486,3 +486,16 @@ FMeshData FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height)
     */
     return FMeshData();
 }
+
+TArray<uint16> FMeshFactory::ConvertSmallIndices(const TArray<uint32>& Indicies) noexcept
+{
+    TArray<uint16> NewArray;
+    NewArray.Reserve(Indicies.GetSize());
+
+    for (uint32 Index : Indicies)
+    {
+        NewArray.Emplace(uint16(Index));
+    }
+
+    return NewArray;
+}

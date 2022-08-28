@@ -188,11 +188,11 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     return true;
 }
 
-void FSkyboxRenderPass::Render(FRHICommandList& CmdList, const FFrameResources& FrameResources, const FScene& Scene)
+void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FScene& Scene)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Skybox");
 
-    GPU_TRACE_SCOPE(CmdList, "Skybox");
+    GPU_TRACE_SCOPE(CommandList, "Skybox");
 
     TRACE_SCOPE("Render Skybox");
 
@@ -204,16 +204,15 @@ void FSkyboxRenderPass::Render(FRHICommandList& CmdList, const FFrameResources& 
     RenderPass.NumRenderTargets = 1;
     RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);
 
-    CmdList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPass);
 
-    // NOTE: For now, MetalRHI require a RenderPass to be started for these two to be valid
-    CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
+    CommandList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+    CommandList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-    CmdList.SetVertexBuffers(MakeArrayView(&SkyboxVertexBuffer, 1), 0);
-    CmdList.SetIndexBuffer(SkyboxIndexBuffer.Get());
-    CmdList.SetGraphicsPipelineState(PipelineState.Get());
+    CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    CommandList.SetVertexBuffers(MakeArrayView(&SkyboxVertexBuffer, 1), 0);
+    CommandList.SetIndexBuffer(SkyboxIndexBuffer.Get());
+    CommandList.SetGraphicsPipelineState(PipelineState.Get());
 
     struct FSimpleCameraBuffer
     {
@@ -222,18 +221,18 @@ void FSkyboxRenderPass::Render(FRHICommandList& CmdList, const FFrameResources& 
 
     SimpleCamera.Matrix = Scene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
 
-    CmdList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, 16);
+    CommandList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, 16);
 
     FRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
-    CmdList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);
+    CommandList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);
 
-    CmdList.SetSamplerState(SkyboxPixelShader.Get(), SkyboxSampler.Get(), 0);
+    CommandList.SetSamplerState(SkyboxPixelShader.Get(), SkyboxSampler.Get(), 0);
 
-    CmdList.DrawIndexedInstanced(static_cast<uint32>(SkyboxMesh.Indices.GetSize()), 1, 0, 0, 0);
+    CommandList.DrawIndexedInstanced(static_cast<uint32>(SkyboxMesh.Indices.GetSize()), 1, 0, 0, 0);
 
-    CmdList.EndRenderPass();
+    CommandList.EndRenderPass();
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Skybox");
 }
 
 void FSkyboxRenderPass::Release()
