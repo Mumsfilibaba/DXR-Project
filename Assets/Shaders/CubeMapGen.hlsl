@@ -1,6 +1,6 @@
 #include "Constants.hlsli"
 
-#define BLOCK_SIZE 16
+#define NUM_THREADS 16
 
 #define RootSig \
     "RootFlags(0), " \
@@ -56,7 +56,7 @@ static const float3x3 ROTATE_UV[6] =
 };
 
 [RootSignature(RootSig)]
-[numthreads(BLOCK_SIZE, BLOCK_SIZE, 1)]
+[numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
 {
     uint3 TexCoord = DispatchThreadID;

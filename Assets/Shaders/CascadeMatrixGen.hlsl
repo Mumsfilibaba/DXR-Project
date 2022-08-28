@@ -3,7 +3,7 @@
 #include "Constants.hlsli"
 #include "Matrices.hlsli"
 
-#define NUM_THREADS 4
+#define NUM_THREADS (4)
 
 ConstantBuffer<FCamera>                 CameraBuffer : register(b0);
 ConstantBuffer<FCascadeGenerationInfo> Settings     : register(b1);

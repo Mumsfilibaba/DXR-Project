@@ -15,9 +15,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variable
 
-TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAO.Radius", 0.4f);
-TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAO.Bias", 0.025f);
-TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAO.KernelSize", 32);
+TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAO.Radius", 0.3f);
+TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAO.Bias", 0.0125f);
+TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAO.KernelSize", 48);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FScreenSpaceOcclusionRenderer
@@ -291,8 +291,8 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 
-    CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(), 0);
-    CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 1);
+    CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBufferIndex_ViewNormal]->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 1);
     CommandList.SetShaderResourceView(SSAOShader.Get(), SSAONoiseTex->GetShaderResourceView(), 2);
     CommandList.SetShaderResourceView(SSAOShader.Get(), SSAOSamplesSRV.Get(), 3);
 

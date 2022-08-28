@@ -187,8 +187,8 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
     Resources.GlobalResources.AddSamplerState(Sampler);
     Resources.GlobalResources.AddShaderResourceView(Resources.RTScene->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.Skybox->GetShaderResourceView());
-    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView());
-    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView());
 
     for (uint32 i = 0; i < Resources.RTMaterialTextureCache.GetSize(); i++)
     {

@@ -5,27 +5,26 @@
 #include "Constants.hlsli"
 #include "Poisson.hlsli"
 
-#define THREAD_COUNT        16
-#define TOTAL_THREAD_COUNT  (THREAD_COUNT * THREAD_COUNT)
-#define MAX_LIGHTS_PER_TILE 1024
+#define NUM_THREADS        (16)
+#define TOTAL_THREAD_COUNT (NUM_THREADS * NUM_THREADS)
+
+// Can be defined from the application
+#ifndef MAX_LIGHTS_PER_TILE
+    #define MAX_LIGHTS_PER_TILE (1024)
+#endif
 
 #ifdef DRAW_TILE_DEBUG 
-    #define DRAW_TILE_OCCUPANCY 1
+    #define DRAW_TILE_OCCUPANCY (1)
 #else
-    #define DRAW_TILE_OCCUPANCY 0
+    #define DRAW_TILE_OCCUPANCY (0)
 #endif
 
 //#define DRAW_CASCADE_DEBUG
 #ifdef DRAW_CASCADE_DEBUG
-    #define DRAW_SHADOW_CASCADE 1
+    #define DRAW_SHADOW_CASCADE (1)
 #else
-    #define DRAW_SHADOW_CASCADE 0
+    #define DRAW_SHADOW_CASCADE (0)
 #endif
-
-#define BLEND_CASCADES  (0)
-#define ROTATE_SAMPLES  (1)
-#define ENABLE_PCSS     (0)
-#define BAND_PERCENTAGE (0.15f)
 
 // G-Buffer
 Texture2D<float4> AlbedoTex       : register(t0);
@@ -90,7 +89,7 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4, space0)
     FPositionRadius ShadowCastingPointLightsPosRad[8];
 }
 
-ConstantBuffer<FDirectionalLight> DirLightBuffer : register(b5, space0);
+ConstantBuffer<FDirectionalLight> DirectionalLightBuffer : register(b5, space0);
 
 RWTexture2D<float4> Output : register(u0, space0);
 
@@ -104,18 +103,18 @@ groupshared uint GroupShadowPointLightIndices[MAX_LIGHTS_PER_TILE];
 
 float GetNumTilesX()
 {
-    return DivideByMultiple(ScreenWidth, THREAD_COUNT);
+    return DivideByMultiple(ScreenWidth, NUM_THREADS);
 }
 
 float GetNumTilesY()
 {
-    return DivideByMultiple(ScreenHeight, THREAD_COUNT);
+    return DivideByMultiple(ScreenHeight, NUM_THREADS);
 }
 
-[numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
+[numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(FComputeShaderInput Input)
 {
-    uint ThreadIndex = Input.GroupThreadID.y * THREAD_COUNT + Input.GroupThreadID.x;
+    uint ThreadIndex = Input.GroupThreadID.y * NUM_THREADS + Input.GroupThreadID.x;
     if (ThreadIndex == 0)
     {
         GroupMinZ = 0x7f7fffff;
@@ -144,12 +143,12 @@ void Main(FComputeShaderInput Input)
     
     float4 Frustum[4];
     {
-        float pxm    = float(THREAD_COUNT * Input.GroupID.x);
-        float pym    = float(THREAD_COUNT * Input.GroupID.y);
-        float pxp    = float(THREAD_COUNT * (Input.GroupID.x + 1));
-        float pyp    = float(THREAD_COUNT * (Input.GroupID.y + 1));
-        float Width  = THREAD_COUNT * GetNumTilesX();
-        float Height = THREAD_COUNT * GetNumTilesY();
+        float pxm    = float(NUM_THREADS * Input.GroupID.x);
+        float pym    = float(NUM_THREADS * Input.GroupID.y);
+        float pxp    = float(NUM_THREADS * (Input.GroupID.x + 1));
+        float pyp    = float(NUM_THREADS * (Input.GroupID.y + 1));
+        float Width  = NUM_THREADS * GetNumTilesX();
+        float Height = NUM_THREADS * GetNumTilesY();
         
         float3 CornerPoints[4];
         CornerPoints[0] = Float3_ProjToView(
@@ -279,55 +278,11 @@ void Main(FComputeShaderInput Input)
     }
     
     // DirectionalLights
-    float CascadeWeights[NUM_SHADOW_CASCADES];
-    float ShadowFactor;
-    {
-        const FDirectionalLight Light = DirLightBuffer;
+    {    
+        const FDirectionalLight Light = DirectionalLightBuffer;
         float3 L = normalize(-Light.Direction);
         
-        // NOTE: For debugging
-        for (uint i = 0; i < NUM_SHADOW_CASCADES; i++)
-        {
-            CascadeWeights[i] = 0.0f;
-        }
-    
-        float CurrentNearPlane = 0.01f;
-        for (int i = 0; i < NUM_SHADOW_CASCADES; i++)
-        {
-            float CurrentSplit = CascadeSplitsBuffer[i].Split;
-            if (ViewPosition.z < CurrentSplit)
-            {
-#if BLEND_CASCADES
-                float Range = ViewPosition.z - CurrentNearPlane;
-                float SplitRange = CurrentSplit - CurrentNearPlane;
-        
-                float Percentage = Range / SplitRange;
-                if (Percentage >= (1.0f - BAND_PERCENTAGE))
-                {
-                    float Weight = (1.0f - Percentage) / BAND_PERCENTAGE;
-                    CascadeWeights[i] = Weight;
-                
-                    int NextIndex = min(i + 1, NUM_SHADOW_CASCADES - 1);
-                    if (NextIndex != i)
-                    {
-                        CascadeWeights[NextIndex] = 1.0f - CascadeWeights[i];
-                    }
-                }
-                else
-#endif
-                {
-                    CascadeWeights[i] = 1.0f;
-                }
-            
-                break;
-            }
-        
-            CurrentNearPlane = CurrentSplit;
-        }
-        
-        uint RandomSeed = InitRandom(TexCoord, ScreenWidth, 0);
-        
-        ShadowFactor = DirectionalShadowMask.Load(int3(TexCoord, 0));
+        float ShadowFactor = DirectionalShadowMask.Load(int3(TexCoord, 0));
         if (ShadowFactor > 0.0f)
         {
             float3 IncidentRadiance = Light.Color;
@@ -363,39 +318,34 @@ void Main(FComputeShaderInput Input)
     float4 Tint = Float4(1.0f);
     if (TotalLightCount < 8)
     {
-        float Col = float(TotalLightCount) / 8.0f;
-        Tint = float4(0.0f, Col, 0.0f, 1.0f);
+        float Color = float(TotalLightCount) / 8.0f;
+        Tint = float4(0.0f, Color, 0.0f, 1.0f);
     }
     else if (TotalLightCount < 16)
     {
-        float Col = float(TotalLightCount) / 16.0f;
-        Tint = float4(0.0f, Col, Col, 1.0f);
+        float Color = float(TotalLightCount) / 16.0f;
+        Tint = float4(0.0f, Color, Color, 1.0f);
     }
     else if (TotalLightCount < 32)
     {
-        float Col = float(TotalLightCount) / 32.0f;
-        Tint = float4(0.0f, 0.0f, Col, 1.0f);
+        float Color = float(TotalLightCount) / 32.0f;
+        Tint = float4(0.0f, 0.0f, Color, 1.0f);
     }
     else if (TotalLightCount < 64)
     {
-        float Col = float(TotalLightCount) / 64.0f;
-        Tint = float4(Col, Col, 0.0f, 1.0f);
+        float Color = float(TotalLightCount) / 64.0f;
+        Tint = float4(Color, Color, 0.0f, 1.0f);
     }
     else
     {
-        float Col = float(TotalLightCount) / float(NumPointLights + NumShadowCastingPointLights);
-        Tint = float4(Col, 0.0f, 0.0f, 1.0f);
+        float Color = float(TotalLightCount) / float(NumPointLights + NumShadowCastingPointLights);
+        Tint = float4(Color, 0.0f, 0.0f, 1.0f);
     }
     
     FinalColor = FinalColor * Tint.rgb;
+
 #elif DRAW_SHADOW_CASCADE
-    float4 Tint = Float4(1.0f);
-    Tint += float4(1.0f, 0.0f, 0.0f, 1.0f) * CascadeWeights[0];
-    Tint += float4(0.0f, 1.0f, 0.0f, 1.0f) * CascadeWeights[1];
-    Tint += float4(0.0f, 0.0f, 1.0f, 1.0f) * CascadeWeights[2];
-    Tint += float4(1.0f, 1.0f, 0.0f, 1.0f) * CascadeWeights[3];
-    
-    FinalColor = FinalColor * Tint.rgb;
+    // TODO: Finish this up
 #endif
     
     // Finalize

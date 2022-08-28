@@ -1,6 +1,9 @@
 #ifndef STRUCTS_HLSLI
 #define STRUCTS_HLSLI
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Common Structs
+
 #define NUM_SHADOW_CASCADES (4)
 
 struct FComputeShaderInput
@@ -13,12 +16,15 @@ struct FComputeShaderInput
 
 struct FCamera
 {
+    float4x4 PrevViewProjection;
     float4x4 ViewProjection;
+    float4x4 ViewProjectionInverse;
+
     float4x4 View;
     float4x4 ViewInverse;
+
     float4x4 Projection;
     float4x4 ProjectionInverse;
-    float4x4 ViewProjectionInverse;
     
     float3   Position;
     float    NearPlane;
@@ -28,6 +34,14 @@ struct FCamera
 
     float3   Right;
     float    AspectRatio;
+
+    float2   Jitter;
+    float2   PrevJitter;
+
+    float    ViewportWidth;
+    float    ViewportHeight;
+    float    Padding0;
+    float    Padding1;
 };
 
 struct FPositionRadius

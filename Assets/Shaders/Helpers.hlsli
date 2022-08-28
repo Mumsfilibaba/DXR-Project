@@ -3,19 +3,19 @@
 
 #include "Constants.hlsli"
 
-float2 Float2(float Single)
+float2 Float2(float Scalar)
 {
-    return float2(Single, Single);
+    return float2(Scalar, Scalar);
 }
 
-float3 Float3(float Single)
+float3 Float3(float Scalar)
 {
-    return float3(Single, Single, Single);
+    return float3(Scalar, Scalar, Scalar);
 }
 
-float4 Float4(float Single)
+float4 Float4(float Scalar)
 {
-    return float4(Single, Single, Single, Single);
+    return float4(Scalar, Scalar, Scalar, Scalar);
 }
 
 float MinusOneToOne(float v)
@@ -187,6 +187,29 @@ float3 UnpackNormal(float3 SampledNormal)
 float3 PackNormal(float3 Normal)
 {
     return (normalize(Normal) + 1.0f) * 0.5f;
+}
+
+// Modified version from: https://github.com/playdeadgames/temporal/blob/master/Assets/Shaders/TemporalReprojection.shader
+float3 ClipAABB(float3 MinAABB, float3 MaxAABB, float3 Q)
+{
+    // NOTE: Only clips towards AABB center (but fast!)
+    float3 ClipO = 0.5f * (MaxAABB + MinAABB);
+    float3 ClipE = 0.5f * (MaxAABB - MinAABB) + FLT32_EPSILON;
+
+    float3 ClipV  = Q - ClipO;
+    float3 UnitV  = ClipV / ClipE;
+    float3 UnitA  = abs(UnitV);
+    float  UnitMa = max(UnitA.x, max(UnitA.y, UnitA.z));
+
+    if (UnitMa > 1.0f)
+    {
+        return ClipO + (ClipV / UnitMa);
+    }
+    else
+    {    
+        // Point inside AABB
+        return Q;
+    }
 }
 
 #endif

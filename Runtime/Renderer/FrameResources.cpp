@@ -25,9 +25,9 @@ void FFrameResources::Release()
     SSAOBuffer.Reset();
     FinalTarget.Reset();
 
-    for (uint32 i = 0; i < 5; i++)
+    for (FRHITexture2DRef& Buffer : GBuffer)
     {
-        GBuffer[i].Reset();
+        Buffer.Reset();
     }
 
     ReducedDepthBuffer[0].Reset();

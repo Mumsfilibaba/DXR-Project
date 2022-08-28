@@ -32,14 +32,16 @@ struct FVSInput
 
 struct FVSOutput
 {
-    float3 Normal          : NORMAL0;
-    float3 ViewNormal      : NORMAL1;
-    float3 Tangent         : TANGENT0;
-    float3 Bitangent       : BITANGENT0;
-    float2 TexCoord	       : TEXCOORD0;
-    float3 TangentViewPos  : TANGENTVIEWPOS0;
-    float3 TangentPosition : TANGENTPOSITION0;
-    float4 Position        : SV_Position;
+    float3 Normal           : NORMAL0;
+    float3 ViewNormal       : NORMAL1;
+    float3 Tangent          : TANGENT0;
+    float3 Bitangent        : BITANGENT0;
+    float2 TexCoord	        : TEXCOORD0;
+    float3 TangentViewPos   : TANGENTVIEWPOS0;
+    float3 TangentPosition  : TANGENTPOSITION0;
+    float4 ClipPosition     : POSITION0;
+    float4 PrevClipPosition : POSITION1;
+    float4 Position         : SV_Position;
 };
 
 FVSOutput VSMain(FVSInput Input)
@@ -62,13 +64,16 @@ FVSOutput VSMain(FVSInput Input)
 
     Output.TexCoord = Input.TexCoord;
 
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), TransformBuffer.Transform);
-    Output.Position      = mul(WorldPosition, CameraBuffer.ViewProjection);
+    float4 WorldPosition    = mul(float4(Input.Position, 1.0f), TransformBuffer.Transform);
+    Output.Position         = mul(WorldPosition, CameraBuffer.ViewProjection);
+
+    // TODO: Handle moving objects (aka PrevTransform)
+    Output.ClipPosition     = Output.Position;
+    Output.PrevClipPosition = mul(WorldPosition, CameraBuffer.PrevViewProjection);
     
     float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
     Output.TangentViewPos  = mul(TBN, CameraBuffer.Position);
     Output.TangentPosition = mul(TBN, WorldPosition.xyz);
-
     return Output;
 }
 
@@ -84,6 +89,8 @@ struct FPSInput
     float2 TexCoord        : TEXCOORD0;
     float3 TangentViewPos  : TANGENTVIEWPOS0;
     float3 TangentPosition : TANGENTPOSITION0;
+    float4 ClipPosition     : POSITION0;
+    float4 PrevClipPosition : POSITION1;
 };
 
 struct FPSOutput
@@ -92,6 +99,7 @@ struct FPSOutput
     float4 Normal     : SV_Target1;
     float4 Material   : SV_Target2;
     float4 ViewNormal : SV_Target3;
+    float2 Velocity   : SV_Target4;
 };
 
 static const float HEIGHT_SCALE = 0.03f;
@@ -130,7 +138,6 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 
     float  Weight         = AfterDepth / (AfterDepth - BeforeDepth);
     float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0f - Weight);
-
     return FinalTexCoords;
 }
 
@@ -181,5 +188,8 @@ FPSOutput PSMain(FPSInput Input)
     Output.Material   = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
     Output.ViewNormal = float4(PackNormal(Input.ViewNormal), 1.0f);
 
+    const float3 PositionNDC     = (Input.ClipPosition.xyz / Input.ClipPosition.w);
+    const float3 PrevPositionNDC = (Input.PrevClipPosition.xyz / Input.PrevClipPosition.w);
+    Output.Velocity = (PositionNDC.xy - CameraBuffer.Jitter) - (PrevPositionNDC.xy - CameraBuffer.PrevJitter);
     return Output;
 }

@@ -106,8 +106,11 @@ public:
 
     FORCEINLINE FD3D12ShaderParameter GetConstantBufferParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ConstantBufferParameters.GetSize())
-                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ConstantBufferParameters.GetSize());
+        D3D12_ERROR_COND(
+            ParameterIndex < static_cast<uint32>(ConstantBufferParameters.GetSize()),
+            "Trying to access ParameterIndex=%u, but the shader only has %u slots",
+            ParameterIndex, 
+            ConstantBufferParameters.GetSize());
         return ConstantBufferParameters[ParameterIndex];
     }
 
@@ -115,8 +118,11 @@ public:
 
     FORCEINLINE FD3D12ShaderParameter GetShaderResourceParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ShaderResourceParameters.GetSize())
-                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ShaderResourceParameters.GetSize());
+        D3D12_ERROR_COND(
+            ParameterIndex < static_cast<uint32>(ShaderResourceParameters.GetSize()),
+            "Trying to access ParameterIndex=%u, but the shader only has %u slots",
+            ParameterIndex, 
+            ShaderResourceParameters.GetSize());
         return ShaderResourceParameters[ParameterIndex];
     }
 
@@ -124,8 +130,11 @@ public:
 
     FORCEINLINE FD3D12ShaderParameter GetUnorderedAccessParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(UnorderedAccessParameters.GetSize())
-                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, UnorderedAccessParameters.GetSize());
+        D3D12_ERROR_COND(
+            ParameterIndex < static_cast<uint32>(UnorderedAccessParameters.GetSize()),
+            "Trying to access ParameterIndex=%u, but the shader only has %u slots",
+            ParameterIndex,
+            UnorderedAccessParameters.GetSize());
         return UnorderedAccessParameters[ParameterIndex];
     }
 
@@ -133,8 +142,11 @@ public:
 
     FORCEINLINE FD3D12ShaderParameter GetSamplerStateParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR_COND( ParameterIndex < static_cast<uint32>(SamplerParameters.GetSize())
-                         ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, SamplerParameters.GetSize());
+        D3D12_ERROR_COND(
+            ParameterIndex < static_cast<uint32>(SamplerParameters.GetSize()),
+            "Trying to access ParameterIndex=%u, but the shader only has %u slots",
+            ParameterIndex,
+            SamplerParameters.GetSize());
         return SamplerParameters[ParameterIndex];
     }
 

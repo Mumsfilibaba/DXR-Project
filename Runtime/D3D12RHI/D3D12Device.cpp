@@ -396,10 +396,17 @@ FD3D12Device::~FD3D12Device()
 {
     if (Adapter->IsDebugLayerEnabled())
     {
+        // Disable filter for warnings since this triggers breakpoints when we check for alive object
+        TComPtr<ID3D12InfoQueue> InfoQueue;
+        if (SUCCEEDED(Device.GetAs(&InfoQueue)))
+        {
+            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
+        }
+
         TComPtr<ID3D12DebugDevice> DebugDevice;
         if (SUCCEEDED(Device.GetAs(&DebugDevice)))
         {
-            DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
+            DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
         }
     }
 
@@ -455,6 +462,7 @@ bool FD3D12Device::Initialize()
         {
             InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
             InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR     , true);
+            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING   , true);
 
             D3D12_MESSAGE_ID Hide[] =
             {

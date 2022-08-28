@@ -21,7 +21,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRTV(const FRHIRenderTargetView
     }
 
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
-    D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, "Texture does not allow RenderTargetViews");
+    D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, "Texture '%s' does not allow RenderTargetViews", Resource->GetName().GetCString());
 
     const uint32 Subresource = D3D12CalcSubresource(
         RTVInitializer.MipLevel,
@@ -126,7 +126,7 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDSV(const FRHIDepthStencilView
     }
 
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
-    D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, "Texture does not allow DepthStencilViews");
+    D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, "Texture '%s' does not allow DepthStencilViews", Resource->GetName().GetCString());
 
     const uint32 Subresource = D3D12CalcSubresource(
         DSVInitializer.MipLevel,

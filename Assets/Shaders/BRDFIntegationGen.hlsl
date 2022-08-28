@@ -4,6 +4,8 @@
     "RootFlags(0), " \
     "DescriptorTable(UAV(u0, numDescriptors = 1))," \
 
+#define NUM_THREADS (16)
+
 RWTexture2D<float2> IntegrationMap : register(u0, space0);
 
 float2 IntegrateBRDF(float NdotV, float Roughness)
@@ -44,7 +46,7 @@ float2 IntegrateBRDF(float NdotV, float Roughness)
 }
 
 [RootSignature(RootSig)]
-[numthreads(16, 16, 1)]
+[numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {
     float OutputWidth;

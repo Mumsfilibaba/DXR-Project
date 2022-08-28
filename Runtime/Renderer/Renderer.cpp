@@ -25,39 +25,18 @@
 
 TAutoConsoleVariable<bool> GEnableSSAO("Renderer.Feature.SSAO", true);
 
-TAutoConsoleVariable<bool> GEnableFXAA("Renderer.Feature.FXAA", true);
+TAutoConsoleVariable<bool> GEnableFXAA("Renderer.Feature.FXAA", false);
+TAutoConsoleVariable<bool> GEnableTemporalAA("Renderer.Feature.TemporalAA", true);
 TAutoConsoleVariable<bool> GFXAADebug("Renderer.Debug.FXAADebug", false);
 
 TAutoConsoleVariable<bool> GEnableVariableRateShading("Renderer.Feature.VariableRateShading", false);
 
 TAutoConsoleVariable<bool> GPrePassEnabled("Renderer.Feature.PrePass", true);
 TAutoConsoleVariable<bool> GDrawAABBs("Renderer.Debug.DrawAABBs", false);
-TAutoConsoleVariable<bool> GDrawPointLights("Renderer.Debug.DrawPointLights", true);
+TAutoConsoleVariable<bool> GDrawPointLights("Renderer.Debug.DrawPointLights", false);
 TAutoConsoleVariable<bool> GVSyncEnabled("Renderer.Feature.VerticalSync", false);
 TAutoConsoleVariable<bool> GFrustumCullEnabled("Renderer.Feature.FrustumCulling", true);
 TAutoConsoleVariable<bool> GRayTracingEnabled("Renderer.Feature.RayTracing", false);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCameraBuffer
-
-struct FCameraBuffer
-{
-    FMatrix4 ViewProjection;
-    FMatrix4 View;
-    FMatrix4 ViewInv;
-    FMatrix4 Projection;
-    FMatrix4 ProjectionInv;
-    FMatrix4 ViewProjectionInv;
-
-    FVector3 Position;
-    float    NearPlane;
-
-    FVector3 Forward;
-    float    FarPlane;
-
-    FVector3 Right;
-    float    AspectRatio;
-};
 
 RENDERER_API FRenderer GRenderer;
 
@@ -194,6 +173,11 @@ bool FRenderer::Init()
     }
 
     if (!ForwardRenderer.Init(Resources))
+    {
+        return false;
+    }
+
+    if (!TemporalAA.Init(Resources))
     {
         return false;
     }
@@ -372,13 +356,13 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
     }
 }
 
-void FRenderer::PerformFXAA(FRHICommandList& InCmdList)
+void FRenderer::PerformFXAA(FRHICommandList& InCommandList)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin FXAA");
+    INSERT_DEBUG_CMDLIST_MARKER(InCommandList, "Begin FXAA");
 
     TRACE_SCOPE("FXAA");
 
-    GPU_TRACE_SCOPE(InCmdList, "FXAA");
+    GPU_TRACE_SCOPE(InCommandList, "FXAA");
 
     struct FFXAASettings
     {
@@ -394,29 +378,29 @@ void FRenderer::PerformFXAA(FRHICommandList& InCmdList)
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPass.NumRenderTargets            = 1;
 
-    InCmdList.BeginRenderPass(RenderPass);
+    InCommandList.BeginRenderPass(RenderPass);
 
     FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     if (GFXAADebug.GetBool())
     {
-        InCmdList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
-        InCmdList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
-        InCmdList.Set32BitShaderConstants(FXAADebugShader.Get(), &Settings, 2);
-        InCmdList.SetGraphicsPipelineState(FXAADebugPSO.Get());
+        InCommandList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
+        InCommandList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
+        InCommandList.Set32BitShaderConstants(FXAADebugShader.Get(), &Settings, 2);
+        InCommandList.SetGraphicsPipelineState(FXAADebugPSO.Get());
     }
     else
     {
-        InCmdList.SetShaderResourceView(FXAAShader.Get(), FinalTargetSRV, 0);
-        InCmdList.SetSamplerState(FXAAShader.Get(), Resources.FXAASampler.Get(), 0);
-        InCmdList.Set32BitShaderConstants(FXAAShader.Get(), &Settings, 2);
-        InCmdList.SetGraphicsPipelineState(FXAAPSO.Get());
+        InCommandList.SetShaderResourceView(FXAAShader.Get(), FinalTargetSRV, 0);
+        InCommandList.SetSamplerState(FXAAShader.Get(), Resources.FXAASampler.Get(), 0);
+        InCommandList.Set32BitShaderConstants(FXAAShader.Get(), &Settings, 2);
+        InCommandList.SetGraphicsPipelineState(FXAAPSO.Get());
     }
 
-    InCmdList.DrawInstanced(3, 1, 0, 0);
+    InCommandList.DrawInstanced(3, 1, 0, 0);
 
-    InCmdList.EndRenderPass();
+    InCommandList.EndRenderPass();
 
-    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End FXAA");
+    INSERT_DEBUG_CMDLIST_MARKER(InCommandList, "End FXAA");
 }
 
 void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
@@ -496,19 +480,48 @@ void FRenderer::Tick(const FScene& Scene)
     }
 
     // Update camera-buffer
-    FCameraBuffer CamBuffer;
-    CamBuffer.ViewProjection    = Scene.GetCamera()->GetViewProjectionMatrix();
-    CamBuffer.View              = Scene.GetCamera()->GetViewMatrix();
-    CamBuffer.ViewInv           = Scene.GetCamera()->GetViewInverseMatrix();
-    CamBuffer.Projection        = Scene.GetCamera()->GetProjectionMatrix();
-    CamBuffer.ProjectionInv     = Scene.GetCamera()->GetProjectionInverseMatrix();
-    CamBuffer.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
-    CamBuffer.Position          = Scene.GetCamera()->GetPosition();
-    CamBuffer.Forward           = Scene.GetCamera()->GetForward();
-    CamBuffer.Right             = Scene.GetCamera()->GetRight();
-    CamBuffer.NearPlane         = Scene.GetCamera()->GetNearPlane();
-    CamBuffer.FarPlane          = Scene.GetCamera()->GetFarPlane();
-    CamBuffer.AspectRatio       = Scene.GetCamera()->GetAspectRatio();
+    // TODO: All matrices needs to be in Transposed the same
+    CameraBuffer.PrevViewProjection = CameraBuffer.ViewProjection;
+    CameraBuffer.ViewProjection     = Scene.GetCamera()->GetViewProjectionMatrix();
+    CameraBuffer.View               = Scene.GetCamera()->GetViewMatrix();
+    CameraBuffer.ViewInv            = Scene.GetCamera()->GetViewInverseMatrix();
+    CameraBuffer.Projection         = Scene.GetCamera()->GetProjectionMatrix();
+    CameraBuffer.ProjectionInv      = Scene.GetCamera()->GetProjectionInverseMatrix();
+    CameraBuffer.ViewProjectionInv  = Scene.GetCamera()->GetViewProjectionInverseMatrix();
+    CameraBuffer.Position           = Scene.GetCamera()->GetPosition();
+    CameraBuffer.Forward            = Scene.GetCamera()->GetForward();
+    CameraBuffer.Right              = Scene.GetCamera()->GetRight();
+    CameraBuffer.NearPlane          = Scene.GetCamera()->GetNearPlane();
+    CameraBuffer.FarPlane           = Scene.GetCamera()->GetFarPlane();
+    CameraBuffer.AspectRatio        = Scene.GetCamera()->GetAspectRatio();
+    CameraBuffer.ViewportWidth      = Resources.BackBuffer->GetWidth();
+    CameraBuffer.ViewportHeight     = Resources.BackBuffer->GetHeight();
+
+    if (GEnableTemporalAA.GetBool())
+    {
+        const FVector2 CameraJitter    = HaltonState.NextSample();
+        const FVector2 ClipSpaceJitter = CameraJitter / FVector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
+
+        // Add Jitter to projection matrix
+        FMatrix4 JitterOffset = FMatrix4::Translation(FVector3(ClipSpaceJitter.x, ClipSpaceJitter.y, 0.0f));
+        CameraBuffer.Projection    = CameraBuffer.Projection * JitterOffset;
+        CameraBuffer.ProjectionInv = CameraBuffer.Projection.Invert();
+        CameraBuffer.ProjectionInv = CameraBuffer.ProjectionInv.Transpose();
+
+        // Calculate new ViewProjection
+        CameraBuffer.ViewProjection    = CameraBuffer.View.Transpose() * CameraBuffer.Projection;
+        CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjection.Invert();
+        CameraBuffer.ViewProjection    = CameraBuffer.ViewProjection.Transpose();
+        CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjectionInv.Transpose();
+
+        CameraBuffer.PrevJitter = CameraBuffer.Jitter;
+        CameraBuffer.Jitter     = ClipSpaceJitter;
+    }
+    else
+    {
+        CameraBuffer.PrevJitter = FVector2(0.0f);
+        CameraBuffer.Jitter     = FVector2(0.0f);
+    }
 
     CommandList.TransitionBuffer(
         Resources.CameraBuffer.Get(), 
@@ -518,30 +531,34 @@ void FRenderer::Tick(const FScene& Scene)
         Resources.CameraBuffer.Get(), 
         0, 
         sizeof(FCameraBuffer), 
-        &CamBuffer);
+        &CameraBuffer);
     CommandList.TransitionBuffer(
         Resources.CameraBuffer.Get(), 
         EResourceAccess::CopyDest, 
         EResourceAccess::VertexAndConstantBuffer);
 
     CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
+        Resources.GBuffer[GBufferIndex_Albedo].Get(), 
         EResourceAccess::NonPixelShaderResource, 
         EResourceAccess::RenderTarget);
     CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
+        Resources.GBuffer[GBufferIndex_Normal].Get(), 
         EResourceAccess::NonPixelShaderResource, 
         EResourceAccess::RenderTarget);
     CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
+        Resources.GBuffer[GBufferIndex_Material].Get(), 
         EResourceAccess::NonPixelShaderResource, 
         EResourceAccess::RenderTarget);
     CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), 
+        Resources.GBuffer[GBufferIndex_ViewNormal].Get(), 
         EResourceAccess::NonPixelShaderResource, 
         EResourceAccess::RenderTarget);
     CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
+        Resources.GBuffer[GBufferIndex_Velocity].Get(),
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::RenderTarget);
+    CommandList.TransitionTexture(
+        Resources.GBuffer[GBufferIndex_Depth].Get(), 
         EResourceAccess::PixelShaderResource, 
         EResourceAccess::DepthWrite);
 
@@ -598,51 +615,62 @@ void FRenderer::Tick(const FScene& Scene)
 
     // Start recording the main CommandList
     CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(),
+        Resources.GBuffer[GBufferIndex_Albedo].Get(),
         EResourceAccess::RenderTarget, 
         EResourceAccess::NonPixelShaderResource);
 
     AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView()),
-        Resources.GBuffer[GBUFFER_ALBEDO_INDEX],
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_Albedo],
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 
     CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
+        Resources.GBuffer[GBufferIndex_Normal].Get(), 
         EResourceAccess::RenderTarget, 
         EResourceAccess::NonPixelShaderResource);
 
     AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView()),
-        Resources.GBuffer[GBUFFER_NORMAL_INDEX],
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_Normal],
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 
     CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(),
+        Resources.GBuffer[GBufferIndex_ViewNormal].Get(),
         EResourceAccess::RenderTarget, 
         EResourceAccess::NonPixelShaderResource);
 
     AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView()),
-        Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX],
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_ViewNormal]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_ViewNormal],
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 
     CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
+        Resources.GBuffer[GBufferIndex_Velocity].Get(),
+        EResourceAccess::RenderTarget,
+        EResourceAccess::NonPixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Velocity]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_Velocity],
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+    CommandList.TransitionTexture(
+        Resources.GBuffer[GBufferIndex_Material].Get(), 
         EResourceAccess::RenderTarget, 
         EResourceAccess::NonPixelShaderResource);
 
     AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView()),
-        Resources.GBuffer[GBUFFER_MATERIAL_INDEX],
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Material]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_Material],
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 
     CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
+        Resources.GBuffer[GBufferIndex_Depth].Get(), 
         EResourceAccess::DepthWrite, 
         EResourceAccess::NonPixelShaderResource);
     CommandList.TransitionTexture(
@@ -697,7 +725,7 @@ void FRenderer::Tick(const FScene& Scene)
     }
 
     CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
+        Resources.GBuffer[GBufferIndex_Depth].Get(), 
         EResourceAccess::NonPixelShaderResource, 
         EResourceAccess::DepthWrite);
     CommandList.TransitionTexture(
@@ -767,28 +795,6 @@ void FRenderer::Tick(const FScene& Scene)
         ForwardRenderer.Render(CommandList, Resources, LightSetup);
     }
 
-    CommandList.TransitionTexture(
-        Resources.FinalTarget.Get(), 
-        EResourceAccess::RenderTarget, 
-        EResourceAccess::PixelShaderResource);
-
-    AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()),
-        Resources.FinalTarget,
-        EResourceAccess::PixelShaderResource,
-        EResourceAccess::PixelShaderResource);
-
-    CommandList.TransitionTexture(
-        Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-        EResourceAccess::DepthWrite, 
-        EResourceAccess::PixelShaderResource);
-
-    AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView()),
-        Resources.GBuffer[GBUFFER_DEPTH_INDEX],
-        EResourceAccess::PixelShaderResource,
-        EResourceAccess::PixelShaderResource);
-
     if (GDrawPointLights.GetBool())
     {
         DebugRenderer.RenderPointLights(CommandList, Resources, Scene);
@@ -799,6 +805,39 @@ void FRenderer::Tick(const FScene& Scene)
         DebugRenderer.RenderObjectAABBs(CommandList, Resources);
     }
 
+    CommandList.TransitionTexture(
+        Resources.GBuffer[GBufferIndex_Depth].Get(), 
+        EResourceAccess::DepthWrite, 
+        EResourceAccess::PixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_Depth],
+        EResourceAccess::PixelShaderResource,
+        EResourceAccess::PixelShaderResource);
+
+    if (GEnableTemporalAA.GetBool())
+    {
+        CommandList.TransitionTexture(
+            Resources.FinalTarget.Get(),
+            EResourceAccess::RenderTarget,
+            EResourceAccess::UnorderedAccess);
+
+        TemporalAA.Render(CommandList, Resources);
+
+        CommandList.TransitionTexture(
+            Resources.FinalTarget.Get(),
+            EResourceAccess::UnorderedAccess,
+            EResourceAccess::PixelShaderResource);
+    }
+    else
+    {
+        CommandList.TransitionTexture(
+            Resources.FinalTarget.Get(),
+            EResourceAccess::RenderTarget,
+            EResourceAccess::PixelShaderResource);
+    }
+
     if (GEnableFXAA.GetBool())
     {
         PerformFXAA(CommandList);
@@ -807,6 +846,12 @@ void FRenderer::Tick(const FScene& Scene)
     {
         PerformBackBufferBlit(CommandList);
     }
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()),
+        Resources.FinalTarget,
+        EResourceAccess::PixelShaderResource,
+        EResourceAccess::PixelShaderResource);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin UI Render");
 
@@ -872,6 +917,7 @@ void FRenderer::Release()
     ForwardRenderer.Release();
     RayTracer.Release();
     DebugRenderer.Release();
+    TemporalAA.Release();
 
     Resources.Release();
     LightSetup.Release();
@@ -910,30 +956,39 @@ void FRenderer::OnWindowResize(const FWindowResizeEvent& Event)
     const uint32 Width  = Event.Width;
     const uint32 Height = Event.Height;
 
-    GRHICommandExecutor.WaitForOutstandingTasks();
-
-    if (!Resources.MainWindowViewport->Resize(Width, Height))
+    if (Width > 0 && Height > 0)
     {
-        DEBUG_BREAK();
-        return;
-    }
+        GRHICommandExecutor.WaitForOutstandingTasks();
 
-    if (!DeferredRenderer.ResizeResources(Resources))
-    {
-        DEBUG_BREAK();
-        return;
-    }
+        if (!Resources.MainWindowViewport->Resize(Width, Height))
+        {
+            DEBUG_BREAK();
+            return;
+        }
 
-    if (!SSAORenderer.ResizeResources(Resources))
-    {
-        DEBUG_BREAK();
-        return;
-    }
+        if (!DeferredRenderer.ResizeResources(Resources))
+        {
+            DEBUG_BREAK();
+            return;
+        }
 
-    if (!ShadowMapRenderer.ResizeResources(Width, Height, LightSetup))
-    {
-        DEBUG_BREAK();
-        return;
+        if (!SSAORenderer.ResizeResources(Resources))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+        if (!ShadowMapRenderer.ResizeResources(Width, Height, LightSetup))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+        if (!TemporalAA.ResizeResources(Resources))
+        {
+            DEBUG_BREAK();
+            return;
+        }
     }
 }
 

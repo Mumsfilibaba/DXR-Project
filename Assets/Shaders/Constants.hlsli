@@ -1,6 +1,9 @@
 #ifndef CONSTANTS_HLSLI
 #define CONSTANTS_HLSLI
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Common Constants
+
 #define PI     (3.14159265359f)
 #define INV_PI (1.0f / 3.14159265359f)
 #define GAMMA  (2.2f)
@@ -12,6 +15,9 @@
 #define RAY_OFFSET    (0.02f)
 
 #define FLT32_MAX (3.402823466e+38f)
+#define FLT32_MIN (1.175494351e-38f)        
+
+#define FLT32_EPSILON (1.192092896e-07f)
 
 #define SHADING_RATE_1x1 (0x0)
 #define SHADING_RATE_1x2 (0x1)

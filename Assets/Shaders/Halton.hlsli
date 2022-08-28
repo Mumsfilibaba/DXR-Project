@@ -1,6 +1,9 @@
 #ifndef HALTON_HLSLI
 #define HALTON_HLSLI
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Halton Sampler functions
+
 // Modifed from this Source: https://pbr-book.org/3ed-2018/Sampling_and_Reconstruction/The_Halton_Sampler
 float RadicalInverse2(uint Bits)
 {
@@ -25,7 +28,7 @@ float RadicalInverse3(uint a)
     
     while (a)
     {
-        uint Next = a / Base;
+        uint Next  = a / Base;
         uint Digit = a - Next * Base;
         ReversedDigits = ReversedDigits * Base + Digit;
         InvBaseN *= InvBase;

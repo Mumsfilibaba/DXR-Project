@@ -8,19 +8,19 @@ cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
     int2 ScreenSize;
 };
 
-#define THREAD_COUNT (16)
-#define KERNEL_SIZE  (5)
+#define NUM_THREADS (16)
+#define KERNEL_SIZE (5)
 
-groupshared float gTextureCache[THREAD_COUNT][THREAD_COUNT];
+groupshared float gTextureCache[NUM_THREADS][NUM_THREADS];
 
-static const int2 MAX_SIZE = int2(THREAD_COUNT - 1, THREAD_COUNT - 1);
+static const int2 MAX_SIZE = int2(NUM_THREADS - 1, NUM_THREADS - 1);
 
 static const float KERNEL[KERNEL_SIZE] =
 {
     0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f
 };
 
-[numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
+[numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(FComputeShaderInput Input)
 {
     const int2 TexCoords = int2(Input.DispatchThreadID.xy);

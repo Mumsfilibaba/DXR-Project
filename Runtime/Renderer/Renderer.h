@@ -7,6 +7,7 @@
 #include "ForwardRenderer.h"
 #include "RayTracer.h"
 #include "DebugRenderer.h"
+#include "TemporalAA.h"
 
 #include "Core/Time/Timer.h"
 #include "Core/Threading/TaskManagerInterface.h"
@@ -49,6 +50,39 @@ public:
         WindowResizedDelegate.Execute(ResizeEvent);
         return true;
     }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FCameraBuffer
+
+struct FCameraBuffer
+{
+    FMatrix4 PrevViewProjection;
+    FMatrix4 ViewProjection;
+    FMatrix4 ViewProjectionInv;
+
+    FMatrix4 View;
+    FMatrix4 ViewInv;
+
+    FMatrix4 Projection;
+    FMatrix4 ProjectionInv;
+
+    FVector3 Position;
+    float    NearPlane;
+
+    FVector3 Forward;
+    float    FarPlane;
+
+    FVector3 Right;
+    float    AspectRatio;
+
+    FVector2 Jitter;
+    FVector2 PrevJitter;
+
+    float    ViewportWidth;
+    float    ViewportHeight;
+    float    Padding0;
+    float    Padding1;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -108,6 +142,7 @@ private:
     FForwardRenderer              ForwardRenderer;
     FRayTracer                    RayTracer;
     FDebugRenderer                DebugRenderer;
+    FTemporalAA                   TemporalAA;
 
     FFrameResources Resources;
     FLightSetup     LightSetup;
@@ -126,6 +161,9 @@ private:
     FRHITimestampQueryRef TimestampQueries;
 
     FRHICommandStatistics FrameStatistics;
+
+    FCameraBuffer         CameraBuffer;
+    FHaltonState          HaltonState;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

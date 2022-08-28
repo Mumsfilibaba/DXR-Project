@@ -11,11 +11,20 @@
 #include "Core/Containers/Map.h"
 #include "Core/Containers/ArrayView.h"
 
-#define GBUFFER_ALBEDO_INDEX      (0)
-#define GBUFFER_NORMAL_INDEX      (1)
-#define GBUFFER_MATERIAL_INDEX    (2)
-#define GBUFFER_DEPTH_INDEX       (3)
-#define GBUFFER_VIEW_NORMAL_INDEX (4)
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EGBufferIndex
+
+enum EGBufferIndex
+{
+    GBufferIndex_Albedo     = 0,
+    GBufferIndex_Normal     = 1,
+    GBufferIndex_Material   = 2,
+    GBufferIndex_Depth      = 3,
+    GBufferIndex_ViewNormal = 4,
+    GBufferIndex_Velocity   = 5,
+
+    GBuffer_NumBuffers
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TResourceCache
@@ -80,6 +89,7 @@ struct RENDERER_API FFrameResources
     const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
     const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
     const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
+    const EFormat VelocityFormat     = EFormat::R16G16_Float;
 
     FRHITexture2D* BackBuffer = nullptr;
 
@@ -102,7 +112,7 @@ struct RENDERER_API FFrameResources
     // GBuffer
     FRHITexture2DRef         SSAOBuffer;
     FRHITexture2DRef         FinalTarget;
-    FRHITexture2DRef         GBuffer[5];
+    FRHITexture2DRef         GBuffer[GBuffer_NumBuffers];
 
     // Two resources that can be ping-ponged between
     FRHITexture2DRef         ReducedDepthBuffer[2];
