@@ -6,21 +6,22 @@ Feel free to make a pull request but please ensure that code follow the code-sta
 
 # Features
 **Current:**
-* FXAA
 * Tiled Deferred Rendering
 * Normal mapping
 * Parallax Occlusion Mapping
 * Physically Based Rendering with Image-Based Lightning
 * Shadow Mapping
-* Dynamic lights (Point-Lights, Directional-Lights, both with shadow support)
+    * Cascaded Shadow-Maps for Directional-Lights
+    * Omni-Directional shadows for Point-Lights 
+* Dynamic lights (Point-Lights, Directional-Lights)
 * SSAO
+* TAA
+* FXAA
 
 **Planed:**
 * Vulkan backend
 * Screen Space Reflections
-* Cascaded Shadow-maps
 * Ray-Traced reflections
-* TAA
 * Spotlights
 * Local Environment Probes
 
