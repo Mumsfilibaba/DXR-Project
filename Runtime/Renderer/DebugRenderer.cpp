@@ -103,7 +103,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
         PSOInitializer.ShaderState.VertexShader               = AABBVertexShader.Get();
         PSOInitializer.ShaderState.PixelShader                = AABBPixelShader.Get();
         PSOInitializer.PrimitiveTopologyType                  = EPrimitiveTopologyType::Line;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = Resources.RenderTargetFormat;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = Resources.FinalTargetFormat;
         PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
         PSOInitializer.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
 
@@ -323,9 +323,9 @@ void FDebugRenderer::Release()
 
 void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin DebugPass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin AABB DebugPass");
 
-    TRACE_SCOPE("DebugPass");
+    TRACE_SCOPE("AABB DebugPass");
 
     FRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
@@ -364,14 +364,14 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
 
     CommandList.EndRenderPass();
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End DebugPass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End AABB DebugPass");
 }
 
 void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, const FScene& Scene)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Light DebugPass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin PointLight DebugPass");
 
-    TRACE_SCOPE("Light DebugPass");
+    TRACE_SCOPE("PointLight DebugPass");
 
     FRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
@@ -413,5 +413,5 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
 
     CommandList.EndRenderPass();
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Light DebugPass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End PointLight DebugPass");
 }

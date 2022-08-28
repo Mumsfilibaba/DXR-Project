@@ -170,11 +170,6 @@ public:
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
 
-public:
-    
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIPipelineState
-
     virtual void SetName(const FString& InName) override final { FD3D12PipelineState::SetDebugName(InName); }
 };
 
@@ -190,11 +185,6 @@ public:
     ~FD3D12ComputePipelineState() = default;
 
     bool Initialize();
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIPipelineState
 
     virtual void SetName(const FString& InName) override final { FD3D12PipelineState::SetDebugName(InName); }
 
