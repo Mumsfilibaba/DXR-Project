@@ -149,7 +149,8 @@ bool FInterfaceRenderer::InitContext(InterfaceContext Context)
     }
 
     FRHIRasterizerStateInitializer RasterizerStateInfo;
-    RasterizerStateInfo.CullMode = ECullMode::None;
+    RasterizerStateInfo.CullMode               = ECullMode::None;
+    RasterizerStateInfo.bAntialiasedLineEnable = true;
 
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
@@ -238,13 +239,13 @@ bool FInterfaceRenderer::InitContext(InterfaceContext Context)
         IndexBuffer->SetName("ImGui IndexBuffer");
     }
 
-    FRHISamplerStateInitializer CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::Clamp;
-    CreateInfo.AddressV = ESamplerMode::Clamp;
-    CreateInfo.AddressW = ESamplerMode::Clamp;
-    CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
+    FRHISamplerStateInitializer SamplerInitializer;
+    SamplerInitializer.AddressU = ESamplerMode::Clamp;
+    SamplerInitializer.AddressV = ESamplerMode::Clamp;
+    SamplerInitializer.AddressW = ESamplerMode::Clamp;
+    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    PointSampler = RHICreateSamplerState(CreateInfo);
+    PointSampler = RHICreateSamplerState(SamplerInitializer);
     if (!PointSampler)
     {
         return false;

@@ -79,7 +79,12 @@ bool FStandardApplication::CreateContext()
     ImGuiStyle& Style = ImGui::GetStyle();
 
     // Padding
-    Style.FramePadding = ImVec2(6.0f, 4.0f);
+    Style.FramePadding     = ImVec2(6.0f, 4.0f);
+    
+    // Use AA for lines etc.
+    Style.AntiAliasedLines       = true;
+    Style.AntiAliasedFill        = true;
+    Style.AntiAliasedLinesUseTex = true;
 
     // Size
     Style.WindowBorderSize = 0.0f;
@@ -356,9 +361,10 @@ void FStandardApplication::SetActiveWindow(const FGenericWindowRef& ActiveWindow
 }
 
 template<typename MessageHandlerType>
-void FStandardApplication::InsertMessageHandler(TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray
-                                               ,const TSharedPtr<MessageHandlerType>& NewMessageHandler
-                                               ,uint32 NewPriority)
+void FStandardApplication::InsertMessageHandler(
+    TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray,
+    const TSharedPtr<MessageHandlerType>& NewMessageHandler,
+    uint32 NewPriority)
 {
     TPair NewPair(NewMessageHandler, NewPriority);
     if (!OutMessageHandlerArray.Contains(NewPair))

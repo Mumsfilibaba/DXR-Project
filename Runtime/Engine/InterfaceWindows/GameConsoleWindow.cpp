@@ -205,8 +205,6 @@ void FGameConsoleWindow::Tick()
 
         ImGui::EndChild();
 
-        ImGui::Separator();
-
         ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.1f, 0.1f, 0.1f, 0.5f));
 
         // Draw the Input Sign for the text input 
@@ -232,13 +230,20 @@ void FGameConsoleWindow::Tick()
             ImGuiInputTextFlags_CallbackEdit;
 
         // Prepare callback for ImGui
-        auto Callback = [](ImGuiInputTextCallbackData* Data)->int32
+        auto Callback = [](ImGuiInputTextCallbackData* Data) -> int32
         {
             FGameConsoleWindow* This = reinterpret_cast<FGameConsoleWindow*>(Data->UserData);
             return This->TextCallback(Data);
         };
 
-        const bool bResult = ImGui::InputText("###Input", TextBuffer.GetData(), TextBuffer.GetSize(), InputFlags, Callback, reinterpret_cast<void*>(this));
+        const bool bResult = ImGui::InputText(
+            "###Input",
+            TextBuffer.GetData(),
+            TextBuffer.GetSize(),
+            InputFlags, 
+            Callback, 
+            reinterpret_cast<void*>(this));
+
         if (bResult && TextBuffer[0] != 0)
         {
             if (CandidatesIndex != -1)
