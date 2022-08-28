@@ -533,7 +533,7 @@ void FD3D12CommandContext::BeginTimeStamp(FRHITimestampQuery* TimestampQuery, ui
     ID3D12GraphicsCommandList* DxCmdList = CommandList.GetGraphicsCommandList();
     D3D12TimestampQuery->BeginQuery(DxCmdList, Index);
 
-    ResolveQueries.Emplace(MakeSharedRef<FD3D12TimestampQuery>(D3D12TimestampQuery));
+    ResolveQueries.PushUnique(MakeSharedRef<FD3D12TimestampQuery>(D3D12TimestampQuery));
 }
 
 void FD3D12CommandContext::EndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)

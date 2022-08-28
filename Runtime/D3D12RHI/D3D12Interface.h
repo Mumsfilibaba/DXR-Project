@@ -8,7 +8,7 @@
 #include "D3D12Shader.h"
 #include "D3D12RayTracing.h"
 
-#include "RHI/RHICoreInterface.h"
+#include "RHI/RHIInterface.h"
 
 #include "CoreApplication/Windows/WindowsWindow.h"
 

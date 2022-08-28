@@ -11,7 +11,7 @@
 #include "MetalRayTracing.h"
 #include "MetalDeviceContext.h"
 
-#include "RHI/RHICoreInterface.h"
+#include "RHI/RHIInterface.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"

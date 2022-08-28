@@ -10,6 +10,9 @@ class FGPUProfilerWindow
 {
     INTERFACE_GENERATE_BODY();
 
+    FGPUProfilerWindow()  = default;
+    ~FGPUProfilerWindow() = default;
+
 public:
     static TSharedRef<FGPUProfilerWindow> Create();
 
@@ -20,9 +23,6 @@ public:
     virtual bool IsTickable() override final;
 
 private:
-    FGPUProfilerWindow()  = default;
-    ~FGPUProfilerWindow() = default;
-
      /** @brief: Draw the profiler window */
     void DrawWindow();
 

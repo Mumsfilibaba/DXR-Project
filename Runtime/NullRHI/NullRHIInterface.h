@@ -1,5 +1,5 @@
 #pragma once
-#include "RHI/RHICoreInterface.h"
+#include "RHI/RHIInterface.h"
 
 #include "NullRHIBuffer.h"
 #include "NullRHITexture.h"

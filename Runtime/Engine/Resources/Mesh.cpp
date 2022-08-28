@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
-#include "RHI/RHICoreInterface.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/

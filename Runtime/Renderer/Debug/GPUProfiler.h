@@ -17,6 +17,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FGPUProfileSample
 
 struct FGPUProfileSample
 {
@@ -77,13 +78,16 @@ struct FGPUProfileSample
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FGPUProfiler
 
 using GPUProfileSamplesTable = TMap<FString, FGPUProfileSample, FStringHasher>;
 
 class RENDERER_API FGPUProfiler
 {
-public:
+    FGPUProfiler();
+    ~FGPUProfiler() = default;
 
+public:
      /** @brief: Creates the profiler, requires the RHI to be initialized */
     static bool Init();
 
@@ -125,10 +129,6 @@ public:
     }
 
 private:
-
-    FGPUProfiler();
-    ~FGPUProfiler() = default;
-
      /** @brief: Queries for GPUTimeStamps */
     FRHITimestampQueryRef Timequeries;
 
@@ -147,23 +147,24 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FGPUScopedTrace
 
 struct FGPUScopedTrace
 {
 public:
-    FORCEINLINE FGPUScopedTrace(FRHICommandList& InCmdList, const CHAR* InName)
-        : CmdList(InCmdList)
+    FORCEINLINE FGPUScopedTrace(FRHICommandList& InCommandList, const CHAR* InName)
+        : CommandList(InCommandList)
         , Name(InName)
     {
-        FGPUProfiler::Get().BeginGPUTrace(CmdList, Name);
+        FGPUProfiler::Get().BeginGPUTrace(CommandList, Name);
     }
 
     FORCEINLINE ~FGPUScopedTrace()
     {
-        FGPUProfiler::Get().EndGPUTrace(CmdList, Name);
+        FGPUProfiler::Get().EndGPUTrace(CommandList, Name);
     }
 
 private:
-    FRHICommandList& CmdList;
-    const CHAR* Name = nullptr;
+    FRHICommandList& CommandList;
+    const CHAR*      Name = nullptr;
 };

@@ -386,10 +386,10 @@ public:
 
     void UpdateBuffer(FD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
 
-    FORCEINLINE uint32 GetCurrentEpochValue() const
+    FORCEINLINE uint32 GetCurrentBachIndex() const
     {
-        uint32 MaxValue = NMath::Max<int32>((int32)CmdBatches.GetSize() - 1, 0);
-        return NMath::Min<uint32>(NextCmdBatch - 1, MaxValue);
+        Check(int32(NextCmdBatch) < CmdBatches.GetSize());
+        return NMath::Max<int32>(int32(NextCmdBatch) - 1, 0);
     }
 
     FORCEINLINE void UnorderedAccessBarrier(FD3D12Resource* Resource)

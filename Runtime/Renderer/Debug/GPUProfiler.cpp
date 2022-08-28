@@ -3,7 +3,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Time/Timespan.h"
 
-#include "RHI/RHICoreInterface.h"
+#include "RHI/RHIInterface.h"
 
 FGPUProfiler FGPUProfiler::Instance;
 
@@ -50,7 +50,8 @@ void FGPUProfiler::Tick()
         const double Frequency = static_cast<double>(Timequeries->GetFrequency());
         const double DeltaTime = static_cast<double>(Query.End - Query.Begin);
 
-        double Duration = (DeltaTime / Frequency) * 1000.0;
+        // To milliseconds
+        double Duration = (DeltaTime / Frequency) * (1000.0);
         FrameTime.AddSample((float)Duration);
     }
 }
@@ -143,8 +144,10 @@ void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
                 Timequeries->GetTimestampFromIndex(Query, TimeQueryIndex);
 
                 const double Frequency = static_cast<double>(Timequeries->GetFrequency());
+                const double DeltaTime = static_cast<double>(Query.End - Query.Begin);
 
-                double Duration = NTime::ToSeconds<double>(static_cast<double>((Query.End - Query.Begin) / Frequency));
+                // To nanoseconds
+                double Duration = (DeltaTime / Frequency) * (1000.0 * 1000.0 * 1000.0);
                 Entry->second.AddSample((float)Duration);
             }
         }

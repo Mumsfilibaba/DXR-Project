@@ -13,14 +13,10 @@ class FD3D12TimestampQuery
     , public FD3D12DeviceChild
 {
 public:
-
     FD3D12TimestampQuery(FD3D12Device* InDevice);
     ~FD3D12TimestampQuery() = default;
 
     static FD3D12TimestampQuery* Create(FD3D12Device* InDevice);
-    
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITimestampQuery Interface
 
     virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final;
 

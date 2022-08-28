@@ -8,7 +8,7 @@
 #include "Engine/Scene/Actor.h"
 #include "Engine/Resources/Mesh.h"
 
-#include "RHI/RHICoreInterface.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

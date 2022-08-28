@@ -1,5 +1,5 @@
 #include "RHIModule.h"
-#include "RHICoreInterface.h"
+#include "RHIInterface.h"
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
 

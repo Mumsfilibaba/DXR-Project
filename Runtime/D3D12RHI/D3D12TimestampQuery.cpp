@@ -21,7 +21,7 @@ void FD3D12TimestampQuery::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32
     if (Index >= (uint32)TimeQueries.GetSize())
     {
         OutQuery.Begin = 0;
-        OutQuery.End = 0;
+        OutQuery.End   = 0;
     }
     else
     {
@@ -51,16 +51,17 @@ void FD3D12TimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 I
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2) + 1);
 }
 
-void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CmdContext)
+void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CommandContext)
 {
-    FD3D12CommandList          CmdList    = CmdContext.GetCommandList();
-    ID3D12CommandQueue*        CmdQueue   = CmdContext.GetQueue().GetQueue();
-    ID3D12GraphicsCommandList* GfxCmdList = CmdList.GetGraphicsCommandList();
+    FD3D12CommandList CommandList = CommandContext.GetCommandList();
+    
+    ID3D12CommandQueue* D3D12Queue = CommandContext.GetQueue().GetQueue();
+    Check(D3D12Queue != nullptr);
 
-    Check(CmdQueue != nullptr);
-    Check(GfxCmdList != nullptr);
+    ID3D12GraphicsCommandList* D3D12CommandList = CommandList.GetGraphicsCommandList();
+    Check(D3D12CommandList != nullptr);
 
-    uint32 ReadIndex = CmdContext.GetCurrentEpochValue();
+    uint32 ReadIndex = CommandContext.GetCurrentBachIndex();
     if (ReadIndex >= (uint32)ReadResources.GetSize())
     {
         if (!AllocateReadResource())
@@ -72,8 +73,7 @@ void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CmdContext
 
     // NOTE: Read the current, the first frames the result will be zero, however this would be expected
     FD3D12Resource* CurrentReadResource = ReadResources[ReadIndex].Get();
-    void* Data = CurrentReadResource->MapRange(0, nullptr);
-    if (Data)
+    if (void* Data = CurrentReadResource->MapRange(0, nullptr))
     {
         const uint32 SizeInBytes = TimeQueries.SizeInBytes();
         FMemory::Memcpy(TimeQueries.GetData(), Data, SizeInBytes);
@@ -81,13 +81,13 @@ void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CmdContext
     }
 
     // Make use of RESOURCE_STATE promotion during the first call
-    GfxCmdList->ResolveQueryData(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0, D3D12_DEFAULT_QUERY_COUNT, WriteResource->GetD3D12Resource(), 0);
+    D3D12CommandList->ResolveQueryData(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0, D3D12_DEFAULT_QUERY_COUNT, WriteResource->GetD3D12Resource(), 0);
 
-    CmdList.TransitionBarrier(WriteResource->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-    GfxCmdList->CopyResource(CurrentReadResource->GetD3D12Resource(), WriteResource->GetD3D12Resource());
-    CmdList.TransitionBarrier(WriteResource->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+    CommandList.TransitionBarrier(WriteResource->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+    D3D12CommandList->CopyResource(CurrentReadResource->GetD3D12Resource(), WriteResource->GetD3D12Resource());
+    CommandList.TransitionBarrier(WriteResource->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
-    HRESULT Result = CmdQueue->GetTimestampFrequency(&Frequency);
+    HRESULT Result = D3D12Queue->GetTimestampFrequency(&Frequency);
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12TimestampQuery] FAILED to query ClockCalibration");
@@ -141,7 +141,7 @@ FD3D12TimestampQuery* FD3D12TimestampQuery::Create(FD3D12Device* InDevice)
     }
 
     // Start with three
-    for (uint32 i = 0; i < D3D12_NUM_BACK_BUFFERS; i++)
+    for (uint32 Index = 0; Index < D3D12_NUM_BACK_BUFFERS; ++Index)
     {
         if (!NewProfiler->AllocateReadResource())
         {

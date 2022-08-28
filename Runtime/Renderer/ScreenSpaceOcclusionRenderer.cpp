@@ -1,7 +1,7 @@
 #include "ScreenSpaceOcclusionRenderer.h"
 #include "Renderer.h"
 
-#include "RHI/RHICoreInterface.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Core/Math/Vector2.h"
