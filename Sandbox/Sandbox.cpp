@@ -232,8 +232,8 @@ bool FSandbox::Init()
     NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
     MatProperties.AO           = 1.0f;
-    MatProperties.Metallic     = 0.0f;
-    MatProperties.Roughness    = 1.0f;
+    MatProperties.Metallic     = 1.0f;
+    MatProperties.Roughness    = 0.2f;
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo       = FVector3(1.0f);
 

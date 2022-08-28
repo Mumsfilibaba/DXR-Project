@@ -16,7 +16,7 @@
 class ENGINE_API FMesh
 {
 public:
-    FMesh() = default;
+    FMesh()  = default;
     ~FMesh() = default;
 
     bool Init(const FMeshData& Data);

@@ -98,7 +98,7 @@ FMeshData FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
     Data.Indices.Resize((Width * Height) * 6);
 
     // Size of each quad, size of the plane will always be between -0.5 and 0.5
-    FVector2 QuadSize = FVector2(1.0f / float(Width), 1.0f / float(Height));
+    FVector2 QuadSize   = FVector2(1.0f / float(Width), 1.0f / float(Height));
     FVector2 UvQuadSize = FVector2(1.0f / float(Width), 1.0f / float(Height));
 
     for (uint32 x = 0; x <= Width; x++)
@@ -108,8 +108,8 @@ FMeshData FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
             int32 v = ((1 + Height) * x) + y;
             Data.Vertices[v].Position = FVector3(0.5f - (QuadSize.x * x), 0.5f - (QuadSize.y * y), 0.0f);
             // TODO: Fix vertices so normal is positive
-            Data.Vertices[v].Normal = FVector3(0.0f, 0.0f, -1.0f);
-            Data.Vertices[v].Tangent = FVector3(1.0f, 0.0f, 0.0f);
+            Data.Vertices[v].Normal   = FVector3(0.0f, 0.0f, -1.0f);
+            Data.Vertices[v].Tangent  = FVector3(1.0f, 0.0f, 0.0f);
             Data.Vertices[v].TexCoord = FVector2(0.0f + (UvQuadSize.x * x), 0.0f + (UvQuadSize.y * y));
         }
     }
