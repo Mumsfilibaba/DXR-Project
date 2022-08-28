@@ -10,14 +10,14 @@
 class RENDERER_API FLightProbeRenderer
 {
 public:
-    FLightProbeRenderer() = default;
+    FLightProbeRenderer()  = default;
     ~FLightProbeRenderer() = default;
 
     bool Init(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
     void Release();
 
-    void RenderSkyLightProbe(FRHICommandList& CmdList, const FLightSetup& LightSetup, const FFrameResources& Resources);
+    void RenderSkyLightProbe(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& Resources);
 
 private:
     bool CreateSkyLightResources(FLightSetup& LightSetup);

@@ -84,20 +84,20 @@ public:
 
      /** @brief: Render Point light shadows */
     void RenderPointLightShadows(
-        FRHICommandList& CmdList,
+        FRHICommandList& CommandList,
         const FLightSetup& LightSetup, 
         const FScene& Scene);
 
      /** @brief: Render Directional light shadows */
     void RenderDirectionalLightShadows(
-        FRHICommandList& CmdList, 
+        FRHICommandList& CommandList,
         const FLightSetup& LightSetup, 
         const FFrameResources& FrameResources,
         const FScene& Scene);
 
      /** @brief: Render ShadowMasks */
     void RenderShadowMasks(
-        FRHICommandList& CmdList, 
+        FRHICommandList& CommandList,
         const FLightSetup& LightSetup, 
         const FFrameResources& FrameResources);
 

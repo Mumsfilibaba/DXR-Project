@@ -78,22 +78,22 @@ struct RENDERER_API FLightSetup
     const EFormat ShadowMapFormat  = EFormat::D16_Unorm;
     const EFormat LightProbeFormat = EFormat::R11G11B10_Float;
 
-    const uint32 MaxPointLights       = 256;
-    const uint32 MaxDirectionalLights = 256;
-    const uint32 MaxPointLightShadows = 8;
+    const uint32 MaxPointLights         = 256;
+    const uint32 MaxDirectionalLights   = 256;
+    const uint32 MaxPointLightShadows   = 8;
 
-    const uint16 CascadeSize          = 2048;
+    const uint16 CascadeSize            = 2048;
 
     const uint16 IrradianceSize         = 32;
     const uint16 SpecularIrradianceSize = 256;
     const uint16 PointLightShadowSize   = 512;
 
-    FLightSetup() = default;
+    FLightSetup()  = default;
     ~FLightSetup() = default;
 
     bool Init();
 
-    void BeginFrame(FRHICommandList& CmdList, const FScene& Scene);
+    void BeginFrame(FRHICommandList& CommandList, const FScene& Scene);
     void Release();
 
     // PointLights

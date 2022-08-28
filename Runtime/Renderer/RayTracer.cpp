@@ -105,7 +105,7 @@ void FRayTracer::Release()
     RayClosestHitShader.Reset();
 }
 
-void FRayTracer::PreRender(FRHICommandList& CmdList, FFrameResources& Resources, const FScene& Scene)
+void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resources, const FScene& Scene)
 {
     UNREFERENCED_VARIABLE(Scene);
 
@@ -177,7 +177,7 @@ void FRayTracer::PreRender(FRHICommandList& CmdList, FFrameResources& Resources,
     }
     else
     {
-        CmdList.BuildRayTracingScene(Resources.RTScene.Get(), TArrayView(Resources.RTGeometryInstances.CreateView()), false);
+        CommandList.BuildRayTracingScene(Resources.RTScene.Get(), TArrayView(Resources.RTGeometryInstances.CreateView()), false);
     }
 
     Resources.GlobalResources.Reset();
@@ -202,7 +202,7 @@ void FRayTracer::PreRender(FRHICommandList& CmdList, FFrameResources& Resources,
     Resources.MissLocalResources.Identifier = "Miss";
 
     // TODO: NO MORE BINDINGS CAN BE BOUND BEFORE DISPATCH RAYS, FIX THIS
-    CmdList.SetRayTracingBindings(
+    CommandList.SetRayTracingBindings(
         Resources.RTScene.Get(),
         Pipeline.Get(),
         &Resources.GlobalResources,
@@ -213,9 +213,9 @@ void FRayTracer::PreRender(FRHICommandList& CmdList, FFrameResources& Resources,
 
     uint32 Width  = Resources.RTOutput->GetWidth();
     uint32 Height = Resources.RTOutput->GetHeight();
-    CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
+    CommandList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
 
-    CmdList.UnorderedAccessTextureBarrier(Resources.RTOutput.Get());
+    CommandList.UnorderedAccessTextureBarrier(Resources.RTOutput.Get());
 
     AddDebugTexture(
         MakeSharedRef<FRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView()),
