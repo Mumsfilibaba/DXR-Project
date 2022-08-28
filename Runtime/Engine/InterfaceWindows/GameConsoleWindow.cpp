@@ -32,18 +32,14 @@ void FGameConsoleWindow::Tick()
     FGenericWindowRef MainWindow = FApplicationInterface::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainWindow->GetWidth();
-
-    // HACK: Push window up above titlebar to remove the rounded corners
-    const ImVec2 Offset(20.0f, -20.0f);
-
-    const float Width = WindowWidth - (Offset.x * 2.0f);
-    const float Height = 270.0f + Offset.y;
+    const float Width  = float(WindowWidth);
+    const float Height = 350.0f;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-    ImGui::SetNextWindowPos(ImVec2(Offset.x, Offset.y), ImGuiCond_Always, ImVec2(0.0f, 0.0f));
+    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always, ImVec2(0.0f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Always);
 
     const ImGuiWindowFlags StyleFlags =
@@ -55,6 +51,7 @@ void FGameConsoleWindow::Tick()
         ImGuiWindowFlags_NoScrollWithMouse |
         ImGuiWindowFlags_NoSavedSettings;
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 30.0f));
 
     ImGui::Begin("Console Window", nullptr, StyleFlags);
@@ -62,7 +59,7 @@ void FGameConsoleWindow::Tick()
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
 
         const ImVec2 ParentSize = ImGui::GetWindowSize();
-        const float TextWindowWidth = Width * 0.985f;
+        const float TextWindowWidth  = Width * 0.985f;
         const float TextWindowHeight = ParentSize.y - 64.0f;
 
         const ImGuiWindowFlags PopupFlags =
@@ -286,8 +283,10 @@ void FGameConsoleWindow::Tick()
         ImGui::PopStyleColor();
 
     }
+
     ImGui::End();
 
+    ImGui::PopStyleVar();
     ImGui::PopStyleVar();
 }
 

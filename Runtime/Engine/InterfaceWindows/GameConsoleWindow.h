@@ -43,6 +43,9 @@ class FGameConsoleWindow final
 {
     INTERFACE_GENERATE_BODY();
 
+    FGameConsoleWindow();
+    ~FGameConsoleWindow() = default;
+
 public:
     static TSharedRef<FGameConsoleWindow> Make();
 
@@ -51,8 +54,6 @@ public:
     virtual bool IsTickable() override final;
 
 private:
-    FGameConsoleWindow();
-    ~FGameConsoleWindow() = default;
 
     /** Callback from the input */
     int32 TextCallback(struct ImGuiInputTextCallbackData* Data);
