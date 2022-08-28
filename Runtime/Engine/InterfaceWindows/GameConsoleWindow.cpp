@@ -33,43 +33,36 @@ void FGameConsoleWindow::Tick()
 
     const uint32 WindowWidth = MainWindow->GetWidth();
     const float Width  = float(WindowWidth);
-    const float Height = 350.0f;
+    const float Height = 256.0f;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always, ImVec2(0.0f, 0.0f));
-    ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(Width, 0.0f), ImGuiCond_Always);
 
     const ImGuiWindowFlags StyleFlags =
         ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoDecoration |
         ImGuiWindowFlags_NoScrollWithMouse |
+        ImGuiWindowFlags_AlwaysAutoResize | 
         ImGuiWindowFlags_NoSavedSettings;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 30.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f));
 
-    ImGui::Begin("Console Window", nullptr, StyleFlags);
+    if (ImGui::Begin("Console Window", nullptr, StyleFlags))
     {
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
 
-        const ImVec2 ParentSize = ImGui::GetWindowSize();
-        const float TextWindowWidth  = Width * 0.985f;
-        const float TextWindowHeight = ParentSize.y - 64.0f;
-
         const ImGuiWindowFlags PopupFlags =
-            ImGuiWindowFlags_NoTitleBar |
-            ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoDecoration |
             ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoSavedSettings |
             ImGuiWindowFlags_NoFocusOnAppearing;
 
-        ImGui::BeginChild("##ChildWindow", ImVec2(TextWindowWidth, TextWindowHeight), false, PopupFlags);
+        ImGui::BeginChild("##ChildWindow", ImVec2(Width, Height), false, PopupFlags);
         if (!Candidates.IsEmpty())
         {
             bool bIsActiveIndex = false;
@@ -97,7 +90,7 @@ void FGameConsoleWindow::Tick()
                 }
             });
 
-            VariableNameWidth += Padding;
+            VariableNameWidth  += Padding;
             VariableValueWidth += Padding;
 
             // Draw UI
@@ -212,6 +205,8 @@ void FGameConsoleWindow::Tick()
 
         ImGui::EndChild();
 
+        ImGui::Separator();
+
         ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.1f, 0.1f, 0.1f, 0.5f));
 
         // Draw the Input Sign for the text input 
@@ -220,7 +215,6 @@ void FGameConsoleWindow::Tick()
             ImGui::SetCursorScreenPos(ImVec2(CursorPos.x, CursorPos.y + 2.0f));
 
             ImGui::Text(">");
-
             ImGui::SameLine();
 
             CursorPos = ImGui::GetCursorScreenPos();
@@ -228,7 +222,7 @@ void FGameConsoleWindow::Tick()
         }
 
         // Text Input
-        ImGui::PushItemWidth(TextWindowWidth - 25.0f);
+        ImGui::PushItemWidth(Width - 32.0f);
 
         const ImGuiInputTextFlags InputFlags =
             ImGuiInputTextFlags_EnterReturnsTrue |
