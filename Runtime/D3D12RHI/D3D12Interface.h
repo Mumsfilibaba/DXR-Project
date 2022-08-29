@@ -15,56 +15,6 @@
 class FD3D12CommandContext;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayTracingDesc
-
-struct FD3D12RayTracingDesc
-{
-    FD3D12RayTracingDesc()
-        : Tier(D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
-    { }
-
-    D3D12_RAYTRACING_TIER Tier;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12VariableRateShadingDesc
-
-struct FD3D12VariableRateShadingDesc
-{
-    FD3D12VariableRateShadingDesc()
-        : Tier(D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED)
-        , ShadingRateImageTileSize(0)
-    { }
-
-    D3D12_VARIABLE_SHADING_RATE_TIER Tier;
-    uint32 ShadingRateImageTileSize;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12MeshShadingDesc
-
-struct FD3D12MeshShadingDesc
-{
-    FD3D12MeshShadingDesc()
-        : Tier(D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
-    { }
-
-    D3D12_MESH_SHADER_TIER Tier;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12SamplerFeedbackDesc
-
-struct FD3D12SamplerFeedbackDesc
-{
-    FD3D12SamplerFeedbackDesc()
-        : Tier(D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED)
-    { }
-
-    D3D12_SAMPLER_FEEDBACK_TIER Tier;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Interface
 
 class FD3D12Interface 
@@ -139,14 +89,8 @@ public:
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
 
 public:
-
     FORCEINLINE FD3D12Device*  GetDevice()  const { return Device.Get(); }
     FORCEINLINE FD3D12Adapter* GetAdapter() const { return Adapter.Get(); }
-
-    FORCEINLINE const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc;}
-    FORCEINLINE const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
-    FORCEINLINE const FD3D12MeshShadingDesc&         GetMeshShadingDesc()         const { return MeshShadingDesc;}
-    FORCEINLINE const FD3D12SamplerFeedbackDesc&     GetSamplerFeedbackDesc()     const { return SamplerFeedbackDesc;}
 
     FORCEINLINE FD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap()     const { return ResourceOfflineDescriptorHeap; }
     FORCEINLINE FD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap() const { return RenderTargetOfflineDescriptorHeap; }
@@ -166,11 +110,6 @@ private:
 
     FD3D12AdapterRef              Adapter;
     FD3D12DeviceRef               Device;
-    
-    FD3D12RayTracingDesc          RayTracingDesc;
-    FD3D12MeshShadingDesc         MeshShadingDesc;
-    FD3D12SamplerFeedbackDesc     SamplerFeedbackDesc;
-    FD3D12VariableRateShadingDesc VariableRateShadingDesc;
 
     FD3D12CommandContext*         DirectCmdContext;
 

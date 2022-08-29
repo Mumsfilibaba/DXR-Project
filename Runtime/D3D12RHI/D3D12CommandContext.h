@@ -190,7 +190,8 @@ private:
 // FD3D12CommandContextState
 
 struct FD3D12CommandContextState 
-    : FNonCopyAndNonMovable
+    : public FD3D12DeviceChild
+    , public FNonCopyAndNonMovable
 {
     FD3D12CommandContextState(FD3D12Device* InDevice);
     ~FD3D12CommandContextState() = default;

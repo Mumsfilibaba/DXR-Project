@@ -559,14 +559,16 @@ bool FD3D12Device::Initialize()
         ARRAY_COUNT(SupportedFeatureLevels), SupportedFeatureLevels, D3D_FEATURE_LEVEL_11_0
     };
 
-    HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
-    if (SUCCEEDED(Result))
     {
-        ActiveFeatureLevel = FeatureLevels.MaxSupportedFeatureLevel;
-    }
-    else
-    {
-        ActiveFeatureLevel = MinFeatureLevel;
+        HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
+        if (SUCCEEDED(Result))
+        {
+            ActiveFeatureLevel = FeatureLevels.MaxSupportedFeatureLevel;
+        }
+        else
+        {
+            ActiveFeatureLevel = MinFeatureLevel;
+        }
     }
 
     // Create RootSignature cache
@@ -574,6 +576,44 @@ bool FD3D12Device::Initialize()
     {
         return false;
     } 
+
+    // Check for Ray-Tracing support
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
+        FMemory::Memzero(&Features5);
+
+        HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+        if (SUCCEEDED(Result))
+        {
+            RayTracingDesc.Tier = Features5.RaytracingTier;
+        }
+    }
+
+    // Checking for Variable Shading Rate support
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
+        FMemory::Memzero(&Features6);
+
+        HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
+        if (SUCCEEDED(Result))
+        {
+            VariableRateShadingDesc.Tier                     = Features6.VariableShadingRateTier;
+            VariableRateShadingDesc.ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
+        }
+    }
+
+    // Check for Mesh-Shaders, and SamplerFeedback support
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
+        FMemory::Memzero(&Features7);
+
+        HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
+        if (SUCCEEDED(Result))
+        {
+            MeshShadingDesc.Tier     = Features7.MeshShaderTier;
+            SamplerFeedbackDesc.Tier = Features7.SamplerFeedbackTier;
+        }
+    }
 
     // Create DescriptorHeaps
     GlobalResourceHeap = dbg_new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);

@@ -227,7 +227,8 @@ bool FD3D12CommandBatch::Initialize(uint32 Index)
 // FD3D12CommandContextState
 
 FD3D12CommandContextState::FD3D12CommandContextState(FD3D12Device* InDevice)
-    : DescriptorCache(InDevice)
+    : FD3D12DeviceChild(InDevice)
+    , DescriptorCache(InDevice)
     , bIsReady(false)
     , bIsCapturing(false)
     , bIsRenderPassActive(false)
@@ -307,20 +308,24 @@ void FD3D12CommandContextState::ApplyGraphics(FD3D12CommandList& CommandList, FD
     {
         DescriptorCache.SetRenderTargets(Graphics.RTCache, Graphics.DepthStencil);
 
-        if (Graphics.ShadingRateTexture)
+        FD3D12VariableRateShadingDesc VRSSupport = GetDevice()->GetVariableRateShadingDesc();
+        if (VRSSupport.IsSupported())
         {
-            CommandList.RSSetShadingRateImage(Graphics.ShadingRateTexture->GetResource()->GetD3D12Resource());
-        }
-        else
-        {
-            D3D12_SHADING_RATE_COMBINER Combiners[] =
+            if (Graphics.ShadingRateTexture)
             {
-                D3D12_SHADING_RATE_COMBINER_OVERRIDE,
-                D3D12_SHADING_RATE_COMBINER_OVERRIDE,
-            };
+                CommandList.RSSetShadingRateImage(Graphics.ShadingRateTexture->GetResource()->GetD3D12Resource());
+            }
+            else
+            {
+                D3D12_SHADING_RATE_COMBINER Combiners[] =
+                {
+                    D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+                    D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+                };
 
-            CommandList.RSSetShadingRateImage(nullptr);
-            CommandList.RSSetShadingRate(Graphics.ShadingRate, Combiners);
+                CommandList.RSSetShadingRateImage(nullptr);
+                CommandList.RSSetShadingRate(Graphics.ShadingRate, Combiners);
+            }
         }
 
         Graphics.ShadingRateTexture = nullptr;

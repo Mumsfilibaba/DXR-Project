@@ -452,8 +452,8 @@ bool FD3D12RootSignatureCache::Initialize()
         ComputeRootSignature->SetName("Default Compute RootSignature");
     }
 
-    const FD3D12RayTracingDesc& RayTracingDesc = GetDevice()->GetAdapter()->GetCoreInterface()->GetRayTracingDesc();
-    if (RayTracingDesc.Tier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+    const FD3D12RayTracingDesc& RayTracingDesc = GetDevice()->GetRayTracingDesc();
+    if (!RayTracingDesc.IsSupported())
     {
         return true;
     }

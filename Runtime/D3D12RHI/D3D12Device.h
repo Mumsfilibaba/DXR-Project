@@ -111,7 +111,7 @@ public:
     bool                     IsDebugLayerEnabled() const { return Initializer.bEnableDebugLayer; }
     bool                     SupportsTearing()     const { return bAllowTearing; }
 
-    FD3D12Interface*     GetCoreInterface() const { return CoreInterface; }
+    FD3D12Interface* GetCoreInterface() const { return CoreInterface; }
 
     IDXGIAdapter1* GetDXGIAdapter()  const { return Adapter.Get(); }
 
@@ -142,6 +142,76 @@ private:
     TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
 
     DXGI_ADAPTER_DESC1           AdapterDesc;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12RayTracingDesc
+
+struct FD3D12RayTracingDesc
+{
+    FD3D12RayTracingDesc()
+        : Tier(D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+    { }
+
+    bool IsSupported() const
+    {
+        return (Tier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED);
+    }
+
+    D3D12_RAYTRACING_TIER Tier;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12VariableRateShadingDesc
+
+struct FD3D12VariableRateShadingDesc
+{
+    FD3D12VariableRateShadingDesc()
+        : Tier(D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED)
+        , ShadingRateImageTileSize(0)
+    { }
+
+    bool IsSupported() const 
+    {
+        return (Tier != D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED);
+    }
+
+    D3D12_VARIABLE_SHADING_RATE_TIER Tier;
+    uint32 ShadingRateImageTileSize;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12MeshShadingDesc
+
+struct FD3D12MeshShadingDesc
+{
+    FD3D12MeshShadingDesc()
+        : Tier(D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
+    { }
+
+    bool IsSupported() const
+    {
+        return (Tier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED);
+    }
+
+    D3D12_MESH_SHADER_TIER Tier;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12SamplerFeedbackDesc
+
+struct FD3D12SamplerFeedbackDesc
+{
+    FD3D12SamplerFeedbackDesc()
+        : Tier(D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED)
+    { }
+
+    bool IsSupported() const
+    {
+        return (Tier != D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED);
+    }
+
+    D3D12_SAMPLER_FEEDBACK_TIER Tier;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -205,6 +275,11 @@ public:
     
     FD3D12RootSignatureCache& GetRootSignatureCache() { return RootSignatureCache; }
 
+    const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc; }
+    const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
+    const FD3D12MeshShadingDesc&         GetMeshShadingDesc()         const { return MeshShadingDesc; }
+    const FD3D12SamplerFeedbackDesc&     GetSamplerFeedbackDesc()     const { return SamplerFeedbackDesc; }
+
     ID3D12Device*  GetD3D12Device()  const { return Device.Get(); }
 #if WIN10_BUILD_14393
     ID3D12Device1* GetD3D12Device1() const { return Device1.Get(); }
@@ -235,9 +310,15 @@ public:
 #endif
 
 private:
-    FD3D12Adapter*           Adapter;
-    FD3D12RootSignatureCache RootSignatureCache;
+    FD3D12RootSignatureCache      RootSignatureCache;
     
+    FD3D12RayTracingDesc          RayTracingDesc;
+    FD3D12MeshShadingDesc         MeshShadingDesc;
+    FD3D12SamplerFeedbackDesc     SamplerFeedbackDesc;
+    FD3D12VariableRateShadingDesc VariableRateShadingDesc;
+   
+    FD3D12Adapter*           Adapter;
+
     FD3D12DescriptorHeapRef  GlobalResourceHeap;
     FD3D12DescriptorHeapRef  GlobalSamplerHeap;
 

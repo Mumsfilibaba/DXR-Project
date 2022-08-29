@@ -182,46 +182,6 @@ bool FD3D12Interface::Initialize(bool bEnableDebug)
         GenerateMipsTexCube_PSO->SetName("GenerateMipsTexCube Gen PSO");
     }
 
-     // Check for Ray-Tracing support
-    ID3D12Device* D3D12Device = GetDevice()->GetD3D12Device();
-
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
-        FMemory::Memzero(&Features5);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
-        if (SUCCEEDED(Result))
-        {
-            RayTracingDesc.Tier = Features5.RaytracingTier;
-        }
-    }
-
-    // Checking for Variable Shading Rate support
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
-        FMemory::Memzero(&Features6);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
-        if (SUCCEEDED(Result))
-        {
-            VariableRateShadingDesc.Tier                     = Features6.VariableShadingRateTier;
-            VariableRateShadingDesc.ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
-        }
-    }
-
-    // Check for Mesh-Shaders, and SamplerFeedback support
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
-        FMemory::Memzero(&Features7);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
-        if (SUCCEEDED(Result))
-        {
-            MeshShadingDesc.Tier     = Features7.MeshShaderTier;
-            SamplerFeedbackDesc.Tier = Features7.SamplerFeedbackTier;
-        }
-    }
-
     // Initialize context
     DirectCmdContext = FD3D12CommandContext::CreateD3D12CommandContext(GetDevice());
     if (!DirectCmdContext)
@@ -1197,7 +1157,8 @@ bool FD3D12Interface::RHIQueryUAVFormatSupport(EFormat Format) const
 
 void FD3D12Interface::RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport) const
 {
-    if (RayTracingDesc.Tier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+    FD3D12RayTracingDesc RayTracingDesc = Device->GetRayTracingDesc();
+    if (RayTracingDesc.IsSupported())
     {
         if (RayTracingDesc.Tier == D3D12_RAYTRACING_TIER_1_1)
         {
@@ -1218,6 +1179,7 @@ void FD3D12Interface::RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport) 
 
 void FD3D12Interface::RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const
 {
+    FD3D12VariableRateShadingDesc VariableRateShadingDesc = Device->GetVariableRateShadingDesc();
     switch (VariableRateShadingDesc.Tier)
     {
         case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED: OutSupport.Tier = ERHIShadingRateTier::NotSupported; break;
