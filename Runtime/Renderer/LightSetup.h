@@ -70,6 +70,38 @@ struct FDirectionalLightData
 MARK_AS_REALLOCATABLE(FDirectionalLightData);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FProxyLightProbe
+
+struct FProxyLightProbe
+{
+    FProxyLightProbe()  = default;
+    ~FProxyLightProbe() = default;
+
+    void Release()
+    {
+        IrradianceMap.Reset();
+        SpecularIrradianceMap.Reset();
+
+        IrradianceMapUAV.Reset();
+        for (FRHIUnorderedAccessViewRef& UAV : SpecularIrradianceMapUAVs)
+        {
+            UAV.Reset();
+        }
+
+        SpecularIrradianceMapUAVs.Clear();
+        WeakSpecularIrradianceMapUAVs.Clear();
+    }
+
+    FRHITextureCubeRef IrradianceMap;
+    FRHITextureCubeRef SpecularIrradianceMap;
+
+    // TODO: We should be able to do this without the UAVs saved
+    FRHIUnorderedAccessViewRef         IrradianceMapUAV;
+    TArray<FRHIUnorderedAccessViewRef> SpecularIrradianceMapUAVs;
+    TArray<FRHIUnorderedAccessView*>   WeakSpecularIrradianceMapUAVs;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FLightSetup
 
 struct RENDERER_API FLightSetup
@@ -134,10 +166,6 @@ struct RENDERER_API FLightSetup
     FRHIUnorderedAccessViewRef CascadeSplitsBufferUAV;
 
     // SkyLight
-    FRHITextureCubeRef         IrradianceMap;
-    FRHIUnorderedAccessViewRef IrradianceMapUAV;
-
-    FRHITextureCubeRef                 SpecularIrradianceMap;
-    TArray<FRHIUnorderedAccessViewRef> SpecularIrradianceMapUAVs;
-    TArray<FRHIUnorderedAccessView*>   WeakSpecularIrradianceMapUAVs;
+    FProxyLightProbe Skylight;
+    FProxyLightProbe LocalProbe;
 };

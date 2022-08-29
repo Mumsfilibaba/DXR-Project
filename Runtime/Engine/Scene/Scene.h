@@ -4,6 +4,8 @@
 
 #include "Lights/Light.h"
 
+#include "Reflections/LightProbe.h"
+
 #include "Renderer/MeshDrawCommand.h"
 
 #include "Core/Time/Timespan.h"
@@ -31,7 +33,7 @@ public:
      * 
      * @return: Returns the newly created actor
      */
-    class FActor* MakeActor();
+    class FActor* CreateActor();
 
     /**
      * @brief: Start game 
@@ -61,6 +63,13 @@ public:
      * @param InLight: Light to add to the scene
      */
     void AddLight(FLight* InLight);
+
+    /**
+     * @brief: Adds a light-probe into the scene
+     *
+     * @param InLightProbe: LightProbe to add to the scene
+     */
+    void AddLightProbe(FLightProbe* InLightProbe);
 
     /**
      * @brief: Function called when adding a component
@@ -103,13 +112,23 @@ public:
     }
 
     /**
-     * @brief: Retrieve all lights of the scene
+     * @brief: Retrieve all lights in the scene
      *
      * @return: Returns a reference to an array of all lights in the scene
      */
     FORCEINLINE const TArray<FLight*>& GetLights() const
     {
         return Lights;
+    }
+
+    /**
+     * @brief: Retrieve all light-probes in the scene
+     *
+     * @return: Returns a reference to an array of all light-probes in the scene
+     */
+    FORCEINLINE const TArray<FLightProbe*>& GetLightProbes() const
+    {
+        return LightProbes;
     }
 
     /**
@@ -135,9 +154,10 @@ public:
 private:
     void AddMeshComponent(class FMeshComponent* Component);
 
-    TArray<FActor*> Actors;
-    TArray<FLight*> Lights;
+    TArray<FActor*>          Actors;
+    TArray<FLight*>          Lights;
+    TArray<FLightProbe*>     LightProbes;
     TArray<FMeshDrawCommand> MeshDrawCommands;
 
-    FCamera* CurrentCamera = nullptr;
+    FCamera*                 CurrentCamera = nullptr;
 };

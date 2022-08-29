@@ -11,7 +11,7 @@ class ENGINE_API FSpotLight
 
 public:
     FSpotLight();
-    ~FSpotLight();
+    ~FSpotLight() = default;
 
     void SetConeAngle(float InConeAngle);
 

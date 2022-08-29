@@ -10,10 +10,6 @@ FSpotLight::FSpotLight()
     CORE_OBJECT_INIT();
 }
 
-FSpotLight::~FSpotLight()
-{
-}
-
 void FSpotLight::SetConeAngle(float InConeAngle)
 {
     ConeAngle = InConeAngle;

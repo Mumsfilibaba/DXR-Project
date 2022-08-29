@@ -697,13 +697,14 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, c
         CmdList.SetComputePipelineState(TiledLightPassPSO.Get());
     }
 
+    const FProxyLightProbe& Skylight = LightSetup.Skylight;
     CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 1);
     CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Material]->GetShaderResourceView(), 2);
     CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 3);
     //CmdList.SetShaderResourceView(LightPassShader, nullptr, 4); // Reflection
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.IrradianceMap->GetShaderResourceView(), 4);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 5);
+    CmdList.SetShaderResourceView(LightPassShader, Skylight.IrradianceMap->GetShaderResourceView(), 4);
+    CmdList.SetShaderResourceView(LightPassShader, Skylight.SpecularIrradianceMap->GetShaderResourceView(), 5);
     CmdList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 6);
     CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirectionalShadowMask->GetShaderResourceView(), 7);
     CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 8);
@@ -738,7 +739,7 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, c
 
     Settings.NumShadowCastingPointLights = LightSetup.ShadowCastingPointLightsData.GetSize();
     Settings.NumPointLights              = LightSetup.PointLightsData.GetSize();
-    Settings.NumSkyLightMips             = LightSetup.SpecularIrradianceMap->GetNumMips();
+    Settings.NumSkyLightMips             = Skylight.SpecularIrradianceMap->GetNumMips();
     Settings.ScreenWidth                 = FrameResources.FinalTarget->GetWidth();
     Settings.ScreenHeight                = FrameResources.FinalTarget->GetHeight();
 

@@ -19,11 +19,6 @@ void FPointLight::SetPosition(const FVector3& InPosition)
     CalculateMatrices();
 }
 
-void FPointLight::SetPosition(float x, float y, float z)
-{
-    SetPosition(FVector3(x, y, z));
-}
-
 void FPointLight::SetShadowNearPlane(float InShadowNearPlane)
 {
     if (InShadowNearPlane > 0.0f)

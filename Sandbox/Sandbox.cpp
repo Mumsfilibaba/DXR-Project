@@ -78,7 +78,7 @@ bool FSandbox::Init()
     {
         for (uint32 x = 0; x < SphereCountX; x++)
         {
-            NewActor = CurrentScene->MakeActor();
+            NewActor = CurrentScene->CreateActor();
             NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
 
             NewActor->SetName("Sphere[" + ToString(SphereIndex) + "]");
@@ -134,7 +134,7 @@ bool FSandbox::Init()
 
             const float Offset = -60.0f;
 
-            NewActor = CurrentScene->MakeActor();
+            NewActor = CurrentScene->CreateActor();
             NewActor->GetTransform().SetTranslation(PositionX, PositionY + 10.0f, Offset + PositionZ);
 
             // MovingBallComponent
@@ -165,7 +165,7 @@ bool FSandbox::Init()
     // Create Other Meshes
     FMeshData CubeMeshData = FMeshFactory::CreateCube();
 
-    NewActor = CurrentScene->MakeActor();
+    NewActor = CurrentScene->CreateActor();
 
     NewActor->SetName("Cube");
     NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
@@ -224,7 +224,7 @@ bool FSandbox::Init()
     NewComponent->Material->Initialize();
     NewActor->AddComponent(NewComponent);
 
-    NewActor = CurrentScene->MakeActor();
+    NewActor = CurrentScene->CreateActor();
 
     NewActor->SetName("Plane");
     NewActor->GetTransform().SetRotation(NMath::kHalfPI_f, 0.0f, 0.0f);
@@ -288,7 +288,7 @@ bool FSandbox::Init()
 
     for (uint32 i = 0; i < 4; i++)
     {
-        NewActor = CurrentScene->MakeActor();
+        NewActor = CurrentScene->CreateActor();
 
         NewActor->SetName("Street Light " + ToString(i));
         NewActor->GetTransform().SetUniformScale(0.25f);
@@ -320,7 +320,7 @@ bool FSandbox::Init()
 
     for (uint32 i = 0; i < 8; i++)
     {
-        NewActor = CurrentScene->MakeActor();
+        NewActor = CurrentScene->CreateActor();
 
         NewActor->SetName("Pillar " + ToString(i));
         NewActor->GetTransform().SetUniformScale(0.25f);
@@ -346,8 +346,8 @@ bool FSandbox::Init()
     const float Intensity = 50.0f;
 
     FPointLight* Light0 = dbg_new FPointLight();
-    Light0->SetPosition(16.5f, 1.0f, 0.0f);
-    Light0->SetColor(1.0f, 1.0f, 1.0f);
+    Light0->SetPosition(FVector3(16.5f, 1.0f, 0.0f));
+    Light0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light0->SetShadowBias(0.001f);
     Light0->SetMaxShadowBias(0.009f);
     Light0->SetShadowFarPlane(50.0f);
@@ -356,8 +356,8 @@ bool FSandbox::Init()
     CurrentScene->AddLight(Light0);
 
     FPointLight* Light1 = dbg_new FPointLight();
-    Light1->SetPosition(-17.5f, 1.0f, 0.0f);
-    Light1->SetColor(1.0f, 1.0f, 1.0f);
+    Light1->SetPosition(FVector3(-17.5f, 1.0f, 0.0f));
+    Light1->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light1->SetShadowBias(0.001f);
     Light1->SetMaxShadowBias(0.009f);
     Light1->SetShadowFarPlane(50.0f);
@@ -366,8 +366,8 @@ bool FSandbox::Init()
     CurrentScene->AddLight(Light1);
 
     FPointLight* Light2 = dbg_new FPointLight();
-    Light2->SetPosition(16.5f, 11.0f, 0.0f);
-    Light2->SetColor(1.0f, 1.0f, 1.0f);
+    Light2->SetPosition(FVector3(16.5f, 11.0f, 0.0f));
+    Light2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light2->SetShadowBias(0.001f);
     Light2->SetMaxShadowBias(0.009f);
     Light2->SetShadowFarPlane(50.0f);
@@ -376,8 +376,8 @@ bool FSandbox::Init()
     CurrentScene->AddLight(Light2);
 
     FPointLight* Light3 = dbg_new FPointLight();
-    Light3->SetPosition(-17.5f, 11.0f, 0.0f);
-    Light3->SetColor(1.0f, 1.0f, 1.0f);
+    Light3->SetPosition(FVector3(-17.5f, 11.0f, 0.0f));
+    Light3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light3->SetShadowBias(0.001f);
     Light3->SetMaxShadowBias(0.009f);
     Light3->SetShadowFarPlane(50.0f);
@@ -411,11 +411,15 @@ bool FSandbox::Init()
     FDirectionalLight* Light4 = dbg_new FDirectionalLight();
     Light4->SetShadowBias(0.0002f);
     Light4->SetMaxShadowBias(0.0015f);
-    Light4->SetColor(1.0f, 1.0f, 1.0f);
+    Light4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light4->SetIntensity(10.0f);
-    Light4->SetRotation(NMath::ToRadians(35.0f), NMath::ToRadians(135.0f), 0.0f);
+    Light4->SetRotation(FVector3(NMath::ToRadians(35.0f), NMath::ToRadians(135.0f), 0.0f));
     //Light4->SetRotation(0.0f, 0.0f, 0.0f);
     CurrentScene->AddLight(Light4);
+
+    FLightProbe* LightProbe = dbg_new FLightProbe();
+    LightProbe->SetPosition(FVector3(0.0f));
+    CurrentScene->AddLightProbe(LightProbe);
 
     LOG_INFO("Finished loading game");
     return true;
@@ -427,7 +431,7 @@ void FSandbox::Tick(FTimespan DeltaTime)
 
     // LOG_INFO("Tick: %f", DeltaTime.AsMilliseconds());
 
-    const float Delta = static_cast<float>(DeltaTime.AsSeconds());
+    const float Delta         = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
 
     TSharedPtr<FUser> User = FApplicationInterface::Get().GetFirstUser();

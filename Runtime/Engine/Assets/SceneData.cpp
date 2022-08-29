@@ -70,7 +70,7 @@ void FSceneData::AddToScene(FScene* Scene)
     {
         if (ModelData.Mesh.Hasdata())
         {
-            FActor* NewActor = Scene->MakeActor();
+            FActor* NewActor = Scene->CreateActor();
             NewActor->SetName(ModelData.Name.GetCString());
             NewActor->GetTransform().SetUniformScale(Scale);
 

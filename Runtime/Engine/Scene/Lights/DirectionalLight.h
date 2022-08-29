@@ -15,16 +15,13 @@ class ENGINE_API FDirectionalLight
 
 public:
     FDirectionalLight();
-    ~FDirectionalLight();
-
-    void UpdateCascades(class FCamera& Camera);
+    ~FDirectionalLight() = default;
 
     // Rotation in Radians
     void SetRotation(const FVector3& InRotation);
-    void SetRotation(float x, float y, float z);
-
     void SetLookAt(const FVector3& InInLookAt);
-    void SetLookAt(float x, float y, float z);
+    
+    void UpdateCascades(class FCamera& Camera);
 
     FORCEINLINE void SetCascadeSplitLambda(float InCascadeSplitLambda)
     {

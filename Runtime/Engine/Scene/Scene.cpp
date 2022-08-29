@@ -34,7 +34,7 @@ FScene::~FScene()
     SAFE_DELETE(CurrentCamera);
 }
 
-FActor* FScene::MakeActor()
+FActor* FScene::CreateActor()
 {
     FActor* NewActor = dbg_new FActor(this);
     AddActor(NewActor);
@@ -91,6 +91,12 @@ void FScene::AddLight(FLight* InLight)
     Lights.Emplace(InLight);
 }
 
+void FScene::AddLightProbe(FLightProbe* InLightProbe)
+{
+    Check(InLightProbe != nullptr);
+    LightProbes.Emplace(InLightProbe);
+}
+
 void FScene::OnAddedComponent(FComponent* NewComponent)
 {
     FMeshComponent* Component = Cast<FMeshComponent>(NewComponent);
@@ -104,10 +110,10 @@ void FScene::AddMeshComponent(FMeshComponent* Component)
 {
     FMeshDrawCommand Command;
     Command.CurrentActor = Component->GetActor();
-    Command.Geometry = Component->Mesh->RTGeometry.Get();
+    Command.Geometry     = Component->Mesh->RTGeometry.Get();
     Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();
-    Command.IndexBuffer = Component->Mesh->IndexBuffer.Get();
-    Command.Material = Component->Material.Get();
-    Command.Mesh = Component->Mesh.Get();
+    Command.IndexBuffer  = Component->Mesh->IndexBuffer.Get();
+    Command.Material     = Component->Material.Get();
+    Command.Mesh         = Component->Mesh.Get();
     MeshDrawCommands.Push(Command);
 }

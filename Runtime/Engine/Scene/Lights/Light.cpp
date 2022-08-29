@@ -18,11 +18,6 @@ void FLight::SetColor(const FVector3& InColor)
     Color = InColor;
 }
 
-void FLight::SetColor(float R, float G, float B)
-{
-    Color = FVector3(R, G, B);
-}
-
 void FLight::SetIntensity(float InIntensity)
 {
     Intensity = InIntensity;

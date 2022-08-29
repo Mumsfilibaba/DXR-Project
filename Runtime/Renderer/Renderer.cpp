@@ -709,11 +709,11 @@ void FRenderer::Tick(const FScene& Scene)
             EResourceAccess::Present, 
             EResourceAccess::RenderTarget);
         CommandList.TransitionTexture(
-            LightSetup.IrradianceMap.Get(), 
+            LightSetup.Skylight.IrradianceMap.Get(), 
             EResourceAccess::PixelShaderResource, 
             EResourceAccess::NonPixelShaderResource);
         CommandList.TransitionTexture(
-            LightSetup.SpecularIrradianceMap.Get(), 
+            LightSetup.Skylight.SpecularIrradianceMap.Get(),
             EResourceAccess::PixelShaderResource, 
             EResourceAccess::NonPixelShaderResource);
         CommandList.TransitionTexture(
@@ -773,11 +773,11 @@ void FRenderer::Tick(const FScene& Scene)
         EResourceAccess::NonPixelShaderResource);
 
     CommandList.TransitionTexture(
-        LightSetup.IrradianceMap.Get(), 
+        LightSetup.Skylight.IrradianceMap.Get(),
         EResourceAccess::NonPixelShaderResource, 
         EResourceAccess::PixelShaderResource);
     CommandList.TransitionTexture(
-        LightSetup.SpecularIrradianceMap.Get(), 
+        LightSetup.Skylight.SpecularIrradianceMap.Get(),
         EResourceAccess::NonPixelShaderResource, 
         EResourceAccess::PixelShaderResource);
     CommandList.TransitionTexture(

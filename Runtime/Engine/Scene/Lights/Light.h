@@ -16,8 +16,6 @@ public:
     virtual ~FLight() = default;
 
     void SetColor(const FVector3& InColor);
-    void SetColor(float r, float g, float b);
-
     void SetIntensity(float InIntensity);
 
     FORCEINLINE void SetShadowBias(float InShadowBias)
@@ -62,9 +60,9 @@ public:
 
 protected:
     FVector3 Color;
-    float Intensity = 1.0f;
-    float ShadowNearPlane;
-    float ShadowFarPlane;
-    float ShadowBias;
-    float MaxShadowBias;
+    float    Intensity = 1.0f;
+    float    ShadowNearPlane;
+    float    ShadowFarPlane;
+    float    ShadowBias;
+    float    MaxShadowBias;
 };

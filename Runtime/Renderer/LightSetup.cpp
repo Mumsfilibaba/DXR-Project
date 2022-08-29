@@ -316,15 +316,8 @@ void FLightSetup::Release()
         ShadowMap.Reset();
     }
 
-    IrradianceMap.Reset();
-    IrradianceMapUAV.Reset();
-
-    SpecularIrradianceMap.Reset();
-
-    for (auto& UAV : SpecularIrradianceMapUAVs)
-    {
-        UAV.Reset();
-    }
+    Skylight.Release();
+    LocalProbe.Release();
 
     CascadeMatrixBuffer.Reset();
     CascadeMatrixBufferSRV.Reset();

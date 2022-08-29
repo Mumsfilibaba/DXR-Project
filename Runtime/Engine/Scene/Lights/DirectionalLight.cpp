@@ -12,7 +12,7 @@
 TAutoConsoleVariable<float> GSunSize("Scene.Lightning.Sun.Size", 0.5f);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// DirectionalLight
+// FDirectionalLight
 
 FDirectionalLight::FDirectionalLight()
     : FLight()
@@ -40,11 +40,6 @@ FDirectionalLight::FDirectionalLight()
         ViewMatrices[i].SetIdentity();
         ProjectionMatrices[i].SetIdentity();
     }
-}
-
-FDirectionalLight::~FDirectionalLight()
-{
-    // Empty for now
 }
 
 void FDirectionalLight::UpdateCascades(FCamera& Camera)
@@ -204,17 +199,7 @@ void FDirectionalLight::SetRotation(const FVector3& InRotation)
     Rotation = InRotation;
 }
 
-void FDirectionalLight::SetRotation(float x, float y, float z)
-{
-    SetRotation(FVector3(x, y, z));
-}
-
 void FDirectionalLight::SetLookAt(const FVector3& InLookAt)
 {
     LookAt = InLookAt;
-}
-
-void FDirectionalLight::SetLookAt(float x, float y, float z)
-{
-    SetLookAt(FVector3(x, y, z));
 }

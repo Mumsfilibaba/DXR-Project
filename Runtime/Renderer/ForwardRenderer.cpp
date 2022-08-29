@@ -145,8 +145,9 @@ void FForwardRenderer::Render(FRHICommandList& CmdList, const FFrameResources& F
     CmdList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 2);
     CmdList.SetConstantBuffer(PShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 3);
 
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.IrradianceMap->GetShaderResourceView(), 0);
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 1);
+    const FProxyLightProbe& Skylight = LightSetup.Skylight;
+    CmdList.SetShaderResourceView(PShader.Get(), Skylight.IrradianceMap->GetShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(PShader.Get(), Skylight.SpecularIrradianceMap->GetShaderResourceView(), 1);
     CmdList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
     //TODO: Fix directional-light shadows
     //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
