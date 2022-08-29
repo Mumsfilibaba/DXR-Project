@@ -233,7 +233,7 @@ bool FSandbox::Init()
 
     MatProperties.AO           = 1.0f;
     MatProperties.Metallic     = 1.0f;
-    MatProperties.Roughness    = 0.2f;
+    MatProperties.Roughness    = 0.0f;
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo       = FVector3(1.0f);
 
@@ -273,11 +273,12 @@ bool FSandbox::Init()
         MetallicMap->SetName("MetallicMap");
     }
 
+    MatProperties.Albedo       = FVector3(1.0f);
     MatProperties.AO           = 1.0f;
     MatProperties.Metallic     = 1.0f;
     MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo       = FVector3(1.0f, 1.0f, 1.0f);
+    MatProperties.EnableMask   = 0;
 
     FSceneData StreetLightData;
     FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"), StreetLightData);

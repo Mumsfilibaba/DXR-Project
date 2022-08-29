@@ -32,7 +32,7 @@ TAutoConsoleVariable<bool> GFXAADebug("Renderer.Debug.FXAADebug", false);
 TAutoConsoleVariable<bool> GEnableVariableRateShading("Renderer.Feature.VariableRateShading", false);
 
 TAutoConsoleVariable<bool> GPrePassEnabled("Renderer.Feature.PrePass", true);
-TAutoConsoleVariable<bool> GDrawAABBs("Renderer.Debug.DrawAABBs", true);
+TAutoConsoleVariable<bool> GDrawAABBs("Renderer.Debug.DrawAABBs", false);
 TAutoConsoleVariable<bool> GDrawPointLights("Renderer.Debug.DrawPointLights", false);
 TAutoConsoleVariable<bool> GVSyncEnabled("Renderer.Feature.VerticalSync", false);
 TAutoConsoleVariable<bool> GFrustumCullEnabled("Renderer.Feature.FrustumCulling", true);

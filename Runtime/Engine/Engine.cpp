@@ -74,7 +74,7 @@ bool FEngine::Initialize()
     Application.RegisterUser(User);
 
     // Create standard textures
-    uint8 Pixels[] = { 255, 255, 255, 255 };
+    uint8 Pixels[4] = { 255, 255, 255, 255 };
 
     BaseTexture = FTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
     if (!BaseTexture)
