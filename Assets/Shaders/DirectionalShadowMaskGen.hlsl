@@ -38,8 +38,8 @@ SamplerState Sampler : register(s0);
 #define ENABLE_PCSS    (0)
 #define BLEND_CASCADES (0)
 #define CASCADE_FADING (0.1f)
-#define PCF_RADIUS     (0.002f)
-#define ROTATE_SAMPLES (0)
+#define PCF_RADIUS     (0.001f)
+#define ROTATE_SAMPLES (1)
 
  /** @brief: Shadow Helpers */
 
@@ -204,8 +204,8 @@ void Main(FComputeShaderInput Input)
 
     const float2 TexCoord      = (float2(Pixel) + Float2(0.5f)) / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
     const float  Depth         = DepthTex.Load(int3(Pixel, 0)); 
-    const float3 ViewPosition  = PositionFromDepth(Depth, TexCoord, CameraBuffer.ProjectionInverse);
-    const float3 WorldPosition = mul(float4(ViewPosition, 1.0f), CameraBuffer.ViewInverse).xyz;
+    const float  ViewPosZ      = Depth_ProjToView(Depth, CameraBuffer.ProjectionInverse);
+    const float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
 
     // Calcualte shadow bias based on the normal and light directions 
     float3 N = UnpackNormal(GBufferNormal);
@@ -215,10 +215,10 @@ void Main(FComputeShaderInput Input)
     
     // Calculate the current cascade
     uint CascadeIndex = 0;
-    for (int Index = 0; Index < NUM_SHADOW_CASCADES; Index++)
+    for (int Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
     {
-        float CurrentSplit = ShadowSplitsBuffer[Index].Split;
-        if (ViewPosition.z < CurrentSplit)
+        const float CurrentSplit = ShadowSplitsBuffer[Index].Split;
+        if (ViewPosZ < CurrentSplit)
         {
             CascadeIndex = Index;
             break;
@@ -231,9 +231,9 @@ void Main(FComputeShaderInput Input)
     float ShadowAmount = 0.0f;
 
 #if BLEND_CASCADES
-    float Cascade0 = smoothstep(ShadowSplitsBuffer[0].Split + (CASCADE_FADING * 0.5f), ShadowSplitsBuffer[0].Split - (CASCADE_FADING * 0.5f), ViewPosition.z);
-    float Cascade1 = smoothstep(ShadowSplitsBuffer[1].Split + (CASCADE_FADING * 0.5f), ShadowSplitsBuffer[1].Split - (CASCADE_FADING * 0.5f), ViewPosition.z);
-    float Cascade2 = smoothstep(ShadowSplitsBuffer[2].Split + (CASCADE_FADING * 0.5f), ShadowSplitsBuffer[2].Split - (CASCADE_FADING * 0.5f), ViewPosition.z);
+    float Cascade0 = smoothstep(ShadowSplitsBuffer[0].Split + (CASCADE_FADING * 0.5f), ShadowSplitsBuffer[0].Split - (CASCADE_FADING * 0.5f), ViewPosZ);
+    float Cascade1 = smoothstep(ShadowSplitsBuffer[1].Split + (CASCADE_FADING * 0.5f), ShadowSplitsBuffer[1].Split - (CASCADE_FADING * 0.5f), ViewPosZ);
+    float Cascade2 = smoothstep(ShadowSplitsBuffer[2].Split + (CASCADE_FADING * 0.5f), ShadowSplitsBuffer[2].Split - (CASCADE_FADING * 0.5f), ViewPosZ);
 
     if (Cascade0 > 0.0f && Cascade0 < 1.0f)
     {

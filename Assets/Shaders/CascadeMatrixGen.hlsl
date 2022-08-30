@@ -94,8 +94,7 @@ void Main(FComputeShaderInput Input)
     }
     FrustumCenter /= 8.0f;
 
-    float ViewSplit = SplitDist * Range;
-    float Radius    = 0.0f;
+    float Radius = 0.0f;
     {
         for (int j = 0; j < 8; j++)
         {
