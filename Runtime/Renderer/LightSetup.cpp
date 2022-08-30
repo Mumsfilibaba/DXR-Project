@@ -171,8 +171,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
             //DirectionalLightData.NearPlane = CurrentLight->GetShadowNearPlane();
             //DirectionalLightData.FarPlane  = CurrentLight->GetShadowFarPlane();
             DirectionalLightData.LightSize = CurrentLight->GetSize();
-
-            CascadeSplitLambda = CurrentLight->GetCascadeSplitLambda();
+            CascadeSplitLambda             = CurrentLight->GetCascadeSplitLambda();
 
             DirectionalLightDataDirty = true;
         }

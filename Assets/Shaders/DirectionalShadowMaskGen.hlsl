@@ -36,8 +36,8 @@ SamplerState Sampler : register(s0);
 
 // Cascaded Shadow Mapping
 #define ENABLE_PCSS    (0)
-#define BLEND_CASCADES (1)
-#define CASCADE_FADING (0.2f)
+#define BLEND_CASCADES (0)
+#define CASCADE_FADING (0.1f)
 #define PCF_RADIUS     (0.002f)
 #define ROTATE_SAMPLES (0)
 
@@ -193,18 +193,7 @@ float PCSSDirectionalLight(in Texture2D<float> ShadowMap, uint CascadeIndex, flo
 void Main(FComputeShaderInput Input)
 {
     const uint2 Pixel = Input.DispatchThreadID.xy;
-    
-    uint Width;
-    uint Height;
-    Output.GetDimensions(Width, Height);
-    
-    const float2 TexCoord = float2(Pixel) / float2(Width, Height);
-    
-    const float Depth = DepthTex.Load(int3(Pixel, 0));
-    
-    const float3 ViewPosition  = PositionFromDepth(Depth, TexCoord, CameraBuffer.ProjectionInverse);
-    const float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
-
+   
     // Discard pixels not rendered to the GBuffer
     float3 GBufferNormal = NormalTex.Load(int3(Pixel, 0)).rgb;
     if (length(GBufferNormal) == 0)
@@ -212,12 +201,17 @@ void Main(FComputeShaderInput Input)
         Output[Pixel] = 1.0f;
         return;
     }
-    
+
+    const float2 TexCoord      = (float2(Pixel) + Float2(0.5f)) / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
+    const float  Depth         = DepthTex.Load(int3(Pixel, 0)); 
+    const float3 ViewPosition  = PositionFromDepth(Depth, TexCoord, CameraBuffer.ProjectionInverse);
+    const float3 WorldPosition = mul(float4(ViewPosition, 1.0f), CameraBuffer.ViewInverse).xyz;
+
     // Calcualte shadow bias based on the normal and light directions 
     float3 N = UnpackNormal(GBufferNormal);
     float3 L = normalize(-LightBuffer.Direction);
 
-    float ShadowBias = max(LightBuffer.MaxShadowBias * (1.0f - (max(dot(N, L), 0.0f))), LightBuffer.ShadowBias);
+    float ShadowBias = max(LightBuffer.MaxShadowBias * (1.0f - (max(dot(N, L), 0.0f))), LightBuffer.ShadowBias) + 0.0001f;
     
     // Calculate the current cascade
     uint CascadeIndex = 0;
@@ -232,7 +226,7 @@ void Main(FComputeShaderInput Input)
     }
     
     // Random Seed when doing soft shadows 
-    uint RandomSeed = InitRandom(Pixel, Width, 0);    
+    uint RandomSeed = InitRandom(Pixel, CameraBuffer.ViewportWidth, 0);    
     // Calculate shadow factor
     float ShadowAmount = 0.0f;
 

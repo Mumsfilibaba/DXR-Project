@@ -20,18 +20,10 @@ public:
     // Rotation in Radians
     void SetRotation(const FVector3& InRotation);
     void SetLookAt(const FVector3& InInLookAt);
-    
+    void SetCascadeSplitLambda(float InCascadeSplitLambda);
+    void SetSize(float InSize);
+
     void UpdateCascades(class FCamera& Camera);
-
-    FORCEINLINE void SetCascadeSplitLambda(float InCascadeSplitLambda)
-    {
-        CascadeSplitLambda = InCascadeSplitLambda;
-    }
-
-    FORCEINLINE void SetSize(float InSize)
-    {
-        Size = InSize;
-    }
 
     FORCEINLINE const FVector3& GetDirection() const
     {
@@ -111,6 +103,5 @@ private:
     float CascadeRadius[NUM_SHADOW_CASCADES];
 
     float CascadeSplitLambda = 0.8f;
-
-    float Size = 0.05f;
+    float Size               = 0.05f;
 };

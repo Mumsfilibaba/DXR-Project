@@ -219,12 +219,20 @@ void Main(FComputeShaderInput Input)
     
     GroupMemoryBarrierWithGroupSync();
     
-    const float2 TexCoordFloat   = saturate((float2(TexCoord) + Float2(0.5f)) / float2(ScreenWidth, ScreenHeight));
-    const float3 WorldPosition   = PositionFromDepth(Depth, TexCoordFloat, CameraBuffer.ViewProjectionInverse);
-    const float3 ViewPosition    = PositionFromDepth(Depth, TexCoordFloat, CameraBuffer.ProjectionInverse);
+    // Discard pixels not rendered to the GBuffer
+    const float3 GBufferNormal = NormalTex.Load(int3(TexCoord, 0)).rgb;
+    if (length(GBufferNormal) == 0)
+    {
+        Output[TexCoord] = Float4(0.0f);
+        return;
+    }
+
+    const float2 TexCoordFloat = saturate((float2(TexCoord) + Float2(0.5f)) / float2(ScreenWidth, ScreenHeight));
+    const float3 ViewPosition  = PositionFromDepth(Depth, TexCoordFloat, CameraBuffer.ProjectionInverse);
+    const float3 WorldPosition = mul(float4(ViewPosition, 1.0f), CameraBuffer.ViewInverse).xyz;
+
     const float3 GBufferAlbedo   = saturate(AlbedoTex.Load(int3(TexCoord, 0)).rgb);
     const float3 GBufferMaterial = MaterialTex.Load(int3(TexCoord, 0)).rgb;
-    const float3 GBufferNormal   = NormalTex.Load(int3(TexCoord, 0)).rgb;
     const float  ScreenSpaceAO   = SSAO.Load(int3(TexCoord, 0)).r;
     
     const float3 ObjectNormal = UnpackNormal(GBufferNormal);

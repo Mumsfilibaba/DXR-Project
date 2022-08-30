@@ -78,7 +78,12 @@ struct FCascadeSplit
     float  Split;
     
     float3 MaxExtent;
+    float  NearPlane;
+
     float  FarPlane;
+    float  Padding0;
+    float  Padding1;
+    float  Padding2;
 };
 
 struct FCascadeGenerationInfo

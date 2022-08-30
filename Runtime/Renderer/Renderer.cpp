@@ -446,12 +446,6 @@ void FRenderer::Tick(const FScene& Scene)
 
     LightSetup.BeginFrame(CommandList, Scene);
 
-    // Initialize point light task
-    ShadowMapRenderer.RenderPointLightShadows(CommandList, LightSetup, Scene);
-
-    // Initialize directional light task
-    ShadowMapRenderer.RenderDirectionalLightShadows(CommandList, LightSetup, Resources, Scene);
-
     // Perform frustum culling
     Resources.DeferredVisibleCommands.Clear();
     Resources.ForwardVisibleCommands.Clear();
@@ -569,6 +563,12 @@ void FRenderer::Tick(const FScene& Scene)
     {
         DeferredRenderer.RenderPrePass(CommandList, Resources, Scene);
     }
+
+    // Point Lights
+    ShadowMapRenderer.RenderPointLightShadows(CommandList, LightSetup, Scene);
+
+    // Directional Light
+    ShadowMapRenderer.RenderDirectionalLightShadows(CommandList, LightSetup, Resources, Scene);
 
 #if 0
     if (ShadingImage && GEnableVariableRateShading.GetBool())

@@ -2,8 +2,9 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 
-#define THREAD_COUNT       (16)
-#define TOTAL_THREAD_COUNT (THREAD_COUNT * THREAD_COUNT)
+#define NUM_THREADS       (16)
+#define NUM_THREADS_TOTAL (NUM_THREADS * NUM_THREADS)
+#define REVERSED_DEPTH    (0)
 
 // Handles first reduction
 Texture2D<float>  DepthBuffer : register(t0);
@@ -18,20 +19,22 @@ cbuffer Constants : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
     float    FarPlane;
 };
 
-groupshared float GroupMinZ[TOTAL_THREAD_COUNT];
-groupshared float GroupMaxZ[TOTAL_THREAD_COUNT];
+groupshared float GroupMinZ[NUM_THREADS_TOTAL];
+groupshared float GroupMaxZ[NUM_THREADS_TOTAL];
 
-[numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
+[numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void ReductionMainInital(FComputeShaderInput Input)
-{
-    uint Width;
-    uint Height;
-    DepthBuffer.GetDimensions(Width, Height);
+{  
+    // Retrieve thread indicies
+    uint2 TextureSize;
+    DepthBuffer.GetDimensions(TextureSize.x, TextureSize.y);
     
-    uint2 TexCoords = min(Input.DispatchThreadID.xy, uint2(Width - 1, Height - 1));
-    
-    uint GroupThreadIndex = Input.GroupThreadID.y * THREAD_COUNT + Input.GroupThreadID.x;
+    uint2 TexCoords = Input.GroupID.xy * NUM_THREADS + Input.GroupThreadID.xy;
+    TexCoords = min(TexCoords, TextureSize - 1);
+
+    const uint GroupThreadIndex = Input.GroupIndex;
    
+    // Start reduction
     float4x4 Projection = transpose(CamProjection);
     
     float MinDepth = 1.0f;
@@ -53,9 +56,10 @@ void ReductionMainInital(FComputeShaderInput Input)
     GroupMemoryBarrierWithGroupSync();
     
     // Parallel reduction
-    for (uint i = TOTAL_THREAD_COUNT / 2; i > 0; i >>= 1)
+	[unroll]
+	for(uint i = NUM_THREADS_TOTAL / 2; i > 0; i >>= 1)
     {
-        if (GroupThreadIndex < i)
+        if (NUM_THREADS_TOTAL < i)
         {
             GroupMinZ[GroupThreadIndex] = min(GroupMinZ[GroupThreadIndex], GroupMinZ[GroupThreadIndex + i]);
             GroupMaxZ[GroupThreadIndex] = max(GroupMaxZ[GroupThreadIndex], GroupMaxZ[GroupThreadIndex + i]);
@@ -71,30 +75,32 @@ void ReductionMainInital(FComputeShaderInput Input)
 }
 
 // Handles the rest of the Reductions
-[numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
+[numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void ReductionMain(FComputeShaderInput Input)
 {
-    uint Width;
-    uint Height;
-    InputMinMax.GetDimensions(Width, Height);
+        // Retrieve thread indicies
+    uint2 TextureSize;
+    InputMinMax.GetDimensions(TextureSize.x, TextureSize.y);
     
-    uint2 TexCoords = min(Input.DispatchThreadID.xy, uint2(Width - 1, Height - 1));
+    uint2 TexCoords = Input.GroupID.xy * NUM_THREADS + Input.GroupThreadID.xy;
+    TexCoords = min(TexCoords, TextureSize - 1);
+
+    const uint GroupThreadIndex = Input.GroupIndex;
     
-    uint GroupThreadIndex = Input.GroupThreadID.y * THREAD_COUNT + Input.GroupThreadID.x;
-    
+    // Start reduction
     float2 MinMaxSample = InputMinMax[TexCoords];
     if (MinMaxSample.x == 0.0f)
     {
         MinMaxSample.x = 1.0f;
     }
-    
+
     GroupMinZ[GroupThreadIndex] = MinMaxSample.x;
     GroupMaxZ[GroupThreadIndex] = MinMaxSample.y;
     
     GroupMemoryBarrierWithGroupSync();
     
     // Parallel Reduction
-    for (uint i = TOTAL_THREAD_COUNT / 2; i > 0; i >>= 1)
+    for (uint i = NUM_THREADS_TOTAL / 2; i > 0; i >>= 1)
     {
         if (GroupThreadIndex < i)
         {

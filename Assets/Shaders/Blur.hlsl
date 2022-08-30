@@ -11,7 +11,7 @@ cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 #define NUM_THREADS (16)
 #define KERNEL_SIZE (5)
 
-groupshared float gTextureCache[NUM_THREADS][NUM_THREADS];
+groupshared float GTextureCache[NUM_THREADS][NUM_THREADS];
 
 static const int2 MAX_SIZE = int2(NUM_THREADS - 1, NUM_THREADS - 1);
 
@@ -31,7 +31,7 @@ void Main(FComputeShaderInput Input)
     
     // Cache texture fetches
     const int2 GroupThreadID = int2(Input.GroupThreadID.xy);
-    gTextureCache[GroupThreadID.x][GroupThreadID.y] = Texture[TexCoords];
+    GTextureCache[GroupThreadID.x][GroupThreadID.y] = Texture[TexCoords];
     
     GroupMemoryBarrierWithGroupSync();
     
@@ -49,10 +49,10 @@ void Main(FComputeShaderInput Input)
         // TODO: Handle when we need to sample outside the tile
 #ifdef HORIZONTAL_PASS
         const int CurrentTexCoord = max(0, min(MAX_SIZE.x, GroupThreadID.x + Offset));
-        Result += gTextureCache[CurrentTexCoord][GroupThreadID.y] * Weight;
+        Result += GTextureCache[CurrentTexCoord][GroupThreadID.y] * Weight;
 #else
         const int CurrentTexCoord = max(0, min(MAX_SIZE.y, GroupThreadID.y + Offset));
-        Result += gTextureCache[GroupThreadID.x][CurrentTexCoord] * Weight;
+        Result += GTextureCache[GroupThreadID.x][CurrentTexCoord] * Weight;
 #endif
     }
     

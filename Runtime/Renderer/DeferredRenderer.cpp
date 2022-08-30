@@ -80,6 +80,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         FRHIDepthStencilStateInitializer DepthStencilInitializer;
         DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
         DepthStencilInitializer.bDepthEnable   = true;
+        // TODO: We should use zero here, but alpha-masks are not rendered in pre-pass right now
         DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::All;
 
         FRHIDepthStencilStateRef GeometryDepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);

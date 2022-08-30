@@ -55,6 +55,16 @@ public:
     // This means that one can call BindShaderResourceViews directly with this function
     FRHIShaderResourceView* const* GetShaderResourceViews() const;
 
+    FORCEINLINE bool HasAlphaMask() const
+    {
+        return AlphaMask && Properties.EnableMask;
+    }
+
+    FORCEINLINE bool HasHeightMap() const
+    {
+        return HeightMap && Properties.EnableHeight;
+    }
+
     FORCEINLINE FRHISamplerState* GetMaterialSampler() const
     {
         return Sampler.Get();
@@ -75,15 +85,6 @@ public:
         return bRenderInForwardPass;
     }
 
-    FORCEINLINE bool HasAlphaMask() const
-    {
-        return AlphaMask;
-    }
-
-    FORCEINLINE bool HasHeightMap() const
-    {
-        return HeightMap;
-    }
 
     FORCEINLINE const FMaterialDesc& GetMaterialProperties() const
     {

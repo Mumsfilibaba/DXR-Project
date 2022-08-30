@@ -39,7 +39,12 @@ struct FCascadeSplits
     FVector3 MinExtent;
     float    Split;
     FVector3 MaxExtent;
+    float    NearPlane;
+
     float    FarPlane;
+    float    Padding0;
+    float    Padding1;
+    float    Padding2;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeSplits);

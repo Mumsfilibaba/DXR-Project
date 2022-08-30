@@ -10,6 +10,7 @@
 // Console-variables
 
 TAutoConsoleVariable<float> GSunSize("Scene.Lightning.Sun.Size", 0.5f);
+TAutoConsoleVariable<float> GCascadeSplitLambda("Scene.Lightning.CascadeSplitLambda", 0.8f);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FDirectionalLight
@@ -30,7 +31,16 @@ FDirectionalLight::FDirectionalLight()
         if (SunLight && SunLight->IsFloat())
         {
             const float NewSize = NMath::Clamp(0.0f, 1.0f, SunLight->GetFloat());
-            this->SetSize(NewSize);
+            this->Size = NewSize;
+        }
+    });
+
+    GCascadeSplitLambda.GetChangedDelegate().AddLambda([this](IConsoleVariable* CascadeSplitLambda)
+    {
+        if (CascadeSplitLambda && CascadeSplitLambda->IsFloat())
+        {
+            const float NewLambda = NMath::Clamp(0.0f, 1.0f, CascadeSplitLambda->GetFloat());
+            this->CascadeSplitLambda = NewLambda;
         }
     });
 
@@ -170,14 +180,14 @@ void FDirectionalLight::UpdateCascades(FCamera& Camera)
         //XMStoreFloat4(&Center, XmCenter);
 
         FVector3 CascadePosition = FVector3(Center.x, Center.y, Center.z) - (Direction * Radius * 6.0f);
-        FVector3 EyePosition = CascadePosition;
-        FVector3 LookPosition = FVector3(Center.x, Center.y, Center.z);
+        FVector3 EyePosition     = CascadePosition;
+        FVector3 LookPosition    = FVector3(Center.x, Center.y, Center.z);
 
-        FMatrix4 View = FMatrix4::LookAt(EyePosition, LookPosition, Up);
-        FMatrix4 Projection = FMatrix4::OrtographicProjection(-Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f);
-        ViewMatrices[i] = View.Transpose();
+        FMatrix4 View         = FMatrix4::LookAt(EyePosition, LookPosition, Up);
+        FMatrix4 Projection   = FMatrix4::OrtographicProjection(-Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f);
+        ViewMatrices[i]       = View.Transpose();
         ProjectionMatrices[i] = Projection.Transpose();
-        Matrices[i] = (View * Projection).Transpose();
+        Matrices[i]           = (View * Projection).Transpose();
 
         LastSplitDist = SplitDist;
 
@@ -202,4 +212,16 @@ void FDirectionalLight::SetRotation(const FVector3& InRotation)
 void FDirectionalLight::SetLookAt(const FVector3& InLookAt)
 {
     LookAt = InLookAt;
+}
+
+void FDirectionalLight::SetCascadeSplitLambda(float InCascadeSplitLambda)
+{
+    CascadeSplitLambda = InCascadeSplitLambda;
+    GCascadeSplitLambda.SetFloat(InCascadeSplitLambda);
+}
+
+void FDirectionalLight::SetSize(float InSize)
+{
+    Size = InSize;
+    GSunSize.SetFloat(InSize);
 }

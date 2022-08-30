@@ -114,8 +114,8 @@ float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInvers
     float y = (1.0f - TexCoord.y) * 2.0f - 1.0f;
 
     float4 ProjectedPos  = float4(x, y, z, 1.0f);
-    float4 FinalPosition = mul(ProjectedPos, ProjectionInverse);
     
+    float4 FinalPosition = mul(ProjectedPos, ProjectionInverse);  
     return FinalPosition.xyz / FinalPosition.w;
 }
 
