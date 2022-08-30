@@ -53,10 +53,10 @@ void FRenderTargetDebugWindow::Tick()
             // Draw Image (Clamped to the window size)
             if (!DebugTextures.IsEmpty())
             {
-                if (FDrawableImage* CurrImage = &DebugTextures[ImageIndex])
+                if (FDrawableTexture* CurrImage = &DebugTextures[ImageIndex])
                 {
-                    const float TexWidth       = float(CurrImage->Image->GetWidth());
-                    const float TexHeight      = float(CurrImage->Image->GetHeight());
+                    const float TexWidth       = float(CurrImage->Texture->GetWidth());
+                    const float TexHeight      = float(CurrImage->Texture->GetHeight());
                     const float AspectRatio    = TexHeight / TexWidth;
                     const float InvAspectRatio = TexWidth / TexHeight;
 
@@ -82,6 +82,7 @@ void FRenderTargetDebugWindow::Tick()
                         ImGui::SetCursorPos(NewPosition);
                     }
 
+                    CurrImage->bSamplerLinear = false;
                     ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
                 }
             }
@@ -116,9 +117,9 @@ void FRenderTargetDebugWindow::Tick()
                     constexpr float MenuImageSize = 96.0f;
                     constexpr int32 FramePadding  = 0;
 
-                    FDrawableImage* CurrImage = &DebugTextures[Index];
+                    FDrawableTexture* CurrImage = &DebugTextures[Index];
 
-                    const float ImageRatio = float(CurrImage->Image->GetWidth()) / float(CurrImage->Image->GetHeight());
+                    const float ImageRatio = float(CurrImage->Texture->GetWidth()) / float(CurrImage->Texture->GetHeight());
                     ImVec2 Size    = ImVec2(MenuImageSize * ImageRatio, MenuImageSize);
                     ImVec2 Uv0     = ImVec2(0.0f, 0.0f);
                     ImVec2 Uv1     = ImVec2(1.0f, 1.0f);
@@ -137,7 +138,7 @@ void FRenderTargetDebugWindow::Tick()
 
                     if (ImGui::IsItemHovered())
                     {
-                        ImGui::SetTooltip("%s", CurrImage->Image->GetName().GetCString());
+                        ImGui::SetTooltip("%s", CurrImage->Texture->GetName().GetCString());
                     }
 
                     ImGui::Separator();

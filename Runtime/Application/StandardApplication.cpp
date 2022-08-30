@@ -27,10 +27,10 @@ FStandardApplication::FStandardApplication(const TSharedPtr<FGenericApplication>
 
 FStandardApplication::~FStandardApplication()
 {
-	if (Context)
-	{
-		ImGui::DestroyContext(Context);
-	}
+    if (Context)
+    {
+        ImGui::DestroyContext(Context);
+    }
 }
 
 bool FStandardApplication::CreateContext()
@@ -84,7 +84,7 @@ bool FStandardApplication::CreateContext()
     // Use AA for lines etc.
     Style.AntiAliasedLines       = true;
     Style.AntiAliasedFill        = true;
-    Style.AntiAliasedLinesUseTex = true;
+    // Style.AntiAliasedLinesUseTex = true;
 
     // Size
     Style.WindowBorderSize = 0.0f;

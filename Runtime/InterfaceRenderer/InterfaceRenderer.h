@@ -34,13 +34,16 @@ private:
     FInterfaceRenderer() = default;
     ~FInterfaceRenderer() = default;
 
-    TArray<FDrawableImage*> RenderedImages;
+    TArray<FDrawableTexture*> RenderedImages;
 
     FRHITexture2DRef             FontTexture;
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIGraphicsPipelineStateRef PipelineStateNoBlending;
     FRHIPixelShaderRef           PShader;
+    
     FRHIVertexBufferRef          VertexBuffer;
     FRHIIndexBufferRef           IndexBuffer;
+
+    FRHISamplerStateRef          LinearSampler;
     FRHISamplerStateRef          PointSampler;
 };

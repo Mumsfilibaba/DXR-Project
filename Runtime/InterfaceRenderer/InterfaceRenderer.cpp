@@ -245,6 +245,14 @@ bool FInterfaceRenderer::InitContext(InterfaceContext Context)
     SamplerInitializer.AddressW = ESamplerMode::Clamp;
     SamplerInitializer.Filter   = ESamplerFilter::MinMagMipLinear;
 
+    LinearSampler = RHICreateSamplerState(SamplerInitializer);
+    if (!LinearSampler)
+    {
+        return false;
+    }
+
+    SamplerInitializer.Filter = ESamplerFilter::MinMagMipPoint;
+
     PointSampler = RHICreateSamplerState(SamplerInitializer);
     if (!PointSampler)
     {
@@ -318,8 +326,6 @@ void FInterfaceRenderer::Render(FRHICommandList& CmdList)
     CmdList.TransitionBuffer(VertexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
     CmdList.TransitionBuffer(IndexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
 
-    CmdList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
-
     int32  GlobalVertexOffset = 0;
     int32  GlobalIndexOffset  = 0;
     ImVec2 ClipOff = DrawData->DisplayPos;
@@ -333,26 +339,44 @@ void FInterfaceRenderer::Render(FRHICommandList& CmdList)
             const ImDrawCmd* Cmd = &DrawCmdList->CmdBuffer[CmdIndex];
             if (Cmd->TextureId)
             {
-                FDrawableImage* Image = reinterpret_cast<FDrawableImage*>(Cmd->TextureId);
-                RenderedImages.Emplace(Image);
+                FDrawableTexture* DrawableTexture = reinterpret_cast<FDrawableTexture*>(Cmd->TextureId);
+                RenderedImages.Emplace(DrawableTexture);
 
-                if (Image->BeforeState != EResourceAccess::PixelShaderResource)
+                if (DrawableTexture->BeforeState != EResourceAccess::PixelShaderResource)
                 {
-                    CmdList.TransitionTexture(Image->Image.Get(), Image->BeforeState, EResourceAccess::PixelShaderResource);
+                    CmdList.TransitionTexture(DrawableTexture->Texture.Get(), DrawableTexture->BeforeState, EResourceAccess::PixelShaderResource);
 
                     // TODO: Another way to do this? May break somewhere?
-                    Image->BeforeState = EResourceAccess::PixelShaderResource;
+                    DrawableTexture->BeforeState = EResourceAccess::PixelShaderResource;
                 }
 
-                CmdList.SetShaderResourceView(PShader.Get(), Image->ImageView.Get(), 0);
+                CmdList.SetShaderResourceView(PShader.Get(), DrawableTexture->View.Get(), 0);
 
-                if (!Image->bAllowBlending)
+                if (!DrawableTexture->bAllowBlending)
                 {
                     CmdList.SetGraphicsPipelineState(PipelineStateNoBlending.Get());
+                }
+
+                if (DrawableTexture->bSamplerLinear)
+                {
+                    CmdList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
+                }
+                else
+                {
+                    CmdList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
                 }
             }
             else
             {
+                if (DrawCmdList->Flags & ImDrawListFlags_AntiAliasedLinesUseTex)
+                {
+                    CmdList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
+                }
+                else
+                {
+                    CmdList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
+                }
+
                 FRHIShaderResourceView* View = FontTexture->GetShaderResourceView();
                 CmdList.SetShaderResourceView(PShader.Get(), View, 0);
             }
@@ -366,13 +390,13 @@ void FInterfaceRenderer::Render(FRHICommandList& CmdList)
         GlobalVertexOffset += DrawCmdList->VtxBuffer.Size;
     }
 
-    for (FDrawableImage* Image : RenderedImages)
+    for (FDrawableTexture* Image : RenderedImages)
     {
         Check(Image != nullptr);
 
         if (Image->AfterState != EResourceAccess::PixelShaderResource)
         {
-            CmdList.TransitionTexture(Image->Image.Get(), EResourceAccess::PixelShaderResource, Image->AfterState);
+            CmdList.TransitionTexture(Image->Texture.Get(), EResourceAccess::PixelShaderResource, Image->AfterState);
         }
     }
 

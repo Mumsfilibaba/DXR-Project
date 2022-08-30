@@ -1,5 +1,5 @@
 #pragma once
-#include "DrawableImage.h"
+#include "DrawableTexture.h"
 #include "Window.h"
 
 #include "Core/Modules/ModuleInterface.h"

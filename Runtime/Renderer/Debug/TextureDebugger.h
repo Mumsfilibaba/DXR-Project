@@ -3,7 +3,7 @@
 
 #include "RHI/RHIResourceViews.h"
 
-#include "Application/DrawableImage.h"
+#include "Application/DrawableTexture.h"
 #include "Application/Window.h"
 
 #include <imgui.h>
@@ -35,7 +35,7 @@ private:
     ~FRenderTargetDebugWindow() = default;
 
      /** @brief: Debug images */
-    TArray<FDrawableImage> DebugTextures;
+    TArray<FDrawableTexture> DebugTextures;
 
      /** @brief: The selected image */
     int32 SelectedTextureIndex = 0;
