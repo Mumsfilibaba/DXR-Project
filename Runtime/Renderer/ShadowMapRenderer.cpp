@@ -15,6 +15,11 @@
 #include "Renderer/Debug/GPUProfiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console variables
+
+TAutoConsoleVariable<bool> GCascadeDebug("Renderer.Debug.DrawCascades", false);
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FShadowMapRenderer
 
 bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameResources)
@@ -340,10 +345,8 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIComputePipelineStateInitializer MaskPSO;
-        MaskPSO.Shader = DirectionalShadowMaskShader.Get();
-
-        DirectionalShadowMaskPSO = RHICreateComputePipelineState(MaskPSO);
+        FRHIComputePipelineStateInitializer MaskPSOInitializer(DirectionalShadowMaskShader.Get());
+        DirectionalShadowMaskPSO = RHICreateComputePipelineState(MaskPSOInitializer);
         if (!DirectionalShadowMaskPSO)
         {
             DEBUG_BREAK();
@@ -352,6 +355,42 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         else
         {
             DirectionalShadowMaskPSO->SetName("Directional ShadowMask PSO");
+        }
+    }
+
+    // Directional Light ShadowMask Debugging
+    {
+        {
+            TArray<FShaderDefine> Defines =
+            {
+                { "ENABLE_DEBUG", "(1)" },
+            };
+
+            FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
+            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
+            {
+                DEBUG_BREAK();
+                return false;
+            }
+        }
+
+        DirectionalShadowMaskShader_Debug = RHICreateComputeShader(ShaderCode);
+        if (!DirectionalShadowMaskShader_Debug)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIComputePipelineStateInitializer MaskPSOInitializer(DirectionalShadowMaskShader_Debug.Get());
+        DirectionalShadowMaskPSO_Debug = RHICreateComputePipelineState(MaskPSOInitializer);
+        if (!DirectionalShadowMaskPSO_Debug)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            DirectionalShadowMaskPSO_Debug->SetName("Directional ShadowMask PSO Debug");
         }
     }
 
@@ -680,27 +719,46 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
             EResourceAccess::NonPixelShaderResource,
             EResourceAccess::UnorderedAccess);
 
-        CommandList.SetComputePipelineState(DirectionalShadowMaskPSO.Get());
+        FRHIComputeShaderRef CurrentShader;
+        if (GCascadeDebug.GetBool())
+        {
+            CommandList.TransitionTexture(
+                LightSetup.CascadeIndexBuffer.Get(),
+                EResourceAccess::NonPixelShaderResource,
+                EResourceAccess::UnorderedAccess);
 
-        CommandList.SetConstantBuffer(DirectionalShadowMaskShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-        CommandList.SetConstantBuffer(DirectionalShadowMaskShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 1);
+            CurrentShader = DirectionalShadowMaskShader_Debug;
+            CommandList.SetComputePipelineState(DirectionalShadowMaskPSO_Debug.Get());
+        }
+        else
+        {
+            CurrentShader = DirectionalShadowMaskShader;
+            CommandList.SetComputePipelineState(DirectionalShadowMaskPSO.Get());
+        }
 
-        CommandList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
-        CommandList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.CascadeSplitsBufferSRV.Get(), 1);
+        CommandList.SetConstantBuffer(CurrentShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+        CommandList.SetConstantBuffer(CurrentShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 1);
 
-        CommandList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 2);
-        CommandList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 3);
+        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
+        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.CascadeSplitsBufferSRV.Get(), 1);
 
-        CommandList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 4);
-        CommandList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[1]->GetShaderResourceView(), 5);
-        CommandList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[2]->GetShaderResourceView(), 6);
-        CommandList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[3]->GetShaderResourceView(), 7);
+        CommandList.SetShaderResourceView(CurrentShader.Get(), FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 2);
+        CommandList.SetShaderResourceView(CurrentShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 3);
 
-        CommandList.SetUnorderedAccessView(DirectionalShadowMaskShader.Get(), LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), 0);
+        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 4);
+        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.ShadowMapCascades[1]->GetShaderResourceView(), 5);
+        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.ShadowMapCascades[2]->GetShaderResourceView(), 6);
+        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.ShadowMapCascades[3]->GetShaderResourceView(), 7);
 
-        CommandList.SetSamplerState(DirectionalShadowMaskShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 0);
+        CommandList.SetUnorderedAccessView(CurrentShader.Get(), LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), 0);
+        if (GCascadeDebug.GetBool())
+        {
+            CommandList.SetUnorderedAccessView(CurrentShader.Get(), LightSetup.CascadeIndexBuffer->GetUnorderedAccessView(), 1);
+        }
 
-        const FIntVector3 ThreadGroupXYZ = DirectionalShadowMaskShader->GetThreadGroupXYZ();
+        CommandList.SetSamplerState(CurrentShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 0);
+
+        const FIntVector3 ThreadGroupXYZ = CurrentShader->GetThreadGroupXYZ();
         const uint32 ThreadsX = NMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetWidth(), ThreadGroupXYZ.x);
         const uint32 ThreadsY = NMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y);
         CommandList.Dispatch(ThreadsX, ThreadsY, 1);
@@ -709,6 +767,14 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
             LightSetup.DirectionalShadowMask.Get(),
             EResourceAccess::UnorderedAccess, 
             EResourceAccess::NonPixelShaderResource);
+
+        if (GCascadeDebug.GetBool())
+        {
+            CommandList.TransitionTexture(
+                LightSetup.CascadeIndexBuffer.Get(),
+                EResourceAccess::UnorderedAccess,
+                EResourceAccess::NonPixelShaderResource);
+        }
 
         INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render ShadowMasks");
     }
@@ -725,7 +791,10 @@ void FShadowMapRenderer::Release()
 
     DirectionalShadowMaskPSO.Reset();
     DirectionalShadowMaskShader.Reset();
-
+    
+    DirectionalShadowMaskPSO_Debug.Reset();
+    DirectionalShadowMaskShader_Debug.Reset();
+    
     DirectionalLightPSO.Reset();
     DirectionalLightShader.Reset();
 
@@ -743,7 +812,7 @@ void FShadowMapRenderer::Release()
 
 bool FShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, FLightSetup& LightSetup)
 {
-    FRHITexture2DInitializer CascadeInitializer(
+    FRHITexture2DInitializer ShadowMaskInitializer(
         LightSetup.ShadowMaskFormat, 
         Width, 
         Height, 
@@ -752,10 +821,29 @@ bool FShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, FLightSet
         ETextureUsageFlags::RWTexture,
         EResourceAccess::NonPixelShaderResource);
     
-    LightSetup.DirectionalShadowMask = RHICreateTexture2D(CascadeInitializer);
+    LightSetup.DirectionalShadowMask = RHICreateTexture2D(ShadowMaskInitializer);
     if (LightSetup.DirectionalShadowMask)
     {
         LightSetup.DirectionalShadowMask->SetName("Directional Shadow Mask 0");
+    }
+    else
+    {
+        return false;
+    }
+
+    FRHITexture2DInitializer CascadeIndexBufferInitializer(
+        EFormat::R8_Uint,
+        Width,
+        Height,
+        1,
+        1,
+        ETextureUsageFlags::RWTexture,
+        EResourceAccess::NonPixelShaderResource);
+
+    LightSetup.CascadeIndexBuffer = RHICreateTexture2D(CascadeIndexBufferInitializer);
+    if (LightSetup.CascadeIndexBuffer)
+    {
+        LightSetup.CascadeIndexBuffer->SetName("Cascade Index Debug Buffer");
     }
     else
     {

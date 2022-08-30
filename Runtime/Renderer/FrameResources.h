@@ -91,7 +91,7 @@ struct RENDERER_API FFrameResources
     const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
     const EFormat VelocityFormat     = EFormat::R16G16_Float;
 
-    FRHITexture2D* BackBuffer = nullptr;
+    FRHITexture2D*           BackBuffer = nullptr;
 
     // GlobalBuffers
     FRHIConstantBufferRef    CameraBuffer;
@@ -123,19 +123,19 @@ struct RENDERER_API FFrameResources
     FRHITexture2DRef         RTOutput;
     FRHIRayTracingSceneRef   RTScene;
 
-    FRayTracingShaderResources GlobalResources;
-    FRayTracingShaderResources RayGenLocalResources;
-    FRayTracingShaderResources MissLocalResources;
+    FRayTracingShaderResources             GlobalResources;
+    FRayTracingShaderResources             RayGenLocalResources;
+    FRayTracingShaderResources             MissLocalResources;
     TArray<FRHIRayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<FRayTracingShaderResources>     RTHitGroupResources;
     TMap<class FMesh*, uint32>             RTMeshToHitGroupIndex;
     TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
 
-    TArrayView<const FMeshDrawCommand> GlobalMeshDrawCommands;
-    TArray<uint32>                     DeferredVisibleCommands;
-    TArray<uint32>                     ForwardVisibleCommands;
+    TArrayView<const FMeshDrawCommand>     GlobalMeshDrawCommands;
+    TArray<uint32>                         DeferredVisibleCommands;
+    TArray<uint32>                         ForwardVisibleCommands;
 
-    FRHIViewportRef                    MainWindowViewport;
+    FRHIViewportRef                        MainWindowViewport;
 };
 

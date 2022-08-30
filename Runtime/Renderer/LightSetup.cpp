@@ -299,6 +299,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
 void FLightSetup::Release()
 {
     DirectionalShadowMask.Reset();
+    CascadeIndexBuffer.Reset();
 
     PointLightsPosRadBuffer.Reset();
     PointLightsBuffer.Reset();

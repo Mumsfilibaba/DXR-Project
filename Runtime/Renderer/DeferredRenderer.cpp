@@ -42,11 +42,13 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
     }
 
     TArray<uint8> ShaderCode;
+    
+    // BasePass
     {
         TArray<FShaderDefine> Defines =
         {
-            { "ENABLE_PARALLAX_MAPPING", "1" },
-            { "ENABLE_NORMAL_MAPPING",   "1" },
+            { "ENABLE_PARALLAX_MAPPING", "(1)" },
+            { "ENABLE_NORMAL_MAPPING",   "(1)" },
         };
 
         FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
@@ -199,72 +201,79 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         } 
     }
 
-    constexpr uint32  LUTSize   = 512;
-    constexpr EFormat LUTFormat = EFormat::R16G16_Float;
-    if (!RHIQueryUAVFormatSupport(LUTFormat))
+    // BRDF LUT Generation
     {
-        LOG_ERROR("[FRenderer]: R16G16_Float is not supported for UAVs");
-        return false;
-    }
+        constexpr uint32  LUTSize   = 512;
+        constexpr EFormat LUTFormat = EFormat::R16G16_Float;
+        if (!RHIQueryUAVFormatSupport(LUTFormat))
+        {
+            LOG_ERROR("[FRenderer]: R16G16_Float is not supported for UAVs");
+            return false;
+        }
 
-    FRHITexture2DInitializer LUTInitializer(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::AllowUAV, EResourceAccess::Common);
+        FRHITexture2DInitializer LUTInitializer(
+            LUTFormat, 
+            LUTSize,
+            LUTSize,
+            1, 
+            1, 
+            ETextureUsageFlags::AllowUAV,
+            EResourceAccess::Common);
 
-    FRHITexture2DRef StagingTexture = RHICreateTexture2D(LUTInitializer);
-    if (!StagingTexture)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        StagingTexture->SetName("Staging IntegrationLUT");
-    }
-
-    LUTInitializer.UsageFlags = ETextureUsageFlags::AllowSRV;
-
-    FrameResources.IntegrationLUT = RHICreateTexture2D(LUTInitializer);
-    if (!FrameResources.IntegrationLUT)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        FrameResources.IntegrationLUT->SetName("IntegrationLUT");
-    }
-
-    FRHISamplerStateInitializer SamplerInitializer;
-    SamplerInitializer.AddressU = ESamplerMode::Clamp;
-    SamplerInitializer.AddressV = ESamplerMode::Clamp;
-    SamplerInitializer.AddressW = ESamplerMode::Clamp;
-    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipPoint;
-
-    FrameResources.IntegrationLUTSampler = RHICreateSamplerState(SamplerInitializer);
-    if (!FrameResources.IntegrationLUTSampler)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/BRDFIntegationGen.hlsl", CompileInfo, ShaderCode))
+        FRHITexture2DRef StagingTexture = RHICreateTexture2D(LUTInitializer);
+        if (!StagingTexture)
         {
             DEBUG_BREAK();
             return false;
         }
-    }
+        else
+        {
+            StagingTexture->SetName("Staging IntegrationLUT");
+        }
 
-    FRHIComputeShaderRef CShader = RHICreateComputeShader(ShaderCode);
-    if (!CShader)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
+        LUTInitializer.UsageFlags = ETextureUsageFlags::AllowSRV;
 
-    {
-        FRHIComputePipelineStateInitializer PSOInitializer;
-        PSOInitializer.Shader = CShader.Get();
+        FrameResources.IntegrationLUT = RHICreateTexture2D(LUTInitializer);
+        if (!FrameResources.IntegrationLUT)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            FrameResources.IntegrationLUT->SetName("IntegrationLUT");
+        }
+
+        FRHISamplerStateInitializer SamplerInitializer;
+        SamplerInitializer.AddressU = ESamplerMode::Clamp;
+        SamplerInitializer.AddressV = ESamplerMode::Clamp;
+        SamplerInitializer.AddressW = ESamplerMode::Clamp;
+        SamplerInitializer.Filter   = ESamplerFilter::MinMagMipPoint;
+
+        FrameResources.IntegrationLUTSampler = RHICreateSamplerState(SamplerInitializer);
+        if (!FrameResources.IntegrationLUTSampler)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        {
+            FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/BRDFIntegationGen.hlsl", CompileInfo, ShaderCode))
+            {
+                DEBUG_BREAK();
+                return false;
+            }
+        }
+
+        FRHIComputeShaderRef CShader = RHICreateComputeShader(ShaderCode);
+        if (!CShader)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIComputePipelineStateInitializer PSOInitializer(CShader.Get());
 
         FRHIComputePipelineStateRef BRDF_PipelineState = RHICreateComputePipelineState(PSOInitializer);
         if (!BRDF_PipelineState)
@@ -311,11 +320,14 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             EResourceAccess::CopyDest, 
             EResourceAccess::PixelShaderResource);
 
+        CommandList.DestroyResource(CShader.Get());
         CommandList.DestroyResource(BRDF_PipelineState.Get());
+        CommandList.DestroyResource(StagingTexture.Get());
 
         GRHICommandExecutor.ExecuteCommandList(CommandList);
     }
 
+    // Tiled lightning
     {
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
@@ -331,9 +343,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInitializer DeferredLightPassInitializer;
-        DeferredLightPassInitializer.Shader = TiledLightShader.Get();
-
+        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader.Get());
         TiledLightPassPSO = RHICreateComputePipelineState(DeferredLightPassInitializer);
         if (!TiledLightPassPSO)
         {
@@ -342,10 +352,11 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         }
     }
 
+    // Tiled lightning Tile debugging
     {
         TArray<FShaderDefine> Defines =
         {
-            FShaderDefine("DRAW_TILE_DEBUG", "1")
+            FShaderDefine("DRAW_TILE_DEBUG", "(1)")
         };
 
         FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
@@ -355,28 +366,61 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        TiledLightDebugShader = RHICreateComputeShader(ShaderCode);
-        if (!TiledLightDebugShader)
+        TiledLightShader_TileDebug = RHICreateComputeShader(ShaderCode);
+        if (!TiledLightShader_TileDebug)
         {
             DEBUG_BREAK();
             return false;
         }
 
-        FRHIComputePipelineStateInitializer DeferredLightPassInitializer;
-        DeferredLightPassInitializer.Shader = TiledLightDebugShader.Get();
-
-        TiledLightPassPSODebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
-        if (!TiledLightPassPSODebug)
+        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader_TileDebug.Get());
+        TiledLightPassPSO_TileDebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
+        if (!TiledLightPassPSO_TileDebug)
         {
             DEBUG_BREAK();
             return false;
         }
         else
         {
-            TiledLightPassPSODebug->SetName("DeferredLightPass PipelineState Debug");
+            TiledLightPassPSO_TileDebug->SetName("DeferredLightPass PipelineState Tile-Debug");
         }
     }
 
+    // Tiled lightning Cascade debugging
+    {
+        TArray<FShaderDefine> Defines =
+        {
+            FShaderDefine("DRAW_CASCADE_DEBUG", "(1)")
+        };
+
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        TiledLightShader_CascadeDebug = RHICreateComputeShader(ShaderCode);
+        if (!TiledLightShader_CascadeDebug)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader_CascadeDebug.Get());
+        TiledLightPassPSO_CascadeDebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
+        if (!TiledLightPassPSO_CascadeDebug)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            TiledLightPassPSO_CascadeDebug->SetName("DeferredLightPass PipelineState Cascade-Debug");
+        }
+    }
+
+    // Depth-Reduction
     {
         FShaderCompileInfo CompileInfo("ReductionMainInital", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
@@ -392,9 +436,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInitializer PipelineStateInfo;
-        PipelineStateInfo.Shader = ReduceDepthInitalShader.Get();
-
+        FRHIComputePipelineStateInitializer PipelineStateInfo(ReduceDepthInitalShader.Get());
         ReduceDepthInitalPSO = RHICreateComputePipelineState(PipelineStateInfo);
         if (!ReduceDepthInitalPSO)
         {
@@ -403,6 +445,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         }
     }
 
+    // Depth-Reduction
     {
         FShaderCompileInfo CompileInfo("ReductionMain", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
@@ -418,9 +461,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInitializer PSOInitializer;
-        PSOInitializer.Shader = ReduceDepthShader.Get();
-
+        FRHIComputePipelineStateInitializer PSOInitializer(ReduceDepthShader.Get());
         ReduceDepthPSO = RHICreateComputePipelineState(PSOInitializer);
         if (!ReduceDepthPSO)
         {
@@ -446,9 +487,13 @@ void FDeferredRenderer::Release()
     BasePixelShader.Reset();
 
     TiledLightPassPSO.Reset();
-    TiledLightPassPSODebug.Reset();
     TiledLightShader.Reset();
-    TiledLightDebugShader.Reset();
+
+    TiledLightPassPSO_TileDebug.Reset();
+    TiledLightShader_TileDebug.Reset();
+
+    TiledLightPassPSO_CascadeDebug.Reset();
+    TiledLightShader_CascadeDebug.Reset();
 
     ReduceDepthInitalPSO.Reset();
     ReduceDepthInitalShader.Reset();
@@ -686,11 +731,22 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, c
 
     GPU_TRACE_SCOPE(CmdList, "Light Pass");
 
+    bool bDrawCascades = false;
+    if (IConsoleVariable* CVarDrawCascades = FConsoleInterface::Get().FindVariable("Renderer.Debug.DrawCascades"))
+    {
+        bDrawCascades = CVarDrawCascades->GetBool();
+    }
+
     FRHIComputeShader* LightPassShader = nullptr;
     if (GDrawTileDebug.GetBool())
     {
-        LightPassShader = TiledLightDebugShader.Get();
-        CmdList.SetComputePipelineState(TiledLightPassPSODebug.Get());
+        LightPassShader = TiledLightShader_TileDebug.Get();
+        CmdList.SetComputePipelineState(TiledLightPassPSO_TileDebug.Get());
+    }
+    else if (bDrawCascades)
+    {
+        LightPassShader = TiledLightShader_CascadeDebug.Get();
+        CmdList.SetComputePipelineState(TiledLightPassPSO_CascadeDebug.Get());
     }
     else
     {
@@ -711,8 +767,10 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, c
     CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 8);
     CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 9);
 
-    //CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeMatrixBufferSRV.Get(), 13);
-    //CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeSplitsBufferSRV.Get(), 14);
+    if (bDrawCascades)
+    {
+        CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeIndexBuffer->GetShaderResourceView(), 10);
+    }
 
     CmdList.SetConstantBuffer(LightPassShader, FrameResources.CameraBuffer.Get(), 0);
     CmdList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsBuffer.Get(), 1);
@@ -724,7 +782,6 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, c
     CmdList.SetSamplerState(LightPassShader, FrameResources.IntegrationLUTSampler.Get(), 0);
     CmdList.SetSamplerState(LightPassShader, FrameResources.IrradianceSampler.Get(), 1);
     CmdList.SetSamplerState(LightPassShader, FrameResources.PointLightShadowSampler.Get(), 2);
-    //CmdList.SetSamplerState(LightPassShader, FrameResources.DirectionalLightShadowSampler.Get(), 3);
 
     FRHIUnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
     CmdList.SetUnorderedAccessView(LightPassShader, FinalTargetUAV, 0);

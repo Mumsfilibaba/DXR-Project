@@ -37,8 +37,10 @@ private:
 
     FRHIComputePipelineStateRef  TiledLightPassPSO;
     FRHIComputeShaderRef         TiledLightShader;
-    FRHIComputePipelineStateRef  TiledLightPassPSODebug;
-    FRHIComputeShaderRef         TiledLightDebugShader;
+    FRHIComputePipelineStateRef  TiledLightPassPSO_TileDebug;
+    FRHIComputeShaderRef         TiledLightShader_TileDebug;
+    FRHIComputePipelineStateRef  TiledLightPassPSO_CascadeDebug;
+    FRHIComputeShaderRef         TiledLightShader_CascadeDebug;
 
     FRHIComputePipelineStateRef ReduceDepthInitalPSO;
     FRHIComputeShaderRef        ReduceDepthInitalShader;

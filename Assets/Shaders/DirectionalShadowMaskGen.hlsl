@@ -6,6 +6,10 @@
 
 #define NUM_THREADS (16)
 
+#ifndef ENABLE_DEBUG
+    #define ENABLE_DEBUG (0)
+#endif
+
 // FCamera and Light
 ConstantBuffer<FCamera>           CameraBuffer : register(b0);
 ConstantBuffer<FDirectionalLight> LightBuffer  : register(b1);
@@ -26,6 +30,10 @@ Texture2D<float> ShadowCascade3 : register(t7);
 
 // Output
 RWTexture2D<float> Output : register(u0);
+
+#if ENABLE_DEBUG
+RWTexture2D<uint> CascadeIndexTex : register(u1);
+#endif
 
 // Samplers
 SamplerState Sampler : register(s0);
@@ -214,7 +222,7 @@ void Main(FComputeShaderInput Input)
     float ShadowBias = max(LightBuffer.MaxShadowBias * (1.0f - (max(dot(N, L), 0.0f))), LightBuffer.ShadowBias) + 0.0001f;
     
     // Calculate the current cascade
-    uint CascadeIndex = 0;
+    uint CascadeIndex = max(NUM_SHADOW_CASCADES - 1, 0);
     for (int Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
     {
         const float CurrentSplit = ShadowSplitsBuffer[Index].Split;
@@ -276,4 +284,8 @@ void Main(FComputeShaderInput Input)
     }
     
     Output[Pixel] = ShadowAmount;
+
+#if ENABLE_DEBUG
+    CascadeIndexTex[Pixel] = CascadeIndex;
+#endif
 }

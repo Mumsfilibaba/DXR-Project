@@ -121,6 +121,9 @@ private:
     FRHIComputePipelineStateRef  DirectionalShadowMaskPSO;
     FRHIComputeShaderRef         DirectionalShadowMaskShader;
 
+    FRHIComputePipelineStateRef  DirectionalShadowMaskPSO_Debug;
+    FRHIComputeShaderRef         DirectionalShadowMaskShader_Debug;
+
     FRHIGraphicsPipelineStateRef PointLightPipelineState;
     FRHIVertexShaderRef          PointLightVertexShader;
     FRHIPixelShaderRef           PointLightPixelShader;

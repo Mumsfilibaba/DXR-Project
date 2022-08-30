@@ -124,9 +124,9 @@ struct RENDERER_API FLightSetup
     ~FLightSetup() = default;
 
     bool Init();
+    void Release();
 
     void BeginFrame(FRHICommandList& CommandList, const FScene& Scene);
-    void Release();
 
     // PointLights
     TArray<FVector4>        PointLightsPosRad;
@@ -156,6 +156,7 @@ struct RENDERER_API FLightSetup
 
     FRHITexture2DRef           ShadowMapCascades[4];
     FRHITexture2DRef           DirectionalShadowMask;
+    FRHITexture2DRef           CascadeIndexBuffer;
 
     FRHIGenericBufferRef       CascadeMatrixBuffer;
     FRHIShaderResourceViewRef  CascadeMatrixBufferSRV;

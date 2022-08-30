@@ -50,8 +50,9 @@ TextureCubeArray<float> PointLightShadowMaps : register(t9);
 Texture2D<float3> SSAO : register(t10);
 
 // Shadow Cascade Data - FOR DEBUG
-StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t14);
-StructuredBuffer<FCascadeSplit>    CascadeSplitsBuffer : register(t15);
+#if DRAW_SHADOW_CASCADE
+Texture2D<uint> CascadeIndexBuffer : register(t11);
+#endif
 
 SamplerState LUTSampler        : register(s0);
 SamplerState IrradianceSampler : register(s1);
@@ -123,8 +124,8 @@ void Main(FComputeShaderInput Input)
     
     GroupMemoryBarrierWithGroupSync();
 
-    uint2 TexCoord  = Input.DispatchThreadID.xy;
-    float Depth     = DepthStencilTex.Load(int3(TexCoord, 0));
+    uint2 Pixel  = Input.DispatchThreadID.xy;
+    float Depth     = DepthStencilTex.Load(int3(Pixel, 0));
     float ViewPosZ  = Depth_ProjToView(Depth, CameraBuffer.ProjectionInverse);
     
     // TODO: If we change to reversed Z then we need to change from 1.0 to 0.0
@@ -220,20 +221,20 @@ void Main(FComputeShaderInput Input)
     GroupMemoryBarrierWithGroupSync();
     
     // Discard pixels not rendered to the GBuffer
-    const float3 GBufferNormal = NormalTex.Load(int3(TexCoord, 0)).rgb;
+    const float3 GBufferNormal = NormalTex.Load(int3(Pixel, 0)).rgb;
     if (length(GBufferNormal) == 0)
     {
-        Output[TexCoord] = Float4(0.0f);
+        Output[Pixel] = Float4(0.0f);
         return;
     }
 
-    const float2 TexCoordFloat = saturate((float2(TexCoord) + Float2(0.5f)) / float2(ScreenWidth, ScreenHeight));
-    const float3 ViewPosition  = PositionFromDepth(Depth, TexCoordFloat, CameraBuffer.ProjectionInverse);
+    const float2 PixelFloat = saturate((float2(Pixel) + Float2(0.5f)) / float2(ScreenWidth, ScreenHeight));
+    const float3 ViewPosition  = PositionFromDepth(Depth, PixelFloat, CameraBuffer.ProjectionInverse);
     const float3 WorldPosition = mul(float4(ViewPosition, 1.0f), CameraBuffer.ViewInverse).xyz;
 
-    const float3 GBufferAlbedo   = saturate(AlbedoTex.Load(int3(TexCoord, 0)).rgb);
-    const float3 GBufferMaterial = MaterialTex.Load(int3(TexCoord, 0)).rgb;
-    const float  ScreenSpaceAO   = SSAO.Load(int3(TexCoord, 0)).r;
+    const float3 GBufferAlbedo   = saturate(AlbedoTex.Load(int3(Pixel, 0)).rgb);
+    const float3 GBufferMaterial = MaterialTex.Load(int3(Pixel, 0)).rgb;
+    const float  ScreenSpaceAO   = SSAO.Load(int3(Pixel, 0)).r;
     
     const float3 ObjectNormal = UnpackNormal(GBufferNormal);
     const float3 View = normalize(CameraBuffer.Position - WorldPosition);
@@ -291,7 +292,7 @@ void Main(FComputeShaderInput Input)
         const FDirectionalLight Light = DirectionalLightBuffer;
         float3 L = normalize(-Light.Direction);
         
-        float ShadowFactor = DirectionalShadowMask.Load(int3(TexCoord, 0));
+        float ShadowFactor = DirectionalShadowMask.Load(int3(Pixel, 0));
         if (ShadowFactor > 0.0f)
         {
             float3 IncidentRadiance = Light.Color;
@@ -353,11 +354,31 @@ void Main(FComputeShaderInput Input)
     FinalColor = FinalColor * Tint.rgb;
 
 #elif DRAW_SHADOW_CASCADE
-    // TODO: Finish this up
+    const uint CascadeIndex = CascadeIndexBuffer[Pixel];
+
+    float4 Tint = Float4(1.0f);
+    if (CascadeIndex == 0)
+    {
+        Tint = float4(1.0f, 0.0f, 0.0f, 1.0f);
+    }
+    else if (CascadeIndex == 1)
+    {
+        Tint = float4(0.0f, 1.0f, 0.0f, 1.0f);
+    }
+    else if (CascadeIndex == 2)
+    {
+        Tint = float4(0.0f, 0.0f, 1.0f, 1.0f);
+    }
+    else if (CascadeIndex == 3)
+    {
+        Tint = float4(1.0f, 1.0f, 0.0f, 1.0f);
+    }
+
+    FinalColor = FinalColor * Tint.rgb;
 #endif
     
     // Finalize
     float FinalLuminance = Luminance(FinalColor);
     FinalColor = ApplyGammaCorrectionAndTonemapping(FinalColor);
-    Output[TexCoord] = float4(FinalColor, FinalLuminance);
+    Output[Pixel] = float4(FinalColor, FinalLuminance);
 }
