@@ -414,7 +414,7 @@ bool FSandbox::Init()
     Light4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light4->SetIntensity(10.0f);
     Light4->SetRotation(FVector3(NMath::ToRadians(35.0f), NMath::ToRadians(135.0f), 0.0f));
-    Light4->SetCascadeSplitLambda(0.5f);
+    Light4->SetCascadeSplitLambda(0.9f);
     //Light4->SetRotation(0.0f, 0.0f, 0.0f);
     CurrentScene->AddLight(Light4);
 

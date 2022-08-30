@@ -84,6 +84,11 @@ struct FCascadeSplit
     float  Padding0;
     float  Padding1;
     float  Padding2;
+
+    float4 FrustumPlanes[6];
+
+    float4 Offsets;
+    float4 Scale;
 };
 
 struct FCascadeGenerationInfo
@@ -93,18 +98,22 @@ struct FCascadeGenerationInfo
     
     float3 LightUp;
     float  CascadeResolution;
+
+    float4x4 ShadowMatrix;
 };
 
 struct FDirectionalLight
 {
-    float3 Color;
-    float  ShadowBias;
+    float3   Color;
+    float    ShadowBias;
     
-    float3 Direction;
-    float  MaxShadowBias;
+    float3   Direction;
+    float    MaxShadowBias;
 
-    float3 Up;
-    float  LightSize;
+    float3   Up;
+    float    LightSize;
+
+    float4x4 ShadowMatrix;
 };
 
 struct FVertex

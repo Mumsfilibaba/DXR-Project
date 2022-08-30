@@ -63,8 +63,10 @@ struct FDirectionalLightData
     FVector3 Direction     = FVector3(0.0f, -1.0f, 0.0f);
     float    MaxShadowBias = 0.05f;
 
-    FVector3 Up = FVector3(0.0f, 0.0f, -1.0f);
+    FVector3 UpVector = FVector3(0.0f, 0.0f, -1.0f);
     float    LightSize;
+
+    FMatrix4 ShadowMatrix;
 };
 
 MARK_AS_REALLOCATABLE(FDirectionalLightData);
@@ -146,11 +148,10 @@ struct RENDERER_API FLightSetup
     FRHITextureCubeArrayRef              PointLightShadowMaps;
 
     // DirectionalLight
-    // NOTE: Only one directional light
+    // NOTE: Only one directional light (TODO: This is ugly)
     FDirectionalLightData      DirectionalLightData;
-    bool                       DirectionalLightDataDirty = true;
-
     float                      CascadeSplitLambda;
+    bool                       DirectionalLightDataDirty = true;
 
     FRHIConstantBufferRef      DirectionalLightsBuffer;
 

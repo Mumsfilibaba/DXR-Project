@@ -9,7 +9,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variables
 
-TAutoConsoleVariable<float> GSunSize("Scene.Lightning.Sun.Size", 0.5f);
+TAutoConsoleVariable<float> GSunSize("Scene.Lightning.Sun.Size", 0.05f);
 TAutoConsoleVariable<float> GCascadeSplitLambda("Scene.Lightning.CascadeSplitLambda", 0.8f);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -21,7 +21,8 @@ FDirectionalLight::FDirectionalLight()
     , Rotation(0.0f, 0.0f, 0.0f)
     , LookAt(0.0f, 0.0f, 0.0f)
     , Position(0.0f, 0.0f, 0.0f)
-    , Matrices()
+    , Size(GSunSize.GetFloat())
+    , CascadeSplitLambda(GCascadeSplitLambda.GetFloat())
 {
     CORE_OBJECT_INIT();
 
@@ -44,164 +45,59 @@ FDirectionalLight::FDirectionalLight()
         }
     });
 
-    for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
-    {
-        Matrices[i].SetIdentity();
-        ViewMatrices[i].SetIdentity();
-        ProjectionMatrices[i].SetIdentity();
-    }
+    ShadowMatrix.SetIdentity();
+    ViewMatrix.SetIdentity();
+    ProjectionMatrix.SetIdentity();
 }
 
-void FDirectionalLight::UpdateCascades(FCamera& Camera)
+void FDirectionalLight::Tick(FCamera& Camera)
 {
-    //XMVECTOR XmDirection = XMVectorSet( 0.0, -1.0f, 0.0f, 0.0f );
-    //XMMATRIX XmRotation = XMMatrixRotationRollPitchYaw( Rotation.x, Rotation.y, Rotation.z );
-    //XMVECTOR XmOffset = XMVector3Transform( XmDirection, XmRotation );
-    //XmDirection = XMVector3Normalize( XmOffset );
-    //XMStoreFloat3( &Direction, XmDirection );
-
-    FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
-
-    FVector3 StartDirection(0.0f, -1.0f, 0.0f);
-    StartDirection = RotationMatrix.TransformDirection(StartDirection);
-    StartDirection.Normalize();
-    Direction = StartDirection;
-
-    FVector3 StartUp(0.0, 0.0f, 1.0f);
-    StartUp = RotationMatrix.TransformDirection(StartUp);
-    StartUp.Normalize();
-    Up = StartUp;
-
-    FMatrix4 InvCamera = Camera.GetViewProjectionInverseMatrix();
-    InvCamera = InvCamera.Transpose();
-
-    float NearPlane = Camera.GetNearPlane();
-    float FarPlane = NMath::Min<float>(Camera.GetFarPlane(), 100.0f); // TODO: Should be a setting
-    float ClipRange = FarPlane - NearPlane;
-
-    ShadowNearPlane = NearPlane;
-    ShadowFarPlane = FarPlane;
-
-    float MinZ = NearPlane;
-    float MaxZ = FarPlane;
-
-    float Range = ClipRange;
-    float Ratio = MaxZ / MinZ;
-
-    float LocalCascadeSplits[NUM_SHADOW_CASCADES];
-
-    // Calculate split depths based on view camera frustum
-    // Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
-    for (uint32 i = 0; i < 4; i++)
+    // Update direction based on rotation
     {
-        float p = (i + 1) / static_cast<float>(NUM_SHADOW_CASCADES);
-        float Log = MinZ * std::pow(Ratio, p);
-        float Uniform = MinZ + Range * p;
-        float d = CascadeSplitLambda * (Log - Uniform) + Uniform;
-        LocalCascadeSplits[i] = (d - NearPlane) / ClipRange;
+        FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
+
+        FVector3 StartDirection(0.0f, -1.0f, 0.0f);
+        StartDirection = RotationMatrix.TransformDirection(StartDirection);
+        StartDirection.Normalize();
+        Direction = StartDirection;
     }
 
-    // TODO: This has to be moved so we do not duplicate it
-    const float CascadeSizes[NUM_SHADOW_CASCADES] =
+    // Update ShadowMatrix
+    FVector3 FrustumCorners[8] =
     {
-        2048.0f, 2048.0f, 2048.0f, 4096.0f
+        FVector3(-1.0f,  1.0f, 0.0f),
+        FVector3( 1.0f,  1.0f, 0.0f),
+        FVector3( 1.0f, -1.0f, 0.0f),
+        FVector3(-1.0f, -1.0f, 0.0f),
+        FVector3(-1.0f,  1.0f, 1.0f),
+        FVector3( 1.0f,  1.0f, 1.0f),
+        FVector3( 1.0f, -1.0f, 1.0f),
+        FVector3(-1.0f, -1.0f, 1.0f),
     };
 
-    UNREFERENCED_VARIABLE(CascadeSizes);
+    // NOTE: Need to transpose since this matrix is assumed to be used on the GPU
+    FMatrix4 InverseViewProjection = Camera.GetViewProjectionInverseMatrix();
+    InverseViewProjection = InverseViewProjection.Transpose();
 
-    float LastSplitDist = 0.0f;
-    for (uint32 i = 0; i < 4; i++)
+    // Calculate the center of frustum
+    FVector3 FrustumCenter = FVector3(0.0f);
+    for (uint32 Corner = 0; Corner < 8; ++Corner)
     {
-        float SplitDist = LocalCascadeSplits[i];
-
-        FVector4 FrustumCorners[8] =
-        {
-            FVector4(-1.0f,  1.0f, 0.0f, 1.0f),
-            FVector4(1.0f,  1.0f, 0.0f, 1.0f),
-            FVector4(1.0f, -1.0f, 0.0f, 1.0f),
-            FVector4(-1.0f, -1.0f, 0.0f, 1.0f),
-            FVector4(-1.0f,  1.0f, 1.0f, 1.0f),
-            FVector4(1.0f,  1.0f, 1.0f, 1.0f),
-            FVector4(1.0f, -1.0f, 1.0f, 1.0f),
-            FVector4(-1.0f, -1.0f, 1.0f, 1.0f),
-        };
-
-        // Calculate position of light frustum
-        for (uint32 j = 0; j < 8; j++)
-        {
-            FVector4 Corner = InvCamera * FrustumCorners[j];
-            FrustumCorners[j] = Corner / Corner.w;
-        }
-
-        for (uint32 j = 0; j < 4; j++)
-        {
-            const FVector4 Distance = FrustumCorners[j + 4] - FrustumCorners[j];
-            FrustumCorners[j + 4] = FrustumCorners[j] + (Distance * SplitDist);
-            FrustumCorners[j] = FrustumCorners[j] + (Distance * LastSplitDist);
-        }
-
-        // Calc frustum center
-        FVector4 Center = FVector4(0.0f);
-        for (uint32 j = 0; j < 8; j++)
-        {
-            Center = Center + FrustumCorners[j];
-        }
-        Center = Center * (1.0f / 8.0f);
-
-        float Radius = 0.0f;
-        for (uint32 j = 0; j < 8; j++)
-        {
-            float Distance = ceil((FrustumCorners[j] - Center).GetLength());
-            Radius = NMath::Min(NMath::Max(Radius, Distance), 80.0f); // This should be dynamic
-        }
-
-        // Make sure we only move cascades with whole pixels
-        //float TexelsPerUnit = CascadeSizes[i] / (Radius * 2.0f);
-        //XMMATRIX Scale = XMMatrixScaling(TexelsPerUnit, TexelsPerUnit, TexelsPerUnit);
-
-        //XMVECTOR EyePosition  = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-        //XMVECTOR LookPosition = XMVectorSet(-Direction.x, -Direction.y, -Direction.z, 0.0f);
-        //
-        //XMMATRIX LookAtMat = XMMatrixLookAtLH(EyePosition, LookPosition, XmUp);
-        //LookAtMat = XMMatrixMultiply(Scale, LookAtMat);
-
-        //XMMATRIX LookAtMatInverse = XMMatrixInverse(nullptr, LookAtMat);
-
-        //XMVECTOR XmCenter = XMLoadFloat4(&Center);
-        //XMVector3Transform(XmCenter, LookAtMat);
-        //XMStoreFloat4(&Center, XmCenter);
-
-        //Center.x = floor(Center.x);
-        //Center.y = floor(Center.y);
-        //Center.z = floor(Center.z);
-
-        //XmCenter = XMLoadFloat4(&Center);
-        //XMVector3Transform(XmCenter, LookAtMatInverse);
-        //XMStoreFloat4(&Center, XmCenter);
-
-        FVector3 CascadePosition = FVector3(Center.x, Center.y, Center.z) - (Direction * Radius * 6.0f);
-        FVector3 EyePosition     = CascadePosition;
-        FVector3 LookPosition    = FVector3(Center.x, Center.y, Center.z);
-
-        FMatrix4 View         = FMatrix4::LookAt(EyePosition, LookPosition, Up);
-        FMatrix4 Projection   = FMatrix4::OrtographicProjection(-Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f);
-        ViewMatrices[i]       = View.Transpose();
-        ProjectionMatrices[i] = Projection.Transpose();
-        Matrices[i]           = (View * Projection).Transpose();
-
-        LastSplitDist = SplitDist;
-
-        CascadeSplits[i] = (NearPlane + SplitDist * ClipRange);
-        CascadeRadius[i] = Radius;
-
-        if (i == 0)
-        {
-            LookAt = FVector3(Center.x, Center.y, Center.z);
-            Position = CascadePosition;
-        }
+        FrustumCorners[Corner] = InverseViewProjection.TransformPosition(FrustumCorners[Corner]);
+        FrustumCenter += FrustumCorners[Corner];
     }
+    FrustumCenter /= 8.0f;
 
-    return;
+    // Calculate a matrix
+    UpVector = FVector3(0.0f, 1.0f, 0.0f);
+
+    LookAt   = FrustumCenter - GetDirection();
+    Position = FrustumCenter + GetDirection() * -0.5f;
+
+    ViewMatrix       = FMatrix4::LookAt(Position, LookAt, UpVector);
+    ProjectionMatrix = FMatrix4::OrtographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
+    ShadowMatrix = ViewMatrix * ProjectionMatrix;
+    ShadowMatrix = ShadowMatrix.Transpose();
 }
 
 void FDirectionalLight::SetRotation(const FVector3& InRotation)
@@ -209,19 +105,12 @@ void FDirectionalLight::SetRotation(const FVector3& InRotation)
     Rotation = InRotation;
 }
 
-void FDirectionalLight::SetLookAt(const FVector3& InLookAt)
-{
-    LookAt = InLookAt;
-}
-
 void FDirectionalLight::SetCascadeSplitLambda(float InCascadeSplitLambda)
 {
-    CascadeSplitLambda = InCascadeSplitLambda;
     GCascadeSplitLambda.SetFloat(InCascadeSplitLambda);
 }
 
 void FDirectionalLight::SetSize(float InSize)
 {
-    Size = InSize;
     GSunSize.SetFloat(InSize);
 }

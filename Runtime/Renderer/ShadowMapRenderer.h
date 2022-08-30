@@ -16,6 +16,8 @@ struct FCascadeGenerationInfo
     
     FVector3 LightUp;
     float    CascadeResolution;
+
+    FMatrix4 ShadowMatrix;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeGenerationInfo);
@@ -45,6 +47,11 @@ struct FCascadeSplits
     float    Padding0;
     float    Padding1;
     float    Padding2;
+
+    FVector4 FrustumPlanes[6];
+
+    FVector4 Offsets;
+    FVector4 Scale;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeSplits);

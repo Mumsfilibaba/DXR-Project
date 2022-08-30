@@ -154,24 +154,18 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
             FDirectionalLight* CurrentLight = Cast<FDirectionalLight>(Light);
             Check(CurrentLight != nullptr);
 
-            CurrentLight->UpdateCascades(*Camera);
+            CurrentLight->Tick(*Camera);
 
             DirectionalLightData.Color         = FVector3(Color.x, Color.y, Color.z);
             DirectionalLightData.ShadowBias    = CurrentLight->GetShadowBias();
             DirectionalLightData.Direction     = CurrentLight->GetDirection();
-            DirectionalLightData.Up            = CurrentLight->GetUp();
+            // TODO: Is this used?
+            DirectionalLightData.UpVector      = CurrentLight->GetUp();
             DirectionalLightData.MaxShadowBias = CurrentLight->GetMaxShadowBias();
-            //DirectionalLightData.Position      = CurrentLight->GetPosition();
+            DirectionalLightData.LightSize     = CurrentLight->GetSize();
+            DirectionalLightData.ShadowMatrix  = CurrentLight->GetShadowMatrix();
 
-            //for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
-            //{
-            //    DirectionalLightData.CascadeRadius[i]   = CurrentLight->GetCascadeRadius(i);
-            //}
-
-            //DirectionalLightData.NearPlane = CurrentLight->GetShadowNearPlane();
-            //DirectionalLightData.FarPlane  = CurrentLight->GetShadowFarPlane();
-            DirectionalLightData.LightSize = CurrentLight->GetSize();
-            CascadeSplitLambda             = CurrentLight->GetCascadeSplitLambda();
+            CascadeSplitLambda = CurrentLight->GetCascadeSplitLambda();
 
             DirectionalLightDataDirty = true;
         }

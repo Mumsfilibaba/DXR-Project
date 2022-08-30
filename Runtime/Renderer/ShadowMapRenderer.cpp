@@ -556,9 +556,10 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
 
         FCascadeGenerationInfo GenerationInfo;
         GenerationInfo.CascadeSplitLambda = LightSetup.CascadeSplitLambda;
-        GenerationInfo.LightUp            = LightSetup.DirectionalLightData.Up;
+        GenerationInfo.LightUp            = LightSetup.DirectionalLightData.UpVector;
         GenerationInfo.LightDirection     = LightSetup.DirectionalLightData.Direction;
         GenerationInfo.CascadeResolution  = (float)LightSetup.CascadeSize;
+        GenerationInfo.ShadowMatrix       = LightSetup.DirectionalLightData.ShadowMatrix;
 
         CommandList.TransitionBuffer(
             CascadeGenerationData.Get(),

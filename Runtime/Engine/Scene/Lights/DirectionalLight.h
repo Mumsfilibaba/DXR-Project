@@ -17,13 +17,12 @@ public:
     FDirectionalLight();
     ~FDirectionalLight() = default;
 
+    void Tick(class FCamera& Camera);
+
     // Rotation in Radians
     void SetRotation(const FVector3& InRotation);
-    void SetLookAt(const FVector3& InInLookAt);
     void SetCascadeSplitLambda(float InCascadeSplitLambda);
     void SetSize(float InSize);
-
-    void UpdateCascades(class FCamera& Camera);
 
     FORCEINLINE const FVector3& GetDirection() const
     {
@@ -32,7 +31,7 @@ public:
 
     FORCEINLINE const FVector3& GetUp() const
     {
-        return Up;
+        return UpVector;
     }
 
     FORCEINLINE const FVector3& GetRotation() const
@@ -50,37 +49,24 @@ public:
         return LookAt;
     }
 
-    FORCEINLINE const FMatrix4& GetMatrix(uint32 CascadeIndex) const
+    FORCEINLINE const FMatrix4& GetShadowMatrix() const
     {
-        Check(CascadeIndex < NUM_SHADOW_CASCADES);
-        return Matrices[CascadeIndex];
+        return ShadowMatrix;
     }
 
-    FORCEINLINE const FMatrix4& GetViewMatrix(uint32 CascadeIndex) const
+    FORCEINLINE const FMatrix4& GetViewMatrix() const
     {
-        Check(CascadeIndex < NUM_SHADOW_CASCADES);
-        return ViewMatrices[CascadeIndex];
+        return ViewMatrix;
     }
 
-    FORCEINLINE const FMatrix4& GetProjectionMatrix(uint32 CascadeIndex) const
+    FORCEINLINE const FMatrix4& GetProjectionMatrix() const
     {
-        Check(CascadeIndex < NUM_SHADOW_CASCADES);
-        return ProjectionMatrices[CascadeIndex];
+        return ProjectionMatrix;
     }
 
     FORCEINLINE float GetCascadeSplitLambda() const
     {
         return CascadeSplitLambda;
-    }
-
-    FORCEINLINE float GetCascadeSplit(uint32 CascadeIndex) const
-    {
-        return CascadeSplits[CascadeIndex];
-    }
-
-    FORCEINLINE float GetCascadeRadius(uint32 CascadeIndex) const
-    {
-        return CascadeRadius[CascadeIndex];
     }
 
     FORCEINLINE float GetSize() const
@@ -90,18 +76,15 @@ public:
 
 private:
     FVector3 Direction;
-    FVector3 Up;
     FVector3 Rotation;
+    FVector3 UpVector;
     FVector3 LookAt;
     FVector3 Position;
 
-    FMatrix4 ViewMatrices[NUM_SHADOW_CASCADES];
-    FMatrix4 ProjectionMatrices[NUM_SHADOW_CASCADES];
-    FMatrix4 Matrices[NUM_SHADOW_CASCADES];
+    FMatrix4 ShadowMatrix;
+    FMatrix4 ViewMatrix;
+    FMatrix4 ProjectionMatrix;
 
-    float CascadeSplits[NUM_SHADOW_CASCADES];
-    float CascadeRadius[NUM_SHADOW_CASCADES];
-
-    float CascadeSplitLambda = 0.8f;
-    float Size               = 0.05f;
+    float CascadeSplitLambda;
+    float Size;
 };
