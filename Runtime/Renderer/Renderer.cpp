@@ -680,12 +680,14 @@ void FRenderer::Tick(const FScene& Scene)
         EResourceAccess::NonPixelShaderResource, 
         EResourceAccess::UnorderedAccess);
 
-    CommandList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), FVector4{ 1.0f, 1.0f, 1.0f, 1.0f });
-
     if (GEnableSSAO.GetBool())
     {
         GPU_TRACE_SCOPE(CommandList, "SSAO");
         SSAORenderer.Render(CommandList, Resources);
+    }
+    else
+    {
+        CommandList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), FVector4{ 1.0f, 1.0f, 1.0f, 1.0f });
     }
 
     CommandList.TransitionTexture(
