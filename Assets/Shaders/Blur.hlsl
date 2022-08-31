@@ -13,48 +13,57 @@ cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 
 groupshared float GTextureCache[NUM_THREADS][NUM_THREADS];
 
-static const int2 MAX_SIZE = int2(NUM_THREADS - 1, NUM_THREADS - 1);
+static const int2 MAX_SIZE = int2(NUM_THREADS, NUM_THREADS);
 
 static const float KERNEL[KERNEL_SIZE] =
 {
     0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f
 };
 
+static const int OFFSETS[KERNEL_SIZE] =
+{
+    -2, -1, 0, 1, 2
+};
+
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(FComputeShaderInput Input)
 {
-    const int2 TexCoords = int2(Input.DispatchThreadID.xy);
-    if (TexCoords.x > ScreenSize.x || TexCoords.y > ScreenSize.y)
-    {
-        return;
-    }
-    
+    const int2 Pixel = min(Input.DispatchThreadID.xy, int2(ScreenSize));   
+
     // Cache texture fetches
     const int2 GroupThreadID = int2(Input.GroupThreadID.xy);
-    GTextureCache[GroupThreadID.x][GroupThreadID.y] = Texture[TexCoords];
+    GTextureCache[GroupThreadID.x][GroupThreadID.y] = Texture[Pixel];
     
     GroupMemoryBarrierWithGroupSync();
     
     // Perform blur
     float Result = 0.0f;
-    int   Offset = -((KERNEL_SIZE - 1) / 2);
-    
     [unroll]
-    for (int Index = 0; Index < KERNEL_SIZE; Index++)
+    for (int Index = 0; Index < KERNEL_SIZE; ++Index)
     {
-        Offset++;
-        
+        const int   Offset = OFFSETS[Index];
         const float Weight = KERNEL[Index];
         
-        // TODO: Handle when we need to sample outside the tile
 #ifdef HORIZONTAL_PASS
-        const int CurrentTexCoord = max(0, min(MAX_SIZE.x, GroupThreadID.x + Offset));
-        Result += GTextureCache[CurrentTexCoord][GroupThreadID.y] * Weight;
+        const int2 CurrentTexCoord = int2(GroupThreadID.x + Offset, GroupThreadID.y);
 #else
-        const int CurrentTexCoord = max(0, min(MAX_SIZE.y, GroupThreadID.y + Offset));
-        Result += GTextureCache[GroupThreadID.x][CurrentTexCoord] * Weight;
+        const int2 CurrentTexCoord = int2(GroupThreadID.x, GroupThreadID.y + Offset);
 #endif
+        // Going outside of the cache? 
+        if (any(CurrentTexCoord >= MAX_SIZE) || any(CurrentTexCoord < int2(0, 0)))
+        {
+#ifdef HORIZONTAL_PASS
+        const int2 CurrentPixel = int2(min(max(Pixel.x + Offset, 0), ScreenSize.x), Pixel.y);
+#else
+        const int2 CurrentPixel = int2(Pixel.x, min(max(Pixel.y + Offset, 0), ScreenSize.y));
+#endif
+            Result += Texture[Pixel] * Weight;
+        }
+        else
+        {
+            Result += GTextureCache[CurrentTexCoord.x][CurrentTexCoord.y] * Weight;
+        }
     }
     
-    Texture[TexCoords] = Result;
+    Texture[Pixel] = Result;
 }

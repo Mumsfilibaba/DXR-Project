@@ -26,10 +26,13 @@ private:
 
     FRHIComputePipelineStateRef PipelineState;
     FRHIComputeShaderRef        SSAOShader;
+    
     FRHIComputePipelineStateRef BlurHorizontalPSO;
     FRHIComputeShaderRef        BlurHorizontalShader;
+    
     FRHIComputePipelineStateRef BlurVerticalPSO;
     FRHIComputeShaderRef        BlurVerticalShader;
+
     FRHIGenericBufferRef        SSAOSamples;
     FRHIShaderResourceViewRef   SSAOSamplesSRV;
     FRHITexture2DRef            SSAONoiseTex;

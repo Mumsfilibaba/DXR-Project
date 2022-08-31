@@ -17,7 +17,7 @@
 
 TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAO.Radius", 0.3f);
 TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAO.Bias", 0.0125f);
-TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAO.KernelSize", 48);
+TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAO.KernelSize", 32);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FScreenSpaceOcclusionRenderer
@@ -296,7 +296,9 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
     CommandList.SetShaderResourceView(SSAOShader.Get(), SSAONoiseTex->GetShaderResourceView(), 2);
     CommandList.SetShaderResourceView(SSAOShader.Get(), SSAOSamplesSRV.Get(), 3);
 
+    // TODO: note the sampler is getting bound to both samplers atm
     CommandList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 0);
+    CommandList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 1);
 
     FRHIUnorderedAccessView* SSAOBufferUAV = FrameResources.SSAOBuffer->GetUnorderedAccessView();
     CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);

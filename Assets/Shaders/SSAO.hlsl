@@ -24,61 +24,66 @@ cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 
 ConstantBuffer<FCamera> CameraBuffer : register(b0, space0);
 
-#define THREAD_COUNT 32
-#define MAX_SAMPLES  64
+#define THREAD_COUNT (16)
+#define MAX_SAMPLES  (64)
+
+groupshared float3 SamplesCache[MAX_SAMPLES];
+
 
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
 void Main(FComputeShaderInput Input)
 {
-    const uint2 OutputTexCoords = Input.DispatchThreadID.xy;
-    if (Input.DispatchThreadID.x > uint(ScreenSize.x) || Input.DispatchThreadID.y > uint(ScreenSize.y))
+    const int   FinalKernelSize = min(max(KernelSize, 4), MAX_SAMPLES);
+    const float FinalRadius = max(Radius, 0.01f);
+    const float FinalBias   = max(Bias, 0.0f);
+
+    // Cache all the samples
+    const uint GroupThreadIndex = Input.GroupIndex;
+    if (GroupThreadIndex < FinalKernelSize)
     {
-        return;
+        SamplesCache[GroupThreadIndex] = Samples[GroupThreadIndex];
     }
+
+    const float2 TexSize         = ScreenSize;
+    const uint2  OutputTexCoords = min(Input.DispatchThreadID.xy, uint2(TexSize));   
     
-    const float2 TexCoords = (float2(OutputTexCoords) + 0.5f) / ScreenSize;
-    const float  Depth = GBufferDepth.SampleLevel(GBufferSampler, TexCoords, 0);
-    if (Depth >= 1.0f)
-    {
-        Output[OutputTexCoords] = 1.0f;
-        return;
-    }
+    const float2 TexCoords  = (float2(OutputTexCoords) + 0.5f) / TexSize;
+
+    const float4x4 Projection        = CameraBuffer.Projection;
+    const float4x4 ProjectionInverse = CameraBuffer.ProjectionInverse;
+
+    // Get the depth and calculate view-space position
+    const float Depth   = GBufferDepth[OutputTexCoords];
+    float3 ViewPosition = PositionFromDepth(Depth, TexCoords, ProjectionInverse); 
     
-    float3 ViewPosition = PositionFromDepth(Depth, TexCoords, CameraBuffer.ProjectionInverse);
-    
-    float3 ViewNormal = GBufferNormals.SampleLevel(GBufferSampler, TexCoords, 0).rgb;
+    // Unpack Normal
+    float3 ViewNormal = GBufferNormals[OutputTexCoords].rgb;
     ViewNormal = UnpackNormal(ViewNormal);
     
-    const float2 NoiseScale = ScreenSize / NoiseSize;
+    const float2 NoiseScale = TexSize / NoiseSize;
     const float3 NoiseVec   = normalize(Noise.SampleLevel(NoiseSampler, TexCoords * NoiseScale, 0));
+    
     const float3 Tangent    = normalize(NoiseVec - ViewNormal * dot(NoiseVec, ViewNormal));
     const float3 Bitangent  = cross(ViewNormal, Tangent);
     float3x3 TBN = float3x3(Tangent, Bitangent, ViewNormal);
     
-    const float FinalRadius     = max(Radius, 0.01f);
-    const float FinalBias       = max(Bias, 0.0f);
-    const int   FinalKernelSize = max(KernelSize, 4);
-    
-    uint Width      = uint(ScreenSize.x);
-    uint RandomSeed = InitRandom(OutputTexCoords, Width, 0);
-    
+    GroupMemoryBarrierWithGroupSync();
+
     float Occlusion = 0.0f;
     for (int i = 0; i < FinalKernelSize; ++i)
     {
-        int Index = NextRandomInt(RandomSeed) % MAX_SAMPLES;
+        const float3 Sample = SamplesCache[i];
         
-        const float3 Sample = Samples[Index];
         float3 SamplePos = mul(Sample, TBN);
         SamplePos = ViewPosition + (SamplePos * FinalRadius);
             
-        float4 Offset = mul(CameraBuffer.Projection, float4(SamplePos, 1.0f));
+        float4 Offset = mul(Projection, float4(SamplePos, 1.0f));
         Offset.xyz = Offset.xyz / Offset.w;
         Offset.xy  = (Offset.xy * 0.5f) + 0.5f;
         Offset.y   = 1.0f - Offset.y;
         
         float SampleDepth = GBufferDepth.SampleLevel(GBufferSampler, Offset.xy, 0);
-        float3 DepthPos   = PositionFromDepth(SampleDepth, Offset.xy, CameraBuffer.ProjectionInverse);
-        SampleDepth = DepthPos.z;
+        SampleDepth = Depth_ProjToView(SampleDepth, ProjectionInverse);
         
         const float RangeCheck = smoothstep(0.0f, 1.0f, FinalRadius / abs(ViewPosition.z - SampleDepth));
         Occlusion += (SampleDepth >= (SamplePos.z - Bias) ? 0.0f : 1.0f) * RangeCheck;

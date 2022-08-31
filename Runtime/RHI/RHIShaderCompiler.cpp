@@ -5,8 +5,14 @@
 #include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Debug/Console/ConsoleInterface.h"
 
 #include <spirv_cross_c.h>
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console Variables
+
+TAutoConsoleVariable<bool> CVarShaderDebug("RHI.ShaderCompiler.Debug", true);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EDXCPart
@@ -261,6 +267,12 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
         CompileArgs.Emplace(L"-spirv");
+    }
+
+    if (CVarShaderDebug.GetBool())
+    {
+        CompileArgs.Emplace(L"-Zi");
+        CompileArgs.Emplace(L"-Qembed_debug");
     }
 
     // Create a single string for printing all the shader arguments
