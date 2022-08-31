@@ -116,7 +116,7 @@ struct RENDERER_API FLightSetup
     const uint32 MaxDirectionalLights   = 256;
     const uint32 MaxPointLightShadows   = 8;
 
-    const uint16 CascadeSize            = 2048;
+    const uint16 CascadeSize            = 1024;
 
     const uint16 IrradianceSize         = 32;
     const uint16 SpecularIrradianceSize = 256;
