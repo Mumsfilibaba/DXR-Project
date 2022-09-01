@@ -603,16 +603,16 @@ void FRenderer::Tick(const FScene& Scene)
     }
 #endif
 
+    // BasePass
+    {
+        DeferredRenderer.RenderBasePass(CommandList, Resources);
+    }
+
     // RayTracing PrePass
     if (RHISupportsRayTracing())
     {
         GPU_TRACE_SCOPE(CommandList, "Ray Tracing");
         RayTracer.PreRender(CommandList, Resources, Scene);
-    }
-
-    // BasePass
-    {
-        DeferredRenderer.RenderBasePass(CommandList, Resources);
     }
 
     // Start recording the main CommandList

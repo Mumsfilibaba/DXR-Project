@@ -66,10 +66,14 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
 
     const FVector3 Normal = FVector3(0.0f, 0.0f, 1.0f);
 
-    TArray<FVector3> SSAOKernel;
+    TArray<FVector4> SSAOKernel;
     for (uint32 Index = 0; (Index < 512u) && (SSAOKernel.GetSize() < 64); ++Index)
     {
-        FVector3 Sample = FVector3(RandomFloats(Generator) * 2.0f - 1.0f, RandomFloats(Generator) * 2.0f - 1.0f, RandomFloats(Generator));
+        FVector4 Sample = FVector4(
+            RandomFloats(Generator) * 2.0f - 1.0f,
+            RandomFloats(Generator) * 2.0f - 1.0f,
+            RandomFloats(Generator),
+            0.0f);
         Sample.Normalize();
 
         float Dot = Sample.DotProduct(Normal);
@@ -145,7 +149,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     FRHIGenericBufferInitializer SSAOSamplesInitializer(
         EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default,
         SSAOKernel.SizeInBytes(),
-        sizeof(FVector3),
+        sizeof(FVector4),
         EResourceAccess::Common,
         &SSAOSampleData);
 
@@ -305,27 +309,36 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
     CommandList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, 7);
 
     constexpr uint32 ThreadCount = 16;
+    const uint32 DispatchWidth   = NMath::DivideByMultiple<uint32>(Width, ThreadCount);
+    const uint32 DispatchHeight  = NMath::DivideByMultiple<uint32>(Height, ThreadCount);
 
     // Actual SSAO tracing
-    const uint32 DispatchWidth  = NMath::DivideByMultiple<uint32>(Width, ThreadCount);
-    const uint32 DispatchHeight = NMath::DivideByMultiple<uint32>(Height, ThreadCount);
-    CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
+    {
+        GPU_TRACE_SCOPE(CommandList, "SSAO Tracing");
 
-    CommandList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+        CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
+        CommandList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+    }
 
     // Horizontal blur
-    CommandList.SetComputePipelineState(BlurHorizontalPSO.Get());
-    CommandList.Set32BitShaderConstants(BlurHorizontalShader.Get(), &SSAOSettings.ScreenSize, 2);
-    CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
+    {
+        GPU_TRACE_SCOPE(CommandList, "SSAO Horizontal blur");
+        
+        CommandList.SetComputePipelineState(BlurHorizontalPSO.Get());
+        CommandList.Set32BitShaderConstants(BlurHorizontalShader.Get(), &SSAOSettings.ScreenSize, 2);
+        CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
-    CommandList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+        CommandList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+    }
 
     // Vertical blur
-    CommandList.SetComputePipelineState(BlurVerticalPSO.Get());
-    CommandList.Set32BitShaderConstants(BlurVerticalShader.Get(), &SSAOSettings.ScreenSize, 2);
-    CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
+    {
+        GPU_TRACE_SCOPE(CommandList, "SSAO Vertical blur");
 
-    CommandList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+        CommandList.SetComputePipelineState(BlurVerticalPSO.Get());
+        CommandList.Set32BitShaderConstants(BlurVerticalShader.Get(), &SSAOSettings.ScreenSize, 2);
+        CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
+    }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End SSAO");
 }
@@ -337,7 +350,15 @@ bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameRes
     const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
 
-    FRHITexture2DInitializer SSAOBufferInitializer(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceAccess::Common);
+    FRHITexture2DInitializer SSAOBufferInitializer(
+        FrameResources.SSAOBufferFormat,
+        Width, 
+        Height, 
+        1,
+        1,
+        Flags,
+        EResourceAccess::Common);
+
     FrameResources.SSAOBuffer = RHICreateTexture2D(SSAOBufferInitializer);
     if (!FrameResources.SSAOBuffer)
     {

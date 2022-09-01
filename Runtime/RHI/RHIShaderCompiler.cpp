@@ -262,8 +262,11 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     if (CompileInfo.bOptimize)
     {
         CompileArgs.Emplace(L"-O3");
+        CompileArgs.Emplace(DXC_ARG_ALL_RESOURCES_BOUND);
+        CompileArgs.Emplace(DXC_ARG_IEEE_STRICTNESS);
+        CompileArgs.Emplace(DXC_ARG_AVOID_FLOW_CONTROL);
     }
-    
+
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
         CompileArgs.Emplace(L"-spirv");
@@ -431,11 +434,20 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FS
     if (CompileInfo.bOptimize)
     {
         CompileArgs.Emplace(L"-O3");
+        CompileArgs.Emplace(DXC_ARG_ALL_RESOURCES_BOUND);
+        CompileArgs.Emplace(DXC_ARG_IEEE_STRICTNESS);
+        CompileArgs.Emplace(DXC_ARG_AVOID_FLOW_CONTROL);
     }
 
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
         CompileArgs.Emplace(L"-spirv");
+    }
+
+    if (CVarShaderDebug.GetBool())
+    {
+        CompileArgs.Emplace(L"-Zi");
+        CompileArgs.Emplace(L"-Qembed_debug");
     }
 
     // Create a single string for printing all the shader arguments

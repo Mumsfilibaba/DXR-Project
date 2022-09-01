@@ -6,7 +6,7 @@ Texture2D<float3> GBufferNormals : register(t0, space0);
 Texture2D<float>  GBufferDepth   : register(t1, space0);
 Texture2D<float3> Noise          : register(t2, space0);
 
-StructuredBuffer<float3> Samples : register(t3, space0);
+StructuredBuffer<float4> Samples : register(t3, space0);
 
 SamplerState GBufferSampler : register(s0, space0);
 SamplerState NoiseSampler   : register(s1, space0);
@@ -29,7 +29,6 @@ ConstantBuffer<FCamera> CameraBuffer : register(b0, space0);
 
 groupshared float3 SamplesCache[MAX_SAMPLES];
 
-
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
 void Main(FComputeShaderInput Input)
 {
@@ -41,7 +40,7 @@ void Main(FComputeShaderInput Input)
     const uint GroupThreadIndex = Input.GroupIndex;
     if (GroupThreadIndex < FinalKernelSize)
     {
-        SamplesCache[GroupThreadIndex] = Samples[GroupThreadIndex];
+        SamplesCache[GroupThreadIndex] = Samples[GroupThreadIndex].xyz;
     }
 
     const float2 TexSize         = ScreenSize;
