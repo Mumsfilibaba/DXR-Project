@@ -220,7 +220,7 @@ bool FEngineLoop::Init()
 
     NCoreDelegates::PreApplicationLoadedDelegate.Broadcast();
 
-    GApplicationModule = FModuleInterface::Get().LoadModule<FApplicationInterfaceModule>(FProjectManager::GetProjectModuleName());
+    GApplicationModule = FModuleInterface::Get().LoadModule<FApplicationModule>(FProjectManager::GetProjectModuleName());
     if (!GApplicationModule)
     {
         LOG_WARNING("Application Init failed, may not behave as intended");

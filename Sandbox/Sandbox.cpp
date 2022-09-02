@@ -33,7 +33,7 @@ IMPLEMENT_ENGINE_MODULE(FSandbox, Sandbox);
 
 bool FSandbox::Init()
 {
-    if (!FApplicationInterfaceModule::Init())
+    if (!FApplicationModule::Init())
     {
         return false;
     }
@@ -315,8 +315,8 @@ bool FSandbox::Init()
     FSceneData PillarData;
     FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Models/Pillar.obj"), PillarData);
 
-    TSharedPtr<FMesh>     Pillar = PillarData.HasModelData() ? FMesh::Make(PillarData.Models.FirstElement().Mesh) : nullptr;
-    TSharedPtr<FMaterial> PillarMat = MakeShared<FMaterial>(MatProperties);
+    TSharedPtr<FMesh>     Pillar         = PillarData.HasModelData() ? FMesh::Make(PillarData.Models.FirstElement().Mesh) : nullptr;
+    TSharedPtr<FMaterial> PillarMaterial = MakeShared<FMaterial>(MatProperties);
 
     for (uint32 i = 0; i < 8; i++)
     {
@@ -328,7 +328,7 @@ bool FSandbox::Init()
 
         NewComponent                         = dbg_new FMeshComponent(NewActor);
         NewComponent->Mesh                   = Pillar;
-        NewComponent->Material               = PillarMat;
+        NewComponent->Material               = PillarMaterial;
         NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
         NewComponent->Material->NormalMap    = GEngine->BaseNormal;
         NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
@@ -415,7 +415,6 @@ bool FSandbox::Init()
     Light4->SetIntensity(10.0f);
     Light4->SetRotation(FVector3(NMath::ToRadians(35.0f), NMath::ToRadians(135.0f), 0.0f));
     Light4->SetCascadeSplitLambda(0.9f);
-    //Light4->SetRotation(0.0f, 0.0f, 0.0f);
     CurrentScene->AddLight(Light4);
 
     FLightProbe* LightProbe = dbg_new FLightProbe();
@@ -428,7 +427,7 @@ bool FSandbox::Init()
 
 void FSandbox::Tick(FTimespan DeltaTime)
 {
-    FApplicationInterfaceModule::Tick(DeltaTime);
+    FApplicationModule::Tick(DeltaTime);
 
     // LOG_INFO("Tick: %f", DeltaTime.AsMilliseconds());
 

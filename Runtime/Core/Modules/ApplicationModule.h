@@ -5,14 +5,14 @@
 #include "Core/Delegates/DelegateInstance.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FApplicationInterfaceModule
+// FApplicationModule
 
-class CORE_API FApplicationInterfaceModule 
+class CORE_API FApplicationModule 
     : public IModule
 {
 public:
-    FApplicationInterfaceModule() = default;
-    virtual ~FApplicationInterfaceModule() = default;
+    FApplicationModule() = default;
+    virtual ~FApplicationModule() = default;
 
     /** @return: Returns true if the initialization is successful */
     virtual bool Init();
@@ -40,4 +40,4 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Global application pointer
 
-extern CORE_API FApplicationInterfaceModule* GApplicationModule;
+extern CORE_API FApplicationModule* GApplicationModule;
