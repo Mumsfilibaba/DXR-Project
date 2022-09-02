@@ -8,23 +8,23 @@
 
 FMeshData FMeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
 {
-    const float HalfWidth = Width * 0.5f;
+    const float HalfWidth  = Width * 0.5f;
     const float HalfHeight = Height * 0.5f;
-    const float HalfDepth = Depth * 0.5f;
+    const float HalfDepth  = Depth * 0.5f;
 
     FMeshData Cube;
     Cube.Vertices =
     {
         // FRONT FACE
         { FVector3(-HalfWidth,  HalfHeight, -HalfDepth), FVector3(0.0f,  0.0f, -1.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 0.0f) },
-        { FVector3(HalfWidth,  HalfHeight, -HalfDepth), FVector3(0.0f,  0.0f, -1.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 0.0f) },
+        { FVector3( HalfWidth,  HalfHeight, -HalfDepth), FVector3(0.0f,  0.0f, -1.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 0.0f) },
         { FVector3(-HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f,  0.0f, -1.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 1.0f) },
-        { FVector3(HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f,  0.0f, -1.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
+        { FVector3( HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f,  0.0f, -1.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
 
         // BACK FACE
-        { FVector3(HalfWidth,  HalfHeight,  HalfDepth), FVector3(0.0f,  0.0f,  1.0f), FVector3(-1.0f,  0.0f, 0.0f), FVector2(0.0f, 0.0f) },
+        { FVector3( HalfWidth,  HalfHeight,  HalfDepth), FVector3(0.0f,  0.0f,  1.0f), FVector3(-1.0f,  0.0f, 0.0f), FVector2(0.0f, 0.0f) },
         { FVector3(-HalfWidth,  HalfHeight,  HalfDepth), FVector3(0.0f,  0.0f,  1.0f), FVector3(-1.0f,  0.0f, 0.0f), FVector2(1.0f, 0.0f) },
-        { FVector3(HalfWidth, -HalfHeight,  HalfDepth), FVector3(0.0f,  0.0f,  1.0f), FVector3(-1.0f,  0.0f, 0.0f), FVector2(0.0f, 1.0f) },
+        { FVector3( HalfWidth, -HalfHeight,  HalfDepth), FVector3(0.0f,  0.0f,  1.0f), FVector3(-1.0f,  0.0f, 0.0f), FVector2(0.0f, 1.0f) },
         { FVector3(-HalfWidth, -HalfHeight,  HalfDepth), FVector3(0.0f,  0.0f,  1.0f), FVector3(-1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
 
         // RIGHT FACE
@@ -41,15 +41,15 @@ FMeshData FMeshFactory::CreateCube(float Width, float Height, float Depth) noexc
 
         // TOP FACE
         { FVector3(-HalfWidth,  HalfHeight,  HalfDepth), FVector3(0.0f,  1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 0.0f) },
-        { FVector3(HalfWidth,  HalfHeight,  HalfDepth), FVector3(0.0f,  1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 0.0f) },
+        { FVector3( HalfWidth,  HalfHeight,  HalfDepth), FVector3(0.0f,  1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 0.0f) },
         { FVector3(-HalfWidth,  HalfHeight, -HalfDepth), FVector3(0.0f,  1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 1.0f) },
-        { FVector3(HalfWidth,  HalfHeight, -HalfDepth), FVector3(0.0f,  1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
+        { FVector3( HalfWidth,  HalfHeight, -HalfDepth), FVector3(0.0f,  1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
 
         // BOTTOM FACE
         { FVector3(-HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f, -1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 0.0f) },
-        { FVector3(HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f, -1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 0.0f) },
+        { FVector3( HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f, -1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 0.0f) },
         { FVector3(-HalfWidth, -HalfHeight,  HalfDepth), FVector3(0.0f, -1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 1.0f) },
-        { FVector3(HalfWidth, -HalfHeight,  HalfDepth), FVector3(0.0f, -1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
+        { FVector3( HalfWidth, -HalfHeight,  HalfDepth), FVector3(0.0f, -1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
     };
 
     Cube.Indices =
@@ -121,7 +121,7 @@ FMeshData FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
             int32 quad = (Height * x) + y;
             Data.Indices[(quad * 6) + 0] = (x * (1 + Height)) + y + 1;
             Data.Indices[(quad * 6) + 1] = (Data.Indices[quad * 6] + 2 + (Height - 1));
-            Data.Indices[(quad * 6) + 2] = Data.Indices[quad * 6] - 1;
+            Data.Indices[(quad * 6) + 2] = Data.Indices[(quad * 6) + 0] - 1;
             Data.Indices[(quad * 6) + 3] = Data.Indices[(quad * 6) + 1];
             Data.Indices[(quad * 6) + 4] = Data.Indices[(quad * 6) + 1] - 1;
             Data.Indices[(quad * 6) + 5] = Data.Indices[(quad * 6) + 2];
@@ -140,18 +140,18 @@ FMeshData FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
     Sphere.Vertices.Resize(12);
 
     const float t = (1.0f + NMath::Sqrt(5.0f)) / 2.0f;
-    Sphere.Vertices[0].Position = FVector3(-1.0f, t, 0.0f);
-    Sphere.Vertices[1].Position = FVector3(1.0f, t, 0.0f);
-    Sphere.Vertices[2].Position = FVector3(-1.0f, -t, 0.0f);
-    Sphere.Vertices[3].Position = FVector3(1.0f, -t, 0.0f);
-    Sphere.Vertices[4].Position = FVector3(0.0f, -1.0f, t);
-    Sphere.Vertices[5].Position = FVector3(0.0f, 1.0f, t);
-    Sphere.Vertices[6].Position = FVector3(0.0f, -1.0f, -t);
-    Sphere.Vertices[7].Position = FVector3(0.0f, 1.0f, -t);
-    Sphere.Vertices[8].Position = FVector3(t, 0.0f, -1.0f);
-    Sphere.Vertices[9].Position = FVector3(t, 0.0f, 1.0f);
-    Sphere.Vertices[10].Position = FVector3(-t, 0.0f, -1.0f);
-    Sphere.Vertices[11].Position = FVector3(-t, 0.0f, 1.0f);
+    Sphere.Vertices[0].Position  = FVector3(-1.0f,  t   ,  0.0f);
+    Sphere.Vertices[1].Position  = FVector3( 1.0f,  t   ,  0.0f);
+    Sphere.Vertices[2].Position  = FVector3(-1.0f, -t   ,  0.0f);
+    Sphere.Vertices[3].Position  = FVector3( 1.0f, -t   ,  0.0f);
+    Sphere.Vertices[4].Position  = FVector3( 0.0f, -1.0f,  t);
+    Sphere.Vertices[5].Position  = FVector3( 0.0f,  1.0f,  t);
+    Sphere.Vertices[6].Position  = FVector3( 0.0f, -1.0f, -t);
+    Sphere.Vertices[7].Position  = FVector3( 0.0f,  1.0f, -t);
+    Sphere.Vertices[8].Position  = FVector3( t   ,  0.0f, -1.0f);
+    Sphere.Vertices[9].Position  = FVector3( t   ,  0.0f,  1.0f);
+    Sphere.Vertices[10].Position = FVector3(-t   ,  0.0f, -1.0f);
+    Sphere.Vertices[11].Position = FVector3(-t   ,  0.0f,  1.0f);
 
     Sphere.Indices =
     {
@@ -194,7 +194,7 @@ FMeshData FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
         Sphere.Vertices[i].Normal = Position;
         Sphere.Vertices[i].Position = Position * Radius;
 
-        // Calculate uvs
+        // Calculate UVs
         Sphere.Vertices[i].TexCoord.y = (NMath::Asin(Sphere.Vertices[i].Position.y) / NMath::kPI_f) + 0.5f;
         Sphere.Vertices[i].TexCoord.x = (NMath::Atan2(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + NMath::kPI_f) / (2.0f * NMath::kPI_f);
     }
@@ -284,6 +284,7 @@ FMeshData FMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noe
 
     return data;
     */
+
     return FMeshData();
 }
 
@@ -375,6 +376,7 @@ FMeshData FMeshFactory::CreatePyramid() noexcept
 
     return data;
     */
+
     return FMeshData();
 }
 
@@ -484,6 +486,7 @@ FMeshData FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height)
     CalculateTangents(data);
     return data;
     */
+
     return FMeshData();
 }
 
