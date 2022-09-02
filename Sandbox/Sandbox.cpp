@@ -410,7 +410,7 @@ bool FSandbox::Init()
     // Add DirectionalLight- Source
     FDirectionalLight* Light4 = dbg_new FDirectionalLight();
     Light4->SetShadowBias(0.0005f);
-    Light4->SetMaxShadowBias(0.0025f);
+    Light4->SetMaxShadowBias(0.0009f);
     Light4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light4->SetIntensity(10.0f);
     Light4->SetRotation(FVector3(NMath::ToRadians(35.0f), NMath::ToRadians(135.0f), 0.0f));
