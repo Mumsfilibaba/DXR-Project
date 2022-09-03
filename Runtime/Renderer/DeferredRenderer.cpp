@@ -723,13 +723,13 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End GeometryPass");
 }
 
-void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, const FFrameResources& FrameResources, const FLightSetup& LightSetup)
+void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin LightPass");
 
     TRACE_SCOPE("LightPass");
 
-    GPU_TRACE_SCOPE(CmdList, "Light Pass");
+    GPU_TRACE_SCOPE(CommandList, "Light Pass");
 
     bool bDrawCascades = false;
     if (IConsoleVariable* CVarDrawCascades = FConsoleInterface::Get().FindVariable("Renderer.Debug.DrawCascades"))
@@ -741,50 +741,51 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, c
     if (GDrawTileDebug.GetBool())
     {
         LightPassShader = TiledLightShader_TileDebug.Get();
-        CmdList.SetComputePipelineState(TiledLightPassPSO_TileDebug.Get());
+        CommandList.SetComputePipelineState(TiledLightPassPSO_TileDebug.Get());
     }
     else if (bDrawCascades)
     {
         LightPassShader = TiledLightShader_CascadeDebug.Get();
-        CmdList.SetComputePipelineState(TiledLightPassPSO_CascadeDebug.Get());
+        CommandList.SetComputePipelineState(TiledLightPassPSO_CascadeDebug.Get());
     }
     else
     {
         LightPassShader = TiledLightShader.Get();
-        CmdList.SetComputePipelineState(TiledLightPassPSO.Get());
+        CommandList.SetComputePipelineState(TiledLightPassPSO.Get());
     }
 
     const FProxyLightProbe& Skylight = LightSetup.Skylight;
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView(), 0);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 1);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Material]->GetShaderResourceView(), 2);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 3);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 1);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Material]->GetShaderResourceView(), 2);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 3);
     //CmdList.SetShaderResourceView(LightPassShader, nullptr, 4); // Reflection
-    CmdList.SetShaderResourceView(LightPassShader, Skylight.IrradianceMap->GetShaderResourceView(), 4);
-    CmdList.SetShaderResourceView(LightPassShader, Skylight.SpecularIrradianceMap->GetShaderResourceView(), 5);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 6);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirectionalShadowMask->GetShaderResourceView(), 7);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 8);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 9);
+    CommandList.SetShaderResourceView(LightPassShader, Skylight.IrradianceMap->GetShaderResourceView(), 4);
+    CommandList.SetShaderResourceView(LightPassShader, Skylight.SpecularIrradianceMap->GetShaderResourceView(), 5);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 6);
+    CommandList.SetShaderResourceView(LightPassShader, LightSetup.DirectionalShadowMask->GetShaderResourceView(), 7);
+    CommandList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 8);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 9);
 
     if (bDrawCascades)
     {
-        CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeIndexBuffer->GetShaderResourceView(), 10);
+        CommandList.SetShaderResourceView(LightPassShader, LightSetup.CascadeIndexBuffer->GetShaderResourceView(), 10);
     }
 
-    CmdList.SetConstantBuffer(LightPassShader, FrameResources.CameraBuffer.Get(), 0);
-    CmdList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsBuffer.Get(), 1);
-    CmdList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsPosRadBuffer.Get(), 2);
-    CmdList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsBuffer.Get(), 3);
-    CmdList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
-    CmdList.SetConstantBuffer(LightPassShader, LightSetup.DirectionalLightsBuffer.Get(), 5);
+    CommandList.SetConstantBuffer(LightPassShader, FrameResources.CameraBuffer.Get(), 0);
+    CommandList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsBuffer.Get(), 1);
+    CommandList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsPosRadBuffer.Get(), 2);
+    CommandList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsBuffer.Get(), 3);
+    CommandList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
+    CommandList.SetConstantBuffer(LightPassShader, LightSetup.DirectionalLightsBuffer.Get(), 5);
 
-    CmdList.SetSamplerState(LightPassShader, FrameResources.IntegrationLUTSampler.Get(), 0);
-    CmdList.SetSamplerState(LightPassShader, FrameResources.IrradianceSampler.Get(), 1);
-    CmdList.SetSamplerState(LightPassShader, FrameResources.PointLightShadowSampler.Get(), 2);
+    CommandList.SetSamplerState(LightPassShader, FrameResources.IntegrationLUTSampler.Get(), 0);
+    CommandList.SetSamplerState(LightPassShader, FrameResources.IrradianceSampler.Get(), 1);
+    CommandList.SetSamplerState(LightPassShader, FrameResources.GBufferSampler.Get(), 2);
+    CommandList.SetSamplerState(LightPassShader, FrameResources.PointLightShadowSampler.Get(), 3);
 
     FRHIUnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
-    CmdList.SetUnorderedAccessView(LightPassShader, FinalTargetUAV, 0);
+    CommandList.SetUnorderedAccessView(LightPassShader, FinalTargetUAV, 0);
 
     struct SLightPassSettings
     {
@@ -801,14 +802,14 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CmdList, c
     Settings.ScreenWidth                 = FrameResources.FinalTarget->GetWidth();
     Settings.ScreenHeight                = FrameResources.FinalTarget->GetHeight();
 
-    CmdList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
+    CommandList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
 
     const FIntVector3 ThreadsXYZ = LightPassShader->GetThreadGroupXYZ();
     const uint32 WorkGroupWidth  = NMath::DivideByMultiple<uint32>(Settings.ScreenWidth, ThreadsXYZ.x);
     const uint32 WorkGroupHeight = NMath::DivideByMultiple<uint32>(Settings.ScreenHeight, ThreadsXYZ.y);
-    CmdList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
+    CommandList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End LightPass");
 }
 
 bool FDeferredRenderer::ResizeResources(FFrameResources& FrameResources)

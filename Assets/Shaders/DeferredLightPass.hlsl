@@ -28,7 +28,7 @@
 
 // G-Buffer
 Texture2D<float4> AlbedoTex       : register(t0);
-Texture2D<float4> NormalTex       : register(t1);
+Texture2D<float4> NormalBuffer    : register(t1);
 Texture2D<float4> MaterialTex     : register(t2);
 Texture2D<float>  DepthStencilTex : register(t3);
 
@@ -46,18 +46,21 @@ Texture2D<float> DirectionalShadowMask : register(t8);
 // Point Shadows
 TextureCubeArray<float> PointLightShadowMaps : register(t9);
 
-// SSAO
-Texture2D<float3> SSAO : register(t10);
+// SSAOBuffer
+Texture2D<float3> SSAOBuffer : register(t10);
 
 // Shadow Cascade Data - FOR DEBUG
 #if DRAW_SHADOW_CASCADE
 Texture2D<uint> CascadeIndexBuffer : register(t11);
 #endif
 
+// Samplers
 SamplerState LUTSampler        : register(s0);
 SamplerState IrradianceSampler : register(s1);
+SamplerState GBufferSampler    : register(s2);
 
-SamplerComparisonState ShadowMapSampler0 : register(s2); // Point-Lights
+// Point-Lights
+SamplerComparisonState ShadowMapSampler0 : register(s3);
 
 cbuffer Constants : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
@@ -221,23 +224,26 @@ void Main(FComputeShaderInput Input)
     GroupMemoryBarrierWithGroupSync();
     
     // Discard pixels not rendered to the GBuffer
-    const float3 GBufferNormal = NormalTex.Load(int3(Pixel, 0)).rgb;
+    const float3 GBufferNormal = NormalBuffer.Load(int3(Pixel, 0)).rgb;
     if (length(GBufferNormal) == 0)
     {
         Output[Pixel] = Float4(0.0f);
         return;
     }
 
-    const float2 PixelFloat = saturate((float2(Pixel) + Float2(0.5f)) / float2(ScreenWidth, ScreenHeight));
+    const float2 PixelFloat    = saturate((float2(Pixel) + Float2(0.5f)) / float2(ScreenWidth, ScreenHeight));
     const float3 ViewPosition  = PositionFromDepth(Depth, PixelFloat, CameraBuffer.ProjectionInverse);
     const float3 WorldPosition = mul(float4(ViewPosition, 1.0f), CameraBuffer.ViewInverse).xyz;
 
     const float3 GBufferAlbedo   = saturate(AlbedoTex.Load(int3(Pixel, 0)).rgb);
     const float3 GBufferMaterial = MaterialTex.Load(int3(Pixel, 0)).rgb;
-    const float  ScreenSpaceAO   = SSAO.Load(int3(Pixel, 0)).r;
+
+    // Sample with a sampler since the texture is not necessarilly the same size as the screen
+    const float ScreenSpaceAO = SSAOBuffer.SampleLevel(GBufferSampler, PixelFloat, 0);
     
     const float3 ObjectNormal = UnpackNormal(GBufferNormal);
     const float3 View = normalize(CameraBuffer.Position - WorldPosition);
+
     const float GBufferRoughness = saturate(GBufferMaterial.r);
     const float GBufferMetallic  = saturate(GBufferMaterial.g);
     const float GBufferAO        = saturate(GBufferMaterial.b * ScreenSpaceAO);

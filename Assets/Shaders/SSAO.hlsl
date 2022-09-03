@@ -17,6 +17,8 @@ cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     float2 ScreenSize;
     float2 NoiseSize;
+    int2   GBufferSize;
+
     float  Radius;
     float  Bias;
     int    KernelSize;
@@ -43,20 +45,23 @@ void Main(FComputeShaderInput Input)
         SamplesCache[GroupThreadIndex] = Samples[GroupThreadIndex].xyz;
     }
 
+    // Output coordinate
     const float2 TexSize         = ScreenSize;
     const uint2  OutputTexCoords = min(Input.DispatchThreadID.xy, uint2(TexSize));   
-    
-    const float2 TexCoords  = (float2(OutputTexCoords) + 0.5f) / TexSize;
+
+    // GBuffer coordinate
+    const float2 TexCoords    = (float2(OutputTexCoords) + 0.5f) / TexSize;
+    const uint2  GBufferPixel = uint2(TexCoords * float2(GBufferSize)); 
 
     const float4x4 Projection        = CameraBuffer.Projection;
     const float4x4 ProjectionInverse = CameraBuffer.ProjectionInverse;
 
     // Get the depth and calculate view-space position
-    const float Depth   = GBufferDepth[OutputTexCoords];
+    const float Depth   = GBufferDepth[GBufferPixel];
     float3 ViewPosition = PositionFromDepth(Depth, TexCoords, ProjectionInverse); 
     
     // Unpack Normal
-    float3 ViewNormal = GBufferNormals[OutputTexCoords].rgb;
+    float3 ViewNormal = GBufferNormals[GBufferPixel].rgb;
     ViewNormal = UnpackNormal(ViewNormal);
     
     const float2 NoiseScale = TexSize / NoiseSize;

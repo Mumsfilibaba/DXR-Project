@@ -6,6 +6,7 @@
 
 #include "Core/Math/Vector2.h"
 #include "Core/Math/Vector3.h"
+#include "Core/Math/IntVector2.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
@@ -271,20 +272,27 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
 
     struct FSSAOSettings
     {
-        FVector2 ScreenSize;
-        FVector2 NoiseSize;
+        FVector2    ScreenSize;
+        FVector2    NoiseSize;
+
+        FIntVector2 GBufferSize;
+
         float    Radius;
         float    Bias;
         int32    KernelSize;
     } SSAOSettings;
 
-    const uint32 Width  = FrameResources.SSAOBuffer->GetWidth();
-    const uint32 Height = FrameResources.SSAOBuffer->GetHeight();
-    SSAOSettings.ScreenSize = FVector2(float(Width), float(Height));
-    SSAOSettings.NoiseSize  = FVector2(4.0f, 4.0f);
-    SSAOSettings.Radius     = GSSAORadius.GetFloat();
-    SSAOSettings.KernelSize = GSSAOKernelSize.GetInt();
-    SSAOSettings.Bias       = GSSAOBias.GetFloat();
+    const uint32 Width         = FrameResources.SSAOBuffer->GetWidth();
+    const uint32 Height        = FrameResources.SSAOBuffer->GetHeight();
+    const uint32 GBufferWidth  = FrameResources.GBuffer[GBufferIndex_Depth]->GetWidth();
+    const uint32 GBufferHeight = FrameResources.GBuffer[GBufferIndex_Depth]->GetHeight();
+    
+    SSAOSettings.ScreenSize  = FVector2(float(Width), float(Height));
+    SSAOSettings.NoiseSize   = FVector2(4.0f, 4.0f);
+    SSAOSettings.GBufferSize = FIntVector2(GBufferWidth, GBufferHeight);
+    SSAOSettings.Radius      = GSSAORadius.GetFloat();
+    SSAOSettings.KernelSize  = GSSAOKernelSize.GetInt();
+    SSAOSettings.Bias        = GSSAOBias.GetFloat();
 
     CommandList.SetComputePipelineState(PipelineState.Get());
     CommandList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);
@@ -300,13 +308,13 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
     CommandList.SetShaderResourceView(SSAOShader.Get(), SSAONoiseTex->GetShaderResourceView(), 2);
     CommandList.SetShaderResourceView(SSAOShader.Get(), SSAOSamplesSRV.Get(), 3);
 
-    // TODO: note the sampler is getting bound to both samplers atm
+    // TODO: note the sampler is getting bound to both samplers ATM
     CommandList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 0);
     CommandList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 1);
 
     FRHIUnorderedAccessView* SSAOBufferUAV = FrameResources.SSAOBuffer->GetUnorderedAccessView();
     CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
-    CommandList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, 7);
+    CommandList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, 9);
 
     constexpr uint32 ThreadCount = 16;
     const uint32 DispatchWidth   = NMath::DivideByMultiple<uint32>(Width, ThreadCount);
@@ -347,8 +355,8 @@ bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameRes
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::RWTexture;
     
-    const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
-    const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
+    const uint32 Width  = FrameResources.MainWindowViewport->GetWidth() / 2;
+    const uint32 Height = FrameResources.MainWindowViewport->GetHeight() / 2;
 
     FRHITexture2DInitializer SSAOBufferInitializer(
         FrameResources.SSAOBufferFormat,
