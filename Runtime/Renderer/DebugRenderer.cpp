@@ -21,7 +21,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
     
     {
         {
-            FShaderCompileInfo CompileInfo("AABB_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+            FRHIShaderCompileInfo CompileInfo("AABB_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -37,7 +37,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
         }
 
         {
-            FShaderCompileInfo CompileInfo("AABB_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
+            FRHIShaderCompileInfo CompileInfo("AABB_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -179,7 +179,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
 
     {
         {
-            FShaderCompileInfo CompileInfo("Light_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+            FRHIShaderCompileInfo CompileInfo("Light_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -195,7 +195,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
         }
 
         {
-            FShaderCompileInfo CompileInfo("Light_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
+            FRHIShaderCompileInfo CompileInfo("Light_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();

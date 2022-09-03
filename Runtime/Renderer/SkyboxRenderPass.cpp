@@ -101,7 +101,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     TArray<uint8> ShaderCode;
     
     {
-        FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -117,7 +117,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     }
 
     {
-        FShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        FRHIShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();

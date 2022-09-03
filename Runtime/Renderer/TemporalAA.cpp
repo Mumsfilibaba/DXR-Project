@@ -18,7 +18,7 @@ bool FTemporalAA::Init(FFrameResources& FrameResources)
 
     TArray<uint8> ShaderCode;
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/TemporalAA.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();

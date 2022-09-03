@@ -17,7 +17,7 @@ bool FRayTracer::Init(FFrameResources& Resources)
     TArray<uint8> Code;
     
     {
-        FShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_3, EShaderStage::RayGen);
+        FRHIShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_3, EShaderStage::RayGen);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
         {
             DEBUG_BREAK();
@@ -33,7 +33,7 @@ bool FRayTracer::Init(FFrameResources& Resources)
     }
 
     {
-        FShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_3, EShaderStage::RayClosestHit);
+        FRHIShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_3, EShaderStage::RayClosestHit);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
         {
             DEBUG_BREAK();
@@ -49,7 +49,7 @@ bool FRayTracer::Init(FFrameResources& Resources)
     }
 
     {
-        FShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_3, EShaderStage::RayMiss);
+        FRHIShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_3, EShaderStage::RayMiss);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
         {
             DEBUG_BREAK();

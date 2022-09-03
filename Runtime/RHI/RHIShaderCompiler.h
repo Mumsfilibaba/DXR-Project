@@ -59,11 +59,11 @@ struct FShaderDefine
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FShaderCompileInfo
+// FRHIShaderCompileInfo
 
-struct FShaderCompileInfo
+struct FRHIShaderCompileInfo
 {
-    FShaderCompileInfo()
+    FRHIShaderCompileInfo()
         : ShaderModel(EShaderModel::Unknown)
         , ShaderStage(EShaderStage::Unknown)
         , OutputLanguage(EShaderOutputLanguage::Unknown)
@@ -72,7 +72,7 @@ struct FShaderCompileInfo
         , EntryPoint()
     { }
     
-    FShaderCompileInfo(
+    FRHIShaderCompileInfo(
         const FString& InEntryPoint,
         EShaderModel InShaderModel,
         EShaderStage InShaderStage,
@@ -120,8 +120,8 @@ public:
     
     static FRHIShaderCompiler& Get();
 
-    bool CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-    bool CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool CompileFromFile(const FString& Filename, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool CompileFromSource(const FString& ShaderSource, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
 private:
     static void ErrorCallback(void* Userdata, const CHAR* Error);

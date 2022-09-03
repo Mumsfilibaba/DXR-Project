@@ -10,9 +10,23 @@
     #define ENABLE_DEBUG (0)
 #endif
 
-#define SELECT_CASCADE_FROM_PROJECTION (1)
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Soft shadows settings
 
-// FCamera and Light
+#define NUM_PCF_SAMPLES (16)
+#define PCF_RADIUS      (0.04f)
+#define ROTATE_SAMPLES  (1)
+#define USE_HAMMERSLY   (1)
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Cascaded Shadow Mapping Settings
+
+#define SELECT_CASCADE_FROM_PROJECTION (1)
+#define USE_RECEIVER_PLANE_DEPTH_BIAS  (0)
+#define BLEND_CASCADES                 (1)
+#define CASCADE_FADE_FACTOR            (0.1f)
+
+// Camera and Light
 ConstantBuffer<FCamera>           CameraBuffer : register(b0);
 ConstantBuffer<FDirectionalLight> LightBuffer  : register(b1);
 
@@ -21,8 +35,8 @@ StructuredBuffer<FCascadeMatrices> ShadowMatricesBuffer : register(t0);
 StructuredBuffer<FCascadeSplit>    ShadowSplitsBuffer   : register(t1);
 
 // G-Buffer
-Texture2D<float3> NormalTex : register(t2);
-Texture2D<float>  DepthTex  : register(t3);
+Texture2D<float>  DepthBuffer  : register(t2);
+Texture2D<float3> NormalBuffer : register(t3);
 
 // Shadow Cascades
 Texture2D<float> ShadowCascade0 : register(t4);
@@ -40,34 +54,14 @@ RWTexture2D<uint> CascadeIndexTex : register(u1);
 // Samplers
 SamplerState Sampler : register(s0);
 
-// Soft shadows settings
-#define NUM_BLOCKER_SAMPLES (32)
-#define NUM_PCF_SAMPLES     (32)
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ShadowMap Helpers
 
-// Cascaded Shadow Mapping
-#define ENABLE_PCSS    (0)
-#define BLEND_CASCADES (0)
-#define CASCADE_FADING (0.1f)
-#define PCF_RADIUS     (0.06f)
-#define ROTATE_SAMPLES (0)
-
- /** @brief: Shadow Helpers */
-
-float2 SamplePoissonBlocker(uint Index)
+float2 GetPCFSample(uint Index)
 {
-#if (NUM_BLOCKER_SAMPLES == 16)
-    return PoissonDisk16[Indexi];
-#elif (NUM_BLOCKER_SAMPLES == 32)
-    return PoissonDisk32[Index];
-#elif (NUM_BLOCKER_SAMPLES == 64)
-    return PoissonDisk64[Index];
-#elif (NUM_BLOCKER_SAMPLES == 128)
-    return PoissonDisk128[Index];
-#endif
-}
-
-float2 SamplePoissonPCF(uint Index)
-{
+#if USE_HAMMERSLY
+    return (Hammersley2(Index, NUM_PCF_SAMPLES) * 2.0f) - 1.0f;
+#else
 #if (NUM_PCF_SAMPLES == 16)
     return PoissonDisk16[Index];
 #elif (NUM_PCF_SAMPLES == 32)
@@ -77,11 +71,12 @@ float2 SamplePoissonPCF(uint Index)
 #elif (NUM_PCF_SAMPLES == 128)
     return PoissonDisk128[Index];
 #endif
+#endif
 }
 
-float2 RotatePoisson(float2 Sample, inout uint RandomSeed)
+float2 RotatePoisson(float2 Sample, float Random0, float Random1)
 {
-    return OneToMinusOne(CranleyPatterssonRotation(MinusOneToOne(Sample), RandomSeed));
+    return OneToMinusOne(CranleyPatterssonRotation(MinusOneToOne(Sample), Random0, Random1));
 }
 
 float3 GetShadowCoords(uint CascadeIndex, float3 World)
@@ -94,17 +89,16 @@ float3 GetShadowCoords(uint CascadeIndex, float3 World)
     return ProjCoords;
 }
 
-float3 GetLightViewPos(uint CascadeIndex, float3 World)
+float2 ComputeReceiverPlaneDepthBias(float3 TexCoordDX, float3 TexCoordDY)
 {
-    return mul(float4(World, 1.0f), ShadowMatricesBuffer[CascadeIndex].View).xyz;
+    float2 BiasUV;
+    BiasUV.x = (TexCoordDY.y * TexCoordDX.z) - (TexCoordDX.y * TexCoordDY.z);
+    BiasUV.y = (TexCoordDX.x * TexCoordDY.z) - (TexCoordDY.x * TexCoordDX.z);
+    BiasUV  *= 1.0f / ((TexCoordDX.x * TexCoordDY.y) - (TexCoordDX.y * TexCoordDY.x));
+    return BiasUV;
 }
 
-// Based on: http://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf
-float SearchWidth(float LightSize, float LightNear, float ReciverZ)
-{
-    return (LightSize * (ReciverZ - LightNear) / ReciverZ);
-}
-
+// TODO: Use a texture array for cascades
 float SampleCascade(uint CascadeIndex, float2 TexCoords)
 {
     if (CascadeIndex == 0)
@@ -129,50 +123,25 @@ float SampleCascade(uint CascadeIndex, float2 TexCoords)
     }
 }
 
-// NOTE: This assumes that the cascades has the same dimensions
-uint2 GetCascadeDimensions()
+float PCFDirectionalLight(
+    uint CascadeIndex,
+    float2 TexCoords,
+    float BiasedDepth,
+    float PenumbraRadius,
+    inout uint RandomSeed)
 {
-    uint2 CascadeSize;
-    ShadowCascade0.GetDimensions(CascadeSize.x, CascadeSize.y);
-    return CascadeSize;
-}
 
-float FindBlockerDistance(uint CascadeIndex, float2 TexCoords, float BiasedDepth, float SearchRadius)
-{
-    float AvgBlockerDistance = 0;
-    
-    int NumBlockers = 0;
-    for (int Index = 0; Index < NUM_BLOCKER_SAMPLES; Index++)
-    {
-        float2 RandomDirection = SamplePoissonBlocker(Index);
-        RandomDirection = RandomDirection * SearchRadius;
-        
-        float Depth = SampleCascade(CascadeIndex, TexCoords.xy + RandomDirection);
-        if (Depth < BiasedDepth)
-        {
-            NumBlockers++;
-            AvgBlockerDistance += Depth;
-        }
-    }
-    
-    if (NumBlockers > 0)
-    {
-        return AvgBlockerDistance / float(NumBlockers);
-    }
-    else
-    {
-        return -1.0f;
-    }
-}
-
-float PCFDirectionalLight(uint CascadeIndex, float2 TexCoords, float BiasedDepth, float PenumbraRadius, inout uint RandomSeed)
-{
     float Shadow = 0;
     for (int Sample = 0; Sample < NUM_PCF_SAMPLES; ++Sample)
     {
-        float2 RandomDirection = SamplePoissonPCF(Sample);
+        float2 RandomDirection = GetPCFSample(Sample);        
 #if ROTATE_SAMPLES
-        RandomDirection = RotatePoisson(RandomDirection, RandomSeed);
+        float    Theta = NextRandom(RandomSeed) * PI_2;
+        float2x2 RandomRotationMatrix = float2x2(
+            float2(cos(Theta), -sin(Theta)),
+            float2(sin(Theta),  cos(Theta)));
+
+        RandomDirection = mul(RandomDirection, RandomRotationMatrix);
 #endif
         RandomDirection *= PenumbraRadius;
         
@@ -186,31 +155,29 @@ float PCFDirectionalLight(uint CascadeIndex, float2 TexCoords, float BiasedDepth
     return 1.0f - saturate(Shadow / float(NUM_PCF_SAMPLES));
 }
 
-float PCSSDirectionalLight(uint CascadeIndex, float3 WorldPosition, float Bias, inout uint RandomSeed)
+float CalculateDirectionalLightShadow(
+    uint CascadeIndex,
+    float3 WorldPosition,
+    float3 Normal,
+    inout uint RandomSeed)
 {
     const float3 ShadowCoords = GetShadowCoords(CascadeIndex, WorldPosition);   
-    const float  RadiusScale = ShadowSplitsBuffer[CascadeIndex].Scale.x;
-    const float  LightNear   = 0.01f;
-    // Size of the light in [0, 1]
-    const float  LightSize   = LightBuffer.LightSize;
-    // Biased depth 
+    const float  RadiusScale  = ShadowSplitsBuffer[CascadeIndex].Scale.x;
+    
+    // Biased depth
+    const float NDotL = saturate(dot(Normal, -LightBuffer.Direction)); 
+#if USE_RECEIVER_PLANE_DEPTH_BIAS
+    const float PlaneRecieverBias = ComputeReceiverPlaneDepthBias();
+    
+    const float2 TexelSize   = (1.0f / shadowMapSize);
     const float  BiasedDepth = (ShadowCoords.z - Bias);
-
-#if ENABLE_PCSS
-    float BlockerSearchRadius = SearchWidth(LightSize, LightNear, ShadowCoords.z) * RadiusScale;
-    float BlockerDistance     = FindBlockerDistance(CascadeIndex, ShadowCoords.xy, BiasedDepth, BlockerSearchRadius);
-    if (BlockerDistance == -1.0f)
-    {
-        return 1.0f;
-    }
-
-    float PenumbraWidth  = (ShadowCoords.z - BlockerDistance) / BlockerDistance;
-    float PenumbraRadius = (PenumbraWidth * LightSize);
-    return PCFDirectionalLight(CascadeIndex, ShadowCoords.xy, BiasedDepth, PenumbraRadius, RandomSeed);
 #else
+    const float ShadowBias  = max(LightBuffer.MaxShadowBias * (1.0f - NDotL), LightBuffer.ShadowBias) + 0.0001f;
+    const float BiasedDepth = (ShadowCoords.z - ShadowBias);
+#endif
+
     const float Radius = (PCF_RADIUS * RadiusScale);
     return PCFDirectionalLight(CascadeIndex, ShadowCoords.xy, BiasedDepth, Radius, RandomSeed);
-#endif
 }
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
@@ -219,28 +186,24 @@ void Main(FComputeShaderInput Input)
     const uint2 Pixel = Input.DispatchThreadID.xy;
    
     // Discard pixels not rendered to the GBuffer
-    float3 GBufferNormal = NormalTex.Load(int3(Pixel, 0)).rgb;
+    float3 GBufferNormal = NormalBuffer.Load(int3(Pixel, 0)).rgb;
     if (length(GBufferNormal) == 0)
     {
         Output[Pixel] = 1.0f;
         return;
     }
 
+    const float  Depth         = DepthBuffer.Load(int3(Pixel, 0)); 
     const float2 TexCoord      = (float2(Pixel) + Float2(0.5f)) / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
-    const float  Depth         = DepthTex.Load(int3(Pixel, 0)); 
     const float  ViewPosZ      = Depth_ProjToView(Depth, CameraBuffer.ProjectionInverse);
     const float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
+    const float3 Normal        = UnpackNormal(GBufferNormal);
+
 #if SELECT_CASCADE_FROM_PROJECTION
     const float3 ProjectionPosition = mul(float4(WorldPosition, 1.0f), LightBuffer.ShadowMatrix).xyz;
 #endif
-
-    // Calcualte shadow bias based on the normal and light directions 
-    float3 N = UnpackNormal(GBufferNormal);
-    float3 L = normalize(-LightBuffer.Direction);
-
-    float ShadowBias = max(LightBuffer.MaxShadowBias * (1.0f - (max(dot(N, L), 0.0f))), LightBuffer.ShadowBias) + 0.0001f;
     
-    // Calculate the current cascade
+    // Calculate the Current cascade
     uint CascadeIndex = max(NUM_SHADOW_CASCADES - 1, 0);
     for (int Index = CascadeIndex; Index >= 0; --Index)
     {
@@ -252,7 +215,7 @@ void Main(FComputeShaderInput Input)
         CascadePosition *= Scale.xyz;
         CascadePosition  = abs(CascadePosition - 0.5f);
         // TODO: Fix this
-        if(all(CascadePosition <= 0.45f))
+        if(all(CascadePosition <= 0.5f))
         {
             CascadeIndex = Index;
         }
@@ -269,52 +232,34 @@ void Main(FComputeShaderInput Input)
     uint RandomSeed = InitRandom(Pixel, CameraBuffer.ViewportWidth, 0);    
     
     // Calculate shadow factor
-    float ShadowAmount = 0.0f;
+    float ShadowAmount = CalculateDirectionalLightShadow(CascadeIndex, WorldPosition, Normal, RandomSeed);
 
 #if BLEND_CASCADES
-    float Cascade0 = smoothstep(ShadowSplitsBuffer[0].Split + (CASCADE_FADING * 0.5f), ShadowSplitsBuffer[0].Split - (CASCADE_FADING * 0.5f), ViewPosZ);
-    float Cascade1 = smoothstep(ShadowSplitsBuffer[1].Split + (CASCADE_FADING * 0.5f), ShadowSplitsBuffer[1].Split - (CASCADE_FADING * 0.5f), ViewPosZ);
-    float Cascade2 = smoothstep(ShadowSplitsBuffer[2].Split + (CASCADE_FADING * 0.5f), ShadowSplitsBuffer[2].Split - (CASCADE_FADING * 0.5f), ViewPosZ);
+    float NextSplit  = ShadowSplitsBuffer[CascadeIndex].Split;
+    float SplitSize  = (CascadeIndex == 0) ? NextSplit : (NextSplit - ShadowSplitsBuffer[CascadeIndex - 1].Split);
+    float FadeFactor = (NextSplit - ViewPosZ) / SplitSize;
+  
+#if SELECT_CASCADE_FROM_PROJECTION
+    const float4 Offsets = ShadowSplitsBuffer[CascadeIndex].Offsets;
+    const float4 Scale   = ShadowSplitsBuffer[CascadeIndex].Scale;
 
-    if (Cascade0 > 0.0f && Cascade0 < 1.0f)
-    {
-        float ShadowAmount0 = PCSSDirectionalLight(0, WorldPosition, ShadowBias, RandomSeed);
-        float ShadowAmount1 = PCSSDirectionalLight(1, WorldPosition, ShadowBias, RandomSeed);
-        ShadowAmount = lerp(ShadowAmount0, ShadowAmount1, Cascade0);
-    }
-    else if (Cascade1 > 0.0f && Cascade1 < 1.0f)
-    {
-        float ShadowAmount1 = PCSSDirectionalLight(1, WorldPosition, ShadowBias, RandomSeed);
-        float ShadowAmount2 = PCSSDirectionalLight(2, WorldPosition, ShadowBias, RandomSeed);
-        ShadowAmount = lerp(ShadowAmount1, ShadowAmount2, Cascade1);
-    }
-    else if (Cascade2 > 0.0f && Cascade2 < 1.0f)
-    {
-        float ShadowAmount2 = PCSSDirectionalLight(2, WorldPosition, ShadowBias, RandomSeed);
-        float ShadowAmount3 = PCSSDirectionalLight(3, WorldPosition, ShadowBias, RandomSeed);
-        ShadowAmount = lerp(ShadowAmount2, ShadowAmount3, Cascade2);
-    }
-    else
+    float3 CascadePosition = ProjectionPosition + Offsets.xyz;
+    CascadePosition *= Scale.xyz;
+    CascadePosition  = abs(CascadePosition * 2.0f - 1.0f);
+
+    float DistToEdge = 1.0f - max(max(CascadePosition.x, CascadePosition.y), CascadePosition.z);
+    FadeFactor = max(DistToEdge, FadeFactor);
 #endif
+
+    [branch]
+    if(FadeFactor <= CASCADE_FADE_FACTOR && CascadeIndex != (NUM_SHADOW_CASCADES - 1))
     {
-        // TODO: Use a texture array for cascades
-        if (CascadeIndex == 0)
-        {
-            ShadowAmount = PCSSDirectionalLight(0, WorldPosition, ShadowBias, RandomSeed);
-        }
-        else if (CascadeIndex == 1)
-        {
-            ShadowAmount = PCSSDirectionalLight(1, WorldPosition, ShadowBias, RandomSeed);
-        }
-        else if (CascadeIndex == 2)
-        {
-            ShadowAmount = PCSSDirectionalLight(2, WorldPosition, ShadowBias, RandomSeed);
-        }
-        else if (CascadeIndex == 3)
-        {
-            ShadowAmount = PCSSDirectionalLight(3, WorldPosition, ShadowBias, RandomSeed);
-        }
+        float3 NextSplitVisibility = CalculateDirectionalLightShadow(CascadeIndex + 1, WorldPosition, Normal, RandomSeed);
+
+        float LerpAmount = smoothstep(0.0f, CASCADE_FADE_FACTOR, FadeFactor);
+        ShadowAmount = lerp(NextSplitVisibility, ShadowAmount, LerpAmount);
     }
+#endif
     
     Output[Pixel] = ShadowAmount;
 

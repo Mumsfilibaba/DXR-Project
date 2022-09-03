@@ -10,7 +10,7 @@
 // Console-variables
 
 TAutoConsoleVariable<float> GSunSize("Scene.Lightning.Sun.Size", 0.05f);
-TAutoConsoleVariable<float> GCascadeSplitLambda("Scene.Lightning.CascadeSplitLambda", 0.8f);
+TAutoConsoleVariable<float> GCascadeSplitLambda("Scene.Lightning.CascadeSplitLambda", 1.0f);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FDirectionalLight

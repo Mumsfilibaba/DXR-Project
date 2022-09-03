@@ -212,7 +212,7 @@ FRHIShaderCompiler& FRHIShaderCompiler::Get()
     return Instance.GetValue();
 }
 
-bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     OutByteCode.Clear();
 
@@ -396,7 +396,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FShaderC
     return true;
 }
 
-bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     OutByteCode.Clear();
 

@@ -47,7 +47,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         }
 
         {
-            FShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+            FRHIShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -63,7 +63,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         }
 
         {
-            FShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
+            FRHIShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -151,7 +151,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             PerCascadeBuffer->SetName("Per Cascade Buffer");
         }
 
-        FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        FRHIShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -224,7 +224,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
 
     // Cascade Matrix Generation
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/CascadeMatrixGen.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -330,7 +330,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
     // Directional Light ShadowMask
     {
         {
-            FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+            FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -366,7 +366,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
                 { "ENABLE_DEBUG", "(1)" },
             };
 
-            FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
+            FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -743,8 +743,8 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
         CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
         CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.CascadeSplitsBufferSRV.Get(), 1);
 
-        CommandList.SetShaderResourceView(CurrentShader.Get(), FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 2);
-        CommandList.SetShaderResourceView(CurrentShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 3);
+        CommandList.SetShaderResourceView(CurrentShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 2);
+        CommandList.SetShaderResourceView(CurrentShader.Get(), FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 3);
 
         CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 4);
         CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.ShadowMapCascades[1]->GetShaderResourceView(), 5);

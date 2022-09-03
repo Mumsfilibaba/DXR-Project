@@ -46,24 +46,31 @@ float NextRandomNeg(inout uint Seed)
     return NextRandom(Seed) * 2.0f - 1.0f;
 }
 
-float CranleyPatterssonRotation(float v, inout uint Seed)
+float CranleyPatterssonRotation(float Value, inout uint Seed)
 {
-    return frac(v + NextRandom(Seed));
+    return frac(Value + NextRandom(Seed));
 }
 
-float2 CranleyPatterssonRotation(float2 v, inout uint Seed)
+float2 CranleyPatterssonRotation(float2 Value, inout uint Seed)
 {
-    v.x = frac(v.x + NextRandom(Seed));
-    v.y = frac(v.y + NextRandom(Seed));
-    return v;
+    Value.x = frac(Value.x + NextRandom(Seed));
+    Value.y = frac(Value.y + NextRandom(Seed));
+    return Value;
 }
 
-float3 CranleyPatterssonRotation(float3 v, inout uint Seed)
+float2 CranleyPatterssonRotation(float2 Value, float Random0, float Random1)
 {
-    v.x = frac(v.x + NextRandom(Seed));
-    v.y = frac(v.y + NextRandom(Seed));
-    v.z = frac(v.z + NextRandom(Seed));
-    return v;
+    Value.x = frac(Value.x + Random0);
+    Value.y = frac(Value.y + Random1);
+    return Value;
+}
+
+float3 CranleyPatterssonRotation(float3 Value, inout uint Seed)
+{
+    Value.x = frac(Value.x + NextRandom(Seed));
+    Value.y = frac(Value.y + NextRandom(Seed));
+    Value.z = frac(Value.z + NextRandom(Seed));
+    return Value;
 }
 
 #endif

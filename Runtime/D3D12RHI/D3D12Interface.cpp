@@ -129,7 +129,7 @@ bool FD3D12Interface::Initialize(bool bEnableDebug)
     TArray<uint8> Code;
 
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTex2D.hlsl", CompileInfo, Code))
         {
             D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
@@ -156,7 +156,7 @@ bool FD3D12Interface::Initialize(bool bEnableDebug)
     }
 
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTexCube.hlsl", CompileInfo, Code))
         {
             D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");

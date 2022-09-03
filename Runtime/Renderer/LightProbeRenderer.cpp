@@ -16,7 +16,7 @@ bool FLightProbeRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRe
     TArray<uint8> Code;
     
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/IrradianceGen.hlsl", CompileInfo, Code))
         {
             LOG_ERROR("Failed to compile IrradianceGen Shader");
@@ -40,7 +40,7 @@ bool FLightProbeRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRe
     }
 
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", CompileInfo, Code))
         {
             LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");

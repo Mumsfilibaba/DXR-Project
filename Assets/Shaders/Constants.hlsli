@@ -5,6 +5,7 @@
 // Common Constants
 
 #define PI     (3.14159265359f)
+#define PI_2   (3.14159265359f)
 #define INV_PI (1.0f / 3.14159265359f)
 #define GAMMA  (2.2f)
 
