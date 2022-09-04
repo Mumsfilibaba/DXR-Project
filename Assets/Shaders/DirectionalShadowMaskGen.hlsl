@@ -215,7 +215,7 @@ void Main(FComputeShaderInput Input)
         CascadePosition *= Scale.xyz;
         CascadePosition  = abs(CascadePosition - 0.5f);
         // TODO: Fix this
-        if(all(CascadePosition <= 0.5f))
+        if(all(CascadePosition < 0.45f))
         {
             CascadeIndex = Index;
         }

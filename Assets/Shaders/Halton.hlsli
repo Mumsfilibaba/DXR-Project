@@ -48,6 +48,16 @@ float2 Halton23(uint i)
     return float2(RadicalInverse2(i), RadicalInverse3(i));
 }
 
+float3 HemispherePointUniform(float U, float V) 
+{
+	float Phi      = V * 2.0f * PI;
+	float CosTheta = 1.0f - U;
+    
+    // TODO: FastSqrt? 
+	float SinTheta = sqrt(1.0f - (CosTheta * CosTheta));
+	return float3(cos(Phi) * SinTheta, sin(Phi) * SinTheta, CosTheta);
+}
+
 float2 OneToMinusOne_Halton23(uint i)
 {
     return (Halton23(i) * 2.0f) - 1.0f;

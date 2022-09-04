@@ -32,8 +32,4 @@ private:
     
     FRHIComputePipelineStateRef BlurVerticalPSO;
     FRHIComputeShaderRef        BlurVerticalShader;
-
-    FRHIGenericBufferRef        SSAOSamples;
-    FRHIShaderResourceViewRef   SSAOSamplesSRV;
-    FRHITexture2DRef            SSAONoiseTex;
 };

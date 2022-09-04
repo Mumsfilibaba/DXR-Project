@@ -16,9 +16,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variable
 
-TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAO.Radius", 0.3f);
-TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAO.Bias", 0.0125f);
-TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAO.KernelSize", 32);
+TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAO.Radius", 0.1f);
+TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAO.Bias", 0.075f);
+TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAO.KernelSize", 16);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FScreenSpaceOcclusionRenderer
@@ -59,118 +59,6 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
         {
             PipelineState->SetName("SSAO PipelineState");
         }
-    }
-
-    // Generate SSAO Kernel
-    std::default_random_engine            Generator;
-    std::uniform_real_distribution<float> RandomFloats(0.0f, 1.0f);
-
-    const FVector3 Normal = FVector3(0.0f, 0.0f, 1.0f);
-
-    TArray<FVector4> SSAOKernel;
-    for (uint32 Index = 0; (Index < 512u) && (SSAOKernel.GetSize() < 64); ++Index)
-    {
-        FVector4 Sample = FVector4(
-            RandomFloats(Generator) * 2.0f - 1.0f,
-            RandomFloats(Generator) * 2.0f - 1.0f,
-            RandomFloats(Generator),
-            0.0f);
-        Sample.Normalize();
-
-        float Dot = Sample.DotProduct(Normal);
-        if (NMath::Abs(Dot) > 0.95f)
-        {
-            continue;
-        }
-
-        Sample *= RandomFloats(Generator);
-
-        float Scale = float(Index) / 64.0f;
-        Scale  = NMath::Lerp(0.1f, 1.0f, Scale * Scale);
-        Sample *= Scale;
-
-        SSAOKernel.Emplace(Sample);
-    }
-
-    SSAOKernel.Shrink();
-
-    // Generate noise
-    TArray<FFloat16> SSAONoise;
-    for (uint32 i = 0; i < 16; i++)
-    {
-        const float x = RandomFloats(Generator) * 2.0f - 1.0f;
-        const float y = RandomFloats(Generator) * 2.0f - 1.0f;
-        SSAONoise.Emplace(x);
-        SSAONoise.Emplace(y);
-        SSAONoise.Emplace(0.0f);
-        SSAONoise.Emplace(0.0f);
-    }
-
-    FRHITexture2DInitializer SSAONoiseInitializer(
-        EFormat::R16G16B16A16_Float, 
-        4,
-        4,
-        1,
-        1,
-        ETextureUsageFlags::AllowSRV,
-        EResourceAccess::NonPixelShaderResource);
-
-    SSAONoiseTex = RHICreateTexture2D(SSAONoiseInitializer);
-    if (!SSAONoiseTex)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        SSAONoiseTex->SetName("SSAO Noise Texture");
-    }
-
-    FRHICommandList CommandList;
-    CommandList.TransitionTexture(
-        FrameResources.SSAOBuffer.Get(),
-        EResourceAccess::Common, 
-        EResourceAccess::NonPixelShaderResource);
-    CommandList.TransitionTexture(
-        SSAONoiseTex.Get(),
-        EResourceAccess::NonPixelShaderResource,
-        EResourceAccess::CopyDest);
-
-    CommandList.UpdateTexture2D(SSAONoiseTex.Get(), 4, 4, 0, SSAONoise.GetData());
-
-    CommandList.TransitionTexture(
-        SSAONoiseTex.Get(),
-        EResourceAccess::CopyDest,
-        EResourceAccess::NonPixelShaderResource);
-
-    GRHICommandExecutor.ExecuteCommandList(CommandList);
-
-    FRHIBufferDataInitializer SSAOSampleData(SSAOKernel.GetData(), SSAOKernel.SizeInBytes());
-    
-    FRHIGenericBufferInitializer SSAOSamplesInitializer(
-        EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default,
-        SSAOKernel.SizeInBytes(),
-        sizeof(FVector4),
-        EResourceAccess::Common,
-        &SSAOSampleData);
-
-    SSAOSamples = RHICreateGenericBuffer(SSAOSamplesInitializer);
-    if (!SSAOSamples)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        SSAOSamples->SetName("SSAO Samples");
-    }
-
-    FRHIBufferSRVInitializer SRVInitializer(SSAOSamples.Get(), 0, SSAOKernel.GetSize());
-    SSAOSamplesSRV = RHICreateShaderResourceView(SRVInitializer);
-    if (!SSAOSamplesSRV)
-    {
-        DEBUG_BREAK();
-        return false;
     }
 
     TArray<FShaderDefine> Defines;
@@ -251,9 +139,6 @@ void FScreenSpaceOcclusionRenderer::Release()
     PipelineState.Reset();
     BlurHorizontalPSO.Reset();
     BlurVerticalPSO.Reset();
-    SSAOSamples.Reset();
-    SSAOSamplesSRV.Reset();
-    SSAONoiseTex.Reset();
     SSAOShader.Reset();
     BlurHorizontalShader.Reset();
     BlurVerticalShader.Reset();
@@ -297,20 +182,10 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
     CommandList.SetComputePipelineState(PipelineState.Get());
     CommandList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(SSAONoiseTex->GetShaderResourceView()),
-        SSAONoiseTex,
-        EResourceAccess::NonPixelShaderResource,
-        EResourceAccess::NonPixelShaderResource);
-
     CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBufferIndex_ViewNormal]->GetShaderResourceView(), 0);
     CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 1);
-    CommandList.SetShaderResourceView(SSAOShader.Get(), SSAONoiseTex->GetShaderResourceView(), 2);
-    CommandList.SetShaderResourceView(SSAOShader.Get(), SSAOSamplesSRV.Get(), 3);
 
-    // TODO: note the sampler is getting bound to both samplers ATM
     CommandList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 0);
-    CommandList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 1);
 
     FRHIUnorderedAccessView* SSAOBufferUAV = FrameResources.SSAOBuffer->GetUnorderedAccessView();
     CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
