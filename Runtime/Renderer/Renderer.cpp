@@ -432,6 +432,8 @@ void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
 
 void FRenderer::Tick(const FScene& Scene)
 {
+    GRHICommandExecutor.Tick();
+
     Resources.BackBuffer             = Resources.MainWindowViewport->GetBackBuffer();
     Resources.GlobalMeshDrawCommands = TArrayView<const FMeshDrawCommand>(Scene.GetMeshDrawCommands());
 

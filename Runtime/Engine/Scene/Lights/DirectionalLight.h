@@ -82,6 +82,7 @@ private:
     FVector3 Position;
 
     FMatrix4 ShadowMatrix;
+
     FMatrix4 ViewMatrix;
     FMatrix4 ProjectionMatrix;
 

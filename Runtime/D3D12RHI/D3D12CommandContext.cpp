@@ -763,13 +763,7 @@ void FD3D12CommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderR
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
-    D3D12_ERROR_COND(
-        ParameterInfo.Space == 0,
-        "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(
-        ParameterInfo.NumDescriptors == 1,
-        "Trying to bind more descriptors than supported to ParameterIndex=%u",
-        ParameterIndex);
+    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
     FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(ShaderResourceView);
     State.DescriptorCache.SetShaderResourceView(D3D12Shader->GetShaderVisibility(), D3D12ShaderResourceView, ParameterInfo.Register);
@@ -781,13 +775,7 @@ void FD3D12CommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArr
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
-    D3D12_ERROR_COND(
-        ParameterInfo.Space == 0,
-        "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(
-        ParameterInfo.NumDescriptors == uint32(InShaderResourceViews.GetSize()),
-        "Trying to bind more descriptors than supported to ParameterIndex=%u",
-        ParameterIndex);
+    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
     for (int32 Index = 0; Index < InShaderResourceViews.GetSize(); ++Index)
     {
@@ -802,13 +790,7 @@ void FD3D12CommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorde
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
-    D3D12_ERROR_COND(
-        ParameterInfo.Space == 0,
-        "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(
-        ParameterInfo.NumDescriptors == 1,
-        "Trying to bind more descriptors than supported to ParameterIndex=%u",
-        ParameterIndex);
+    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
     FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
     State.DescriptorCache.SetUnorderedAccessView(D3D12Shader->GetShaderVisibility(), D3D12UnorderedAccessView, ParameterInfo.Register);
@@ -820,13 +802,7 @@ void FD3D12CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TAr
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
-    D3D12_ERROR_COND(
-        ParameterInfo.Space == 0,
-        "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(
-        ParameterInfo.NumDescriptors == uint32(InUnorderedAccessViews.GetSize()),
-        "Trying to bind more descriptors than supported to ParameterIndex=%u",
-        ParameterIndex);
+    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
     for (int32 Index = 0; Index < InUnorderedAccessViews.GetSize(); ++Index)
     {
@@ -841,13 +817,7 @@ void FD3D12CommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuf
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
-    D3D12_ERROR_COND(
-        ParameterInfo.Space == 0,
-        "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(
-        ParameterInfo.NumDescriptors == 1,
-        "Trying to bind more descriptors than supported to ParameterIndex=%u",
-        ParameterIndex);
+    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
     if (ConstantBuffer)
     {
@@ -866,24 +836,18 @@ void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayVi
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
-    D3D12_ERROR_COND(
-        ParameterInfo.Space == 0,
-        "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(
-        ParameterInfo.NumDescriptors == uint32(InConstantBuffers.GetSize()),
-        "Trying to bind more descriptors than supported to ParameterIndex=%u",
-        ParameterIndex);
+    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
     for (int32 Index = 0; Index < InConstantBuffers.GetSize(); ++Index)
     {
         if (InConstantBuffers[Index])
         {
             FD3D12ConstantBufferView& D3D12ConstantBufferView = static_cast<FD3D12ConstantBuffer*>(InConstantBuffers[Index])->GetView();
-            State.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), &D3D12ConstantBufferView, ParameterInfo.Register);
+            State.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), &D3D12ConstantBufferView, ParameterInfo.Register + Index);
         }
         else
         {
-            State.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), nullptr, ParameterInfo.Register);
+            State.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), nullptr, ParameterInfo.Register + Index);
         }
     }
 }
@@ -894,13 +858,7 @@ void FD3D12CommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState*
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
-    D3D12_ERROR_COND(
-        ParameterInfo.Space == 0,
-        "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(
-        ParameterInfo.NumDescriptors == 1,
-        "Trying to bind more descriptors than supported to ParameterIndex=%u",
-        ParameterIndex);
+    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
     FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(SamplerState);
     State.DescriptorCache.SetSamplerState(D3D12Shader->GetShaderVisibility(), D3D12SamplerState, ParameterInfo.Register);
@@ -912,18 +870,12 @@ void FD3D12CommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
     Check(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
-    D3D12_ERROR_COND(
-        ParameterInfo.Space == 0,
-        "Global variables must be bound to RegisterSpace=0");
-    D3D12_ERROR_COND(
-        ParameterInfo.NumDescriptors == uint32(InSamplerStates.GetSize()),
-        "Trying to bind more descriptors than supported to ParameterIndex=%u",
-        ParameterIndex);
+    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
     for (int32 Index = 0; Index < InSamplerStates.GetSize(); ++Index)
     {
         FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(InSamplerStates[Index]);
-        State.DescriptorCache.SetSamplerState(D3D12Shader->GetShaderVisibility(), D3D12SamplerState, ParameterInfo.Register);
+        State.DescriptorCache.SetSamplerState(D3D12Shader->GetShaderVisibility(), D3D12SamplerState, ParameterInfo.Register + Index);
     }
 }
 

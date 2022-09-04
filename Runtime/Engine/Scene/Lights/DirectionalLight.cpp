@@ -81,23 +81,40 @@ void FDirectionalLight::Tick(FCamera& Camera)
 
     // Calculate the center of frustum
     FVector3 FrustumCenter = FVector3(0.0f);
-    for (uint32 Corner = 0; Corner < 8; ++Corner)
+    for (int32 Corner = 0; Corner < 8; ++Corner)
     {
         FrustumCorners[Corner] = InverseViewProjection.TransformPosition(FrustumCorners[Corner]);
         FrustumCenter += FrustumCorners[Corner];
     }
     FrustumCenter /= 8.0f;
 
-    // Calculate a matrix
+    // Calculate a Shadow-matrix
     UpVector = FVector3(0.0f, 1.0f, 0.0f);
 
-    LookAt   = FrustumCenter - GetDirection();
-    Position = FrustumCenter + GetDirection() * -0.5f;
+    {
+        FVector3 ShadowLookAt   = FrustumCenter - GetDirection();
+        FVector3 ShadowPosition = FrustumCenter + GetDirection() * -0.5f;
 
-    ViewMatrix       = FMatrix4::LookAt(Position, LookAt, UpVector);
-    ProjectionMatrix = FMatrix4::OrtographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
-    ShadowMatrix = ViewMatrix * ProjectionMatrix;
-    ShadowMatrix = ShadowMatrix.Transpose();
+        FMatrix4 ShadowViewMatrix       = FMatrix4::LookAt(ShadowPosition, ShadowLookAt, UpVector);
+        FMatrix4 ShadowProjectionMatrix = FMatrix4::OrtographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
+
+        ShadowMatrix = ShadowViewMatrix * ShadowProjectionMatrix;
+        ShadowMatrix = ShadowMatrix.Transpose();
+    }
+
+    // Generate a bounds matrix
+    {
+        float Radius = 0.0f;
+        for (int32 Index = 0; Index < 8; ++Index)
+        {
+            const float Distance = (FrustumCorners[Index] - FrustumCenter).GetLength();
+            Radius = NMath::Max(Radius, Distance);
+        }
+        Radius = NMath::Ceil(Radius * 16.0f) / 16.0f;
+
+        ViewMatrix       = FMatrix4::LookAt(Position, LookAt, UpVector);
+        ProjectionMatrix = FMatrix4::OrtographicProjection(-Radius, Radius, -Radius, Radius, -Radius, Radius);
+    }
 }
 
 void FDirectionalLight::SetRotation(const FVector3& InRotation)

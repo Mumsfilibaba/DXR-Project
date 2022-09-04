@@ -23,7 +23,7 @@ public:
 
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
 
-    static TSharedPtr<FMesh> Make(const FMeshData& Data);
+    static TSharedPtr<FMesh> Create(const FMeshData& Data);
 
 public:
     void CreateBoundingBox(const FMeshData& Data);

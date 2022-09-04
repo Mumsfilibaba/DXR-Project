@@ -673,7 +673,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
     // Setup Pipeline
     CommandList.SetGraphicsPipelineState(PipelineState.Get());
 
-    struct STransformBuffer
+    struct FTransformBuffer
     {
         FMatrix4 Transform;
         FMatrix4 TransformInv;
@@ -693,27 +693,25 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
 
         CommandList.SetConstantBuffer(BaseVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-        FRHIConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
-        CommandList.SetConstantBuffer(BasePixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-        CommandList.SetConstantBuffer(BasePixelShader.Get(), MaterialBuffer, 1);
-
         TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
+        CommandList.Set32BitShaderConstants(BaseVertexShader.Get(), &TransformPerObject, 32);
 
-        // TODO: Bind all these with a single command
-        FRHIShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[0], 0);
-        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[1], 1);
-        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[2], 2);
-        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[3], 3);
-        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[4], 4);
-        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[5], 5);
-        CommandList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[6], 6);
+        FRHIConstantBuffer* PSConstantBuffers[] =
+        {
+            FrameResources.CameraBuffer.Get(),
+            Command.Material->GetMaterialBuffer(),
+        };
+
+        CommandList.SetConstantBuffers(BasePixelShader.Get(), MakeArrayView(PSConstantBuffers), 0);
+
+        const auto PSShaderResourceViews = MakeArrayView(
+            Command.Material->GetShaderResourceViews(),
+            Command.Material->GetNumShaderResourceViews());
+        CommandList.SetShaderResourceViews(BasePixelShader.Get(), PSShaderResourceViews, 0);
 
         FRHISamplerState* Sampler = Command.Material->GetMaterialSampler();
         CommandList.SetSamplerState(BasePixelShader.Get(), Sampler, 0);
-
-        CommandList.Set32BitShaderConstants(BaseVertexShader.Get(), &TransformPerObject, 32);
 
         CommandList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
     }

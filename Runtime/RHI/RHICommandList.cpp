@@ -121,12 +121,20 @@ void FRHICommandListExecutor::Release()
     ExecutorThread.StopExecution();
 }
 
+void FRHICommandListExecutor::Tick()
+{
+    Statistics.NumDrawCalls     = 0;
+    Statistics.NumDispatchCalls = 0;
+    Statistics.NumCommands      = 0;
+}
+
 void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 {
     if (CommandList.HasCommands())
     {
         Statistics.NumDrawCalls     += CommandList.GetNumDrawCalls();
         Statistics.NumDispatchCalls += CommandList.GetNumDispatchCalls();
+        Statistics.NumCommands      += CommandList.GetNumCommands();
 
         FRHICommandList* NewCommandList = dbg_new FRHICommandList();
         NewCommandList->ExchangeState(CommandList);

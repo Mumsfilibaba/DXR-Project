@@ -85,10 +85,14 @@ public:
         return bRenderInForwardPass;
     }
 
-
     FORCEINLINE const FMaterialDesc& GetMaterialProperties() const
     {
         return Properties;
+    }
+
+    FORCEINLINE uint32 GetNumShaderResourceViews() const
+    {
+        return static_cast<uint32>(ShaderResourceViews.GetSize());
     }
 
 public:

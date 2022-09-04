@@ -13,10 +13,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variable 
 
-TAutoConsoleVariable<bool> GDrawRendererInfo("Renderer.DrawRendererInfo", false);
+TAutoConsoleVariable<bool> GDrawRendererInfo("Renderer.DrawRendererInfo", true);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RendererInfoWindow
+// FRendererInfoWindow
 
 TSharedRef<FRendererInfoWindow> FRendererInfoWindow::Create()
 {
@@ -73,8 +73,7 @@ void FRendererInfoWindow::Tick()
     ImGui::Text("Command Count: ");
     ImGui::NextColumn();
 
-    // TODO: Fix NumCommands
-    ImGui::Text("%d", 0);
+    ImGui::Text("%d", Statistics.NumCommands);
 
     ImGui::Columns(1);
 

@@ -32,16 +32,19 @@ struct FRHICommandStatistics
     FORCEINLINE FRHICommandStatistics()
         : NumDrawCalls(0)
         , NumDispatchCalls(0)
+        , NumCommands(0)
     { }
 
     FORCEINLINE void Reset()
     {
         NumDrawCalls     = 0;
         NumDispatchCalls = 0;
+        NumCommands      = 0;
     }
 
     uint32 NumDrawCalls;
     uint32 NumDispatchCalls;
+    uint32 NumCommands;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -693,6 +696,8 @@ public:
 
     bool Initialize();
     void Release();
+
+    void Tick();
 
     void WaitForOutstandingTasks();
     void WaitForGPU();

@@ -96,7 +96,7 @@ bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
     return true;
 }
 
-TSharedPtr<FMesh> FMesh::Make(const FMeshData& Data)
+TSharedPtr<FMesh> FMesh::Create(const FMeshData& Data)
 {
     TSharedPtr<FMesh> Result = MakeShared<FMesh>();
     if (Result->Init(Data))

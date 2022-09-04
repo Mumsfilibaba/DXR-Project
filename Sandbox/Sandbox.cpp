@@ -22,7 +22,7 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA         (1)
+#define LOAD_SPONZA         (0)
 #define ENABLE_LIGHT_TEST   (0)
 #define ENABLE_MANY_SPHERES (0)
 
@@ -60,7 +60,7 @@ bool FSandbox::Init()
     // Create Spheres
     FMeshData SphereMeshData = FMeshFactory::CreateSphere(3);
 
-    TSharedPtr<FMesh> SphereMesh = FMesh::Make(SphereMeshData);
+    TSharedPtr<FMesh> SphereMesh = FMesh::Create(SphereMeshData);
 
     constexpr float  SphereOffset   = 1.25f;
     constexpr uint32 SphereCountX   = 8;
@@ -176,7 +176,7 @@ bool FSandbox::Init()
     MatProperties.EnableHeight = 1;
 
     NewComponent           = dbg_new FMeshComponent(NewActor);
-    NewComponent->Mesh     = FMesh::Make(CubeMeshData);
+    NewComponent->Mesh     = FMesh::Create(CubeMeshData);
     NewComponent->Material = MakeShared<FMaterial>(MatProperties);
 
     FRHITexture2DRef AlbedoMap = FTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
@@ -238,7 +238,7 @@ bool FSandbox::Init()
     MatProperties.Albedo       = FVector3(1.0f);
 
     NewComponent                         = dbg_new FMeshComponent(NewActor);
-    NewComponent->Mesh                   = FMesh::Make(FMeshFactory::CreatePlane(10, 10));
+    NewComponent->Mesh                   = FMesh::Create(FMeshFactory::CreatePlane(10, 10));
     NewComponent->Material               = MakeShared<FMaterial>(MatProperties);
     NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
     NewComponent->Material->NormalMap    = GEngine->BaseNormal;
@@ -283,7 +283,7 @@ bool FSandbox::Init()
     FSceneData StreetLightData;
     FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"), StreetLightData);
 
-    TSharedPtr<FMesh>     StreetLight = StreetLightData.HasModelData() ? FMesh::Make(StreetLightData.Models.FirstElement().Mesh) : nullptr;
+    TSharedPtr<FMesh>     StreetLight = StreetLightData.HasModelData() ? FMesh::Create(StreetLightData.Models.FirstElement().Mesh) : nullptr;
     TSharedPtr<FMaterial> StreetLightMat = MakeShared<FMaterial>(MatProperties);
 
     for (uint32 i = 0; i < 4; i++)
@@ -315,7 +315,7 @@ bool FSandbox::Init()
     FSceneData PillarData;
     FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Models/Pillar.obj"), PillarData);
 
-    TSharedPtr<FMesh>     Pillar         = PillarData.HasModelData() ? FMesh::Make(PillarData.Models.FirstElement().Mesh) : nullptr;
+    TSharedPtr<FMesh>     Pillar         = PillarData.HasModelData() ? FMesh::Create(PillarData.Models.FirstElement().Mesh) : nullptr;
     TSharedPtr<FMaterial> PillarMaterial = MakeShared<FMaterial>(MatProperties);
 
     for (uint32 i = 0; i < 8; i++)

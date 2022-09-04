@@ -5,10 +5,15 @@
 
 #include <imgui.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FRendererInfoWindow
+
 class FRendererInfoWindow 
     : public FWindow
 {
     INTERFACE_GENERATE_BODY();
+
+    FRendererInfoWindow() = default;
 
 public:
     static TSharedRef<FRendererInfoWindow> Create();
@@ -18,7 +23,4 @@ public:
 
      /** @brief: Returns true if the panel should be updated this frame */
     virtual bool IsTickable() override final;
-
-private:
-    FRendererInfoWindow() = default;
 };
