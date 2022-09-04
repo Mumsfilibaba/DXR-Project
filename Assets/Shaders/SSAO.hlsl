@@ -68,8 +68,9 @@ void Main(FComputeShaderInput Input)
 		const float2 HammerslySample = Hammersley2(Index, FinalKernelSize);
 		const float3 Sample          = HemispherePointUniform(HammerslySample.x, HammerslySample.y);
         
+        float  RayLength = FinalRadius * NextRandom(RandomSeed);
         float3 SamplePos = normalize(mul(Sample, TBN));
-        SamplePos = ViewPosition + (SamplePos * FinalRadius);
+        SamplePos = ViewPosition + (SamplePos * RayLength);
 
         float4 SampleProjected = mul(Projection, float4(SamplePos, 1.0f));
         SampleProjected.xyz = (SampleProjected.xyz / SampleProjected.w);

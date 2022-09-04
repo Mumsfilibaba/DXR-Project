@@ -16,7 +16,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variable
 
-TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAO.Radius", 0.1f);
+TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAO.Radius", 0.2f);
 TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAO.Bias", 0.075f);
 TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAO.KernelSize", 16);
 
