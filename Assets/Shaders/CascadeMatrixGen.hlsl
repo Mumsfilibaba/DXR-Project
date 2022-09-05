@@ -132,7 +132,7 @@ void Main(FComputeShaderInput Input)
     // Add extra to capture more objects in the frustum
     const float ExtentZ      = CascadeExtents.z + 50.0f;
     const float NewNearPlane = -ExtentZ;
-    const float NewFarPlane  = ExtentZ;
+    const float NewFarPlane  =  ExtentZ;
     
     // Projection Matrix
     float4x4 ShadowProjection = OrtographicMatrix(

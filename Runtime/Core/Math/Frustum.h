@@ -40,10 +40,11 @@ public:
      * 
      * @return: Returns true if the bounding-box is intersecting with the frustum
      */
-    bool CheckAABB(const FAABB& BoundingBox);
+    bool CheckAABB(const FAABB& BoundingBox) const;
 
 private:
-    FPlane Planes[6];
+    FPlane   Planes[6];
+    FVector3 Points[8];
 };
 
 MARK_AS_REALLOCATABLE(FFrustum);

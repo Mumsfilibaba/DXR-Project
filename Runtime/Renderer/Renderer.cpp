@@ -250,7 +250,6 @@ void FRenderer::FrustumCullingAndSortingInternal(
         OutDistances.Insert(Index, NewDistance);
     };
 
-
     // Perform frustum culling and insert based on distance to the camera
     TArray<float> DeferredDistances;
     
@@ -260,7 +259,11 @@ void FRenderer::FrustumCullingAndSortingInternal(
     DeferredDistances.Reserve(NumCommands);
     OutDeferredDrawCommands.Reserve(NumCommands);
 
-    FFrustum CameraFrustum = FFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+    const FFrustum CameraFrustum = FFrustum(
+        Camera->GetFarPlane(),
+        Camera->GetViewMatrix(),
+        Camera->GetProjectionMatrix());
+    
     for (uint32 Index = 0; Index < NumCommands; ++Index)
     {
         const uint32 CommandIndex = StartCommand + Index;
@@ -270,11 +273,8 @@ void FRenderer::FrustumCullingAndSortingInternal(
         FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
 
-        FVector3 Top = FVector3(Command.Mesh->BoundingBox.Top);
-        Top = TransformMatrix.TransformPosition(Top);
-
-        FVector3 Bottom = FVector3(Command.Mesh->BoundingBox.Bottom);
-        Bottom = TransformMatrix.TransformPosition(Bottom);
+        const FVector3 Top    = TransformMatrix.Transform(Command.Mesh->BoundingBox.Top);
+        const FVector3 Bottom = TransformMatrix.Transform(Command.Mesh->BoundingBox.Bottom);
 
         FAABB Box(Top, Bottom);
         if (CameraFrustum.CheckAABB(Box))

@@ -90,23 +90,66 @@ public:
         , m30(Arr[12]), m31(Arr[13]), m32(Arr[14]), m33(Arr[15])
     { }
 
+    FORCEINLINE FVector4 Transform(const FVector4& Vector) const noexcept
+    {
+#if !USE_VECTOR_OP
+        FVector4 Result;
+        Result.x = (Vector[0] * m00) + (Vector[1] * m10) + (Vector[2] * m20) + (Vector[3] * m30);
+        Result.y = (Vector[0] * m01) + (Vector[1] * m11) + (Vector[2] * m21) + (Vector[3] * m31);
+        Result.z = (Vector[0] * m02) + (Vector[1] * m12) + (Vector[2] * m22) + (Vector[3] * m32);
+        Result.w = (Vector[0] * m03) + (Vector[1] * m13) + (Vector[2] * m23) + (Vector[3] * m33);
+        return Result;
+#else
+        NVectorOp::Float128 NewVector = NVectorOp::LoadAligned(&Vector);
+        NewVector = NVectorOp::Transform(this, NewVector);
+
+        FVector4 Result;
+        NVectorOp::StoreAligned(NewVector, &Result);
+        return Result;
+#endif
+    }
+
+    FORCEINLINE FVector3 Transform(const FVector3& Vector) const noexcept
+    {
+#if !USE_VECTOR_OP
+        FVector3 Result;
+        Result.x = (Vector[0] * m00) + (Vector[1] * m10) + (Vector[2] * m20) + (1.0f * m30);
+        Result.y = (Vector[0] * m01) + (Vector[1] * m11) + (Vector[2] * m21) + (1.0f * m31);
+        Result.z = (Vector[0] * m02) + (Vector[1] * m12) + (Vector[2] * m22) + (1.0f * m32);
+        return Result;
+#else
+        NVectorOp::Float128 NewVector = NVectorOp::Load(Vector.x, Vector.y, Vector.z, 1.0f);
+        NewVector = NVectorOp::Transform(this, NewVector);
+        return FVector3(NVectorOp::GetX(NewVector), NVectorOp::GetY(NewVector), NVectorOp::GetZ(NewVector));
+#endif
+    }
+
     /**
      * @brief: Transform a 3-D vector as position, fourth component to one
      *
      * @param Position: Vector to transform
      * @return: Transformed vector
      */
-    FORCEINLINE FVector3 TransformPosition(const FVector3& Position) noexcept
+    FORCEINLINE FVector3 TransformCoord(const FVector3& Position) const noexcept
     {
 #if !USE_VECTOR_OP
+        float ComponentW = (Position[0] * m03) + (Position[1] * m13) + (Position[2] * m23) + (1.0f * m33);
+        ComponentW = 1.0f / ComponentW;
+
         FVector3 Result;
-        Result.x = (Position[0] * m00) + (Position[1] * m10) + (Position[2] * m20) + (1.0f * m30);
-        Result.y = (Position[0] * m01) + (Position[1] * m11) + (Position[2] * m21) + (1.0f * m31);
-        Result.z = (Position[0] * m02) + (Position[1] * m12) + (Position[2] * m22) + (1.0f * m32);
+        Result.x = ((Position[0] * m00) + (Position[1] * m10) + (Position[2] * m20) + (1.0f * m30)) * ComponentW;
+        Result.y = ((Position[0] * m01) + (Position[1] * m11) + (Position[2] * m21) + (1.0f * m31)) * ComponentW;
+        Result.z = ((Position[0] * m02) + (Position[1] * m12) + (Position[2] * m22) + (1.0f * m32)) * ComponentW;
         return Result;
 #else
         NVectorOp::Float128 NewPosition = NVectorOp::Load(Position.x, Position.y, Position.z, 1.0f);
         NewPosition = NVectorOp::Transform(this, NewPosition);
+        
+        NVectorOp::Float128 Temp0 = NVectorOp::MakeOnes();
+        NVectorOp::Float128 Temp1 = NVectorOp::Broadcast<3>(NewPosition);
+        Temp0       = NVectorOp::Div(Temp0, Temp1);
+        NewPosition = NVectorOp::Mul(Temp0, NewPosition);
+
         return FVector3(NVectorOp::GetX(NewPosition), NVectorOp::GetY(NewPosition), NVectorOp::GetZ(NewPosition));
 #endif
     }
@@ -117,7 +160,7 @@ public:
      * @param Direction: Vector to transform
      * @return: Transformed vector
      */
-    FORCEINLINE FVector3 TransformDirection(const FVector3& Direction) noexcept
+    FORCEINLINE FVector3 TransformNormal(const FVector3& Direction) const noexcept
     {
 #if !USE_VECTOR_OP
         FVector3 Result;
@@ -176,31 +219,31 @@ public:
     inline FMatrix4 Invert() const noexcept
     {
 #if !USE_VECTOR_OP
-        float a = (m22 * m33) - (m23 * m32);
-        float b = (m21 * m33) - (m23 * m31);
-        float c = (m21 * m32) - (m22 * m31);
-        float d = (m20 * m33) - (m23 * m30);
-        float e = (m20 * m32) - (m22 * m30);
-        float f = (m20 * m31) - (m21 * m30);
+        float _a = (m22 * m33) - (m23 * m32);
+        float _b = (m21 * m33) - (m23 * m31);
+        float _c = (m21 * m32) - (m22 * m31);
+        float _d = (m20 * m33) - (m23 * m30);
+        float _e = (m20 * m32) - (m22 * m30);
+        float _f = (m20 * m31) - (m21 * m30);
 
         FMatrix4 Inverse;
         //d11
-        Inverse.m00 = (m11 * a) - (m12 * b) + (m13 * c);
+        Inverse.m00 = (m11 * _a) - (m12 * _b) + (m13 * _c);
         //d12
-        Inverse.m10 = -((m10 * a) - (m12 * d) + (m13 * e));
+        Inverse.m10 = -((m10 * _a) - (m12 * _d) + (m13 * _e));
         //d13
-        Inverse.m20 = (m10 * b) - (m11 * d) + (m13 * f);
+        Inverse.m20 = (m10 * _b) - (m11 * _d) + (m13 * _f);
         //d14
-        Inverse.m30 = -((m10 * c) - (m11 * e) + (m12 * f));
+        Inverse.m30 = -((m10 * _c) - (m11 * _e) + (m12 * _f));
 
         //d21
-        Inverse.m01 = -((m01 * a) - (m02 * b) + (m03 * c));
+        Inverse.m01 = -((m01 * _a) - (m02 * _b) + (m03 * _c));
         //d22
-        Inverse.m11 = (m00 * a) - (m02 * d) + (m03 * e);
+        Inverse.m11 = (m00 * _a) - (m02 * _d) + (m03 * _e);
         //d23
-        Inverse.m21 = -((m00 * b) - (m01 * d) + (m03 * f));
+        Inverse.m21 = -((m00 * _b) - (m01 * _d) + (m03 * _f));
         //d24
-        Inverse.m31 = (m00 * c) - (m01 * e) + (m02 * f);
+        Inverse.m31 = (m00 * _c) - (m01 * _e) + (m02 * _f);
 
         const float Determinant     = (Inverse.m00 * m00) - (Inverse.m10 * m01) + (Inverse.m20 * m02) - (Inverse.m30 * m03);
         const float ReprDeterminant = 1.0f / Determinant;
@@ -214,37 +257,37 @@ public:
         Inverse.m21 *= ReprDeterminant;
         Inverse.m31 *= ReprDeterminant;
 
-        a = (m12 * m33) - (m13 * m32);
-        b = (m11 * m33) - (m13 * m31);
-        c = (m11 * m32) - (m12 * m31);
-        d = (m10 * m33) - (m13 * m30);
-        e = (m10 * m32) - (m12 * m30);
-        f = (m10 * m31) - (m11 * m30);
+        _a = (m12 * m33) - (m13 * m32);
+        _b = (m11 * m33) - (m13 * m31);
+        _c = (m11 * m32) - (m12 * m31);
+        _d = (m10 * m33) - (m13 * m30);
+        _e = (m10 * m32) - (m12 * m30);
+        _f = (m10 * m31) - (m11 * m30);
 
         //d31
-        Inverse.m02 = ((m01 * a) - (m02 * b) + (m03 * c)) * ReprDeterminant;
+        Inverse.m02 = ((m01 * _a) - (m02 * _b) + (m03 * _c)) * ReprDeterminant;
         //d32
-        Inverse.m12 = -((m00 * a) - (m02 * d) + (m03 * e)) * ReprDeterminant;
+        Inverse.m12 = -((m00 * _a) - (m02 * _d) + (m03 * _e)) * ReprDeterminant;
         //d33
-        Inverse.m22 = ((m00 * b) - (m01 * d) + (m03 * f)) * ReprDeterminant;
+        Inverse.m22 = ((m00 * _b) - (m01 * _d) + (m03 * _f)) * ReprDeterminant;
         //d34
-        Inverse.m32 = -((m00 * c) - (m01 * e) + (m02 * f)) * ReprDeterminant;
+        Inverse.m32 = -((m00 * _c) - (m01 * _e) + (m02 * _f)) * ReprDeterminant;
 
-        a = (m12 * m23) - (m13 * m22);
-        b = (m11 * m23) - (m13 * m21);
-        c = (m11 * m22) - (m12 * m21);
-        d = (m10 * m23) - (m13 * m20);
-        e = (m10 * m22) - (m12 * m20);
-        f = (m10 * m21) - (m11 * m20);
+        _a = (m12 * m23) - (m13 * m22);
+        _b = (m11 * m23) - (m13 * m21);
+        _c = (m11 * m22) - (m12 * m21);
+        _d = (m10 * m23) - (m13 * m20);
+        _e = (m10 * m22) - (m12 * m20);
+        _f = (m10 * m21) - (m11 * m20);
 
         //d41
-        Inverse.m03 = -((m01 * a) - (m02 * b) + (m03 * c)) * ReprDeterminant;
+        Inverse.m03 = -((m01 * _a) - (m02 * _b) + (m03 * _c)) * ReprDeterminant;
         //d42
-        Inverse.m13 = ((m00 * a) - (m02 * d) + (m03 * e)) * ReprDeterminant;
+        Inverse.m13 = ((m00 * _a) - (m02 * _d) + (m03 * _e)) * ReprDeterminant;
         //d43
-        Inverse.m23 = -((m00 * b) - (m01 * d) + (m03 * f)) * ReprDeterminant;
+        Inverse.m23 = -((m00 * _b) - (m01 * _d) + (m03 * _f)) * ReprDeterminant;
         //d44
-        Inverse.m33 = ((m00 * c) - (m01 * e) + (m02 * f)) * ReprDeterminant;
+        Inverse.m33 = ((m00 * _c) - (m01 * _e) + (m02 * _f)) * ReprDeterminant;
 
         return Inverse;
 #else
@@ -320,63 +363,63 @@ public:
     inline FMatrix4 Adjoint() const noexcept
     {
 #if !USE_VECTOR_OP
-        float a = (m22 * m33) - (m23 * m32);
-        float b = (m21 * m33) - (m23 * m31);
-        float c = (m21 * m32) - (m22 * m31);
-        float d = (m20 * m33) - (m23 * m30);
-        float e = (m20 * m32) - (m22 * m30);
-        float f = (m20 * m31) - (m21 * m30);
+        float _a = (m22 * m33) - (m23 * m32);
+        float _b = (m21 * m33) - (m23 * m31);
+        float _c = (m21 * m32) - (m22 * m31);
+        float _d = (m20 * m33) - (m23 * m30);
+        float _e = (m20 * m32) - (m22 * m30);
+        float _f = (m20 * m31) - (m21 * m30);
 
         FMatrix4 Adjugate;
         //d11
-        Adjugate.m00 = (m11 * a) - (m12 * b) + (m13 * c);
+        Adjugate.m00 = (m11 * _a) - (m12 * _b) + (m13 * _c);
         //d12
-        Adjugate.m10 = -((m10 * a) - (m12 * d) + (m13 * e));
+        Adjugate.m10 = -((m10 * _a) - (m12 * _d) + (m13 * _e));
         //d13
-        Adjugate.m20 = (m10 * b) - (m11 * d) + (m13 * f);
+        Adjugate.m20 = (m10 * _b) - (m11 * _d) + (m13 * _f);
         //d14
-        Adjugate.m30 = -((m10 * c) - (m11 * e) + (m12 * f));
+        Adjugate.m30 = -((m10 * _c) - (m11 * _e) + (m12 * _f));
 
         //d21
-        Adjugate.m01 = -((m01 * a) - (m02 * b) + (m03 * c));
+        Adjugate.m01 = -((m01 * _a) - (m02 * _b) + (m03 * _c));
         //d22
-        Adjugate.m11 = (m00 * a) - (m02 * d) + (m03 * e);
+        Adjugate.m11 = (m00 * _a) - (m02 * _d) + (m03 * _e);
         //d23
-        Adjugate.m21 = -((m00 * b) - (m01 * d) + (m03 * f));
+        Adjugate.m21 = -((m00 * _b) - (m01 * _d) + (m03 * _f));
         //d24
-        Adjugate.m31 = (m00 * c) - (m01 * e) + (m02 * f);
+        Adjugate.m31 = (m00 * _c) - (m01 * _e) + (m02 * _f);
 
-        a = (m12 * m33) - (m13 * m32);
-        b = (m11 * m33) - (m13 * m31);
-        c = (m11 * m32) - (m12 * m31);
-        d = (m10 * m33) - (m13 * m30);
-        e = (m10 * m32) - (m12 * m30);
-        f = (m10 * m31) - (m11 * m30);
+        _a = (m12 * m33) - (m13 * m32);
+        _b = (m11 * m33) - (m13 * m31);
+        _c = (m11 * m32) - (m12 * m31);
+        _d = (m10 * m33) - (m13 * m30);
+        _e = (m10 * m32) - (m12 * m30);
+        _f = (m10 * m31) - (m11 * m30);
 
         //d31
-        Adjugate.m02 = (m01 * a) - (m02 * b) + (m03 * c);
+        Adjugate.m02 = (m01 * _a) - (m02 * _b) + (m03 * _c);
         //d32
-        Adjugate.m12 = -((m00 * a) - (m02 * d) + (m03 * e));
+        Adjugate.m12 = -((m00 * _a) - (m02 * _d) + (m03 * _e));
         //d33
-        Adjugate.m22 = (m00 * b) - (m01 * d) + (m03 * f);
+        Adjugate.m22 = (m00 * _b) - (m01 * _d) + (m03 * _f);
         //d34
-        Adjugate.m32 = -((m00 * c) - (m01 * e) + (m02 * f));
+        Adjugate.m32 = -((m00 * _c) - (m01 * _e) + (m02 * _f));
 
-        a = (m12 * m23) - (m13 * m22);
-        b = (m11 * m23) - (m13 * m21);
-        c = (m11 * m22) - (m12 * m21);
-        d = (m10 * m23) - (m13 * m20);
-        e = (m10 * m22) - (m12 * m20);
-        f = (m10 * m21) - (m11 * m20);
+        _a = (m12 * m23) - (m13 * m22);
+        _b = (m11 * m23) - (m13 * m21);
+        _c = (m11 * m22) - (m12 * m21);
+        _d = (m10 * m23) - (m13 * m20);
+        _e = (m10 * m22) - (m12 * m20);
+        _f = (m10 * m21) - (m11 * m20);
 
         //d41
-        Adjugate.m03 = -((m01 * a) - (m02 * b) + (m03 * c));
+        Adjugate.m03 = -((m01 * _a) - (m02 * _b) + (m03 * _c));
         //d42
-        Adjugate.m13 = (m00 * a) - (m02 * d) + (m03 * e);
+        Adjugate.m13 = (m00 * _a) - (m02 * _d) + (m03 * _e);
         //d43
-        Adjugate.m23 = -((m00 * b) - (m01 * d) + (m03 * f));
+        Adjugate.m23 = -((m00 * _b) - (m01 * _d) + (m03 * _f));
         //d44
-        Adjugate.m33 = (m00 * c) - (m01 * e) + (m02 * f);
+        Adjugate.m33 = (m00 * _c) - (m01 * _e) + (m02 * _f);
 
         return Adjugate;
 #else
@@ -440,21 +483,21 @@ public:
     inline float Determinant() const noexcept
     {
 #if !USE_VECTOR_OP
-        float a = (m22 * m33) - (m23 * m32);
-        float b = (m21 * m33) - (m23 * m31);
-        float c = (m21 * m32) - (m22 * m31);
-        float d = (m20 * m33) - (m23 * m30);
-        float e = (m20 * m32) - (m22 * m30);
-        float f = (m20 * m31) - (m21 * m30);
+        float _a = (m22 * m33) - (m23 * m32);
+        float _b = (m21 * m33) - (m23 * m31);
+        float _c = (m21 * m32) - (m22 * m31);
+        float _d = (m20 * m33) - (m23 * m30);
+        float _e = (m20 * m32) - (m22 * m30);
+        float _f = (m20 * m31) - (m21 * m30);
 
         //d11
-        float Determinant = m00 * ((m11 * a) - (m12 * b) + (m13 * c));
+        float Determinant = m00 * ((m11 * _a) - (m12 * _b) + (m13 * _c));
         //d12
-        Determinant -= m01 * ((m10 * a) - (m12 * d) + (m13 * e));
+        Determinant -= m01 * ((m10 * _a) - (m12 * _d) + (m13 * _e));
         //d13
-        Determinant += m02 * ((m10 * b) - (m11 * d) + (m13 * f));
+        Determinant += m02 * ((m10 * _b) - (m11 * _d) + (m13 * _f));
         //d14
-        Determinant -= m03 * ((m10 * c) - (m11 * e) + (m12 * f));
+        Determinant -= m03 * ((m10 * _c) - (m11 * _e) + (m12 * _f));
         return Determinant;
 #else
         NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(f[0]);
@@ -501,7 +544,7 @@ public:
      */
     inline bool HasNaN() const noexcept
     {
-        for (int i = 0; i < 16; i++)
+        for (int32 i = 0; i < 16; i++)
         {
             if (NMath::IsNaN(reinterpret_cast<const float*>(this)[i]))
             {
@@ -519,7 +562,7 @@ public:
      */
     inline bool HasInfinity() const noexcept
     {
-        for (int i = 0; i < 16; i++)
+        for (int32 i = 0; i < 16; i++)
         {
             if (NMath::IsInfinity(reinterpret_cast<const float*>(this)[i]))
             {
@@ -551,7 +594,7 @@ public:
 #if !USE_VECTOR_OP
         Epsilon = NMath::Abs(Epsilon);
 
-        for (int i = 0; i < 16; i++)
+        for (int32 i = 0; i < 16; i++)
         {
             float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
             if (NMath::Abs(Diff) > Epsilon)
@@ -565,7 +608,7 @@ public:
         NVectorOp::Float128 Espilon128 = NVectorOp::Load(Epsilon);
         Espilon128 = NVectorOp::Abs(Espilon128);
 
-        for (int i = 0; i < 4; i++)
+        for (int32 i = 0; i < 4; i++)
         {
             NVectorOp::Float128 Diff = NVectorOp::Sub(f[i], Other.f[i]);
             Diff = NVectorOp::Abs(Diff);
@@ -649,7 +692,7 @@ public:
      * @param Row: The row to retrieve
      * @return: A vector containing the specified row
      */
-    FORCEINLINE FVector4 GetRow(int Row) const noexcept
+    FORCEINLINE FVector4 GetRow(int32 Row) const noexcept
     {
         Check(Row < 4);
         return FVector4(f[Row]);
@@ -661,7 +704,7 @@ public:
      * @param Column: The column to retrieve
      * @return: A vector containing the specified column
      */
-    FORCEINLINE FVector4 GetColumn(int Column) const noexcept
+    FORCEINLINE FVector4 GetColumn(int32 Column) const noexcept
     {
         Check(Column < 4);
         return FVector4(f[0][Column], f[1][Column], f[2][Column], f[3][Column]);
@@ -709,6 +752,7 @@ public:
     }
 
 public:
+
     /**
      * @brief: Transforms a 4-D vector
      *
@@ -717,21 +761,7 @@ public:
      */
     FORCEINLINE FVector4 operator*(const FVector4& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
-        FVector4 Result;
-        Result.x = (RHS[0] * m00) + (RHS[1] * m10) + (RHS[2] * m20) + (RHS[3] * m30);
-        Result.y = (RHS[0] * m01) + (RHS[1] * m11) + (RHS[2] * m21) + (RHS[3] * m31);
-        Result.z = (RHS[0] * m02) + (RHS[1] * m12) + (RHS[2] * m22) + (RHS[3] * m32);
-        Result.w = (RHS[0] * m03) + (RHS[1] * m13) + (RHS[2] * m23) + (RHS[3] * m33);
-        return Result;
-#else
-        NVectorOp::Float128 Temp = NVectorOp::LoadAligned(&RHS);
-        Temp = NVectorOp::Transform(this, Temp);
-
-        FVector4 Result;
-        NVectorOp::StoreAligned(Temp, &Result);
-        return Result;
-#endif
+        return Transform(RHS);
     }
 
     /**
@@ -1337,13 +1367,13 @@ public:
     }
 
     /**
-     * @brief: Creates a ortographic-projection matrix (Left-handed)
+     * @brief: Creates a orthographic-projection matrix (Left-handed)
      *
      * @param Width: Width of the projection plane in pixels
      * @param Height: Height of the projection plane in pixels
      * @param NearZ: The distance to the near plane in world-units
      * @param FarZ: The distance to the far plane in world-units
-     * @return: A ortographic-projection matrix
+     * @return: A orthographic-projection matrix
      */
     inline static FMatrix4 OrtographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
     {
@@ -1355,7 +1385,7 @@ public:
     }
 
     /**
-     * @brief: Creates a ortographic-projection matrix (Left-handed)
+     * @brief: Creates a orthographic-projection matrix (Left-handed)
      *
      * @param Left: Negative offset on the x-axis in world-units
      * @param Right: Positive offset on the x-axis in world-units
@@ -1363,7 +1393,7 @@ public:
      * @param Top: Positive offset on the y-axis in world-units
      * @param NearZ: The distance to the near plane in world-units
      * @param FarZ: The distance to the far plane in world-units
-     * @return: A ortographic-projection matrix
+     * @return: A orthographic-projection matrix
      */
     inline static FMatrix4 OrtographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept
     {

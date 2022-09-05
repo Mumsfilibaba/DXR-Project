@@ -86,6 +86,6 @@ private:
     FMatrix4 ViewMatrix;
     FMatrix4 ProjectionMatrix;
 
-    float CascadeSplitLambda;
-    float Size;
+    float    CascadeSplitLambda;
+    float    Size;
 };

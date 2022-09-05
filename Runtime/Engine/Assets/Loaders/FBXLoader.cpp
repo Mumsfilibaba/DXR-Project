@@ -238,7 +238,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
                     static_cast<float>(Vertices[CurrentIndex].x),
                     static_cast<float>(Vertices[CurrentIndex].y),
                     static_cast<float>(Vertices[CurrentIndex].z));
-                TempVertex.Position = Transform.TransformPosition(Position);
+                TempVertex.Position = Transform.Transform(Position);
 
                 // Apply the scene scale
                 if (Flags & EFBXFlags::FBXFlags_ApplyScaleFactor)
@@ -248,7 +248,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
 
                 // Normal
                 FVector3 Normal = FVector3((float)Normals[CurrentIndex].x, (float)Normals[CurrentIndex].y, (float)Normals[CurrentIndex].z);
-                TempVertex.Normal = Transform.TransformDirection(Normal);
+                TempVertex.Normal = Transform.TransformNormal(Normal);
 
                 // TexCoords
                 TempVertex.TexCoord = FVector2((float)TexCoords[CurrentIndex].x, (float)TexCoords[CurrentIndex].y);
@@ -257,7 +257,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
                 if (Tangents)
                 {
                     FVector3 Tangent = FVector3((float)Tangents[CurrentIndex].x, (float)Tangents[CurrentIndex].y, (float)Tangents[CurrentIndex].z);
-                    TempVertex.Tangent = Transform.TransformDirection(Tangent);
+                    TempVertex.Tangent = Transform.TransformNormal(Tangent);
                 }
 
                 // Only push unique vertices

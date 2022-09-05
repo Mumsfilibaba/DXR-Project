@@ -37,8 +37,9 @@ void FCamera::Rotate(float Pitch, float Yaw, float Roll)
     Rotation.z += Roll;
 
     FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation);
+
     FVector3 TempForward(0.0f, 0.0f, 1.0f);
-    Forward = RotationMatrix.TransformDirection(TempForward);
+    Forward = RotationMatrix.TransformNormal(TempForward);
     Forward.Normalize();
 
     FVector3 TempUp(0.0f, 1.0f, 0.0f);

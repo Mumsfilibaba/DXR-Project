@@ -9,18 +9,18 @@ FFrustum::FFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Project
     Create(FarPlane, View, Projection);
 }
 
-void FFrustum::Create(float FarPlane, const FMatrix4& View, const FMatrix4& Projection)
+void FFrustum::Create(float FarPlane, const FMatrix4& InView, const FMatrix4& InProjection)
 {
     // Calculate the minimum Z distance in the frustum.
-    FMatrix4 TempProjection = Projection;
-    float MinimumZ = -TempProjection.m32 / TempProjection.m22;
-    float r = FarPlane / (FarPlane - MinimumZ);
-    TempProjection.m22 = r;
-    TempProjection.m32 = -r * MinimumZ;
+    FMatrix4 Projection = InProjection;
+    float MinimumZ = -Projection.m32 / Projection.m22;
+    float Recip    = FarPlane / (FarPlane - MinimumZ);
+    Projection.m22 = Recip;
+    Projection.m32 = -Recip * MinimumZ;
 
     // Create the frustum Matrix from the view Matrix and updated projection Matrix.
-    FMatrix4 TempView = View.Transpose();
-    FMatrix4 Matrix   = TempView * TempProjection;
+    FMatrix4 View   = InView.Transpose();
+    FMatrix4 Matrix = View * Projection;
 
     // Calculate near plane of frustum.
     Planes[0].x = Matrix.m03 + Matrix.m02;
@@ -63,9 +63,28 @@ void FFrustum::Create(float FarPlane, const FMatrix4& View, const FMatrix4& Proj
     Planes[5].z = Matrix.m23 + Matrix.m21;
     Planes[5].w = Matrix.m33 + Matrix.m31;
     Planes[5].Normalize();
+
+    // Generate the points
+    const FVector3 FrustumCorners[8] =
+    {
+        FVector3(-1.0f,  1.0f, 0.0f),
+        FVector3( 1.0f,  1.0f, 0.0f),
+        FVector3( 1.0f, -1.0f, 0.0f),
+        FVector3(-1.0f, -1.0f, 0.0f),
+        FVector3(-1.0f,  1.0f, 1.0f),
+        FVector3( 1.0f,  1.0f, 1.0f),
+        FVector3( 1.0f, -1.0f, 1.0f),
+        FVector3(-1.0f, -1.0f, 1.0f),
+    };
+
+    const FMatrix4 InverseViewProjection = Matrix.Invert();
+    for (int32 Corner = 0; Corner < 8; ++Corner)
+    {
+        Points[Corner] = InverseViewProjection.TransformCoord(FrustumCorners[Corner]);
+    }
 }
 
-bool FFrustum::CheckAABB(const FAABB& Box)
+bool FFrustum::CheckAABB(const FAABB& Box) const
 {
     const FVector3 Center = Box.GetCenter();
     const float Width  = Box.GetWidth()  / 2.0f;
@@ -82,50 +101,74 @@ bool FFrustum::CheckAABB(const FAABB& Box)
     Coords[6] = FVector3(Center.x - Width, Center.y + Height, Center.z + Depth);
     Coords[7] = FVector3(Center.x + Width, Center.y + Height, Center.z + Depth);
 
-    for (int32 Index = 0; Index < 6; Index++)
+    for (int32 PlaneIndex = 0; PlaneIndex < 6; ++PlaneIndex)
     {
-        const FPlane& Plane = Planes[Index];
-        if (Plane.DotProductCoord(Coords[0]) >= 0.0f)
+        int32 NumOutside = 0;
+        for (int32 CornerIndex = 0; CornerIndex < 8; ++CornerIndex)
         {
-            continue;
+            if (Planes[PlaneIndex].DotProductCoord(Coords[CornerIndex]) < 0.0f)
+                ++NumOutside;
         }
 
-        if (Plane.DotProductCoord(Coords[1]) >= 0.0f)
-        {
-            continue;
-        }
+        // We know that the primitive is completely outside of the frustum
+        if (NumOutside == 8)
+            return false;
+    }
 
-        if (Plane.DotProductCoord(Coords[2]) >= 0.0f)
-        {
-            continue;
-        }
+    // Filter out false positive (Where one plane intersects large geometry)
+    {
+        int32 NumOutside = 0;
+        for (int32 Index = 0; Index < 8; ++Index)
+            NumOutside += (Points[Index].x > Box.Top.x) ? 1 : 0;
 
-        if (Plane.DotProductCoord(Coords[3]) >= 0.0f)
-        {
-            continue;
-        }
+        if (NumOutside == 8)
+            return false;
+    }
 
-        if (Plane.DotProductCoord(Coords[4]) >= 0.0f)
-        {
-            continue;
-        }
+    {
+        int32 NumOutside = 0;
+        for (int32 Index = 0; Index < 8; ++Index)
+            NumOutside += (Points[Index].x < Box.Bottom.x) ? 1 : 0;
 
-        if (Plane.DotProductCoord(Coords[5]) >= 0.0f)
-        {
-            continue;
-        }
+        if (NumOutside == 8)
+            return false;
+    }
 
-        if (Plane.DotProductCoord(Coords[6]) >= 0.0f)
-        {
-            continue;
-        }
+    {
+        int32 NumOutside = 0;
+        for (int32 Index = 0; Index < 8; ++Index)
+            NumOutside += (Points[Index].y > Box.Top.y) ? 1 : 0;
 
-        if (Plane.DotProductCoord(Coords[7]) >= 0.0f)
-        {
-            continue;
-        }
+        if (NumOutside == 8)
+            return false;
+    }
 
-        return false;
+    {
+        int32 NumOutside = 0;
+        for (int32 Index = 0; Index < 8; ++Index)
+            NumOutside += (Points[Index].y < Box.Bottom.y) ? 1 : 0;
+
+        if (NumOutside == 8)
+            return false;
+    }
+
+
+    {
+        int32 NumOutside = 0;
+        for (int32 Index = 0; Index < 8; ++Index)
+            NumOutside += (Points[Index].z > Box.Top.z) ? 1 : 0;
+
+        if (NumOutside == 8)
+            return false;
+    }
+
+    {
+        int32 NumOutside = 0;
+        for (int32 Index = 0; Index < 8; ++Index)
+            NumOutside += (Points[Index].z < Box.Bottom.z) ? 1 : 0;
+
+        if (NumOutside == 8)
+            return false;
     }
 
     return true;

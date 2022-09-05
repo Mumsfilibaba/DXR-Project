@@ -73,13 +73,13 @@ bool TestMatrix4()
 
     // Transformation
     FVector3 Vec0 = FVector3(1.0f, 1.0f, 1.0f);
-    FVector3 Vec1 = Translation.TransformPosition(Vec0);
+    FVector3 Vec1 = Translation.TransformCoord(Vec0);
     if (Vec1 != FVector3(6.0f, 2.0f, -1.0f))
     {
         TEST_FAILED();
     }
 
-    Vec1 = Translation.TransformDirection(Vec0);
+    Vec1 = Translation.TransformNormal(Vec0);
     if (Vec1 != FVector3(1.0f, 1.0f, 1.0f))
     {
         TEST_FAILED();

@@ -150,7 +150,13 @@ struct RENDERER_API FLightSetup
     // DirectionalLight
     // NOTE: Only one directional light (TODO: This is ugly)
     FDirectionalLightData      DirectionalLightData;
+
+    FMatrix4                   DirectionalLightViewMatrix;
+    FMatrix4                   DirectionalLightProjMatrix;
+
+    float                      DirectionalLightFarPlane;
     float                      CascadeSplitLambda;
+    
     bool                       DirectionalLightDataDirty = true;
 
     FRHIConstantBufferRef      DirectionalLightsBuffer;

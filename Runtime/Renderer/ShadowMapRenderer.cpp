@@ -481,20 +481,21 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
                 CommandList.SetConstantBuffer(PointLightPixelShader.Get(), PerShadowMapBuffer.Get(), 0);
 
                 // Draw all objects to depth buffer
-                static IConsoleVariable* GlobalFrustumCullEnabled = FConsoleInterface::Get().FindVariable("Renderer.Feature.FrustumCulling");
-                if (GlobalFrustumCullEnabled && GlobalFrustumCullEnabled->GetBool())
+                static IConsoleVariable* GFrustumCullEnabled = FConsoleInterface::Get().FindVariable("Renderer.Feature.FrustumCulling");
+                if (GFrustumCullEnabled && GFrustumCullEnabled->GetBool())
                 {
-                    FFrustum CameraFrustum = FFrustum(Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face]);
+                    const FFrustum CameraFrustum = FFrustum(
+                        Data.FarPlane,
+                        Data.ViewMatrix[Face],
+                        Data.ProjMatrix[Face]);
+                    
                     for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
                     {
                         FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
                         TransformMatrix = TransformMatrix.Transpose();
 
-                        FVector3 Top = FVector3(Command.Mesh->BoundingBox.Top);
-                        Top = TransformMatrix.TransformPosition(Top);
-
-                        FVector3 Bottom = FVector3(Command.Mesh->BoundingBox.Bottom);
-                        Bottom = TransformMatrix.TransformPosition(Bottom);
+                        const FVector3 Top    = TransformMatrix.Transform(Command.Mesh->BoundingBox.Top);
+                        const FVector3 Bottom = TransformMatrix.Transform(Command.Mesh->BoundingBox.Bottom);
 
                         FAABB Box(Top, Bottom);
                         if (CameraFrustum.CheckAABB(Box))
@@ -554,6 +555,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
             LightSetup.CascadeMatrixBuffer.Get(), 
             EResourceAccess::NonPixelShaderResource, 
             EResourceAccess::UnorderedAccess);
+        
         CommandList.TransitionBuffer(
             LightSetup.CascadeSplitsBuffer.Get(),
             EResourceAccess::NonPixelShaderResource,
@@ -598,6 +600,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
             LightSetup.CascadeMatrixBuffer.Get(),
             EResourceAccess::UnorderedAccess,
             EResourceAccess::PixelShaderResource);
+        
         CommandList.TransitionBuffer(
             LightSetup.CascadeSplitsBuffer.Get(),
             EResourceAccess::UnorderedAccess,
@@ -616,14 +619,17 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
             LightSetup.ShadowMapCascades[0].Get(),
             EResourceAccess::NonPixelShaderResource, 
             EResourceAccess::DepthWrite);
+        
         CommandList.TransitionTexture(
             LightSetup.ShadowMapCascades[1].Get(),
             EResourceAccess::NonPixelShaderResource,
             EResourceAccess::DepthWrite);
+        
         CommandList.TransitionTexture(
             LightSetup.ShadowMapCascades[2].Get(),
             EResourceAccess::NonPixelShaderResource, 
             EResourceAccess::DepthWrite);
+        
         CommandList.TransitionTexture(
             LightSetup.ShadowMapCascades[3].Get(), 
             EResourceAccess::NonPixelShaderResource,
@@ -680,15 +686,47 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
             CommandList.SetShaderResourceView(DirectionalLightShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
 
             // Draw all objects to shadow-map
-            for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+            static IConsoleVariable* GFrustumCullEnabled = FConsoleInterface::Get().FindVariable("Renderer.Feature.FrustumCulling");
+            if (GFrustumCullEnabled && GFrustumCullEnabled->GetBool())
             {
-                CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
-                CommandList.SetIndexBuffer(Command.IndexBuffer);
+                const FFrustum CameraFrustum = FFrustum(
+                    LightSetup.DirectionalLightFarPlane,
+                    LightSetup.DirectionalLightViewMatrix,
+                    LightSetup.DirectionalLightProjMatrix);
 
-                ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-                CommandList.Set32BitShaderConstants(DirectionalLightShader.Get(), &ShadowPerObjectBuffer, 16);
+                for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+                {
+                    FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
+                    TransformMatrix = TransformMatrix.Transpose();
 
-                CommandList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+                    const FVector3 Top    = TransformMatrix.Transform(Command.Mesh->BoundingBox.Top);
+                    const FVector3 Bottom = TransformMatrix.Transform(Command.Mesh->BoundingBox.Bottom);
+
+                    const FAABB Box(Top, Bottom);
+                    // if (CameraFrustum.CheckAABB(Box))
+                    {
+                        CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
+                        CommandList.SetIndexBuffer(Command.IndexBuffer);
+
+                        ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+                        CommandList.Set32BitShaderConstants(DirectionalLightShader.Get(), &ShadowPerObjectBuffer, 16);
+
+                        CommandList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+                    }
+                }
+            }
+            else
+            {
+                for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+                {
+                    CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
+                    CommandList.SetIndexBuffer(Command.IndexBuffer);
+
+                    ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+                    CommandList.Set32BitShaderConstants(DirectionalLightShader.Get(), &ShadowPerObjectBuffer, 16);
+
+                    CommandList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+                }
             }
 
             CommandList.EndRenderPass();
@@ -698,14 +736,17 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
             LightSetup.ShadowMapCascades[0].Get(),
             EResourceAccess::DepthWrite,
             EResourceAccess::NonPixelShaderResource);
+        
         CommandList.TransitionTexture(
             LightSetup.ShadowMapCascades[1].Get(),
             EResourceAccess::DepthWrite, 
             EResourceAccess::NonPixelShaderResource);
+        
         CommandList.TransitionTexture(
             LightSetup.ShadowMapCascades[2].Get(), 
             EResourceAccess::DepthWrite, 
             EResourceAccess::NonPixelShaderResource);
+        
         CommandList.TransitionTexture(
             LightSetup.ShadowMapCascades[3].Get(),
             EResourceAccess::DepthWrite,

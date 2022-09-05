@@ -57,9 +57,8 @@ void FDirectionalLight::Tick(FCamera& Camera)
         FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
 
         FVector3 StartDirection(0.0f, -1.0f, 0.0f);
-        StartDirection = RotationMatrix.TransformDirection(StartDirection);
-        StartDirection.Normalize();
-        Direction = StartDirection;
+        StartDirection = RotationMatrix.TransformNormal(StartDirection);
+        Direction      = StartDirection.GetNormalized();
     }
 
     // Update ShadowMatrix
@@ -83,7 +82,7 @@ void FDirectionalLight::Tick(FCamera& Camera)
     FVector3 FrustumCenter = FVector3(0.0f);
     for (int32 Corner = 0; Corner < 8; ++Corner)
     {
-        FrustumCorners[Corner] = InverseViewProjection.TransformPosition(FrustumCorners[Corner]);
+        FrustumCorners[Corner] = InverseViewProjection.TransformCoord(FrustumCorners[Corner]);
         FrustumCenter += FrustumCorners[Corner];
     }
     FrustumCenter /= 8.0f;
@@ -92,8 +91,8 @@ void FDirectionalLight::Tick(FCamera& Camera)
     UpVector = FVector3(0.0f, 1.0f, 0.0f);
 
     {
-        FVector3 ShadowLookAt   = FrustumCenter - GetDirection();
-        FVector3 ShadowPosition = FrustumCenter + GetDirection() * -0.5f;
+        FVector3 ShadowLookAt   = FrustumCenter - Direction;
+        FVector3 ShadowPosition = FrustumCenter + (Direction * -0.5f);
 
         FMatrix4 ShadowViewMatrix       = FMatrix4::LookAt(ShadowPosition, ShadowLookAt, UpVector);
         FMatrix4 ShadowProjectionMatrix = FMatrix4::OrtographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
@@ -110,10 +109,25 @@ void FDirectionalLight::Tick(FCamera& Camera)
             const float Distance = (FrustumCorners[Index] - FrustumCenter).GetLength();
             Radius = NMath::Max(Radius, Distance);
         }
+
         Radius = NMath::Ceil(Radius * 16.0f) / 16.0f;
 
-        ViewMatrix       = FMatrix4::LookAt(Position, LookAt, UpVector);
-        ProjectionMatrix = FMatrix4::OrtographicProjection(-Radius, Radius, -Radius, Radius, -Radius, Radius);
+        FVector3 MaxExtents = FVector3(Radius);
+        FVector3 MinExtents = -MaxExtents;
+
+        // Setup ShadowView
+        FVector3 Extents        = MaxExtents - MinExtents;
+        FVector3 LightDirection = Direction.GetNormalized();
+        Position = FrustumCenter - LightDirection * MaxExtents.z;
+
+        ShadowNearPlane = -Extents.z;
+        ShadowFarPlane  =  Extents.z;
+
+        ViewMatrix = FMatrix4::LookAt(Position, LightDirection, UpVector);
+        ViewMatrix = ViewMatrix.Transpose();
+
+        ProjectionMatrix = FMatrix4::OrtographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, ShadowNearPlane, ShadowFarPlane);
+        // ProjectionMatrix = ProjectionMatrix.Transpose();
     }
 }
 
