@@ -11,16 +11,9 @@ FFrustum::FFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Project
 
 void FFrustum::Create(float FarPlane, const FMatrix4& InView, const FMatrix4& InProjection)
 {
-    // Calculate the minimum Z distance in the frustum.
-    FMatrix4 Projection = InProjection;
-    float MinimumZ = -Projection.m32 / Projection.m22;
-    float Recip    = FarPlane / (FarPlane - MinimumZ);
-    Projection.m22 = Recip;
-    Projection.m32 = -Recip * MinimumZ;
-
     // Create the frustum Matrix from the view Matrix and updated projection Matrix.
     FMatrix4 View   = InView.Transpose();
-    FMatrix4 Matrix = View * Projection;
+    FMatrix4 Matrix = View * InProjection;
 
     // Calculate near plane of frustum.
     Planes[0].x = Matrix.m03 + Matrix.m02;

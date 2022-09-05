@@ -703,7 +703,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
                     const FVector3 Bottom = TransformMatrix.Transform(Command.Mesh->BoundingBox.Bottom);
 
                     const FAABB Box(Top, Bottom);
-                    // if (CameraFrustum.CheckAABB(Box))
+                    if (CameraFrustum.CheckAABB(Box))
                     {
                         CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
                         CommandList.SetIndexBuffer(Command.IndexBuffer);
