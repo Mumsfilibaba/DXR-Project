@@ -78,26 +78,25 @@ public:
 
     virtual IRHICommandContext*          RHIGetDefaultCommandContext() override final { return DirectContext; }
 
-    virtual void    RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport)   const override final;
-    virtual void    RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const override final;
-    virtual bool    RHIQueryUAVFormatSupport(EFormat Format)                    const override final;
+    virtual void                         RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport)   const override final;
+    virtual void                         RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const override final;
+    virtual bool                         RHIQueryUAVFormatSupport(EFormat Format)                    const override final;
 
-    virtual FString GetAdapterDescription() const override final { return Adapter->GetDescription(); }
+    virtual FString                      GetAdapterDescription() const override final { return Adapter->GetDescription(); }
 
 public:
-    FORCEINLINE FD3D12Device*  GetDevice()  const { return Device.Get(); }
-    FORCEINLINE FD3D12Adapter* GetAdapter() const { return Adapter.Get(); }
-
-    FORCEINLINE FD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap()     const { return ResourceOfflineDescriptorHeap; }
-    FORCEINLINE FD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap() const { return RenderTargetOfflineDescriptorHeap; }
-    FORCEINLINE FD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap() const { return DepthStencilOfflineDescriptorHeap; }
-    FORCEINLINE FD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap()      const { return SamplerOfflineDescriptorHeap; }
+    FORCEINLINE FD3D12OfflineDescriptorHeap*  GetResourceOfflineDescriptorHeap()     const { return ResourceOfflineDescriptorHeap; }
+    FORCEINLINE FD3D12OfflineDescriptorHeap*  GetRenderTargetOfflineDescriptorHeap() const { return RenderTargetOfflineDescriptorHeap; }
+    FORCEINLINE FD3D12OfflineDescriptorHeap*  GetDepthStencilOfflineDescriptorHeap() const { return DepthStencilOfflineDescriptorHeap; }
+    FORCEINLINE FD3D12OfflineDescriptorHeap*  GetSamplerOfflineDescriptorHeap()      const { return SamplerOfflineDescriptorHeap; }
 
     FORCEINLINE FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexure2D()   const { return GenerateMipsTex2D_PSO; }
     FORCEINLINE FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexureCube() const { return GenerateMipsTexCube_PSO; }
+    
+    FORCEINLINE FD3D12Adapter* GetAdapter() const { return Adapter.Get(); }
+    FORCEINLINE FD3D12Device*  GetDevice()  const { return Device.Get(); }
 
 private:
-
     template<typename D3D12TextureType, typename InitializerType>
     D3D12TextureType* CreateTexture(const InitializerType& Initializer);
 
