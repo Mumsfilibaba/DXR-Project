@@ -653,11 +653,12 @@ bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const 
 
 FString FRHIShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
 {
-    FStringWide WArgumentsString;
-    for (LPCWSTR Arg : Args)
+    FStringWide NewString;
+    for (LPCWSTR CurrentArg : Args)
     {
-        WArgumentsString += Arg + ' ';
+        NewString += CurrentArg;
+        NewString += L' ';
     }
 
-    return WideToChar(WArgumentsString);
+    return WideToChar(NewString);
 }
