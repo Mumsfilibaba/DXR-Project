@@ -10,11 +10,21 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Misc/CoreDelegates.h"
+#include "Core/Debug/Console/ConsoleInterface.h"
+#include "Core/Containers/String.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-Variables
+
+TAutoConsoleVariable<bool> CVarEnableGPUTimeout("D3D12RHI.EnableGPUTimeout", true);
+TAutoConsoleVariable<bool> CVarEnableGPUValidation("D3D12RHI.EnableGPUValidation", false);
+TAutoConsoleVariable<bool> CVarEnableDRED("D3D12RHI.EnableDRED", false);
+TAutoConsoleVariable<bool> CVarPreferDedicatedGPU("D3D12RHI.PreferDedicatedGPU", true);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helpers
@@ -149,9 +159,24 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Adapter
 
+FD3D12Adapter::FD3D12Adapter(FD3D12Interface* InD3D12Interface)
+    : FD3D12RefCounted()
+    , AdapterIndex(0)
+    , bAllowTearing(false)
+    , D3D12Interface(InD3D12Interface)
+    , Factory(nullptr)
+#if WIN10_BUILD_17134
+    , Factory6(nullptr)
+#endif
+    , Adapter(nullptr)
+{ }
+
 bool FD3D12Adapter::Initialize()
 {
-    if (Initializer.bEnableDebugLayer)
+    IConsoleVariable* CVarEnableDebugLayer = FConsoleInterface::Get().FindVariable("RHI.EnableDebugLayer");
+    bEnableDebugLayer = (CVarEnableDebugLayer && CVarEnableDebugLayer->GetBool());
+    
+    if (bEnableDebugLayer)
     {
         TComPtr<ID3D12Debug> DebugInterface;
         if (FAILED(FDynamicD3D12::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
@@ -164,7 +189,8 @@ bool FD3D12Adapter::Initialize()
             DebugInterface->EnableDebugLayer();
         }
 
-        if (Initializer.bEnableDRED)
+        const bool bEnableDRED = CVarEnableDRED.GetBool();
+        if (bEnableDRED)
         {
             TComPtr<ID3D12DeviceRemovedExtendedDataSettings> DredSettings;
             if (SUCCEEDED(FDynamicD3D12::D3D12GetDebugInterface(IID_PPV_ARGS(&DredSettings))))
@@ -178,7 +204,8 @@ bool FD3D12Adapter::Initialize()
             }
         }
 
-        if (Initializer.bEnableGPUValidation)
+        const bool bEnableGPUValidation = CVarEnableGPUValidation.GetBool();
+        if (bEnableGPUValidation)
         {
             TComPtr<ID3D12Debug1> DebugInterface1;
             if (FAILED(DebugInterface.GetAs(&DebugInterface1)))
@@ -217,7 +244,8 @@ bool FD3D12Adapter::Initialize()
             D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve InfoQueue");
         }
 
-        if (Initializer.bEnablePIX)
+        IConsoleVariable* CVarEnablePIX = FConsoleInterface::Get().FindVariable("D3D12RHI.EnablePIX");
+        if (CVarEnablePIX && CVarEnablePIX->GetBool())
         {
             TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
             if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
@@ -246,7 +274,11 @@ bool FD3D12Adapter::Initialize()
         }
         else
         {
-            HRESULT hResult = Factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &bAllowTearing, sizeof(bAllowTearing));
+            HRESULT hResult = Factory5->CheckFeatureSupport(
+                DXGI_FEATURE_PRESENT_ALLOW_TEARING,
+                &bAllowTearing, 
+                sizeof(bAllowTearing));
+
             if (SUCCEEDED(hResult))
             {
                 if (bAllowTearing)
@@ -327,7 +359,7 @@ bool FD3D12Adapter::Initialize()
         HRESULT Result = Factory.GetAs<IDXGIFactory6>(Factory6.GetAddressOf());
         D3D12_ERROR_COND(SUCCEEDED(Result), "[FD3D12Adapter]: Failed to Query IDXGIFactory6");
 
-        const DXGI_GPU_PREFERENCE GPUPreference = Initializer.bPreferDGPU ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED;
+        const DXGI_GPU_PREFERENCE GPUPreference = CVarPreferDedicatedGPU.GetBool() ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED;
 
         TComPtr<IDXGIAdapter1> TempAdapter;
         for (uint32 Index = 0; DXGI_ERROR_NOT_FOUND != Factory6->EnumAdapterByGpuPreference(Index, GPUPreference, IID_PPV_ARGS(&TempAdapter)); Index++)
@@ -392,6 +424,42 @@ bool FD3D12Adapter::Initialize()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Device
 
+FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
+    : FD3D12RefCounted()
+    , Adapter(InAdapter)
+    , RootSignatureCache(this)
+    , Device(nullptr)
+#if WIN10_BUILD_14393
+    , Device1(nullptr)
+#endif
+#if WIN10_BUILD_15063
+    , Device2(nullptr)
+#endif
+#if WIN10_BUILD_16299
+    , Device3(nullptr)
+#endif
+#if WIN10_BUILD_17134
+    , Device4(nullptr)
+#endif
+#if WIN10_BUILD_17763
+    , Device5(nullptr)
+#endif
+#if WIN10_BUILD_18362
+    , Device6(nullptr)
+#endif
+#if WIN10_BUILD_19041
+    , Device7(nullptr)
+#endif
+#if WIN10_BUILD_20348
+    , Device8(nullptr)
+#endif
+#if WIN11_BUILD_22000
+    , Device9(nullptr)
+#endif
+    , MinFeatureLevel(D3D_FEATURE_LEVEL_12_0)
+    , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
+{ }
+
 FD3D12Device::~FD3D12Device()
 {
     if (Adapter->IsDebugLayerEnabled())
@@ -442,105 +510,15 @@ FD3D12Device::~FD3D12Device()
 
 bool FD3D12Device::Initialize()
 {
-    // Create Device
-    if (FAILED(FDynamicD3D12::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
+    if (!CreateDevice())
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create device");
         return false;
     }
-    else
+
+    if (!CreateQueues())
     {
-        const FString Description = Adapter->GetDescription();
-        D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", Description.GetCString());
+        return false;
     }
-
-    // Configure debug device (if active).
-    if (Adapter->IsDebugLayerEnabled())
-    {
-        TComPtr<ID3D12InfoQueue> InfoQueue;
-        if (SUCCEEDED(Device.GetAs(&InfoQueue)))
-        {
-            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR     , true);
-            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING   , true);
-
-            D3D12_MESSAGE_ID Hide[] =
-            {
-                D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-                D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
-            };
-
-            D3D12_INFO_QUEUE_FILTER Filter;
-            FMemory::Memzero(&Filter);
-
-            Filter.DenyList.NumIDs  = ARRAY_COUNT(Hide);
-            Filter.DenyList.pIDList = Hide;
-            InfoQueue->AddStorageFilterEntries(&Filter);
-        }
-    }
-
-#if WIN10_BUILD_14393
-    if (FAILED(Device.GetAs<ID3D12Device1>(&Device1)))
-    {
-        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device1");
-    }
-#endif
-
-#if WIN10_BUILD_15063
-    if (FAILED(Device.GetAs<ID3D12Device2>(&Device2)))
-    {
-        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device2");
-    }
-#endif
-
-#if WIN10_BUILD_16299
-    if (FAILED(Device.GetAs<ID3D12Device3>(&Device3)))
-    {
-        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device3");
-    }
-#endif
-
-#if WIN10_BUILD_17134
-    if (FAILED(Device.GetAs<ID3D12Device4>(&Device4)))
-    {
-        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device4");
-    }
-#endif
-
-#if WIN10_BUILD_17763
-    if (FAILED(Device.GetAs<ID3D12Device5>(&Device5)))
-    {
-        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device5");
-    }
-#endif
-
-#if WIN10_BUILD_18362
-    if (FAILED(Device.GetAs<ID3D12Device6>(&Device6)))
-    {
-        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device6");
-    }
-#endif
-
-#if WIN10_BUILD_19041
-    if (FAILED(Device.GetAs<ID3D12Device7>(&Device7)))
-    {
-        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device7");
-    }
-#endif
-
-#if WIN10_BUILD_20348
-    if (FAILED(Device.GetAs<ID3D12Device8>(&Device8)))
-    {
-        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device8");
-    }
-#endif
-
-#if WIN11_BUILD_22000
-    if (FAILED(Device.GetAs<ID3D12Device9>(&Device9)))
-    {
-        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device9");
-    }
-#endif
 
     // TODO: Remove feature levels from unsupported SDKs
     const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
@@ -636,6 +614,157 @@ bool FD3D12Device::Initialize()
     else
     {
         GlobalSamplerHeap->SetName("Global Sampler Descriptor Heap");
+    }
+
+    return true;
+}
+
+bool FD3D12Device::CreateDevice()
+{
+    // Create Device
+    if (FAILED(FDynamicD3D12::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create device");
+        return false;
+    }
+    else
+    {
+        const FString Description = Adapter->GetDescription();
+        D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", Description.GetCString());
+    }
+
+    // NodeMask
+    NodeCount = Device->GetNodeCount();
+    if (NodeCount > 1)
+    {
+        NodeMask = 1;
+    }
+    else
+    {
+        NodeMask = 0;
+    }
+
+    // Configure debug device (if active).
+    if (Adapter->IsDebugLayerEnabled())
+    {
+        TComPtr<ID3D12InfoQueue> InfoQueue;
+        if (SUCCEEDED(Device.GetAs(&InfoQueue)))
+        {
+            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+
+            D3D12_MESSAGE_ID Hide[] =
+            {
+                D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
+                D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
+            };
+
+            D3D12_INFO_QUEUE_FILTER Filter;
+            FMemory::Memzero(&Filter);
+
+            Filter.DenyList.NumIDs = ARRAY_COUNT(Hide);
+            Filter.DenyList.pIDList = Hide;
+            InfoQueue->AddStorageFilterEntries(&Filter);
+        }
+    }
+
+#if WIN10_BUILD_14393
+    if (FAILED(Device.GetAs<ID3D12Device1>(&Device1)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device1");
+    }
+#endif
+
+#if WIN10_BUILD_15063
+    if (FAILED(Device.GetAs<ID3D12Device2>(&Device2)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device2");
+    }
+#endif
+
+#if WIN10_BUILD_16299
+    if (FAILED(Device.GetAs<ID3D12Device3>(&Device3)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device3");
+    }
+#endif
+
+#if WIN10_BUILD_17134
+    if (FAILED(Device.GetAs<ID3D12Device4>(&Device4)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device4");
+    }
+#endif
+
+#if WIN10_BUILD_17763
+    if (FAILED(Device.GetAs<ID3D12Device5>(&Device5)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device5");
+    }
+#endif
+
+#if WIN10_BUILD_18362
+    if (FAILED(Device.GetAs<ID3D12Device6>(&Device6)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device6");
+    }
+#endif
+
+#if WIN10_BUILD_19041
+    if (FAILED(Device.GetAs<ID3D12Device7>(&Device7)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device7");
+    }
+#endif
+
+#if WIN10_BUILD_20348
+    if (FAILED(Device.GetAs<ID3D12Device8>(&Device8)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device8");
+    }
+#endif
+
+#if WIN11_BUILD_22000
+    if (FAILED(Device.GetAs<ID3D12Device9>(&Device9)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device9");
+    }
+#endif
+
+    return true;
+}
+
+bool FD3D12Device::CreateQueues()
+{
+    Check(Device != nullptr);
+
+    for (ED3D12CommandQueueType QueueType = ED3D12CommandQueueType::Direct; QueueType < ED3D12CommandQueueType::Count; QueueType = EnumAdd(QueueType, 1))
+    {
+        TComPtr<ID3D12CommandQueue> NewCommandQueue;
+     
+        D3D12_COMMAND_QUEUE_DESC Desc;
+        FMemory::Memzero(&Desc);
+
+        Desc.Type     = ToCommandListType(QueueType);
+        Desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+        Desc.NodeMask = GetNodeMask();
+        Desc.Flags    = CVarEnableGPUTimeout.GetBool() ? D3D12_COMMAND_QUEUE_FLAG_NONE : D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT;
+
+        HRESULT Result = Device->CreateCommandQueue(&Desc, IID_PPV_ARGS(&NewCommandQueue));
+        if (FAILED(Result))
+        {
+            D3D12_ERROR("[FD3D12Device]: Failed to create CommandQueue '%s'", ToString(QueueType));
+            return false;
+        }
+        else
+        {
+            D3D12_INFO("[FD3D12Device]: Created CommandQueue '%s'", ToString(QueueType));
+            CommandQueues[ToUnderlying(QueueType)] = NewCommandQueue;
+            
+            const FStringWide WideName = CharToWide(FString::CreateFormatted("CommandQueue %s", ToString(QueueType)));
+            NewCommandQueue->SetName(WideName.GetCString());
+        }
     }
 
     return true;

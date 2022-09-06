@@ -424,24 +424,10 @@ void FD3D12CommandContextState::SetIndexBuffer(FD3D12IndexBuffer* IndexBuffer)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CommandContext
 
-FD3D12CommandContext* FD3D12CommandContext::CreateD3D12CommandContext(FD3D12Device* InDevice)
-{
-    FD3D12CommandContext* NewContext = dbg_new FD3D12CommandContext(InDevice);
-    if (NewContext && NewContext->Initialize())
-    {
-        return NewContext;
-    }
-    else
-    {
-        SAFE_DELETE(NewContext);
-        return nullptr;
-    }
-}
-
-FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice)
+FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : IRHICommandContext()
     , FD3D12DeviceChild(InDevice)
-    , CommandQueue(InDevice)
+    , QueueType(InQueueType)
     , CommandList(InDevice)
     , Fence(InDevice)
     , CmdBatches()
@@ -456,11 +442,6 @@ FD3D12CommandContext::~FD3D12CommandContext()
 
 bool FD3D12CommandContext::Initialize()
 {
-    if (!CommandQueue.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-    {
-        return false;
-    }
-
     for (uint32 Index = 0; Index < D3D12_NUM_BACK_BUFFERS; ++Index)
     {
         FD3D12CommandBatch& Batch = CmdBatches.Emplace(GetDevice());
@@ -471,7 +452,7 @@ bool FD3D12CommandContext::Initialize()
         }
     }
 
-    if (!CommandList.Init(D3D12_COMMAND_LIST_TYPE_DIRECT, CmdBatches[0].GetCommandAllocator(), nullptr))
+    if (!CommandList.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, CmdBatches[0].GetCommandAllocator(), nullptr))
     {
         D3D12_ERROR("Failed to initialize CommandList");
         return false;
@@ -1559,7 +1540,9 @@ void FD3D12CommandContext::Flush()
     }
 
     const uint64 NewFenceValue = ++FenceValue;
-    if (CommandQueue.SignalFence(Fence, NewFenceValue))
+
+    HRESULT hResult = GetDevice()->GetD3D12CommandQueue(QueueType)->Signal(Fence.GetFence(), NewFenceValue);
+    if (SUCCEEDED(hResult))
     {
         Fence.WaitForValue(NewFenceValue);
 
@@ -1660,13 +1643,21 @@ void FD3D12CommandContext::EndCommandList()
         return;
     }
 
-    CommandQueue.ExecuteCommandList(&CommandList);
+    ID3D12CommandList* CommandLists[] =
+    {
+        CommandList.GetGraphicsCommandList()
+    };
 
-    if (!CommandQueue.SignalFence(Fence, NewFenceValue))
+    ID3D12CommandQueue* CommandQueue = GetDevice()->GetD3D12CommandQueue(QueueType);
+    CommandQueue->ExecuteCommandLists(ARRAY_COUNT(CommandLists), CommandLists);
+
+    HRESULT hResult = CommandQueue->Signal(Fence.GetFence(), NewFenceValue);
+    if (FAILED(hResult))
     {
         D3D12_ERROR("Failed to signal Fence on the GPU");
     }
 
+    // Clear the state
     State.ClearAll();
     State.DescriptorCache.SetCurrentCommandList(nullptr);
 }

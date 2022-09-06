@@ -145,7 +145,7 @@ public:
      * @param bEnableDebug: True if the debug-layer should be enabled
      * @return: Returns true if the initialization was successful
      */
-    virtual bool Initialize(bool bEnableDebug) = 0;
+    virtual bool Initialize() = 0;
 
     /**
      * @brief: Destroys the instance

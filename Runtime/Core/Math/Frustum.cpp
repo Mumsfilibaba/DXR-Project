@@ -145,7 +145,6 @@ bool FFrustum::CheckAABB(const FAABB& Box) const
             return false;
     }
 
-
     {
         int32 NumOutside = 0;
         for (int32 Index = 0; Index < 8; ++Index)

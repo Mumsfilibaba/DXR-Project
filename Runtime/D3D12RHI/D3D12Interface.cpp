@@ -16,24 +16,31 @@
 #include "D3D12TimestampQuery.h"
 #include "DynamicD3D12.h"
 
+#include "Core/Debug/Console/ConsoleInterface.h"
+
 #include "CoreApplication/Windows/WindowsWindow.h"
 
-FD3D12Interface* GD3D12Instance = nullptr;
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console Variables
+
+TAutoConsoleVariable<bool> CVarEnablePix("D3D12RHI.EnablePIX", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Interface
 
+FD3D12Interface* GD3D12Instance = nullptr;
+
 FD3D12Interface::FD3D12Interface()
     : FRHIInterface(ERHIInstanceType::D3D12)
     , Device(nullptr)
-    , DirectCmdContext(nullptr)
+    , DirectContext(nullptr)
 {
     GD3D12Instance = this;
 }
 
 FD3D12Interface::~FD3D12Interface()
 {
-    SAFE_DELETE(DirectCmdContext);
+    SAFE_DELETE(DirectContext);
 
     GenerateMipsTex2D_PSO.Reset();
     GenerateMipsTexCube_PSO.Reset();
@@ -50,38 +57,18 @@ FD3D12Interface::~FD3D12Interface()
     GD3D12Instance = nullptr;
 }
 
-bool FD3D12Interface::Initialize(bool bEnableDebug)
+bool FD3D12Interface::Initialize()
 {
+    const bool bEnablePIX = CVarEnablePix.GetBool();
+
     // Load Library and Function-Pointers etc.
-    const bool bResult = FDynamicD3D12::Initialize(bEnableDebug);
+    const bool bResult = FDynamicD3D12::Initialize(bEnablePIX);
     if (!bResult)
     {
         return false;
     }
 
-    // NOTE: GPUBasedValidation does not work with ray tracing since it is not supported
-    const bool bEnableGBV =
-#if ENABLE_API_GPU_DEBUGGING
-        bEnableDebug;
-#else
-        false;
-#endif
-    const bool bEnableDRED =
-#if ENABLE_API_GPU_BREADCRUMBS
-        bEnableDebug;
-#else
-        false;
-#endif
-
-    FD3D12AdapterInitializer AdapterInitializer;
-    AdapterInitializer.bEnableDebugLayer    = bEnableDebug;
-    // NOTE: GPUBasedValidation does not work with ray tracing since it is not supported
-    AdapterInitializer.bEnableGPUValidation = bEnableGBV;
-    AdapterInitializer.bEnableDRED          = bEnableDRED;
-    AdapterInitializer.bEnablePIX           = 
-    AdapterInitializer.bPreferDGPU          = true;
-
-    Adapter = dbg_new FD3D12Adapter(this, AdapterInitializer);
+    Adapter = dbg_new FD3D12Adapter(this);
     if (!Adapter->Initialize())
     {
         return false;
@@ -183,8 +170,8 @@ bool FD3D12Interface::Initialize(bool bEnableDebug)
     }
 
     // Initialize context
-    DirectCmdContext = FD3D12CommandContext::CreateD3D12CommandContext(GetDevice());
-    if (!DirectCmdContext)
+    DirectContext = dbg_new FD3D12CommandContext(GetDevice(), ED3D12CommandQueueType::Direct);
+    if (!(DirectContext && DirectContext->Initialize()))
     {
         return false;
     }
@@ -225,29 +212,27 @@ D3D12TextureType* FD3D12Interface::CreateTexture(const InitializerType& Initiali
         Desc.SampleDesc.Quality = 0;
     }
 
-    D3D12_CLEAR_VALUE* OptimizedClearValue = nullptr;
-    
-    D3D12_CLEAR_VALUE D3D12ClearValue;
+    D3D12_CLEAR_VALUE* ClearValue = nullptr;
+    D3D12_CLEAR_VALUE  D3D12ClearValue;
     if (Initializer.AllowRTV() || Initializer.AllowDSV())
     {
         FMemory::Memzero(&D3D12ClearValue);
-        OptimizedClearValue = &D3D12ClearValue;
+        ClearValue = &D3D12ClearValue;
 
-        const auto& ClearValue = Initializer.ClearValue;
-        D3D12ClearValue.Format = (ClearValue.Format != EFormat::Unknown) ? ConvertFormat(ClearValue.Format) : Desc.Format;
-        if (ClearValue.IsDepthStencilValue())
+        D3D12ClearValue.Format = (Initializer.ClearValue.Format != EFormat::Unknown) ? ConvertFormat(Initializer.ClearValue.Format) : Desc.Format;
+        if (Initializer.ClearValue.IsDepthStencilValue())
         {
-            D3D12ClearValue.DepthStencil.Depth   = ClearValue.AsDepthStencil().Depth;
-            D3D12ClearValue.DepthStencil.Stencil = ClearValue.AsDepthStencil().Stencil;
+            D3D12ClearValue.DepthStencil.Depth   = Initializer.ClearValue.AsDepthStencil().Depth;
+            D3D12ClearValue.DepthStencil.Stencil = Initializer.ClearValue.AsDepthStencil().Stencil;
         }
-        else if (ClearValue.IsColorValue())
+        else if (Initializer.ClearValue.IsColorValue())
         {
-            FMemory::Memcpy(D3D12ClearValue.Color, ClearValue.AsColor().GetData(), sizeof(float[4]));
+            FMemory::Memcpy(D3D12ClearValue.Color, Initializer.ClearValue.AsColor().GetData(), sizeof(float[4]));
         }
     }
 
     FD3D12ResourceRef Resource = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
-    if (!Resource->Initialize(D3D12_RESOURCE_STATE_COMMON, OptimizedClearValue))
+    if (!Resource->Initialize(D3D12_RESOURCE_STATE_COMMON, ClearValue))
     {
         return nullptr;
     }
@@ -369,15 +354,15 @@ D3D12TextureType* FD3D12Interface::CreateTexture(const InitializerType& Initiali
             FRHITexture2D* Texture2D = NewTexture->GetTexture2D();
             D3D12_ERROR_COND(Texture2D != nullptr, "Texture was unexpectedly nullptr");
 
-            DirectCmdContext->StartContext();
+            DirectContext->StartContext();
 
-            DirectCmdContext->TransitionTexture(Texture2D, EResourceAccess::Common, EResourceAccess::CopyDest);
-            DirectCmdContext->UpdateTexture2D(Texture2D, Extent.x, Extent.y, 0, InitialData->TextureData);
+            DirectContext->TransitionTexture(Texture2D, EResourceAccess::Common, EResourceAccess::CopyDest);
+            DirectContext->UpdateTexture2D(Texture2D, Extent.x, Extent.y, 0, InitialData->TextureData);
 
             // NOTE: Transition into InitialAccess
-            DirectCmdContext->TransitionTexture(Texture2D, EResourceAccess::CopyDest, Initializer.InitialAccess);
+            DirectContext->TransitionTexture(Texture2D, EResourceAccess::CopyDest, Initializer.InitialAccess);
 
-            DirectCmdContext->FinishContext();
+            DirectContext->FinishContext();
 
             return NewTexture.ReleaseOwnership();
         }
@@ -385,9 +370,9 @@ D3D12TextureType* FD3D12Interface::CreateTexture(const InitializerType& Initiali
 
     if (Initializer.InitialAccess != EResourceAccess::Common)
     {
-        DirectCmdContext->StartContext();
-        DirectCmdContext->TransitionTexture(NewTexture.Get(), EResourceAccess::Common, Initializer.InitialAccess);
-        DirectCmdContext->FinishContext();
+        DirectContext->StartContext();
+        DirectContext->TransitionTexture(NewTexture.Get(), EResourceAccess::Common, Initializer.InitialAccess);
+        DirectContext->FinishContext();
     }
 
     return NewTexture.ReleaseOwnership();
@@ -524,24 +509,24 @@ D3D12BufferType* FD3D12Interface::CreateBuffer(const InitializerType& Initialize
         }
         else
         {
-            DirectCmdContext->StartContext();
+            DirectContext->StartContext();
 
-            DirectCmdContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
-            DirectCmdContext->UpdateBuffer(NewBuffer.Get(), 0, InitialData->Size, InitialData->BufferData);
+            DirectContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
+            DirectContext->UpdateBuffer(NewBuffer.Get(), 0, InitialData->Size, InitialData->BufferData);
 
             // NOTE: Transfer to the initial state
-            DirectCmdContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::CopyDest, Initializer.InitialAccess);
+            DirectContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::CopyDest, Initializer.InitialAccess);
 
-            DirectCmdContext->FinishContext();
+            DirectContext->FinishContext();
         }
     }
     else
     {
         if (Initializer.InitialAccess != EResourceAccess::Common && Initializer.IsDynamic())
         {
-            DirectCmdContext->StartContext();
-            DirectCmdContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::Common, Initializer.InitialAccess);
-            DirectCmdContext->FinishContext();
+            DirectContext->StartContext();
+            DirectContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::Common, Initializer.InitialAccess);
+            DirectContext->FinishContext();
         }
     }
 
@@ -583,15 +568,15 @@ FRHIRayTracingGeometry* FD3D12Interface::RHICreateRayTracingGeometry(const FRHIR
 
     TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = dbg_new FD3D12RayTracingGeometry(GetDevice(), Initializer);
 
-    DirectCmdContext->StartContext();
+    DirectContext->StartContext();
     
-    if (!D3D12Geometry->Build(*DirectCmdContext, D3D12VertexBuffer, D3D12IndexBuffer, false))
+    if (!D3D12Geometry->Build(*DirectContext, D3D12VertexBuffer, D3D12IndexBuffer, false))
     {
         DEBUG_BREAK();
         D3D12Geometry.Reset();
     }
 
-    DirectCmdContext->FinishContext();
+    DirectContext->FinishContext();
 
     return D3D12Geometry.ReleaseOwnership();
 }
@@ -600,15 +585,15 @@ FRHIRayTracingScene* FD3D12Interface::RHICreateRayTracingScene(const FRHIRayTrac
 {
     TSharedRef<FD3D12RayTracingScene> D3D12Scene = dbg_new FD3D12RayTracingScene(GetDevice(), Initializer);
 
-    DirectCmdContext->StartContext();
+    DirectContext->StartContext();
 
-    if (!D3D12Scene->Build(*DirectCmdContext, Initializer.Instances.CreateView(), false))
+    if (!D3D12Scene->Build(*DirectContext, Initializer.Instances.CreateView(), false))
     {
         DEBUG_BREAK();
         D3D12Scene.Reset();
     }
 
-    DirectCmdContext->FinishContext();
+    DirectContext->FinishContext();
 
     return D3D12Scene.ReleaseOwnership();
 }
@@ -1116,7 +1101,7 @@ FRHITimestampQuery* FD3D12Interface::RHICreateTimestampQuery()
 
 FRHIViewport* FD3D12Interface::RHICreateViewport(const FRHIViewportInitializer& Initializer)
 {
-    FD3D12ViewportRef Viewport = dbg_new FD3D12Viewport(GetDevice(), DirectCmdContext, Initializer);
+    FD3D12ViewportRef Viewport = dbg_new FD3D12Viewport(GetDevice(), DirectContext, Initializer);
     if (Viewport->Initialize())
     {
         return Viewport.ReleaseOwnership();

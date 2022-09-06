@@ -2,8 +2,12 @@
 #include "DynamicD3D12.h"
 
 #include "Core/Platform/PlatformLibrary.h"
+#include "Core/Debug/Console/ConsoleInterface.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Global Pointers
 
 void* FDynamicD3D12::DXGILib  = nullptr;
 void* FDynamicD3D12::D3D12Lib = nullptr;

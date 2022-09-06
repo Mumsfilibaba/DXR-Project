@@ -43,11 +43,11 @@
 template<typename EnumType>
 CONSTEXPR typename TEnableIf<TIsEnum<EnumType>::Value, EnumType>::Type EnumAdd(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept
 {
-    return ToUnderlying(Value) + Offset;
+    return static_cast<EnumType>(ToUnderlying(Value) + Offset);
 }
 
 template<typename EnumType>
 CONSTEXPR typename TEnableIf<TIsEnum<EnumType>::Value, EnumType>::Type EnumSub(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept
 {
-    return ToUnderlying(Value) - Offset;
+    return static_cast<EnumType>(ToUnderlying(Value) - Offset);
 }

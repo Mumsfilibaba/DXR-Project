@@ -3,7 +3,14 @@
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
 
+#include "Core/Debug/Console/ConsoleInterface.h"
+
 IMPLEMENT_ENGINE_MODULE(FDefaultModule, RHI);
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-Variables
+
+TAutoConsoleVariable<bool> CVarEnableDebugLayer("RHI.EnableDebugLayer", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Globals
@@ -47,22 +54,14 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
         }
     }
 
-    // TODO: This should be in EngineConfig and/or CCommandLine
-    const bool bEnableDebug =
-#if ENABLE_API_DEBUGGING
-        true;
-#else
-        false;
-#endif
-
-    FRHIInterface* RHICoreInterface = RHIModule->CreateInterface();
-    if (!(RHICoreInterface && RHICoreInterface->Initialize(bEnableDebug)))
+    FRHIInterface* RHIInterface = RHIModule->CreateInterface();
+    if (!(RHIInterface && RHIInterface->Initialize()))
     {
         LOG_ERROR("[InitRHI] Failed to init RHIInterface, the application has to terminate");
         return false;
     }
 
-    GRHIInterface = RHICoreInterface;
+    GRHIInterface = RHIInterface;
 
     // Initialize the CommandListExecutor
     if (!GRHICommandExecutor.Initialize())

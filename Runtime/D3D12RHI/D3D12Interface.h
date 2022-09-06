@@ -24,10 +24,7 @@ public:
     FD3D12Interface();
     ~FD3D12Interface();
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIInterface Interface
-
-    virtual bool                         Initialize(bool bEnableDebug) override final;
+    virtual bool                         Initialize() override final;
 
     virtual FRHITexture2D*               RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)               override final;
     virtual FRHITexture2DArray*          RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)     override final;
@@ -79,14 +76,13 @@ public:
 
     virtual FRHIViewport*                RHICreateViewport(const FRHIViewportInitializer& Initializer) override final;
 
-    virtual IRHICommandContext*          RHIGetDefaultCommandContext() override final { return DirectCmdContext; }
+    virtual IRHICommandContext*          RHIGetDefaultCommandContext() override final { return DirectContext; }
+
+    virtual void    RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport)   const override final;
+    virtual void    RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const override final;
+    virtual bool    RHIQueryUAVFormatSupport(EFormat Format)                    const override final;
 
     virtual FString GetAdapterDescription() const override final { return Adapter->GetDescription(); }
-
-    virtual void RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport)   const override final;
-    virtual void RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const override final;
-
-    virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
 
 public:
     FORCEINLINE FD3D12Device*  GetDevice()  const { return Device.Get(); }
@@ -111,7 +107,7 @@ private:
     FD3D12AdapterRef              Adapter;
     FD3D12DeviceRef               Device;
 
-    FD3D12CommandContext*         DirectCmdContext;
+    FD3D12CommandContext*         DirectContext;
 
     FD3D12OfflineDescriptorHeap*  ResourceOfflineDescriptorHeap     = nullptr;
     FD3D12OfflineDescriptorHeap*  RenderTargetOfflineDescriptorHeap = nullptr;

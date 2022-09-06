@@ -37,10 +37,10 @@ public:
         SAFE_DELETE(CommandContext);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIInterface Interface
-
-    virtual bool Initialize(bool bEnableDebug) override final { return true; }
+    virtual bool Initialize() override final 
+    { 
+        return true; 
+    }
 
     virtual FRHITexture2D* RHICreateTexture2D(const FRHITexture2DInitializer& Initializer) override final
     {

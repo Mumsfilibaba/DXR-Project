@@ -31,107 +31,45 @@ typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12AdapterInitializer
-
-struct FD3D12AdapterInitializer
-{
-    FD3D12AdapterInitializer()
-        : bEnableDebugLayer(false)
-        , bEnableGPUValidation(false)
-        , bEnableDRED(false)
-        , bEnablePIX(false)
-        , bPreferDGPU(true)
-    { }
-
-    FD3D12AdapterInitializer(
-        bool bInEnableDebugLayer,
-        bool bInEnableGPUValidation,
-        bool bInEnableDRED,
-        bool bInEnablePIX,
-        bool bInPreferDGPU)
-        : bEnableDebugLayer(bInEnableDebugLayer)
-        , bEnableGPUValidation(bInEnableGPUValidation)
-        , bEnableDRED(bInEnableDRED)
-        , bEnablePIX(bInEnablePIX)
-        , bPreferDGPU(bInPreferDGPU)
-    { }
-
-    bool operator==(const FD3D12AdapterInitializer& RHS) const
-    {
-        return (bEnableDebugLayer    == RHS.bEnableDebugLayer)
-            && (bEnableGPUValidation == RHS.bEnableGPUValidation)
-            && (bEnableDRED          == RHS.bEnableDRED)
-            && (bEnablePIX           == RHS.bEnablePIX)
-            && (bPreferDGPU          == RHS.bPreferDGPU);
-    }
-
-    bool operator!=(const FD3D12AdapterInitializer& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    bool bEnableDebugLayer    : 1;
-    bool bEnableGPUValidation : 1;
-    bool bEnableDRED          : 1;
-    bool bEnablePIX           : 1;
-    bool bPreferDGPU          : 1;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Adapter
 
 class FD3D12Adapter 
     : public FD3D12RefCounted
 {
 public:
-    FD3D12Adapter(FD3D12Interface* InCoreInterface, const FD3D12AdapterInitializer& InInitializer)
-        : FD3D12RefCounted()
-        , Initializer(InInitializer)
-        , AdapterIndex(0)
-        , bAllowTearing(false)
-        , CoreInterface(InCoreInterface)
-        , Factory(nullptr)
-#if WIN10_BUILD_17134
-        , Factory6(nullptr)
-#endif
-        , Adapter(nullptr)
-    { }
-
+    FD3D12Adapter(FD3D12Interface* InD3D12Interface);
     ~FD3D12Adapter() = default;
 
-public:
+    bool             Initialize();
 
-    bool                     Initialize();
+    FString          GetDescription()  const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
 
-    FD3D12AdapterInitializer GetInitializer()   const { return Initializer; }
-    uint32                   GetAdapterIndex()  const { return AdapterIndex; }
-    
-    FString                  GetDescription() const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
+    FORCEINLINE bool IsDebugLayerEnabled() const { return bEnableDebugLayer; }
+    FORCEINLINE bool SupportsTearing()     const { return bAllowTearing; }
 
-    bool                     IsDebugLayerEnabled() const { return Initializer.bEnableDebugLayer; }
-    bool                     SupportsTearing()     const { return bAllowTearing; }
+    FORCEINLINE FD3D12Interface*     GetCoreInterface() const { return D3D12Interface; }
 
-    FD3D12Interface* GetCoreInterface() const { return CoreInterface; }
+    FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysis() const { return DXGraphicsAnalysis.Get(); }
 
-    IDXGIAdapter1* GetDXGIAdapter()  const { return Adapter.Get(); }
+    FORCEINLINE IDXGIAdapter1*       GetDXGIAdapter()  const { return Adapter.Get(); }
+    FORCEINLINE uint32               GetAdapterIndex() const { return AdapterIndex; }
 
-    IDXGIFactory2* GetDXGIFactory()  const { return Factory.Get(); }
-    IDXGIFactory5* GetDXGIFactory5() const { return Factory5.Get(); }
+    FORCEINLINE IDXGIFactory2*       GetDXGIFactory()  const { return Factory.Get(); }
+    FORCEINLINE IDXGIFactory5*       GetDXGIFactory5() const { return Factory5.Get(); }
+
 #if WIN10_BUILD_17134
-    IDXGIFactory6* GetDXGIFactory6() const { return Factory6.Get(); }
+    FORCEINLINE IDXGIFactory6*       GetDXGIFactory6() const { return Factory6.Get(); }
 #endif
 
-    IDXGraphicsAnalysis* GetGraphicsAnalysis() const { return DXGraphicsAnalysis.Get(); }
-
 private:
-    FD3D12AdapterInitializer Initializer;
-    uint32                   AdapterIndex;
+    FD3D12Interface*       D3D12Interface;
+
+    TComPtr<IDXGIAdapter1> Adapter;
     
-    bool                     bAllowTearing;
+    uint32 AdapterIndex;
 
-    FD3D12Interface*         CoreInterface;
-
-    TComPtr<IDXGIAdapter1>       Adapter;
+    bool   bAllowTearing;
+    bool   bEnableDebugLayer;
     
     TComPtr<IDXGIFactory2>       Factory;
     TComPtr<IDXGIFactory5>       Factory5;
@@ -221,95 +159,66 @@ class FD3D12Device
     : public FD3D12RefCounted
 {
 public:
-    FD3D12Device(FD3D12Adapter* InAdapter)
-        : FD3D12RefCounted()
-        , Adapter(InAdapter)
-        , RootSignatureCache(this)
-        , Device(nullptr)
-#if WIN10_BUILD_14393
-        , Device1(nullptr)
-#endif
-#if WIN10_BUILD_15063
-        , Device2(nullptr)
-#endif
-#if WIN10_BUILD_16299
-        , Device3(nullptr)
-#endif
-#if WIN10_BUILD_17134
-        , Device4(nullptr)
-#endif
-#if WIN10_BUILD_17763
-        , Device5(nullptr)
-#endif
-#if WIN10_BUILD_18362
-        , Device6(nullptr)
-#endif
-#if WIN10_BUILD_19041
-        , Device7(nullptr)
-#endif
-#if WIN10_BUILD_20348
-        , Device8(nullptr)
-#endif
-#if WIN11_BUILD_22000
-        , Device9(nullptr)
-#endif
-        , MinFeatureLevel(D3D_FEATURE_LEVEL_12_0)
-        , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
-    { }
-
+    FD3D12Device(FD3D12Adapter* InAdapter);
     ~FD3D12Device();
 
-public:
-     
-    bool                      Initialize();
+    bool  Initialize();
 
-    void                      AddWastedBufferSpace(uint64 WastedSize)    { WastedBufferSpace += WastedSize; }
-    void                      RemoveWastedBufferSpace(uint64 WastedSize) { WastedBufferSpace += WastedSize; }
+    int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
-    int32                     GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
-
-    FD3D12Adapter*            GetAdapter()            const { return Adapter; }
+    FORCEINLINE FD3D12DescriptorHeap*     GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
+    FORCEINLINE FD3D12DescriptorHeap*     GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
     
-    FD3D12DescriptorHeap*     GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
-    FD3D12DescriptorHeap*     GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
+    FORCEINLINE FD3D12RootSignatureCache& GetRootSignatureCache() { return RootSignatureCache; }
+
+    FORCEINLINE const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc; }
+    FORCEINLINE const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
+    FORCEINLINE const FD3D12MeshShadingDesc&         GetMeshShadingDesc()         const { return MeshShadingDesc; }
+    FORCEINLINE const FD3D12SamplerFeedbackDesc&     GetSamplerFeedbackDesc()     const { return SamplerFeedbackDesc; }
+
+    FORCEINLINE uint32 GetNodeCount() const { return NodeCount; }
+    FORCEINLINE uint32 GetNodeMask()  const { return NodeMask; }
     
-    FD3D12RootSignatureCache& GetRootSignatureCache() { return RootSignatureCache; }
+    FORCEINLINE ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType) const 
+    { 
+        return CommandQueues[ToUnderlying(QueueType)].Get();
+    }
 
-    const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc; }
-    const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
-    const FD3D12MeshShadingDesc&         GetMeshShadingDesc()         const { return MeshShadingDesc; }
-    const FD3D12SamplerFeedbackDesc&     GetSamplerFeedbackDesc()     const { return SamplerFeedbackDesc; }
+    FORCEINLINE FD3D12Adapter* GetAdapter()      const { return Adapter; }
+    FORCEINLINE ID3D12Device*  GetD3D12Device()  const { return Device.Get(); }
 
-    ID3D12Device*  GetD3D12Device()  const { return Device.Get(); }
 #if WIN10_BUILD_14393
-    ID3D12Device1* GetD3D12Device1() const { return Device1.Get(); }
+    FORCEINLINE ID3D12Device1* GetD3D12Device1() const { return Device1.Get(); }
 #endif
 #if WIN10_BUILD_15063
-    ID3D12Device2* GetD3D12Device2() const { return Device2.Get(); }
+    FORCEINLINE ID3D12Device2* GetD3D12Device2() const { return Device2.Get(); }
 #endif
 #if WIN10_BUILD_16299
-    ID3D12Device3* GetD3D12Device3() const { return Device3.Get(); }
+    FORCEINLINE ID3D12Device3* GetD3D12Device3() const { return Device3.Get(); }
 #endif
 #if WIN10_BUILD_17134
-    ID3D12Device4* GetD3D12Device4() const { return Device4.Get(); }
+    FORCEINLINE ID3D12Device4* GetD3D12Device4() const { return Device4.Get(); }
 #endif
 #if WIN10_BUILD_17763
-    ID3D12Device5* GetD3D12Device5() const { return Device5.Get(); }
+    FORCEINLINE ID3D12Device5* GetD3D12Device5() const { return Device5.Get(); }
 #endif
 #if WIN10_BUILD_18362
-    ID3D12Device6* GetD3D12Device6() const { return Device6.Get(); }
+    FORCEINLINE ID3D12Device6* GetD3D12Device6() const { return Device6.Get(); }
 #endif
 #if WIN10_BUILD_19041
-    ID3D12Device7* GetD3D12Device7() const { return Device7.Get(); }
+    FORCEINLINE ID3D12Device7* GetD3D12Device7() const { return Device7.Get(); }
 #endif
 #if WIN10_BUILD_20348
-    ID3D12Device8* GetD3D12Device8() const { return Device8.Get(); }
+    FORCEINLINE ID3D12Device8* GetD3D12Device8() const { return Device8.Get(); }
 #endif
 #if WIN11_BUILD_22000
-    ID3D12Device9* GetD3D12Device9() const { return Device9.Get(); }
+    FORCEINLINE ID3D12Device9* GetD3D12Device9() const { return Device9.Get(); }
 #endif
 
 private:
+    bool CreateDevice();
+    bool CreateQueues();
+
     FD3D12RootSignatureCache      RootSignatureCache;
     
     FD3D12RayTracingDesc          RayTracingDesc;
@@ -351,8 +260,11 @@ private:
     TComPtr<ID3D12Device9> Device9;
 #endif
 
-    uint64                 WastedBufferSpace = 0;
+    TComPtr<ID3D12CommandQueue> CommandQueues[ToUnderlying(ED3D12CommandQueueType::Count)];
 
-    D3D_FEATURE_LEVEL      MinFeatureLevel;
-    D3D_FEATURE_LEVEL      ActiveFeatureLevel;
+    uint32            NodeMask;
+    uint32            NodeCount;
+
+    D3D_FEATURE_LEVEL MinFeatureLevel;
+    D3D_FEATURE_LEVEL ActiveFeatureLevel;
 };

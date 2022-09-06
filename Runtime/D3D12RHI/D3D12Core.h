@@ -248,7 +248,43 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RHI conversion functions 
+// ED3D12CommandQueueType
+
+enum class ED3D12CommandQueueType
+{
+    Direct  = 0,
+    Compute = 1,
+    Copy    = 2,
+
+    Count
+};
+
+CONSTEXPR const CHAR* ToString(ED3D12CommandQueueType QueueType)
+{
+    switch (QueueType)
+    {
+        case ED3D12CommandQueueType::Direct:  return "Default";
+        case ED3D12CommandQueueType::Compute: return "Compute";
+        case ED3D12CommandQueueType::Copy:    return "Copy";
+    }
+
+    return "CommandQueueType::Unknown";
+}
+
+CONSTEXPR D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueueType QueueType)
+{
+    switch (QueueType)
+    {
+        case ED3D12CommandQueueType::Direct:  return D3D12_COMMAND_LIST_TYPE_DIRECT;
+        case ED3D12CommandQueueType::Compute: return D3D12_COMMAND_LIST_TYPE_COMPUTE;
+        case ED3D12CommandQueueType::Copy:    return D3D12_COMMAND_LIST_TYPE_COPY;
+    }
+
+    return D3D12_COMMAND_LIST_TYPE(-1);
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// RHI Conversion Functions 
 
 CONSTEXPR D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
 {

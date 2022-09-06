@@ -277,14 +277,12 @@ class FD3D12CommandContext
     : public IRHICommandContext
     , public FD3D12DeviceChild
 {
-private:
+public:
+
     friend class FD3D12Interface;
 
-    FD3D12CommandContext(FD3D12Device* InDevice);
+    FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
     ~FD3D12CommandContext();
-
-public:
-    static FD3D12CommandContext* CreateD3D12CommandContext(FD3D12Device* InDevice);
 
     virtual void StartContext()  override final;
     virtual void FinishContext() override final;
@@ -405,24 +403,30 @@ public:
         BarrierBatcher.AddTransitionBarrier(Resource->GetD3D12Resource(), BeforeState, AfterState);
     }
 
-    FORCEINLINE void DestroyResource(FD3D12Resource* Resource) { CmdBatch->AddInUseResource(Resource); }
+    FORCEINLINE void DestroyResource(FD3D12Resource* Resource) 
+    { 
+        CmdBatch->AddInUseResource(Resource);
+    }
 
-    FORCEINLINE void FlushResourceBarriers() { BarrierBatcher.FlushBarriers(CommandList); }
+    FORCEINLINE void FlushResourceBarriers() 
+    { 
+        BarrierBatcher.FlushBarriers(CommandList);
+    }
     
-    FORCEINLINE FD3D12CommandQueue& GetQueue()       { return CommandQueue; }
-    FORCEINLINE FD3D12CommandList&  GetCommandList() { return CommandList; }
+    FORCEINLINE FD3D12CommandList& GetCommandList() { return CommandList; }
 
 private:
     bool Initialize();
 
     void InternalClearState();
 
+    ED3D12CommandQueueType          QueueType;
+
     // TODO: Look into if this is the best way
     FCriticalSection                CommandContextCS;
 
     FD3D12CommandList               CommandList;
     FD3D12Fence                     Fence;
-    FD3D12CommandQueue              CommandQueue;
 
     FD3D12CommandContextState       State;
     FD3D12ResourceBarrierBatcher    BarrierBatcher;
@@ -434,5 +438,4 @@ private:
     FD3D12CommandBatch*             CmdBatch = nullptr;
 
     TArray<FD3D12TimestampQueryRef> ResolveQueries;
-
 };
