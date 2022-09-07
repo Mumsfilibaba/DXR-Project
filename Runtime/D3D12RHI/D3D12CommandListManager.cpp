@@ -3,6 +3,7 @@
 #include "D3D12Device.h"
 
 #include "Core/Debug/Console/ConsoleInterface.h"
+#include "Core/Threading/ScopedLock.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-Variables
@@ -52,6 +53,8 @@ bool FD3D12CommandListManager::Initialize()
 
 FD3D12CommandListRef FD3D12CommandListManager::ObtainCommandList(FD3D12CommandAllocator& CommandAllocator, ID3D12PipelineState* InitialPipelineState)
 {
+    TScopedLock Lock(CommandListsCS);
+
     FD3D12CommandListRef CommandList;
     if (CommandLists.IsEmpty())
     {
@@ -73,6 +76,8 @@ FD3D12CommandListRef FD3D12CommandListManager::ObtainCommandList(FD3D12CommandAl
 void FD3D12CommandListManager::ReleaseCommandList(FD3D12CommandListRef InCommandList)
 {
     Check(InCommandList != nullptr);
+    
+    TScopedLock Lock(CommandListsCS);
     CommandLists.Emplace(InCommandList);
 }
 
