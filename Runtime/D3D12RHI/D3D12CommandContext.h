@@ -412,6 +412,8 @@ public:
     virtual void* GetRHIBaseCommandList() override final { return reinterpret_cast<void*>(&CommandList); }
 
 public:
+    bool Initialize();
+    
     void AquireCommandList();
     void EndCommandList();
 
@@ -452,8 +454,6 @@ public:
     }
 
 private:
-    bool Initialize();
-
     void InternalClearState();
 
     ED3D12CommandQueueType          QueueType;
