@@ -325,9 +325,17 @@ public:
 
     virtual void ResolveTexture(FRHITexture* Destination, FRHITexture* Source) override final;
 
-    virtual void CopyBuffer(FRHIBuffer* Destination, FRHIBuffer* Source, const FRHICopyBufferInfo& CopyInfo)                  override final;
-    virtual void CopyTexture(FRHITexture* Destination, FRHITexture* Source)                                                   override final;
-    virtual void CopyTextureRegion(FRHITexture* Destination, FRHITexture* Source, const FRHICopyTextureInfo& CopyTextureInfo) override final;
+    virtual void CopyBuffer(
+        FRHIBuffer* Destination,
+        FRHIBuffer* Source,
+        const FRHICopyBufferInfo& CopyInfo) override final;
+
+    virtual void CopyTexture(FRHITexture* Destination, FRHITexture* Source) override final;
+
+    virtual void CopyTextureRegion(
+        FRHITexture* Destination,
+        FRHITexture* Source,
+        const FRHICopyTextureInfo& CopyTextureInfo) override final;
 
     virtual void DestroyResource(class IRefCounted* Resource) override final;
     virtual void DiscardContents(class FRHITexture* Texture)  override final;
@@ -361,8 +369,12 @@ public:
     virtual void UnorderedAccessTextureBarrier(FRHITexture* Texture) override final;
     virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)    override final;
 
-    virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation)                                 override final;
-    virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
+    virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final;
+
+    virtual void DrawIndexed(
+        uint32 IndexCount,
+        uint32 StartIndexLocation,
+        uint32 BaseVertexLocation) override final;
     
     virtual void DrawInstanced(
         uint32 VertexCountPerInstance,
