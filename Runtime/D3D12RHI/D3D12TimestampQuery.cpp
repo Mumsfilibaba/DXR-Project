@@ -55,7 +55,7 @@ void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CommandCon
 {
     FD3D12CommandList CommandList = CommandContext.GetCommandList();
     
-    ID3D12CommandQueue* D3D12Queue = GetDevice()->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct);
+    ID3D12CommandQueue* D3D12Queue = GetDevice()->GetCommandListManager(ED3D12CommandQueueType::Direct)->GetD3D12CommandQueue();
     Check(D3D12Queue != nullptr);
 
     ID3D12GraphicsCommandList* D3D12CommandList = CommandList.GetGraphicsCommandList();

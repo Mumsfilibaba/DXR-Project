@@ -3,7 +3,6 @@
 #include "D3D12Descriptors.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandAllocator.h"
-#include "D3D12CommandQueue.h"
 #include "D3D12PipelineState.h"
 #include "DynamicD3D12.h"
 
@@ -21,7 +20,6 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-Variables
 
-TAutoConsoleVariable<bool> CVarEnableGPUTimeout("D3D12RHI.EnableGPUTimeout", true);
 TAutoConsoleVariable<bool> CVarEnableGPUValidation("D3D12RHI.EnableGPUValidation", false);
 TAutoConsoleVariable<bool> CVarEnableDRED("D3D12RHI.EnableDRED", false);
 TAutoConsoleVariable<bool> CVarPreferDedicatedGPU("D3D12RHI.PreferDedicatedGPU", true);
@@ -458,6 +456,9 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
 #endif
     , MinFeatureLevel(D3D_FEATURE_LEVEL_12_0)
     , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
+    , DirectCommandListManager(this, ED3D12CommandQueueType::Direct)
+    , CopyCommandListManager(this, ED3D12CommandQueueType::Copy)
+    , ComputeCommandListManager(this, ED3D12CommandQueueType::Compute)
 { }
 
 FD3D12Device::~FD3D12Device()
@@ -739,35 +740,45 @@ bool FD3D12Device::CreateQueues()
 {
     Check(Device != nullptr);
 
-    for (ED3D12CommandQueueType QueueType = ED3D12CommandQueueType::Direct; QueueType < ED3D12CommandQueueType::Count; QueueType = EnumAdd(QueueType, 1))
+    if (!DirectCommandListManager.Initialize())
     {
-        TComPtr<ID3D12CommandQueue> NewCommandQueue;
-     
-        D3D12_COMMAND_QUEUE_DESC Desc;
-        FMemory::Memzero(&Desc);
+        return false;
+    }
 
-        Desc.Type     = ToCommandListType(QueueType);
-        Desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-        Desc.NodeMask = GetNodeMask();
-        Desc.Flags    = CVarEnableGPUTimeout.GetBool() ? D3D12_COMMAND_QUEUE_FLAG_NONE : D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT;
+    if (!CopyCommandListManager.Initialize())
+    {
+        return false;
+    }
 
-        HRESULT Result = Device->CreateCommandQueue(&Desc, IID_PPV_ARGS(&NewCommandQueue));
-        if (FAILED(Result))
-        {
-            D3D12_ERROR("[FD3D12Device]: Failed to create CommandQueue '%s'", ToString(QueueType));
-            return false;
-        }
-        else
-        {
-            D3D12_INFO("[FD3D12Device]: Created CommandQueue '%s'", ToString(QueueType));
-            CommandQueues[ToUnderlying(QueueType)] = NewCommandQueue;
-            
-            const FStringWide WideName = CharToWide(FString::CreateFormatted("CommandQueue %s", ToString(QueueType)));
-            NewCommandQueue->SetName(WideName.GetCString());
-        }
+    if (!ComputeCommandListManager.Initialize())
+    {
+        return false;
     }
 
     return true;
+}
+
+FD3D12CommandListManager* FD3D12Device::GetCommandListManager(ED3D12CommandQueueType QueueType)
+{
+    if (QueueType == ED3D12CommandQueueType::Direct)
+    {
+        Check(DirectCommandListManager.GetQueueType() == ED3D12CommandQueueType::Direct);
+        return &DirectCommandListManager;
+    }
+    else if (QueueType == ED3D12CommandQueueType::Copy)
+    {
+        Check(CopyCommandListManager.GetQueueType() == ED3D12CommandQueueType::Copy);
+        return &CopyCommandListManager;
+    }
+    else if (QueueType == ED3D12CommandQueueType::Compute)
+    {
+        Check(ComputeCommandListManager.GetQueueType() == ED3D12CommandQueueType::Compute);
+        return &ComputeCommandListManager;
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 int32 FD3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)

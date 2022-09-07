@@ -1,5 +1,4 @@
 #include "D3D12CommandList.h"
-#include "D3D12CommandQueue.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12Fence.h"
 #include "D3D12RootSignature.h"

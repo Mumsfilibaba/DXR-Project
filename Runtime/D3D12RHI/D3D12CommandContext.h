@@ -6,7 +6,6 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandList.h"
-#include "D3D12CommandQueue.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12Descriptors.h"
 #include "D3D12Fence.h"
@@ -385,6 +384,12 @@ public:
 
     void UpdateBuffer(FD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
 
+    FORCEINLINE FD3D12CommandList& GetCommandList() 
+    {
+        Check(CommandList != nullptr);
+        return *CommandList; 
+    }
+    
     FORCEINLINE uint32 GetCurrentBachIndex() const
     {
         Check(int32(NextCmdBatch) < CmdBatches.GetSize());
@@ -410,10 +415,8 @@ public:
 
     FORCEINLINE void FlushResourceBarriers() 
     { 
-        BarrierBatcher.FlushBarriers(CommandList);
+        BarrierBatcher.FlushBarriers(*CommandList);
     }
-    
-    FORCEINLINE FD3D12CommandList& GetCommandList() { return CommandList; }
 
 private:
     bool Initialize();
@@ -425,7 +428,7 @@ private:
     // TODO: Look into if this is the best way
     FCriticalSection                CommandContextCS;
 
-    FD3D12CommandList               CommandList;
+    FD3D12CommandListRef            CommandList;
     FD3D12Fence                     Fence;
 
     FD3D12CommandContextState       State;

@@ -2,6 +2,7 @@
 #include "D3D12RefCounted.h"
 #include "D3D12Descriptors.h"
 #include "D3D12RootSignature.h"
+#include "D3D12CommandListManager.h"
 
 #include "Core/Containers/SharedRef.h"
 
@@ -26,11 +27,6 @@ typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
 typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12DeviceRemovedHandlerRHI
-
-void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Adapter
 
 class FD3D12Adapter 
@@ -40,14 +36,14 @@ public:
     FD3D12Adapter(FD3D12Interface* InD3D12Interface);
     ~FD3D12Adapter() = default;
 
-    bool             Initialize();
+    bool           Initialize();
 
-    FString          GetDescription()  const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
+    inline FString GetDescription()  const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
 
-    FORCEINLINE bool IsDebugLayerEnabled() const { return bEnableDebugLayer; }
-    FORCEINLINE bool SupportsTearing()     const { return bAllowTearing; }
+    inline bool    IsDebugLayerEnabled() const { return bEnableDebugLayer; }
+    inline bool    SupportsTearing()     const { return bAllowTearing; }
 
-    FORCEINLINE FD3D12Interface*     GetCoreInterface() const { return D3D12Interface; }
+    FORCEINLINE FD3D12Interface*     GetD3D12Interface() const { return D3D12Interface; }
 
     FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysis() const { return DXGraphicsAnalysis.Get(); }
 
@@ -162,28 +158,24 @@ public:
     FD3D12Device(FD3D12Adapter* InAdapter);
     ~FD3D12Device();
 
-    bool  Initialize();
+    bool Initialize();
 
-    int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
+    FD3D12CommandListManager* GetCommandListManager(ED3D12CommandQueueType QueueType);
+    int32                     GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
-    FORCEINLINE FD3D12DescriptorHeap*     GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
-    FORCEINLINE FD3D12DescriptorHeap*     GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
+    inline FD3D12DescriptorHeap*     GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
+    inline FD3D12DescriptorHeap*     GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
     
-    FORCEINLINE FD3D12RootSignatureCache& GetRootSignatureCache() { return RootSignatureCache; }
+    inline FD3D12RootSignatureCache& GetRootSignatureCache() { return RootSignatureCache; }
 
-    FORCEINLINE const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc; }
-    FORCEINLINE const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
-    FORCEINLINE const FD3D12MeshShadingDesc&         GetMeshShadingDesc()         const { return MeshShadingDesc; }
-    FORCEINLINE const FD3D12SamplerFeedbackDesc&     GetSamplerFeedbackDesc()     const { return SamplerFeedbackDesc; }
+    inline const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc; }
+    inline const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
+    inline const FD3D12MeshShadingDesc&         GetMeshShadingDesc()         const { return MeshShadingDesc; }
+    inline const FD3D12SamplerFeedbackDesc&     GetSamplerFeedbackDesc()     const { return SamplerFeedbackDesc; }
 
-    FORCEINLINE uint32 GetNodeCount() const { return NodeCount; }
-    FORCEINLINE uint32 GetNodeMask()  const { return NodeMask; }
+    inline uint32 GetNodeCount() const { return NodeCount; }
+    inline uint32 GetNodeMask()  const { return NodeMask; }
     
-    FORCEINLINE ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType) const 
-    { 
-        return CommandQueues[ToUnderlying(QueueType)].Get();
-    }
-
     FORCEINLINE FD3D12Adapter* GetAdapter()      const { return Adapter; }
     FORCEINLINE ID3D12Device*  GetD3D12Device()  const { return Device.Get(); }
 
@@ -260,7 +252,9 @@ private:
     TComPtr<ID3D12Device9> Device9;
 #endif
 
-    TComPtr<ID3D12CommandQueue> CommandQueues[ToUnderlying(ED3D12CommandQueueType::Count)];
+    FD3D12CommandListManager DirectCommandListManager;
+    FD3D12CommandListManager CopyCommandListManager;
+    FD3D12CommandListManager ComputeCommandListManager;
 
     uint32            NodeMask;
     uint32            NodeCount;

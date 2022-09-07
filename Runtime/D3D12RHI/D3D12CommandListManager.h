@@ -2,6 +2,7 @@
 #include "D3D12CommandList.h"
 
 class FD3D12Device;
+class FD3D12CommandAllocator;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CommandListManager
@@ -10,17 +11,24 @@ class FD3D12CommandListManager
     : public FD3D12DeviceChild
 {
 public:
-    FD3D12CommandListManager(FD3D12Device* InDevice);
-    ~FD3D12CommandListManager();
+    FD3D12CommandListManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
+    ~FD3D12CommandListManager() = default;
 
-    FD3D12CommandList* ObtainCommandList();
-    void ReleaseCommandList(FD3D12CommandList* InCommandList);
+    bool Initialize();
 
-    void ExecuteCommandList(FD3D12CommandList* InCommandList);
+    FD3D12CommandListRef ObtainCommandList(FD3D12CommandAllocator& CommandAllocator, ID3D12PipelineState* InitialPipelineState);
+    void ReleaseCommandList(FD3D12CommandListRef InCommandList);
 
-    FORCEINLINE ID3D12CommandQueue* GetD3D12CommandQueue() { return CommandQueue.Get(); }
+    void ExecuteCommandList(FD3D12CommandListRef InCommandList);
+
+    FORCEINLINE ED3D12CommandQueueType GetQueueType() const { return QueueType; }
+
+    FORCEINLINE ID3D12CommandQueue*    GetD3D12CommandQueue() const { return CommandQueue.Get(); }
 
 private:
-    TComPtr<ID3D12CommandQueue> CommandQueue;
-    TArray<FD3D12CommandList*>  CommandLists;
+    ED3D12CommandQueueType  QueueType;
+    D3D12_COMMAND_LIST_TYPE CommandListType;
+
+    TComPtr<ID3D12CommandQueue>  CommandQueue;
+    TArray<FD3D12CommandListRef> CommandLists;
 };

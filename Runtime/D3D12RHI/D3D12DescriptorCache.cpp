@@ -22,7 +22,7 @@ FD3D12DescriptorCache::FD3D12DescriptorCache(FD3D12Device* InDevice)
 
 bool FD3D12DescriptorCache::Initialize()
 {
-    FD3D12Interface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
+    FD3D12Interface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetD3D12Interface();
     
     D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
     FMemory::Memzero(&CBVDesc);

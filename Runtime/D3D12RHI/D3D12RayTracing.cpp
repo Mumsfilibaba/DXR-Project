@@ -222,7 +222,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         SrvDesc.Shader4ComponentMapping                  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
 
-        FD3D12Interface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetCoreInterface();
+        FD3D12Interface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetD3D12Interface();
 
         View = dbg_new FD3D12ShaderResourceView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap(), this);
         if (!View->AllocateHandle())

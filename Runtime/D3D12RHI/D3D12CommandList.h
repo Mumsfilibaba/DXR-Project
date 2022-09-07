@@ -4,49 +4,30 @@
 #include "D3D12Descriptors.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12ResourceViews.h"
+#include "D3D12RefCounted.h"
 
 class FD3D12ComputePipelineState;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedef
+
+typedef TSharedRef<class FD3D12CommandList> FD3D12CommandListRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CommandList
 
 class FD3D12CommandList 
     : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
 public:
-    FORCEINLINE FD3D12CommandList(FD3D12Device* InDevice)
-        : FD3D12DeviceChild(InDevice)
-        , CmdList(nullptr)
-        , CmdList5(nullptr)
-    { }
+    FD3D12CommandList(FD3D12Device* InDevice);
+    ~FD3D12CommandList() = default;
 
     bool Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline);
 
-    FORCEINLINE bool Reset(FD3D12CommandAllocator& Allocator)
-    {
-        bIsReady = true;
-
-        HRESULT Result = CmdList->Reset(Allocator.GetAllocator(), nullptr);
-        if (Result == DXGI_ERROR_DEVICE_REMOVED)
-        {
-            D3D12DeviceRemovedHandlerRHI(GetDevice());
-        }
-
-        return SUCCEEDED(Result);
-    }
-
-    FORCEINLINE bool Close()
-    {
-        bIsReady = false;
-
-        HRESULT Result = CmdList->Close();
-        if (Result == DXGI_ERROR_DEVICE_REMOVED)
-        {
-            D3D12DeviceRemovedHandlerRHI(GetDevice());
-        }
-
-        return SUCCEEDED(Result);
-    }
+    bool Reset(FD3D12CommandAllocator& Allocator);
+    bool Close();
 
     FORCEINLINE void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView, const float Color[4], uint32 NumRects, const D3D12_RECT* Rects)
     {

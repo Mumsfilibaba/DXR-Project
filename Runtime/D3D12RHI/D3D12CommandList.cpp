@@ -4,6 +4,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CommandList
 
+FD3D12CommandList::FD3D12CommandList(FD3D12Device* InDevice)
+    : FD3D12DeviceChild(InDevice)
+    , CmdList(nullptr)
+    , CmdList5(nullptr)
+{ }
+
 bool FD3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline)
 {
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
@@ -51,4 +57,30 @@ bool FD3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAl
         D3D12_ERROR("[FD3D12CommandList]: FAILED to create CommandList");
         return false;
     }
+}
+
+bool FD3D12CommandList::Reset(FD3D12CommandAllocator& Allocator)
+{
+    bIsReady = true;
+
+    HRESULT Result = CmdList->Reset(Allocator.GetAllocator(), nullptr);
+    if (Result == DXGI_ERROR_DEVICE_REMOVED)
+    {
+        D3D12DeviceRemovedHandlerRHI(GetDevice());
+    }
+
+    return SUCCEEDED(Result);
+}
+
+bool FD3D12CommandList::Close()
+{
+    bIsReady = false;
+
+    HRESULT Result = CmdList->Close();
+    if (Result == DXGI_ERROR_DEVICE_REMOVED)
+    {
+        D3D12DeviceRemovedHandlerRHI(GetDevice());
+    }
+
+    return SUCCEEDED(Result);
 }
