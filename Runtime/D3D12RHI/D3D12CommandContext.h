@@ -332,8 +332,16 @@ public:
     virtual void DestroyResource(class IRefCounted* Resource) override final;
     virtual void DiscardContents(class FRHITexture* Texture)  override final;
 
-    virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)       override final;
-    virtual void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final;
+    virtual void BuildRayTracingGeometry(
+        FRHIRayTracingGeometry* Geometry,
+        FRHIVertexBuffer* VertexBuffer,
+        FRHIIndexBuffer* IndexBuffer,
+        bool bUpdate) override final;
+    
+    virtual void BuildRayTracingScene(
+        FRHIRayTracingScene* RayTracingScene,
+        const TArrayView<const FRHIRayTracingGeometryInstance>& Instances,
+        bool bUpdate) override final;
 
      /** @brief: Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
     virtual void SetRayTracingBindings(
@@ -353,14 +361,30 @@ public:
     virtual void UnorderedAccessTextureBarrier(FRHITexture* Texture) override final;
     virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)    override final;
 
-    virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final;
-    virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)                                                                         override final;
-    virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)                                 override final;
-    virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) override final;
+    virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation)                                 override final;
+    virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
+    
+    virtual void DrawInstanced(
+        uint32 VertexCountPerInstance,
+        uint32 InstanceCount,
+        uint32 StartVertexLocation,
+        uint32 StartInstanceLocation) override final;
+    
+    virtual void DrawIndexedInstanced(
+        uint32 IndexCountPerInstance,
+        uint32 InstanceCount,
+        uint32 StartIndexLocation,
+        uint32 BaseVertexLocation,
+        uint32 StartInstanceLocation) override final;
 
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
 
-    virtual void DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
+    virtual void DispatchRays(
+        FRHIRayTracingScene* InScene,
+        FRHIRayTracingPipelineState* InPipelineState,
+        uint32 InWidth,
+        uint32 InHeight,
+        uint32 InDepth) override final;
 
     virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) override final;
 
