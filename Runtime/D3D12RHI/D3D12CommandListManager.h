@@ -21,9 +21,10 @@ public:
 
     void ExecuteCommandList(FD3D12CommandListRef InCommandList);
 
-    FORCEINLINE ED3D12CommandQueueType GetQueueType() const { return QueueType; }
+    FORCEINLINE ED3D12CommandQueueType  GetQueueType()       const { return QueueType; }
+    FORCEINLINE D3D12_COMMAND_LIST_TYPE GetCommandListType() const { return CommandListType; }
 
-    FORCEINLINE ID3D12CommandQueue*    GetD3D12CommandQueue() const { return CommandQueue.Get(); }
+    FORCEINLINE ID3D12CommandQueue*     GetD3D12CommandQueue() const { return CommandQueue.Get(); }
 
 private:
     ED3D12CommandQueueType  QueueType;

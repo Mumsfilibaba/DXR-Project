@@ -40,3 +40,27 @@ private:
     TComPtr<ID3D12Fence> Fence;
     HANDLE               Event;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12FenceSyncPoint
+
+struct FD3D12FenceSyncPoint
+{
+    FD3D12FenceSyncPoint()
+        : Fence(nullptr)
+        , FenceValue(0)
+    { }
+
+	FD3D12FenceSyncPoint(FD3D12Fence* InFence, uint64 InFenceValue)
+		: Fence(InFence)
+		, FenceValue(InFenceValue)
+	{ }
+
+    FORCEINLINE bool IsComplete() const
+    {
+        return (FenceValue <= Fence->GetCompletedValue());
+    }
+
+    FD3D12Fence* Fence;
+    uint64       FenceValue;
+};

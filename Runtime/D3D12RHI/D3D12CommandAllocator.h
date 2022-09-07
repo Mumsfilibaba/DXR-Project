@@ -2,6 +2,13 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12RefCounted.h"
 
+#include "Core/Platform/CriticalSection.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedef
+
+typedef TSharedRef<class FD3D12CommandAllocator> FD3D12CommandAllocatorRef;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12CommandAllocator 
 
@@ -26,4 +33,22 @@ public:
 
 private:
     TComPtr<ID3D12CommandAllocator> Allocator;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12CommandAllocatorManager
+
+class FD3D12CommandAllocatorManager
+    : public FD3D12DeviceChild
+{
+public:
+    FD3D12CommandAllocatorManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
+    ~FD3D12CommandAllocatorManager() = default;
+
+    FD3D12CommandAllocatorRef ObtainAllocator();
+    void ReleaseAllocator(FD3D12CommandAllocatorRef InAllocator);
+
+private:
+    TArray<FD3D12CommandAllocatorRef> Allocators;
+    FCriticalSection                  AllocatorsCS;
 };

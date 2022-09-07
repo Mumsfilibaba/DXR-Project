@@ -308,20 +308,58 @@ public:
 
     virtual void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final;
 
-    virtual void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)                             override final;
-    virtual void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) override final;
+    virtual void SetShaderResourceView(
+        FRHIShader* Shader,
+        FRHIShaderResourceView* ShaderResourceView,
+        uint32 ParameterIndex) override final;
+    
+    virtual void SetShaderResourceViews(
+        FRHIShader* Shader,
+        const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews,
+        uint32 ParameterIndex) override final;
 
-    virtual void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)                             override final;
-    virtual void SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex) override final;
+    virtual void SetUnorderedAccessView(
+        FRHIShader* Shader,
+        FRHIUnorderedAccessView* UnorderedAccessView,
+        uint32 ParameterIndex) override final;
+    
+    virtual void SetUnorderedAccessViews(
+        FRHIShader* Shader,
+        const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews,
+        uint32 ParameterIndex) override final;
 
-    virtual void SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)                             override final;
-    virtual void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIConstantBuffer* const> InConstantBuffers, uint32 ParameterIndex) override final;
+    virtual void SetConstantBuffer(
+        FRHIShader* Shader,
+        FRHIConstantBuffer* ConstantBuffer,
+        uint32 ParameterIndex) override final;
+    
+    virtual void SetConstantBuffers(
+        FRHIShader* Shader,
+        const TArrayView<FRHIConstantBuffer* const> InConstantBuffers,
+        uint32 ParameterIndex) override final;
 
-    virtual void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)                             override final;
-    virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) override final;
+    virtual void SetSamplerState(
+        FRHIShader* Shader,
+        FRHISamplerState* SamplerState,
+        uint32 ParameterIndex) override final;
+    
+    virtual void SetSamplerStates(
+        FRHIShader* Shader,
+        const TArrayView<FRHISamplerState* const> InSamplerStates,
+        uint32 ParameterIndex) override final;
 
-    virtual void UpdateBuffer(FRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)           override final;
-    virtual void UpdateTexture2D(FRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) override final;
+    virtual void UpdateBuffer(
+        FRHIBuffer* Destination,
+        uint64 OffsetInBytes,
+        uint64 SizeInBytes,
+        const void* SourceData) override final;
+    
+    virtual void UpdateTexture2D(
+        FRHITexture2D* Destination,
+        uint32 Width,
+        uint32 Height,
+        uint32 MipLevel,
+        const void* SourceData) override final;
 
     virtual void ResolveTexture(FRHITexture* Destination, FRHITexture* Source) override final;
 
