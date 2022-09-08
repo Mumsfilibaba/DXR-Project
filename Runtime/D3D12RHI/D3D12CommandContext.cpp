@@ -423,9 +423,15 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
     , FD3D12DeviceChild(InDevice)
     , QueueType(InQueueType)
     , CommandList(nullptr)
-    , CmdBatches()
-    , BarrierBatcher()
+    , CommandAllocator(nullptr)
+    , CommandAllocatorManager(InDevice, InQueueType)
     , State(InDevice)
+    , CommandContextCS()
+    , ResolveQueries()
+    , BarrierBatcher()
+    , NextCmdBatch(0)
+    , CmdBatches()
+    , CmdBatch(nullptr)
 { }
 
 FD3D12CommandContext::~FD3D12CommandContext()
@@ -445,9 +451,8 @@ bool FD3D12CommandContext::Initialize()
         }
     }
 
-    FD3D12Device* D3D12Device = GetDevice();
-    CommandAllocator = D3D12Device->GetCommandAllocatorManager(QueueType)->ObtainAllocator();
-    CommandList      = D3D12Device->GetCommandListManager(QueueType)->ObtainCommandList(*CommandAllocator, nullptr);
+    CommandAllocator = CommandAllocatorManager.ObtainAllocator();
+    CommandList      = GetDevice()->GetCommandListManager(QueueType)->ObtainCommandList(*CommandAllocator, nullptr);
     if (!CommandList)
     {
         D3D12_ERROR("Failed to initialize CommandList");
@@ -1513,7 +1518,6 @@ void FD3D12CommandContext::PresentViewport(FRHIViewport* Viewport, bool bVertica
 void FD3D12CommandContext::ClearState()
 {
     Flush();
-
     State.ClearAll();
 }
 
@@ -1584,14 +1588,13 @@ void FD3D12CommandContext::ObtainCommandList()
         return;
     }
 
-    State.ClearAll();
-
-    CommandAllocator = GetDevice()->GetCommandAllocatorManager(QueueType)->ObtainAllocator();
+    CommandAllocator = CommandAllocatorManager.ObtainAllocator();
     if (!CommandList->Reset(*CommandAllocator))
     {
         D3D12_ERROR("Failed to reset Commandlist");
     }
 
+    State.ClearAll();
     State.DescriptorCache.SetCurrentCommandList(CommandList.Get());
     State.bIsReady = true;
 }
@@ -1622,10 +1625,10 @@ void FD3D12CommandContext::FinishCommandList()
     FD3D12CommandListManager* CommandListManager = D3D12Device->GetCommandListManager(QueueType);
     CommandListManager->ExecuteCommandList(CommandList, false);
 
-    D3D12Device->GetCommandAllocatorManager(QueueType)->ReleaseAllocator(CommandAllocator);
+    CommandAllocatorManager.ReleaseAllocator(CommandAllocator);
     CommandAllocator = nullptr;
 
-    // Assing fencevalue
+    // Assigning FenceValue
     CmdBatch->AssignedFenceValue = CommandListManager->GetFenceManager().SignalGPU(QueueType);
     CmdBatch = nullptr;
 

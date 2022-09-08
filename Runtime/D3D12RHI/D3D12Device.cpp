@@ -459,9 +459,7 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , DirectCommandListManager(this, ED3D12CommandQueueType::Direct)
     , CopyCommandListManager(this, ED3D12CommandQueueType::Copy)
     , ComputeCommandListManager(this, ED3D12CommandQueueType::Compute)
-    , DirectCommandAllocatorManager(this, ED3D12CommandQueueType::Direct)
     , CopyCommandAllocatorManager(this, ED3D12CommandQueueType::Copy)
-    , ComputeCommandAllocatorManager(this, ED3D12CommandQueueType::Compute)
 { }
 
 FD3D12Device::~FD3D12Device()
@@ -777,29 +775,6 @@ FD3D12CommandListManager* FD3D12Device::GetCommandListManager(ED3D12CommandQueue
     {
         Check(ComputeCommandListManager.GetQueueType() == ED3D12CommandQueueType::Compute);
         return &ComputeCommandListManager;
-    }
-    else
-    {
-        return nullptr;
-    }
-}
-
-FD3D12CommandAllocatorManager* FD3D12Device::GetCommandAllocatorManager(ED3D12CommandQueueType QueueType)
-{
-    if (QueueType == ED3D12CommandQueueType::Direct)
-    {
-        Check(DirectCommandAllocatorManager.GetQueueType() == ED3D12CommandQueueType::Direct);
-        return &DirectCommandAllocatorManager;
-    }
-    else if (QueueType == ED3D12CommandQueueType::Copy)
-    {
-        Check(CopyCommandAllocatorManager.GetQueueType() == ED3D12CommandQueueType::Copy);
-        return &CopyCommandAllocatorManager;
-    }
-    else if (QueueType == ED3D12CommandQueueType::Compute)
-    {
-        Check(ComputeCommandAllocatorManager.GetQueueType() == ED3D12CommandQueueType::Compute);
-        return &ComputeCommandAllocatorManager;
     }
     else
     {

@@ -160,9 +160,6 @@ public:
 
     bool Initialize();
 
-    FD3D12CommandListManager*      GetCommandListManager(ED3D12CommandQueueType QueueType);
-    FD3D12CommandAllocatorManager* GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
-
     inline ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
     {
         FD3D12CommandListManager* CommandListManager = GetCommandListManager(QueueType);
@@ -170,13 +167,13 @@ public:
         return CommandListManager->GetD3D12CommandQueue();
     }
 
+    FD3D12CommandListManager* GetCommandListManager(ED3D12CommandQueueType QueueType);
+
     inline FD3D12CommandListManager&      GetDirectCommandListManager()  { return DirectCommandListManager; }
     inline FD3D12CommandListManager&      GetCopyCommandListManager()    { return CopyCommandListManager; }
     inline FD3D12CommandListManager&      GetComputeCommandListManager() { return ComputeCommandListManager; }
 
-    inline FD3D12CommandAllocatorManager& GetDirectCommandAllocatorManager()  { return DirectCommandAllocatorManager; }
-    inline FD3D12CommandAllocatorManager& GetCopyCommandAllocatorManager()    { return CopyCommandAllocatorManager; }
-    inline FD3D12CommandAllocatorManager& GetComputeCommandAllocatorManager() { return ComputeCommandAllocatorManager; }
+    inline FD3D12CommandAllocatorManager& GetCopyCommandAllocatorManager() { return CopyCommandAllocatorManager; }
     
     inline FD3D12RootSignatureCache&      GetRootSignatureCache() { return RootSignatureCache; }
     
@@ -238,9 +235,7 @@ private:
     FD3D12CommandListManager      CopyCommandListManager;
     FD3D12CommandListManager      ComputeCommandListManager;
 
-    FD3D12CommandAllocatorManager DirectCommandAllocatorManager;
     FD3D12CommandAllocatorManager CopyCommandAllocatorManager;
-    FD3D12CommandAllocatorManager ComputeCommandAllocatorManager;
 
     FD3D12RayTracingDesc          RayTracingDesc;
     FD3D12MeshShadingDesc         MeshShadingDesc;
