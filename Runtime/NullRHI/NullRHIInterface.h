@@ -227,7 +227,7 @@ public:
         return dbg_new FNullRHIViewport(Initializer);
     }
 
-    virtual class IRHICommandContext* RHIGetDefaultCommandContext() override final
+    virtual struct IRHICommandContext* RHIGetDefaultCommandContext() override final
     {
         return CommandContext;
     }

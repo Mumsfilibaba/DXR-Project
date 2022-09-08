@@ -22,7 +22,7 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA         (0)
+#define LOAD_SPONZA         (1)
 #define ENABLE_LIGHT_TEST   (0)
 #define ENABLE_MANY_SPHERES (0)
 

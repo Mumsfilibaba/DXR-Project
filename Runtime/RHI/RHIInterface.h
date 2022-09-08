@@ -24,6 +24,7 @@ struct SRHIResourceData;
 
 class FRHIRayTracingGeometry;
 class FRHIRayTracingScene;
+struct IRHICommandContext;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIShadingRateTier
@@ -687,7 +688,7 @@ FORCEINLINE bool RHIQueryUAVFormatSupport(EFormat Format)
     return GRHIInterface->RHIQueryUAVFormatSupport(Format);
 }
 
-FORCEINLINE class IRHICommandContext* RHIGetDefaultCommandContext()
+FORCEINLINE IRHICommandContext* RHIGetDefaultCommandContext()
 {
     return GRHIInterface->RHIGetDefaultCommandContext();
 }
@@ -711,7 +712,6 @@ FORCEINLINE bool RHISupportsRayTracing()
 {
     FRayTracingSupport Support;
     RHIQueryRayTracingSupport(Support);
-
     return false;// (Support.Tier != ERHIRayTracingTier::NotSupported);
 }
 
@@ -719,7 +719,6 @@ FORCEINLINE bool RHISupportsVariableRateShading()
 {
     FShadingRateSupport Support;
     RHIQueryShadingRateSupport(Support);
-
     return (Support.Tier != ERHIShadingRateTier::NotSupported);
 }
 
