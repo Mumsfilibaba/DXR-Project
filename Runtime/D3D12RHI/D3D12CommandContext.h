@@ -403,6 +403,17 @@ public:
         Check(CommandList != nullptr);
         return *CommandList; 
     }
+
+    FORCEINLINE FD3D12CommandAllocatorManager& GetCommandAllocatorManager()
+    {
+        return CommandAllocatorManager;
+    }
+
+    FORCEINLINE FD3D12CommandAllocator& GetCommandAllocator()
+    {
+        Check(CommandAllocator != nullptr);
+        return *CommandAllocator;
+    }
     
     FORCEINLINE uint32 GetCurrentBachIndex() const
     {
