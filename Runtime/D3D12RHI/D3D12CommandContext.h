@@ -76,23 +76,16 @@ public:
 
     bool Reset()
     {
-        if (CmdAllocator.Reset())
-        {
-            Resources.Clear();
-            NativeResources.Clear();
-            DxResources.Clear();
+        Resources.Clear();
+        NativeResources.Clear();
+        DxResources.Clear();
 
-            GpuResourceUploader.Reset();
+        GpuResourceUploader.Reset();
 
-            OnlineResourceDescriptorHeap->Reset();
-            OnlineSamplerDescriptorHeap->Reset();
+        OnlineResourceDescriptorHeap->Reset();
+        OnlineSamplerDescriptorHeap->Reset();
 
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return true;
     }
 
     FORCEINLINE void AddInUseResource(IRefCounted* InResource)
@@ -124,11 +117,6 @@ public:
         return GpuResourceUploader;
     }
 
-    FORCEINLINE FD3D12CommandAllocator& GetCommandAllocator()
-    {
-        return CmdAllocator;
-    }
-
     FORCEINLINE FD3D12OnlineDescriptorManager* GetResourceDescriptorManager() const
     {
         return OnlineResourceDescriptorHeap.Get();
@@ -143,7 +131,6 @@ public:
     
     uint64                           AssignedFenceValue = 0;
 
-    FD3D12CommandAllocator           CmdAllocator;
     FD3D12GPUResourceUploader        GpuResourceUploader;
 
     FD3D12OnlineDescriptorManagerRef OnlineResourceDescriptorHeap;
@@ -449,6 +436,7 @@ private:
     ED3D12CommandQueueType          QueueType;
 
     FD3D12CommandListRef            CommandList;
+    FD3D12CommandAllocatorRef       CommandAllocator;
     FD3D12CommandContextState       State;
 
     // TODO: Look into if this is the best way

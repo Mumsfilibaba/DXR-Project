@@ -3,6 +3,7 @@
 #include "D3D12Descriptors.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandListManager.h"
+#include "D3D12CommandAllocator.h"
 
 #include "Core/Containers/SharedRef.h"
 
@@ -159,8 +160,9 @@ public:
 
     bool Initialize();
 
-    FD3D12CommandListManager* GetCommandListManager(ED3D12CommandQueueType QueueType);
-    
+    FD3D12CommandListManager*      GetCommandListManager(ED3D12CommandQueueType QueueType);
+    FD3D12CommandAllocatorManager* GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
+
     inline ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
     {
         FD3D12CommandListManager* CommandListManager = GetCommandListManager(QueueType);
@@ -168,14 +170,18 @@ public:
         return CommandListManager->GetD3D12CommandQueue();
     }
 
-    inline FD3D12CommandListManager& GetDirectCommandListManager()  { return DirectCommandListManager; }
-    inline FD3D12CommandListManager& GetCopyCommandListManager()    { return CopyCommandListManager; }
-    inline FD3D12CommandListManager& GetComputeCommandListManager() { return ComputeCommandListManager; }
+    inline FD3D12CommandListManager&      GetDirectCommandListManager()  { return DirectCommandListManager; }
+    inline FD3D12CommandListManager&      GetCopyCommandListManager()    { return CopyCommandListManager; }
+    inline FD3D12CommandListManager&      GetComputeCommandListManager() { return ComputeCommandListManager; }
+
+    inline FD3D12CommandAllocatorManager& GetDirectCommandAllocatorManager()  { return DirectCommandAllocatorManager; }
+    inline FD3D12CommandAllocatorManager& GetCopyCommandAllocatorManager()    { return CopyCommandAllocatorManager; }
+    inline FD3D12CommandAllocatorManager& GetComputeCommandAllocatorManager() { return ComputeCommandAllocatorManager; }
     
-    inline FD3D12RootSignatureCache& GetRootSignatureCache() { return RootSignatureCache; }
+    inline FD3D12RootSignatureCache&      GetRootSignatureCache() { return RootSignatureCache; }
     
-    inline FD3D12DescriptorHeap*     GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
-    inline FD3D12DescriptorHeap*     GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
+    inline FD3D12DescriptorHeap*          GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
+    inline FD3D12DescriptorHeap*          GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
     
     inline const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc; }
     inline const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
@@ -231,6 +237,10 @@ private:
     FD3D12CommandListManager      DirectCommandListManager;
     FD3D12CommandListManager      CopyCommandListManager;
     FD3D12CommandListManager      ComputeCommandListManager;
+
+    FD3D12CommandAllocatorManager DirectCommandAllocatorManager;
+    FD3D12CommandAllocatorManager CopyCommandAllocatorManager;
+    FD3D12CommandAllocatorManager ComputeCommandAllocatorManager;
 
     FD3D12RayTracingDesc          RayTracingDesc;
     FD3D12MeshShadingDesc         MeshShadingDesc;

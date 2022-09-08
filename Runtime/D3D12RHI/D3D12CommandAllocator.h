@@ -2,6 +2,7 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12Fence.h"
 
+#include "Core/Containers/Queue.h"
 #include "Core/Platform/CriticalSection.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -58,11 +59,13 @@ public:
     FD3D12CommandAllocatorRef ObtainAllocator();
     void ReleaseAllocator(FD3D12CommandAllocatorRef InAllocator);
 
+    FORCEINLINE ED3D12CommandQueueType GetQueueType() const { return QueueType; }
+
 private:
     ED3D12CommandQueueType  QueueType;
     D3D12_COMMAND_LIST_TYPE CommandListType;
 
     // TODO: Use a queue instead
-    TArray<FD3D12CommandAllocatorRef> Allocators;
+    TQueue<FD3D12CommandAllocatorRef> Allocators;
     FCriticalSection                  AllocatorsCS;
 };

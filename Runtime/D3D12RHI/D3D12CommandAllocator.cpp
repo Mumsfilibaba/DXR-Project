@@ -46,10 +46,12 @@ bool FD3D12CommandAllocator::IsFinished() const
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12CommandAllocator
+// FD3D12CommandAllocatorManager
 
 FD3D12CommandAllocatorManager::FD3D12CommandAllocatorManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : FD3D12DeviceChild(InDevice)
+    , QueueType(InQueueType)
+    , CommandListType(ToCommandListType(QueueType))
     , Allocators()
     , AllocatorsCS()
 { }
@@ -59,10 +61,10 @@ FD3D12CommandAllocatorRef FD3D12CommandAllocatorManager::ObtainAllocator()
     TScopedLock Lock(AllocatorsCS);
 
     FD3D12CommandAllocatorRef CommandAllocator;
-    if (!Allocators.IsEmpty() && Allocators.LastElement()->IsFinished())
+    if (!Allocators.IsEmpty() && (*Allocators.Peek())->IsFinished())
     {
-        CommandAllocator = Allocators.LastElement();
-        Allocators.Pop();
+        Allocators.Pop(CommandAllocator);
+        CommandAllocator->Reset();
     }
     else
     {
@@ -78,6 +80,8 @@ FD3D12CommandAllocatorRef FD3D12CommandAllocatorManager::ObtainAllocator()
 
 void FD3D12CommandAllocatorManager::ReleaseAllocator(FD3D12CommandAllocatorRef InAllocator)
 {
+    Check(InAllocator != nullptr);
+
     TScopedLock Lock(AllocatorsCS);
 
     FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
@@ -89,6 +93,5 @@ void FD3D12CommandAllocatorManager::ReleaseAllocator(FD3D12CommandAllocatorRef I
 
     InAllocator->SetSyncPoint(SyncPoint);
 
-    // TODO: Use a queue instead
-    Allocators.Insert(0, InAllocator);
+    Allocators.Push(InAllocator);
 }

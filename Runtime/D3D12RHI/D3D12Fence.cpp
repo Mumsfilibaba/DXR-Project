@@ -128,12 +128,14 @@ void FD3D12FenceManager::WaitForFence(uint64 InFenceValue)
     Check(Fence != nullptr);
     Check(InFenceValue <= LastSignaledValue);
 
-    if (InFenceValue >= GetCompletedValue())
+    uint64 CompletedFenceValue = GetCompletedValue();
+    if (InFenceValue >= CompletedFenceValue)
     {
         Fence->WaitForValue(InFenceValue);
+        CompletedFenceValue = GetCompletedValue();
     }
 
-    Check(InFenceValue <= LastCompletedValue);
+    Check(InFenceValue <= CompletedFenceValue);
 }
 
 uint64 FD3D12FenceManager::GetCompletedValue() const
