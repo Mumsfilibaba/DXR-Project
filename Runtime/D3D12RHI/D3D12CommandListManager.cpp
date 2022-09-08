@@ -17,35 +17,45 @@ FD3D12CommandListManager::FD3D12CommandListManager(FD3D12Device* InDevice, ED3D1
     : FD3D12DeviceChild(InDevice)
     , QueueType(InQueueType)
     , CommandListType(ToCommandListType(InQueueType))
+    , FenceManager(InDevice)
     , CommandQueue(nullptr)
     , CommandLists()
 { }
 
 bool FD3D12CommandListManager::Initialize()
 {
-    TComPtr<ID3D12CommandQueue> NewCommandQueue;
-
-    D3D12_COMMAND_QUEUE_DESC Desc;
-    FMemory::Memzero(&Desc);
-
-    Desc.Type     = CommandListType;
-    Desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-    Desc.NodeMask = GetDevice()->GetNodeMask();
-    Desc.Flags    = CVarEnableGPUTimeout.GetBool() ? D3D12_COMMAND_QUEUE_FLAG_NONE : D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT;
-
-    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandQueue(&Desc, IID_PPV_ARGS(&NewCommandQueue));
-    if (FAILED(Result))
+    // CommandQueue
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to create CommandQueue '%s'", ToString(QueueType));
-        return false;
+        TComPtr<ID3D12CommandQueue> NewCommandQueue;
+
+        D3D12_COMMAND_QUEUE_DESC Desc;
+        FMemory::Memzero(&Desc);
+
+        Desc.Type = CommandListType;
+        Desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+        Desc.NodeMask = GetDevice()->GetNodeMask();
+        Desc.Flags = CVarEnableGPUTimeout.GetBool() ? D3D12_COMMAND_QUEUE_FLAG_NONE : D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT;
+
+        HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandQueue(&Desc, IID_PPV_ARGS(&NewCommandQueue));
+        if (FAILED(Result))
+        {
+            D3D12_ERROR("[FD3D12Device]: Failed to create CommandQueue '%s'", ToString(QueueType));
+            return false;
+        }
+        else
+        {
+            D3D12_INFO("[FD3D12Device]: Created CommandQueue '%s'", ToString(QueueType));
+            CommandQueue = NewCommandQueue;
+
+            const FStringWide WideName = CharToWide(FString::CreateFormatted("CommandQueue %s", ToString(QueueType)));
+            NewCommandQueue->SetName(WideName.GetCString());
+        }
     }
-    else
-    {
-        D3D12_INFO("[FD3D12Device]: Created CommandQueue '%s'", ToString(QueueType));
-        CommandQueue = NewCommandQueue;
 
-        const FStringWide WideName = CharToWide(FString::CreateFormatted("CommandQueue %s", ToString(QueueType)));
-        NewCommandQueue->SetName(WideName.GetCString());
+    // Fences
+    if (!FenceManager.Initialize())
+    {
+        return false;
     }
 
     return true;
@@ -81,10 +91,12 @@ void FD3D12CommandListManager::ReleaseCommandList(FD3D12CommandListRef InCommand
     CommandLists.Emplace(InCommandList);
 }
 
-void FD3D12CommandListManager::ExecuteCommandList(FD3D12CommandListRef InCommandList)
+FD3D12FenceSyncPoint FD3D12CommandListManager::ExecuteCommandList(FD3D12CommandListRef InCommandList, bool bWaitForCompletion)
 {
     Check(InCommandList != nullptr);
 
     ID3D12CommandList* CommandList = InCommandList->GetCommandList();
     CommandQueue->ExecuteCommandLists(1, &CommandList);
+
+    return FD3D12FenceSyncPoint(nullptr, 0);
 }

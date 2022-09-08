@@ -1,11 +1,18 @@
 #pragma once
 #include "D3D12DeviceChild.h"
+#include "D3D12RefCounted.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedef
+
+typedef TSharedRef<class FD3D12Fence> FD3D12FenceRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Fence
 
 class FD3D12Fence 
     : public FD3D12DeviceChild
+    , public FD3D12RefCounted
 {
 public:
     FD3D12Fence(FD3D12Device* InDevice);
@@ -15,25 +22,12 @@ public:
 
     bool WaitForValue(uint64 Value);
 
-    FORCEINLINE uint64 GetCompletedValue() const
-    {
-        return Fence->GetCompletedValue();
-    }
-
-    FORCEINLINE bool Signal(uint64 Value)
-    {
-        HRESULT Result = Fence->Signal(Value);
-        return SUCCEEDED(Result);
-    }
+    FORCEINLINE ID3D12Fence* GetD3D12Fence() const { return Fence.Get(); }
 
     FORCEINLINE void SetName(const FString& Name)
     {
+        Check(Fence != nullptr);
         Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.GetLength(), Name.GetCString());
-    }
-
-    FORCEINLINE ID3D12Fence* GetFence() const
-    {
-        return Fence.Get();
     }
 
 private:
@@ -51,16 +45,56 @@ struct FD3D12FenceSyncPoint
         , FenceValue(0)
     { }
 
-	FD3D12FenceSyncPoint(FD3D12Fence* InFence, uint64 InFenceValue)
-		: Fence(InFence)
-		, FenceValue(InFenceValue)
-	{ }
-
-    FORCEINLINE bool IsComplete() const
-    {
-        return (FenceValue <= Fence->GetCompletedValue());
-    }
+    FD3D12FenceSyncPoint(FD3D12Fence* InFence, uint64 InFenceValue)
+        : Fence(InFence)
+        , FenceValue(InFenceValue)
+    { }
 
     FD3D12Fence* Fence;
     uint64       FenceValue;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12FenceManager
+
+class FD3D12FenceManager
+    : public FD3D12DeviceChild
+{
+public:
+    FD3D12FenceManager(FD3D12Device* InDevice);
+    ~FD3D12FenceManager() = default;
+
+    bool Initialize();
+
+    uint64 SignalGPU(ED3D12CommandQueueType QueueType);
+
+    void WaitGPU(ED3D12CommandQueueType QueueType);
+    void WaitGPU(ED3D12CommandQueueType QueueType, uint64 InFenceValue);
+
+    void WaitForFence();
+    void WaitForFence(uint64 InFenceValue);
+
+    uint64 GetCompletedValue() const;
+    
+    FORCEINLINE uint64 GetLastSignaledValue() const 
+    { 
+        return LastSignaledValue; 
+    }
+
+    FORCEINLINE uint64 GetCurrentValue() const 
+    { 
+        return CurrentValue; 
+    }
+
+    FORCEINLINE uint64 GetCompletedValueFast() const 
+    { 
+        return LastCompletedValue;
+    }
+
+private:
+    FD3D12FenceRef Fence;
+
+    uint64         CurrentValue;
+    uint64         LastSignaledValue;
+    mutable uint64 LastCompletedValue;
 };

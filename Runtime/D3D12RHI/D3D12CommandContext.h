@@ -286,27 +286,49 @@ public:
     virtual void BeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) override final;
     virtual void EndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)   override final;
 
-    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)         override final;
-    virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)   override final;
-    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
+    virtual void ClearRenderTargetView(
+        const FRHIRenderTargetView& RenderTargetView,
+        const FVector4& ClearColor) override final;
+    
+    virtual void ClearDepthStencilView(
+        const FRHIDepthStencilView& DepthStencilView,
+        const float Depth,
+        uint8 Stencil) override final;
+
+    virtual void ClearUnorderedAccessViewFloat(
+        FRHIUnorderedAccessView* UnorderedAccessView,
+        const FVector4& ClearColor) override final;
 
     virtual void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) override final;
     virtual void EndRenderPass() override final;
 
-    virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final;
-    virtual void SetScissorRect(float Width, float Height, float x, float y)                              override final;
+    virtual void SetViewport(
+        float Width,
+        float Height,
+        float MinDepth,
+        float MaxDepth,
+        float x,
+        float y) override final;
+
+    virtual void SetScissorRect(float Width, float Height, float x, float y) override final;
 
     virtual void SetBlendFactor(const FVector4& Color) override final;
 
-    virtual void SetVertexBuffers(const TArrayView<FRHIVertexBuffer* const> InVertexBuffers, uint32 BufferSlot) override final;
-    virtual void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer)                                                   override final;
+    virtual void SetVertexBuffers(
+        const TArrayView<FRHIVertexBuffer* const> InVertexBuffers,
+        uint32 BufferSlot) override final;
+    
+    virtual void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer) override final;
 
     virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
 
     virtual void SetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState) override final;
     virtual void SetComputePipelineState(class FRHIComputePipelineState* PipelineState)   override final;
 
-    virtual void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final;
+    virtual void Set32BitShaderConstants(
+        FRHIShader* Shader,
+        const void* Shader32BitConstants,
+        uint32 Num32BitConstants) override final;
 
     virtual void SetShaderResourceView(
         FRHIShader* Shader,
@@ -452,8 +474,8 @@ public:
 public:
     bool Initialize();
     
-    void AquireCommandList();
-    void EndCommandList();
+    void ObtainCommandList();
+    void FinishCommandList();
 
     void UpdateBuffer(FD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
 
@@ -500,12 +522,10 @@ private:
     FCriticalSection                CommandContextCS;
 
     FD3D12CommandListRef            CommandList;
-    FD3D12Fence                     Fence;
 
     FD3D12CommandContextState       State;
     FD3D12ResourceBarrierBatcher    BarrierBatcher;
 
-    uint64                          FenceValue   = 0;
     uint32                          NextCmdBatch = 0;
 
     TArray<FD3D12CommandBatch>      CmdBatches;

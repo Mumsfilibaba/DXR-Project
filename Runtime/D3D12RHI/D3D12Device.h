@@ -27,58 +27,6 @@ typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
 typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Adapter
-
-class FD3D12Adapter 
-    : public FD3D12RefCounted
-{
-public:
-    FD3D12Adapter(FD3D12Interface* InD3D12Interface);
-    ~FD3D12Adapter() = default;
-
-    bool           Initialize();
-
-    inline FString GetDescription()  const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
-
-    inline bool    IsDebugLayerEnabled() const { return bEnableDebugLayer; }
-    inline bool    SupportsTearing()     const { return bAllowTearing; }
-
-    FORCEINLINE FD3D12Interface*     GetD3D12Interface() const { return D3D12Interface; }
-
-    FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysis() const { return DXGraphicsAnalysis.Get(); }
-
-    FORCEINLINE IDXGIAdapter1*       GetDXGIAdapter()  const { return Adapter.Get(); }
-    FORCEINLINE uint32               GetAdapterIndex() const { return AdapterIndex; }
-
-    FORCEINLINE IDXGIFactory2*       GetDXGIFactory()  const { return Factory.Get(); }
-    FORCEINLINE IDXGIFactory5*       GetDXGIFactory5() const { return Factory5.Get(); }
-
-#if WIN10_BUILD_17134
-    FORCEINLINE IDXGIFactory6*       GetDXGIFactory6() const { return Factory6.Get(); }
-#endif
-
-private:
-    FD3D12Interface*       D3D12Interface;
-
-    TComPtr<IDXGIAdapter1> Adapter;
-    
-    uint32 AdapterIndex;
-
-    bool   bAllowTearing;
-    bool   bEnableDebugLayer;
-    
-    TComPtr<IDXGIFactory2>       Factory;
-    TComPtr<IDXGIFactory5>       Factory5;
-#if WIN10_BUILD_17134
-    TComPtr<IDXGIFactory6>       Factory6;
-#endif
-
-    TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
-
-    DXGI_ADAPTER_DESC1           AdapterDesc;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayTracingDesc
 
 struct FD3D12RayTracingDesc
@@ -149,6 +97,58 @@ struct FD3D12SamplerFeedbackDesc
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FD3D12Adapter
+
+class FD3D12Adapter 
+    : public FD3D12RefCounted
+{
+public:
+    FD3D12Adapter(FD3D12Interface* InD3D12Interface);
+    ~FD3D12Adapter() = default;
+
+    bool           Initialize();
+
+    inline FString GetDescription()  const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
+
+    inline bool    IsDebugLayerEnabled() const { return bEnableDebugLayer; }
+    inline bool    SupportsTearing()     const { return bAllowTearing; }
+
+    FORCEINLINE FD3D12Interface*     GetD3D12Interface() const { return D3D12Interface; }
+
+    FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysis() const { return DXGraphicsAnalysis.Get(); }
+
+    FORCEINLINE IDXGIAdapter1*       GetDXGIAdapter()  const { return Adapter.Get(); }
+    FORCEINLINE uint32               GetAdapterIndex() const { return AdapterIndex; }
+
+    FORCEINLINE IDXGIFactory2*       GetDXGIFactory()  const { return Factory.Get(); }
+    FORCEINLINE IDXGIFactory5*       GetDXGIFactory5() const { return Factory5.Get(); }
+
+#if WIN10_BUILD_17134
+    FORCEINLINE IDXGIFactory6*       GetDXGIFactory6() const { return Factory6.Get(); }
+#endif
+
+private:
+    FD3D12Interface* D3D12Interface;
+
+    uint32 AdapterIndex;
+
+    bool   bAllowTearing;
+    bool   bEnableDebugLayer;
+
+    TComPtr<IDXGIAdapter1> Adapter;
+    
+    TComPtr<IDXGIFactory2> Factory;
+    TComPtr<IDXGIFactory5> Factory5;
+#if WIN10_BUILD_17134
+    TComPtr<IDXGIFactory6> Factory6;
+#endif
+
+    TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
+
+    DXGI_ADAPTER_DESC1           AdapterDesc;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12Device
 
 class FD3D12Device 
@@ -161,22 +161,35 @@ public:
     bool Initialize();
 
     FD3D12CommandListManager* GetCommandListManager(ED3D12CommandQueueType QueueType);
-    int32                     GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
+    
+    inline ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
+    {
+        FD3D12CommandListManager* CommandListManager = GetCommandListManager(QueueType);
+        Check(CommandListManager != nullptr);
+        return CommandListManager->GetD3D12CommandQueue();
+    }
 
+    inline FD3D12CommandListManager& GetDirectCommandListManager()  { return DirectCommandListManager; }
+    inline FD3D12CommandListManager& GetCopyCommandListManager()    { return CopyCommandListManager; }
+    inline FD3D12CommandListManager& GetComputeCommandListManager() { return ComputeCommandListManager; }
+    
+    inline FD3D12RootSignatureCache& GetRootSignatureCache() { return RootSignatureCache; }
+    
     inline FD3D12DescriptorHeap*     GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
     inline FD3D12DescriptorHeap*     GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
     
-    inline FD3D12RootSignatureCache& GetRootSignatureCache() { return RootSignatureCache; }
-
     inline const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc; }
     inline const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
     inline const FD3D12MeshShadingDesc&         GetMeshShadingDesc()         const { return MeshShadingDesc; }
     inline const FD3D12SamplerFeedbackDesc&     GetSamplerFeedbackDesc()     const { return SamplerFeedbackDesc; }
-
+    
     inline uint32 GetNodeCount() const { return NodeCount; }
     inline uint32 GetNodeMask()  const { return NodeMask; }
-    
+
+    int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
+
     FORCEINLINE FD3D12Adapter* GetAdapter()      const { return Adapter; }
+    
     FORCEINLINE ID3D12Device*  GetD3D12Device()  const { return Device.Get(); }
 
 #if WIN10_BUILD_14393
@@ -211,17 +224,27 @@ private:
     bool CreateDevice();
     bool CreateQueues();
 
+    FD3D12DescriptorHeapRef       GlobalResourceHeap;
+    FD3D12DescriptorHeapRef       GlobalSamplerHeap;
+
     FD3D12RootSignatureCache      RootSignatureCache;
-    
+
+    FD3D12CommandListManager      DirectCommandListManager;
+    FD3D12CommandListManager      CopyCommandListManager;
+    FD3D12CommandListManager      ComputeCommandListManager;
+
     FD3D12RayTracingDesc          RayTracingDesc;
     FD3D12MeshShadingDesc         MeshShadingDesc;
     FD3D12SamplerFeedbackDesc     SamplerFeedbackDesc;
     FD3D12VariableRateShadingDesc VariableRateShadingDesc;
-   
-    FD3D12Adapter*           Adapter;
-
-    FD3D12DescriptorHeapRef  GlobalResourceHeap;
-    FD3D12DescriptorHeapRef  GlobalSamplerHeap;
+    
+    uint32            NodeMask;
+    uint32            NodeCount;
+    
+    D3D_FEATURE_LEVEL MinFeatureLevel;
+    D3D_FEATURE_LEVEL ActiveFeatureLevel;
+    
+    FD3D12Adapter*         Adapter;
 
     TComPtr<ID3D12Device>  Device;
 #if WIN10_BUILD_14393
@@ -251,14 +274,4 @@ private:
 #if WIN11_BUILD_22000
     TComPtr<ID3D12Device9> Device9;
 #endif
-
-    FD3D12CommandListManager DirectCommandListManager;
-    FD3D12CommandListManager CopyCommandListManager;
-    FD3D12CommandListManager ComputeCommandListManager;
-
-    uint32            NodeMask;
-    uint32            NodeCount;
-
-    D3D_FEATURE_LEVEL MinFeatureLevel;
-    D3D_FEATURE_LEVEL ActiveFeatureLevel;
 };

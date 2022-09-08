@@ -135,12 +135,14 @@ bool FD3D12GPUResourceUploader::Reserve(uint32 InSizeInBytes)
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource( &HeapProperties
-                                                                           , D3D12_HEAP_FLAG_NONE
-                                                                           , &Desc
-                                                                           , D3D12_RESOURCE_STATE_GENERIC_READ
-                                                                           , nullptr
-                                                                           , IID_PPV_ARGS(&Resource));
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource(
+        &HeapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &Desc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&Resource));
+    
     if (SUCCEEDED(Result))
     {
         Resource->SetName(L"[D3D12GPUResourceUploader] Buffer");
@@ -428,7 +430,6 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
     , FD3D12DeviceChild(InDevice)
     , QueueType(InQueueType)
     , CommandList(nullptr)
-    , Fence(InDevice)
     , CmdBatches()
     , BarrierBatcher()
     , State(InDevice)
@@ -458,13 +459,6 @@ bool FD3D12CommandContext::Initialize()
     if (!CommandList)
     {
         D3D12_ERROR("Failed to initialize CommandList");
-        return false;
-    }
-
-    FenceValue = 0;
-    if (!Fence.Initialize(FenceValue))
-    {
-        D3D12_ERROR("Failed to initialize Fence");
         return false;
     }
 
@@ -502,12 +496,12 @@ void FD3D12CommandContext::StartContext()
     // Lock to the thread that started the context
     CommandContextCS.Lock();
 
-    AquireCommandList();
+    ObtainCommandList();
 }
 
 void FD3D12CommandContext::FinishContext()
 {
-    EndCommandList();
+    FinishCommandList();
 
     // Unlock from the thread that started the context
     CommandContextCS.Unlock();
@@ -1515,13 +1509,13 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
 void FD3D12CommandContext::PresentViewport(FRHIViewport* Viewport, bool bVerticalSync)
 {
     // Ensure that commands are submitted
-    EndCommandList();
+    FinishCommandList();
 
     FD3D12Viewport* D3D12Viewport = static_cast<FD3D12Viewport*>(Viewport);
     D3D12Viewport->Present(bVerticalSync);
 
     // Start recording again
-    AquireCommandList();
+    ObtainCommandList();
 }
 
 void FD3D12CommandContext::ClearState()
@@ -1537,21 +1531,18 @@ void FD3D12CommandContext::Flush()
 
     if (State.bIsReady)
     {
-        EndCommandList();
+        FinishCommandList();
     }
 
-    const uint64 NewFenceValue = ++FenceValue;
-
     FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
-    HRESULT hResult = CommandListManager->GetD3D12CommandQueue()->Signal(Fence.GetFence(), NewFenceValue);
-    if (SUCCEEDED(hResult))
-    {
-        Fence.WaitForValue(NewFenceValue);
+    Check(CommandListManager != nullptr);
 
-        for (FD3D12CommandBatch& Batch : CmdBatches)
-        {
-            Batch.Reset();
-        }
+    CommandListManager->GetFenceManager().SignalGPU(QueueType);
+    CommandListManager->GetFenceManager().WaitForFence();
+
+    for (FD3D12CommandBatch& Batch : CmdBatches)
+    {
+        Batch.Reset();
     }
 }
 
@@ -1588,7 +1579,7 @@ void FD3D12CommandContext::InternalClearState()
     State.ClearAll();
 }
 
-void FD3D12CommandContext::AquireCommandList()
+void FD3D12CommandContext::ObtainCommandList()
 {
     Check(State.bIsReady == false);
 
@@ -1597,10 +1588,8 @@ void FD3D12CommandContext::AquireCommandList()
     CmdBatch = &CmdBatches[NextCmdBatch];
     NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.GetSize();
 
-    if (CmdBatch->AssignedFenceValue >= Fence.GetCompletedValue())
-    {
-        Fence.WaitForValue(CmdBatch->AssignedFenceValue);
-    }
+    FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
+    CommandListManager->GetFenceManager().WaitForFence(CmdBatch->AssignedFenceValue);
 
     if (!CmdBatch->Reset())
     {
@@ -1619,17 +1608,13 @@ void FD3D12CommandContext::AquireCommandList()
     State.bIsReady = true;
 }
 
-void FD3D12CommandContext::EndCommandList()
+void FD3D12CommandContext::FinishCommandList()
 {
     Check(State.bIsReady == true);
 
     TRACE_FUNCTION_SCOPE();
 
     FlushResourceBarriers();
-
-    const uint64 NewFenceValue = ++FenceValue;
-    CmdBatch->AssignedFenceValue = NewFenceValue;
-    CmdBatch = nullptr;
 
     for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.GetSize(); ++QueryIndex)
     {
@@ -1646,13 +1631,10 @@ void FD3D12CommandContext::EndCommandList()
     }
 
     FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
-    CommandListManager->ExecuteCommandList(CommandList);
+    CommandListManager->ExecuteCommandList(CommandList, false);
 
-    HRESULT hResult = CommandListManager->GetD3D12CommandQueue()->Signal(Fence.GetFence(), NewFenceValue);
-    if (FAILED(hResult))
-    {
-        D3D12_ERROR("Failed to signal Fence on the GPU");
-    }
+    CmdBatch->AssignedFenceValue = CommandListManager->GetFenceManager().SignalGPU(QueueType);
+    CmdBatch = nullptr;
 
     // Clear the state
     State.ClearAll();

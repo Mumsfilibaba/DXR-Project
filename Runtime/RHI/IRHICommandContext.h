@@ -87,7 +87,9 @@ public:
      * @param RenderTargetView: RenderTargetView to clear
      * @param ClearColor: Color to set each pixel within the RenderTargetView to
      */
-    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) = 0;
+    virtual void ClearRenderTargetView(
+        const FRHIRenderTargetView& RenderTargetView,
+        const FVector4& ClearColor) = 0;
 
     /**
      * @brief: Clears a DepthStencilView with a specific value
@@ -95,7 +97,10 @@ public:
      * @param DepthStencilView: DepthStencilView to clear
      * @param ClearValue: Value to set each pixel within the DepthStencilView to
      */
-    virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, const uint8 Stencil) = 0;
+    virtual void ClearDepthStencilView(
+        const FRHIDepthStencilView& DepthStencilView,
+        const float Depth,
+        const uint8 Stencil) = 0;
     
     /**
      * @brief: Clears a UnorderedAccessView with a specific value
@@ -103,7 +108,9 @@ public:
      * @param UnorderedAccessView: UnorderedAccessView to clear
      * @param ClearColor: Value to set each pixel within the UnorderedAccessView to
      */
-    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) = 0;
+    virtual void ClearUnorderedAccessViewFloat(
+        FRHIUnorderedAccessView* UnorderedAccessView,
+        const FVector4& ClearColor) = 0;
 
     /**
      * @brief: Begins a new RenderPass
@@ -127,7 +134,13 @@ public:
      * @param x: x-position of the viewport
      * @param y: y-position of the viewport
      */
-    virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) = 0;
+    virtual void SetViewport(
+        float Width,
+        float Height,
+        float MinDepth,
+        float MaxDepth,
+        float x,
+        float y) = 0;
     
     /**
      * @brief: Set the current scissor settings 
@@ -152,7 +165,9 @@ public:
      * @param VertexBuffers: ArrayView of VertexBuffers to use
      * @param BufferSlot: Slot to start bind the array to
      */
-    virtual void SetVertexBuffers(const TArrayView<FRHIVertexBuffer* const> InVertexBuffers, uint32 BufferSlot) = 0;
+    virtual void SetVertexBuffers(
+        const TArrayView<FRHIVertexBuffer* const> InVertexBuffers,
+        uint32 BufferSlot) = 0;
     
     /**
      * @brief: Set the current IndexBuffer 
@@ -189,7 +204,10 @@ public:
      * @param Shader32BitConstants: Array of 32-bit constants
      * @param Num32bitConstants: Number o 32-bit constants (Each is 4 bytes)
      */
-    virtual void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) = 0;
+    virtual void Set32BitShaderConstants(
+        FRHIShader* Shader,
+        const void* Shader32BitConstants,
+        uint32 Num32BitConstants) = 0;
 
     /**
      * @brief: Sets a single ShaderResourceView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object 
@@ -198,7 +216,10 @@ public:
      * @param ShaderResourceView: ShaderResourceView to bind
      * @param ParameterIndex: ShaderResourceView-index to bind to
      */
-    virtual void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) = 0;
+    virtual void SetShaderResourceView(
+        FRHIShader* Shader,
+        FRHIShaderResourceView* ShaderResourceView,
+        uint32 ParameterIndex) = 0;
     
     /**
      * @brief: Sets a multiple ShaderResourceViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
@@ -208,7 +229,10 @@ public:
      * @param ShaderResourceViews: ArrayView of ShaderResourceViews to bind
      * @param ParameterIndex: ShaderResourceView-index to bind to
      */
-    virtual void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) = 0;
+    virtual void SetShaderResourceViews(
+        FRHIShader* Shader,
+        const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews,
+        uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -217,7 +241,10 @@ public:
      * @param UnorderedAccessView: UnorderedAccessView to bind
      * @param ParameterIndex: UnorderedAccessView-index to bind to
      */
-    virtual void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) = 0;
+    virtual void SetUnorderedAccessView(
+        FRHIShader* Shader,
+        FRHIUnorderedAccessView* UnorderedAccessView,
+        uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a multiple UnorderedAccessViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
@@ -227,7 +254,10 @@ public:
      * @param InUnorderedAccessViews: ArrayView of UnorderedAccessViews to bind
      * @param ParameterIndex: UnorderedAccessView-index to bind to
      */
-    virtual void SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex) = 0;
+    virtual void SetUnorderedAccessViews(
+        FRHIShader* Shader,
+        const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews,
+        uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -236,7 +266,10 @@ public:
      * @param ConstantBuffer: ConstantBuffer to bind
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    virtual void SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffer(
+        FRHIShader* Shader,
+        FRHIConstantBuffer* ConstantBuffer,
+        uint32 ParameterIndex) = 0;
     
     /**
      * @brief: Sets a multiple ConstantBuffers to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
@@ -246,7 +279,10 @@ public:
      * @param ConstantBuffers: ArrayView of ConstantBuffers to bind
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    virtual void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIConstantBuffer* const> InConstantBuffers, uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffers(
+        FRHIShader* Shader,
+        const TArrayView<FRHIConstantBuffer* const> InConstantBuffers,
+        uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -255,7 +291,10 @@ public:
      * @param SamplerState: SamplerState to bind
      * @param ParameterIndex: SamplerState-index to bind to
      */
-    virtual void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex) = 0;
+    virtual void SetSamplerState(
+        FRHIShader* Shader,
+        FRHISamplerState* SamplerState,
+        uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Sets a multiple SamplerStates to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
@@ -265,7 +304,10 @@ public:
      * @param SamplerStates: ArrayView of SamplerStates to bind
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) = 0;
+    virtual void SetSamplerStates(
+        FRHIShader* Shader,
+        const TArrayView<FRHISamplerState* const> InSamplerStates,
+        uint32 ParameterIndex) = 0;
 
     /**
      * @brief: Updates the contents of a Buffer
@@ -275,7 +317,11 @@ public:
      * @param SizeInBytes: Number of bytes to copy over to the buffer
      * @param SourceData: SourceData to copy to the GPU
      */
-    virtual void UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) = 0;
+    virtual void UpdateBuffer(
+        FRHIBuffer* Dst,
+        uint64 OffsetInBytes,
+        uint64 SizeInBytes,
+        const void* SourceData) = 0;
     
     /**
      * @brief: Updates the contents of a Texture2D
@@ -286,7 +332,12 @@ public:
      * @param MipLevel: MipLevel of the texture to update
      * @param SourceData: SourceData to copy to the GPU
      */
-    virtual void UpdateTexture2D(FRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) = 0;
+    virtual void UpdateTexture2D(
+        FRHITexture2D* Dst,
+        uint32 Width,
+        uint32 Height,
+        uint32 MipLevel,
+        const void* SourceData) = 0;
 
     /**
      * @brief: Resolves a multi-sampled texture, must have the same sizes and compatible formats
@@ -303,7 +354,10 @@ public:
      * @param Src: Source buffer to copy from
      * @param CopyInfo: Information about the copy operation
      */
-    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo) = 0;
+    virtual void CopyBuffer(
+        FRHIBuffer* Dst,
+        FRHIBuffer* Src,
+        const FRHICopyBufferInfo& CopyInfo) = 0;
     
     /**
      * @brief: Copies the entire contents of one texture to another, which require the size and formats to be the same 
@@ -320,7 +374,10 @@ public:
      * @param Src: Source texture
      * @param CopyTextureInfo: Information about the copy operation
      */
-    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) = 0;
+    virtual void CopyTextureRegion(
+        FRHITexture* Dst,
+        FRHITexture* Src,
+        const FRHICopyTextureInfo& CopyTextureInfo) = 0;
 
     /**
      * @brief: Destroys a resource, this can be used to not having to deal with resource life time, 
@@ -345,7 +402,11 @@ public:
      * @param IndexBuffer: IndexBuffer to build Geometry of
      * @param bUpdate: True if the build should be an update, false if it should build from the ground up
      */ 
-    virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate) = 0;
+    virtual void BuildRayTracingGeometry(
+        FRHIRayTracingGeometry* Geometry,
+        FRHIVertexBuffer* VertexBuffer,
+        FRHIIndexBuffer* IndexBuffer,
+        bool bUpdate) = 0;
     
     /**
      * @brief: Builds the Top-Level Acceleration-Structure for ray tracing
@@ -354,7 +415,10 @@ public:
      * @param Instances: Instances to build the scene of
      * @param bUpdate: True if the build should be an update, false if it should build from the ground up
      */
-    virtual void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) = 0;
+    virtual void BuildRayTracingScene(
+        FRHIRayTracingScene* Scene,
+        const TArrayView<const FRHIRayTracingGeometryInstance>& Instances,
+        bool bUpdate) = 0;
 
      /** @brief: Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
     virtual void SetRayTracingBindings(
@@ -407,7 +471,10 @@ public:
 
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) = 0;
     
-    virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
+    virtual void DrawIndexed(
+        uint32 IndexCount,
+        uint32 StartIndexLocation,
+        uint32 BaseVertexLocation) = 0;
     
     virtual void DrawInstanced(
         uint32 VertexCountPerInstance,
@@ -450,4 +517,16 @@ public:
 
     /** @return: Returns the native CommandList */
     virtual void* GetRHIBaseCommandList() = 0;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// IRHICommandContextManager
+
+struct IRHICommandContextManager
+{
+    /** @return: Returns a new CommandContext */
+    virtual IRHICommandContext* ObtainCommandContext() = 0;
+    
+    /** @breif: Return a CommandContext and execute it */
+    virtual void FinishCommandContext(IRHICommandContext* InCommandContext) = 0;
 };

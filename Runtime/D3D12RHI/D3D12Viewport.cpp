@@ -96,7 +96,7 @@ bool FD3D12Viewport::Initialize()
     TComPtr<IDXGISwapChain1> TempSwapChain;
 
     HRESULT Result = Factory->CreateSwapChainForHwnd(
-        GetDevice()->GetCommandListManager(ED3D12CommandQueueType::Direct)->GetD3D12CommandQueue(),
+        GetDevice()->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct),
         Hwnd,
         &SwapChainDesc,
         &FullscreenDesc,
