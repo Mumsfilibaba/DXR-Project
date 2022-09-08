@@ -12,7 +12,7 @@ FD3D12CommandList::FD3D12CommandList(FD3D12Device* InDevice)
 
 bool FD3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline)
 {
-    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandList(1, Type, Allocator.GetD3D12Allocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
     if (SUCCEEDED(Result))
     {
         CmdList->Close();
@@ -63,7 +63,7 @@ bool FD3D12CommandList::Reset(FD3D12CommandAllocator& Allocator)
 {
     bIsReady = true;
 
-    HRESULT Result = CmdList->Reset(Allocator.GetAllocator(), nullptr);
+    HRESULT Result = CmdList->Reset(Allocator.GetD3D12Allocator(), nullptr);
     if (Result == DXGI_ERROR_DEVICE_REMOVED)
     {
         D3D12DeviceRemovedHandlerRHI(GetDevice());

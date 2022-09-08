@@ -25,6 +25,8 @@ public:
 
     bool IsFinished() const;
 
+    FORCEINLINE ID3D12CommandAllocator* GetD3D12Allocator() const { return Allocator.Get(); }
+
     FORCEINLINE void SetSyncPoint(const FD3D12FenceSyncPoint& InSyncPoint)
     {
         SyncPoint = InSyncPoint;
@@ -36,10 +38,8 @@ public:
         Allocator->SetName(WideName.GetCString());
     }
 
-    FORCEINLINE ID3D12CommandAllocator* GetAllocator() const { return Allocator.Get(); }
-
 private:
-    ED3D12CommandQueueType  QueueType;
+    ED3D12CommandQueueType QueueType;
 
     TComPtr<ID3D12CommandAllocator> Allocator;
     FD3D12FenceSyncPoint            SyncPoint;
@@ -62,6 +62,7 @@ private:
     ED3D12CommandQueueType  QueueType;
     D3D12_COMMAND_LIST_TYPE CommandListType;
 
+    // TODO: Use a queue instead
     TArray<FD3D12CommandAllocatorRef> Allocators;
     FCriticalSection                  AllocatorsCS;
 };

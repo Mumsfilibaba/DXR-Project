@@ -89,5 +89,6 @@ void FD3D12CommandAllocatorManager::ReleaseAllocator(FD3D12CommandAllocatorRef I
 
     InAllocator->SetSyncPoint(SyncPoint);
 
+    // TODO: Use a queue instead
     Allocators.Insert(0, InAllocator);
 }

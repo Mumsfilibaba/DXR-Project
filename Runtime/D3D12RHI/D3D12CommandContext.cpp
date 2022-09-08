@@ -196,7 +196,7 @@ FD3D12UploadAllocation FD3D12GPUResourceUploader::LinearAllocate(uint32 InSizeIn
 
 FD3D12CommandBatch::FD3D12CommandBatch(FD3D12Device* InDevice)
     : Device(InDevice)
-    , CmdAllocator(InDevice)
+    , CmdAllocator(InDevice, ED3D12CommandQueueType::Direct)
     , GpuResourceUploader(InDevice)
     , OnlineResourceDescriptorHeap(nullptr)
     , OnlineSamplerDescriptorHeap(nullptr)
@@ -206,13 +206,13 @@ FD3D12CommandBatch::FD3D12CommandBatch(FD3D12Device* InDevice)
 bool FD3D12CommandBatch::Initialize(uint32 Index)
 {
     // TODO: Do not have D3D12_COMMAND_LIST_TYPE_DIRECT directly
-    if (!CmdAllocator.Create(D3D12_COMMAND_LIST_TYPE_DIRECT))
+    if (!CmdAllocator.Create())
     {
         return false;
     }
 
     const uint32 ResourceCount = 100000;
-    const uint32 SamplerCount  = 200;
+    const uint32 SamplerCount  = 500;
 
     OnlineResourceDescriptorHeap = dbg_new FD3D12OnlineDescriptorManager(Device, Device->GetGlobalResourceHeap(), Index * ResourceCount, ResourceCount);
     Check(OnlineResourceDescriptorHeap != nullptr);
