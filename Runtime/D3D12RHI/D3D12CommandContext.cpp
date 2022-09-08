@@ -1522,7 +1522,7 @@ void FD3D12CommandContext::ClearState()
 {
     Flush();
 
-    InternalClearState();
+    State.ClearAll();
 }
 
 void FD3D12CommandContext::Flush()
@@ -1574,11 +1574,6 @@ void FD3D12CommandContext::EndExternalCapture()
     }
 }
 
-void FD3D12CommandContext::InternalClearState()
-{
-    State.ClearAll();
-}
-
 void FD3D12CommandContext::ObtainCommandList()
 {
     Check(State.bIsReady == false);
@@ -1597,7 +1592,7 @@ void FD3D12CommandContext::ObtainCommandList()
         return;
     }
 
-    InternalClearState();
+    State.ClearAll();
 
     if (!CommandList->Reset(CmdBatch->GetCommandAllocator()))
     {

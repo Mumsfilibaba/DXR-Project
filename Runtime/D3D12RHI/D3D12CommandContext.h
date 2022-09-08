@@ -446,8 +446,6 @@ public:
     }
 
 private:
-    void InternalClearState();
-
     ED3D12CommandQueueType          QueueType;
 
     FD3D12CommandListRef            CommandList;
