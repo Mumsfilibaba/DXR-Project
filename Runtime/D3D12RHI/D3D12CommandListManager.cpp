@@ -31,10 +31,10 @@ bool FD3D12CommandListManager::Initialize()
         D3D12_COMMAND_QUEUE_DESC Desc;
         FMemory::Memzero(&Desc);
 
-        Desc.Type = CommandListType;
+        Desc.Type     = CommandListType;
         Desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
         Desc.NodeMask = GetDevice()->GetNodeMask();
-        Desc.Flags = CVarEnableGPUTimeout.GetBool() ? D3D12_COMMAND_QUEUE_FLAG_NONE : D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT;
+        Desc.Flags    = CVarEnableGPUTimeout.GetBool() ? D3D12_COMMAND_QUEUE_FLAG_NONE : D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT;
 
         HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandQueue(&Desc, IID_PPV_ARGS(&NewCommandQueue));
         if (FAILED(Result))
@@ -98,5 +98,11 @@ FD3D12FenceSyncPoint FD3D12CommandListManager::ExecuteCommandList(FD3D12CommandL
     ID3D12CommandList* CommandList = InCommandList->GetCommandList();
     CommandQueue->ExecuteCommandLists(1, &CommandList);
 
-    return FD3D12FenceSyncPoint(nullptr, 0);
+    const uint64 FenceValue = FenceManager.SignalGPU(QueueType);
+    if (bWaitForCompletion)
+    {
+        FenceManager.WaitForFence(FenceValue);
+    }
+
+    return FD3D12FenceSyncPoint(FenceManager.GetFence(), FenceValue);
 }

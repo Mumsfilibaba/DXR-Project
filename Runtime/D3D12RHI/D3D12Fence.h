@@ -76,6 +76,8 @@ public:
 
     uint64 GetCompletedValue() const;
     
+    FORCEINLINE FD3D12Fence* GetFence() const { return Fence.Get(); }
+
     FORCEINLINE uint64 GetLastSignaledValue() const 
     { 
         return LastSignaledValue; 

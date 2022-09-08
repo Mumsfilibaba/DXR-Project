@@ -1,6 +1,4 @@
 #pragma once
-#include "RHI/RHIInterface.h"
-
 #include "NullRHIBuffer.h"
 #include "NullRHITexture.h"
 #include "NullRHIViews.h"
@@ -11,6 +9,8 @@
 #include "NullRHITimestampQuery.h"
 #include "NullRHIPipelineState.h"
 #include "NullRHIRayTracing.h"
+
+#include "RHI/RHIInterface.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
