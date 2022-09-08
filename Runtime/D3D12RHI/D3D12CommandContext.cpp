@@ -1585,7 +1585,7 @@ void FD3D12CommandContext::ObtainCommandList()
 
     TRACE_FUNCTION_SCOPE();
 
-    CmdBatch = &CmdBatches[NextCmdBatch];
+    CmdBatch     = &CmdBatches[NextCmdBatch];
     NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.GetSize();
 
     FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);

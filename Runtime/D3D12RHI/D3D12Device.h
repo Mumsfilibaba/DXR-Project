@@ -136,6 +136,7 @@ private:
     bool   bEnableDebugLayer;
 
     TComPtr<IDXGIAdapter1> Adapter;
+    DXGI_ADAPTER_DESC1     AdapterDesc;
     
     TComPtr<IDXGIFactory2> Factory;
     TComPtr<IDXGIFactory5> Factory5;
@@ -144,8 +145,6 @@ private:
 #endif
 
     TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
-
-    DXGI_ADAPTER_DESC1           AdapterDesc;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

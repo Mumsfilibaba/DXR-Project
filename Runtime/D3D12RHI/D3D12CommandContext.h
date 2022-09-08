@@ -450,18 +450,19 @@ private:
 
     ED3D12CommandQueueType          QueueType;
 
+    FD3D12CommandListRef            CommandList;
+    FD3D12CommandContextState       State;
+
     // TODO: Look into if this is the best way
     FCriticalSection                CommandContextCS;
 
-    FD3D12CommandListRef            CommandList;
-
-    FD3D12CommandContextState       State;
+    TArray<FD3D12TimestampQueryRef> ResolveQueries;
+    
+    // TODO: Refactor all below
     FD3D12ResourceBarrierBatcher    BarrierBatcher;
 
     uint32                          NextCmdBatch = 0;
 
     TArray<FD3D12CommandBatch>      CmdBatches;
     FD3D12CommandBatch*             CmdBatch = nullptr;
-
-    TArray<FD3D12TimestampQueryRef> ResolveQueries;
 };
