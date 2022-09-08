@@ -21,8 +21,8 @@ FD3D12Fence::~FD3D12Fence()
 bool FD3D12Fence::Initialize(uint64 InitalValue)
 {
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateFence(
-        InitalValue, 
-        D3D12_FENCE_FLAG_NONE, 
+        InitalValue,
+        D3D12_FENCE_FLAG_NONE,
         IID_PPV_ARGS(&Fence));
 
     if (FAILED(Result))
