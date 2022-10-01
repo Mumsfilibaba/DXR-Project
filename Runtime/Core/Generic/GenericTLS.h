@@ -15,7 +15,7 @@
 
 struct FGenericTLS
 {
-	static FORCEINLINE uint32 GetCurrentThreadId()
+	static FORCEINLINE uint32 GetCurrentThreadID()
 	{
 		return TNumericLimits<uint32>::Min();
 	}
