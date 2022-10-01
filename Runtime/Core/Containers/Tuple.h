@@ -135,14 +135,14 @@ namespace Internal
 
         template<typename TupleType>
         NODISCARD
-    static FORCEINLINE ElementType& Get(TupleType& Tuple) noexcept
+        static FORCEINLINE ElementType& Get(TupleType& Tuple) noexcept
         {
             return static_cast<TTupleLeaf<Index, ElementType>&>(Tuple).Value;
         }
 
         template<typename TupleType>
         NODISCARD
-    static FORCEINLINE const ElementType& Get(const TupleType& Tuple) noexcept
+        static FORCEINLINE const ElementType& Get(const TupleType& Tuple) noexcept
         {
             return static_cast<const TTupleLeaf<Index, ElementType>&>(Tuple).Value;
         }
@@ -185,14 +185,14 @@ namespace Internal
 
         template <typename TupleType>
         NODISCARD
-    static FORCEINLINE WantedType& Get(TupleType& Tuple) noexcept
+        static FORCEINLINE WantedType& Get(TupleType& Tuple) noexcept
         {
             return static_cast<TTupleLeaf<Iteration, WantedType>&>(Tuple).Value;
         }
 
         template <typename TupleType>
         NODISCARD
-    static FORCEINLINE const WantedType& Get(const TupleType& Tuple) noexcept
+        static FORCEINLINE const WantedType& Get(const TupleType& Tuple) noexcept
         {
             return static_cast<const TTupleLeaf<Iteration, WantedType>&>(Tuple).Value;
         }
@@ -350,13 +350,13 @@ namespace Internal
             typedef FirstType Type;
 
             NODISCARD
-    static FORCEINLINE FirstType& Get(TTupleStorage& Tuple)
+            static FORCEINLINE FirstType& Get(TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
 
             NODISCARD
-    static FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple)
+            static FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
@@ -368,13 +368,13 @@ namespace Internal
             typedef SecondType Type;
 
             NODISCARD
-    static FORCEINLINE SecondType& Get(TTupleStorage& Tuple)
+            static FORCEINLINE SecondType& Get(TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
 
             NODISCARD
-    static FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple)
+            static FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
@@ -397,13 +397,13 @@ namespace Internal
             typedef FirstType Type;
 
             NODISCARD
-    static FORCEINLINE FirstType& Get(TTupleStorage& Tuple)
+            static FORCEINLINE FirstType& Get(TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
 
             NODISCARD
-    static FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple)
+            static FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
@@ -415,13 +415,13 @@ namespace Internal
             typedef SecondType Type;
 
             NODISCARD
-    static FORCEINLINE SecondType& Get(TTupleStorage& Tuple)
+            static FORCEINLINE SecondType& Get(TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
 
             NODISCARD
-    static FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple)
+            static FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
@@ -560,7 +560,7 @@ namespace Internal
             typename FirstTupleType,
             typename SecondTupleType>
         NODISCARD
-    static FORCEINLINE bool IsEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
+        static FORCEINLINE bool IsEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
             return TTupleComparators<Index - 1>::IsEqual(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() == RHS.template GetByIndex<Index - 1>());
@@ -570,7 +570,7 @@ namespace Internal
             typename FirstTupleType,
             typename SecondTupleType>
         NODISCARD
-    static FORCEINLINE bool IsLessThan(const FirstTupleType& LHS, const SecondTupleType& RHS)
+        static FORCEINLINE bool IsLessThan(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
             return TTupleComparators<Index - 1>::IsLessThan(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() < RHS.template GetByIndex<Index - 1>());
@@ -580,7 +580,7 @@ namespace Internal
             typename FirstTupleType,
             typename SecondTupleType>
         NODISCARD
-    static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
+        static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
             return TTupleComparators<Index - 1>::IsLessThanOrEqual(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() <= RHS.template GetByIndex<Index - 1>());
@@ -594,7 +594,7 @@ namespace Internal
             typename FirstTupleType,
             typename SecondTupleType>
         NODISCARD
-    static FORCEINLINE bool IsEqual(const FirstTupleType&, const SecondTupleType&)
+        static FORCEINLINE bool IsEqual(const FirstTupleType&, const SecondTupleType&)
         {
             return true;
         }
@@ -603,7 +603,7 @@ namespace Internal
             typename FirstTupleType,
             typename SecondTupleType>
         NODISCARD
-    static FORCEINLINE bool IsLessThan(const FirstTupleType&, const SecondTupleType&)
+        static FORCEINLINE bool IsLessThan(const FirstTupleType&, const SecondTupleType&)
         {
             return true;
         }
@@ -612,7 +612,7 @@ namespace Internal
             typename FirstTupleType,
             typename SecondTupleType>
         NODISCARD
-    static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType&, const SecondTupleType&)
+        static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType&, const SecondTupleType&)
         {
             return true;
         }

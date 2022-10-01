@@ -185,6 +185,8 @@ private:
         Check(Result == 0);
     }
 
+    
+
     bool bInitialized;
     bool bManualReset;
 

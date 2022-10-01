@@ -25,8 +25,7 @@ public:
 private:
     static DWORD WINAPI ThreadRoutine(LPVOID ThreadParameter);
 
-    HANDLE Thread;
-    DWORD  hThreadID;
-
+    HANDLE  Thread;
+    DWORD   hThreadID;
     FString Name;
 };

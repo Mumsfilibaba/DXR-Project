@@ -168,13 +168,13 @@ class TVariant
     struct TVariantComparators
     {
         NODISCARD
-    static bool IsEqual(const void* LHS, const void* RHS) noexcept
+        static bool IsEqual(const void* LHS, const void* RHS) noexcept
         {
             return (*reinterpret_cast<const T*>(LHS)) == (*reinterpret_cast<const T*>(RHS));
         }
 
         NODISCARD
-    static bool IsLessThan(const void* LHS, const void* RHS) noexcept
+        static bool IsLessThan(const void* LHS, const void* RHS) noexcept
         {
             return (*reinterpret_cast<const T*>(LHS)) < (*reinterpret_cast<const T*>(RHS));
         }
@@ -183,7 +183,7 @@ class TVariant
     struct TVariantComparatorsTable
     {
         NODISCARD
-    static bool IsEqual(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
+        static bool IsEqual(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
         {
             static constexpr bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsEqual... };
 
@@ -192,7 +192,7 @@ class TVariant
         }
 
         NODISCARD
-    static bool IsLessThan(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
+        static bool IsLessThan(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
         {
             static constexpr bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsLessThan... };
 
