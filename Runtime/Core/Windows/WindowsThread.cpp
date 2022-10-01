@@ -43,8 +43,7 @@ bool FWindowsThread::Start()
 
 void FWindowsThread::WaitForCompletion()
 {
-    DWORD ThreadExitCode = 0;
-    WaitForSingleObject(Thread, DWORD(TimeoutInMs));
+    WaitForSingleObject(Thread, INFINITE);
 }
 
 void FWindowsThread::SetName(const FString& InName)

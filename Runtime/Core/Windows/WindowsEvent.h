@@ -37,7 +37,10 @@ public:
 
     virtual void Reset() override final;
 
-    virtual bool IsManualReset() const override final { return bManualReset; }
+    virtual bool IsManualReset() const override final 
+    { 
+        return bManualReset;
+    }
 
 private:
     HANDLE Event;

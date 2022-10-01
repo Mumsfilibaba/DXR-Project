@@ -16,12 +16,6 @@
 
 FMacApplication* MacApplication = nullptr;
 
-FMacApplication* FMacApplication::CreateMacApplication()
-{
-    MacApplication = dbg_new FMacApplication();
-	return MacApplication;
-}
-
 FMacApplication::FMacApplication()
     : FGenericApplication(TSharedPtr<ICursor>(dbg_new FMacCursor()))
     , Windows()

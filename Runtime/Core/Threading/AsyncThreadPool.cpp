@@ -87,7 +87,7 @@ void FAsyncWorkThread::Stop()
 
     if (Thread)
     {
-        Thread->WaitForCompletion(FTimespan::Infinity());
+        Thread->WaitForCompletion();
     }
 }
 

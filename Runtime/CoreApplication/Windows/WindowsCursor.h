@@ -24,6 +24,7 @@ public:
 
     virtual void SetVisibility(bool bIsVisible) override final;
 
-    virtual void SetPosition(FGenericWindow* RelativeWindow, int32 x, int32 y)         const override final;
+    virtual void SetPosition(FGenericWindow* RelativeWindow, int32 x, int32 y) const override final;
+
     virtual void GetPosition(FGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const override final;
 };

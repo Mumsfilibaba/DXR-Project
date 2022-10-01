@@ -1,7 +1,7 @@
 #include "WindowsCursor.h"
 #include "WindowsWindow.h"
-#include "Windows.h"
 
+#include "Core/Windows/Windows.h"
 #include "Core/Containers/SharedRef.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

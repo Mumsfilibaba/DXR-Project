@@ -49,20 +49,25 @@ void FMacOutputDeviceConsole::CreateConsole()
             NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
             
             NSRect ContentFrame = WindowHandle.contentView.frame;
-            ScrollView = [[NSScrollView alloc] initWithFrame:ContentFrame];
+            ScrollView            = [[NSScrollView alloc] initWithFrame:ContentFrame];
             ScrollView.borderType = NSNoBorder;
+            
             [ScrollView setHasVerticalScroller:YES];
             [ScrollView setHasHorizontalScroller:NO];
+            
             ScrollView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
             ScrollView.backgroundColor  = BackGroundColor;
             
             NSSize ContentSize = [ScrollView contentSize];
             TextView = [[NSTextView alloc] initWithFrame:NSMakeRect(0.0, 0.0, ContentSize.width, ContentSize.height)];
             [TextView setEditable:NO];
+            
             TextView.minSize = NSMakeSize(0.0f, ContentSize.height);
             TextView.maxSize = NSMakeSize(TNumericLimits<float>::Max(), TNumericLimits<float>::Max());
+            
             [TextView setVerticallyResizable:YES];
             [TextView setHorizontallyResizable:NO];
+
             TextView.autoresizingMask = NSViewWidthSizable;
             TextView.backgroundColor  = BackGroundColor;
             

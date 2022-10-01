@@ -14,7 +14,7 @@ FThreadManager::~FThreadManager()
 {
     for (const auto& Thread : Threads)
     {
-        Thread->WaitForCompletion(FTimespan::Infinity());
+        Thread->WaitForCompletion();
     }
 
     Threads.Clear();

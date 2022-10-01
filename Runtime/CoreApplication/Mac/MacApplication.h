@@ -60,19 +60,12 @@ struct FDeferredMacEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacApplication
 
-class FMacApplication final
+class COREAPPLICATION_API FMacApplication final
     : public FGenericApplication
 {
+public:
     FMacApplication();
     ~FMacApplication();
-
-public:
-	static FMacApplication* CreateMacApplication();
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericApplication Interface
 
     virtual FGenericWindowRef CreateWindow() override final;
 

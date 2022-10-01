@@ -102,7 +102,15 @@ class FGenericWindow
     : public FRefCounted
 {
 public:
-    virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle Style) { return true; }
+    virtual ~FGenericWindow() = default;
+
+    virtual bool Initialize(
+        const FString& Title,
+        uint32 InWidth,
+        uint32 InHeight,
+        int32 x,
+        int32 y,
+        FWindowStyle Style) { return true; }
 
     virtual void Show(bool bMaximized) { }
 
@@ -132,7 +140,7 @@ public:
     virtual uint32 GetHeight() const { return 0; }
 
     virtual void  SetPlatformHandle(void* InPlatformHandle) { }
-    virtual void* GetPlatformHandle() const                 { return nullptr; }
+    virtual void* GetPlatformHandle() const { return nullptr; }
 
     FORCEINLINE FWindowStyle GetStyle() const { return StyleParams; }
 

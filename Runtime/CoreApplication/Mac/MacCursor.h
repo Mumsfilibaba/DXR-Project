@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacCursor
 
-class FMacCursor final 
+class COREAPPLICATION_API FMacCursor final 
     : public FGenericCursor
 {
 public:

@@ -107,7 +107,7 @@ void FRHIThread::Stop()
     WaitCondition.NotifyAll();
 
     Check(Thread != nullptr);
-    Thread->WaitForCompletion(FTimespan::Infinity());
+    Thread->WaitForCompletion();
 
     Thread.Reset();
 }

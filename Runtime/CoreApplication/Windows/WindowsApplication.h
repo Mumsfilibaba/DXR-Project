@@ -1,4 +1,5 @@
 #pragma once 
+#include "Windows.h"
 #include "WindowsWindow.h"
 #include "WindowsCursor.h"
 
@@ -68,8 +69,6 @@ class COREAPPLICATION_API FWindowsApplication final
 public:
     static FWindowsApplication* CreateWindowsApplication();
 
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // FGenericApplication Interface
 
@@ -81,12 +80,15 @@ public:
 
     virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) override final;
 
-    virtual void SetCapture(const FGenericWindowRef& Window)      override final;
+    virtual void SetCapture(const FGenericWindowRef& Window) override final;
+    
     virtual void SetActiveWindow(const FGenericWindowRef& Window) override final;
 
     virtual FGenericWindowRef GetWindowUnderCursor() const override final;
-    virtual FGenericWindowRef GetCapture()           const override final;
-    virtual FGenericWindowRef GetActiveWindow()      const override final;
+
+    virtual FGenericWindowRef GetCapture() const override final;
+    
+    virtual FGenericWindowRef GetActiveWindow() const override final;
 
 public:
     FWindowsWindowRef GetWindowsWindowFromHWND(HWND Window) const;

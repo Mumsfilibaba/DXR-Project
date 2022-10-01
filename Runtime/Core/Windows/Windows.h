@@ -67,6 +67,13 @@
     #undef InterlockedExchange
 #endif
 
+#ifdef MessageBox
+    #undef MessageBox
+#endif
+
+#ifdef GetClassName
+    #undef GetClassName
+#endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Windows-version helper defines

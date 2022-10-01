@@ -1,14 +1,9 @@
 #pragma once
-#include "Windows.h"
-
+#include "Core/Windows/Windows.h"
 #include "Core/Containers/SharedRef.h"
 
 #include "CoreApplication/CoreApplication.h"
 #include "CoreApplication/Generic/GenericWindow.h"
-
-#ifdef GetClassName
-    #undef GetClassName
-#endif
 
 class FWindowsApplication;
 
@@ -27,7 +22,13 @@ public:
     static const CHAR* GetClassName();
 
 public:
-    virtual bool Initialize(const FString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle Style) override final;
+    virtual bool Initialize(
+        const FString& Title,
+        uint32 InWidth,
+        uint32 InHeight,
+        int32 x,
+        int32 y,
+        FWindowStyle Style) override final;
 
     virtual void Show(bool bMaximized) override final;
 
@@ -68,12 +69,12 @@ public:
 private:
     FWindowsApplication* Application;
 
-    HWND                 Window;
+    HWND            Window;
 
-    DWORD                Style;
-    DWORD                StyleEx;
+    DWORD           Style;
+    DWORD           StyleEx;
 
-    bool                 bIsFullscreen;
+    bool            bIsFullscreen;
 
-    WINDOWPLACEMENT      StoredPlacement;
+    WINDOWPLACEMENT StoredPlacement;
 };

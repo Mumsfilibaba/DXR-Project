@@ -36,13 +36,19 @@ public:
     virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) { return true; }
 
     virtual void SetActiveWindow(const FGenericWindowRef& Window) { }
-    virtual void SetCapture(const FGenericWindowRef& Window)      { }
+    
+    virtual void SetCapture(const FGenericWindowRef& Window) { }
 
     virtual FGenericWindowRef GetWindowUnderCursor() const { return nullptr; }
-    virtual FGenericWindowRef GetCapture()           const { return nullptr; }
-    virtual FGenericWindowRef GetActiveWindow()      const { return nullptr; }
+    
+    virtual FGenericWindowRef GetCapture() const { return nullptr; }
+    
+    virtual FGenericWindowRef GetActiveWindow() const { return nullptr; }
 
-    virtual void SetMessageListener(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) { MessageListener = InMessageHandler; }
+    virtual void SetMessageListener(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
+    { 
+        MessageListener = InMessageHandler; 
+    }
 
     TSharedPtr<FGenericApplicationMessageHandler> GetMessageListener() const { return MessageListener; }
 

@@ -9,10 +9,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacApplicationMisc
 
-struct FMacApplicationMisc final
+struct COREAPPLICATION_API FMacApplicationMisc final
     : public FGenericApplicationMisc
 {
-    static class  FGenericApplication*  CreateApplication();
+    static class FGenericApplication* CreateApplication();
+
     static struct FOutputDeviceConsole* CreateOutputDeviceConsole();
  
     static void MessageBox(const FString& Title, const FString& Message);

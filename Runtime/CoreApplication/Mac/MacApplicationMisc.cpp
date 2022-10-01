@@ -10,7 +10,7 @@
 
 FGenericApplication* FMacApplicationMisc::CreateApplication()
 {
-    return FMacApplication::CreateMacApplication();
+    return dbg_new FMacApplication();
 }
 
 FOutputDeviceConsole* FMacApplicationMisc::CreateOutputDeviceConsole()
@@ -39,12 +39,10 @@ void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
     
     Check(NSApp != nil);
 	
+    NSEvent* Event = nil;
     do
     {
-        NSEvent* Event = [NSApp nextEventMatchingMask:NSEventMaskAny
-                                            untilDate:[NSDate distantPast]
-                                               inMode:NSDefaultRunLoopMode
-                                              dequeue:YES];
+        Event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
         if (!Event)
         {
             break;

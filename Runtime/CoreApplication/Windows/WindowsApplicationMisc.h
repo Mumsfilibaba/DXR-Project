@@ -1,13 +1,8 @@
 #pragma once
-#include "Windows.h"
-
 #include "Core/Core.h"
+#include "Core/Windows/Windows.h"
 
 #include "CoreApplication/Generic/GenericApplicationMisc.h"
-
-#ifdef MessageBox
-    #undef MessageBox
-#endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsApplicationMisc
@@ -15,8 +10,9 @@
 struct COREAPPLICATION_API FWindowsApplicationMisc final 
     : public FGenericApplicationMisc
 {
-    static FOutputDeviceConsole* CreateOutputDeviceConsole();
-    static FGenericApplication*  CreateApplication();
+    static class FGenericApplication* CreateApplication();
+
+    static struct FOutputDeviceConsole* CreateOutputDeviceConsole();
 
     static FORCEINLINE void MessageBox(const FString& Title, const FString& Message)
     {
