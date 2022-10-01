@@ -196,6 +196,6 @@ struct FWindowsInterlocked
 
     static FORCEINLINE void* InterlockedExchangePointer(void* volatile* Target, void* Value)
     {
-        return ::_InterlockedExchangePointer(Target, Value);
+        return static_cast<void*>(::_InterlockedExchangePointer(static_cast<volatile PVOID*>(Target), Value));
     }
 };

@@ -194,5 +194,10 @@ struct FMacInterlocked
     {
         return __sync_lock_test_and_set(Dest, Exchange);
     }
+
+    static FORCEINLINE void* InterlockedExchangePointer(void* volatile* Target, void* Value)
+    {
+        return __atomic_exchange_n(Target, Value, __ATOMIC_SEQ_CST);
+    }
 };
 
