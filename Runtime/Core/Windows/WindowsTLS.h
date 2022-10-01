@@ -9,7 +9,7 @@
 struct FWindowsTLS
 	: public FGenericTLS
 {
-	static FORCEINLINE uint32 GetCurrentThreadId()
+	static FORCEINLINE uint32 GetCurrentThreadID()
 	{
 		return ::GetCurrentThreadId();
 	}
