@@ -19,6 +19,10 @@
     #undef CreateWindow
 #endif
 
+#ifdef CreateFile
+    #undef CreateFile
+#endif
+
 #ifdef CreateThread
     #undef CreateThread
 #endif
