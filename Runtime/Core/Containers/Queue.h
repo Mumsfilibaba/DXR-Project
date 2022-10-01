@@ -22,6 +22,7 @@ public:
     using ElementType = T;
 
 private:
+
     struct FNode
     {
         FNode()
@@ -47,6 +48,9 @@ public:
     TQueue(const TQueue&)            = delete;
     TQueue& operator=(const TQueue&) = delete;
 
+    /**
+     * @breif: Constructor
+     */
     FORCEINLINE TQueue()
         : Head(nullptr)
         , Tail(nullptr)
@@ -55,6 +59,9 @@ public:
         Tail = Head;
     }
 
+    /**
+     * @breif: Destructor
+     */
     FORCEINLINE ~TQueue()
     {
         while (Tail != nullptr)
@@ -65,6 +72,12 @@ public:
         }
     }
 
+    /**
+     * @breif: Pop the next element
+     * 
+     * @param OutElement: Storage for the popped element
+     * @return: Returns true if an element was popped
+     */
     FORCEINLINE bool Pop(ElementType& OutElement)
     {
         FNode* Popped = Tail->NextNode;
@@ -83,6 +96,11 @@ public:
         return true;
     }
 
+    /**
+     * @breif: Pop the next element
+     *
+     * @return: Returns true if an element was popped
+     */
     FORCEINLINE bool Pop()
     {
         FNode* Popped = Tail->NextNode;
@@ -99,21 +117,42 @@ public:
         return true;
     }
 
+    /**
+     * @breif: Clears the queue
+     */
     FORCEINLINE void Clear()
     {
         while (Pop());
     }
 
+    /**
+     * @breif: Push an element to the back of the queue 
+     * 
+     * @param Item: The new element to push
+     * @return: Returns true if the element was successfully pushed
+     */
     FORCEINLINE bool Push(const ElementType& Item)
     {
         return Emplace(Item);
     }
 
+    /**
+     * @breif: Push an element to the back of the queue 
+     * 
+     * @param Item: The new element to push
+     * @return: Returns true if the element was successfully pushed
+     */
     FORCEINLINE bool Push(ElementType&& Item)
     {
-        return Emplace(Item);
+        return Emplace(::Forward<ElementType>(Item));
     }
 
+    /**
+     * @breif: Push an element to the back of the queue
+     *
+     * @param Args: Arguments used to construct the new element in-place
+     * @return: Returns true if the element was successfully pushed
+     */
     template<typename... ArgTypes>
     FORCEINLINE bool Emplace(ArgTypes&&... Args) noexcept
     {
@@ -139,11 +178,20 @@ public:
         return true;
     }
 
+    /** 
+     * @return: Returns true if the queue is empty
+     */
     FORCEINLINE bool IsEmpty() const
     {
         return (Tail->NextNode == nullptr);
     }
 
+    /**
+     * @breif: Peek at the first element of the queue without popping from the queue
+     *
+     * @param OutItem: Storage for the item to peek
+     * @return: Returns true if the element was successfully stored
+     */
     FORCEINLINE bool Peek(ElementType& OutItem) const
     {
         if (Tail->NextNode == nullptr)
@@ -155,6 +203,9 @@ public:
         return true;
     }
 
+    /**
+     * @return: Returns a pointer to the first element in the queue, nullptr if the queue is empty
+     */
     FORCEINLINE ElementType* Peek()
     {
         if (Tail->NextNode == nullptr)
@@ -162,9 +213,12 @@ public:
             return nullptr;
         }
 
-        return AddressOf(Tail->NextNode->Item);
+        return ::AddressOf(Tail->NextNode->Item);
     }
 
+    /**
+    * @return: Returns a pointer to the first element in the queue, nullptr if the queue is empty
+    */
     FORCEINLINE const ElementType* Peek() const
     {
         if (Tail->NextNode == nullptr)
@@ -172,7 +226,7 @@ public:
             return nullptr;
         }
 
-        return AddressOf(Tail->NextNode->Item);
+        return ::AddressOf(Tail->NextNode->Item);
     }
 
 private:

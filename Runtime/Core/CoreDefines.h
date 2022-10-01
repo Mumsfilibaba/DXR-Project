@@ -117,16 +117,16 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////
-* String preprocessor handling. There are two versions of PREPROCESS_CONCAT, this is so that
-* you can use __LINE__, __FILE__ etc. within the macro, therefore always use PREPROCESS_CONCAT
+* String preprocessor handling. There are two versions of STRING_CONCAT, this is so that
+* you can use __LINE__, __FILE__ etc. within the macro, therefore always use STRING_CONCAT
 */
 
-#ifndef _PREPROCESS_CONCAT
-    #define _PREPROCESS_CONCAT(x, y) x##y
+#ifndef _STRING_CONCAT
+    #define _STRING_CONCAT(x, y) x##y
 #endif
 
-#ifndef PREPROCESS_CONCAT
-    #define PREPROCESS_CONCAT(x, y) _PREPROCESS_CONCAT(x, y)
+#ifndef STRING_CONCAT
+    #define STRING_CONCAT(x, y) _STRING_CONCAT(x, y)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

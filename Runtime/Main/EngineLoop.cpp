@@ -11,7 +11,7 @@
 #include "Core/Modules/ModuleInterface.h"
 #include "Core/Modules/ApplicationModule.h"
 #include "Core/Threading/ThreadManager.h"
-#include "Core/Threading/TaskManagerInterface.h"
+#include "Core/Threading/AsyncThreadPool.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
 #include "Core/Misc/OutputDeviceConsole.h"
@@ -55,36 +55,42 @@ bool FEngineLoop::LoadCoreModules()
     IModule* CoreModule = ModuleManager.LoadModule("Core");
     if (!CoreModule)
     {
+        DEBUG_BREAK();
         return false;
     }
 
     IModule* CoreApplicationModule = ModuleManager.LoadModule("CoreApplication");
     if (!CoreApplicationModule)
     {
+        DEBUG_BREAK();
         return false;
     }
 
     IModule* ApplicationModule = ModuleManager.LoadModule("Application");
     if (!ApplicationModule)
     {
+        DEBUG_BREAK();
         return false;
     }
 
     IModule* EngineModule = ModuleManager.LoadModule("Engine");
     if (!EngineModule)
     {
+        DEBUG_BREAK();
         return false;
     }
 
     IModule* RHIModule = ModuleManager.LoadModule("RHI");
     if (!RHIModule)
     {
+        DEBUG_BREAK();
         return false;
     }
 
     IModule* RendererModule = ModuleManager.LoadModule("Renderer");
     if (!RendererModule)
     {
+        DEBUG_BREAK();
         return false;
     }
 
@@ -126,12 +132,15 @@ bool FEngineLoop::PreInit()
     FFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
 
-	const FString ProjectLocation     = FString(ENGINE_LOCATION) + FString("/") + FString(PROJECT_NAME);
-    const FString AssetFolderLocation = FString(ENGINE_LOCATION) + FString("/Assets");
-    if (!FProjectManager::Initialize(PROJECT_NAME, ProjectLocation.GetCString(), AssetFolderLocation.GetCString()))
+    // ProjectManager
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
-        return false;
+        const FString ProjectLocation     = FString(ENGINE_LOCATION) + FString("/") + FString(PROJECT_NAME);
+        const FString AssetFolderLocation = FString(ENGINE_LOCATION) + FString("/Assets");
+        if (!FProjectManager::Initialize(PROJECT_NAME, ProjectLocation.GetCString(), AssetFolderLocation.GetCString()))
+        {
+            FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
+            return false;
+        }
     }
 
 #if !PRODUCTION_BUILD
@@ -151,9 +160,13 @@ bool FEngineLoop::PreInit()
         return false;
     }
 
-    if (!FTaskManagerInterface::Get().Initialize())
+    // Initialize the Async-worker threads
     {
-        return false;
+        const auto NumProcessors = FPlatformThreadMisc::GetNumProcessors();
+        if (!FAsyncThreadPool::Initialize(NumProcessors))
+        {
+            return false;
+        }
     }
 
    // Initialize the ShaderCompiler before RHI since RHI might need to compile shaders
@@ -163,7 +176,7 @@ bool FEngineLoop::PreInit()
         return false;
     }
         
-    // TODO: Decide this via command line
+    // TODO: Decide this via command line or config file
     ERHIInstanceType RenderApi =
 #if PLATFORM_MACOS
         ERHIInstanceType::Metal;
@@ -173,6 +186,15 @@ bool FEngineLoop::PreInit()
     if (!RHIInitialize(RenderApi))
     {
         return false;
+    }
+
+    // Startup RHI Thread
+    {
+        if (!FRHIThread::Startup())
+        {
+            LOG_ERROR("Failed to startup RHI-Thread");
+            return false;
+        }
     }
 
     NCoreDelegates::PostInitRHIDelegate.Broadcast();
@@ -220,14 +242,17 @@ bool FEngineLoop::Init()
 
     NCoreDelegates::PreApplicationLoadedDelegate.Broadcast();
 
-    GApplicationModule = FModuleInterface::Get().LoadModule<FApplicationModule>(FProjectManager::GetProjectModuleName());
-    if (!GApplicationModule)
+    // Load application
     {
-        LOG_WARNING("Application Init failed, may not behave as intended");
-    }
-    else
-    {
-        NCoreDelegates::PostApplicationLoadedDelegate.Broadcast();
+        GApplicationModule = FModuleInterface::Get().LoadModule<FApplicationModule>(FProjectManager::GetProjectModuleName());
+        if (!GApplicationModule)
+        {
+            LOG_WARNING("Application Init failed, may not behave as intended");
+        }
+        else
+        {
+            NCoreDelegates::PostApplicationLoadedDelegate.Broadcast();
+        }
     }
 
     IApplicationRendererModule* InterfaceRendererModule = FModuleInterface::Get().LoadModule<IApplicationRendererModule>("InterfaceRenderer");
@@ -308,9 +333,13 @@ bool FEngineLoop::Release()
 
     FTextureFactory::Release();
 
+    {
+        FRHIThread::Shutdown();
+    }
+
     RHIRelease();
 
-    FTaskManagerInterface::Get().Release();
+    FAsyncThreadPool::Release();
 
     FApplicationInterface::Release();
 

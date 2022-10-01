@@ -114,8 +114,8 @@ bool FD3D12DescriptorCache::Initialize()
     SamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
     SamplerDesc.Filter         = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
     SamplerDesc.MaxAnisotropy  = 1;
-    SamplerDesc.MaxLOD         = FLT_MAX;
-    SamplerDesc.MinLOD         = -FLT_MAX;
+    SamplerDesc.MaxLOD         = TNumericLimits<float>::Max();
+    SamplerDesc.MinLOD         = TNumericLimits<float>::Lowest();
     SamplerDesc.MipLODBias     = 0.0f;
 
     NullSampler = dbg_new FD3D12SamplerState(GetDevice(), D3D12CoreInterface->GetSamplerOfflineDescriptorHeap());

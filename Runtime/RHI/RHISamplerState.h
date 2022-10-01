@@ -2,6 +2,7 @@
 #include "RHIResourceBase.h"
 
 #include "Core/Math/Float.h"
+#include "Core/Templates/NumericLimits.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
@@ -99,8 +100,8 @@ struct FRHISamplerStateInitializer
         , ComparisonFunc(EComparisonFunc::Never)
 	    , MaxAnisotropy(1)
 	    , MipLODBias(0.0f)
-        , MinLOD(-FLT_MAX)
-        , MaxLOD(FLT_MAX)
+        , MinLOD(TNumericLimits<float>::Lowest())
+        , MaxLOD(TNumericLimits<float>::Max())
         , BorderColor()
     { }
 
@@ -113,7 +114,7 @@ struct FRHISamplerStateInitializer
 	    , MaxAnisotropy(0)
 	    , MipLODBias(0.0f)
         , MinLOD(0.0f)
-        , MaxLOD(FLT_MAX)
+        , MaxLOD(TNumericLimits<float>::Max())
         , BorderColor(0.0f, 0.0f, 0.0f, 1.0f)
     { }
 

@@ -11,7 +11,7 @@
 #define NUM_GPU_PROFILER_SAMPLES (200)
 
 #if ENABLE_GPU_PROFILER
-    #define GPU_TRACE_SCOPE(CmdList, Name) FGPUScopedTrace PREPROCESS_CONCAT(GPUScopedTrace_Line_, __LINE__)(CmdList, Name)
+    #define GPU_TRACE_SCOPE(CmdList, Name) FGPUScopedTrace STRING_CONCAT(GPUScopedTrace_Line_, __LINE__)(CmdList, Name)
 #else
     #define GPU_TRACE_SCOPE(CmdList, Name)
 #endif
@@ -61,14 +61,14 @@ struct FGPUProfileSample
         CurrentSample = 0;
         TotalCalls = 0;
 
-        Max = -FLT_MAX;
-        Min = FLT_MAX;
+        Max = TNumericLimits<float>::Lowest();
+        Min = TNumericLimits<float>::Max();
     }
 
     TStaticArray<float, NUM_GPU_PROFILER_SAMPLES> Samples;
 
-    float Max = -FLT_MAX;
-    float Min = FLT_MAX;
+    float Max = TNumericLimits<float>::Lowest();
+    float Min = TNumericLimits<float>::Max();
 
     int32 SampleCount = 0;
     int32 CurrentSample = 0;

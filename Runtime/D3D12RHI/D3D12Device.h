@@ -4,6 +4,7 @@
 #include "D3D12RootSignature.h"
 #include "D3D12CommandListManager.h"
 #include "D3D12CommandAllocator.h"
+#include "D3D12DeferredDeletionQueue.h"
 
 #include "Core/Containers/SharedRef.h"
 
@@ -175,7 +176,8 @@ public:
 
     inline FD3D12CommandAllocatorManager& GetCopyCommandAllocatorManager() { return CopyCommandAllocatorManager; }
     
-    inline FD3D12RootSignatureCache&      GetRootSignatureCache() { return RootSignatureCache; }
+    inline FD3D12DeferredDeletionQueue&   GetDeferredDeletionQueue() { return DeferredDeletionQueue; }
+    inline FD3D12RootSignatureCache&      GetRootSignatureCache()    { return RootSignatureCache; }
     
     inline FD3D12DescriptorHeap*          GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
     inline FD3D12DescriptorHeap*          GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
@@ -236,6 +238,8 @@ private:
     FD3D12CommandListManager      ComputeCommandListManager;
 
     FD3D12CommandAllocatorManager CopyCommandAllocatorManager;
+
+    FD3D12DeferredDeletionQueue   DeferredDeletionQueue;
 
     FD3D12RayTracingDesc          RayTracingDesc;
     FD3D12MeshShadingDesc         MeshShadingDesc;

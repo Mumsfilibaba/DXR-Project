@@ -30,7 +30,7 @@ bool FMesh::Init(const FMeshData& Data)
 
     TArray<uint16> NewIndicies;
 
-    const EIndexFormat IndexFormat = (IndexCount < UINT16_MAX) && (!bRTOn) ? EIndexFormat::uint16 : EIndexFormat::uint32;
+    const EIndexFormat IndexFormat = (IndexCount < TNumericLimits<uint16>::Max()) && (!bRTOn) ? EIndexFormat::uint16 : EIndexFormat::uint32;
     if (IndexFormat == EIndexFormat::uint16)
     {
         NewIndicies.Reserve(Data.Indices.GetSize());

@@ -23,10 +23,7 @@ public:
 
     static bool IsMainThread();
 
-    FGenericThreadRef CreateThread(const TFunction<void()>& InFunction);
-    FGenericThreadRef CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName);
-
-    FGenericThreadRef GetNamedThread(const FString& InName);
+    FGenericThreadRef CreateThread(FThreadInterface* InRunnable);
     FGenericThreadRef GetThreadFromHandle(void* ThreadHandle);
 
 private:

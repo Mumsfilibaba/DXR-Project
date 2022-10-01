@@ -5,14 +5,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsThreadMisc
 
-FGenericThread* FWindowsThreadMisc::CreateThread(const FThreadFunction& InFunction)
+FGenericThread* FWindowsThreadMisc::CreateThread(FThreadInterface* Runnable)
 {
-    return dbg_new FWindowsThread(InFunction);
-}
-
-FGenericThread* FWindowsThreadMisc::CreateNamedThread(const FThreadFunction& InFunction, const FString& InName)
-{
-    return dbg_new FWindowsThread(InFunction, InName);
+    return dbg_new FWindowsThread(Runnable);
 }
 
 FGenericEvent* FWindowsThreadMisc::CreateEvent(bool bManualReset)

@@ -3,6 +3,7 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/Function.h"
+#include "Core/Threading/ThreadInterface.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
@@ -12,7 +13,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-typedef TFunction<void()>                FThreadFunction;
 typedef TSharedRef<class FGenericThread> FGenericThreadRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -22,8 +22,8 @@ class CORE_API FGenericThread
     : public FRefCounted
 {
 public:
-    FGenericThread(const FThreadFunction& InFunction)
-        : Function(InFunction)
+    FGenericThread(FThreadInterface* InRunnable)
+        : Runnable(InRunnable)
     { }
 
     /** @brief: Start the thread and start executing the entrypoint */
@@ -38,13 +38,17 @@ public:
     /** @return: Returns the native platform handle */
     virtual void* GetPlatformHandle() { return nullptr; }
 
+    /** @return: Returns the name of the thread */
     virtual FString GetName() const { return ""; }
-    virtual void    SetName(const FString& InName) { }
 
-    FThreadFunction GetFunction() const { return Function; }
+    /** @breif: Set the name of the thread */
+    virtual void SetName(const FString& InName) { }
+
+    /** @return: Returns a pointer to the interface currently running on the thread */
+    FThreadInterface* GetRunnable() const { return Runnable; }
 
 protected:
-    FThreadFunction Function;
+    FThreadInterface* Runnable;
 };
 
 #if defined(PLATFORM_COMPILER_MSVC)

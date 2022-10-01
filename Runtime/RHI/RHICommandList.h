@@ -5,7 +5,8 @@
 #include "RHITimestampQuery.h"
 
 #include "Core/Memory/MemoryStack.h"
-#include "Core/Threading/ThreadManager.h"
+#include "Core/Threading/ThreadInterface.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Platform/ConditionVariable.h"
 #include "Core/Containers/ArrayView.h"
 
@@ -652,23 +653,35 @@ struct FRHIThreadTask
 // FRHIThread
 
 class RHI_API FRHIThread 
-    : FNonCopyable
+    : public FThreadInterface
+    , private FNonCopyable
 {
-public:
+private:
     FRHIThread();
     ~FRHIThread() = default;
 
-    static FORCEINLINE const CHAR* GetStaticThreadName() { return "RHI Executor-Thread"; }
+public:
+    static FORCEINLINE const CHAR* GetThreadName() { return "RHI Executor-Thread"; }
+    
+    static bool Startup();
+    static void Shutdown();
 
-    bool Start();
-    void StopExecution();
+    static bool IsRunning() { return (GInstance != nullptr); }
+
+    static FRHIThread& Get();
+
+    virtual bool Start() override final;
+
+    virtual int32 Run() override final;
+
+    virtual void Stop() override final;
 
     void Execute(FRHIThreadTask&& NewTask);
 
     void WaitForOutstandingTasks();
 
 private:
-    void Worker();
+    bool Create();
     
     FGenericThreadRef      Thread;
 
@@ -682,13 +695,15 @@ private:
     FCriticalSection       TasksCS;
 
     bool bIsRunning;
+
+    static FRHIThread* GInstance;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandListExecutor
 
 class RHI_API FRHICommandListExecutor 
-    : FNonCopyable
+    : private FNonCopyable
 {
 public:
     FRHICommandListExecutor();
@@ -715,9 +730,7 @@ public:
     FORCEINLINE const FRHICommandStatistics& GetStatistics() const { return Statistics; }
 
 private:
-    FRHIThread            ExecutorThread;
     FRHICommandStatistics Statistics;
-
     IRHICommandContext*   CommandContext;
 };
 

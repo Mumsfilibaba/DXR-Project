@@ -314,7 +314,7 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
     int32 RemainingCommands = NumMeshCommands;
     int32 StartCommand      = 0;
 
-    TArray<DispatchID> Tasks(NumThreads);
+    TArray<FAsyncTaskBase*> Tasks(NumThreads);
     for (uint32 Index = 0; Index < NumThreads; ++Index)
     {
         // Allocate Array for commands to fill
@@ -328,26 +328,26 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
         TPair<uint32, uint32>& ReadMeshCommands = ReadableMeshCommands.Emplace(StartCommand, NumCommands);
         StartCommand += NumCommands;
 
-        const auto CullAndSort = [&]() -> void
+        FAsyncTaskBase* AsyncTask = dbg_new TAsyncLambdaTask([&]() -> void
         {
             FrustumCullingAndSortingInternal(
-                CameraPtr, 
-                ReadMeshCommands, 
-                WriteDeferredMeshCommands, 
+                CameraPtr,
+                ReadMeshCommands,
+                WriteDeferredMeshCommands,
                 WriteForwardMeshCommands);
-        };
+        });
 
-        FAsyncTask AsyncTask;
-        AsyncTask.Delegate.BindLambda(CullAndSort);
-
-        Tasks[Index] = FTaskManagerInterface::Get().Dispatch(AsyncTask);
+        AsyncTask->Launch();
+        Tasks[Index] = AsyncTask;
     }
 
     // Sync and insert
     for (uint32 Index = 0; Index < NumThreads; ++Index)
     {
-        FTaskManagerInterface::Get().WaitFor(Tasks[Index], true);
-        
+        FAsyncTaskBase* AsyncTask = Tasks[Index];
+        AsyncTask->WaitForCompletion();
+        delete AsyncTask;
+
         const TArray<uint32>& WriteForwardMeshCommands = WriteableForwardMeshCommands[Index];
         Resources.ForwardVisibleCommands.Append(WriteForwardMeshCommands);
 

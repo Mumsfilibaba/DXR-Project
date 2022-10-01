@@ -82,13 +82,13 @@ void FFrameProfilerWindow::DrawCPUData(float Width)
 
         float Avg = CPUFrameTime.GetAverage();
         float Min = CPUFrameTime.Min;
-        if (Min == FLT_MAX)
+        if (Min == TNumericLimits<float>::Max())
         {
             Min = 0.0f;
         }
 
         float Max = CPUFrameTime.Max;
-        if (Max == -FLT_MAX)
+        if (Max == TNumericLimits<float>::Lowest())
         {
             Max = 0.0f;
         }

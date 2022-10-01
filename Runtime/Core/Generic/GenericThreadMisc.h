@@ -3,6 +3,7 @@
 #include "GenericEvent.h"
 
 #include "Core/Time/Timespan.h"
+#include "Core/Threading/ThreadInterface.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
@@ -17,9 +18,9 @@
 
 struct FGenericThreadMisc
 {
-    static FGenericThread* CreateThread(const TFunction<void()>& InFunction);
-    static FGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName);
-    static FGenericEvent*  CreateEvent(bool bManualReset);
+    static FGenericThread* CreateThread(FThreadInterface* Runnable);
+    
+    static FGenericEvent* CreateEvent(bool bManualReset);
 
     static FORCEINLINE bool Initialize() { return true; }
     static FORCEINLINE void Release()    { }

@@ -2,11 +2,14 @@
 #include "Core/Core.h"
 #include "Core/Templates/ClassUtilities.h"
 
+#define SCOPED_LOCK(Lock) TScopedLock<decltype(Lock)> STRING_CONCAT(ScopedLock_, __LINE__)(Lock) 
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TScopedLock
 
 template<typename LockType>
-class TScopedLock : FNonCopyAndNonMovable
+class TScopedLock 
+    : private FNonCopyAndNonMovable
 {
 public:
     

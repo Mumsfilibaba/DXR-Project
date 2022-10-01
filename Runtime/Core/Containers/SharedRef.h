@@ -185,6 +185,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType** ReleaseAndGetAddressOf() noexcept
     {
+        Check(IsValid());
         Ptr->Release();
         return &Ptr;
     }
@@ -238,6 +239,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
+        Check(IsValid());
         return *Ptr;
     }
 

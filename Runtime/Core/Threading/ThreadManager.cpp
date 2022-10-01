@@ -63,9 +63,9 @@ FThreadManager& FThreadManager::Get()
     return ThreadManager.GetValue();
 }
 
-FGenericThreadRef FThreadManager::CreateThread(const TFunction<void()>& InFunction)
+FGenericThreadRef FThreadManager::CreateThread(FThreadInterface* InRunnable)
 {
-    FGenericThreadRef Thread = FPlatformThreadMisc::CreateThread(InFunction);
+    FGenericThreadRef Thread = FPlatformThreadMisc::CreateThread(InRunnable);
     if (Thread)
     {
         Threads.Push(Thread);
@@ -76,35 +76,6 @@ FGenericThreadRef FThreadManager::CreateThread(const TFunction<void()>& InFuncti
         LOG_ERROR("Failed to create thread");
         return nullptr;
     }
-}
-
-FGenericThreadRef FThreadManager::CreateNamedThread(const TFunction<void()>& InFunction, const FString& InName)
-{
-    FGenericThreadRef Thread = FPlatformThreadMisc::CreateNamedThread(InFunction, InName);
-    if (Thread)
-    {
-        Threads.Push(Thread);
-        return Thread;
-    }
-    else
-    {
-        LOG_ERROR("Failed to create thread");
-        return nullptr;
-    }
-}
-
-FGenericThreadRef FThreadManager::GetNamedThread(const FString& InName)
-{
-    for (const auto& Thread : Threads)
-    {
-        if (Thread->GetName() == InName)
-        {
-            return Thread;
-        }
-    }
-
-    LOG_WARNING("No thread with the name '%s'", InName.GetCString());
-    return nullptr;
 }
 
 FGenericThreadRef FThreadManager::GetThreadFromHandle(void* ThreadHandle)

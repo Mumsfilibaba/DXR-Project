@@ -42,7 +42,7 @@ public:
 
         FWindowsCriticalSection::PlatformHandle CriticalSection = Lock.GetLock().GetPlatformHandle();
 
-        const bool bResult = !!SleepConditionVariableCS(&ConditionVariable, CriticalSection, INFINITE);
+        const BOOL bResult = SleepConditionVariableCS(&ConditionVariable, CriticalSection, INFINITE);
         if (!bResult)
         {
             FString ErrorString;

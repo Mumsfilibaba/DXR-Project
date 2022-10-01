@@ -171,9 +171,6 @@ public:
 
 public:
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Operators
-
     /**
      * @brief: Copy-assignment operator
      * 
@@ -195,7 +192,8 @@ public:
      */
     FORCEINLINE T operator=(T RHS) noexcept
     {
-        return Store(RHS);
+        Store(RHS);
+        return Value;
     }
 
     /**

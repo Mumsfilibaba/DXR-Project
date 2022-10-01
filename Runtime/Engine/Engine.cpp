@@ -108,8 +108,8 @@ bool FEngine::Initialize()
     SamplerCreateInfo.ComparisonFunc = EComparisonFunc::Never;
     SamplerCreateInfo.Filter         = ESamplerFilter::Anistrotopic;
     SamplerCreateInfo.MaxAnisotropy  = 16;
-    SamplerCreateInfo.MaxLOD         = FLT_MAX;
-    SamplerCreateInfo.MinLOD         = -FLT_MAX;
+    SamplerCreateInfo.MaxLOD         = TNumericLimits<float>::Max();
+    SamplerCreateInfo.MinLOD         = TNumericLimits<float>::Lowest();
     SamplerCreateInfo.MipLODBias     = 0.0f;
 
     BaseMaterialSampler = RHICreateSamplerState(SamplerCreateInfo);

@@ -11,14 +11,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FGenericThreadMisc
 
-FGenericThread* FGenericThreadMisc::CreateThread(const FThreadFunction& InFunction)
+FGenericThread* FGenericThreadMisc::CreateThread(FThreadInterface* Runnable)
 {
-    return dbg_new FGenericThread(InFunction);
-}
-
-FGenericThread* FGenericThreadMisc::CreateNamedThread(const FThreadFunction& InFunction, const FString& InName)
-{
-    return dbg_new FGenericThread(InFunction);
+    return dbg_new FGenericThread(Runnable);
 }
 
 FGenericEvent* FGenericThreadMisc::CreateEvent(bool bManualReset)

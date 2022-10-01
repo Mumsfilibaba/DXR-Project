@@ -137,7 +137,7 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
         }
         else if (IsShaderResourceView(ShaderBindDesc.Type))
         {
-            const uint32 NumDescriptors = ShaderBindDesc.BindCount != 0 ? ShaderBindDesc.BindCount : UINT_MAX;
+            const uint32 NumDescriptors = ShaderBindDesc.BindCount != 0 ? ShaderBindDesc.BindCount : TNumericLimits<uint32>::Max();
 
             ShaderResourceParameters.Emplace(ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, NumDescriptors, 0);
 

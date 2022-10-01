@@ -18,6 +18,8 @@ typedef TSharedRef<struct FGenericEvent> FGenericEventRef;
 struct CORE_API FGenericEvent
     : public FRefCounted
 {
+    virtual ~FGenericEvent() = default;
+
     /** @brief: Trigger the event */
     virtual void Trigger() { }
 

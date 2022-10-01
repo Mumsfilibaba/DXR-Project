@@ -9,18 +9,18 @@ class CORE_API FWindowsThread final
     : public FGenericThread
 {
 public:
-    FWindowsThread(const FThreadFunction& InFunction);
-    FWindowsThread(const FThreadFunction& InFunction, const FString& InName);
+    FWindowsThread(FThreadInterface* InRunnable);
     ~FWindowsThread();
 
     virtual bool Start() override final;
 
-    virtual int32 WaitForCompletion(uint64 TimeoutInMs) override final;
+    virtual int32 WaitForCompletion(uint64 InTimeout) override final;
 
     virtual void* GetPlatformHandle() override final;
 
     virtual FString GetName() const override final { return Name; }
-    virtual void    SetName(const FString& InName) override final;
+    
+    virtual void SetName(const FString& InName) override final;
 
 private:
     static DWORD WINAPI ThreadRoutine(LPVOID ThreadParameter);

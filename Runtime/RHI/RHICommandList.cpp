@@ -8,6 +8,8 @@ RHI_API FRHICommandListExecutor GRHICommandExecutor;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIThread
 
+FRHIThread* FRHIThread::GInstance = nullptr;
+
 FRHIThread::FRHIThread()
     : Thread(nullptr)
     , WaitCS()
@@ -15,17 +17,45 @@ FRHIThread::FRHIThread()
     , bIsRunning(false)
 { }
 
-bool FRHIThread::Start()
+bool FRHIThread::Startup()
 {
-    TFunction<void()> ThreadFunction = Bind(&FRHIThread::Worker, this);
+    if (!GInstance)
+    {
+        GInstance = dbg_new FRHIThread();
+        if (!GInstance->Create())
+        {
+            return false;
+        }
+    }
 
-    Thread = FThreadManager::Get().CreateNamedThread(ThreadFunction, GetStaticThreadName());
+    return true;
+}
+
+void FRHIThread::Shutdown()
+{
+    if (GInstance)
+    {
+        GInstance->Stop();
+
+        delete GInstance;
+        GInstance = nullptr;
+    }
+}
+
+FRHIThread& FRHIThread::Get()
+{
+    Check(GInstance != nullptr);
+    return *GInstance;
+}
+
+bool FRHIThread::Create()
+{
+    Thread = FPlatformThreadMisc::CreateThread(this);
     if (!Thread)
     {
         return false;
     }
 
-    bIsRunning = true;
     if (!Thread->Start())
     {
         return false;
@@ -34,7 +64,42 @@ bool FRHIThread::Start()
     return true;
 }
 
-void FRHIThread::StopExecution()
+bool FRHIThread::Start()
+{
+    bIsRunning = true;
+    return true;
+}
+
+int32 FRHIThread::Run()
+{
+    while (bIsRunning)
+    {
+        TScopedLock WaitLock(WaitCS);
+        WaitCondition.Wait(WaitLock);
+
+        FRHIThreadTask CurrentTask;
+        {
+            SCOPED_LOCK(TasksCS);
+            
+            if (!Tasks.IsEmpty())
+            {
+                CurrentTask = ::Move(Tasks.FirstElement());
+                Tasks.RemoveAt(0);
+            }
+        }
+
+        if (CurrentTask)
+        {
+            TRACE_FUNCTION_SCOPE();
+            CurrentTask.CommandList->Execute();
+            NumCompletedTasks++;
+        }
+    }
+
+    return 0;
+}
+
+void FRHIThread::Stop()
 {
     WaitForOutstandingTasks();
 
@@ -51,9 +116,10 @@ void FRHIThread::Execute(FRHIThreadTask&& NewTask)
 {
     Check(bIsRunning);
 
+    // Set the work to execute
     {
-        // Set the work to execute
-        TScopedLock TaskLock(TasksCS);
+        SCOPED_LOCK(TasksCS);
+
         Tasks.Emplace(Move(NewTask));
         NumSubmittedTasks++;
     }
@@ -71,54 +137,25 @@ void FRHIThread::WaitForOutstandingTasks()
     }
 }
 
-void FRHIThread::Worker()
-{
-    while(bIsRunning)
-    {
-        TScopedLock WaitLock(WaitCS);
-        WaitCondition.Wait(WaitLock);
-
-        FRHIThreadTask CurrentTask;
-        {
-            TScopedLock Lock(TasksCS);
-            if (!Tasks.IsEmpty())
-            {
-                CurrentTask = Move(Tasks.FirstElement());
-                Tasks.RemoveAt(0);
-            }
-        }
-        
-        if (CurrentTask)
-        {
-            TRACE_FUNCTION_SCOPE();
-            CurrentTask.CommandList->Execute();
-            NumCompletedTasks++;
-        }
-    }
-}
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHICommandListExecutor
 
 FRHICommandListExecutor::FRHICommandListExecutor()
-    : ExecutorThread()
-    , Statistics()
+    : Statistics()
     , CommandContext(nullptr)
 { }
 
 bool FRHICommandListExecutor::Initialize()
 {
-    if (!ExecutorThread.Start())
-    {
-        return false;
-    }
-
     return true;
 }
 
 void FRHICommandListExecutor::Release()
 {
-    ExecutorThread.StopExecution();
+    if (FRHIThread::IsRunning())
+    {
+        FRHIThread::Get().Stop();
+    }
 }
 
 void FRHICommandListExecutor::Tick()
@@ -140,18 +177,21 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
         NewCommandList->ExchangeState(CommandList);
         NewCommandList->SetCommandContext(CommandContext);
 
-        ExecutorThread.Execute(FRHIThreadTask(NewCommandList));
+        FRHIThread::Get().Execute(FRHIThreadTask(NewCommandList));
     }
 }
 
 void FRHICommandListExecutor::WaitForOutstandingTasks()
 {
-    ExecutorThread.WaitForOutstandingTasks();
+    FRHIThread::Get().WaitForOutstandingTasks();
 }
 
 void FRHICommandListExecutor::WaitForGPU()
 {
-    WaitForOutstandingTasks();
+    if (FRHIThread::IsRunning())
+    {
+        WaitForOutstandingTasks();
+    }
 
     if (CommandContext)
     {

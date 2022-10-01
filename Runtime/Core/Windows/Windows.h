@@ -19,6 +19,14 @@
     #undef CreateWindow
 #endif
 
+#ifdef CreateThread
+    #undef CreateThread
+#endif
+
+#ifdef CreateEvent
+    #undef CreateEvent
+#endif
+
 #ifdef OutputDebugString
     #undef OutputDebugString
 #endif

@@ -47,13 +47,13 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
 
         float Avg = GPUFrameTime.GetAverage();
         float Min = GPUFrameTime.Min;
-        if (Min == FLT_MAX)
+        if (Min == TNumericLimits<float>::Max())
         {
             Min = 0.0f;
         }
 
         float Max = GPUFrameTime.Max;
-        if (Max == -FLT_MAX)
+        if (Max == TNumericLimits<float>::Lowest())
         {
             Max = 0.0f;
         }

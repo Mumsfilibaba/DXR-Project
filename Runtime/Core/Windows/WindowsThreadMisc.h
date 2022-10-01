@@ -9,12 +9,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsThreadMisc
 
-struct FWindowsThreadMisc 
+struct CORE_API FWindowsThreadMisc 
     : public FGenericThreadMisc
 {
-    static FGenericThread* CreateThread(const FThreadFunction& InFunction);
-    static FGenericThread* CreateNamedThread(const FThreadFunction& InFunction, const FString& InString);
-    static FGenericEvent*  CreateEvent(bool bManualReset);
+    static FGenericThread* CreateThread(FThreadInterface* InRunnable);
+    
+    static FGenericEvent* CreateEvent(bool bManualReset);
 
     static FORCEINLINE uint32 GetNumProcessors()
     {

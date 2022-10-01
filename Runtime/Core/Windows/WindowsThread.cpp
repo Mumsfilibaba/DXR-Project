@@ -5,18 +5,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsThread
 
-FWindowsThread::FWindowsThread(const FThreadFunction& InFunction)
-    : FGenericThread(InFunction)
+FWindowsThread::FWindowsThread(FThreadInterface* InRunnable)
+    : FGenericThread(InRunnable)
     , Thread(0)
     , hThreadID(0)
     , Name()
-{ }
-
-FWindowsThread::FWindowsThread(const FThreadFunction& InFunction, const FString& InName)
-    : FGenericThread(InFunction)
-    , Thread(0)
-    , hThreadID(0)
-    , Name(InName)
 { }
 
 FWindowsThread::~FWindowsThread()
@@ -80,9 +73,17 @@ DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
             SetThreadDescription(CurrentThread->Thread, WideName.GetCString());
         }
 
-        Check(CurrentThread->Function);
-        CurrentThread->Function();
-        return 0;
+        DWORD Result = DWORD(-1);
+        if (FThreadInterface* Runnable = CurrentThread->Runnable)
+        {
+            if (Runnable->Start())
+            {
+                Result = DWORD(Runnable->Run());
+            }
+
+            Runnable->Destroy();
+            return Result;
+        }
     }
 
     return DWORD(-1);

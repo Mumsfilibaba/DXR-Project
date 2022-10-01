@@ -1,4 +1,6 @@
 #pragma once
+#include "Windows.h"
+
 #include "Core/Generic/GenericEvent.h"
 
 typedef TSharedRef<class FWindowsEvent> FWindowsEventRef;
@@ -19,8 +21,8 @@ public:
 
     bool Create(bool bInManualReset)
     {
-        Event = CreateEvent(nullptr, bInManualReset, FALSE, nullptr);
-        if (Event != nullptr)
+        Event = ::CreateEventA(nullptr, bInManualReset, FALSE, nullptr);
+        if (!Event)
         {
             return false;
         }

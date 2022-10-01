@@ -60,14 +60,14 @@ void FMacOutputDeviceConsole::CreateConsole()
             TextView = [[NSTextView alloc] initWithFrame:NSMakeRect(0.0, 0.0, ContentSize.width, ContentSize.height)];
             [TextView setEditable:NO];
             TextView.minSize = NSMakeSize(0.0f, ContentSize.height);
-            TextView.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
+            TextView.maxSize = NSMakeSize(TNumericLimits<float>::Max(), TNumericLimits<float>::Max());
             [TextView setVerticallyResizable:YES];
             [TextView setHorizontallyResizable:NO];
             TextView.autoresizingMask = NSViewWidthSizable;
             TextView.backgroundColor  = BackGroundColor;
             
             NSTextContainer* Container = TextView.textContainer;
-            Container.containerSize = NSMakeSize(ContentSize.width, FLT_MAX);
+            Container.containerSize = NSMakeSize(ContentSize.width, TNumericLimits<float>::Max());
             [Container setWidthTracksTextView:YES];
             
             ScrollView.documentView = TextView;

@@ -6,6 +6,7 @@
 
 #include "Core/Threading/Spinlock.h"
 #include "Core/Containers/Map.h"
+#include "Core/Templates/NumericLimits.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Config
@@ -17,7 +18,7 @@
 // Macros
 
 #if ENABLE_PROFILER
-    #define TRACE_SCOPE(Name)      FScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
+    #define TRACE_SCOPE(Name)      FScopedTrace STRING_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
     #define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(FUNCTION_SIGNATURE)
 #else
     #define TRACE_SCOPE(Name)
@@ -84,8 +85,8 @@ struct FProfileSample
         CurrentSample = 0;
         TotalCalls = 0;
 
-        Max = -FLT_MAX;
-        Min = FLT_MAX;
+        Max = TNumericLimits<float>::Lowest();
+        Min = TNumericLimits<float>::Max();
 
         Clock.Reset();
     }
@@ -94,8 +95,8 @@ struct FProfileSample
 
     FTimer Clock;
 
-    float Max = -FLT_MAX;
-    float Min = FLT_MAX;
+    float Max = TNumericLimits<float>::Lowest();
+    float Min = TNumericLimits<float>::Max();
 
     int32 SampleCount   = 0;
     int32 CurrentSample = 0;

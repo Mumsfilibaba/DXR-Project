@@ -11,7 +11,7 @@
 #include "Core/Templates/IsReallocatable.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TArray - Dynamic Array similar to std::vector
+// TArray - Dynamic Array
 
 template<
     typename T,
@@ -724,17 +724,20 @@ public:
      * @brief: Search the array and remove the first instance of the element from the array if it is found. 
      * 
      * @param Element: Element to remove
+     * @return: Returns true if the element was found and remved, false otherwise
      */
-    FORCEINLINE void Remove(const ElementType& Element) noexcept
+    FORCEINLINE bool Remove(const ElementType& Element) noexcept
     {
         for(SizeType Index = 0; Index < ArraySize; ++Index)
         {
             if (Element == GetElementAt(Index))
             {
                 RemoveAt(Index);
-                break;
+                return true;
             }
         }
+
+        return false;
     }
 
     /**
@@ -1568,7 +1571,7 @@ private:
         }
     }
 
-public:
+private:
     NODISCARD
     static FORCEINLINE SizeType LeftIndex(SizeType Index)
     {

@@ -3,6 +3,7 @@
 
 #include "Core/Math/Vector3.h"
 #include "Core/Containers/String.h"
+#include "Core/Templates/NumericLimits.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -105,7 +106,7 @@ FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FVector3& OutColor, ImGuiColo
 
 inline void ImGui_PrintTime(float Nanoseconds)
 {
-    if (Nanoseconds == FLT_MAX || Nanoseconds == -FLT_MAX)
+    if (Nanoseconds == TNumericLimits<float>::Max() || Nanoseconds == TNumericLimits<float>::Lowest())
     {
         ImGui::Text("0.0 s");
     }

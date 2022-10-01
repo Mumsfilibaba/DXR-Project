@@ -1,6 +1,6 @@
 #include "StbImageLoader.h"
 
-#include "Core/Threading/TaskManagerInterface.h"
+#include "Core/Threading/AsyncTask.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -78,7 +78,7 @@ FImage2DPtr FSTBImageLoader::LoadFile(const FString& Filename)
     FImage2DPtr Image = MakeShared<FImage2D>(Filename, uint16(0), uint16(0), EFormat::Unknown);
 
     // Async lambda
-    const auto LoadImageAsync = [Image, Filename]()
+    Async([Image, Filename]()
     {
         FILE* File = fopen(Filename.GetCString(), "rb");
         if (!File)
@@ -148,11 +148,7 @@ FImage2DPtr FSTBImageLoader::LoadFile(const FString& Filename)
         Image->Width     = (uint16)Width;
         Image->Height    = (uint16)Height;
         Image->bIsLoaded = true;
-    };
+    });
 
-    FAsyncTask NewTask;
-    NewTask.Delegate.BindLambda(LoadImageAsync);
-
-    FTaskManagerInterface::Get().Dispatch(NewTask);
     return Image;
 }

@@ -24,7 +24,7 @@ CONSTEXPR typename TUnderlyingType<EnumType>::Type ToUnderlying(EnumType Value)
 // ToInteger
 
 template<typename T>
-CONSTEXPR typename TEnableIf<TIsPointer<T>::Value, uint64>::Type ToInteger(T Pointer)
+CONSTEXPR typename TEnableIf<TIsPointer<T>::Value, uintptr>::Type ToInteger(T Pointer)
 {
-    return reinterpret_cast<uint64>(Pointer);
+    return reinterpret_cast<uintptr>(Pointer);
 }
