@@ -1,4 +1,5 @@
 #include "MacThread.h"
+#include "MacEvent.h"
 #include "MacThreadMisc.h"
 
 #include <Foundation/Foundation.h>
@@ -6,12 +7,18 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacThreadMisc
 
-FGenericThread* FMacThreadMisc::CreateThread(const FThreadFunction& InFunction)
+FGenericThread* FMacThreadMisc::CreateThread(FThreadInterface* InRunnable)
 {
-    return new FMacThread(InFunction);
+    return new FMacThread(InRunnable);
 }
 
-FGenericThread* FMacThreadMisc::CreateNamedThread(const FThreadFunction& InFunction, const FString& InName)
+FGenericEvent* FMacThreadMisc::CreateEvent(bool bManualReset)
 {
-    return new FMacThread(InFunction, InName);
+    FMacEventRef NewEvent = new FMacEvent();
+    if (NewEvent->Create(bManualReset))
+    {
+        return nullptr;
+    }
+
+    return NewEvent.ReleaseOwnership();
 }

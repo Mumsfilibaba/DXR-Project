@@ -29,11 +29,8 @@ public:
     /** @brief: Start the thread and start executing the entrypoint */
     virtual bool Start() { return true; }
 
-    /** @return: Waits for the thread and returns the return-value from the thread  */
-    virtual int32 WaitForCompletion(uint64 TimeoutInMs) { return 0; }
-
-    /** @return: Waits for the thread and returns the return-value from the thread  */
-    virtual int32 WaitForCompletion(FTimespan Timeout) { return WaitForCompletion(uint64(Timeout.AsMilliseconds())); }
+    /** @brief: Waits for the thread and returns the return-value from the thread  */
+    virtual void WaitForCompletion() { }
     
     /** @return: Returns the native platform handle */
     virtual void* GetPlatformHandle() { return nullptr; }

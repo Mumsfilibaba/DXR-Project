@@ -6,19 +6,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacThread
 
-FMacThread::FMacThread(const FThreadFunction& InFunction)
-    : FGenericThread(InFunction)
+FMacThread::FMacThread(FThreadInterface* InRunnable)
+    : FGenericThread(InRunnable)
     , Name()
     , Thread()
-	, ThreadExitCode(-1)
-    , bIsRunning(false)
-{ }
-
-FMacThread::FMacThread(const FThreadFunction& InFunction, const FString& InName)
-    : FGenericThread(InFunction)
-    , Name(InName)
-    , Thread()
-    , ThreadExitCode(-1)
     , bIsRunning(false)
 { }
 
@@ -36,13 +27,9 @@ bool FMacThread::Start()
     }
 }
 
-int32 FMacThread::WaitForCompletion(uint64 TimeoutInMs)
+void FMacThread::WaitForCompletion()
 {
-	UNREFERENCED_VARIABLE(TimeoutInMs);
-	
-    // TODO: Investigate timeout
-    const auto Result = pthread_join(Thread, nullptr);
-    return Result ? ThreadExitCode : int32(-1);
+	pthread_join(Thread, nullptr);
 }
 
 void FMacThread::SetName(const FString& InName)
@@ -67,6 +54,8 @@ void* FMacThread::GetPlatformHandle()
 
 void* FMacThread::ThreadRoutine(void* ThreadParameter)
 {
+    int32 Result = int32(-1);
+
     FMacThread* CurrentThread = reinterpret_cast<FMacThread*>(ThreadParameter);
     if (CurrentThread)
     {
@@ -76,12 +65,17 @@ void* FMacThread::ThreadRoutine(void* ThreadParameter)
             pthread_setname_np(CurrentThread->Name.GetCString());
         }
 
-        Check(CurrentThread->Function);
-        CurrentThread->Function();
+        if (FThreadInterface* Runnable = CurrentThread->GetRunnable())
+        {
+            if (Runnable->Start())
+            {
+                Result = Runnable->Run();
+            }
 
-		CurrentThread->ThreadExitCode = 0;
+            Runnable->Destroy();
+        }
     }
 
     pthread_exit(nullptr);
-    return nullptr;
+    return reinterpret_cast<void*>(Result);
 }

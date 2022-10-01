@@ -41,13 +41,10 @@ bool FWindowsThread::Start()
     }
 }
 
-int32 FWindowsThread::WaitForCompletion(uint64 TimeoutInMs)
+void FWindowsThread::WaitForCompletion()
 {
     DWORD ThreadExitCode = 0;
     WaitForSingleObject(Thread, DWORD(TimeoutInMs));
-
-    const BOOL Result = GetExitCodeThread(Thread, &ThreadExitCode);
-    return Result ? int32(ThreadExitCode) : int32(-1);
 }
 
 void FWindowsThread::SetName(const FString& InName)

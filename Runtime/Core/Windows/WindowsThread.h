@@ -14,7 +14,7 @@ public:
 
     virtual bool Start() override final;
 
-    virtual int32 WaitForCompletion(uint64 InTimeout) override final;
+    virtual void WaitForCompletion() override final;
 
     virtual void* GetPlatformHandle() override final;
 

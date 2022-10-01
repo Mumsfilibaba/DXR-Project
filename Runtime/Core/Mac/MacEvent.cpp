@@ -1,9 +1,9 @@
-#include "WindowsEvent.h"
+#include "MacEvent.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsEvent
+// FMacEvent
 
-FWindowsEvent::~FWindowsEvent()
+FMacEvent::~FMacEvent()
 {
     if (Event != nullptr)
     {
@@ -11,19 +11,19 @@ FWindowsEvent::~FWindowsEvent()
     }
 }
 
-void FWindowsEvent::Trigger()
+void FMacEvent::Trigger()
 {
     Check(Event != nullptr);
     SetEvent(Event);
 }
 
-void FWindowsEvent::Wait(uint64 Milliseconds)
+void FMacEvent::Wait(uint64 Milliseconds)
 {
     Check(Event != nullptr);
     WaitForSingleObject(Event, static_cast<DWORD>(Milliseconds));
 }
 
-void FWindowsEvent::Reset()
+void FMacEvent::Reset()
 {
     Check(Event != nullptr);
     ResetEvent(Event);
