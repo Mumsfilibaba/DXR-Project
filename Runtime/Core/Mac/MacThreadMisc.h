@@ -13,13 +13,14 @@
 struct FMacThreadMisc 
     : public FGenericThreadMisc
 {
-    static FGenericThread* CreateThread(const FThreadFunction& InFunction);
-    static FGenericThread* CreateNamedThread(const FThreadFunction& InFunction, const FString& InString);
+    static FGenericThread* CreateThread(FThreadInterface* InRunnable);
 
+    static FGenericEvent* CreateEvent(bool bManualReset);
+    
     static FORCEINLINE bool Initialize() 
     { 
         Check(IsMainThread());
-		    return RegisterMainRunLoop();
+        return RegisterMainRunLoop();
     }
 
     static FORCEINLINE void Release() 
@@ -29,7 +30,7 @@ struct FMacThreadMisc
 
     static uint32 GetNumProcessors()
     {
-        NSUInteger NumProcessors = [NSProcessInfo processInfo].processorCount;
+        const NSUInteger NumProcessors = [NSProcessInfo processInfo].processorCount;
         return static_cast<uint32>(NumProcessors);
     }
 
