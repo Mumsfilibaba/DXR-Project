@@ -57,47 +57,7 @@ private:
 struct CORE_API FWindowsFile 
     : public FGenericFile
 {
-    static FORCEINLINE IFileHandle* OpenForRead(const FString& Filename)
-    {
-        ::SetLastError(S_OK);
+    static FORCEINLINE IFileHandle* OpenForRead(const FString& Filename);
 
-        HANDLE NewHandle = CreateFileA(
-            Filename.GetCString(),
-            GENERIC_READ,
-            0,
-            0,
-            OPEN_EXISTING,
-            FILE_ATTRIBUTE_NORMAL,
-            0);
-
-        if (NewHandle == INVALID_HANDLE_VALUE)
-        {
-            const auto LastError = GetLastError();
-            return nullptr;
-        }
-
-        return dbg_new FWindowsFileHandle(NewHandle);
-    }
-
-    static FORCEINLINE IFileHandle* OpenForWrite(const FString& Filename)
-    {
-        ::SetLastError(S_OK);
-
-        HANDLE NewHandle = ::CreateFileA(
-            Filename.GetCString(),
-            GENERIC_WRITE,
-            0,
-            0,
-            CREATE_NEW,
-            FILE_ATTRIBUTE_NORMAL,
-            0);
-
-        if (NewHandle == INVALID_HANDLE_VALUE)
-        {
-            const auto LastError = ::GetLastError();
-            return nullptr;
-        }
-
-        return dbg_new FWindowsFileHandle(NewHandle);
-    }
+    static FORCEINLINE IFileHandle* OpenForWrite(const FString& Filename);
 };

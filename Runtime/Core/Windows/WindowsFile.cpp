@@ -122,3 +122,50 @@ void FWindowsFileHandle::Close()
     
     delete this;
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FWindowsFile
+
+FORCEINLINE IFileHandle* FWindowsFile::OpenForRead(const FString& Filename)
+{
+    ::SetLastError(S_OK);
+
+    HANDLE NewHandle = CreateFileA(
+        Filename.GetCString(),
+        GENERIC_READ,
+        0,
+        0,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        0);
+
+    if (NewHandle == INVALID_HANDLE_VALUE)
+    {
+        const auto LastError = ::GetLastError();
+        return nullptr;
+    }
+
+    return dbg_new FWindowsFileHandle(NewHandle);
+}
+
+FORCEINLINE IFileHandle* FWindowsFile::OpenForWrite(const FString& Filename)
+{
+    ::SetLastError(S_OK);
+
+    HANDLE NewHandle = ::CreateFileA(
+        Filename.GetCString(),
+        GENERIC_WRITE,
+        0,
+        0,
+        CREATE_NEW,
+        FILE_ATTRIBUTE_NORMAL,
+        0);
+
+    if (NewHandle == INVALID_HANDLE_VALUE)
+    {
+        const auto LastError = ::GetLastError();
+        return nullptr;
+    }
+
+    return dbg_new FWindowsFileHandle(NewHandle);
+}
