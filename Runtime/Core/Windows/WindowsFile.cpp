@@ -51,12 +51,12 @@ int64 FWindowsFileHandle::Tell() const
     return FilePointer;
 }
 
-int32 FWindowsFileHandle::Read(uint8* Buffer, uint32 BufferSize)
+int32 FWindowsFileHandle::Read(uint8* Dst, uint32 BytesToRead)
 {
     Check(IsValid());
 
     DWORD NumRead = 0;
-    if (!ReadFile(FileHandle, Buffer, BufferSize, &NumRead, nullptr))
+    if (!ReadFile(FileHandle, Dst, BytesToRead, &NumRead, nullptr))
     {
         const auto Error = GetLastError();
         
@@ -71,12 +71,12 @@ int32 FWindowsFileHandle::Read(uint8* Buffer, uint32 BufferSize)
     return static_cast<int32_t>(NumRead);
 }
 
-int32 FWindowsFileHandle::Write(uint8* Buffer, uint32 BufferSize)
+int32 FWindowsFileHandle::Write(uint8* Src, uint32 BytesToWrite)
 {
     Check(IsValid());
 
     DWORD NumWritten = 0;
-    if (!WriteFile(FileHandle, Buffer, BufferSize, &NumWritten, nullptr))
+    if (!WriteFile(FileHandle, Src, BytesToWrite, &NumWritten, nullptr))
     {
         const auto Error = GetLastError();
 
@@ -107,10 +107,7 @@ bool FWindowsFileHandle::Truncate(int64 NewSize)
 
 bool FWindowsFileHandle::IsValid() const
 {
-    return 
-        (FileHandle != 0) && 
-        (FileHandle != INVALID_HANDLE_VALUE) &&
-        (FileSize   != -1);
+    return (FileHandle != 0) && (FileHandle != INVALID_HANDLE_VALUE) && (FileSize != -1);
 }
 
 void FWindowsFileHandle::Close()
@@ -120,6 +117,8 @@ void FWindowsFileHandle::Close()
         CloseHandle(FileHandle);
     }
     
+    FileHandle = INVALID_HANDLE_VALUE;
+    FileSize   = -1;
     delete this;
 }
 

@@ -1,4 +1,6 @@
 #pragma once
+#include "EngineModule.h"
+
 #include "Core/RefCounted.h"
 #include "Core/Containers/Optional.h"
 #include "Core/Containers/SharedRef.h"
@@ -16,7 +18,7 @@ typedef TSharedRef<class FMeshModel> FMeshModelRef;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FTexture2D 
 
-class FTexture2D 
+class ENGINE_API FTexture2D 
     : public FRefCounted
 {
 public:
@@ -32,10 +34,12 @@ public:
     uint16 GetWidth() const;
     uint16 GetHeight() const;
 
-    void* GetData() const;
+    void* GetData(int32 MipLevel = 0) const;
 
 private:
     FRHITexture2DRef TextureRHI;
+
+    TArray<void*> TextureData;
 
     EFormat Format;
 
@@ -46,7 +50,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMeshModel
 
-class FMeshModel
+class ENGINE_API FMeshModel
     : public FRefCounted
 {
 public:
@@ -58,13 +62,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FAssetManager
 
-class FAssetManager
+class ENGINE_API FAssetManager
 {
 private:
-    friend class TOptional<FAssetManager>;
-
     FAssetManager();
-    ~FAssetManager();
+    ~FAssetManager() = default;
 
 public:
 
@@ -75,7 +77,7 @@ public:
     static void Release();
 
     /** @brief: Retrieve the AssetManager instance */
-    static FORCEINLINE FAssetManager& Get() { return Instance.GetValue(); }
+    static FAssetManager& Get();
 
     /** 
     * @brief: Load a texture
@@ -103,5 +105,5 @@ private:
     FMeshModelMap    MeshModels;
     FCriticalSection MeshModelsCS;
 
-    static TOptional<FAssetManager> Instance;
+    static FAssetManager* GInstance;
 };
