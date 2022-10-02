@@ -13,7 +13,7 @@
 #include "Engine/Resources/Material.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FEngine - Class representing the engine
+// FEngine
 
 struct ENGINE_API FEngine
 {

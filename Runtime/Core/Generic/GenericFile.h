@@ -33,7 +33,7 @@ struct IFileHandle
     virtual int64 Tell() const = 0;
 
     /** @brief: Read from the file */
-    virtual int32 Read(uint8* Buffer, uint32 BufferSize) = 0;
+    virtual int32 Read(uint8* Buffer, uint32 BytesToRead) = 0;
 
     /** @brief: Write to the file */
     virtual int32 Write(uint8* Buffer, uint32 BufferSize) = 0;
