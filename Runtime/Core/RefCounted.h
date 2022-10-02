@@ -4,6 +4,7 @@
 #include "Core/Threading/AtomicInt.h"
 #include "Core/Templates/IsBaseOf.h"
 #include "Core/Templates/EnableIf.h"
+#include "Core/Templates/AddPointer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRefCounted
@@ -22,14 +23,14 @@ public:
     virtual int32 GetRefCount() const override;
 
 private:
-    mutable FAtomicInt32 StrongReferences;
+    FAtomicInt32 StrongReferences;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Add a reference to a RefCounted object safely
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsBaseOf<FRefCounted, T>::Value, T*>::Type AddRef(T* InRefCounted)
+FORCEINLINE typename TEnableIf<TIsBaseOf<FRefCounted, T>::Value, typename TAddPointer<T>::Type>::Type AddRef(T* InRefCounted)
 {
     if (InRefCounted)
     {

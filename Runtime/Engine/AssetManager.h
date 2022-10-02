@@ -22,8 +22,8 @@ class ENGINE_API FTexture2D
     : public FRefCounted
 {
 public:
-    FTexture2D();
-    ~FTexture2D();
+    FTexture2D() = default;
+    ~FTexture2D() = default;
 
     bool CreateRHITexture();
 
