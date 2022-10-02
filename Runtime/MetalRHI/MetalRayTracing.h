@@ -9,20 +9,15 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalRayTracingGeometry
 
-class FMetalRayTracingGeometry : public FRHIRayTracingGeometry
+class FMetalRayTracingGeometry 
+    : public FRHIRayTracingGeometry
 {
 public:
-
     FMetalRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
         : FRHIRayTracingGeometry(Initializer)
     { }
 
     ~FMetalRayTracingGeometry() = default;
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIRayTracingGeometry Interface
 
     virtual void* GetRHIBaseBVHBuffer()             { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
@@ -31,7 +26,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalRayTracingScene
 
-class FMetalRayTracingScene : public FRHIRayTracingScene
+class FMetalRayTracingScene 
+    : public FRHIRayTracingScene
 {
 public:
     FMetalRayTracingScene(FMetalDeviceContext* InDeviceContext, const FRHIRayTracingSceneInitializer& Initializer)
@@ -40,11 +36,6 @@ public:
     { }
 
     ~FMetalRayTracingScene() = default;
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIRayTracingScene Interface
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
     virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final{ return FRHIDescriptorHandle(); }

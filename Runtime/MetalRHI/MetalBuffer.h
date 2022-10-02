@@ -9,7 +9,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalBuffer
 
-class FMetalBuffer : public FMetalObject
+class FMetalBuffer 
+    : public FMetalObject
 {
 public:
     
@@ -40,7 +41,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalVertexBuffer
 
-class FMetalVertexBuffer : public FMetalBuffer, public FRHIVertexBuffer
+class FMetalVertexBuffer 
+    : public FMetalBuffer
+    , public FRHIVertexBuffer
 {
 public:
 
@@ -73,7 +76,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalIndexBuffer
 
-class FMetalIndexBuffer : public FMetalBuffer, public FRHIIndexBuffer
+class FMetalIndexBuffer 
+    : public FMetalBuffer
+    , public FRHIIndexBuffer
 {
 public:
     
@@ -106,7 +111,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalConstantBuffer
 
-class FMetalConstantBuffer : public FMetalBuffer, public FRHIConstantBuffer
+class FMetalConstantBuffer 
+    : public FMetalBuffer
+    , public FRHIConstantBuffer
 {
 public:
     
@@ -141,7 +148,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalGenericBuffer
 
-class FMetalGenericBuffer : public FMetalBuffer, public FRHIGenericBuffer
+class FMetalGenericBuffer 
+    : public FMetalBuffer
+    , public FRHIGenericBuffer
 {
 public:
     

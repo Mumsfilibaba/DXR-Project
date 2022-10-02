@@ -11,10 +11,10 @@ class FMetalViewport;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalTexture
 
-class FMetalTexture : public FMetalObject
+class FMetalTexture 
+    : public FMetalObject
 {
 public:
-     
     FMetalTexture(FMetalDeviceContext* InDeviceContext)
         : FMetalObject(InDeviceContext)
         , Texture(nil)
@@ -26,9 +26,7 @@ public:
     {
         NSSafeRelease(Texture);
     }
-    
-public:
-    
+
     void SetMTLTexture(id<MTLTexture> InTexture) { Texture = [InTexture retain]; }
     
     void SetViewport(FMetalViewport* InViewport) { Viewport = InViewport; }
@@ -48,24 +46,18 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalTexture2D
 
-class FMetalTexture2D : public FMetalTexture, public FRHITexture2D
+class FMetalTexture2D 
+    : public FMetalTexture
+    , public FRHITexture2D
 {
 public:
-
     FMetalTexture2D(FMetalDeviceContext* InDeviceContext, const FRHITexture2DInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
         , FRHITexture2D(Initializer)
         , UnorderedAccessView(dbg_new FMetalUnorderedAccessView(InDeviceContext, this))
     { }
 
-public:
-    
     FMetalUnorderedAccessView* GetMetalUnorderedAccessView() const { return UnorderedAccessView.Get(); }
-    
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
     virtual void* GetRHIBaseTexture()  override final { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
@@ -94,19 +86,15 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalTexture2DArray
 
-class FMetalTexture2DArray : public FMetalTexture, public FRHITexture2DArray
+class FMetalTexture2DArray 
+    : public FMetalTexture
+    , public FRHITexture2DArray
 {
 public:
-
     FMetalTexture2DArray(FMetalDeviceContext* InDeviceContext, const FRHITexture2DArrayInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
         , FRHITexture2DArray(Initializer)
     { }
-    
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
@@ -130,19 +118,15 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalTextureCube
 
-class FMetalTextureCube : public FMetalTexture, public FRHITextureCube
+class FMetalTextureCube 
+    : public FMetalTexture
+    , public FRHITextureCube
 {
 public:
-
     FMetalTextureCube(FMetalDeviceContext* InDeviceContext, const FRHITextureCubeInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
         , FRHITextureCube(Initializer)
     { }
-    
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
@@ -166,19 +150,15 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalTextureCubeArray
 
-class FMetalTextureCubeArray : public FMetalTexture, public FRHITextureCubeArray
+class FMetalTextureCubeArray 
+    : public FMetalTexture
+    , public FRHITextureCubeArray
 {
 public:
-    
     FMetalTextureCubeArray(FMetalDeviceContext* InDeviceContext, const FRHITextureCubeArrayInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
         , FRHITextureCubeArray(Initializer)
     { }
-    
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
@@ -202,19 +182,15 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalTexture3D
 
-class FMetalTexture3D : public FMetalTexture, public FRHITexture3D
+class FMetalTexture3D 
+    : public FMetalTexture
+    , public FRHITexture3D
 {
 public:
-    
     FMetalTexture3D(FMetalDeviceContext* InDeviceContext, const FRHITexture3DInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
         , FRHITexture3D(Initializer)
     { }
-    
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }

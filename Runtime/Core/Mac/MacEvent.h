@@ -16,7 +16,7 @@ class FMacEvent final
         None = 0,
         One  = 1,
         All  = 2,
-    }
+    };
 
 public:
     FMacEvent();

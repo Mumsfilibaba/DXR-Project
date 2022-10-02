@@ -6,7 +6,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalModule
 
-struct FMetalModule final : public FRHIModule
+struct FMetalModule final 
+    : public FRHIModule
 {
     FMetalModule()  = default;
     ~FMetalModule() = default;

@@ -15,7 +15,7 @@ public:
 
     virtual bool SeekFromStart(int64 InOffset) override final;
     virtual bool SeekFromCurrent(int64 InOffset) override final;
-    virtual bool SeekFromEnd(int64 InOffset);
+    virtual bool SeekFromEnd(int64 InOffset) override final;;
 
     virtual int64 Size() const override final;
 

@@ -7,7 +7,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalTimestampQuery
 
-class FMetalTimestampQuery : public FRHITimestampQuery
+class FMetalTimestampQuery 
+    : public FRHITimestampQuery
 {
 public:
     FMetalTimestampQuery()  = default;

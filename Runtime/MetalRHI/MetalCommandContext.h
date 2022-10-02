@@ -58,7 +58,9 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalCommandContext
 
-class FMetalCommandContext final : public FMetalObject, public IRHICommandContext
+class FMetalCommandContext final 
+    : public FMetalObject
+    , public IRHICommandContext
 {
 private:
 

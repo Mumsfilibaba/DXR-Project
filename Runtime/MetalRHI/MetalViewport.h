@@ -22,7 +22,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalViewport
 
-class FMetalViewport : public FMetalObject, public FRHIViewport
+class FMetalViewport 
+    : public FMetalObject
+    , public FRHIViewport
 {
 public:
     FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer);

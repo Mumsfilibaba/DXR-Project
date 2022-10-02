@@ -9,7 +9,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalView
 
-class FMetalView : public FMetalObject
+class FMetalView 
+    : public FMetalObject
 {
 public:
     explicit FMetalView(FMetalDeviceContext* InDeviceContext)
@@ -26,10 +27,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalShaderResourceView
 
-class FMetalShaderResourceView : public FRHIShaderResourceView, public FMetalView
+class FMetalShaderResourceView 
+    : public FRHIShaderResourceView
+    , public FMetalView
 {
 public:
-
     explicit FMetalShaderResourceView(FMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
         : FRHIShaderResourceView(InResource)
         , FMetalView(InDeviceContext)
@@ -41,7 +43,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalUnorderedAccessView
 
-class FMetalUnorderedAccessView : public FRHIUnorderedAccessView, public FMetalView
+class FMetalUnorderedAccessView 
+    : public FRHIUnorderedAccessView
+    , public FMetalView
 {
 public:
     explicit FMetalUnorderedAccessView(FMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
