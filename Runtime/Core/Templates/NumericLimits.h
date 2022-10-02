@@ -8,7 +8,7 @@
 // TNumericLimits
 
 template<typename T>
-class TNumericLimits;
+struct TNumericLimits;
 
 template<>
 struct TNumericLimits<bool>

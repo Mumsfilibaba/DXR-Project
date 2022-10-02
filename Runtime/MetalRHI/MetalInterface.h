@@ -19,17 +19,14 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalInterface
 
-class FMetalInterface final : public FRHIInterface
+class FMetalInterface final
+    : public FRHIInterface
 {
-private:
+public:
 	FMetalInterface();
 	~FMetalInterface();
 
-public:
-	static FMetalInterface* CreateMetalCoreInterface();
-
-public:
-	virtual bool Initialize(bool bEnableDebug) override final;
+    virtual bool Initialize() override final;
 
     virtual FRHITexture2D*               RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)               override final;
     virtual FRHITexture2DArray*          RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)     override final;
@@ -90,7 +87,6 @@ public:
     virtual bool RHIQueryUAVFormatSupport(EFormat Format)                    const override final;
 
 public:
-    
     FMetalDeviceContext* GetDeviceContext() const { return DeviceContext; }
     
 private:

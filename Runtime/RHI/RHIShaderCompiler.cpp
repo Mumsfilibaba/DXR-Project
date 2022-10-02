@@ -43,27 +43,29 @@ static LPCWSTR GetShaderStageString(EShaderStage Stage)
     switch (Stage)
     {
         // Compute
-        case EShaderStage::Compute:       return L"cs";
+        case EShaderStage::Compute:         return L"cs";
 
         // Graphics
-        case EShaderStage::Vertex:        return L"vs";
-        case EShaderStage::Hull:          return L"hs";
-        case EShaderStage::Domain:        return L"ds";
-        case EShaderStage::Geometry:      return L"gs";
-        case EShaderStage::Pixel:         return L"ps";
+        case EShaderStage::Vertex:          return L"vs";
+        case EShaderStage::Hull:            return L"hs";
+        case EShaderStage::Domain:          return L"ds";
+        case EShaderStage::Geometry:        return L"gs";
+        case EShaderStage::Pixel:           return L"ps";
 
         // New Graphics Pipeline
-        case EShaderStage::Mesh:          return L"ms";
-        case EShaderStage::Amplification: return L"as";
+        case EShaderStage::Mesh:            return L"ms";
+        case EShaderStage::Amplification:   return L"as";
 
         // Ray tracing
         case EShaderStage::RayGen:
         case EShaderStage::RayAnyHit:
         case EShaderStage::RayClosestHit:
-        case EShaderStage::RayMiss:       return L"lib";
+        case EShaderStage::RayIntersection:
+        case EShaderStage::RayCallable:
+        case EShaderStage::RayMiss:         return L"lib";
+            
+        default:                            return L"xxx";
     }
-
-    return L"xxx";
 }
 
 static LPCWSTR GetShaderModelString(EShaderModel Model)
@@ -79,15 +81,15 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
         case EShaderModel::SM_6_4: return L"6_4";
         case EShaderModel::SM_6_5: return L"6_5";
         case EShaderModel::SM_6_6: return L"6_6";
+            
+        default:                   return L"0_0";
     }
-
-    return L"0_0";
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FShaderBlob
 
-class FShaderBlob : public IDxcBlob
+class FShaderBlob final : public IDxcBlob
 {
 public:
     FShaderBlob(LPCVOID InData, SIZE_T InSize)
@@ -104,17 +106,17 @@ public:
         FMemory::Free(Data);
     }
 
-    virtual LPVOID GetBufferPointer() override
+    virtual LPVOID GetBufferPointer() override final
     {
         return Data;
     }
 
-    virtual SIZE_T GetBufferSize() override
+    virtual SIZE_T GetBufferSize() override final
     {
         return Size;
     }
 
-    virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject)
+    virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject) override final
     {
         if (!ppvObject)
         {
@@ -134,13 +136,13 @@ public:
         return E_NOINTERFACE;
     }
 
-    virtual ULONG AddRef()
+    virtual ULONG AddRef() override final
     {
         FPlatformInterlocked::InterlockedIncrement(&References);
         return static_cast<ULONG>(References);
     }
 
-    virtual ULONG Release()
+    virtual ULONG Release() override final
     {
         ULONG NumRefs = static_cast<ULONG>(FPlatformInterlocked::InterlockedDecrement(&References));
         if (NumRefs == 0)
@@ -154,7 +156,6 @@ public:
 private:
     LPVOID Data;
     SIZE_T Size;
-
     int32  References;
 };
 

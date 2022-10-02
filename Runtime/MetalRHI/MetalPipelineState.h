@@ -12,7 +12,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalInputLayoutState
 
-class FMetalInputLayoutState : public FRHIVertexInputLayout, public FMetalObject
+class FMetalInputLayoutState 
+    : public FRHIVertexInputLayout
+    , public FMetalObject
 {
 public:
     FMetalInputLayoutState(FMetalDeviceContext* DeviceContext, const FRHIVertexInputLayoutInitializer& Initializer)
@@ -34,8 +36,7 @@ public:
     }
     
     ~FMetalInputLayoutState() = default;
-    
-public:
+
     MTLVertexDescriptor* GetMTLVertexDescriptor() const { return VertexDescriptor; }
     
 private:
@@ -46,10 +47,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalDepthStencilState
 
-class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalObject
+class FMetalDepthStencilState 
+    : public FRHIDepthStencilState
+    , public FMetalObject
 {
 public:
-    
     FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInitializer& Initializer)
         : FMetalObject(DeviceContext)
         , DepthStencilState()
@@ -96,7 +98,6 @@ public:
     }
     
 public:
-    
     id<MTLDepthStencilState> GetMTLDepthStencilState() const { return DepthStencilState; }
     
 private:
@@ -106,16 +107,16 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalRasterizerState
 
-class FMetalRasterizerState : public FRHIRasterizerState, public FMetalObject
+class FMetalRasterizerState 
+    : public FRHIRasterizerState
+    , public FMetalObject
 {
 public:
-
     FMetalRasterizerState(FMetalDeviceContext* DeviceContext, const FRHIRasterizerStateInitializer& Initializer)
         : FMetalObject(DeviceContext)
         , FillMode(ConvertFillMode(Initializer.FillMode))
         , FrontFaceWinding(Initializer.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
-    {
-    }
+    { }
 
     ~FMetalRasterizerState() = default;
 
@@ -133,10 +134,10 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalBlendState
 
-class FMetalBlendState : public FRHIBlendState
+class FMetalBlendState 
+    : public FRHIBlendState
 {
 public:
-
     FMetalBlendState()  = default;
     ~FMetalBlendState() = default;
 };
@@ -158,7 +159,9 @@ struct FMetalResourceBinding
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalGraphicsPipelineState
 
-class FMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public FMetalObject
+class FMetalGraphicsPipelineState 
+    : public FRHIGraphicsPipelineState
+    , public FMetalObject
 {
 public:
     FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInitializer& Initializer)
@@ -293,17 +296,11 @@ public:
         NSSafeRelease(PipelineState);
     }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIPipelineState Interface
-
     virtual void SetName(const FString& InName) override final { }
 
     virtual FString GetName() const override final { return ""; }
     
 public:
-    
     FMetalBlendState*        GetMetalBlendState()        const { return BlendState.Get(); }
     FMetalDepthStencilState* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
     FMetalRasterizerState*   GetMetalRasterizerState()   const { return RasterizerState.Get(); }
@@ -333,17 +330,12 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalComputePipelineState
 
-class FMetalComputePipelineState : public FRHIComputePipelineState
+class FMetalComputePipelineState 
+    : public FRHIComputePipelineState
 {
 public:
-
     FMetalComputePipelineState()  = default;
     ~FMetalComputePipelineState() = default;
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIPipelineState Interface
 
     virtual void SetName(const FString& InName) override final { }
 
@@ -353,17 +345,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalRayTracingPipelineState
 
-class FMetalRayTracingPipelineState : public FRHIRayTracingPipelineState
+class FMetalRayTracingPipelineState 
+    : public FRHIRayTracingPipelineState
 {
 public:
-
     FMetalRayTracingPipelineState()  = default;
     ~FMetalRayTracingPipelineState() = default;
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIPipelineState Interface
 
     virtual void SetName(const FString& InName) override final { }
 

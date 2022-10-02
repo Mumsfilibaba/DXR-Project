@@ -7,7 +7,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalSamplerState
 
-class FMetalSamplerState : public FRHISamplerState
+class FMetalSamplerState 
+    : public FRHISamplerState
 {
 public:
     FMetalSamplerState()  = default;

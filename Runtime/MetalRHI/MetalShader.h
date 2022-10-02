@@ -21,7 +21,8 @@ enum EShaderVisibility : uint8
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalShader
 
-class FMetalShader : public FMetalObject
+class FMetalShader
+    : public FMetalObject
 {
 public:
     FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVisibility, const TArray<uint8>& InCode);
@@ -45,7 +46,9 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalVertexShader
 
-class FMetalVertexShader : public FRHIVertexShader, public FMetalShader
+class FMetalVertexShader 
+    : public FRHIVertexShader
+    , public FMetalShader
 {
 public:
     FMetalVertexShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
@@ -60,7 +63,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalPixelShader
 
-class FMetalPixelShader : public FRHIPixelShader, public FMetalShader
+class FMetalPixelShader 
+    : public FRHIPixelShader
+    , public FMetalShader
 {
 public:
     FMetalPixelShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
@@ -75,7 +80,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalRayTracingShader
 
-class FMetalRayTracingShader : public FMetalShader
+class FMetalRayTracingShader 
+    : public FMetalShader
 {
 public:
     FMetalRayTracingShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
@@ -93,7 +99,9 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalRayGenShader
 
-class FMetalRayGenShader : public FRHIRayGenShader, public FMetalRayTracingShader
+class FMetalRayGenShader 
+    : public FRHIRayGenShader
+    , public FMetalRayTracingShader
 {
 public:
     FMetalRayGenShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
@@ -108,7 +116,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalRayAnyHitShader
 
-class FMetalRayAnyHitShader : public FRHIRayAnyHitShader, public FMetalRayTracingShader
+class FMetalRayAnyHitShader 
+    : public FRHIRayAnyHitShader
+    , public FMetalRayTracingShader
 {
 public:
     FMetalRayAnyHitShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
@@ -123,7 +133,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalRayClosestHitShader
 
-class FMetalRayClosestHitShader : public FRHIRayClosestHitShader, public FMetalRayTracingShader
+class FMetalRayClosestHitShader 
+    : public FRHIRayClosestHitShader
+    , public FMetalRayTracingShader
 {
 public:
     
@@ -139,7 +151,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalRayMissShader
 
-class FMetalRayMissShader : public FRHIRayMissShader, public FMetalRayTracingShader
+class FMetalRayMissShader 
+    : public FRHIRayMissShader
+    , public FMetalRayTracingShader
 {
 public:
     FMetalRayMissShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
@@ -154,7 +168,9 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalComputeShader
 
-class FMetalComputeShader : public FRHIComputeShader, public FMetalShader
+class FMetalComputeShader 
+    : public FRHIComputeShader
+    , public FMetalShader
 {
 public:
     FMetalComputeShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)

@@ -17,15 +17,8 @@ FMetalInterface::~FMetalInterface()
 	SAFE_DELETE(DeviceContext);
 }
 
-FMetalInterface* FMetalInterface::CreateMetalCoreInterface()
+bool FMetalInterface::Initialize()
 {
-	return dbg_new FMetalInterface();
-}
-
-bool FMetalInterface::Initialize(bool bEnableDebug)
-{
-	UNREFERENCED_VARIABLE(bEnableDebug);
-	
 	DeviceContext = FMetalDeviceContext::CreateContext(this);
 	if (!DeviceContext)
 	{

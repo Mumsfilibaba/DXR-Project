@@ -12,26 +12,25 @@
 
 FMacFileHandle::FMacFileHandle(int32 InFileHandle, bool bInReadOnly)
     : IFileHandle()
-    , FilePointer(0)
     , FileHandle(InFileHandle)
     , bReadOnly(bInReadOnly)
 { }
 
 bool FMacFileHandle::SeekFromStart(int64 InOffset)
 {
-    check(IsValid());
+    Check(IsValid());
     return (lseek(FileHandle, InOffset, SEEK_SET) != -1);
 }
 
 bool FMacFileHandle::SeekFromCurrent(int64 InOffset)
 {
-    check(IsValid());
+    Check(IsValid());
     return (lseek(FileHandle, InOffset, SEEK_CUR) != -1);
 }
 
 bool FMacFileHandle::SeekFromEnd(int64 InOffset)
 {
-    check(IsValid());
+    Check(IsValid());
     return (lseek(FileHandle, InOffset, SEEK_END) != -1);
 }
 
@@ -131,7 +130,7 @@ bool FMacFileHandle::Truncate(int64 NewSize)
 
 bool FMacFileHandle::IsValid() const
 {
-    return (FileHandle >= 0) && (FileHandle != INVALID_HANDLE_VALUE) && (FileSize != -1);
+    return (FileHandle >= 0);
 }
 
 void FMacFileHandle::Close()
@@ -162,7 +161,7 @@ void FMacFileHandle::Close()
 
 IFileHandle* FMacFile::OpenForRead(const FString& Filename)
 {
-    int32 FileHandle = open(FileName.GetCString(), O_RDONLY);
+    int32 FileHandle = open(Filename.GetCString(), O_RDONLY);
     if (FileHandle < 0)
     {
         return nullptr;
@@ -179,7 +178,7 @@ IFileHandle* FMacFile::OpenForRead(const FString& Filename)
         return nullptr;
     }
 
-    return dbg_new FMacFileHandle(FileHandle);
+    return dbg_new FMacFileHandle(FileHandle, true);
 }
 
 IFileHandle* FMacFile::OpenForWrite(const FString& Filename)
@@ -196,7 +195,7 @@ IFileHandle* FMacFile::OpenForWrite(const FString& Filename)
         S_IROTH | // Read for Permission for Other
         S_IWOTH ; // Write for Permission for Other
 
-    int32 FileHandle = open(FileName.GetCString(), Flags, PermissonFlags);
+    int32 FileHandle = open(Filename.GetCString(), Flags, PermissonFlags);
     if (FileHandle < 0)
     {
         return nullptr;
@@ -213,5 +212,5 @@ IFileHandle* FMacFile::OpenForWrite(const FString& Filename)
         return nullptr;
     }
 
-    return dbg_new FMacFileHandle(FileHandle);
+    return dbg_new FMacFileHandle(FileHandle, false);
 }
