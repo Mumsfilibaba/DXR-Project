@@ -1,5 +1,7 @@
 #include "MacEvent.h"
 
+#include "Core/Templates/NumericLimits.h"
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMacEvent
 
@@ -14,7 +16,7 @@ FMacEvent::FMacEvent()
 
 FMacEvent::~FMacEvent()
 {
-    if (bInitialize)
+    if (bInitialized)
     {
         LockMutex();
         bManualReset = true;
@@ -45,9 +47,9 @@ bool FMacEvent::Create(bool bInManualReset)
     Triggered    = ETriggerType::None;
     bManualReset = bInManualReset;
 
-    if (pthreads_mutex_init(&Mutex, nullptr) == 0)
+    if (pthread_mutex_init(&Mutex, nullptr) == 0)
     {
-        if (pthread_cond_init(&Condition) == 0)
+        if (pthread_cond_init(&Condition, nullptr) == 0)
         {
             bInitialized = true;
             bResult      = true;
@@ -96,12 +98,12 @@ void FMacEvent::Wait(uint64 Milliseconds)
     bool bResult = false;
     do 
     {
-        if (Triggered == ETriggered::One)
+        if (Triggered == ETriggerType::One)
         {
-            Triggered = ETriggered::None;
+            Triggered = ETriggerType::None;
             bResult = true;
         }
-        else if (Triggered == ETriggered::All)
+        else if (Triggered == ETriggerType::All)
         {
             bResult = true;
         }
@@ -133,14 +135,13 @@ void FMacEvent::Wait(uint64 Milliseconds)
 
                 const int32 DifferenceMS = ((Difference.tv_sec * 1000) + (Difference.tv_usec / 1000));
                 Milliseconds = ();
-                StartTime = Now;
+                StartTime    = Now;
             }
         }
 
     } while(!bResult && (Milliseconds != 0));
 
     UnlockMutex();
-    return bResult;
 }
 
 void FMacEvent::Reset()
