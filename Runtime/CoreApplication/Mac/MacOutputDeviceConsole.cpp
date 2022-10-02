@@ -5,6 +5,7 @@
 #include "Core/Mac/Mac.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Mac/MacRunLoop.h"
+#include "Core/Templates/NumericLimits.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 

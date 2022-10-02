@@ -21,8 +21,8 @@ FDirectionalLight::FDirectionalLight()
     , Rotation(0.0f, 0.0f, 0.0f)
     , LookAt(0.0f, 0.0f, 0.0f)
     , Position(0.0f, 0.0f, 0.0f)
-    , Size(GSunSize.GetFloat())
     , CascadeSplitLambda(GCascadeSplitLambda.GetFloat())
+    , Size(GSunSize.GetFloat())
 {
     CORE_OBJECT_INIT();
 

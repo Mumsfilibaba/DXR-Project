@@ -22,51 +22,79 @@ public:
     virtual void SetCursor(ECursor Cursor) override final;
 
     virtual void SetCursorPos(const FIntVector2& Position) override final;
+    
     virtual void SetCursorPos(const FGenericWindowRef& RelativeWindow, const FIntVector2& Position) override final;
 
     virtual FIntVector2 GetCursorPos() const override final;
+    
     virtual FIntVector2 GetCursorPos(const FGenericWindowRef& RelativeWindow) const override final;
 
     virtual void ShowCursor(bool bIsVisible) override final;
 
-    virtual bool IsCursorVisibile() const;
+    virtual bool IsCursorVisibile() const override final;
 
-    virtual bool SupportsHighPrecisionMouse() const override final { return PlatformApplication->SupportsHighPrecisionMouse(); }
+    virtual bool SupportsHighPrecisionMouse() const override final
+    {
+        return PlatformApplication->SupportsHighPrecisionMouse();
+    }
 
-    virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) { return PlatformApplication->EnableHighPrecisionMouseForWindow(Window);  }
+    virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) override final
+    {
+        return PlatformApplication->EnableHighPrecisionMouseForWindow(Window);
+    }
 
     virtual void SetCapture(const FGenericWindowRef& CaptureWindow) override final;
+    
     virtual void SetActiveWindow(const FGenericWindowRef& ActiveWindow) override final;
 
-    virtual FGenericWindowRef GetActiveWindow()      const override final { return PlatformApplication->GetActiveWindow(); }
-    virtual FGenericWindowRef GetWindowUnderCursor() const override final { return PlatformApplication->GetActiveWindow(); }
-    virtual FGenericWindowRef GetCapture()           const override final { return PlatformApplication->GetCapture();  }
+    virtual FGenericWindowRef GetActiveWindow() const override final
+    {
+        return PlatformApplication->GetActiveWindow();
+    }
+    
+    virtual FGenericWindowRef GetWindowUnderCursor() const override final
+    {
+        return PlatformApplication->GetActiveWindow();
+    }
+    
+    virtual FGenericWindowRef GetCapture() const override final
+    {
+        return PlatformApplication->GetCapture();
+    }
 
     virtual void AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority) override final;
+    
     virtual void RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler) override final;
 
     virtual void RegisterMainViewport(const FGenericWindowRef& NewMainViewport) override final;
+    
     virtual FGenericWindowRef GetMainViewport() const override final { return MainViewport; }
 
     virtual void SetRenderer(const TSharedRef<IApplicationRenderer>& NewRenderer) override final;
+    
     virtual TSharedRef<IApplicationRenderer> GetRenderer() const override final { return Renderer; }
 
     virtual void AddWindow(const TSharedRef<FWindow>& NewWindow) override final;
+    
     virtual void RemoveWindow(const TSharedRef<FWindow>& Window) override final;
 
     virtual void DrawString(const FString& NewString) override final;
+    
     virtual void DrawWindows(class FRHICommandList& InCommandList) override final;
 
     virtual void SetPlatformApplication(const TSharedPtr<FGenericApplication>& InFPlatformApplication) override final;
+    
     virtual TSharedPtr<FGenericApplication> GetPlatformApplication() const override final { return PlatformApplication; }
 
     virtual void AddWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority) override final;
+    
     virtual void RemoveWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& WindowMessageHandler) override final;
     
     virtual TSharedPtr<ICursor> GetCursor() const override final { return PlatformApplication->GetCursor(); }
 
 public:
-    virtual void HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState)               override final;
+    virtual void HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState) override final;
+    
     virtual void HandleKeyPressed(EKey KeyCode, bool IsRepeat, FModifierKeyState ModierKeyState) override final;
     
     virtual void HandleKeyChar(uint32 Character) override final;
@@ -74,16 +102,19 @@ public:
     virtual void HandleMouseMove(int32 x, int32 y) override final;
     
     virtual void HandleMouseReleased(EMouseButton Button, FModifierKeyState ModierKeyState) override final;
+    
     virtual void HandleMousePressed(EMouseButton Button, FModifierKeyState ModierKeyState)  override final;
     
     virtual void HandleMouseScrolled(float HorizontalDelta, float VerticalDelta) override final;
 
     virtual void HandleWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height) override final;
-    virtual void HandleWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y)              override final;
+    
+    virtual void HandleWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y) override final;
     
     virtual void HandleWindowFocusChanged(const FGenericWindowRef& Window, bool HasFocus) override final;
     
-    virtual void HandleWindowMouseLeft(const FGenericWindowRef& Window)    override final;
+    virtual void HandleWindowMouseLeft(const FGenericWindowRef& Window) override final;
+    
     virtual void HandleWindowMouseEntered(const FGenericWindowRef& Window) override final;
     
     virtual void HandleWindowClosed(const FGenericWindowRef& Window) override final;
