@@ -37,6 +37,7 @@ void FAsyncTaskBase::Abandon()
 
 bool FAsyncTaskBase::Launch(EQueuePriority Priority, bool bAsync)
 {
+    Check(NumInvokations.Load() == 0);
     NumInvokations++;
 
     if (bAsync)
@@ -50,6 +51,8 @@ bool FAsyncTaskBase::Launch(EQueuePriority Priority, bool bAsync)
             }
         }
 
+        Check(NumInvokations.Load() == 1);
+        
         // Reset the event
         TaskCompleteEvent->Reset();
 

@@ -19,6 +19,7 @@ bool FAsyncWorkThread::Create(const CHAR* InThreadName)
     Thread = FPlatformThreadMisc::CreateThread(this);
     if (!Thread)
     {
+        LOG_ERROR("[FAsyncWorkThread] Failed to Create Thread");
         return false;
     }
 
@@ -26,12 +27,14 @@ bool FAsyncWorkThread::Create(const CHAR* InThreadName)
 
     if (!Thread->Start())
     {
+        LOG_ERROR("[FAsyncWorkThread] Failed to Start Thread");
         return false;
     }
 
     WorkEvent = FPlatformThreadMisc::CreateEvent(false);
     if (!WorkEvent)
     {
+        LOG_ERROR("[FAsyncWorkThread] Failed to Create Event");
         this->Stop();
         return false;
     }
@@ -213,6 +216,8 @@ bool FAsyncThreadPool::CreateWorkers(int32 NumWorkers)
         }
         else
         {
+            LOG_ERROR("[FAsyncThreadPool] Failed to create worker thread");
+            
             delete NewWorker;
             bResult = false;
         }

@@ -34,7 +34,6 @@ public:
     {
         CFRunLoopRemoveSource(RunLoop, Source, (CFStringRef)RunLoopMode);
         CFRelease(Source);
-        
         CFRelease(RunLoop);
     }
     
@@ -103,7 +102,6 @@ bool RegisterMainRunLoop()
 {
     CFRunLoopRef MainLoop = CFRunLoopGetMain();
     GMainThread = new FMacRunLoopSource(MainLoop, NSDefaultRunLoopMode);
-    
     return true;
 }
 

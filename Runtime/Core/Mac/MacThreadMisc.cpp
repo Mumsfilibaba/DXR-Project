@@ -15,7 +15,7 @@ FGenericThread* FMacThreadMisc::CreateThread(FThreadInterface* InRunnable)
 FGenericEvent* FMacThreadMisc::CreateEvent(bool bManualReset)
 {
     FMacEventRef NewEvent = new FMacEvent();
-    if (NewEvent->Create(bManualReset))
+    if (!NewEvent->Create(bManualReset))
     {
         return nullptr;
     }

@@ -43,10 +43,12 @@ FMacEvent::~FMacEvent()
 
 bool FMacEvent::Create(bool bInManualReset)
 {
-    bool bResult = false;
+    Check(bInitialized == false);
+    
     Triggered    = ETriggerType::None;
     bManualReset = bInManualReset;
 
+    bool bResult = false;
     if (pthread_mutex_init(&Mutex, nullptr) == 0)
     {
         if (pthread_cond_init(&Condition, nullptr) == 0)
@@ -78,7 +80,7 @@ void FMacEvent::Trigger()
     else 
     {
         Triggered = ETriggerType::One;
-        const auto Result = pthread_cond_broadcast(&Condition);
+        const auto Result = pthread_cond_signal(&Condition);
         Check(Result == 0);
     }
 
@@ -87,6 +89,8 @@ void FMacEvent::Trigger()
 
 void FMacEvent::Wait(uint64 Milliseconds)
 {
+    Check(bInitialized == true);
+    
     struct timeval StartTime;
     if ((Milliseconds > 0) && (Milliseconds != TNumericLimits<uint64>::Max()))
     {
@@ -118,7 +122,7 @@ void FMacEvent::Wait(uint64 Milliseconds)
             }
             else
             {
-                const uint32 TimeMS = (StartTime.tv_usec / 1000) + Milliseconds;
+                const uint64 TimeMS = (StartTime.tv_usec / 1000) + Milliseconds;
 
                 struct timespec TimeOut;
                 TimeOut.tv_sec  = StartTime.tv_sec + (TimeMS / 1000);
@@ -133,10 +137,13 @@ void FMacEvent::Wait(uint64 Milliseconds)
 
                 SubtractTimevals(&Now, &StartTime, &Difference);
 
-                const int32 DifferenceMS = ((Difference.tv_sec * 1000) + (Difference.tv_usec / 1000));
+                const uint64 DifferenceMS = ((Difference.tv_sec * 1000) + (Difference.tv_usec / 1000));
                 Milliseconds = ((DifferenceMS >= Milliseconds) ? 0 : (Milliseconds - DifferenceMS));
                 StartTime    = Now;
             }
+            
+            NumWaitingThreads--;
+            Check(NumWaitingThreads >= 0);
         }
 
     } while(!bResult && (Milliseconds != 0));
