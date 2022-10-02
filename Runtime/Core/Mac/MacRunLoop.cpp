@@ -92,8 +92,8 @@ public:
             FRunLoopSource* RunLoopSource = [[FRunLoopSource alloc] initWithContext:this];
 
             CFRunLoopSourceContext SourceContext = CFRunLoopSourceContext();
-            SourceContext.info            = reinterpret_cast<void*>(RunLoopSource);
-            SourceContext.version         = 0;
+            SourceContext.info    = reinterpret_cast<void*>(RunLoopSource);
+            SourceContext.version = 0;
 
             // These functions operate on the Info pointer
             SourceContext.retain          = CFRetain;
@@ -102,9 +102,10 @@ public:
             SourceContext.equal           = CFEqual;
             SourceContext.hash            = CFHash;
             
-            SourceContext.perform         = &FRunLoopSourceContext::Perform;
-            // SourceContext.schedule        = &FRunLoopSourceContext::Schedule;
-			// SourceContext.cancel          = &FRunLoopSourceContext::Cancel;
+            // Setup so that the context is called via the FRunLoopSource
+            SourceContext.perform  = &FRunLoopSourceContext::Perform;
+            SourceContext.schedule = &FRunLoopSourceContext::Schedule;
+			SourceContext.cancel   = &FRunLoopSourceContext::Cancel;
 
             CFRunLoopSourceRef Source = CFRunLoopSourceCreate(nullptr, 0, &SourceContext);
 
@@ -177,6 +178,24 @@ private:
 			CFRunLoopSourceSignal(RunLoopSource);
 		}
 	}
+
+    static void Schedule(void* Info, CFRunLoopRef InRunLoop, CFRunLoopMode InRunLoopMode)
+    {
+        FRunLoopSource* RunLoopSource = reinterpret_cast<FRunLoopSource*>(Info);
+        if (RunLoopSource)
+        {
+            [RunLoopSource scheduleOn:InRunLoop inMode:InRunLoopMode];
+        }
+    }
+
+    static void Cancel(void* Info, CFRunLoopRef InRunLoop, CFRunLoopMode InRunLoopMode)
+    {
+        FRunLoopSource* RunLoopSource = reinterpret_cast<FRunLoopSource*>(Info);
+        if (RunLoopSource)
+        {
+            [RunLoopSource cancelFrom:InRunLoop inMode:InRunLoopMode];
+        }
+    }
 
     static void Perform(void* Info)
     {
