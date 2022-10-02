@@ -132,8 +132,8 @@ void FMacEvent::Wait(uint64 Milliseconds)
                 SubtractTimevals(&Now, &StartTime, &Difference);
 
                 const int32 DifferenceMS = ((Difference.tv_sec * 1000) + (Difference.tv_usec / 1000));
-                Milliseconds = ();
-                StartTime = Now;
+                Milliseconds = (((DifferenceMS >= Milliseconds) ? 0 : (Milliseconds - DifferenceMS)););
+                StartTime    = Now;
             }
         }
 
