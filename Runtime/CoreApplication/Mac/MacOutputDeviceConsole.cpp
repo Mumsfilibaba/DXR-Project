@@ -6,6 +6,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Mac/MacRunLoop.h"
 #include "Core/Templates/NumericLimits.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -28,7 +29,7 @@ void FMacOutputDeviceConsole::CreateConsole()
 {
     if (!WindowHandle)
     {
-        MakeMainThreadCall(^
+        ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
             
@@ -103,7 +104,7 @@ void FMacOutputDeviceConsole::CreateConsole()
                     FPlatformApplicationMisc::PumpMessages(true);
                 } while(WindowHandle && ![WindowHandle isVisible]);
             }
-        }, true);
+        }, NSDefaultRunLoopMode, true);
     }
 }
 
@@ -111,7 +112,7 @@ void FMacOutputDeviceConsole::DestroyConsole()
 {
     if (IsVisible())
     {
-        MakeMainThreadCall(^
+        ExecuteOnMainThread(^
         {
 			SCOPED_AUTORELEASE_POOL();
 		
@@ -121,7 +122,7 @@ void FMacOutputDeviceConsole::DestroyConsole()
             NSSafeRelease(ConsoleColor);
 			
 			DestroyResources();
-		}, true);
+		}, NSDefaultRunLoopMode, true);
 	}
 }
 
@@ -129,6 +130,8 @@ void FMacOutputDeviceConsole::DestroyResources()
 {
 	SCOPED_AUTORELEASE_POOL();
 	
+    Check(FPlatformThreadMisc::IsMainThread());
+    
     NSSafeRelease(TextView);
     NSSafeRelease(ScrollView);
 }
@@ -137,8 +140,6 @@ void FMacOutputDeviceConsole::Show(bool bShow)
 {
     if (IsVisible() != bShow)
     {
-        // TScopedLock Lock(WindowCS);
-        
         if (bShow)
 		{
 			CreateConsole();
@@ -154,7 +155,7 @@ void FMacOutputDeviceConsole::Log(const FString& Message)
 {
     if (WindowHandle)
     {
-        MakeMainThreadCall(^
+        ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
 
@@ -162,7 +163,7 @@ void FMacOutputDeviceConsole::Log(const FString& Message)
 			AppendStringAndScroll(String);
 			
             FPlatformApplicationMisc::PumpMessages(true);
-        }, true);
+        }, NSDefaultRunLoopMode, false);
     }
 }
 
@@ -188,7 +189,7 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
             NewColor = EConsoleColor::White;
         }
         
-        MakeMainThreadCall(^
+        ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
 
@@ -200,7 +201,7 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
             SetTextColor(EConsoleColor::White);
 
             FPlatformApplicationMisc::PumpMessages(true);
-        }, true);
+        }, NSDefaultRunLoopMode, false);
     }
 }
 
@@ -208,11 +209,11 @@ void FMacOutputDeviceConsole::Flush()
 {
     if (WindowHandle)
     {
-        MakeMainThreadCall(^
+        ExecuteOnMainThread(^
         {
 			SCOPED_AUTORELEASE_POOL();
 			TextView.string = @"";
-        }, true);
+        }, NSDefaultRunLoopMode, false);
     }
 }
 
@@ -220,13 +221,13 @@ void FMacOutputDeviceConsole::SetTitle(const FString& InTitle)
 {
     if (WindowHandle)
     {
-        MakeMainThreadCall(^
+        ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
             
             NSString* Title = InTitle.GetNSString();
             WindowHandle.title = Title;
-        }, true);
+        }, NSDefaultRunLoopMode, false);
     }
 }
 
@@ -280,7 +281,7 @@ int32 FMacOutputDeviceConsole::GetLineCount() const
 	if (WindowHandle)
 	{
 		__block NSUInteger NumberOfLines = 0;
-		MakeMainThreadCall(^
+		ExecuteOnMainThread(^
 		{
 			NSString* String = TextView.string;
 			
@@ -289,7 +290,7 @@ int32 FMacOutputDeviceConsole::GetLineCount() const
 			{
 				LineIndex = NSMaxRange([String lineRangeForRange:NSMakeRange(LineIndex, 0)]);
 			}
-		}, true);
+		}, NSDefaultRunLoopMode, true);
 		
 		return static_cast<int32>(NumberOfLines);
 	}
@@ -311,7 +312,7 @@ void FMacOutputDeviceConsole::AppendStringAndScroll(NSString* String)
 {
 	if (WindowHandle)
 	{
-		MakeMainThreadCall(^
+		ExecuteOnMainThread(^
 		{
 			SCOPED_AUTORELEASE_POOL();
 			
@@ -357,6 +358,6 @@ void FMacOutputDeviceConsole::AppendStringAndScroll(NSString* String)
 			[TextView scrollToEndOfDocument:TextView];
 			
 			[AttributedString release];
-		}, true);
+		}, NSDefaultRunLoopMode, true);
 	}
 }

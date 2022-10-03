@@ -36,7 +36,7 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
     , MetalView(nullptr)
     , Drawable(nil)
 {
-    MakeMainThreadCall(^
+    ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -74,7 +74,7 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
         
         WindowHandle.contentView = MetalView;
         [WindowHandle makeFirstResponder:MetalView];
-    }, true);
+    }, NSDefaultRunLoopMode, true);
     
     // Create BackBuffer
     FRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
@@ -85,7 +85,11 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
 
 FMetalViewport::~FMetalViewport()
 {
-    NSSafeRelease(MetalView);
+    // The view is a UI object and needs to be released on the main-thread
+    ExecuteOnMainThread(^
+    {
+        NSSafeRelease(MetalView);
+    }, NSDefaultRunLoopMode, true);
 }
 
 bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
@@ -94,11 +98,11 @@ bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
     
     if ((Width != InWidth) || (Height != InHeight))
     {
-        MakeMainThreadCall(^
+        ExecuteOnMainThread(^
         {
             CAMetalLayer* MetalLayer = (CAMetalLayer*)MetalView.layer;
             MetalLayer.drawableSize = CGSizeMake(InWidth, InHeight);
-        }, true);
+        }, NSDefaultRunLoopMode, true);
         
         Width  = uint16(InWidth);
         Height = uint16(InHeight);
@@ -140,7 +144,7 @@ id<CAMetalDrawable> FMetalViewport::GetDrawable()
     {
         CAMetalLayer* MetalLayer = GetMetalLayer();
         Drawable = [MetalLayer nextDrawable];
-        
+    
         if (Drawable)
         {
             [Drawable retain];

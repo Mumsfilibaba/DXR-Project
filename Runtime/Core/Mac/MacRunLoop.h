@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 
+#include <Foundation/Foundation.h>
 #include <CoreFoundation/CoreFoundation.h>
 
 /**
@@ -12,17 +13,17 @@
 CORE_API bool RegisterMainRunLoop();
 
 /** @brief: Perform a call on the MainThread */
-CORE_API void MakeMainThreadCall(dispatch_block_t Block, NSString* WaitMode, bool WaitForCompletion);
+CORE_API void ExecuteOnMainThread(dispatch_block_t Block, NSString* WaitMode, bool WaitForCompletion);
 
 /** @brief: Perform a call on the MainThread and wait for a returnvalue */
 template<typename ReturnType>
-inline ReturnType MakeMainThreadCallWithReturn(ReturnType (^Block)(void))
+inline ReturnType ExecuteOnMainThreadAndReturn(ReturnType (^Block)(void), NSString* WaitMode)
 {
 	__block ReturnType ReturnValue;
-	MakeMainThreadCall(^
+	ExecuteOnMainThread(^
 	{
 		ReturnValue = Block();
-	}, NSDefaultRunLoopMode, true);
+	}, WaitMode, true);
 	
 	return ReturnValue;
 }

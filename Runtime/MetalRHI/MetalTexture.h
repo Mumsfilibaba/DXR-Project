@@ -18,7 +18,6 @@ public:
     FMetalTexture(FMetalDeviceContext* InDeviceContext)
         : FMetalObject(InDeviceContext)
         , Texture(nil)
-        , Viewport(nullptr)
         , ShaderResourceView(nullptr)
     { }
     
@@ -28,18 +27,16 @@ public:
     }
 
     void SetMTLTexture(id<MTLTexture> InTexture) { Texture = [InTexture retain]; }
-    
-    void SetViewport(FMetalViewport* InViewport) { Viewport = InViewport; }
-    
+
     id<MTLTexture> GetMTLTexture() const { return Texture; }
     
-    FMetalShaderResourceView* GetMetalShaderResourceView() const { return ShaderResourceView.Get(); }
-    FMetalViewport*           GetViewport()                const { return Viewport; }
+    FMetalShaderResourceView* GetMetalShaderResourceView() const
+    {
+        return ShaderResourceView.Get();
+    }
 
 private:
-    id<MTLTexture>  Texture;
-    FMetalViewport* Viewport;
-    
+    id<MTLTexture> Texture;
     TSharedRef<FMetalShaderResourceView> ShaderResourceView;
 };
 

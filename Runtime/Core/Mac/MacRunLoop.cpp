@@ -2,6 +2,7 @@
 
 #include "Core/RefCounted.h"
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Queue.h"
 #include "Core/Threading/Spinlock.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/PlatformThreadMisc.h"
@@ -47,15 +48,15 @@ FRunLoopSourceContext* GMainThread = nullptr;
 struct FRunLoopTask
 {
     FRunLoopTask(NSArray* InRunLoopModes, dispatch_block_t InBlock)
-        : RunLoopModes(Block_copy(InRunLoopModes))
-        , Block([InBlock retain])
+        : RunLoopModes([InRunLoopModes retain])
+        , Block(Block_copy(InBlock))
     { }
     
     ~FRunLoopTask()
     {
         Block_release(Block);
         [RunLoopModes release];
-    }
+     }
     
     NSArray*         RunLoopModes;
     dispatch_block_t Block;
@@ -72,7 +73,6 @@ public:
         : RunLoop(InRunLoop)
         , SourceAndModeDictionary(CFDictionaryCreateMutable(nullptr, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks))
         , Tasks()
-        , TasksLock()
     {
         CFRetain(RunLoop);
 
@@ -133,38 +133,25 @@ public:
 			RegisterForMode((CFStringRef)Mode);
 		}
 
-        {
-            SCOPED_LOCK(TasksLock);
-            Tasks.Emplace(InModes, Block);
-        }
+        Tasks.Emplace(new FRunLoopTask(InModes, Block));
         
         CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Signal, nullptr);
     }
     
     void Execute(CFStringRef InRunLoopMode)
     {
-        // Copy blocks
-        TArray<FRunLoopTask> CopiedTasks;
-        {
-            SCOPED_LOCK(TasksLock);
-            CopiedTasks.Swap(Tasks);
-        }
-        
-        // Execute all blocks
         bool bDone = false;
         while (!bDone)
         {
             bDone = true;
-            for (int32 Index = 0; Index < CopiedTasks.GetSize(); ++Index)
+            
+            FRunLoopTask* Task = *Tasks.Peek();
+            if (Task && [Task->RunLoopModes containsObject:(NSString*)InRunLoopMode])
             {
-                FRunLoopTask& Task = CopiedTasks[Index];
-                if ([Task.RunLoopModes containsObject:(NSString*)InRunLoopMode])
-                {
-                    Task.Block();
-                    CopiedTasks.RemoveAt(Index);
-                    bDone = false;
-                    break;
-                }
+                Task->Block();
+                Tasks.Pop();
+                bDone = false;
+                break;
             }
         }
     }
@@ -231,8 +218,7 @@ private:
     CFRunLoopRef           RunLoop;
     CFMutableDictionaryRef SourceAndModeDictionary;
     
-    TArray<FRunLoopTask>   Tasks;
-    FSpinLock              TasksLock;
+    TQueue<FRunLoopTask*, EQueueType::Lockfree> Tasks;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -294,8 +280,6 @@ private:
 
 @end
 
-#pragma clang diagnostic pop
-
 bool RegisterMainRunLoop()
 {
     CFRunLoopRef MainLoop = CFRunLoopGetMain();
@@ -303,7 +287,7 @@ bool RegisterMainRunLoop()
     return true;
 }
 
-void MakeMainThreadCall(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
+void ExecuteOnMainThread(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
 {
     dispatch_block_t CopiedBlock = Block_copy(Block);
     
@@ -349,3 +333,4 @@ void MakeMainThreadCall(dispatch_block_t Block, NSString* WaitMode, bool bWaitUn
     Block_release(CopiedBlock);
 }
 
+#pragma clang diagnostic pop

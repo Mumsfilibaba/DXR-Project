@@ -382,11 +382,11 @@ FRHIViewport* FMetalInterface::RHICreateViewport(const FRHIViewportInitializer& 
     
     __block NSRect Frame;
     __block NSRect ContentRect;
-    MakeMainThreadCall(^
+    ExecuteOnMainThread(^
     {
         Frame       = Window.frame;
         ContentRect = [Window contentRectForFrameRect:Window.frame];
-    }, true);
+    }, NSDefaultRunLoopMode, true);
     
     FRHIViewportInitializer NewInitializer(Initializer);
     NewInitializer.Width  = ContentRect.size.width;

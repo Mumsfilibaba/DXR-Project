@@ -134,11 +134,11 @@ void FMacApplication::Tick(float)
 void FMacApplication::SetActiveWindow(const FGenericWindowRef& Window)
 {
 	__block TSharedRef<FMacWindow> MacWindow = StaticCastSharedRef<FMacWindow>(Window);
-    MakeMainThreadCall(^
+    ExecuteOnMainThread(^
     {
 		FCocoaWindow* CocoaWindow = MacWindow->GetWindowHandle();
         [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
-    }, false);
+    }, NSDefaultRunLoopMode, false);
 }
 
 FGenericWindowRef FMacApplication::GetActiveWindow() const

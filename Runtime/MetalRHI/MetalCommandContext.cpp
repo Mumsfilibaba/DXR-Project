@@ -109,11 +109,11 @@ void FMetalCommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
     {
         const FRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[Index];
         
-        FMetalTexture*  RTVTexture = GetMetalTexture(RenderTargetView.Texture);
-        FMetalViewport* Viewport   = RTVTexture ? RTVTexture->GetViewport() : nullptr;
+        FMetalTexture* RTVTexture = GetMetalTexture(RenderTargetView.Texture);
+        METAL_ERROR_COND(RTVTexture != nullptr, "Texture cannot be nullptr");
         
         MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[Index];
-        ColorAttachment.texture            = Viewport ? Viewport->GetDrawableTexture() : RTVTexture->GetMTLTexture();
+        ColorAttachment.texture            = RTVTexture->GetMTLTexture();
         ColorAttachment.loadAction         = ConvertAttachmentLoadAction(RenderTargetView.LoadAction);
         ColorAttachment.level              = RenderTargetView.MipLevel;
         ColorAttachment.slice              = RenderTargetView.ArrayIndex;

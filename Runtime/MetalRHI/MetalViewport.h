@@ -6,6 +6,7 @@
 
 #include "Core/Containers/ArrayView.h"
 #include "Core/Mac/MacRunLoop.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 
 #include "CoreApplication/Mac/CocoaWindow.h"
 #include "CoreApplication/Mac/CocoaWindowView.h"
@@ -45,7 +46,7 @@ public:
     
     CAMetalLayer* GetMetalLayer() const
     {
-        SCOPED_AUTORELEASE_POOL();
+        Check(FPlatformThreadMisc::IsMainThread());
         return MetalView ? (CAMetalLayer*)MetalView.layer : nil;
     }
 

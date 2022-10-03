@@ -165,8 +165,8 @@ public:
         FNode* PreviousHead;
         if constexpr (QueueMode == EQueueType::Lockfree)
         {
-            PreviousHead = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void**>(&Head), NewNode));
-            FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void**>(&PreviousHead->NextNode), NewNode);
+            PreviousHead = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), NewNode));
+            FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&PreviousHead->NextNode), NewNode);
         }
         else
         {

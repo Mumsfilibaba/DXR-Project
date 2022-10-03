@@ -18,7 +18,7 @@ FMacWindow::FMacWindow(FMacApplication* InApplication)
 
 FMacWindow::~FMacWindow()
 {
-	MakeMainThreadCall(^
+	ExecuteOnMainThread(^
 	{
 		SCOPED_AUTORELEASE_POOL();
 		NSSafeRelease(WindowHandle);
@@ -50,7 +50,7 @@ bool FMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHei
     }
     
     __block bool bResult = false;
-    MakeMainThreadCall(^
+    ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -115,7 +115,7 @@ bool FMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHei
 
 void FMacWindow::Show(bool bMaximized)
 {
-	MakeMainThreadCall(^
+	ExecuteOnMainThread(^
 	{
 		[WindowHandle makeKeyAndOrderFront:WindowHandle];
 
@@ -132,7 +132,7 @@ void FMacWindow::Close()
 {
 	if (StyleParams.IsClosable())
 	{
-		MakeMainThreadCall(^
+		ExecuteOnMainThread(^
 		{
 			[WindowHandle performClose:WindowHandle];
 			FPlatformApplicationMisc::PumpMessages(true);
@@ -144,7 +144,7 @@ void FMacWindow::Minimize()
 {
 	if (StyleParams.IsMinimizable())
 	{
-		MakeMainThreadCall(^
+		ExecuteOnMainThread(^
 		{
 			[WindowHandle miniaturize:WindowHandle];
 			FPlatformApplicationMisc::PumpMessages(true);
@@ -156,7 +156,7 @@ void FMacWindow::Maximize()
 {
 	if (StyleParams.IsMaximizable())
 	{
-		MakeMainThreadCall(^
+		ExecuteOnMainThread(^
 		{
 			if (WindowHandle.miniaturized)
 			{
@@ -178,7 +178,7 @@ bool FMacWindow::IsActiveWindow() const
 
 void FMacWindow::Restore()
 {
-    MakeMainThreadCall(^
+    ExecuteOnMainThread(^
     {
         if (WindowHandle.miniaturized)
         {
@@ -198,7 +198,7 @@ void FMacWindow::ToggleFullscreen()
 {
 	if (StyleParams.IsResizeable())
 	{
-		MakeMainThreadCall(^
+		ExecuteOnMainThread(^
 		{
 			[WindowHandle toggleFullScreen:WindowHandle];
 		}, NSDefaultRunLoopMode, true);
@@ -213,7 +213,7 @@ void FMacWindow::SetTitle(const FString& InTitle)
         SCOPED_AUTORELEASE_POOL();
 
         NSString* Title = InTitle.GetNSString();
-		MakeMainThreadCall(^
+		ExecuteOnMainThread(^
 		{
 			WindowHandle.title = Title;
 		}, NSDefaultRunLoopMode, true);
@@ -235,7 +235,7 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
 	SCOPED_AUTORELEASE_POOL();
 	
-	MakeMainThreadCall(^
+	ExecuteOnMainThread(^
 	{
 		NSRect Frame = WindowHandle.frame;
 		if (StyleParams.IsResizeable())
@@ -261,7 +261,7 @@ void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 
 	__block NSRect Frame;
 	__block NSRect ContentRect;
-	MakeMainThreadCall(^
+	ExecuteOnMainThread(^
 	{
 		Frame       = WindowHandle.frame;
 		ContentRect = [WindowHandle contentRectForFrameRect:WindowHandle.frame];
@@ -278,7 +278,7 @@ uint32 FMacWindow::GetWidth() const
 	SCOPED_AUTORELEASE_POOL();
 
 	__block NSRect ContentRect;
-	MakeMainThreadCall(^
+	ExecuteOnMainThread(^
 	{
 		ContentRect = [WindowHandle contentRectForFrameRect:WindowHandle.frame];
 	}, NSDefaultRunLoopMode, true);
@@ -291,7 +291,7 @@ uint32 FMacWindow::GetHeight() const
 	SCOPED_AUTORELEASE_POOL();
 
 	__block NSRect ContentRect;
-	MakeMainThreadCall(^
+	ExecuteOnMainThread(^
 	{
 		ContentRect = [WindowHandle contentRectForFrameRect:WindowHandle.frame];
 	}, NSDefaultRunLoopMode, true);
