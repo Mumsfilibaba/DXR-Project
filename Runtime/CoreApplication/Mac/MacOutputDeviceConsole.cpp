@@ -161,8 +161,11 @@ void FMacOutputDeviceConsole::Log(const FString& Message)
 
             NSString* String = [Message.GetNSString() stringByAppendingString:@"\n"];
 			AppendStringAndScroll(String);
-			
-            FPlatformApplicationMisc::PumpMessages(true);
+            
+            if(!MacApplication)
+            {
+                FPlatformApplicationMisc::PumpMessages(true);
+            }
         }, NSDefaultRunLoopMode, false);
     }
 }
@@ -199,8 +202,11 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
 			AppendStringAndScroll(String);
 			
             SetTextColor(EConsoleColor::White);
-
-            FPlatformApplicationMisc::PumpMessages(true);
+            
+            if(!MacApplication)
+            {
+                FPlatformApplicationMisc::PumpMessages(true);
+            }
         }, NSDefaultRunLoopMode, false);
     }
 }
@@ -213,6 +219,11 @@ void FMacOutputDeviceConsole::Flush()
         {
 			SCOPED_AUTORELEASE_POOL();
 			TextView.string = @"";
+            
+            if(!MacApplication)
+            {
+                FPlatformApplicationMisc::PumpMessages(true);
+            }
         }, NSDefaultRunLoopMode, false);
     }
 }
@@ -227,6 +238,11 @@ void FMacOutputDeviceConsole::SetTitle(const FString& InTitle)
             
             NSString* Title = InTitle.GetNSString();
             WindowHandle.title = Title;
+            
+            if(!MacApplication)
+            {
+                FPlatformApplicationMisc::PumpMessages(true);
+            }
         }, NSDefaultRunLoopMode, false);
     }
 }

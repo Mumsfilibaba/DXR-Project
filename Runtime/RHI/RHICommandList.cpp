@@ -138,11 +138,6 @@ void FRHIThread::WaitForOutstandingTasks()
     {
         WaitCondition.NotifyAll();
         FPlatformThreadMisc::Pause();
-        
-#if PLATFORM_MACOS
-        // TODO: Proper workaround
-        FPlatformApplicationMisc::PumpMessages(false);
-#endif
     }
 }
 
