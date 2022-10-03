@@ -63,9 +63,14 @@ struct FDeferredMacEvent
 class COREAPPLICATION_API FMacApplication final
     : public FGenericApplication
 {
-public:
     FMacApplication();
     ~FMacApplication();
+
+public:
+    static FMacApplication* CreateMacApplication();
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // FGenericApplication Interface
 
     virtual FGenericWindowRef CreateWindow() override final;
 
@@ -74,7 +79,8 @@ public:
     virtual void SetActiveWindow(const FGenericWindowRef& Window) override final;
 
     virtual FGenericWindowRef GetWindowUnderCursor() const override final;
-    virtual FGenericWindowRef GetActiveWindow()      const override final;
+
+    virtual FGenericWindowRef GetActiveWindow() const override final;
 
 public:
     TSharedRef<FMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;

@@ -7,6 +7,7 @@
 #include "Core/Containers/Queue.h"
 #include "Core/Threading/Spinlock.h"
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Threading/AtomicInt.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
 #include <AppKit/AppKit.h>
@@ -137,6 +138,7 @@ public:
 		}
 
         Tasks.Emplace(new FRunLoopTask(InModes, Block));
+        NumTasks++;
         
         CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Signal, nullptr);
     }
@@ -153,6 +155,7 @@ public:
             {
                 Task->Block();
                 Tasks.Pop();
+                NumTasks--;
                 bDone = false;
                 break;
             }
@@ -222,6 +225,7 @@ private:
     CFMutableDictionaryRef SourceAndModeDictionary;
     
     TQueue<FRunLoopTask*, EQueueType::Lockfree> Tasks;
+    FAtomicInt32 NumTasks;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

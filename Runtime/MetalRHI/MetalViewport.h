@@ -47,7 +47,7 @@ public:
     
     CAMetalLayer* GetMetalLayer() const
     {
-        Check(FPlatformThreadMisc::IsMainThread());
+        // Check(FPlatformThreadMisc::IsMainThread());
         return MetalView ? (CAMetalLayer*)MetalView.layer : nil;
     }
 

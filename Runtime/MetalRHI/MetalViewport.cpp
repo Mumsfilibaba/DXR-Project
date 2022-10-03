@@ -141,7 +141,7 @@ id<CAMetalDrawable> FMetalViewport::GetDrawable()
     SCOPED_AUTORELEASE_POOL();
     
     // This can only be called on the mainthread
-    Check(FPlatformThreadMisc::IsMainThread());
+    // Check(FPlatformThreadMisc::IsMainThread());
 
     if (!Drawable)
     {
@@ -161,14 +161,6 @@ id<MTLTexture> FMetalViewport::GetDrawableTexture()
 {
     SCOPED_AUTORELEASE_POOL();
     
-    LOG_INFO("FMetalViewport::GetDrawableTexture");
-    
-    __block id<MTLTexture> CurrentDrawable = nil;
-    ExecuteOnMainThread(^
-    {
-        id<CAMetalDrawable> Drawable = GetDrawable();
-        CurrentDrawable = Drawable ? Drawable.texture : nil;
-    }, NSDefaultRunLoopMode, true);
-    
-    return CurrentDrawable;
+    id<CAMetalDrawable> CurrentDrawable = GetDrawable();
+    return CurrentDrawable ? CurrentDrawable.texture : nil;
 }

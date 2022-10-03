@@ -155,12 +155,18 @@ void FMacOutputDeviceConsole::Log(const FString& Message)
 {
     if (WindowHandle)
     {
+        SCOPED_AUTORELEASE_POOL();
+        
+        NSString* NativeMessage = Message.GetNSString();
+        [NativeMessage retain];
+        
         ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
 
-            NSString* String = [Message.GetNSString() stringByAppendingString:@"\n"];
+            NSString* String = [NativeMessage stringByAppendingString:@"\n"];
 			AppendStringAndScroll(String);
+            [NativeMessage release];
             
             if(!MacApplication)
             {
@@ -174,6 +180,8 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
 {
     if (WindowHandle)
     {
+        SCOPED_AUTORELEASE_POOL();
+        
         EConsoleColor NewColor;
         if (Severity == ELogSeverity::Info)
         {
@@ -192,14 +200,18 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
             NewColor = EConsoleColor::White;
         }
         
+        NSString* NativeMessage = Message.GetNSString();
+        [NativeMessage retain];
+        
         ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
 
             SetTextColor(NewColor);
 
-            NSString* String = [Message.GetNSString() stringByAppendingString:@"\n"];
+            NSString* String = [NativeMessage stringByAppendingString:@"\n"];
 			AppendStringAndScroll(String);
+            [NativeMessage release];
 			
             SetTextColor(EConsoleColor::White);
             

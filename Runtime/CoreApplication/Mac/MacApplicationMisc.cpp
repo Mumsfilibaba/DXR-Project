@@ -11,7 +11,7 @@
 
 FGenericApplication* FMacApplicationMisc::CreateApplication()
 {
-    return dbg_new FMacApplication();
+    return FMacApplication::CreateMacApplication();
 }
 
 FOutputDeviceConsole* FMacApplicationMisc::CreateOutputDeviceConsole()
