@@ -28,7 +28,7 @@ public:
     explicit FMetalTexture(FMetalDeviceContext* InDeviceContext);
     ~FMetalTexture();
 
-    id<MTLTexture> GetDrawableTexture() const;
+    id<MTLTexture> GetMTLTexture() const;
     
     void SetDrawableTexture(id<MTLTexture> InTexture) 
     { 

@@ -15,7 +15,7 @@ FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext)
     NSSafeRelease(Texture);
 }
 
-id<MTLTexture> FMetalTexture::GetDrawableTexture() const
+id<MTLTexture> FMetalTexture::GetMTLTexture() const
 {
     // Need to get the texture from the viewport
     if (Viewport)

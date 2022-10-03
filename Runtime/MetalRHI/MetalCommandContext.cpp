@@ -62,7 +62,7 @@ void FMetalCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& Ren
     MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
     MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[0];
 
-    ColorAttachment.texture            = RTVTexture->GetDrawableTexture();
+    ColorAttachment.texture            = RTVTexture->GetMTLTexture();
     ColorAttachment.loadAction         = ConvertAttachmentLoadAction(RenderTargetView.LoadAction);
     ColorAttachment.clearColor         = MTLClearColorMake(RenderTargetView.ClearValue.R, RenderTargetView.ClearValue.G, RenderTargetView.ClearValue.B, RenderTargetView.ClearValue.A);
     ColorAttachment.level              = RenderTargetView.MipLevel;
@@ -112,7 +112,7 @@ void FMetalCommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
         METAL_ERROR_COND(RTVTexture != nullptr, "Texture cannot be nullptr");
         
         MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[Index];
-        ColorAttachment.texture            = RTVTexture->GetDrawableTexture();
+        ColorAttachment.texture            = RTVTexture->GetMTLTexture();
         ColorAttachment.loadAction         = ConvertAttachmentLoadAction(RenderTargetView.LoadAction);
         ColorAttachment.level              = RenderTargetView.MipLevel;
         ColorAttachment.slice              = RenderTargetView.ArrayIndex;
@@ -130,7 +130,7 @@ void FMetalCommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
         const FRHIDepthStencilView& DepthStencilView = RenderPassInitializer.DepthStencilView;
         
         MTLRenderPassDepthAttachmentDescriptor* DepthAttachment = RenderPassDescriptor.depthAttachment;
-        DepthAttachment.texture            = DSVTexture->GetDrawableTexture();
+        DepthAttachment.texture            = DSVTexture->GetMTLTexture();
         DepthAttachment.loadAction         = ConvertAttachmentLoadAction(DepthStencilView.LoadAction);
         DepthAttachment.clearDepth         = DepthStencilView.ClearValue.Depth;
         DepthAttachment.level              = DepthStencilView.MipLevel;
@@ -369,7 +369,7 @@ void FMetalCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     CopyContext.StartContext(CommandBuffer);
     
     id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
-    [CopyEncoder copyFromTexture:MetalSrc->GetDrawableTexture() toTexture:MetalDst->GetDrawableTexture()];
+    [CopyEncoder copyFromTexture:MetalSrc->GetMTLTexture() toTexture:MetalDst->GetMTLTexture()];
     
     CopyContext.FinishContext();
 }
@@ -416,7 +416,7 @@ void FMetalCommandContext::GenerateMips(FRHITexture* Texture)
     CopyContext.StartContext(CommandBuffer);
     
     id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
-    [CopyEncoder generateMipmapsForTexture:MetalTexture->GetDrawableTexture()];
+    [CopyEncoder generateMipmapsForTexture:MetalTexture->GetMTLTexture()];
 }
 
 void FMetalCommandContext::TransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
