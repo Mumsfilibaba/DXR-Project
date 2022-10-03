@@ -22,7 +22,7 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA         (1)
+#define LOAD_SPONZA         (0)
 #define ENABLE_LIGHT_TEST   (0)
 #define ENABLE_MANY_SPHERES (0)
 
@@ -429,7 +429,7 @@ void FSandbox::Tick(FTimespan DeltaTime)
 {
     FApplicationModule::Tick(DeltaTime);
 
-    LOG_INFO("Tick: %f", DeltaTime.AsMilliseconds());
+    // LOG_INFO("Tick: %f", DeltaTime.AsMilliseconds());
 
     const float Delta         = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;

@@ -80,6 +80,7 @@ FImage2DPtr FSTBImageLoader::LoadFile(const FString& Filename)
     // Async lambda
     Async([Image, Filename]()
     {
+        // Change to FPlatformFile somehow
         FILE* File = fopen(Filename.GetCString(), "rb");
         if (!File)
         {
@@ -93,7 +94,7 @@ FImage2DPtr FSTBImageLoader::LoadFile(const FString& Filename)
         int32 ChannelCount = 0;
         stbi_info_from_file(File, &Width, &Height, &ChannelCount);
 
-        const bool bIsFloat = stbi_is_hdr_from_file(File);
+        const bool bIsFloat    = stbi_is_hdr_from_file(File);
         const bool bIsExtented = stbi_is_16_bit_from_file(File);
 
         EFormat Format = EFormat::Unknown;
@@ -143,7 +144,7 @@ FImage2DPtr FSTBImageLoader::LoadFile(const FString& Filename)
             LOG_INFO("[FSTBImageLoader]: Loaded image '%s'", Filename.GetCString());
         }
 
-        Image->Image     = Move(Pixels);
+        Image->Image     = ::Move(Pixels);
         Image->Format    = Format;
         Image->Width     = (uint16)Width;
         Image->Height    = (uint16)Height;

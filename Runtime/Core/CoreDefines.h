@@ -159,6 +159,17 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// maybe_unused
+
+#define ENABLE_MAYBE_UNUSED (1)
+
+#if ENABLE_MAYBE_UNUSED
+    #define MAYBE_UNUSED [[maybe_unused]]
+#else
+    #define MAYBE_UNUSED
+#endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Standard alignment of memory-allocations
 
 #define STANDARD_ALIGNMENT (__STDCPP_DEFAULT_NEW_ALIGNMENT__)

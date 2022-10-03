@@ -19,32 +19,32 @@ FMacFileHandle::FMacFileHandle(int32 InFileHandle, bool bInReadOnly)
 bool FMacFileHandle::SeekFromStart(int64 InOffset)
 {
     Check(IsValid());
-    return (lseek(FileHandle, InOffset, SEEK_SET) != -1);
+    return (::lseek(FileHandle, InOffset, SEEK_SET) != -1);
 }
 
 bool FMacFileHandle::SeekFromCurrent(int64 InOffset)
 {
     Check(IsValid());
-    return (lseek(FileHandle, InOffset, SEEK_CUR) != -1);
+    return (::lseek(FileHandle, InOffset, SEEK_CUR) != -1);
 }
 
 bool FMacFileHandle::SeekFromEnd(int64 InOffset)
 {
     Check(IsValid());
-    return (lseek(FileHandle, InOffset, SEEK_END) != -1);
+    return (::lseek(FileHandle, InOffset, SEEK_END) != -1);
 }
 
 int64 FMacFileHandle::Size() const
 {
     struct stat FileInfo;
-    fstat(FileHandle, &FileInfo);
+    ::fstat(FileHandle, &FileInfo);
     return FileInfo.st_size;
 }
 
 int64 FMacFileHandle::Tell() const
 {
     Check(IsValid());
-    return lseek(FileHandle, 0, SEEK_CUR);
+    return ::lseek(FileHandle, 0, SEEK_CUR);
 }
 
 int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
@@ -57,7 +57,7 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
     while (BytesToRead)
     {
         const int64 Size = NMath::Min<int64>(MaxReadSize, BytesToRead);
-        const int64 Read = read(FileHandle, Dst, Size);
+        const int64 Read = ::read(FileHandle, Dst, Size);
         if (Read >= 0)
         {
             // File was smaller so we are already finished
@@ -90,7 +90,7 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
     return BytesRead;
 }
 
-int32 FMacFileHandle::Write(uint8* Src, uint32 BytesToWrite)
+int32 FMacFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
 {
 	Check(IsValid());
     Check(Src != nullptr);
@@ -99,7 +99,7 @@ int32 FMacFileHandle::Write(uint8* Src, uint32 BytesToWrite)
     while (BytesToWrite)
     {
         const int64 Size    = NMath::Min<int64>(kMaxReadWriteSize, BytesToWrite);
-        const int64 Written = write(FileHandle, Src, Size);
+        const int64 Written = ::write(FileHandle, Src, Size);
         BytesWritten += Written;
 
         if (Written != Size)
@@ -122,7 +122,7 @@ bool FMacFileHandle::Truncate(int64 NewSize)
     int32 Result = 0;
     do 
     { 
-        Result = ftruncate(FileHandle, NewSize);
+        Result = ::ftruncate(FileHandle, NewSize);
     } while ((Result < 0) && (errno == EINTR));
     
     return Result == 0;
@@ -139,15 +139,15 @@ void FMacFileHandle::Close()
     {
         if (!bReadOnly)
         {
-            const auto Result = fsync(FileHandle);
+            const auto Result = ::fsync(FileHandle);
             Check(Result >= 0);
         }
 
         // Unlock the file
-        flock(FileHandle, LOCK_UN | LOCK_NB);
+        ::flock(FileHandle, LOCK_UN | LOCK_NB);
 
         {
-		    const auto Result = close(FileHandle);
+		    const auto Result = ::close(FileHandle);
             Check(Result >= 0);
         }
     }
@@ -161,7 +161,7 @@ void FMacFileHandle::Close()
 
 IFileHandle* FMacFile::OpenForRead(const FString& Filename)
 {
-    int32 FileHandle = open(Filename.GetCString(), O_RDONLY);
+    int32 FileHandle = ::open(Filename.GetCString(), O_RDONLY);
     if (FileHandle < 0)
     {
         return nullptr;
@@ -174,7 +174,7 @@ IFileHandle* FMacFile::OpenForRead(const FString& Filename)
     const auto Result = flock(FileHandle, LockFlags);
     if (Result != 0)
     {
-        close(FileHandle);
+        ::close(FileHandle);
         return nullptr;
     }
 
@@ -195,7 +195,7 @@ IFileHandle* FMacFile::OpenForWrite(const FString& Filename)
         S_IROTH | // Read for Permission for Other
         S_IWOTH ; // Write for Permission for Other
 
-    int32 FileHandle = open(Filename.GetCString(), Flags, PermissonFlags);
+    int32 FileHandle = ::open(Filename.GetCString(), Flags, PermissonFlags);
     if (FileHandle < 0)
     {
         return nullptr;
@@ -205,10 +205,10 @@ IFileHandle* FMacFile::OpenForWrite(const FString& Filename)
         LOCK_NB | // Do not block, return error instead
         LOCK_EX ; // Exclusive lock, since we are writing
 
-    const auto Result = flock(FileHandle, LockFlags);
+    const auto Result = ::flock(FileHandle, LockFlags);
     if (Result != 0)
     {
-        close(FileHandle);
+        ::close(FileHandle);
         return nullptr;
     }
 

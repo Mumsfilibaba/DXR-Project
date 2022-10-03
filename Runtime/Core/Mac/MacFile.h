@@ -24,7 +24,7 @@ public:
     virtual int64 Tell() const override final;
 
     virtual int32 Read(uint8* Dst, uint32 BytesToRead) override final;
-    virtual int32 Write(uint8* Src, uint32 BytesToWrite) override final;
+    virtual int32 Write(const uint8* Src, uint32 BytesToWrite) override final;
 
     virtual bool Truncate(int64 NewSize) override final;
 

@@ -7,6 +7,7 @@
 #include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Platform/PlatformFile.h"
 
 #include <ofbx.h>
 
@@ -100,7 +101,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     OutScene.Models.Clear();
     OutScene.Materials.Clear();
 
-    FILE* File = fopen(Filename.GetCString(), "rb");
+    FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
     if (!File)
     {
         LOG_ERROR("[FFBXLoader]: Failed to open '%s'", Filename.GetCString());
@@ -108,13 +109,10 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     }
 
     // TODO: Utility to read in full file?
-    fseek(File, 0, SEEK_END);
-    uint32 FileSize = (uint32)ftell(File);
-    rewind(File);
+    const uint32 FileSize = File->Size();
 
     TArray<ofbx::u8> FileContent(FileSize);
-    uint32 SizeInBytes = FileContent.SizeInBytes();
-    UNREFERENCED_VARIABLE(SizeInBytes);
+    FileContent.SizeInBytes();
 
     ofbx::u8* Bytes = FileContent.GetData();
 
@@ -123,7 +121,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     uint32 NumBytesRead = 0;
     while (NumBytesRead < FileSize)
     {
-        NumBytesRead += (uint32)fread(Bytes, 1, ChunkSize, File);
+        NumBytesRead += (uint32)File->Read(Bytes, ChunkSize);
         Bytes += ChunkSize;
     }
 

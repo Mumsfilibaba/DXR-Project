@@ -3,6 +3,7 @@
 #include "Core/Containers/ComPtr.h"
 #include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformLibrary.h"
+#include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Debug/Console/ConsoleInterface.h"
 
@@ -638,16 +639,14 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
 
 bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const FString& Filename)
 {
-    FILE* Output = fopen(Filename.GetCString(), "w");
+    FFileHandleRef Output = FPlatformFile::OpenForWrite(Filename);
     if (!Output)
     {
         LOG_ERROR("Failed to open file '%s'", Filename.GetCString());
         return false;
     }
 
-    fwrite(ByteCode.GetData(), ByteCode.GetSize(), sizeof(uint8), Output);
-
-    fclose(Output);
+    Output->Write(ByteCode.GetData(), ByteCode.GetSize());
     return true;
 }
 

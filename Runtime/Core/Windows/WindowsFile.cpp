@@ -71,7 +71,7 @@ int32 FWindowsFileHandle::Read(uint8* Dst, uint32 BytesToRead)
     return static_cast<int32_t>(NumRead);
 }
 
-int32 FWindowsFileHandle::Write(uint8* Src, uint32 BytesToWrite)
+int32 FWindowsFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
 {
     Check(IsValid());
 

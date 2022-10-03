@@ -33,10 +33,10 @@ struct IFileHandle
     virtual int64 Tell() const = 0;
 
     /** @brief: Read from the file */
-    virtual int32 Read(uint8* Buffer, uint32 BytesToRead) = 0;
+    virtual int32 Read(uint8* Dst, uint32 BytesToRead) = 0;
 
     /** @brief: Write to the file */
-    virtual int32 Write(uint8* Buffer, uint32 BufferSize) = 0;
+    virtual int32 Write(const uint8* Src, uint32 BytesToWrite) = 0;
 
     /** @brief: Truncate the file if the file is currently larger than the new size */
     virtual bool Truncate(int64 NewSize) = 0;
@@ -46,6 +46,70 @@ struct IFileHandle
 
     /** @brief: Closes the FileHandle and deletes this instance */
     virtual void Close() = 0;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FFileHandleRef
+
+class FFileHandleRef
+{ 
+public:
+    FFileHandleRef()
+        : Handle(nullptr)
+    { }
+
+    FFileHandleRef(IFileHandle* InHandle)
+        : Handle(InHandle)
+    { }
+    
+    FFileHandleRef(FFileHandleRef&& Other)
+        : Handle(Other.Handle)
+    {
+        Other.Handle = nullptr;
+    }
+
+    ~FFileHandleRef()
+    {
+        Close();
+    }
+
+    bool IsValid() const
+    {
+        return (Handle != nullptr);
+    }
+
+    void Close()
+    {
+        if (Handle)
+        {
+            Handle->Close();
+            Handle = nullptr;
+        }
+    }
+
+    IFileHandle* operator->() const
+    {
+        return Handle;
+    }
+
+    operator bool()
+    {
+        return IsValid();
+    }
+
+    FFileHandleRef& operator=(FFileHandleRef&& Other)
+    {
+        if (this != ::AddressOf(Other))
+        {
+            Handle = Other.Handle;
+            Other.Handle = nullptr;
+        }
+
+        return *this;
+    }
+
+private:
+    IFileHandle* Handle;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

@@ -8,6 +8,7 @@
 
 #include "Core/Windows/Windows.h"
 #include "Core/Platform/PlatformLibrary.h"
+#include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Debug/Console/ConsoleInterface.h"
 #include "Core/Containers/String.h"
@@ -110,11 +111,11 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         return;
     }
 
-    FILE* File = fopen(GDeviceRemovedDumpFile, "w");
+    FFileHandleRef File = FPlatformFile::OpenForWrite(GDeviceRemovedDumpFile);
     if (File)
     {
-        fwrite(Message.GetData(), 1, Message.GetSize(), File);
-        fputc('\n', File);
+        Message += '\n';
+        File->Write(Message.GetData(), Message.GetSize());
     }
 
     const D3D12_AUTO_BREADCRUMB_NODE* CurrentNode  = DredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
@@ -124,8 +125,8 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         Message = "BreadCrumbs:";
         if (File)
         {
-            fwrite(Message.GetData(), 1, Message.GetSize(), File);
-            fputc('\n', File);
+            Message += '\n';
+            File->Write(Message.GetData(), Message.GetSize());
         }
 
         D3D12_ERROR("%s", Message.GetCString());
@@ -135,8 +136,8 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
             D3D12_ERROR("%s", Message.GetCString());
             if (File)
             {
-                fwrite(Message.GetData(), 1, Message.GetSize(), File);
-                fputc('\n', File);
+                Message += '\n';
+                File->Write(Message.GetData(), Message.GetSize());
             }
         }
 
@@ -144,11 +145,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         CurrentNode  = CurrentNode->pNext;
     }
 
-    if (File)
-    {
-        fclose(File);
-    }
-
+    // Signal other systems that the device is removed 
     NCoreDelegates::DeviceRemovedDelegate.Broadcast();
 
     FPlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
