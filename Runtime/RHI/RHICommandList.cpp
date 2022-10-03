@@ -3,6 +3,8 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
+
 RHI_API FRHICommandListExecutor GRHICommandExecutor;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -56,6 +58,8 @@ bool FRHIThread::Create()
         return false;
     }
 
+    Thread->SetName("RHI-CommandList Thread");
+    
     if (!Thread->Start())
     {
         return false;
@@ -134,6 +138,11 @@ void FRHIThread::WaitForOutstandingTasks()
     {
         WaitCondition.NotifyAll();
         FPlatformThreadMisc::Pause();
+        
+#if PLATFORM_MACOS
+        // TODO: Proper workaround
+        FPlatformApplicationMisc::PumpMessages(false);
+#endif
     }
 }
 

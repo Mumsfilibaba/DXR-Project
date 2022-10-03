@@ -14,6 +14,7 @@ RHIModule.AddSystemIncludes(
 RHIModule.AddModuleDependencies( 
 {
     'Core',
+    'CoreApplication'
 })
 
 RHIModule.AddLinkLibraries( 

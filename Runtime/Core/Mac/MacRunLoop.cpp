@@ -1,4 +1,6 @@
 #include "MacRunLoop.h"
+#include "ScopedAutoreleasePool.h"
+
 
 #include "Core/RefCounted.h"
 #include "Core/Containers/Array.h"
@@ -89,6 +91,7 @@ public:
         
         // This dictionary is created so that keys and values are automatically retained and released when added or removed
         CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Destroy, RunLoop);
+        
 		CFRelease(SourceAndModeDictionary);
         CFRelease(RunLoop);
     }
@@ -298,9 +301,10 @@ void ExecuteOnMainThread(dispatch_block_t Block, NSString* WaitMode, bool bWaitU
     }
     else
     {
-        NSArray* ScheduleModes = @[NSDefaultRunLoopMode, NSModalPanelRunLoopMode, NSEventTrackingRunLoopMode];
-        
         // Otherwise schedule Block on main thread
+        SCOPED_AUTORELEASE_POOL();
+        
+        NSArray* ScheduleModes = @[NSDefaultRunLoopMode, NSModalPanelRunLoopMode, NSEventTrackingRunLoopMode];
         Check(GMainThread != nullptr);
 
         if (bWaitUntilFinished)

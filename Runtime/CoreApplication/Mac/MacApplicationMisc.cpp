@@ -39,10 +39,9 @@ void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
     
     Check(NSApp != nil);
 	
-    NSEvent* Event = nil;
     do
     {
-        Event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
+        NSEvent* Event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
         if (!Event)
         {
             break;

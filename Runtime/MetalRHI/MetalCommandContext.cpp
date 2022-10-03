@@ -119,7 +119,7 @@ void FMetalCommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
         ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
         ColorAttachment.storeAction        = ConvertAttachmentStoreAction(RenderTargetView.StoreAction);
         ColorAttachment.clearColor         = MTLClearColorMake(
-            RenderTargetView.ClearValue.R,
+            1.0f,
             RenderTargetView.ClearValue.G,
             RenderTargetView.ClearValue.B,
             RenderTargetView.ClearValue.A);

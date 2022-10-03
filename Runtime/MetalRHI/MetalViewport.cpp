@@ -78,7 +78,7 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
     }, NSDefaultRunLoopMode, true);
     
     // Create Event
-    MainThreadEvent = FMacThreadMisc::CreateEvent(false);
+    MainThreadEvent = static_cast<FMacEvent*>(FMacThreadMisc::CreateEvent(false));
 
     // Create BackBuffer
     FRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
@@ -161,17 +161,14 @@ id<MTLTexture> FMetalViewport::GetDrawableTexture()
 {
     SCOPED_AUTORELEASE_POOL();
     
-    __block id<CAMetalDrawable> CurrentDrawable = nil;
+    LOG_INFO("FMetalViewport::GetDrawableTexture");
+    
+    __block id<MTLTexture> CurrentDrawable = nil;
     ExecuteOnMainThread(^
     {
         id<CAMetalDrawable> Drawable = GetDrawable();
         CurrentDrawable = Drawable ? Drawable.texture : nil;
-
-        // This gets triggered on the main-thread        
-        MainThreadEvent->Trigger();
-    }, NSDefaultRunLoopMode, false);
-
-    // Waiting for the main-thread to run
-    MainThreadEvent->Wait();    
+    }, NSDefaultRunLoopMode, true);
+    
     return CurrentDrawable;
 }

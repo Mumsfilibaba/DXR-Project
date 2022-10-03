@@ -5,6 +5,7 @@
 #include "RHI/RHIViewport.h"
 
 #include "Core/Containers/ArrayView.h"
+#include "Core/Mac/MacEvent.h"
 #include "Core/Mac/MacRunLoop.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
@@ -58,7 +59,7 @@ private:
     FMetalWindowView*   MetalView;
     id<CAMetalDrawable> Drawable;
     
-    FMacEventRef        Event;
+    FMacEventRef        MainThreadEvent;
 };
 
 #pragma clang diagnostic pop

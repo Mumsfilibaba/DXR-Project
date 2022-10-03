@@ -7,10 +7,11 @@
 FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext)
     : FMetalObject(InDeviceContext)
     , Texture(nil)
+    , Viewport(nullptr)
     , ShaderResourceView(nullptr)
 { }
     
-~FMetalTexture()
+FMetalTexture::~FMetalTexture()
 {
     NSSafeRelease(Texture);
 }
