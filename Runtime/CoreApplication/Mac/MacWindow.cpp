@@ -22,7 +22,7 @@ FMacWindow::~FMacWindow()
 	{
 		SCOPED_AUTORELEASE_POOL();
 		NSSafeRelease(WindowHandle);
-	}, true);
+	}, NSDefaultRunLoopMode, true);
 }
 
 bool FMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle InStyle)
@@ -108,7 +108,7 @@ bool FMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHei
         StyleParams = InStyle;
 
         bResult = true;
-    }, true);
+    }, NSDefaultRunLoopMode, true);
 
     return bResult;
 }
@@ -125,7 +125,7 @@ void FMacWindow::Show(bool bMaximized)
 		}
 
 		FPlatformApplicationMisc::PumpMessages(true);
-	}, true);
+	}, NSDefaultRunLoopMode, true);
 }
 
 void FMacWindow::Close()
@@ -136,7 +136,7 @@ void FMacWindow::Close()
 		{
 			[WindowHandle performClose:WindowHandle];
 			FPlatformApplicationMisc::PumpMessages(true);
-		}, true);
+		}, NSDefaultRunLoopMode, true);
 	}
 }
 
@@ -148,7 +148,7 @@ void FMacWindow::Minimize()
 		{
 			[WindowHandle miniaturize:WindowHandle];
 			FPlatformApplicationMisc::PumpMessages(true);
-		}, true);
+		}, NSDefaultRunLoopMode, true);
 	}
 }
 
@@ -166,7 +166,7 @@ void FMacWindow::Maximize()
 			[WindowHandle zoom:WindowHandle];
 
 			FPlatformApplicationMisc::PumpMessages(true);
-		}, true);
+		}, NSDefaultRunLoopMode, true);
 	}
 }
 
@@ -191,7 +191,7 @@ void FMacWindow::Restore()
         }
     
         FPlatformApplicationMisc::PumpMessages(true);
-    }, true);
+    }, NSDefaultRunLoopMode, true);
 }
 
 void FMacWindow::ToggleFullscreen()
@@ -201,7 +201,7 @@ void FMacWindow::ToggleFullscreen()
 		MakeMainThreadCall(^
 		{
 			[WindowHandle toggleFullScreen:WindowHandle];
-		}, true);
+		}, NSDefaultRunLoopMode, true);
 	}
 }
 
@@ -216,7 +216,7 @@ void FMacWindow::SetTitle(const FString& InTitle)
 		MakeMainThreadCall(^
 		{
 			WindowHandle.title = Title;
-		}, true);
+		}, NSDefaultRunLoopMode, true);
 	}
 }
 
@@ -252,7 +252,7 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 		}
 		
 		FPlatformApplicationMisc::PumpMessages(true);
-	}, true);
+	}, NSDefaultRunLoopMode, true);
 }
 
 void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
@@ -265,7 +265,7 @@ void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 	{
 		Frame       = WindowHandle.frame;
 		ContentRect = [WindowHandle contentRectForFrameRect:WindowHandle.frame];
-	}, true);
+	}, NSDefaultRunLoopMode, true);
 
 	OutWindowShape.Width      = ContentRect.size.width;
 	OutWindowShape.Height     = ContentRect.size.height;
@@ -281,7 +281,7 @@ uint32 FMacWindow::GetWidth() const
 	MakeMainThreadCall(^
 	{
 		ContentRect = [WindowHandle contentRectForFrameRect:WindowHandle.frame];
-	}, true);
+	}, NSDefaultRunLoopMode, true);
 
 	return uint32(ContentRect.size.width);
 }
@@ -294,7 +294,7 @@ uint32 FMacWindow::GetHeight() const
 	MakeMainThreadCall(^
 	{
 		ContentRect = [WindowHandle contentRectForFrameRect:WindowHandle.frame];
-	}, true);
+	}, NSDefaultRunLoopMode, true);
 
 	return uint32(ContentRect.size.height);
 }

@@ -23,11 +23,6 @@ struct FMacThreadMisc
         return RegisterMainRunLoop();
     }
 
-    static FORCEINLINE void Release() 
-    {
-		UnregisterMainRunLoop();
-    }
-
     static uint32 GetNumProcessors()
     {
         const NSUInteger NumProcessors = [NSProcessInfo processInfo].processorCount;

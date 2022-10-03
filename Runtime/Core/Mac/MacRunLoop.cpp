@@ -6,12 +6,16 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
+#include <AppKit/AppKit.h>
 #include <Foundation/Foundation.h>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 class FRunLoopSourceContext;
+
+// Main-thread runloop source
+FRunLoopSourceContext* GMainThread = nullptr;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRunLoopSource
@@ -67,8 +71,8 @@ public:
     FRunLoopSourceContext(CFRunLoopRef InRunLoop)
         : RunLoop(InRunLoop)
         , SourceAndModeDictionary(CFDictionaryCreateMutable(nullptr, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks))
-        , BlockLock()
-        , Blocks()
+        , Tasks()
+        , TasksLock()
     {
         CFRetain(RunLoop);
 
@@ -78,6 +82,11 @@ public:
     
     ~FRunLoopSourceContext()
     {
+        if (this == GMainThread)
+        {
+            GMainThread = nullptr;
+        }
+        
         // This dictionary is created so that keys and values are automatically retained and released when added or removed
         CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Destroy, RunLoop);
 		CFRelease(SourceAndModeDictionary);
@@ -126,13 +135,13 @@ public:
 
         {
             SCOPED_LOCK(TasksLock);
-            Tasks.Emplace(Block, InModes);
+            Tasks.Emplace(InModes, Block);
         }
         
         CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Signal, nullptr);
     }
     
-    void Execute()
+    void Execute(CFStringRef InRunLoopMode)
     {
         // Copy blocks
         TArray<FRunLoopTask> CopiedTasks;
@@ -142,9 +151,21 @@ public:
         }
         
         // Execute all blocks
-        for (FRunLoopTask& Task : CopiedTasks)
+        bool bDone = false;
+        while (!bDone)
         {
-            Task.Block();
+            bDone = true;
+            for (int32 Index = 0; Index < CopiedTasks.GetSize(); ++Index)
+            {
+                FRunLoopTask& Task = CopiedTasks[Index];
+                if ([Task.RunLoopModes containsObject:(NSString*)InRunLoopMode])
+                {
+                    Task.Block();
+                    CopiedTasks.RemoveAt(Index);
+                    bDone = false;
+                    break;
+                }
+            }
         }
     }
     
@@ -199,10 +220,10 @@ private:
 
     static void Perform(void* Info)
     {
-        FRunLoopSourceContext* RunLoopSource = reinterpret_cast<FRunLoopSourceContext*>(Info);
+        FRunLoopSource* RunLoopSource = reinterpret_cast<FRunLoopSource*>(Info);
         if (RunLoopSource)
         {
-            RunLoopSource->Execute();
+            [RunLoopSource perform];
         }
     }
     
@@ -275,22 +296,14 @@ private:
 
 #pragma clang diagnostic pop
 
-// Main-thread runloop source
-FRunLoopSourceContext* GMainThread = nullptr;
-
 bool RegisterMainRunLoop()
 {
     CFRunLoopRef MainLoop = CFRunLoopGetMain();
-    GMainThread = new FRunLoopSourceContext(MainLoop, NSDefaultRunLoopMode);
+    GMainThread = new FRunLoopSourceContext(MainLoop);
     return true;
 }
 
-void UnregisterMainRunLoop()
-{
-    SAFE_DELETE(GMainThread);
-}
-
-void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
+void MakeMainThreadCall(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
 {
     dispatch_block_t CopiedBlock = Block_copy(Block);
     
@@ -301,6 +314,8 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
     }
     else
     {
+        NSArray* ScheduleModes = @[NSDefaultRunLoopMode, NSModalPanelRunLoopMode, NSEventTrackingRunLoopMode];
+        
         // Otherwise schedule Block on main thread
         Check(GMainThread != nullptr);
 
@@ -313,12 +328,12 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
                 dispatch_semaphore_signal(WaitSemaphore);
             });
             
-            GMainThread->ScheduleBlock(WaitableBlock);
+            GMainThread->ScheduleBlock(WaitableBlock, ScheduleModes);
             
             do
             {
                 GMainThread->WakeUp();
-                GMainThread->RunInMode((CFStringRef)NSDefaultRunLoopMode);
+                GMainThread->RunInMode((CFStringRef)WaitMode);
             } while (dispatch_semaphore_wait(WaitSemaphore, dispatch_time(0, 10000ull)));
             
             Block_release(WaitableBlock);
@@ -326,7 +341,7 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
         }
         else
         {
-            GMainThread->ScheduleBlock(CopiedBlock);
+            GMainThread->ScheduleBlock(CopiedBlock, ScheduleModes);
             GMainThread->WakeUp();
         }
     }

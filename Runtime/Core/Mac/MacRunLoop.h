@@ -11,11 +11,8 @@
 /** @brief: Create the MainThread's RunLoop */
 CORE_API bool RegisterMainRunLoop();
 
-/** @brief: Destroy the MainThread's RunLoop */
-CORE_API void UnregisterMainRunLoop();
-
 /** @brief: Perform a call on the MainThread */
-CORE_API void MakeMainThreadCall(dispatch_block_t Block, bool WaitForCompletion);
+CORE_API void MakeMainThreadCall(dispatch_block_t Block, NSString* WaitMode, bool WaitForCompletion);
 
 /** @brief: Perform a call on the MainThread and wait for a returnvalue */
 template<typename ReturnType>
@@ -25,7 +22,7 @@ inline ReturnType MakeMainThreadCallWithReturn(ReturnType (^Block)(void))
 	MakeMainThreadCall(^
 	{
 		ReturnValue = Block();
-	}, true);
+	}, NSDefaultRunLoopMode, true);
 	
 	return ReturnValue;
 }
