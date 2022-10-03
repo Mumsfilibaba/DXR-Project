@@ -121,8 +121,14 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     uint32 NumBytesRead = 0;
     while (NumBytesRead < FileSize)
     {
-        NumBytesRead += (uint32)File->Read(Bytes, ChunkSize);
-        Bytes += ChunkSize;
+        const uint32 Read = (uint32)File->Read(Bytes, ChunkSize);
+        if (!Read)
+        {
+            break;
+        }
+        
+        NumBytesRead += Read;
+        Bytes        += ChunkSize;
     }
 
     if (NumBytesRead != FileSize)
