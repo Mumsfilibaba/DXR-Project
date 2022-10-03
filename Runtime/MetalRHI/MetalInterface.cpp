@@ -68,16 +68,16 @@ MetalTextureType* FMetalInterface::CreateTexture(const InitializerType& Initiali
 {
     SCOPED_AUTORELEASE_POOL();
     
-    TSharedRef<MetalTextureType> NewTexture = dbg_new MetalTextureType(GetDeviceContext(), Initializer);
+    TSharedRef<MetalTextureType> NewMetalTexture = dbg_new MetalTextureType(GetDeviceContext(), Initializer);
 
     MTLTextureDescriptor* TextureDescriptor = [[MTLTextureDescriptor new] autorelease];
-    TextureDescriptor.textureType               = GetMTLTextureType(NewTexture.Get());
+    TextureDescriptor.textureType               = GetMTLTextureType(NewMetalTexture.Get());
     TextureDescriptor.pixelFormat               = ConvertFormat(Initializer.Format);
     TextureDescriptor.usage                     = ConvertTextureFlags(Initializer.UsageFlags);
     TextureDescriptor.allowGPUOptimizedContents = NO;
     TextureDescriptor.swizzle                   = MTLTextureSwizzleChannelsMake(MTLTextureSwizzleRed, MTLTextureSwizzleGreen, MTLTextureSwizzleBlue, MTLTextureSwizzleAlpha);
     
-    const FIntVector3 Extent = NewTexture->GetExtent();
+    const FIntVector3 Extent = NewMetalTexture->GetExtent();
     TextureDescriptor.width  = Extent.x;
     TextureDescriptor.height = Extent.y;
     
@@ -93,20 +93,20 @@ MetalTextureType* FMetalInterface::CreateTexture(const InitializerType& Initiali
     }
     
     TextureDescriptor.mipmapLevelCount   = Initializer.NumMips;
-    TextureDescriptor.sampleCount        = NewTexture->GetNumSamples();
+    TextureDescriptor.sampleCount        = NewMetalTexture->GetNumSamples();
     TextureDescriptor.resourceOptions    = MTLResourceCPUCacheModeWriteCombined;
     TextureDescriptor.cpuCacheMode       = MTLCPUCacheModeWriteCombined;
     TextureDescriptor.storageMode        = MTLStorageModePrivate;
     TextureDescriptor.hazardTrackingMode = MTLHazardTrackingModeDefault;
     
     id<MTLDevice>  Device = GetDeviceContext()->GetMTLDevice();
-    id<MTLTexture> NewMTLTexture = [Device newTextureWithDescriptor:TextureDescriptor];
-    if (!NewMTLTexture)
+    id<MTLTexture> NewTexture = [Device newTextureWithDescriptor:TextureDescriptor];
+    if (!NewTexture)
     {
         return nullptr;
     }
     
-    NewTexture->SetMTLTexture(NewMTLTexture);
+    NewMetalTexture->SetDrawableTexture(NewTexture);
     
     // TODO: Fix upload for other resources than Texture2D
     constexpr bool bIsTexture2D = TIsSame<MetalTextureType, FMetalTexture2D>::Value;
@@ -136,7 +136,7 @@ MetalTextureType* FMetalInterface::CreateTexture(const InitializerType& Initiali
                           sourceBytesPerRow:BytesPerRow
                         sourceBytesPerImage:0
                                  sourceSize:Region.size
-                                  toTexture:NewMTLTexture
+                                  toTexture:NewTexture
                            destinationSlice:0
                            destinationLevel:0
                           destinationOrigin:Region.origin];
@@ -152,7 +152,7 @@ MetalTextureType* FMetalInterface::CreateTexture(const InitializerType& Initiali
         }
     }
     
-    return NewTexture.ReleaseOwnership();
+    return NewMetalTexture.ReleaseOwnership();
 }
 
 FRHISamplerState* FMetalInterface::RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer)

@@ -1,6 +1,7 @@
 #include "MetalViewport.h"
 
 #include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalWindowView
@@ -76,10 +77,12 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
         [WindowHandle makeFirstResponder:MetalView];
     }, NSDefaultRunLoopMode, true);
     
+    // Create Event
+    MainThreadEvent = FMacThreadMisc::CreateEvent(false);
+
     // Create BackBuffer
     FRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
-    BackBuffer = dbg_new FMetalTexture2D(InDeviceContext, BackBufferInitializer);
-    
+    BackBuffer = dbg_new FMetalTexture2D(InDeviceContext, BackBufferInitializer);   
     BackBuffer->SetViewport(this);
 }
 
@@ -113,25 +116,22 @@ bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
 
 bool FMetalViewport::Present(bool bVerticalSync)
 {
-    SCOPED_AUTORELEASE_POOL();
-    
-    id<MTLCommandQueue>  Queue  = GetDeviceContext()->GetMTLCommandQueue();
-    id<MTLCommandBuffer> Buffer = [Queue commandBuffer];
-    
-    CAMetalLayer* MetalLayer = GetMetalLayer();
-    if (MetalLayer)
+    ExecuteOnMainThread(^
     {
-        MetalLayer.displaySyncEnabled = bVerticalSync;
-    }
+        SCOPED_AUTORELEASE_POOL();
     
-    id<MTLDrawable> CurrentDrawable = GetDrawable();
-    if (CurrentDrawable)
-    {
-        [Buffer presentDrawable:CurrentDrawable];
-        NSSafeRelease(Drawable);
-    }
-       
-    [Buffer commit];
+        CAMetalLayer* MetalLayer = GetMetalLayer();
+        if (MetalLayer)
+        {
+            MetalLayer.displaySyncEnabled = bVerticalSync;
+        }
+        
+        id<MTLDrawable> CurrentDrawable = GetDrawable();
+        if (CurrentDrawable)
+        {
+            [CurrentDrawable present];
+        }
+    }, NSDefaultRunLoopMode, false);
     
     return true;
 }
@@ -140,6 +140,9 @@ id<CAMetalDrawable> FMetalViewport::GetDrawable()
 {
     SCOPED_AUTORELEASE_POOL();
     
+    // This can only be called on the mainthread
+    Check(FPlatformThreadMisc::IsMainThread());
+
     if (!Drawable)
     {
         CAMetalLayer* MetalLayer = GetMetalLayer();
@@ -158,6 +161,17 @@ id<MTLTexture> FMetalViewport::GetDrawableTexture()
 {
     SCOPED_AUTORELEASE_POOL();
     
-    id<CAMetalDrawable> Drawable = GetDrawable();
-    return Drawable ? Drawable.texture : nil;
+    __block id<CAMetalDrawable> CurrentDrawable = nil;
+    ExecuteOnMainThread(^
+    {
+        id<CAMetalDrawable> Drawable = GetDrawable();
+        CurrentDrawable = Drawable ? Drawable.texture : nil;
+
+        // This gets triggered on the main-thread        
+        MainThreadEvent->Trigger();
+    }, NSDefaultRunLoopMode, false);
+
+    // Waiting for the main-thread to run
+    MainThreadEvent->Wait();    
+    return CurrentDrawable;
 }

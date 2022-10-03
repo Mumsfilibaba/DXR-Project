@@ -54,8 +54,11 @@ public:
     
 private:
     TSharedRef<FMetalTexture2D> BackBuffer;
-    FMetalWindowView*           MetalView;
-    id<CAMetalDrawable>         Drawable;
+    
+    FMetalWindowView*   MetalView;
+    id<CAMetalDrawable> Drawable;
+    
+    FMacEventRef        Event;
 };
 
 #pragma clang diagnostic pop

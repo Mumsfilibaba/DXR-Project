@@ -9,34 +9,47 @@
 class FMetalViewport;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedef
+
+typedef TSharedRef<class FMetalTexture>          FMetalTextureRef;
+typedef TSharedRef<class FMetalTexture2D>        FMetalTexture2DRef;
+typedef TSharedRef<class FMetalTexture2DArray>   FMetalTexture2DArrayRef;
+typedef TSharedRef<class FMetalTextureCube>      FMetalTextureCubeRef;
+typedef TSharedRef<class FMetalTextureCubeArray> FMetalTextureCubeArrayRef;
+typedef TSharedRef<class FMetalTexture3D>        FMetalTexture3DRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMetalTexture
 
 class FMetalTexture 
     : public FMetalObject
 {
 public:
-    FMetalTexture(FMetalDeviceContext* InDeviceContext)
-        : FMetalObject(InDeviceContext)
-        , Texture(nil)
-        , ShaderResourceView(nullptr)
-    { }
+    explicit FMetalTexture(FMetalDeviceContext* InDeviceContext);
+    ~FMetalTexture();
+
+    id<MTLTexture> GetDrawableTexture() const;
     
-    ~FMetalTexture()
-    {
+    void SetDrawableTexture(id<MTLTexture> InTexture) 
+    { 
         NSSafeRelease(Texture);
+        Texture = [InTexture retain];
     }
 
-    void SetMTLTexture(id<MTLTexture> InTexture) { Texture = [InTexture retain]; }
+    void SetViewport(FMetalViewport* InViewport)
+    {
+        Viewport = InViewport;
+    }
 
-    id<MTLTexture> GetMTLTexture() const { return Texture; }
-    
     FMetalShaderResourceView* GetMetalShaderResourceView() const
     {
         return ShaderResourceView.Get();
     }
 
-private:
-    id<MTLTexture> Texture;
+protected:
+    id<MTLTexture>  Texture;
+    FMetalViewport* Viewport;
+
     TSharedRef<FMetalShaderResourceView> ShaderResourceView;
 };
 
@@ -211,7 +224,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // GetMetalTexture
 
-inline FMetalTexture* GetMetalTexture(FRHITexture* Texture)
+FORCEINLINE FMetalTexture* GetMetalTexture(FRHITexture* Texture)
 {
     return Texture ? reinterpret_cast<FMetalTexture*>(Texture->GetRHIBaseTexture()) : nullptr;
 }

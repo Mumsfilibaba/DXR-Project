@@ -90,7 +90,6 @@ public:
     FMetalDeviceContext* GetDeviceContext() const { return DeviceContext; }
     
 private:
-    
     template<typename MetalTextureType, typename InitializerType>
     MetalTextureType* CreateTexture(const InitializerType& Initializer);
     

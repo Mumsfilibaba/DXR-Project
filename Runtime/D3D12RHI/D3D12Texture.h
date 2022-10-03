@@ -75,7 +75,7 @@ class FD3D12Texture2D
     , public FD3D12Texture
 {
 public:
-    explicit FD3D12Texture2D(FD3D12Device* InDevice, const FRHITexture2DInitializer& Initializer)
+    FD3D12Texture2D(FD3D12Device* InDevice, const FRHITexture2DInitializer& Initializer)
         : FRHITexture2D(Initializer)
         , FD3D12Texture(InDevice)
         , UnorderedAccessView(nullptr)
@@ -115,7 +115,7 @@ class FD3D12BackBufferTexture
     : public FD3D12Texture2D
 {
 public:
-    explicit FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITexture2DInitializer& Initializer)
+    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITexture2DInitializer& Initializer)
         : FD3D12Texture2D(InDevice, Initializer)
         , Viewport(InViewport)
     { }
@@ -140,7 +140,7 @@ class FD3D12Texture2DArray
     , public FD3D12Texture
 {
 public:
-    explicit FD3D12Texture2DArray(FD3D12Device* InDevice, const FRHITexture2DArrayInitializer& Initializer)
+    FD3D12Texture2DArray(FD3D12Device* InDevice, const FRHITexture2DArrayInitializer& Initializer)
         : FRHITexture2DArray(Initializer)
         , FD3D12Texture(InDevice)
     { }
@@ -174,7 +174,7 @@ class FD3D12TextureCube
     , public FD3D12Texture
 {
 public:
-    explicit FD3D12TextureCube(FD3D12Device* InDevice, const FRHITextureCubeInitializer& Initializer)
+    FD3D12TextureCube(FD3D12Device* InDevice, const FRHITextureCubeInitializer& Initializer)
         : FRHITextureCube(Initializer)
         , FD3D12Texture(InDevice)
     { }
@@ -208,7 +208,7 @@ class FD3D12TextureCubeArray
     , public FD3D12Texture
 {
 public:
-    explicit FD3D12TextureCubeArray(FD3D12Device* InDevice, const FRHITextureCubeArrayInitializer& Initializer)
+    FD3D12TextureCubeArray(FD3D12Device* InDevice, const FRHITextureCubeArrayInitializer& Initializer)
         : FRHITextureCubeArray(Initializer)
         , FD3D12Texture(InDevice)
     { }
@@ -242,7 +242,7 @@ class FD3D12Texture3D final
     , public FD3D12Texture
 {
 public:
-    explicit FD3D12Texture3D(FD3D12Device* InDevice, const FRHITexture3DInitializer& Initializer)
+    FD3D12Texture3D(FD3D12Device* InDevice, const FRHITexture3DInitializer& Initializer)
         : FRHITexture3D(Initializer)
         , FD3D12Texture(InDevice)
     { }
