@@ -16,7 +16,7 @@ void* FMemory::Malloc(uint64 Size) noexcept
     // Src: https://www.cplusplus.com/reference/cstdlib/malloc/
     if (Size)
     {
-        return malloc(Size);
+        return ::malloc(Size);
     }
     else
     {
@@ -33,7 +33,7 @@ void* FMemory::MallocZeroed(uint64 Size) noexcept
 
 void* FMemory::Realloc(void* Ptr, uint64 Size) noexcept
 {
-    return realloc(Ptr, Size);
+    return ::realloc(Ptr, Size);
 }
 
 void FMemory::Free(void* Ptr) noexcept
@@ -43,27 +43,27 @@ void FMemory::Free(void* Ptr) noexcept
 
 void* FMemory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept
 {
-    return memset(Dst, static_cast<int>(Value), Size);
+    return ::memset(Dst, static_cast<int>(Value), Size);
 }
 
 void* FMemory::Memzero(void* Dst, uint64 Size) noexcept
 {
-    return memset(Dst, 0, Size);
+    return ::memset(Dst, 0, Size);
 }
 
 void* FMemory::Memcpy(void* RESTRICT Dst, const void* RESTRICT Src, uint64 Size) noexcept
 {
-    return memcpy(Dst, Src, Size);
+    return ::memcpy(Dst, Src, Size);
 }
 
 void* FMemory::Memmove(void* Dst, const void* Src, uint64 Size) noexcept
 {
-    return memmove(Dst, Src, Size);
+    return ::memmove(Dst, Src, Size);
 }
 
 bool FMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
 {
-    return (memcmp(LHS, RHS, Size) == 0);
+    return (::memcmp(LHS, RHS, Size) == 0);
 }
 
 void FMemory::Memswap(void* RESTRICT LHS, void* RESTRICT RHS, uint64 Size) noexcept

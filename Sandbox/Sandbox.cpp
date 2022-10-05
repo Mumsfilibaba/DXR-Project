@@ -7,8 +7,9 @@
 #include <Renderer/Renderer.h>
 
 #include <Engine/Engine.h>
-#include <Engine/Assets/Loaders/OBJLoader.h>
-#include <Engine/Assets/Loaders/FBXLoader.h>
+#include <Engine/Assets/AssetManager.h>
+#include <Engine/Assets/AssetLoaders/OBJLoader.h>
+#include <Engine/Assets/AssetLoaders/FBXLoader.h>
 #include <Engine/Scene/Scene.h>
 #include <Engine/Scene/Lights/PointLight.h>
 #include <Engine/Scene/Lights/DirectionalLight.h>
@@ -22,7 +23,7 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA         (0)
+#define LOAD_SPONZA         (1)
 #define ENABLE_LIGHT_TEST   (0)
 #define ENABLE_MANY_SPHERES (0)
 
@@ -45,17 +46,19 @@ bool FSandbox::Init()
     TSharedPtr<FScene> CurrentScene = GEngine->Scene;
 
     // Load Scene
-    FSceneData SceneData;
+    {
+        FSceneData SceneData;
 #if LOAD_SPONZA
-    FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
-    SceneData.Scale = 0.015f;
+        FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
+        SceneData.Scale = 0.015f;
 #else
-    FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
-    SceneData.AddToScene(CurrentScene.Get());
+        FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
+        SceneData.AddToScene(CurrentScene.Get());
 
-    FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
+        FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
 #endif
-    SceneData.AddToScene(CurrentScene.Get());
+        SceneData.AddToScene(CurrentScene.Get());
+    }
 
     // Create Spheres
     FMeshData SphereMeshData = FMeshFactory::CreateSphere(3);
@@ -179,48 +182,25 @@ bool FSandbox::Init()
     NewComponent->Mesh     = FMesh::Create(CubeMeshData);
     NewComponent->Material = MakeShared<FMaterial>(MatProperties);
 
-    FRHITexture2DRef AlbedoMap = FTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
-    if (AlbedoMap)
-    {
-        AlbedoMap->SetName("AlbedoMap");
-    }
+    FTextureResource2DRef AlbedoMap = StaticCastSharedRef<FTextureResource2D>(
+        FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png")));
+    FTextureResource2DRef NormalMap = StaticCastSharedRef<FTextureResource2D>(
+        FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png")));
+    FTextureResource2DRef AOMap = StaticCastSharedRef<FTextureResource2D>(
+        FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png")));
+    FTextureResource2DRef RoughnessMap = StaticCastSharedRef<FTextureResource2D>(
+        FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png")));
+    FTextureResource2DRef HeightMap = StaticCastSharedRef<FTextureResource2D>(
+        FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png")));
+    FTextureResource2DRef MetallicMap = StaticCastSharedRef<FTextureResource2D>(
+        FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png")));
 
-    FRHITexture2DRef NormalMap = FTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
-    if (NormalMap)
-    {
-        NormalMap->SetName("NormalMap");
-    }
-
-    FRHITexture2DRef AOMap = FTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (AOMap)
-    {
-        AOMap->SetName("AOMap");
-    }
-
-    FRHITexture2DRef RoughnessMap = FTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (RoughnessMap)
-    {
-        RoughnessMap->SetName("RoughnessMap");
-    }
-
-    FRHITexture2DRef HeightMap = FTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (HeightMap)
-    {
-        HeightMap->SetName("HeightMap");
-    }
-
-    FRHITexture2DRef MetallicMap = FTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (MetallicMap)
-    {
-        MetallicMap->SetName("MetallicMap");
-    }
-
-    NewComponent->Material->AlbedoMap    = AlbedoMap;
-    NewComponent->Material->NormalMap    = NormalMap;
-    NewComponent->Material->RoughnessMap = RoughnessMap;
-    NewComponent->Material->HeightMap    = HeightMap;
-    NewComponent->Material->AOMap        = AOMap;
-    NewComponent->Material->MetallicMap  = MetallicMap;
+    NewComponent->Material->AlbedoMap    = AlbedoMap->GetRHITexture();
+    NewComponent->Material->NormalMap    = NormalMap->GetRHITexture();
+    NewComponent->Material->RoughnessMap = RoughnessMap->GetRHITexture();
+    NewComponent->Material->HeightMap    = HeightMap->GetRHITexture();
+    NewComponent->Material->AOMap        = AOMap->GetRHITexture();
+    NewComponent->Material->MetallicMap  = MetallicMap->GetRHITexture();
     NewComponent->Material->Initialize();
     NewActor->AddComponent(NewComponent);
 
@@ -249,29 +229,14 @@ bool FSandbox::Init()
 
     NewActor->AddComponent(NewComponent);
 
-    AlbedoMap = FTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/StreetLight/BaseColor.jpg"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
-    if (AlbedoMap)
-    {
-        AlbedoMap->SetName("AlbedoMap");
-    }
-
-    NormalMap = FTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/StreetLight/Normal.jpg"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
-    if (NormalMap)
-    {
-        NormalMap->SetName("NormalMap");
-    }
-
-    RoughnessMap = FTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (RoughnessMap)
-    {
-        RoughnessMap->SetName("RoughnessMap");
-    }
-
-    MetallicMap = FTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (MetallicMap)
-    {
-        MetallicMap->SetName("MetallicMap");
-    }
+    AlbedoMap = StaticCastSharedRef<FTextureResource2D>(
+        FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/BaseColor.jpg")));
+    NormalMap = StaticCastSharedRef<FTextureResource2D>(
+        FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Normal.jpg")));
+    RoughnessMap = StaticCastSharedRef<FTextureResource2D>(
+        FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg")));
+    MetallicMap = StaticCastSharedRef<FTextureResource2D>(
+        FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg")));
 
     MatProperties.Albedo       = FVector3(1.0f);
     MatProperties.AO           = 1.0f;
@@ -297,11 +262,11 @@ bool FSandbox::Init()
         NewComponent                         = dbg_new FMeshComponent(NewActor);
         NewComponent->Mesh                   = StreetLight;
         NewComponent->Material               = StreetLightMat;
-        NewComponent->Material->AlbedoMap    = AlbedoMap;
-        NewComponent->Material->NormalMap    = NormalMap;
-        NewComponent->Material->RoughnessMap = RoughnessMap;
+        NewComponent->Material->AlbedoMap    = AlbedoMap->GetRHITexture();;
+        NewComponent->Material->NormalMap    = NormalMap->GetRHITexture();;
+        NewComponent->Material->RoughnessMap = RoughnessMap->GetRHITexture();;
         NewComponent->Material->AOMap        = GEngine->BaseTexture;
-        NewComponent->Material->MetallicMap  = MetallicMap;
+        NewComponent->Material->MetallicMap  = MetallicMap->GetRHITexture();
         NewComponent->Material->Initialize();
         NewActor->AddComponent(NewComponent);
     }
@@ -333,7 +298,7 @@ bool FSandbox::Init()
         NewComponent->Material->NormalMap    = GEngine->BaseNormal;
         NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
         NewComponent->Material->AOMap        = GEngine->BaseTexture;
-        NewComponent->Material->MetallicMap  = MetallicMap;
+        NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
         NewComponent->Material->Initialize();
 
         NewActor->AddComponent(NewComponent);

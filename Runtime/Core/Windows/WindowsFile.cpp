@@ -140,7 +140,7 @@ FORCEINLINE IFileHandle* FWindowsFile::OpenForRead(const FString& Filename)
 
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
-        const auto LastError = ::GetLastError();
+        MAYBE_UNUSED const auto LastError = ::GetLastError();
         return nullptr;
     }
 
@@ -162,7 +162,7 @@ FORCEINLINE IFileHandle* FWindowsFile::OpenForWrite(const FString& Filename)
 
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
-        const auto LastError = ::GetLastError();
+        MAYBE_UNUSED const auto LastError = ::GetLastError();
         return nullptr;
     }
 

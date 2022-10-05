@@ -8,6 +8,7 @@
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
+#include "Engine/Assets/AssetManager.h"
 #include "Engine/Resources/TextureFactory.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -57,7 +58,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     // Create Texture Cube
     {
         const FString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
-        FRHITexture2DRef Panorama = FTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
+        FTextureResource2DRef Panorama = StaticCastSharedRef<FTextureResource2D>(FAssetManager::Get().LoadTexture(PanoramaSourceFilename, false));
         if (!Panorama)
         {
             DEBUG_BREAK();
@@ -69,7 +70,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         }
 
         FrameResources.Skybox = FTextureFactory::CreateTextureCubeFromPanorma(
-            Panorama.Get(),
+            Panorama->GetRHITexture().Get(),
             1024,
             TextureFactoryFlag_GenerateMips,
             EFormat::R16G16B16A16_Float);

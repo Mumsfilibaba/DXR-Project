@@ -495,7 +495,7 @@ NODISCARD FORCEINLINE TSharedRef<T> StaticCastSharedRef(const TSharedRef<U>& Poi
 template<typename T, typename U>
 NODISCARD FORCEINLINE TSharedRef<T> StaticCastSharedRef(TSharedRef<U>&& Pointer)
 {
-    T* RawPointer = static_cast<T*>(Pointer.Get());
+    T* RawPointer = static_cast<T*>(Pointer.ReleaseOwnership());
     return TSharedRef<T>(RawPointer);
 }
 
@@ -509,7 +509,7 @@ NODISCARD FORCEINLINE TSharedRef<T> ConstCastSharedRef(const TSharedRef<U>& Poin
 template<typename T, typename U>
 NODISCARD FORCEINLINE TSharedRef<T> ConstCastSharedRef(TSharedRef<U>&& Pointer)
 {
-    T* RawPointer = const_cast<T*>(Pointer.Get());
+    T* RawPointer = const_cast<T*>(Pointer.ReleaseOwnership());
     return TSharedRef<T>(RawPointer);
 }
 
@@ -523,6 +523,6 @@ NODISCARD FORCEINLINE TSharedRef<T> ReinterpretCastSharedRef(const TSharedRef<U>
 template<typename T, typename U>
 NODISCARD FORCEINLINE TSharedRef<T> ReinterpretCastSharedRef(TSharedRef<U>&& Pointer)
 {
-    T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
+    T* RawPointer = reinterpret_cast<T*>(Pointer.ReleaseOwnership());
     return TSharedRef<T>(RawPointer);
 }

@@ -33,17 +33,20 @@ public:
 private:
     void UpdateFileSize()
     {
-        Check(IsValid());
+        if ((FileHandle != 0) && (FileHandle != INVALID_HANDLE_VALUE))
+        {
+            LARGE_INTEGER TempFileSize;
+            if (!GetFileSizeEx(FileHandle, &TempFileSize))
+            {
+                FileSize = -1;
+            }
+            else
+            {
+                FileSize = static_cast<int64>(TempFileSize.QuadPart);
+            }
+        }
 
-        LARGE_INTEGER TempFileSize;
-        if (!GetFileSizeEx(FileHandle, &TempFileSize))
-        {
-            FileSize = -1;
-        }
-        else
-        {
-            FileSize = static_cast<int64>(TempFileSize.QuadPart);
-        }
+        Check(IsValid());
     }
 
     HANDLE FileHandle;
@@ -57,7 +60,7 @@ private:
 struct CORE_API FWindowsFile 
     : public FGenericFile
 {
-    static FORCEINLINE IFileHandle* OpenForRead(const FString& Filename);
+    static IFileHandle* OpenForRead(const FString& Filename);
 
-    static FORCEINLINE IFileHandle* OpenForWrite(const FString& Filename);
+    static IFileHandle* OpenForWrite(const FString& Filename);
 };

@@ -1523,7 +1523,7 @@ void FD3D12CommandContext::ClearState()
 
 void FD3D12CommandContext::Flush()
 {
-    TScopedLock Lock(CommandContextCS);
+    SCOPED_LOCK(CommandContextCS);
 
     if (State.bIsReady)
     {

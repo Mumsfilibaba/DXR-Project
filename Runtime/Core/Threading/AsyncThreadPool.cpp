@@ -2,6 +2,12 @@
 #include "AsyncTask.h"
 
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Debug/Console/ConsoleInterface.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-Variables
+
+TAutoConsoleVariable<bool> CVarEnableAsyncWork("Core.EnableAsyncWork", true);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FAsyncThreadPool
@@ -118,6 +124,12 @@ bool FAsyncThreadPool::Initialize(int32 NumThreads)
     if (!GInstance)
     {
         GInstance = dbg_new FAsyncThreadPool();
+
+        if (!CVarEnableAsyncWork.GetBool())
+        {
+            NumThreads = 0;
+        }
+
         if (GInstance->CreateWorkers(NumThreads))
         {
             return true;
@@ -136,6 +148,16 @@ void FAsyncThreadPool::Release()
     }
 }
 
+bool FAsyncThreadPool::IsMultithreaded()
+{
+    if (GInstance)
+    {
+        return (GInstance->Workers.GetSize() > 0);
+    }
+
+    return false;
+}
+
 FAsyncThreadPool& FAsyncThreadPool::Get()
 {
     Check(GInstance != nullptr);
@@ -148,6 +170,14 @@ bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
 
     Check(NewTask != nullptr);
 
+    // We can disable the async work pool, execute tasks here in these cases
+    if (!CVarEnableAsyncWork.GetBool())
+    {
+        NewTask->DoAsyncWork();
+        return true;
+    }
+
+    // If we have stopped running but a task still was submitted, abandon
     if (!bIsRunning)
     {
         NewTask->Abandon();
@@ -204,7 +234,7 @@ IAsyncTask* FAsyncThreadPool::ReturnThreadOrRetrieveNextTask(FAsyncWorkThread* I
 bool FAsyncThreadPool::CreateWorkers(int32 NumWorkers)
 {
     bool bResult = true;
-    for (int32 Index = 0; Index < NumWorkers && bResult; ++Index)
+    for (int32 Index = 0; (Index < NumWorkers) && bResult; ++Index)
     {
         const FString Name = FString::CreateFormatted("Async Worker[%d]", Index);
 

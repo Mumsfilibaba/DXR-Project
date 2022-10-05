@@ -9,5 +9,5 @@
 class ENGINE_API FDDSLoader
 {
 public:
-    static FImage2DPtr LoadFile(const FString& Filename);
+    static void* LoadFile(const FString& Filename);
 };

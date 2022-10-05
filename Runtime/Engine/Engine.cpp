@@ -8,6 +8,7 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
+#include "Engine/Assets/AssetManager.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/TextureFactory.h"
 #include "Engine/InterfaceWindows/GameConsoleWindow.h"
@@ -36,36 +37,44 @@ FEngine::FEngine()
 
 bool FEngine::Initialize()
 {
-    const uint32 Style =
-        WindowStyleFlag_Titled |
-        WindowStyleFlag_Closable |
-        WindowStyleFlag_Minimizable |
-        WindowStyleFlag_Maximizable |
-        WindowStyleFlag_Resizeable;
-
-    FApplicationInterface& Application = FApplicationInterface::Get();
-
-    const uint32 WindowWidth  = 1920;
-    const uint32 WindowHeight = 1080;
-
-    MainWindow = Application.CreateWindow();
-    if (MainWindow && MainWindow->Initialize(FProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
+    if (!FAssetManager::Initialize())
     {
-        MainWindow->Show(false);
-
-        GToggleFullscreen.GetDelgate().AddRaw(MainWindow.Get(), &FGenericWindow::ToggleFullscreen);
-    }
-    else
-    {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Main Window");
         return false;
     }
 
-    Application.RegisterMainViewport(MainWindow);
+    FApplicationInterface& Application = FApplicationInterface::Get();
+    
+    // Initialize the GameViewport
+    {
+        const uint32 Style =
+            WindowStyleFlag_Titled      |
+            WindowStyleFlag_Closable    |
+            WindowStyleFlag_Minimizable |
+            WindowStyleFlag_Maximizable |
+            WindowStyleFlag_Resizeable;
 
-    TSharedPtr<ICursor> CursorDevice = Application.GetCursor();
+        const uint32 WindowWidth  = 1920;
+        const uint32 WindowHeight = 1080;
 
-    User = FUser::Make(0, CursorDevice);
+        MainWindow = Application.CreateWindow();
+        if (MainWindow && MainWindow->Initialize(FProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
+        {
+            MainWindow->Show(false);
+
+            GToggleFullscreen.GetDelgate().AddRaw(MainWindow.Get(), &FGenericWindow::ToggleFullscreen);
+        }
+        else
+        {
+            FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Main Window");
+            return false;
+        }
+
+        Application.RegisterMainViewport(MainWindow);
+    }
+
+    TSharedPtr<ICursor> Cursor = Application.GetCursor();
+
+    User = FUser::Make(0, Cursor);
     if (!User)
     {
         return false;
@@ -171,5 +180,6 @@ void FEngine::Exit()
 
 void FEngine::Destroy()
 {
+    FAssetManager::Release();
     delete this;
 }

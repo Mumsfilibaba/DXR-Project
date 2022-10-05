@@ -88,7 +88,7 @@ void FLightProbeRenderer::Release()
 
 void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, const FLightSetup& LightSetup, const FFrameResources& FrameResources)
 {
-    const FProxyLightProbe& Skylight    = LightSetup.Skylight;
+    const FProxyLightProbe& Skylight = LightSetup.Skylight;
     const uint32 IrradianceMapSize = static_cast<uint32>(Skylight.IrradianceMap->GetWidth());
 
     CmdList.TransitionTexture(

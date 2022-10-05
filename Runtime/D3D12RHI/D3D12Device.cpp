@@ -115,7 +115,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
     if (File)
     {
         Message += '\n';
-        File->Write(Message.GetData(), Message.GetSize());
+        File->Write((const uint8*)Message.GetCString(), Message.GetSize());
     }
 
     const D3D12_AUTO_BREADCRUMB_NODE* CurrentNode  = DredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
@@ -126,7 +126,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         if (File)
         {
             Message += '\n';
-            File->Write(Message.GetData(), Message.GetSize());
+            File->Write((const uint8*)Message.GetCString(), Message.GetSize());
         }
 
         D3D12_ERROR("%s", Message.GetCString());
@@ -137,7 +137,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
             if (File)
             {
                 Message += '\n';
-                File->Write(Message.GetData(), Message.GetSize());
+                File->Write((const uint8*)Message.GetCString(), Message.GetSize());
             }
         }
 

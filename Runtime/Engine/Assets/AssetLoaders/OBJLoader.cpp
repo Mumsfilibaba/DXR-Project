@@ -1,5 +1,4 @@
 #include "OBJLoader.h"
-#include "StbImageLoader.h"
 
 #include "Core/Math/MathCommon.h"
 #include "Core/Containers/Map.h"
@@ -8,44 +7,12 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 
 #include "Engine/Assets/MeshUtilities.h"
+#include "Engine/Assets/AssetManager.h"
 
 #include <tiny_obj_loader.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FOBJLoader
-
-struct FOBJTextureContext
-{
-    int8 LoadMaterialTexture(const FString& Path, const FString& Filename)
-    {
-        // If filename is empty there is no texture to load
-        if (Filename.IsEmpty())
-        {
-            return -1;
-        }
-
-        // Make sure that correct slashes are used
-        FString Fullpath = Path + '/' + Filename;
-        ConvertBackslashes(Fullpath);
-
-        auto TextureIt = UniqueTextures.find(Fullpath);
-        if (TextureIt == UniqueTextures.end())
-        {
-            int8 TextureIndex = static_cast<int8>(Textures.GetSize());
-
-            FImage2DPtr NewTexture = Textures.Emplace(FSTBImageLoader::LoadFile(Fullpath));
-            UniqueTextures.insert(std::make_pair(Fullpath, TextureIndex));
-            return TextureIndex;
-        }
-        else
-        {
-            return TextureIt->second;
-        }
-    }
-
-    TMap<FString, int8, FStringHasher> UniqueTextures;
-    TArray<FImage2DPtr>                      Textures;
-};
 
 bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool ReverseHandedness)
 {
@@ -72,16 +39,21 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
     }
 
     // Create All Materials in scene
-    FOBJTextureContext TextureContext;
     for (tinyobj::material_t& Mat : Materials)
     {
         // Create new material with default properties
         FMaterialData MaterialData;
-        MaterialData.MetallicTexture  = TextureContext.LoadMaterialTexture(MTLFiledir, Mat.ambient_texname.c_str());
-        MaterialData.DiffuseTexture   = TextureContext.LoadMaterialTexture(MTLFiledir, Mat.diffuse_texname.c_str());
-        MaterialData.RoughnessTexture = TextureContext.LoadMaterialTexture(MTLFiledir, Mat.specular_highlight_texname.c_str());
-        MaterialData.NormalTexture    = TextureContext.LoadMaterialTexture(MTLFiledir, Mat.bump_texname.c_str());
-        MaterialData.AlphaMaskTexture = TextureContext.LoadMaterialTexture(MTLFiledir, Mat.alpha_texname.c_str());
+        MaterialData.MetallicTexture = StaticCastSharedRef<FTextureResource2D>(
+            FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.ambient_texname.c_str()));
+        MaterialData.DiffuseTexture = StaticCastSharedRef<FTextureResource2D>(
+            FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.diffuse_texname.c_str()));
+        MaterialData.RoughnessTexture = StaticCastSharedRef<FTextureResource2D>(
+            FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.specular_highlight_texname.c_str()));
+        MaterialData.NormalTexture = StaticCastSharedRef<FTextureResource2D>(
+            FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.bump_texname.c_str()));
+        MaterialData.AlphaMaskTexture = StaticCastSharedRef<FTextureResource2D>(
+            FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.alpha_texname.c_str()));
+
 
         MaterialData.Diffuse   = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
         MaterialData.Metallic  = Mat.ambient[0];
@@ -90,7 +62,6 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
 
         OutScene.Materials.Emplace(MaterialData);
     }
-    OutScene.Textures = TextureContext.Textures;
 
     // Construct Scene
     FModelData Data;

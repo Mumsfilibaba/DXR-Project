@@ -49,6 +49,8 @@ public:
     static bool Initialize(int32 NumThreads);
     static void Release();
 
+    static bool IsMultithreaded();
+
     static FAsyncThreadPool& Get();
 
     bool SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority = EQueuePriority::Normal);

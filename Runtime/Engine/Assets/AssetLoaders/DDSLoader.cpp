@@ -3,8 +3,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FDDSLoader
 
-FImage2DPtr FDDSLoader::LoadFile(const FString& Filename)
+void* FDDSLoader::LoadFile(const FString& Filename)
 {
     UNREFERENCED_VARIABLE(Filename);
-    return FImage2DPtr();
+    return nullptr;
 }

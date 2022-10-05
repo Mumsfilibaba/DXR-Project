@@ -1,5 +1,6 @@
 #pragma once
 #include "VertexFormat.h"
+#include "TextureResource.h"
 
 #include "Engine/EngineModule.h"
 
@@ -67,67 +68,34 @@ struct FModelData
     int32 MaterialIndex = -1;
 };
 
-typedef TSharedPtr<struct FImage2D> FImage2DPtr;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FImage2D - Image for when loading materials
-
-struct FImage2D
-{
-    FImage2D() = default;
-
-    FImage2D(const FString& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat)
-        : Path(InPath)
-        , Image()
-        , Width(InWidth)
-        , Height(InHeight)
-        , Format(InFormat)
-    { }
-
-     /** @brief: Relative path to the image specified in the model-file */
-    FString Path;
-
-     /** @brief: Pointer to image data */
-    TUniquePtr<uint8[]> Image;
-
-     /** @brief: Size of the image */
-    uint16 Width  = 0;
-    uint16 Height = 0;
-
-     /** @brief: The format that the image was loaded as */
-    EFormat Format = EFormat::Unknown;
-
-    bool bIsLoaded = false;
-};
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMaterialData
 
 struct FMaterialData
 {
      /** @brief: Diffuse texture */
-    int8 DiffuseTexture = -1;
+    FTextureResource2DRef DiffuseTexture;
 
      /** @brief: Normal texture */
-    int8 NormalTexture = -1;
+    FTextureResource2DRef NormalTexture;
 
      /** @brief: Specular texture - Stores AO, Metallic, and Roughness in the same textures */
-    int8 SpecularTexture = -1;
+    FTextureResource2DRef SpecularTexture;
 
      /** @brief: Emissive texture */
-    int8 EmissiveTexture = -1;
+    FTextureResource2DRef EmissiveTexture;
 
      /** @brief: AO texture - Ambient Occlusion */
-    int8 AOTexture = -1;
+    FTextureResource2DRef AOTexture;
 
      /** @brief: Roughness texture*/
-    int8 RoughnessTexture = -1;
+    FTextureResource2DRef RoughnessTexture;
 
      /** @brief: Metallic Texture*/
-    int8 MetallicTexture = -1;
+    FTextureResource2DRef MetallicTexture;
 
      /** @brief: Metallic Texture*/
-    int8 AlphaMaskTexture = -1;
+    FTextureResource2DRef AlphaMaskTexture;
 
      /** @brief: Diffuse Parameter */
     FVector3 Diffuse;
@@ -166,7 +134,6 @@ struct ENGINE_API FSceneData
 
     TArray<FModelData>    Models;
     TArray<FMaterialData> Materials;
-    TArray<FImage2DPtr>   Textures;
 
      /** @brief: A scale used to scale each actor when using add to scene */
     float Scale = 1.0f;

@@ -14,15 +14,6 @@ void FSceneData::AddToScene(FScene* Scene)
         return;
     }
 
-    LOG_INFO("AddToScene");
-
-    TArray<FRHITexture2DRef> RHITextures;
-    for (FImage2DPtr Image : Textures)
-    {
-        FRHITexture2DRef NewTexture = FTextureFactory::LoadFromImage2D(Image.Get(), TextureFactoryFlag_GenerateMips);
-        RHITextures.Emplace(NewTexture);
-    }
-
     TArray<TSharedPtr<FMaterial>> CreatedMaterials;
     if (!Materials.IsEmpty())
     {
@@ -37,27 +28,16 @@ void FSceneData::AddToScene(FScene* Scene)
             // TODO: Should probably have a better connection between RHITexture and a Texture
 
             TSharedPtr<FMaterial> Material = MakeShared<FMaterial>(Desc);
-            Material->AlbedoMap = (MaterialData.DiffuseTexture >= 0) ? RHITextures[MaterialData.DiffuseTexture] : GEngine->BaseTexture;
-            Material->AlbedoMap = (Material->AlbedoMap)              ? Material->AlbedoMap                      : GEngine->BaseTexture;
+            Material->AlbedoMap    = (MaterialData.DiffuseTexture)   ? MaterialData.DiffuseTexture->GetRHITexture()   : GEngine->BaseTexture;
+            Material->AOMap        = (MaterialData.AOTexture)        ? MaterialData.AOTexture->GetRHITexture()        : GEngine->BaseTexture;
+            Material->MetallicMap  = (MaterialData.MetallicTexture)  ? MaterialData.MetallicTexture->GetRHITexture()  : GEngine->BaseTexture;
+            Material->NormalMap    = (MaterialData.NormalTexture)    ? MaterialData.NormalTexture->GetRHITexture()    : GEngine->BaseNormal;
+            Material->RoughnessMap = (MaterialData.RoughnessTexture) ? MaterialData.RoughnessTexture->GetRHITexture() : GEngine->BaseTexture;
+            Material->HeightMap    = GEngine->BaseTexture;
 
-            Material->AlphaMask = (MaterialData.AlphaMaskTexture >= 0) ? RHITextures[MaterialData.AlphaMaskTexture] : GEngine->BaseTexture;
-            Material->AlphaMask = (Material->AlphaMask)                ? Material->AlphaMask                        : GEngine->BaseTexture;
+            Material->AlphaMask = (MaterialData.AlphaMaskTexture) ? MaterialData.AlphaMaskTexture->GetRHITexture(): GEngine->BaseTexture;
             Material->EnableAlphaMask(Material->AlphaMask != GEngine->BaseTexture);
 
-            Material->AOMap = (MaterialData.AOTexture >= 0) ? RHITextures[MaterialData.AOTexture] : GEngine->BaseTexture;
-            Material->AOMap = (Material->AOMap)             ? Material->AOMap                     : GEngine->BaseTexture;
-
-            Material->MetallicMap = (MaterialData.MetallicTexture >= 0) ? RHITextures[MaterialData.MetallicTexture] : GEngine->BaseTexture;
-            Material->MetallicMap = (Material->MetallicMap)             ? Material->MetallicMap                     : GEngine->BaseTexture;
-
-            Material->NormalMap = (MaterialData.NormalTexture >= 0) ? RHITextures[MaterialData.NormalTexture] : GEngine->BaseNormal;
-            Material->NormalMap = (Material->NormalMap)             ? Material->NormalMap                     : GEngine->BaseNormal;
-
-            Material->RoughnessMap = (MaterialData.RoughnessTexture >= 0) ? RHITextures[MaterialData.RoughnessTexture] : GEngine->BaseTexture;
-            Material->RoughnessMap = (Material->RoughnessMap)             ? Material->RoughnessMap                     : GEngine->BaseTexture;
-
-            Material->HeightMap = GEngine->BaseTexture;
-            
             Material->Initialize();
 
             CreatedMaterials.Push(Material);

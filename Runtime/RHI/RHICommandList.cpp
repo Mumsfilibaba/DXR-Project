@@ -1,11 +1,17 @@
 #include "RHICommandList.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Debug/Console/ConsoleInterface.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 RHI_API FRHICommandListExecutor GRHICommandExecutor;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-Variables
+
+TAutoConsoleVariable<bool> CVarEnableRHIThread("RHI.EnableRHIThread", true);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHIThread
@@ -24,6 +30,11 @@ bool FRHIThread::Startup()
     if (!GInstance)
     {
         GInstance = dbg_new FRHIThread();
+        if (!CVarEnableRHIThread.GetBool())
+        {
+            return true;
+        }
+        
         if (!GInstance->Create())
         {
             return false;
@@ -37,7 +48,10 @@ void FRHIThread::Shutdown()
 {
     if (GInstance)
     {
-        GInstance->Stop();
+        if (CVarEnableRHIThread.GetBool())
+        {
+            GInstance->Stop();
+        }
 
         delete GInstance;
         GInstance = nullptr;
@@ -59,7 +73,7 @@ bool FRHIThread::Create()
     }
 
     Thread->SetName("RHI-CommandList Thread");
-    
+
     if (!Thread->Start())
     {
         return false;
@@ -105,31 +119,35 @@ int32 FRHIThread::Run()
 
 void FRHIThread::Stop()
 {
-    WaitForOutstandingTasks();
+    if (bIsRunning)
+    {
+        WaitForOutstandingTasks();
 
-    bIsRunning = false;
-    WaitCondition.NotifyAll();
+        bIsRunning = false;
+        WaitCondition.NotifyAll();
 
-    Check(Thread != nullptr);
-    Thread->WaitForCompletion();
+        Check(Thread != nullptr);
+        Thread->WaitForCompletion();
 
-    Thread.Reset();
+        Thread.Reset();
+    }
 }
 
 void FRHIThread::Execute(FRHIThreadTask&& NewTask)
 {
-    Check(bIsRunning);
-
-    // Set the work to execute
+    if (bIsRunning)
     {
-        SCOPED_LOCK(TasksCS);
+        // Set the work to execute
+        {
+            SCOPED_LOCK(TasksCS);
 
-        Tasks.Emplace(Move(NewTask));
-        NumSubmittedTasks++;
+            Tasks.Emplace(Move(NewTask));
+            NumSubmittedTasks++;
+        }
+
+        // Then notify worker
+        WaitCondition.NotifyAll();
     }
-
-    // Then notify worker
-    WaitCondition.NotifyAll();
 }
 
 void FRHIThread::WaitForOutstandingTasks()
@@ -177,11 +195,19 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
         Statistics.NumDispatchCalls += CommandList.GetNumDispatchCalls();
         Statistics.NumCommands      += CommandList.GetNumCommands();
 
-        FRHICommandList* NewCommandList = dbg_new FRHICommandList();
-        NewCommandList->ExchangeState(CommandList);
-        NewCommandList->SetCommandContext(CommandContext);
+        if (CVarEnableRHIThread.GetBool())
+        {
+            FRHICommandList* NewCommandList = dbg_new FRHICommandList();
+            NewCommandList->ExchangeState(CommandList);
+            NewCommandList->SetCommandContext(CommandContext);
 
-        FRHIThread::Get().Execute(FRHIThreadTask(NewCommandList));
+            FRHIThread::Get().Execute(FRHIThreadTask(NewCommandList));
+        }
+        else
+        {
+            CommandList.SetCommandContext(CommandContext);
+            CommandList.Execute();
+        }
     }
 }
 

@@ -59,80 +59,8 @@ void FTextureFactory::Release()
     GlobalFactoryData.ComputeShader.Reset();
 }
 
-FRHITexture2D* FTextureFactory::LoadFromImage2D(FImage2D* InImage, uint32 CreateFlags)
-{
-    if (!InImage || (InImage && !InImage->bIsLoaded))
-    {
-        return nullptr;
-    }
-
-    const uint8* Pixels = InImage->Image.Get();
-    uint32  Width  = InImage->Width;
-    uint32  Height = InImage->Height;
-    EFormat Format = InImage->Format;
-
-    FRHITexture2D* NewTexture = LoadFromMemory(Pixels, Width, Height, CreateFlags, Format);
-    if (NewTexture)
-    {
-        // Set debug name
-        NewTexture->SetName(InImage->Path.GetCString());
-    }
-
-    return NewTexture;
-}
-
-FRHITexture2D* FTextureFactory::LoadFromFile(const FString& Filepath, uint32 CreateFlags, EFormat Format)
-{
-    int32 Width        = 0;
-    int32 Height       = 0;
-    int32 ChannelCount = 0;
-
-    // Load based on format
-    TUniquePtr<uint8> Pixels;
-    if (Format == EFormat::R8G8B8A8_Unorm)
-    {
-        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.GetCString(), &Width, &Height, &ChannelCount, 4));
-    }
-    else if (Format == EFormat::R8_Unorm)
-    {
-        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.GetCString(), &Width, &Height, &ChannelCount, 1));
-    }
-    else if (Format == EFormat::R32G32B32A32_Float)
-    {
-        Pixels = TUniquePtr<uint8>(reinterpret_cast<uint8*>(stbi_loadf(Filepath.GetCString(), &Width, &Height, &ChannelCount, 4)));
-    }
-    else
-    {
-        LOG_ERROR("[FTextureFactory]: Format not supported");
-        return nullptr;
-    }
-
-    // Check if succeeded
-    if (!Pixels)
-    {
-        LOG_ERROR("[FTextureFactory]: Failed to load image '%s'", Filepath.GetCString());
-        return nullptr;
-    }
-    else
-    {
-        LOG_INFO("[FTextureFactory]: Loaded image '%s'", Filepath.GetCString());
-    }
-
-    return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);
-}
-
 FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format)
 {
-    if (
-        Format != EFormat::R8_Unorm && 
-        Format != EFormat::R8G8_Unorm &&
-        Format != EFormat::R8G8B8A8_Unorm && 
-        Format != EFormat::R32G32B32A32_Float)
-    {
-        LOG_ERROR("[FTextureFactory]: Format not supported");
-        return nullptr;
-    }
-
     Check(Pixels != nullptr);
 
     const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
