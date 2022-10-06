@@ -31,8 +31,8 @@ void FD3D12TimestampQuery::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32
 
 void FD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
-    Check(Index < D3D12_DEFAULT_QUERY_COUNT);
-    Check(CmdList != nullptr);
+    CHECK(Index < D3D12_DEFAULT_QUERY_COUNT);
+    CHECK(CmdList != nullptr);
 
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2));
 
@@ -45,8 +45,8 @@ void FD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32
 
 void FD3D12TimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
-    Check(CmdList != nullptr);
-    Check(Index < (uint32)TimeQueries.GetSize());
+    CHECK(CmdList != nullptr);
+    CHECK(Index < (uint32)TimeQueries.GetSize());
 
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2) + 1);
 }
@@ -56,10 +56,10 @@ void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CommandCon
     FD3D12CommandList CommandList = CommandContext.GetCommandList();
     
     ID3D12CommandQueue* D3D12Queue = GetDevice()->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct);
-    Check(D3D12Queue != nullptr);
+    CHECK(D3D12Queue != nullptr);
 
     ID3D12GraphicsCommandList* D3D12CommandList = CommandList.GetGraphicsCommandList();
-    Check(D3D12CommandList != nullptr);
+    CHECK(D3D12CommandList != nullptr);
 
     uint32 ReadIndex = CommandContext.GetCurrentBachIndex();
     if (ReadIndex >= (uint32)ReadResources.GetSize())

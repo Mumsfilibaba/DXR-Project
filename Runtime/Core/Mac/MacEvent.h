@@ -39,13 +39,13 @@ private:
     FORCEINLINE void LockMutex()
     {
         const auto Result = pthread_mutex_lock(&Mutex);
-        Check(Result == 0);
+        CHECK(Result == 0);
     }
 
     FORCEINLINE void UnlockMutex()
     {
         const auto Result = pthread_mutex_unlock(&Mutex);
-        Check(Result == 0);
+        CHECK(Result == 0);
     }
 
 	static void SubtractTimevals(const struct timeval* This, struct timeval* Subtract, struct timeval* OutDifference)

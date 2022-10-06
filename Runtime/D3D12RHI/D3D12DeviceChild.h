@@ -16,7 +16,7 @@ public:
     FD3D12DeviceChild(FD3D12Device* InDevice)
         : Device(InDevice)
     {
-        Check(Device != nullptr);
+        CHECK(Device != nullptr);
     }
 
     virtual ~FD3D12DeviceChild()

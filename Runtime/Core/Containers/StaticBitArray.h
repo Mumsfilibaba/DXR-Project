@@ -332,10 +332,10 @@ public:
      */
     NODISCARD CONSTEXPR BitReferenceType GetBitReference(SizeType BitIndex) noexcept
     {
-        Check(BitIndex < NUM_BITS);
+        CHECK(BitIndex < NUM_BITS);
 
         const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
-        Check(ElementIndex < GetCapacity());
+        CHECK(ElementIndex < GetCapacity());
 
         return BitReferenceType(Storage[ElementIndex], ~Element);
     }
@@ -348,10 +348,10 @@ public:
      */
     NODISCARD CONSTEXPR const ConstBitReferenceType GetBitReference(SizeType Index) const noexcept
     {
-        Check(Index < NUM_BITS);
+        CHECK(Index < NUM_BITS);
 
         const SizeType ElementIndex = GetStorageIndexOfBit(Index);
-        Check(ElementIndex < GetCapacity());
+        CHECK(ElementIndex < GetCapacity());
 
         return ConstBitReferenceType(Storage[ElementIndex], CreateMaskForBit(Index));
     }

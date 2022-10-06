@@ -25,18 +25,33 @@ void FSceneData::AddToScene(FScene* Scene)
             Desc.Metallic  = MaterialData.Metallic;
             Desc.Roughness = MaterialData.Roughness;
 
-            // TODO: Should probably have a better connection between RHITexture and a Texture
+            if (MaterialData.bAlphaDiffuseCombined)
+            {
+                Desc.EnableMask = AlphaMaskMode_DiffuseCombined;
+            }
+
+            if (MaterialData.SpecularTexture)
+            {
+                Desc.EnableHeight = 2;
+            }
 
             TSharedPtr<FMaterial> Material = MakeShared<FMaterial>(Desc);
-            Material->AlbedoMap    = (MaterialData.DiffuseTexture)   ? MaterialData.DiffuseTexture->GetRHITexture()   : GEngine->BaseTexture;
-            Material->AOMap        = (MaterialData.AOTexture)        ? MaterialData.AOTexture->GetRHITexture()        : GEngine->BaseTexture;
+            Material->AlbedoMap = (MaterialData.DiffuseTexture)   ? MaterialData.DiffuseTexture->GetRHITexture()   : GEngine->BaseTexture;
+
+            // Specular store AO in r
+            Material->AOMap = (MaterialData.AOTexture)        ? MaterialData.AOTexture->GetRHITexture()        : GEngine->BaseTexture;
+            Material->AOMap = (MaterialData.SpecularTexture)  ? MaterialData.SpecularTexture->GetRHITexture()  : Material->AOMap;
+            
             Material->MetallicMap  = (MaterialData.MetallicTexture)  ? MaterialData.MetallicTexture->GetRHITexture()  : GEngine->BaseTexture;
             Material->NormalMap    = (MaterialData.NormalTexture)    ? MaterialData.NormalTexture->GetRHITexture()    : GEngine->BaseNormal;
             Material->RoughnessMap = (MaterialData.RoughnessTexture) ? MaterialData.RoughnessTexture->GetRHITexture() : GEngine->BaseTexture;
             Material->HeightMap    = GEngine->BaseTexture;
 
-            Material->AlphaMask = (MaterialData.AlphaMaskTexture) ? MaterialData.AlphaMaskTexture->GetRHITexture(): GEngine->BaseTexture;
-            Material->EnableAlphaMask(Material->AlphaMask != GEngine->BaseTexture);
+            if (!MaterialData.bAlphaDiffuseCombined)
+            {
+                Material->AlphaMask = (MaterialData.AlphaMaskTexture) ? MaterialData.AlphaMaskTexture->GetRHITexture() : GEngine->BaseTexture;
+                Material->EnableAlphaMask(Material->AlphaMask != GEngine->BaseTexture);
+            }
 
             Material->Initialize();
 
@@ -44,7 +59,7 @@ void FSceneData::AddToScene(FScene* Scene)
         }
     }
 
-    Check(Materials.GetSize() == CreatedMaterials.GetSize());
+    CHECK(Materials.GetSize() == CreatedMaterials.GetSize());
 
     for (const FModelData& ModelData : Models)
     {

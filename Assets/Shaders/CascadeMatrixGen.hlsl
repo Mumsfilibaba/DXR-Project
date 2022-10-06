@@ -54,7 +54,7 @@ void Main(FComputeShaderInput Input)
 
     const float CascadeResolution = GenerationInfo.CascadeResolution;
 
-    float PrevSplitDist = (CascadeIndex == 0) ? MinMaxDepth.x : CascadeSplits[CascadeIndex - 1];
+    float PrevSplitDist = (CascadeIndex == 0) ? min(MinMaxDepth.x, MinMaxDepth.y) : CascadeSplits[CascadeIndex - 1];
     float SplitDist     = CascadeSplits[CascadeIndex];
 
     float3 FrustumCorners[8] =
@@ -236,9 +236,9 @@ void Main(FComputeShaderInput Input)
         Split.NearPlane = NewNearPlane;
         Split.FarPlane  = NewFarPlane;
     
-        Split.Padding0  = 0.0f;
-        Split.Padding1  = 0.0f;
-        Split.Padding2  = 0.0f;
+        Split.Padding0  = MinDepth;
+        Split.Padding1  = MaxDepth;
+        Split.Padding2  = NearPlane + PrevSplitDist * ClipRange;
 
         [unroll]
         for(int Index = 0; Index < 6; ++Index)

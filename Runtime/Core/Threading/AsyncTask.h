@@ -82,7 +82,7 @@ private:
     FORCEINLINE void DoWork()
     {
         Execute();
-        Check(NumInvokations.Load() == 1);
+        CHECK(NumInvokations.Load() == 1);
         NumInvokations--;
     }
 
@@ -260,6 +260,6 @@ inline void Async(LambdaType&& InLambda, EQueuePriority Priority = EQueuePriorit
     using AsyncType = TAutoAsyncTask<TAsyncLambda<LambdaType>>;
 
     AsyncType* AsynTask = dbg_new AsyncType(::Forward<LambdaType>(InLambda));
-    Check(AsynTask != nullptr);
+    CHECK(AsynTask != nullptr);
     AsynTask->Launch(Priority, bExecuteAsync);
 }

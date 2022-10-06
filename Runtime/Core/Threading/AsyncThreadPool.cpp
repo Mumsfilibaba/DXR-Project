@@ -50,9 +50,9 @@ bool FAsyncWorkThread::Create(const CHAR* InThreadName)
 
 void FAsyncWorkThread::WakeUpAndStartTask(IAsyncTask* NewTask)
 {
-    Check(NewTask != nullptr);
+    CHECK(NewTask != nullptr);
     CurrentTask = NewTask;
-    Check(WorkEvent != nullptr);
+    CHECK(WorkEvent != nullptr);
     WorkEvent->Trigger();
 }
 
@@ -73,11 +73,15 @@ int32 FAsyncWorkThread::Run()
     {
         if (CurrentTask)
         {
+            LOG_INFO("There is a task");
+
             CurrentTask->DoAsyncWork();
             CurrentTask = FAsyncThreadPool::Get().ReturnThreadOrRetrieveNextTask(this);
         }
         else
         {
+            LOG_INFO("No task go to sleep");
+
             WorkEvent->Wait(FTimespan::Infinity());
         }
     }
@@ -116,7 +120,7 @@ FAsyncThreadPool::~FAsyncThreadPool()
 {
     // Lock in-case we are currently trying to submit from another thread
     SCOPED_LOCK(TaskQueueCS);
-    Check(TaskQueue.GetSize() == 0);
+    CHECK(TaskQueue.GetSize() == 0);
 }
 
 bool FAsyncThreadPool::Initialize(int32 NumThreads)
@@ -160,7 +164,7 @@ bool FAsyncThreadPool::IsMultithreaded()
 
 FAsyncThreadPool& FAsyncThreadPool::Get()
 {
-    Check(GInstance != nullptr);
+    CHECK(GInstance != nullptr);
     return *GInstance;
 }
 
@@ -168,7 +172,7 @@ bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
 {
     SCOPED_LOCK(TaskQueueCS);
 
-    Check(NewTask != nullptr);
+    CHECK(NewTask != nullptr);
 
     // We can disable the async work pool, execute tasks here in these cases
     if (!CVarEnableAsyncWork.GetBool())
@@ -187,6 +191,7 @@ bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
     if (AvailableWorkers.IsEmpty())
     {
         TaskQueue.Enqueue(NewTask, Priority);
+        LOG_INFO("Num Queued tasks=%d", TaskQueue.GetSize());
     }
     else
     {
@@ -217,18 +222,18 @@ IAsyncTask* FAsyncThreadPool::ReturnThreadOrRetrieveNextTask(FAsyncWorkThread* I
 {
     SCOPED_LOCK(TaskQueueCS);
 
-    if (InThread)
-    {
-        IAsyncTask* NewTask = nullptr;
-        if (TaskQueue.Dequeue(&NewTask))
-        {
-            return NewTask;
-        }
-        
-        AvailableWorkers.Emplace(InThread);
-    }
+    CHECK(InThread != nullptr);
 
-    return nullptr;
+    IAsyncTask* NewTask = nullptr;
+    if (TaskQueue.Dequeue(&NewTask))
+    {
+        return NewTask;
+    }
+    else
+    {
+        AvailableWorkers.Emplace(InThread);
+        return nullptr;
+    }
 }
 
 bool FAsyncThreadPool::CreateWorkers(int32 NumWorkers)

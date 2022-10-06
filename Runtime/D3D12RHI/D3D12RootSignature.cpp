@@ -20,7 +20,7 @@ static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[ShaderVisibility_Count] =
 
 static D3D12_SHADER_VISIBILITY GetD3D12ShaderVisibility(uint32 Visbility)
 {
-    Check(Visbility < ShaderVisibility_Count);
+    CHECK(Visbility < ShaderVisibility_Count);
     return GD3D12ShaderVisibility[Visbility];
 }
 
@@ -39,7 +39,7 @@ static EShaderVisibility GShaderVisibility[ShaderVisibility_Count] =
 
 static EShaderVisibility GetShaderVisibility(uint32 Visbility)
 {
-    Check(Visbility < ShaderVisibility_Count);
+    CHECK(Visbility < ShaderVisibility_Count);
     return GShaderVisibility[Visbility];
 }
 
@@ -56,7 +56,7 @@ static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
     case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER: return ResourceType_Sampler;
     
     default:
-        Check(false);
+        CHECK(false);
         return ResourceType_Unknown;
     }
 }
@@ -111,8 +111,8 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
         const FShaderResourceCount& ResourceCounts = RootSignatureInfo.ResourceCounts[ShaderStage];
         if (ResourceCounts.Ranges.NumCBVs > 0)
         {
-            Check(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Check(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
+            CHECK(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
+            CHECK(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_CBV, ResourceCounts.Ranges.NumCBVs, 0, Space);
             InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
@@ -124,8 +124,8 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
 
         if (ResourceCounts.Ranges.NumSRVs > 0)
         {
-            Check(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Check(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
+            CHECK(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
+            CHECK(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ResourceCounts.Ranges.NumSRVs, 0, Space);
             InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
@@ -137,8 +137,8 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
 
         if (ResourceCounts.Ranges.NumUAVs > 0)
         {
-            Check(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Check(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
+            CHECK(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
+            CHECK(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_UAV, ResourceCounts.Ranges.NumUAVs, 0, Space);
             InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
@@ -150,8 +150,8 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
 
         if (ResourceCounts.Ranges.NumSamplers > 0)
         {
-            Check(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Check(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
+            CHECK(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
+            CHECK(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ResourceCounts.Ranges.NumSamplers, 0, Space);
             InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
@@ -163,8 +163,8 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
 
         if (ResourceCounts.Num32BitConstants > 0)
         {
-            Check(ResourceCounts.Num32BitConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
-            Check(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
+            CHECK(ResourceCounts.Num32BitConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
+            CHECK(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
             Insert32BitConstantRange(GetD3D12ShaderVisibility(ShaderStage), ResourceCounts.Num32BitConstants, 0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
 
@@ -177,7 +177,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
         }
     }
 
-    Check(RootSignatureCost <= D3D12_MAX_ROOT_PARAMETER_COST);
+    CHECK(RootSignatureCost <= D3D12_MAX_ROOT_PARAMETER_COST);
     D3D12_INFO("[FD3D12RootSignatureDescHelper] RootSignatureCost=%u", RootSignatureCost);
 
     Desc.NumParameters = NumRootParameters;
@@ -199,7 +199,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
 
 void FD3D12RootSignatureDescHelper::InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace)
 {
-    Check(NumDescriptors > 0);
+    CHECK(NumDescriptors > 0);
 
     OutRange.BaseShaderRegister                = BaseShaderRegister;
     OutRange.NumDescriptors                    = NumDescriptors;
@@ -222,7 +222,7 @@ void FD3D12RootSignatureDescHelper::InsertDescriptorTable(D3D12_SHADER_VISIBILIT
 
 void FD3D12RootSignatureDescHelper::Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace)
 {
-    Check(Num32BitConstants > 0);
+    CHECK(Num32BitConstants > 0);
 
     D3D12_ROOT_PARAMETER& NewParameters = RootParameters[NumRootParameters++];
     NewParameters.ParameterType            = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
@@ -320,7 +320,7 @@ bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
     }
 
     const D3D12_ROOT_SIGNATURE_DESC* Desc = Deserializer->GetRootSignatureDesc();
-    Check(Desc != nullptr);
+    CHECK(Desc != nullptr);
 
     CreateRootParameterMap(*Desc);
 
@@ -351,7 +351,7 @@ void FD3D12RootSignature::CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC
             uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
 
             // NOTE: We may want to support multiple ranges
-            Check(Parameter.DescriptorTable.NumDescriptorRanges == 1);
+            CHECK(Parameter.DescriptorTable.NumDescriptorRanges == 1);
             D3D12_DESCRIPTOR_RANGE Range = Parameter.DescriptorTable.pDescriptorRanges[0];
 
             uint32 ResourceType = GetResourceType(Range.RangeType);
@@ -359,7 +359,7 @@ void FD3D12RootSignature::CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC
         }
         else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS)
         {
-            Check(ConstantRootParameterIndex == -1);
+            CHECK(ConstantRootParameterIndex == -1);
             ConstantRootParameterIndex = i;
         }
     }
@@ -513,7 +513,7 @@ void FD3D12RootSignatureCache::ReleaseAll()
 
 FD3D12RootSignature* FD3D12RootSignatureCache::GetOrCreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount)
 {
-    Check(RootSignatures.GetSize() == ResourceCounts.GetSize());
+    CHECK(RootSignatures.GetSize() == ResourceCounts.GetSize());
 
     for (int32 i = 0; i < ResourceCounts.GetSize(); i++)
     {

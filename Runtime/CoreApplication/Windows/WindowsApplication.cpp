@@ -69,7 +69,7 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle)
     , InstanceHandle(InInstanceHandle)
 {
     const bool bResult = RegisterWindowClass();
-    Check(bResult == true);
+    CHECK(bResult == true);
 
 #if (PLATFORM_WINDOWS_VISTA && ENABLE_DPI_AWARENESS)
     SetProcessDPIAware();
@@ -548,7 +548,7 @@ LRESULT FWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
     LRESULT ResultFromListeners = 0;
     for (TSharedPtr<IWindowsMessageListener> NativeMessageListener : WindowsMessageListeners)
     {
-        Check(NativeMessageListener != nullptr);
+        CHECK(NativeMessageListener != nullptr);
 
         LRESULT TempResult = NativeMessageListener->MessageProc(Window, Message, wParam, lParam);
         if (TempResult)

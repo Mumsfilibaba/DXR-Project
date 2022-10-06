@@ -43,7 +43,7 @@ FMacEvent::~FMacEvent()
 
 bool FMacEvent::Create(bool bInManualReset)
 {
-    Check(bInitialized == false);
+    CHECK(bInitialized == false);
     
     Triggered    = ETriggerType::None;
     bManualReset = bInManualReset;
@@ -67,7 +67,7 @@ bool FMacEvent::Create(bool bInManualReset)
 
 void FMacEvent::Trigger()
 {
-    Check(bInitialized == true);
+    CHECK(bInitialized == true);
 
     LockMutex();
 
@@ -75,13 +75,13 @@ void FMacEvent::Trigger()
     {
         Triggered = ETriggerType::All;
         const auto Result = pthread_cond_broadcast(&Condition);
-        Check(Result == 0);
+        CHECK(Result == 0);
     }
     else 
     {
         Triggered = ETriggerType::One;
         const auto Result = pthread_cond_signal(&Condition);
-        Check(Result == 0);
+        CHECK(Result == 0);
     }
 
     UnlockMutex();
@@ -89,7 +89,7 @@ void FMacEvent::Trigger()
 
 void FMacEvent::Wait(uint64 Milliseconds)
 {
-    Check(bInitialized == true);
+    CHECK(bInitialized == true);
     
     struct timeval StartTime;
     if ((Milliseconds > 0) && (Milliseconds != TNumericLimits<uint64>::Max()))
@@ -118,7 +118,7 @@ void FMacEvent::Wait(uint64 Milliseconds)
             if (Milliseconds == uint64(-1))
             {
                 const auto Result = pthread_cond_wait(&Condition, &Mutex);
-                Check(Result == 0);
+                CHECK(Result == 0);
             }
             else
             {
@@ -129,7 +129,7 @@ void FMacEvent::Wait(uint64 Milliseconds)
                 TimeOut.tv_nsec = (TimeMS % 1000) * 1000000;
 
                 const auto Result = pthread_cond_timedwait(&Condition, &Mutex, &TimeOut);
-                Check((Result == 0) || (Result == ETIMEDOUT));
+                CHECK((Result == 0) || (Result == ETIMEDOUT));
 
                 struct timeval Now;
                 struct timeval Difference;
@@ -143,7 +143,7 @@ void FMacEvent::Wait(uint64 Milliseconds)
             }
             
             NumWaitingThreads--;
-            Check(NumWaitingThreads >= 0);
+            CHECK(NumWaitingThreads >= 0);
         }
 
     } while(!bResult && (Milliseconds != 0));
@@ -153,7 +153,7 @@ void FMacEvent::Wait(uint64 Milliseconds)
 
 void FMacEvent::Reset()
 {
-    Check(bInitialized == true);
+    CHECK(bInitialized == true);
     LockMutex();
     Triggered = ETriggerType::None;
     UnlockMutex();

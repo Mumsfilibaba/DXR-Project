@@ -75,7 +75,7 @@ void FScene::AddCamera(FCamera* InCamera)
 
 void FScene::AddActor(FActor* InActor)
 {
-    Check(InActor != nullptr);
+    CHECK(InActor != nullptr);
     Actors.Emplace(InActor);
 
     FMeshComponent* Component = InActor->GetComponentOfType<FMeshComponent>();
@@ -87,13 +87,13 @@ void FScene::AddActor(FActor* InActor)
 
 void FScene::AddLight(FLight* InLight)
 {
-    Check(InLight != nullptr);
+    CHECK(InLight != nullptr);
     Lights.Emplace(InLight);
 }
 
 void FScene::AddLightProbe(FLightProbe* InLightProbe)
 {
-    Check(InLightProbe != nullptr);
+    CHECK(InLightProbe != nullptr);
     LightProbes.Emplace(InLightProbe);
 }
 

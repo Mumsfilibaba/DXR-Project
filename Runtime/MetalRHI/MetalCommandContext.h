@@ -43,7 +43,7 @@ public:
     
     void FinishContextUnsafe()
     {
-        Check(CopyEncoder != nil);
+        CHECK(CopyEncoder != nil);
         
         [CopyEncoder endEncoding];
         NSRelease(CopyEncoder);

@@ -95,7 +95,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) noexcept
     {
-        Check(Index < NUM_ELEMENTS);
+        CHECK(Index < NUM_ELEMENTS);
         return Elements[Index];
     }
 
@@ -107,7 +107,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& GetElementAt(SizeType Index) const noexcept
     {
-        Check(Index < NUM_ELEMENTS);
+        CHECK(Index < NUM_ELEMENTS);
         return Elements[Index];
     }
 

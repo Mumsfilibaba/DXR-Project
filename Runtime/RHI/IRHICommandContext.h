@@ -276,9 +276,9 @@ struct IRHICommandContext
      * @param Dst: Destination buffer to update
      * @param OffsetInBytes: Offset in bytes inside the destination-buffer
      * @param SizeInBytes: Number of bytes to copy over to the buffer
-     * @param SourceData: SourceData to copy to the GPU
+     * @param SrcData: SrcData to copy to the GPU
      */
-    virtual void UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) = 0;
+    virtual void UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SrcData) = 0;
     
     /**
      * @brief: Updates the contents of a Texture2D
@@ -287,9 +287,16 @@ struct IRHICommandContext
      * @param Width: Width of the texture to update
      * @param Height: Height of the texture to update
      * @param MipLevel: MipLevel of the texture to update
-     * @param SourceData: SourceData to copy to the GPU
+     * @param SrcData: SrcData to copy to the GPU
+     * @param SourceRowPitch: RowPitch of the SrcData
      */
-    virtual void UpdateTexture2D(FRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) = 0;
+    virtual void UpdateTexture2D(
+        FRHITexture2D* Dst,
+        uint32 Width,
+        uint32 Height,
+        uint32 MipLevel,
+        const void* SrcData,
+        uint32 SourceRowPitch) = 0;
 
     /**
      * @brief: Resolves a multi-sampled texture, must have the same sizes and compatible formats

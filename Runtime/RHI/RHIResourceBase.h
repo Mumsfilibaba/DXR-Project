@@ -21,7 +21,7 @@ protected:
 public:
     virtual int32 AddRef() override
     {
-        Check(StrongReferences.Load() > 0);
+        CHECK(StrongReferences.Load() > 0);
         ++StrongReferences;
         return StrongReferences.Load();
     }
@@ -29,7 +29,7 @@ public:
     virtual int32 Release() override
     {
         const int32 RefCount = --StrongReferences;
-        Check(RefCount >= 0);
+        CHECK(RefCount >= 0);
 
         if (RefCount < 1)
         {

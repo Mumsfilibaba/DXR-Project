@@ -92,7 +92,7 @@ void FFrameProfiler::EndTraceScope(const CHAR* Name)
         }
         else
         {
-            Check(false);
+            CHECK(false);
         }
     }
 }

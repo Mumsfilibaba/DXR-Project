@@ -164,7 +164,7 @@ public:
     inline ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
     {
         FD3D12CommandListManager* CommandListManager = GetCommandListManager(QueueType);
-        Check(CommandListManager != nullptr);
+        CHECK(CommandListManager != nullptr);
         return CommandListManager->GetD3D12CommandQueue();
     }
 

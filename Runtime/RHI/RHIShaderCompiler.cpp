@@ -209,7 +209,7 @@ void FRHIShaderCompiler::Release()
 
 FRHIShaderCompiler& FRHIShaderCompiler::Get()
 {
-    Check(Instance.HasValue());
+    CHECK(Instance.HasValue());
     return Instance.GetValue();
 }
 

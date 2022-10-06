@@ -38,19 +38,19 @@ public:
 
     FORCEINLINE const FMatrix4& GetMatrix(uint32 Index) const
     {
-        Check(Index < 6);
+        CHECK(Index < 6);
         return Matrices[Index];
     }
 
     FORCEINLINE const FMatrix4& GetViewMatrix(uint32 Index) const
     {
-        Check(Index < 6);
+        CHECK(Index < 6);
         return ViewMatrices[Index];
     }
 
     FORCEINLINE const FMatrix4& GetProjectionMatrix(uint32 Index) const
     {
-        Check(Index < 6);
+        CHECK(Index < 6);
         return ProjMatrices[Index];
     }
 

@@ -24,7 +24,7 @@ struct FMacPlatformMisc final
 
         size_t Size = sizeof(Info);
         const int32 Junk = sysctl(Mib, sizeof(Mib) / sizeof(*Mib), &Info, &Size, nullptr, 0);
-        Check(Junk == 0);
+        CHECK(Junk == 0);
 
         return ((Info.kp_proc.p_flag & P_TRACED) != 0);
     }

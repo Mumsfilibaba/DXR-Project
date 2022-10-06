@@ -86,7 +86,7 @@ static const CHAR* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 
 void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 {
-    Check(Device != nullptr);
+    CHECK(Device != nullptr);
 
     FString Message = "[D3D12] Device Removed";
     D3D12_ERROR("%s", Message.GetCString());
@@ -737,7 +737,7 @@ bool FD3D12Device::CreateDevice()
 
 bool FD3D12Device::CreateQueues()
 {
-    Check(Device != nullptr);
+    CHECK(Device != nullptr);
 
     if (!DirectCommandListManager.Initialize())
     {
@@ -761,17 +761,17 @@ FD3D12CommandListManager* FD3D12Device::GetCommandListManager(ED3D12CommandQueue
 {
     if (QueueType == ED3D12CommandQueueType::Direct)
     {
-        Check(DirectCommandListManager.GetQueueType() == ED3D12CommandQueueType::Direct);
+        CHECK(DirectCommandListManager.GetQueueType() == ED3D12CommandQueueType::Direct);
         return &DirectCommandListManager;
     }
     else if (QueueType == ED3D12CommandQueueType::Copy)
     {
-        Check(CopyCommandListManager.GetQueueType() == ED3D12CommandQueueType::Copy);
+        CHECK(CopyCommandListManager.GetQueueType() == ED3D12CommandQueueType::Copy);
         return &CopyCommandListManager;
     }
     else if (QueueType == ED3D12CommandQueueType::Compute)
     {
-        Check(ComputeCommandListManager.GetQueueType() == ED3D12CommandQueueType::Compute);
+        CHECK(ComputeCommandListManager.GetQueueType() == ED3D12CommandQueueType::Compute);
         return &ComputeCommandListManager;
     }
     else

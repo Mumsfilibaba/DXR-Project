@@ -104,7 +104,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& FirstElement() const noexcept
     {
-        Check(IsEmpty());
+        CHECK(IsEmpty());
         return *GetData();
     }
 
@@ -115,7 +115,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& LastElement() const noexcept
     {
-        Check(IsEmpty());
+        CHECK(IsEmpty());
         return *(GetData() + (ViewSize - 1));
     }
 
@@ -127,7 +127,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) const noexcept
     {
-        Check(Index < ViewSize);
+        CHECK(Index < ViewSize);
         return *(GetData() + Index);
     }
 
@@ -345,7 +345,7 @@ public:
      */
     NODISCARD FORCEINLINE TArrayView SubView(SizeType Offset, SizeType NumElements) const noexcept
     {
-        Check((NumElements < ViewSize) && (Offset + NumElements < ViewSize));
+        CHECK((NumElements < ViewSize) && (Offset + NumElements < ViewSize));
         return TArrayView(View + Offset, NumElements);
     }
 

@@ -9,6 +9,17 @@
 #define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetShaderResourceView() : nullptr)
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// EAlphaMaskMode
+
+// TODO: This should be refactored into using different shaders
+enum EAlphaMaskMode
+{
+    AlphaMaskMode_Disabled        = 0, // Disabled completely
+    AlphaMaskMode_Enabled         = 1, // Stored in separate texture
+    AlphaMaskMode_DiffuseCombined = 2, // Stored in Alpha channel of diffuse texture
+};
+
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // FMaterialDesc
 
 struct FMaterialDesc
@@ -19,7 +30,7 @@ struct FMaterialDesc
     float    Metallic     = 0.0f;
     float    AO           = 0.5f;
     int32    EnableHeight = 0;
-    int32    EnableMask   = 0;
+    int32    EnableMask   = AlphaMaskMode_Disabled;
 };
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -57,12 +68,12 @@ public:
 
     FORCEINLINE bool HasAlphaMask() const
     {
-        return AlphaMask && Properties.EnableMask;
+        return (AlphaMask && Properties.EnableMask) || (Properties.EnableMask == AlphaMaskMode_DiffuseCombined);
     }
 
     FORCEINLINE bool HasHeightMap() const
     {
-        return HeightMap && Properties.EnableHeight;
+        return HeightMap && (Properties.EnableHeight == 1);
     }
 
     FORCEINLINE FRHISamplerState* GetMaterialSampler() const

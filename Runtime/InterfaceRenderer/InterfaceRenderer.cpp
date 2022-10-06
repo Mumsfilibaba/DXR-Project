@@ -392,7 +392,7 @@ void FInterfaceRenderer::Render(FRHICommandList& CmdList)
 
     for (FDrawableTexture* Image : RenderedImages)
     {
-        Check(Image != nullptr);
+        CHECK(Image != nullptr);
 
         if (Image->AfterState != EResourceAccess::PixelShaderResource)
         {

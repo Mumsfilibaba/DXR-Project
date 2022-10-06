@@ -509,7 +509,7 @@ public:
      */
     FORCEINLINE float& operator[](int32 Index) noexcept
     {
-        Check(Index < 2);
+        CHECK(Index < 2);
         return reinterpret_cast<float*>(this)[Index];
     }
 
@@ -521,7 +521,7 @@ public:
      */
     FORCEINLINE float operator[](int32 Index) const noexcept
     {
-        Check(Index < 2);
+        CHECK(Index < 2);
         return reinterpret_cast<const float*>(this)[Index];
     }
 

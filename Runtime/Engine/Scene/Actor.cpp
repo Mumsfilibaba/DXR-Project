@@ -107,7 +107,7 @@ void FActor::Tick(FTimespan DeltaTime)
 
 void FActor::AddComponent(FComponent* InComponent)
 {
-    Check(InComponent != nullptr);
+    CHECK(InComponent != nullptr);
     Components.Emplace(InComponent);
 
     if (SceneOwner)

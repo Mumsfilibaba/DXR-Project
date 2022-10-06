@@ -46,32 +46,32 @@ struct FVSOutput
 
 FVSOutput VSMain(FVSInput Input)
 {
-    FVSOutput Output;
-    
     const float4x4 TransformInv = TransformBuffer.TransformInv;
-    float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
-    Output.Normal = Normal;
     
+    float3 Normal     = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
     float3 ViewNormal = mul(float4(Normal, 0.0f), CameraBuffer.View).xyz;
-    Output.ViewNormal = ViewNormal;
     
     float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), TransformInv).xyz);
-    Tangent        = normalize(Tangent - dot(Tangent, Normal) * Normal);
-    Output.Tangent = Tangent;
+    Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
     
     float3 Bitangent = normalize(cross(Tangent, Normal));
-    Output.Bitangent = Bitangent;
 
-    Output.TexCoord = Input.TexCoord;
+    FVSOutput Output;
+    Output.Normal     = Normal;
+    Output.ViewNormal = ViewNormal;
+    Output.Tangent    = Tangent;
+    Output.Bitangent  = Bitangent;
 
-    float4 WorldPosition    = mul(float4(Input.Position, 1.0f), TransformBuffer.Transform);
-    Output.Position         = mul(WorldPosition, CameraBuffer.ViewProjection);
+    const float4 WorldPosition = mul(float4(Input.Position, 1.0f), TransformBuffer.Transform);
+    Output.Position   = mul(WorldPosition, CameraBuffer.ViewProjection);
 
     // TODO: Handle moving objects (aka PrevTransform)
     Output.ClipPosition     = Output.Position;
     Output.PrevClipPosition = mul(WorldPosition, CameraBuffer.PrevViewProjection);
     
-    float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
+    Output.TexCoord = Input.TexCoord;
+    
+    const float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
     Output.TangentViewPos  = mul(TBN, CameraBuffer.Position);
     Output.TangentPosition = mul(TBN, WorldPosition.xyz);
     return Output;
@@ -141,12 +141,16 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     return FinalTexCoords;
 }
 
+#define ALPHA_DISABLED         (0)
+#define ALPHA_ENABLED          (1)
+#define ALPHA_DIFFUSE_COMBINED (2)
+
 FPSOutput PSMain(FPSInput Input)
 {
     float2 TexCoords = Input.TexCoord;
     TexCoords.y = 1.0f - TexCoords.y;
     
-    if (MaterialBuffer.EnableHeight != 0)
+    if (MaterialBuffer.EnableHeight == 1)
     {
         float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
         TexCoords      = ParallaxMapping(TexCoords, ViewDir);
@@ -156,9 +160,17 @@ FPSOutput PSMain(FPSInput Input)
         }
     }
     
-    if (MaterialBuffer.EnableMask)
+    if (MaterialBuffer.EnableMask == ALPHA_ENABLED)
     {
-        float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
+        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
+        if (AlphaMask < 0.5f)
+        {
+            discard;
+        }
+    }
+    else if (MaterialBuffer.EnableMask == ALPHA_DIFFUSE_COMBINED)
+    {
+        float AlphaMask = AlbedoMap.Sample(MaterialSampler, TexCoords).a;
         if (AlphaMask < 0.5f)
         {
             discard;
@@ -168,19 +180,34 @@ FPSOutput PSMain(FPSInput Input)
     float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords).rgb) * MaterialBuffer.Albedo;
     
     float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords).rgb;
-    SampledNormal        = UnpackNormal(SampledNormal);
-    SampledNormal.y      = -SampledNormal.y;
-    
-    float3 Tangent      = normalize(Input.Tangent);
-    float3 Bitangent    = normalize(Input.Bitangent);
-    float3 Normal       = normalize(Input.Normal);
+    SampledNormal = UnpackNormalBC5(SampledNormal);
+
+    float3 Tangent   = normalize(Input.Tangent);
+    float3 Bitangent = normalize(Input.Bitangent);
+    float3 Normal    = normalize(Input.Normal);
+
     float3 MappedNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
     MappedNormal = PackNormal(MappedNormal);
 
-    const float SampledAO        = AOTex.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.AO;
-    const float SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Metallic;
-    const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Roughness;
-    const float FinalRoughness   = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    // TODO: Should probably be compiled and not dynamic like this
+    float SampledAO;
+    float SampledMetallic;
+    float SampledRoughness;
+    if (MaterialBuffer.EnableHeight == 2)
+    {
+        float3 Specular = AOTex.Sample(MaterialSampler, TexCoords).rgb;
+        SampledAO        = Specular.r * MaterialBuffer.AO;
+        SampledRoughness = Specular.g * MaterialBuffer.Roughness;
+        SampledMetallic  = Specular.b * MaterialBuffer.Metallic;
+    }
+    else
+    {
+        SampledAO        = AOTex.Sample(MaterialSampler, TexCoords).r        * MaterialBuffer.AO;
+        SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords).r  * MaterialBuffer.Metallic;
+        SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Roughness;
+    }
+    
+    const float FinalRoughness = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
     
     FPSOutput Output;
     Output.Albedo     = float4(SampledAlbedo, 1.0f);

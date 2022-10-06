@@ -22,8 +22,9 @@
 
 struct FD3D12UploadAllocation
 {
-    uint8* MappedPtr      = nullptr;
-    uint64 ResourceOffset = 0;
+    ID3D12Resource* Resource = nullptr;
+    uint8* Memory            = nullptr;
+    uint64 ResourceOffset    = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -36,18 +37,12 @@ public:
     FD3D12GPUResourceUploader(FD3D12Device* InDevice);
     ~FD3D12GPUResourceUploader() = default;
 
-    bool Reserve(uint32 InSizeInBytes);
-
+    bool Reserve(uint64 InSizeInBytes);
     void Reset();
 
-    FD3D12UploadAllocation LinearAllocate(uint32 SizeInBytes);
+    FD3D12UploadAllocation Allocate(uint64 SizeInBytes, uint64 Alignment);
 
-    FORCEINLINE ID3D12Resource* GetGpuResource() const
-    {
-        return Resource.Get();
-    }
-
-    FORCEINLINE uint32 GetSizeInBytes() const
+    FORCEINLINE uint64 GetSizeInBytes() const
     {
         return SizeInBytes;
     }
@@ -55,8 +50,8 @@ public:
 private:
     uint8* MappedMemory  = nullptr;
 
-    uint32 SizeInBytes   = 0;
-    uint32 OffsetInBytes = 0;
+    uint64 SizeInBytes   = 0;
+    uint64 OffsetInBytes = 0;
 
     TComPtr<ID3D12Resource> Resource;
 
@@ -307,14 +302,21 @@ public:
     virtual void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)                             override final;
     virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) override final;
 
-    virtual void UpdateBuffer(FRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)           override final;
-    virtual void UpdateTexture2D(FRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) override final;
+    virtual void UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SrcData) override final;
+    
+    virtual void UpdateTexture2D(
+        FRHITexture2D* Dst,
+        uint32 Width,
+        uint32 Height,
+        uint32 MipLevel,
+        const void* SrcData,
+        uint32 SrcRowPitch) override final;
 
-    virtual void ResolveTexture(FRHITexture* Destination, FRHITexture* Source) override final;
+    virtual void ResolveTexture(FRHITexture* Dst, FRHITexture* Src) override final;
 
-    virtual void CopyBuffer(FRHIBuffer* Destination, FRHIBuffer* Source, const FRHICopyBufferInfo& CopyInfo) override final;
-    virtual void CopyTexture(FRHITexture* Destination, FRHITexture* Source)                                  override final;
-    virtual void CopyTextureRegion(FRHITexture* Destination, FRHITexture* Source, const FRHICopyTextureInfo& CopyTextureInfo) override final;
+    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo) override final;
+    virtual void CopyTexture(FRHITexture* Dst, FRHITexture* Src)                                  override final;
+    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) override final;
 
     virtual void DestroyResource(class IRefCounted* Resource) override final;
     virtual void DiscardContents(class FRHITexture* Texture)  override final;
@@ -400,7 +402,7 @@ public:
 
     FORCEINLINE FD3D12CommandList& GetCommandList() 
     {
-        Check(CommandList != nullptr);
+        CHECK(CommandList != nullptr);
         return *CommandList; 
     }
 
@@ -411,13 +413,13 @@ public:
 
     FORCEINLINE FD3D12CommandAllocator& GetCommandAllocator()
     {
-        Check(CommandAllocator != nullptr);
+        CHECK(CommandAllocator != nullptr);
         return *CommandAllocator;
     }
     
     FORCEINLINE uint32 GetCurrentBachIndex() const
     {
-        Check(int32(NextCmdBatch) < CmdBatches.GetSize());
+        CHECK(int32(NextCmdBatch) < CmdBatches.GetSize());
         return NMath::Max<int32>(int32(NextCmdBatch) - 1, 0);
     }
 

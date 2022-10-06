@@ -212,7 +212,7 @@ public:
      */
     void AssignBit(SizeType BitPosition, const bool bValue) noexcept
     {
-        Check(BitPosition < NumBits);
+        CHECK(BitPosition < NumBits);
         AssignBitUnchecked(BitPosition, bValue);
     }
 
@@ -223,7 +223,7 @@ public:
      */
     FORCEINLINE void FlipBit(SizeType BitPosition) noexcept
     {
-        Check(BitPosition < NumBits);
+        CHECK(BitPosition < NumBits);
 
         const SizeType ElementIndex   = GetStorageIndexOfBit(BitPosition);
         const SizeType IndexInElement = GetIndexOfBitInStorage(BitPosition);
@@ -322,7 +322,7 @@ public:
      */
     void Insert(SizeType BitPosition, const bool bValue) noexcept
     {
-        Check(BitPosition <= NumBits);
+        CHECK(BitPosition <= NumBits);
 
         Reserve(NumBits + 1);
         BitshiftLeft_SimpleWithBitOffset(1, BitPosition);
@@ -340,7 +340,7 @@ public:
      */
     inline void Remove(SizeType BitPosition) noexcept
     {
-        Check(BitPosition <= NumBits);
+        CHECK(BitPosition <= NumBits);
 
         BitshiftRight_SimpleWithBitOffset(1, BitPosition);
         NumBits--;
@@ -486,10 +486,10 @@ public:
      */
     NODISCARD FORCEINLINE BitReferenceType GetBitReference(SizeType BitIndex) noexcept
     {
-        Check(BitIndex < NumBits);
+        CHECK(BitIndex < NumBits);
 
         const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
-        Check(ElementIndex < NumElements);
+        CHECK(ElementIndex < NumElements);
 
         StorageType& Element = GetStorage(ElementIndex);
         return BitReferenceType(Element, ~Element);
@@ -503,10 +503,10 @@ public:
      */
     NODISCARD FORCEINLINE ConstBitReferenceType GetBitReference(SizeType BitIndex) const noexcept
     {
-        Check(BitIndex < NumBits);
+        CHECK(BitIndex < NumBits);
 
         const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
-        Check(ElementIndex < NumElements);
+        CHECK(ElementIndex < NumElements);
 
         const StorageType& Element = GetStorage(ElementIndex);
         return ConstBitReferenceType(Element, CreateMaskForBit(BitIndex));

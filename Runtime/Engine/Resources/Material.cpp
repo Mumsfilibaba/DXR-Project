@@ -77,12 +77,12 @@ void FMaterial::ForceForwardPass(bool bForceForwardRender)
 
 void FMaterial::EnableHeightMap(bool bInEnableHeightMap)
 {
-    Properties.EnableHeight = (int32)bInEnableHeightMap;
+    Properties.EnableHeight = bInEnableHeightMap ? 1 : 0;
 }
 
 void FMaterial::EnableAlphaMask(bool bInEnableAlphaMask)
 {
-    Properties.EnableMask = (int32)bInEnableAlphaMask;
+    Properties.EnableMask = bInEnableAlphaMask ? 1 : 0;
 }
 
 void FMaterial::SetDebugName(const FString& InDebugName)

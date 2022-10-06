@@ -87,7 +87,7 @@ public:
         }
 
         DepthStencilState = [DeviceContext->GetMTLDevice() newDepthStencilStateWithDescriptor:Descriptor];
-        Check(DepthStencilState != nil);
+        CHECK(DepthStencilState != nil);
         
         NSRelease(Descriptor);
     }
@@ -183,10 +183,10 @@ public:
         }
         
         DepthStencilState = MakeSharedRef<FMetalDepthStencilState>(Initializer.DepthStencilState);
-        Check(DepthStencilState != nullptr);
+        CHECK(DepthStencilState != nullptr);
         
         RasterizerState = MakeSharedRef<FMetalRasterizerState>(Initializer.RasterizerState);
-        Check(RasterizerState != nullptr);
+        CHECK(RasterizerState != nullptr);
         
         MTLRenderPipelineDescriptor* Descriptor = [MTLRenderPipelineDescriptor new];
         if (FMetalShader* VertexShader = GetMetalShader(Initializer.ShaderState.VertexShader))
@@ -241,7 +241,7 @@ public:
                 else
                 {
                     const auto Index = NumBuffers[ShaderVisibility_Vertex]++;
-                    Check(Index < BufferBindings[ShaderVisibility_Vertex].GetSize());
+                    CHECK(Index < BufferBindings[ShaderVisibility_Vertex].GetSize());
                     
                     BufferBindings[ShaderVisibility_Vertex][Index] = static_cast<uint8>(Argument.index);
                 }
@@ -271,7 +271,7 @@ public:
             if (Argument.type == MTLArgumentTypeBuffer)
             {
                 const auto Index = NumBuffers[ShaderVisibility_Pixel]++;
-                Check(Index < BufferBindings[ShaderVisibility_Pixel].GetSize());
+                CHECK(Index < BufferBindings[ShaderVisibility_Pixel].GetSize());
                 
                 BufferBindings[ShaderVisibility_Pixel][Index] = static_cast<uint8>(Argument.index);
             }

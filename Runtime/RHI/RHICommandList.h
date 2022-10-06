@@ -194,7 +194,7 @@ public:
 
     FORCEINLINE IRHICommandContext& GetCommandContext() const noexcept
     {
-        Check(CommandContext != nullptr);
+        CHECK(CommandContext != nullptr);
         return *CommandContext;
     }
 
@@ -246,25 +246,25 @@ public:
 
     FORCEINLINE void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) noexcept
     {
-        Check(RenderTargetView.Texture != nullptr);
+        CHECK(RenderTargetView.Texture != nullptr);
         EmplaceCommand<FRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
 
     FORCEINLINE void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) noexcept
     {
-        Check(DepthStencilView.Texture != nullptr);
+        CHECK(DepthStencilView.Texture != nullptr);
         EmplaceCommand<FRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
     }
 
     FORCEINLINE void ClearUnorderedAccessView(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) noexcept
     {
-        Check(UnorderedAccessView != nullptr);
+        CHECK(UnorderedAccessView != nullptr);
         EmplaceCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
 
     FORCEINLINE void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) noexcept
     {
-        Check(bIsRenderPassActive == false);
+        CHECK(bIsRenderPassActive == false);
 
         EmplaceCommand<FRHICommandBeginRenderPass>(RenderPassInitializer);
         bIsRenderPassActive = true;
@@ -272,7 +272,7 @@ public:
 
     FORCEINLINE void EndRenderPass() noexcept
     {
-        Check(bIsRenderPassActive == true);
+        CHECK(bIsRenderPassActive == true);
 
         EmplaceCommand<FRHICommandEndRenderPass>();
         bIsRenderPassActive = false;
@@ -321,7 +321,7 @@ public:
 
     FORCEINLINE void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) noexcept
     {
-        Check(Num32BitConstants <= kRHIMaxShaderConstants);
+        CHECK(Num32BitConstants <= kRHIMaxShaderConstants);
 
         const int32 Size = Num32BitConstants * sizeof(uint32);
         void* SourceData = Allocate(Size, alignof(uint32));
@@ -374,20 +374,27 @@ public:
         EmplaceCommand<FRHICommandSetSamplerStates>(Shader, SamplerStates, ParameterIndex);
     }
 
-    FORCEINLINE void UpdateBuffer(FRHIBuffer* Dst, uint32 OffsetInBytes, uint32 SizeInBytes, const void* InSourceData) noexcept
+    FORCEINLINE void UpdateBuffer(FRHIBuffer* Dst, uint32 OffsetInBytes, uint32 SizeInBytes, const void* InSrcData) noexcept
     {
-        void* SourceData = Allocate(SizeInBytes, alignof(uint8));
-        FMemory::Memcpy(SourceData, InSourceData, SizeInBytes);
-        EmplaceCommand<FRHICommandUpdateBuffer>(Dst, OffsetInBytes, SizeInBytes, SourceData);
+        void* SrcData = Allocate(SizeInBytes, alignof(uint8));
+        FMemory::Memcpy(SrcData, InSrcData, SizeInBytes);
+        EmplaceCommand<FRHICommandUpdateBuffer>(Dst, OffsetInBytes, SizeInBytes, SrcData);
     }
 
-    FORCEINLINE void UpdateTexture2D(FRHITexture2D* Dst, uint16 Width, uint16 Height, uint16 MipLevel, const void* InSourceData) noexcept
+    FORCEINLINE void UpdateTexture2D(
+        FRHITexture2D* Dst,
+        uint16 Width,
+        uint16 Height,
+        uint16 MipLevel,
+        const void* InSrcData,
+        uint32 InSrcRowPitch) noexcept
     {
-        const uint32 SizeInBytes = Width * Height * GetByteStrideFromFormat(Dst->GetFormat());
+        const uint32 SizeInBytes = InSrcRowPitch * Height;
 
-        void* SourceData = Allocate(SizeInBytes, alignof(uint8));
-        FMemory::Memcpy(SourceData, InSourceData, SizeInBytes);
-        EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, Width, Height, MipLevel, SourceData);
+        void* SrcData = Allocate(SizeInBytes, alignof(uint8));
+        FMemory::Memcpy(SrcData, InSrcData, SizeInBytes);
+
+        EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, Width, Height, MipLevel, SrcData, InSrcRowPitch);
     }
 
     FORCEINLINE void ResolveTexture(FRHITexture* Dst, FRHITexture* Src) noexcept
@@ -422,13 +429,13 @@ public:
 
     FORCEINLINE void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate) noexcept
     {
-        Check((Geometry != nullptr) && (!bUpdate || (bUpdate && IsEnumFlagSet(Geometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))));
+        CHECK((Geometry != nullptr) && (!bUpdate || (bUpdate && IsEnumFlagSet(Geometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))));
         EmplaceCommand<FRHICommandBuildRayTracingGeometry>(Geometry, VertexBuffer, IndexBuffer, bUpdate);
     }
 
     FORCEINLINE void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance> Instances, bool bUpdate) noexcept
     {
-        Check((Scene != nullptr) && (!bUpdate || (bUpdate && IsEnumFlagSet(Scene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))));
+        CHECK((Scene != nullptr) && (!bUpdate || (bUpdate && IsEnumFlagSet(Scene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))));
         EmplaceCommand<FRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);
     }
 
@@ -454,7 +461,7 @@ public:
 
     FORCEINLINE void GenerateMips(FRHITexture* Texture) noexcept
     {
-        Check(Texture != nullptr);
+        CHECK(Texture != nullptr);
         EmplaceCommand<FRHICommandGenerateMips>(Texture);
     }
 
@@ -472,7 +479,7 @@ public:
 
     FORCEINLINE void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
     {
-        Check(Buffer != nullptr);
+        CHECK(Buffer != nullptr);
 
         if (BeforeState != AfterState)
         {
@@ -486,13 +493,13 @@ public:
 
     FORCEINLINE void UnorderedAccessTextureBarrier(FRHITexture* Texture) noexcept
     {
-        Check(Texture != nullptr);
+        CHECK(Texture != nullptr);
         EmplaceCommand<FRHICommandUnorderedAccessTextureBarrier>(Texture);
     }
 
     FORCEINLINE void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) noexcept
     {
-        Check(Buffer != nullptr);
+        CHECK(Buffer != nullptr);
         EmplaceCommand<FRHICommandUnorderedAccessBufferBarrier>(Buffer);
     }
 
@@ -561,7 +568,7 @@ public:
 
     FORCEINLINE void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) noexcept
     {
-        Check(Viewport != nullptr);
+        CHECK(Viewport != nullptr);
         EmplaceCommand<FRHICommandPresentViewport>(Viewport, bVerticalSync);
     }
 
@@ -723,7 +730,7 @@ public:
 
     FORCEINLINE IRHICommandContext& GetContext()
     {
-        Check(CommandContext != nullptr);
+        CHECK(CommandContext != nullptr);
         return *CommandContext;
     }
 

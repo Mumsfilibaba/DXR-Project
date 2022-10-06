@@ -486,7 +486,7 @@ void FStandardApplication::SetPlatformApplication(const TSharedPtr<FGenericAppli
 {
     if (InPlatformApplication)
     {
-        Check(this == GInstance);
+        CHECK(this == GInstance);
         InPlatformApplication->SetMessageListener(GInstance);
     }
 

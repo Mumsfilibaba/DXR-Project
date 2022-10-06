@@ -60,17 +60,19 @@ struct FRHITextureDataInitializer
 {
     FRHITextureDataInitializer()
         : TextureData(nullptr)
-        , Size(0)
+        , RowPitch(0)
+        , SlicePitch(0)
     { }
 
-    explicit FRHITextureDataInitializer(const void* InBufferData, EFormat Format, uint32 Width, uint32 Height)
-        : TextureData(InBufferData)
-        , Size(Width * Height * GetByteStrideFromFormat(Format))
+    FRHITextureDataInitializer(const void* InTextureData, uint32 InRowPitch, uint32 InSlicePitch)
+        : TextureData(InTextureData)
+        , RowPitch(InRowPitch)
+        , SlicePitch(InSlicePitch)
     { }
 
     bool operator==(const FRHITextureDataInitializer& RHS) const
     {
-        return (TextureData == RHS.TextureData) && (Size == RHS.Size);
+        return (TextureData == RHS.TextureData) && (RowPitch == RHS.RowPitch) && (SlicePitch == RHS.SlicePitch);
     }
 
     bool operator!=(const FRHITextureDataInitializer& RHS) const
@@ -79,7 +81,8 @@ struct FRHITextureDataInitializer
     }
 
     const void* TextureData;
-    uint32      Size;
+    uint32      RowPitch;
+    uint32      SlicePitch;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -396,25 +399,31 @@ public:
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
-    virtual FRHIDescriptorHandle    GetBindlessSRVHandle()  const { return FRHIDescriptorHandle(); }
+
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
 
     virtual FIntVector3 GetExtent() const { return FIntVector3(1, 1, 1); }
     
     virtual uint32 GetWidth()  const { return 1; }
+
     virtual uint32 GetHeight() const { return 1; }
+
     virtual uint32 GetDepth()  const { return 1; }
 
     virtual uint32 GetArraySize()  const { return 1; }
+
     virtual uint32 GetNumSamples() const { return 1; }
 
-    virtual void    SetName(const FString& InName) { }
-    virtual FString GetName() const { return ""; }
-
-    bool IsMultiSampled() const { return (GetNumSamples() > 1); }
-
     ETextureUsageFlags GetFlags()   const { return UsageFlags; }
-    EFormat            GetFormat()  const { return Format; }
-    uint32             GetNumMips() const { return NumMips; }
+    
+    EFormat GetFormat() const { return Format; }
+    
+    uint32 GetNumMips() const { return NumMips; }
+    
+    bool IsMultiSampled() const { return (GetNumSamples() > 1); }
+    
+    virtual FString GetName() const { return ""; }
+    virtual void SetName(const FString& InName) { }
 
     const FTextureClearValue& GetClearValue() const { return ClearValue; }
 
@@ -438,8 +447,8 @@ protected:
         , Width(Initializer.Width)
         , Height(Initializer.Height)
     {
-        Check(Width  != 0);
-        Check(Height != 0);
+        CHECK(Width  != 0);
+        CHECK(Height != 0);
     }
 
 public:
@@ -475,7 +484,7 @@ protected:
         : FRHITexture2D(Initializer)
         , ArraySize(Initializer.ArraySize)
     {
-        Check(ArraySize != 0);
+        CHECK(ArraySize != 0);
     }
 
 public:
@@ -506,7 +515,7 @@ protected:
         , NumSamples(Initializer.NumSamples)
         , Extent(Initializer.Extent)
     {
-        Check(Extent != 0);
+        CHECK(Extent != 0);
     }
 
 public:
@@ -539,7 +548,7 @@ protected:
         : FRHITextureCube(Initializer)
         , ArraySize(Initializer.ArraySize)
     {
-        Check(ArraySize != 0);
+        CHECK(ArraySize != 0);
     }
 
 public:
@@ -571,9 +580,9 @@ protected:
         , Height(Initializer.Height)
         , Depth(Initializer.Depth)
     {
-        Check(Width  != 0);
-        Check(Height != 0);
-        Check(Depth  != 0);
+        CHECK(Width  != 0);
+        CHECK(Height != 0);
+        CHECK(Depth  != 0);
     }
 
 public:

@@ -17,10 +17,10 @@ FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVi
         FString SourceString(reinterpret_cast<const CHAR*>(InCode.GetData()), InCode.GetSize());
         
         NSString* Source = SourceString.GetNSString();
-        Check(Source != nil);
+        CHECK(Source != nil);
         
         Library = [GetDeviceContext()->GetMTLDevice() newLibraryWithSource:Source options:nil error:&Error];
-        Check(Library != nil);
+        CHECK(Library != nil);
         
         // Retrieve the entrypoint
         const auto Length = NMath::Max(SourceString.FindChar('\n') - 3, 0);
@@ -28,7 +28,7 @@ FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVi
         FunctionName = [EntryPoint retain];
         
         Function = [Library newFunctionWithName:EntryPoint];
-        Check(Function != nil);
+        CHECK(Function != nil);
     }
 }
 

@@ -23,7 +23,7 @@
 
 void FD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
 {
-    Check(Resource != nullptr);
+    CHECK(Resource != nullptr);
 
     if (BeforeState != AfterState)
     {
@@ -64,7 +64,7 @@ void FD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource
 
 void FD3D12ResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource)
 {
-    Check(Resource != nullptr);
+    CHECK(Resource != nullptr);
 
     // Make sure we are not already have UAV barrier for this resource
     for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType It = Barriers.StartIterator(); It != Barriers.EndIterator(); It++)
@@ -100,7 +100,7 @@ FD3D12GPUResourceUploader::FD3D12GPUResourceUploader(FD3D12Device* InDevice)
     , GarbageResources()
 { }
 
-bool FD3D12GPUResourceUploader::Reserve(uint32 InSizeInBytes)
+bool FD3D12GPUResourceUploader::Reserve(uint64 InSizeInBytes)
 {
     if (InSizeInBytes == SizeInBytes)
     {
@@ -174,20 +174,26 @@ void FD3D12GPUResourceUploader::Reset()
     OffsetInBytes = 0;
 }
 
-FD3D12UploadAllocation FD3D12GPUResourceUploader::LinearAllocate(uint32 InSizeInBytes)
+FD3D12UploadAllocation FD3D12GPUResourceUploader::Allocate(uint64 InSizeInBytes, uint64 Alignment)
 {
-    constexpr uint32 EXTRA_BYTES_ALLOCATED = 1024;
+    // 1 Mega-Byte
+    constexpr uint32 EXTRA_BYTES_ALLOCATED = 1024 * 1024;
 
-    const uint32 NeededSize = OffsetInBytes + InSizeInBytes;
+    const uint64 AlignedSize   = NMath::AlignUp<uint64>(InSizeInBytes, Alignment);
+    const uint64 AlignedOffset = NMath::AlignUp<uint64>(OffsetInBytes, Alignment);
+    
+    const uint64 NeededSize = AlignedOffset + AlignedSize;
     if (NeededSize > SizeInBytes)
     {
         Reserve(NeededSize + EXTRA_BYTES_ALLOCATED);
     }
 
     FD3D12UploadAllocation Allocation;
-    Allocation.MappedPtr      = MappedMemory + OffsetInBytes;
-    Allocation.ResourceOffset = OffsetInBytes;
-    OffsetInBytes            += InSizeInBytes;
+    Allocation.Resource       = Resource.Get();
+    Allocation.Memory         = MappedMemory + AlignedOffset;
+    Allocation.ResourceOffset = AlignedOffset;
+
+    OffsetInBytes = AlignedOffset + AlignedSize;
     return Allocation;
 }
 
@@ -207,11 +213,19 @@ bool FD3D12CommandBatch::Initialize(uint32 Index)
     const uint32 ResourceCount = 100000;
     const uint32 SamplerCount  = 500;
 
-    OnlineResourceDescriptorHeap = dbg_new FD3D12OnlineDescriptorManager(Device, Device->GetGlobalResourceHeap(), Index * ResourceCount, ResourceCount);
-    Check(OnlineResourceDescriptorHeap != nullptr);
+    OnlineResourceDescriptorHeap = dbg_new FD3D12OnlineDescriptorManager(
+        Device,
+        Device->GetGlobalResourceHeap(),
+        Index * ResourceCount, ResourceCount);
+    
+    CHECK(OnlineResourceDescriptorHeap != nullptr);
 
-    OnlineSamplerDescriptorHeap = dbg_new FD3D12OnlineDescriptorManager(Device, Device->GetGlobalSamplerHeap(), Index * SamplerCount, SamplerCount);
-    Check(OnlineResourceDescriptorHeap != nullptr);
+    OnlineSamplerDescriptorHeap = dbg_new FD3D12OnlineDescriptorManager(
+        Device,
+        Device->GetGlobalSamplerHeap(),
+        Index * SamplerCount, SamplerCount);
+    
+    CHECK(OnlineResourceDescriptorHeap != nullptr);
 
     GpuResourceUploader.Reserve(1024);
     return true;
@@ -468,22 +482,27 @@ bool FD3D12CommandContext::Initialize()
     return true;
 }
 
-void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
+void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SrcData)
 {
     D3D12_ERROR_COND(Resource != nullptr, "Resource cannot be nullptr");
 
     if (SizeInBytes)
     {
-        D3D12_ERROR_COND(SourceData != nullptr, "SourceData cannot be nullptr");
+        D3D12_ERROR_COND(SrcData != nullptr, "SourceData cannot be nullptr");
 
         FlushResourceBarriers();
 
-        FD3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
+        FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(SizeInBytes, 1);
+        FMemory::Memcpy(Allocation.Memory, SrcData, SizeInBytes);
 
-        FD3D12UploadAllocation Allocation = GpuResourceUploader.LinearAllocate((uint32)SizeInBytes);
-        FMemory::Memcpy(Allocation.MappedPtr, SourceData, SizeInBytes);
+        CommandList->CopyBufferRegion(
+            Resource->GetD3D12Resource(),
+            OffsetInBytes,
+            Allocation.Resource,
+            Allocation.ResourceOffset,
+            SizeInBytes);
 
-        CommandList->CopyBufferRegion(Resource->GetD3D12Resource(), OffsetInBytes, GpuResourceUploader.GetGpuResource(), Allocation.ResourceOffset, SizeInBytes);
+        // TODO: Deferred Release Queue
         CmdBatch->AddInUseResource(Resource);
     }
 }
@@ -532,7 +551,7 @@ void FD3D12CommandContext::ClearRenderTargetView(const FRHIRenderTargetView& Ren
     D3D12_ERROR_COND(D3D12Texture != nullptr, "Texture cannot be nullptr when clearing the surface");
 
     FD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRTV(RenderTargetView);
-    Check(D3D12RenderTargetView != nullptr);
+    CHECK(D3D12RenderTargetView != nullptr);
 
     CommandList->ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.GetData(), 0, nullptr);
 }
@@ -545,7 +564,7 @@ void FD3D12CommandContext::ClearDepthStencilView(const FRHIDepthStencilView& Dep
     D3D12_ERROR_COND(D3D12Texture != nullptr, "Texture cannot be nullptr when clearing the surface");
 
     FD3D12DepthStencilView* D3D12DepthStencilView = D3D12Texture->GetOrCreateDSV(DepthStencilView);
-    Check(D3D12DepthStencilView != nullptr);
+    CHECK(D3D12DepthStencilView != nullptr);
 
     CommandList->ClearDepthStencilView(D3D12DepthStencilView->GetOfflineHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, Depth, Stencil);
 }
@@ -588,7 +607,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
         if (D3D12Texture)
         {
             FD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRTV(RenderTargetView);
-            Check(D3D12RenderTargetView != nullptr);
+            CHECK(D3D12RenderTargetView != nullptr);
 
             // Clear the RenderTarget here, since we expect it to be cleared when the RenderPass begin, however
             // it is not certain that there will be a call to draw inside of the RenderPass
@@ -611,7 +630,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& Rend
     {
         FD3D12Texture*          D3D12Texture = GetD3D12Texture(DepthStencilView.Texture);
         FD3D12DepthStencilView* D3D12DepthStencilView = D3D12Texture->GetOrCreateDSV(DepthStencilView);
-        Check(D3D12DepthStencilView != nullptr);
+        CHECK(D3D12DepthStencilView != nullptr);
 
         // Clear the RenderTarget here, since we expect it to be cleared when the RenderPass begin, however
         // it is not certain that there will be a call to draw inside of the RenderPass
@@ -734,7 +753,7 @@ void FD3D12CommandContext::Set32BitShaderConstants(FRHIShader* Shader, const voi
 void FD3D12CommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    Check(D3D12Shader != nullptr);
+    CHECK(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
@@ -746,7 +765,7 @@ void FD3D12CommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderR
 void FD3D12CommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    Check(D3D12Shader != nullptr);
+    CHECK(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
@@ -761,7 +780,7 @@ void FD3D12CommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArr
 void FD3D12CommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    Check(D3D12Shader != nullptr);
+    CHECK(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
@@ -773,7 +792,7 @@ void FD3D12CommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorde
 void FD3D12CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    Check(D3D12Shader != nullptr);
+    CHECK(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
@@ -788,7 +807,7 @@ void FD3D12CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TAr
 void FD3D12CommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    Check(D3D12Shader != nullptr);
+    CHECK(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
@@ -807,7 +826,7 @@ void FD3D12CommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuf
 void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIConstantBuffer* const> InConstantBuffers, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    Check(D3D12Shader != nullptr);
+    CHECK(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
@@ -829,7 +848,7 @@ void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayVi
 void FD3D12CommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    Check(D3D12Shader != nullptr);
+    CHECK(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
@@ -841,7 +860,7 @@ void FD3D12CommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState*
 void FD3D12CommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    Check(D3D12Shader != nullptr);
+    CHECK(D3D12Shader != nullptr);
 
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
@@ -853,101 +872,126 @@ void FD3D12CommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
     }
 }
 
-void FD3D12CommandContext::ResolveTexture(FRHITexture* Destination, FRHITexture* Source)
+void FD3D12CommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    D3D12_ERROR_COND(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
+    D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
 
     FlushResourceBarriers();
 
-    FD3D12Texture* D3D12Destination = GetD3D12Texture(Destination);
-    FD3D12Texture* D3D12Source      = GetD3D12Texture(Source);
+    FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
+    FD3D12Texture* D3D12Source      = GetD3D12Texture(Src);
     const DXGI_FORMAT DstFormat = D3D12Destination->GetDXGIFormat();
     const DXGI_FORMAT SrcFormat = D3D12Source->GetDXGIFormat();
 
     //TODO: For now texture must be the same format. I.e typeless does probably not work
-    D3D12_ERROR_COND(DstFormat == SrcFormat, "Destination and Source texture must have the same format");
+    D3D12_ERROR_COND(DstFormat == SrcFormat, "Dst and Src texture must have the same format");
 
     CommandList->ResolveSubresource(D3D12Destination->GetResource(), D3D12Source->GetResource(), DstFormat);
 
-    CmdBatch->AddInUseResource(Destination);
-    CmdBatch->AddInUseResource(Source);
+    CmdBatch->AddInUseResource(Dst);
+    CmdBatch->AddInUseResource(Src);
 }
 
-void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
+void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SrcData)
 {
     if (SizeInBytes > 0)
     {
-        FD3D12Buffer* D3D12Destination = GetD3D12Buffer(Destination);
-        UpdateBuffer(D3D12Destination->GetD3D12Resource(), OffsetInBytes, SizeInBytes, SourceData);
+        FD3D12Buffer* D3D12Destination = GetD3D12Buffer(Dst);
+        UpdateBuffer(D3D12Destination->GetD3D12Resource(), OffsetInBytes, SizeInBytes, SrcData);
 
-        CmdBatch->AddInUseResource(Destination);
+        CmdBatch->AddInUseResource(Dst);
     }
 }
 
-void FD3D12CommandContext::UpdateTexture2D(FRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
+void FD3D12CommandContext::UpdateTexture2D(
+    FRHITexture2D* Dst,
+    uint32 Width,
+    uint32 Height,
+    uint32 MipLevel,
+    const void* SrcData,
+    uint32 SrcRowPitch)
 {
-    D3D12_ERROR_COND(Destination != nullptr, "Destination cannot be nullptr");
-
-    if (Width > 0 && Height > 0)
-    {
-        D3D12_ERROR_COND(SourceData != nullptr, "SourceData cannot be nullptr");
-
-        FlushResourceBarriers();
-
-        FD3D12Texture* D3D12Destination = GetD3D12Texture(Destination);
-
-        const DXGI_FORMAT NativeFormat = D3D12Destination->GetDXGIFormat();
-        
-        const uint32 Stride      = GetFormatStride(NativeFormat);
-        const uint32 RowPitch    = ((Width * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
-        const uint32 SizeInBytes = Height * RowPitch;
-
-        FD3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
-        FD3D12UploadAllocation Allocation = GpuResourceUploader.LinearAllocate(SizeInBytes);
-
-        const uint8* Source = reinterpret_cast<const uint8*>(SourceData);
-        for (uint32 y = 0; y < Height; y++)
-        {
-            FMemory::Memcpy(Allocation.MappedPtr + (y * RowPitch), Source + (y * Width * Stride), Width * Stride);
-        }
-
-        // Copy to Dest
-        D3D12_TEXTURE_COPY_LOCATION SourceLocation;
-        FMemory::Memzero(&SourceLocation);
-
-        SourceLocation.pResource                          = GpuResourceUploader.GetGpuResource();
-        SourceLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-        SourceLocation.PlacedFootprint.Footprint.Format   = NativeFormat;
-        SourceLocation.PlacedFootprint.Footprint.Width    = Width;
-        SourceLocation.PlacedFootprint.Footprint.Height   = Height;
-        SourceLocation.PlacedFootprint.Footprint.Depth    = 1;
-        SourceLocation.PlacedFootprint.Footprint.RowPitch = RowPitch;
-        SourceLocation.PlacedFootprint.Offset             = Allocation.ResourceOffset;
-
-        // TODO: MipLevel may not be the correct subresource
-        D3D12_TEXTURE_COPY_LOCATION DestLocation;
-        FMemory::Memzero(&DestLocation);
-
-        DestLocation.pResource        = D3D12Destination->GetResource()->GetD3D12Resource();
-        DestLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-        DestLocation.SubresourceIndex = MipLevel;
-
-        CommandList->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
-        CmdBatch->AddInUseResource(Destination);
-    }
-}
-
-void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Destination, FRHIBuffer* Source, const FRHICopyBufferInfo& CopyInfo)
-{
-    D3D12_ERROR_COND(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
+    D3D12_ERROR_COND(SrcData != nullptr, "SrcData cannot be nullptr");
 
     FlushResourceBarriers();
 
-    FD3D12Buffer* D3D12Destination = GetD3D12Buffer(Destination);
-    Check(D3D12Destination != nullptr);
+    FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
+    D3D12_ERROR_COND(D3D12Destination != nullptr, "Dst cannot be nullptr");
 
-    FD3D12Buffer* D3D12Source = GetD3D12Buffer(Source);
-    Check(D3D12Source != nullptr);
+    FD3D12Resource* D3D12Resource = D3D12Destination->GetResource();
+    D3D12_ERROR_COND(D3D12Resource != nullptr, "Resource cannot be nullptr");
+
+    D3D12_RESOURCE_DESC Desc = D3D12Resource->GetDesc();
+
+    UINT64 RequiredSize = 0;
+    UINT64 RowPitch     = 0;
+    UINT   NumRows      = 0;
+
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT PlacedSubresourceFootprint;
+    GetDevice()->GetD3D12Device()->GetCopyableFootprints(
+        &Desc,
+        MipLevel,
+        1,
+        0,
+        &PlacedSubresourceFootprint,
+        &NumRows,
+        &RowPitch,
+        &RequiredSize);
+
+    FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(
+        RequiredSize,
+        D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+
+    CHECK(Allocation.Memory   != nullptr);
+    CHECK(Allocation.Resource != nullptr);
+
+    const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
+    for (uint64 y = 0; y < NumRows; y++)
+    {
+        FMemory::Memcpy(Allocation.Memory, Source, SrcRowPitch);
+
+        Source            += SrcRowPitch;
+        Allocation.Memory += PlacedSubresourceFootprint.Footprint.RowPitch;
+    }
+
+    // Copy to Dest
+    D3D12_TEXTURE_COPY_LOCATION SourceLocation;
+    FMemory::Memzero(&SourceLocation);
+
+    SourceLocation.pResource                          = Allocation.Resource;
+    SourceLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+    SourceLocation.PlacedFootprint.Offset             = Allocation.ResourceOffset;
+    SourceLocation.PlacedFootprint.Footprint.Format   = Desc.Format;
+    SourceLocation.PlacedFootprint.Footprint.Width    = Width;
+    SourceLocation.PlacedFootprint.Footprint.Height   = Height;
+    SourceLocation.PlacedFootprint.Footprint.Depth    = 1;
+    SourceLocation.PlacedFootprint.Footprint.RowPitch = PlacedSubresourceFootprint.Footprint.RowPitch;
+
+    // TODO: MipLevel may not be the correct subresource
+    D3D12_TEXTURE_COPY_LOCATION DestLocation;
+    FMemory::Memzero(&DestLocation);
+
+    DestLocation.pResource        = D3D12Resource->GetD3D12Resource();
+    DestLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    DestLocation.SubresourceIndex = MipLevel;
+
+    CommandList->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
+
+    // TODO: DeferredReleaseQueue
+    CmdBatch->AddInUseResource(Dst);
+}
+
+void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo)
+{
+    D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
+
+    FlushResourceBarriers();
+
+    FD3D12Buffer* D3D12Destination = GetD3D12Buffer(Dst);
+    CHECK(D3D12Destination != nullptr);
+
+    FD3D12Buffer* D3D12Source = GetD3D12Buffer(Src);
+    CHECK(D3D12Source != nullptr);
 
     CommandList->CopyBufferRegion(
         D3D12Destination->GetD3D12Resource(),
@@ -956,37 +1000,37 @@ void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Destination, FRHIBuffer* Sourc
         CopyInfo.SourceOffset,
         CopyInfo.SizeInBytes);
 
-    CmdBatch->AddInUseResource(Destination);
-    CmdBatch->AddInUseResource(Source);
+    CmdBatch->AddInUseResource(Dst);
+    CmdBatch->AddInUseResource(Src);
 }
 
-void FD3D12CommandContext::CopyTexture(FRHITexture* Destination, FRHITexture* Source)
+void FD3D12CommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    D3D12_ERROR_COND(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
+    D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
 
     FlushResourceBarriers();
 
-    FD3D12Texture* D3D12Destination = GetD3D12Texture(Destination);
-    Check(D3D12Destination != nullptr);
+    FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
+    CHECK(D3D12Destination != nullptr);
 
-    FD3D12Texture* D3D12Source = GetD3D12Texture(Source);
-    Check(D3D12Source != nullptr);
+    FD3D12Texture* D3D12Source = GetD3D12Texture(Src);
+    CHECK(D3D12Source != nullptr);
     
     CommandList->CopyResource(D3D12Destination->GetResource(), D3D12Source->GetResource());
 
-    CmdBatch->AddInUseResource(Destination);
-    CmdBatch->AddInUseResource(Source);
+    CmdBatch->AddInUseResource(Dst);
+    CmdBatch->AddInUseResource(Src);
 }
 
-void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Destination, FRHITexture* Source, const FRHICopyTextureInfo& CopyInfo)
+void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyInfo)
 {
-    D3D12_ERROR_COND(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
+    D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
 
-    FD3D12Texture* D3D12Destination = GetD3D12Texture(Destination);
-    Check(D3D12Destination != nullptr);
+    FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
+    CHECK(D3D12Destination != nullptr);
     
-    FD3D12Texture* D3D12Source = GetD3D12Texture(Source);
-    Check(D3D12Source != nullptr);
+    FD3D12Texture* D3D12Source = GetD3D12Texture(Src);
+    CHECK(D3D12Source != nullptr);
 
     // Source
     D3D12_TEXTURE_COPY_LOCATION SourceLocation;
@@ -1022,8 +1066,8 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Destination, FRHITextu
         &SourceLocation, 
         &SourceBox);
 
-    CmdBatch->AddInUseResource(Destination);
-    CmdBatch->AddInUseResource(Source);
+    CmdBatch->AddInUseResource(Dst);
+    CmdBatch->AddInUseResource(Src);
 }
 
 void FD3D12CommandContext::DestroyResource(IRefCounted* Resource)
@@ -1120,7 +1164,7 @@ void FD3D12CommandContext::SetRayTracingBindings(
     FD3D12OnlineDescriptorManager* ResourceHeap = CmdBatch->GetResourceDescriptorManager();
     if (!ResourceHeap->HasSpace(NumDescriptorsNeeded))
     {
-        Check(false);
+        CHECK(false);
         // TODO: Fix this
         // ResourceHeap->AllocateFreshHeap();
     }
@@ -1134,7 +1178,7 @@ void FD3D12CommandContext::SetRayTracingBindings(
     FD3D12OnlineDescriptorManager* SamplerHeap = CmdBatch->GetSamplerDescriptorManager();
     if (!SamplerHeap->HasSpace(NumSamplersNeeded))
     {
-        Check(false);
+        CHECK(false);
         // TODO: Fix this
         // SamplerHeap->AllocateFreshHeap();
     }
@@ -1408,7 +1452,7 @@ void FD3D12CommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess 
     const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(AfterState);
 
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
-    Check(D3D12Buffer != nullptr);
+    CHECK(D3D12Buffer != nullptr);
 
     TransitionResource(D3D12Buffer->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
 
@@ -1418,7 +1462,7 @@ void FD3D12CommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess 
 void FD3D12CommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
-    Check(D3D12Texture != nullptr);
+    CHECK(D3D12Texture != nullptr);
 
     UnorderedAccessBarrier(D3D12Texture->GetResource());
 
@@ -1428,7 +1472,7 @@ void FD3D12CommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
 void FD3D12CommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
-    Check(D3D12Buffer != nullptr);
+    CHECK(D3D12Buffer != nullptr);
 
     UnorderedAccessBarrier(D3D12Buffer->GetD3D12Resource());
 
@@ -1531,7 +1575,7 @@ void FD3D12CommandContext::Flush()
     }
 
     FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
-    Check(CommandListManager != nullptr);
+    CHECK(CommandListManager != nullptr);
 
     CommandListManager->GetFenceManager().SignalGPU(QueueType);
     CommandListManager->GetFenceManager().WaitForFence();
@@ -1572,7 +1616,7 @@ void FD3D12CommandContext::EndExternalCapture()
 
 void FD3D12CommandContext::ObtainCommandList()
 {
-    Check(State.bIsReady == false);
+    CHECK(State.bIsReady == false);
 
     TRACE_FUNCTION_SCOPE();
 
@@ -1601,7 +1645,7 @@ void FD3D12CommandContext::ObtainCommandList()
 
 void FD3D12CommandContext::FinishCommandList()
 {
-    Check(State.bIsReady == true);
+    CHECK(State.bIsReady == true);
 
     TRACE_FUNCTION_SCOPE();
 

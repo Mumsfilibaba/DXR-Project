@@ -54,7 +54,6 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
         MaterialData.AlphaMaskTexture = StaticCastSharedRef<FTextureResource2D>(
             FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.alpha_texname.c_str()));
 
-
         MaterialData.Diffuse   = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
         MaterialData.Metallic  = Mat.ambient[0];
         MaterialData.AO        = 1.0f;
@@ -69,9 +68,9 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
     for (const tinyobj::shape_t& Shape : Shapes)
     {
         // Start at index zero for each mesh and loop until all indices are processed
-        uint32 i = 0;
-        uint32 IndexCount = static_cast<uint32>(Shape.mesh.indices.size());
-        while (i < IndexCount)
+        uint32 CurrentIndex = 0;
+        uint32 IndexCount   = static_cast<uint32>(Shape.mesh.indices.size());
+        while (CurrentIndex < IndexCount)
         {
             // Start a new mesh
             Data.Mesh.Clear();
@@ -79,38 +78,47 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
 
             Data.Mesh.Indices.Reserve(IndexCount);
 
-            int32 Face = i / 3;
+            int32 Face = CurrentIndex / 3;
+
             const int32 MaterialID = Shape.mesh.material_ids[Face];
-            for (; i < IndexCount; i++)
+            for (; CurrentIndex < IndexCount; ++CurrentIndex)
             {
                 // Break if material is not the same
-                Face = i / 3;
+                Face = CurrentIndex / 3;
                 if (Shape.mesh.material_ids[Face] != MaterialID)
                 {
                     break;
                 }
 
-                const tinyobj::index_t& Index = Shape.mesh.indices[i];
+                const tinyobj::index_t& Index = Shape.mesh.indices[CurrentIndex];
 
                 FVertex TempVertex;
 
                 // Normals and texcoords are optional, Positions are required
-                Check(Index.vertex_index >= 0);
+                CHECK(Index.vertex_index >= 0);
 
                 auto PositionIndex = 3 * Index.vertex_index;
-                TempVertex.Position = FVector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);
+                TempVertex.Position = FVector3(
+                    Attributes.vertices[PositionIndex + 0],
+                    Attributes.vertices[PositionIndex + 1],
+                    Attributes.vertices[PositionIndex + 2]);
 
                 if (Index.normal_index >= 0)
                 {
                     auto NormalIndex = 3 * Index.normal_index;
-                    TempVertex.Normal = FVector3(Attributes.normals[NormalIndex + 0], Attributes.normals[NormalIndex + 1], Attributes.normals[NormalIndex + 2]);
+                    TempVertex.Normal = FVector3(
+                        Attributes.normals[NormalIndex + 0],
+                        Attributes.normals[NormalIndex + 1],
+                        Attributes.normals[NormalIndex + 2]);
                     TempVertex.Normal.Normalize();
                 }
 
                 if (Index.texcoord_index >= 0)
                 {
                     auto TexCoordIndex = 2 * Index.texcoord_index;
-                    TempVertex.TexCoord = FVector2(Attributes.texcoords[TexCoordIndex + 0], Attributes.texcoords[TexCoordIndex + 1]);
+                    TempVertex.TexCoord = FVector2(
+                        Attributes.texcoords[TexCoordIndex + 0],
+                        Attributes.texcoords[TexCoordIndex + 1]);
                 }
 
                 if (UniqueVertices.count(TempVertex) == 0)

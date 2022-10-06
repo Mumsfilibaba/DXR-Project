@@ -71,7 +71,7 @@ public:
     
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
     {
-        Check(ResultBuffer != nullptr);
+        CHECK(ResultBuffer != nullptr);
         return ResultBuffer->GetGPUVirtualAddress();
     }
 

@@ -110,7 +110,7 @@ public:
 
     FORCEINLINE void MoveFrom(TDefaultArrayAllocator&& Other)
     {
-        Check(this != &Other);
+        CHECK(this != &Other);
 
         Free();
 
@@ -204,7 +204,7 @@ public:
         {
             if (!DynamicAllocation.HasAllocation())
             {
-                Check(CurrentCount <= NumInlineElements);
+                CHECK(CurrentCount <= NumInlineElements);
                 DynamicAllocation.Realloc(CurrentCount, NewElementCount);
                 ::RelocateElements<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
             }
@@ -235,7 +235,7 @@ public:
 
     FORCEINLINE void MoveFrom(TInlineArrayAllocator&& Other)
     {
-        Check(this != &Other);
+        CHECK(this != &Other);
 
         if (!Other.DynamicAllocation.HasAllocation())
         {

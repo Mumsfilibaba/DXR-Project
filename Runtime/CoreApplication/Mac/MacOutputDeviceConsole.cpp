@@ -130,7 +130,7 @@ void FMacOutputDeviceConsole::DestroyResources()
 {
 	SCOPED_AUTORELEASE_POOL();
 	
-    Check(FPlatformThreadMisc::IsMainThread());
+    CHECK(FPlatformThreadMisc::IsMainThread());
     
     NSSafeRelease(TextView);
     NSSafeRelease(ScrollView);

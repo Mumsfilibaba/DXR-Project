@@ -186,7 +186,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& GetValue() noexcept
     {
-        Check(HasValue());
+        CHECK(HasValue());
         return *Value.GetStorage();
     }
 
@@ -197,7 +197,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& GetValue() const noexcept
     {
-        Check(HasValue());
+        CHECK(HasValue());
         return *Value.GetStorage();
     }
 
@@ -329,7 +329,7 @@ public:
      */
     NODISCARD FORCEINLINE T* operator->() noexcept
     {
-        Check(HasValue());
+        CHECK(HasValue());
         return Value.GetStorage();
     }
 
@@ -340,7 +340,7 @@ public:
      */
     NODISCARD FORCEINLINE const T* operator->() const noexcept
     {
-        Check(HasValue());
+        CHECK(HasValue());
         return Value.GetStorage();
     }
 
@@ -351,7 +351,7 @@ public:
      */
     NODISCARD FORCEINLINE T& operator*() noexcept
     {
-        Check(HasValue());
+        CHECK(HasValue());
         return *Value.GetStorage();
     }
 
@@ -362,7 +362,7 @@ public:
      */
     NODISCARD FORCEINLINE const T& operator*() const noexcept
     {
-        Check(HasValue());
+        CHECK(HasValue());
         return *Value.GetStorage();
     }
 

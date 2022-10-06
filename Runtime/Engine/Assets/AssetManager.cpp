@@ -1,5 +1,6 @@
 #include "AssetManager.h"
 #include "TextureImporterBase.h"
+#include "TextureImporterDDS.h"
 
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/OutputDeviceLogger.h"
@@ -19,6 +20,7 @@ FAssetManager::FAssetManager()
     , TextureImporters()
 {
     TextureImporters.Emplace(dbg_new FTextureImporterBase());
+    TextureImporters.Emplace(dbg_new FTextureImporterDDS());
 }
 
 FAssetManager::~FAssetManager()
@@ -53,7 +55,7 @@ void FAssetManager::Release()
 
 FAssetManager& FAssetManager::Get()
 {
-    Check(GInstance != nullptr);
+    CHECK(GInstance != nullptr);
     return *GInstance;
 }
 

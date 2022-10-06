@@ -97,7 +97,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
     TRACE_SCOPE("Update LightBuffers");
 
     FCamera* Camera = Scene.GetCamera();
-    Check(Camera != nullptr);
+    CHECK(Camera != nullptr);
 
     for (FLight* Light : Scene.GetLights())
     {
@@ -108,7 +108,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
         if (IsSubClassOf<FPointLight>(Light))
         {
             FPointLight* CurrentLight = Cast<FPointLight>(Light);
-            Check(CurrentLight != nullptr);
+            CHECK(CurrentLight != nullptr);
 
             constexpr float MinLuma = 0.005f;
             const float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
@@ -152,7 +152,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
         else if (IsSubClassOf<FDirectionalLight>(Light))
         {
             FDirectionalLight* CurrentLight = Cast<FDirectionalLight>(Light);
-            Check(CurrentLight != nullptr);
+            CHECK(CurrentLight != nullptr);
 
             CurrentLight->Tick(*Camera);
 

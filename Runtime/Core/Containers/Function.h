@@ -242,7 +242,7 @@ public:
      */
     FORCEINLINE ReturnType Invoke(ArgTypes&&... Args) noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return GetFunctor()->Invoke(Forward<ArgTypes>(Args)...);
     }
 

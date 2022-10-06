@@ -117,8 +117,8 @@ public:
      */
     FORCEINLINE void CopyToBuffer(CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const noexcept
     {
-        Check(Buffer != nullptr);
-        Check((Position < GetLength()) || (Position == 0));
+        CHECK(Buffer != nullptr);
+        CHECK((Position < GetLength()) || (Position == 0));
 
         const SizeType CopySize = NMath::Min(BufferSize, GetLength() - Position);
         TCString<CharType>::Strncpy(Buffer, ViewStart + Position, CopySize);
@@ -415,7 +415,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Check((Position < GetLength()) || (Position == 0));
+        CHECK((Position < GetLength()) || (Position == 0));
 
         if ((InLength == 0) || (GetLength() == 0))
         {
@@ -463,7 +463,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindChar(CharType Char, SizeType Position = 0) const noexcept
     {
-        Check((Position < GetLength()) || (Position == 0));
+        CHECK((Position < GetLength()) || (Position == 0));
 
         const SizeType Length = GetLength();
         if (Length == 0)
@@ -497,7 +497,7 @@ public:
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
     {
-        Check((Position < GetLength()) || (Position == 0));
+        CHECK((Position < GetLength()) || (Position == 0));
 
         const SizeType Length = GetLength();
         if (Length == 0)
@@ -530,7 +530,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        Check((Position < GetLength()) || (Position == 0));
+        CHECK((Position < GetLength()) || (Position == 0));
 
         SizeType Length = GetLength();
         if (Length == 0)
@@ -598,7 +598,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Check((Position < GetLength()) || (Position == 0));
+        CHECK((Position < GetLength()) || (Position == 0));
 
         SizeType Length = GetLength();
         if ((InLength == 0) || (Length == 0))
@@ -652,7 +652,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLastChar(CharType Char, SizeType Position = 0) const noexcept
     {
-        Check((Position < GetLength()) || (Position == 0));
+        CHECK((Position < GetLength()) || (Position == 0));
 
         const SizeType Length = GetLength();
         if (Length == 0)
@@ -685,7 +685,7 @@ public:
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
     {
-        Check((Position < GetLength()) || (Position == 0));
+        CHECK((Position < GetLength()) || (Position == 0));
 
         const SizeType Length = GetLength();
         if (Length == 0)
@@ -846,7 +846,7 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& FirstElement() const noexcept
     {
-        Check(!IsEmpty());
+        CHECK(!IsEmpty());
         return *ViewStart;
     }
 
@@ -857,7 +857,7 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& LastElement() const noexcept
     {
-        Check(!IsEmpty());
+        CHECK(!IsEmpty());
         return *(ViewStart + LastElementIndex());
     }
 
@@ -869,7 +869,7 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& GetElementAt(SizeType Index) const noexcept
     {
-        Check(Index < GetLength());
+        CHECK(Index < GetLength());
         return *(ViewStart + Index);
     }
 
@@ -954,7 +954,7 @@ public:
      */
     NODISCARD FORCEINLINE TStringView SubStringView(SizeType Offset, SizeType Count) const noexcept
     {
-        Check((Count < GetLength()) && (Offset + Count < GetLength()));
+        CHECK((Count < GetLength()) && (Offset + Count < GetLength()));
         return TStringView(GetData() + Offset, Count);
     }
 

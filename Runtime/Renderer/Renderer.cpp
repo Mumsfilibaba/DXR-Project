@@ -229,7 +229,7 @@ void FRenderer::FrustumCullingAndSortingInternal(
         TArray<float>& OutDistances,
         TArray<uint32>& OutCommands) -> void
     {
-        Check(OutDistances.GetSize() == OutCommands.GetSize());
+        CHECK(OutDistances.GetSize() == OutCommands.GetSize());
 
         FVector3 CameraPosition = Camera->GetPosition();
         FVector3 DistanceVector = WorldPosition - CameraPosition;

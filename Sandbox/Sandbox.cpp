@@ -23,7 +23,7 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA         (1)
+#define LOAD_SPONZA         (0)
 #define ENABLE_LIGHT_TEST   (0)
 #define ENABLE_MANY_SPHERES (0)
 
@@ -53,9 +53,19 @@ bool FSandbox::Init()
         SceneData.Scale = 0.015f;
 #else
         FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
+        for (auto& Material : SceneData.Materials)
+        {
+            Material.bAlphaDiffuseCombined = true;
+        }
+        
         SceneData.AddToScene(CurrentScene.Get());
 
         FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
+
+        for (auto& Material : SceneData.Materials)
+        {
+            Material.bAlphaDiffuseCombined = true;
+        }
 #endif
         SceneData.AddToScene(CurrentScene.Get());
     }

@@ -13,7 +13,7 @@ public:
     FMetalObject(FMetalDeviceContext* InDeviceContext)
         : DeviceContext(InDeviceContext)
     {
-        Check(DeviceContext != nullptr);
+        CHECK(DeviceContext != nullptr);
     }
 
     ~FMetalObject() = default;

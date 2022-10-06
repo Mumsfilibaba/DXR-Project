@@ -14,7 +14,7 @@ FWindowsFileHandle::FWindowsFileHandle(HANDLE InFileHandle)
 
 bool FWindowsFileHandle::SeekFromStart(int64 InOffset)
 {
-    Check(IsValid());
+    CHECK(IsValid());
 
     LARGE_INTEGER Offset;
     Offset.QuadPart = InOffset;
@@ -23,7 +23,7 @@ bool FWindowsFileHandle::SeekFromStart(int64 InOffset)
 
 bool FWindowsFileHandle::SeekFromCurrent(int64 InOffset)
 {
-    Check(IsValid());
+    CHECK(IsValid());
 
     LARGE_INTEGER Offset;
     Offset.QuadPart = InOffset;
@@ -32,7 +32,7 @@ bool FWindowsFileHandle::SeekFromCurrent(int64 InOffset)
 
 bool FWindowsFileHandle::SeekFromEnd(int64 InOffset)
 {
-    Check(IsValid());
+    CHECK(IsValid());
 
     LARGE_INTEGER Offset;
     Offset.QuadPart = InOffset;
@@ -41,19 +41,19 @@ bool FWindowsFileHandle::SeekFromEnd(int64 InOffset)
 
 int64 FWindowsFileHandle::Size() const
 {
-    Check(IsValid());
+    CHECK(IsValid());
     return FileSize;
 }
 
 int64 FWindowsFileHandle::Tell() const
 {
-    Check(IsValid());
+    CHECK(IsValid());
     return FilePointer;
 }
 
 int32 FWindowsFileHandle::Read(uint8* Dst, uint32 BytesToRead)
 {
-    Check(IsValid());
+    CHECK(IsValid());
 
     DWORD NumRead = 0;
     if (!ReadFile(FileHandle, Dst, BytesToRead, &NumRead, nullptr))
@@ -73,7 +73,7 @@ int32 FWindowsFileHandle::Read(uint8* Dst, uint32 BytesToRead)
 
 int32 FWindowsFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
 {
-    Check(IsValid());
+    CHECK(IsValid());
 
     DWORD NumWritten = 0;
     if (!WriteFile(FileHandle, Src, BytesToWrite, &NumWritten, nullptr))
@@ -93,12 +93,12 @@ int32 FWindowsFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
 
 bool FWindowsFileHandle::Truncate(int64 NewSize)
 {
-    Check(IsValid());
+    CHECK(IsValid());
 
     if (SeekFromStart(NewSize) && SetEndOfFile(FileHandle) != 0)
     {
         UpdateFileSize();
-        Check(IsValid());
+        CHECK(IsValid());
         return true;
     }
 

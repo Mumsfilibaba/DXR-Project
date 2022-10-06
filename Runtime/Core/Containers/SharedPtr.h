@@ -128,7 +128,7 @@ public:
                 Counter = new FPointerReferenceCounter();
             }
 
-            Check(Counter != nullptr);
+            CHECK(Counter != nullptr);
             Counter->AddStrongRef();
         }
         else
@@ -145,7 +145,7 @@ public:
         {
             // ...however, if we init a weak reference then there has to be a counter as well, since weak-refs require a strong
             Counter = NewCounter;
-            Check(Counter != nullptr);
+            CHECK(Counter != nullptr);
             Counter->AddWeakRef();
         }
         else
@@ -162,7 +162,7 @@ public:
         {
             // ...However if the Ptr is valid then the counter also has to be, otherwise it is not a valid move
             Counter = NewCounter;
-            Check(Counter != nullptr);
+            CHECK(Counter != nullptr);
         }
         else
         {
@@ -173,7 +173,7 @@ public:
     /** Releases a strong ref and deletes the pointer if the strong refcount is zero, if the weak refcount is also zero the counter is deleted */
     FORCEINLINE void ReleaseStrong() noexcept
     {
-        Check(Counter != nullptr);
+        CHECK(Counter != nullptr);
         Counter->ReleaseStrongRef();
 
         CounterType StrongRefs = Counter->GetStrongRefCount();
@@ -193,7 +193,7 @@ public:
     /** Releases a weak reference and if all references are gone, then delete the counter */
     FORCEINLINE void ReleaseWeak() noexcept
     {
-        Check(Counter != nullptr);
+        CHECK(Counter != nullptr);
         Counter->ReleaseWeakRef();
 
         CounterType NumStrongRefs = Counter->GetStrongRefCount();
@@ -240,13 +240,13 @@ public:
 
     NODISCARD FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
-        Check(Counter != nullptr);
+        CHECK(Counter != nullptr);
         return Counter->GetWeakRefCount();
     }
 
     NODISCARD FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
-        Check(Counter != nullptr);
+        CHECK(Counter != nullptr);
         return Counter->GetStrongRefCount();
     }
 
@@ -556,7 +556,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return *Get();
     }
 
@@ -596,7 +596,7 @@ public:
     NODISCARD FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[](SizeType Index) const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return Get()[Index];
     }
 
@@ -1016,7 +1016,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return *Get();
     }
 
@@ -1062,7 +1062,7 @@ public:
     NODISCARD FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[](SizeType Index) const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return Get()[Index];
     }
 

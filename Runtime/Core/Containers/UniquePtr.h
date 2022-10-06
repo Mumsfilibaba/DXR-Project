@@ -163,7 +163,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return *Ptr;
     }
 
@@ -447,7 +447,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return Get()[Index];
     }
 

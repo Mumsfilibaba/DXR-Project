@@ -85,7 +85,7 @@ FD3D12CommandListRef FD3D12CommandListManager::ObtainCommandList(FD3D12CommandAl
 
 void FD3D12CommandListManager::ReleaseCommandList(FD3D12CommandListRef InCommandList)
 {
-    Check(InCommandList != nullptr);
+    CHECK(InCommandList != nullptr);
     
     TScopedLock Lock(CommandListsCS);
     CommandLists.Emplace(InCommandList);
@@ -93,7 +93,7 @@ void FD3D12CommandListManager::ReleaseCommandList(FD3D12CommandListRef InCommand
 
 FD3D12FenceSyncPoint FD3D12CommandListManager::ExecuteCommandList(FD3D12CommandListRef InCommandList, bool bWaitForCompletion)
 {
-    Check(InCommandList != nullptr);
+    CHECK(InCommandList != nullptr);
 
     ID3D12CommandList* CommandList = InCommandList->GetCommandList();
     CommandQueue->ExecuteCommandLists(1, &CommandList);

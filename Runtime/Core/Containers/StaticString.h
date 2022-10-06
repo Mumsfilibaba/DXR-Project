@@ -151,7 +151,7 @@ public:
      */
     FORCEINLINE void Append(CharType Char) noexcept
     {
-        Check((Length + 1) < GetCapacity());
+        CHECK((Length + 1) < GetCapacity());
         Characters[Length]   = Char;
         Characters[++Length] = TChar<CharType>::Zero;
     }
@@ -185,8 +185,8 @@ public:
      */
     FORCEINLINE void Append(const CharType* InString, SizeType InLength) noexcept
     {
-        Check(InString != nullptr);
-        Check((Length + InLength) < GetCapacity());
+        CHECK(InString != nullptr);
+        CHECK((Length + InLength) < GetCapacity());
 
         const SizeType MinLength = NMath::Min<SizeType>(NUM_CHARS - Length, InLength);
         TCString<CharType>::Strncpy(Characters + Length, InString, MinLength);
@@ -213,7 +213,7 @@ public:
      */
     FORCEINLINE void Resize(SizeType NewLength, CharType FillElement) noexcept
     {
-        Check(NewLength < NUM_CHARS);
+        CHECK(NewLength < NUM_CHARS);
 
         if (NewLength > Length)
         {
@@ -233,8 +233,8 @@ public:
      */
     FORCEINLINE void CopyToBuffer(CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const noexcept
     {
-        Check(Buffer != nullptr);
-        Check((Position < Length) || (Position == 0));
+        CHECK(Buffer != nullptr);
+        CHECK((Position < Length) || (Position == 0));
 
         const SizeType CopySize = NMath::Min(BufferSize, Length - Position);
         TCString<CharType>::Strncpy(Buffer, Characters + Position, CopySize);
@@ -539,7 +539,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        Check((Position < Length) || (Position == 0));
+        CHECK((Position < Length) || (Position == 0));
 
         if (InString == nullptr)
         {
@@ -587,7 +587,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Check((Position < GetLength()) || (Position == 0));
+        CHECK((Position < GetLength()) || (Position == 0));
 
         if ((InLength == 0) || (GetLength() == 0))
         {
@@ -636,7 +636,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindChar(CharType Char, SizeType Position = 0) const noexcept
     {
-        Check((Position < Length) || (Position == 0));
+        CHECK((Position < Length) || (Position == 0));
 
         if (Length == 0)
         {
@@ -669,7 +669,7 @@ public:
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
     {
-        Check((Position < GetLength()) || (Position == 0));
+        CHECK((Position < GetLength()) || (Position == 0));
 
         const SizeType ThisLength = GetLength();
         if (ThisLength == 0)
@@ -729,8 +729,8 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Check((Position < Length) || (Position == 0));
-        Check(InString != nullptr);
+        CHECK((Position < Length) || (Position == 0));
+        CHECK(InString != nullptr);
 
         if (Length == 0)
         {
@@ -778,7 +778,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLastChar(CharType Char, SizeType Position = 0) const noexcept
     {
-        Check((Position < Length) || (Position == 0));
+        CHECK((Position < Length) || (Position == 0));
 
         if (Length == 0)
         {
@@ -810,7 +810,7 @@ public:
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
     {
-        Check((Position < Length) || (Position == 0));
+        CHECK((Position < Length) || (Position == 0));
 
         if (Length == 0)
         {
@@ -959,7 +959,7 @@ public:
      */
     FORCEINLINE void Remove(SizeType Position, SizeType NumCharacters) noexcept
     {
-        Check((Position < Length) && (Position + NumCharacters < Length));
+        CHECK((Position < Length) && (Position + NumCharacters < Length));
 
         CharType* Dst = Characters + Position;
         CharType* Src = Dst + NumCharacters;
@@ -1000,7 +1000,7 @@ public:
      */
     FORCEINLINE void Insert(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
-        Check((Position < Length) && (Length + InLength < NUM_CHARS));
+        CHECK((Position < Length) && (Length + InLength < NUM_CHARS));
 
         CharType* Src = Characters + Position;
         CharType* Dst = Src + InLength;
@@ -1021,7 +1021,7 @@ public:
      */
     FORCEINLINE void Insert(CharType Char, SizeType Position) noexcept
     {
-        Check((Position < Length) && (Length + 1 < NUM_CHARS));
+        CHECK((Position < Length) && (Length + 1 < NUM_CHARS));
 
         // Make room for string
         CharType* Src = Characters + Position;
@@ -1067,7 +1067,7 @@ public:
      */
     FORCEINLINE void Replace(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
-        Check((Position < Length) && (Position + InLength < Length));
+        CHECK((Position < Length) && (Position + InLength < Length));
         
         if (InString)
         {
@@ -1083,7 +1083,7 @@ public:
      */
     FORCEINLINE void Replace(CharType Char, SizeType Position) noexcept
     {
-        Check((Position < Length));
+        CHECK((Position < Length));
         *(Characters + Position) = Char;
     }
 
@@ -1130,7 +1130,7 @@ public:
      */
     NODISCARD FORCEINLINE TStaticString SubString(SizeType Position, SizeType NumCharacters) const noexcept
     {
-        Check((Position < Length) && (Position + NumCharacters < Length));
+        CHECK((Position < Length) && (Position + NumCharacters < Length));
         return TStaticString(Characters + Position, NumCharacters);
     }
 
@@ -1143,7 +1143,7 @@ public:
      */
     NODISCARD FORCEINLINE TStringView<CharType> SubStringView(SizeType Position, SizeType NumCharacters) const noexcept
     {
-        Check((Position < Length) && (Position + NumCharacters < Length));
+        CHECK((Position < Length) && (Position + NumCharacters < Length));
         return TStringView<CharType>(Characters + Position, NumCharacters);
     }
 
@@ -1155,7 +1155,7 @@ public:
      */
     NODISCARD FORCEINLINE CharType& GetElementAt(SizeType Index) noexcept
     {
-        Check(Index < GetLength());
+        CHECK(Index < GetLength());
         return Characters[Index];
     }
 
@@ -1167,7 +1167,7 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& GetElementAt(SizeType Index) const noexcept
     {
-        Check(Index < GetLength());
+        CHECK(Index < GetLength());
         return Characters[Index];
     }
 
@@ -1671,7 +1671,7 @@ public:
 private:
     FORCEINLINE void CopyFrom(const CharType* InString, SizeType InLength) noexcept
     {
-        Check(InLength < GetCapacity());
+        CHECK(InLength < GetCapacity());
 
         TCString<CharType>::Strncpy(Characters, InString, InLength);
         Length = InLength;

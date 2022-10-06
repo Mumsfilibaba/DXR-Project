@@ -215,7 +215,7 @@ public:
     {
         if (NumElements > 0)
         {
-            Check(InputArray != nullptr);
+            CHECK(InputArray != nullptr);
             if (InputArray != GetData())
             {
                 ::DestroyElements<ElementType>(GetData(), ArraySize);
@@ -290,7 +290,7 @@ public:
             // NewSize is always larger than array-size...
             const SizeType NumElementsToConstruct = NewSize - ArraySize;
             // ...However, assert just in case
-            Check(NumElementsToConstruct > 0);
+            CHECK(NumElementsToConstruct > 0);
 
             ElementType* LastElementPtr = GetData() + ArraySize;
             ::DefaultConstructElements<ElementType>(LastElementPtr, NumElementsToConstruct);
@@ -299,7 +299,7 @@ public:
         else if (NewSize < ArraySize)
         {
             const SizeType NumElementsToDestruct = ArraySize - NewSize;
-            Check(NumElementsToDestruct > 0);
+            CHECK(NumElementsToDestruct > 0);
             PopRangeUnchecked(NumElementsToDestruct);
         }
     }
@@ -322,7 +322,7 @@ public:
             // NewSize is always larger than arraysize...
             const SizeType NumElementsToConstruct = NewSize - ArraySize;
             // ...However, assert just in case
-            Check(NumElementsToConstruct > 0);
+            CHECK(NumElementsToConstruct > 0);
 
             ElementType* TmpLastElement = GetData() + ArraySize;
             ::ConstructElementsFrom<ElementType>(TmpLastElement, NumElementsToConstruct, Element);
@@ -331,7 +331,7 @@ public:
         else if (NewSize < ArraySize)
         {
             const SizeType NumElementsToDestruct = ArraySize - NewSize;
-            Check(NumElementsToDestruct > 0);
+            CHECK(NumElementsToDestruct > 0);
             PopRangeUnchecked(NumElementsToDestruct);
         }
     }
@@ -444,7 +444,7 @@ public:
     template<typename... ArgTypes>
     FORCEINLINE void EmplaceAt(SizeType Position, ArgTypes&&... Args) noexcept
     {
-        Check(Position <= ArraySize);
+        CHECK(Position <= ArraySize);
         InsertUninitializedUnchecked(Position, 1);
         new(GetData() + Position) ElementType(Forward<ArgTypes>(Args)...);
         ArraySize++;
@@ -515,8 +515,8 @@ public:
      */
     FORCEINLINE void Insert(SizeType Position, const ElementType* InputArray, SizeType NumElements) noexcept
     {
-        Check(Position <= ArraySize);
-        Check(InputArray != nullptr);
+        CHECK(Position <= ArraySize);
+        CHECK(InputArray != nullptr);
 
         InsertUninitializedUnchecked(Position, NumElements);
         ::CopyConstructElements<ElementType>(GetData() + Position, InputArray, NumElements);
@@ -591,7 +591,7 @@ public:
      */
     FORCEINLINE void InsertUninitialized(SizeType Position, SizeType NumElements) noexcept
     {
-        Check(Position <= ArraySize);
+        CHECK(Position <= ArraySize);
         InsertUninitializedUnchecked(Position, NumElements);
         ArraySize += NumElements;
     }
@@ -606,7 +606,7 @@ public:
     {
         if (NumElements > 0)
         {
-            Check(InputArray != nullptr);
+            CHECK(InputArray != nullptr);
             ExpandStorage(NumElements);
             ::CopyConstructElements<ElementType>(GetData() + ArraySize, InputArray, NumElements);
             ArraySize += NumElements;
@@ -674,7 +674,7 @@ public:
      */
     void RemoveRangeAt(SizeType Position, SizeType NumElements) noexcept
     {
-        Check(Position + NumElements <= ArraySize);
+        CHECK(Position + NumElements <= ArraySize);
 
         if (NumElements)
         {
@@ -702,7 +702,7 @@ public:
      */
     FORCEINLINE IteratorType RemoveAt(IteratorType Iterator) noexcept
     {
-        Check(Iterator.IsFrom(*this));
+        CHECK(Iterator.IsFrom(*this));
         RemoveAt(Iterator.GetIndex());
         return Iterator;
     }
@@ -715,7 +715,7 @@ public:
      */
     FORCEINLINE ConstIteratorType RemoveAt(ConstIteratorType Iterator) noexcept
     {
-        Check(Iterator.IsFrom(*this));
+        CHECK(Iterator.IsFrom(*this));
         RemoveAt(Iterator.GetIndex());
         return Iterator;
     }
@@ -991,7 +991,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& FirstElement() noexcept
     {
-        Check(!IsEmpty());
+        CHECK(!IsEmpty());
         return *GetData();
     }
 
@@ -1002,7 +1002,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& FirstElement() const noexcept
     {
-        Check(!IsEmpty());
+        CHECK(!IsEmpty());
         return *GetData();
     }
 
@@ -1013,7 +1013,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& LastElement() noexcept
     {
-        Check(!IsEmpty());
+        CHECK(!IsEmpty());
         return *(GetData() + (ArraySize - 1));
     }
 
@@ -1024,7 +1024,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& LastElement() const noexcept
     {
-        Check(!IsEmpty());
+        CHECK(!IsEmpty());
         return *(GetData() + (ArraySize - 1));
     }
 
@@ -1106,7 +1106,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) noexcept
     {
-        Check(Index < ArraySize);
+        CHECK(Index < ArraySize);
         return *(GetData() + Index);
     }
 
@@ -1118,7 +1118,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& GetElementAt(SizeType Index) const noexcept
     {
-        Check(Index < ArraySize);
+        CHECK(Index < ArraySize);
         return *(GetData() + Index);
     }
 
@@ -1151,7 +1151,7 @@ public:
      */
     NODISCARD FORCEINLINE TArrayView<ElementType> CreateView(SizeType Offset, SizeType NumElements) noexcept
     {
-        Check((NumElements < ArraySize) && (Offset + NumElements < ArraySize));
+        CHECK((NumElements < ArraySize) && (Offset + NumElements < ArraySize));
         return TArrayView<ElementType>(GetData() + Offset, NumElements);
     }
 
@@ -1164,7 +1164,7 @@ public:
      */
     NODISCARD FORCEINLINE TArrayView<const ElementType> CreateView(SizeType Offset, SizeType NumElements) const noexcept
     {
-        Check((NumElements < ArraySize) && (Offset + NumElements < ArraySize));
+        CHECK((NumElements < ArraySize) && (Offset + NumElements < ArraySize));
         return TArrayView<const ElementType>(GetData() + Offset, NumElements);
     }
 

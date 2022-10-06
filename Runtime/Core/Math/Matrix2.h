@@ -268,7 +268,7 @@ public:
      */
     FORCEINLINE FVector2 GetRow(int32 Row) const noexcept
     {
-        Check(Row < 2);
+        CHECK(Row < 2);
         return FVector2(f[Row]);
     }
 
@@ -280,7 +280,7 @@ public:
      */
     FORCEINLINE FVector2 GetColumn(int32 Column) const noexcept
     {
-        Check(Column < 2);
+        CHECK(Column < 2);
         return FVector2(f[0][Column], f[1][Column]);
     }
 

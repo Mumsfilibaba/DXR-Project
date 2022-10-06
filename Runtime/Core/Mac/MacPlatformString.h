@@ -34,7 +34,7 @@ struct FMacPlatformString : public FGenericPlatformString
         UNREFERENCED_VARIABLE(Format);
         
         // TODO: Finish
-        Check(false);
+        CHECK(false);
         return 0; 
     }
     

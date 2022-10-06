@@ -50,7 +50,7 @@ function FBuildRules(InName)
         VectorExtensions = 'SSE2',
         -- Language to compile
         Language   = 'C++',
-        CppVersion = 'C++17',
+        CppVersion = 'C++20',
         -- Version of system SDK
         SystemVersion = 'latest',
         -- Ascii or Unicode

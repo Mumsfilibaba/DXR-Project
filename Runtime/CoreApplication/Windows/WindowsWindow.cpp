@@ -140,7 +140,7 @@ bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 I
 
 void FWindowsWindow::Show(bool bMaximized)
 {
-    Check(Window != 0);
+    CHECK(Window != 0);
 
     if (IsValid())
     {
@@ -157,7 +157,7 @@ void FWindowsWindow::Show(bool bMaximized)
 
 void FWindowsWindow::Close()
 {
-    Check(Window != 0);
+    CHECK(Window != 0);
 
     if (IsValid())
     {
@@ -170,7 +170,7 @@ void FWindowsWindow::Close()
 
 void FWindowsWindow::Minimize()
 {
-    Check(Window != 0);
+    CHECK(Window != 0);
 
     if (StyleParams.IsMinimizable())
     {
@@ -194,7 +194,7 @@ void FWindowsWindow::Maximize()
 
 void FWindowsWindow::Restore()
 {
-    Check(Window != 0);
+    CHECK(Window != 0);
 
     if (IsValid())
     {
@@ -208,7 +208,7 @@ void FWindowsWindow::Restore()
 
 void FWindowsWindow::ToggleFullscreen()
 {
-    Check(Window != 0);
+    CHECK(Window != 0);
 
     if (IsValid())
     {
@@ -268,7 +268,7 @@ bool FWindowsWindow::IsActiveWindow() const
 
 void FWindowsWindow::SetTitle(const FString& Title)
 {
-    Check(Window != 0);
+    CHECK(Window != 0);
 
     if (StyleParams.IsTitled())
     {
@@ -303,7 +303,7 @@ void FWindowsWindow::MoveTo(int32 x, int32 y)
 
 void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
-    Check(Window != 0);
+    CHECK(Window != 0);
 
     if (IsValid())
     {
@@ -346,7 +346,7 @@ void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 
 void FWindowsWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 {
-    Check(Window != 0);
+    CHECK(Window != 0);
 
     if (IsValid())
     {

@@ -220,7 +220,7 @@ public:
 
     uint32 AllocateHandles(uint32 NumHandles)
     {
-        Check(HasSpace(NumHandles));
+        CHECK(HasSpace(NumHandles));
 
         const uint32 NewHandle = CurrentHandle;
         CurrentHandle += NumHandles;
@@ -233,25 +233,25 @@ public:
 
     FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleAt(uint32 Index) const
     {
-        Check(Index < DescriptorCount);
+        CHECK(Index < DescriptorCount);
         return CPUStartHandle.Offset(Index, DescriptorSize); 
     }
     
     FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleAt(uint32 Index) const
     {
-        Check(Index < DescriptorCount);
+        CHECK(Index < DescriptorCount);
         return GPUStartHandle.Offset(Index, DescriptorSize); 
     }
 
     FORCEINLINE uint32 GetDescriptorHandleIncrementSize() const
     {
-        Check(DescriptorHeap != nullptr);
+        CHECK(DescriptorHeap != nullptr);
         return DescriptorHeap->GetDescriptorHandleIncrementSize();
     }
 
     FORCEINLINE ID3D12DescriptorHeap* GetD3D12Heap() const
     {
-        Check(DescriptorHeap != nullptr);
+        CHECK(DescriptorHeap != nullptr);
         return DescriptorHeap->GetD3D12Heap();
     }
 

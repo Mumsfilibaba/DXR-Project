@@ -18,19 +18,19 @@ FMacFileHandle::FMacFileHandle(int32 InFileHandle, bool bInReadOnly)
 
 bool FMacFileHandle::SeekFromStart(int64 InOffset)
 {
-    Check(IsValid());
+    CHECK(IsValid());
     return (::lseek(FileHandle, InOffset, SEEK_SET) != -1);
 }
 
 bool FMacFileHandle::SeekFromCurrent(int64 InOffset)
 {
-    Check(IsValid());
+    CHECK(IsValid());
     return (::lseek(FileHandle, InOffset, SEEK_CUR) != -1);
 }
 
 bool FMacFileHandle::SeekFromEnd(int64 InOffset)
 {
-    Check(IsValid());
+    CHECK(IsValid());
     return (::lseek(FileHandle, InOffset, SEEK_END) != -1);
 }
 
@@ -43,14 +43,14 @@ int64 FMacFileHandle::Size() const
 
 int64 FMacFileHandle::Tell() const
 {
-    Check(IsValid());
+    CHECK(IsValid());
     return ::lseek(FileHandle, 0, SEEK_CUR);
 }
 
 int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
 {
-    Check(IsValid());
-    Check(Dst != nullptr);
+    CHECK(IsValid());
+    CHECK(Dst != nullptr);
 
     int64 MaxReadSize = kMaxReadWriteSize;   
     int64 BytesRead   = 0;
@@ -70,7 +70,7 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
             BytesRead   += Read;         
             Dst         += Size;       
             BytesToRead -= Size;
-            Check(BytesToRead >= 0);
+            CHECK(BytesToRead >= 0);
         }
         else if (Read == -1)
         {
@@ -92,8 +92,8 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
 
 int32 FMacFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
 {
-	Check(IsValid());
-    Check(Src != nullptr);
+	CHECK(IsValid());
+    CHECK(Src != nullptr);
 
     int64 BytesWritten = 0;
     while (BytesToWrite)
@@ -109,7 +109,7 @@ int32 FMacFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
 
         Src          += Size;
         BytesToWrite -= Size;
-        Check(BytesToWrite >= 0);
+        CHECK(BytesToWrite >= 0);
     }
 
     return BytesWritten;
@@ -117,7 +117,7 @@ int32 FMacFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
 
 bool FMacFileHandle::Truncate(int64 NewSize)
 {
-    Check(IsValid());
+    CHECK(IsValid());
     
     int32 Result = 0;
     do 
@@ -140,7 +140,7 @@ void FMacFileHandle::Close()
         if (!bReadOnly)
         {
             const auto Result = ::fsync(FileHandle);
-            Check(Result >= 0);
+            CHECK(Result >= 0);
         }
 
         // Unlock the file
@@ -148,7 +148,7 @@ void FMacFileHandle::Close()
 
         {
 		    const auto Result = ::close(FileHandle);
-            Check(Result >= 0);
+            CHECK(Result >= 0);
         }
     }
     

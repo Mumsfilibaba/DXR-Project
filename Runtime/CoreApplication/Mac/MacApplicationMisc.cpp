@@ -38,7 +38,7 @@ void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
     SCOPED_AUTORELEASE_POOL();
     
-    Check(NSApp != nil);
+    CHECK(NSApp != nil);
 	
     do
     {

@@ -23,7 +23,7 @@ public:
         , OfflineHandle({ 0 })
         , Desc()
     {
-        Check(InOfflineHeap != nullptr);
+        CHECK(InOfflineHeap != nullptr);
     }
 
     ~FD3D12SamplerState()

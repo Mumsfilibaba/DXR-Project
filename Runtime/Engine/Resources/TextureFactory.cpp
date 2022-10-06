@@ -61,18 +61,18 @@ void FTextureFactory::Release()
 
 FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format)
 {
-    Check(Pixels != nullptr);
+    CHECK(Pixels != nullptr);
 
     const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     
     const uint32 NumMips = GenerateMips ? NMath::Max<uint32>(NMath::Log2(NMath::Max(Width, Height)), 1u) : 1;
-    Check(NumMips != 0);
+    CHECK(NumMips != 0);
 
     const uint32 Stride   = GetByteStrideFromFormat(Format);
     const uint32 RowPitch = Width * Stride;
-    Check(RowPitch > 0);
+    CHECK(RowPitch > 0);
 
-    FRHITextureDataInitializer InitalData(Pixels, Format, Width, Height);
+    FRHITextureDataInitializer InitalData(Pixels, RowPitch, 0);
 
     FRHITexture2DInitializer Initializer(
         Format, 
@@ -106,7 +106,7 @@ FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
 
 FRHITextureCube* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format)
 {
-    Check(IsEnumFlagSet(PanoramaSource->GetFlags(), ETextureUsageFlags::AllowSRV));
+    CHECK(IsEnumFlagSet(PanoramaSource->GetFlags(), ETextureUsageFlags::AllowSRV));
 
     const bool bGenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
 

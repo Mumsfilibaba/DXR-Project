@@ -138,9 +138,9 @@ void FD3D12DescriptorCache::PrepareGraphicsDescriptors(FD3D12CommandBatch* CmdBa
 {
     // TRACE_FUNCTION_SCOPE();
 
-    Check(CmdBatch           != nullptr);
-    Check(CurrentCommandList != nullptr);
-    Check(RootSignature      != nullptr);
+    CHECK(CmdBatch           != nullptr);
+    CHECK(CurrentCommandList != nullptr);
+    CHECK(RootSignature      != nullptr);
 
     // Allocate descriptors for resources and samplers 
     ID3D12Device*              DxDevice  = GetDevice()->GetD3D12Device();
@@ -176,9 +176,9 @@ void FD3D12DescriptorCache::PrepareComputeDescriptors(FD3D12CommandBatch* CmdBat
 {
     // TRACE_FUNCTION_SCOPE();
 
-    Check(CmdBatch           != nullptr);
-    Check(CurrentCommandList != nullptr);
-    Check(RootSignature      != nullptr);
+    CHECK(CmdBatch           != nullptr);
+    CHECK(CurrentCommandList != nullptr);
+    CHECK(RootSignature      != nullptr);
 
     ID3D12Device*              DxDevice  = GetDevice()->GetD3D12Device();
     ID3D12GraphicsCommandList* DxCmdList = CurrentCommandList->GetGraphicsCommandList();
@@ -203,7 +203,7 @@ void FD3D12DescriptorCache::PrepareComputeDescriptors(FD3D12CommandBatch* CmdBat
 
 void FD3D12DescriptorCache::SetRenderTargets(FD3D12RenderTargetViewCache& RenderTargets, FD3D12DepthStencilView* DepthStencil)
 {
-    Check(CurrentCommandList != nullptr);
+    CHECK(CurrentCommandList != nullptr);
 
     D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetViewHandles[D3D12_MAX_RENDER_TARGET_COUNT];
     for (uint32 Index = 0; Index < RenderTargets.NumRenderTargets; ++Index)
@@ -214,7 +214,7 @@ void FD3D12DescriptorCache::SetRenderTargets(FD3D12RenderTargetViewCache& Render
             CurrentView = NullRTV.Get();
         }
 
-        Check(CurrentView != nullptr);
+        CHECK(CurrentView != nullptr);
         RenderTargetViewHandles[Index] = CurrentView->GetOfflineHandle();
     }
 
@@ -231,13 +231,13 @@ void FD3D12DescriptorCache::SetRenderTargets(FD3D12RenderTargetViewCache& Render
 
 void FD3D12DescriptorCache::SetVertexBuffers(FD3D12VertexBufferCache& VertexBuffers)
 {
-    Check(CurrentCommandList != nullptr);
+    CHECK(CurrentCommandList != nullptr);
     CurrentCommandList->IASetVertexBuffers(0, VertexBuffers.VBViews, VertexBuffers.NumVertexBuffers);
 }
 
 void FD3D12DescriptorCache::SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer)
 {
-    Check(CurrentCommandList != nullptr);
+    CHECK(CurrentCommandList != nullptr);
     CurrentCommandList->IASetIndexBuffer(&IndexBuffer.IBView);
 }
 
@@ -277,7 +277,7 @@ void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(
 
     if (!ResourceDescriptors->HasSpace(NumResourceDescriptors))
     {
-        Check(false);
+        CHECK(false);
 
         // ConstantBufferViewCache.InvalidateAll();
         // ShaderResourceViewCache.InvalidateAll();
@@ -293,7 +293,7 @@ void FD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(
 
     if (!SamplerDescriptors->HasSpace(NumSamplerDescriptors))
     {
-        Check(false);
+        CHECK(false);
 
         // SamplerStateCache.InvalidateAll();
         // SamplerDescriptors->AllocateFreshHeap();

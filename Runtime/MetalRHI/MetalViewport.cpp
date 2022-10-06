@@ -11,7 +11,7 @@
 - (instancetype)initWithFrame:(NSRect)frameRect
 {
     self = [super initWithFrame:frameRect];
-    Check(self != nil);
+    CHECK(self != nil);
     return self;
 }
 

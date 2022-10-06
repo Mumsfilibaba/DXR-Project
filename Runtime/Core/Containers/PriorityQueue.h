@@ -102,7 +102,7 @@ public:
             auto& CurrentQueue = PriorityQueues[Index];
             if (!CurrentQueue.IsEmpty())
             {
-                Check(OutElement != nullptr);
+                CHECK(OutElement != nullptr);
                 *OutElement = ::Move(CurrentQueue.FirstElement());
 
                 CurrentQueue.RemoveAt(0);

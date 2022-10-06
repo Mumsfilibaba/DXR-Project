@@ -108,6 +108,9 @@ struct FMaterialData
 
      /** @brief: Metallic Parameter */
     float Metallic = 1.0f;
+
+    /** @brief: Is the diffuse and alpha stored in the same texture? */
+    bool bAlphaDiffuseCombined = false;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

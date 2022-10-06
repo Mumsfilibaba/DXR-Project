@@ -221,7 +221,7 @@ struct FFloat16
             Exponent = 0;
             Mantissa = NewMantissa >> (Shift + 1);
 
-            // Check for rounding and add one
+            // CHECK for rounding and add one
             if ((NewMantissa & ((1u << Shift) - 1)))
             {
                 Encoded++;

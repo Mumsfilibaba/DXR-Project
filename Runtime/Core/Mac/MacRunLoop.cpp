@@ -238,7 +238,7 @@ private:
 	id Self = [super init];
 	if(Self)
 	{
-		Check(InContext);
+		CHECK(InContext);
         Context = InContext;
         Context->AddRef();
 	}
@@ -248,7 +248,7 @@ private:
 
 - (void)dealloc
 {
-	Check(Context);
+	CHECK(Context);
     Context->Release();
     Context = nullptr;
 	[super dealloc];
@@ -256,8 +256,8 @@ private:
 
 - (void)scheduleOn:(CFRunLoopRef)InRunLoop inMode:(CFStringRef)InMode
 {
-    Check(!ScheduledRunLoop);
-    Check(!ScheduledMode);
+    CHECK(!ScheduledRunLoop);
+    CHECK(!ScheduledMode);
     ScheduledRunLoop = InRunLoop;
     ScheduledMode    = InMode;
 }
@@ -273,13 +273,13 @@ private:
 
 - (void)perform
 {
-    Check(Context);
-    Check(ScheduledRunLoop);
-    Check(ScheduledMode);
-    Check(CFEqual(ScheduledRunLoop, CFRunLoopGetCurrent()));
+    CHECK(Context);
+    CHECK(ScheduledRunLoop);
+    CHECK(ScheduledMode);
+    CHECK(CFEqual(ScheduledRunLoop, CFRunLoopGetCurrent()));
     
 	CFStringRef CurrentMode = CFRunLoopCopyCurrentMode(CFRunLoopGetCurrent());
-    Check(CFEqual(CurrentMode, ScheduledMode));
+    CHECK(CFEqual(CurrentMode, ScheduledMode));
 	
     Context->Execute(CurrentMode);
 	CFRelease(CurrentMode);
@@ -309,7 +309,7 @@ void ExecuteOnMainThread(dispatch_block_t Block, NSString* WaitMode, bool bWaitU
         SCOPED_AUTORELEASE_POOL();
         
         NSArray* ScheduleModes = @[NSDefaultRunLoopMode, NSModalPanelRunLoopMode, NSEventTrackingRunLoopMode];
-        Check(GMainThread != nullptr);
+        CHECK(GMainThread != nullptr);
 
         if (bWaitUntilFinished)
         {

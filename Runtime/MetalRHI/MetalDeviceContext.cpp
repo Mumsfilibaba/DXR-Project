@@ -8,7 +8,7 @@ FMetalDeviceContext::FMetalDeviceContext(FMetalInterface* InCoreInterface, id<MT
     , Device(InDevice)
     , CommandQueue([InDevice newCommandQueue])
 {
-    Check(CommandQueue != nullptr);
+    CHECK(CommandQueue != nullptr);
 }
 
 FMetalDeviceContext::~FMetalDeviceContext()

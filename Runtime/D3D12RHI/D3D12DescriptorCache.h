@@ -63,12 +63,12 @@ public:
 
     void PrepareDescriptorsForCopy(EShaderVisibility Stage)
     {
-        Check(bDirty[Stage]);
+        CHECK(bDirty[Stage]);
 
         for (uint32 Index = 0; Index < kDescriptorTableSize; Index++)
         {
             ViewType* View = ResourceViews[Stage][Index];
-            Check(View != nullptr);
+            CHECK(View != nullptr);
 
             CopyDescriptors[Stage][Index] = View->GetOfflineHandle();
         }
@@ -76,7 +76,7 @@ public:
 
     FORCEINLINE void SetDescriptorTable(EShaderVisibility Stage, D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle)
     {
-        Check(bDirty[Stage]);
+        CHECK(bDirty[Stage]);
 
         CPUDescriptorTables[Stage] = CPUHandle;
         GPUDescriptorTables[Stage] = GPUHandle;
@@ -244,7 +244,7 @@ struct FD3D12RenderTargetViewCache
 
     void SetRenderTarget(FD3D12RenderTargetView* View, uint32 Slot)
     {
-        Check(Slot < ARRAY_COUNT(RenderTargetViews));
+        CHECK(Slot < ARRAY_COUNT(RenderTargetViews));
         RenderTargetViews[Slot] = View;
     }
 

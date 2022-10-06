@@ -23,7 +23,7 @@ void FMeshUtilities::Subdivide(FMeshData& OutData, uint32 Subdivisions) noexcept
         OldVertexCount = uint32(OutData.Vertices.GetSize());
         IndexCount = uint32(OutData.Indices.GetSize());
 
-        Check(IndexCount % 3 == 0);
+        CHECK(IndexCount % 3 == 0);
 
         for (uint32 j = 0; j < IndexCount; j += 3)
         {
@@ -161,7 +161,7 @@ void FMeshUtilities::Optimize(FMeshData& OutData, uint32 StartVertex) noexcept
 
 void FMeshUtilities::CalculateHardNormals(FMeshData& OutData) noexcept
 {
-    Check(OutData.Indices.GetSize() % 3 == 0);
+    CHECK(OutData.Indices.GetSize() % 3 == 0);
 
     for (int32 i = 0; i < OutData.Indices.GetSize(); i += 3)
     {
@@ -182,7 +182,7 @@ void FMeshUtilities::CalculateHardNormals(FMeshData& OutData) noexcept
 
 void FMeshUtilities::CalculateSoftNormals(FMeshData& OutData) noexcept
 {
-    Check(OutData.Indices.GetSize() % 3 == 0);
+    CHECK(OutData.Indices.GetSize() % 3 == 0);
 
     // TODO: Write better version. For now calculate the hard normals and then average all of them
     CalculateHardNormals(OutData);
@@ -210,7 +210,7 @@ void FMeshUtilities::CalculateSoftNormals(FMeshData& OutData) noexcept
 
 void FMeshUtilities::CalculateTangents(FMeshData& OutData) noexcept
 {
-    Check(OutData.Indices.GetSize() % 3 == 0);
+    CHECK(OutData.Indices.GetSize() % 3 == 0);
 
     auto CalculateTangentFromVectors = [](FVertex& Vertex1, const FVertex& Vertex2, const FVertex& Vertex3)
     {
@@ -242,7 +242,7 @@ void FMeshUtilities::CalculateTangents(FMeshData& OutData) noexcept
 
 void FMeshUtilities::ReverseHandedness(FMeshData& OutData) noexcept
 {
-    Check(OutData.Indices.GetSize() % 3 == 0);
+    CHECK(OutData.Indices.GetSize() % 3 == 0);
 
     for (int32 i = 0; i < OutData.Indices.GetSize(); i += 3)
     {
@@ -251,9 +251,10 @@ void FMeshUtilities::ReverseHandedness(FMeshData& OutData) noexcept
         OutData.Indices[i + 2] = TempIndex;
     }
 
-    for (int32 i = 0; i < OutData.Vertices.GetSize(); i++)
+    for (int32 i = 0; i < OutData.Vertices.GetSize(); ++i)
     {
         OutData.Vertices[i].Position.z = OutData.Vertices[i].Position.z * -1.0f;
-        OutData.Vertices[i].Normal.z = OutData.Vertices[i].Normal.z * -1.0f;
+        OutData.Vertices[i].Normal.z   = OutData.Vertices[i].Normal.z   * -1.0f;
+        OutData.Vertices[i].Tangent.z  = OutData.Vertices[i].Tangent.z  * -1.0f;
     }
 }

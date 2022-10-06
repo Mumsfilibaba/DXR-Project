@@ -68,7 +68,7 @@ bool FMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
 
 void FMemory::Memswap(void* RESTRICT LHS, void* RESTRICT RHS, uint64 Size) noexcept
 {
-    Check(LHS != nullptr && RHS != nullptr);
+    CHECK(LHS != nullptr && RHS != nullptr);
 
     // Move 8 bytes at a time 
     uint64* Left  = reinterpret_cast<uint64*>(LHS);

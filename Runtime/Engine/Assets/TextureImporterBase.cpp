@@ -155,9 +155,9 @@ FTextureResource* FTextureImporterBase::ImportFromFile(const FStringView& FileNa
         Format = GetByteFormat(NumChannels);
     }
 
-    Check(Format != EFormat::Unknown);
+    CHECK(Format != EFormat::Unknown);
 
-    // Check if succeeded
+    // CHECK if succeeded
     if (!Pixels)
     {
         LOG_ERROR("[FTextureImporterBase]: Failed to load image '%s'", FileName.GetCString());
@@ -165,7 +165,9 @@ FTextureResource* FTextureImporterBase::ImportFromFile(const FStringView& FileNa
     }
     else
     {
-        return dbg_new FTextureResource2D(Pixels.Release(), Width, Height, Format);
+        // Calculate row-pitch
+        const uint32 RowPitch = Width * GetByteStrideFromFormat(Format);
+        return dbg_new FTextureResource2D(Pixels.Release(), Width, Height, RowPitch, Format);
     }
 }
 

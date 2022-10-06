@@ -33,7 +33,7 @@ FMacApplication::FMacApplication()
     SCOPED_AUTORELEASE_POOL();
     
     // This should only be init from the main thread, but assert just to be sure.
-    Check(FPlatformThreadMisc::IsMainThread());
+    CHECK(FPlatformThreadMisc::IsMainThread());
 
     FPlatformKeyMapping::Initialize();
     

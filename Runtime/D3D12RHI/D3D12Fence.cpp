@@ -80,13 +80,13 @@ bool FD3D12FenceManager::Initialize()
 
 uint64 FD3D12FenceManager::SignalGPU(ED3D12CommandQueueType QueueType)
 {
-    Check(Fence != nullptr);
+    CHECK(Fence != nullptr);
 
     ++CurrentValue;
-    Check(LastSignaledValue != CurrentValue);
+    CHECK(LastSignaledValue != CurrentValue);
 
     ID3D12CommandQueue* CommandQueue = GetDevice()->GetD3D12CommandQueue(QueueType);
-    Check(CommandQueue != nullptr);
+    CHECK(CommandQueue != nullptr);
     
     HRESULT hResult = CommandQueue->Signal(Fence->GetD3D12Fence(), CurrentValue);
     if (FAILED(hResult))
@@ -105,11 +105,11 @@ void FD3D12FenceManager::WaitGPU(ED3D12CommandQueueType QueueType)
 
 void FD3D12FenceManager::WaitGPU(ED3D12CommandQueueType QueueType, uint64 InFenceValue)
 {
-    Check(Fence != nullptr);
-    Check(InFenceValue <= LastSignaledValue);
+    CHECK(Fence != nullptr);
+    CHECK(InFenceValue <= LastSignaledValue);
 
     ID3D12CommandQueue* CommandQueue = GetDevice()->GetD3D12CommandQueue(QueueType);
-    Check(CommandQueue != nullptr);
+    CHECK(CommandQueue != nullptr);
     
     HRESULT hResult = CommandQueue->Wait(Fence->GetD3D12Fence(), InFenceValue);
     if (FAILED(hResult))
@@ -125,8 +125,8 @@ void FD3D12FenceManager::WaitForFence()
 
 void FD3D12FenceManager::WaitForFence(uint64 InFenceValue)
 {
-    Check(Fence != nullptr);
-    Check(InFenceValue <= LastSignaledValue);
+    CHECK(Fence != nullptr);
+    CHECK(InFenceValue <= LastSignaledValue);
 
     uint64 CompletedFenceValue = GetCompletedValue();
     if (InFenceValue >= CompletedFenceValue)
@@ -135,12 +135,12 @@ void FD3D12FenceManager::WaitForFence(uint64 InFenceValue)
         CompletedFenceValue = GetCompletedValue();
     }
 
-    Check(InFenceValue <= CompletedFenceValue);
+    CHECK(InFenceValue <= CompletedFenceValue);
 }
 
 uint64 FD3D12FenceManager::GetCompletedValue() const
 {
-    Check(Fence != nullptr);
+    CHECK(Fence != nullptr);
     LastCompletedValue = Fence->GetD3D12Fence()->GetCompletedValue();
     return LastCompletedValue;
 }

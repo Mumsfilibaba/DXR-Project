@@ -68,8 +68,8 @@ private:
 
 inline bool IsSubClassOf(FCoreObject* CoreObject, FClassType* ClassType)
 {
-    Check(CoreObject != nullptr);
-    Check(CoreObject->GetClass() != nullptr);
+    CHECK(CoreObject != nullptr);
+    CHECK(CoreObject->GetClass() != nullptr);
     return CoreObject->GetClass()->IsSubClassOf(ClassType);
 }
 

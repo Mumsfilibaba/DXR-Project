@@ -11,7 +11,7 @@ FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHe
     , Heap(InHeap)
     , OfflineHandle({ 0 })
 {
-    Check(Heap != nullptr);
+    CHECK(Heap != nullptr);
 }
 
 FD3D12View::~FD3D12View()
@@ -42,7 +42,7 @@ FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D1
 
 bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
-    Check(OfflineHandle != 0);
+    CHECK(OfflineHandle != 0);
 
     Resource = MakeSharedRef<FD3D12Resource>(InResource);
     Desc = InDesc;
@@ -62,7 +62,7 @@ FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D1
 
 bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
-    Check(OfflineHandle != 0);
+    CHECK(OfflineHandle != 0);
 
     FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
     Desc = InDesc;
@@ -89,7 +89,7 @@ FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3
 
 bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
-    Check(OfflineHandle != 0);
+    CHECK(OfflineHandle != 0);
 
     Desc            = InDesc;
     CounterResource = InCounterResource;
@@ -121,7 +121,7 @@ FD3D12RenderTargetView::FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12Off
 
 bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
-    Check(OfflineHandle != 0);
+    CHECK(OfflineHandle != 0);
 
     Desc = InDesc;
     FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
@@ -146,7 +146,7 @@ FD3D12DepthStencilView::FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12Off
 
 bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
-    Check(OfflineHandle != 0);
+    CHECK(OfflineHandle != 0);
 
     Desc = InDesc;
     FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);

@@ -174,7 +174,7 @@ public:
      */
     NODISCARD FORCEINLINE uint64 GetRefCount() const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return Ptr->GetRefCount();
     }
 
@@ -185,7 +185,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType** ReleaseAndGetAddressOf() noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         Ptr->Release();
         return &Ptr;
     }
@@ -239,7 +239,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return *Ptr;
     }
 

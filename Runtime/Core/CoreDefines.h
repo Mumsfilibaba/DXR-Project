@@ -42,19 +42,30 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Asserts
 
-#ifdef DEBUG_BUILD
+#if !defined(PRODUCTION_BUILD)
     #ifndef ENABLE_ASSERTS 
         #define ENABLE_ASSERTS (1)
     #endif
 #endif
 
-#ifndef Check
+#ifndef CHECK
+    #ifdef NDEBUG
+        // We should redefine this later
+        #define REDEFINE_NDEBUG (1)
+        // But un-define now so we can have asserts in release
+        #undef NDEBUG
+    #endif
+
     #include <cassert>
     
     #if ENABLE_ASSERTS
-        #define Check(Condition) assert(Condition)
+        #define CHECK(Condition) assert(Condition)
     #else
-        #define Check(Condition) (void)(Condition)
+        #define CHECK(Condition) (void)(Condition)
+    #endif
+
+    #ifdef REDEFINE_NDEBUG
+        #define NDEBUG (1)
     #endif
 #endif
 

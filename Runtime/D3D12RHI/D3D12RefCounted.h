@@ -15,13 +15,13 @@ protected:
 
     virtual ~FD3D12RefCounted()
     {
-        Check(StrongReferences.Load() == 0);
+        CHECK(StrongReferences.Load() == 0);
     }
 
 public:
     int32 AddRef()
     {
-        Check(StrongReferences.Load() > 0);
+        CHECK(StrongReferences.Load() > 0);
         ++StrongReferences;
         return StrongReferences.Load();
     }
@@ -29,7 +29,7 @@ public:
     int32 Release()
     {
         const int32 RefCount = --StrongReferences;
-        Check(RefCount >= 0);
+        CHECK(RefCount >= 0);
 
         if (RefCount < 1)
         {

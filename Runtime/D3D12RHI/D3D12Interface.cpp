@@ -356,7 +356,7 @@ D3D12TextureType* FD3D12Interface::CreateTexture(const InitializerType& Initiali
             DirectContext->StartContext();
 
             DirectContext->TransitionTexture(Texture2D, EResourceAccess::Common, EResourceAccess::CopyDest);
-            DirectContext->UpdateTexture2D(Texture2D, Extent.x, Extent.y, 0, InitialData->TextureData);
+            DirectContext->UpdateTexture2D(Texture2D, Extent.x, Extent.y, 0, InitialData->TextureData, InitialData->RowPitch);
 
             // NOTE: Transition into InitialAccess
             DirectContext->TransitionTexture(Texture2D, EResourceAccess::CopyDest, Initializer.InitialAccess);
@@ -551,7 +551,7 @@ FRHIIndexBuffer* FD3D12Interface::RHICreateIndexBuffer(const FRHIIndexBufferInit
 
 FRHIConstantBuffer* FD3D12Interface::RHICreateConstantBuffer(const FRHIConstantBufferInitializer& Initializer)
 {
-    Check(!Initializer.AllowSRV() && !Initializer.AllowUAV());
+    CHECK(!Initializer.AllowSRV() && !Initializer.AllowUAV());
     return CreateBuffer<FD3D12ConstantBuffer>(Initializer);
 }
 
@@ -604,7 +604,7 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIT
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    Check(((Initializer.Texture->GetFlags() & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None) && Initializer.Format != EFormat::Unknown);
+    CHECK(((Initializer.Texture->GetFlags() & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None) && Initializer.Format != EFormat::Unknown);
     Desc.Format                  = ConvertFormat(Initializer.Format);
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
@@ -673,7 +673,7 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIT
     }
 
     FD3D12Resource* D3D12Resource = GetD3D12Resource(Initializer.Texture);
-    Check(D3D12Resource != nullptr);
+    CHECK(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(D3D12Resource, Desc))
     {
@@ -697,7 +697,7 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIB
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    Check(((Initializer.Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
+    CHECK(((Initializer.Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
     Desc.ViewDimension           = D3D12_SRV_DIMENSION_BUFFER;
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     Desc.Buffer.FirstElement     = Initializer.FirstElement;
@@ -723,7 +723,7 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIB
     }
 
     FD3D12Resource* D3D12Resource = D3D12Buffer->GetD3D12Resource();
-    Check(D3D12Resource != nullptr);
+    CHECK(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(D3D12Resource, Desc))
     {
@@ -742,7 +742,7 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    Check(((Initializer.Texture->GetFlags() & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None) && Initializer.Format != EFormat::Unknown);
+    CHECK(((Initializer.Texture->GetFlags() & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None) && Initializer.Format != EFormat::Unknown);
     Desc.Format = ConvertFormat(Initializer.Format);
 
     if (FD3D12Texture2D* Texture2D = static_cast<FD3D12Texture2D*>(Initializer.Texture->GetTexture2D()))
@@ -804,7 +804,7 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
     }
 
     FD3D12Resource* D3D12Resource = GetD3D12Resource(Initializer.Texture);
-    Check(D3D12Resource != nullptr);
+    CHECK(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(nullptr, D3D12Resource, Desc))
     {
@@ -828,7 +828,7 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    Check(((Initializer.Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
+    CHECK(((Initializer.Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
     Desc.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
     Desc.Buffer.FirstElement = Initializer.FirstElement;
     Desc.Buffer.NumElements  = Initializer.NumElements;
@@ -853,7 +853,7 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
     }
 
     FD3D12Resource* D3D12Resource = D3D12Buffer->GetD3D12Resource();
-    Check(D3D12Resource != nullptr);
+    CHECK(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(nullptr, D3D12Resource, Desc))
     {
@@ -1068,7 +1068,7 @@ FRHIGraphicsPipelineState* FD3D12Interface::RHICreateGraphicsPipelineState(const
 
 FRHIComputePipelineState* FD3D12Interface::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer)
 {
-    Check(Initializer.Shader != nullptr);
+    CHECK(Initializer.Shader != nullptr);
 
     TSharedRef<FD3D12ComputeShader>        Shader           = MakeSharedRef<FD3D12ComputeShader>(Initializer.Shader);
     FD3D12ComputePipelineStateRef NewPipelineState = dbg_new FD3D12ComputePipelineState(GetDevice(), Shader);

@@ -22,6 +22,7 @@ function FModuleBuildRules(InName)
     
     -- Should the module be dynamic or static, this is overridden by monolithic build, which forces all modules to be linked statically
     self.bIsDynamic = true
+	
     -- Should perform linking at compile time (Ignored if bIsDynamic is false). Set to true to enable hot-reloading
     self.bRuntimeLinking = true
     

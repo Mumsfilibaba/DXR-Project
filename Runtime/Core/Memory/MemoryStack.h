@@ -55,8 +55,8 @@ public:
 
     FORCEINLINE void* Allocate(int32 Size, int32 Alignment = STANDARD_ALIGNMENT) noexcept
     {
-        Check(Size      > 0);
-        Check(Alignment > 0);
+        CHECK(Size      > 0);
+        CHECK(Alignment > 0);
 
         const int32 AlignedSize = NMath::AlignUp(Size, Alignment);
         

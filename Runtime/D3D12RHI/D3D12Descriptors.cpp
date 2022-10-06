@@ -112,14 +112,14 @@ D3D12_CPU_DESCRIPTOR_HANDLE FD3D12OfflineDescriptorHeap::Allocate(uint32& OutHea
 void FD3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex)
 {
     TScopedLock Lock(CriticalSection);
-    Check(HeapIndex < (uint32)Heaps.GetSize());
+    CHECK(HeapIndex < (uint32)Heaps.GetSize());
 
     FDescriptorHeap& Heap = Heaps[HeapIndex];
 
     bool bFoundRange = false;
     for (FDescriptorRange& Range : Heap.FreeList)
     {
-        Check(Range.IsValid());
+        CHECK(Range.IsValid());
 
         if (Handle.ptr + DescriptorSize == Range.Begin.ptr)
         {
@@ -203,7 +203,7 @@ bool FD3D12OnlineDescriptorHeap::Initialize()
 
 uint32 FD3D12OnlineDescriptorHeap::AllocateHandles(uint32 NumHandles)
 {
-    Check(NumHandles <= DescriptorCount);
+    CHECK(NumHandles <= DescriptorCount);
 
     if (!HasSpace(NumHandles))
     {
@@ -288,7 +288,7 @@ FD3D12OnlineDescriptorManager::FD3D12OnlineDescriptorManager(FD3D12Device* InDev
     , DescriptorCount(InDescriptorCount)
     , CurrentHandle(0)
 {
-    Check(DescriptorHeap != nullptr);
+    CHECK(DescriptorHeap != nullptr);
 
     DescriptorSize = DescriptorHeap->GetDescriptorHandleIncrementSize();
 

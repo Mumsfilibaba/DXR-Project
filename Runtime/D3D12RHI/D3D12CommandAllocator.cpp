@@ -41,7 +41,7 @@ bool FD3D12CommandAllocator::Reset()
 bool FD3D12CommandAllocator::IsFinished() const
 {
     FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
-    Check(CommandListManager != nullptr);
+    CHECK(CommandListManager != nullptr);
     return (SyncPoint.FenceValue <= CommandListManager->GetFenceManager().GetCompletedValue());
 }
 
@@ -80,12 +80,12 @@ FD3D12CommandAllocatorRef FD3D12CommandAllocatorManager::ObtainAllocator()
 
 void FD3D12CommandAllocatorManager::ReleaseAllocator(FD3D12CommandAllocatorRef InAllocator)
 {
-    Check(InAllocator != nullptr);
+    CHECK(InAllocator != nullptr);
 
     TScopedLock Lock(AllocatorsCS);
 
     FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
-    Check(CommandListManager != nullptr);
+    CHECK(CommandListManager != nullptr);
 
     const FD3D12FenceSyncPoint SyncPoint(
         CommandListManager->GetFenceManager().GetFence(),

@@ -217,9 +217,17 @@ float3 ApplyNormalMapping(float3 MappedNormal, float3 Normal, float3 Tangent, fl
     return normalize(mul(MappedNormal, TBN));
 }
 
-float3 UnpackNormal(float3 SampledNormal)
+float3 UnpackNormal(float3 TextureSample)
 {
-    return normalize((SampledNormal * 2.0f) - 1.0f);
+    return normalize((TextureSample * 2.0f) - 1.0f);
+}
+
+float3 UnpackNormalBC5(float3 TextureSample)
+{
+	float2 NormalXY = TextureSample.rg;	
+	NormalXY = (NormalXY * 2.0f) - 1.0f;
+	float NormalZ = sqrt(saturate(1.0f - dot(NormalXY, NormalXY)));
+	return float3(NormalXY.xy, NormalZ);
 }
 
 float3 PackNormal(float3 Normal)

@@ -46,7 +46,7 @@ private:
             }
         }
 
-        Check(IsValid());
+        CHECK(IsValid());
     }
 
     HANDLE FileHandle;

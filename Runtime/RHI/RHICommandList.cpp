@@ -60,7 +60,7 @@ void FRHIThread::Shutdown()
 
 FRHIThread& FRHIThread::Get()
 {
-    Check(GInstance != nullptr);
+    CHECK(GInstance != nullptr);
     return *GInstance;
 }
 
@@ -126,7 +126,7 @@ void FRHIThread::Stop()
         bIsRunning = false;
         WaitCondition.NotifyAll();
 
-        Check(Thread != nullptr);
+        CHECK(Thread != nullptr);
         Thread->WaitForCompletion();
 
         Thread.Reset();

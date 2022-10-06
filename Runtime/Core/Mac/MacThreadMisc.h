@@ -19,7 +19,7 @@ struct FMacThreadMisc
     
     static FORCEINLINE bool Initialize() 
     { 
-        Check(IsMainThread());
+        CHECK(IsMainThread());
         return RegisterMainRunLoop();
     }
 

@@ -87,6 +87,28 @@ enum class EFormat : uint16
     R8_Uint               = 68,
     R8_Snorm              = 69,
     R8_Sint               = 70,
+
+    BC1_Typeless          = 71,
+    BC1_UNorm             = 72,
+    BC1_UNorm_SRGB        = 73,
+    BC2_Typeless          = 74,
+    BC2_UNorm             = 75,
+    BC2_UNorm_SRGB        = 76,
+    BC3_Typeless          = 77,
+    BC3_UNorm             = 78,
+    BC3_UNorm_SRGB        = 79,
+    BC4_Typeless          = 80,
+    BC4_UNorm             = 81,
+    BC4_SNorm             = 82,
+    BC5_Typeless          = 83,
+    BC5_UNorm             = 84,
+    BC5_SNorm             = 85,
+    BC6H_Typeless         = 86,
+    BC6H_UF16             = 87,
+    BC6H_SF16             = 88,
+    BC7_Typeless          = 89,
+    BC7_UNorm             = 90,
+    BC7_UNorm_SRGB        = 91,
 };
 
 CONSTEXPR const CHAR* ToString(EFormat Format)
@@ -164,6 +186,29 @@ CONSTEXPR const CHAR* ToString(EFormat Format)
         case EFormat::R8_Uint:                  return "R8_Uint";
         case EFormat::R8_Snorm:                 return "R8_Snorm";
         case EFormat::R8_Sint:                  return "R8_Sint";
+
+        case EFormat::BC1_Typeless:             return "BC1_Typeless";
+        case EFormat::BC1_UNorm:                return "BC1_UNorm";
+        case EFormat::BC1_UNorm_SRGB:           return "BC1_UNorm_SRGB";
+        case EFormat::BC2_Typeless:             return "BC2_Typeless";
+        case EFormat::BC2_UNorm:                return "BC2_UNorm";
+        case EFormat::BC2_UNorm_SRGB:           return "BC2_UNorm_SRGB";
+        case EFormat::BC3_Typeless:             return "BC3_Typeless";
+        case EFormat::BC3_UNorm:                return "BC3_UNorm";
+        case EFormat::BC3_UNorm_SRGB:           return "BC3_UNorm_SRGB";
+        case EFormat::BC4_Typeless:             return "BC4_Typeless";
+        case EFormat::BC4_UNorm:                return "BC4_UNorm";
+        case EFormat::BC4_SNorm:                return "BC4_SNorm";
+        case EFormat::BC5_Typeless:             return "BC5_Typeless";
+        case EFormat::BC5_UNorm:                return "BC5_UNorm";
+        case EFormat::BC5_SNorm:                return "BC5_SNorm";
+        case EFormat::BC6H_Typeless:            return "BC6H_Typeless";
+        case EFormat::BC6H_UF16:                return "BC6H_UF16";
+        case EFormat::BC6H_SF16:                return "BC6H_SF16";
+        case EFormat::BC7_Typeless:             return "BC7_Typeless";
+        case EFormat::BC7_UNorm:                return "BC7_UNorm";
+        case EFormat::BC7_UNorm_SRGB:           return "BC7_UNorm_SRGB";
+
         default:                                return "Unknown";
     }
 }
@@ -197,6 +242,7 @@ CONSTEXPR uint32 GetByteStrideFromFormat(EFormat Format)
         case EFormat::R16G16B16A16_Uint:
         case EFormat::R16G16B16A16_Snorm:
         case EFormat::R16G16B16A16_Sint:
+        
         case EFormat::R32G32_Typeless:
         case EFormat::R32G32_Float:
         case EFormat::R32G32_Uint:
@@ -208,25 +254,31 @@ CONSTEXPR uint32 GetByteStrideFromFormat(EFormat Format)
         case EFormat::R10G10B10A2_Typeless:
         case EFormat::R10G10B10A2_Unorm:
         case EFormat::R10G10B10A2_Uint:
+        
         case EFormat::R11G11B10_Float:
+        
         case EFormat::R8G8B8A8_Typeless:
         case EFormat::R8G8B8A8_Unorm:
         case EFormat::R8G8B8A8_Unorm_SRGB:
         case EFormat::R8G8B8A8_Uint:
         case EFormat::R8G8B8A8_Snorm:
         case EFormat::R8G8B8A8_Sint:
+
         case EFormat::R16G16_Typeless:
         case EFormat::R16G16_Float:
         case EFormat::R16G16_Unorm:
         case EFormat::R16G16_Uint:
         case EFormat::R16G16_Snorm:
         case EFormat::R16G16_Sint:
+        
         case EFormat::R32_Typeless:
         case EFormat::D32_Float:
         case EFormat::R32_Float:
         case EFormat::R32_Uint:
         case EFormat::R32_Sint:
+        
         case EFormat::R24G8_Typeless:
+        
         case EFormat::D24_Unorm_S8_Uint:
         case EFormat::R24_Unorm_X8_Typeless:
         case EFormat::X24_Typeless_G8_Uint:
@@ -239,6 +291,7 @@ CONSTEXPR uint32 GetByteStrideFromFormat(EFormat Format)
         case EFormat::R8G8_Uint:
         case EFormat::R8G8_Snorm:
         case EFormat::R8G8_Sint:
+        
         case EFormat::R16_Typeless:
         case EFormat::R16_Float:
         case EFormat::D16_Unorm:
@@ -264,6 +317,11 @@ CONSTEXPR uint32 GetByteStrideFromFormat(EFormat Format)
             return 0;
         }
     }
+}
+
+CONSTEXPR bool IsCompressed(EFormat Format)
+{
+    return (ToUnderlying(Format) >= ToUnderlying(EFormat::BC1_Typeless));
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -671,7 +729,7 @@ struct FTextureClearValue
         }
         else
         {
-            Check(Other.IsDepthStencilValue());
+            CHECK(Other.IsDepthStencilValue());
             DepthStencilValue = Other.DepthStencilValue;
         }
     }
@@ -685,28 +743,28 @@ struct FTextureClearValue
     /** @return: Returns a FloatColor */
     FFloatColor& AsColor()
     {
-        Check(IsColorValue());
+        CHECK(IsColorValue());
         return ColorValue;
     }
 
     /** @return: Returns a FloatColor */
     const FFloatColor& AsColor() const
     {
-        Check(IsColorValue());
+        CHECK(IsColorValue());
         return ColorValue;
     }
 
     /** @return: Returns a DepthStencilClearValue */
     FTextureDepthStencilValue& AsDepthStencil()
     {
-        Check(IsDepthStencilValue());
+        CHECK(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
     /** @return: Returns a DepthStencilClearValue */
     const FTextureDepthStencilValue& AsDepthStencil() const
     {
-        Check(IsDepthStencilValue());
+        CHECK(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
@@ -727,7 +785,7 @@ struct FTextureClearValue
         }
         else
         {
-            Check(RHS.IsDepthStencilValue());
+            CHECK(RHS.IsDepthStencilValue());
             DepthStencilValue = RHS.DepthStencilValue;
         }
 
@@ -752,7 +810,7 @@ struct FTextureClearValue
             return (ColorValue == RHS.ColorValue);
         }
 
-        Check(IsDepthStencilValue());
+        CHECK(IsDepthStencilValue());
         return (DepthStencilValue == RHS.DepthStencilValue);
     }
 
@@ -796,9 +854,9 @@ struct FRHICopyBufferInfo
         , SizeInBytes(InSizeInBytes)
     { }
 
-    uint64 SourceOffset = 0;
+    uint64 SourceOffset      = 0;
     uint32 DestinationOffset = 0;
-    uint32 SizeInBytes = 0;
+    uint32 SizeInBytes       = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

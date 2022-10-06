@@ -279,7 +279,7 @@ public:
         , Function(InFunction)
         , Payload(Forward<PayloadTypes>(InPayload)...)
     {
-        Check(This != nullptr);
+        CHECK(This != nullptr);
     }
 
     virtual ReturnType Execute(ArgTypes... Args) override final
@@ -326,7 +326,7 @@ public:
         , This(InThis)
         , Function(InFunction)
     {
-        Check(This != nullptr);
+        CHECK(This != nullptr);
     }
 
     virtual ReturnType Execute(ArgTypes... Args) override final

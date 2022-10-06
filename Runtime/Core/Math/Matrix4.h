@@ -694,7 +694,7 @@ public:
      */
     FORCEINLINE FVector4 GetRow(int32 Row) const noexcept
     {
-        Check(Row < 4);
+        CHECK(Row < 4);
         return FVector4(f[Row]);
     }
 
@@ -706,7 +706,7 @@ public:
      */
     FORCEINLINE FVector4 GetColumn(int32 Column) const noexcept
     {
-        Check(Column < 4);
+        CHECK(Column < 4);
         return FVector4(f[0][Column], f[1][Column], f[2][Column], f[3][Column]);
     }
 

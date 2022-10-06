@@ -152,7 +152,7 @@ public:
     FORCEINLINE IModule& LoadModuleRef(const CHAR* ModuleName)
     {
         IModule* Module = LoadModule(ModuleName);
-        Check(Module != nullptr);
+        CHECK(Module != nullptr);
         return *Module;
     }
 
@@ -189,7 +189,7 @@ public:
     FORCEINLINE IModule& GetModuleRef(const TCHAR* ModuleName)
     {
         IModule* Module = GetModule(ModuleName);
-        Check(Module != nullptr);
+        CHECK(Module != nullptr);
         return *Module;
     }
 

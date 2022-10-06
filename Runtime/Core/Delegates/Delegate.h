@@ -245,7 +245,7 @@ public:
      */ 
     FORCEINLINE ReturnType Execute(ArgTypes... Args)
     {
-        Check(IsBound());
+        CHECK(IsBound());
         return GetDelegateInstance()->Execute(Forward<ArgTypes>(Args)...);
     }
 

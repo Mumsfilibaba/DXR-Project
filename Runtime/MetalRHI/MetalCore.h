@@ -123,7 +123,7 @@ CONSTEXPR MTLStoreAction ConvertAttachmentStoreAction(EAttachmentStoreAction Sto
 
 inline MTLTextureType GetMTLTextureType(FRHITexture* Texture)
 {
-    Check(Texture != nullptr);
+    CHECK(Texture != nullptr);
     
     if (FRHITexture2D* Texture2D = Texture->GetTexture2D())
     {
@@ -147,7 +147,7 @@ inline MTLTextureType GetMTLTextureType(FRHITexture* Texture)
     }
     else
     {
-        Check(false);
+        CHECK(false);
         return MTLTextureType(-1);
     }
 }

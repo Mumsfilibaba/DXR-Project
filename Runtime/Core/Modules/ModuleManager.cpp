@@ -2,7 +2,7 @@
 
 IModule* FModuleManager::LoadModule(const CHAR* ModuleName)
 {
-    Check(ModuleName != nullptr);
+    CHECK(ModuleName != nullptr);
 
     if (IModule* ExistingModule = GetModule(ModuleName))
     {

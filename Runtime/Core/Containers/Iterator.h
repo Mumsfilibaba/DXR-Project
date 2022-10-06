@@ -45,7 +45,7 @@ public:
         : Array(InArray)
         , Index(StartIndex)
     {
-        Check(IsValid());
+        CHECK(IsValid());
     }
 
     /**
@@ -87,7 +87,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType* GetPointer() const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return Array.Get().GetData() + GetIndex();
     }
 
@@ -131,7 +131,7 @@ public:
     FORCEINLINE TArrayIterator operator++() noexcept
     {
         Index++;
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -144,7 +144,7 @@ public:
     {
         TArrayIterator NewIterator(*this);
         Index++;
-        Check(IsValid());
+        CHECK(IsValid());
         return NewIterator;
     }
 
@@ -156,7 +156,7 @@ public:
     FORCEINLINE TArrayIterator operator--() noexcept
     {
         Index--;
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -169,7 +169,7 @@ public:
     {
         TArrayIterator NewIterator(*this);
         Index--;
-        Check(IsValid());
+        CHECK(IsValid());
         return NewIterator;
     }
 
@@ -206,7 +206,7 @@ public:
     FORCEINLINE TArrayIterator& operator+=(SizeType RHS) noexcept
     {
         Index += RHS;
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -219,7 +219,7 @@ public:
     FORCEINLINE TArrayIterator& operator-=(SizeType RHS) noexcept
     {
         Index -= RHS;
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -311,7 +311,7 @@ public:
         : Array(InArray)
         , Index(StartIndex)
     {
-        Check(IsValid());
+        CHECK(IsValid());
     }
 
     /**
@@ -353,7 +353,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType* GetPointer() const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return Array.Get().GetData() + GetIndex();
     }
 
@@ -398,7 +398,7 @@ public:
     {
         Index--;
 
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -411,7 +411,7 @@ public:
     {
         TReverseArrayIterator NewIterator(*this);
         Index--;
-        Check(IsValid());
+        CHECK(IsValid());
         return NewIterator;
     }
 
@@ -423,7 +423,7 @@ public:
     FORCEINLINE TReverseArrayIterator operator--() noexcept
     {
         Index++;
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -436,7 +436,7 @@ public:
     {
         TReverseArrayIterator NewIterator(*this);
         NewIterator++;
-        Check(IsValid());
+        CHECK(IsValid());
         return NewIterator;
     }
 
@@ -473,7 +473,7 @@ public:
     FORCEINLINE TReverseArrayIterator& operator+=(SizeType RHS) noexcept
     {
         Index -= RHS;
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -486,7 +486,7 @@ public:
     FORCEINLINE TReverseArrayIterator& operator-=(SizeType RHS) noexcept
     {
         Index += RHS;
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -563,7 +563,7 @@ public:
     FORCEINLINE TTreeIterator(NodeType* InNode) noexcept
         : Node(InNode)
     {
-        Check(IsValid());
+        CHECK(IsValid());
     }
 
     FORCEINLINE bool IsValid() const noexcept
@@ -573,7 +573,7 @@ public:
 
     FORCEINLINE ElementType* GetPointer() const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return Node->GetPointer();
     }
 
@@ -589,7 +589,7 @@ public:
 
     FORCEINLINE TTreeIterator operator++() noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
 
         Node = Node->GetNext();
         return *this;
@@ -600,13 +600,13 @@ public:
         TTreeIterator NewIterator(*this);
         Node = Node->GetNext();
 
-        Check(IsValid());
+        CHECK(IsValid());
         return NewIterator;
     }
 
     FORCEINLINE TTreeIterator operator--() noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
 
         Node = Node->GetPrevious();
         return *this;
@@ -617,7 +617,7 @@ public:
         TTreeIterator NewIterator(*this);
         Node = Node->GetPrevious();
 
-        Check(IsValid());
+        CHECK(IsValid());
         return NewIterator;
     }
 
@@ -704,7 +704,7 @@ public:
      */
     NODISCARD FORCEINLINE BitReferenceType GetBitValue() noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return BitArray.Get().GetBitReference(Index);
     }
 
@@ -715,7 +715,7 @@ public:
      */
     NODISCARD FORCEINLINE ConstBitReferenceType GetBitValue() const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return BitArray.Get().GetBitReference(Index);
     }
 
@@ -729,7 +729,7 @@ public:
     FORCEINLINE TBitArrayIterator operator++() noexcept
     {
         Index++;
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -742,7 +742,7 @@ public:
     {
         TBitArrayIterator NewIterator(*this);
         Index++;
-        Check(IsValid());
+        CHECK(IsValid());
         return NewIterator;
     }
 
@@ -754,7 +754,7 @@ public:
     FORCEINLINE TBitArrayIterator operator--() noexcept
     {
         Index--;
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -767,7 +767,7 @@ public:
     {
         TBitArrayIterator NewIterator(*this);
         Index--;
-        Check(IsValid());
+        CHECK(IsValid());
         return NewIterator;
     }
 
@@ -879,7 +879,7 @@ public:
      */
     NODISCARD FORCEINLINE BitReferenceType GetBitValue() noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return BitArray.Get().GetBitReference(Index);
     }
 
@@ -890,7 +890,7 @@ public:
      */
     NODISCARD FORCEINLINE ConstBitReferenceType GetBitValue() const noexcept
     {
-        Check(IsValid());
+        CHECK(IsValid());
         return BitArray.Get().GetBitReference(Index);
     }
 
@@ -904,7 +904,7 @@ public:
     FORCEINLINE TReverseBitArrayIterator operator++() noexcept
     {
         Index++;
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -917,7 +917,7 @@ public:
     {
         TReverseBitArrayIterator NewIterator(*this);
         Index++;
-        Check(IsValid());
+        CHECK(IsValid());
         return NewIterator;
     }
 
@@ -929,7 +929,7 @@ public:
     FORCEINLINE TReverseBitArrayIterator operator--() noexcept
     {
         Index--;
-        Check(IsValid());
+        CHECK(IsValid());
         return *this;
     }
 
@@ -942,7 +942,7 @@ public:
     {
         TReverseBitArrayIterator NewIterator(*this);
         Index--;
-        Check(IsValid());
+        CHECK(IsValid());
         return NewIterator;
     }
 

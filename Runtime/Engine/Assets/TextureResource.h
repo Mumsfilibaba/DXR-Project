@@ -45,6 +45,7 @@ public:
         void* InTextureData,
         uint32 InWidth,
         uint32 InHeight,
+        uint32 InRowPitch,
         EFormat InFormat);
 
     ~FTextureResource2D();
@@ -75,6 +76,11 @@ public:
         return Height;
     }
 
+    uint32 GetRowPitch() const
+    {
+        return RowPitch;
+    }
+
     void* GetData(int32 MipLevel = 0) const
     {
         if (TextureData.IsValidIndex(MipLevel))
@@ -96,4 +102,6 @@ private:
 
     uint16  Width;
     uint16  Height;
+
+    uint32  RowPitch;
 };

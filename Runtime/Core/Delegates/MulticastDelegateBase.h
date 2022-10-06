@@ -297,7 +297,7 @@ protected:
 
     FORCEINLINE void Unlock() const noexcept
     {
-        Check(LockVariable > 0);
+        CHECK(LockVariable > 0);
         LockVariable--;
     }
 

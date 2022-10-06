@@ -17,7 +17,7 @@ FComponent::FComponent(FActor* InActorOwner)
     , bIsStartable(true)
     , bIsTickable(true)
 {
-    Check(InActorOwner != nullptr);
+    CHECK(InActorOwner != nullptr);
 
     CORE_OBJECT_INIT();
 }
@@ -28,7 +28,7 @@ FComponent::FComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTick
     , bIsStartable(bInIsStartable)
     , bIsTickable(bInIsTickable)
 {
-    Check(InActorOwner != nullptr);
+    CHECK(InActorOwner != nullptr);
 
     CORE_OBJECT_INIT();
 }

@@ -367,7 +367,7 @@ DECLARE_RHICOMMAND(FRHICommandSet32BitShaderConstants)
         , Shader32BitConstants(InShader32BitConstants)
         , Num32BitConstants(InNum32BitConstants)
     { 
-        Check(InNum32BitConstants <= kRHIMaxShaderConstants);
+        CHECK(InNum32BitConstants <= kRHIMaxShaderConstants);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -576,17 +576,24 @@ DECLARE_RHICOMMAND(FRHICommandUpdateBuffer)
 
 DECLARE_RHICOMMAND(FRHICommandUpdateTexture2D)
 {
-    FORCEINLINE FRHICommandUpdateTexture2D(FRHITexture2D* InDst, uint16 InWidth, uint16 InHeight, uint16 InMipLevel, const void* InSrcData)
+    FORCEINLINE FRHICommandUpdateTexture2D(
+        FRHITexture2D* InDst,
+        uint16 InWidth,
+        uint16 InHeight,
+        uint16 InMipLevel,
+        const void* InSrcData,
+        uint32 InSrcRowPitch)
         : Dst(InDst)
         , Width(InWidth)
         , Height(InHeight)
         , MipLevel(InMipLevel)
         , SrcData(InSrcData)
+        , SrcRowPitch(InSrcRowPitch)
     { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.UpdateTexture2D(Dst, Width, Height, MipLevel, SrcData);
+        CommandContext.UpdateTexture2D(Dst, Width, Height, MipLevel, SrcData, SrcRowPitch);
     }
 
     FRHITexture2D* Dst;
@@ -594,6 +601,7 @@ DECLARE_RHICOMMAND(FRHICommandUpdateTexture2D)
     uint16         Height;
     uint16         MipLevel;
     const void*    SrcData;
+    uint32         SrcRowPitch;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

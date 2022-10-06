@@ -91,7 +91,7 @@ bool FD3D12Viewport::Initialize()
     FullscreenDesc.Windowed                = true;
 
     IDXGIFactory2* Factory = GetDevice()->GetAdapter()->GetDXGIFactory();
-    Check(Factory != nullptr);
+    CHECK(Factory != nullptr);
 
     TComPtr<IDXGISwapChain1> TempSwapChain;
 

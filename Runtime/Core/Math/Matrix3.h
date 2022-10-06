@@ -272,7 +272,7 @@ public:
      */
     FORCEINLINE FVector3 GetRow(int32 Row) const noexcept
     {
-        Check(Row < 3);
+        CHECK(Row < 3);
         return FVector3(f[Row]);
     }
 
@@ -284,7 +284,7 @@ public:
      */
     FORCEINLINE FVector3 GetColumn(int32 Column) const noexcept
     {
-        Check(Column < 3);
+        CHECK(Column < 3);
         return FVector3(f[0][Column], f[1][Column], f[2][Column]);
     }
 

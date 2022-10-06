@@ -13,18 +13,18 @@ FWindowsEvent::~FWindowsEvent()
 
 void FWindowsEvent::Trigger()
 {
-    Check(Event != nullptr);
+    CHECK(Event != nullptr);
     SetEvent(Event);
 }
 
 void FWindowsEvent::Wait(uint64 Milliseconds)
 {
-    Check(Event != nullptr);
+    CHECK(Event != nullptr);
     WaitForSingleObject(Event, static_cast<DWORD>(Milliseconds));
 }
 
 void FWindowsEvent::Reset()
 {
-    Check(Event != nullptr);
+    CHECK(Event != nullptr);
     ResetEvent(Event);
 }
