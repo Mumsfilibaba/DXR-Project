@@ -1,4 +1,7 @@
 #include "WindowsFile.h"
+#include "WindowsPlatformMisc.h"
+
+#include "Core/Templates/NumericLimits.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsFileHandle
@@ -55,20 +58,45 @@ int32 FWindowsFileHandle::Read(uint8* Dst, uint32 BytesToRead)
 {
     CHECK(IsValid());
 
-    DWORD NumRead = 0;
-    if (!ReadFile(FileHandle, Dst, BytesToRead, &NumRead, nullptr))
+    ::SetLastError(0);
+
+    int32 TotalRead = 0;
+    while(BytesToRead)
     {
-        const auto Error = GetLastError();
-        
-        // ERROR_IO_PENDING is not an error, however if the error is not that we report an error
-        if (Error != ERROR_IO_PENDING)
+        const uint32 LocalBytesToRead = NMath::Min<uint32>(BytesToRead, TNumericLimits<uint32>::Max());
+
+        DWORD NumRead = 0;
+        if (!ReadFile(FileHandle, Dst, LocalBytesToRead, &NumRead, nullptr))
         {
-            return -1;
+            const int32 Error = ::GetLastError();
+        
+            // ERROR_IO_PENDING is not an error, however if the error is not that we report an error
+            if (Error != ERROR_IO_PENDING)
+            {
+                FString ErrorString;
+
+                FWindowsPlatformMisc::GetLastErrorString(ErrorString);
+                LOG_ERROR("Failed to read file, Error '%d' Message '%s'", Error, ErrorString.GetCString());
+                
+                return -1;
+            }
+        }
+
+        BytesToRead -= NumRead;
+        Dst         += NumRead;
+        TotalRead   += NumRead;
+
+        FilePointer += NumRead;
+        CHECK(FilePointer <= FileSize);
+        
+        // We may have reached end of file here
+        if (LocalBytesToRead != NumRead)
+        {
+            break;
         }
     }
 
-    FilePointer += NumRead;
-    return static_cast<int32_t>(NumRead);
+    return static_cast<int32>(TotalRead);
 }
 
 int32 FWindowsFileHandle::Write(const uint8* Src, uint32 BytesToWrite)

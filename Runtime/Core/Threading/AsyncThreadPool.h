@@ -28,8 +28,8 @@ public:
     virtual void Stop() override final;
 
 private:
-    IAsyncTask*       CurrentTask;
-    FAtomicInt32      Triggered;
+    IAsyncTask* volatile CurrentTask;
+    FAtomicInt32         Triggered;
 
     FGenericThreadRef Thread;
     FGenericEventRef  WorkEvent;

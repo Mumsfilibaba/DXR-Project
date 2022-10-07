@@ -58,8 +58,12 @@ public:
 struct FCameraBuffer
 {
     FMatrix4 PrevViewProjection;
+    
     FMatrix4 ViewProjection;
     FMatrix4 ViewProjectionInv;
+
+    FMatrix4 ViewProjectionUnjittered;
+    FMatrix4 ViewProjectionInvUnjittered;
 
     FMatrix4 View;
     FMatrix4 ViewInv;

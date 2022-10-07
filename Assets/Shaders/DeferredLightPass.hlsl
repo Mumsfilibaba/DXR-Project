@@ -8,6 +8,8 @@
 #define NUM_THREADS        (16)
 #define TOTAL_THREAD_COUNT (NUM_THREADS * NUM_THREADS)
 
+#define BASE_OCCLUSION (0.2f)
+
 // Can be defined from the application
 #ifndef MAX_LIGHTS_PER_TILE
     #define MAX_LIGHTS_PER_TILE (1024)
@@ -129,7 +131,7 @@ void Main(FComputeShaderInput Input)
 
     uint2 Pixel  = Input.DispatchThreadID.xy;
     float Depth     = DepthStencilTex.Load(int3(Pixel, 0));
-    float ViewPosZ  = Depth_ProjToView(Depth, CameraBuffer.ProjectionInverse);
+    float ViewPosZ  = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
     
     // TODO: If we change to reversed Z then we need to change from 1.0 to 0.0
     
@@ -157,19 +159,19 @@ void Main(FComputeShaderInput Input)
         float3 CornerPoints[4];
         CornerPoints[0] = Float3_ProjToView(
             float3((pxm / Width) * 2.0f - 1.0f, ((Height - pym) / Height) * 2.0f - 1.0f, 1.0f),
-            CameraBuffer.ProjectionInverse);
+            CameraBuffer.ProjectionInv);
         
         CornerPoints[1] = Float3_ProjToView(
             float3((pxp / Width) * 2.0f - 1.0f, ((Height - pym) / Height) * 2.0f - 1.0f, 1.0f),
-            CameraBuffer.ProjectionInverse);
+            CameraBuffer.ProjectionInv);
         
         CornerPoints[2] = Float3_ProjToView(
             float3((pxp / Width) * 2.0f - 1.0f, ((Height - pyp) / Height) * 2.0f - 1.0f, 1.0f),
-            CameraBuffer.ProjectionInverse);
+            CameraBuffer.ProjectionInv);
         
         CornerPoints[3] = Float3_ProjToView(
             float3((pxm / Width) * 2.0f - 1.0f, ((Height - pyp) / Height) * 2.0f - 1.0f, 1.0f),
-            CameraBuffer.ProjectionInverse);
+            CameraBuffer.ProjectionInv);
 
         for (uint i = 0; i < 4; i++)
         {
@@ -232,8 +234,8 @@ void Main(FComputeShaderInput Input)
     }
 
     const float2 PixelFloat    = saturate((float2(Pixel) + Float2(0.5f)) / float2(ScreenWidth, ScreenHeight));
-    const float3 ViewPosition  = PositionFromDepth(Depth, PixelFloat, CameraBuffer.ProjectionInverse);
-    const float3 WorldPosition = mul(float4(ViewPosition, 1.0f), CameraBuffer.ViewInverse).xyz;
+    const float3 ViewPosition  = PositionFromDepth(Depth, PixelFloat, CameraBuffer.ProjectionInv);
+    const float3 WorldPosition = mul(float4(ViewPosition, 1.0f), CameraBuffer.ViewInv).xyz;
 
     const float3 GBufferAlbedo   = saturate(AlbedoTex.Load(int3(Pixel, 0)).rgb);
     const float3 GBufferMaterial = MaterialTex.Load(int3(Pixel, 0)).rgb;
@@ -246,7 +248,7 @@ void Main(FComputeShaderInput Input)
 
     const float GBufferRoughness = saturate(GBufferMaterial.r);
     const float GBufferMetallic  = saturate(GBufferMaterial.g);
-    const float GBufferAO        = saturate(GBufferMaterial.b * ScreenSpaceAO);
+    const float GBufferAO        = saturate(BASE_OCCLUSION + (GBufferMaterial.b * ScreenSpaceAO));
     
     float3 F0 = Float3(0.04f);
     F0 = lerp(F0, GBufferAlbedo, GBufferMetallic);

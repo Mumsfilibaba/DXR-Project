@@ -480,20 +480,27 @@ void FRenderer::Tick(const FScene& Scene)
     // Update camera-buffer
     // TODO: All matrices needs to be in Transposed the same
     CameraBuffer.PrevViewProjection = CameraBuffer.ViewProjection;
+    
     CameraBuffer.ViewProjection     = Scene.GetCamera()->GetViewProjectionMatrix();
-    CameraBuffer.View               = Scene.GetCamera()->GetViewMatrix();
-    CameraBuffer.ViewInv            = Scene.GetCamera()->GetViewInverseMatrix();
-    CameraBuffer.Projection         = Scene.GetCamera()->GetProjectionMatrix();
-    CameraBuffer.ProjectionInv      = Scene.GetCamera()->GetProjectionInverseMatrix();
     CameraBuffer.ViewProjectionInv  = Scene.GetCamera()->GetViewProjectionInverseMatrix();
-    CameraBuffer.Position           = Scene.GetCamera()->GetPosition();
-    CameraBuffer.Forward            = Scene.GetCamera()->GetForward();
-    CameraBuffer.Right              = Scene.GetCamera()->GetRight();
-    CameraBuffer.NearPlane          = Scene.GetCamera()->GetNearPlane();
-    CameraBuffer.FarPlane           = Scene.GetCamera()->GetFarPlane();
-    CameraBuffer.AspectRatio        = Scene.GetCamera()->GetAspectRatio();
-    CameraBuffer.ViewportWidth      = Resources.BackBuffer->GetWidth();
-    CameraBuffer.ViewportHeight     = Resources.BackBuffer->GetHeight();
+
+    CameraBuffer.ViewProjectionUnjittered    = CameraBuffer.ViewProjection;
+    CameraBuffer.ViewProjectionInvUnjittered = CameraBuffer.ViewProjectionInv;
+
+    CameraBuffer.View           = Scene.GetCamera()->GetViewMatrix();
+    CameraBuffer.ViewInv        = Scene.GetCamera()->GetViewInverseMatrix();
+
+    CameraBuffer.Projection     = Scene.GetCamera()->GetProjectionMatrix();
+    CameraBuffer.ProjectionInv  = Scene.GetCamera()->GetProjectionInverseMatrix();
+
+    CameraBuffer.Position       = Scene.GetCamera()->GetPosition();
+    CameraBuffer.Forward        = Scene.GetCamera()->GetForward();
+    CameraBuffer.Right          = Scene.GetCamera()->GetRight();
+    CameraBuffer.NearPlane      = Scene.GetCamera()->GetNearPlane();
+    CameraBuffer.FarPlane       = Scene.GetCamera()->GetFarPlane();
+    CameraBuffer.AspectRatio    = Scene.GetCamera()->GetAspectRatio();
+    CameraBuffer.ViewportWidth  = Resources.BackBuffer->GetWidth();
+    CameraBuffer.ViewportHeight = Resources.BackBuffer->GetHeight();
 
     if (GEnableTemporalAA.GetBool())
     {

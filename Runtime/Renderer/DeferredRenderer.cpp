@@ -536,7 +536,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         for (const auto CommandIndex : FrameResources.DeferredVisibleCommands)
         {
             const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
-            if (Command.Material->ShouldRenderInPrePass())
+            //if (Command.Material->ShouldRenderInPrePass())
             {
                 CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
                 CommandList.SetIndexBuffer(Command.IndexBuffer);

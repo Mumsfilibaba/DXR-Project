@@ -21,7 +21,7 @@ void Main(FComputeShaderInput Input)
     // Get the min and max depth of the scene
     const float2 MinMaxDepth = MinMaxDepthTex[uint2(0, 0)];
     
-    float4x4 InvCamera = CameraBuffer.ViewProjectionInverse;
+    float4x4 InvCamera = CameraBuffer.ViewProjectionInvUnjittered;
     float NearPlane = CameraBuffer.NearPlane;
     float FarPlane  = CameraBuffer.FarPlane;
     float ClipRange = FarPlane - NearPlane;

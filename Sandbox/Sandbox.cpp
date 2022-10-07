@@ -24,6 +24,9 @@
 #include <random>
 
 #define LOAD_SPONZA         (0)
+#define LOAD_BISTRO         (0)
+#define LOAD_SUN_TEMPLE     (0)
+
 #define ENABLE_LIGHT_TEST   (0)
 #define ENABLE_MANY_SPHERES (0)
 
@@ -51,7 +54,7 @@ bool FSandbox::Init()
 #if LOAD_SPONZA
         FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
         SceneData.Scale = 0.015f;
-#else
+#elif LOAD_BISTRO
         FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
         {
@@ -62,6 +65,18 @@ bool FSandbox::Init()
 
         FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
 
+        for (auto& Material : SceneData.Materials)
+        {
+            Material.bAlphaDiffuseCombined = true;
+        }
+#elif LOAD_SUN_TEMPLE
+        FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"), SceneData);
+        for (auto& Material : SceneData.Materials)
+        {
+            Material.bAlphaDiffuseCombined = true;
+        }
+#else
+        FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
         {
             Material.bAlphaDiffuseCombined = true;

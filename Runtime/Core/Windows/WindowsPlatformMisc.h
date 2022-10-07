@@ -29,9 +29,9 @@ struct FWindowsPlatformMisc final
         return ::IsDebuggerPresent();
     }
 
-    static FORCEINLINE void GetLastErrorString(FString& OutErrorString)
+    static FORCEINLINE int32 GetLastErrorString(FString& OutErrorString)
     {
-        int32 LastError = ::GetLastError();
+        const int32 LastError = ::GetLastError();
 
         const uint32 Flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
 
@@ -42,5 +42,6 @@ struct FWindowsPlatformMisc final
         OutErrorString.Append(MessageBuffer, MessageLength);
 
         LocalFree(MessageBuffer);
+        return LastError;
     }
 };

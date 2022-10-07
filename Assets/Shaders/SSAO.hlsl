@@ -47,12 +47,12 @@ void Main(FComputeShaderInput Input)
     
     ViewNormal = UnpackNormal(ViewNormal);
 
-    const float4x4 Projection        = CameraBuffer.Projection;
-    const float4x4 ProjectionInverse = CameraBuffer.ProjectionInverse;
+    const float4x4 Projection    = CameraBuffer.Projection;
+    const float4x4 ProjectionInv = CameraBuffer.ProjectionInv;
 
     // Get the depth and calculate view-space position
     const float  Depth        = GBufferDepth.SampleLevel(GBufferSampler, TexCoords, 0);
-    const float3 ViewPosition = PositionFromDepth(Depth, TexCoords, ProjectionInverse); 
+    const float3 ViewPosition = PositionFromDepth(Depth, TexCoords, ProjectionInv); 
     
     // Random Seed
     uint RandomSeed = InitRandom(Pixel, uint2(TexSize).x, 0);
@@ -80,7 +80,7 @@ void Main(FComputeShaderInput Input)
 		if (all(SampleProjected.xy >= 0.0f) && all(SampleProjected.xy <= 1.0f))
 		{
             float SampleDepth = GBufferDepth.SampleLevel(GBufferSampler, SampleProjected.xy, 0);
-            SampleDepth = Depth_ProjToView(SampleDepth, ProjectionInverse);
+            SampleDepth = Depth_ProjToView(SampleDepth, ProjectionInv);
 
             const float RangeCheck = 1.0f - saturate(abs(SampleProjected.w - SampleDepth) * FinalRadius);
             Occlusion += float(SampleDepth < (SampleProjected.w - FinalBias)) * RangeCheck;

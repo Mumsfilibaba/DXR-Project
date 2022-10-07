@@ -195,8 +195,8 @@ void Main(FComputeShaderInput Input)
 
     const float  Depth         = DepthBuffer.Load(int3(Pixel, 0)); 
     const float2 TexCoord      = (float2(Pixel) + Float2(0.5f)) / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
-    const float  ViewPosZ      = Depth_ProjToView(Depth, CameraBuffer.ProjectionInverse);
-    const float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
+    const float  ViewPosZ      = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
+    const float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInv);
     const float3 Normal        = UnpackNormal(GBufferNormal);
 
 #if SELECT_CASCADE_FROM_PROJECTION

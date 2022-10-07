@@ -30,7 +30,7 @@ void RayGen()
     //    return;
     //}
     
-    float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
+    float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInv);
     float3 WorldNormal   = GBufferNormal.SampleLevel(GBufferSampler, TexCoord, 0).rgb;
     WorldNormal = UnpackNormal(WorldNormal);
     

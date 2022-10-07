@@ -71,18 +71,21 @@ int32 FAsyncWorkThread::Run()
 
     while(bIsRunning)
     {
-        if (CurrentTask)
-        {
-            LOG_INFO("There is a task");
+        // Start waiting for work
+        WorkEvent->Wait(FTimespan::Infinity());
+        
+        // Set the member to nullptr and save it locally
+        IAsyncTask* LocalTask = CurrentTask;
+        CurrentTask = nullptr;
 
-            CurrentTask->DoAsyncWork();
-            CurrentTask = FAsyncThreadPool::Get().ReturnThreadOrRetrieveNextTask(this);
-        }
-        else
+        while (LocalTask)
         {
-            LOG_INFO("No task go to sleep");
-
-            WorkEvent->Wait(FTimespan::Infinity());
+            // Perform the task
+            LocalTask->DoAsyncWork();
+            
+            // Then return the thread to the pool and check if any new tasks has 
+            // been submitted in that case start work on that
+            LocalTask = FAsyncThreadPool::Get().ReturnThreadOrRetrieveNextTask(this);
         }
     }
 
@@ -191,12 +194,12 @@ bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
     if (AvailableWorkers.IsEmpty())
     {
         TaskQueue.Enqueue(NewTask, Priority);
-        LOG_INFO("Num Queued tasks=%d", TaskQueue.GetSize());
     }
     else
     {
         FAsyncWorkThread* WorkerThread = AvailableWorkers.FirstElement();
         AvailableWorkers.RemoveAt(0);
+
         WorkerThread->WakeUpAndStartTask(NewTask);
     }
 

@@ -125,18 +125,18 @@ float3 Lerp(float3 A, float3 B, float P)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Depth position helpers
 
-float Depth_ProjToView(float Depth, float4x4 ProjectionInverse)
+float Depth_ProjToView(float Depth, float4x4 ProjectionInv)
 {
-    return 1.0f / (Depth * ProjectionInverse._34 + ProjectionInverse._44);
+    return 1.0f / (Depth * ProjectionInv._34 + ProjectionInv._44);
 }
 
-float3 Float3_ProjToView(float3 P, float4x4 ProjectionInverse)
+float3 Float3_ProjToView(float3 P, float4x4 ProjectionInv)
 {
-    float4 ViewP = mul(float4(P, 1.0f), ProjectionInverse);
+    float4 ViewP = mul(float4(P, 1.0f), ProjectionInv);
     return (ViewP / ViewP.w).xyz;
 }
 
-float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInverse)
+float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInv)
 {
     float z = Depth;
     float x = TexCoord.x * 2.0f - 1.0f;
@@ -144,7 +144,7 @@ float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInvers
 
     float4 ProjectedPos  = float4(x, y, z, 1.0f);
     
-    float4 FinalPosition = mul(ProjectedPos, ProjectionInverse);  
+    float4 FinalPosition = mul(ProjectedPos, ProjectionInv);  
     return FinalPosition.xyz / FinalPosition.w;
 }
 

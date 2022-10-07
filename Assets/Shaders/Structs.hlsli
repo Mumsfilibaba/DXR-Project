@@ -17,14 +17,18 @@ struct FComputeShaderInput
 struct FCamera
 {
     float4x4 PrevViewProjection;
+
     float4x4 ViewProjection;
-    float4x4 ViewProjectionInverse;
+    float4x4 ViewProjectionInv;
+
+    float4x4 ViewProjectionUnjittered;
+    float4x4 ViewProjectionInvUnjittered;
 
     float4x4 View;
-    float4x4 ViewInverse;
+    float4x4 ViewInv;
 
     float4x4 Projection;
-    float4x4 ProjectionInverse;
+    float4x4 ProjectionInv;
     
     float3   Position;
     float    NearPlane;

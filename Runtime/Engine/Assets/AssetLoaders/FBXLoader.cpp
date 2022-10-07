@@ -82,22 +82,8 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     TArray<ofbx::u8> FileContent(FileSize);
     ofbx::u8* Bytes = FileContent.GetData();
 
-    const uint32 ChunkSize = 1024;
-
-    int32 NumBytesRead = 0;
-    while (NumBytesRead < FileSize)
-    {
-        const int32 Read = (int32)File->Read(Bytes, ChunkSize);
-        if (!Read)
-        {
-            break;
-        }
-
-        NumBytesRead += Read;
-        Bytes += ChunkSize;
-    }
-
-    if (NumBytesRead != FileSize)
+    const int32 NumBytesRead = File->Read(Bytes, FileSize);
+    if (NumBytesRead <= 0)
     {
         LOG_ERROR("[FFBXLoader]: Failed to load '%s'", Filename.GetCString());
         return false;
@@ -108,7 +94,8 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     ofbx::IScene* FBXScene = ofbx::load(Bytes, FileSize, (ofbx::u64)ofbx::LoadFlags::TRIANGULATE);
     if (!FBXScene)
     {
-        LOG_ERROR("[FMeshFactory]: Failed to load content '%s'", Filename.GetCString());
+        const char* ErrorString = ofbx::getError();
+        LOG_ERROR("[FMeshFactory]: Failed to load content '%s', error '%s'", Filename.GetCString(), ErrorString);
         return false;
     }
 
@@ -129,7 +116,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
         const ofbx::Mesh*     CurrentMesh = FBXScene->getMesh(i);
         const ofbx::Geometry* CurrentGeom = CurrentMesh->getGeometry();
 
-        uint32 MaterialCount = CurrentMesh->getMaterialCount();
+        const uint32 MaterialCount = CurrentMesh->getMaterialCount();
         for (uint32 j = 0; j < MaterialCount; j++)
         {
             const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(j);
