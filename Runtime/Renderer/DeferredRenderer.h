@@ -34,6 +34,7 @@ private:
 
     FRHIGraphicsPipelineStateRef PrePassPipelineState;
     FRHIVertexShaderRef          PrePassVertexShader;
+    FRHIPixelShaderRef           PrePassPixelShader;
 
     FRHIComputePipelineStateRef  TiledLightPassPSO;
     FRHIComputeShaderRef         TiledLightShader;

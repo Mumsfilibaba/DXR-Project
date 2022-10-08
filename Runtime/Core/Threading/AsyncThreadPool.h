@@ -58,6 +58,8 @@ public:
 
     IAsyncTask* ReturnThreadOrRetrieveNextTask(FAsyncWorkThread* InThread);
 
+    int32 GetNumTasks() const { return TaskQueue.GetSize(); }
+
 private:
     bool CreateWorkers(int32 NumWorkers);
     void DestroyWorkers();

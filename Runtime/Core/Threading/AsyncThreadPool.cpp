@@ -3,6 +3,7 @@
 
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Debug/Console/ConsoleInterface.h"
+#include "Core/Platform/PlatformMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-Variables
@@ -50,8 +51,14 @@ bool FAsyncWorkThread::Create(const CHAR* InThreadName)
 
 void FAsyncWorkThread::WakeUpAndStartTask(IAsyncTask* NewTask)
 {
+    // New task must be nullptr and current-task must be nullptr
     CHECK(NewTask != nullptr);
+    CHECK(CurrentTask == nullptr);
     CurrentTask = NewTask;
+
+    // Ensure that everyone can see the CurrentTask
+    FPlatformMisc::MemoryBarrier();
+
     CHECK(WorkEvent != nullptr);
     WorkEvent->Trigger();
 }
@@ -71,12 +78,20 @@ int32 FAsyncWorkThread::Run()
 
     while(bIsRunning)
     {
-        // Start waiting for work
-        WorkEvent->Wait(FTimespan::Infinity());
+        FPlatformMisc::MemoryBarrier();
+
+        if (!CurrentTask)
+        {
+            LOG_ERROR("Num Tasks = %d", FAsyncThreadPool::Get().GetNumTasks());
+            WorkEvent->Wait(FTimespan::Infinity());
+        }
         
         // Set the member to nullptr and save it locally
         IAsyncTask* LocalTask = CurrentTask;
         CurrentTask = nullptr;
+
+        // Ensure that everyone can see the CurrentTask
+        FPlatformMisc::MemoryBarrier();
 
         while (LocalTask)
         {
@@ -280,6 +295,9 @@ void FAsyncThreadPool::DestroyWorkers()
         SCOPED_LOCK(TaskQueueCS);
 
         bIsRunning = false;
+
+        // Ensure bIsRunning is visible for all threads
+        FPlatformMisc::MemoryBarrier();
 
         IAsyncTask* Task = nullptr;
         while (TaskQueue.Dequeue(&Task))

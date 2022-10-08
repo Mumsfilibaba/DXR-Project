@@ -31,10 +31,6 @@
     #undef CreateEvent
 #endif
 
-#ifdef OutputDebugString
-    #undef OutputDebugString
-#endif
-
 #if defined(InterlockedAdd)
     #undef InterlockedAdd
 #endif
@@ -73,6 +69,14 @@
 
 #ifdef MessageBox
     #undef MessageBox
+#endif
+
+#ifdef OutputDebugString
+    #undef OutputDebugString
+#endif
+
+#ifdef MemoryBarrier
+    #undef MemoryBarrier
 #endif
 
 #ifdef GetClassName

@@ -2,6 +2,7 @@
 #include "AsyncThreadPool.h"
 
 #include "Core/Core.h"
+#include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Containers/PriorityQueue.h"
 
@@ -50,9 +51,12 @@ public:
     /** @brief: Waits for the task to finish executing (Blocks the calling thread) */
     void WaitForCompletion()
     {
+        FPlatformMisc::MemoryBarrier();
+
         if (TaskCompleteEvent)
         {
             TaskCompleteEvent->Wait(FTimespan::Infinity());
+            CHECK(NumInvokations.Load() == 0);
         }
     }
 
@@ -208,6 +212,8 @@ public:
 
     bool Launch(EQueuePriority Priority = EQueuePriority::Normal, bool bAsync = true)
     {
+        FPlatformMisc::MemoryBarrier();
+
         if (bAsync)
         {
             FAsyncThreadPool::Get().SubmitTask(this, Priority);

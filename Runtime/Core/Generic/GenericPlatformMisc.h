@@ -3,14 +3,6 @@
 
 #include "CoreApplication/CoreApplication.h"
 
-#ifdef MessageBox
-    #undef MessageBox
-#endif
-
-#ifdef OutputDebugString
-    #undef OutputDebugString
-#endif
-
 #if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
@@ -27,6 +19,8 @@ struct FGenericPlatformMisc
     static FORCEINLINE void OutputDebugString(const FString& Message) { }
 
     static FORCEINLINE bool IsDebuggerPresent() { return false; }
+
+    static FORCEINLINE void MemoryBarrier() { }
 };
 
 #if defined(PLATFORM_COMPILER_MSVC)

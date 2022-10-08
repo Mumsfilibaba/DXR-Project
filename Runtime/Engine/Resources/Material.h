@@ -88,7 +88,7 @@ public:
 
     FORCEINLINE bool ShouldRenderInPrePass()
     {
-        return !HasAlphaMask() && !HasHeightMap() && !bRenderInForwardPass;
+        return !HasHeightMap() && !bRenderInForwardPass;
     }
 
     FORCEINLINE bool ShouldRenderInForwardPass()
@@ -99,6 +99,11 @@ public:
     FORCEINLINE const FMaterialDesc& GetMaterialProperties() const
     {
         return Properties;
+    }
+
+    FORCEINLINE FRHIShaderResourceView* GetAlphaMaskSRV() const
+    {
+        return (Properties.EnableMask == AlphaMaskMode_DiffuseCombined) ? AlbedoMap->GetShaderResourceView() : AlphaMask->GetShaderResourceView();
     }
 
     FORCEINLINE uint32 GetNumShaderResourceViews() const

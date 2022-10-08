@@ -255,6 +255,5 @@ void FMeshUtilities::ReverseHandedness(FMeshData& OutData) noexcept
     {
         OutData.Vertices[i].Position.z = OutData.Vertices[i].Position.z * -1.0f;
         OutData.Vertices[i].Normal.z   = OutData.Vertices[i].Normal.z   * -1.0f;
-        OutData.Vertices[i].Tangent.z  = OutData.Vertices[i].Tangent.z  * -1.0f;
     }
 }

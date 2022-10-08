@@ -24,7 +24,7 @@
 #include <random>
 
 #define LOAD_SPONZA         (0)
-#define LOAD_BISTRO         (0)
+#define LOAD_BISTRO         (1)
 #define LOAD_SUN_TEMPLE     (0)
 
 #define ENABLE_LIGHT_TEST   (0)
@@ -85,6 +85,7 @@ bool FSandbox::Init()
         SceneData.AddToScene(CurrentScene.Get());
     }
 
+#if LOAD_SPONZA
     // Create Spheres
     FMeshData SphereMeshData = FMeshFactory::CreateSphere(3);
 
@@ -328,6 +329,7 @@ bool FSandbox::Init()
 
         NewActor->AddComponent(NewComponent);
     }
+#endif
 
     CurrentCamera = dbg_new FCamera();
     CurrentScene->AddCamera(CurrentCamera);
@@ -335,6 +337,7 @@ bool FSandbox::Init()
     // Add PointLight- Source
     const float Intensity = 50.0f;
 
+#if LOAD_SPONZA
     FPointLight* Light0 = dbg_new FPointLight();
     Light0->SetPosition(FVector3(16.5f, 1.0f, 0.0f));
     Light0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
@@ -374,6 +377,7 @@ bool FSandbox::Init()
     Light3->SetIntensity(Intensity);
     Light3->SetShadowCaster(true);
     CurrentScene->AddLight(Light3);
+#endif
 
 #if ENABLE_LIGHT_TEST
     {
@@ -403,7 +407,11 @@ bool FSandbox::Init()
     Light4->SetMaxShadowBias(0.0009f);
     Light4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light4->SetIntensity(10.0f);
+#if LOAD_SUN_TEMPLE
+    Light4->SetRotation(FVector3(NMath::ToRadians(35.0f), NMath::ToRadians(-55.0f), 0.0f));
+#else
     Light4->SetRotation(FVector3(NMath::ToRadians(35.0f), NMath::ToRadians(135.0f), 0.0f));
+#endif
     Light4->SetCascadeSplitLambda(0.9f);
     CurrentScene->AddLight(Light4);
 

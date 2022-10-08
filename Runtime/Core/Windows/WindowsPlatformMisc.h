@@ -5,14 +5,6 @@
 #include "Core/Containers/String.h"
 #include "Core/Generic/GenericPlatformMisc.h"
 
-#ifdef MessageBox
-    #undef MessageBox
-#endif
-
-#ifdef OutputDebugString
-    #undef OutputDebugString
-#endif
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FWindowsPlatformMisc
 
@@ -27,6 +19,11 @@ struct FWindowsPlatformMisc final
     static FORCEINLINE bool IsDebuggerPresent()
     {
         return ::IsDebuggerPresent();
+    }
+
+    static FORCEINLINE void MemoryBarrier()
+    {
+        _mm_sfence();
     }
 
     static FORCEINLINE int32 GetLastErrorString(FString& OutErrorString)

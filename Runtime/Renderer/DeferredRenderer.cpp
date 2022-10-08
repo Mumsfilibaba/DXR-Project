@@ -140,7 +140,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
 
     // PrePass
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -149,6 +149,20 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
 
         PrePassVertexShader = RHICreateVertexShader(ShaderCode);
         if (!PrePassVertexShader)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        PrePassPixelShader = RHICreatePixelShader(ShaderCode);
+        if (!PrePassPixelShader)
         {
             DEBUG_BREAK();
             return false;
@@ -191,6 +205,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
         PSOInitializer.RasterizerState                    = RasterizerState.Get();
         PSOInitializer.ShaderState.VertexShader           = PrePassVertexShader.Get();
+        PSOInitializer.ShaderState.PixelShader            = PrePassPixelShader.Get();
         PSOInitializer.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
 
         PrePassPipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
@@ -481,6 +496,7 @@ void FDeferredRenderer::Release()
 {
     PrePassPipelineState.Reset();
     PrePassVertexShader.Reset();
+    PrePassPixelShader.Reset();
 
     PipelineState.Reset();
     BaseVertexShader.Reset();
@@ -536,7 +552,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         for (const auto CommandIndex : FrameResources.DeferredVisibleCommands)
         {
             const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
-            //if (Command.Material->ShouldRenderInPrePass())
+            if (Command.Material->ShouldRenderInPrePass())
             {
                 CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
                 CommandList.SetIndexBuffer(Command.IndexBuffer);
@@ -544,6 +560,17 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
                 PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
                 CommandList.Set32BitShaderConstants(PrePassVertexShader.Get(), &PerObjectBuffer, 16);
+
+                if (Command.Material->IsBufferDirty())
+                {
+                    Command.Material->BuildBuffer(CommandList);
+                }
+
+                CommandList.SetConstantBuffer(BasePixelShader.Get(), Command.Material->GetMaterialBuffer(), 1);
+                CommandList.SetShaderResourceView(BasePixelShader.Get(), Command.Material->GetAlphaMaskSRV(), 0);
+
+                FRHISamplerState* Sampler = Command.Material->GetMaterialSampler();
+                CommandList.SetSamplerState(BasePixelShader.Get(), Sampler, 0);
 
                 CommandList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
             }
@@ -686,16 +713,16 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
         CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
         CommandList.SetIndexBuffer(Command.IndexBuffer);
 
-        if (Command.Material->IsBufferDirty())
-        {
-            Command.Material->BuildBuffer(CommandList);
-        }
-
         CommandList.SetConstantBuffer(BaseVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
         TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
         CommandList.Set32BitShaderConstants(BaseVertexShader.Get(), &TransformPerObject, 32);
+
+        if (Command.Material->IsBufferDirty())
+        {
+            Command.Material->BuildBuffer(CommandList);
+        }
 
         FRHIConstantBuffer* PSConstantBuffers[] =
         {

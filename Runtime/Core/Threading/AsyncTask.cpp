@@ -37,6 +37,8 @@ void FAsyncTaskBase::Abandon()
 
 bool FAsyncTaskBase::Launch(EQueuePriority Priority, bool bAsync)
 {
+    FPlatformMisc::MemoryBarrier();
+
     CHECK(NumInvokations.Load() == 0);
     NumInvokations++;
 
