@@ -43,15 +43,15 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
     {
         // Create new material with default properties
         FMaterialData MaterialData;
-        MaterialData.MetallicTexture = StaticCastSharedRef<FTextureResource2D>(
+        MaterialData.MetallicTexture = StaticCastSharedRef<FTexture2D>(
             FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.ambient_texname.c_str()));
-        MaterialData.DiffuseTexture = StaticCastSharedRef<FTextureResource2D>(
+        MaterialData.DiffuseTexture = StaticCastSharedRef<FTexture2D>(
             FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.diffuse_texname.c_str()));
-        MaterialData.RoughnessTexture = StaticCastSharedRef<FTextureResource2D>(
+        MaterialData.RoughnessTexture = StaticCastSharedRef<FTexture2D>(
             FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.specular_highlight_texname.c_str()));
-        MaterialData.NormalTexture = StaticCastSharedRef<FTextureResource2D>(
+        MaterialData.NormalTexture = StaticCastSharedRef<FTexture2D>(
             FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.bump_texname.c_str()));
-        MaterialData.AlphaMaskTexture = StaticCastSharedRef<FTextureResource2D>(
+        MaterialData.AlphaMaskTexture = StaticCastSharedRef<FTexture2D>(
             FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.alpha_texname.c_str()));
 
         MaterialData.Diffuse   = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);

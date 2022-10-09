@@ -24,8 +24,8 @@
 #include <random>
 
 #define LOAD_SPONZA         (0)
-#define LOAD_BISTRO         (1)
-#define LOAD_SUN_TEMPLE     (0)
+#define LOAD_BISTRO         (0)
+#define LOAD_SUN_TEMPLE     (1)
 
 #define ENABLE_LIGHT_TEST   (0)
 #define ENABLE_MANY_SPHERES (0)
@@ -208,17 +208,17 @@ bool FSandbox::Init()
     NewComponent->Mesh     = FMesh::Create(CubeMeshData);
     NewComponent->Material = MakeShared<FMaterial>(MatProperties);
 
-    FTextureResource2DRef AlbedoMap = StaticCastSharedRef<FTextureResource2D>(
+    FTextureResource2DRef AlbedoMap = StaticCastSharedRef<FTexture2D>(
         FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png")));
-    FTextureResource2DRef NormalMap = StaticCastSharedRef<FTextureResource2D>(
+    FTextureResource2DRef NormalMap = StaticCastSharedRef<FTexture2D>(
         FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png")));
-    FTextureResource2DRef AOMap = StaticCastSharedRef<FTextureResource2D>(
+    FTextureResource2DRef AOMap = StaticCastSharedRef<FTexture2D>(
         FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png")));
-    FTextureResource2DRef RoughnessMap = StaticCastSharedRef<FTextureResource2D>(
+    FTextureResource2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(
         FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png")));
-    FTextureResource2DRef HeightMap = StaticCastSharedRef<FTextureResource2D>(
+    FTextureResource2DRef HeightMap = StaticCastSharedRef<FTexture2D>(
         FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png")));
-    FTextureResource2DRef MetallicMap = StaticCastSharedRef<FTextureResource2D>(
+    FTextureResource2DRef MetallicMap = StaticCastSharedRef<FTexture2D>(
         FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png")));
 
     NewComponent->Material->AlbedoMap    = AlbedoMap->GetRHITexture();
@@ -255,13 +255,13 @@ bool FSandbox::Init()
 
     NewActor->AddComponent(NewComponent);
 
-    AlbedoMap = StaticCastSharedRef<FTextureResource2D>(
+    AlbedoMap = StaticCastSharedRef<FTexture2D>(
         FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/BaseColor.jpg")));
-    NormalMap = StaticCastSharedRef<FTextureResource2D>(
+    NormalMap = StaticCastSharedRef<FTexture2D>(
         FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Normal.jpg")));
-    RoughnessMap = StaticCastSharedRef<FTextureResource2D>(
+    RoughnessMap = StaticCastSharedRef<FTexture2D>(
         FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg")));
-    MetallicMap = StaticCastSharedRef<FTextureResource2D>(
+    MetallicMap = StaticCastSharedRef<FTexture2D>(
         FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg")));
 
     MatProperties.Albedo       = FVector3(1.0f);

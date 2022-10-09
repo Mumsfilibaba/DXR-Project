@@ -121,7 +121,7 @@ CONSTEXPR EFormat ConvertFormat(tinyddsloader::DDSFile::DXGIFormat Format)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FTextureImporterDDS
 
-FTextureResource* FTextureImporterDDS::ImportFromFile(const FStringView& FileName)
+FTexture* FTextureImporterDDS::ImportFromFile(const FStringView& FileName)
 {
     tinyddsloader::DDSFile File;
 
@@ -132,27 +132,22 @@ FTextureResource* FTextureImporterDDS::ImportFromFile(const FStringView& FileNam
         return nullptr;
     }
 
-    const uint32 Width    = File.GetWidth();
-    const uint32 Height   = File.GetHeight();
-    const uint32 RowPitch = File.GetImageData()->m_memPitch;
-
-    const EFormat Format = ConvertFormat(File.GetFormat());
-
     // TODO: Support other types
     CHECK(File.GetTextureDimension() == tinyddsloader::DDSFile::TextureDimension::Texture2D);
 
-    TArray<void*> ImageData(File.GetMipCount());
-    for (int32 Index = 0; Index < 1; ++Index)
+    const EFormat Format = ConvertFormat(File.GetFormat());
+    
+    FTexture2D* NewTexture = dbg_new FTexture2D(Format, File.GetWidth(), File.GetHeight(), File.GetMipCount());
+    NewTexture->CreateData();
+
+    FTextureResourceData* TextureData = NewTexture->GetTextureResourceData();
+    for (uint32 Index = 0; Index < File.GetMipCount(); ++Index)
     {
         const tinyddsloader::DDSFile::ImageData* Data = File.GetImageData(Index);
-
-        // The data is released from the file object when leaving this scope so copy 
-        // the data here and hand it over to the FTextureResource
-        void* NewData = FMemory::Malloc(Data->m_memSlicePitch);
-        ImageData[Index] = FMemory::Memcpy(NewData, Data->m_mem, Data->m_memSlicePitch);
+        TextureData->InitMipData(Data->m_mem, Data->m_memPitch, Data->m_memSlicePitch, Index);
     }
 
-    return dbg_new FTextureResource2D(ImageData[0], Width, Height, RowPitch, Format);
+    return NewTexture;
 }
 
 bool FTextureImporterDDS::MatchExtenstion(const FStringView& FileName)

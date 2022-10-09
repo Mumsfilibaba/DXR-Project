@@ -58,7 +58,7 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
         FString Filename = Path + '/' + StringBuffer;
         ConvertBackslashes(Filename);
 
-        return StaticCastSharedRef<FTextureResource2D>(FAssetManager::Get().LoadTexture(Filename, false));
+        return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
     }
     
     return FTextureResource2DRef();
@@ -262,7 +262,6 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
                 }
             }
 
-            Data.Name = CurrentMesh->name;
 
             // Find the correct unique material and set it to the mesh
             const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(LastMaterialIndex);
@@ -282,6 +281,9 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
 
             if (Data.Mesh.Hasdata())
             {
+                Data.Name = CurrentMesh->name;
+                LOG_INFO("Loaded Mesh '%s'", CurrentMesh->name);
+                
                 Data.Mesh.RefitContainers();
                 OutScene.Models.Emplace(Data);
             }

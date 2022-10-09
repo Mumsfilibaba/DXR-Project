@@ -78,7 +78,7 @@ static EFormat GetFloatFormat(int32 Channels)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FTextureImporterBase
 
-FTextureResource* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
+FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
 {
     FFileHandleRef File = FPlatformFile::OpenForRead(FString(FileName));
     if (!File)
@@ -88,10 +88,10 @@ FTextureResource* FTextureImporterBase::ImportFromFile(const FStringView& FileNa
     }
 
     // Read in the whole file
-    const uint32 FileSize = File->Size();
+    const int64 FileSize = File->Size();
     
     TArray<uint8> FileData;
-    FileData.Resize(FileSize);
+    FileData.Resize(int32(FileSize));
     File->Read(FileData.GetData(), FileData.GetSize());
 
     if (FileData.IsEmpty())
@@ -163,12 +163,17 @@ FTextureResource* FTextureImporterBase::ImportFromFile(const FStringView& FileNa
         LOG_ERROR("[FTextureImporterBase]: Failed to load image '%s'", FileName.GetCString());
         return nullptr;
     }
-    else
-    {
-        // Calculate row-pitch
-        const uint32 RowPitch = Width * GetByteStrideFromFormat(Format);
-        return dbg_new FTextureResource2D(Pixels.Release(), Width, Height, RowPitch, Format);
-    }
+
+    const int64 RowPitch   = Width * GetByteStrideFromFormat(Format);
+    const int64 SlicePitch = RowPitch * Height;
+
+    FTexture2D* NewTexture = dbg_new FTexture2D(Format, Width, Height, 1);
+    NewTexture->CreateData();
+
+    FTextureResourceData* TextureData = NewTexture->GetTextureResourceData();
+    TextureData->InitMipData(Pixels.Get(), RowPitch, SlicePitch);
+
+    return NewTexture;
 }
 
 bool FTextureImporterBase::MatchExtenstion(const FStringView& FileName)

@@ -15,6 +15,7 @@
 #include "D3D12TimestampQuery.h"
 #include "DynamicD3D12.h"
 
+#include "Core/Containers/ITextureResourceData.h"
 #include "Core/Debug/Console/ConsoleInterface.h"
 
 #include "CoreApplication/Windows/WindowsWindow.h"
@@ -345,7 +346,7 @@ D3D12TextureType* FD3D12Interface::CreateTexture(const InitializerType& Initiali
 
     if constexpr (bIsTexture2D)
     {
-        FRHITextureDataInitializer* InitialData = Initializer.InitialData;
+        ITextureResourceData* InitialData = Initializer.InitialData;
         if (InitialData)
         {
             // TODO: Support other types than texture 2D
@@ -354,13 +355,27 @@ D3D12TextureType* FD3D12Interface::CreateTexture(const InitializerType& Initiali
             D3D12_ERROR_COND(Texture2D != nullptr, "Texture was unexpectedly nullptr");
 
             DirectContext->StartContext();
-
             DirectContext->TransitionTexture(Texture2D, EResourceAccess::Common, EResourceAccess::CopyDest);
-            DirectContext->UpdateTexture2D(Texture2D, Extent.x, Extent.y, 0, InitialData->TextureData, InitialData->RowPitch);
+
+            // Transfer all the mip-levels
+            uint32 Width  = Extent.x;
+            uint32 Height = Extent.y;
+            for (uint32 Index = 0; Index < Texture2D->GetNumMips(); ++Index)
+            {
+                DirectContext->UpdateTexture2D(
+                    Texture2D, 
+                    Width,
+                    Height,
+                    Index, 
+                    InitialData->GetMipData(Index), 
+                    (uint32)InitialData->GetMipRowPitch(Index));
+
+                Width  = Width / 2;
+                Height = Height / 2;
+            }
 
             // NOTE: Transition into InitialAccess
             DirectContext->TransitionTexture(Texture2D, EResourceAccess::CopyDest, Initializer.InitialAccess);
-
             DirectContext->FinishContext();
 
             return NewTexture.ReleaseOwnership();

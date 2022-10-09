@@ -15,6 +15,7 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
+struct ITextureResourceData;
 class FRHIShaderResourceView;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -54,38 +55,6 @@ enum class ETextureUsageFlags
 ENUM_CLASS_OPERATORS(ETextureUsageFlags);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITextureDataInitializer
-
-struct FRHITextureDataInitializer
-{
-    FRHITextureDataInitializer()
-        : TextureData(nullptr)
-        , RowPitch(0)
-        , SlicePitch(0)
-    { }
-
-    FRHITextureDataInitializer(const void* InTextureData, uint32 InRowPitch, uint32 InSlicePitch)
-        : TextureData(InTextureData)
-        , RowPitch(InRowPitch)
-        , SlicePitch(InSlicePitch)
-    { }
-
-    bool operator==(const FRHITextureDataInitializer& RHS) const
-    {
-        return (TextureData == RHS.TextureData) && (RowPitch == RHS.RowPitch) && (SlicePitch == RHS.SlicePitch);
-    }
-
-    bool operator!=(const FRHITextureDataInitializer& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    const void* TextureData;
-    uint32      RowPitch;
-    uint32      SlicePitch;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FRHITextureInitializer
 
 struct FRHITextureInitializer
@@ -104,7 +73,7 @@ struct FRHITextureInitializer
         ETextureUsageFlags InUsageFlags,
         EResourceAccess InInitialAccess,
         uint32 InNumMips,
-        FRHITextureDataInitializer* InInitialData = nullptr,
+        ITextureResourceData* InInitialData = nullptr,
         const FTextureClearValue& InClearValue = FTextureClearValue())
         : ClearValue(InClearValue)
         , Format(InFormat)
@@ -143,16 +112,16 @@ struct FRHITextureInitializer
         return !(*this == RHS);
     }
 
-    FTextureClearValue          ClearValue;
+    FTextureClearValue    ClearValue;
 
-    EFormat                     Format;
+    EFormat               Format;
 
-    ETextureUsageFlags          UsageFlags;
-    EResourceAccess             InitialAccess;
+    ETextureUsageFlags    UsageFlags;
+    EResourceAccess       InitialAccess;
 
-    FRHITextureDataInitializer* InitialData;
+    ITextureResourceData* InitialData;
 
-    uint8                       NumMips;
+    uint8                 NumMips;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -177,7 +146,7 @@ struct FRHITexture2DInitializer
         uint32 InNumSamples,
         ETextureUsageFlags InUsageFlags,
         EResourceAccess InInitialAccess,
-        FRHITextureDataInitializer* InInitialData = nullptr,
+        ITextureResourceData* InInitialData = nullptr,
         const FTextureClearValue& InClearValue = FTextureClearValue())
         : FRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InInitialData, InClearValue)
         , Width(uint16(InWidth))
@@ -227,7 +196,7 @@ struct FRHITexture2DArrayInitializer
         uint32 InNumSamples,
         ETextureUsageFlags InUsageFlags,
         EResourceAccess InInitialAccess,
-        FRHITextureDataInitializer* InInitialData = nullptr,
+        ITextureResourceData* InInitialData = nullptr,
         const FTextureClearValue& InClearValue = FTextureClearValue())
         : FRHITexture2DInitializer(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InInitialData, InClearValue)
         , ArraySize(uint16(InArraySize))
@@ -265,7 +234,7 @@ struct FRHITextureCubeInitializer
         uint32 InNumSamples,
         ETextureUsageFlags InUsageFlags,
         EResourceAccess InInitialAccess,
-        FRHITextureDataInitializer* InInitialData = nullptr,
+        ITextureResourceData* InInitialData = nullptr,
         const FTextureClearValue& InClearValue = FTextureClearValue())
         : FRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InInitialData, InClearValue)
         , NumSamples(uint8(InNumSamples))
@@ -307,7 +276,7 @@ struct FRHITextureCubeArrayInitializer
         uint32 InNumSamples,
         ETextureUsageFlags InUsageFlags,
         EResourceAccess InInitialAccess,
-        FRHITextureDataInitializer* InInitialData = nullptr,
+        ITextureResourceData* InInitialData = nullptr,
         const FTextureClearValue& InClearValue = FTextureClearValue())
         : FRHITextureCubeInitializer(InFormat, InExtent, InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InInitialData, InClearValue)
         , ArraySize(uint16(InArraySize))
@@ -347,7 +316,7 @@ struct FRHITexture3DInitializer
         uint8 InNumMips,
         ETextureUsageFlags InUsageFlags,
         EResourceAccess InInitialAccess,
-        FRHITextureDataInitializer* InInitialData = nullptr,
+        ITextureResourceData* InInitialData = nullptr,
         const FTextureClearValue& InClearValue = FTextureClearValue())
         : FRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InInitialData, InClearValue)
         , Width(InWidth)

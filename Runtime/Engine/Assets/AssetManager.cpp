@@ -100,6 +100,9 @@ FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGe
     // Set name 
     NewTexture->SetName(FinalPath);
 
+    // Release the data after the texture is loaded
+    NewTexture->ReleaseData();
+
     // Insert the new texture
     const auto Index = Textures.GetSize();
     Textures.Emplace(NewTexture);

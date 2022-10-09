@@ -72,7 +72,8 @@ FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
     const uint32 RowPitch = Width * Stride;
     CHECK(RowPitch > 0);
 
-    FRHITextureDataInitializer InitalData(Pixels, RowPitch, 0);
+    FTextureResourceData InitalData;
+    InitalData.InitMipData(Pixels, RowPitch, RowPitch*Height);
 
     FRHITexture2DInitializer Initializer(
         Format, 

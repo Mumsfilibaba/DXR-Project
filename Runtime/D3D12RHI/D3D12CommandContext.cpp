@@ -938,9 +938,11 @@ void FD3D12CommandContext::UpdateTexture2D(
         &RowPitch,
         &RequiredSize);
 
+    const uint64 AlignedSize = NMath::AlignUp<uint64>(RequiredSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+
     FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(
-        RequiredSize,
-        D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+        AlignedSize,
+        D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 
     CHECK(Allocation.Memory   != nullptr);
     CHECK(Allocation.Resource != nullptr);

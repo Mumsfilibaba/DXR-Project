@@ -1,107 +1,119 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/ITextureResourceData.h"
 #include "Core/RefCounted.h"
 
 #include "RHI/RHITexture.h"
 
 #include "Engine/EngineModule.h"
 
-struct FTextureResource;
-class FTextureResource2D;
+struct FTexture;
+class FTexture2D;
+
+// This is based on the max texture-size 32678
+#define MAX_TEXTURE_MIPS (15)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef TSharedRef<FTextureResource>   FTextureResourceRef;
-typedef TSharedRef<FTextureResource2D> FTextureResource2DRef;
+typedef TSharedRef<FTexture>   FTextureResourceRef;
+typedef TSharedRef<FTexture2D> FTextureResource2DRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FTextureResourceData 
+
+class ENGINE_API FTextureResourceData
+    : public ITextureResourceData
+{
+public:
+    FTextureResourceData();
+    ~FTextureResourceData();
+
+    void InitMipData(const void* InTextureData, int64 InTextureDataRowPitch, int64 InTextureDataSlicePitch, uint32 MipLevel = 0);
+
+    virtual void* GetMipData(uint32 MipLevel = 0) const override final
+    {
+        CHECK(MipLevel < MAX_TEXTURE_MIPS);
+        return TextureData[MipLevel];
+    }
+
+    virtual int64 GetMipRowPitch(uint32 MipLevel = 0) const override final
+    {
+        CHECK(MipLevel < MAX_TEXTURE_MIPS);
+        return TextureDataRowPitch[MipLevel];
+    }
+
+    virtual int64 GetMipSlicePitch(uint32 MipLevel = 0) const override final
+    {
+        CHECK(MipLevel < MAX_TEXTURE_MIPS);
+        return TextureDataSlicePitch[MipLevel];
+    }
+
+private:
+    void MemzeroData();
+
+    void* TextureData[MAX_TEXTURE_MIPS];
+    int64 TextureDataRowPitch[MAX_TEXTURE_MIPS];
+    int64 TextureDataSlicePitch[MAX_TEXTURE_MIPS];
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FTextureResource 
 
-struct ENGINE_API FTextureResource
+struct ENGINE_API FTexture
     : public FRefCounted
 {
-    FTextureResource()          = default;
-    virtual ~FTextureResource() = default;
+    FTexture()          = default;
+    virtual ~FTexture() = default;
 
-    virtual FTextureResource2D* GetTexture2D() { return nullptr; }
+    virtual FTexture2D* GetTexture2D() { return nullptr; }
 
     virtual bool CreateRHITexture(bool bGenerateMips) = 0;
+
+    virtual void CreateData()  = 0;
+    virtual void ReleaseData() = 0;
 
     virtual void SetName(const FString& InName) = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTextureResource2D 
+// FTextureResource2D
 
-class ENGINE_API FTextureResource2D
-    : public FTextureResource
+class ENGINE_API FTexture2D
+    : public FTexture
 {
 public:
-    FTextureResource2D();
-    
-    FTextureResource2D(
-        void* InTextureData,
-        uint32 InWidth,
-        uint32 InHeight,
-        uint32 InRowPitch,
-        EFormat InFormat);
+    FTexture2D();
+    FTexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips);
+    ~FTexture2D();
 
-    ~FTextureResource2D();
-
-    virtual FTextureResource2D* GetTexture2D() { return this; }
+    virtual FTexture2D* GetTexture2D() { return this; }
 
     virtual bool CreateRHITexture(bool bGenerateMips) override final;
+    
+    virtual void CreateData()  override final;
+    virtual void ReleaseData() override final;
 
     virtual void SetName(const FString& InName) override final;
 
-    FRHITexture2DRef GetRHITexture() const
-    {
-        return TextureRHI;
-    }
+    FRHITexture2DRef GetRHITexture() const { return TextureRHI; }
 
-    EFormat GetFormat() const
-    {
-        return Format;
-    }
+    FTextureResourceData* GetTextureResourceData() const { return TextureData; }
 
-    uint16 GetWidth() const
-    {
-        return Width;
-    }
+    EFormat GetFormat() const { return Format; }
 
-    uint16 GetHeight() const
-    {
-        return Height;
-    }
-
-    uint32 GetRowPitch() const
-    {
-        return RowPitch;
-    }
-
-    void* GetData(int32 MipLevel = 0) const
-    {
-        if (TextureData.IsValidIndex(MipLevel))
-        {
-            return TextureData[MipLevel];
-        }
-
-        return nullptr;
-    }
+    uint32 GetWidth() const { return Width; }
+    uint32 GetHeight() const { return Height; }
 
 private:
-    void DeleteData();
 
-    FRHITexture2DRef TextureRHI;
-
-    TArray<void*> TextureData;
+    FRHITexture2DRef      TextureRHI;
+    FTextureResourceData* TextureData;
 
     EFormat Format;
 
-    uint16  Width;
-    uint16  Height;
-
-    uint32  RowPitch;
+    uint32  Width;
+    uint32  Height;
+    uint32  NumMips;
 };

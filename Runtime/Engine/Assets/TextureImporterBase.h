@@ -11,7 +11,7 @@ public:
     FTextureImporterBase()  = default;
     ~FTextureImporterBase() = default;
 
-    virtual FTextureResource* ImportFromFile(const FStringView& FileName) override final;
+    virtual FTexture* ImportFromFile(const FStringView& FileName) override final;
 
     virtual bool MatchExtenstion(const FStringView& FileName) override final;
 };
