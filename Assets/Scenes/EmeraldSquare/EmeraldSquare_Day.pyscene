@@ -1,0 +1,5 @@
+# Load scene
+sceneBuilder.importScene("EmeraldSquare_Day.fbx")
+
+# Set environment map
+sceneBuilder.envMap = EnvMap("symmetrical_garden_4k.hdr")
