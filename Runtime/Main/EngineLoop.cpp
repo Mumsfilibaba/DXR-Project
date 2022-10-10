@@ -21,7 +21,7 @@
 
 #include "Application/ApplicationInterface.h"
 
-#include "InterfaceRenderer/InterfaceRenderer.h"
+#include "ViewportRenderer/ViewportRenderer.h"
 
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -255,21 +255,21 @@ bool FEngineLoop::Init()
         }
     }
 
-    IApplicationRendererModule* InterfaceRendererModule = FModuleInterface::Get().LoadModule<IApplicationRendererModule>("InterfaceRenderer");
-    if (!InterfaceRendererModule)
+    IApplicationRendererModule* ViewportRendererModule = FModuleInterface::Get().LoadModule<IApplicationRendererModule>("ViewportRenderer");
+    if (!ViewportRendererModule)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load InterfaceRenderer");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load ViewportRenderer");
         return false;
     }
 
-    TSharedRef<IApplicationRenderer> InterfaceRenderer = InterfaceRendererModule->CreateRenderer();
-    if (!InterfaceRenderer)
+    TSharedRef<IViewportRenderer> ViewportRenderer = ViewportRendererModule->CreateRenderer();
+    if (!ViewportRenderer)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create InterfaceRenderer");
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create ViewportRenderer");
         return false;
     }
 
-    FApplicationInterface::Get().SetRenderer(InterfaceRenderer);
+    FApplicationInterface::Get().SetRenderer(ViewportRenderer);
 
     // Final thing is to startup the engine
     if (!GEngine->Start())

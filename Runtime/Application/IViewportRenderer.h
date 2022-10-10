@@ -8,10 +8,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IApplicationRenderer
 
-struct IApplicationRenderer 
+struct IViewportRenderer 
     : public FRefCounted
 {
-    virtual ~IApplicationRenderer() = default;
+    virtual ~IViewportRenderer() = default;
 
     /**
      * @brief: Initialize the context
@@ -47,5 +47,5 @@ struct IApplicationRendererModule
      * 
      * @return: Returns a newly created interface renderer
      */
-    virtual IApplicationRenderer* CreateRenderer() = 0;
+    virtual IViewportRenderer* CreateRenderer() = 0;
 };

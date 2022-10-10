@@ -2,7 +2,7 @@
 #include "InputHandler.h"
 #include "WindowMessageHandler.h"
 #include "User.h"
-#include "IApplicationRenderer.h"
+#include "IViewportRenderer.h"
 
 #include "Core/Core.h"
 #include "Core/Containers/SharedPtr.h"
@@ -107,7 +107,7 @@ public:
     virtual void RegisterMainViewport(const FGenericWindowRef& NewMainViewport) = 0;
 
     /** @brief:  Sets the interface renderer */
-    virtual void SetRenderer(const TSharedRef<IApplicationRenderer>& NewRenderer) = 0;
+    virtual void SetRenderer(const TSharedRef<IViewportRenderer>& NewRenderer) = 0;
 
     /** @brief: Register a window to add that should be drawn the next frame */
     virtual void AddWindow(const TSharedRef<FWindow>& NewWindow) = 0;
@@ -134,7 +134,7 @@ public:
     virtual TSharedPtr<FGenericApplication> GetPlatformApplication() const = 0;
 
     /** @return: Returns the renderer for the Application */
-    virtual TSharedRef<IApplicationRenderer> GetRenderer() const = 0;
+    virtual TSharedRef<IViewportRenderer> GetRenderer() const = 0;
 
     /** @return: Returns the window registered as the main viewport */
     virtual FGenericWindowRef GetMainViewport() const = 0;

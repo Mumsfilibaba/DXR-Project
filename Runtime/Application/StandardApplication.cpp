@@ -424,14 +424,14 @@ void FStandardApplication::RegisterMainViewport(const FGenericWindowRef& NewMain
     }
 }
 
-void FStandardApplication::SetRenderer(const TSharedRef<IApplicationRenderer>& NewRenderer)
+void FStandardApplication::SetRenderer(const TSharedRef<IViewportRenderer>& NewRenderer)
 {
     Renderer = NewRenderer;
     if (Renderer)
     {
         if (!Renderer->InitContext(Context))
         {
-            FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init InterfaceRenderer ");
+            FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ViewportRenderer ");
         }
     }
 }

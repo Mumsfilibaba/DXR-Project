@@ -70,9 +70,9 @@ public:
     
     virtual FGenericWindowRef GetMainViewport() const override final { return MainViewport; }
 
-    virtual void SetRenderer(const TSharedRef<IApplicationRenderer>& NewRenderer) override final;
+    virtual void SetRenderer(const TSharedRef<IViewportRenderer>& NewRenderer) override final;
     
-    virtual TSharedRef<IApplicationRenderer> GetRenderer() const override final { return Renderer; }
+    virtual TSharedRef<IViewportRenderer> GetRenderer() const override final { return Renderer; }
 
     virtual void AddWindow(const TSharedRef<FWindow>& NewWindow) override final;
     
@@ -166,7 +166,7 @@ protected:
     TSharedPtr<FGenericApplication>  PlatformApplication;
 
     FGenericWindowRef                MainViewport;
-    TSharedRef<IApplicationRenderer> Renderer;
+    TSharedRef<IViewportRenderer> Renderer;
 
     TArray<FString>                  DebugStrings;
     TArray<TSharedRef<FWindow>>      InterfaceWindows;
