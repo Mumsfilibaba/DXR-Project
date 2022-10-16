@@ -55,7 +55,7 @@ struct FDirectionalLightData
     float    MaxShadowBias = 0.05f;
 
     FVector3 UpVector = FVector3(0.0f, 0.0f, -1.0f);
-    float    LightSize;
+    float    LightSize = 0.0f;
 
     FMatrix4 ShadowMatrix;
 };
@@ -141,8 +141,8 @@ struct RENDERER_API FLightSetup
     FMatrix4                   DirectionalLightViewMatrix;
     FMatrix4                   DirectionalLightProjMatrix;
 
-    float                      DirectionalLightFarPlane;
-    float                      CascadeSplitLambda;
+    float                      DirectionalLightFarPlane = 0.0f;
+    float                      CascadeSplitLambda       = 0.0f;
     
     bool                       DirectionalLightDataDirty = true;
 

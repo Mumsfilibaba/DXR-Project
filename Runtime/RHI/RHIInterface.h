@@ -420,10 +420,34 @@ public:
     virtual FRHIViewport* RHICreateViewport(const FRHIViewportInitializer& Initializer) = 0;
 
     /**
-     * @brief  - Retrieve the default CommandContext
-     * @return - Returns the default CommandContext
+     * @return - Returns the a CommandContext
      */
-    virtual IRHICommandContext* RHIGetDefaultCommandContext() = 0;
+    virtual IRHICommandContext* RHIObtainCommandContext() = 0;
+
+    /**
+     * @return - Returns the native Adapter
+     */
+    virtual void* RHIGetAdapter() { return nullptr; }
+
+    /**
+     * @return - Returns the native Device
+     */
+    virtual void* RHIGetDevice() { return nullptr; }
+
+    /**
+     * @return - Returns the native Direct (Graphics) CommandQueue
+     */
+    virtual void* RHIGetDirectCommandQueue() { return nullptr; }
+
+    /**
+     * @return - Returns the native Compute CommandQueue
+     */
+    virtual void* RHIGetComputeCommandQueue() { return nullptr; }
+
+    /**
+     * @return - Returns the native Copy CommandQueue
+     */
+    virtual void* RHIGetCopyCommandQueue() { return nullptr; }
 
     /**
      * @brief            - Check for Ray tracing support
@@ -448,13 +472,13 @@ public:
      * @brief  - Retrieve the name of the Adapter
      * @return - Returns a string with the Adapter name
      */
-    virtual FString GetAdapterDescription() const { return ""; }
+    virtual FString RHIGetAdapterDescription() const { return ""; }
 
     /**
      * @brief  - retrieve the current API that is used
      * @return - Returns the current RHI's API
      */
-    ERHIInstanceType GetApi() const { return RHIType; }
+    ERHIInstanceType GetInstanceType() const { return RHIType; }
 
 private:
     ERHIInstanceType RHIType;
@@ -644,12 +668,12 @@ FORCEINLINE bool RHIQueryUAVFormatSupport(EFormat Format)
 
 FORCEINLINE IRHICommandContext* RHIGetDefaultCommandContext()
 {
-    return GetRHIInterface()->RHIGetDefaultCommandContext();
+    return GetRHIInterface()->RHIObtainCommandContext();
 }
 
 FORCEINLINE FString RHIGetAdapterName()
 {
-    return GetRHIInterface()->GetAdapterDescription();
+    return GetRHIInterface()->RHIGetAdapterDescription();
 }
 
 FORCEINLINE void RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport)

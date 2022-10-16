@@ -96,5 +96,5 @@ private:
     FRHITexture2DRef             TAAHistoryBuffers[2];
     FRHISamplerStateRef          LinearSampler;
 
-    uint32                       CurrentBufferIndex;
+    uint32                       CurrentBufferIndex = 0;
 };

@@ -241,7 +241,6 @@ struct FD3D12CommandContextState
     bool bBindRootSignature  : 1;
 };
 
-
 class FD3D12CommandContext 
     : public IRHICommandContext
     , public FD3D12DeviceChild
@@ -260,11 +259,11 @@ public:
     virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)   override final;
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
 
-    virtual void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) override final;
+    virtual void BeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer) override final;
     virtual void EndRenderPass() override final;
 
-    virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final;
-    virtual void SetScissorRect(float Width, float Height, float x, float y) override final;
+    virtual void SetViewport(const FRHIViewportRegion& ViewportRegion)  override final;
+    virtual void SetScissorRect(const FRHIScissorRegion& ScissorRegion) override final;
 
     virtual void SetBlendFactor(const FVector4& Color) override final;
 
@@ -290,33 +289,32 @@ public:
     virtual void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)                             override final;
     virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) override final;
 
-    virtual void UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SrcData) override final;
+    virtual void UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData) override final;
     
     virtual void UpdateTexture2D(
-        FRHITexture2D* Dst,
-        uint32 Width,
-        uint32 Height,
-        uint32 MipLevel,
-        const void* SrcData,
-        uint32 SrcRowPitch) override final;
+        FRHITexture2D*          Dst,
+        const FTextureRegion2D& TextureRegion,
+        uint32                  MipLevel,
+        const void*             SrcData,
+        uint32                  SrcRowPitch) override final;
 
     virtual void ResolveTexture(FRHITexture* Dst, FRHITexture* Src) override final;
 
-    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo) override final;
-    virtual void CopyTexture(FRHITexture* Dst, FRHITexture* Src)                                  override final;
-    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) override final;
+    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc)           override final;
+    virtual void CopyTexture(FRHITexture* Dst, FRHITexture* Src)                                            override final;
+    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc) override final;
 
     virtual void DestroyResource(class IRefCounted* Resource) override final;
     virtual void DiscardContents(class FRHITexture* Texture)  override final;
 
     virtual void BuildRayTracingGeometry(
         FRHIRayTracingGeometry* RayTracingGeometry,
-        FRHIBuffer* VertexBuffer,
-        uint32 NumVertices,
-        FRHIBuffer* IndexBuffer,
-        uint32 NumIndices,
-        EIndexFormat IndexFormat,
-        bool bUpdate) override final;
+        FRHIBuffer*             VertexBuffer,
+        uint32                  NumVertices,
+        FRHIBuffer*             IndexBuffer,
+        uint32                  NumIndices,
+        EIndexFormat            IndexFormat,
+        bool                    bUpdate) override final;
     
     virtual void BuildRayTracingScene(
         FRHIRayTracingScene* RayTracingScene,
@@ -325,13 +323,13 @@ public:
 
      /** @brief - Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
     virtual void SetRayTracingBindings(
-        FRHIRayTracingScene* RayTracingScene,
-        FRHIRayTracingPipelineState* PipelineState,
+        FRHIRayTracingScene*              RayTracingScene,
+        FRHIRayTracingPipelineState*      PipelineState,
         const FRayTracingShaderResources* GlobalResource,
         const FRayTracingShaderResources* RayGenLocalResources,
         const FRayTracingShaderResources* MissLocalResources,
         const FRayTracingShaderResources* HitGroupResources,
-        uint32 NumHitGroupResources) override final;
+        uint32                            NumHitGroupResources) override final;
 
     virtual void GenerateMips(FRHITexture* Texture) override final;
 
@@ -364,7 +362,7 @@ public:
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
 
     virtual void DispatchRays(
-        FRHIRayTracingScene* InScene,
+        FRHIRayTracingScene*         InScene,
         FRHIRayTracingPipelineState* InPipelineState,
         uint32 InWidth,
         uint32 InHeight,
@@ -389,7 +387,7 @@ public:
     void ObtainCommandList();
     void FinishCommandList();
 
-    void UpdateBuffer(FD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
+    void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
 
     FORCEINLINE FD3D12CommandList& GetCommandList() 
     {

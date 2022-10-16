@@ -149,27 +149,13 @@ private:
 };
 
 
-TOptional<FRHIShaderCompiler> FRHIShaderCompiler::Instance;
+FRHIShaderCompiler* FRHIShaderCompiler::GInstance = nullptr;
 
 FRHIShaderCompiler::FRHIShaderCompiler(const CHAR* InAssetPath)
     : DXCLib(nullptr)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
-{ 
-    DXCLib = FPlatformLibrary::LoadDynamicLib("dxcompiler");
-    if (!DXCLib)
-    {
-        LOG_ERROR("Failed to load 'dxcompiler'");
-        return;
-    }
-
-    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
-    if (!DxcCreateInstanceFunc)
-    {
-        LOG_ERROR("Failed to load 'DxcCreateInstance'");
-        return;
-    }
-}
+{ }
 
 FRHIShaderCompiler::~FRHIShaderCompiler()
 {
@@ -182,21 +168,50 @@ FRHIShaderCompiler::~FRHIShaderCompiler()
     DxcCreateInstanceFunc = nullptr;
 }
 
-bool FRHIShaderCompiler::Initialize(const CHAR* InAssetFolderPath)
+bool FRHIShaderCompiler::Create(const CHAR* InAssetFolderPath)
 {
-    Instance.Emplace(InAssetFolderPath);
-    return (Instance->DXCLib != nullptr) && (Instance->DxcCreateInstanceFunc != nullptr);
+    CHECK(GInstance == nullptr);
+    GInstance = dbg_new FRHIShaderCompiler(InAssetFolderPath);
+    if (!GInstance->Initialize())
+    {
+        delete GInstance;
+        GInstance = nullptr;
+        return false;
+    }
+
+    return true;
 }
 
-void FRHIShaderCompiler::Release()
+void FRHIShaderCompiler::Destroy()
 {
-    Instance.Reset();
+    CHECK(GInstance != nullptr);
+    delete GInstance;
+    GInstance = nullptr;
+}
+
+bool FRHIShaderCompiler::Initialize()
+{
+    DXCLib = FPlatformLibrary::LoadDynamicLib("dxcompiler");
+    if (!DXCLib)
+    {
+        LOG_ERROR("Failed to load 'dxcompiler'");
+        return false;
+    }
+
+    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
+    if (!DxcCreateInstanceFunc)
+    {
+        LOG_ERROR("Failed to load 'DxcCreateInstance'");
+        return false;
+    }
+
+    return true;
 }
 
 FRHIShaderCompiler& FRHIShaderCompiler::Get()
 {
-    CHECK(Instance.HasValue());
-    return Instance.GetValue();
+    CHECK(GInstance != nullptr);
+    return *GInstance;
 }
 
 bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)

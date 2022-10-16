@@ -290,27 +290,25 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
 
     if (DirectionalLightDataDirty)
     {
-        CommandList.UpdateBuffer(DirectionalLightsBuffer.Get(), 0, sizeof(DirectionalLightData), &DirectionalLightData);
+        CommandList.UpdateBuffer(DirectionalLightsBuffer.Get(), FBufferRegion(0, sizeof(DirectionalLightData)), &DirectionalLightData);
         DirectionalLightDataDirty = false;
     }
 
     if (!PointLightsData.IsEmpty())
     {
-        CommandList.UpdateBuffer(PointLightsBuffer.Get(), 0, PointLightsData.SizeInBytes(), PointLightsData.GetData());
-        CommandList.UpdateBuffer(PointLightsPosRadBuffer.Get(), 0, PointLightsPosRad.SizeInBytes(), PointLightsPosRad.GetData());
+        CommandList.UpdateBuffer(PointLightsBuffer.Get(), FBufferRegion(0, PointLightsData.SizeInBytes()), PointLightsData.GetData());
+        CommandList.UpdateBuffer(PointLightsPosRadBuffer.Get(), FBufferRegion(0, PointLightsPosRad.SizeInBytes()), PointLightsPosRad.GetData());
     }
 
     if (!ShadowCastingPointLightsData.IsEmpty())
     {
         CommandList.UpdateBuffer(
             ShadowCastingPointLightsBuffer.Get(),
-            0,
-            ShadowCastingPointLightsData.SizeInBytes(),
+            FBufferRegion(0, ShadowCastingPointLightsData.SizeInBytes()),
             ShadowCastingPointLightsData.GetData());
         CommandList.UpdateBuffer(
             ShadowCastingPointLightsPosRadBuffer.Get(),
-            0,
-            ShadowCastingPointLightsPosRad.SizeInBytes(),
+            FBufferRegion(0, ShadowCastingPointLightsPosRad.SizeInBytes()),
             ShadowCastingPointLightsPosRad.GetData());
     }
 

@@ -192,15 +192,18 @@ void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResourc
     const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
 
-    FRHIRenderPassInitializer RenderPass;
+    FRHIRenderPassDesc RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
     RenderPass.NumRenderTargets = 1;
     RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPass);
 
-    CommandList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CommandList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
+    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    CommandList.SetViewport(ViewportRegion);
+
+    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    CommandList.SetScissorRect(ScissorRegion);
 
     CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     CommandList.SetVertexBuffers(MakeArrayView(&SkyboxVertexBuffer, 1), 0);

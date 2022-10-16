@@ -38,7 +38,6 @@ inline const CHAR* ToString(EDepthWriteMask DepthWriteMask)
     }
 }
 
-
 enum class EStencilOp : uint8
 {
     Keep    = 1,
@@ -67,7 +66,6 @@ inline const CHAR* ToString(EStencilOp StencilOp)
     }
 }
 
-
 struct FDepthStencilStateFace
 {
     FDepthStencilStateFace()
@@ -78,9 +76,9 @@ struct FDepthStencilStateFace
     { }
 
     FDepthStencilStateFace(
-        EStencilOp InStencilFailOp,
-        EStencilOp InStencilDepthFailOp,
-        EStencilOp InStencilPassOp,
+        EStencilOp      InStencilFailOp,
+        EStencilOp      InStencilDepthFailOp,
+        EStencilOp      InStencilPassOp,
         EComparisonFunc InStencilFunc)
         : StencilFailOp(InStencilFailOp)
         , StencilDepthFailOp(InStencilDepthFailOp)
@@ -131,14 +129,14 @@ struct FRHIDepthStencilStateInitializer
     { }
 
     FRHIDepthStencilStateInitializer(
-        EComparisonFunc InDepthFunc,
-        bool bInDepthEnable,
-        EDepthWriteMask InDepthWriteMask = EDepthWriteMask::All,
-        bool bInStencilEnable = false,
-        uint8 InStencilReadMask = 0xff,
-        uint8 InStencilWriteMask = 0xff,
-        const FDepthStencilStateFace& InFrontFace = FDepthStencilStateFace(),
-        const FDepthStencilStateFace& InBackFace = FDepthStencilStateFace())
+        EComparisonFunc               InDepthFunc,
+        bool                          bInDepthEnable,
+        EDepthWriteMask               InDepthWriteMask   = EDepthWriteMask::All,
+        bool                          bInStencilEnable   = false,
+        uint8                         InStencilReadMask  = 0xff,
+        uint8                         InStencilWriteMask = 0xff,
+        const FDepthStencilStateFace& InFrontFace        = FDepthStencilStateFace(),
+        const FDepthStencilStateFace& InBackFace         = FDepthStencilStateFace())
         : DepthWriteMask(InDepthWriteMask)
         , DepthFunc(InDepthFunc)
         , bDepthEnable(bInDepthEnable)
@@ -325,7 +323,6 @@ struct FRHIRasterizerStateInitializer
     float     SlopeScaledDepthBias;
 };
 
-
 class FRHIRasterizerState 
     : public FRHIResource
 {
@@ -333,7 +330,6 @@ protected:
     FRHIRasterizerState()  = default;
     ~FRHIRasterizerState() = default;
 };
-
 
 enum class EBlendType : uint8
 {
@@ -381,7 +377,6 @@ inline const CHAR* ToString(EBlendType  Blend)
     }
 }
 
-
 enum class EBlendOp : uint8
 {
     Add         = 1,
@@ -403,7 +398,6 @@ inline const CHAR* ToString(EBlendOp BlendOp)
         default:                    return "Unknown";
     }
 }
-
 
 enum class ELogicOp : uint8
 {
@@ -533,15 +527,15 @@ struct FRenderTargetBlendDesc
     { }
 
     FRenderTargetBlendDesc(
-        bool bInBlendEnable,
+        bool       bInBlendEnable,
         EBlendType InSrcBlend,
         EBlendType InDstBlend,
-        EBlendOp InBlendOp = EBlendOp::Add,
-        EBlendType InSrcBlendAlpha = EBlendType::One,
-        EBlendType InDstBlendAlpha = EBlendType::Zero,
-        EBlendOp InBlendOpAlpha = EBlendOp::Add,
-        ELogicOp InLogicOp = ELogicOp::Noop,
-        bool bInLogicOpEnable = false,
+        EBlendOp   InBlendOp        = EBlendOp::Add,
+        EBlendType InSrcBlendAlpha  = EBlendType::One,
+        EBlendType InDstBlendAlpha  = EBlendType::Zero,
+        EBlendOp   InBlendOpAlpha   = EBlendOp::Add,
+        ELogicOp   InLogicOp        = ELogicOp::Noop,
+        bool       bInLogicOpEnable = false,
         FRenderTargetWriteState InRenderTargetWriteMask = FRenderTargetWriteState())
         : SrcBlend(InSrcBlend)
         , DstBlend(InDstBlend)
@@ -606,7 +600,6 @@ struct FRenderTargetBlendDesc
     FRenderTargetWriteState RenderTargetWriteMask;
 };
 
-
 struct FRHIBlendStateInitializer
 {
     FRHIBlendStateInitializer()
@@ -656,7 +649,6 @@ struct FRHIBlendStateInitializer
     bool bIndependentBlendEnable;
 };
 
-
 class FRHIBlendState : public FRHIResource
 {
 protected:
@@ -681,7 +673,6 @@ inline const CHAR* ToString(EVertexInputClass BlendOp)
     }
 }
 
-
 struct FVertexInputElement
 {
     FVertexInputElement()
@@ -696,14 +687,14 @@ struct FVertexInputElement
     { }
 
     FVertexInputElement(
-        const FString& InSemantic,
-        uint32 InSemanticIndex,
-        EFormat InFormat,
-        uint16 InVertexStride,
-        uint32 InInputSlot,
-        uint32 InByteOffset,
+        const FString&    InSemantic,
+        uint32            InSemanticIndex,
+        EFormat           InFormat,
+        uint16            InVertexStride,
+        uint32            InInputSlot,
+        uint32            InByteOffset,
         EVertexInputClass InInputClass,
-        uint32 InInstanceStepRate)
+        uint32            InInstanceStepRate)
         : Semantic(InSemantic)
         , SemanticIndex(InSemanticIndex)
         , Format(InFormat)
@@ -824,8 +815,8 @@ struct FGraphicsPipelineFormats
     }
 
     FGraphicsPipelineFormats(
-        const TStaticArray<EFormat, kRHIMaxRenderTargetCount>& InRenderTargetFormats,
-        uint32 InNumRenderTargets,
+        const   TStaticArray<EFormat, kRHIMaxRenderTargetCount>& InRenderTargetFormats,
+        uint32  InNumRenderTargets,
         EFormat InDepthStencilFormat = EFormat::Unknown)
         : RenderTargetFormats(InRenderTargetFormats)
         , NumRenderTargets(InNumRenderTargets)
@@ -896,16 +887,16 @@ struct FRHIGraphicsPipelineStateInitializer
     { }
 
     FRHIGraphicsPipelineStateInitializer(
-        FRHIVertexInputLayout* InVertexInputLayout,
-        FRHIDepthStencilState* InDepthStencilState,
-        FRHIRasterizerState* InRasterizerState,
-        FRHIBlendState* InBlendState,
-        const FGraphicsPipelineShaders& InShaderState,
-        const FGraphicsPipelineFormats& InPipelineFormats,
-        EPrimitiveTopologyType InPrimitiveTopologyType = EPrimitiveTopologyType::Triangle,
-        uint32 InSampleCount = 1,
-        uint32 InSampleQuality = 0,
-        uint32 InSampleMask = 0xffffffff,
+        FRHIVertexInputLayout*    InVertexInputLayout,
+        FRHIDepthStencilState*    InDepthStencilState,
+        FRHIRasterizerState*      InRasterizerState,
+        FRHIBlendState*           InBlendState,
+        const                     FGraphicsPipelineShaders& InShaderState,
+        const                     FGraphicsPipelineFormats& InPipelineFormats,
+        EPrimitiveTopologyType    InPrimitiveTopologyType   = EPrimitiveTopologyType::Triangle,
+        uint32                    InSampleCount             = 1,
+        uint32                    InSampleQuality           = 0,
+        uint32                    InSampleMask              = 0xffffffff,
         EIndexBufferStripCutValue InIBStripCutValue = IndexBufferStripCutValue_Disabled)
         : VertexInputLayout(InVertexInputLayout)
         , DepthStencilState(InDepthStencilState)
@@ -1050,10 +1041,10 @@ struct FRHIRayTracingPipelineStateInitializer
     { }
 
     FRHIRayTracingPipelineStateInitializer(
-        const TArrayView<FRHIRayGenShader*>& InRayGenShaders,
-        const TArrayView<FRHIRayCallableShader*>& InCallableShaders,
-        const TArrayView<FRHIRayTracingHitGroupInitializer>& InHitGroups,
-        const TArrayView<FRHIRayMissShader*>& InMissShaders,
+        const  TArrayView<FRHIRayGenShader*>&                 InRayGenShaders,
+        const  TArrayView<FRHIRayCallableShader*>&            InCallableShaders,
+        const  TArrayView<FRHIRayTracingHitGroupInitializer>& InHitGroups,
+        const  TArrayView<FRHIRayMissShader*>&                InMissShaders,
         uint32 InMaxAttributeSizeInBytes,
         uint32 InMaxPayloadSizeInBytes,
         uint32 InMaxRecursionDepth)

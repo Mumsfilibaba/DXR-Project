@@ -363,11 +363,11 @@ D3D12TextureType* FD3D12Interface::CreateTexture(const InitializerType& Initiali
             uint32 Height = Extent.y;
             for (uint32 Index = 0; Index < Texture2D->GetNumMips(); ++Index)
             {
+                FTextureRegion2D TextureRegion(Width, Height);
                 DirectContext->UpdateTexture2D(
-                    Texture2D, 
-                    Width,
-                    Height,
-                    Index, 
+                    Texture2D,
+                    TextureRegion,
+                    Index,
                     InitialData->GetMipData(Index), 
                     (uint32)InitialData->GetMipRowPitch(Index));
 
@@ -511,7 +511,7 @@ FRHIBuffer* FD3D12Interface::RHICreateBuffer(const FRHIBufferDesc& InDesc, EReso
             DirectContext->StartContext();
 
             DirectContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
-            DirectContext->UpdateBuffer(NewBuffer.Get(), 0, InDesc.Size, InInitialData);
+            DirectContext->UpdateBuffer(NewBuffer.Get(), FBufferRegion(0, InDesc.Size), InInitialData);
 
             // NOTE: Transfer to the initial state
             if (InInitialState != EResourceAccess::CopyDest)

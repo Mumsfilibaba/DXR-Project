@@ -23,7 +23,6 @@ struct FRHICommand
     FRHICommand* NextCommand = nullptr;
 };
 
-
 template<typename CommandType>
 struct TRHICommand 
     : public FRHICommand
@@ -38,7 +37,6 @@ struct TRHICommand
         Command->~CommandType();
     }
 };
-
 
 template<typename LambdaType>
 struct TRHICommandExecuteLambda : public TRHICommand<TRHICommandExecuteLambda<LambdaType>>
@@ -55,7 +53,6 @@ struct TRHICommandExecuteLambda : public TRHICommand<TRHICommandExecuteLambda<La
     LambdaType Lambda;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandExecuteCommandList)
 {
     FORCEINLINE FRHICommandExecuteCommandList(FRHICommandList* InCommandList)
@@ -66,7 +63,6 @@ DECLARE_RHICOMMAND(FRHICommandExecuteCommandList)
 
     FRHICommandList* CommandList;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandBeginTimeStamp)
 {
@@ -84,7 +80,6 @@ DECLARE_RHICOMMAND(FRHICommandBeginTimeStamp)
     uint32              Index;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
 {
     FORCEINLINE FRHICommandEndTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
@@ -100,7 +95,6 @@ DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
     FRHITimestampQuery* Query;
     uint32              Index;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
 {
@@ -119,7 +113,6 @@ DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
     FRHIRenderTargetView RenderTargetView;
     FVector4             ClearColor;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
 {
@@ -141,7 +134,6 @@ DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
     const uint8          Stencil;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
 {
     FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const FVector4& InClearColor)
@@ -160,10 +152,9 @@ DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
     FVector4                 ClearColor;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandBeginRenderPass)
 {
-    FRHICommandBeginRenderPass(const FRHIRenderPassInitializer& InRenderPassInitializer)
+    FRHICommandBeginRenderPass(const FRHIRenderPassDesc& InRenderPassInitializer)
         : RenderPassInitializer(InRenderPassInitializer)
     { }
 
@@ -172,9 +163,8 @@ DECLARE_RHICOMMAND(FRHICommandBeginRenderPass)
         CommandContext.BeginRenderPass(RenderPassInitializer);
     }
 
-    FRHIRenderPassInitializer RenderPassInitializer;
+    FRHIRenderPassDesc RenderPassInitializer;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandEndRenderPass)
 {
@@ -186,52 +176,33 @@ DECLARE_RHICOMMAND(FRHICommandEndRenderPass)
     }
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandSetViewport)
 {
-    FORCEINLINE FRHICommandSetViewport(float InWidth, float InHeight, float InMinDepth, float InMaxDepth, float InX, float InY)
-        : Width(InWidth)
-        , Height(InHeight)
-        , MinDepth(InMinDepth)
-        , MaxDepth(InMaxDepth)
-        , x(InX)
-        , y(InY)
+    FORCEINLINE FRHICommandSetViewport(const FRHIViewportRegion& InViewportRegion)
+        : ViewportRegion(InViewportRegion)
     { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetViewport(Width, Height, MinDepth, MaxDepth, x, y);
+        CommandContext.SetViewport(ViewportRegion);
     }
 
-    float Width;
-    float Height;
-    float MinDepth;
-    float MaxDepth;
-    float x;
-    float y;
+    FRHIViewportRegion ViewportRegion;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandSetScissorRect)
 {
-    FORCEINLINE FRHICommandSetScissorRect(float InWidth, float InHeight, float InX, float InY)
-        : Width(InWidth)
-        , Height(InHeight)
-        , x(InX)
-        , y(InY)
+    FORCEINLINE FRHICommandSetScissorRect(const FRHIScissorRegion& InScissorRegion)
+        : ScissorRegion(InScissorRegion)
     { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetScissorRect(Width, Height, x, y);
+        CommandContext.SetScissorRect(ScissorRegion);
     }
 
-    float Width;
-    float Height;
-    float x;
-    float y;
+    FRHIScissorRegion ScissorRegion;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
 {
@@ -246,7 +217,6 @@ DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
 
     FVector4 Color;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandSetVertexBuffers)
 {
@@ -272,7 +242,6 @@ DECLARE_RHICOMMAND(FRHICommandSetVertexBuffers)
     uint32                        StartSlot;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandSetIndexBuffer)
 {
     FORCEINLINE FRHICommandSetIndexBuffer(FRHIBuffer* InIndexBuffer, EIndexFormat InIndexFormat)
@@ -294,7 +263,6 @@ DECLARE_RHICOMMAND(FRHICommandSetIndexBuffer)
     EIndexFormat IndexFormat;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandSetPrimitiveTopology)
 {
     FORCEINLINE FRHICommandSetPrimitiveTopology(EPrimitiveTopology InPrimitiveTopologyType)
@@ -308,7 +276,6 @@ DECLARE_RHICOMMAND(FRHICommandSetPrimitiveTopology)
 
     EPrimitiveTopology PrimitiveTopologyType;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandSetGraphicsPipelineState)
 {
@@ -324,7 +291,6 @@ DECLARE_RHICOMMAND(FRHICommandSetGraphicsPipelineState)
     FRHIGraphicsPipelineState* PipelineState;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandSetComputePipelineState)
 {
     FORCEINLINE FRHICommandSetComputePipelineState(FRHIComputePipelineState* InPipelineState)
@@ -338,7 +304,6 @@ DECLARE_RHICOMMAND(FRHICommandSetComputePipelineState)
 
     FRHIComputePipelineState* PipelineState;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandSet32BitShaderConstants)
 {
@@ -360,7 +325,6 @@ DECLARE_RHICOMMAND(FRHICommandSet32BitShaderConstants)
     uint32      Num32BitConstants;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandSetShaderResourceView)
 {
     FORCEINLINE FRHICommandSetShaderResourceView(FRHIShader* InShader, FRHIShaderResourceView* InShaderResourceView, uint32 InParameterIndex)
@@ -378,7 +342,6 @@ DECLARE_RHICOMMAND(FRHICommandSetShaderResourceView)
     FRHIShaderResourceView* ShaderResourceView;
     uint32                  ParameterIndex;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandSetShaderResourceViews)
 {
@@ -398,7 +361,6 @@ DECLARE_RHICOMMAND(FRHICommandSetShaderResourceViews)
     uint32                                    StartParameterIndex;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessView)
 {
     FORCEINLINE FRHICommandSetUnorderedAccessView(FRHIShader* InShader, FRHIUnorderedAccessView* InUnorderedAccessView, uint32 InParameterIndex)
@@ -417,7 +379,6 @@ DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessView)
     uint32                   ParameterIndex;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessViews)
 {
     FORCEINLINE FRHICommandSetUnorderedAccessViews(FRHIShader* InShader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 InStartParameterIndex)
@@ -435,7 +396,6 @@ DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessViews)
     TArrayView<FRHIUnorderedAccessView* const> UnorderedAccessViews;
     uint32                                     StartParameterIndex;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandSetConstantBuffer)
 {
@@ -459,7 +419,6 @@ DECLARE_RHICOMMAND(FRHICommandSetConstantBuffer)
     FRHIBuffer* ConstantBuffer;
     uint32      ParameterIndex;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandSetConstantBuffers)
 {
@@ -487,7 +446,6 @@ DECLARE_RHICOMMAND(FRHICommandSetConstantBuffers)
     uint32                        StartParameterIndex;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandSetSamplerState)
 {
     FORCEINLINE FRHICommandSetSamplerState(FRHIShader* InShader, FRHISamplerState* InSamplerState, uint32 InParameterIndex)
@@ -505,7 +463,6 @@ DECLARE_RHICOMMAND(FRHICommandSetSamplerState)
     FRHISamplerState* SamplerState;
     uint32            ParameterIndex;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandSetSamplerStates)
 {
@@ -525,40 +482,34 @@ DECLARE_RHICOMMAND(FRHICommandSetSamplerStates)
     uint32                              StartParameterIndex;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandUpdateBuffer)
 {
-    FORCEINLINE FRHICommandUpdateBuffer(FRHIBuffer* InDst, uint32 InDstOffset, uint32 InSize, const void* InSrcData)
+    FORCEINLINE FRHICommandUpdateBuffer(FRHIBuffer* InDst, const FBufferRegion& InBufferRegion, const void* InSrcData)
         : Dst(InDst)
-        , DstOffset(InDstOffset)
-        , Size(InSize)
         , SrcData(InSrcData)
+        , BufferRegion(InBufferRegion)
     { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.UpdateBuffer(Dst, DstOffset, Size, SrcData);
+        CommandContext.UpdateBuffer(Dst, BufferRegion, SrcData);
     }
 
-    FRHIBuffer* Dst;
-    uint32      DstOffset;
-    uint32      Size;
-    const void* SrcData;
+    FRHIBuffer*      Dst;
+    const void*      SrcData;
+    FBufferRegion BufferRegion;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandUpdateTexture2D)
 {
     FORCEINLINE FRHICommandUpdateTexture2D(
-        FRHITexture2D* InDst,
-        uint16 InWidth,
-        uint16 InHeight,
-        uint16 InMipLevel,
-        const void* InSrcData,
-        uint32 InSrcRowPitch)
+        FRHITexture2D*          InDst,
+        const FTextureRegion2D& InTextureRegion,
+        uint32                  InMipLevel,
+        const void*             InSrcData,
+        uint32                  InSrcRowPitch)
         : Dst(InDst)
-        , Width(InWidth)
-        , Height(InHeight)
+        , TextureRegion(InTextureRegion)
         , MipLevel(InMipLevel)
         , SrcData(InSrcData)
         , SrcRowPitch(InSrcRowPitch)
@@ -566,17 +517,15 @@ DECLARE_RHICOMMAND(FRHICommandUpdateTexture2D)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.UpdateTexture2D(Dst, Width, Height, MipLevel, SrcData, SrcRowPitch);
+        CommandContext.UpdateTexture2D(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch);
     }
 
-    FRHITexture2D* Dst;
-    uint16         Width;
-    uint16         Height;
-    uint16         MipLevel;
-    const void*    SrcData;
-    uint32         SrcRowPitch;
+    FRHITexture2D*   Dst;
+    FTextureRegion2D TextureRegion;
+    uint32           MipLevel;
+    const void*      SrcData;
+    uint32           SrcRowPitch;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandResolveTexture)
 {
@@ -594,10 +543,9 @@ DECLARE_RHICOMMAND(FRHICommandResolveTexture)
     FRHITexture* Src;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandCopyBuffer)
 {
-    FORCEINLINE FRHICommandCopyBuffer(FRHIBuffer* InDst, FRHIBuffer* InSrc, const FRHICopyBufferInfo& InCopyBufferInfo)
+    FORCEINLINE FRHICommandCopyBuffer(FRHIBuffer* InDst, FRHIBuffer* InSrc, const FRHIBufferCopyDesc& InCopyBufferInfo)
         : Dst(InDst)
         , Src(InSrc)
         , CopyBufferInfo(InCopyBufferInfo)
@@ -610,9 +558,8 @@ DECLARE_RHICOMMAND(FRHICommandCopyBuffer)
 
     FRHIBuffer*        Dst;
     FRHIBuffer*        Src;
-    FRHICopyBufferInfo CopyBufferInfo;
+    FRHIBufferCopyDesc CopyBufferInfo;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandCopyTexture)
 {
@@ -630,10 +577,9 @@ DECLARE_RHICOMMAND(FRHICommandCopyTexture)
     FRHITexture* Source;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
 {
-    FORCEINLINE FRHICommandCopyTextureRegion(FRHITexture* InDst, FRHITexture* InSrc, const FRHICopyTextureInfo& InCopyInfo)
+    FORCEINLINE FRHICommandCopyTextureRegion(FRHITexture* InDst, FRHITexture* InSrc, const FRHITextureCopyDesc& InCopyInfo)
         : Dst(InDst)
         , Src(InSrc)
         , CopyInfo(InCopyInfo)
@@ -646,9 +592,8 @@ DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
 
     FRHITexture*        Dst;
     FRHITexture*        Src;
-    FRHICopyTextureInfo CopyInfo;
+    FRHITextureCopyDesc CopyInfo;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandDestroyResource)
 {
@@ -664,7 +609,6 @@ DECLARE_RHICOMMAND(FRHICommandDestroyResource)
     TSharedRef<IRefCounted> Resource;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandDiscardContents)
 {
     FORCEINLINE FRHICommandDiscardContents(FRHITexture* InTexture)
@@ -679,17 +623,16 @@ DECLARE_RHICOMMAND(FRHICommandDiscardContents)
     FRHITexture* Texture;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandBuildRayTracingGeometry)
 {
     FORCEINLINE FRHICommandBuildRayTracingGeometry(
         FRHIRayTracingGeometry* InRayTracingGeometry,
-        FRHIBuffer* InVertexBuffer,
-        uint32 InNumVertices,
-        FRHIBuffer* InIndexBuffer,
-        uint32 InNumIndices,
-        EIndexFormat InIndexFormat,
-        bool bInUpdate)
+        FRHIBuffer*             InVertexBuffer,
+        uint32                  InNumVertices,
+        FRHIBuffer*             InIndexBuffer,
+        uint32                  InNumIndices,
+        EIndexFormat            InIndexFormat,
+        bool                    bInUpdate)
         : RayTracingGeometry(InRayTracingGeometry)
         , VertexBuffer(InVertexBuffer)
         , NumVertices(InNumVertices)
@@ -723,7 +666,6 @@ DECLARE_RHICOMMAND(FRHICommandBuildRayTracingGeometry)
     bool                    bUpdate;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandBuildRayTracingScene)
 {
     FORCEINLINE FRHICommandBuildRayTracingScene(
@@ -745,12 +687,11 @@ DECLARE_RHICOMMAND(FRHICommandBuildRayTracingScene)
     bool                                             bUpdate;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
 {
     FORCEINLINE FRHICommandSetRayTracingBindings(
-        FRHIRayTracingScene* InRayTracingScene,
-        FRHIRayTracingPipelineState* InPipelineState,
+        FRHIRayTracingScene*              InRayTracingScene,
+        FRHIRayTracingPipelineState*      InPipelineState,
         const FRayTracingShaderResources* InGlobalResource,
         const FRayTracingShaderResources* InRayGenLocalResources,
         const FRayTracingShaderResources* InMissLocalResources,
@@ -786,7 +727,6 @@ DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
     uint32                            NumHitGroupResources;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandGenerateMips)
 {
     FORCEINLINE FRHICommandGenerateMips(FRHITexture* InTexture)
@@ -800,7 +740,6 @@ DECLARE_RHICOMMAND(FRHICommandGenerateMips)
 
     FRHITexture* Texture;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandTransitionTexture)
 {
@@ -820,7 +759,6 @@ DECLARE_RHICOMMAND(FRHICommandTransitionTexture)
     EResourceAccess AfterState;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandTransitionBuffer)
 {
     FORCEINLINE FRHICommandTransitionBuffer(FRHIBuffer* InBuffer, EResourceAccess InBeforeState, EResourceAccess InAfterState)
@@ -839,7 +777,6 @@ DECLARE_RHICOMMAND(FRHICommandTransitionBuffer)
     EResourceAccess AfterState;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandUnorderedAccessTextureBarrier)
 {
     FORCEINLINE FRHICommandUnorderedAccessTextureBarrier(FRHITexture* InTexture)
@@ -854,7 +791,6 @@ DECLARE_RHICOMMAND(FRHICommandUnorderedAccessTextureBarrier)
     FRHITexture* Texture;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandUnorderedAccessBufferBarrier)
 {
     FORCEINLINE FRHICommandUnorderedAccessBufferBarrier(FRHIBuffer* InBuffer)
@@ -868,7 +804,6 @@ DECLARE_RHICOMMAND(FRHICommandUnorderedAccessBufferBarrier)
 
     FRHIBuffer* Buffer;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandDraw)
 {
@@ -885,7 +820,6 @@ DECLARE_RHICOMMAND(FRHICommandDraw)
     uint32 VertexCount;
     uint32 StartVertexLocation;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandDrawIndexed)
 {
@@ -904,7 +838,6 @@ DECLARE_RHICOMMAND(FRHICommandDrawIndexed)
     uint32 StartIndexLocation;
     uint32 BaseVertexLocation;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandDrawInstanced)
 {
@@ -925,7 +858,6 @@ DECLARE_RHICOMMAND(FRHICommandDrawInstanced)
     uint32 StartVertexLocation;
     uint32 StartInstanceLocation;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandDrawIndexedInstanced)
 {
@@ -954,7 +886,6 @@ DECLARE_RHICOMMAND(FRHICommandDrawIndexedInstanced)
     uint32 StartInstanceLocation;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandDispatch)
 {
     FORCEINLINE FRHICommandDispatch(uint32 InThreadGroupCountX, uint32 InThreadGroupCountY, uint32 InThreadGroupCountZ)
@@ -972,7 +903,6 @@ DECLARE_RHICOMMAND(FRHICommandDispatch)
     uint32 ThreadGroupCountY;
     uint32 ThreadGroupCountZ;
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandDispatchRays)
 {
@@ -1001,7 +931,6 @@ DECLARE_RHICOMMAND(FRHICommandDispatchRays)
     uint32                       Depth;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandInsertMarker)
 {
     FORCEINLINE FRHICommandInsertMarker(const FStringView& InMarker)
@@ -1023,7 +952,6 @@ DECLARE_RHICOMMAND(FRHICommandInsertMarker)
     FStringView Marker;
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandDebugBreak)
 {
     FRHICommandDebugBreak() = default;
@@ -1037,7 +965,6 @@ DECLARE_RHICOMMAND(FRHICommandDebugBreak)
     }
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandBeginExternalCapture)
 {
     FRHICommandBeginExternalCapture() = default;
@@ -1048,7 +975,6 @@ DECLARE_RHICOMMAND(FRHICommandBeginExternalCapture)
     }
 };
 
-
 DECLARE_RHICOMMAND(FRHICommandEndExternalCapture)
 {
     FRHICommandEndExternalCapture() = default;
@@ -1058,7 +984,6 @@ DECLARE_RHICOMMAND(FRHICommandEndExternalCapture)
         CommandContext.EndExternalCapture();
     }
 };
-
 
 DECLARE_RHICOMMAND(FRHICommandPresentViewport)
 {

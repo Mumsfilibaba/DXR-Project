@@ -60,9 +60,9 @@ struct FRHIShaderCompileInfo
     { }
     
     FRHIShaderCompileInfo(
-        const FString& InEntryPoint,
-        EShaderModel InShaderModel,
-        EShaderStage InShaderStage,
+        const FString&  InEntryPoint,
+        EShaderModel    InShaderModel,
+        EShaderStage    InShaderStage,
         const TArrayView<FShaderDefine>& InDefines = TArrayView<FShaderDefine>(),
 #if PLATFORM_WINDOWS
         EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::HLSL)
@@ -100,8 +100,8 @@ private:
     ~FRHIShaderCompiler();
 
 public:
-    static bool Initialize(const CHAR* AssetFolderPath);
-    static void Release();
+    static bool Create(const CHAR* AssetFolderPath);
+    static void Destroy();
     
     static FRHIShaderCompiler& Get();
 
@@ -111,16 +111,18 @@ public:
 private:
     static void ErrorCallback(void* Userdata, const CHAR* Error);
 
+    bool Initialize();
+
     bool ConvertSpirvToMetalShader(const FString& Entrypoint, TArray<uint8>& OutByteCode);
     bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);
 
     FString CreateArgString(const TArrayView<LPCWSTR> Args);
 
-public:
+private:
     void*                 DXCLib;
     DxcCreateInstanceProc DxcCreateInstanceFunc;
 
     FString               AssetPath;
 
-    static TOptional<FRHIShaderCompiler> Instance;
+    static FRHIShaderCompiler* GInstance;
 };

@@ -209,12 +209,12 @@ public:
         return dbg_new FNullRHIViewport(Initializer);
     }
 
-    virtual struct IRHICommandContext* RHIGetDefaultCommandContext() override final
+    virtual struct IRHICommandContext* RHIObtainCommandContext() override final
     {
         return CommandContext;
     }
 
-    virtual FString GetAdapterDescription() const override final
+    virtual FString RHIGetAdapterDescription() const override final
     {
         return FString();
     }

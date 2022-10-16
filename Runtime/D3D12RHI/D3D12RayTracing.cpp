@@ -311,7 +311,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
     }
 
     CmdContext.TransitionResource(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-    CmdContext.UpdateBuffer(InstanceBuffer.Get(), 0, InstanceDescs.SizeInBytes(), InstanceDescs.GetData());
+    CmdContext.UpdateBuffer(InstanceBuffer.Get(), FBufferRegion(0, InstanceDescs.SizeInBytes()), InstanceDescs.GetData());
     CmdContext.TransitionResource(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc;
@@ -428,9 +428,9 @@ bool FD3D12RayTracingScene::BuildBindingTable(
 
     // NOTE: With resource tracking this would not be needed
     CmdContext.TransitionResource(BindingTable.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-    CmdContext.UpdateBuffer(BindingTable.Get(), 0, TableEntrySize, &RayGenEntry);
-    CmdContext.UpdateBuffer(BindingTable.Get(), TableEntrySize, TableEntrySize, &MissEntry);
-    CmdContext.UpdateBuffer(BindingTable.Get(), TableEntrySize * 2, NumHitGroupResources * TableEntrySize, HitGroupEntries);
+    CmdContext.UpdateBuffer(BindingTable.Get(), FBufferRegion(0, TableEntrySize), &RayGenEntry);
+    CmdContext.UpdateBuffer(BindingTable.Get(), FBufferRegion(TableEntrySize, TableEntrySize), &MissEntry);
+    CmdContext.UpdateBuffer(BindingTable.Get(), FBufferRegion(TableEntrySize * 2, NumHitGroupResources * TableEntrySize), HitGroupEntries);
     CmdContext.TransitionResource(BindingTable.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     ShaderBindingTableBuilder.Reset();

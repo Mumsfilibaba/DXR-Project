@@ -35,13 +35,116 @@ TAutoConsoleVariable<bool> GVSyncEnabled("Renderer.Feature.VerticalSync", false)
 TAutoConsoleVariable<bool> GFrustumCullEnabled("Renderer.Feature.FrustumCulling", true);
 TAutoConsoleVariable<bool> GRayTracingEnabled("Renderer.Feature.RayTracing", false);
 
-RENDERER_API FRenderer GRenderer;
+
+FRenderer* FRenderer::GInstance = nullptr;
 
 FRenderer::FRenderer()
     : WindowHandler(MakeShared<FRendererWindowHandler>())
+    , TextureDebugger(nullptr)
+    , InfoWindow(nullptr)
+    , GPUProfilerWindow(nullptr)
+    , CommandList()
+    , Resources()
+    , LightSetup()
+    , CameraBuffer()
+    , HaltonState()
+    , DeferredRenderer()
+    , ShadowMapRenderer()
+    , SSAORenderer()
+    , LightProbeRenderer()
+    , SkyboxRenderPass()
+    , ForwardRenderer()
+    , RayTracer()
+    , DebugRenderer()
+    , TemporalAA()
+    , ShadingImage(nullptr)
+    , ShadingRatePipeline(nullptr)
+    , ShadingRateShader(nullptr)
+    , PostPSO(nullptr)
+    , PostShader(nullptr)
+    , FXAAPSO(nullptr)
+    , FXAAShader(nullptr)
+    , FXAADebugPSO(nullptr)
+    , FXAADebugShader(nullptr)
+    , TimestampQueries(nullptr)
+    , FrameStatistics()
 { }
 
-bool FRenderer::Init()
+FRenderer::~FRenderer()
+{
+    GRHICommandExecutor.WaitForGPU();
+
+    CommandList.Reset();
+
+    DeferredRenderer.Release();
+    ShadowMapRenderer.Release();
+    SSAORenderer.Release();
+    LightProbeRenderer.Release();
+    SkyboxRenderPass.Release();
+    ForwardRenderer.Release();
+    RayTracer.Release();
+    DebugRenderer.Release();
+    TemporalAA.Release();
+
+    Resources.Release();
+    LightSetup.Release();
+
+    PostPSO.Reset();
+    PostShader.Reset();
+    FXAAPSO.Reset();
+    FXAAShader.Reset();
+    FXAADebugPSO.Reset();
+    FXAADebugShader.Reset();
+
+    ShadingImage.Reset();
+    ShadingRatePipeline.Reset();
+    ShadingRateShader.Reset();
+
+    TimestampQueries.Reset();
+
+    FrameStatistics.Reset();
+
+    if (FApplicationInterface::IsInitialized())
+    {
+        FApplicationInterface& Application = FApplicationInterface::Get();
+        Application.RemoveWindow(TextureDebugger);
+        TextureDebugger.Reset();
+
+        Application.RemoveWindow(InfoWindow);
+        InfoWindow.Reset();
+
+        Application.RemoveWindow(GPUProfilerWindow);
+        GPUProfilerWindow.Reset();
+    }
+}
+
+bool FRenderer::Initialize()
+{
+    CHECK(GInstance == nullptr);
+
+    GInstance = dbg_new FRenderer();
+    if (!GInstance->Create())
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void FRenderer::Release()
+{
+    CHECK(GInstance != nullptr);
+    delete GInstance;
+    GInstance = nullptr;
+}
+
+FRenderer& FRenderer::Get()
+{
+    CHECK(GInstance != nullptr);
+    return *GInstance;
+}
+
+bool FRenderer::Create()
 {
     FRHIViewportInitializer ViewportInitializer(
         GEngine->MainWindow->GetPlatformHandle(),
@@ -367,7 +470,7 @@ void FRenderer::PerformFXAA(FRHICommandList& InCommandList)
     Settings.Width  = static_cast<float>(Resources.BackBuffer->GetWidth());
     Settings.Height = static_cast<float>(Resources.BackBuffer->GetHeight());
 
-    FRHIRenderPassInitializer RenderPass;
+    FRHIRenderPassDesc RenderPass;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPass.NumRenderTargets            = 1;
@@ -403,7 +506,7 @@ void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
 
     TRACE_SCOPE("Draw to BackBuffer");
 
-    FRHIRenderPassInitializer RenderPass;
+    FRHIRenderPassDesc RenderPass;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPass.NumRenderTargets            = 1;
@@ -528,8 +631,7 @@ void FRenderer::Tick(const FScene& Scene)
         EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(
         Resources.CameraBuffer.Get(), 
-        0, 
-        sizeof(FCameraBuffer), 
+        FBufferRegion(0, sizeof(FCameraBuffer)), 
         &CameraBuffer);
     CommandList.TransitionBuffer(
         Resources.CameraBuffer.Get(), 
@@ -873,7 +975,7 @@ void FRenderer::Tick(const FScene& Scene)
         }
 #endif
 
-        FRHIRenderPassInitializer RenderPass;
+        FRHIRenderPassDesc RenderPass;
         RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
         RenderPass.NumRenderTargets = 1;
 
@@ -907,54 +1009,6 @@ void FRenderer::Tick(const FScene& Scene)
         GRHICommandExecutor.WaitForOutstandingTasks();
         GRHICommandExecutor.ExecuteCommandList(CommandList);
         FrameStatistics = GRHICommandExecutor.GetStatistics();
-    }
-}
-
-void FRenderer::Release()
-{
-    GRHICommandExecutor.WaitForGPU();
-
-    CommandList.Reset();
-
-    DeferredRenderer.Release();
-    ShadowMapRenderer.Release();
-    SSAORenderer.Release();
-    LightProbeRenderer.Release();
-    SkyboxRenderPass.Release();
-    ForwardRenderer.Release();
-    RayTracer.Release();
-    DebugRenderer.Release();
-    TemporalAA.Release();
-
-    Resources.Release();
-    LightSetup.Release();
-
-    PostPSO.Reset();
-    PostShader.Reset();
-    FXAAPSO.Reset();
-    FXAAShader.Reset();
-    FXAADebugPSO.Reset();
-    FXAADebugShader.Reset();
-
-    ShadingImage.Reset();
-    ShadingRatePipeline.Reset();
-    ShadingRateShader.Reset();
-
-    TimestampQueries.Reset();
-
-    FrameStatistics.Reset();
-
-    if (FApplicationInterface::IsInitialized())
-    {
-        FApplicationInterface& Application = FApplicationInterface::Get();
-        Application.RemoveWindow(TextureDebugger);
-        TextureDebugger.Reset();
-
-        Application.RemoveWindow(InfoWindow);
-        InfoWindow.Reset();
-
-        Application.RemoveWindow(GPUProfilerWindow);
-        GPUProfilerWindow.Reset();
     }
 }
 

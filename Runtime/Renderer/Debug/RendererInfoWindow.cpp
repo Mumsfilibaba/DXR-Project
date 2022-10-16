@@ -50,7 +50,7 @@ void FRendererInfoWindow::Tick()
     ImGui::Text("%s", AdapterName.GetCString());
     ImGui::NextColumn();
 
-    FRHICommandStatistics Statistics = GRenderer.GetStatistics();
+    FRHICommandStatistics Statistics = FRenderer::Get().GetStatistics();
 
     ImGui::Text("DrawCalls: ");
     ImGui::NextColumn();

@@ -529,15 +529,18 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
             FMatrix4 Matrix;
         } PerObjectBuffer;
 
-        FRHIRenderPassInitializer RenderPass;
+        FRHIRenderPassDesc RenderPass;
         RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get());
 
         CommandList.BeginRenderPass(RenderPass);
 
         CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
         
-        CommandList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-        CommandList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
+        FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+        CommandList.SetViewport(ViewportRegion);
+
+        FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+        CommandList.SetScissorRect(ScissorRegion);
 
         CommandList.SetGraphicsPipelineState(PrePassPipelineState.Get());
 
@@ -673,7 +676,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
     const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
 
-    FRHIRenderPassInitializer RenderPass;
+    FRHIRenderPassDesc RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get());
     RenderPass.RenderTargets[1] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Normal].Get());
     RenderPass.RenderTargets[2] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Material].Get());
@@ -688,8 +691,11 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
 
     CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     
-    CommandList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CommandList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
+    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    CommandList.SetViewport(ViewportRegion);
+
+    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    CommandList.SetScissorRect(ScissorRegion);
 
     // Setup Pipeline
     CommandList.SetGraphicsPipelineState(PipelineState.Get());
@@ -928,7 +934,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     }
 
     // DepthStencil
-    const FTextureClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
+    const FClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
     TextureInitializer.Format     = FrameResources.DepthBufferFormat;
     TextureInitializer.UsageFlags = ETextureUsageFlags::ShadowMap;
     TextureInitializer.ClearValue = DepthClearValue;

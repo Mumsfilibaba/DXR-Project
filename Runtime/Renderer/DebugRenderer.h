@@ -20,7 +20,7 @@ public:
 private:
     FRHIBufferRef                AABBVertexBuffer;
     FRHIBufferRef                AABBIndexBuffer;
-    uint32                       AABBIndexCount;
+    uint32                       AABBIndexCount = 0;
 
     FRHIGraphicsPipelineStateRef AABBDebugPipelineState;
     FRHIVertexShaderRef          AABBVertexShader;
@@ -32,5 +32,5 @@ private:
 
     FRHIBufferRef                DbgSphereVertexBuffer;
     FRHIBufferRef                DbgSphereIndexBuffer;
-    uint32                       DbgSphereIndexCount;
+    uint32                       DbgSphereIndexCount = 0;
 };

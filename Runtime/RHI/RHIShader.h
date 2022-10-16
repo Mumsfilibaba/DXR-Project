@@ -51,7 +51,7 @@ enum class EShaderStage : uint8
     RayCallable     = 14,
 };
 
-inline const CHAR* ToString(EShaderStage ShaderStage)
+CONSTEXPR const CHAR* ToString(EShaderStage ShaderStage)
 {
     switch(ShaderStage)
     {
@@ -92,7 +92,6 @@ private:
     EShaderStage ShaderStage;
 };
 
-
 class FRHIComputeShader
     : public FRHIShader
 {
@@ -107,7 +106,6 @@ public:
     virtual FIntVector3 GetThreadGroupXYZ() const = 0;
 };
 
-
 class FRHIGraphicsShader 
     : public FRHIShader
 {
@@ -116,7 +114,6 @@ protected:
         : FRHIShader(InShaderStage)
     { }
 };
-
 
 class FRHIVertexShader 
     : public FRHIGraphicsShader
@@ -127,7 +124,6 @@ protected:
     { }
 };
 
-
 class FRHIHullShader 
     : public FRHIGraphicsShader
 {
@@ -136,7 +132,6 @@ protected:
         : FRHIGraphicsShader(EShaderStage::Hull)
     { }
 };
-
 
 class FRHIDomainShader 
     : public FRHIGraphicsShader
@@ -147,7 +142,6 @@ protected:
     { }
 };
 
-
 class FRHIGeometryShader 
     : public FRHIGraphicsShader
 {
@@ -156,7 +150,6 @@ protected:
         : FRHIGraphicsShader(EShaderStage::Geometry)
     { }
 };
-
 
 class FRHIMeshShader 
     : public FRHIGraphicsShader
@@ -167,7 +160,6 @@ protected:
     { }
 };
 
-
 class FRHIAmplificationShader 
     : public FRHIGraphicsShader
 {
@@ -176,7 +168,6 @@ protected:
         : FRHIGraphicsShader(EShaderStage::Amplification)
     { }
 };
-
 
 class FRHIPixelShader 
     : public FRHIGraphicsShader
@@ -187,7 +178,6 @@ protected:
     { }
 };
 
-
 class FRHIRayTracingShader 
     : public FRHIShader
 {
@@ -196,7 +186,6 @@ protected:
         : FRHIShader(InShaderStage)
     { }
 };
-
 
 class FRHIRayGenShader 
     : public FRHIRayTracingShader
@@ -207,7 +196,6 @@ protected:
     { }
 };
 
-
 class FRHIRayAnyHitShader 
     : public FRHIRayTracingShader
 {
@@ -216,7 +204,6 @@ protected:
         : FRHIRayTracingShader(EShaderStage::RayAnyHit)
     { }
 };
-
 
 class FRHIRayClosestHitShader
     : public FRHIRayTracingShader
@@ -227,7 +214,6 @@ protected:
     { }
 };
 
-
 class FRHIRayMissShader 
     : public FRHIRayTracingShader
 {
@@ -237,7 +223,6 @@ protected:
     { }
 };
 
-
 class FRHIRayIntersectionShader 
     : public FRHIRayTracingShader
 {
@@ -246,7 +231,6 @@ protected:
         : FRHIRayTracingShader(EShaderStage::RayIntersection)
     { }
 };
-
 
 class FRHIRayCallableShader
     : public FRHIRayTracingShader

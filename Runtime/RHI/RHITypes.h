@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Math/Color.h"
+#include "Core/Math/IntVector3.h"
 #include "Core/Templates/EnumUtilities.h"
 
 enum class EFormat : uint16
@@ -620,12 +621,12 @@ private:
 };
 
 
-struct FTextureDepthStencilValue
+struct FDepthStencilValue
 {
     /**
      * @brief - Default Constructor
      */
-    FTextureDepthStencilValue()
+    FDepthStencilValue()
         : Depth(1.0f)
         , Stencil(0)
     { }
@@ -635,7 +636,7 @@ struct FTextureDepthStencilValue
      * @param InDepth   - Depth-value
      * @param InStencil - Stencil-value
      */
-    FTextureDepthStencilValue(float InDepth, uint8 InStencil)
+    FDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     { }
@@ -655,7 +656,7 @@ struct FTextureDepthStencilValue
      * @param Other - Other instance to compare with
      * @return      - Returns true if the instances are equal
      */
-    bool operator==(const FTextureDepthStencilValue& Other) const
+    bool operator==(const FDepthStencilValue& Other) const
     {
         return (Depth == Other.Depth) && (Stencil && Other.Stencil);
     }
@@ -665,7 +666,7 @@ struct FTextureDepthStencilValue
      * @param Other - Other instance to compare with
      * @return      - Returns false if the instances are equal
      */
-    bool operator!=(const FTextureDepthStencilValue& Other) const
+    bool operator!=(const FDepthStencilValue& Other) const
     {
         return !(*this == Other);
     }
@@ -678,7 +679,7 @@ struct FTextureDepthStencilValue
 };
 
 
-struct FTextureClearValue
+struct FClearValue
 {
     enum class EType : uint8
     {
@@ -689,7 +690,7 @@ struct FTextureClearValue
     /**
      * @brief - Default Constructor that creates a black clear color
      */
-    FTextureClearValue()
+    FClearValue()
         : Type(EType::Color)
         , Format(EFormat::Unknown)
         , ColorValue(0.0f, 0.0f, 0.0f, 1.0f)
@@ -701,7 +702,7 @@ struct FTextureClearValue
      * @param InDepth   - Depth-value
      * @param InStencil - Stencil-value
      */
-    FTextureClearValue(EFormat InFormat, float InDepth, uint8 InStencil)
+    FClearValue(EFormat InFormat, float InDepth, uint8 InStencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencilValue(InDepth, InStencil)
@@ -715,7 +716,7 @@ struct FTextureClearValue
      * @param InB      - Blue-Channel value
      * @param InA      - Alpha-Channel value
      */
-    FTextureClearValue(EFormat InFormat, float InR, float InG, float InB, float InA)
+    FClearValue(EFormat InFormat, float InR, float InG, float InB, float InA)
         : Type(EType::Color)
         , Format(InFormat)
         , ColorValue(InR, InG, InB, InA)
@@ -725,7 +726,7 @@ struct FTextureClearValue
      * @brief       - Copy-constructor
      * @param Other - Instance to copy
      */
-    FTextureClearValue(const FTextureClearValue& Other)
+    FClearValue(const FClearValue& Other)
         : Type(Other.Type)
         , Format(Other.Format)
         , ColorValue()
@@ -744,17 +745,23 @@ struct FTextureClearValue
     /** 
      * @return - Returns a true if the value is a FloatColor
      */
-    bool IsColorValue() const { return (Type == EType::Color); }
+    FORCEINLINE bool IsColorValue() const 
+    { 
+        return (Type == EType::Color);
+    }
 
     /** 
      * @return - Returns a true if the value is a DepthStencilClearValue 
      */
-    bool IsDepthStencilValue() const { return (Type == EType::DepthStencil); }
+    FORCEINLINE bool IsDepthStencilValue() const 
+    { 
+        return (Type == EType::DepthStencil);
+    }
 
     /**
      * @return - Returns a FloatColor
      */
-    FFloatColor& AsColor()
+    FORCEINLINE FFloatColor& AsColor()
     {
         CHECK(IsColorValue());
         return ColorValue;
@@ -763,7 +770,7 @@ struct FTextureClearValue
     /**
      * @return - Returns a FloatColor
      */
-    const FFloatColor& AsColor() const
+    FORCEINLINE const FFloatColor& AsColor() const
     {
         CHECK(IsColorValue());
         return ColorValue;
@@ -772,7 +779,7 @@ struct FTextureClearValue
     /** 
      * @return - Returns a DepthStencilClearValue 
      */
-    FTextureDepthStencilValue& AsDepthStencil()
+    FORCEINLINE FDepthStencilValue& AsDepthStencil()
     {
         CHECK(IsDepthStencilValue());
         return DepthStencilValue;
@@ -781,7 +788,7 @@ struct FTextureClearValue
     /** 
      * @return - Returns a DepthStencilClearValue 
      */
-    const FTextureDepthStencilValue& AsDepthStencil() const
+    FORCEINLINE const FDepthStencilValue& AsDepthStencil() const
     {
         CHECK(IsDepthStencilValue());
         return DepthStencilValue;
@@ -792,7 +799,7 @@ struct FTextureClearValue
      * @param Other - Instance to copy
      * @return      - Returns a reference to this instance
      */
-    FTextureClearValue& operator=(const FTextureClearValue& Other)
+    FClearValue& operator=(const FClearValue& Other)
     {
         Type   = Other.Type;
         Format = Other.Format;
@@ -815,7 +822,7 @@ struct FTextureClearValue
      * @param Other - Instance to compare with
      * @return      - Returns true if the instances are equal
      */
-    bool operator==(const FTextureClearValue& Other) const
+    bool operator==(const FClearValue& Other) const
     {
         if ((Type != Other.Type) || (Format != Other.Format))
         {
@@ -836,7 +843,7 @@ struct FTextureClearValue
      * @param Other - Instance to compare with
      * @return      - Returns false if the instances are equal
      */
-    bool operator!=(const FTextureClearValue& Other) const
+    bool operator!=(const FClearValue& Other) const
     {
         return !(*this == Other);
     }
@@ -853,50 +860,111 @@ struct FTextureClearValue
         FFloatColor ColorValue;
 
         /** @brief - DepthStencil-value */
-        FTextureDepthStencilValue DepthStencilValue;
+        FDepthStencilValue DepthStencilValue;
     };
 };
 
 
-struct FRHICopyBufferInfo
+struct FBufferRegion
 {
-    FRHICopyBufferInfo() = default;
+    FBufferRegion() = default;
 
-    FORCEINLINE FRHICopyBufferInfo(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes)
-        : SourceOffset(InSourceOffset)
-        , DestinationOffset(InDestinationOffset)
-        , SizeInBytes(InSizeInBytes)
+    FORCEINLINE FBufferRegion(uint64 InOffset, uint64 InSize)
+        : Offset(InOffset)
+        , Size(InSize)
     { }
 
-    uint64 SourceOffset      = 0;
-    uint32 DestinationOffset = 0;
-    uint32 SizeInBytes       = 0;
+    uint64 Offset;
+    uint64 Size;
 };
 
 
-struct FRHICopyTextureSubresourceInfo
+struct FTextureRegion2D
 {
-    FRHICopyTextureSubresourceInfo() = default;
+    FTextureRegion2D() = default;
 
-    FORCEINLINE FRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
-        : x(InX)
-        , y(InY)
-        , z(InZ)
-        , SubresourceIndex(InSubresourceIndex)
+    FORCEINLINE FTextureRegion2D(uint32 InWidth, uint32 InHeight, uint32 InPositionX = 0, uint32 InPositionY = 0)
+        : PositionX(InPositionX)
+        , PositionY(InPositionY)
+        , Width(InWidth)
+        , Height(InHeight)
     { }
 
-    uint32 x = 0;
-    uint32 y = 0;
-    uint32 z = 0;
-    uint32 SubresourceIndex = 0;
+    uint32 Width;
+    uint32 Height;
+    
+    uint32 PositionX;
+    uint32 PositionY;
 };
 
 
-struct FRHICopyTextureInfo
+struct FRHIBufferCopyDesc
 {
-    FRHICopyTextureSubresourceInfo Source;
-    FRHICopyTextureSubresourceInfo Destination;
-    uint32 Width  = 0;
-    uint32 Height = 0;
-    uint32 Depth  = 0;
+    FRHIBufferCopyDesc() = default;
+
+    FORCEINLINE FRHIBufferCopyDesc(uint64 InSrcOffset, uint32 InDstOffset, uint32 InSize)
+        : SrcOffset(InSrcOffset)
+        , DstOffset(InDstOffset)
+        , Size(InSize)
+    { }
+
+    uint64 SrcOffset = 0;
+    uint64 DstOffset = 0;
+    uint64 Size      = 0;
+};
+
+
+struct FRHITextureCopyDesc
+{
+    FIntVector3 DstPosition;
+    uint32      DstArraySlice = 0;
+    uint32      DstMipSlice   = 0;
+
+    FIntVector3 SrcPosition;
+    uint32      SrcArraySlice = 0;
+    uint32      SrcMipSlice   = 0;
+
+    FIntVector3 Size;
+    uint32      NumArraySlices = 0;
+    uint32      NumMipSlices   = 0;
+};
+
+
+struct FRHIViewportRegion
+{
+    FRHIViewportRegion() = default;
+
+    FORCEINLINE FRHIViewportRegion(float InWidth, float InHeight, float InPositionX, float InPositionY, float InMinDepth, float InMaxDepth)
+        : Width(InWidth)
+        , Height(InHeight)
+        , PositionX(InPositionX)
+        , PositionY(InPositionY)
+        , MinDepth(InMinDepth)
+        , MaxDepth(InMaxDepth)
+    { }
+
+    float Width     = 0.0f;
+    float Height    = 0.0f;
+    float PositionX = 0.0f;
+    float PositionY = 0.0f;
+    float MinDepth  = 0.0f;
+    float MaxDepth  = 1.0f;
+};
+
+
+struct FRHIScissorRegion
+{
+    FRHIScissorRegion() = default;
+
+    FORCEINLINE FRHIScissorRegion(float InWidth, float InHeight, float InPositionX, float InPositionY)
+        : Width(InWidth)
+        , Height(InHeight)
+        , PositionX(InPositionX)
+        , PositionY(InPositionY)
+    { }
+
+    float Width     = 0.0f;
+    float Height    = 0.0f;
+    float PositionX = 0.0f;
+    float PositionY = 0.0f;
 };

@@ -67,7 +67,7 @@ struct FRHITextureInitializer
         EResourceAccess InInitialAccess,
         uint32 InNumMips,
         ITextureResourceData* InInitialData = nullptr,
-        const FTextureClearValue& InClearValue = FTextureClearValue())
+        const FClearValue& InClearValue = FClearValue())
         : ClearValue(InClearValue)
         , Format(InFormat)
         , UsageFlags(InUsageFlags)
@@ -105,7 +105,7 @@ struct FRHITextureInitializer
         return !(*this == RHS);
     }
 
-    FTextureClearValue    ClearValue;
+    FClearValue    ClearValue;
 
     EFormat               Format;
 
@@ -138,7 +138,7 @@ struct FRHITexture2DInitializer
         ETextureUsageFlags InUsageFlags,
         EResourceAccess InInitialAccess,
         ITextureResourceData* InInitialData = nullptr,
-        const FTextureClearValue& InClearValue = FTextureClearValue())
+        const FClearValue& InClearValue = FClearValue())
         : FRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InInitialData, InClearValue)
         , Width(uint16(InWidth))
         , Height(uint16(InHeight))
@@ -186,7 +186,7 @@ struct FRHITexture2DArrayInitializer
         ETextureUsageFlags InUsageFlags,
         EResourceAccess InInitialAccess,
         ITextureResourceData* InInitialData = nullptr,
-        const FTextureClearValue& InClearValue = FTextureClearValue())
+        const FClearValue& InClearValue = FClearValue())
         : FRHITexture2DInitializer(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InInitialData, InClearValue)
         , ArraySize(uint16(InArraySize))
     { }
@@ -222,7 +222,7 @@ struct FRHITextureCubeInitializer
         ETextureUsageFlags InUsageFlags,
         EResourceAccess InInitialAccess,
         ITextureResourceData* InInitialData = nullptr,
-        const FTextureClearValue& InClearValue = FTextureClearValue())
+        const FClearValue& InClearValue = FClearValue())
         : FRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InInitialData, InClearValue)
         , NumSamples(uint8(InNumSamples))
         , Extent(uint16(InExtent))
@@ -262,7 +262,7 @@ struct FRHITextureCubeArrayInitializer
         ETextureUsageFlags InUsageFlags,
         EResourceAccess InInitialAccess,
         ITextureResourceData* InInitialData = nullptr,
-        const FTextureClearValue& InClearValue = FTextureClearValue())
+        const FClearValue& InClearValue = FClearValue())
         : FRHITextureCubeInitializer(InFormat, InExtent, InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InInitialData, InClearValue)
         , ArraySize(uint16(InArraySize))
     { }
@@ -300,7 +300,7 @@ struct FRHITexture3DInitializer
         ETextureUsageFlags InUsageFlags,
         EResourceAccess InInitialAccess,
         ITextureResourceData* InInitialData = nullptr,
-        const FTextureClearValue& InClearValue = FTextureClearValue())
+        const FClearValue& InClearValue = FClearValue())
         : FRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InInitialData, InClearValue)
         , Width(InWidth)
         , Height(InHeight)
@@ -375,13 +375,13 @@ public:
     virtual FString GetName() const { return ""; }
     virtual void SetName(const FString& InName) { }
 
-    const FTextureClearValue& GetClearValue() const { return ClearValue; }
+    const FClearValue& GetClearValue() const { return ClearValue; }
 
 protected:
     EFormat            Format;
     uint8              NumMips;
     ETextureUsageFlags UsageFlags;
-    FTextureClearValue ClearValue;
+    FClearValue ClearValue;
 };
 
 

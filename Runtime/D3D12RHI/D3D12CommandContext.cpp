@@ -488,25 +488,25 @@ bool FD3D12CommandContext::Initialize()
     return true;
 }
 
-void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SrcData)
+void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SrcData)
 {
     D3D12_ERROR_COND(Resource != nullptr, "Resource cannot be nullptr");
 
-    if (SizeInBytes)
+    if (BufferRegion.Size)
     {
         D3D12_ERROR_COND(SrcData != nullptr, "SourceData cannot be nullptr");
 
         FlushResourceBarriers();
 
-        FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(SizeInBytes, 1);
-        FMemory::Memcpy(Allocation.Memory, SrcData, SizeInBytes);
+        FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(BufferRegion.Size, 1);
+        FMemory::Memcpy(Allocation.Memory, SrcData, BufferRegion.Size);
 
         CommandList->CopyBufferRegion(
             Resource->GetD3D12Resource(),
-            OffsetInBytes,
+            BufferRegion.Offset,
             Allocation.Resource,
             Allocation.ResourceOffset,
-            SizeInBytes);
+            BufferRegion.Size);
 
         // TODO: Deferred Release Queue
         CmdBatch->AddInUseResource(Resource);
@@ -595,7 +595,7 @@ void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
     CommandList->ClearUnorderedAccessViewFloat(OnlineHandle_GPU, D3D12UnorderedAccessView, ClearColor.GetData());
 }
 
-void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer)
+void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer)
 {
     D3D12_ERROR_COND(State.bIsRenderPassActive == false, "A RenderPass is already active");
 
@@ -667,27 +667,27 @@ void FD3D12CommandContext::EndRenderPass()
     State.bIsRenderPassActive = false;
 }
 
-void FD3D12CommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
+void FD3D12CommandContext::SetViewport(const FRHIViewportRegion& ViewportRegion)
 {
     D3D12_VIEWPORT& Viewport = State.Graphics.Viewports[0];
-    Viewport.Width    = Width;
-    Viewport.Height   = Height;
-    Viewport.MaxDepth = MaxDepth;
-    Viewport.MinDepth = MinDepth;
-    Viewport.TopLeftX = x;
-    Viewport.TopLeftY = y;
+    Viewport.Width    = ViewportRegion.Width;
+    Viewport.Height   = ViewportRegion.Height;
+    Viewport.MaxDepth = ViewportRegion.MaxDepth;
+    Viewport.MinDepth = ViewportRegion.MinDepth;
+    Viewport.TopLeftX = ViewportRegion.PositionX;
+    Viewport.TopLeftY = ViewportRegion.PositionY;
 
     State.Graphics.NumViewports   = 1;
     State.Graphics.bBindViewports = true;
 }
 
-void FD3D12CommandContext::SetScissorRect(float Width, float Height, float x, float y)
+void FD3D12CommandContext::SetScissorRect(const FRHIScissorRegion& ScissorRegion)
 {
     D3D12_RECT& ScissorRect = State.Graphics.ScissorRects[0];
-    ScissorRect.top    = LONG(y);
-    ScissorRect.bottom = LONG(Height);
-    ScissorRect.left   = LONG(x);
-    ScissorRect.right  = LONG(Width);
+    ScissorRect.left   = LONG(ScissorRegion.PositionX);
+    ScissorRect.right  = LONG(ScissorRegion.Width);
+    ScissorRect.top    = LONG(ScissorRegion.PositionY);
+    ScissorRect.bottom = LONG(ScissorRegion.Height);
 
     State.Graphics.NumScissor        = 1;
     State.Graphics.bBindScissorRects = true;
@@ -896,24 +896,23 @@ void FD3D12CommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     CmdBatch->AddInUseResource(Src);
 }
 
-void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SrcData)
+void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)
 {
-    if (SizeInBytes > 0)
+    if (BufferRegion.Size)
     {
         FD3D12Buffer* D3D12Destination = GetD3D12Buffer(Dst);
-        UpdateBuffer(D3D12Destination->GetD3D12Resource(), OffsetInBytes, SizeInBytes, SrcData);
+        UpdateBuffer(D3D12Destination->GetD3D12Resource(), BufferRegion, SrcData);
 
         CmdBatch->AddInUseResource(Dst);
     }
 }
 
 void FD3D12CommandContext::UpdateTexture2D(
-    FRHITexture2D* Dst,
-    uint32 Width,
-    uint32 Height,
-    uint32 MipLevel,
-    const void* SrcData,
-    uint32 SrcRowPitch)
+    FRHITexture2D*          Dst,
+    const FTextureRegion2D& TextureRegion,
+    uint32                  MipLevel,
+    const void*             SrcData,
+    uint32                  SrcRowPitch)
 {
     D3D12_ERROR_COND(SrcData != nullptr, "SrcData cannot be nullptr");
 
@@ -968,12 +967,13 @@ void FD3D12CommandContext::UpdateTexture2D(
     SourceLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
     SourceLocation.PlacedFootprint.Offset             = Allocation.ResourceOffset;
     SourceLocation.PlacedFootprint.Footprint.Format   = Desc.Format;
-    SourceLocation.PlacedFootprint.Footprint.Width    = Width;
-    SourceLocation.PlacedFootprint.Footprint.Height   = Height;
+    SourceLocation.PlacedFootprint.Footprint.Width    = TextureRegion.Width;
+    SourceLocation.PlacedFootprint.Footprint.Height   = TextureRegion.Height;
     SourceLocation.PlacedFootprint.Footprint.Depth    = 1;
     SourceLocation.PlacedFootprint.Footprint.RowPitch = PlacedSubresourceFootprint.Footprint.RowPitch;
 
     // TODO: MipLevel may not be the correct subresource
+    // TODO: Add offset
     D3D12_TEXTURE_COPY_LOCATION DestLocation;
     FMemory::Memzero(&DestLocation);
 
@@ -987,7 +987,7 @@ void FD3D12CommandContext::UpdateTexture2D(
     CmdBatch->AddInUseResource(Dst);
 }
 
-void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo)
+void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyInfo)
 {
     D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
 
@@ -1001,10 +1001,10 @@ void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FR
 
     CommandList->CopyBufferRegion(
         D3D12Destination->GetD3D12Resource(),
-        CopyInfo.DestinationOffset,
+        CopyInfo.DstOffset,
         D3D12Source->GetD3D12Resource(),
-        CopyInfo.SourceOffset,
-        CopyInfo.SizeInBytes);
+        CopyInfo.SrcOffset,
+        CopyInfo.Size);
 
     CmdBatch->AddInUseResource(Dst);
     CmdBatch->AddInUseResource(Src);
@@ -1028,7 +1028,7 @@ void FD3D12CommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     CmdBatch->AddInUseResource(Src);
 }
 
-void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyInfo)
+void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& InCopyDesc)
 {
     D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
 
@@ -1039,38 +1039,40 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
     CHECK(D3D12Source != nullptr);
 
     // Source
-    D3D12_TEXTURE_COPY_LOCATION SourceLocation;
-    FMemory::Memzero(&SourceLocation);
+    D3D12_TEXTURE_COPY_LOCATION SrcLocation;
+    FMemory::Memzero(&SrcLocation);
 
-    SourceLocation.pResource        = D3D12Source->GetResource()->GetD3D12Resource();
-    SourceLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-    SourceLocation.SubresourceIndex = CopyInfo.Source.SubresourceIndex;
+    const uint32 SrcSubresourceIndex = D3D12CalcSubresource(InCopyDesc.SrcMipSlice, InCopyDesc.SrcArraySlice, 0, Src->GetNumMips(), Src->GetArraySize());
+    SrcLocation.pResource        = D3D12Source->GetResource()->GetD3D12Resource();
+    SrcLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    SrcLocation.SubresourceIndex = SrcSubresourceIndex;
 
-    D3D12_BOX SourceBox;
-    SourceBox.left   = CopyInfo.Source.x;
-    SourceBox.right  = CopyInfo.Source.x + CopyInfo.Width;
-    SourceBox.bottom = CopyInfo.Source.y;
-    SourceBox.top    = CopyInfo.Source.y + CopyInfo.Height;
-    SourceBox.front  = CopyInfo.Source.z;
-    SourceBox.back   = CopyInfo.Source.z + CopyInfo.Depth;
+    D3D12_BOX SrcBox;
+    SrcBox.left   = InCopyDesc.SrcPosition.x;
+    SrcBox.right  = InCopyDesc.SrcPosition.x + InCopyDesc.Size.x;
+    SrcBox.bottom = InCopyDesc.SrcPosition.y;
+    SrcBox.top    = InCopyDesc.SrcPosition.y + InCopyDesc.Size.y;
+    SrcBox.front  = InCopyDesc.SrcPosition.z;
+    SrcBox.back   = InCopyDesc.SrcPosition.z + InCopyDesc.Size.z;
 
     // Destination
-    D3D12_TEXTURE_COPY_LOCATION DestinationLocation;
-    FMemory::Memzero(&DestinationLocation);
+    D3D12_TEXTURE_COPY_LOCATION DstLocation;
+    FMemory::Memzero(&DstLocation);
 
-    DestinationLocation.pResource        = D3D12Destination->GetResource()->GetD3D12Resource();
-    DestinationLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-    DestinationLocation.SubresourceIndex = CopyInfo.Destination.SubresourceIndex;
+    const uint32 DstSubresourceIndex = D3D12CalcSubresource(InCopyDesc.DstMipSlice, InCopyDesc.DstArraySlice, 0, Dst->GetNumMips(), Dst->GetArraySize());
+    DstLocation.pResource        = D3D12Destination->GetResource()->GetD3D12Resource();
+    DstLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    DstLocation.SubresourceIndex = DstSubresourceIndex;
 
     FlushResourceBarriers();
 
     CommandList->CopyTextureRegion(
-        &DestinationLocation,
-        CopyInfo.Destination.x,
-        CopyInfo.Destination.y,
-        CopyInfo.Destination.z,
-        &SourceLocation, 
-        &SourceBox);
+        &DstLocation,
+        InCopyDesc.DstPosition.x,
+        InCopyDesc.DstPosition.y,
+        InCopyDesc.DstPosition.z,
+        &SrcLocation, 
+        &SrcBox);
 
     CmdBatch->AddInUseResource(Dst);
     CmdBatch->AddInUseResource(Src);

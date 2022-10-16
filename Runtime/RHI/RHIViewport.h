@@ -23,11 +23,11 @@ struct FRHIViewportInitializer
     { }
 
     FRHIViewportInitializer(
-        void* InWindowHandle,
+        void*   InWindowHandle,
         EFormat InColorFormat,
         EFormat InDepthFormat,
-        uint16 InWidth,
-        uint16 InHeight)
+        uint16  InWidth,
+        uint16  InHeight)
         : WindowHandle(InWindowHandle)
         , ColorFormat(InColorFormat)
         , DepthFormat(InDepthFormat)
@@ -57,6 +57,7 @@ struct FRHIViewportInitializer
     uint16  Width;
     uint16  Height;
 };
+
 
 class FRHIViewport 
     : public FRHIResource

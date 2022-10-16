@@ -68,12 +68,12 @@ struct FRHIRayTracingGeometryInstance
     { }
 
     FRHIRayTracingGeometryInstance(
-        FRHIRayTracingGeometry* InGeometry,
-        uint32 InInstanceIndex,
-        uint32 InHitGroupIndex,
+        FRHIRayTracingGeometry*  InGeometry,
+        uint32                   InInstanceIndex,
+        uint32                   InHitGroupIndex,
         ERayTracingInstanceFlags InFlags,
-        uint32 InMask,
-        const FMatrix3x4& InTransform)
+        uint32                   InMask,
+        const FMatrix3x4&        InTransform)
         : Geometry(InGeometry)
         , InstanceIndex(InInstanceIndex)
         , HitGroupIndex(InHitGroupIndex)
@@ -152,11 +152,11 @@ struct FRHIRayTracingGeometryInitializer
     { }
 
     FRHIRayTracingGeometryInitializer(
-        FRHIBuffer* InVertexBuffer,
-        uint32 InNumVerticies,
-        FRHIBuffer* InIndexBuffer,
-        uint32 InNumIndices,
-        EIndexFormat InIndexFormat,
+        FRHIBuffer*                      InVertexBuffer,
+        uint32                           InNumVerticies,
+        FRHIBuffer*                      InIndexBuffer,
+        uint32                           InNumIndices,
+        EIndexFormat                     InIndexFormat,
         EAccelerationStructureBuildFlags InFlags)
         : FRHIAccelerationStructureInitializer(InFlags)
         , VertexBuffer(InVertexBuffer)
@@ -272,8 +272,6 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRayTracingShaderResources
 
 struct FRayTracingShaderResources
 {

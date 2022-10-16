@@ -67,9 +67,9 @@ public:
         Reset();
     }
 
-    FORCEINLINE void* Allocate(int32 Size, int32 Alignment) noexcept
+    FORCEINLINE void* Allocate(uint64 Size, uint32 Alignment) noexcept
     {
-        return Memory.Allocate(Size, Alignment);
+        return Memory.Allocate(static_cast<int32>(Size), static_cast<int32>(Alignment));
     }
 
     template<typename T>
@@ -254,7 +254,7 @@ public:
         EmplaceCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
 
-    FORCEINLINE void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) noexcept
+    FORCEINLINE void BeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer) noexcept
     {
         CHECK(bIsRenderPassActive == false);
         EmplaceCommand<FRHICommandBeginRenderPass>(RenderPassInitializer);
@@ -268,14 +268,14 @@ public:
         bIsRenderPassActive = false;
     }
 
-    FORCEINLINE void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) noexcept
+    FORCEINLINE void SetViewport(const FRHIViewportRegion& ViewportRegion) noexcept
     {
-        EmplaceCommand<FRHICommandSetViewport>(Width, Height, MinDepth, MaxDepth, x, y);
+        EmplaceCommand<FRHICommandSetViewport>(ViewportRegion);
     }
 
-    FORCEINLINE void SetScissorRect(float Width, float Height, float x, float y) noexcept
+    FORCEINLINE void SetScissorRect(const FRHIScissorRegion& ScissorRegion) noexcept
     {
-        EmplaceCommand<FRHICommandSetScissorRect>(Width, Height, x, y);
+        EmplaceCommand<FRHICommandSetScissorRect>(ScissorRegion);
     }
 
     FORCEINLINE void SetBlendFactor(const FVector4& Color) noexcept
@@ -363,26 +363,25 @@ public:
         EmplaceCommand<FRHICommandSetSamplerStates>(Shader, SamplerStates, ParameterIndex);
     }
 
-    FORCEINLINE void UpdateBuffer(FRHIBuffer* Dst, uint32 OffsetInBytes, uint32 SizeInBytes, const void* InSrcData) noexcept
+    FORCEINLINE void UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* InSrcData) noexcept
     {
-        void* SrcData = Allocate(SizeInBytes, alignof(uint8));
-        FMemory::Memcpy(SrcData, InSrcData, SizeInBytes);
-        EmplaceCommand<FRHICommandUpdateBuffer>(Dst, OffsetInBytes, SizeInBytes, SrcData);
+        void* SrcData = Allocate(BufferRegion.Size, alignof(uint8));
+        FMemory::Memcpy(SrcData, InSrcData, BufferRegion.Size);
+        EmplaceCommand<FRHICommandUpdateBuffer>(Dst, BufferRegion, SrcData);
     }
 
     FORCEINLINE void UpdateTexture2D(
         FRHITexture2D* Dst,
-        uint16 Width,
-        uint16 Height,
-        uint16 MipLevel,
+        const FTextureRegion2D& TextureRegion,
+        uint32 MipLevel,
         const void* InSrcData,
         uint32 InSrcRowPitch) noexcept
     {
-        const uint32 SizeInBytes = InSrcRowPitch * Height;
+        const uint32 SizeInBytes = InSrcRowPitch * TextureRegion.Height;
         
         void* SrcData = Allocate(SizeInBytes, alignof(uint8));
         FMemory::Memcpy(SrcData, InSrcData, SizeInBytes);
-        EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, Width, Height, MipLevel, SrcData, InSrcRowPitch);
+        EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, TextureRegion, MipLevel, SrcData, InSrcRowPitch);
     }
 
     FORCEINLINE void ResolveTexture(FRHITexture* Dst, FRHITexture* Src) noexcept
@@ -390,7 +389,7 @@ public:
         EmplaceCommand<FRHICommandResolveTexture>(Dst, Src);
     }
 
-    FORCEINLINE void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo) noexcept
+    FORCEINLINE void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyInfo) noexcept
     {
         EmplaceCommand<FRHICommandCopyBuffer>(Dst, Src, CopyInfo);
     }
@@ -400,7 +399,7 @@ public:
         EmplaceCommand<FRHICommandCopyTexture>(Dst, Src);
     }
 
-    FORCEINLINE void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) noexcept
+    FORCEINLINE void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyTextureInfo) noexcept
     {
         EmplaceCommand<FRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
     }

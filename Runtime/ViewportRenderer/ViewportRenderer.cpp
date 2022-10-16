@@ -294,7 +294,8 @@ void FViewportRenderer::Render(FRHICommandList& CmdList)
     };
 
     // Setup viewport
-    CmdList.SetViewport(DrawData->DisplaySize.x, DrawData->DisplaySize.y, 0.0f, 1.0f, 0.0f, 0.0f);
+    FRHIViewportRegion ViewportRegion(DrawData->DisplaySize.x, DrawData->DisplaySize.y, 0.0f, 0.0f, 0.0f, 1.0f);
+    CmdList.SetViewport(ViewportRegion);
 
     CmdList.Set32BitShaderConstants(PShader.Get(), &MVP, 16);
 
@@ -314,10 +315,10 @@ void FViewportRenderer::Render(FRHICommandList& CmdList)
         const ImDrawList* ImCmdList = DrawData->CmdLists[i];
 
         const uint32 VertexSize = ImCmdList->VtxBuffer.Size * sizeof(ImDrawVert);
-        CmdList.UpdateBuffer(VertexBuffer.Get(), VertexOffset, VertexSize, ImCmdList->VtxBuffer.Data);
+        CmdList.UpdateBuffer(VertexBuffer.Get(), FBufferRegion(VertexOffset, VertexSize), ImCmdList->VtxBuffer.Data);
 
         const uint32 IndexSize = ImCmdList->IdxBuffer.Size * sizeof(ImDrawIdx);
-        CmdList.UpdateBuffer(IndexBuffer.Get(), IndexOffset, IndexSize, ImCmdList->IdxBuffer.Data);
+        CmdList.UpdateBuffer(IndexBuffer.Get(), FBufferRegion(IndexOffset, IndexSize), ImCmdList->IdxBuffer.Data);
 
         VertexOffset += VertexSize;
         IndexOffset  += IndexSize;
@@ -381,7 +382,12 @@ void FViewportRenderer::Render(FRHICommandList& CmdList)
                 CmdList.SetShaderResourceView(PShader.Get(), View, 0);
             }
 
-            CmdList.SetScissorRect(Cmd->ClipRect.z - ClipOff.x, Cmd->ClipRect.w - ClipOff.y, Cmd->ClipRect.x - ClipOff.x, Cmd->ClipRect.y - ClipOff.y);
+            FRHIScissorRegion ScissorRegion(
+                Cmd->ClipRect.z - ClipOff.x,
+                Cmd->ClipRect.w - ClipOff.y,
+                Cmd->ClipRect.x - ClipOff.x,
+                Cmd->ClipRect.y - ClipOff.y);
+            CmdList.SetScissorRect(ScissorRegion);
 
             CmdList.DrawIndexedInstanced(Cmd->ElemCount, 1, Cmd->IdxOffset + GlobalIndexOffset, Cmd->VtxOffset + GlobalVertexOffset, 0);
         }

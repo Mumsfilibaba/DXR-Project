@@ -33,11 +33,11 @@ public:
     virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)   override final { }
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final { }
 
-    virtual void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) override final { }
+    virtual void BeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer) override final { }
     virtual void EndRenderPass()                                                         override final { }
 
-    virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final { }
-    virtual void SetScissorRect(float Width, float Height, float x, float y)                              override final { }
+    virtual void SetViewport(const FRHIViewportRegion& ViewportRegion)  override final { }
+    virtual void SetScissorRect(const FRHIScissorRegion& ScissorRegion) override final { }
 
     virtual void SetBlendFactor(const FVector4& Color) override final { }
 
@@ -63,14 +63,14 @@ public:
     virtual void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)                             override final { }
     virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) override final { }
 
-    virtual void UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SrcData)           override final { }
-    virtual void UpdateTexture2D(FRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) override final { }
+    virtual void UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)           override final { }
+    virtual void UpdateTexture2D(FRHITexture2D* Dst, const FTextureRegion2D& BufferRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) override final { }
 
     virtual void ResolveTexture(FRHITexture* Dst, FRHITexture* Src) override final { }
 
-    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo)                  override final { }
+    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyInfo)                  override final { }
     virtual void CopyTexture(FRHITexture* Dst, FRHITexture* Src)                                                   override final { }
-    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) override final { }
+    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyTextureInfo) override final { }
 
     virtual void DestroyResource(class IRefCounted* Resource) override final { }
 

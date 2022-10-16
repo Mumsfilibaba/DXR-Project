@@ -66,34 +66,36 @@ struct FCameraBuffer
     FMatrix4 ProjectionInv;
 
     FVector3 Position;
-    float    NearPlane;
+    float    NearPlane = 0.0f;
 
     FVector3 Forward;
-    float    FarPlane;
+    float    FarPlane = 0.0f;
 
     FVector3 Right;
-    float    AspectRatio;
+    float    AspectRatio = 0.0f;
 
     FVector2 Jitter;
     FVector2 PrevJitter;
 
-    float    ViewportWidth;
-    float    ViewportHeight;
-    float    Padding0;
-    float    Padding1;
+    float    ViewportWidth  = 0.0f;
+    float    ViewportHeight = 0.0f;
+    float    Padding0 = 0.0f;
+    float    Padding1 = 0.0f;
 };
+
 
 class RENDERER_API FRenderer
 {
-public:
     FRenderer();
-    ~FRenderer() = default;
+    ~FRenderer();
 
-    bool Init();
+public:
+    static bool Initialize();
+    static void Release();
+
+    static FRenderer& Get();
 
     void Tick(const FScene& Scene);
-
-    void Release();
 
     void PerformFrustumCullingAndSort(const FScene& Scene);
     void PerformFXAA(FRHICommandList& InCmdList);
@@ -112,6 +114,8 @@ public:
 private:
     void OnWindowResize(const FWindowResizeEvent& Event);
 
+    bool Create();
+    
     bool InitAA();
     bool InitShadingImage();
 
@@ -124,10 +128,16 @@ private:
     TSharedPtr<FRendererWindowHandler> WindowHandler;
 
     TSharedRef<FRenderTargetDebugWindow> TextureDebugger;
-    TSharedRef<FRendererInfoWindow> InfoWindow;
-    TSharedRef<FGPUProfilerWindow>  GPUProfilerWindow;
+    TSharedRef<FRendererInfoWindow>      InfoWindow;
+    TSharedRef<FGPUProfilerWindow>       GPUProfilerWindow;
 
     FRHICommandList CommandList;
+
+    FFrameResources               Resources;
+    FLightSetup                   LightSetup;
+
+    FCameraBuffer                 CameraBuffer;
+    FHaltonState                  HaltonState;
 
     FDeferredRenderer             DeferredRenderer;
     FShadowMapRenderer            ShadowMapRenderer;
@@ -139,15 +149,13 @@ private:
     FDebugRenderer                DebugRenderer;
     FTemporalAA                   TemporalAA;
 
-    FFrameResources Resources;
-    FLightSetup     LightSetup;
-
-    FRHITexture2DRef            ShadingImage;
-    FRHIComputePipelineStateRef ShadingRatePipeline;
-    FRHIComputeShaderRef        ShadingRateShader;
+    FRHITexture2DRef             ShadingImage;
+    FRHIComputePipelineStateRef  ShadingRatePipeline;
+    FRHIComputeShaderRef         ShadingRateShader;
 
     FRHIGraphicsPipelineStateRef PostPSO;
     FRHIPixelShaderRef           PostShader;
+
     FRHIGraphicsPipelineStateRef FXAAPSO;
     FRHIPixelShaderRef           FXAAShader;
     FRHIGraphicsPipelineStateRef FXAADebugPSO;
@@ -157,13 +165,9 @@ private:
 
     FRHICommandStatistics FrameStatistics;
 
-    FCameraBuffer         CameraBuffer;
-    FHaltonState          HaltonState;
+    static FRenderer* GInstance;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-extern RENDERER_API FRenderer GRenderer;
 
 inline void AddDebugTexture(
     const FRHIShaderResourceViewRef& ImageView,
@@ -171,5 +175,5 @@ inline void AddDebugTexture(
     EResourceAccess BeforeState,
     EResourceAccess AfterState)
 {
-    GRenderer.GetTextureDebugger()->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
+    FRenderer::Get().GetTextureDebugger()->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
 }

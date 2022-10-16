@@ -108,15 +108,15 @@ struct FRHISamplerStateInitializer
     { }
 
     FRHISamplerStateInitializer(
-        ESamplerMode InAddressU,
-        ESamplerMode InAddressV,
-        ESamplerMode InAddressW,
-        ESamplerFilter InFilter,
-        EComparisonFunc InComparisonFunc,
-        float InMipLODBias,
-        uint8 InMaxAnisotropy,
-        float InMinLOD,
-        float InMaxLOD,
+        ESamplerMode       InAddressU,
+        ESamplerMode       InAddressV,
+        ESamplerMode       InAddressW,
+        ESamplerFilter     InFilter,
+        EComparisonFunc    InComparisonFunc,
+        float              InMipLODBias,
+        uint8              InMaxAnisotropy,
+        float              InMinLOD,
+        float              InMaxLOD,
         const FFloatColor& InBorderColor)
         : AddressU(InAddressU)
         , AddressV(InAddressV)

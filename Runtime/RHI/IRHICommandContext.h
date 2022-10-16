@@ -5,56 +5,6 @@
 
 class FRHIViewport;
 
-typedef TStaticArray<FRHIRenderTargetView, kRHIMaxRenderTargetCount> FRenderTargetViewArray;
-
-struct FRHIRenderPassInitializer
-{
-    FRHIRenderPassInitializer()
-        : ShadingRateTexture(nullptr)
-        , DepthStencilView()
-        , StaticShadingRate(EShadingRate::VRS_1x1)
-        , NumRenderTargets(0)
-        , RenderTargets()
-    { }
-
-    FRHIRenderPassInitializer(
-        const FRenderTargetViewArray& InRenderTargets,
-        uint32 InNumRenderTargets,
-        FRHIDepthStencilView InDepthStencilView,
-        FRHITexture2D* InShadingRateTexture = nullptr,
-        EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1)
-        : ShadingRateTexture(InShadingRateTexture)
-        , DepthStencilView(InDepthStencilView)
-        , StaticShadingRate(InStaticShadingRate)
-        , NumRenderTargets(InNumRenderTargets)
-        , RenderTargets(InRenderTargets)
-    { }
-
-    bool operator==(const FRHIRenderPassInitializer& RHS) const
-    {
-        return (NumRenderTargets   == RHS.NumRenderTargets)
-            && (RenderTargets      == RHS.RenderTargets)
-            && (DepthStencilView   == RHS.DepthStencilView)
-            && (ShadingRateTexture == RHS.ShadingRateTexture)
-            && (StaticShadingRate  == RHS.StaticShadingRate);
-    }
-
-    bool operator!=(const FRHIRenderPassInitializer& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    FRHITexture2D*         ShadingRateTexture;
-
-    FRHIDepthStencilView   DepthStencilView;
-    
-    EShadingRate           StaticShadingRate;
-    
-    uint32                 NumRenderTargets;
-    FRenderTargetViewArray RenderTargets;
-};
-
-
 struct IRHICommandContext
 {
     virtual void StartContext()  = 0;
@@ -96,10 +46,10 @@ struct IRHICommandContext
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) = 0;
 
     /**
-     * @brief                       - Begins a new RenderPass
-     * @param RenderPassInitializer - Description of RenderTargets and DepthStencils to bind for drawing
+     * @brief                - Begins a new RenderPass
+     * @param RenderPassDesc - Description of RenderTargets and DepthStencils to bind for drawing
      */
-    virtual void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) = 0;
+    virtual void BeginRenderPass(const FRHIRenderPassDesc& RenderPassDesc) = 0;
 
     /**
      * @brief - Ends the current RenderPass
@@ -107,24 +57,16 @@ struct IRHICommandContext
     virtual void EndRenderPass() = 0;
 
     /**
-     * @brief          - Set the current viewport settings
-     * @param Width    - Width of the viewport
-     * @param Height   - Height of the viewport
-     * @param MinDepth - Minimum-depth of the viewport
-     * @param MaxDepth - Maximum-depth of the viewport
-     * @param x        - x-position of the viewport
-     * @param y        - y-position of the viewport
+     * @brief                - Set the current viewport settings
+     * @param ViewportRegion - Region of the viewport
      */
-    virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) = 0;
+    virtual void SetViewport(const FRHIViewportRegion& ViewportRegion) = 0;
     
     /**
-     * @brief        - Set the current scissor settings 
-     * @param Width  - Width of the viewport
-     * @param Height - Height of the viewport
-     * @param x      - x-position of the viewport
-     * @param y      - y-position of the viewport
+     * @brief               - Set the current scissor settings 
+     * @param ScissorRegion - Region of the scissor rectangle
      */
-    virtual void SetScissorRect(float Width, float Height, float x, float y) = 0;
+    virtual void SetScissorRect(const FRHIScissorRegion& ScissorRegion) = 0;
 
     /**
      * @brief       - Set the BlendFactor color 
@@ -253,30 +195,22 @@ struct IRHICommandContext
     virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) = 0;
 
     /**
-     * @brief               - Updates the contents of a Buffer
-     * @param Dst           - Destination buffer to update
-     * @param OffsetInBytes - Offset in bytes inside the destination-buffer
-     * @param SizeInBytes   - Number of bytes to copy over to the buffer
-     * @param SrcData       - SrcData to copy to the GPU
+     * @brief              - Updates the contents of a Buffer
+     * @param Dst          - Destination buffer to update
+     * @param BufferRegion - BufferRegion to copy
+     * @param SrcData      - SrcData to copy to the GPU
      */
-    virtual void UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SrcData) = 0;
+    virtual void UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData) = 0;
     
     /**
-     * @brief                - Updates the contents of a Texture2D
-     * @param Dst            - Destination Texture2D to update
-     * @param Width          - Width of the texture to update
-     * @param Height         - Height of the texture to update
-     * @param MipLevel       - MipLevel of the texture to update
-     * @param SrcData        - SrcData to copy to the GPU
-     * @param SourceRowPitch - RowPitch of the SrcData
+     * @brief               - Updates the contents of a Texture2D
+     * @param Dst           - Destination Texture2D to update
+     * @param TextureRegion - Describes the region of the texture to copy
+     * @param MipLevel      - MipLevel of the texture to update
+     * @param SrcData       - SrcData to copy to the GPU
+     * @param SrcRowPitch   - RowPitch of the SrcData
      */
-    virtual void UpdateTexture2D(
-        FRHITexture2D* Dst,
-        uint32 Width,
-        uint32 Height,
-        uint32 MipLevel,
-        const void* SrcData,
-        uint32 SourceRowPitch) = 0;
+    virtual void UpdateTexture2D(FRHITexture2D* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) = 0;
 
     /**
      * @brief     - Resolves a multi-sampled texture, must have the same sizes and compatible formats
@@ -289,9 +223,9 @@ struct IRHICommandContext
      * @brief          - Copies the contents from one buffer to another 
      * @param Dst      - Destination buffer to copy to
      * @param Src      - Source buffer to copy from
-     * @param CopyInfo - Information about the copy operation
+     * @param CopyDesc - Information about the copy operation
      */
-    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHICopyBufferInfo& CopyInfo) = 0;
+    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc) = 0;
     
     /**
      * @brief     - Copies the entire contents of one texture to another, which require the size and formats to be the same 
@@ -304,11 +238,11 @@ struct IRHICommandContext
      * @brief - Copies contents of a texture region of one texture to another,
      *     which require the size and formats to be the same.
      * 
-     * @param Dst             - Destination texture
-     * @param Src             - Source texture
-     * @param CopyTextureInfo - Information about the copy operation
+     * @param Dst      - Destination texture
+     * @param Src      - Source texture
+     * @param CopyDesc - Information about the copy operation
      */
-    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHICopyTextureInfo& CopyTextureInfo) = 0;
+    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc) = 0;
 
     /**
      * @brief - Destroys a resource, this can be used to not having to deal with resource life time,
@@ -348,10 +282,7 @@ struct IRHICommandContext
      * @param Instances - Instances to build the scene of
      * @param bUpdate   - True if the build should be an update, false if it should build from the ground up
      */
-    virtual void BuildRayTracingScene(
-        FRHIRayTracingScene* Scene,
-        const TArrayView<const FRHIRayTracingGeometryInstance>& Instances,
-        bool bUpdate) = 0;
+    virtual void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) = 0;
 
      /** @brief - Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
     virtual void SetRayTracingBindings(
@@ -403,16 +334,9 @@ struct IRHICommandContext
 
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) = 0;
     
-    virtual void DrawIndexed(
-        uint32 IndexCount,
-        uint32 StartIndexLocation,
-        uint32 BaseVertexLocation) = 0;
-    
-    virtual void DrawInstanced(
-        uint32 VertexCountPerInstance,
-        uint32 InstanceCount,
-        uint32 StartVertexLocation,
-        uint32 StartInstanceLocation) = 0;
+    virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
+
+    virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) = 0;
     
     virtual void DrawIndexedInstanced(
         uint32 IndexCountPerInstance,
@@ -423,12 +347,7 @@ struct IRHICommandContext
 
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
 
-    virtual void DispatchRays(
-        FRHIRayTracingScene* Scene,
-        FRHIRayTracingPipelineState* PipelineState,
-        uint32 Width,
-        uint32 Height,
-        uint32 Depth) = 0;
+    virtual void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
 
     virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) = 0;
 
@@ -461,18 +380,4 @@ struct IRHICommandContext
      * @return - Returns the native CommandList
      */
     virtual void* GetRHIBaseCommandList() = 0;
-};
-
-
-struct IRHICommandContextManager
-{
-    /**
-     * @return - Returns a new CommandContext
-     */
-    virtual IRHICommandContext* ObtainCommandContext() = 0;
-    
-    /**
-     * @brief - Return a CommandContext and execute it
-     */
-    virtual void FinishCommandContext(IRHICommandContext* InCommandContext) = 0;
 };

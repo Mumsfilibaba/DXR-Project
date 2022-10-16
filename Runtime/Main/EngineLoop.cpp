@@ -162,20 +162,20 @@ bool FEngineLoop::PreInit()
     }
 
    // Initialize the ShaderCompiler before RHI since RHI might need to compile shaders
-    if (!FRHIShaderCompiler::Initialize(FProjectManager::GetAssetPath()))
+    if (!FRHIShaderCompiler::Create(FProjectManager::GetAssetPath()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return false;
     }
         
     // TODO: Decide this via command line or config file
-    ERHIInstanceType RenderApi =
+    ERHIInstanceType RHIInstanceType =
 #if PLATFORM_MACOS
         ERHIInstanceType::Metal;
 #else
         ERHIInstanceType::D3D12;
 #endif
-    if (!RHIInitialize(RenderApi))
+    if (!RHIInitialize(RHIInstanceType))
     {
         return false;
     }
@@ -224,10 +224,13 @@ bool FEngineLoop::Init()
 
     NCoreDelegates::PreEngineInitDelegate.Broadcast();
 
-    if (!GRenderer.Init())
+    // Initialize renderer
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
-        return false;
+        if (!FRenderer::Initialize())
+        {
+            FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
+            return false;
+        }
     }
 
     NCoreDelegates::PreApplicationLoadedDelegate.Broadcast();
@@ -288,7 +291,7 @@ void FEngineLoop::Tick()
 
     FGPUProfiler::Get().Tick();
 
-    GRenderer.Tick(*GEngine->Scene);
+    FRenderer::Get().Tick(*GEngine->Scene);
 }
 
 
@@ -300,7 +303,7 @@ bool FEngineLoop::Release()
 
     FGPUProfiler::Release();
 
-    GRenderer.Release();
+    FRenderer::Release();
 
     // Release the Application. Protect against failed initialization where the global pointer was never initialized
     if (FApplicationInterface::IsInitialized())

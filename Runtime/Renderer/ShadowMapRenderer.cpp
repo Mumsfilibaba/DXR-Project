@@ -445,25 +445,28 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
             {
                 const uint32 ArrayIndex = (Cube * kRHINumCubeFaces) + Face;
 
-                FRHIRenderPassInitializer RenderPass;
+                FRHIRenderPassDesc RenderPass;
                 RenderPass.DepthStencilView = FRHIDepthStencilView(LightSetup.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
 
                 CommandList.BeginRenderPass(RenderPass);
 
                 const uint32 PointLightShadowSize = LightSetup.PointLightShadowSize;
-                CommandList.SetViewport(
+                
+                FRHIViewportRegion ViewportRegion(
                     static_cast<float>(PointLightShadowSize),
                     static_cast<float>(PointLightShadowSize),
-                    0.0f, 
-                    1.0f, 
                     0.0f,
-                    0.0f);
+                    0.0f,
+                    0.0f,
+                    1.0f);
+                CommandList.SetViewport(ViewportRegion);
 
-                CommandList.SetScissorRect(
+                FRHIScissorRegion ScissorRegion(
                     static_cast<float>(PointLightShadowSize),
                     static_cast<float>(PointLightShadowSize),
-                    0, 
+                    0,
                     0);
+                CommandList.SetScissorRect(ScissorRegion);
 
                 auto& Data = LightSetup.PointLightShadowMapsGenerationData[Cube];
                 PerShadowMapData.Matrix   = Data.Matrix[Face];
@@ -477,8 +480,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
                 
                 CommandList.UpdateBuffer(
                     PerShadowMapBuffer.Get(),
-                    0, 
-                    sizeof(FPerShadowMap),
+                    FBufferRegion(0, sizeof(FPerShadowMap)),
                     &PerShadowMapData);
 
                 CommandList.TransitionBuffer(
@@ -584,8 +586,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
 
         CommandList.UpdateBuffer(
             CascadeGenerationData.Get(),
-            0,
-            sizeof(FCascadeGenerationInfo),
+            FBufferRegion(0, sizeof(FCascadeGenerationInfo)),
             &GenerationInfo);
         
         CommandList.TransitionBuffer(
@@ -656,21 +657,25 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
         FPerCascade PerCascadeData;
         for (uint32 Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
         {
-            FRHIRenderPassInitializer RenderPass;
+            FRHIRenderPassDesc RenderPass;
             RenderPass.DepthStencilView = FRHIDepthStencilView(LightSetup.ShadowMapCascades[Index].Get());
 
             CommandList.BeginRenderPass(RenderPass);
 
             const uint16 CascadeSize = LightSetup.CascadeSize;
-            CommandList.SetViewport(
-                static_cast<float>(CascadeSize),
-                static_cast<float>(CascadeSize), 
-                0.0f, 
-                1.0f, 
-                0.0f, 
-                0.0f);
 
-            CommandList.SetScissorRect(CascadeSize, CascadeSize, 0, 0);
+            FRHIViewportRegion ViewportRegion(
+                static_cast<float>(CascadeSize),
+                static_cast<float>(CascadeSize),
+                0.0f,
+                0.0f,
+                0.0f,
+                1.0f);
+
+            CommandList.SetViewport(ViewportRegion);
+
+            FRHIScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
+            CommandList.SetScissorRect(ScissorRegion);
 
             PerCascadeData.CascadeIndex = Index;
 
@@ -681,8 +686,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
             
             CommandList.UpdateBuffer(
                 PerCascadeBuffer.Get(),
-                0, 
-                sizeof(FPerCascade),
+                FBufferRegion(0, sizeof(FPerCascade)),
                 &PerCascadeData);
 
             CommandList.TransitionBuffer(
@@ -929,7 +933,7 @@ bool FShadowMapRenderer::CreateShadowMaps(FLightSetup& LightSetup, FFrameResourc
         return false;
     }
 
-    const FTextureClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
+    const FClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
 
     FRHITextureCubeArrayInitializer PointLightInitializer(
         LightSetup.ShadowMapFormat,

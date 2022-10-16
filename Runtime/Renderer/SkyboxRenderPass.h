@@ -25,7 +25,7 @@ private:
     FRHIPixelShaderRef           SkyboxPixelShader;
     FRHIBufferRef                SkyboxVertexBuffer;
     FRHIBufferRef                SkyboxIndexBuffer;
-    uint32                       SkyboxIndexCount;
-    EIndexFormat                 SkyboxIndexFormat;
+    uint32                       SkyboxIndexCount  = 0;
+    EIndexFormat                 SkyboxIndexFormat = EIndexFormat::Unknown;
     FRHISamplerStateRef          SkyboxSampler;
 };

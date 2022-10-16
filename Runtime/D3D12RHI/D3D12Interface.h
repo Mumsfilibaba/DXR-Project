@@ -76,13 +76,47 @@ public:
 
     virtual FRHIViewport*                RHICreateViewport(const FRHIViewportInitializer& Initializer) override final;
 
-    virtual IRHICommandContext*          RHIGetDefaultCommandContext() override final { return DirectContext; }
+    virtual IRHICommandContext*          RHIObtainCommandContext() override final { return DirectContext; }
 
     virtual void                         RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport)   const override final;
     virtual void                         RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const override final;
-    virtual bool                         RHIQueryUAVFormatSupport(EFormat Format)                    const override final;
+    virtual bool                         RHIQueryUAVFormatSupport(EFormat Format)                       const override final;
 
-    virtual FString                      GetAdapterDescription() const override final { return Adapter->GetDescription(); }
+    virtual FString RHIGetAdapterDescription() const override final 
+    { 
+        CHECK(Adapter != nullptr);
+        return Adapter->GetDescription(); 
+    }
+
+    virtual void* RHIGetAdapter() override final 
+    {
+        CHECK(Adapter != nullptr);
+        return reinterpret_cast<void*>(Adapter->GetDXGIAdapter());
+    }
+
+    virtual void* RHIGetDevice() override final
+    {
+        CHECK(Device != nullptr);
+        return reinterpret_cast<void*>(Device->GetD3D12Device());
+    }
+
+    virtual void* RHIGetDirectCommandQueue() override final
+    {
+        CHECK(Device != nullptr);
+        return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct));
+    }
+
+    virtual void* RHIGetComputeCommandQueue() override final
+    {
+        CHECK(Device != nullptr);
+        return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Compute));
+    }
+
+    virtual void* RHIGetCopyCommandQueue() override final
+    {
+        CHECK(Device != nullptr);
+        return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));
+    }
 
 public:
     FORCEINLINE FD3D12OfflineDescriptorHeap*  GetResourceOfflineDescriptorHeap()     const { return ResourceOfflineDescriptorHeap; }
