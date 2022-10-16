@@ -4,24 +4,16 @@
 #include "Core/Templates/Move.h"
 #include "Core/Templates/InPlace.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TVariant - Similar to std::variant
-
 template<typename... Types>
 class TVariant
 {
     using TypeIndexType = int32;
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Constants
 
     inline static constexpr TypeIndexType SizeInBytes      = TMax<sizeof(Types)...>::Value;
     inline static constexpr TypeIndexType AlignmentInBytes = TMax<alignof(Types)...>::Value;
     inline static constexpr TypeIndexType InvalidTypeIndex = -1;
     inline static constexpr TypeIndexType MaxTypeIndex     = sizeof... (Types);
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TVariantIndex - Retrieve the Type index
 
     template<
         TypeIndexType CurrentIndex,
@@ -57,8 +49,6 @@ class TVariant
         enum { Value = TVariantIndexHelper<0, WantedType, Types...>::Value };
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TVariantType - Retrieve type from index
 
     template<
         TypeIndexType CurrentIndex,
@@ -91,8 +81,6 @@ class TVariant
         using Type = typename TVariantTypeHelper<0, SearchForIndex, Types...>::Type;
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TVariantDestructorTable
 
     template<typename T>
     struct TVariantDestructor
@@ -115,8 +103,6 @@ class TVariant
         }
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TVariantCopyConstructorTable
 
     template<typename T>
     struct TVariantCopyConstructor
@@ -138,8 +124,6 @@ class TVariant
         }
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TVariantMoveConstructorTable
 
     template<typename T>
     struct TVariantMoveConstructor
@@ -161,8 +145,6 @@ class TVariant
         }
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TVariantCompareTable
 
     template<typename T>
     struct TVariantComparators
@@ -201,8 +183,6 @@ class TVariant
         }
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TIsValidType - Checks if the templated type is one of the Variant-types
 
     template<typename T>
     struct TIsValidType
@@ -210,8 +190,6 @@ class TVariant
         enum { Value = (TVariantIndex<T>::Value != InvalidTypeIndex) ? 1 : 0 };
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TIsValidIndex - Checks if the templated index valid
 
     template<TypeIndexType Index>
     struct TIsValidIndex
@@ -222,7 +200,7 @@ class TVariant
 public:
     
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE TVariant() noexcept
         : Value()
@@ -230,9 +208,8 @@ public:
     { }
 
     /**
-     * @brief: In-Place constructor that constructs a variant of specified type with arguments for the types constructor
-     * 
-     * @param Args: Arguments for the elements constructor
+     * @brief      - In-Place constructor that constructs a variant of specified type with arguments for the types constructor
+     * @param Args - Arguments for the elements constructor
      */
     template<
         typename T,
@@ -246,9 +223,8 @@ public:
     }
 
     /**
-     * @brief: In-Place constructor that constructs a variant of specified type with arguments for the types constructor
-     *
-     * @param Args: Arguments for the elements constructor
+     * @brief      - In-Place constructor that constructs a variant of specified type with arguments for the types constructor
+     * @param Args - Arguments for the elements constructor
      */
     template<
         TypeIndexType InIndex,
@@ -263,9 +239,8 @@ public:
     }
 
     /**
-     * @brief: Copy constructor
-     * 
-     * @param Other: Variant to copy from
+     * @brief       - Copy constructor
+     * @param Other - Variant to copy from
      */
     FORCEINLINE TVariant(const TVariant& Other) noexcept
         : Value()
@@ -278,9 +253,8 @@ public:
     }
 
     /**
-     * @brief: Move constructor
-     *
-     * @param Other: Variant to move from
+     * @brief       - Move constructor
+     * @param Other - Variant to move from
      */
     FORCEINLINE TVariant(TVariant&& Other) noexcept
         : Value()
@@ -294,7 +268,7 @@ public:
     }
 
     /**
-     * @brief: Destructor
+     * @brief - Destructor
      */
     FORCEINLINE ~TVariant()
     {
@@ -302,10 +276,9 @@ public:
     }
 
     /**
-     * @brief: Create a value in-place 
-     * 
-     * @param Args: Arguments for the constructor of the element
-     * @return: Returns a reference to the newly created element
+     * @brief      - Create a value in-place 
+     * @param Args - Arguments for the constructor of the element
+     * @return     - Returns a reference to the newly created element
      */
     template<
         typename T,
@@ -319,7 +292,7 @@ public:
     }
 
     /**
-     * @brief: Resets the variant and calls the destructor
+     * @brief - Resets the variant and calls the destructor
      */
     FORCEINLINE void Reset() noexcept
     {
@@ -330,9 +303,8 @@ public:
     }
 
     /**
-     * @brief: Swap this variant with another
-     * 
-     * @param Other: Variant to swap with
+     * @brief       - Swap this variant with another
+     * @param Other - Variant to swap with
      */
     FORCEINLINE void Swap(TVariant& Other) noexcept
     {
@@ -353,9 +325,8 @@ public:
     }
 
     /**
-     * @brief: Check if the templated type is the current type
-     * 
-     * @return: Returns true if the templated type is the currently held value
+     * @brief  - Check if the templated type is the current type
+     * @return - Returns true if the templated type is the currently held value
      */
     template<typename T>
     NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, bool>::Type IsType() const noexcept
@@ -364,9 +335,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the currently held value
-     *
-     * @return: Returns a reference to the currently held value
+     * @brief  - Retrieve the currently held value
+     * @return - Returns a reference to the currently held value
      */
     template<typename T>
     NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TRemoveReference<T>::Type&>::Type GetValue() noexcept
@@ -376,9 +346,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the currently held value
-     * 
-     * @return: Returns a reference to the currently held value
+     * @brief  - Retrieve the currently held value
+     * @return - Returns a reference to the currently held value
      */
     template<typename T>
     NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, const typename TRemoveReference<T>::Type&>::Type GetValue() const noexcept
@@ -388,9 +357,8 @@ public:
     }
 
     /**
-     * @brief: Try and retrieve the currently held value, or get nullptr if value of specified type is not held
-     *
-     * @return: Returns a pointer to the currently stored value or nullptr if not correct type
+     * @brief  - Try and retrieve the currently held value, or get nullptr if value of specified type is not held
+     * @return - Returns a pointer to the currently stored value or nullptr if not correct type
      */
     template<typename T>
     NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TRemoveReference<T>::Type*>::Type TryGetValue() noexcept
@@ -399,9 +367,8 @@ public:
     }
 
     /**
-     * @brief: Try and retrieve the currently held value, or get nullptr if value of specified type is not held
-     *
-     * @return: Returns a pointer to the currently stored value or nullptr if not correct type
+     * @brief  - Try and retrieve the currently held value, or get nullptr if value of specified type is not held
+     * @return - Returns a pointer to the currently stored value or nullptr if not correct type
      */
     template<typename T>
     NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, const typename TRemoveReference<T>::Type*>::Type TryGetValue() const noexcept
@@ -410,9 +377,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the type index of the currently held value
-     * 
-     * @return: Returns the index of the current held value
+     * @brief  - Retrieve the type index of the currently held value
+     * @return - Returns the index of the current held value
      */
     NODISCARD FORCEINLINE TypeIndexType GetIndex() const noexcept
     {
@@ -420,9 +386,8 @@ public:
     }
 
     /**
-     * @brief: Check if the Variant is valid or not
-     * 
-     * @return: Returns true if the variant holds a value
+     * @brief  - Check if the Variant is valid or not
+     * @return - Returns true if the variant holds a value
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
@@ -432,35 +397,32 @@ public:
 public:
 
     /**
-     * @brief: Copy assignment operator
-     * 
-     * @param RHS: Variant to copy from
-     * @return: Returns a reference to this instance
+     * @brief       - Copy assignment operator
+     * @param Other - Variant to copy from
+     * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TVariant& operator=(const TVariant& RHS) noexcept
+    FORCEINLINE TVariant& operator=(const TVariant& Other) noexcept
     {
-        TVariant(RHS).Swap(*this);
+        TVariant(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move assignment operator
-     *
-     * @param RHS: Variant to move from
-     * @return: Returns a reference to this instance
+     * @brief       - Move assignment operator
+     * @param Other - Variant to move from
+     * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TVariant& operator=(TVariant&& RHS) noexcept
+    FORCEINLINE TVariant& operator=(TVariant&& Other) noexcept
     {
-        TVariant(Move(RHS)).Swap(*this);
+        TVariant(Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if the variants are equal
+     * @brief     - Comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if the variants are equal
      */
     NODISCARD
     friend FORCEINLINE bool operator==(const TVariant& LHS, const TVariant& RHS) noexcept
@@ -480,11 +442,10 @@ public:
     }
 
     /**
-     * @brief: Comparison operator
-     *
-     * @param LHS: Left side to compare with 
-     * @param RHS: Right side to compare with
-     * @return: Returns false if the variants are equal
+     * @brief     - Comparison operator
+     * @param LHS - Left side to compare with 
+     * @param RHS - Right side to compare with
+     * @return    - Returns false if the variants are equal
      */
     NODISCARD
     friend FORCEINLINE bool operator!=(const TVariant& LHS, const TVariant& RHS) noexcept
@@ -493,11 +454,10 @@ public:
     }
 
     /**
-     * @brief: Less than comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if LHS is less than RHS
+     * @brief     - Less than comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if LHS is less than RHS
      */
     NODISCARD
     friend FORCEINLINE bool operator<(const TVariant& LHS, const TVariant& RHS) noexcept
@@ -517,11 +477,10 @@ public:
     }
 
     /**
-     * @brief: Less than or equal comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if LHS is less than or equal to RHS
+     * @brief     - Less than or equal comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if LHS is less than or equal to RHS
      */
     NODISCARD
     friend FORCEINLINE bool operator<=(const TVariant& LHS, const TVariant& RHS) noexcept
@@ -541,11 +500,10 @@ public:
     }
 
     /**
-     * @brief: Greater than comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if LHS is greater than RHS
+     * @brief     - Greater than comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if LHS is greater than RHS
      */
     NODISCARD
     friend FORCEINLINE bool operator>(const TVariant& LHS, const TVariant& RHS) noexcept
@@ -554,11 +512,10 @@ public:
     }
 
     /**
-     * @brief: Greater than or equal comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if LHS is greater than or equal to RHS
+     * @brief     - Greater than or equal comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if LHS is greater than or equal to RHS
      */
     NODISCARD
     friend FORCEINLINE bool operator>=(const TVariant& LHS, const TVariant& RHS) noexcept
@@ -604,6 +561,7 @@ private:
 
     /** Storage that fit the largest element */
     TAlignedStorage<SizeInBytes, AlignmentInBytes> Value;
+    
     /** Storage that fit the largest element */
     TypeIndexType TypeIndex;
 };

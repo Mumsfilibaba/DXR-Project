@@ -15,14 +15,9 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalWindowView
-
 @interface FMetalWindowView : FCocoaWindowView
 @end
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalViewport
 
 class FMetalViewport 
     : public FMetalObject
@@ -41,7 +36,7 @@ public:
 
 public:
     
-    /** @return: Returns the current drawable, will release it during next call to present */
+    /** @return - Returns the current drawable, will release it during next call to present */
     id<CAMetalDrawable> GetDrawable();
     id<MTLTexture>      GetDrawableTexture();
     

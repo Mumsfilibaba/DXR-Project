@@ -16,9 +16,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalInterface
-
 class FMetalInterface final
     : public FRHIInterface
 {
@@ -36,10 +33,10 @@ public:
 
     virtual FRHISamplerState*            RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer) override final;
 
-    virtual FRHIVertexBuffer*            RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)     override final;
-    virtual FRHIIndexBuffer*             RHICreateIndexBuffer(const FRHIIndexBufferInitializer& Initializer)       override final;
-    virtual FRHIGenericBuffer*           RHICreateGenericBuffer(const FRHIGenericBufferInitializer& Initializer)   override final;
-    virtual FRHIConstantBuffer*          RHICreateConstantBuffer(const FRHIConstantBufferInitializer& Initializer) override final;
+    virtual FRHIVertexBuffer*            RHICreateBuffer(const FRHIVertexBufferInitializer& Initializer)     override final;
+    virtual FRHIIndexBuffer*             RHICreateBuffer(const FRHIIndexBufferInitializer& Initializer)       override final;
+    virtual FRHIGenericBuffer*           RHICreateBuffer(const FRHIGenericBufferInitializer& Initializer)   override final;
+    virtual FRHIConstantBuffer*          RHICreateBuffer(const FRHIConstantBufferInitializer& Initializer) override final;
 
     virtual FRHIRayTracingScene*         RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)       override final;
     virtual FRHIRayTracingGeometry*      RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer) override final;

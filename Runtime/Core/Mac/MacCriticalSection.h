@@ -3,8 +3,6 @@
 
 #include <pthread.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacCriticalSection
 
 class FMacCriticalSection final 
     : public FGenericCriticalSection

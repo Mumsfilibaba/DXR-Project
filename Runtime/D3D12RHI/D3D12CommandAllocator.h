@@ -5,13 +5,7 @@
 #include "Core/Containers/Queue.h"
 #include "Core/Platform/CriticalSection.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedef
-
 typedef TSharedRef<class FD3D12CommandAllocator> FD3D12CommandAllocatorRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12CommandAllocator 
 
 class FD3D12CommandAllocator 
     : public FD3D12DeviceChild
@@ -46,8 +40,6 @@ private:
     FD3D12FenceSyncPoint            SyncPoint;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12CommandAllocatorManager
 
 class FD3D12CommandAllocatorManager
     : public FD3D12DeviceChild

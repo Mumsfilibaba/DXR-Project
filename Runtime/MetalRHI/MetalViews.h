@@ -6,9 +6,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalView
-
 class FMetalView 
     : public FMetalObject
 {
@@ -24,8 +21,6 @@ private:
     id<MTLBuffer>  Buffer;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalShaderResourceView
 
 class FMetalShaderResourceView 
     : public FRHIShaderResourceView
@@ -40,8 +35,6 @@ public:
     ~FMetalShaderResourceView() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalUnorderedAccessView
 
 class FMetalUnorderedAccessView 
     : public FRHIUnorderedAccessView

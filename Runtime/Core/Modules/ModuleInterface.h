@@ -9,15 +9,11 @@
 #include "Core/Debug/Debug.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Platform/PlatformLibrary.h"
+#include "Core/Time/Timespan.h"
 
-#ifdef GetModuleHandle
-    #undef GetModuleHandle
-#endif
-
-struct IModule;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Macro for implementing a new engine module based on monolithic or dynamic build
+/** 
+ * Macro for implementing a new engine module based on monolithic or dynamic build
+ */
 
 #if MONOLITHIC_BUILD
 #define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                        \
@@ -30,7 +26,7 @@ struct IModule;
 #define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                        \
     extern "C"                                                                                                                      \
     {                                                                                                                               \
-        MODULE_EXPORT IModule* LoadEngineModule()                                                                                   \
+        MODULE_EXPORT FModuleInterface* LoadEngineModule()                                                                                   \
         {                                                                                                                           \
             return dbg_new ModuleClassType();                                                                                       \
         }                                                                                                                           \
@@ -40,127 +36,136 @@ struct IModule;
     extern "C" MODULE_EXPORT void LinkModule_##ModuleName() { }
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// IModule
+struct FModuleInterface;
 
-typedef IModule* (*PFNLoadEngineModule)();
-
-struct IModule
-{
-    virtual ~IModule() = default;
-
-    /** @return: Returns true if the load is successful */
-    virtual bool Load() = 0;
-
-    /** @return: Returns true if the unload is successful */
-    virtual bool Unload() = 0;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDefaultModule
-
-struct FDefaultModule
-    : public IModule
-{
-    /** @return: Returns true if the load is successful */
-    virtual bool Load() override { return true; }
-
-    /** @return: Returns true if the unload is successful */
-    virtual bool Unload() override { return true; }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FModuleManager
-
+typedef FModuleInterface* (*PFNLoadEngineModule)();
 typedef void* PlatformModule;
 
-class CORE_API FModuleInterface
-{
-public: 
-    /** Delegate for when a static module is loaded into the engine */
-    DECLARE_RETURN_DELEGATE(FInitializeStaticModuleDelegate, IModule*);
 
-    /** Delegate for when a new module is loaded into the engine, name and IModule pointer is the arguments */
-    DECLARE_EVENT(FModuleLoadedDelegate, FModuleInterface, const CHAR*, IModule*);
+struct FModuleInterface
+{
+    ~FModuleInterface() = default;
+
+    /** @return - Returns true if the load is successful */
+    virtual bool Load() { return true; }
+
+    /** @return - Returns true if the unload is successful */
+    virtual bool Unload() { return true; }
+};
+
+
+class CORE_API FModuleManager
+{
+    struct FModuleData
+    {
+        FModuleData() = default;
+
+        FModuleData(const FString& InName, FModuleInterface* InInterface)
+            : Name(InName)
+            , Interface(InInterface)
+            , Handle(nullptr)
+        { }
+
+        FString           Name;
+        FModuleInterface* Interface;
+        PlatformModule    Handle;
+    };
+
+    friend class TOptional<FModuleManager>;
+
+    FModuleManager()  = default;
+    ~FModuleManager() = default;
+
+public:
+    
+    /**
+     * @brief - Delegate for when a static module is loaded into the engine 
+     */
+    DECLARE_RETURN_DELEGATE(FInitializeStaticModuleDelegate, FModuleInterface*);
+
+    /** 
+     * @brief - Delegate for when a new module is loaded into the engine, name and IModule pointer is the arguments 
+     */
+    DECLARE_EVENT(FModuleLoadedDelegate, FModuleManager, const CHAR*, FModuleInterface*);
     FModuleLoadedDelegate GetModuleLoadedDelegate() { return ModuleLoadedDelegate; }
 
-    /** @return: Returns a reference to the ModuleManager */
-    static FModuleInterface& Get();
+    /** 
+     * @return - Returns a reference to the ModuleManager 
+     */
+    static FModuleManager& Get();
 
-    /** @brief: Releases all modules that are loaded */
+    /**
+     * @brief - Releases all modules that are loaded 
+     */
     static void ReleaseAllLoadedModules();
 
-    /** @brief: ReleaseAllLoadedModules and Destroy the module manager, after this no more modules can be accessed */
+    /**
+     * @brief - ReleaseAllLoadedModules and Destroy the module manager, after this no more modules can be accessed 
+     */
     static void Shutdown();
 
     /**
-     * @brief: Load a new module into the engine
-     *
-     * @param ModuleName: Name of the module without platform extension or prefix
-     * @return: Returns a pointer to a IModule interface if the load is successful, otherwise nullptr
+     * @brief            - Load a new module into the engine
+     * @param ModuleName - Name of the module without platform extension or prefix
+     * @return           - Returns a pointer to a IModule interface if the load is successful, otherwise nullptr
      */
-    virtual IModule* LoadModule(const CHAR* ModuleName) = 0;
+    FModuleInterface* LoadModule(const CHAR* ModuleName);
 
     /**
-     * @brief: Retrieve a already loaded module interface
-     *
-     * @param ModuleName: Name of the module without platform extension or prefix
-     * @return: Returns a pointer to a IModule interface if the interface is present, otherwise nullptr
+     * @brief            - Retrieve a already loaded module interface
+     * @param ModuleName - Name of the module without platform extension or prefix
+     * @return           - Returns a pointer to a IModule interface if the interface is present, otherwise nullptr
      */
-    virtual IModule* GetModule(const CHAR* ModuleName) = 0;
+    FModuleInterface* GetModule(const CHAR* ModuleName);
 
     /**
-     * @brief: Retrieve a already loaded module's native handle
-     *
-     * @param ModuleName: Name of the module without platform extension or prefix
-     * @return: Returns a native handle to a module if the module is present otherwise a platform-defined invalid handle
+     * @brief            - Retrieve a already loaded module's native handle
+     * @param ModuleName - Name of the module without platform extension or prefix
+     * @return           - Returns a native handle to a module if the module is present otherwise a platform-defined invalid handle
      */
-    virtual PlatformModule GetModuleHandle(const CHAR* ModuleName) = 0;
+    PlatformModule GetModuleHandle(const CHAR* ModuleName);
 
     /**
-     * @brief: Registers a static module
-     *
-     * @param ModuleName: Name of the module to load without platform extension or prefix
-     * @param InitDelegate: Delegate to initialize the static delegate
+     * @brief              - Registers a static module
+     * @param ModuleName   - Name of the module to load without platform extension or prefix
+     * @param InitDelegate - Delegate to initialize the static delegate
      */
-    virtual void RegisterStaticModule(const CHAR* ModuleName, FInitializeStaticModuleDelegate InitDelegate) = 0;
+    void RegisterStaticModule(const CHAR* ModuleName, FInitializeStaticModuleDelegate InitDelegate);
 
     /**
-     * @brief: Check if a module is already loaded
-     *
-     * @param ModuleName: Name of the module to load without platform extension or prefix
-     * @return: Returns true if the module is loaded, otherwise false
+     * @brief            - Check if a module is already loaded
+     * @param ModuleName - Name of the module to load without platform extension or prefix
+     * @return           - Returns true if the module is loaded, otherwise false
      */
-    virtual bool IsModuleLoaded(const CHAR* ModuleName) = 0;
+    bool IsModuleLoaded(const CHAR* ModuleName);
 
     /**
-     * @brief: Release a single module
-     *
-     * @param ModuleName: Name of the module to load without platform extension or prefix
+     * @brief            - Release a single module
+     * @param ModuleName - Name of the module to load without platform extension or prefix
      */
-    virtual void UnloadModule(const CHAR* ModuleName) = 0;
-
-    /** @return: Returns the number of loaded modules */
-    virtual uint32 GetLoadedModuleCount() = 0;
+    void UnloadModule(const CHAR* ModuleName);
 
     /**
-     * @brief: Load a new module into the engine
-     *
-     * @param ModuleName: Name of the module to load without platform extension or prefix
-     * @return: A reference to the IModule interface, on fail an assert is triggered
+     * @return - Returns the number of loaded modules 
      */
-    FORCEINLINE IModule& LoadModuleRef(const CHAR* ModuleName)
+    uint32 GetLoadedModuleCount();
+
+    /**
+     * @brief            - Load a new module into the engine
+     * @param ModuleName - Name of the module to load without platform extension or prefix
+     * @return           - A reference to the IModule interface, on fail an assert is triggered
+     */
+    FORCEINLINE FModuleInterface& LoadModuleRef(const CHAR* ModuleName)
     {
-        IModule* Module = LoadModule(ModuleName);
+        FModuleInterface* Module = LoadModule(ModuleName);
         CHECK(Module != nullptr);
         return *Module;
     }
 
     /**
-     * @brief: Load a new module into the engine
-     *
-     * @param ModuleName: Name of the module without platform extension or prefix
-     * @return: Returns a typed pointer to if the load is successful, otherwise nullptr
+     * @brief            - Load a new module into the engine
+     * @param ModuleName - Name of the module without platform extension or prefix
+     * @return           - Returns a typed pointer to if the load is successful, otherwise nullptr
      */
     template<typename ModuleType>
     FORCEINLINE ModuleType* LoadModule(const TCHAR* ModuleName)
@@ -169,10 +174,9 @@ public:
     }
 
     /**
-     * @brief: Load a new module into the engine
-     *
-     * @param ModuleName: Name of the module without platform extension or prefix
-     * @return: Returns a typed reference to if the load is successful, on fail an assert is triggered
+     * @brief            - Load a new module into the engine
+     * @param ModuleName - Name of the module without platform extension or prefix
+     * @return           - Returns a typed reference to if the load is successful, on fail an assert is triggered
      */
     template<typename ModuleType>
     FORCEINLINE ModuleType& LoadModuleRef(const TCHAR* ModuleName)
@@ -181,23 +185,21 @@ public:
     }
 
     /**
-     * @brief: Retrieve a already loaded module interface
-     *
-     * @param ModuleName: Name of the module without platform extension or prefix
-     * @return: Returns a reference to a typed interface if the interface is present, on fail an assert is triggered
+     * @brief            - Retrieve a already loaded module interface
+     * @param ModuleName - Name of the module without platform extension or prefix
+     * @return           - Returns a reference to a typed interface if the interface is present, on fail an assert is triggered
      */
-    FORCEINLINE IModule& GetModuleRef(const TCHAR* ModuleName)
+    FORCEINLINE FModuleInterface& GetModuleRef(const TCHAR* ModuleName)
     {
-        IModule* Module = GetModule(ModuleName);
+        FModuleInterface* Module = GetModule(ModuleName);
         CHECK(Module != nullptr);
         return *Module;
     }
 
     /**
-     * @brief: Load a new module into the engine
-     *
-     * @param ModuleName: Name of the module without platform extension or prefix
-     * @return: Returns a typed pointer to a interface if the load is successful, otherwise nullptr
+     * @brief            - Load a new module into the engine
+     * @param ModuleName - Name of the module without platform extension or prefix
+     * @return           - Returns a typed pointer to a interface if the load is successful, otherwise nullptr
      */
     template<typename ModuleType>
     FORCEINLINE ModuleType* GetModule(const TCHAR* ModuleName)
@@ -206,10 +208,9 @@ public:
     }
 
     /**
-     * @brief: Load a new module into the engine
-     *
-     * @param ModuleName: Name of the module without platform extension or prefix
-     * @return: Returns a typed pointer to a interface if the load is successful, otherwise nullptr
+     * @brief            - Load a new module into the engine
+     * @param ModuleName - Name of the module without platform extension or prefix
+     * @return           - Returns a typed pointer to a interface if the load is successful, otherwise nullptr
      */
     template<typename ModuleType>
     FORCEINLINE ModuleType& GetModuleRef(const TCHAR* ModuleName)
@@ -218,35 +219,105 @@ public:
     }
 
 protected:
-    void HandleModuleLoaded(const CHAR* ModuleName, IModule* Module) { ModuleLoadedDelegate.Broadcast(ModuleName, Module); }
+    void HandleModuleLoaded(const CHAR* ModuleName, FModuleInterface* Module) { ModuleLoadedDelegate.Broadcast(ModuleName, Module); }
+    void ReleaseAllModules();
 
-    FModuleLoadedDelegate ModuleLoadedDelegate;
+    FInitializeStaticModuleDelegate* GetStaticModuleDelegate(const CHAR* ModuleName);
+
+    int32 GetModuleIndexUnlocked(const CHAR* ModuleName);
+
+    FORCEINLINE uint32 GetLoadedModuleCountUnlocked()
+    {
+        return static_cast<uint32>(Modules.GetSize());
+    }
+
+    FModuleLoadedDelegate     ModuleLoadedDelegate;
+
+    typedef TPair<FString, FInitializeStaticModuleDelegate> FStaticModulePair;
+    TArray<FStaticModulePair> StaticModuleDelegates;
+    FCriticalSection          StaticModuleDelegatesCS;
+
+    TArray<FModuleData>       Modules;
+    FCriticalSection          ModulesCS;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TStaticModuleInitializer
 
 template<typename ModuleClassType>
 class TStaticModuleInitializer
 {
-    using FInitializeDelegate = FModuleInterface::FInitializeStaticModuleDelegate;
+    using FInitializeDelegate = FModuleManager::FInitializeStaticModuleDelegate;
 
 public:
 
     /**
-     * @brief: Constructor that registers the module to the ModuleManager
-     *
-     * @param ModuleName: Name of the module
+     * @brief            - Constructor that registers the module to the ModuleManager
+     * @param ModuleName - Name of the module
      */
     TStaticModuleInitializer(const TCHAR* ModuleName)
     {
         FInitializeDelegate InitializeDelegate = FInitializeDelegate::CreateRaw(this, &TStaticModuleInitializer::CreateModuleInterface);
-        FModuleInterface::Get().RegisterStaticModule(ModuleName, InitializeDelegate);
+        FModuleManager::Get().RegisterStaticModule(ModuleName, InitializeDelegate);
     }
 
-    /** @return: The newly created module interface */
-    IModule* CreateModuleInterface()
+    /** 
+     * @return - The newly created module interface 
+     */
+    FModuleInterface* CreateModuleInterface()
     {
         return dbg_new ModuleClassType();
     }
 };
+
+
+#if defined(PLATFORM_COMPILER_MSVC)
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
+#elif defined(PLATFORM_COMPILER_CLANG)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
+
+class CORE_API FApplicationModule
+    : public FModuleInterface
+{
+public:
+    virtual ~FApplicationModule() = default;
+
+    /** 
+     * @return - Returns true if the initialization is successful 
+     */
+    virtual bool Init();
+
+    /**
+     * @brief           - Tick the application module
+     * @param DeltaTime - Time since last time the application was ticked
+     */
+    virtual void Tick(FTimespan Deltatime) { }
+
+    /** 
+     * @return - Returns true if the release is successful 
+     */
+    virtual bool Release();
+
+    /** 
+     * @return - Returns true if the load is successful
+     */
+    virtual bool Load() override;
+
+    /**
+     * @return - Returns true if the unload is successful
+     */
+    virtual bool Unload() override;
+
+protected:
+    FDelegateHandle TickHandle;
+};
+
+extern CORE_API FApplicationModule* GApplicationModule;
+
+#if defined(PLATFORM_COMPILER_MSVC)
+    #pragma warning(pop)
+#elif defined(PLATFORM_COMPILER_CLANG)
+    #pragma clang diagnostic pop
+#endif

@@ -1,9 +1,6 @@
 #pragma once
 #include "RHI/RHIResourceViews.h"
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDrawableTexture
-
 struct FDrawableTexture
 {
     FDrawableTexture() = default;

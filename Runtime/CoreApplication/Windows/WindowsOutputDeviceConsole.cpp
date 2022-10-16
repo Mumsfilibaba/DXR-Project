@@ -2,9 +2,6 @@
 
 #include "Core/Threading/ScopedLock.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsOutputDeviceConsole
-
 FWindowsOutputDeviceConsole::FWindowsOutputDeviceConsole()
     : ConsoleHandle(0)
 { }

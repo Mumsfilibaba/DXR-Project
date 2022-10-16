@@ -4,9 +4,6 @@
 #include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformAtomic.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TAtomicInt
-
 template<typename T>
 class TAtomicInt
 {
@@ -16,16 +13,15 @@ public:
     static_assert(TIsSigned<T>::Value, "AtomicInt only supports signed types");
 
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE TAtomicInt() noexcept
         : Value(0)
     { }
 
     /**
-     * @brief: Copy-constructor
-     * 
-     * @param Other: Instance to copy
+     * @brief       - Copy-constructor
+     * @param Other - Instance to copy
      */
     FORCEINLINE TAtomicInt(const TAtomicInt& Other)
         : Value(0)
@@ -35,18 +31,16 @@ public:
     }
 
     /**
-     * @brief: Construct with a initial value
-     * 
-     * @param InValue: Initial value
+     * @brief         - Construct with a initial value
+     * @param InValue - Initial value
      */
     FORCEINLINE TAtomicInt(T InValue) noexcept
         : Value(InValue)
     { }
 
     /**
-     * @brief: Atomically increments the integer
-     * 
-     * @return: Returns the new value
+     * @brief  - Atomically increments the integer
+     * @return - Returns the new value
      */
     FORCEINLINE T Increment() noexcept
     {
@@ -54,9 +48,8 @@ public:
     }
 
     /**
-     * @brief: Atomically decrements the integer
-     *
-     * @return: Returns the new value
+     * @brief  - Atomically decrements the integer
+     * @return - Returns the new value
      */
     FORCEINLINE T Decrement() noexcept
     {
@@ -64,9 +57,8 @@ public:
     }
 
     /**
-     * @brief: Atomically adds a value to the integer
-     *
-     * @return: Returns the new value
+     * @brief  - Atomically adds a value to the integer
+     * @return - Returns the new value
      */
     FORCEINLINE T Add(T RHS) noexcept
     {
@@ -75,9 +67,8 @@ public:
     }
 
     /**
-     * @brief: Atomically subtracts a value from the integer
-     *
-     * @return: Returns the new value
+     * @brief  - Atomically subtracts a value from the integer
+     * @return - Returns the new value
      */
     FORCEINLINE T Subtract(T RHS) noexcept
     {
@@ -86,9 +77,8 @@ public:
     }
 
     /**
-     * @brief: Performs a bitwise AND atomically with a value and the integer
-     *
-     * @return: Returns the new value
+     * @brief  - Performs a bitwise AND atomically with a value and the integer
+     * @return - Returns the new value
      */
     FORCEINLINE T And(T RHS) noexcept
     {
@@ -97,9 +87,8 @@ public:
     }
 
     /**
-     * @brief: Performs a bitwise OR atomically with a value and the integer
-     *
-     * @return: Returns the new value
+     * @brief  - Performs a bitwise OR atomically with a value and the integer
+     * @return - Returns the new value
      */
     FORCEINLINE T Or(T RHS) noexcept
     {
@@ -108,9 +97,8 @@ public:
     }
 
     /**
-     * @brief: Performs a bitwise XOR atomically with a value and the integer
-     *
-     * @return: Returns the new value
+     * @brief  - Performs a bitwise XOR atomically with a value and the integer
+     * @return - Returns the new value
      */
     FORCEINLINE T Xor(T RHS) noexcept
     {
@@ -119,9 +107,8 @@ public:
     }
 
     /**
-     * @brief: Retrieves the integer atomically and makes sure that all prior accesses has completed 
-     *
-     * @return: Returns the stored value
+     * @brief  - Retrieves the integer atomically and makes sure that all prior accesses has completed 
+     * @return - Returns the stored value
      */
     FORCEINLINE T Load() const noexcept
     {
@@ -129,9 +116,8 @@ public:
     }
 
     /**
-     * @brief: Retrieves the integer atomically without making sure that all prior accesses has completed
-     *
-     * @return: Returns the stored value
+     * @brief  - Retrieves the integer atomically without making sure that all prior accesses has completed
+     * @return - Returns the stored value
      */
     FORCEINLINE T RelaxedLoad() const noexcept
     {
@@ -139,10 +125,9 @@ public:
     }
 
     /**
-     * @brief: Exchanges the integer to a new value and return the original value
-     * 
-     * @param InValue: Value to exchange
-     * @return: Returns the original value
+     * @brief         - Exchanges the integer to a new value and return the original value
+     * @param InValue - Value to exchange
+     * @return        - Returns the original value
      */
     FORCEINLINE T Exchange(T InValue) noexcept
     {
@@ -150,9 +135,8 @@ public:
     }
 
     /**
-     * @brief: Stores a new integer atomically and makes sure that all prior accesses has completed
-     *
-     * @param InValue: New value to store
+     * @brief         - Stores a new integer atomically and makes sure that all prior accesses has completed
+     * @param InValue - New value to store
      */
     FORCEINLINE void Store(T InValue) noexcept
     {
@@ -160,9 +144,8 @@ public:
     }
 
     /**
-     * @brief: Stores a new integer atomically without making sure that all prior accesses has completed
-     *
-     * @param InValue: New value to store
+     * @brief         - Stores a new integer atomically without making sure that all prior accesses has completed
+     * @param InValue - New value to store
      */
     FORCEINLINE void RelaxedStore(T InValue) noexcept
     {
@@ -172,10 +155,9 @@ public:
 public:
 
     /**
-     * @brief: Copy-assignment operator
-     * 
-     * @param RHS: Value to copy
-     * @return: Returns a reference to this instance
+     * @brief     - Copy-assignment operator
+     * @param RHS - Value to copy
+     * @return    - Returns a reference to this instance
      */
     FORCEINLINE TAtomicInt& operator=(const TAtomicInt& RHS)
     {
@@ -185,10 +167,9 @@ public:
     }
 
     /**
-     * @brief: Assign a new value
-     *
-     * @param RHS: Value to assign
-     * @return: Returns a reference to this instance
+     * @brief     - Assign a new value
+     * @param RHS - Value to assign
+     * @return    - Returns a reference to this instance
      */
     FORCEINLINE T operator=(T RHS) noexcept
     {
@@ -197,9 +178,8 @@ public:
     }
 
     /**
-     * @brief: Increment the integer with one
-     *
-     * @return: Returns a the previous value
+     * @brief  - Increment the integer with one
+     * @return - Returns a the previous value
      */
     FORCEINLINE T operator++(int32) noexcept
     {
@@ -209,9 +189,8 @@ public:
     }
 
     /**
-     * @brief: Increment the integer with one
-     *
-     * @return: Returns a the new value
+     * @brief  - Increment the integer with one
+     * @return - Returns a the new value
      */
     FORCEINLINE T operator++() noexcept
     {
@@ -219,9 +198,8 @@ public:
     }
 
     /**
-     * @brief: Decrement the integer with one
-     *
-     * @return: Returns a the previous value
+     * @brief  - Decrement the integer with one
+     * @return - Returns a the previous value
      */
     FORCEINLINE T operator--(int32) noexcept
     {
@@ -231,9 +209,8 @@ public:
     }
 
     /**
-     * @brief: Decrement the integer with one
-     *
-     * @return: Returns a the new value
+     * @brief  - Decrement the integer with one
+     * @return - Returns a the new value
      */
     FORCEINLINE T operator--() noexcept
     {
@@ -241,10 +218,9 @@ public:
     }
 
     /**
-     * @brief: Add a value
-     * 
-     * @param RHS: Value to add to the integer
-     * @return: Returns a the new value
+     * @brief     - Add a value
+     * @param RHS - Value to add to the integer
+     * @return    - Returns a the new value
      */
     FORCEINLINE T operator+=(T RHS) noexcept
     {
@@ -252,10 +228,9 @@ public:
     }
 
     /**
-     * @brief: Subtract a value
-     *
-     * @param RHS: Value to subtract to the integer
-     * @return: Returns a the new value
+     * @brief     - Subtract a value
+     * @param RHS - Value to subtract to the integer
+     * @return    - Returns a the new value
      */
     FORCEINLINE T operator-=(T RHS) noexcept
     {
@@ -263,10 +238,9 @@ public:
     }
 
     /**
-     * @brief: Bitwise AND with a value
-     *
-     * @param RHS: Value to AND with the integer
-     * @return: Returns a the new value
+     * @brief     - Bitwise AND with a value
+     * @param RHS - Value to AND with the integer
+     * @return    - Returns a the new value
      */
     FORCEINLINE T operator&=(T RHS) noexcept
     {
@@ -274,10 +248,9 @@ public:
     }
 
     /**
-     * @brief: Bitwise OR with a value
-     *
-     * @param RHS: Value to OR with the integer
-     * @return: Returns a the new value
+     * @brief     - Bitwise OR with a value
+     * @param RHS - Value to OR with the integer
+     * @return    - Returns a the new value
      */
     FORCEINLINE T operator|=(T RHS) noexcept
     {
@@ -285,10 +258,9 @@ public:
     }
 
     /**
-     * @brief: Bitwise XOR with a value
-     *
-     * @param RHS: Value to XOR with the integer
-     * @return: Returns a the new value
+     * @brief     - Bitwise XOR with a value
+     * @param RHS - Value to XOR with the integer
+     * @return    - Returns a the new value
      */
     FORCEINLINE T operator^=(T RHS) noexcept
     {
@@ -299,8 +271,6 @@ private:
     mutable volatile T Value;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Predefined types
 
 typedef TAtomicInt<int8>  FAtomicInt8;
 typedef TAtomicInt<int16> FAtomicInt16;

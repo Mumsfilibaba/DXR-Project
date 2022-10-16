@@ -10,18 +10,12 @@
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/Optional.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EConsoleSeverity
-
 enum class EConsoleSeverity
 {
     Info    = 0,
     Warning = 1,
     Error   = 2
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FConsoleInterface
 
 class CORE_API FConsoleInterface
 {
@@ -32,104 +26,90 @@ protected:
 public:
 
     /**
-     * @brief: Retrieve the ConsoleManager instance
-     * 
-     * @return: Returns a reference to the ConsoleManager
+     * @brief  - Retrieve the ConsoleManager instance
+     * @return - Returns a reference to the ConsoleManager
      */
     static FConsoleInterface& Get();
 
     /**
-     * @brief: Register a new console-command
-     * 
-     * @param Name: Name of the console-command
-     * @param Command: Command to register
+     * @brief         - Register a new console-command
+     * @param Name    - Name of the console-command
+     * @param Command - Command to register
      */
     virtual void RegisterCommand(const FString& Name, IConsoleCommand* Command) = 0;
     
     /**
-     * @brief: Register a new console-variable
-     *
-     * @param Name: Name of the console-variable
-     * @param Variable: variable to register
+     * @brief          - Register a new console-variable
+     * @param Name     - Name of the console-variable
+     * @param Variable - variable to register
      */
     virtual void RegisterVariable(const FString& Name, IConsoleVariable* Variable) = 0;
 
     /**
-     * @brief: Unregister a console-object
-     * 
-     * @param Name: Name of the console-object to unregister from the console manager
+     * @brief      - Unregister a console-object
+     * @param Name - Name of the console-object to unregister from the console manager
      */
     virtual void UnregisterObject(const FString& Name) = 0;
 
     /**
-     * @brief: Check weather or not a console-object exists with a specific name
-     * 
-     * @param Name: Name of the console-object
-     * @return: Returns true if there exists a console-object with the specified name
+     * @brief      - Check weather or not a console-object exists with a specific name
+     * @param Name - Name of the console-object
+     * @return     - Returns true if there exists a console-object with the specified name
      */
     virtual bool IsConsoleObject(const FString& Name) const = 0;
 
     /**
-     * @brief: Finds a console-command, returns nullptr otherwise, including if the object is a variable
-     * 
-     * @param Name: Name of the console-command
-     * @return: The console-command matching the name
+     * @brief      - Finds a console-command, returns nullptr otherwise, including if the object is a variable
+     * @param Name - Name of the console-command
+     * @return     - The console-command matching the name
      */
     virtual IConsoleCommand* FindCommand(const FString& Name) = 0;
 
     /**
-     * @brief: Finds a console-variable, returns nullptr otherwise, including if the object is a command
-     *
-     * @param Name: Name of the console-variable
-     * @return: The console-variable matching the name
+     * @brief      - Finds a console-variable, returns nullptr otherwise, including if the object is a command
+     * @param Name - Name of the console-variable
+     * @return     - The console-variable matching the name
      */
     virtual IConsoleVariable* FindVariable(const FString& Name) = 0;
 
     /**
-     * @brief: Retrieve all ConsoleObjects that fits the name of the specified string
-     * 
-     * @param CandidateName: Names to match
-     * @param OutCandidates: Array to store the console-objects that matches the candidate-name
+     * @brief               - Retrieve all ConsoleObjects that fits the name of the specified string
+     * @param CandidateName - Names to match
+     * @param OutCandidates - Array to store the console-objects that matches the candidate-name
      */
     virtual void FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates) = 0;
 
     /**
-     * @brief: Print a message to the console
-     * 
-     * @param Message: Message to print to the console
-     * @param Severity: Severity of the message
+     * @brief          - Print a message to the console
+     * @param Message  - Message to print to the console
+     * @param Severity - Severity of the message
      */
     virtual void PrintMessage(const FString& Message, EConsoleSeverity Severity) = 0;
 
     /** 
-     * @brief: Clears the console history 
+     * @brief - Clears the console history 
      */
     virtual void ClearHistory() = 0;
 
     /**
-     * @brief: Execute a string from the console 
-     * 
-     * @param Command: Command to execute by the console
+     * @brief         - Execute a string from the console 
+     * @param Command - Command to execute by the console
      */
     virtual void Execute(const FString& Command) = 0;
 
     /**
-     * @brief: Retrieve all the messages printed to the console
-     * 
-     * @return: An array containing pairs of the console-messages and console-severity that has been printed to the console.
+     * @brief  - Retrieve all the messages printed to the console
+     * @return - An array containing pairs of the console-messages and console-severity that has been printed to the console.
      */
     virtual const TArray<TPair<FString, EConsoleSeverity>>& GetMessages() const = 0;
 
     /**
-     * @brief: Retrieve all the history that has been written to the console 
-     * 
-     * @return: An array containing string of all history written to the console
+     * @brief  - Retrieve all the history that has been written to the console 
+     * @return - An array containing string of all history written to the console
      */
     virtual const TArray<FString>& GetHistory() const = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FAutoConsoleCommand
 
 class FAutoConsoleCommand
     : public FConsoleCommand
@@ -161,8 +141,6 @@ private:
     FString Name;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TAutoConsoleVariable
 
 template<typename T>
 class TAutoConsoleVariable 

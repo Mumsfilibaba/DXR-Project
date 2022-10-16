@@ -4,9 +4,6 @@
 #include "Core/Core.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FSpinLock
-
 class FSpinLock
 {
     enum
@@ -21,16 +18,16 @@ public:
 
     ~FSpinLock() = default;
 
-    /** @brief: Default constructor */
+    /** @brief - Default constructor */
     FORCEINLINE FSpinLock() noexcept
         : State(State_Unlocked)
     { }
 
-    /** @brief: Lock SpinLock for other threads */
+    /** @brief - Lock SpinLock for other threads */
     FORCEINLINE void Lock() noexcept
     {
         // Try locking until success
-        for (;; )
+        for (;;)
         {
             // When the previous value is unlocked => success
             if (State.Exchange(State_Locked) == State_Unlocked)
@@ -45,14 +42,14 @@ public:
         }
     }
 
-    /** @return: Tries to lock CriticalSection for other threads and, returns true if the lock is successful */
+    /** @return - Tries to lock CriticalSection for other threads and, returns true if the lock is successful */
     FORCEINLINE bool TryLock() noexcept
     {
         // The first relaxed load is in order to prevent unnecessary cache misses when trying to lock in a loop: See Lock
         return (State.RelaxedLoad() == State_Unlocked) && (State.Exchange(State_Locked) == State_Unlocked);
     }
 
-    /** @brief: Unlock CriticalSection for other threads */
+    /** @brief - Unlock CriticalSection for other threads */
     FORCEINLINE void Unlock() noexcept
     {
         State.Store(State_Unlocked);

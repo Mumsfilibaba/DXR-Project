@@ -5,9 +5,6 @@
 
 typedef TSharedRef<class FMacEvent> FMacEventRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacEvent
-
 class FMacEvent final
     : public FGenericEvent
 {
@@ -48,25 +45,25 @@ private:
         CHECK(Result == 0);
     }
 
-	static void SubtractTimevals(const struct timeval* This, struct timeval* Subtract, struct timeval* OutDifference)
-	{
-		if (This->tv_usec < Subtract->tv_usec)
-		{
-			const auto nsec = ((Subtract->tv_usec - This->tv_usec) / 1000000) + 1;
-			Subtract->tv_usec -= 1000000 * nsec;
-			Subtract->tv_sec  += nsec;
-		}
+    static void SubtractTimevals(const struct timeval* This, struct timeval* Subtract, struct timeval* OutDifference)
+    {
+        if (This->tv_usec < Subtract->tv_usec)
+        {
+            const auto nsec = ((Subtract->tv_usec - This->tv_usec) / 1000000) + 1;
+            Subtract->tv_usec -= 1000000 * nsec;
+            Subtract->tv_sec  += nsec;
+        }
 
-		if (This->tv_usec - Subtract->tv_usec > 1000000)
-		{
-			const auto nsec = (This->tv_usec - Subtract->tv_usec) / 1000000;
-			Subtract->tv_usec += 1000000 * nsec;
-			Subtract->tv_sec  -= nsec;
-		}
+        if (This->tv_usec - Subtract->tv_usec > 1000000)
+        {
+            const auto nsec = (This->tv_usec - Subtract->tv_usec) / 1000000;
+            Subtract->tv_usec += 1000000 * nsec;
+            Subtract->tv_sec  -= nsec;
+        }
 
-		OutDifference->tv_sec  = This->tv_sec - Subtract->tv_sec;
-		OutDifference->tv_usec = This->tv_usec - Subtract->tv_usec;
-	}  
+        OutDifference->tv_sec  = This->tv_sec - Subtract->tv_sec;
+        OutDifference->tv_usec = This->tv_usec - Subtract->tv_usec;
+    }  
 
     bool bInitialized;
     bool bManualReset;

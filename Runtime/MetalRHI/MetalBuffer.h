@@ -6,9 +6,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalBuffer
-
 class FMetalBuffer 
     : public FMetalObject
 {
@@ -38,8 +35,6 @@ private:
     id<MTLBuffer> Buffer;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalVertexBuffer
 
 class FMetalVertexBuffer 
     : public FMetalBuffer
@@ -51,11 +46,6 @@ public:
         : FMetalBuffer(DeviceContext)
         , FRHIVertexBuffer(Initializer)
     { }
-    
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
@@ -73,8 +63,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalIndexBuffer
 
 class FMetalIndexBuffer 
     : public FMetalBuffer
@@ -86,11 +74,6 @@ public:
         : FMetalBuffer(DeviceContext)
         , FRHIIndexBuffer(Initializer)
     { }
-    
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
@@ -108,8 +91,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalConstantBuffer
 
 class FMetalConstantBuffer 
     : public FMetalBuffer
@@ -121,11 +102,6 @@ public:
         : FMetalBuffer(DeviceContext)
         , FRHIConstantBuffer(Initializer)
     { }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIConstantBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
@@ -145,8 +121,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalGenericBuffer
 
 class FMetalGenericBuffer 
     : public FMetalBuffer
@@ -158,11 +132,6 @@ public:
         : FMetalBuffer(DeviceContext)
         , FRHIGenericBuffer(Initializer)
     { }
-    
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIBuffer Interface
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
@@ -180,8 +149,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// GetMetalBuffer
 
 inline FMetalBuffer* GetMetalBuffer(FRHIBuffer* Buffer)
 {

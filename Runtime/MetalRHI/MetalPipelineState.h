@@ -9,9 +9,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalInputLayoutState
-
 class FMetalInputLayoutState 
     : public FRHIVertexInputLayout
     , public FMetalObject
@@ -43,9 +40,6 @@ private:
 
     MTLVertexDescriptor* VertexDescriptor;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalDepthStencilState
 
 class FMetalDepthStencilState 
     : public FRHIDepthStencilState
@@ -104,8 +98,6 @@ private:
     id<MTLDepthStencilState> DepthStencilState;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalRasterizerState
 
 class FMetalRasterizerState 
     : public FRHIRasterizerState
@@ -131,8 +123,6 @@ private:
     MTLWinding          FrontFaceWinding;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalBlendState
 
 class FMetalBlendState 
     : public FRHIBlendState
@@ -142,8 +132,6 @@ public:
     ~FMetalBlendState() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalResourceBinding
 
 struct FMetalResourceBinding
 {
@@ -156,8 +144,6 @@ struct FMetalResourceBinding
     uint8 Binding = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalGraphicsPipelineState
 
 class FMetalGraphicsPipelineState 
     : public FRHIGraphicsPipelineState
@@ -327,8 +313,6 @@ private:
     TArray<FMetalResourceBinding>       SamplerBindings[ShaderVisibility_Count];
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalComputePipelineState
 
 class FMetalComputePipelineState 
     : public FRHIComputePipelineState
@@ -342,8 +326,6 @@ public:
     virtual FString GetName() const override final { return ""; }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalRayTracingPipelineState
 
 class FMetalRayTracingPipelineState 
     : public FRHIRayTracingPipelineState

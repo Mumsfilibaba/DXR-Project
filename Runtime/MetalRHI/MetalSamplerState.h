@@ -4,9 +4,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalSamplerState
-
 class FMetalSamplerState 
     : public FRHISamplerState
 {

@@ -5,9 +5,6 @@
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/Move.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TDefaultDelete
-
 template<typename T>
 struct TDefaultDelete
 {
@@ -55,8 +52,6 @@ struct TDefaultDelete
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TDefaultDelete
 
 template<typename T>
 struct TDefaultDelete<T[]>

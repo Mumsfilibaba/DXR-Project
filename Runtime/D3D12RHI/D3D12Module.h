@@ -1,17 +1,13 @@
 #pragma once
 #include "Core/Core.h"
 
-#include "RHI/RHIModule.h"
+#include "RHI/RHIInterface.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Module
-
-class FD3D12Module final
-    : public FRHIModule
+struct FD3D12InterfaceModule final
+    : public FRHIInterfaceModule
 {
-public:
-    FD3D12Module()  = default;
-    ~FD3D12Module() = default;
+    FD3D12InterfaceModule()  = default;
+    ~FD3D12InterfaceModule() = default;
 
     virtual class FRHIInterface* CreateInterface() override final;
 };

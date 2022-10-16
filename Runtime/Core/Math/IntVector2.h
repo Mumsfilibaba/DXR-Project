@@ -1,15 +1,12 @@
 #pragma once
 #include "MathCommon.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FInt16Vector2
-
 class FInt16Vector2
 {
 public:
 
     /**
-     * @brief: Default constructor (Initialize components to zero)
+     * @brief - Default constructor (Initialize components to zero)
      */
     FORCEINLINE FInt16Vector2() noexcept
         : x(0)
@@ -17,10 +14,9 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all components with a corresponding value.
-     *
-     * @param InX: The x-coordinate
-     * @param InY: The y-coordinate
+     * @brief     - Constructor initializing all components with a corresponding value.
+     * @param InX - The x-coordinate
+     * @param InY - The y-coordinate
      */
     FORCEINLINE explicit FInt16Vector2(int16 InX, int16 InY) noexcept
         : x(InX)
@@ -28,9 +24,8 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all components with an array.
-     *
-     * @param Arr: Array with 2 elements
+     * @brief     - Constructor initializing all components with an array.
+     * @param Arr - Array with 2 elements
      */
     FORCEINLINE explicit FInt16Vector2(const int16* Arr) noexcept
         : x(Arr[0])
@@ -38,9 +33,8 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all components with a single value.
-     *
-     * @param Scalar: Value to set all components to
+     * @brief        - Constructor initializing all components with a single value.
+     * @param Scalar - Value to set all components to
      */
     FORCEINLINE explicit FInt16Vector2(int16 Scalar) noexcept
         : x(Scalar)
@@ -48,10 +42,9 @@ public:
     { }
 
     /**
-     * @brief: Compares this vector with another vector
-     *
-     * @param Other: Vector to compare against
-     * @return: True if equal, false if not
+     * @brief       - Compares this vector with another vector
+     * @param Other - Vector to compare against
+     * @return      - True if equal, false if not
      */
     FORCEINLINE bool IsEqual(const FInt16Vector2& Other) const noexcept
     {
@@ -61,11 +54,10 @@ public:
 public:
 
     /**
-     * @brief: Returns a vector with the smallest of each component of two vectors
-     *
-     * @param LHS: First vector to compare with
-     * @param RHS: Second vector to compare with
-     * @return: A vector with the smallest components of LHS and RHS
+     * @brief     - Returns a vector with the smallest of each component of two vectors
+     * @param LHS - First vector to compare with
+     * @param RHS - Second vector to compare with
+     * @return    - A vector with the smallest components of LHS and RHS
      */
     friend FORCEINLINE FInt16Vector2 Min(const FInt16Vector2& LHS, const FInt16Vector2& RHS) noexcept
     {
@@ -73,11 +65,10 @@ public:
     }
 
     /**
-     * @brief: Returns a vector with the largest of each component of two vectors
-     *
-     * @param LHS: First vector to compare with
-     * @param RHS: Second vector to compare with
-     * @return: A vector with the largest components of LHS and RHS
+     * @brief     - Returns a vector with the largest of each component of two vectors
+     * @param LHS - First vector to compare with
+     * @param RHS - Second vector to compare with
+     * @return    - A vector with the largest components of LHS and RHS
      */
     friend FORCEINLINE FInt16Vector2 Max(const FInt16Vector2& LHS, const FInt16Vector2& RHS) noexcept
     {
@@ -87,9 +78,8 @@ public:
 public:
 
     /**
-     * @brief: Return a vector with component-wise negation of this vector
-     *
-     * @return: A negated vector
+     * @brief  - Return a vector with component-wise negation of this vector
+     * @return - A negated vector
      */
     FORCEINLINE FInt16Vector2 operator-() const noexcept
     {
@@ -97,10 +87,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of component-wise adding this and another vector
-     *
-     * @param RHS: The vector to add
-     * @return: A vector with the result of addition
+     * @brief     - Returns the result of component-wise adding this and another vector
+     * @param RHS - The vector to add
+     * @return    - A vector with the result of addition
      */
     FORCEINLINE FInt16Vector2 operator+(const FInt16Vector2& RHS) const noexcept
     {
@@ -108,10 +97,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after component-wise adding this with another vector
-     *
-     * @param RHS: The vector to add
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after component-wise adding this with another vector
+     * @param RHS - The vector to add
+     * @return    - A reference to this vector
      */
     FORCEINLINE FInt16Vector2& operator+=(const FInt16Vector2& RHS) noexcept
     {
@@ -119,10 +107,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of adding a scalar to each component of this vector
-     *
-     * @param RHS: The scalar to add
-     * @return: A vector with the result of addition
+     * @brief     - Returns the result of adding a scalar to each component of this vector
+     * @param RHS - The scalar to add
+     * @return    - A vector with the result of addition
      */
     FORCEINLINE FInt16Vector2 operator+(int16 RHS) const noexcept
     {
@@ -130,10 +117,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after adding a scalar to each component of this vector
-     *
-     * @param RHS: The scalar to add
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after adding a scalar to each component of this vector
+     * @param RHS - The scalar to add
+     * @return    - A reference to this vector
      */
     FORCEINLINE FInt16Vector2& operator+=(int16 RHS) noexcept
     {
@@ -141,10 +127,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of component-wise subtraction between this and another vector
-     *
-     * @param RHS: The vector to subtract
-     * @return: A vector with the result of subtraction
+     * @brief     - Returns the result of component-wise subtraction between this and another vector
+     * @param RHS - The vector to subtract
+     * @return    - A vector with the result of subtraction
      */
     FORCEINLINE FInt16Vector2 operator-(const FInt16Vector2& RHS) const noexcept
     {
@@ -152,10 +137,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after component-wise subtraction between this and another vector
-     *
-     * @param RHS: The vector to subtract
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after component-wise subtraction between this and another vector
+     * @param RHS - The vector to subtract
+     * @return    - A reference to this vector
      */
     FORCEINLINE FInt16Vector2& operator-=(const FInt16Vector2& RHS) noexcept
     {
@@ -163,10 +147,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of subtracting each component of this vector with a scalar
-     *
-     * @param RHS: The scalar to subtract
-     * @return: A vector with the result of the subtraction
+     * @brief     - Returns the result of subtracting each component of this vector with a scalar
+     * @param RHS - The scalar to subtract
+     * @return    - A vector with the result of the subtraction
      */
     FORCEINLINE FInt16Vector2 operator-(int16 RHS) const noexcept
     {
@@ -174,10 +157,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after subtracting each component of this vector with a scalar
-     *
-     * @param RHS: The scalar to subtract
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after subtracting each component of this vector with a scalar
+     * @param RHS - The scalar to subtract
+     * @return    - A reference to this vector
      */
     FORCEINLINE FInt16Vector2& operator-=(int16 RHS) noexcept
     {
@@ -185,10 +167,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of component-wise multiplication with this and another vector
-     *
-     * @param RHS: The vector to multiply with
-     * @return: A vector with the result of the multiplication
+     * @brief     - Returns the result of component-wise multiplication with this and another vector
+     * @param RHS - The vector to multiply with
+     * @return    - A vector with the result of the multiplication
      */
     FORCEINLINE FInt16Vector2 operator*(const FInt16Vector2& RHS) const noexcept
     {
@@ -196,10 +177,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after component-wise multiplication with this and another vector
-     *
-     * @param RHS: The vector to multiply with
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after component-wise multiplication with this and another vector
+     * @param RHS - The vector to multiply with
+     * @return    - A reference to this vector
      */
     FORCEINLINE FInt16Vector2& operator*=(const FInt16Vector2& RHS) noexcept
     {
@@ -207,10 +187,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of multiplying each component of this vector with a scalar
-     *
-     * @param RHS: The scalar to multiply with
-     * @return: A vector with the result of the multiplication
+     * @brief     - Returns the result of multiplying each component of this vector with a scalar
+     * @param RHS - The scalar to multiply with
+     * @return    - A vector with the result of the multiplication
      */
     FORCEINLINE FInt16Vector2 operator*(int16 RHS) const noexcept
     {
@@ -218,10 +197,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after multiplying each component of this vector with a scalar
-     *
-     * @param RHS: The scalar to multiply with
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after multiplying each component of this vector with a scalar
+     * @param RHS - The scalar to multiply with
+     * @return    - A reference to this vector
      */
     FORCEINLINE FInt16Vector2& operator*=(int16 RHS) noexcept
     {
@@ -229,10 +207,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of component-wise division with this and another vector
-     *
-     * @param RHS: The vector to divide with
-     * @return: A vector with the result of the division
+     * @brief     - Returns the result of component-wise division with this and another vector
+     * @param RHS - The vector to divide with
+     * @return    - A vector with the result of the division
      */
     FORCEINLINE FInt16Vector2 operator/(const FInt16Vector2& RHS) const noexcept
     {
@@ -240,10 +217,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after component-wise division with this and another vector
-     *
-     * @param RHS: The vector to divide with
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after component-wise division with this and another vector
+     * @param RHS - The vector to divide with
+     * @return    - A reference to this vector
      */
     FORCEINLINE FInt16Vector2& operator/=(const FInt16Vector2& RHS) noexcept
     {
@@ -251,10 +227,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of dividing each component of this vector and a scalar
-     *
-     * @param RHS: The scalar to divide with
-     * @return: A vector with the result of the division
+     * @brief     - Returns the result of dividing each component of this vector and a scalar
+     * @param RHS - The scalar to divide with
+     * @return    - A vector with the result of the division
      */
     FORCEINLINE FInt16Vector2 operator/(int16 RHS) const noexcept
     {
@@ -262,10 +237,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after dividing each component of this vector and a scalar
-     *
-     * @param RHS: The scalar to divide with
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after dividing each component of this vector and a scalar
+     * @param RHS - The scalar to divide with
+     * @return    - A reference to this vector
      */
     FORCEINLINE FInt16Vector2& operator/=(int16 RHS) noexcept
     {
@@ -273,10 +247,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result after comparing this and another vector
-     *
-     * @param Other: The vector to compare with
-     * @return: True if equal, false if not
+     * @brief       - Returns the result after comparing this and another vector
+     * @param Other - The vector to compare with
+     * @return      - True if equal, false if not
      */
     FORCEINLINE bool operator==(const FInt16Vector2& Other) const noexcept
     {
@@ -284,10 +257,9 @@ public:
     }
 
     /**
-     * @brief: Returns the negated result after comparing this and another vector
-     *
-     * @param Other: The vector to compare with
-     * @return: False if equal, true if not
+     * @brief       - Returns the negated result after comparing this and another vector
+     * @param Other - The vector to compare with
+     * @return      - False if equal, true if not
      */
     FORCEINLINE bool operator!=(const FInt16Vector2& Other) const noexcept
     {
@@ -295,10 +267,9 @@ public:
     }
 
     /**
-     * @brief: Returns the component specified
-     *
-     * @param Index: The component index
-     * @return: The component
+     * @brief       - Returns the component specified
+     * @param Index - The component index
+     * @return      - The component
      */
     FORCEINLINE int16& operator[](int16 Index) noexcept
     {
@@ -307,10 +278,9 @@ public:
     }
 
     /**
-     * @brief: Returns the component specified
-     *
-     * @param Index: The component index
-     * @return: The component
+     * @brief       - Returns the component specified
+     * @param Index - The component index
+     * @return      - The component
      */
     FORCEINLINE int16 operator[](int16 Index) const noexcept
     {
@@ -320,24 +290,22 @@ public:
 
 public:
 
-     /** @brief: The x-coordinate */
+     /** @brief - The x-coordinate */
     int16 x;
 
-     /** @brief: The y-coordinate */
+     /** @brief - The y-coordinate */
     int16 y;
 };
 
 MARK_AS_REALLOCATABLE(FInt16Vector2);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FIntVector2
 
 class FIntVector2
 {
 public:
 
     /**
-     * @brief: Default constructor (Initialize components to zero)
+     * @brief - Default constructor (Initialize components to zero)
      */
     FORCEINLINE FIntVector2() noexcept
         : x(0)
@@ -345,10 +313,9 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all components with a corresponding value.
-     *
-     * @param InX: The x-coordinate
-     * @param InY: The y-coordinate
+     * @brief     - Constructor initializing all components with a corresponding value.
+     * @param InX - The x-coordinate
+     * @param InY - The y-coordinate
      */
     FORCEINLINE explicit FIntVector2(int32 InX, int32 InY) noexcept
         : x(InX)
@@ -356,9 +323,8 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all components with an array.
-     *
-     * @param Arr: Array with 2 elements
+     * @brief     - Constructor initializing all components with an array.
+     * @param Arr - Array with 2 elements
      */
     FORCEINLINE explicit FIntVector2(const int32* Arr) noexcept
         : x(Arr[0])
@@ -366,9 +332,8 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all components with a single value.
-     *
-     * @param Scalar: Value to set all components to
+     * @brief        - Constructor initializing all components with a single value.
+     * @param Scalar - Value to set all components to
      */
     FORCEINLINE explicit FIntVector2(int32 Scalar) noexcept
         : x(Scalar)
@@ -376,10 +341,9 @@ public:
     { }
 
     /**
-     * @brief: Compares this vector with another vector
-     *
-     * @param Other: Vector to compare against
-     * @return: True if equal, false if not
+     * @brief       - Compares this vector with another vector
+     * @param Other - Vector to compare against
+     * @return      - True if equal, false if not
      */
     FORCEINLINE bool IsEqual(const FIntVector2& Other) const noexcept
     {
@@ -389,11 +353,10 @@ public:
 public:
 
     /**
-     * @brief: Returns a vector with the smallest of each component of two vectors
-     *
-     * @param LHS: First vector to compare with
-     * @param RHS: Second vector to compare with
-     * @return: A vector with the smallest components of LHS and RHS
+     * @brief     - Returns a vector with the smallest of each component of two vectors
+     * @param LHS - First vector to compare with
+     * @param RHS - Second vector to compare with
+     * @return    - A vector with the smallest components of LHS and RHS
      */
     friend FORCEINLINE FIntVector2 Min(const FIntVector2& LHS, const FIntVector2& RHS) noexcept
     {
@@ -401,11 +364,10 @@ public:
     }
 
     /**
-     * @brief: Returns a vector with the largest of each component of two vectors
-     *
-     * @param LHS: First vector to compare with
-     * @param RHS: Second vector to compare with
-     * @return: A vector with the largest components of LHS and RHS
+     * @brief     - Returns a vector with the largest of each component of two vectors
+     * @param LHS - First vector to compare with
+     * @param RHS - Second vector to compare with
+     * @return    - A vector with the largest components of LHS and RHS
      */
     friend FORCEINLINE FIntVector2 Max(const FIntVector2& LHS, const FIntVector2& RHS) noexcept
     {
@@ -415,9 +377,8 @@ public:
 public:
 
     /**
-     * @brief: Return a vector with component-wise negation of this vector
-     *
-     * @return: A negated vector
+     * @brief  - Return a vector with component-wise negation of this vector
+     * @return - A negated vector
      */
     FORCEINLINE FIntVector2 operator-() const noexcept
     {
@@ -425,10 +386,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of component-wise adding this and another vector
-     *
-     * @param RHS: The vector to add
-     * @return: A vector with the result of addition
+     * @brief     - Returns the result of component-wise adding this and another vector
+     * @param RHS - The vector to add
+     * @return    - A vector with the result of addition
      */
     FORCEINLINE FIntVector2 operator+(const FIntVector2& RHS) const noexcept
     {
@@ -436,10 +396,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after component-wise adding this with another vector
-     *
-     * @param RHS: The vector to add
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after component-wise adding this with another vector
+     * @param RHS - The vector to add
+     * @return    - A reference to this vector
      */
     FORCEINLINE FIntVector2& operator+=(const FIntVector2& RHS) noexcept
     {
@@ -447,10 +406,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of adding a scalar to each component of this vector
-     *
-     * @param RHS: The scalar to add
-     * @return: A vector with the result of addition
+     * @brief     - Returns the result of adding a scalar to each component of this vector
+     * @param RHS - The scalar to add
+     * @return    - A vector with the result of addition
      */
     FORCEINLINE FIntVector2 operator+(int32 RHS) const noexcept
     {
@@ -458,10 +416,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after adding a scalar to each component of this vector
-     *
-     * @param RHS: The scalar to add
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after adding a scalar to each component of this vector
+     * @param RHS - The scalar to add
+     * @return    - A reference to this vector
      */
     FORCEINLINE FIntVector2& operator+=(int32 RHS) noexcept
     {
@@ -469,10 +426,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of component-wise subtraction between this and another vector
-     *
-     * @param RHS: The vector to subtract
-     * @return: A vector with the result of subtraction
+     * @brief     - Returns the result of component-wise subtraction between this and another vector
+     * @param RHS - The vector to subtract
+     * @return    - A vector with the result of subtraction
      */
     FORCEINLINE FIntVector2 operator-(const FIntVector2& RHS) const noexcept
     {
@@ -480,10 +436,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after component-wise subtraction between this and another vector
-     *
-     * @param RHS: The vector to subtract
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after component-wise subtraction between this and another vector
+     * @param RHS - The vector to subtract
+     * @return    - A reference to this vector
      */
     FORCEINLINE FIntVector2& operator-=(const FIntVector2& RHS) noexcept
     {
@@ -491,10 +446,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of subtracting each component of this vector with a scalar
-     *
-     * @param RHS: The scalar to subtract
-     * @return: A vector with the result of the subtraction
+     * @brief     - Returns the result of subtracting each component of this vector with a scalar
+     * @param RHS - The scalar to subtract
+     * @return    - A vector with the result of the subtraction
      */
     FORCEINLINE FIntVector2 operator-(int32 RHS) const noexcept
     {
@@ -502,10 +456,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after subtracting each component of this vector with a scalar
-     *
-     * @param RHS: The scalar to subtract
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after subtracting each component of this vector with a scalar
+     * @param RHS - The scalar to subtract
+     * @return    - A reference to this vector
      */
     FORCEINLINE FIntVector2& operator-=(int32 RHS) noexcept
     {
@@ -513,10 +466,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of component-wise multiplication with this and another vector
-     *
-     * @param RHS: The vector to multiply with
-     * @return: A vector with the result of the multiplication
+     * @brief     - Returns the result of component-wise multiplication with this and another vector
+     * @param RHS - The vector to multiply with
+     * @return    - A vector with the result of the multiplication
      */
     FORCEINLINE FIntVector2 operator*(const FIntVector2& RHS) const noexcept
     {
@@ -524,10 +476,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after component-wise multiplication with this and another vector
-     *
-     * @param RHS: The vector to multiply with
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after component-wise multiplication with this and another vector
+     * @param RHS - The vector to multiply with
+     * @return    - A reference to this vector
      */
     FORCEINLINE FIntVector2& operator*=(const FIntVector2& RHS) noexcept
     {
@@ -535,10 +486,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of multiplying each component of this vector with a scalar
-     *
-     * @param RHS: The scalar to multiply with
-     * @return: A vector with the result of the multiplication
+     * @brief     - Returns the result of multiplying each component of this vector with a scalar
+     * @param RHS - The scalar to multiply with
+     * @return    - A vector with the result of the multiplication
      */
     FORCEINLINE FIntVector2 operator*(int32 RHS) const noexcept
     {
@@ -546,10 +496,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after multiplying each component of this vector with a scalar
-     *
-     * @param RHS: The scalar to multiply with
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after multiplying each component of this vector with a scalar
+     * @param RHS - The scalar to multiply with
+     * @return    - A reference to this vector
      */
     FORCEINLINE FIntVector2& operator*=(int32 RHS) noexcept
     {
@@ -557,10 +506,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of component-wise division with this and another vector
-     *
-     * @param RHS: The vector to divide with
-     * @return: A vector with the result of the division
+     * @brief     - Returns the result of component-wise division with this and another vector
+     * @param RHS - The vector to divide with
+     * @return    - A vector with the result of the division
      */
     FORCEINLINE FIntVector2 operator/(const FIntVector2& RHS) const noexcept
     {
@@ -568,10 +516,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after component-wise division with this and another vector
-     *
-     * @param RHS: The vector to divide with
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after component-wise division with this and another vector
+     * @param RHS - The vector to divide with
+     * @return    - A reference to this vector
      */
     FORCEINLINE FIntVector2& operator/=(const FIntVector2& RHS) noexcept
     {
@@ -579,10 +526,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result of dividing each component of this vector and a scalar
-     *
-     * @param RHS: The scalar to divide with
-     * @return: A vector with the result of the division
+     * @brief     - Returns the result of dividing each component of this vector and a scalar
+     * @param RHS - The scalar to divide with
+     * @return    - A vector with the result of the division
      */
     FORCEINLINE FIntVector2 operator/(int32 RHS) const noexcept
     {
@@ -590,10 +536,9 @@ public:
     }
 
     /**
-     * @brief: Returns this vector after dividing each component of this vector and a scalar
-     *
-     * @param RHS: The scalar to divide with
-     * @return: A reference to this vector
+     * @brief     - Returns this vector after dividing each component of this vector and a scalar
+     * @param RHS - The scalar to divide with
+     * @return    - A reference to this vector
      */
     FORCEINLINE FIntVector2& operator/=(int32 RHS) noexcept
     {
@@ -601,10 +546,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result after comparing this and another vector
-     *
-     * @param Other: The vector to compare with
-     * @return: True if equal, false if not
+     * @brief       - Returns the result after comparing this and another vector
+     * @param Other - The vector to compare with
+     * @return      - True if equal, false if not
      */
     FORCEINLINE bool operator==(const FIntVector2& Other) const noexcept
     {
@@ -612,10 +556,9 @@ public:
     }
 
     /**
-     * @brief: Returns the negated result after comparing this and another vector
-     *
-     * @param Other: The vector to compare with
-     * @return: False if equal, true if not
+     * @brief       - Returns the negated result after comparing this and another vector
+     * @param Other - The vector to compare with
+     * @return      - False if equal, true if not
      */
     FORCEINLINE bool operator!=(const FIntVector2& Other) const noexcept
     {
@@ -623,10 +566,9 @@ public:
     }
 
     /**
-     * @brief: Returns the component specified
-     *
-     * @param Index: The component index
-     * @return: The component
+     * @brief       - Returns the component specified
+     * @param Index - The component index
+     * @return      - The component
      */
     FORCEINLINE int32& operator[](int32 Index) noexcept
     {
@@ -635,10 +577,9 @@ public:
     }
 
     /**
-     * @brief: Returns the component specified
-     *
-     * @param Index: The component index
-     * @return: The component
+     * @brief       - Returns the component specified
+     * @param Index - The component index
+     * @return      - The component
      */
     FORCEINLINE int32 operator[](int32 Index) const noexcept
     {
@@ -648,10 +589,10 @@ public:
 
 public:
 
-     /** @brief: The x-coordinate */
+     /** @brief - The x-coordinate */
     int32 x;
 
-     /** @brief: The y-coordinate */
+     /** @brief - The y-coordinate */
     int32 y;
 };
 

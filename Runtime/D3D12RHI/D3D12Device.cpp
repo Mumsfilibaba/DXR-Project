@@ -18,15 +18,9 @@
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-Variables
-
 TAutoConsoleVariable<bool> CVarEnableGPUValidation("D3D12RHI.EnableGPUValidation", false);
 TAutoConsoleVariable<bool> CVarEnableDRED("D3D12RHI.EnableDRED", false);
 TAutoConsoleVariable<bool> CVarPreferDedicatedGPU("D3D12RHI.PreferDedicatedGPU", true);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helpers
 
 static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
@@ -80,9 +74,6 @@ static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 }
 
 static const CHAR* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// DeviceRemovedHandler
 
 void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 {
@@ -151,14 +142,11 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
     FPlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Adapter
 
-FD3D12Adapter::FD3D12Adapter(FD3D12Interface* InD3D12Interface)
+FD3D12Adapter::FD3D12Adapter()
     : FD3D12RefCounted()
     , AdapterIndex(0)
     , bAllowTearing(false)
-    , D3D12Interface(InD3D12Interface)
     , Factory(nullptr)
 #if WIN10_BUILD_17134
     , Factory6(nullptr)
@@ -254,7 +242,7 @@ bool FD3D12Adapter::Initialize()
         }
     }
 
-    // Create factory
+    // Create Factory
     if (FAILED(FDynamicD3D12::CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
     {
         D3D12_ERROR("[FD3D12Adapter]: FAILED to create factory");
@@ -288,7 +276,7 @@ bool FD3D12Adapter::Initialize()
         }
     }
 
-    // Choose adapter
+    // Choose Adapter
     D3D_FEATURE_LEVEL BestFeatureLevel = D3D_FEATURE_LEVEL_11_0;
     
     const D3D_FEATURE_LEVEL TestFeatureLevels[] =
@@ -416,8 +404,6 @@ bool FD3D12Adapter::Initialize()
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Device
 
 FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     : FD3D12RefCounted()

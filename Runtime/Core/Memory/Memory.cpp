@@ -7,9 +7,6 @@
 #include <crtdbg.h>
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Memory
-
 void* FMemory::Malloc(uint64 Size) noexcept
 {
     // Since malloc is not guaranteed to return nullptr, we check for it here

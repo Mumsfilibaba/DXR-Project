@@ -1,7 +1,7 @@
 include '../BuildScripts/Scripts/build_workspace.lua'
 
 ---------------------------------------------------------------------------------------------------
--- Sanbox Project
+-- Sandbox Project
 
 local SandboxProject = FTargetBuildRules('Sandbox')
 SandboxProject.AddModuleDependencies(
@@ -12,7 +12,7 @@ SandboxProject.AddModuleDependencies(
     'RHI',
     'Engine',
     'Renderer',
-    'InterfaceRenderer',
+    'ViewportRenderer',
     'NullRHI',
 })
 

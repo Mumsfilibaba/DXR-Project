@@ -10,17 +10,12 @@
 class FD3D12CommandList;
 class FMaterial;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ShaderBindingTableEntry
-
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) FD3D12ShaderBindingTableEntry
 {
     CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
     D3D12_GPU_DESCRIPTOR_HANDLE	RootDescriptorTables[4] = { 0, 0, 0, 0 };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ShaderBindingTableBuilder
 
 class FD3D12ShaderBindingTableBuilder 
     : public FD3D12DeviceChild
@@ -59,8 +54,6 @@ private:
     uint32 GPUSamplerIndex  = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12AccelerationStructure
 
 class FD3D12AccelerationStructure 
     : public FD3D12DeviceChild
@@ -83,8 +76,6 @@ protected:
     FD3D12ResourceRef ScratchBuffer;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayTracingGeometry
 
 class FD3D12RayTracingGeometry 
     : public FRHIRayTracingGeometry
@@ -94,13 +85,14 @@ public:
     FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryInitializer& Initializer);
     ~FD3D12RayTracingGeometry() = default;
 
-    bool Build(class FD3D12CommandContext& CmdContext, FD3D12VertexBuffer* InVertexBuffer, FD3D12IndexBuffer* InIndexBuffer, bool bUpdate);
-
-    FD3D12VertexBuffer* GetVertexBuffer() const { return VertexBuffer.Get(); }
-    FD3D12IndexBuffer*  GetIndexBuffer()  const { return IndexBuffer.Get(); }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIRayTracingGeometry
+    bool Build(
+        FD3D12CommandContext& CmdContext,
+        FD3D12Buffer* InVertexBuffer,
+        uint32 InNumVertices,
+        FD3D12Buffer* InIndexBuffer,
+        uint32 InNumIndices,
+        EIndexFormat InIndexFormat,
+        bool bUpdate);
 
     virtual void* GetRHIBaseBVHBuffer()             override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
@@ -114,13 +106,14 @@ public:
         }
     }
 
+    FD3D12Buffer* GetVertexBuffer() const { return VertexBuffer.Get(); }
+    FD3D12Buffer* GetIndexBuffer()  const { return IndexBuffer.Get(); }
+
 private:
-    FD3D12VertexBufferRef VertexBuffer;
-    FD3D12IndexBufferRef  IndexBuffer;
+    FD3D12BufferRef VertexBuffer;
+    FD3D12BufferRef IndexBuffer;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayTracingScene
 
 class FD3D12RayTracingScene 
     : public FRHIRayTracingScene
@@ -142,18 +135,6 @@ public:
         const FRayTracingShaderResources* HitGroupResources,
         uint32 NumHitGroupResources);
 
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE            GetRayGenShaderRecord() const;
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetMissShaderTable()    const;
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetHitGroupTable()      const;
-
-    FD3D12Resource* GetInstanceuffer() const { return InstanceBuffer.Get(); }
-    FD3D12Resource* GetBindingTable()  const { return BindingTable.Get(); }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIRayTracingScene
-
     virtual void* GetRHIBaseBVHBuffer()             override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
 
@@ -168,6 +149,13 @@ public:
             D3D12Resource->SetName(InName);
         }
     }
+
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE            GetRayGenShaderRecord() const;
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetMissShaderTable()    const;
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetHitGroupTable()      const;
+
+    FD3D12Resource* GetInstanceuffer() const { return InstanceBuffer.Get(); }
+    FD3D12Resource* GetBindingTable()  const { return BindingTable.Get(); }
 
 private:
     TArray<FRHIRayTracingGeometryInstance> Instances;

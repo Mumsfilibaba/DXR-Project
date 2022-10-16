@@ -12,13 +12,7 @@
 
 #include "Renderer/Debug/GPUProfiler.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-variable
-
 TAutoConsoleVariable<bool> GDrawTileDebug("Renderer.Debug.DrawTiledLightning", false);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDeferredRenderer
 
 bool FDeferredRenderer::Init(FFrameResources& FrameResources)
 {
@@ -555,7 +549,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
             if (Command.Material->ShouldRenderInPrePass())
             {
                 CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
-                CommandList.SetIndexBuffer(Command.IndexBuffer);
+                CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
                 PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
@@ -572,7 +566,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
                 FRHISamplerState* Sampler = Command.Material->GetMaterialSampler();
                 CommandList.SetSamplerState(BasePixelShader.Get(), Sampler, 0);
 
-                CommandList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+                CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
             }
         }
 
@@ -711,7 +705,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
         const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
 
         CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
-        CommandList.SetIndexBuffer(Command.IndexBuffer);
+        CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
         CommandList.SetConstantBuffer(BaseVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
@@ -724,7 +718,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
             Command.Material->BuildBuffer(CommandList);
         }
 
-        FRHIConstantBuffer* PSConstantBuffers[] =
+        FRHIBuffer* PSConstantBuffers[] =
         {
             FrameResources.CameraBuffer.Get(),
             Command.Material->GetMaterialBuffer(),
@@ -740,7 +734,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
         FRHISamplerState* Sampler = Command.Material->GetMaterialSampler();
         CommandList.SetSamplerState(BasePixelShader.Get(), Sampler, 0);
 
-        CommandList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+        CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
     }
 
     CommandList.EndRenderPass();

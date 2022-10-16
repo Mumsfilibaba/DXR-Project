@@ -3,15 +3,12 @@
 #include "Matrix3.h"
 #include "Vector4.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMatrix4
-
 class VECTOR_ALIGN FMatrix4
 {
 public:
 
     /**
-     * @brief: Default constructor (Initialize components to zero)
+     * @brief - Default constructor (Initialize components to zero)
      */
     FORCEINLINE FMatrix4() noexcept
         : m00(0.0f), m01(0.0f), m02(0.0f), m03(0.0f)
@@ -21,9 +18,8 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
-     *
-     * @param Diagonal: Value to set on the diagonal
+     * @brief          - Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
+     * @param Diagonal - Value to set on the diagonal
      */
     FORCEINLINE explicit FMatrix4(float Diagonal) noexcept
         : m00(Diagonal), m01(0.0f), m02(0.0f), m03(0.0f)
@@ -33,12 +29,11 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all values with vectors specifying each row
-     *
-     * @param Row0: Vector to set the first row to
-     * @param Row1: Vector to set the second row to
-     * @param Row2: Vector to set the third row to
-     * @param Row3: Vector to set the fourth row to
+     * @brief      - Constructor initializing all values with vectors specifying each row
+     * @param Row0 - Vector to set the first row to
+     * @param Row1 - Vector to set the second row to
+     * @param Row2 - Vector to set the third row to
+     * @param Row3 - Vector to set the fourth row to
      */
     FORCEINLINE explicit FMatrix4(const FVector4& Row0, const FVector4& Row1, const FVector4& Row2, const FVector4& Row3) noexcept
         : m00(Row0.x), m01(Row0.y), m02(Row0.z), m03(Row0.w)
@@ -48,24 +43,23 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all values with corresponding value
-     *
-     * @param In00: Value to set on row 0 and column 0
-     * @param In01: Value to set on row 0 and column 1
-     * @param In02: Value to set on row 0 and column 2
-     * @param In03: Value to set on row 0 and column 3
-     * @param In10: Value to set on row 1 and column 0
-     * @param In11: Value to set on row 1 and column 1
-     * @param In12: Value to set on row 1 and column 2
-     * @param In13: Value to set on row 1 and column 3
-     * @param In20: Value to set on row 2 and column 0
-     * @param In21: Value to set on row 2 and column 1
-     * @param In22: Value to set on row 2 and column 2
-     * @param In23: Value to set on row 2 and column 3
-     * @param In30: Value to set on row 3 and column 0
-     * @param In31: Value to set on row 3 and column 1
-     * @param In32: Value to set on row 3 and column 2
-     * @param In33: Value to set on row 3 and column 3
+     * @brief      - Constructor initializing all values with corresponding value
+     * @param In00 - Value to set on row 0 and column 0
+     * @param In01 - Value to set on row 0 and column 1
+     * @param In02 - Value to set on row 0 and column 2
+     * @param In03 - Value to set on row 0 and column 3
+     * @param In10 - Value to set on row 1 and column 0
+     * @param In11 - Value to set on row 1 and column 1
+     * @param In12 - Value to set on row 1 and column 2
+     * @param In13 - Value to set on row 1 and column 3
+     * @param In20 - Value to set on row 2 and column 0
+     * @param In21 - Value to set on row 2 and column 1
+     * @param In22 - Value to set on row 2 and column 2
+     * @param In23 - Value to set on row 2 and column 3
+     * @param In30 - Value to set on row 3 and column 0
+     * @param In31 - Value to set on row 3 and column 1
+     * @param In32 - Value to set on row 3 and column 2
+     * @param In33 - Value to set on row 3 and column 3
      */
     FORCEINLINE explicit FMatrix4(
         float m00, float m01, float m02, float m03,
@@ -79,9 +73,8 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all components with an array
-     *
-     * @param Arr: Array with at least 16 elements
+     * @brief     - Constructor initializing all components with an array
+     * @param Arr - Array with at least 16 elements
      */
     FORCEINLINE explicit FMatrix4(const float* Arr) noexcept
         : m00(Arr[0]) , m01(Arr[1]) , m02(Arr[2]) , m03(Arr[3])
@@ -125,10 +118,9 @@ public:
     }
 
     /**
-     * @brief: Transform a 3-D vector as position, fourth component to one
-     *
-     * @param Position: Vector to transform
-     * @return: Transformed vector
+     * @brief          - Transform a 3-D vector as position, fourth component to one
+     * @param Position - Vector to transform
+     * @return         - Transformed vector
      */
     FORCEINLINE FVector3 TransformCoord(const FVector3& Position) const noexcept
     {
@@ -155,10 +147,9 @@ public:
     }
 
     /**
-     * @brief: Transform a 3-D vector as direction, fourth component to zero
-     *
-     * @param Direction: Vector to transform
-     * @return: Transformed vector
+     * @brief           - Transform a 3-D vector as direction, fourth component to zero
+     * @param Direction - Vector to transform
+     * @return          - Transformed vector
      */
     FORCEINLINE FVector3 TransformNormal(const FVector3& Direction) const noexcept
     {
@@ -176,9 +167,8 @@ public:
     }
 
     /**
-     * @brief: Returns the transposed version of this matrix
-     *
-     * @return: Transposed matrix
+     * @brief  - Returns the transposed version of this matrix
+     * @return - Transposed matrix
      */
     inline FMatrix4 Transpose() const noexcept
     {
@@ -212,9 +202,8 @@ public:
     }
 
     /**
-     * @brief: Returns the inverted version of this matrix
-     *
-     * @return: Inverse matrix
+     * @brief  - Returns the inverted version of this matrix
+     * @return - Inverse matrix
      */
     inline FMatrix4 Invert() const noexcept
     {
@@ -356,9 +345,8 @@ public:
     }
 
     /**
-     * @brief: Returns the adjugate of this matrix
-     *
-     * @return: Adjugate matrix
+     * @brief  - Returns the adjugate of this matrix
+     * @return - Adjugate matrix
      */
     inline FMatrix4 Adjoint() const noexcept
     {
@@ -476,9 +464,8 @@ public:
     }
 
     /**
-     * @brief: Returns the determinant of this matrix
-     *
-     * @return: The determinant
+     * @brief  - Returns the determinant of this matrix
+     * @return - The determinant
      */
     inline float Determinant() const noexcept
     {
@@ -538,9 +525,8 @@ public:
     }
 
     /**
-     * @brief: Checks weather this matrix has any value that equals NaN
-     *
-     * @return: True if the any value equals NaN, false if not
+     * @brief  - Checks weather this matrix has any value that equals NaN
+     * @return - True if the any value equals NaN, false if not
      */
     inline bool HasNaN() const noexcept
     {
@@ -556,9 +542,8 @@ public:
     }
 
     /**
-     * @brief: Checks weather this matrix has any value that equals infinity
-     *
-     * @return: True if the any value equals infinity, false if not
+     * @brief  - Checks weather this matrix has any value that equals infinity
+     * @return - True if the any value equals infinity, false if not
      */
     inline bool HasInfinity() const noexcept
     {
@@ -574,9 +559,8 @@ public:
     }
 
     /**
-     * @brief: Checks weather this matrix has any value that equals infinity or NaN
-     *
-     * @return: False if the any value equals infinity or NaN, true if not
+     * @brief  - Checks weather this matrix has any value that equals infinity or NaN
+     * @return - False if the any value equals infinity or NaN, true if not
      */
     FORCEINLINE bool IsValid() const noexcept
     {
@@ -584,10 +568,9 @@ public:
     }
 
     /**
-     * @brief: Compares, within a threshold Epsilon, this matrix with another matrix
-     *
-     * @param Other: matrix to compare against
-     * @return: True if equal, false if not
+     * @brief       - Compares, within a threshold Epsilon, this matrix with another matrix
+     * @param Other - matrix to compare against
+     * @return      - True if equal, false if not
      */
     inline bool IsEqual(const FMatrix4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
@@ -623,7 +606,7 @@ public:
 #endif
     }
 
-     /** @brief: Sets this matrix to an identity matrix */
+     /** @brief - Sets this matrix to an identity matrix */
     FORCEINLINE void SetIdentity() noexcept
     {
 #if !USE_VECTOR_OP
@@ -655,9 +638,8 @@ public:
     }
 
     /**
-     * @brief: Sets the upper 3x3 matrix
-     *
-     * @param RotationAndScale: 3x3 to set the upper quadrant to
+     * @brief                  - Sets the upper 3x3 matrix
+     * @param RotationAndScale - 3x3 to set the upper quadrant to
      */
     FORCEINLINE void SetRotationAndScale(const FMatrix3& RotationAndScale) noexcept
     {
@@ -675,9 +657,8 @@ public:
     }
 
     /**
-     * @brief: Sets the translation part of a matrix
-     *
-     * @param Translation: The translation part
+     * @brief             - Sets the translation part of a matrix
+     * @param Translation - The translation part
      */
     FORCEINLINE void SetTranslation(const FVector3& Translation) noexcept
     {
@@ -687,10 +668,9 @@ public:
     }
 
     /**
-     * @brief: Returns a row of this matrix
-     *
-     * @param Row: The row to retrieve
-     * @return: A vector containing the specified row
+     * @brief     - Returns a row of this matrix
+     * @param Row - The row to retrieve
+     * @return    - A vector containing the specified row
      */
     FORCEINLINE FVector4 GetRow(int32 Row) const noexcept
     {
@@ -699,10 +679,9 @@ public:
     }
 
     /**
-     * @brief: Returns a column of this matrix
-     *
-     * @param Column: The column to retrieve
-     * @return: A vector containing the specified column
+     * @brief        - Returns a column of this matrix
+     * @param Column - The column to retrieve
+     * @return       - A vector containing the specified column
      */
     FORCEINLINE FVector4 GetColumn(int32 Column) const noexcept
     {
@@ -711,10 +690,8 @@ public:
     }
 
     /**
-     * @brief: Returns the translation part of this matrix, that is
-     * the x-, y-, and z-coordinates of the fourth row
-     *
-     * @return: A vector containing the translation
+     * @brief  - Returns the translation part of this matrix, that is the x-, y-, and z-coordinates of the fourth row
+     * @return - A vector containing the translation
      */
     FORCEINLINE FVector3 GetTranslation() const noexcept
     {
@@ -722,9 +699,8 @@ public:
     }
 
     /**
-     * @brief: Returns the 3x3 matrix thats forming the upper quadrant of this matrix.
-     *
-     * @return: A matrix containing the upper part of the matrix
+     * @brief  - Returns the 3x3 matrix thats forming the upper quadrant of this matrix.
+     * @return - A matrix containing the upper part of the matrix
      */
     FORCEINLINE FMatrix3 GetRotationAndScale() const noexcept
     {
@@ -732,9 +708,8 @@ public:
     }
 
     /**
-     * @brief: Returns the data of this matrix as a pointer
-     *
-     * @return: A pointer to the data
+     * @brief  - Returns the data of this matrix as a pointer
+     * @return - A pointer to the data
      */
     FORCEINLINE float* GetData() noexcept
     {
@@ -742,9 +717,8 @@ public:
     }
 
     /**
-     * @brief: Returns the data of this matrix as a pointer
-     *
-     * @return: A pointer to the data
+     * @brief  - Returns the data of this matrix as a pointer
+     * @return - A pointer to the data
      */
     FORCEINLINE const float* GetData() const noexcept
     {
@@ -754,10 +728,9 @@ public:
 public:
 
     /**
-     * @brief: Transforms a 4-D vector
-     *
-     * @param RHS: The vector to transform
-     * @return: A vector containing the transformation
+     * @brief     - Transforms a 4-D vector
+     * @param RHS - The vector to transform
+     * @return    - A vector containing the transformation
      */
     FORCEINLINE FVector4 operator*(const FVector4& RHS) const noexcept
     {
@@ -765,10 +738,9 @@ public:
     }
 
     /**
-     * @brief: Multiplies a matrix with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A matrix containing the result of the multiplication
+     * @brief     - Multiplies a matrix with another matrix
+     * @param RHS - The other matrix
+     * @return    - A matrix containing the result of the multiplication
      */
     FORCEINLINE FMatrix4 operator*(const FMatrix4& RHS) const noexcept
     {
@@ -817,10 +789,9 @@ public:
     }
 
     /**
-     * @brief: Multiplies this matrix with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A reference to this matrix
+     * @brief     - Multiplies this matrix with another matrix
+     * @param RHS - The other matrix
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix4& operator*=(const FMatrix4& RHS) noexcept
     {
@@ -828,10 +799,9 @@ public:
     }
 
     /**
-     * @brief: Multiplies a matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A matrix containing the result of the multiplication
+     * @brief     - Multiplies a matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A matrix containing the result of the multiplication
      */
     FORCEINLINE FMatrix4 operator*(float RHS) const noexcept
     {
@@ -874,10 +844,9 @@ public:
     }
 
     /**
-     * @brief: Multiplies this matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A reference to this matrix
+     * @brief     - Multiplies this matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix4& operator*=(float RHS) noexcept
     {
@@ -885,10 +854,9 @@ public:
     }
 
     /**
-     * @brief: Adds a matrix component-wise with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A matrix containing the result of the addition
+     * @brief     - Adds a matrix component-wise with another matrix
+     * @param RHS - The other matrix
+     * @return    - A matrix containing the result of the addition
      */
     FORCEINLINE FMatrix4 operator+(const FMatrix4& RHS) const noexcept
     {
@@ -930,10 +898,9 @@ public:
     }
 
     /**
-     * @brief: Adds this matrix component-wise with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A reference to this matrix
+     * @brief     - Adds this matrix component-wise with another matrix
+     * @param RHS - The other matrix
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix4& operator+=(const FMatrix4& RHS) noexcept
     {
@@ -941,10 +908,9 @@ public:
     }
 
     /**
-     * @brief: Adds a matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A matrix containing the result of the addition
+     * @brief     - Adds a matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A matrix containing the result of the addition
      */
     FORCEINLINE FMatrix4 operator+(float RHS) const noexcept
     {
@@ -987,10 +953,9 @@ public:
     }
 
     /**
-     * @brief: Adds this matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A reference to this matrix
+     * @brief     - Adds this matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix4& operator+=(float RHS) noexcept
     {
@@ -998,10 +963,9 @@ public:
     }
 
     /**
-     * @brief: Subtracts a matrix component-wise with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A matrix containing the result of the subtraction
+     * @brief     - Subtracts a matrix component-wise with another matrix
+     * @param RHS - The other matrix
+     * @return    - A matrix containing the result of the subtraction
      */
     FORCEINLINE FMatrix4 operator-(const FMatrix4& RHS) const noexcept
     {
@@ -1043,10 +1007,9 @@ public:
     }
 
     /**
-     * @brief: Subtracts this matrix component-wise with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A reference to this matrix
+     * @brief     - Subtracts this matrix component-wise with another matrix
+     * @param RHS - The other matrix
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix4& operator-=(const FMatrix4& RHS) noexcept
     {
@@ -1054,10 +1017,9 @@ public:
     }
 
     /**
-     * @brief: Subtracts a matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A matrix containing the result of the subtraction
+     * @brief     - Subtracts a matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A matrix containing the result of the subtraction
      */
     FORCEINLINE FMatrix4 operator-(float RHS) const noexcept
     {
@@ -1100,10 +1062,9 @@ public:
     }
 
     /**
-     * @brief: Subtracts this matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A reference to this matrix
+     * @brief     - Subtracts this matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix4& operator-=(float RHS) noexcept
     {
@@ -1111,10 +1072,9 @@ public:
     }
 
     /**
-     * @brief: Divides a matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A matrix containing the result of the division
+     * @brief     - Divides a matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A matrix containing the result of the division
      */
     FORCEINLINE FMatrix4 operator/(float RHS) const noexcept
     {
@@ -1159,10 +1119,9 @@ public:
     }
 
     /**
-     * @brief: Divides this matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A reference to this matrix
+     * @brief     - Divides this matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix4& operator/=(float RHS) noexcept
     {
@@ -1170,10 +1129,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result after comparing this and another matrix
-     *
-     * @param Other: The matrix to compare with
-     * @return: True if equal, false if not
+     * @brief       - Returns the result after comparing this and another matrix
+     * @param Other - The matrix to compare with
+     * @return      - True if equal, false if not
      */
     FORCEINLINE bool operator==(const FMatrix4& Other) const noexcept
     {
@@ -1181,10 +1139,9 @@ public:
     }
 
     /**
-     * @brief: Returns the negated result after comparing this and another matrix
-     *
-     * @param Other: The matrix to compare with
-     * @return: False if equal, true if not
+     * @brief       - Returns the negated result after comparing this and another matrix
+     * @param Other - The matrix to compare with
+     * @return      - False if equal, true if not
      */
     FORCEINLINE bool operator!=(const FMatrix4& Other) const noexcept
     {
@@ -1194,9 +1151,8 @@ public:
 public:
 
     /**
-     * @brief: Creates and returns a identity matrix
-     *
-     * @return: A identity matrix
+     * @brief  - Creates and returns a identity matrix
+     * @return - A identity matrix
      */
     inline static FMatrix4 Identity() noexcept
     {
@@ -1204,10 +1160,9 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a uniform scale matrix
-     *
-     * @param Scale: Uniform scale that represents this matrix
-     * @return: A scale matrix
+     * @brief       - Creates and returns a uniform scale matrix
+     * @param Scale - Uniform scale that represents this matrix
+     * @return      - A scale matrix
      */
     inline static FMatrix4 Scale(float Scale) noexcept
     {
@@ -1219,12 +1174,11 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a scale matrix for each axis
-     *
-     * @param x: Scale for the x-axis
-     * @param y: Scale for the y-axis
-     * @param z: Scale for the z-axis
-     * @return: A scale matrix
+     * @brief   - Creates and returns a scale matrix for each axis
+     * @param x - Scale for the x-axis
+     * @param y - Scale for the y-axis
+     * @param z - Scale for the z-axis
+     * @return  - A scale matrix
      */
     inline static FMatrix4 Scale(float x, float y, float z) noexcept
     {
@@ -1236,10 +1190,9 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a scale matrix for each axis
-     *
-     * @param VectorWithScale: A vector containing the scale for each axis in the x-, y-, z-components
-     * @return: A scale matrix
+     * @brief                 - Creates and returns a scale matrix for each axis
+     * @param VectorWithScale - A vector containing the scale for each axis in the x-, y-, z-components
+     * @return                - A scale matrix
      */
     inline static FMatrix4 Scale(const FVector3& VectorWithScale) noexcept
     {
@@ -1247,12 +1200,11 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a translation matrix
-     *
-     * @param x: Translation for the x-axis
-     * @param y: Translation for the y-axis
-     * @param z: Translation for the z-axis
-     * @return: A translation matrix
+     * @brief   - Creates and returns a translation matrix
+     * @param x - Translation for the x-axis
+     * @param y - Translation for the y-axis
+     * @param z - Translation for the z-axis
+     * @return  - A translation matrix
      */
     inline static FMatrix4 Translation(float x, float y, float z) noexcept
     {
@@ -1264,10 +1216,9 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a translation matrix
-     *
-     * @param Translation: A vector containing the translation
-     * @return: A translation matrix
+     * @brief             - Creates and returns a translation matrix
+     * @param Translation - A vector containing the translation
+     * @return            - A translation matrix
      */
     inline static FMatrix4 Translation(const FVector3& InTranslation) noexcept
     {
@@ -1275,12 +1226,11 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
-     *
-     * @param Pitch: Rotation around the x-axis in radians
-     * @param Yaw: Rotation around the y-axis in radians
-     * @param Roll: Rotation around the z-axis in radians
-     * @return: A rotation matrix
+     * @brief       - Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
+     * @param Pitch - Rotation around the x-axis in radians
+     * @param Yaw   - Rotation around the y-axis in radians
+     * @param Roll  - Rotation around the z-axis in radians
+     * @return      - A rotation matrix
      */
     inline static FMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
     {
@@ -1302,10 +1252,9 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
-     *
-     * @param PitchYawRoll: A vector containing the PitchYawRoll (x = Pitch, y = Yaw, z = Roll)
-     * @return: A rotation matrix
+     * @brief              - Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
+     * @param PitchYawRoll - A vector containing the PitchYawRoll (x = Pitch, y = Yaw, z = Roll)
+     * @return             - A rotation matrix
      */
     inline static FMatrix4 RotationRollPitchYaw(const FVector3& PitchYawRoll) noexcept
     {
@@ -1313,10 +1262,9 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a rotation matrix around the x-axis
-     *
-     * @param x: Rotation around the x-axis in radians
-     * @return: A rotation matrix
+     * @brief   - Creates and returns a rotation matrix around the x-axis
+     * @param x - Rotation around the x-axis in radians
+     * @return  - A rotation matrix
      */
     inline static FMatrix4 RotationX(float x) noexcept
     {
@@ -1331,10 +1279,9 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a rotation matrix around the y-axis
-     *
-     * @param y: Rotation around the y-axis in radians
-     * @return: A rotation matrix
+     * @brief   - Creates and returns a rotation matrix around the y-axis
+     * @param y - Rotation around the y-axis in radians
+     * @return  - A rotation matrix
      */
     inline static FMatrix4 RotationY(float y) noexcept
     {
@@ -1349,10 +1296,9 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a rotation matrix around the z-axis
-     *
-     * @param z: Rotation around the z-axis in radians
-     * @return: A rotation matrix
+     * @brief   - Creates and returns a rotation matrix around the z-axis
+     * @param z - Rotation around the z-axis in radians
+     * @return  - A rotation matrix
      */
     inline static FMatrix4 RotationZ(float z) noexcept
     {
@@ -1367,13 +1313,12 @@ public:
     }
 
     /**
-     * @brief: Creates a orthographic-projection matrix (Left-handed)
-     *
-     * @param Width: Width of the projection plane in pixels
-     * @param Height: Height of the projection plane in pixels
-     * @param NearZ: The distance to the near plane in world-units
-     * @param FarZ: The distance to the far plane in world-units
-     * @return: A orthographic-projection matrix
+     * @brief        - Creates a orthographic-projection matrix (Left-handed)
+     * @param Width  - Width of the projection plane in pixels
+     * @param Height - Height of the projection plane in pixels
+     * @param NearZ  - The distance to the near plane in world-units
+     * @param FarZ   - The distance to the far plane in world-units
+     * @return       - A orthographic-projection matrix
      */
     inline static FMatrix4 OrtographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
     {
@@ -1385,15 +1330,14 @@ public:
     }
 
     /**
-     * @brief: Creates a orthographic-projection matrix (Left-handed)
-     *
-     * @param Left: Negative offset on the x-axis in world-units
-     * @param Right: Positive offset on the x-axis in world-units
-     * @param Bottom: Negative offset on the y-axis in world-units
-     * @param Top: Positive offset on the y-axis in world-units
-     * @param NearZ: The distance to the near plane in world-units
-     * @param FarZ: The distance to the far plane in world-units
-     * @return: A orthographic-projection matrix
+     * @brief        - Creates a orthographic-projection matrix (Left-handed)
+     * @param Left   - Negative offset on the x-axis in world-units
+     * @param Right  - Positive offset on the x-axis in world-units
+     * @param Bottom - Negative offset on the y-axis in world-units
+     * @param Top    - Positive offset on the y-axis in world-units
+     * @param NearZ  - The distance to the near plane in world-units
+     * @param FarZ   - The distance to the far plane in world-units
+     * @return       - A orthographic-projection matrix
      */
     inline static FMatrix4 OrtographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept
     {
@@ -1409,13 +1353,12 @@ public:
     }
 
     /**
-     * @brief: Creates a perspective-projection matrix (Left-handed)
-     *
-     * @param Fov: Field of view of the projection in radians
-     * @param AspectRatio: Aspect ratio of the projection (Width / Height)
-     * @param NearZ: The distance to the near plane in world-units
-     * @param FarZ: The distance to the far plane in world-units
-     * @return: A perspective-projection matrix
+     * @brief             - Creates a perspective-projection matrix (Left-handed)
+     * @param Fov         - Field of view of the projection in radians
+     * @param AspectRatio - Aspect ratio of the projection (Width / Height)
+     * @param NearZ       - The distance to the near plane in world-units
+     * @param FarZ        - The distance to the far plane in world-units
+     * @return            - A perspective-projection matrix
      */
     inline static FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
     {
@@ -1436,14 +1379,13 @@ public:
     }
 
     /**
-     * @brief: Creates a perspective-projection matrix (Left-handed)
-     *
-     * @param Fov: Field of view of the projection in radians
-     * @param Width: Width of the projection plane in pixels
-     * @param Height: Height of the projection plane in pixels
-     * @param NearZ: The distance to the near plane in world-units
-     * @param FarZ: The distance to the far plane in world-units
-     * @return: A perspective-projection matrix
+     * @brief        - Creates a perspective-projection matrix (Left-handed)
+     * @param Fov    - Field of view of the projection in radians
+     * @param Width  - Width of the projection plane in pixels
+     * @param Height - Height of the projection plane in pixels
+     * @param NearZ  - The distance to the near plane in world-units
+     * @param FarZ   - The distance to the far plane in world-units
+     * @return       - A perspective-projection matrix
      */
     inline static FMatrix4 PerspectiveProjection(float Fov, float Width, float Height, float NearZ, float FarZ) noexcept
     {
@@ -1452,12 +1394,11 @@ public:
     }
 
     /**
-     * @brief: Creates a look-at matrix (Left-handed)
-     *
-     * @param Eye: Position to look from
-     * @param At: Position to look at
-     * @param Up: The up-axis of the new coordinate system in the current world-space
-     * @return: A look-at matrix
+     * @brief - Creates a look-at matrix (Left-handed)
+     * @param Eye - Position to look from
+     * @param At - Position to look at
+     * @param Up - The up-axis of the new coordinate system in the current world-space
+     * @return - A look-at matrix
      */
     inline static FMatrix4 LookAt(const FVector3& Eye, const FVector3& At, const FVector3& Up) noexcept
     {
@@ -1466,12 +1407,11 @@ public:
     }
 
     /**
-     * @brief: Creates a look-to matrix (Left-handed)
-     *
-     * @param Eye: Position to look from
-     * @param Direction: Direction to look in
-     * @param Up: The up-axis of the new coordinate system in the current world-space
-     * @return: A look-to matrix
+     * @brief           - Creates a look-to matrix (Left-handed)
+     * @param Eye       - Position to look from
+     * @param Direction - Direction to look in
+     * @param Up        - The up-axis of the new coordinate system in the current world-space
+     * @return          - A look-to matrix
      */
     inline static FMatrix4 LookTo(const FVector3& Eye, const FVector3& Direction, const FVector3& Up) noexcept
     {
@@ -1496,7 +1436,7 @@ public:
 public:
     union
     {
-         /** @brief: Each element of the matrix */
+         /** @brief - Each element of the matrix */
         struct
         {
             float m00, m01, m02, m03;
@@ -1505,7 +1445,7 @@ public:
             float m30, m31, m32, m33;
         };
 
-         /** @brief: 2-D array of the matrix */
+         /** @brief - 2-D array of the matrix */
         float f[4][4];
     };
 };

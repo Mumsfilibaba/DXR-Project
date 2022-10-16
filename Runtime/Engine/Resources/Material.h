@@ -8,9 +8,6 @@
 
 #define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetShaderResourceView() : nullptr)
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// EAlphaMaskMode
-
 // TODO: This should be refactored into using different shaders
 enum EAlphaMaskMode
 {
@@ -19,8 +16,6 @@ enum EAlphaMaskMode
     AlphaMaskMode_DiffuseCombined = 2, // Stored in Alpha channel of diffuse texture
 };
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMaterialDesc
 
 struct FMaterialDesc
 {
@@ -33,8 +28,6 @@ struct FMaterialDesc
     int32    EnableMask   = AlphaMaskMode_Disabled;
 };
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMaterial
 
 class ENGINE_API FMaterial
 {
@@ -81,7 +74,7 @@ public:
         return Sampler.Get();
     }
 
-    FORCEINLINE FRHIConstantBuffer* GetMaterialBuffer() const
+    FORCEINLINE FRHIBuffer* GetMaterialBuffer() const
     {
         return MaterialBuffer.Get();
     }
@@ -126,9 +119,10 @@ private:
     bool bMaterialBufferIsDirty = true;
     bool bRenderInForwardPass   = false;
 
-    FMaterialDesc         Properties;
-    FRHIConstantBufferRef MaterialBuffer;
-    FRHISamplerStateRef   Sampler;
+    FMaterialDesc       Properties;
+    FRHIBufferRef       MaterialBuffer;
+
+    FRHISamplerStateRef Sampler;
 
     mutable TStaticArray<FRHIShaderResourceView*, 7> ShaderResourceViews;
 };

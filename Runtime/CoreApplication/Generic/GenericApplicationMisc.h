@@ -16,9 +16,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGenericApplicationMisc
-
 struct COREAPPLICATION_API FGenericApplicationMisc
 {
     static class FGenericApplication* CreateApplication();

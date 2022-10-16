@@ -13,9 +13,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedefs
-
 typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
 typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;
 typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
@@ -24,8 +21,6 @@ typedef TSharedRef<class FRHIGraphicsPipelineState>   FRHIGraphicsPipelineStateR
 typedef TSharedRef<class FRHIComputePipelineState>    FRHIComputePipelineStateRef;
 typedef TSharedRef<class FRHIRayTracingPipelineState> FRHIRayTracingPipelineStateRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EDepthWriteMask
 
 enum class EDepthWriteMask : uint8
 {
@@ -43,8 +38,6 @@ inline const CHAR* ToString(EDepthWriteMask DepthWriteMask)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EStencilOp
 
 enum class EStencilOp : uint8
 {
@@ -74,8 +67,6 @@ inline const CHAR* ToString(EStencilOp StencilOp)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDepthStencilStateFace
 
 struct FDepthStencilStateFace
 {
@@ -106,17 +97,17 @@ struct FDepthStencilStateFace
         return Hash;
     }
 
-    bool operator==(const FDepthStencilStateFace& RHS) const
+    bool operator==(const FDepthStencilStateFace& Other) const
     {
-        return (StencilFailOp      == RHS.StencilFailOp) 
-            && (StencilDepthFailOp == RHS.StencilDepthFailOp)
-            && (StencilDepthPassOp      == RHS.StencilDepthPassOp)
-            && (StencilFunc        == RHS.StencilFunc);
+        return (StencilFailOp      == Other.StencilFailOp) 
+            && (StencilDepthFailOp == Other.StencilDepthFailOp)
+            && (StencilDepthPassOp == Other.StencilDepthPassOp)
+            && (StencilFunc        == Other.StencilFunc);
     }
 
-    bool operator!=(const FDepthStencilStateFace& RHS) const
+    bool operator!=(const FDepthStencilStateFace& Other) const
     {
-        return !(*this == RHS);
+        return !(*this == Other);
     }
 
     EStencilOp      StencilFailOp;
@@ -125,8 +116,6 @@ struct FDepthStencilStateFace
     EComparisonFunc StencilFunc;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIDepthStencilStateInitializer
 
 struct FRHIDepthStencilStateInitializer
 {
@@ -200,8 +189,6 @@ struct FRHIDepthStencilStateInitializer
     FDepthStencilStateFace BackFace;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIDepthStencilState
 
 class FRHIDepthStencilState 
     : public FRHIResource
@@ -211,8 +198,6 @@ protected:
     ~FRHIDepthStencilState() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ECullMode
 
 enum class ECullMode : uint8
 {
@@ -232,8 +217,6 @@ inline const CHAR* ToString(ECullMode CullMode)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EFillMode
 
 enum class EFillMode : uint8
 {
@@ -251,8 +234,6 @@ inline const CHAR* ToString(EFillMode FillMode)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIRasterizerStateInitializer
 
 struct FRHIRasterizerStateInitializer
 {
@@ -344,8 +325,6 @@ struct FRHIRasterizerStateInitializer
     float     SlopeScaledDepthBias;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIRasterizerState
 
 class FRHIRasterizerState 
     : public FRHIResource
@@ -355,8 +334,6 @@ protected:
     ~FRHIRasterizerState() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EBlendType 
 
 enum class EBlendType : uint8
 {
@@ -404,8 +381,6 @@ inline const CHAR* ToString(EBlendType  Blend)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EBlendOp
 
 enum class EBlendOp : uint8
 {
@@ -429,8 +404,6 @@ inline const CHAR* ToString(EBlendOp BlendOp)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ELogicOp
 
 enum class ELogicOp : uint8
 {
@@ -476,8 +449,6 @@ inline const CHAR* ToString(ELogicOp LogicOp)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EColorWriteFlag
 
 enum class EColorWriteFlag : uint8
 {
@@ -491,8 +462,6 @@ enum class EColorWriteFlag : uint8
 
 ENUM_CLASS_OPERATORS(EColorWriteFlag);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRenderTargetWriteState
 
 struct FRenderTargetWriteState
 {
@@ -547,8 +516,6 @@ struct FRenderTargetWriteState
     EColorWriteFlag Mask;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRenderTargetBlendDesc
 
 struct FRenderTargetBlendDesc
 {
@@ -639,8 +606,6 @@ struct FRenderTargetBlendDesc
     FRenderTargetWriteState RenderTargetWriteMask;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIBlendStateInitializer
 
 struct FRHIBlendStateInitializer
 {
@@ -691,8 +656,6 @@ struct FRHIBlendStateInitializer
     bool bIndependentBlendEnable;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIBlendState
 
 class FRHIBlendState : public FRHIResource
 {
@@ -701,8 +664,6 @@ protected:
     ~FRHIBlendState() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EVertexInputClass
 
 enum class EVertexInputClass : uint8
 {
@@ -720,8 +681,6 @@ inline const CHAR* ToString(EVertexInputClass BlendOp)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FVertexInputElement
 
 struct FVertexInputElement
 {
@@ -782,8 +741,6 @@ struct FVertexInputElement
     uint32            InstanceStepRate;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIVertexInputLayoutInitializer
 
 struct FRHIVertexInputLayoutInitializer
 {
@@ -812,8 +769,6 @@ struct FRHIVertexInputLayoutInitializer
     TArray<FVertexInputElement> Elements;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIVertexInputLayout
 
 class FRHIVertexInputLayout : public FRHIResource
 {
@@ -822,8 +777,6 @@ protected:
     ~FRHIVertexInputLayout() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EIndexBufferStripCutValue
 
 enum EIndexBufferStripCutValue : uint8
 {
@@ -843,8 +796,6 @@ inline const CHAR* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIPipelineState
 
 class FRHIPipelineState : public FRHIResource
 {
@@ -854,15 +805,13 @@ protected:
 
 public:
 
-    /** @brief: Set the name of the PipelineState */
+    /** @brief - Set the name of the PipelineState */
     virtual void SetName(const FString& InName) { }
 
-    /** @return: Returns the name of the PipelineState */
+    /** @return - Returns the name of the PipelineState */
     virtual FString GetName() const { return ""; }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGraphicsPipelineFormats
 
 struct FGraphicsPipelineFormats
 {
@@ -901,8 +850,6 @@ struct FGraphicsPipelineFormats
     EFormat DepthStencilFormat;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGraphicsPipelineShaders
 
 struct FGraphicsPipelineShaders
 {
@@ -931,8 +878,6 @@ struct FGraphicsPipelineShaders
     FRHIPixelShader*  PixelShader  = nullptr;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIGraphicsPipelineStateInitializer
 
 struct FRHIGraphicsPipelineStateInitializer
 {
@@ -1010,8 +955,6 @@ struct FRHIGraphicsPipelineStateInitializer
     FGraphicsPipelineFormats  PipelineFormats;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIGraphicsPipelineState
 
 class FRHIGraphicsPipelineState : public FRHIPipelineState
 {
@@ -1020,8 +963,6 @@ protected:
     ~FRHIGraphicsPipelineState() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIComputePipelineStateInitializer
 
 struct FRHIComputePipelineStateInitializer
 {
@@ -1046,8 +987,6 @@ struct FRHIComputePipelineStateInitializer
     FRHIComputeShader* Shader;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIComputePipelineState
 
 class FRHIComputePipelineState : public FRHIPipelineState
 {
@@ -1056,8 +995,6 @@ protected:
     ~FRHIComputePipelineState() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERayTracingHitGroupType
 
 enum class ERayTracingHitGroupType : uint8
 {
@@ -1066,8 +1003,6 @@ enum class ERayTracingHitGroupType : uint8
     Procedural = 2
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIRayTracingHitGroupInitializer
 
 struct FRHIRayTracingHitGroupInitializer
 {
@@ -1101,8 +1036,6 @@ struct FRHIRayTracingHitGroupInitializer
     TArray<FRHIRayTracingShader*> Shaders;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIRayTracingPipelineStateInitializer
 
 struct FRHIRayTracingPipelineStateInitializer
 {
@@ -1159,8 +1092,6 @@ struct FRHIRayTracingPipelineStateInitializer
     uint32 MaxRecursionDepth;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIRayTracingPipelineState
 
 class FRHIRayTracingPipelineState : public FRHIPipelineState
 {

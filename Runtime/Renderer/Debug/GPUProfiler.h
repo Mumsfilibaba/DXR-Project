@@ -16,9 +16,6 @@
     #define GPU_TRACE_SCOPE(CmdList, Name)
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGPUProfileSample
-
 struct FGPUProfileSample
 {
     void AddSample(float NewSample)
@@ -77,8 +74,6 @@ struct FGPUProfileSample
     uint32 TimeQueryIndex = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGPUProfiler
 
 using GPUProfileSamplesTable = TMap<FString, FGPUProfileSample, FStringHasher>;
 
@@ -88,39 +83,39 @@ class RENDERER_API FGPUProfiler
     ~FGPUProfiler() = default;
 
 public:
-     /** @brief: Creates the profiler, requires the RHI to be initialized */
+     /** @brief - Creates the profiler, requires the RHI to be initialized */
     static bool Init();
 
-     /** @brief: Release the resources */
+     /** @brief - Release the resources */
     static void Release();
 
     static FORCEINLINE FGPUProfiler& Get() { return Instance; }
 
-     /** @brief: Enables the collection of samples (Resume) */
+     /** @brief - Enables the collection of samples (Resume) */
     void Enable();
 
-     /** @brief: Disables the collection of samples (Pause) */
+     /** @brief - Disables the collection of samples (Pause) */
     void Disable();
 
-     /** @brief: Updates the profiler, should be called once per frame */
+     /** @brief - Updates the profiler, should be called once per frame */
     void Tick();
 
-     /** @brief: Resets all the samples */
+     /** @brief - Resets all the samples */
     void Reset();
 
-     /** @brief: Retrieve a copy of the GPU Profiler samples */
+     /** @brief - Retrieve a copy of the GPU Profiler samples */
     void GetGPUSamples(GPUProfileSamplesTable& OutGPUSamples);
 
-     /** @brief: Start the GPU frame */
+     /** @brief - Start the GPU frame */
     void BeginGPUFrame(FRHICommandList& CmdList);
 
-     /** @brief: End the GPU frame */
+     /** @brief - End the GPU frame */
     void EndGPUFrame(FRHICommandList& CmdList);
 
-     /** @brief: Begin a GPU scope */
+     /** @brief - Begin a GPU scope */
     void BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
 
-     /** @brief: End a GPU scope */
+     /** @brief - End a GPU scope */
     void EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
 
     FORCEINLINE const FGPUProfileSample& GetGPUFrameTime() const
@@ -129,15 +124,16 @@ public:
     }
 
 private:
-     /** @brief: Queries for GPUTimeStamps */
+
+     /** @brief - Queries for GPUTimeStamps */
     FRHITimestampQueryRef Timequeries;
 
     uint32 CurrentTimeQueryIndex = 0;
 
-     /** @brief: Sample for the GPU FrameTime */
+     /** @brief - Sample for the GPU FrameTime */
     FGPUProfileSample FrameTime;
 
-     /** @brief: Table for GPU- samples */
+     /** @brief - Table for GPU- samples */
     GPUProfileSamplesTable Samples;
     FSpinLock              SamplesLock;
 
@@ -146,8 +142,6 @@ private:
     static FGPUProfiler Instance;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGPUScopedTrace
 
 struct FGPUScopedTrace
 {

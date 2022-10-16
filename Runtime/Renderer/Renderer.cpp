@@ -2,7 +2,7 @@
 
 #include "Application/ApplicationInterface.h"
 
-#include "InterfaceRenderer/InterfaceRenderer.h"
+#include "ViewportRenderer/ViewportRenderer.h"
 
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
@@ -20,9 +20,6 @@
 
 #include "Renderer/Debug/GPUProfiler.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-variables
-
 TAutoConsoleVariable<bool> GEnableSSAO("Renderer.Feature.SSAO", true);
 
 TAutoConsoleVariable<bool> GEnableFXAA("Renderer.Feature.FXAA", false);
@@ -39,9 +36,6 @@ TAutoConsoleVariable<bool> GFrustumCullEnabled("Renderer.Feature.FrustumCulling"
 TAutoConsoleVariable<bool> GRayTracingEnabled("Renderer.Feature.RayTracing", false);
 
 RENDERER_API FRenderer GRenderer;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRenderer
 
 FRenderer::FRenderer()
     : WindowHandler(MakeShared<FRendererWindowHandler>())
@@ -62,13 +56,13 @@ bool FRenderer::Init()
         DEBUG_BREAK();
         return false;
     }
-    else
-    {
-        // Resources.MainWindowViewport->SetName("Main Window Viewport");
-    }
 
-    FRHIConstantBufferInitializer CBInitializer(EBufferUsageFlags::Default, sizeof(FCameraBuffer), EResourceAccess::Common);
-    Resources.CameraBuffer = RHICreateConstantBuffer(CBInitializer);
+    FRHIBufferDesc CBDesc(
+        sizeof(FCameraBuffer),
+        sizeof(FCameraBuffer),
+        EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    
+    Resources.CameraBuffer = RHICreateBuffer(CBDesc, EResourceAccess::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create CameraBuffer");
@@ -1168,7 +1162,7 @@ bool FRenderer::InitAA()
 
 bool FRenderer::InitShadingImage()
 {
-    FShadingRateSupport Support;
+    FRHIShadingRateSupport Support;
     RHIQueryShadingRateSupport(Support);
 
     if (Support.Tier != ERHIShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)

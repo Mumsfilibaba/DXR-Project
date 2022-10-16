@@ -1,8 +1,6 @@
 #pragma once
 #include "Core/Generic/GenericInterlocked.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacInterlocked
 
 struct FMacInterlocked 
     : public FGenericInterlocked

@@ -6,8 +6,6 @@
 #include "Core/Generic/GenericConditionVariable.h"
 #include "Core/Platform/PlatformMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsConditionVariable
 
 class FWindowsConditionVariable final 
     : public FGenericConditionVariable

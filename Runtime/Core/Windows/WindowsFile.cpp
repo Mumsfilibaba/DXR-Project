@@ -3,9 +3,6 @@
 
 #include "Core/Templates/NumericLimits.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsFileHandle
-
 FWindowsFileHandle::FWindowsFileHandle(HANDLE InFileHandle)
     : IFileHandle()
     , FileHandle(InFileHandle)
@@ -150,8 +147,6 @@ void FWindowsFileHandle::Close()
     delete this;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsFile
 
 FORCEINLINE IFileHandle* FWindowsFile::OpenForRead(const FString& Filename)
 {

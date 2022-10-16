@@ -13,9 +13,6 @@
 
 #include <imgui.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FConsoleInputHandler
-
 class FConsoleInputHandler final 
     : public FInputHandler
 {
@@ -34,9 +31,6 @@ public:
 
     bool bConsoleToggled = false;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGameConsoleWindow
 
 class FGameConsoleWindow final 
     : public FWindow

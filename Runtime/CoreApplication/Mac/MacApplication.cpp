@@ -11,9 +11,6 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacApplication
-
 FMacApplication* MacApplication = nullptr;
 
 FMacApplication* FMacApplication::CreateMacApplication()

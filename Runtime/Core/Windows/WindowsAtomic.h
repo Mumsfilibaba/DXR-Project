@@ -2,9 +2,6 @@
 #include "Core/Generic/GenericAtomic.h"
 #include "Core/Platform/PlatformInterlocked.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsAtomic
-
 struct FWindowsAtomic final 
     : public FGenericAtomic
 {

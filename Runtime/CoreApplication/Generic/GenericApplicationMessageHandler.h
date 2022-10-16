@@ -13,9 +13,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGenericApplicationMessageHandler
-
 struct FGenericApplicationMessageHandler
 {
     virtual ~FGenericApplicationMessageHandler() = default;

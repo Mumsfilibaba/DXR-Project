@@ -8,9 +8,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalCommandContext
-
 FMetalCommandContext::FMetalCommandContext(FMetalDeviceContext* InDeviceContext)
     : FMetalObject(InDeviceContext)
     , IRHICommandContext()

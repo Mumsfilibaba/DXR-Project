@@ -11,22 +11,18 @@
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Resources/TextureFactory.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FShadowMapRenderer
-
 bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
 {
     SkyboxMesh = FMeshFactory::CreateSphere(1);
+    SkyboxIndexCount  = SkyboxMesh.Indices.GetSize();
+    SkyboxIndexFormat = EIndexFormat::uint32;
 
-    FRHIBufferDataInitializer VertexData(SkyboxMesh.Vertices.GetData(), SkyboxMesh.Vertices.SizeInBytes());
+    FRHIBufferDesc VBDesc(
+        SkyboxMesh.Vertices.SizeInBytes(),
+        SkyboxMesh.Vertices.GetStride(),
+        EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
 
-    FRHIVertexBufferInitializer VBInitializer(
-        EBufferUsageFlags::Default, 
-        SkyboxMesh.Vertices.GetSize(),
-        sizeof(FVertex), 
-        EResourceAccess::VertexAndConstantBuffer, &VertexData);
-    
-    SkyboxVertexBuffer = RHICreateVertexBuffer(VBInitializer);
+    SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, SkyboxMesh.Vertices.GetData());
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -36,16 +32,12 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         SkyboxVertexBuffer->SetName("Skybox VertexBuffer");
     }
 
-    FRHIBufferDataInitializer IndexData(SkyboxMesh.Indices.GetData(), SkyboxMesh.Indices.SizeInBytes());
+    FRHIBufferDesc IBDesc(
+        SkyboxMesh.Indices.SizeInBytes(),
+        SkyboxMesh.Indices.GetStride(),
+        EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
 
-    FRHIIndexBufferInitializer IBInitializer(
-        EBufferUsageFlags::Default, 
-        EIndexFormat::uint32,
-        SkyboxMesh.Indices.GetSize(),
-        EResourceAccess::IndexBuffer, 
-        &IndexData);
-
-    SkyboxIndexBuffer = RHICreateIndexBuffer(IBInitializer);
+    SkyboxIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, SkyboxMesh.Indices.GetData());
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -212,7 +204,7 @@ void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResourc
 
     CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     CommandList.SetVertexBuffers(MakeArrayView(&SkyboxVertexBuffer, 1), 0);
-    CommandList.SetIndexBuffer(SkyboxIndexBuffer.Get());
+    CommandList.SetIndexBuffer(SkyboxIndexBuffer.Get(), SkyboxIndexFormat);
     CommandList.SetGraphicsPipelineState(PipelineState.Get());
 
     struct FSimpleCameraBuffer
@@ -229,7 +221,7 @@ void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResourc
 
     CommandList.SetSamplerState(SkyboxPixelShader.Get(), SkyboxSampler.Get(), 0);
 
-    CommandList.DrawIndexedInstanced(static_cast<uint32>(SkyboxMesh.Indices.GetSize()), 1, 0, 0, 0);
+    CommandList.DrawIndexedInstanced(SkyboxIndexCount, 1, 0, 0, 0);
 
     CommandList.EndRenderPass();
 

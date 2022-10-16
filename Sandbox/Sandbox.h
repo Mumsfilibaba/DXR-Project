@@ -1,10 +1,7 @@
 #include <Core/Core.h>
-#include <Core/Modules/ApplicationModule.h>
+#include <Core/Modules/ModuleInterface.h>
 
 #include <Engine/Scene/Camera.h>
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FSandbox
 
 class FSandbox 
     : public FApplicationModule

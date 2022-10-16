@@ -35,8 +35,6 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
     return false;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Shader
 
 FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility)
     : FD3D12DeviceChild(InDevice)
@@ -205,8 +203,6 @@ bool FD3D12Shader::GetShaderReflection(FD3D12Shader* Shader)
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayTracingShader
 
 bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShader* Shader)
 {
@@ -265,8 +261,6 @@ bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShade
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ComputeShader
 
 bool FD3D12ComputeShader::Init()
 {
@@ -304,8 +298,6 @@ bool FD3D12ComputeShader::Init()
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ShaderResourceCount
 
 void FShaderResourceCount::Combine(const FShaderResourceCount& Other)
 {

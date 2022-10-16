@@ -9,9 +9,6 @@
 
 typedef TSharedRef<class FD3D12RootSignature> FD3D12RootSignatureRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERootSignatureType
-
 enum class ERootSignatureType
 {
     Unknown          = 0,
@@ -21,8 +18,6 @@ enum class ERootSignatureType
     RayTracingLocal  = 4,
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RootSignatureResourceCount
 
 struct FD3D12RootSignatureResourceCount
 {
@@ -33,8 +28,6 @@ struct FD3D12RootSignatureResourceCount
     bool AllowInputAssembler = false;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RootSignatureDescHelper
 
 class FD3D12RootSignatureDescHelper
 {
@@ -66,8 +59,6 @@ private:
     uint32 RootSignatureCost   = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RootSignature
 
 class FD3D12RootSignature 
     : public FD3D12DeviceChild
@@ -122,8 +113,6 @@ private:
     int32 ConstantRootParameterIndex;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RootSignatureCache
 
 class FD3D12RootSignatureCache
     : public FD3D12DeviceChild

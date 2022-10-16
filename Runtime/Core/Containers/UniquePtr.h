@@ -9,9 +9,6 @@
 #include "Core/Templates/IsConvertible.h"
 #include "Core/Templates/AddressOf.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* TUniquePtr - Scalar values. Similar to std::unique_ptr */
-
 template<
     typename T,
     typename DeleterType = TDefaultDelete<T>>
@@ -30,7 +27,7 @@ public:
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE TUniquePtr() noexcept
         : DeleterType()
@@ -38,7 +35,7 @@ public:
     { }
 
     /**
-     * @brief: Construct from nullptr
+     * @brief - Construct from nullptr
      */
     FORCEINLINE TUniquePtr(nullptr_type) noexcept
         : DeleterType()
@@ -46,9 +43,8 @@ public:
     { }
 
     /**
-     * @brief: Constructor that takes a raw pointer
-     * 
-     * @param InPointer: Raw pointer to store
+     * @brief           - Constructor that takes a raw pointer
+     * @param InPointer - Raw pointer to store
      */
     FORCEINLINE explicit TUniquePtr(ElementType* InPointer) noexcept
         : DeleterType()
@@ -56,9 +52,8 @@ public:
     { }
 
     /**
-     * @brief: Move-constructor
-     * 
-     * @param Other: UniquePtr to move from
+     * @brief       - Move-constructor
+     * @param Other - UniquePtr to move from
      */
     FORCEINLINE TUniquePtr(TUniquePtr&& Other) noexcept
         : DeleterType(Move(Other))
@@ -68,9 +63,8 @@ public:
     }
 
     /**
-     * @brief: Move-constructor that takes a convertible type
-     *
-     * @param Other: UniquePtr to move from
+     * @brief       - Move-constructor that takes a convertible type
+     * @param Other - UniquePtr to move from
      */
     template<
         typename OtherType,
@@ -84,7 +78,7 @@ public:
     }
 
     /**
-     * @brief: Destructor
+     * @brief - Destructor
      */
     FORCEINLINE ~TUniquePtr()
     {
@@ -92,9 +86,8 @@ public:
     }
 
     /**
-     * @brief: Reset stored pointer to nullptr and return the old pointer
-     * 
-     * @return: Returns the pointer previously stored
+     * @brief  - Reset stored pointer to nullptr and return the old pointer
+     * @return - Returns the pointer previously stored
      */
     FORCEINLINE ElementType* Release() noexcept
     {
@@ -104,9 +97,8 @@ public:
     }
 
     /**
-     * @brief: Resets the container by setting the pointer to a new value and releases the old one 
-     * 
-     * @param NewPointer: New pointer to store
+     * @brief            - Resets the container by setting the pointer to a new value and releases the old one 
+     * @param NewPointer - New pointer to store
      */
     FORCEINLINE void Reset(ElementType* NewPointer = nullptr) noexcept
     {
@@ -114,9 +106,8 @@ public:
     }
 
     /**
-     * @brief: Resets the container by setting the pointer to a new value of a convertible type and releases the old one
-     *
-     * @param NewPointer: New pointer to store
+     * @brief            - Resets the container by setting the pointer to a new value of a convertible type and releases the old one
+     * @param NewPointer - New pointer to store
      */
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset(OtherType* NewPointer) noexcept
@@ -125,9 +116,8 @@ public:
     }
 
     /**
-     * @brief: Swaps this UniquePtr with another
-     * 
-     * @param Other: Pointer to swap
+     * @brief       - Swaps this UniquePtr with another
+     * @param Other - Pointer to swap
      */ 
     FORCEINLINE void Swap(TUniquePtr& Other) noexcept
     {
@@ -137,9 +127,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the stored pointer 
-     * 
-     * @return: Returns the stored pointer
+     * @brief  - Retrieve the stored pointer 
+     * @return - Returns the stored pointer
      */
     NODISCARD FORCEINLINE ElementType* Get() const noexcept
     {
@@ -147,9 +136,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the address of the stored pointer
-     *
-     * @return: Returns the address of the stored pointer
+     * @brief  - Retrieve the address of the stored pointer
+     * @return - Returns the address of the stored pointer
      */
     NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
@@ -157,9 +145,8 @@ public:
     }
 
     /**
-     * @brief: Dereference the stored pointer
-     * 
-     * @return: A reference to the object pointed to by the stored pointer
+     * @brief  - Dereference the stored pointer
+     * @return - A reference to the object pointed to by the stored pointer
      */
     NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
@@ -168,9 +155,8 @@ public:
     }
 
     /**
-     * @brief: Checks if the stored pointer is valid
-     * 
-     * @return: Returns true if the stored pointer is not nullptr
+     * @brief  - Checks if the stored pointer is valid
+     * @return - Returns true if the stored pointer is not nullptr
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
@@ -180,9 +166,8 @@ public:
 public:
 
     /**
-     * @brief: Retrieve the stored pointer
-     *
-     * @return: Returns the stored pointer
+     * @brief  - Retrieve the stored pointer
+     * @return - Returns the stored pointer
      */
     NODISCARD FORCEINLINE ElementType* operator->() const noexcept
     {
@@ -190,9 +175,8 @@ public:
     }
 
     /**
-     * @brief: Dereference the stored pointer
-     *
-     * @return: A reference to the object pointed to by the stored pointer
+     * @brief  - Dereference the stored pointer
+     * @return - A reference to the object pointed to by the stored pointer
      */
     NODISCARD FORCEINLINE ElementType& operator*() const noexcept
     {
@@ -200,9 +184,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the address of the stored pointer
-     *
-     * @return: Returns the address of the stored pointer
+     * @brief  - Retrieve the address of the stored pointer
+     * @return - Returns the address of the stored pointer
      */
     NODISCARD FORCEINLINE ElementType* const* operator&() const noexcept
     {
@@ -210,47 +193,44 @@ public:
     }
 
     /**
-     * @brief: Assignment operator that takes a raw pointer 
-     * 
-     * @param RHS: Pointer to store
-     * @return: A reference to this instance
+     * @brief       - Assignment operator that takes a raw pointer 
+     * @param Other - Pointer to store
+     * @return      - A reference to this instance
      */
-    FORCEINLINE TUniquePtr& operator=(ElementType* RHS) noexcept
+    FORCEINLINE TUniquePtr& operator=(ElementType* Other) noexcept
     {
-        TUniquePtr(RHS).Swap(*this);
+        TUniquePtr(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator
-     * 
-     * @param RHS: UniquePtr to move from
-     * @return: A reference to this instance
+     * @brief       - Move-assignment operator
+     * @param Other - UniquePtr to move from
+     * @return      - A reference to this instance
      */
-    FORCEINLINE TUniquePtr& operator=(TUniquePtr&& RHS) noexcept
+    FORCEINLINE TUniquePtr& operator=(TUniquePtr&& Other) noexcept
     {
-        TUniquePtr(Move(RHS)).Swap(*this);
+        TUniquePtr(Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator that takes a convertible type
-     *
-     * @param RHS: UniquePtr to move from
-     * @return: A reference to this instance
+     * @brief       - Move-assignment operator that takes a convertible type
+     * @param Other - UniquePtr to move from
+     * @return      - A reference to this instance
      */
     template<
         typename OtherType,
         typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type 
-        operator=(TUniquePtr<OtherType, OtherDeleterType>&& RHS) noexcept
+        operator=(TUniquePtr<OtherType, OtherDeleterType>&& Other) noexcept
     {
-        TUniquePtr(Move(RHS)).Swap(*this);
+        TUniquePtr(Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Assignment operator that takes a nullptr
+     * @brief - Assignment operator that takes a nullptr
      */
     FORCEINLINE TUniquePtr& operator=(nullptr_type) noexcept
     {
@@ -259,9 +239,8 @@ public:
     }
 
     /**
-     * @brief: Checks if the stored pointer is valid
-     *
-     * @return: Returns true if the stored pointer is not nullptr
+     * @brief  - Checks if the stored pointer is valid
+     * @return - Returns true if the stored pointer is not nullptr
      */
     NODISCARD FORCEINLINE operator bool() const noexcept
     {
@@ -281,8 +260,6 @@ private:
     ElementType* Ptr;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* TUniquePtr - Array values. Similar to std::unique_ptr */
 
 template<
     typename T,
@@ -303,7 +280,7 @@ public:
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE TUniquePtr() noexcept
         : DeleterType()
@@ -311,7 +288,7 @@ public:
     { }
 
     /**
-     * @brief: Construct from nullptr
+     * @brief - Construct from nullptr
      */
     FORCEINLINE TUniquePtr(nullptr_type) noexcept
         : DeleterType()
@@ -319,9 +296,8 @@ public:
     { }
 
     /**
-     * @brief: Constructor that takes a raw pointer
-     *
-     * @param InPointer: Raw pointer to store
+     * @brief           - Constructor that takes a raw pointer
+     * @param InPointer - Raw pointer to store
      */
     FORCEINLINE explicit TUniquePtr(ElementType* InPointer) noexcept
         : DeleterType()
@@ -329,9 +305,8 @@ public:
     { }
 
     /**
-     * @brief: Move-constructor
-     *
-     * @param Other: UniquePtr to move from
+     * @brief       - Move-constructor
+     * @param Other - UniquePtr to move from
      */
     FORCEINLINE TUniquePtr(TUniquePtr&& Other) noexcept
         : DeleterType(Move(Other))
@@ -341,9 +316,8 @@ public:
     }
 
     /**
-     * @brief: Move-constructor that takes a convertible type
-     *
-     * @param Other: UniquePtr to move from
+     * @brief       - Move-constructor that takes a convertible type
+     * @param Other - UniquePtr to move from
      */
     template<
         typename OtherType,
@@ -357,7 +331,7 @@ public:
     }
 
     /**
-     * @brief: Destructor
+     * @brief - Destructor
      */
     FORCEINLINE ~TUniquePtr()
     {
@@ -365,9 +339,8 @@ public:
     }
 
     /**
-     * @brief: Reset stored pointer to nullptr and return the old pointer
-     *
-     * @return: Returns the pointer previously stored
+     * @brief  - Reset stored pointer to nullptr and return the old pointer
+     * @return - Returns the pointer previously stored
      */
     NODISCARD FORCEINLINE ElementType* Release() noexcept
     {
@@ -377,9 +350,8 @@ public:
     }
 
     /**
-     * @brief: Resets the container by setting the pointer to a new value and releases the old one
-     *
-     * @param NewPointer: New pointer to store
+     * @brief            - Resets the container by setting the pointer to a new value and releases the old one
+     * @param NewPointer - New pointer to store
      */
     FORCEINLINE void Reset(ElementType* NewPointer = nullptr) noexcept
     {
@@ -387,9 +359,8 @@ public:
     }
 
     /**
-     * @brief: Resets the container by setting the pointer to a new value of a convertible type and releases the old one
-     *
-     * @param NewPointer: New pointer to store
+     * @brief            - Resets the container by setting the pointer to a new value of a convertible type and releases the old one
+     * @param NewPointer - New pointer to store
      */
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset(OtherType* NewPointer) noexcept
@@ -398,9 +369,8 @@ public:
     }
 
     /**
-     * @brief: Swaps this UniquePtr with another
-     *
-     * @param Other: Pointer to swap
+     * @brief       - Swaps this UniquePtr with another
+     * @param Other - Pointer to swap
      */
     FORCEINLINE void Swap(TUniquePtr& Other) noexcept
     {
@@ -410,9 +380,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the stored pointer
-     *
-     * @return: Returns the stored pointer
+     * @brief  - Retrieve the stored pointer
+     * @return - Returns the stored pointer
      */
     NODISCARD FORCEINLINE ElementType* Get() const noexcept
     {
@@ -420,9 +389,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the address of the stored pointer
-     *
-     * @return: Returns the address of the stored pointer
+     * @brief  - Retrieve the address of the stored pointer
+     * @return - Returns the address of the stored pointer
      */
     NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
@@ -430,9 +398,8 @@ public:
     }
 
     /**
-     * @brief: Checks if the stored pointer is valid
-     *
-     * @return: Returns true if the stored pointer is not nullptr
+     * @brief  - Checks if the stored pointer is valid
+     * @return - Returns true if the stored pointer is not nullptr
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
@@ -440,10 +407,9 @@ public:
     }
 
     /**
-     * @brief: Retrieve a element at a certain index of the array
-     *
-     * @param Index: Index of the element to retrieve
-     * @return: A reference to the element at the index
+     * @brief       - Retrieve a element at a certain index of the array
+     * @param Index - Index of the element to retrieve
+     * @return      - A reference to the element at the index
      */
     NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) const noexcept
     {
@@ -454,10 +420,9 @@ public:
 public:
 
     /**
-     * @brief: Bracket-operator to retrieve an element at a certain index
-     *
-     * @param Index: Index of the element to retrieve
-     * @return: A reference to the element at the index
+     * @brief       - Bracket-operator to retrieve an element at a certain index
+     * @param Index - Index of the element to retrieve
+     * @return      - A reference to the element at the index
      */
     NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) const noexcept
     {
@@ -465,9 +430,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the address of the stored pointer
-     *
-     * @return: Returns the address of the stored pointer
+     * @brief  - Retrieve the address of the stored pointer
+     * @return - Returns the address of the stored pointer
      */
     NODISCARD FORCEINLINE ElementType* const* operator&() const noexcept
     {
@@ -475,49 +439,45 @@ public:
     }
 
     /**
-     * @brief: Assignment operator that takes a raw pointer
-     *
-     * @param RHS: Pointer to store
-     * @return: A reference to this instance
+     * @brief       - Assignment operator that takes a raw pointer
+     * @param Other - Pointer to store
+     * @return      - A reference to this instance
      */
-    FORCEINLINE TUniquePtr& operator=(ElementType* RHS) noexcept
+    FORCEINLINE TUniquePtr& operator=(ElementType* Other) noexcept
     {
-        TUniquePtr(RHS).Swap(*this);
+        TUniquePtr(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator
-     *
-     * @param RHS: UniquePtr to move from
-     * @return: A reference to this instance
+     * @brief       - Move-assignment operator
+     * @param Other - UniquePtr to move from
+     * @return      - A reference to this instance
      */
-    FORCEINLINE TUniquePtr& operator=(TUniquePtr&& RHS) noexcept
+    FORCEINLINE TUniquePtr& operator=(TUniquePtr&& Other) noexcept
     {
-        TUniquePtr(Move(RHS)).Swap(*this);
+        TUniquePtr(Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator that takes a convertible type
-     *
-     * @param RHS: UniquePtr to move from
-     * @return: A reference to this instance
+     * @brief       - Move-assignment operator that takes a convertible type
+     * @param Other - UniquePtr to move from
+     * @return      - A reference to this instance
      */
     template<
         typename OtherType,
         typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value,  TUniquePtr&>::Type 
-        operator=(TUniquePtr<OtherType[], OtherDeleterType>&& RHS) noexcept
+        operator=(TUniquePtr<OtherType[], OtherDeleterType>&& Other) noexcept
     {
-        TUniquePtr(Move(RHS)).Swap(*this);
+        TUniquePtr(Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Assignment operator that takes a nullptr
-     *
-     * @return: A reference to this instance
+     * @brief  - Assignment operator that takes a nullptr
+     * @return - A reference to this instance
      */
     FORCEINLINE TUniquePtr& operator=(nullptr_type) noexcept
     {
@@ -526,9 +486,8 @@ public:
     }
 
     /**
-     * @brief: Checks if the stored pointer is valid
-     *
-     * @return: Returns true if the stored pointer is not nullptr
+     * @brief  - Checks if the stored pointer is valid
+     * @return - Returns true if the stored pointer is not nullptr
      */
     NODISCARD FORCEINLINE operator bool() const noexcept
     {
@@ -548,8 +507,6 @@ private:
     ElementType* Ptr;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Operators
 
 template<
     typename T,
@@ -623,8 +580,6 @@ NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TUniquePtr<T>& RHS) no
     return (nullptr != RHS.Get());
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* MakeUnique - Creates a new object together with a UniquePtr */
 
 template<
     typename T,

@@ -6,13 +6,10 @@
 
 #include "Renderer/MeshDrawCommand.h"
 
-#include "InterfaceRenderer/InterfaceRenderer.h"
+#include "ViewportRenderer/ViewportRenderer.h"
 
 #include "Core/Containers/Map.h"
 #include "Core/Containers/ArrayView.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EGBufferIndex
 
 enum EGBufferIndex
 {
@@ -25,9 +22,6 @@ enum EGBufferIndex
 
     GBuffer_NumBuffers
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TResourceCache
 
 template<typename TResource>
 class TResourceCache
@@ -70,9 +64,6 @@ private:
     TMap<TResource*, int32> ResourceIndices;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FFrameResources
-
 struct RENDERER_API FFrameResources
 {
     FFrameResources()  = default;
@@ -94,8 +85,8 @@ struct RENDERER_API FFrameResources
     FRHITexture2D*           BackBuffer = nullptr;
 
     // GlobalBuffers
-    FRHIConstantBufferRef    CameraBuffer;
-    FRHIConstantBufferRef    TransformBuffer;
+    FRHIBufferRef            CameraBuffer;
+    FRHIBufferRef            TransformBuffer;
 
     // Samplers
     FRHISamplerStateRef      PointLightShadowSampler;

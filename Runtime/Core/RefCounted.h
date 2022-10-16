@@ -6,8 +6,6 @@
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/AddPointer.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRefCounted
 
 class CORE_API FRefCounted 
     : public IRefCounted
@@ -26,8 +24,6 @@ private:
     FAtomicInt32 StrongReferences;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Add a reference to a RefCounted object safely
 
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsBaseOf<FRefCounted, T>::Value, typename TAddPointer<T>::Type>::Type AddRef(T* InRefCounted)

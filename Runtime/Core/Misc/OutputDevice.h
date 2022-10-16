@@ -16,21 +16,18 @@ enum class ELogSeverity
     Error   = 3,
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FOutputDevice
-
 struct CORE_API FOutputDevice
 {
     FOutputDevice()          = default;
     virtual ~FOutputDevice() = default;
 
-    /** @brief: Log a simple message */
+    /** @brief - Log a simple message */
     virtual void Log(const FString& Message) = 0;
 
-    /** @brief: Log a message with severity */
+    /** @brief - Log a message with severity */
     virtual void Log(ELogSeverity Severity, const FString& Message) = 0;
     
-    /** @brief: Clear the output device */
+    /** @brief - Clear the output device */
     virtual void Flush() = 0;
 };
 

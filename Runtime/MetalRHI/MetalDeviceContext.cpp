@@ -1,7 +1,5 @@
 #include "MetalDeviceContext.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalDeviceContext
 
 FMetalDeviceContext::FMetalDeviceContext(FMetalInterface* InCoreInterface, id<MTLDevice> InDevice)
     : CoreInterface(InCoreInterface)

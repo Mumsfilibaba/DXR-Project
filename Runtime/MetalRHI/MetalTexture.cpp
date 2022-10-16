@@ -1,9 +1,6 @@
 #include "MetalTexture.h"
 #include "MetalViewport.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalTexture
-
 FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext)
     : FMetalObject(InDeviceContext)
     , Texture(nil)

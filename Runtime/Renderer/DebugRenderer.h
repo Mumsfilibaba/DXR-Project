@@ -5,9 +5,6 @@
 
 #include "Engine/Scene/Scene.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDebugRenderer
-
 class FDebugRenderer
 {
 public:
@@ -21,8 +18,10 @@ public:
     void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, const FScene& Scene);
 
 private:
-    FRHIVertexBufferRef          AABBVertexBuffer;
-    FRHIIndexBufferRef           AABBIndexBuffer;
+    FRHIBufferRef                AABBVertexBuffer;
+    FRHIBufferRef                AABBIndexBuffer;
+    uint32                       AABBIndexCount;
+
     FRHIGraphicsPipelineStateRef AABBDebugPipelineState;
     FRHIVertexShaderRef          AABBVertexShader;
     FRHIPixelShaderRef           AABBPixelShader;
@@ -30,6 +29,8 @@ private:
     FRHIGraphicsPipelineStateRef LightDebugPSO;
     FRHIVertexShaderRef          LightDebugVS;
     FRHIPixelShaderRef           LightDebugPS;
-    FRHIVertexBufferRef          DbgSphereVertexBuffer;
-    FRHIIndexBufferRef           DbgSphereIndexBuffer;
+
+    FRHIBufferRef                DbgSphereVertexBuffer;
+    FRHIBufferRef                DbgSphereIndexBuffer;
+    uint32                       DbgSphereIndexCount;
 };

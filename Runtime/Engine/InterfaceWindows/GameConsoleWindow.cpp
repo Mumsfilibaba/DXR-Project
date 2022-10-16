@@ -7,9 +7,6 @@
 
 #include <imgui.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGameConsoleWindow
-
 TSharedRef<FGameConsoleWindow> FGameConsoleWindow::Make()
 {
     TSharedRef<FGameConsoleWindow> NewWindow = dbg_new FGameConsoleWindow();

@@ -4,8 +4,6 @@
 
 #include <Foundation/Foundation.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacThreadMisc
 
 FGenericThread* FMacThreadMisc::CreateThread(FThreadInterface* InRunnable)
 {

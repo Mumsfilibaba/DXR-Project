@@ -4,13 +4,7 @@
 #include "Core/Math/Float.h"
 #include "Core/Templates/NumericLimits.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedefs
-
 typedef TSharedRef<class FRHISamplerState> FRHISamplerStateRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ESamplerMode
 
 enum class ESamplerMode : uint8
 {
@@ -34,9 +28,6 @@ inline const CHAR* ToString(ESamplerMode SamplerMode)
     default:                       return "Unknown";
     }
 }
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ESamplerFilter
 
 enum class ESamplerFilter : uint8
 {
@@ -87,8 +78,6 @@ inline const CHAR* ToString(ESamplerFilter SamplerFilter)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHISamplerStateInitializer
 
 struct FRHISamplerStateInitializer
 {
@@ -193,19 +182,18 @@ struct FRHISamplerStateInitializer
     FFloatColor     BorderColor;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHISamplerState
 
 class FRHISamplerState 
     : public FRHIResource
 {
 protected:
-    FRHISamplerState()  = default;
-    ~FRHISamplerState() = default;
+    explicit FRHISamplerState(const FRHISamplerStateInitializer& InInitializer)
+        : Initializer(InInitializer)
+    { }
 
 public:
 
-    /** @return: Returns the Bindless descriptor-handle if the RHI-supports descriptor-handles */
+    /** @return - Returns the Bindless descriptor-handle if the RHI-supports descriptor-handles */
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
     const FRHISamplerStateInitializer& GetInitializer() const { return Initializer; } 

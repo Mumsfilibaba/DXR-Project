@@ -2,7 +2,6 @@
 #include "Core/Utilities/HashUtilities.h"
 
 // TODO: Custom map implementation
-
 #if 1
 #include <unordered_map>
 
@@ -16,14 +15,8 @@ using TMap = std::unordered_map<KeyType, T, HashType>;
 #include "Pair.h"
 #include "Array.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CHasherInterface - Base implementation for a hasher
-
 template<typename T>
 struct THash;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TMap
 
 template<typename ElementType, typename KeyType, typename HasherType = THash<KeyType>>
 class TMap

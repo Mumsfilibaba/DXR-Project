@@ -1,8 +1,5 @@
 #include "EngineLoopTicker.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FEngineLoopTicker
-
 FEngineLoopTicker::FEngineLoopTicker()
     : TickDelegates()
 { }

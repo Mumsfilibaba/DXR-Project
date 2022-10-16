@@ -14,9 +14,6 @@
 
 class FMacWindow;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDeferredMacEvent
-
 struct FDeferredMacEvent
 {
     FORCEINLINE FDeferredMacEvent()
@@ -57,8 +54,6 @@ struct FDeferredMacEvent
 	uint32             Character;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacApplication
 
 class COREAPPLICATION_API FMacApplication final
     : public FGenericApplication

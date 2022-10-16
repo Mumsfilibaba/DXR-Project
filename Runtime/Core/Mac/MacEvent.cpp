@@ -2,9 +2,6 @@
 
 #include "Core/Templates/NumericLimits.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacEvent
-
 FMacEvent::FMacEvent()
     : bInitialized(false)
     , bManualReset(false)

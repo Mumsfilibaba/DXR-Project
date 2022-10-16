@@ -14,9 +14,6 @@
 
 #define INVALID_MATERIAL_INDEX (-1)
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FFBXLoader
-
 static FString ExtractPath(const FString& FullFilePath)
 {
     auto Pos = FullFilePath.FindLastChar('/');

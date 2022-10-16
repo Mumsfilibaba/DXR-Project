@@ -4,9 +4,6 @@
 
 #include "CoreApplication/Generic/GenericApplicationMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsApplicationMisc
-
 struct COREAPPLICATION_API FWindowsApplicationMisc final 
     : public FGenericApplicationMisc
 {

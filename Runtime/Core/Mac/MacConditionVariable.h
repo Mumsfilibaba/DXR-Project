@@ -3,8 +3,6 @@
 
 #include <pthread.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacConditionVariable
 
 class FMacConditionVariable final 
     : public FGenericConditionVariable

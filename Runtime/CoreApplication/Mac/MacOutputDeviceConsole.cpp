@@ -10,9 +10,6 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacOutputDeviceConsole
-
 FMacOutputDeviceConsole::FMacOutputDeviceConsole()
     : WindowHandle(nullptr)
 	, TextView(nullptr)

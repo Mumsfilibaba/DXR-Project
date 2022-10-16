@@ -6,9 +6,6 @@
 
 #include "CoreApplication/CoreApplication.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacOutputDeviceConsole
-
 class COREAPPLICATION_API FMacOutputDeviceConsole final 
     : public FOutputDeviceConsole
 {

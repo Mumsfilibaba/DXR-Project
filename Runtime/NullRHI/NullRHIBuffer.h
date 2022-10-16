@@ -9,46 +9,17 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-template<typename T>
-struct TNullRHIBuffer;
-
-typedef TNullRHIBuffer<class FRHIVertexBuffer>            FNullRHIVertexBuffer;
-typedef TNullRHIBuffer<class FRHIIndexBuffer>             FNullRHIIndexBuffer;
-typedef TNullRHIBuffer<class FRHIGenericBuffer>           FNullRHIGenericBuffer;
-typedef TNullRHIBuffer<struct FNullRHIConstantBufferBase> FNullRHIConstantBuffer;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHIConstantBufferBase
-
-struct FNullRHIConstantBufferBase 
-    : public FRHIConstantBuffer
+struct FNullRHIBuffer
+    : public FRHIBuffer
 {
-    explicit FNullRHIConstantBufferBase(const FRHIConstantBufferInitializer& Initializer)
-        : FRHIConstantBuffer(Initializer)
+    explicit FNullRHIBuffer(const FRHIBufferDesc& InDesc)
+        : FRHIBuffer(InDesc)
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIConstantBuffer Interface
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TNullRHIBuffer
-
-template<typename BaseBufferType>
-struct TNullRHIBuffer final 
-    : public BaseBufferType
-{
-    template<typename... ArgTypes>
-    explicit TNullRHIBuffer(ArgTypes&&... Args)
-        : BaseBufferType(Forward<ArgTypes>(Args)...)
-    { }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIBuffer Interface
-
+    virtual void* GetRHIBaseBuffer()         override final { return this; }
     virtual void* GetRHIBaseResource() const override final { return nullptr; }
-    virtual void* GetRHIBaseBuffer()   override final       { return this; }
+
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final{ return FRHIDescriptorHandle(); }
 };
 
 #if defined(PLATFORM_COMPILER_MSVC)

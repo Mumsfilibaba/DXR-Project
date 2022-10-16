@@ -14,9 +14,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FContiguousContainerHelper
-
 struct FContiguousContainerHelper
 {
     template<

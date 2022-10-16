@@ -11,9 +11,6 @@
     #pragma warning(disable : 4251) // Class '...' needs to have DLL-interface to be used by clients of class '...'
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsOutputDeviceConsole
-
 class COREAPPLICATION_API FWindowsOutputDeviceConsole final 
     : public FOutputDeviceConsole
 {

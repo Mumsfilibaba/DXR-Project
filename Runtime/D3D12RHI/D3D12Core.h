@@ -68,8 +68,6 @@
     #define WIN11_BUILD_22621 (1)
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Log Macros
 
 #if !PRODUCTION_BUILD
     #define D3D12_ERROR(...)                     \
@@ -128,13 +126,8 @@
     #define D3D12_INFO(...)    do { (void)(0); } while(false)
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12DeviceRemovedHandlerRHI
 
 void D3D12DeviceRemovedHandlerRHI(class FD3D12Device* Device);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Texture Helpers
 
 template<typename D3D12TextureType>
 CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
@@ -200,29 +193,6 @@ constexpr uint16 GetDepthOrArraySize(uint32 DepthOrArraySize)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Buffer Helpers
-
-template<typename D3D12BufferType>
-CONSTEXPR uint32 GetBufferAlignedSize(uint32 Size)
-{
-    return Size;
-}
-
-template<>
-CONSTEXPR uint32 GetBufferAlignedSize<class FD3D12ConstantBuffer>(uint32 Size)
-{
-    return NMath::AlignUp<uint32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
-}
-
-template<>
-CONSTEXPR uint32 GetBufferAlignedSize<class FD3D12IndexBuffer>(uint32 Size)
-{
-    return NMath::AlignUp<uint32>(Size, sizeof(uint32));
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Heap helpers
 
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
@@ -252,8 +222,6 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
     return HeapProperties;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ED3D12CommandQueueType
 
 enum class ED3D12CommandQueueType
 {
@@ -288,15 +256,27 @@ CONSTEXPR D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueueType Queue
     return D3D12_COMMAND_LIST_TYPE(-1);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RHI Conversion Functions 
+
+CONSTEXPR uint32 GetBufferAlignment(EBufferUsageFlags BufferFlags)
+{
+    // Constant buffers require special alignment
+    if (IsEnumFlagSet(BufferFlags, EBufferUsageFlags::ConstantBuffer))
+    {
+        return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
+    }
+    else
+    {
+        // Otherwise, return a default of 16
+        return 16;
+    }
+}
 
 CONSTEXPR D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if ((Flags & EBufferUsageFlags::AllowUAV) != EBufferUsageFlags::None)
+    if (IsEnumFlagSet(Flags, EBufferUsageFlags::UnorderedAccess))
     {
-        Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Result |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
 
     return Result;
@@ -305,22 +285,22 @@ CONSTEXPR D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
 CONSTEXPR D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if ((Flag & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None)
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::AllowUAV))
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
-    if ((Flag & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None)
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::AllowRTV))
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     }
 
-    const bool bAllowDSV = (Flag & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None;
+    const bool bAllowDSV = IsEnumFlagSet(Flag, ETextureUsageFlags::AllowDSV);
     if (bAllowDSV)
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
     }
 
-    const bool bAllowSRV = (Flag & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None;
+    const bool bAllowSRV = IsEnumFlagSet(Flag, ETextureUsageFlags::AllowSRV);
     if (bAllowDSV && !bAllowSRV)
     {
         Result |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
@@ -430,6 +410,22 @@ CONSTEXPR DXGI_FORMAT ConvertFormat(EFormat Format)
         case EFormat::BC7_UNorm_SRGB:        return DXGI_FORMAT_BC7_UNORM_SRGB;
 
         default:                             return DXGI_FORMAT_UNKNOWN;
+    }
+}
+
+CONSTEXPR DXGI_FORMAT ConvertIndexFormat(EIndexFormat IndexFormat)
+{
+    if (IndexFormat == EIndexFormat::uint32)
+    {
+        return DXGI_FORMAT_R32_UINT;
+    }
+    else if (IndexFormat == EIndexFormat::uint16)
+    {
+        return DXGI_FORMAT_R16_UINT;
+    }
+    else
+    {
+        return DXGI_FORMAT_UNKNOWN;
     }
 }
 
@@ -770,9 +766,6 @@ CONSTEXPR D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(ERayTra
 }
 
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Helpers
-
 CONSTEXPR uint32 GetFormatStride(DXGI_FORMAT Format)
 {
     switch (Format)
@@ -898,8 +891,6 @@ CONSTEXPR DXGI_FORMAT CastShaderResourceFormat(DXGI_FORMAT Format)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Operators for D3D12_CPU_DESCRIPTOR_HANDLE
 
 inline bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
 {
@@ -921,8 +912,6 @@ inline bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HA
     return !(Left == Right);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Operators for D3D12_GPU_DESCRIPTOR_HANDLE
 
 inline bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
 {
@@ -944,8 +933,6 @@ inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HA
     return !(Left == Right);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12CPUDescriptorHandle
 
 struct FD3D12CPUDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
 {
@@ -1028,8 +1015,6 @@ struct FD3D12CPUDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12GPUDescriptorHandle
 
 struct FD3D12GPUDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
 {
@@ -1112,8 +1097,6 @@ struct FD3D12GPUDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Helper Functions
 
 CONSTEXPR const CHAR* ToString(D3D12_RESOURCE_DIMENSION Dimension)
 {

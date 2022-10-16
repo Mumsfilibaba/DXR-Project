@@ -6,9 +6,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacApplicationMisc
-
 struct COREAPPLICATION_API FMacApplicationMisc final
     : public FGenericApplicationMisc
 {

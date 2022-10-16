@@ -7,9 +7,6 @@
 class FD3D12Device;
 class FD3D12CommandAllocator;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12CommandListManager
-
 class FD3D12CommandListManager
     : public FD3D12DeviceChild
 {

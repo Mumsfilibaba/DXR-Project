@@ -4,9 +4,6 @@
 
 #include "RHI/RHIInterface.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTextureData2D 
-
 FTextureResourceData::FTextureResourceData()
     : TextureData()
     , TextureDataRowPitch()
@@ -50,8 +47,6 @@ void FTextureResourceData::MemzeroData()
     FMemory::Memzero(TextureDataSlicePitch, sizeof(TextureDataSlicePitch));
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTextureResource2D 
 
 FTexture2D::FTexture2D()
     : FTexture()

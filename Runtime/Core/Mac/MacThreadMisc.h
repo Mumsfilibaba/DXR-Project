@@ -7,8 +7,6 @@
 #include <pthread.h>
 #include <Foundation/Foundation.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacThreadMisc
 
 struct FMacThreadMisc 
     : public FGenericThreadMisc
@@ -36,14 +34,14 @@ struct FMacThreadMisc
     }
 
     static FORCEINLINE void Sleep(FTimespan Time)
-    {	
+    {    
         float Microseconds = Time.AsMicroseconds();
         usleep(static_cast<useconds_t>(Microseconds));
     }
 
     static FORCEINLINE bool IsMainThread() 
     {
-		return [NSThread isMainThread];
+        return [NSThread isMainThread];
     }
 
     static FORCEINLINE void Pause() 

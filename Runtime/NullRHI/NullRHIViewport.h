@@ -11,9 +11,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHIViewport
-
 class FNullRHIViewport 
     : public FRHIViewport
 {
@@ -25,13 +22,6 @@ public:
         FRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
         BackBuffer = dbg_new FNullRHITexture2D(BackBufferInitializer);
     }
-
-    ~FNullRHIViewport() = default;
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIViewport Interface
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final
     {

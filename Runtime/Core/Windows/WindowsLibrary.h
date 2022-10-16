@@ -3,9 +3,6 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Generic/GenericLibrary.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsLibrary
-
 struct FWindowsLibrary final 
     : public FGenericLibrary
 {

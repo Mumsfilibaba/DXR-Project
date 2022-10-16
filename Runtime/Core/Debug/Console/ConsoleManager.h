@@ -1,9 +1,6 @@
 #pragma once
 #include "ConsoleInterface.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FConsoleManager
-
 class CORE_API FConsoleManager 
     : public FConsoleInterface
 {

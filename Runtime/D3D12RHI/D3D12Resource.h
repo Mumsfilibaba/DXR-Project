@@ -4,13 +4,7 @@
 
 #include "Core/Utilities/StringUtilities.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedef
-
 typedef TSharedRef<class FD3D12Resource> FD3D12ResourceRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Resource
 
 class FD3D12Resource 
     : public FD3D12DeviceChild
@@ -41,6 +35,8 @@ public:
     FORCEINLINE uint64                     GetWidth()  const { return Desc.Width; }
     FORCEINLINE uint64                     GetHeight() const { return Desc.Height; }
     FORCEINLINE uint64                     GetDepth()  const { return Desc.DepthOrArraySize; }
+
+    FORCEINLINE uint64                     GetSize() const { return Desc.Width; }
 
 private:
     TComPtr<ID3D12Resource>   Resource;

@@ -10,9 +10,6 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FForwardRenderer
-
 bool FForwardRenderer::Init(FFrameResources& FrameResources)
 {
     TArray<FShaderDefine> Defines =
@@ -170,14 +167,14 @@ void FForwardRenderer::Render(FRHICommandList& CmdList, const FFrameResources& F
         const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
 
         CmdList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
-        CmdList.SetIndexBuffer(Command.IndexBuffer);
+        CmdList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
         if (Command.Material->IsBufferDirty())
         {
             Command.Material->BuildBuffer(CmdList);
         }
 
-        FRHIConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
+        FRHIBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
         CmdList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 4);
 
         FRHIShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
@@ -197,7 +194,7 @@ void FForwardRenderer::Render(FRHICommandList& CmdList, const FFrameResources& F
 
         CmdList.Set32BitShaderConstants(VShader.Get(), &TransformPerObject, 32);
 
-        CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+        CmdList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
     }
 
     CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);

@@ -1,8 +1,5 @@
 #include "OutputDeviceLogger.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FOutputDeviceLogger
-
 FOutputDeviceLogger::FOutputDeviceLogger()
     : OutputDevices()
     , OutputDevicesCS()

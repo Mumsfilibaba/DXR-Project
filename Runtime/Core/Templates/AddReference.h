@@ -1,8 +1,6 @@
 #pragma once
 #include "Identity.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TAddLValueReference
 
 template<typename T>
 struct TAddLValueReference
@@ -20,9 +18,6 @@ public:
     typedef typename IdentityType::Type Type;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TAddRValueReference
-
 template<typename T>
 struct TAddRValueReference
 {
@@ -38,9 +33,6 @@ private:
 public:
     typedef typename IdentityType::Type Type;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TAddReference
 
 template<typename T>
 struct TAddReference

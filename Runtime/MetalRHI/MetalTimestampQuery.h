@@ -4,9 +4,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalTimestampQuery
-
 class FMetalTimestampQuery 
     : public FRHITimestampQuery
 {

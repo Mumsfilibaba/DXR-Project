@@ -8,18 +8,12 @@
 
 class FMetalViewport;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedef
-
 typedef TSharedRef<class FMetalTexture>          FMetalTextureRef;
 typedef TSharedRef<class FMetalTexture2D>        FMetalTexture2DRef;
 typedef TSharedRef<class FMetalTexture2DArray>   FMetalTexture2DArrayRef;
 typedef TSharedRef<class FMetalTextureCube>      FMetalTextureCubeRef;
 typedef TSharedRef<class FMetalTextureCubeArray> FMetalTextureCubeArrayRef;
 typedef TSharedRef<class FMetalTexture3D>        FMetalTexture3DRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalTexture
 
 class FMetalTexture 
     : public FMetalObject
@@ -52,9 +46,6 @@ protected:
 
     TSharedRef<FMetalShaderResourceView> ShaderResourceView;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalTexture2D
 
 class FMetalTexture2D 
     : public FMetalTexture
@@ -93,8 +84,6 @@ private:
     TSharedRef<FMetalUnorderedAccessView> UnorderedAccessView;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalTexture2DArray
 
 class FMetalTexture2DArray 
     : public FMetalTexture
@@ -125,8 +114,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalTextureCube
 
 class FMetalTextureCube 
     : public FMetalTexture
@@ -157,8 +144,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalTextureCubeArray
 
 class FMetalTextureCubeArray 
     : public FMetalTexture
@@ -189,8 +174,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalTexture3D
 
 class FMetalTexture3D 
     : public FMetalTexture
@@ -221,8 +204,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// GetMetalTexture
 
 FORCEINLINE FMetalTexture* GetMetalTexture(FRHITexture* Texture)
 {

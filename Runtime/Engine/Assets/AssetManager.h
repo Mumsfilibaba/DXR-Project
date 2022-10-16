@@ -5,9 +5,6 @@
 #include "Core/Containers/Map.h"
 #include "Core/Platform/CriticalSection.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FAssetManager
-
 class ENGINE_API FAssetManager
 {
 private:
@@ -16,24 +13,23 @@ private:
 
 public:
 
-    /** @brief: Create and initialize the AssetManager */
+    /** @brief - Create and initialize the AssetManager */
     static bool Initialize();
 
-    /** @brief: Destroy the AssetManager */
+    /** @brief - Destroy the AssetManager */
     static void Release();
 
-    /** @brief: Retrieve the AssetManager instance */
+    /** @brief - Retrieve the AssetManager instance */
     static FAssetManager& Get();
 
     /** 
-    * @brief: Load a texture
-    * 
-    * @param Filename: Filename relative to the AssetFolder
-    * @return: Returns the loaded texture
+    * @brief          - Load a texture
+    * @param Filename - Filename relative to the AssetFolder
+    * @return         - Returns the loaded texture
     */
     FTextureResourceRef LoadTexture(const FString& Filename, bool bGenerateMips = true);
 
-    /** @brief: Unload the texture and release the AssetManager's reference to the texture */
+    /** @brief - Unload the texture and release the AssetManager's reference to the texture */
     void UnloadTexture(const FTextureResourceRef& Texture);
 
 private:

@@ -20,22 +20,19 @@
 
 #include "CoreApplication/Windows/WindowsWindow.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console Variables
-
 TAutoConsoleVariable<bool> CVarEnablePix("D3D12RHI.EnablePIX", false);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Interface
-
-FD3D12Interface* GD3D12Instance = nullptr;
+FD3D12Interface* FD3D12Interface::GD3D12Interface = nullptr;
 
 FD3D12Interface::FD3D12Interface()
     : FRHIInterface(ERHIInstanceType::D3D12)
     , Device(nullptr)
     , DirectContext(nullptr)
 {
-    GD3D12Instance = this;
+    if (!GD3D12Interface)
+    {
+        GD3D12Interface = this;
+    }
 }
 
 FD3D12Interface::~FD3D12Interface()
@@ -51,10 +48,14 @@ FD3D12Interface::~FD3D12Interface()
     SAFE_RELEASE(SamplerOfflineDescriptorHeap);
 
     Device.Reset();
+    Adapter.Reset();
 
     FDynamicD3D12::Release();
 
-    GD3D12Instance = nullptr;
+    if (GD3D12Interface == this)
+    {
+        GD3D12Interface = nullptr;
+    }
 }
 
 bool FD3D12Interface::Initialize()
@@ -68,7 +69,7 @@ bool FD3D12Interface::Initialize()
         return false;
     }
 
-    Adapter = dbg_new FD3D12Adapter(this);
+    Adapter = dbg_new FD3D12Adapter();
     if (!Adapter->Initialize())
     {
         return false;
@@ -434,7 +435,7 @@ FRHISamplerState* FD3D12Interface::RHICreateSamplerState(const FRHISamplerStateI
 
     FMemory::Memcpy(Desc.BorderColor, Initializer.BorderColor.GetData(), sizeof(Desc.BorderColor));
 
-    FD3D12SamplerStateRef Sampler = dbg_new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap);
+    FD3D12SamplerStateRef Sampler = dbg_new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap, Initializer);
     if (!Sampler->CreateSampler(Desc))
     {
         return nullptr;
@@ -445,28 +446,18 @@ FRHISamplerState* FD3D12Interface::RHICreateSamplerState(const FRHISamplerStateI
     }
 }
 
-template<typename D3D12BufferType, typename InitializerType>
-D3D12BufferType* FD3D12Interface::CreateBuffer(const InitializerType& Initializer)
+FRHIBuffer* FD3D12Interface::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData)
 {
-    TSharedRef<D3D12BufferType> NewBuffer;
-    if constexpr (TIsSame<D3D12BufferType, FD3D12ConstantBuffer>::Value)
-    {
-        NewBuffer = dbg_new D3D12BufferType(GetDevice(), GetResourceOfflineDescriptorHeap(), Initializer);
-    }
-    else
-    {
-        NewBuffer = dbg_new D3D12BufferType(GetDevice(), Initializer);
-    }
-    
-    const uint32 AlignedSize = GetBufferAlignedSize<D3D12BufferType>(NewBuffer->GetSize());
-    const uint32 BufferSize  = NewBuffer->GetSize();
-    const uint32 WastedSpace = (AlignedSize - NewBuffer->GetSize());
+    FD3D12BufferRef NewBuffer = dbg_new FD3D12Buffer(GetDevice(), InDesc);
+
+    const uint64 Alignment   = GetBufferAlignment(InDesc.UsageFlags);
+    const uint64 AlignedSize = NMath::AlignUp(InDesc.Size, Alignment);
 
     D3D12_RESOURCE_DESC Desc;
     FMemory::Memzero(&Desc);
 
     Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags              = ConvertBufferFlags(Initializer.UsageFlags);
+    Desc.Flags              = ConvertBufferFlags(InDesc.UsageFlags);
     Desc.Format             = DXGI_FORMAT_UNKNOWN;
     Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     Desc.Width              = AlignedSize;
@@ -479,7 +470,7 @@ D3D12BufferType* FD3D12Interface::CreateBuffer(const InitializerType& Initialize
 
     D3D12_HEAP_TYPE       D3D12HeapType     = D3D12_HEAP_TYPE_DEFAULT;
     D3D12_RESOURCE_STATES D3D12InitialState = D3D12_RESOURCE_STATE_COMMON;
-    if (Initializer.IsDynamic())
+    if (InDesc.IsDynamic())
     {
         D3D12HeapType     = D3D12_HEAP_TYPE_UPLOAD;
         D3D12InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
@@ -498,26 +489,20 @@ D3D12BufferType* FD3D12Interface::CreateBuffer(const InitializerType& Initialize
         }
     }
 
-    FRHIBufferDataInitializer* InitialData = Initializer.InitialData;
-    if (InitialData)
+    if (InInitialData)
     {
-        D3D12_ERROR_COND(InitialData->Size <= AlignedSize, "Size of InitialData is larger than the allocated memory");
-
-        if (Initializer.IsDynamic())
+        if (InDesc.IsDynamic())
         {
             FD3D12Resource* D3D12Resource = NewBuffer->GetD3D12Resource();
 
             void* BufferData = D3D12Resource->MapRange(0, 0);
             if (!BufferData)
             {
-                return false;
+                return nullptr;
             }
 
             // Copy over relevant data
-            FMemory::Memcpy(BufferData, InitialData->BufferData, InitialData->Size);
-
-            // Set the remaining, unused memory to zero
-            FMemory::Memzero(reinterpret_cast<uint8*>(BufferData) + InitialData->Size, AlignedSize - InitialData->Size);
+            FMemory::Memcpy(BufferData, InInitialData, InDesc.Size);
 
             D3D12Resource->UnmapRange(0, 0);
         }
@@ -526,70 +511,52 @@ D3D12BufferType* FD3D12Interface::CreateBuffer(const InitializerType& Initialize
             DirectContext->StartContext();
 
             DirectContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
-            DirectContext->UpdateBuffer(NewBuffer.Get(), 0, InitialData->Size, InitialData->BufferData);
+            DirectContext->UpdateBuffer(NewBuffer.Get(), 0, InDesc.Size, InInitialData);
 
             // NOTE: Transfer to the initial state
-            DirectContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::CopyDest, Initializer.InitialAccess);
+            if (InInitialState != EResourceAccess::CopyDest)
+            {
+                DirectContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::CopyDest, InInitialState);
+            }
 
             DirectContext->FinishContext();
         }
     }
     else
     {
-        if (Initializer.InitialAccess != EResourceAccess::Common && Initializer.IsDynamic())
+        if (InInitialState != EResourceAccess::Common && InDesc.IsDynamic())
         {
             DirectContext->StartContext();
-            DirectContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::Common, Initializer.InitialAccess);
+            DirectContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::Common, InInitialState);
             DirectContext->FinishContext();
         }
-    }
-
-    // TODO: CVar
-    const bool bVerboseLogging = false;
-    if (bVerboseLogging)
-    {
-        D3D12_INFO("Created buffer (BufferSize=%u AlignedSize=%u WastedSpace=%u)", BufferSize, AlignedSize, WastedSpace);
     }
 
     return NewBuffer.ReleaseOwnership();
 }
 
-FRHIVertexBuffer* FD3D12Interface::RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
-{
-    return CreateBuffer<FD3D12VertexBuffer>(Initializer);
-}
-
-FRHIIndexBuffer* FD3D12Interface::RHICreateIndexBuffer(const FRHIIndexBufferInitializer& Initializer)
-{
-    return CreateBuffer<FD3D12IndexBuffer>(Initializer);
-}
-
-FRHIConstantBuffer* FD3D12Interface::RHICreateConstantBuffer(const FRHIConstantBufferInitializer& Initializer)
-{
-    CHECK(!Initializer.AllowSRV() && !Initializer.AllowUAV());
-    return CreateBuffer<FD3D12ConstantBuffer>(Initializer);
-}
-
-FRHIGenericBuffer* FD3D12Interface::RHICreateGenericBuffer(const FRHIGenericBufferInitializer& Initializer)
-{
-    return CreateBuffer<FD3D12GenericBuffer>(Initializer);
-}
-
 FRHIRayTracingGeometry* FD3D12Interface::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
 {
-    FD3D12VertexBuffer* D3D12VertexBuffer = static_cast<FD3D12VertexBuffer*>(Initializer.VertexBuffer);
-    FD3D12IndexBuffer*  D3D12IndexBuffer  = static_cast<FD3D12IndexBuffer*>(Initializer.IndexBuffer);
+    FD3D12Buffer* D3D12VertexBuffer = static_cast<FD3D12Buffer*>(Initializer.VertexBuffer);
+    FD3D12Buffer* D3D12IndexBuffer  = static_cast<FD3D12Buffer*>(Initializer.IndexBuffer);
 
     TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = dbg_new FD3D12RayTracingGeometry(GetDevice(), Initializer);
-
-    DirectContext->StartContext();
     
-    if (!D3D12Geometry->Build(*DirectContext, D3D12VertexBuffer, D3D12IndexBuffer, false))
+    DirectContext->StartContext();
+
+    if (!D3D12Geometry->Build(
+        *DirectContext,
+        D3D12VertexBuffer,
+        Initializer.NumVertices,
+        D3D12IndexBuffer,
+        Initializer.NumIndices,
+        Initializer.IndexFormat,
+        false))
     {
         DEBUG_BREAK();
         D3D12Geometry.Reset();
     }
-
+    
     DirectContext->FinishContext();
 
     return D3D12Geometry.ReleaseOwnership();
@@ -616,13 +583,14 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIT
 {
     D3D12_ERROR_COND(Initializer.Texture != nullptr, "Texture cannot be nullptr");
 
+    CHECK(IsEnumFlagSet(Initializer.Texture->GetFlags(), ETextureUsageFlags::AllowSRV) && (Initializer.Format != EFormat::Unknown));
+    
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    CHECK(((Initializer.Texture->GetFlags() & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None) && Initializer.Format != EFormat::Unknown);
     Desc.Format                  = ConvertFormat(Initializer.Format);
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
+    
     if (FD3D12Texture2D* Texture2D = static_cast<FD3D12Texture2D*>(Initializer.Texture->GetTexture2D()))
     {
         if (!Texture2D->IsMultiSampled())
@@ -681,7 +649,7 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIT
         Desc.Texture3D.ResourceMinLODClamp = Initializer.MinLODClamp;
     }
 
-    TSharedRef<FD3D12ShaderResourceView> D3D12View = dbg_new FD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap, Initializer.Texture);
+    FD3D12ShaderResourceViewRef D3D12View = dbg_new FD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap, Initializer.Texture);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -709,10 +677,11 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIB
         return nullptr;
     }
 
+    CHECK(IsEnumFlagSet(D3D12Buffer->GetFlags(), EBufferUsageFlags::ShaderResource));
+
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    CHECK(((Initializer.Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
     Desc.ViewDimension           = D3D12_SRV_DIMENSION_BUFFER;
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     Desc.Buffer.FirstElement     = Initializer.FirstElement;
@@ -731,7 +700,7 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIB
         Desc.Buffer.StructureByteStride = 0;
     }
 
-    TSharedRef<FD3D12ShaderResourceView> D3D12View = dbg_new FD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap, Initializer.Buffer);
+    FD3D12ShaderResourceViewRef D3D12View = dbg_new FD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap, Initializer.Buffer);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -757,8 +726,8 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    CHECK(((Initializer.Texture->GetFlags() & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None) && Initializer.Format != EFormat::Unknown);
     Desc.Format = ConvertFormat(Initializer.Format);
+    CHECK(IsEnumFlagSet(Initializer.Texture->GetFlags(), ETextureUsageFlags::AllowUAV) && (Initializer.Format != EFormat::Unknown));
 
     if (FD3D12Texture2D* Texture2D = static_cast<FD3D12Texture2D*>(Initializer.Texture->GetTexture2D()))
     {
@@ -812,7 +781,7 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
         Desc.Texture3D.MipSlice    = Initializer.MipLevel;
     }
 
-    TSharedRef<FD3D12UnorderedAccessView> D3D12View = dbg_new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, Initializer.Texture);
+    FD3D12UnorderedAccessViewRef D3D12View = dbg_new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, Initializer.Texture);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -840,10 +809,11 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
         return nullptr;
     }
 
+    CHECK(D3D12Buffer->GetDesc().HasUnorderedAccess());
+
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    CHECK(((Initializer.Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
     Desc.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
     Desc.Buffer.FirstElement = Initializer.FirstElement;
     Desc.Buffer.NumElements  = Initializer.NumElements;
@@ -861,7 +831,7 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
         Desc.Buffer.StructureByteStride = 0;
     }
 
-    TSharedRef<FD3D12UnorderedAccessView> D3D12View = dbg_new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, Initializer.Buffer);
+    FD3D12UnorderedAccessViewRef D3D12View = dbg_new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, Initializer.Buffer);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -1097,7 +1067,7 @@ FRHIComputePipelineState* FD3D12Interface::RHICreateComputePipelineState(const F
 
 FRHIRayTracingPipelineState* FD3D12Interface::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Initializer)
 {
-    TSharedRef<FD3D12RayTracingPipelineState> NewPipelineState = dbg_new FD3D12RayTracingPipelineState(GetDevice());
+    FD3D12RayTracingPipelineStateRef NewPipelineState = dbg_new FD3D12RayTracingPipelineState(GetDevice());
     if (NewPipelineState->Initialize(Initializer))
     {
         return NewPipelineState.ReleaseOwnership();
@@ -1154,7 +1124,7 @@ bool FD3D12Interface::RHIQueryUAVFormatSupport(EFormat Format) const
     return true;
 }
 
-void FD3D12Interface::RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport) const
+void FD3D12Interface::RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const
 {
     FD3D12RayTracingDesc RayTracingDesc = Device->GetRayTracingDesc();
     if (RayTracingDesc.IsSupported())
@@ -1176,7 +1146,7 @@ void FD3D12Interface::RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport) 
     }
 }
 
-void FD3D12Interface::RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const
+void FD3D12Interface::RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const
 {
     FD3D12VariableRateShadingDesc VariableRateShadingDesc = Device->GetVariableRateShadingDesc();
     switch (VariableRateShadingDesc.Tier)

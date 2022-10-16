@@ -9,7 +9,6 @@
 #endif
 
 #include "Core/Modules/ModuleInterface.h"
-#include "Core/Modules/ApplicationModule.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/AsyncThreadPool.h"
 #include "Core/Misc/CoreDelegates.h"
@@ -32,9 +31,6 @@
 
 #include "RHI/RHIShaderCompiler.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FEngineLoop
-
 FEngineLoop::FEngineLoop()
     : FrameTimer()
     , ConsoleWindow(nullptr)
@@ -45,49 +41,47 @@ FEngineLoop::~FEngineLoop()
     ConsoleWindow = nullptr;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// LoadCoreModules
 
 bool FEngineLoop::LoadCoreModules()
 {
-    FModuleInterface& ModuleManager = FModuleInterface::Get();
+    FModuleManager& ModuleManager = FModuleManager::Get();
 
-    IModule* CoreModule = ModuleManager.LoadModule("Core");
+    FModuleInterface* CoreModule = ModuleManager.LoadModule("Core");
     if (!CoreModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    IModule* CoreApplicationModule = ModuleManager.LoadModule("CoreApplication");
+    FModuleInterface* CoreApplicationModule = ModuleManager.LoadModule("CoreApplication");
     if (!CoreApplicationModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    IModule* ApplicationModule = ModuleManager.LoadModule("Application");
+    FModuleInterface* ApplicationModule = ModuleManager.LoadModule("Application");
     if (!ApplicationModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    IModule* EngineModule = ModuleManager.LoadModule("Engine");
+    FModuleInterface* EngineModule = ModuleManager.LoadModule("Engine");
     if (!EngineModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    IModule* RHIModule = ModuleManager.LoadModule("RHI");
+    FModuleInterface* RHIModule = ModuleManager.LoadModule("RHI");
     if (!RHIModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    IModule* RendererModule = ModuleManager.LoadModule("Renderer");
+    FModuleInterface* RendererModule = ModuleManager.LoadModule("Renderer");
     if (!RendererModule)
     {
         DEBUG_BREAK();
@@ -97,8 +91,6 @@ bool FEngineLoop::LoadCoreModules()
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// PreInitialize
 
 bool FEngineLoop::PreInit()
 {
@@ -214,8 +206,6 @@ bool FEngineLoop::PreInit()
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Initialize
 
 bool FEngineLoop::Init()
 {
@@ -244,7 +234,7 @@ bool FEngineLoop::Init()
 
     // Load application
     {
-        GApplicationModule = FModuleInterface::Get().LoadModule<FApplicationModule>(FProjectManager::GetProjectModuleName());
+        GApplicationModule = FModuleManager::Get().LoadModule<FApplicationModule>(FProjectManager::GetProjectModuleName());
         if (!GApplicationModule)
         {
             LOG_WARNING("Application Init failed, may not behave as intended");
@@ -255,7 +245,7 @@ bool FEngineLoop::Init()
         }
     }
 
-    IApplicationRendererModule* ViewportRendererModule = FModuleInterface::Get().LoadModule<IApplicationRendererModule>("ViewportRenderer");
+    IViewportRendererModule* ViewportRendererModule = FModuleManager::Get().LoadModule<IViewportRendererModule>("ViewportRenderer");
     if (!ViewportRendererModule)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load ViewportRenderer");
@@ -280,8 +270,6 @@ bool FEngineLoop::Init()
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Tick
 
 void FEngineLoop::Tick()
 {
@@ -303,8 +291,6 @@ void FEngineLoop::Tick()
     GRenderer.Tick(*GEngine->Scene);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Release
 
 bool FEngineLoop::Release()
 {
@@ -347,7 +333,6 @@ bool FEngineLoop::Release()
 
     SAFE_DELETE(ConsoleWindow);
 
-    FModuleInterface::Shutdown();
-
+    FModuleManager::Shutdown();
     return true;
 }

@@ -11,9 +11,6 @@
 
 class FD3D12Viewport;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedef
-
 typedef TSharedRef<class FD3D12Texture>           FD3D12TextureRef;
 typedef TSharedRef<class FD3D12Texture2D>         FD3D12Texture2DRef;
 typedef TSharedRef<class FD3D12Texture2DArray>    FD3D12Texture2DArrayRef;
@@ -22,8 +19,6 @@ typedef TSharedRef<class FD3D12TextureCubeArray>  FD3D12TextureCubeArrayRef;
 typedef TSharedRef<class FD3D12Texture3D>         FD3D12Texture3DRef;
 typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Texture 
 
 class FD3D12Texture 
     : public FD3D12DeviceChild
@@ -67,8 +62,6 @@ protected:
     TArray<FD3D12DepthStencilViewRef> DepthStencilViews;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Texture2D
 
 class FD3D12Texture2D 
     : public FRHITexture2D
@@ -108,8 +101,6 @@ private:
     FD3D12UnorderedAccessViewRef UnorderedAccessView;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12BackBufferTexture
 
 class FD3D12BackBufferTexture 
     : public FD3D12Texture2D
@@ -132,8 +123,6 @@ private:
     FD3D12Viewport* Viewport;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Texture2DArray
 
 class FD3D12Texture2DArray 
     : public FRHITexture2DArray
@@ -166,8 +155,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12TextureCube
 
 class FD3D12TextureCube 
     : public FRHITextureCube
@@ -200,8 +187,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12TextureCubeArray
 
 class FD3D12TextureCubeArray 
     : public FRHITextureCubeArray
@@ -234,8 +219,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Texture3D
 
 class FD3D12Texture3D final 
     : public FRHITexture3D
@@ -268,8 +251,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// GetD3D12Texture
 
 FORCEINLINE FD3D12Texture* GetD3D12Texture(FRHITexture* Texture)
 {

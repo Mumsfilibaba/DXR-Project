@@ -6,9 +6,6 @@
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMeshComponent
-
 class ENGINE_API FMeshComponent 
     : public FComponent
 {

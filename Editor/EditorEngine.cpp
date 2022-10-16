@@ -2,7 +2,7 @@
 
 #include "Renderer/Renderer.h"
 
-#include "InterfaceRenderer/InterfaceRenderer.h"
+#include "ViewportRenderer/ViewportRenderer.h"
 
 #include "Engine/Engine.h"
 #include "Engine/Scene/Scene.h"
@@ -13,8 +13,6 @@
 #include "Core/Math/Math.h"
 #include "Core/Modules/ApplicationModule.h"
 #include "Core/Debug/Console/ConsoleManager.h"
-
-#include "Interface/InterfaceApplication.h"
 
 FEditorEngine* FEditorEngine::Make()
 {

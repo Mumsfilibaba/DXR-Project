@@ -2,9 +2,6 @@
 #include "Core/Containers/Function.h"
 #include "Core/Generic/GenericThread.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsThread
-
 class CORE_API FWindowsThread final 
     : public FGenericThread
 {

@@ -4,16 +4,13 @@
 
 struct FTexture;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ITextureImporter
-
 struct ITextureImporter
 {
     virtual ~ITextureImporter() = default;
 
     /**
-     * @breif: Imports a texture with the specified filename
-     * @return: Returns a pointer to the imported texture. Returns nullptr on failure.
+     * @brief  - Imports a texture with the specified filename
+     * @return - Returns a pointer to the imported texture. Returns nullptr on failure.
      */
     virtual FTexture* ImportFromFile(const FStringView& FileName) = 0;
 

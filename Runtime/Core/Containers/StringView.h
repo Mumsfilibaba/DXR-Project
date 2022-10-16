@@ -9,9 +9,6 @@
 #include "Core/Templates/IsTStringType.h"
 #include "Core/Templates/CString.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TStringView - Class for viewing a string similar to std::string_view
-
 template<typename InCharType>
 class TStringView
 {
@@ -26,7 +23,6 @@ public:
         TIsSigned<SizeType>::Value,
         "TStringView only supports a SizeType that's signed");
 
-    /* Iterators */
     typedef TArrayIterator<const TStringView, const CharType>        ConstIteratorType;
     typedef TReverseArrayIterator<const TStringView, const CharType> ReverseConstIteratorType;
 
@@ -35,7 +31,7 @@ public:
 public:
     
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE TStringView() noexcept
         : ViewStart(nullptr)
@@ -43,9 +39,8 @@ public:
     { }
 
     /**
-     * @brief: Create a view from a raw string
-     * 
-     * @param InString: String to view
+     * @brief          - Create a view from a raw string
+     * @param InString - String to view
      */
     FORCEINLINE TStringView(const CharType* InString) noexcept
         : ViewStart(InString)
@@ -53,10 +48,9 @@ public:
     { }
 
     /**
-     * @brief: Create a view from a raw string with a fixed length
-     *
-     * @param InString: String to view
-     * @param InLength: Length of the string to view
+     * @brief          - Create a view from a raw string with a fixed length
+     * @param InString - String to view
+     * @param InLength - Length of the string to view
      */
     FORCEINLINE explicit TStringView(const CharType* InString, SizeType InLength) noexcept
         : ViewStart(InString)
@@ -64,9 +58,8 @@ public:
     { }
 
     /**
-     * @brief: Create a view from a string-type 
-     * 
-     * @param InString: String to view
+     * @brief          - Create a view from a string-type 
+     * @param InString - String to view
      */
     template<
         typename StringType,
@@ -77,9 +70,8 @@ public:
     { }
 
     /**
-     * @brief: Copy Constructor
-     *
-     * @param Other: Other view to copy from
+     * @brief       - Copy Constructor
+     * @param Other - Other view to copy from
      */
     FORCEINLINE TStringView(const TStringView& Other) noexcept
         : ViewStart(Other.ViewStart)
@@ -87,9 +79,8 @@ public:
     { }
 
     /**
-     * @brief: Move Constructor
-     *
-     * @param Other: Other view to move from
+     * @brief       - Move Constructor
+     * @param Other - Other view to move from
      */
     FORCEINLINE TStringView(TStringView&& Other) noexcept
         : ViewStart(Other.ViewStart)
@@ -100,7 +91,7 @@ public:
     }
 
     /**
-     * @brief: Clears the view
+     * @brief - Clears the view
      */
     FORCEINLINE void Clear() noexcept
     {
@@ -109,11 +100,10 @@ public:
     }
 
     /**
-     * @brief: Copy this string into buffer
-     *
-     * @param Buffer: Buffer to fill
-     * @param BufferSize: Size of the buffer to fill
-     * @param Position: Offset to start copy from
+     * @brief            - Copy this string into buffer
+     * @param Buffer     - Buffer to fill
+     * @param BufferSize - Size of the buffer to fill
+     * @param Position   - Offset to start copy from
      */
     FORCEINLINE void CopyToBuffer(CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const noexcept
     {
@@ -125,9 +115,8 @@ public:
     }
 
     /**
-     * @brief: Removes whitespace from the beginning and end of the string and returns a copy
-     *
-     * @return: Returns a copy of this string with the whitespace removed in the end and beginning
+     * @brief  - Removes whitespace from the beginning and end of the string and returns a copy
+     * @return - Returns a copy of this string with the whitespace removed in the end and beginning
      */
     NODISCARD FORCEINLINE TStringView Trim() noexcept
     {
@@ -137,7 +126,7 @@ public:
     }
 
     /**
-     * @brief: Removes whitespace from the beginning and end of the string
+     * @brief - Removes whitespace from the beginning and end of the string
      */
     FORCEINLINE void TrimInline() noexcept
     {
@@ -146,9 +135,8 @@ public:
     }
 
     /**
-     * @brief: Removes whitespace from the beginning of the string and returns a copy
-     *
-     * @return: Returns a copy of this string with all the whitespace removed from the beginning
+     * @brief  - Removes whitespace from the beginning of the string and returns a copy
+     * @return - Returns a copy of this string with all the whitespace removed from the beginning
      */
     NODISCARD FORCEINLINE TStringView TrimStart() noexcept
     {
@@ -158,7 +146,7 @@ public:
     }
 
     /**
-     * @brief: Removes whitespace from the beginning of the string
+     * @brief - Removes whitespace from the beginning of the string
      */
     FORCEINLINE void TrimStartInline() noexcept
     {
@@ -177,9 +165,8 @@ public:
     }
 
     /**
-     * @brief: Removes whitespace from the end of the string and returns a copy
-     *
-     * @return: Returns a copy of this string with all the whitespace removed from the end
+     * @brief  - Removes whitespace from the end of the string and returns a copy
+     * @return - Returns a copy of this string with all the whitespace removed from the end
      */
     NODISCARD FORCEINLINE TStringView TrimEnd() noexcept
     {
@@ -189,7 +176,7 @@ public:
     }
 
     /**
-     * @brief: Removes whitespace from the end of the string
+     * @brief - Removes whitespace from the end of the string
      */
     FORCEINLINE void TrimEndInline() noexcept
     {
@@ -207,10 +194,9 @@ public:
     }
 
     /**
-     * @brief: Shrink the view from the left and return a copy
-     * 
-     * @param Num: Number of characters to trim
-     * @return: Return a trimmed copy of the view
+     * @brief     - Shrink the view from the left and return a copy
+     * @param Num - Number of characters to trim
+     * @return    - Return a trimmed copy of the view
      */
     NODISCARD FORCEINLINE TStringView ShrinkLeft(int32 Num = 1) noexcept
     {
@@ -220,9 +206,8 @@ public:
     }
 
     /**
-     * @brief: Shrink the view from the left
-     *
-     * @param Num: Number of characters to trim
+     * @brief     - Shrink the view from the left
+     * @param Num - Number of characters to trim
      */
     FORCEINLINE void ShrinkLeftInline(int32 Num = 1) noexcept
     {
@@ -237,10 +222,9 @@ public:
     }
 
     /**
-     * @brief: Shrink the view from the right and return a copy
-     *
-     * @param Num: Number of characters to trim
-     * @return: Return a trimmed copy of the view
+     * @brief     - Shrink the view from the right and return a copy
+     * @param Num - Number of characters to trim
+     * @return    - Return a trimmed copy of the view
      */
     NODISCARD FORCEINLINE TStringView ShrinkRight(int32 Num = 1) noexcept
     {
@@ -250,9 +234,8 @@ public:
     }
 
     /**
-     * @brief: Shrink the view from the right
-     *
-     * @param Num: Number of characters to trim
+     * @brief     - Shrink the view from the right
+     * @param Num - Number of characters to trim
      */
     FORCEINLINE void ShrinkRightInline(int32 Num = 1) noexcept
     {
@@ -267,10 +250,9 @@ public:
     }
 
     /**
-     * @brief: Compares this string to another string-type
-     *
-     * @param InString: String to compare with
-     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     * @brief          - Compares this string to another string-type
+     * @param InString - String to compare with
+     * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type Compare(const StringType& InString) const noexcept
@@ -279,10 +261,9 @@ public:
     }
 
     /**
-     * @brief: Compares this string with a raw-string
-     *
-     * @param InString: String to compare with
-     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     * @brief          - Compares this string with a raw-string
+     * @param InString - String to compare with
+     * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
     NODISCARD FORCEINLINE int32 Compare(const CharType* InString) const noexcept
     {
@@ -290,11 +271,10 @@ public:
     }
 
     /**
-     * @brief: Compares this string with a raw-string of a fixed length
-     *
-     * @param InString: String to compare with
-     * @param InLength: Length of the string to compare
-     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     * @brief          - Compares this string with a raw-string of a fixed length
+     * @param InString - String to compare with
+     * @param InLength - Length of the string to compare
+     * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
     NODISCARD FORCEINLINE int32 Compare(const CharType* InString, SizeType InLength) const noexcept
     {
@@ -324,10 +304,9 @@ public:
     }
 
     /**
-     * @brief: Compares this string to another string-type without taking casing into account.
-     *
-     * @param InString: String to compare with
-     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     * @brief          - Compares this string to another string-type without taking casing into account.
+     * @param InString - String to compare with
+     * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type CompareNoCase(const StringType& InString) const noexcept
@@ -336,10 +315,9 @@ public:
     }
 
     /**
-     * @brief: Compares this string with a raw-string without taking casing into account.
-     *
-     * @param InString: String to compare with
-     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     * @brief          - Compares this string with a raw-string without taking casing into account.
+     * @param InString - String to compare with
+     * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
     NODISCARD FORCEINLINE int32 CompareNoCase(const CharType* InString) const noexcept
     {
@@ -347,11 +325,10 @@ public:
     }
 
     /**
-     * @brief: Compares this string with a raw-string without taking casing into account.
-     *
-     * @param InString: String to compare with
-     * @param InLength: Length of the string to compare
-     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     * @brief          - Compares this string with a raw-string without taking casing into account.
+     * @param InString - String to compare with
+     * @param InLength - Length of the string to compare
+     * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
     NODISCARD FORCEINLINE int32 CompareNoCase(const CharType* InString, SizeType InLength) const noexcept
     {
@@ -381,11 +358,10 @@ public:
     }
 
     /**
-     * @brief: Find the position of the first occurrence of the start of the search-string
-     *
-     * @param InString: String to search
-     * @param Position: Position to start search at
-     * @return: Returns the position of the first character in the search-string
+     * @brief          - Find the position of the first occurrence of the start of the search-string
+     * @param InString - String to search
+     * @param Position - Position to start search at
+     * @return         - Returns the position of the first character in the search-string
      */
     NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
     {
@@ -393,11 +369,10 @@ public:
     }
 
     /**
-     * @brief: Find the position of the first occurrence of the start of the search-string
-     *
-     * @param InString: String to search
-     * @param Position: Position to start search at
-     * @return: Returns the position of the first character in the search-string
+     * @brief          - Find the position of the first occurrence of the start of the search-string
+     * @param InString - String to search
+     * @param Position - Position to start search at
+     * @return         - Returns the position of the first character in the search-string
      */
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type Find(const StringType& InString, SizeType Position = 0) const noexcept
@@ -406,12 +381,11 @@ public:
     }
 
     /**
-     * @brief: Find the position of the first occurrence of the start of the search-string
-     *
-     * @param InString: String to search
-     * @param InString: Length of the search-string
-     * @param Position: Position to start search at
-     * @return: Returns the position of the first character in the search-string
+     * @brief          - Find the position of the first occurrence of the start of the search-string
+     * @param InString - String to search
+     * @param InString - Length of the search-string
+     * @param Position - Position to start search at
+     * @return         - Returns the position of the first character in the search-string
      */
     NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
@@ -455,11 +429,10 @@ public:
     }
 
     /**
-     * @brief: Returns the position of the first occurrence of CHAR
-     *
-     * @param Char: Character to search for
-     * @param Position: Position to start search at
-     * @return: Returns the position of the first occurrence of the CHAR
+     * @brief          - Returns the position of the first occurrence of CHAR
+     * @param Char     - Character to search for
+     * @param Position - Position to start search at
+     * @return         - Returns the position of the first occurrence of the CHAR
      */
     NODISCARD FORCEINLINE SizeType FindChar(CharType Char, SizeType Position = 0) const noexcept
     {
@@ -488,11 +461,10 @@ public:
     }
 
     /**
-     * @brief: Returns the position of the first CHAR that passes the predicate
-     *
-     * @param Predicate: Predicate that specifies valid chars
-     * @param Position: Position to start search at
-     * @return: Returns the position of the first occurrence of the CHAR
+     * @brief           - Returns the position of the first CHAR that passes the predicate
+     * @param Predicate - Predicate that specifies valid chars
+     * @param Position  - Position to start search at
+     * @return          - Returns the position of the first occurrence of the CHAR
      */
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
@@ -522,11 +494,10 @@ public:
     }
 
     /**
-     * @brief: Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
-     *
-     * @param InString: String to search
-     * @param Position: Position to start search at
-     * @return: Returns the position of the first character in the search-string
+     * @brief          - Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @param InString - String to search
+     * @param Position - Position to start search at
+     * @return         - Returns the position of the first character in the search-string
      */
     NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType Position = 0) const noexcept
     {
@@ -575,11 +546,10 @@ public:
     }
 
     /**
-     * @brief: Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
-     *
-     * @param InString: String to search
-     * @param Position: Position to start search at
-     * @return: Returns the position of the first character in the search-string
+     * @brief          - Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @param InString - String to search
+     * @param Position - Position to start search at
+     * @return         - Returns the position of the first character in the search-string
      */
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindLast(const StringType& InString, SizeType Position = 0) const noexcept
@@ -588,13 +558,13 @@ public:
     }
 
     /**
-     * @brief: Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
-     * Position is the end, instead of the start as with normal Find.
-     *
-     * @param InString: String to search
-     * @param InString: Length of the search-string
-     * @param Position: Position to start search at
-     * @return: Returns the position of the first character in the search-string
+     * @brief - Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     *     Position is the end, instead of the start as with normal Find.
+     * 
+     * @param InString - String to search
+     * @param InString - Length of the search-string
+     * @param Position - Position to start search at
+     * @return         - Returns the position of the first character in the search-string
      */
     NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
@@ -644,11 +614,10 @@ public:
     }
 
     /**
-     * @brief: Returns the position of the first occurrence of CHAR. Searches the string in reverse.
-     *
-     * @param Char: Character to search for
-     * @param Position: Position to start search at
-     * @return: Returns the position of the first occurrence of the CHAR
+     * @brief          - Returns the position of the first occurrence of CHAR. Searches the string in reverse.
+     * @param Char     - Character to search for
+     * @param Position - Position to start search at
+     * @return         - Returns the position of the first occurrence of the CHAR
      */
     NODISCARD FORCEINLINE SizeType FindLastChar(CharType Char, SizeType Position = 0) const noexcept
     {
@@ -676,11 +645,10 @@ public:
     }
 
     /**
-     * @brief: Returns the position of the first CHAR that passes the predicate
-     *
-     * @param Predicate: Predicate that specifies valid chars
-     * @param Position: Position to start search at
-     * @return: Returns the position of the first occurrence of the CHAR
+     * @brief           - Returns the position of the first CHAR that passes the predicate
+     * @param Predicate - Predicate that specifies valid chars
+     * @param Position  - Position to start search at
+     * @return          - Returns the position of the first occurrence of the CHAR
      */
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
@@ -709,11 +677,10 @@ public:
     }
 
     /**
-     * @brief: Check if the search-string exists within the view
-     *
-     * @param InString: String to search for
-     * @param Position: Position to start to search at
-     * @return: Returns true if the string is found
+     * @brief          - Check if the search-string exists within the view
+     * @param InString - String to search for
+     * @param Position - Position to start to search at
+     * @return         - Returns true if the string is found
      */
     NODISCARD FORCEINLINE bool Contains(const CharType* InString, SizeType Position = 0) const noexcept
     {
@@ -721,11 +688,10 @@ public:
     }
 
     /**
-     * @brief: Check if the search-string exists within the view. The string is of a string-type.
-     *
-     * @param InString: String to search for
-     * @param Position: Position to start to search at
-     * @return: Returns true if the string is found
+     * @brief          - Check if the search-string exists within the view. The string is of a string-type.
+     * @param InString - String to search for
+     * @param Position - Position to start to search at
+     * @return         - Returns true if the string is found
      */
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Contains(const StringType& InString, SizeType Position = 0) const noexcept
@@ -734,11 +700,10 @@ public:
     }
 
     /**
-     * @brief: Check if the search-string exists within the view
-     *
-     * @param InString: String to search for
-     * @param Position: Position to start to search at
-     * @return: Returns true if the string is found
+     * @brief          - Check if the search-string exists within the view
+     * @param InString - String to search for
+     * @param Position - Position to start to search at
+     * @return         - Returns true if the string is found
      */
     NODISCARD FORCEINLINE bool Contains(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
@@ -746,11 +711,10 @@ public:
     }
 
     /**
-     * @brief: Check if the character exists within the view
-     *
-     * @param InString: String to search for
-     * @param Position: Position to start to search at
-     * @return: Returns true if the string is found
+     * @brief          - Check if the character exists within the view
+     * @param InString - String to search for
+     * @param Position - Position to start to search at
+     * @return         - Returns true if the string is found
      */
     NODISCARD FORCEINLINE bool Contains(CharType Char, SizeType Position = 0) const noexcept
     {
@@ -758,10 +722,9 @@ public:
     }
 
     /**
-     * @brief: Check if string begins with a string
-     *
-     * @param InString: String to test for
-     * @return: Returns true if the string begins with InString
+     * @brief          - Check if string begins with a string
+     * @param InString - String to test for
+     * @return         - Returns true if the string begins with InString
      */
     NODISCARD FORCEINLINE bool StartsWith(const CharType* InString) const noexcept
     {
@@ -770,10 +733,9 @@ public:
     }
 
     /**
-     * @brief: Check if string begins with a string
-     *
-     * @param InString: String to test for
-     * @return: Returns true if the string begins with InString
+     * @brief          - Check if string begins with a string
+     * @param InString - String to test for
+     * @return         - Returns true if the string begins with InString
      */
     NODISCARD FORCEINLINE bool StartsWithNoCase(const CharType* InString) const noexcept
     {
@@ -782,10 +744,9 @@ public:
     }
 
     /**
-     * @brief: Check if string end with a string
-     *
-     * @param InString: String to test for
-     * @return: Returns true if the string ends with InString
+     * @brief          - Check if string end with a string
+     * @param InString - String to test for
+     * @return         - Returns true if the string ends with InString
      */
     NODISCARD FORCEINLINE bool EndsWith(const CharType* InString) const noexcept
     {
@@ -806,10 +767,9 @@ public:
     }
 
     /**
-     * @brief: Check if string end with a string without taking casing into account
-     *
-     * @param InString: String to test for
-     * @return: Returns true if the string ends with InString
+     * @brief          - Check if string end with a string without taking casing into account
+     * @param InString - String to test for
+     * @return         - Returns true if the string ends with InString
      */
     NODISCARD FORCEINLINE bool EndsWithNoCase(const CharType* InString) const noexcept
     {
@@ -830,9 +790,8 @@ public:
     }
 
     /**
-     * @brief: Check if the container contains any elements
-     *
-     * @return: Returns true if the array is empty or false if it contains elements
+     * @brief  - Check if the container contains any elements
+     * @return - Returns true if the array is empty or false if it contains elements
      */
     NODISCARD FORCEINLINE bool IsEmpty() const noexcept
     {
@@ -840,9 +799,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the first element of the view
-     *
-     * @return: Returns a reference to the first element of the view
+     * @brief  - Retrieve the first element of the view
+     * @return - Returns a reference to the first element of the view
      */
     NODISCARD FORCEINLINE const CharType& FirstElement() const noexcept
     {
@@ -851,9 +809,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the last element of the array
-     *
-     * @return: Returns a reference to the last element of the view
+     * @brief  - Retrieve the last element of the array
+     * @return - Returns a reference to the last element of the view
      */
     NODISCARD FORCEINLINE const CharType& LastElement() const noexcept
     {
@@ -862,10 +819,9 @@ public:
     }
 
     /**
-     * @brief: Retrieve a element at a certain index of the view
-     *
-     * @param Index: Index of the element to retrieve
-     * @return: A reference to the element at the index
+     * @brief       - Retrieve a element at a certain index of the view
+     * @param Index - Index of the element to retrieve
+     * @return      - A reference to the element at the index
      */
     NODISCARD FORCEINLINE const CharType& GetElementAt(SizeType Index) const noexcept
     {
@@ -874,9 +830,8 @@ public:
     }
 
     /**
-     * @brief: Swap this view with another
-     *
-     * @param Other: String to swap with
+     * @brief       - Swap this view with another
+     * @param Other - String to swap with
      */
     FORCEINLINE void Swap(TStringView& Other) noexcept
     {
@@ -885,9 +840,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the last index that can be used to retrieve an element from the view
-     *
-     * @return: Returns a the index to the last element of the view
+     * @brief  - Retrieve the last index that can be used to retrieve an element from the view
+     * @return - Returns a the index to the last element of the view
      */
     NODISCARD FORCEINLINE SizeType LastElementIndex() const noexcept
     {
@@ -896,9 +850,8 @@ public:
     }
 
     /**
-     * @brief: Returns the size of the view
-     *
-     * @return: The current size of the view
+     * @brief  - Returns the size of the view
+     * @return - The current size of the view
      */
     NODISCARD FORCEINLINE SizeType GetSize() const noexcept
     {
@@ -906,9 +859,8 @@ public:
     }
 
     /**
-     * @brief: Returns the length of the view
-     *
-     * @return: The current length of the view
+     * @brief  - Returns the length of the view
+     * @return - The current length of the view
      */
     NODISCARD FORCEINLINE SizeType GetLength() const noexcept
     {
@@ -916,9 +868,8 @@ public:
     }
 
     /**
-     * @brief: Returns the size of the container in bytes
-     *
-     * @return: The current size of the container in bytes
+     * @brief  - Returns the size of the container in bytes
+     * @return - The current size of the container in bytes
      */
     NODISCARD FORCEINLINE SizeType SizeInBytes() const noexcept
     {
@@ -926,9 +877,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the data of the array
-     *
-     * @return: Returns a pointer to the data of the array
+     * @brief  - Retrieve the data of the array
+     * @return - Returns a pointer to the data of the array
      */
     NODISCARD FORCEINLINE const CharType* GetData() const noexcept
     {
@@ -936,9 +886,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve a null-terminated string
-     *
-     * @return: Returns a pointer containing a null-terminated string
+     * @brief  - Retrieve a null-terminated string
+     * @return - Returns a pointer containing a null-terminated string
      */
     NODISCARD FORCEINLINE const CharType* GetCString() const noexcept
     {
@@ -946,11 +895,10 @@ public:
     }
 
     /**
-     * @brief: Create a sub-string view of this string
-     *
-     * @param Position: Position to start the sub-string at
-     * @param NumCharacters: Number of characters in the sub-string
-     * @return: Returns a sub-string view
+     * @brief               - Create a sub-string view of this string
+     * @param Position      - Position to start the sub-string at
+     * @param NumCharacters - Number of characters in the sub-string
+     * @return              - Returns a sub-string view
      */
     NODISCARD FORCEINLINE TStringView SubStringView(SizeType Offset, SizeType Count) const noexcept
     {
@@ -961,10 +909,9 @@ public:
 public:
 
     /**
-     * @brief: Bracket-operator to retrieve an element at a certain index
-     *
-     * @param Index: Index of the element to retrieve
-     * @return: A reference to the element at the index
+     * @brief       - Bracket-operator to retrieve an element at a certain index
+     * @param Index - Index of the element to retrieve
+     * @return      - A reference to the element at the index
      */
     NODISCARD FORCEINLINE const CharType& operator[](SizeType Index) const noexcept
     {
@@ -972,35 +919,32 @@ public:
     }
 
     /**
-     * @brief: Copy-assignment operator
-     *
-     * @param RHS: String to copy
-     * @return: Return a reference to this instance
+     * @brief       - Copy-assignment operator
+     * @param Other - String to copy
+     * @return      - Return a reference to this instance
      */
-    FORCEINLINE TStringView& operator=(const TStringView& RHS) noexcept
+    FORCEINLINE TStringView& operator=(const TStringView& Other) noexcept
     {
-        TStringView(RHS).Swap(*this);
+        TStringView(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator
-     *
-     * @param RHS: String to move
-     * @return: Return a reference to this instance
+     * @brief       - Move-assignment operator
+     * @param Other - String to move
+     * @return      - Return a reference to this instance
      */
-    FORCEINLINE TStringView& operator=(TStringView&& RHS) noexcept
+    FORCEINLINE TStringView& operator=(TStringView&& Other) noexcept
     {
-        TStringView(Move(RHS)).Swap(*this);
+        TStringView(Move(Other)).Swap(*this);
         return *this;
     }
 
 public:
 
     /**
-     * @brief: Retrieve an iterator to the beginning of the array
-     *
-     * @return: A iterator that points to the first element
+     * @brief  - Retrieve an iterator to the beginning of the array
+     * @return - A iterator that points to the first element
      */
     NODISCARD FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
@@ -1008,9 +952,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve an iterator to the end of the array
-     *
-     * @return: A iterator that points to the element past the end
+     * @brief  - Retrieve an iterator to the end of the array
+     * @return - A iterator that points to the element past the end
      */
     NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
@@ -1018,9 +961,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve an reverse-iterator to the end of the array
-     *
-     * @return: A reverse-iterator that points to the last element
+     * @brief  - Retrieve an reverse-iterator to the end of the array
+     * @return - A reverse-iterator that points to the last element
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
@@ -1028,9 +970,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve an reverse-iterator to the start of the array
-     *
-     * @return: A reverse-iterator that points to the element before the first element
+     * @brief  - Retrieve an reverse-iterator to the start of the array
+     * @return - A reverse-iterator that points to the element before the first element
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
@@ -1038,9 +979,6 @@ public:
     }
 
 public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // STL Iterators
 
     NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
     NODISCARD FORCEINLINE ConstIteratorType end()   const noexcept { return EndIterator(); }
@@ -1050,14 +988,10 @@ private:
     const CharType* ViewEnd   = nullptr;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Predefined types
 
 using FStringView     = TStringView<CHAR>;
 using FStringViewWide = TStringView<WIDECHAR>;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Operators
 
 template<typename CharType>
 NODISCARD
@@ -1185,8 +1119,6 @@ inline bool operator>=(const TStringView<CharType>& LHS, const TStringView<CharT
     return (LHS.Compare(RHS) >= 0);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Add TStringView to be a string-type
 
 template<typename CharType>
 struct TIsTStringType<TStringView<CharType>>

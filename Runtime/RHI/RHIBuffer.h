@@ -12,450 +12,115 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedefs
+typedef TSharedRef<class FRHIBuffer> FRHIBufferRef;
 
-typedef TSharedRef<class FRHIBuffer>         FRHIBufferRef;
-typedef TSharedRef<class FRHIVertexBuffer>   FRHIVertexBufferRef;
-typedef TSharedRef<class FRHIIndexBuffer>    FRHIIndexBufferRef;
-typedef TSharedRef<class FRHIGenericBuffer>  FRHIGenericBufferRef;
-typedef TSharedRef<class FRHIConstantBuffer> FRHIConstantBufferRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EIndexFormat 
-
-enum class EIndexFormat : uint8
+enum class EBufferUsageFlags : uint16
 {
-    Unknown = 0,
-    uint16  = 1,
-    uint32  = 2,
-};
+    None = 0,
 
-inline const CHAR* ToString(EIndexFormat IndexFormat)
-{
-    switch (IndexFormat)
-    {
-        case EIndexFormat::uint16: return "uint16";
-        case EIndexFormat::uint32: return "uint32";
-        default:                   return "Unknown";
-    }
-}
-
-inline EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
-{
-    switch (StrideInBytes)
-    {
-        case 2:  return EIndexFormat::uint16;
-        case 4:  return EIndexFormat::uint32;
-        default: return EIndexFormat::Unknown;
-    }
-}
-
-inline uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
-{
-    switch (IndexFormat)
-    {
-        case EIndexFormat::uint16: return 2;
-        case EIndexFormat::uint32: return 4;
-        default:                   return 0;
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EBufferUsageFlags 
-
-enum class EBufferUsageFlags : uint8
-{
-    None     = 0,
     Default  = FLAG(1), // Default Device Memory
-    Dynamic  = FLAG(2), // Dynamic Memory
-    AllowUAV = FLAG(3), // Can be used in UnorderedAccessViews
-    AllowSRV = FLAG(4), // Can be used in ShaderResourceViews
+    Dynamic  = FLAG(2), // Dynamic Memory (D3D12 UploadHeap)
+    ReadBack = FLAG(3), // Read-Back from GPU
 
-    RWBuffer = AllowUAV | AllowSRV
+    ConstantBuffer  = FLAG(4), // Can be used as ConstantBuffer
+    UnorderedAccess = FLAG(5), // Can be used in UnorderedAccessViews
+    ShaderResource  = FLAG(6), // Can be used in ShaderResourceViews
+    VertexBuffer    = FLAG(7), // Can be used as VertexBuffer
+    IndexBuffer     = FLAG(8), // Can be used as IndexBuffer
+
+    RWBuffer = UnorderedAccess | ShaderResource
 };
 
 ENUM_CLASS_OPERATORS(EBufferUsageFlags);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIBufferDataInitializer
 
-struct FRHIBufferDataInitializer
+struct FRHIBufferDesc
 {
-    FRHIBufferDataInitializer()
-        : BufferData(nullptr)
-        , Size(0)
-    { }
-
-    explicit FRHIBufferDataInitializer(const void* InBufferData, uint32 InSize)
-        : BufferData(InBufferData)
-        , Size(InSize)
-    { }
-
-    bool operator==(const FRHIBufferDataInitializer& RHS) const
-    {
-        return (BufferData == RHS.BufferData) && (Size == RHS.Size);
-    }
-
-    bool operator!=(const FRHIBufferDataInitializer& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    const void* BufferData;
-    uint32      Size;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIBufferInitializer
-
-struct FRHIBufferInitializer
-{
-    FRHIBufferInitializer()
-        : InitialData(nullptr)
-	    , UsageFlags(EBufferUsageFlags::None)
-        , InitialAccess(EResourceAccess::Common)
-    { }
-
-    FRHIBufferInitializer(
-        EBufferUsageFlags InUsageFlags, 
-        EResourceAccess InInitialState, 
-        FRHIBufferDataInitializer* InInitialData = nullptr)
-        : InitialData(InInitialData)
-	    , UsageFlags(InUsageFlags)
-        , InitialAccess(InInitialState)
-    { }
-
-    bool AllowSRV() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::AllowSRV); }
-    bool AllowUAV() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::AllowUAV); }
-
-    bool IsDynamic() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Dynamic); }
-
-    bool operator==(const FRHIBufferInitializer& RHS) const
-    {
-        return (UsageFlags == RHS.UsageFlags) && (InitialAccess == RHS.InitialAccess);
-    }
-
-    bool operator!=(const FRHIBufferInitializer& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    FRHIBufferDataInitializer* InitialData;
-    EBufferUsageFlags          UsageFlags;
-    EResourceAccess            InitialAccess;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIVertexBufferInitializer
-
-struct FRHIVertexBufferInitializer
-    : public FRHIBufferInitializer
-{
-    FRHIVertexBufferInitializer()
-        : FRHIBufferInitializer()
-        , NumVertices(0)
+    FRHIBufferDesc()
+        : Size(0)
         , Stride(0)
+        , UsageFlags(EBufferUsageFlags::None)
     { }
 
-    FRHIVertexBufferInitializer(
-        EBufferUsageFlags InUsageFlags,
-        uint32 InNumVertices,
-        uint16 InStride,
-        EResourceAccess InInitialState = EResourceAccess::VertexAndConstantBuffer,
-        FRHIBufferDataInitializer* InInitialData = nullptr)
-        : FRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
-        , NumVertices(InNumVertices)
-        , Stride(InStride)
-    { }
-
-    uint32 GetSize()   const { return NumVertices * GetStride(); }
-    uint32 GetStride() const { return Stride; }
-
-    bool operator==(const FRHIVertexBufferInitializer& RHS) const
-    {
-        return FRHIBufferInitializer::operator==(RHS) && (NumVertices == RHS.NumVertices) && (Stride == RHS.Stride);
-    }
-
-    bool operator!=(const FRHIVertexBufferInitializer& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    uint32 NumVertices;
-    uint16 Stride;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIIndexBufferInitializer
-
-struct FRHIIndexBufferInitializer
-    : public FRHIBufferInitializer
-{
-    FRHIIndexBufferInitializer()
-        : FRHIBufferInitializer()
-        , IndexFormat(EIndexFormat::Unknown)
-        , NumIndicies(0)
-    { }
-
-    FRHIIndexBufferInitializer(
-        EBufferUsageFlags InUsageFlags,
-        EIndexFormat InIndexFormat,
-        uint32 InNumIndicies,
-        EResourceAccess InInitialState = EResourceAccess::IndexBuffer,
-        FRHIBufferDataInitializer* InInitialData = nullptr)
-        : FRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
-        , IndexFormat(InIndexFormat)
-        , NumIndicies(InNumIndicies)
-    { }
-
-    uint32 GetSize()   const { return NumIndicies * GetStride(); }
-    uint32 GetStride() const { return GetStrideFromIndexFormat(IndexFormat); }
-
-    bool operator==(const FRHIIndexBufferInitializer& RHS) const
-    {
-        return FRHIBufferInitializer::operator==(RHS) && (IndexFormat == RHS.IndexFormat) && (NumIndicies == RHS.NumIndicies);
-    }
-
-    bool operator!=(const FRHIIndexBufferInitializer& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    EIndexFormat IndexFormat;
-    uint32       NumIndicies;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIGenericBufferInitializer
-
-struct FRHIGenericBufferInitializer
-    : public FRHIBufferInitializer
-{
-    FRHIGenericBufferInitializer()
-        : FRHIBufferInitializer()
-        , Size(0)
-        , Stride(0)
-    { }
-
-    FRHIGenericBufferInitializer(
-        EBufferUsageFlags InUsageFlags,
-        uint32 InSize,
-        EResourceAccess InInitialState = EResourceAccess::Common,
-        FRHIBufferDataInitializer* InInitialData = nullptr)
-        : FRHIBufferInitializer(InUsageFlags, InInitialState)
-        , Size(InSize)
-        , Stride(InSize)
-    { }
-
-    FRHIGenericBufferInitializer(
-        EBufferUsageFlags InUsageFlags,
-        uint32 InNumElements,
+    FRHIBufferDesc(
+        uint64 InSize,
         uint32 InStride,
-        EResourceAccess InInitialState = EResourceAccess::Common,
-        FRHIBufferDataInitializer* InInitialData = nullptr)
-        : FRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
-        , Size(InNumElements * InStride)
+        EBufferUsageFlags InUsageFlags)
+        : Size(InSize)
         , Stride(InStride)
+        , UsageFlags(InUsageFlags)
     { }
 
-    bool operator==(const FRHIGenericBufferInitializer& RHS) const
+    bool IsDefault()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Default); }
+    bool IsDynamic()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Dynamic); }
+    bool IsReadBack() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ReadBack); }
+    
+    bool IsConstantBuffer()   const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ConstantBuffer); }
+    bool IsShaderResource()   const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ShaderResource); }
+    bool IsVertexBuffer()     const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::VertexBuffer); }
+    bool IsIndexBuffer()      const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::IndexBuffer); }
+    
+    bool HasUnorderedAccess() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::UnorderedAccess); }
+
+    bool operator==(const FRHIBufferDesc& Other) const
     {
-        return FRHIBufferInitializer::operator==(RHS) && (Size == RHS.Size) && (Stride == RHS.Stride);
+        return (Size == Other.Size) && (Stride == Other.Stride) && (UsageFlags == Other.UsageFlags);
     }
 
-    bool operator!=(const FRHIGenericBufferInitializer& RHS) const
+    bool operator!=(const FRHIBufferDesc& Other) const
     {
-        return !(*this == RHS);
+        return !(*this == Other);
     }
 
-    uint32 Size;
-    uint32 Stride;
+    uint64            Size;
+    uint32            Stride;
+    EBufferUsageFlags UsageFlags;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIConstantBufferInitializer
-
-struct FRHIConstantBufferInitializer
-    : public FRHIBufferInitializer
-{
-    FRHIConstantBufferInitializer()
-        : FRHIBufferInitializer()
-        , Size(0)
-        , Stride(0)
-    { }
-
-    FRHIConstantBufferInitializer(
-        EBufferUsageFlags InUsageFlags,
-        uint32 InSize,
-        EResourceAccess InInitialState = EResourceAccess::VertexAndConstantBuffer,
-        FRHIBufferDataInitializer* InInitialData = nullptr)
-        : FRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
-        , Size(InSize)
-        , Stride(InSize)
-    { }
-
-    FRHIConstantBufferInitializer(
-        EBufferUsageFlags InUsageFlags,
-        uint32 InStride,
-        uint32 InNumElements,
-        EResourceAccess InInitialState = EResourceAccess::VertexAndConstantBuffer, 
-        FRHIBufferDataInitializer* InInitialData = nullptr)
-        : FRHIBufferInitializer(InUsageFlags, InInitialState, InInitialData)
-        , Size(InNumElements * InStride)
-        , Stride(InStride)
-    { }
-
-    bool operator==(const FRHIConstantBufferInitializer& RHS) const
-    {
-        return FRHIBufferInitializer::operator==(RHS)
-            && (Size   == RHS.Size)
-            && (Stride == RHS.Stride);
-    }
-
-    bool operator!=(const FRHIConstantBufferInitializer& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    uint32 Size;
-    uint32 Stride;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIBuffer
 
 class FRHIBuffer 
     : public FRHIResource
 {
 protected:
-    explicit FRHIBuffer(const FRHIBufferInitializer& Initializer)
+    explicit FRHIBuffer(const FRHIBufferDesc& InDesc)
         : FRHIResource()
-        , Flags(Initializer.UsageFlags)
+        , Desc(InDesc)
     { }
 
 public:
-    virtual class FRHIVertexBuffer*   GetVertexBuffer()   { return nullptr; }
-    virtual class FRHIIndexBuffer*    GetIndexBuffer()    { return nullptr; }
-    virtual class FRHIConstantBuffer* GetConstantBuffer() { return nullptr; }
-    virtual class FRHIGenericBuffer*  GetGenericBuffer()  { return nullptr; }
 
-    virtual void* GetRHIBaseBuffer()         { return nullptr; }
+    /** @return - Returns a pointer to the RHI implementation of RHIBuffer */
+    virtual void* GetRHIBaseBuffer() { return nullptr; }
+
+    /** @return - Returns the native resource-handle */
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    virtual uint32 GetSize()   const { return 1; }
-    virtual uint32 GetStride() const { return 1; }
-
-    virtual void    SetName(const FString& InName) { }
-    virtual FString GetName() const { return ""; }
-
-    EBufferUsageFlags GetFlags() const { return Flags; }
-
-private:
-    EBufferUsageFlags Flags;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIVertexBuffer
-
-class FRHIVertexBuffer 
-    : public FRHIBuffer
-{
-protected:
-    explicit FRHIVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
-        : FRHIBuffer(Initializer)
-        , NumVertices(Initializer.NumVertices)
-        , Stride(Initializer.Stride)
-    { }
-
-public:
-    virtual FRHIVertexBuffer* GetVertexBuffer() override final { return this; }
-
-    virtual uint32 GetSize()   const override final { return GetStride() * NumVertices; }
-    virtual uint32 GetStride() const override final { return Stride; }
-
-    uint32 GetNumVertices() const { return NumVertices; }
-
-private:
-    uint32 NumVertices;
-    uint32 Stride;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIIndexBuffer
-
-class FRHIIndexBuffer 
-    : public FRHIBuffer
-{
-protected:
-    explicit FRHIIndexBuffer(const FRHIIndexBufferInitializer& Initializer)
-        : FRHIBuffer(Initializer)
-        , Format(Initializer.IndexFormat)
-        , NumIndicies(Initializer.NumIndicies)
-    { }
-
-public:
-    virtual FRHIIndexBuffer* GetIndexBuffer() override final { return this; }
-
-    virtual uint32 GetSize()   const override final { return GetStride() * NumIndicies; }
-    virtual uint32 GetStride() const override final { return GetStrideFromIndexFormat(Format); }
-
-    EIndexFormat GetFormat()      const { return Format; }
-    uint32       GetNumIndicies() const { return NumIndicies; }
-
-private:
-    EIndexFormat Format;
-    uint32       NumIndicies;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIGenericBuffer
-
-class FRHIGenericBuffer 
-    : public FRHIBuffer
-{
-protected:
-    explicit FRHIGenericBuffer(const FRHIGenericBufferInitializer& Initializer)
-        : FRHIBuffer(Initializer)
-        , Stride(Initializer.Stride)
-        , Size(Initializer.Size)
-    { }
-
-public:
-    virtual FRHIGenericBuffer* GetGenericBuffer() override final { return this; }
-
-    virtual uint32 GetSize()   const override final { return Size; }
-    virtual uint32 GetStride() const override final { return Stride; }
-
-private:
-    uint32 Stride;
-    uint32 Size;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIConstantBuffer
-
-class FRHIConstantBuffer 
-    : public FRHIBuffer
-{
-protected:
-    explicit FRHIConstantBuffer(const FRHIConstantBufferInitializer& Initializer)
-        : FRHIBuffer(Initializer)
-        , Size(Initializer.Size)
-        , Stride(Initializer.Stride)
-    { }
-
-public: 
-    virtual FRHIConstantBuffer* GetConstantBuffer() override final { return this; }
-
-    virtual uint32 GetSize()   const override final { return Size; }
-    virtual uint32 GetStride() const override final { return Stride; }
-    
+    /** @return - Returns a ConstantBuffer Bindless-handle */
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-private:
-    uint32 Size;
-    uint32 Stride;
+    /** @return - Returns the name of the resource */
+    virtual FString GetName() const { return ""; }
+
+    /**
+     * @brief        - Set the name of the resource
+     * @param InName - New name of the resource
+     */
+    virtual void SetName(const FString& InName) { }
+    
+    /** @return - Returns the size of the buffer */
+    FORCEINLINE uint64 GetSize() const { return Desc.Size; }
+    
+    /** @return - Returns the stride of each element in the buffer */
+    FORCEINLINE uint32 GetStride() const { return Desc.Stride; }
+
+    /** @return - Returns the flags of the buffer */
+    FORCEINLINE EBufferUsageFlags GetFlags() const { return Desc.UsageFlags; }
+
+    /** @return - Returns the description used to create the buffer */
+    FORCEINLINE const FRHIBufferDesc& GetDesc() const { return Desc; }
+
+protected:
+    FRHIBufferDesc Desc;
 };
 
 #if defined(PLATFORM_COMPILER_MSVC)

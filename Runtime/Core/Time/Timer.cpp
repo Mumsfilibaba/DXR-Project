@@ -2,9 +2,6 @@
 
 #include "Core/Platform/PlatformTime.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTimer
-
 FTimer::FTimer()
 {
     Frequency = FPlatformTime::QueryPerformanceFrequency();

@@ -1,9 +1,6 @@
 #pragma once
 #include "ClassType.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Defines for creating CoreObjects
-
 #define CLASS_DESCRIPTION( TCoreObject )        \
     static FClassDescription ClassDescription = \
     {                                           \
@@ -29,9 +26,6 @@ private:
 
 #define CORE_OBJECT_INIT()                 \
     this->SetClass(This::GetStaticClass())
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCoreObject
 
 class ENGINE_API FCoreObject
 {
@@ -59,7 +53,8 @@ protected:
     }
 
 private:
-     /** @brief: Object representing the class */
+
+     /** @brief - Object representing the class */
     const FClassType* Class = nullptr;
 };
 

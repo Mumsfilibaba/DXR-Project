@@ -11,14 +11,8 @@
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/And.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helpers for TTuple implementation
-
 namespace Internal
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Forward declarations
-
     template<
         uint32 SearchForIndex,
         typename... Types>
@@ -29,8 +23,6 @@ namespace Internal
         typename... Types>
     struct TTupleGetByElement;
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Leaf of a tuple
     
     template<
         uint32 Index,
@@ -68,8 +60,6 @@ namespace Internal
         ValueType Value;
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Reference TTupleLeaf-specialization
     
     template<
         uint32 Index,
@@ -105,8 +95,6 @@ namespace Internal
         ValueType Value;
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Tuple GetByIndex Implementation
     
     template<
         uint32 Iteration,
@@ -155,8 +143,6 @@ namespace Internal
         : public TTupleGetByIndexHelper<0, SearchForIndex, Types...>
     { };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Tuple GetByElement Implementation
 
     template<
         uint32 Iteration,
@@ -205,8 +191,6 @@ namespace Internal
         : public TTupleGetByElementHelper<0, WantedType, Types...>
     { };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Implementation of tuple
 
     template <
         typename Indices,
@@ -228,9 +212,8 @@ namespace Internal
         TTupleStorage& operator=(const TTupleStorage&) = default;
 
         /**
-         * Create a new tuple
-         * 
-         * @param Args: Arguments for the element
+         * @brief      - Create a new tuple
+         * @param Args - Arguments for the element
          */
         template<typename... ArgTypes>
         FORCEINLINE explicit TTupleStorage(ArgTypes&&... Args) noexcept
@@ -238,9 +221,8 @@ namespace Internal
         { }
 
         /**
-         * Swap this tuple with another
-         * 
-         * @param Other: Tuple to swap with  
+         * @brief       - Swap this tuple with another
+         * @param Other - Tuple to swap with  
          */
         FORCEINLINE void Swap(TTupleStorage& Other) noexcept
         {
@@ -250,9 +232,8 @@ namespace Internal
     public:
 
         /**
-         * Retrieve a certain element based on type
-         * 
-         * @return: Returns a reference to the data of the specified type
+         * @brief  - Retrieve a certain element based on type
+         * @return - Returns a reference to the data of the specified type
          */
         template<typename ElementType>
         NODISCARD FORCEINLINE ElementType& Get() noexcept
@@ -262,9 +243,8 @@ namespace Internal
         }
 
         /**
-          * Retrieve a certain element based on type
-          *
-          * @return: Returns a reference to the data of the specified type
+          * @brief  - Retrieve a certain element based on type
+          * @return - Returns a reference to the data of the specified type
           */
         template<typename ElementType>
         NODISCARD FORCEINLINE const ElementType& Get() const noexcept
@@ -274,9 +254,8 @@ namespace Internal
         }
 
         /**
-          * Retrieve a certain element with the specified index
-          *
-          * @return: Returns a reference with the specified index
+          * @brief  - Retrieve a certain element with the specified index
+          * @return - Returns a reference with the specified index
           */
         template<uint32 Index>
         NODISCARD FORCEINLINE auto& GetByIndex() noexcept
@@ -286,9 +265,8 @@ namespace Internal
         }
 
         /**
-          * Retrieve a certain element with the specified index
-          *
-          * @return: Returns a reference with the specified index
+          * @brief  - Retrieve a certain element with the specified index
+          * @return - Returns a reference with the specified index
           */
         template<uint32 Index>
         NODISCARD FORCEINLINE const auto& GetByIndex() const noexcept
@@ -300,11 +278,10 @@ namespace Internal
     public:
 
         /**
-         * Apply the elements as arguments to a function after the arguments
-         * 
-         * @param Func: Function to call
-         * @param Args: Arguments to before after the tuple
-         * @return: Return the value from the function-call
+         * @brief      - Apply the elements as arguments to a function after the arguments
+         * @param Func - Function to call
+         * @param Args - Arguments to before after the tuple
+         * @return     - Return the value from the function-call
          */
         template<
             typename FuncType,
@@ -315,11 +292,10 @@ namespace Internal
         }
 
         /**
-         * Apply the elements as arguments to a function before the arguments
-         *
-         * @param Func: Function to call
-         * @param Args: Arguments to apply after the tuple
-         * @return: Return the value from the function-call
+         * @brief      - Apply the elements as arguments to a function before the arguments
+         * @param Func - Function to call
+         * @param Args - Arguments to apply after the tuple
+         * @return     - Return the value from the function-call
          */
         template<
             typename FuncType,
@@ -330,17 +306,12 @@ namespace Internal
         }
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Specialization of a TTuple with only two elements making it similar to TPair
 
     template<
         typename FirstType,
         typename SecondType>
     class TTupleStorage<TIntegerSequence<uint32, 0, 1>, FirstType, SecondType>
     {
-        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-        // GetByIndexHelper
-
         template<uint32 Index>
         struct TGetByIndexHelper;
 
@@ -380,8 +351,6 @@ namespace Internal
             }
         };
 
-        /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-        // GetByElement
 
         template<
             typename T,
@@ -437,10 +406,9 @@ namespace Internal
         TTupleStorage& operator=(const TTupleStorage&) = default;
 
         /**
-         * Constructor
-         * 
-         * @param InFirst: Element of the first type to copy
-         * @param InSecond: Element of the second type to copy
+         * @brief          - Constructor
+         * @param InFirst  - Element of the first type to copy
+         * @param InSecond - Element of the second type to copy
          */
         FORCEINLINE explicit TTupleStorage(const FirstType& InFirst, const SecondType& InSecond)
             : First(InFirst)
@@ -448,10 +416,9 @@ namespace Internal
         { }
 
         /**
-         * Constructor with templated types
-         *
-         * @param InFirst: Element of the first type to copy
-         * @param InSecond: Element of the second type to copy
+         * @brief          - Constructor with templated types
+         * @param InFirst  - Element of the first type to copy
+         * @param InSecond - Element of the second type to copy
          */
         template<
             typename OtherFirstType,
@@ -462,9 +429,8 @@ namespace Internal
         { }
 
         /**
-         * Swap this tuple with another
-         *
-         * @param Other: Tuple to swap with
+         * @brief       - Swap this tuple with another
+         * @param Other - Tuple to swap with
          */
         FORCEINLINE void Swap(TTupleStorage& Other) noexcept
         {
@@ -473,9 +439,8 @@ namespace Internal
         }
 
         /**
-         * Retrieve a certain element based on type
-         *
-         * @return: Returns a reference to the data of the specified type
+         * @brief  - Retrieve a certain element based on type
+         * @return - Returns a reference to the data of the specified type
          */
         template<typename ElementType>
         NODISCARD FORCEINLINE typename TGetByElementHelper<ElementType>::Type& Get() noexcept
@@ -484,9 +449,8 @@ namespace Internal
         }
 
         /**
-         * Retrieve a certain element based on type
-         *
-         * @return: Returns a reference to the data of the specified type
+         * @brief  - Retrieve a certain element based on type
+         * @return - Returns a reference to the data of the specified type
          */
         template<typename ElementType>
         NODISCARD FORCEINLINE const typename TGetByElementHelper<ElementType>::Type& Get() const noexcept
@@ -495,10 +459,9 @@ namespace Internal
         }
 
         /**
-          * Retrieve a certain element with the specified index
-          *
-          * @return: Returns a reference with the specified index
-          */
+         * @brief  - Retrieve a certain element with the specified index
+         * @return - Returns a reference with the specified index
+         */
         template<uint32 Index>
         NODISCARD FORCEINLINE typename TGetByIndexHelper<Index>::Type& GetByIndex() noexcept
         {
@@ -506,10 +469,9 @@ namespace Internal
         }
 
         /**
-          * Retrieve a certain element with the specified index
-          *
-          * @return: Returns a reference with the specified index
-          */
+         * @brief  - Retrieve a certain element with the specified index
+         * @return - Returns a reference with the specified index
+         */
         template<uint32 Index>
         NODISCARD FORCEINLINE const typename TGetByIndexHelper<Index>::Type& GetByIndex() const noexcept
         {
@@ -517,11 +479,10 @@ namespace Internal
         }
 
         /**
-         * Apply the elements as arguments to a function after the arguments
-         *
-         * @param Func: Function to call
-         * @param Args: Arguments to before after the tuple
-         * @return: Return the value from the function-call
+         * @brief      - Apply the elements as arguments to a function after the arguments
+         * @param Func - Function to call
+         * @param Args - Arguments to before after the tuple
+         * @return     - Return the value from the function-call
          */
         template<
             typename FuncType,
@@ -532,11 +493,10 @@ namespace Internal
         }
 
         /**
-         * Apply the elements as arguments to a function before the arguments
-         *
-         * @param Func: Function to call
-         * @param Args: Arguments to apply after the tuple
-         * @return: Return the value from the function-call
+         * @brief      - Apply the elements as arguments to a function before the arguments
+         * @param Func - Function to call
+         * @param Args - Arguments to apply after the tuple
+         * @return     - Return the value from the function-call
          */
         template<
             typename FuncType,
@@ -550,8 +510,6 @@ namespace Internal
         SecondType Second;
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TupleEquallityHelper - Equality / LessThan / LessThanOrEqual - Helpers
 
     template<uint32 Index>
     struct TTupleComparators
@@ -619,8 +577,6 @@ namespace Internal
     };
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TTuple implementation - similar to std::tuple
 
 template<typename... Types>
 class TTuple 
@@ -645,9 +601,8 @@ public:
     TTuple& operator=(const TTuple&) = default;
 
     /**
-     * @brief: Constructor
-     * 
-     * @param Args: Arguments for each type
+     * @brief      - Constructor
+     * @param Args - Arguments for each type
      */
     template<
         typename... ArgTypes,
@@ -657,9 +612,8 @@ public:
     { }
 
     /**
-     * @brief: Retrieve the number of elements 
-     * 
-     * @return: Returns the number of elements for the tuples
+     * @brief  - Retrieve the number of elements 
+     * @return - Returns the number of elements for the tuples
      */
     NODISCARD CONSTEXPR uint32 GetSize() const
     {
@@ -667,8 +621,6 @@ public:
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Operators
 
 template<
     typename... FirstTypes,
@@ -724,8 +676,6 @@ inline bool operator>=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondType
     return (Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThan(LHS, RHS) == false);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helper functions
 
 template<
     uint32 SearchForIndex,

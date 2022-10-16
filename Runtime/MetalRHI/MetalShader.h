@@ -7,9 +7,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EShaderVisibility
-
 enum EShaderVisibility : uint8
 {
     ShaderVisibility_Compute  = 0,
@@ -18,8 +15,6 @@ enum EShaderVisibility : uint8
     ShaderVisibility_Count    = ShaderVisibility_Pixel + 1
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalShader
 
 class FMetalShader
     : public FMetalObject
@@ -43,8 +38,6 @@ protected:
     id<MTLFunction> Function;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalVertexShader
 
 class FMetalVertexShader 
     : public FRHIVertexShader
@@ -60,8 +53,6 @@ public:
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalShader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalPixelShader
 
 class FMetalPixelShader 
     : public FRHIPixelShader
@@ -77,8 +68,6 @@ public:
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalShader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalRayTracingShader
 
 class FMetalRayTracingShader 
     : public FMetalShader
@@ -96,8 +85,6 @@ protected:
     FString Identifier;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalRayGenShader
 
 class FMetalRayGenShader 
     : public FRHIRayGenShader
@@ -113,8 +100,6 @@ public:
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalRayAnyHitShader
 
 class FMetalRayAnyHitShader 
     : public FRHIRayAnyHitShader
@@ -130,8 +115,6 @@ public:
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalRayClosestHitShader
 
 class FMetalRayClosestHitShader 
     : public FRHIRayClosestHitShader
@@ -148,8 +131,6 @@ public:
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalRayMissShader
 
 class FMetalRayMissShader 
     : public FRHIRayMissShader
@@ -165,8 +146,6 @@ public:
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalComputeShader
 
 class FMetalComputeShader 
     : public FRHIComputeShader
@@ -188,8 +167,6 @@ protected:
     FIntVector3 ThreadGroupXYZ;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// GetMetalShader
 
 inline FMetalShader* GetMetalShader(FRHIShader* Shader)
 {

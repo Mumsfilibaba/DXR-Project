@@ -1,9 +1,6 @@
 #pragma once
 #include "ApplicationInterface.h"
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// FStandardApplication
-
 class APPLICATION_API FStandardApplication 
     : public FApplicationInterface
 {

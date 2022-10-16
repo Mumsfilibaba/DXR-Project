@@ -5,9 +5,6 @@
 
 #include <imgui.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRendererInfoWindow
-
 class FRendererInfoWindow 
     : public FWindow
 {
@@ -18,9 +15,9 @@ class FRendererInfoWindow
 public:
     static TSharedRef<FRendererInfoWindow> Create();
 
-     /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
+     /** @brief - Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;
 
-     /** @brief: Returns true if the panel should be updated this frame */
+     /** @brief - Returns true if the panel should be updated this frame */
     virtual bool IsTickable() override final;
 };

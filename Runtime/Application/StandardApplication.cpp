@@ -8,9 +8,6 @@
 
 #include <imgui.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FStandardApplication
-
 FStandardApplication::FStandardApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
     : FApplicationInterface()
     , PlatformApplication(InPlatformApplication)

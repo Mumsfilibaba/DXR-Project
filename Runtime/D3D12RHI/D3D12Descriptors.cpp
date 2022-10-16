@@ -4,9 +4,6 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12DescriptorHeap
-
 FD3D12DescriptorHeap::FD3D12DescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
     : FD3D12DeviceChild(InDevice)
     , Heap(nullptr)
@@ -49,8 +46,6 @@ bool FD3D12DescriptorHeap::Initialize()
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12OfflineDescriptorHeap
 
 FD3D12OfflineDescriptorHeap::FD3D12OfflineDescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType)
     : FD3D12DeviceChild(InDevice)
@@ -178,8 +173,6 @@ bool FD3D12OfflineDescriptorHeap::AllocateHeap()
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12OnlineDescriptorHeap 
 
 FD3D12OnlineDescriptorHeap::FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType)
     : FD3D12DeviceChild(InDevice)
@@ -276,8 +269,6 @@ void FD3D12OnlineDescriptorHeap::SetNumPooledHeaps(uint32 NumHeaps)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12OnlineDescriptorManager
 
 FD3D12OnlineDescriptorManager::FD3D12OnlineDescriptorManager(FD3D12Device* InDevice, FD3D12DescriptorHeap* InDescriptorHeap, uint32 InDescriptorStartOffset, uint32 InDescriptorCount)
     : FD3D12DeviceChild(InDevice)

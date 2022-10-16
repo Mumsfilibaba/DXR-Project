@@ -5,9 +5,6 @@
 
 typedef TSharedRef<class FWindowsEvent> FWindowsEventRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsEvent
-
 class CORE_API FWindowsEvent final
     : public FGenericEvent
 {

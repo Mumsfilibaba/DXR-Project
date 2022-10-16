@@ -2,8 +2,6 @@
 
 #include <Foundation/Foundation.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacPlatformMisc
 
 void FMacPlatformMisc::OutputDebugString(const FString& Message)
 {

@@ -3,8 +3,6 @@
 #include "Core/Mac/MacRunLoop.h"
 #include "Core/Mac/MacThreadMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalWindowView
 
 @implementation FMetalWindowView
 
@@ -27,8 +25,6 @@
 
 @end
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalViewport
 
 FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer)
     : FMetalObject(InDeviceContext)

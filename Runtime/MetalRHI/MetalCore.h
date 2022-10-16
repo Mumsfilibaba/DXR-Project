@@ -20,9 +20,6 @@
     #endif
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MetalRHI Log Macros
-
 #if !PRODUCTION_BUILD
     #define METAL_ERROR(...)                      \
         do                                        \
@@ -80,8 +77,6 @@
     #define METAL_INFO(...)    do { (void)(0); } while(false)
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MetalRHI constants
 
 enum : uint32
 {
@@ -97,8 +92,6 @@ enum : uint32
     kConstantBufferAlignment = 256,
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MetalRHI conversion functions
 
 CONSTEXPR MTLLoadAction ConvertAttachmentLoadAction(EAttachmentLoadAction LoadAction)
 {

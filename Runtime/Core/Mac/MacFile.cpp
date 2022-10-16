@@ -7,8 +7,6 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacFileHandle
 
 FMacFileHandle::FMacFileHandle(int32 InFileHandle, bool bInReadOnly)
     : IFileHandle()
@@ -92,7 +90,7 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
 
 int32 FMacFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
 {
-	CHECK(IsValid());
+    CHECK(IsValid());
     CHECK(Src != nullptr);
 
     int64 BytesWritten = 0;
@@ -147,7 +145,7 @@ void FMacFileHandle::Close()
         ::flock(FileHandle, LOCK_UN | LOCK_NB);
 
         {
-		    const auto Result = ::close(FileHandle);
+            const auto Result = ::close(FileHandle);
             CHECK(Result >= 0);
         }
     }
@@ -156,8 +154,6 @@ void FMacFileHandle::Close()
     delete this;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacFile
 
 IFileHandle* FMacFile::OpenForRead(const FString& Filename)
 {

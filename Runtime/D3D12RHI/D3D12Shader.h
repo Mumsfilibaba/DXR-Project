@@ -6,9 +6,6 @@
 
 #include <d3d12shader.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EShaderVisibility
-
 enum EShaderVisibility : int32
 {
     ShaderVisibility_All      = 0,
@@ -20,8 +17,6 @@ enum EShaderVisibility : int32
     ShaderVisibility_Count    = ShaderVisibility_Pixel + 1
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EResourceType
 
 enum EResourceType : int32
 {
@@ -33,8 +28,6 @@ enum EResourceType : int32
     ResourceType_Unknown = 5,
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FShaderResourceRange
 
 struct FShaderResourceRange
 {
@@ -44,8 +37,6 @@ struct FShaderResourceRange
     uint32 NumSamplers = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FShaderResourceCount
 
 struct FShaderResourceCount
 {
@@ -55,9 +46,6 @@ struct FShaderResourceCount
     FShaderResourceRange Ranges;
     uint32               Num32BitConstants = 0;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ShaderParameter
 
 struct FD3D12ShaderParameter
 {
@@ -78,8 +66,6 @@ struct FD3D12ShaderParameter
     uint32 SizeInBytes    = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Shader
 
 class FD3D12Shader 
     : public FD3D12DeviceChild
@@ -170,8 +156,6 @@ protected:
     bool bContainsRootSignature = false;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12VertexShader
 
 class FD3D12VertexShader 
     : public FRHIVertexShader
@@ -183,15 +167,10 @@ public:
         , FD3D12Shader(InDevice, InCode, ShaderVisibility_Vertex)
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIShader Interface
-
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12PixelShader
 
 class FD3D12PixelShader 
     : public FRHIPixelShader
@@ -203,15 +182,10 @@ public:
         , FD3D12Shader(InDevice, InCode, ShaderVisibility_Pixel)
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIShader Interface
-
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayTracingShader
 
 class FD3D12RayTracingShader 
     : public FD3D12Shader
@@ -229,8 +203,6 @@ protected:
     FString Identifier;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayGenShader
 
 class FD3D12RayGenShader 
     : public FRHIRayGenShader
@@ -242,15 +214,10 @@ public:
         , FD3D12RayTracingShader(InDevice, InCode)
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIShader Interface
-
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayAnyHitShader
 
 class FD3D12RayAnyHitShader 
     : public FRHIRayAnyHitShader
@@ -262,15 +229,10 @@ public:
         , FD3D12RayTracingShader(InDevice, InCode)
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIShader Interface
-
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayClosestHitShader
 
 class FD3D12RayClosestHitShader 
     : public FRHIRayClosestHitShader
@@ -282,15 +244,10 @@ public:
         , FD3D12RayTracingShader(InDevice, InCode)
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIShader Interface
-
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayMissShader
 
 class FD3D12RayMissShader 
     : public FRHIRayMissShader
@@ -302,17 +259,10 @@ public:
         , FD3D12RayTracingShader(InDevice, InCode)
     { }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIShader Interface
-
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ComputeShader
 
 class FD3D12ComputeShader : public FRHIComputeShader, public FD3D12Shader
 {
@@ -325,9 +275,6 @@ public:
 
     bool Init();
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIShader Interface
-
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
 
@@ -337,8 +284,6 @@ protected:
     FIntVector3 ThreadGroupXYZ;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// GetD3D12Shader
 
 inline FD3D12Shader* GetD3D12Shader(FRHIShader* Shader)
 {

@@ -6,9 +6,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalRayTracingGeometry
-
 class FMetalRayTracingGeometry 
     : public FRHIRayTracingGeometry
 {
@@ -23,8 +20,6 @@ public:
     virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalRayTracingScene
 
 class FMetalRayTracingScene 
     : public FRHIRayTracingScene

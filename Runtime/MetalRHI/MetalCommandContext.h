@@ -13,9 +13,6 @@
 
 class FMetalDeviceContext;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalCopyCommandContext
-
 class FMetalCopyCommandContext final
 {
 public:
@@ -55,8 +52,6 @@ private:
     id<MTLBlitCommandEncoder> CopyEncoder;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalCommandContext
 
 class FMetalCommandContext final 
     : public FMetalObject

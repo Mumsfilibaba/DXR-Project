@@ -2,9 +2,6 @@
 
 #include "Core/Misc/OutputDeviceLogger.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ConfigFile
-
 FConfigFile::FConfigFile(const CHAR* InFilename)
     : Filename(InFilename)
     , Sections()

@@ -2,8 +2,6 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Generic/GenericCriticalSection.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsCriticalSection
 
 class FWindowsCriticalSection final 
     : public FGenericCriticalSection

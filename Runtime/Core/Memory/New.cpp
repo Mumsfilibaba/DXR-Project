@@ -1,9 +1,6 @@
 #include "New.h"
 #include "Memory.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Memory operators
-
 void* operator new(size_t Size)
 {
     return FMemory::Malloc(Size);

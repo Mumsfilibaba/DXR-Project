@@ -2,9 +2,6 @@
 
 #include "Core/Threading/ScopedLock.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FFrameProfiler
-
 FFrameProfiler& FFrameProfiler::Get()
 {
     static FFrameProfiler Instance;

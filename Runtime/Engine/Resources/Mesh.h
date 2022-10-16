@@ -28,14 +28,18 @@ public:
 public:
     void CreateBoundingBox(const FMeshData& Data);
 
-    FRHIVertexBufferRef       VertexBuffer;
+    FRHIBufferRef             VertexBuffer;
     FRHIShaderResourceViewRef VertexBufferSRV;
-    FRHIIndexBufferRef        IndexBuffer;
+
+    FRHIBufferRef             IndexBuffer;
     FRHIShaderResourceViewRef IndexBufferSRV;
-    TSharedRef<FRHIRayTracingGeometry> RTGeometry;
+    
+    FRHIRayTracingGeometryRef RTGeometry;
 
-    uint32 VertexCount = 0;
-    uint32 IndexCount = 0;
+    uint32       VertexCount = 0;
+    
+    EIndexFormat IndexFormat;
+    uint32       IndexCount  = 0;
 
-    FAABB BoundingBox;
+    FAABB        BoundingBox;
 };

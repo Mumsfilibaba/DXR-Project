@@ -5,22 +5,13 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Input/Generic/GenericKeyMapping.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsKeyMapping
 
 class CORE_API FWindowsKeyMapping 
     : public FGenericKeyMapping
 {
-    enum
-    {
-        kNumKeys = 512
-    };
+    enum { kNumKeys = 512 };
 
 public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericKeyMapping Interface
-
     static void Initialize();
 
     static FORCEINLINE EKey GetKeyCodeFromScanCode(uint32 ScanCode)

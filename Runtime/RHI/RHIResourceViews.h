@@ -9,14 +9,8 @@
 class FRHITexture;
 class FRHIBuffer;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedefs
-
 typedef TSharedRef<class FRHIShaderResourceView>  FRHIShaderResourceViewRef;
 typedef TSharedRef<class FRHIUnorderedAccessView> FRHIUnorderedAccessViewRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EBufferSRVFormat
 
 enum class EBufferSRVFormat : uint32
 {
@@ -33,9 +27,6 @@ inline const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EBufferUAVFormat
-
 enum class EBufferUAVFormat : uint32
 {
     None   = 0,
@@ -50,9 +41,6 @@ inline const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
         default:                       return "Unknown";
     }
 }
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EAttachmentLoadAction
 
 enum class EAttachmentLoadAction : uint8
 {
@@ -72,9 +60,6 @@ inline const CHAR* ToString(EAttachmentLoadAction LoadAction)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EAttachmentStoreAction
-
 enum class EAttachmentStoreAction : uint8
 {
     DontCare = 0, // Don't care
@@ -91,8 +76,6 @@ inline const CHAR* ToString(EAttachmentStoreAction StoreAction)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITextureSRVInitializer
 
 struct FRHITextureSRVInitializer
 {
@@ -164,8 +147,6 @@ struct FRHITextureSRVInitializer
     uint16       NumSlices;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIBufferSRVInitializer
 
 struct FRHIBufferSRVInitializer
 {
@@ -217,8 +198,6 @@ struct FRHIBufferSRVInitializer
     uint32           NumElements;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITextureUAVInitializer
 
 struct FRHITextureUAVInitializer
 {
@@ -285,8 +264,6 @@ struct FRHITextureUAVInitializer
     uint16       NumSlices;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIBufferUAVInitializer
 
 struct FRHIBufferUAVInitializer
 {
@@ -338,8 +315,6 @@ struct FRHIBufferUAVInitializer
     uint32           NumElements;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIResourceView
 
 class FRHIResourceView 
     : public FRHIResource
@@ -350,8 +325,6 @@ protected:
         , Resource(InResource)
     { }
 
-    ~FRHIResourceView() = default;
-
 public:
     FRHIResource* GetResource() const { return Resource; }
 
@@ -359,8 +332,6 @@ protected:
     FRHIResource* Resource;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIShaderResourceView
 
 class FRHIShaderResourceView 
     : public FRHIResourceView
@@ -370,15 +341,10 @@ protected:
         : FRHIResourceView(InResource)
     { }
 
-    ~FRHIShaderResourceView() = default;
-
 public:
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIUnorderedAccessView
 
 class FRHIUnorderedAccessView 
     : public FRHIResourceView
@@ -388,14 +354,10 @@ protected:
         : FRHIResourceView(InResource)
     { }
 
-    ~FRHIUnorderedAccessView() = default;
-
 public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIRenderTargetView
 
 struct FRHIRenderTargetView
 {
@@ -409,7 +371,7 @@ struct FRHIRenderTargetView
         , ClearValue()
     { }
     
-    explicit FRHIRenderTargetView(
+    FRHIRenderTargetView(
         FRHITexture* InTexture,
         EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
         EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
@@ -423,7 +385,7 @@ struct FRHIRenderTargetView
         , ClearValue(InClearValue)
     { }
 
-    explicit FRHIRenderTargetView(
+    FRHIRenderTargetView(
         FRHITexture* InTexture,
         EFormat InFormat,
         uint32 InArrayIndex,
@@ -481,8 +443,6 @@ struct FRHIRenderTargetView
     FFloatColor            ClearValue;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIDepthStencilView
 
 struct FRHIDepthStencilView
 {

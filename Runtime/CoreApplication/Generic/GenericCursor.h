@@ -2,9 +2,6 @@
 #include "CoreApplication/CoreApplication.h"
 #include "CoreApplication/ICursor.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGenericCursor
-
 class COREAPPLICATION_API FGenericCursor 
     : public ICursor
 {

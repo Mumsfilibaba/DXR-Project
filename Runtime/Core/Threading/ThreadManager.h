@@ -4,9 +4,6 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Optional.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FThreadManager
-
 class CORE_API FThreadManager
 {
 private:

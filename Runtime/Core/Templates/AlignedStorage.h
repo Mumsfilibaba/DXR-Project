@@ -4,9 +4,6 @@
 #include "Core/CoreTypes.h"
 #include "Core/CoreDefines.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TAlignmentOf
-
 template<typename T>
 struct TAlignmentOf
 {
@@ -16,8 +13,6 @@ struct TAlignmentOf
 template<typename T>
 inline CONSTEXPR int32 AlignmentOf = TAlignmentOf<T>::Value;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TAlignedStorage
 
 template<int32 kNumBytes, int32 kAlignment> 
 class TAlignedStorage
@@ -57,8 +52,6 @@ private:
     ALIGN_AS(kAlignment) uint8 Storage[kNumBytes];
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TTypedStorage
 
 template<typename T>
 class TTypedStorage

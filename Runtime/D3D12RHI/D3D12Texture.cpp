@@ -2,8 +2,6 @@
 #include "D3D12Viewport.h"
 #include "D3D12Interface.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Texture 
 
 FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
@@ -97,9 +95,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRTV(const FRHIRenderTargetView
         D3D12_ERROR("ResourceDimension (=%s) does not support RenderTargetViews", ToString(ResourceDesc.Dimension));
     }
 
-    FD3D12Interface* D3D12Interface = GetDevice()->GetAdapter()->GetD3D12Interface();
-
-    FD3D12RenderTargetViewRef D3D12View = dbg_new FD3D12RenderTargetView(GetDevice(), D3D12Interface->GetRenderTargetOfflineDescriptorHeap());
+    FD3D12RenderTargetViewRef D3D12View = dbg_new FD3D12RenderTargetView(GetDevice(), FD3D12Interface::GetRHI()->GetRenderTargetOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -193,9 +189,7 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDSV(const FRHIDepthStencilView
         D3D12_ERROR("ResourceDimension (=%s) does not support DepthStencilViews", ToString(ResourceDesc.Dimension));
     }
 
-    FD3D12Interface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetD3D12Interface();
-
-    FD3D12DepthStencilViewRef D3D12View = dbg_new FD3D12DepthStencilView(GetDevice(), D3D12CoreInterface->GetDepthStencilOfflineDescriptorHeap());
+    FD3D12DepthStencilViewRef D3D12View = dbg_new FD3D12DepthStencilView(GetDevice(), FD3D12Interface::GetRHI()->GetDepthStencilOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -230,8 +224,6 @@ FString FD3D12Texture::GetName() const
     return "";
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12BackBufferTexture
 
 FD3D12Texture* FD3D12BackBufferTexture::GetCurrentBackBufferTexture()
 {

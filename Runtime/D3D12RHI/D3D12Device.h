@@ -22,14 +22,9 @@ class FD3D12ComputePipelineState;
 class FD3D12OnlineDescriptorHeap;
 class FD3D12OfflineDescriptorHeap;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedef
-
 typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
 typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayTracingDesc
 
 struct FD3D12RayTracingDesc
 {
@@ -45,8 +40,6 @@ struct FD3D12RayTracingDesc
     D3D12_RAYTRACING_TIER Tier;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12VariableRateShadingDesc
 
 struct FD3D12VariableRateShadingDesc
 {
@@ -64,8 +57,6 @@ struct FD3D12VariableRateShadingDesc
     uint32 ShadingRateImageTileSize;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12MeshShadingDesc
 
 struct FD3D12MeshShadingDesc
 {
@@ -81,8 +72,6 @@ struct FD3D12MeshShadingDesc
     D3D12_MESH_SHADER_TIER Tier;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12SamplerFeedbackDesc
 
 struct FD3D12SamplerFeedbackDesc
 {
@@ -98,14 +87,12 @@ struct FD3D12SamplerFeedbackDesc
     D3D12_SAMPLER_FEEDBACK_TIER Tier;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Adapter
 
 class FD3D12Adapter 
     : public FD3D12RefCounted
 {
 public:
-    FD3D12Adapter(FD3D12Interface* InD3D12Interface);
+    FD3D12Adapter();
     ~FD3D12Adapter() = default;
 
     bool           Initialize();
@@ -114,8 +101,6 @@ public:
 
     inline bool    IsDebugLayerEnabled() const { return bEnableDebugLayer; }
     inline bool    SupportsTearing()     const { return bAllowTearing; }
-
-    FORCEINLINE FD3D12Interface*     GetD3D12Interface() const { return D3D12Interface; }
 
     FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysis() const { return DXGraphicsAnalysis.Get(); }
 
@@ -130,8 +115,6 @@ public:
 #endif
 
 private:
-    FD3D12Interface* D3D12Interface;
-
     uint32 AdapterIndex;
 
     bool   bAllowTearing;
@@ -149,8 +132,6 @@ private:
     TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Device
 
 class FD3D12Device 
     : public FD3D12RefCounted

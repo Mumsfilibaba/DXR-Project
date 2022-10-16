@@ -10,9 +10,6 @@
 
 #include "Core/Math/Vector4.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FPointLightData
-
 struct FPointLightData
 {
     FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
@@ -21,8 +18,6 @@ struct FPointLightData
 
 MARK_AS_REALLOCATABLE(FPointLightData);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FShadowCastingPointLightData
 
 struct FShadowCastingPointLightData
 {
@@ -37,8 +32,6 @@ struct FShadowCastingPointLightData
 
 MARK_AS_REALLOCATABLE(FShadowCastingPointLightData);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FPointLightShadowMapGenerationData
 
 struct FPointLightShadowMapGenerationData
 {
@@ -52,8 +45,6 @@ struct FPointLightShadowMapGenerationData
 
 MARK_AS_REALLOCATABLE(FPointLightShadowMapGenerationData);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDirectionalLightData
 
 struct FDirectionalLightData
 {
@@ -71,8 +62,6 @@ struct FDirectionalLightData
 
 MARK_AS_REALLOCATABLE(FDirectionalLightData);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FProxyLightProbe
 
 struct FProxyLightProbe
 {
@@ -103,8 +92,6 @@ struct FProxyLightProbe
     TArray<FRHIUnorderedAccessView*>   WeakSpecularIrradianceMapUAVs;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FLightSetup
 
 struct RENDERER_API FLightSetup
 {
@@ -134,16 +121,16 @@ struct RENDERER_API FLightSetup
     TArray<FVector4>        PointLightsPosRad;
     TArray<FPointLightData> PointLightsData;
 
-    FRHIConstantBufferRef   PointLightsBuffer;
-    FRHIConstantBufferRef   PointLightsPosRadBuffer;
+    FRHIBufferRef           PointLightsBuffer;
+    FRHIBufferRef           PointLightsPosRadBuffer;
 
     TArray<FPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
 
     TArray<FVector4>                     ShadowCastingPointLightsPosRad;
     TArray<FShadowCastingPointLightData> ShadowCastingPointLightsData;
 
-    FRHIConstantBufferRef                ShadowCastingPointLightsBuffer;
-    FRHIConstantBufferRef                ShadowCastingPointLightsPosRadBuffer;
+    FRHIBufferRef                        ShadowCastingPointLightsBuffer;
+    FRHIBufferRef                        ShadowCastingPointLightsPosRadBuffer;
 
     FRHITextureCubeArrayRef              PointLightShadowMaps;
 
@@ -159,17 +146,17 @@ struct RENDERER_API FLightSetup
     
     bool                       DirectionalLightDataDirty = true;
 
-    FRHIConstantBufferRef      DirectionalLightsBuffer;
+    FRHIBufferRef              DirectionalLightsBuffer;
 
     FRHITexture2DRef           ShadowMapCascades[4];
     FRHITexture2DRef           DirectionalShadowMask;
     FRHITexture2DRef           CascadeIndexBuffer;
 
-    FRHIGenericBufferRef       CascadeMatrixBuffer;
+    FRHIBufferRef              CascadeMatrixBuffer;
     FRHIShaderResourceViewRef  CascadeMatrixBufferSRV;
     FRHIUnorderedAccessViewRef CascadeMatrixBufferUAV;
 
-    FRHIGenericBufferRef       CascadeSplitsBuffer;
+    FRHIBufferRef              CascadeSplitsBuffer;
     FRHIShaderResourceViewRef  CascadeSplitsBufferSRV;
     FRHIUnorderedAccessViewRef CascadeSplitsBufferUAV;
 

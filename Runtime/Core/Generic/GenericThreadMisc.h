@@ -13,8 +13,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGenericThreadMisc
 
 struct FGenericThreadMisc
 {

@@ -3,9 +3,6 @@
 
 typedef void* InterfaceContext;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helper macros
-
 // Helper for init the current context
 #define INIT_CONTEXT( ContextHandle )                                                       \
     {                                                                                       \
@@ -28,8 +25,6 @@ public:                                                                     \
                                                                             \
 private:
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindow
 
 struct  FWindow 
     : public FRefCounted
@@ -37,19 +32,19 @@ struct  FWindow
     virtual ~FWindow() = default;
 
     /**
-     * @brief: Initializes the window's context
-     * 
-     * @param ContextHandle: Context for the interface 
+     * @brief               - Initializes the window's context
+     * @param ContextHandle - Context for the interface 
      */
     virtual void InitContext(InterfaceContext ContextHandle) = 0;
 
-    /** Update the window */
+    /** 
+     * @brief - Update the window 
+     */
     virtual void Tick() = 0;
 
     /**
-     * @brief: Check if the window should be updated this frame
-     * 
-     * @return: Returns true if the window should be updated
+     * @brief  - Check if the window should be updated this frame
+     * @return - Returns true if the window should be updated
      */
     virtual bool IsTickable() = 0;
 };

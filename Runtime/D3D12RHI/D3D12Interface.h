@@ -14,30 +14,30 @@
 
 class FD3D12CommandContext;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Interface
-
-class FD3D12Interface 
+class D3D12_RHI_API FD3D12Interface 
     : public FRHIInterface
 {
 public:
     FD3D12Interface();
     ~FD3D12Interface();
+    
+    static FD3D12Interface* GetRHI() 
+    {
+        CHECK(GD3D12Interface != nullptr);
+        return GD3D12Interface; 
+    }
 
-    virtual bool                         Initialize() override final;
+    virtual bool Initialize() override final;
 
     virtual FRHITexture2D*               RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)               override final;
     virtual FRHITexture2DArray*          RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)     override final;
     virtual FRHITextureCube*             RHICreateTextureCube(const FRHITextureCubeInitializer& Initializer)           override final;
     virtual FRHITextureCubeArray*        RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer) override final;
     virtual FRHITexture3D*               RHICreateTexture3D(const FRHITexture3DInitializer& Initializer)               override final;
+    
+    virtual FRHIBuffer*                  RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) override final;
 
     virtual FRHISamplerState*            RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer) override final;
-
-    virtual FRHIVertexBuffer*            RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)     override final;
-    virtual FRHIIndexBuffer*             RHICreateIndexBuffer(const FRHIIndexBufferInitializer& Initializer)       override final;
-    virtual FRHIConstantBuffer*          RHICreateConstantBuffer(const FRHIConstantBufferInitializer& Initializer) override final;
-    virtual FRHIGenericBuffer*           RHICreateGenericBuffer(const FRHIGenericBufferInitializer& Initializer)   override final;
 
     virtual FRHIRayTracingScene*         RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)       override final;
     virtual FRHIRayTracingGeometry*      RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer) override final;
@@ -78,8 +78,8 @@ public:
 
     virtual IRHICommandContext*          RHIGetDefaultCommandContext() override final { return DirectContext; }
 
-    virtual void                         RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport)   const override final;
-    virtual void                         RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const override final;
+    virtual void                         RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport)   const override final;
+    virtual void                         RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const override final;
     virtual bool                         RHIQueryUAVFormatSupport(EFormat Format)                    const override final;
 
     virtual FString                      GetAdapterDescription() const override final { return Adapter->GetDescription(); }
@@ -100,8 +100,7 @@ private:
     template<typename D3D12TextureType, typename InitializerType>
     D3D12TextureType* CreateTexture(const InitializerType& Initializer);
 
-    template<typename D3D12BufferType, typename InitializerType>
-    D3D12BufferType* CreateBuffer(const InitializerType& Initializer);
+    static FD3D12Interface* GD3D12Interface;
 
     FD3D12AdapterRef              Adapter;
     FD3D12DeviceRef               Device;

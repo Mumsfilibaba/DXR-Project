@@ -3,15 +3,12 @@
 
 // TODO: Fill this out properly with functions etc
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMatrix3x4
-
 class FMatrix3x4
 {
 public:
 
     /**
-     * @brief: Default constructor (Initialize components to zero) 
+     * @brief - Default constructor (Initialize components to zero) 
      */
     FORCEINLINE FMatrix3x4() noexcept
         : m00(0.0f), m01(0.0f), m02(0.0f), m03(0.0f)
@@ -20,20 +17,19 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all values with corresponding value
-     *
-     * @param In00: Value to set on row 0 and column 0
-     * @param In01: Value to set on row 0 and column 1
-     * @param In02: Value to set on row 0 and column 2
-     * @param In03: Value to set on row 0 and column 3
-     * @param In10: Value to set on row 1 and column 0
-     * @param In11: Value to set on row 1 and column 1
-     * @param In12: Value to set on row 1 and column 2
-     * @param In13: Value to set on row 1 and column 3
-     * @param In20: Value to set on row 2 and column 0
-     * @param In21: Value to set on row 2 and column 1
-     * @param In22: Value to set on row 2 and column 2
-     * @param In23: Value to set on row 2 and column 3
+     * @brief      - Constructor initializing all values with corresponding value
+     * @param In00 - Value to set on row 0 and column 0
+     * @param In01 - Value to set on row 0 and column 1
+     * @param In02 - Value to set on row 0 and column 2
+     * @param In03 - Value to set on row 0 and column 3
+     * @param In10 - Value to set on row 1 and column 0
+     * @param In11 - Value to set on row 1 and column 1
+     * @param In12 - Value to set on row 1 and column 2
+     * @param In13 - Value to set on row 1 and column 3
+     * @param In20 - Value to set on row 2 and column 0
+     * @param In21 - Value to set on row 2 and column 1
+     * @param In22 - Value to set on row 2 and column 2
+     * @param In23 - Value to set on row 2 and column 3
      */
     FORCEINLINE explicit FMatrix3x4(
         float In00, float In01, float In02, float In03,
@@ -45,10 +41,9 @@ public:
     { }
 
     /**
-     * @brief: Compares, within a threshold Epsilon, this matrix with another matrix
-     *
-     * @param Other: matrix to compare against
-     * @return: True if equal, false if not
+     * @brief       - Compares, within a threshold Epsilon, this matrix with another matrix
+     * @param Other - matrix to compare against
+     * @return      - True if equal, false if not
      */
     inline bool IsEqual(const FMatrix3x4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
@@ -67,24 +62,21 @@ public:
     }
 
     /**
-     * @brief: Returns the data of this matrix as a pointer
-     *
-     * @return: A pointer to the data
+     * @brief  - Returns the data of this matrix as a pointer
+     * @return - A pointer to the data
      */
     FORCEINLINE float* GetData() noexcept { return reinterpret_cast<float*>(this); }
 
     /**
-     * @brief: Returns the data of this matrix as a pointer
-     *
-     * @return: A pointer to the data
+     * @brief  - Returns the data of this matrix as a pointer
+     * @return - A pointer to the data
      */
     FORCEINLINE const float* GetData() const noexcept { return reinterpret_cast<const float*>(this); }
 
     /**
-     * @brief: Returns the result after comparing this and another matrix
-     *
-     * @param Other: The matrix to compare with
-     * @return: True if equal, false if not
+     * @brief       - Returns the result after comparing this and another matrix
+     * @param Other - The matrix to compare with
+     * @return      - True if equal, false if not
      */
     FORCEINLINE bool operator==(const FMatrix3x4& Other) const noexcept
     {
@@ -92,10 +84,9 @@ public:
     }
 
     /**
-     * @brief: Returns the negated result after comparing this and another matrix
-     *
-     * @param Other: The matrix to compare with
-     * @return: False if equal, true if not
+     * @brief       - Returns the negated result after comparing this and another matrix
+     * @param Other - The matrix to compare with
+     * @return      - False if equal, true if not
      */
     FORCEINLINE bool operator!=(const FMatrix3x4& Other) const noexcept
     {
@@ -105,7 +96,7 @@ public:
 public:
     union
     {
-        /** @brief: Each element of the matrix */
+        /** @brief - Each element of the matrix */
         struct
         {
             float m00, m01, m02, m03;
@@ -113,7 +104,7 @@ public:
             float m20, m21, m22, m23;
         };
 
-        /** @brief: 2-D array of the matrix */
+        /** @brief - 2-D array of the matrix */
         float Elements[3][4];
     };
 };

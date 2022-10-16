@@ -1,9 +1,6 @@
 #pragma once
 #include "Core/Core.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMemory
-
 struct CORE_API FMemory
 {
     template<typename T>
@@ -19,101 +16,90 @@ struct CORE_API FMemory
     }
 
     /**
-     * @brief: Allocate memory
-     *
-     * @param Size: The number of bytes to allocate
-     * @return: Returns the newly allocated memory
+     * @brief      - Allocate memory
+     * @param Size - The number of bytes to allocate
+     * @return     - Returns the newly allocated memory
      */
     static void* Malloc(uint64 Size) noexcept;
 
     /**
-     * @brief: Allocate memory and zero it
-     *
-     * @param Size: The number of bytes to allocate
-     * @return: Returns the newly allocated memory
+     * @brief      - Allocate memory and zero it
+     * @param Size - The number of bytes to allocate
+     * @return     - Returns the newly allocated memory
      */
     static void* MallocZeroed(uint64 Size) noexcept;
 
     /**
-     * @brief: Reallocate memory
-     *
-     * @param Ptr: Ptr to the memory to reallocate
-     * @param Size: The number of bytes to reallocate
-     * @return: Returns the newly allocated memory
+     * @brief      - Reallocate memory
+     * @param Ptr  - Ptr to the memory to reallocate
+     * @param Size - The number of bytes to reallocate
+     * @return     - Returns the newly allocated memory
      */
     static void* Realloc(void* Ptr, uint64 Size) noexcept;
 
     /**
-     * @brief: Free memory
-     *
-     * @param Ptr: A pointer to the memory to deallocate
+     * @brief     - Free memory
+     * @param Ptr - A pointer to the memory to deallocate
      */
     static void Free(void* Ptr) noexcept;
 
     /**
-     * @brief: Move memory from one location to another. Can be overlapping memory-ranges.
-     *
-     * @param Dst: Destination of the moved memory
-     * @param Src: Src of the memory
-     * @param Size: Size of the memory to move
-     * @return: Returns the destination pointer
+     * @brief      - Move memory from one location to another. Can be overlapping memory-ranges.
+     * @param Dst  - Destination of the moved memory
+     * @param Src  - Src of the memory
+     * @param Size - Size of the memory to move
+     * @return     - Returns the destination pointer
      */
     static void* Memmove(void* Dst, const void* Src, uint64 Size) noexcept;
 
     /**
-     * @brief: Copy memory from one memory range to another
-     *
-     * @param Dst: Destination of the memory
-     * @param Src: Src of the memory
-     * @param Size: Size of the memory to copy
-     * @return: Returns the destination pointer
+     * @brief      - Copy memory from one memory range to another
+     * @param Dst  - Destination of the memory
+     * @param Src  - Src of the memory
+     * @param Size - Size of the memory to copy
+     * @return     - Returns the destination pointer
      */
     static void* Memcpy(void* RESTRICT Dst, const void* RESTRICT Src, uint64 Size) noexcept;
 
     /**
-     * @brief: Set memory to a byte value
-     *
-     * @param Dst: Destination of the memory to set
-     * @param Value: Value to set each byte to
-     * @param Size: Size of the memory to set
-     * @return: Returns the destination pointer
+     * @brief       - Set memory to a byte value
+     * @param Dst   - Destination of the memory to set
+     * @param Value - Value to set each byte to
+     * @param Size  - Size of the memory to set
+     * @return      - Returns the destination pointer
      */
     static void* Memset(void* Dst, uint8 Value, uint64 Size) noexcept;
 
     /**
-     * @brief: Set memory to zero
-     *
-     * @param Dst: Destination of the memory to set
-     * @param Size: Size of the memory to set
-     * @return: Returns the destination pointer
+     * @brief      - Set memory to zero
+     * @param Dst  - Destination of the memory to set
+     * @param Size - Size of the memory to set
+     * @return     - Returns the destination pointer
      */
     static void* Memzero(void* Dst, uint64 Size) noexcept;
 
     /**
-     * @brief: Compare two memory ranges
-     *
-     * @param LHS: Memory range 1
-     * @param RHS: Memory range 2
-     * @param Size: Size of the memory ranges
-     * @return: Returns true if the memory ranges are equal
+     * @brief      - Compare two memory ranges
+     * @param LHS  - Memory range 1
+     * @param RHS  - Memory range 2
+     * @param Size - Size of the memory ranges
+     * @return     - Returns true if the memory ranges are equal
      */
     static bool Memcmp(const void* LHS, const void* RHS, uint64 Size) noexcept;
 
     /**
-     * @brief: Swaps the contents of two memory ranges
-     *
-     * @param LHS: First of the memory ranges to swap
-     * @param RHS: Second of the memory ranges to swap
-     * @param Size: Size of the memory ranges
+     * @brief      - Swaps the contents of two memory ranges
+     * @param LHS  - First of the memory ranges to swap
+     * @param RHS  - Second of the memory ranges to swap
+     * @param Size - Size of the memory ranges
      */
     static void Memswap(void* RESTRICT LHS, void* RESTRICT RHS, uint64 Size) noexcept;
 
     /**
-     * @brief: Copy memory range from one memory range to another and then set the source to zero
-     *
-     * @param Dst: Destination memory range
-     * @param Src: Src memory range
-     * @param Size: Size of the memory range
+     * @brief      - Copy memory range from one memory range to another and then set the source to zero
+     * @param Dst  - Destination memory range
+     * @param Src  - Src memory range
+     * @param Size - Size of the memory range
      */
     static FORCEINLINE void Memexchange(void* RESTRICT Dst, void* RESTRICT Src, uint64 Size) noexcept
     {
@@ -125,9 +111,8 @@ struct CORE_API FMemory
     }
 
     /**
-     * @brief: Free memory of const pointers
-     *
-     * @param Ptr: A pointer to the memory to deallocate
+     * @brief     - Free memory of const pointers
+     * @param Ptr - A pointer to the memory to deallocate
      */
     static FORCEINLINE void Free(const void* Ptr) noexcept
     {
@@ -135,10 +120,9 @@ struct CORE_API FMemory
     }
 
     /**
-     * @brief: Allocate memory typed
-     *
-     * @param Count: Number of elements to allocate
-     * @return: Returns of the newly allocated memory
+     * @brief       - Allocate memory typed
+     * @param Count - Number of elements to allocate
+     * @return      - Returns of the newly allocated memory
      */
     template<typename T>
     static FORCEINLINE T* Malloc(uint32 Count) noexcept
@@ -147,11 +131,10 @@ struct CORE_API FMemory
     }
 
     /**
-     * @brief: Reallocate memory typed
-     *
-     * @param Ptr: Ptr to the memory to reallocate
-     * @param Count: Number of elements to allocate
-     * @return: Returns the pointer
+     * @brief       - Reallocate memory typed
+     * @param Ptr   - Ptr to the memory to reallocate
+     * @param Count - Number of elements to allocate
+     * @return      - Returns the pointer
      */
     template<typename T>
     static FORCEINLINE T* Realloc(T* Ptr, uint64 Count) noexcept
@@ -161,10 +144,9 @@ struct CORE_API FMemory
     }
 
     /**
-     * @brief: Set memory to zero
-     *
-     * @param Dst: Destination of memory to zero
-     * @return: Returns the destination pointer
+     * @brief     - Set memory to zero
+     * @param Dst - Destination of memory to zero
+     * @return    - Returns the destination pointer
      */
     template<typename T>
     static FORCEINLINE T* Memzero(T* Dst) noexcept
@@ -173,10 +155,9 @@ struct CORE_API FMemory
     }
 
     /**
-     * @brief: Set memory to zero
-     *
-     * @param Dst: Destination of memory to zero
-     * @return: Returns the destination pointer
+     * @brief     - Set memory to zero
+     * @param Dst - Destination of memory to zero
+     * @return    - Returns the destination pointer
      */
     template<typename T>
     static FORCEINLINE T* MemzeroTyped(T* Dst, uint32 NumElements) noexcept
@@ -185,11 +166,10 @@ struct CORE_API FMemory
     }
 
     /**
-     * @brief: Copy memory typed
-     *
-     * @param Dst: Destination of memory to copy
-     * @param Src: Src of the memory to copy
-     * @return: Returns the destination pointer
+     * @brief     - Copy memory typed
+     * @param Dst - Destination of memory to copy
+     * @param Src - Src of the memory to copy
+     * @return    - Returns the destination pointer
      */
     template<typename T>
     static FORCEINLINE T* Memcpy(T* RESTRICT Dst, const T* RESTRICT Src) noexcept
@@ -198,12 +178,11 @@ struct CORE_API FMemory
     }
 
     /**
-     * @brief: Copy memory typed
-     *
-     * @param Dst: Destination of memory to copy
-     * @param Src: Src of the memory to copy
-     * @param NumElements: Number of elements to copy
-     * @return: Returns the destination pointer
+     * @brief             - Copy memory typed
+     * @param Dst         - Destination of memory to copy
+     * @param Src         - Src of the memory to copy
+     * @param NumElements - Number of elements to copy
+     * @return            - Returns the destination pointer
      */
     template<typename T>
     static FORCEINLINE T* MemcpyTyped(T* RESTRICT Dst, const T* RESTRICT Src, uint32 NumElements) noexcept
@@ -212,12 +191,11 @@ struct CORE_API FMemory
     }
 
     /**
-     * @brief: Compare memory typed
-     *
-     * @param LHS: Destination of memory to copy
-     * @param RHS: Src of the memory to copy
-     * @param Count: Number of elements to compare
-     * @return: Returns true if the memory is equal to each other
+     * @brief       - Compare memory typed
+     * @param LHS   - Destination of memory to copy
+     * @param RHS   - Src of the memory to copy
+     * @param Count - Number of elements to compare
+     * @return      - Returns true if the memory is equal to each other
      */
     template<typename T>
     static FORCEINLINE bool Memcmp(const T* LHS, const T* RHS, uint64 Count) noexcept
@@ -226,10 +204,9 @@ struct CORE_API FMemory
     }
 
     /**
-     * @brief: Copy typed memory range from one memory range to another and then set the source to zero
-     *
-     * @param Dst: Destination memory range
-     * @param Src: Src memory range
+     * @brief     - Copy typed memory range from one memory range to another and then set the source to zero
+     * @param Dst - Destination memory range
+     * @param Src - Src memory range
      */
     template<typename T>
     static FORCEINLINE T* Memexchange(T* RESTRICT Dst, T* RESTRICT Src) noexcept

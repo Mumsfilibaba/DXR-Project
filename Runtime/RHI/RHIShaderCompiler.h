@@ -1,4 +1,7 @@
 #pragma once
+#include "RHIShader.h"
+
+#include "Core/Containers/Optional.h"
 
 // TODO: Check if this could be avoided
 #if PLATFORM_WINDOWS
@@ -7,30 +10,18 @@
 
 #include <dxc/dxcapi.h>
 
-#include "RHIModule.h"
-#include "RHIShader.h"
-
-#include "Core/Containers/Optional.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EShaderModel
-
 enum class EShaderModel : uint8
 {
     Unknown = 0,
-    SM_5_0 = 1,
-    SM_5_1 = 2,
-    SM_6_0 = 3,
-    SM_6_1 = 4,
-    SM_6_2 = 5,
-    SM_6_3 = 6,
-    SM_6_4 = 7,
-    SM_6_5 = 8,
-    SM_6_6 = 9,
+    SM_6_0  = 3,
+    SM_6_1  = 4,
+    SM_6_2  = 5,
+    SM_6_3  = 6,
+    SM_6_4  = 7,
+    SM_6_5  = 8,
+    SM_6_6  = 9,
+    SM_6_7  = 10,
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EShaderOutputLanguage
 
 enum class EShaderOutputLanguage : uint8
 {
@@ -39,8 +30,6 @@ enum class EShaderOutputLanguage : uint8
     MSL     = 2, // Metal Shading Language for MetalRHI
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FShaderDefine
 
 struct FShaderDefine
 {
@@ -58,8 +47,6 @@ struct FShaderDefine
     FString Value;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIShaderCompileInfo
 
 struct FRHIShaderCompileInfo
 {
@@ -103,8 +90,6 @@ struct FRHIShaderCompileInfo
     FString                   EntryPoint;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIShaderCompiler
 
 class RHI_API FRHIShaderCompiler
 {

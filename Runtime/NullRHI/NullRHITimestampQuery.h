@@ -9,14 +9,10 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHITimestampQuery
-
 struct FNullRHITimestampQuery 
     : public FRHITimestampQuery
 {
     FNullRHITimestampQuery()  = default;
-    ~FNullRHITimestampQuery() = default;
 
     virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final { OutQuery = FRHITimestamp(); }
 

@@ -5,9 +5,6 @@
 
 #include "Engine/Scene/Scene.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FScreenSpaceOcclusionRenderer
-
 class RENDERER_API FScreenSpaceOcclusionRenderer
 {
 public:

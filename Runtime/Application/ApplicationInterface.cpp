@@ -4,9 +4,6 @@
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FApplicationInterface
-
 TSharedPtr<FApplicationInterface> FApplicationInterface::GInstance;
 
 bool FApplicationInterface::Create()

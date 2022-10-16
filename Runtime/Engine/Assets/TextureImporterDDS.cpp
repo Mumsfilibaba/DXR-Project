@@ -118,8 +118,6 @@ CONSTEXPR EFormat ConvertFormat(tinyddsloader::DDSFile::DXGIFormat Format)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTextureImporterDDS
 
 FTexture* FTextureImporterDDS::ImportFromFile(const FStringView& FileName)
 {

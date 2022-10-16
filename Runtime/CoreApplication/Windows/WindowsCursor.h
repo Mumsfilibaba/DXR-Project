@@ -4,9 +4,6 @@
 #include "CoreApplication/CoreApplication.h"
 #include "CoreApplication/Generic/GenericCursor.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsCursor
-
 class COREAPPLICATION_API FWindowsCursor final 
     : public FGenericCursor
 {
@@ -16,9 +13,6 @@ public:
     { }
 
     virtual ~FWindowsCursor() = default;
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericCursor Interface
 
     virtual void SetCursor(ECursor Cursor) override final;
 

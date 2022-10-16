@@ -11,8 +11,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGenericPlatformMisc
 
 struct FGenericPlatformMisc
 {

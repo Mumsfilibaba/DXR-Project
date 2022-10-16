@@ -8,9 +8,6 @@
 #include <cstring>
 #include <cstdarg>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TChar
-
 template<typename InCharType>
 struct TChar 
 {
@@ -90,8 +87,6 @@ struct TChar
 typedef TChar<CHAR>     FChar;
 typedef TChar<WIDECHAR> FCharWide;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TCString
 
 template<typename InCharType>
 struct TCString
@@ -151,9 +146,6 @@ struct TCString
     }
 
 public: 
-    
-    /*///////////////////////////////////////////////////////////////////////////////////////////*/
-    // Non standard functions
     
     static FORCEINLINE CHARTYPE* Strmove(CHARTYPE* Dst, const CHARTYPE* Src) noexcept
     {
@@ -252,17 +244,11 @@ public:
 typedef TCString<CHAR>     FCString;
 typedef TCString<WIDECHAR> FCStringWide;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCString
-
 template<>
 FORCEINLINE const CHAR* TCString<CHAR>::Empty() noexcept
 {
     return "";
 }
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCStringWide
 
 template<>
 FORCEINLINE const WIDECHAR* TCString<WIDECHAR>::Empty() noexcept

@@ -2,9 +2,6 @@
 #include "Core/Generic/GenericTime.h"
 #include "Core/Windows/Windows.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsTime
-
 struct FWindowsTime 
     : public FGenericTime
 {

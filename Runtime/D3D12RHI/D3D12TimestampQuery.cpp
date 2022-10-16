@@ -2,9 +2,6 @@
 #include "D3D12CommandContext.h"
 #include "D3D12TimestampQuery.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHITimestampQuery
-
 FD3D12TimestampQuery::FD3D12TimestampQuery(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , FRHITimestampQuery()
@@ -13,8 +10,7 @@ FD3D12TimestampQuery::FD3D12TimestampQuery(FD3D12Device* InDevice)
     , ReadResources()
     , TimeQueries()
     , Frequency(0)
-{
-}
+{ }
 
 void FD3D12TimestampQuery::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const
 {

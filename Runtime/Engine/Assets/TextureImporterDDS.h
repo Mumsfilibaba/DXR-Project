@@ -1,9 +1,6 @@
 #pragma once
 #include "ITextureImporter.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTextureImporterDDS
-
 class FTextureImporterDDS
     : public ITextureImporter
 {

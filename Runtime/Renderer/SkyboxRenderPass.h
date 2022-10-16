@@ -6,9 +6,6 @@
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Scene/Scene.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FSkyboxRenderPass
-
 class RENDERER_API FSkyboxRenderPass final
 {
 public:
@@ -26,7 +23,9 @@ private:
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIVertexShaderRef          SkyboxVertexShader;
     FRHIPixelShaderRef           SkyboxPixelShader;
-    FRHIVertexBufferRef          SkyboxVertexBuffer;
-    FRHIIndexBufferRef           SkyboxIndexBuffer;
+    FRHIBufferRef                SkyboxVertexBuffer;
+    FRHIBufferRef                SkyboxIndexBuffer;
+    uint32                       SkyboxIndexCount;
+    EIndexFormat                 SkyboxIndexFormat;
     FRHISamplerStateRef          SkyboxSampler;
 };

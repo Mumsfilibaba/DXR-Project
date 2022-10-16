@@ -12,9 +12,6 @@
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDebugRenderer
-
 bool FDebugRenderer::Init(FFrameResources& Resources)
 {
     TArray<uint8> ShaderCode;
@@ -132,10 +129,8 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
         };
 
         {
-            FRHIBufferDataInitializer VertexData(Vertices.GetData(), Vertices.SizeInBytes());
-
-            FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, Vertices.GetSize(), sizeof(FVector3), EResourceAccess::Common, &VertexData);
-            AABBVertexBuffer = RHICreateVertexBuffer(VBInitializer);
+            FRHIBufferDesc VBDesc(Vertices.SizeInBytes(), sizeof(FVector3), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+            AABBVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::Common, Vertices.GetData());
             if (!AABBVertexBuffer)
             {
                 DEBUG_BREAK();
@@ -165,10 +160,10 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
         };
 
         {
-            FRHIBufferDataInitializer IndexData(Indices.GetData(), Indices.SizeInBytes());
+            AABBIndexCount = Indices.GetSize();
 
-            FRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint16, Indices.GetSize(), EResourceAccess::Common, &IndexData);
-            AABBIndexBuffer = RHICreateIndexBuffer(IBInitializer);
+            FRHIBufferDesc IBDesc(Indices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+            AABBIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::Common, Indices.GetData());
             if (!AABBIndexBuffer)
             {
                 DEBUG_BREAK();
@@ -268,10 +263,8 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
 
         // VertexBuffer
         {
-            FRHIBufferDataInitializer VertexData(SphereMesh.Vertices.GetData(), SphereMesh.Vertices.SizeInBytes());
-
-            FRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, SphereMesh.Vertices.GetSize(), sizeof(FVertex), EResourceAccess::Common, &VertexData);
-            DbgSphereVertexBuffer = RHICreateVertexBuffer(VBInitializer);
+            FRHIBufferDesc VBDesc(SphereMesh.Vertices.SizeInBytes(), sizeof(FVertex), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+            DbgSphereVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::Common, SphereMesh.Vertices.GetData());
             if (!DbgSphereVertexBuffer)
             {
                 DEBUG_BREAK();
@@ -286,11 +279,10 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
         // Create IndexBuffer
         {
             TArray<uint16> SmallIndicies = FMeshFactory::ConvertSmallIndices(SphereMesh.Indices);
+            DbgSphereIndexCount = SmallIndicies.GetSize();
 
-            FRHIBufferDataInitializer IndexData(SmallIndicies.GetData(), SmallIndicies.SizeInBytes());
-
-            FRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint16, SmallIndicies.GetSize(), EResourceAccess::Common, &IndexData);
-            DbgSphereIndexBuffer = RHICreateIndexBuffer(IBInitializer);
+            FRHIBufferDesc IBDesc(SmallIndicies.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+            DbgSphereIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::Common, SmallIndicies.GetData());
             if (!DbgSphereIndexBuffer)
             {
                 DEBUG_BREAK();
@@ -341,7 +333,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     CommandList.SetConstantBuffer(AABBVertexShader.Get(), Resources.CameraBuffer.Get(), 0);
 
     CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
-    CommandList.SetIndexBuffer(AABBIndexBuffer.Get());
+    CommandList.SetIndexBuffer(AABBIndexBuffer.Get(), EIndexFormat::uint16);
 
     for (const FMeshDrawCommand& Command : Resources.GlobalMeshDrawCommands)
     {
@@ -359,7 +351,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
 
         CommandList.Set32BitShaderConstants(AABBVertexShader.Get(), TransformMatrix.GetData(), 16);
 
-        CommandList.DrawIndexedInstanced(24, 1, 0, 0, 0);
+        CommandList.DrawIndexedInstanced(AABBIndexCount, 1, 0, 0, 0);
     }
 
     CommandList.EndRenderPass();
@@ -387,7 +379,7 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
     CommandList.SetConstantBuffer(LightDebugVS.Get(), Resources.CameraBuffer.Get(), 0);
 
     CommandList.SetVertexBuffers(MakeArrayView(&DbgSphereVertexBuffer, 1), 0);
-    CommandList.SetIndexBuffer(DbgSphereIndexBuffer.Get());
+    CommandList.SetIndexBuffer(DbgSphereIndexBuffer.Get(), EIndexFormat::uint16);
 
     struct FPointlightDebugData
     {
@@ -407,7 +399,7 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
 
             CommandList.Set32BitShaderConstants(LightDebugVS.Get(), &PointLightData, 8);
 
-            CommandList.DrawIndexedInstanced(DbgSphereIndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+            CommandList.DrawIndexedInstanced(DbgSphereIndexCount, 1, 0, 0, 0);
         }
     }
 

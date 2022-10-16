@@ -3,8 +3,6 @@
 
 #include "Core/Misc/OutputDeviceLogger.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacThread
 
 FMacThread::FMacThread(FThreadInterface* InRunnable)
     : FGenericThread(InRunnable)
@@ -29,7 +27,7 @@ bool FMacThread::Start()
 
 void FMacThread::WaitForCompletion()
 {
-	pthread_join(Thread, nullptr);
+    pthread_join(Thread, nullptr);
 }
 
 void FMacThread::SetName(const FString& InName)

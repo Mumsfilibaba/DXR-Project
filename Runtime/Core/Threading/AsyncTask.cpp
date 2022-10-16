@@ -1,9 +1,6 @@
 #include "AsyncTask.h"
 #include "AsyncThreadPool.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FAsyncTaskBase
-
 FAsyncTaskBase::FAsyncTaskBase()
     : TaskCompleteEvent(nullptr)
     , NumInvokations(0)

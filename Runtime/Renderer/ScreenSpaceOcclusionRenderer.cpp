@@ -13,15 +13,9 @@
 // TODO: Remove and replace. There are better and easier implementations to do yourself
 #include <random>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-variable
-
 TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAO.Radius", 0.2f);
 TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAO.Bias", 0.075f);
 TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAO.KernelSize", 16);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FScreenSpaceOcclusionRenderer
 
 bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
 {

@@ -6,9 +6,6 @@
 #include "Core/Templates/RemoveReference.h"
 #include "Core/Templates/InPlace.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TOptional - Similar to std::optional
-
 template<typename T>
 class TOptional
 {
@@ -19,7 +16,7 @@ public:
     friend class TOptional;
 
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE TOptional() noexcept
         : Value()
@@ -27,7 +24,7 @@ public:
     { }
 
     /**
-     * @brief: Construct from nullptr
+     * @brief - Construct from nullptr
      */
     FORCEINLINE TOptional(nullptr_type) noexcept
         : Value()
@@ -35,9 +32,8 @@ public:
     { }
 
     /**
-     * @brief: Copy-constructor
-     * 
-     * @param Other: Optional to copy from
+     * @brief       - Copy-constructor
+     * @param Other - Optional to copy from
      */
     FORCEINLINE TOptional(const TOptional& Other) noexcept
         : Value()
@@ -50,9 +46,8 @@ public:
     }
 
     /**
-     * @brief: Copy-constructor that takes another type
-     *
-     * @param Other: Optional to copy from
+     * @brief       - Copy-constructor that takes another type
+     * @param Other - Optional to copy from
      */
     template<
         typename OtherType,
@@ -68,9 +63,8 @@ public:
     }
 
     /**
-     * @brief: Move-constructor
-     *
-     * @param Other: Optional to move from
+     * @brief       - Move-constructor
+     * @param Other - Optional to move from
      */
     FORCEINLINE TOptional(TOptional&& Other) noexcept
         : Value()
@@ -84,9 +78,8 @@ public:
     }
 
     /**
-     * @brief: Move-constructor taking another type
-     *
-     * @param Other: Optional to move from
+     * @brief       - Move-constructor taking another type
+     * @param Other - Optional to move from
      */
     template<
         typename OtherType,
@@ -103,9 +96,8 @@ public:
     }
 
     /**
-     * @brief: Constructor that creates a value in-place
-     * 
-     * @param Args: Arguments for the element to create
+     * @brief      - Constructor that creates a value in-place
+     * @param Args - Arguments for the element to create
      */
     template<typename... ArgTypes>
     FORCEINLINE explicit TOptional(EInPlace, ArgTypes&&... Args) noexcept
@@ -116,7 +108,7 @@ public:
     }
 
     /**
-     * @brief: Destructor
+     * @brief - Destructor
      */
     FORCEINLINE ~TOptional()
     {
@@ -124,9 +116,8 @@ public:
     }
 
     /**
-     * @brief: Check if optional has a value assigned
-     * 
-     * @return: Returns true if there is a value assigned
+     * @brief  - Check if optional has a value assigned
+     * @return - Returns true if there is a value assigned
      */
     NODISCARD FORCEINLINE bool HasValue() const noexcept
     {
@@ -134,10 +125,9 @@ public:
     }
 
     /**
-     * @brief: Emplace constructs a new element in the optional and destructs any old value
-     * 
-     * @param Args: Arguments for constructor
-     * @return: Returns a reference to the newly constructed value
+     * @brief      - Emplace constructs a new element in the optional and destructs any old value
+     * @param Args - Arguments for constructor
+     * @return     - Returns a reference to the newly constructed value
      */
     template<typename... ArgTypes>
     FORCEINLINE ElementType& Emplace(ArgTypes&&... Args) noexcept
@@ -148,7 +138,7 @@ public:
     }
 
     /**
-     * @brief: Resets the Optional and destructs any existing element
+     * @brief - Resets the Optional and destructs any existing element
      */
     FORCEINLINE void Reset() noexcept
     {
@@ -159,9 +149,8 @@ public:
     }
 
     /**
-     * @brief: Swap between this optional and another optional
-     * 
-     * @param Other: Optional to swap with
+     * @brief       - Swap between this optional and another optional
+     * @param Other - Optional to swap with
      */
     FORCEINLINE void Swap(TOptional& Other)
     {
@@ -180,9 +169,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the optional value
-     * 
-     * @return: Returns a reference to the stored value
+     * @brief  - Retrieve the optional value
+     * @return - Returns a reference to the stored value
      */
     NODISCARD FORCEINLINE ElementType& GetValue() noexcept
     {
@@ -191,9 +179,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the optional value
-     *
-     * @return: Returns a reference to the stored value
+     * @brief  - Retrieve the optional value
+     * @return - Returns a reference to the stored value
      */
     NODISCARD FORCEINLINE const ElementType& GetValue() const noexcept
     {
@@ -202,9 +189,8 @@ public:
     }
 
     /**
-     * @brief: Try and retrieve the optional value, if no value is stored, it returns nullptr
-     *
-     * @return: Returns a pointer to the stored value, or nullptr if no value is held
+     * @brief  - Try and retrieve the optional value, if no value is stored, it returns nullptr
+     * @return - Returns a pointer to the stored value, or nullptr if no value is held
      */
     NODISCARD FORCEINLINE ElementType* TryGetValue() noexcept
     {
@@ -212,9 +198,8 @@ public:
     }
 
     /**
-     * @brief: Try and retrieve the optional value, if no value is stored, it returns nullptr
-     *
-     * @return: Returns a pointer to the stored value, or nullptr if no value is held
+     * @brief  - Try and retrieve the optional value, if no value is stored, it returns nullptr
+     * @return - Returns a pointer to the stored value, or nullptr if no value is held
      */
     NODISCARD FORCEINLINE const ElementType* TryGetValue() const noexcept
     {
@@ -222,10 +207,9 @@ public:
     }
 
     /**
-     * @brief: Retrieve the optional value
-     *
-     * @param Default: Default value to return if a value is not set
-     * @return: Returns a reference to the stored value
+     * @brief         - Retrieve the optional value
+     * @param Default - Default value to return if a value is not set
+     * @return        - Returns a reference to the stored value
      */
     template<typename OtherType>
     NODISCARD FORCEINLINE const ElementType& GetValueOrDefault(const OtherType& Default) const noexcept
@@ -236,9 +220,8 @@ public:
 public:
 
     /**
-     * @brief: Nullptr assignment operator
-     * 
-     * @return: Returns a reference to this instance
+     * @brief  - Nullptr assignment operator
+     * @return - Returns a reference to this instance
      */
     FORCEINLINE TOptional& operator=(nullptr_type) noexcept
     {
@@ -247,75 +230,69 @@ public:
     }
 
     /**
-     * @brief: Copy-assignment operator
-     *
-     * @param RHS: Optional to copy from
-     * @return: Returns a reference to this instance
+     * @brief       - Copy-assignment operator
+     * @param Other - Optional to copy from
+     * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(const TOptional& RHS) noexcept
+    FORCEINLINE TOptional& operator=(const TOptional& Other) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Copy-assignment operator that takes another type
-     *
-     * @param RHS: Optional to copy from
-     * @return: Returns a reference to this instance
+     * @brief       - Copy-assignment operator that takes another type
+     * @param Other - Optional to copy from
+     * @return      - Returns a reference to this instance
      */
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConstructible<ElementType,
-        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& RHS) noexcept
+        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& Other) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator
-     *
-     * @param RHS: Optional to move from
-     * @return: Returns a reference to this instance
+     * @brief       - Move-assignment operator
+     * @param Other - Optional to move from
+     * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(TOptional&& RHS) noexcept
+    FORCEINLINE TOptional& operator=(TOptional&& Other) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator that takes another type
-     *
-     * @param RHS: Optional to move from
-     * @return: Returns a reference to this instance
+     * @brief       - Move-assignment operator that takes another type
+     * @param Other - Optional to move from
+     * @return      - Returns a reference to this instance
      */
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConstructible<ElementType,
-        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& RHS) noexcept
+        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& Other) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Assignment operator that can take a r-value reference
-     *
-     * @param RHS: Instance to move-construct value from
-     * @return: Returns a reference to this instance
+     * @brief       - Assignment operator that can take a r-value reference
+     * @param Other - Instance to move-construct value from
+     * @return      - Returns a reference to this instance
      */
     template<typename OtherType = T>
     FORCEINLINE typename TEnableIf<TIsConstructible<ElementType,
-        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& RHS) noexcept
+        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& Other) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Operator that returns true if there is a stored value
-     * 
-     * @return: Returns true if the optional has a stored value
+     * @brief  - Operator that returns true if there is a stored value
+     * @return - Returns true if the optional has a stored value
      */
     NODISCARD FORCEINLINE operator bool() const noexcept
     {
@@ -323,9 +300,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve a pointer to the stored value
-     *
-     * @return: Returns a pointer to the stored value
+     * @brief  - Retrieve a pointer to the stored value
+     * @return - Returns a pointer to the stored value
      */
     NODISCARD FORCEINLINE T* operator->() noexcept
     {
@@ -334,9 +310,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve a pointer to the stored value
-     *
-     * @return: Returns a pointer to the stored value
+     * @brief  - Retrieve a pointer to the stored value
+     * @return - Returns a pointer to the stored value
      */
     NODISCARD FORCEINLINE const T* operator->() const noexcept
     {
@@ -345,9 +320,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve a reference to the stored value
-     *
-     * @return: Returns a reference to the stored value
+     * @brief  - Retrieve a reference to the stored value
+     * @return - Returns a reference to the stored value
      */
     NODISCARD FORCEINLINE T& operator*() noexcept
     {
@@ -356,9 +330,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve a pointer to the stored value
-     *
-     * @return: Returns a pointer to the stored value
+     * @brief  - Retrieve a pointer to the stored value
+     * @return - Returns a pointer to the stored value
      */
     NODISCARD FORCEINLINE const T& operator*() const noexcept
     {
@@ -369,11 +342,10 @@ public:
 public:
 
     /**
-     * @brief: Comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if the values are equal
+     * @brief     - Comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if the values are equal
      */
     NODISCARD
     friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
@@ -392,11 +364,10 @@ public:
     }
 
     /**
-     * @brief: Comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns false if the values are equal
+     * @brief     - Comparison operator 
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns false if the values are equal
      */
     NODISCARD
     friend FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
@@ -405,11 +376,10 @@ public:
     }
 
     /**
-     * @brief: Less than comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if the LHS is less than RHS
+     * @brief     - Less than comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if the LHS is less than RHS
      */
     NODISCARD
     friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
@@ -428,11 +398,10 @@ public:
     }
 
     /**
-     * @brief: Less than or equal comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if the LHS is less than or equal to RHS
+     * @brief     - Less than or equal comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if the LHS is less than or equal to RHS
      */
     NODISCARD
     friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
@@ -451,11 +420,10 @@ public:
     }
 
     /**
-     * @brief: Great than comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if LHS is greater than RHS
+     * @brief     - Great than comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if LHS is greater than RHS
      */
     NODISCARD
     friend FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
@@ -464,11 +432,10 @@ public:
     }
 
     /**
-     * @brief: Greater than or equal comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if the LHS is greater than or equal to RHS
+     * @brief     - Greater than or equal comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if the LHS is greater than or equal to RHS
      */
     NODISCARD
     friend FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept

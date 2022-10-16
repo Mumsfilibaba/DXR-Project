@@ -2,9 +2,6 @@
 
 #include "Core/Platform/PlatformThreadMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FThreadManager
-
 FThreadManager::FThreadManager()
     : Threads(0)
     , MainThread(nullptr)

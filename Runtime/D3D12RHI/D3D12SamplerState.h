@@ -8,16 +8,13 @@
 
 typedef TSharedRef<class FD3D12SamplerState> FD3D12SamplerStateRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12SamplerState
-
 class FD3D12SamplerState 
     : public FRHISamplerState
     , public FD3D12DeviceChild
 {
 public:
-    FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap)
-        : FRHISamplerState()
+    FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap, const FRHISamplerStateInitializer& InInitializer)
+        : FRHISamplerState(InInitializer)
         , FD3D12DeviceChild(InDevice)
         , OfflineHeap(InOfflineHeap)
         , OfflineHandle({ 0 })
@@ -31,14 +28,7 @@ public:
         OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
     }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHISamplerState Interface
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
-
-public:
 
     bool CreateSampler(const D3D12_SAMPLER_DESC& InDesc)
     {

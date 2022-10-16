@@ -5,9 +5,6 @@
 #define MAX_PROJECT_PATH_LENGTH (512)
 #define MAX_ASSET_PATH_LENGTH   (512)
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// FProjectManager
-
 class ENGINE_API FProjectManager
 {
 public:

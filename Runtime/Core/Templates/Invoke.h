@@ -5,9 +5,6 @@
 #include "IsMemberPointer.h"
 #include "IsBaseOf.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Internal::Invoke
-
 namespace Internal
 {
     template<
@@ -61,9 +58,6 @@ namespace Internal
         return (*Forward<InstanceType>(Obj)).*Member;
     }
 }
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Invoke
 
 template <
     typename FuncType, 

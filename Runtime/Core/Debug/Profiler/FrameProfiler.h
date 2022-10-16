@@ -8,14 +8,8 @@
 #include "Core/Containers/Map.h"
 #include "Core/Templates/NumericLimits.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Config
-
 #define ENABLE_PROFILER      (1)
 #define NUM_PROFILER_SAMPLES (200)
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Macros
 
 #if ENABLE_PROFILER
     #define TRACE_SCOPE(Name)      FScopedTrace STRING_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
@@ -24,9 +18,6 @@
     #define TRACE_SCOPE(Name)
     #define TRACE_FUNCTION_SCOPE()
 #endif
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FProfileSample
 
 struct FProfileSample
 {
@@ -103,8 +94,6 @@ struct FProfileSample
     int32 TotalCalls    = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FFrameProfiler
 
 using ProfileSamplesTable = TMap<FString, FProfileSample, FStringHasher>;
 
@@ -113,39 +102,36 @@ class CORE_API FFrameProfiler
 public:
 
     /**
-     * @brief: Retrieve the Frame-Profiler instance
-     * 
-     * @return: Returns a reference to the Frame-Profiler instance
+     * @brief  - Retrieve the Frame-Profiler instance
+     * @return - Returns a reference to the Frame-Profiler instance
      */
     static FFrameProfiler& Get();
 
-    /** Enables the collection of samples (Resume) */
+    /** @brief - Enables the collection of samples (Resume) */
     static void Enable();
 
-    /** Disables the collection of samples (Pause) */
+    /** @brief - Disables the collection of samples (Pause) */
     static void Disable();
 
-    /** Updates the profiler, should be called once per frame */
+    /** @brief - Updates the profiler, should be called once per frame */
     void Tick();
 
-    /** Resets all the samples */
+    /** @brief - Resets all the samples */
     void Reset();
 
     /**
-     * @brief: Starts a scope for a function 
-     * 
-     * @param Name: Name of the scope
+     * @brief      - Starts a scope for a function 
+     * @param Name - Name of the scope
      */ 
     void BeginTraceScope(const CHAR* Name);
 
     /**
-     * @brief: Ends a scope for a function
-     *
-     * @param Name: Name of the scope
+     * @brief      - Ends a scope for a function
+     * @param Name - Name of the scope
      */
     void EndTraceScope(const CHAR* Name);
 
-    /** CPU Profiler samples */
+    /** @brief - CPU Profiler samples */
     void GetCPUSamples(ProfileSamplesTable& OutCPUSamples);
 
     FORCEINLINE int32 GetFramesPerSecond() const
@@ -173,8 +159,6 @@ private:
     FSpinLock           SamplesTableLock;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FScopedTrace
 
 struct FScopedTrace
 {

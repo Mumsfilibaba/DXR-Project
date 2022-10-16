@@ -7,9 +7,6 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacWindow
-
 FMacWindow::FMacWindow(FMacApplication* InApplication)
     : FGenericWindow()
     , Application(InApplication)

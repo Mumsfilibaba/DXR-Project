@@ -1,9 +1,6 @@
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12CommandList
-
 FD3D12CommandList::FD3D12CommandList(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , CmdList(nullptr)

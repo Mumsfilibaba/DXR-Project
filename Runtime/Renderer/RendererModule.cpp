@@ -2,4 +2,4 @@
 
 #include "Core/Modules/ModuleInterface.h"
 
-IMPLEMENT_ENGINE_MODULE(FDefaultModule, Renderer);
+IMPLEMENT_ENGINE_MODULE(FModuleInterface, Renderer);

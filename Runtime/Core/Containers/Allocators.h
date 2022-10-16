@@ -12,9 +12,6 @@
 	#pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TArrayAllocatorInterface 
-
 template<typename T>
 class TArrayAllocatorInterface
 {
@@ -26,56 +23,48 @@ public:
     ~TArrayAllocatorInterface()         = default;
 
     /**
-     * @brief: Reallocates the allocation
-     * 
-     * @param CurrentCount: Current number of elements that are allocated 
-     * @param NewCount: The new number of elements to allocate
+     * @brief              - Reallocates the allocation
+     * @param CurrentCount - Current number of elements that are allocated 
+     * @param NewCount     - The new number of elements to allocate
      */
     FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) noexcept { return nullptr; }
 
     /**
-     * @brief: Free the allocation
+     * @brief - Free the allocation
      */
     FORCEINLINE void Free() noexcept { }
 
     /**
-     * @brief: Move allocation from another allocator-instance
-     * 
-     * @param Other: Other allocator instance
+     * @brief       - Move allocation from another allocator-instance
+     * @param Other - Other allocator instance
      */
     FORCEINLINE void MoveFrom(TArrayAllocatorInterface&& Other) { }
 
     /**
-     * @brief: Retrieve the allocation
-     * 
-     * @return: Returns the allocation
+     * @brief  - Retrieve the allocation
+     * @return - Returns the allocation
      */
     NODISCARD FORCEINLINE ElementType* GetAllocation() noexcept { return nullptr; }
 
     /**
-     * @brief: Retrieve the allocation
-     *
-     * @return: Returns the allocation
+     * @brief  - Retrieve the allocation
+     * @return - Returns the allocation
      */
     NODISCARD FORCEINLINE const ElementType* GetAllocation() const noexcept { return nullptr; }
 
     /**
-     * @brief: Returns the current state of the allocation
-     *
-     * @return: Returns true or false if there is an allocation
+     * @brief  - Returns the current state of the allocation
+     * @return - Returns true or false if there is an allocation
      */
     NODISCARD FORCEINLINE bool HasAllocation() const noexcept { return false; }
 
     /**
-     * @brief: Returns the current state of the allocation
-     *
-     * @return: Returns true or false if the allocation is allocated on the heap
+     * @brief  - Returns the current state of the allocation
+     * @return - Returns true or false if the allocation is allocated on the heap
      */
     NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept { return false; }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TDefaultArrayAllocator - Default allocator that allocates from malloc
 
 template<typename T>
 class TDefaultArrayAllocator
@@ -142,17 +131,12 @@ private:
     ElementType* Allocation;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TInlineArrayAllocator
 
 template<
     typename T,
     int32 NumInlineElements>
 class TInlineArrayAllocator
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TInlineAllocation - Wrapper class for inline allocated bytes
-
     template<
         typename ElementType,
         int32 NumElements>

@@ -3,9 +3,6 @@
 #include "IsInteger.h"
 #include "IsFloatingPoint.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TIsArithmetic
-
 template<typename T>
 struct TIsArithmetic
 {

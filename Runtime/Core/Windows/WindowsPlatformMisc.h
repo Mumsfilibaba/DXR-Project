@@ -5,8 +5,6 @@
 #include "Core/Containers/String.h"
 #include "Core/Generic/GenericPlatformMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsPlatformMisc
 
 struct FWindowsPlatformMisc final 
     : public FGenericPlatformMisc

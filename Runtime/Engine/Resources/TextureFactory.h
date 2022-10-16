@@ -5,17 +5,11 @@
 
 #include "Core/Utilities/StringUtilities.h"
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// ETextureFactoryFlags
-
 enum ETextureFactoryFlags : uint32
 {
-    TextureFactoryFlag_None = 0,
+    TextureFactoryFlag_None         = 0,
     TextureFactoryFlag_GenerateMips = FLAG(1),
 };
-
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTextureFactory
 
 struct ENGINE_API FTextureFactory
 {

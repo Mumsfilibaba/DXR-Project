@@ -9,13 +9,7 @@
 
 #include <spirv_cross_c.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console Variables
-
 TAutoConsoleVariable<bool> CVarShaderDebug("RHI.ShaderCompiler.Debug", true);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EDXCPart
 
 enum class EDXCPart
 {
@@ -36,8 +30,6 @@ enum class EDXCPart
     ShaderHash              = DXC_FOURCC('H', 'A', 'S', 'H'),
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Convert the Shader-enums
 
 static LPCWSTR GetShaderStageString(EShaderStage Stage)
 {
@@ -73,22 +65,18 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
 {
     switch (Model)
     {
-        case EShaderModel::SM_5_0: return L"5_0";
-        case EShaderModel::SM_5_1: return L"5_1";
         case EShaderModel::SM_6_0: return L"6_0";
         case EShaderModel::SM_6_1: return L"6_1";
         case EShaderModel::SM_6_2: return L"6_2";
         case EShaderModel::SM_6_3: return L"6_3";
         case EShaderModel::SM_6_4: return L"6_4";
         case EShaderModel::SM_6_5: return L"6_5";
-        case EShaderModel::SM_6_6: return L"6_6";
-            
+        case EShaderModel::SM_6_6: return L"6_6";  
+        case EShaderModel::SM_6_7: return L"6_7";           
         default:                   return L"0_0";
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FShaderBlob
 
 class FShaderBlob final : public IDxcBlob
 {
@@ -160,8 +148,6 @@ private:
     int32  References;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIShaderCompiler
 
 TOptional<FRHIShaderCompiler> FRHIShaderCompiler::Instance;
 

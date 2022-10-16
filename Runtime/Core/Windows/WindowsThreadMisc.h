@@ -6,9 +6,6 @@
     #include <immintrin.h>
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsThreadMisc
-
 struct CORE_API FWindowsThreadMisc 
     : public FGenericThreadMisc
 {

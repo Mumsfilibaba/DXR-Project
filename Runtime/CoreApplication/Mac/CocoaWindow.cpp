@@ -4,9 +4,6 @@
 
 #include "Core/Mac/Mac.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCocoaWindow
-
 @implementation FCocoaWindow
 
 - (instancetype) initWithContentRect:(NSRect)ContentRect StyleMask:(NSWindowStyleMask)StyleMask Backing:(NSBackingStoreType)BackingStoreType Defer:(BOOL)Flag

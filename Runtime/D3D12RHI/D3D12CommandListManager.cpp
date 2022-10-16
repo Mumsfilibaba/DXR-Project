@@ -5,13 +5,7 @@
 #include "Core/Debug/Console/ConsoleInterface.h"
 #include "Core/Threading/ScopedLock.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-Variables
-
 TAutoConsoleVariable<bool> CVarEnableGPUTimeout("D3D12RHI.EnableGPUTimeout", true);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12CommandListManager
 
 FD3D12CommandListManager::FD3D12CommandListManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : FD3D12DeviceChild(InDevice)

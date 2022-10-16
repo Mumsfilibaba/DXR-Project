@@ -11,9 +11,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EConsoleColor
-
 enum class EConsoleColor : uint8
 {
     Red    = 0,
@@ -21,9 +18,6 @@ enum class EConsoleColor : uint8
     Yellow = 2,
     White  = 3
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FOutputDeviceConsole
 
 struct CORE_API FOutputDeviceConsole
     : public FOutputDevice

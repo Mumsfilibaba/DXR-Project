@@ -1,8 +1,5 @@
 #include "MetalShader.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalShader
-
 FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVisibility, const TArray<uint8>& InCode)
     : FMetalObject(InDevice)
     , Library(nil)

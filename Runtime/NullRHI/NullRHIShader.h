@@ -30,9 +30,6 @@ typedef TNullRHIShader<class FRHIRayAnyHitShader>        FNullRHIRayAnyHitShader
 typedef TNullRHIShader<class FRHIRayIntersectionShader>  FNullRHIRayIntersectionShader;
 typedef TNullRHIShader<class FRHIRayCallableShader>      FNullRHIRayCallableShader;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHIComputeShader
-
 struct FNullRHIComputeShaderBase 
     : public FRHIComputeShader
 {
@@ -40,14 +37,8 @@ struct FNullRHIComputeShaderBase
         : FRHIComputeShader()
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIComputeShader Interface
-
     virtual FIntVector3 GetThreadGroupXYZ() const override final { return FIntVector3(1, 1, 1); }
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TNullRHIShader
 
 template<typename BaseShaderType>
 struct TNullRHIShader final 
@@ -56,9 +47,6 @@ struct TNullRHIShader final
     TNullRHIShader()
         : BaseShaderType()
     { }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIShader Interface
 
     virtual void* GetRHIBaseShader() override final { return this; }
 };

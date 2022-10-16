@@ -2,9 +2,6 @@
 #include "WindowsEvent.h"
 #include "WindowsThreadMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsThreadMisc
-
 FGenericThread* FWindowsThreadMisc::CreateThread(FThreadInterface* Runnable)
 {
     return dbg_new FWindowsThread(Runnable);

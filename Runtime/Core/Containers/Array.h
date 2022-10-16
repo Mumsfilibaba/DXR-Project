@@ -10,9 +10,6 @@
 #include "Core/Templates/Not.h"
 #include "Core/Templates/IsReallocatable.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TArray - Dynamic Array
-
 template<
     typename T,
     typename AllocatorType = TDefaultArrayAllocator<T>>
@@ -36,7 +33,7 @@ public:
 public:
 
     /** 
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE TArray() noexcept
         : Allocator()
@@ -45,9 +42,8 @@ public:
     { }
 
     /** 
-     * @brief: Constructor that default creates a certain number of elements 
-     *
-     * @param InSize: Number of elements to construct
+     * @brief        - Constructor that default creates a certain number of elements 
+     * @param InSize - Number of elements to construct
      */
     FORCEINLINE explicit TArray(SizeType InSize) noexcept
         : Allocator()
@@ -58,10 +54,9 @@ public:
     }
 
     /**
-     * @brief: Constructor that Allocates the specified amount of elements, and initializes them to the same value 
-     * 
-     * @param InSize: Number of elements to construct
-     * @param Element: Element to copy into all positions of the array
+     * @brief         - Constructor that Allocates the specified amount of elements, and initializes them to the same value 
+     * @param InSize  - Number of elements to construct
+     * @param Element - Element to copy into all positions of the array
      */
     FORCEINLINE TArray(SizeType InSize, const ElementType& Element) noexcept
         : Allocator()
@@ -72,10 +67,9 @@ public:
     }
 
     /**
-     * @brief: Constructor that creates an array from a raw pointer array 
-     * 
-     * @param InputArray: Pointer to the start of the array to copy from
-     * @param NumElements: Number of elements in 'InputArray', which also is the resulting size of the constructed array
+     * @brief             - Constructor that creates an array from a raw pointer array 
+     * @param InputArray  - Pointer to the start of the array to copy from
+     * @param NumElements - Number of elements in 'InputArray', which also is the resulting size of the constructed array
      */
     FORCEINLINE TArray(const ElementType* InputArray, SizeType NumElements) noexcept
         : Allocator()
@@ -86,9 +80,8 @@ public:
     }
 
     /** 
-     * Copy-constructor 
-     * 
-     * @param Other: Array to copy from
+     * @brief       - Copy-constructor
+     * @param Other - Array to copy from
      */
     FORCEINLINE TArray(const TArray& Other) noexcept
         : Allocator()
@@ -99,9 +92,8 @@ public:
     }
 
     /**
-     * @brief: Copy-constructor from another type of array
-     *
-     * @param Other: Array to copy from
+     * @brief       - Copy-constructor from another type of array
+     * @param Other - Array to copy from
      */
     template<
         typename ArrayType,
@@ -115,9 +107,8 @@ public:
     }
 
     /** 
-     * Move-constructor 
-     * 
-     * @param Other: Array to move elements from
+     * @brief       - Move-constructor 
+     * @param Other - Array to move elements from
      */
     FORCEINLINE TArray(TArray&& Other) noexcept
         : Allocator()
@@ -128,9 +119,8 @@ public:
     }
 
     /** 
-     * Constructor that creates an array from an std::initializer_list
-     * 
-     * @param InList: Initializer list containing all elements to construct the array from
+     * @brief        - Constructor that creates an array from an std::initializer_list
+     * @param InList - Initializer list containing all elements to construct the array from
      */
     FORCEINLINE TArray(std::initializer_list<ElementType> InList) noexcept
         : Allocator()
@@ -141,7 +131,7 @@ public:
     }
 
     /** 
-     * Destructor
+     * @brief - Destructor
      */
     FORCEINLINE ~TArray()
     {
@@ -149,7 +139,8 @@ public:
     }
 
     /** 
-     * Clear all elements of the container, but does not deallocate the memory
+     * @brief             - Clear all elements of the container, but does not deallocate the memory
+     * @param bFreeMemory - Should the memory be deallocated or not
      */
     FORCEINLINE void Clear(bool bFreeMemory = false) noexcept
     {
@@ -167,10 +158,10 @@ public:
     }
 
     /**
-     * @brief: Resets the container, but does not deallocate the memory. Takes an optional parameter to 
-     * default construct a new amount of elements.
+     * @brief - Resets the container, but does not deallocate the memory. Takes an optional parameter to 
+     *    default construct a new amount of elements.
      * 
-     * @param NewSize: Number of elements to construct
+     * @param NewSize - Number of elements to construct
      */
     FORCEINLINE void Reset(SizeType NewSize = 0) noexcept
     {
@@ -186,11 +177,11 @@ public:
     }
 
     /** 
-     * Resets the container, but does not deallocate the memory. Takes an optional parameter to
-     * default construct a new amount of elements from a single element. 
+     * @brief - Resets the container, but does not deallocate the memory. Takes an optional parameter to
+     *     default construct a new amount of elements from a single element.
      * 
-     * @param NewSize: Number of elements to construct
-     * @param Element: Element to copy-construct from
+     * @param NewSize - Number of elements to construct
+     * @param Element - Element to copy-construct from
      */
     FORCEINLINE void Reset(SizeType NewSize, const ElementType& Element) noexcept
     {
@@ -206,10 +197,10 @@ public:
     }
 
     /** 
-     * Resets the container, but does not deallocate the memory. Takes in pointer to copy-construct elements from.
+     * @brief - Resets the container, but does not deallocate the memory. Takes in pointer to copy-construct elements from.
      * 
-     * @param InputArray: Array to copy-construct from
-     * @param NumElements: Number of elements from
+     * @param InputArray  - Array to copy-construct from
+     * @param NumElements - Number of elements from
      */
     FORCEINLINE void Reset(const ElementType* InputArray, SizeType NumElements) noexcept
     {
@@ -232,10 +223,10 @@ public:
     }
 
     /** 
-     * Resets the container, but does not deallocate the memory. Creates a new array from
-     * another array which can be of another type of array.
+     * @brief - Resets the container, but does not deallocate the memory. Creates a new array from
+     *     another array which can be of another type of array.
      * 
-     * @param InputArray: Array to copy-construct from
+     * @param InputArray - Array to copy-construct from
      */
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Reset(const ArrayType& InputArray) noexcept
@@ -244,9 +235,8 @@ public:
     }
 
     /**
-     * @brief: Resets the container by moving elements from another array to this one.
-     * 
-     * @param InputArray: Array to copy-construct elements from
+     * @brief            - Resets the container by moving elements from another array to this one.
+     * @param InputArray - Array to copy-construct elements from
      */
     FORCEINLINE void Reset(TArray&& InputArray) noexcept
     {
@@ -254,9 +244,8 @@ public:
     }
 
     /** 
-     * Resets the container and copy-construct a new array from an initializer-list
-     *
-     * @param InList: Initializer-list to copy-construct elements from
+     * @brief        - Resets the container and copy-construct a new array from an initializer-list
+     * @param InList - Initializer-list to copy-construct elements from
      */
     FORCEINLINE void Reset(std::initializer_list<ElementType> InList) noexcept
     {
@@ -264,9 +253,8 @@ public:
     }
 
     /** 
-     * Fill the container with the specified value 
-     *
-     * @param InputElement: Element to copy into all elements in the array
+     * @brief              - Fill the container with the specified value 
+     * @param InputElement - Element to copy into all elements in the array
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
@@ -274,9 +262,8 @@ public:
     }
 
     /**
-     * @brief: Resizes the container with a new size, and default constructs them
-     * 
-     * @param NewSize: The new size of the array
+     * @brief         - Resizes the container with a new size, and default constructs them
+     * @param NewSize - The new size of the array
      */
     void Resize(SizeType NewSize) noexcept
     {
@@ -305,10 +292,9 @@ public:
     }
 
     /**
-     * @brief: Resizes the container with a new size, and constructs them with value 
-     * 
-     * @param NewSize: The new size of the array
-     * @param Elements: Element to copy into all positions of the array
+     * @brief          - Resizes the container with a new size, and constructs them with value 
+     * @param NewSize  - The new size of the array
+     * @param Elements - Element to copy into all positions of the array
      */
     void Resize(SizeType NewSize, const ElementType& Element) noexcept
     {
@@ -337,9 +323,8 @@ public:
     }
 
     /**
-     * @brief: Reallocate the array to a new capacity
-     * 
-     * @param NewCapacity: The new capacity of the allocated array
+     * @brief             - Reallocate the array to a new capacity
+     * @param NewCapacity - The new capacity of the allocated array
      */
     void Reserve(SizeType NewCapacity) noexcept
     {
@@ -356,10 +341,9 @@ public:
     }
 
     /** 
-     * @brief: Constructs a new element at the end of the array 
-     *
-     * @param Args: Arguments for the constructor of the element
-     * @return: Returns a reference to the newly created element
+     * @brief      - Constructs a new element at the end of the array 
+     * @param Args - Arguments for the constructor of the element
+     * @return     - Returns a reference to the newly created element
      */
     template<typename... ArgTypes>
     ElementType& Emplace(ArgTypes&&... Args) noexcept
@@ -370,10 +354,9 @@ public:
     }
 
     /**
-     * @brief: Appends a new element at the end of the array
-     * 
-     * @param Element: Element to insert into the array by copy
-     * @return: Returns a reference to the newly created element
+     * @brief         - Appends a new element at the end of the array
+     * @param Element - Element to insert into the array by copy
+     * @return        - Returns a reference to the newly created element
      */
     FORCEINLINE ElementType& Push(const ElementType& Element) noexcept
     {
@@ -381,10 +364,9 @@ public:
     }
 
     /**
-     * @brief: Appends a new element at the end of the array
-     * 
-     * @param Element: Element to insert into the array by move
-     * @return: Returns a reference to the newly created element
+     * @brief         - Appends a new element at the end of the array
+     * @param Element - Element to insert into the array by move
+     * @return        - Returns a reference to the newly created element
      */
     FORCEINLINE ElementType& Push(ElementType&& Element) noexcept
     {
@@ -392,10 +374,9 @@ public:
     }
 
     /**
-     * @brief: Appends a new element at the end of the array if the element does not already exist
-     *
-     * @param Element: Element to insert into the array by copy
-     * @return: Returns a reference to the newly created element or element equal to Element
+     * @brief         - Appends a new element at the end of the array if the element does not already exist
+     * @param Element - Element to insert into the array by copy
+     * @return        - Returns a reference to the newly created element or element equal to Element
      */
     FORCEINLINE SizeType PushUnique(const ElementType& Element) noexcept
     {
@@ -410,10 +391,9 @@ public:
     }
 
     /**
-     * @brief: Appends a new element at the end of the array if the element does not already exist
-     *
-     * @param Element: Element to insert into the array by copy
-     * @return: Returns a reference to the newly created element or element equal to Element
+     * @brief         - Appends a new element at the end of the array if the element does not already exist
+     * @param Element - Element to insert into the array by copy
+     * @return        - Returns a reference to the newly created element or element equal to Element
      */
     FORCEINLINE SizeType PushUnique(ElementType&& Element) noexcept
     {
@@ -428,7 +408,7 @@ public:
     }
 
     /**
-     * @brief: Appends a new element at the end of the array, but does not call any constructor
+     * @brief - Appends a new element at the end of the array, but does not call any constructor
      */
     FORCEINLINE void PushUninitialized() noexcept
     {
@@ -436,10 +416,9 @@ public:
     }
 
     /**
-     * @brief: Constructs a new element at a specific position in the array
-     *
-     * @param Position: Position of the new element
-     * @param Args: Arguments for the constructor of the element
+     * @brief          - Constructs a new element at a specific position in the array
+     * @param Position - Position of the new element
+     * @param Args     - Arguments for the constructor of the element
      */
     template<typename... ArgTypes>
     FORCEINLINE void EmplaceAt(SizeType Position, ArgTypes&&... Args) noexcept
@@ -451,10 +430,9 @@ public:
     }
 
     /**
-     * @brief: Constructs a new element at a specific position in the array
-     *
-     * @param Position: Iterator pointing to the position of the new element
-     * @param Args: Arguments for the constructor of the element
+     * @brief          - Constructs a new element at a specific position in the array
+     * @param Position - Iterator pointing to the position of the new element
+     * @param Args     - Arguments for the constructor of the element
      */
     template<typename... ArgTypes>
     FORCEINLINE void EmplaceAt(ConstIteratorType Position, ArgTypes&&... Args) noexcept
@@ -463,10 +441,9 @@ public:
     }
 
     /**
-     * @brief: Insert a new element at a specific position in the array
-     *
-     * @param Position: Position of the new element
-     * @param Element: Element to copy into the position
+     * @brief          - Insert a new element at a specific position in the array
+     * @param Position - Position of the new element
+     * @param Element  - Element to copy into the position
      */
     FORCEINLINE void Insert(SizeType Position, const ElementType& Element) noexcept
     {
@@ -474,10 +451,9 @@ public:
     }
 
     /**
-     * @brief: Insert a new element at a specific position in the array
-     *
-     * @param Position: Iterator pointing to the position of the new element
-     * @param Element: Element to copy into the position
+     * @brief          - Insert a new element at a specific position in the array
+     * @param Position - Iterator pointing to the position of the new element
+     * @param Element  - Element to copy into the position
      */
     FORCEINLINE void Insert(ConstIteratorType Position, const ElementType& Element) noexcept
     {
@@ -485,10 +461,9 @@ public:
     }
 
     /**
-     * @brief: Insert a new element at the a specific position in the array by moving
-     *
-     * @param Position: Position of the new element
-     * @param Element: Element to move into the position
+     * @brief          - Insert a new element at the a specific position in the array by moving
+     * @param Position - Position of the new element
+     * @param Element  - Element to move into the position
      */
     FORCEINLINE void Insert(SizeType Position, ElementType&& Element) noexcept
     {
@@ -496,10 +471,9 @@ public:
     }
 
     /**
-     * @brief: Insert a new element at the a specific position in the array by moving
-     *
-     * @param Position: Iterator pointing to the position of the new element
-     * @param Element: Element to move into the position
+     * @brief          - Insert a new element at the a specific position in the array by moving
+     * @param Position - Iterator pointing to the position of the new element
+     * @param Element  - Element to move into the position
      */
     FORCEINLINE void Insert(ConstIteratorType Position, ElementType&& Element) noexcept
     {
@@ -507,11 +481,10 @@ public:
     }
 
     /**
-     * @brief: Insert an array at a specific position in the array
-     *
-     * @param Position: Position of the new element
-     * @param InputArray: Array to copy into the array
-     * @param NumElements: Number of elements in the input-array
+     * @brief             - Insert an array at a specific position in the array
+     * @param Position    - Position of the new element
+     * @param InputArray  - Array to copy into the array
+     * @param NumElements - Number of elements in the input-array
      */
     FORCEINLINE void Insert(SizeType Position, const ElementType* InputArray, SizeType NumElements) noexcept
     {
@@ -524,11 +497,10 @@ public:
     }
 
     /**
-     * @brief: Insert an array at a specific position in the array
-     *
-     * @param Position: Iterator pointing to the position of the new element
-     * @param InputArray: Array to copy into the array
-     * @param NumElements: Number of elements in the input-array
+     * @brief             - Insert an array at a specific position in the array
+     * @param Position    - Iterator pointing to the position of the new element
+     * @param InputArray  - Array to copy into the array
+     * @param NumElements - Number of elements in the input-array
      */
     FORCEINLINE void Insert(ConstIteratorType Position, const ElementType* InputArray, SizeType NumElements) noexcept
     {
@@ -536,10 +508,9 @@ public:
     }
 
     /**
-     * @brief: Insert elements from a initializer list at a specific position in the array
-     *
-     * @param Position: Position of the new element
-     * @param InList: Initializer list to insert into the array
+     * @brief          - Insert elements from a initializer list at a specific position in the array
+     * @param Position - Position of the new element
+     * @param InList   - Initializer list to insert into the array
      */
     FORCEINLINE void Insert(SizeType Position, std::initializer_list<ElementType> InList) noexcept
     {
@@ -547,10 +518,9 @@ public:
     }
 
     /**
-     * @brief: Insert elements from a initializer list at a specific position in the array
-     *
-     * @param Position: Iterator pointing to the position of the new element
-     * @param InList: Initializer list to insert into the array
+     * @brief          - Insert elements from a initializer list at a specific position in the array
+     * @param Position - Iterator pointing to the position of the new element
+     * @param InList   - Initializer list to insert into the array
      */
     FORCEINLINE void Insert(ConstIteratorType Position, std::initializer_list<ElementType> InList) noexcept
     {
@@ -558,11 +528,11 @@ public:
     }
 
     /**
-      * Insert elements from another array at a specific position in the array, which
-      * can be of another array-type.
-      *
-      * @param Position: Position of the new element
-      * @param InArray: Array to copy elements from
+      * @brief - Insert elements from another array at a specific position in the array, which
+      *     can be of another array-type.
+      * 
+      * @param Position - Position of the new element
+      * @param InArray  - Array to copy elements from
       */
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Insert(SizeType Position, const ArrayType& InArray) noexcept
@@ -571,11 +541,11 @@ public:
     }
 
     /**
-      * Insert elements from another array at a specific position in the array, which
-      * can be of another array-type.
-      *
-      * @param Position: Iterator pointing to the position of the new element
-      * @param InArray: Array to copy elements from
+      * @brief - Insert elements from another array at a specific position in the array, which
+      *     can be of another array-type.
+      * 
+      * @param Position - Iterator pointing to the position of the new element
+      * @param InArray  - Array to copy elements from
       */
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Insert(ConstIteratorType Position, const ArrayType& InArray) noexcept
@@ -584,10 +554,9 @@ public:
     }
 
     /**
-     * @brief: Insert a number of uninitialized elements in the array at a specific position
-     *
-     * @param Position: Start-position of the new elements
-     * @param NumElements: Number of elements to insert
+     * @brief             - Insert a number of uninitialized elements in the array at a specific position
+     * @param Position    - Start-position of the new elements
+     * @param NumElements - Number of elements to insert
      */
     FORCEINLINE void InsertUninitialized(SizeType Position, SizeType NumElements) noexcept
     {
@@ -597,10 +566,9 @@ public:
     }
 
     /**
-     * @brief: Insert an array from a raw-pointer at the end of the array
-     * 
-     * @param InputArray: Array to copy elements from
-     * @param NumElements: Number of elements in the input-array
+     * @brief             - Insert an array from a raw-pointer at the end of the array
+     * @param InputArray  - Array to copy elements from
+     * @param NumElements - Number of elements in the input-array
      */
     void Append(const ElementType* InputArray, SizeType NumElements) noexcept
     {
@@ -614,9 +582,8 @@ public:
     }
 
     /**
-     * @brief: Insert another array at the end of the array, which can be of another array-type
-     *
-     * @param Other: Array to copy elements from
+     * @brief       - Insert another array at the end of the array, which can be of another array-type
+     * @param Other - Array to copy elements from
      */
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Append(const ArrayType& Other) noexcept
@@ -625,9 +592,8 @@ public:
     }
 
     /**
-     * @brief: Insert an initializer-list at the end of the array, which can be of another array-type
-     *
-     * @param InList: Initializer-list to copy elements from
+     * @brief        - Insert an initializer-list at the end of the array, which can be of another array-type
+     * @param InList - Initializer-list to copy elements from
      */
     FORCEINLINE void Append(std::initializer_list<ElementType> InList) noexcept
     {
@@ -635,9 +601,8 @@ public:
     }
 
     /**
-     * @brief: Create a number of uninitialized elements at the end of the array
-     * 
-     * @param NewSize: Number of elements to append
+     * @brief         - Create a number of uninitialized elements at the end of the array
+     * @param NewSize - Number of elements to append
      */
     FORCEINLINE void AppendUninitialized(SizeType NumElements) noexcept
     {
@@ -646,9 +611,8 @@ public:
     }
 
     /**
-     * @brief: Remove and destroy a number of elements from the back
-     *
-     * @param NumElements: Number of elements destroy from the end
+     * @brief             - Remove and destroy a number of elements from the back
+     * @param NumElements - Number of elements destroy from the end
      */
     FORCEINLINE void PopRange(SizeType NumElements) noexcept
     {
@@ -659,7 +623,7 @@ public:
     }
 
     /** 
-     * Remove the last element 
+     * @brief - Remove the last element 
      */
     FORCEINLINE void Pop() noexcept
     {
@@ -667,10 +631,9 @@ public:
     }
 
     /**
-     * @brief: Remove a range of elements starting at position
-     * 
-     * @param Position: Position of the array to start remove elements from
-     * @param NumElements: Number of elements to remove
+     * @brief             - Remove a range of elements starting at position
+     * @param Position    - Position of the array to start remove elements from
+     * @param NumElements - Number of elements to remove
      */
     void RemoveRangeAt(SizeType Position, SizeType NumElements) noexcept
     {
@@ -685,9 +648,8 @@ public:
     }
 
     /**
-     * @brief: Removes the element at the position 
-     * 
-     * @param Position: Position of element to remove
+     * @brief          - Removes the element at the position 
+     * @param Position - Position of element to remove
      */
     FORCEINLINE void RemoveAt(SizeType Position) noexcept
     {
@@ -695,10 +657,9 @@ public:
     }
 
     /**
-     * @brief: Removes the element at the position
-     *
-     * @param Position: Iterator pointing to the position of element to remove
-     * @return: Returns the iterator to the element that follows the removed element
+     * @brief          - Removes the element at the position
+     * @param Position - Iterator pointing to the position of element to remove
+     * @return         - Returns the iterator to the element that follows the removed element
      */
     FORCEINLINE IteratorType RemoveAt(IteratorType Iterator) noexcept
     {
@@ -708,10 +669,9 @@ public:
     }
 
     /**
-     * @brief: Removes the element at the position
-     *
-     * @param Position: Iterator pointing to the position of element to remove
-     * @return: Returns the iterator to the element that follow the removed element
+     * @brief          - Removes the element at the position
+     * @param Position - Iterator pointing to the position of element to remove
+     * @return         - Returns the iterator to the element that follow the removed element
      */
     FORCEINLINE ConstIteratorType RemoveAt(ConstIteratorType Iterator) noexcept
     {
@@ -721,10 +681,9 @@ public:
     }
 
     /**
-     * @brief: Search the array and remove the first instance of the element from the array if it is found. 
-     * 
-     * @param Element: Element to remove
-     * @return: Returns true if the element was found and remved, false otherwise
+     * @brief         - Search the array and remove the first instance of the element from the array if it is found. 
+     * @param Element - Element to remove
+     * @return        - Returns true if the element was found and remved, false otherwise
      */
     FORCEINLINE bool Remove(const ElementType& Element) noexcept
     {
@@ -741,10 +700,10 @@ public:
     }
 
     /**
-     * @brief: Search the array and remove the first instance of 
-     *   the element from the array if the predicate returns true.
-     *
-     * @param Element: Element to remove
+     * @brief - Search the array and remove the first instance of 
+     *     the element from the array if the predicate returns true.
+     * 
+     * @param Element - Element to remove
      */
     template<typename PredicateType>
     FORCEINLINE void RemoveWithPredicate(PredicateType&& Predicate) noexcept
@@ -760,9 +719,8 @@ public:
     }
 
     /**
-     * @brief: Search the array and remove the all instances of the element from the array if it is found.
-     *
-     * @param Element: Element to remove
+     * @brief         - Search the array and remove the all instances of the element from the array if it is found.
+     * @param Element - Element to remove
      */
     FORCEINLINE void RemoveAll(const ElementType& Element) noexcept
     {
@@ -780,10 +738,10 @@ public:
     }
 
     /**
-     * @brief: Search the array and remove the all instances of the 
-     *   element from the array if the predicate returns true.
-     *
-     * @param Element: Element to remove
+     * @brief - Search the array and remove the all instances of the 
+     *     element from the array if the predicate returns true.
+     * 
+     * @param Element - Element to remove
      */
     template<typename PredicateType>
     FORCEINLINE void RemoveAll(PredicateType&& Predicate) noexcept
@@ -802,10 +760,9 @@ public:
     }
 
     /**
-     * @brief: Returns the index of an element if it is present in the array, or -1 if it is not found
-     *
-     * @param Element: Element to search for
-     * @return: The index of the element if found or -1 if not
+     * @brief         - Returns the index of an element if it is present in the array, or -1 if it is not found
+     * @param Element - Element to search for
+     * @return        - The index of the element if found or -1 if not
      */
     NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
     {
@@ -825,10 +782,9 @@ public:
     }
 
     /**
-     * @brief: Returns the index of the element that satisfy the conditions of a comparator
-     *
-     * @param Predicate: Callable that compares an element in the array against some condition
-     * @return: The index of the element if found or INVALID_INDEX if not
+     * @brief           - Returns the index of the element that satisfy the conditions of a comparator
+     * @param Predicate - Callable that compares an element in the array against some condition
+     * @return          - The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
@@ -849,10 +805,9 @@ public:
     }
 
     /**
-     * @brief: Returns the index of an element if it is present in the array, or -1 if it is not found
-     *
-     * @param Element: Element to search for
-     * @return: The index of the element if found or -1 if not
+     * @brief         - Returns the index of an element if it is present in the array, or -1 if it is not found
+     * @param Element - Element to search for
+     * @return        - The index of the element if found or -1 if not
      */
     NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
     {
@@ -871,10 +826,9 @@ public:
     }
 
     /**
-     * @brief: Returns the index of the element that satisfy the conditions of a comparator
-     *
-     * @param Predicate: Callable that compares an element in the array against some condition
-     * @return: The index of the element if found or INVALID_INDEX if not
+     * @brief           - Returns the index of the element that satisfy the conditions of a comparator
+     * @param Predicate - Callable that compares an element in the array against some condition
+     * @return          - The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
@@ -894,10 +848,9 @@ public:
     }
 
     /**
-     * @brief: Check if an element exists in the array
-     * 
-     * @param Element: Element to check for
-     * @return: Returns true if the element is found in the array and false if not
+     * @brief         - Check if an element exists in the array
+     * @param Element - Element to check for
+     * @return        - Returns true if the element is found in the array and false if not
      */
     NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const noexcept
     {
@@ -905,10 +858,9 @@ public:
     }
 
     /**
-     * @brief: Check if an element that satisfies the conditions of a comparator exists in the array
-     * 
-     * @param Predicate: Callable that compares an element in the array against some condition
-     * @return: Returns true if the comparator returned true for one element
+     * @brief           - Check if an element that satisfies the conditions of a comparator exists in the array
+     * @param Predicate - Callable that compares an element in the array against some condition
+     * @return          - Returns true if the comparator returned true for one element
      */
     template<class PredicateType>
     NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const noexcept
@@ -917,9 +869,8 @@ public:
     }
 
     /**
-     * @brief: Perform some function on each element in the array
-     * 
-     * @param Functor: Callable that takes one element and perform some operation on it
+     * @brief         - Perform some function on each element in the array
+     * @param Functor - Callable that takes one element and perform some operation on it
      */
     template<class FunctorType>
     FORCEINLINE void Foreach(FunctorType&& Functor)
@@ -934,9 +885,8 @@ public:
     }
 
     /**
-     * @brief: Swap the contents of this array with another
-     * 
-     * @param Other: The other array to swap with
+     * @brief       - Swap the contents of this array with another
+     * @param Other - The other array to swap with
      */
     FORCEINLINE void Swap(TArray& Other) noexcept
     {
@@ -946,7 +896,7 @@ public:
     }
 
     /**
-     * @brief: Shrink the allocation to perfectly fit with the size of the array
+     * @brief - Shrink the allocation to perfectly fit with the size of the array
      */
     FORCEINLINE void Shrink() noexcept
     {
@@ -954,10 +904,9 @@ public:
     }
 
     /**
-     * @brief: Checks that the pointer is a part of the array
-     *
-     * @param Address: Address to check.
-     * @return: Returns true if the address belongs to the array
+     * @brief         - Checks that the pointer is a part of the array
+     * @param Address - Address to check.
+     * @return        - Returns true if the address belongs to the array
      */
     NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const noexcept
     {
@@ -965,9 +914,8 @@ public:
     }
 
     /**
-     * @brief: Checks if an index is a valid index
-     * 
-     * @return: Returns true if the index is valid
+     * @brief  - Checks if an index is a valid index
+     * @return - Returns true if the index is valid
      */
     NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const noexcept
     {
@@ -975,9 +923,8 @@ public:
     }
 
     /**
-     * @brief: Check if the container contains any elements
-     * 
-     * @return: Returns true if the array is empty or false if it contains elements
+     * @brief  - Check if the container contains any elements
+     * @return - Returns true if the array is empty or false if it contains elements
      */
     NODISCARD FORCEINLINE bool IsEmpty() const noexcept
     {
@@ -985,9 +932,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the first element of the array
-     * 
-     * @return: Returns a reference to the first element of the array
+     * @brief  - Retrieve the first element of the array
+     * @return - Returns a reference to the first element of the array
      */
     NODISCARD FORCEINLINE ElementType& FirstElement() noexcept
     {
@@ -996,9 +942,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the first element of the array
-     *
-     * @return: Returns a reference to the first element of the array
+     * @brief  - Retrieve the first element of the array
+     * @return - Returns a reference to the first element of the array
      */
     NODISCARD FORCEINLINE const ElementType& FirstElement() const noexcept
     {
@@ -1007,9 +952,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the last element of the array
-     *
-     * @return: Returns a reference to the last element of the array
+     * @brief  - Retrieve the last element of the array
+     * @return - Returns a reference to the last element of the array
      */
     NODISCARD FORCEINLINE ElementType& LastElement() noexcept
     {
@@ -1018,9 +962,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the last element of the array
-     *
-     * @return: Returns a reference to the last element of the array
+     * @brief  - Retrieve the last element of the array
+     * @return - Returns a reference to the last element of the array
      */
     NODISCARD FORCEINLINE const ElementType& LastElement() const noexcept
     {
@@ -1029,9 +972,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the data of the array
-     *
-     * @return: Returns a pointer to the data of the array
+     * @brief  - Retrieve the data of the array
+     * @return - Returns a pointer to the data of the array
      */
     NODISCARD FORCEINLINE ElementType* GetData() noexcept
     {
@@ -1039,9 +981,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the data of the array
-     *
-     * @return: Returns a pointer to the data of the array
+     * @brief  - Retrieve the data of the array
+     * @return - Returns a pointer to the data of the array
      */
     NODISCARD FORCEINLINE const ElementType* GetData() const noexcept
     {
@@ -1049,9 +990,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the last index that can be used to retrieve an element from the array
-     *
-     * @return: Returns a the index to the last element of the array
+     * @brief  - Retrieve the last index that can be used to retrieve an element from the array
+     * @return - Returns a the index to the last element of the array
      */
     NODISCARD FORCEINLINE SizeType LastElementIndex() const noexcept
     {
@@ -1059,9 +999,7 @@ public:
     }
 
     /**
-     * @brief: Returns the size of the container
-     * 
-     * @return: The current size of the container
+     * @return - Returns the size of the container
      */
     NODISCARD FORCEINLINE SizeType GetSize() const noexcept
     {
@@ -1069,9 +1007,15 @@ public:
     }
 
     /**
-     * @brief: Returns the size of the container in bytes
-     *
-     * @return: The current size of the container in bytes
+     * @return - Returns the stride of each element of the container
+     */
+    NODISCARD CONSTEXPR SizeType GetStride() const noexcept
+    {
+        return sizeof(ElementType);
+    }
+
+    /**
+     * @return - Returns the size of the container in bytes
      */
     NODISCARD FORCEINLINE SizeType SizeInBytes() const noexcept
     {
@@ -1079,9 +1023,7 @@ public:
     }
 
     /**
-     * @brief: Returns the capacity of the container
-     *
-     * @return: The current capacity of the container
+     * @return - Returns the capacity of the container
      */
     NODISCARD FORCEINLINE SizeType GetCapacity() const noexcept
     {
@@ -1089,9 +1031,7 @@ public:
     }
 
     /**
-     * @brief: Returns the capacity of the container in bytes
-     *
-     * @return: The current capacity of the container in bytes
+     * @return - Returns the capacity of the container in bytes
      */
     NODISCARD FORCEINLINE SizeType CapacityInBytes() const noexcept
     {
@@ -1099,10 +1039,9 @@ public:
     }
 
     /**
-     * @brief: Retrieve a element at a certain index of the array
-     * 
-     * @param Index: Index of the element to retrieve
-     * @return: A reference to the element at the index
+     * @brief       - Retrieve a element at a certain index of the array
+     * @param Index - Index of the element to retrieve
+     * @return      - A reference to the element at the index
      */
     NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) noexcept
     {
@@ -1111,10 +1050,9 @@ public:
     }
 
     /**
-     * @brief: Retrieve a element at a certain index of the array
-     *
-     * @param Index: Index of the element to retrieve
-     * @return: A reference to the element at the index
+     * @brief       - Retrieve a element at a certain index of the array
+     * @param Index - Index of the element to retrieve
+     * @return      - A reference to the element at the index
      */
     NODISCARD FORCEINLINE const ElementType& GetElementAt(SizeType Index) const noexcept
     {
@@ -1123,9 +1061,8 @@ public:
     }
 
     /**
-     * @brief: Create an array-view of the array
-     *
-     * @return: A new array-view pointing this array's data
+     * @brief  - Create an array-view of the array
+     * @return - A new array-view pointing this array's data
      */
     NODISCARD FORCEINLINE TArrayView<ElementType> CreateView() noexcept
     {
@@ -1133,9 +1070,8 @@ public:
     }
 
     /**
-     * @brief: Create an array-view of the array
-     *
-     * @return: A new array-view pointing this array's data
+     * @brief  - Create an array-view of the array
+     * @return - A new array-view pointing this array's data
      */
     NODISCARD FORCEINLINE TArrayView<const ElementType> CreateView() const noexcept
     {
@@ -1143,11 +1079,10 @@ public:
     }
 
     /**
-     * @brief: Create an array-view of the array
-     * 
-     * @param Offset: Offset into the array
-     * @param NumElements: Number of elements to include in the view
-     * @return: A new array-view pointing to the specified elements
+     * @brief             - Create an array-view of the array
+     * @param Offset      - Offset into the array
+     * @param NumElements - Number of elements to include in the view
+     * @return            - A new array-view pointing to the specified elements
      */
     NODISCARD FORCEINLINE TArrayView<ElementType> CreateView(SizeType Offset, SizeType NumElements) noexcept
     {
@@ -1156,11 +1091,10 @@ public:
     }
 
     /**
-     * @brief: Create an array-view of the array
-     *
-     * @param Offset: Offset into the array
-     * @param NumElements: Number of elements to include in the view
-     * @return: A new array-view pointing to the specified elements
+     * @brief             - Create an array-view of the array
+     * @param Offset      - Offset into the array
+     * @param NumElements - Number of elements to include in the view
+     * @return            - A new array-view pointing to the specified elements
      */
     NODISCARD FORCEINLINE TArrayView<const ElementType> CreateView(SizeType Offset, SizeType NumElements) const noexcept
     {
@@ -1171,7 +1105,7 @@ public:
 public:
 
     /**
-     * @brief: Create a heap of the array 
+     * @brief - Create a heap of the array 
      */
     void Heapify() noexcept
     {
@@ -1183,9 +1117,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the top of the heap. The same as the first element.
-     * 
-     * @return: A reference to the element at the top of the heap
+     * @brief  - Retrieve the top of the heap. The same as the first element.
+     * @return - A reference to the element at the top of the heap
      */
     NODISCARD FORCEINLINE ElementType& HeapTop() noexcept
     {
@@ -1193,9 +1126,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the top of the heap. The same as the first element.
-     *
-     * @return: A reference to the element at the top of the heap
+     * @brief  - Retrieve the top of the heap. The same as the first element.
+     * @return - A reference to the element at the top of the heap
      */
     NODISCARD FORCEINLINE const ElementType& HeapTop() const noexcept
     {
@@ -1203,9 +1135,8 @@ public:
     }
 
     /**
-     * @brief: Inserts a new element at the top of the heap
-     * 
-     * @param Element: Element to copy to the top of the heap
+     * @brief         - Inserts a new element at the top of the heap
+     * @param Element - Element to copy to the top of the heap
      */
     FORCEINLINE void HeapPush(const ElementType& Element) noexcept
     {
@@ -1214,9 +1145,8 @@ public:
     }
 
     /**
-     * @brief: Inserts a new element at the top of the heap
-     *
-     * @param Element: Element to move to the top of the heap
+     * @brief         - Inserts a new element at the top of the heap
+     * @param Element - Element to move to the top of the heap
      */
     FORCEINLINE void HeapPush(ElementType&& Element) noexcept
     {
@@ -1225,9 +1155,8 @@ public:
     }
 
     /**
-     * @brief: Remove the top of the heap and retrieve the element on top
-     * 
-     * @param OutElement: Reference that the top element will be copied to
+     * @brief            - Remove the top of the heap and retrieve the element on top
+     * @param OutElement - Reference that the top element will be copied to
      */
     FORCEINLINE void HeapPop(ElementType& OutElement) noexcept
     {
@@ -1236,7 +1165,7 @@ public:
     }
 
     /**
-     * @brief: Remove the top of the heap
+     * @brief - Remove the top of the heap
      */
     FORCEINLINE void HeapPop() noexcept
     {
@@ -1245,7 +1174,7 @@ public:
     }
 
     /**
-     * @brief: Performs heap sort on the array (assuming the operator> exists for the elements)
+     * @brief - Performs heap sort on the array (assuming the operator> exists for the elements)
      */
     FORCEINLINE void HeapSort()
     {
@@ -1260,70 +1189,64 @@ public:
 public:
 
     /**
-     * @brief: Copy-assignment operator
-     * 
-     * @param RHS: Array to copy
-     * @return: A reference to this container
+     * @brief       - Copy-assignment operator
+     * @param Other - Array to copy
+     * @return      - A reference to this container
      */
-    FORCEINLINE TArray& operator=(const TArray& RHS) noexcept
+    FORCEINLINE TArray& operator=(const TArray& Other) noexcept
     {
-        Reset(RHS);
+        Reset(Other);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator
-     *
-     * @param RHS: Array to move
-     * @return: A reference to this container
+     * @brief       - Move-assignment operator
+     * @param Other - Array to move
+     * @return      - A reference to this container
      */
-    FORCEINLINE TArray& operator=(TArray&& RHS) noexcept
+    FORCEINLINE TArray& operator=(TArray&& Other) noexcept
     {
-        MoveFrom(Forward<TArray>(RHS));
+        MoveFrom(Forward<TArray>(Other));
         return *this;
     }
 
     /**
-     * @brief: Assignment-operator that takes a initializer-list
-     * 
-     * @param RHS: A initializer list to replace the current contents with
-     * @return: A reference to this container
+     * @brief       - Assignment-operator that takes a initializer-list
+     * @param Other - A initializer list to replace the current contents with
+     * @return      - A reference to this container
      */
-    FORCEINLINE TArray& operator=(std::initializer_list<ElementType> RHS) noexcept
+    FORCEINLINE TArray& operator=(std::initializer_list<ElementType> Other) noexcept
     {
-        Reset(RHS);
+        Reset(Other);
         return *this;
     }
 
     /**
-     * @brief: Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
-     * 
-     * @param RHS: Array to compare with
-     * @return: Returns true if all elements are equal to each other
+     * @brief       - Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
+     * @param Other - Array to compare with
+     * @return      - Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& Other) const noexcept
     {
-        return (GetSize() == RHS.GetSize()) ? ::CompareElements<ElementType>(GetData(), RHS.GetData(), GetSize()) : (false);
+        return (GetSize() == Other.GetSize()) ? ::CompareElements<ElementType>(GetData(), Other.GetData(), GetSize()) : (false);
     }
 
     /**
-     * @brief: Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
-     *
-     * @param RHS: Array to compare with
-     * @return: Returns true if all elements are NOT equal to each other
+     * @brief       - Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
+     * @param Other - Array to compare with
+     * @return      - Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& Other) const noexcept
     {
-        return !(*this == RHS);
+        return !(*this == Other);
     }
 
     /**
-     * @brief: Bracket-operator to retrieve an element at a certain index
-     * 
-     * @param Index: Index of the element to retrieve
-     * @return: A reference to the element at the index
+     * @brief       - Bracket-operator to retrieve an element at a certain index
+     * @param Index - Index of the element to retrieve
+     * @return      - A reference to the element at the index
      */
     NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) noexcept
     {
@@ -1331,10 +1254,9 @@ public:
     }
 
     /**
-     * @brief: Bracket-operator to retrieve an element at a certain index
-     *
-     * @param Index: Index of the element to retrieve
-     * @return: A reference to the element at the index
+     * @brief       - Bracket-operator to retrieve an element at a certain index
+     * @param Index - Index of the element to retrieve
+     * @return      - A reference to the element at the index
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
     {
@@ -1344,9 +1266,8 @@ public:
 public:
 
     /**
-     * @brief: Retrieve an iterator to the beginning of the array
-     * 
-     * @return: A iterator that points to the first element
+     * @brief  - Retrieve an iterator to the beginning of the array
+     * @return - A iterator that points to the first element
      */
     NODISCARD FORCEINLINE IteratorType StartIterator() noexcept
     {
@@ -1354,9 +1275,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve an iterator to the end of the array
-     *
-     * @return: A iterator that points to the element past the end
+     * @brief  - Retrieve an iterator to the end of the array
+     * @return - A iterator that points to the element past the end
      */
     NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
     {
@@ -1364,9 +1284,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve an iterator to the beginning of the array
-     *
-     * @return: A iterator that points to the first element
+     * @brief  - Retrieve an iterator to the beginning of the array
+     * @return - A iterator that points to the first element
      */
     NODISCARD FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
@@ -1374,9 +1293,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve an iterator to the end of the array
-     *
-     * @return: A iterator that points to the element past the end
+     * @brief  - Retrieve an iterator to the end of the array
+     * @return - A iterator that points to the element past the end
      */
     NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
@@ -1384,9 +1302,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve an reverse-iterator to the end of the array
-     *
-     * @return: A reverse-iterator that points to the last element
+     * @brief  - Retrieve an reverse-iterator to the end of the array
+     * @return - A reverse-iterator that points to the last element
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
@@ -1394,9 +1311,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve an reverse-iterator to the start of the array
-     *
-     * @return: A reverse-iterator that points to the element before the first element
+     * @brief  - Retrieve an reverse-iterator to the start of the array
+     * @return - A reverse-iterator that points to the element before the first element
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
@@ -1404,9 +1320,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve an reverse-iterator to the end of the array
-     *
-     * @return: A reverse-iterator that points to the last element
+     * @brief  - Retrieve an reverse-iterator to the end of the array
+     * @return - A reverse-iterator that points to the last element
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
@@ -1414,9 +1329,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve an reverse-iterator to the start of the array
-     *
-     * @return: A reverse-iterator that points to the element before the first element
+     * @brief  - Retrieve an reverse-iterator to the start of the array
+     * @return - A reverse-iterator that points to the element before the first element
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
@@ -1424,9 +1338,6 @@ public:
     }
 
 public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // STL Iterators
 
     NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
     NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
@@ -1613,8 +1524,6 @@ private:
     SizeType      ArrayCapacity;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Enable TArrayType
 
 template<
     typename T,
@@ -1632,8 +1541,6 @@ struct TIsContiguousContainer<TArray<T, AllocatorType>>
     enum { Value = true };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Allocate and copy the contents into a unique-ptr
 
 template<typename T, typename AllocatorType>
 inline TUniquePtr<T[]> MakeUniquePtr(const TArray<T, AllocatorType>& Array) noexcept

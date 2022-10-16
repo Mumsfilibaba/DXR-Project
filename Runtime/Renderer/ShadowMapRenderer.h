@@ -6,9 +6,6 @@
 
 #include "Engine/Scene/Scene.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCascadeGenerationInfo
-
 struct FCascadeGenerationInfo
 {
     FVector3 LightDirection;
@@ -22,8 +19,6 @@ struct FCascadeGenerationInfo
 
 MARK_AS_REALLOCATABLE(FCascadeGenerationInfo);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCascadeMatrices
 
 struct FCascadeMatrices
 {
@@ -33,8 +28,6 @@ struct FCascadeMatrices
 
 MARK_AS_REALLOCATABLE(FCascadeMatrices);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCascadeSplits
 
 struct FCascadeSplits
 {
@@ -56,8 +49,6 @@ struct FCascadeSplits
 
 MARK_AS_REALLOCATABLE(FCascadeSplits);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FPerShadowMap
 
 struct FPerShadowMap
 {
@@ -68,8 +59,6 @@ struct FPerShadowMap
 
 MARK_AS_REALLOCATABLE(FPerShadowMap);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FPerCascade
 
 struct FPerCascade
 {
@@ -81,8 +70,6 @@ struct FPerCascade
 
 MARK_AS_REALLOCATABLE(FPerCascade);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FShadowMapRenderer
 
 class RENDERER_API FShadowMapRenderer
 {
@@ -94,33 +81,33 @@ public:
 
     void Release();
 
-     /** @brief: Render Point light shadows */
+     /** @brief - Render Point light shadows */
     void RenderPointLightShadows(
         FRHICommandList& CommandList,
         const FLightSetup& LightSetup, 
         const FScene& Scene);
 
-     /** @brief: Render Directional light shadows */
+     /** @brief - Render Directional light shadows */
     void RenderDirectionalLightShadows(
         FRHICommandList& CommandList,
         const FLightSetup& LightSetup, 
         const FFrameResources& FrameResources,
         const FScene& Scene);
 
-     /** @brief: Render ShadowMasks */
+     /** @brief - Render ShadowMasks */
     void RenderShadowMasks(
         FRHICommandList& CommandList,
         const FLightSetup& LightSetup, 
         const FFrameResources& FrameResources);
 
-     /** @brief: Resize the resources that are dependent on the viewport */
+     /** @brief - Resize the resources that are dependent on the viewport */
     bool ResizeResources(uint32 Width, uint32 Height, FLightSetup& LightSetup);
 
 private:
     bool CreateShadowMask(uint32 Width, uint32 Height, FLightSetup& LightSetup);
     bool CreateShadowMaps(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
-    FRHIConstantBufferRef        PerShadowMapBuffer;
+    FRHIBufferRef                PerShadowMapBuffer;
 
     FRHIGraphicsPipelineStateRef DirectionalLightPSO;
     FRHIVertexShaderRef          DirectionalLightShader;
@@ -135,8 +122,8 @@ private:
     FRHIVertexShaderRef          PointLightVertexShader;
     FRHIPixelShaderRef           PointLightPixelShader;
 
-    FRHIConstantBufferRef        PerCascadeBuffer;
-    FRHIConstantBufferRef        CascadeGenerationData;
+    FRHIBufferRef                PerCascadeBuffer;
+    FRHIBufferRef                CascadeGenerationData;
 
     FRHIComputePipelineStateRef  CascadeGen;
     FRHIComputeShaderRef         CascadeGenShader;

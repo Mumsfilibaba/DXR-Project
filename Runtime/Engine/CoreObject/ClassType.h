@@ -1,21 +1,15 @@
 #pragma once
 #include "Engine/EngineModule.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ClassDescription
-
 struct FClassDescription
 {
-    /** Name of the class */
+    /** @brief - Name of the class */
     const CHAR* Name = nullptr;
-    /** Size of the class in bytes */
+    /** @brief - Size of the class in bytes */
     uint32 SizeInBytes = 0;
-    /** Alignment of the class in bytes */
+    /** @brief - Alignment of the class in bytes */
     uint32 Alignment = 0;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ClassType - Stores info about a class, for now inheritance
 
 class ENGINE_API FClassType
 {

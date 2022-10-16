@@ -3,9 +3,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMetalInterface
-
 FMetalInterface::FMetalInterface()
 	: FRHIInterface(ERHIInstanceType::Metal)
 	, CommandContext()
@@ -160,22 +157,22 @@ FRHISamplerState* FMetalInterface::RHICreateSamplerState(const FRHISamplerStateI
     return dbg_new FMetalSamplerState();
 }
 
-FRHIVertexBuffer* FMetalInterface::RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer)
+FRHIVertexBuffer* FMetalInterface::RHICreateBuffer(const FRHIVertexBufferInitializer& Initializer)
 {
     return CreateBuffer<FMetalVertexBuffer>(Initializer);
 }
 
-FRHIIndexBuffer* FMetalInterface::RHICreateIndexBuffer(const FRHIIndexBufferInitializer& Initializer)
+FRHIIndexBuffer* FMetalInterface::RHICreateBuffer(const FRHIIndexBufferInitializer& Initializer)
 {
     return CreateBuffer<FMetalIndexBuffer>(Initializer);
 }
 
-FRHIGenericBuffer* FMetalInterface::RHICreateGenericBuffer(const FRHIGenericBufferInitializer& Initializer)
+FRHIGenericBuffer* FMetalInterface::RHICreateBuffer(const FRHIGenericBufferInitializer& Initializer)
 {
     return CreateBuffer<FMetalGenericBuffer>(Initializer);
 }
 
-FRHIConstantBuffer* FMetalInterface::RHICreateConstantBuffer(const FRHIConstantBufferInitializer& Initializer)
+FRHIConstantBuffer* FMetalInterface::RHICreateBuffer(const FRHIConstantBufferInitializer& Initializer)
 {
     return CreateBuffer<FMetalConstantBuffer, FRHIConstantBufferInitializer, kConstantBufferAlignment>(Initializer);
 }

@@ -12,9 +12,6 @@
 #include <windowsx.h>
 #include <sdkddkver.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Remove Windows.h defines
-
 #ifdef CreateWindow
     #undef CreateWindow
 #endif
@@ -31,39 +28,39 @@
     #undef CreateEvent
 #endif
 
-#if defined(InterlockedAdd)
+#ifdef InterlockedAdd
     #undef InterlockedAdd
 #endif
 
-#if defined(InterlockedSub)
+#ifdef InterlockedSub
     #undef InterlockedSub
 #endif
 
-#if defined(InterlockedAnd)
+#ifdef InterlockedAnd
     #undef InterlockedAnd
 #endif
 
-#if defined(InterlockedOr)
+#ifdef InterlockedOr
     #undef InterlockedOr
 #endif
 
-#if defined(InterlockedXor)
+#ifdef InterlockedXor
     #undef InterlockedXor
 #endif
 
-#if defined(InterlockedIncrement)
+#ifdef InterlockedIncrement
     #undef InterlockedIncrement
 #endif
 
-#if defined(InterlockedDecrement)
+#ifdef InterlockedDecrement
     #undef InterlockedDecrement
 #endif
 
-#if defined(InterlockedCompareExchange)
+#ifdef InterlockedCompareExchange
     #undef InterlockedCompareExchange
 #endif
 
-#if defined(InterlockedExchange)
+#ifdef InterlockedExchange
     #undef InterlockedExchange
 #endif
 
@@ -72,7 +69,11 @@
 #endif
 
 #ifdef OutputDebugString
-    #undef OutputDebugString
+     #undef OutputDebugString
+#endif
+
+#ifdef OutputDebugFormat
+     #undef OutputDebugFormat
 #endif
 
 #ifdef MemoryBarrier
@@ -83,8 +84,10 @@
     #undef GetClassName
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows-version helper defines
+#ifdef GetModuleHandle
+    #undef GetModuleHandle
+#endif
+
 
 #ifdef NTDDI_VISTA
     #define PLATFORM_WINDOWS_VISTA (1)

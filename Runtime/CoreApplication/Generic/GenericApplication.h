@@ -14,9 +14,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGenericApplication
-
 class COREAPPLICATION_API FGenericApplication
 {
 public:

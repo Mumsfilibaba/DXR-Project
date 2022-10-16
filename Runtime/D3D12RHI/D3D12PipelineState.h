@@ -7,15 +7,9 @@
 
 #include "Core/Utilities/StringUtilities.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedefs
-
 typedef TSharedRef<class FD3D12GraphicsPipelineState>   FD3D12GraphicsPipelineStateRef;
 typedef TSharedRef<class FD3D12ComputePipelineState>    FD3D12ComputePipelineStateRef;
 typedef TSharedRef<class FD3D12RayTracingPipelineState> FD3D12RayTracingPipelineStateRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ED3D12PipelineType
 
 enum class ED3D12PipelineType
 {
@@ -24,9 +18,6 @@ enum class ED3D12PipelineType
     Compute    = 2,
     RayTracing = 3,
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12VertexInputLayout
 
 class FD3D12VertexInputLayout 
     : public FRHIVertexInputLayout
@@ -70,8 +61,6 @@ private:
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12DepthStencilState
 
 class FD3D12DepthStencilState 
     : public FRHIDepthStencilState
@@ -90,8 +79,6 @@ private:
     D3D12_DEPTH_STENCIL_DESC Desc;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RasterizerState
 
 class FD3D12RasterizerState 
     : public FRHIRasterizerState
@@ -110,8 +97,6 @@ private:
     D3D12_RASTERIZER_DESC Desc;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12BlendState
 
 class FD3D12BlendState 
     : public FRHIBlendState
@@ -130,8 +115,6 @@ private:
     D3D12_BLEND_DESC Desc;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12PipelineState
 
 class FD3D12PipelineState 
     : public FD3D12DeviceChild
@@ -157,8 +140,6 @@ protected:
     FD3D12RootSignatureRef       RootSignature;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12GraphicsPipelineState
 
 class FD3D12GraphicsPipelineState
     : public FRHIGraphicsPipelineState
@@ -173,8 +154,6 @@ public:
     virtual void SetName(const FString& InName) override final { FD3D12PipelineState::SetDebugName(InName); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ComputePipelineState
 
 class FD3D12ComputePipelineState 
     : public FRHIComputePipelineState
@@ -192,16 +171,12 @@ private:
     TSharedRef<FD3D12ComputeShader> Shader;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRayTracingShaderIdentifer
 
 struct FRayTracingShaderIdentifer
 {
     CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayTracingPipelineState
 
 class FD3D12RayTracingPipelineState 
     : public FRHIRayTracingPipelineState

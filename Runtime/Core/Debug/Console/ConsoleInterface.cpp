@@ -1,9 +1,6 @@
 #include "ConsoleInterface.h"
 #include "ConsoleManager.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FConsoleInterface
-
 static auto& GetConsoleManagerInstance()
 {
     static TOptional<FConsoleManager> GInstance(InPlace);

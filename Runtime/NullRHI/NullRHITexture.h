@@ -20,9 +20,6 @@ typedef TNullRHITexture<struct FNullRHITextureCubeBase>      FNullRHITextureCube
 typedef TNullRHITexture<struct FNullRHITextureCubeArrayBase> FNullRHITextureCubeArray;
 typedef TNullRHITexture<struct FNullRHITexture3DBase>        FNullRHITexture3D;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHITexture2DBase
-
 class FNullRHITexture2DBase 
     : public FRHITexture2D
 {
@@ -32,17 +29,11 @@ public:
         , UnorderedAccessView(dbg_new FNullRHIUnorderedAccessView(this))
     { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
-
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
 
 private:
     TSharedRef<FNullRHIUnorderedAccessView> UnorderedAccessView;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHITexture2DArrayBase
 
 struct FNullRHITexture2DArrayBase 
     : public FRHITexture2DArray
@@ -52,9 +43,6 @@ struct FNullRHITexture2DArrayBase
     { }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHITextureCubeBase
-
 struct FNullRHITextureCubeBase 
     : public FRHITextureCube
 {
@@ -62,9 +50,6 @@ struct FNullRHITextureCubeBase
         : FRHITextureCube(Initializer)
     { }
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHITextureCubeArrayBase
 
 struct FNullRHITextureCubeArrayBase 
     : public FRHITextureCubeArray
@@ -74,9 +59,6 @@ struct FNullRHITextureCubeArrayBase
     { }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHITexture3DBase
-
 struct FNullRHITexture3DBase 
     : public FRHITexture3D
 {
@@ -85,8 +67,6 @@ struct FNullRHITexture3DBase
     { }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TNullRHITexture
 
 template<typename BaseTextureType>
 class TNullRHITexture final 
@@ -98,9 +78,6 @@ public:
         : BaseTextureType(Initializer)
         , ShaderResourceView(dbg_new FNullRHIShaderResourceView(this))
     { }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
 
     virtual void* GetRHIBaseResource() const override final { return nullptr; }
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(this); }

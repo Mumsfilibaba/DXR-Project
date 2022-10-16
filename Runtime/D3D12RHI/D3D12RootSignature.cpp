@@ -5,9 +5,6 @@
 #include "DynamicD3D12.h"
 #include "D3D12Interface.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12_SHADER_VISIBILITY
-
 static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[ShaderVisibility_Count] =
 {
     D3D12_SHADER_VISIBILITY_ALL,
@@ -24,8 +21,6 @@ static D3D12_SHADER_VISIBILITY GetD3D12ShaderVisibility(uint32 Visbility)
     return GD3D12ShaderVisibility[Visbility];
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ShaderVisibility
 
 static EShaderVisibility GShaderVisibility[ShaderVisibility_Count] =
 {
@@ -43,8 +38,6 @@ static EShaderVisibility GetShaderVisibility(uint32 Visbility)
     return GShaderVisibility[Visbility];
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// GetResourceType
 
 static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
 {
@@ -61,8 +54,6 @@ static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RootSignatureResourceCount
 
 bool FD3D12RootSignatureResourceCount::IsCompatible(const FD3D12RootSignatureResourceCount& Other) const
 {
@@ -82,8 +73,6 @@ bool FD3D12RootSignatureResourceCount::IsCompatible(const FD3D12RootSignatureRes
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RootSignatureDescHelper
 
 FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSignatureResourceCount& RootSignatureInfo)
     : Desc()
@@ -271,8 +260,6 @@ void FD3D12RootSignatureDescHelper::InsertRootUAV(D3D12_SHADER_VISIBILITY Shader
     RootSignatureCost += 2;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RootSignature
 
 FD3D12RootSignature::FD3D12RootSignature(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
@@ -391,8 +378,6 @@ bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RootSignatureCache
 
 FD3D12RootSignatureCache::FD3D12RootSignatureCache(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)

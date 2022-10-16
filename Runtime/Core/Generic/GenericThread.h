@@ -15,8 +15,6 @@
 
 typedef TSharedRef<class FGenericThread> FGenericThreadRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGenericThread
 
 class CORE_API FGenericThread 
     : public FRefCounted
@@ -26,22 +24,22 @@ public:
         : Runnable(InRunnable)
     { }
 
-    /** @brief: Start the thread and start executing the entrypoint */
+    /** @brief - Start the thread and start executing the entrypoint */
     virtual bool Start() { return true; }
 
-    /** @brief: Waits for the thread and returns the return-value from the thread  */
+    /** @brief - Waits for the thread and returns the return-value from the thread  */
     virtual void WaitForCompletion() { }
     
-    /** @return: Returns the native platform handle */
+    /** @return - Returns the native platform handle */
     virtual void* GetPlatformHandle() { return nullptr; }
 
-    /** @return: Returns the name of the thread */
+    /** @return - Returns the name of the thread */
     virtual FString GetName() const { return ""; }
 
-    /** @breif: Set the name of the thread */
+    /** @brief - Set the name of the thread */
     virtual void SetName(const FString& InName) { }
 
-    /** @return: Returns a pointer to the interface currently running on the thread */
+    /** @return - Returns a pointer to the interface currently running on the thread */
     FThreadInterface* GetRunnable() const { return Runnable; }
 
 protected:

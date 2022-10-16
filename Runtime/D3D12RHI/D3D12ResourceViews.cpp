@@ -2,9 +2,6 @@
 #include "D3D12Descriptors.h"
 #include "D3D12ResourceViews.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12View
-
 FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
     : FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
@@ -29,11 +26,9 @@ void FD3D12View::InvalidateAndFreeHandle()
 {
     Heap->Free(OfflineHandle, OfflineHeapIndex);
     OfflineHeapIndex = 0;
-    OfflineHandle = { 0 };
+    OfflineHandle    = { 0 };
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ConstantBufferView
 
 FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
     : FD3D12View(InDevice, InHeap)
@@ -51,8 +46,6 @@ bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D1
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ShaderResourceView
 
 FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource)
     : FRHIShaderResourceView(InResource)
@@ -77,8 +70,6 @@ bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D1
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12UnorderedAccessView
 
 FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource)
     : FRHIUnorderedAccessView(InResource)
@@ -111,8 +102,6 @@ bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RenderTargetView
 
 FD3D12RenderTargetView::FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
     : FD3D12View(InDevice, InHeap)
@@ -136,8 +125,6 @@ bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12DepthStencilView
 
 FD3D12DepthStencilView::FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
     : FD3D12View(InDevice, InHeap)

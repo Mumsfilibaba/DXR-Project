@@ -4,9 +4,6 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Containers/SharedRef.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsCursor
-
 void FWindowsCursor::SetCursor(ECursor Cursor)
 {
     LPSTR CursorName = NULL;

@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 
-#include "RHI/RHIModule.h"
+#include "RHI/RHIInterface.h"
 
 #if NULLRHI_IMPL
     #define NULLRHI_API MODULE_EXPORT
@@ -9,11 +9,8 @@
     #define NULLRHI_API 
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHIModule
-
 struct FNullRHIModule final 
-    : public FRHIModule
+    : public FRHIInterfaceModule
 {
     FNullRHIModule()  = default;
     ~FNullRHIModule() = default;

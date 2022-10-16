@@ -20,9 +20,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHIInterface
-
 class FNullRHIInterface final 
     : public FRHIInterface
 {
@@ -69,28 +66,13 @@ public:
 
     virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer) override final
     {
-        return dbg_new FNullRHISamplerState();
+        return dbg_new FNullRHISamplerState(Initializer);
     }
 
-    virtual FRHIVertexBuffer* RHICreateVertexBuffer(const FRHIVertexBufferInitializer& Initializer) override final
+    virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) override final
     {
-        return dbg_new FNullRHIVertexBuffer(Initializer);
-    }
-
-    virtual FRHIIndexBuffer* RHICreateIndexBuffer(const FRHIIndexBufferInitializer& Initializer) override final
-    {
-        return dbg_new FNullRHIIndexBuffer(Initializer);
-    }
-
-    virtual FRHIGenericBuffer* RHICreateGenericBuffer(const FRHIGenericBufferInitializer& Initializer) override final
-    {
-        return dbg_new FNullRHIGenericBuffer(Initializer);
-    }
-
-    virtual FRHIConstantBuffer* RHICreateConstantBuffer(const FRHIConstantBufferInitializer& Initializer) override final
-    {
-        return dbg_new FNullRHIConstantBuffer(Initializer);
-    }
+        return dbg_new FNullRHIBuffer(InDesc);
+    } 
 
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer) override final
     {
@@ -237,14 +219,14 @@ public:
         return FString();
     }
 
-    virtual void RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport) const override final
+    virtual void RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const override final
     {
-        OutSupport = FRayTracingSupport();
+        OutSupport = FRHIRayTracingSupport();
     }
 
-    virtual void RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const override final
+    virtual void RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const override final
     {
-        OutSupport = FShadingRateSupport();
+        OutSupport = FRHIShadingRateSupport();
     }
 
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final

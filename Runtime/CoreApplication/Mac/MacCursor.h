@@ -3,9 +3,6 @@
 
 #include "CoreApplication/Generic/GenericCursor.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacCursor
-
 class COREAPPLICATION_API FMacCursor final 
     : public FGenericCursor
 {

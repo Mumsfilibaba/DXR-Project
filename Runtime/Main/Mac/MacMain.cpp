@@ -9,9 +9,6 @@ class FMacApplication;
 
 static int32 GEngineMainResult = 0;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCocoaAppDelegate
-
 @interface FCocoaAppDelegate : NSObject<NSApplicationDelegate>
 @end
 
@@ -43,8 +40,6 @@ static int32 GEngineMainResult = 0;
 
 @end
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Main
 
 int main(int NumArgs, const CHAR** Args)
 {

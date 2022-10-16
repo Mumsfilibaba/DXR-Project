@@ -1,9 +1,6 @@
 #pragma once
 #include "Core/CoreTypes.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TMin
-
 template<int32 Arg0, int32... RestArgs>
 struct TMin;
 
@@ -19,8 +16,6 @@ struct TMin<Arg0, Arg1, RestArgs...>
     enum { Value = (Arg0 <= Arg1) ? TMin<Arg0, RestArgs...>::Value : TMin<Arg1, RestArgs...>::Value };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TMax
 
 template<int32 Arg0, int32... RestArgs>
 struct TMax;

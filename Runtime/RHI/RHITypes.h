@@ -2,9 +2,6 @@
 #include "Core/Math/Color.h"
 #include "Core/Templates/EnumUtilities.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EFormat
-
 enum class EFormat : uint16
 {
     Unknown               = 0,
@@ -213,8 +210,6 @@ CONSTEXPR const CHAR* ToString(EFormat Format)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helpers
 
 CONSTEXPR uint32 GetByteStrideFromFormat(EFormat Format)
 {
@@ -324,8 +319,44 @@ CONSTEXPR bool IsCompressed(EFormat Format)
     return (ToUnderlying(Format) >= ToUnderlying(EFormat::BC1_Typeless));
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ECubeFace
+
+enum class EIndexFormat : uint8
+{
+    Unknown = 0,
+    uint16  = 1,
+    uint32  = 2,
+};
+
+CONSTEXPR const CHAR* ToString(EIndexFormat IndexFormat)
+{
+    switch (IndexFormat)
+    {
+        case EIndexFormat::uint16: return "uint16";
+        case EIndexFormat::uint32: return "uint32";
+        default:                   return "Unknown";
+    }
+}
+
+CONSTEXPR EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
+{
+    switch (StrideInBytes)
+    {
+        case 2:  return EIndexFormat::uint16;
+        case 4:  return EIndexFormat::uint32;
+        default: return EIndexFormat::Unknown;
+    }
+}
+
+CONSTEXPR uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
+{
+    switch (IndexFormat)
+    {
+        case EIndexFormat::uint16: return 2;
+        case EIndexFormat::uint32: return 4;
+        default:                   return 0;
+    }
+}
+
 
 enum class ECubeFace
 {
@@ -347,8 +378,6 @@ CONSTEXPR ECubeFace GetCubeFaceFromIndex(uint32 Index)
     return (Index > GetCubeFaceIndex(ECubeFace::NegZ)) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EComparisonFunc
 
 enum class EComparisonFunc
 {
@@ -379,8 +408,6 @@ CONSTEXPR const CHAR* ToString(EComparisonFunc ComparisonFunc)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EPrimitiveTopologyType
 
 enum class EPrimitiveTopologyType
 {
@@ -404,12 +431,9 @@ CONSTEXPR const CHAR* ToString(EPrimitiveTopologyType PrimitveTopologyType)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EResourceAccess
 
 // TODO: These should be flags
-
-enum class EResourceAccess
+enum class EResourceAccess : uint8
 {
     Common                          = 0,
     VertexAndConstantBuffer         = 1,
@@ -456,8 +480,6 @@ CONSTEXPR const CHAR* ToString(EResourceAccess ResourceState)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EPrimitiveTopology
 
 enum class EPrimitiveTopology
 {
@@ -483,8 +505,6 @@ CONSTEXPR const CHAR* ToString(EPrimitiveTopology ResourceState)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EShadingRate
 
 enum class EShadingRate
 {
@@ -512,8 +532,6 @@ CONSTEXPR const CHAR* ToString(EShadingRate ShadingRate)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EDescriptorType
 
 enum class EDescriptorType : uint32
 {
@@ -536,21 +554,19 @@ CONSTEXPR const CHAR* ToString(EDescriptorType DescriptorType)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIDescriptorHandle
 
 class FRHIDescriptorHandle
 {
     enum : uint32
     {
-		// Be specific in order to cancel warnings about truncation
+        // Be specific in order to cancel warnings about truncation
         InvalidHandle = ((1 << 24) - 1)
     };
 
 public:
 
     /**
-     * @brief: Default Constructor
+     * @brief - Default Constructor
      */
     FRHIDescriptorHandle()
         : Index(InvalidHandle)
@@ -558,23 +574,23 @@ public:
     { }
 
     /**
-     * @brief: Constructor that creates a descriptor-handle
-     *
-     * @param InType: Type of descriptor
-     * @param InIndex: Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
+     * @brief         - Constructor that creates a descriptor-handle
+     * @param InType  - Type of descriptor
+     * @param InIndex - Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
      */
     FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
         : Index(InIndex)
 	    , Type(InType)
     { }
 
-    /** @return: Returns true if the handle is valid */
+    /** 
+     * @return - Returns true if the handle is valid
+     */
     bool IsValid() const { return (Type != EDescriptorType::Unknown) && (Index != InvalidHandle); }
 
     /**
-     * @brief: Compare two descriptor-handles to see if the reference the same resource
-     *
-     * @return: Returns true if the handles are equal
+     * @brief  - Compare two descriptor-handles to see if the reference the same resource
+     * @return - Returns true if the handles are equal
      */
     bool operator==(const FRHIDescriptorHandle& RHS) const
     {
@@ -582,9 +598,8 @@ public:
     }
 
     /**
-     * @brief: Compare two descriptor-handles to see if the reference the same resource
-     *
-     * @return: Returns false if the handles are equal
+     * @brief  - Compare two descriptor-handles to see if the reference the same resource
+     * @return - Returns false if the handles are equal
      */
     bool operator!=(const FRHIDescriptorHandle& RHS) const
     {
@@ -604,13 +619,11 @@ private:
     };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTextureDepthStencilValue
 
 struct FTextureDepthStencilValue
 {
     /**
-     * @brief: Default Constructor
+     * @brief - Default Constructor
      */
     FTextureDepthStencilValue()
         : Depth(1.0f)
@@ -618,17 +631,18 @@ struct FTextureDepthStencilValue
     { }
 
     /**
-     * @brief: Constructor taking depth and stencil value
-     *
-     * @param InDepth: Depth-value
-     * @param InStencil: Stencil-value
+     * @brief           - Constructor taking depth and stencil value
+     * @param InDepth   - Depth-value
+     * @param InStencil - Stencil-value
      */
     FTextureDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     { }
 
-    /** @return: Returns and calculates the hash for this type */
+    /** 
+     * @return - Returns and calculates the hash for this type
+     */
     uint64 GetHash() const
     {
         uint64 Hash = Stencil;
@@ -637,36 +651,32 @@ struct FTextureDepthStencilValue
     }
 
     /**
-     * @brief: Compare with another instance
-     *
-     * @param RHS: Other instance to compare with
-     * @return: Returns true if the instances are equal
+     * @brief       - Compare with another instance
+     * @param Other - Other instance to compare with
+     * @return      - Returns true if the instances are equal
      */
-    bool operator==(const FTextureDepthStencilValue& RHS) const
+    bool operator==(const FTextureDepthStencilValue& Other) const
     {
-        return (Depth == RHS.Depth) && (Stencil && RHS.Stencil);
+        return (Depth == Other.Depth) && (Stencil && Other.Stencil);
     }
 
     /**
-     * @brief: Compare with another instance
-     *
-     * @param RHS: Other instance to compare with
-     * @return: Returns false if the instances are equal
+     * @brief       - Compare with another instance
+     * @param Other - Other instance to compare with
+     * @return      - Returns false if the instances are equal
      */
-    bool operator!=(const FTextureDepthStencilValue& RHS) const
+    bool operator!=(const FTextureDepthStencilValue& Other) const
     {
-        return !(*this == RHS);
+        return !(*this == Other);
     }
 
-    /** @brief: Value to clear the depth portion of a texture with */
+    /** @brief - Value to clear the depth portion of a texture with */
     float Depth;
 
-    /** @brief: Value to clear the stencil portion of a texture with */
+    /** @brief - Value to clear the stencil portion of a texture with */
     uint8 Stencil;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTextureClearValue
 
 struct FTextureClearValue
 {
@@ -677,7 +687,7 @@ struct FTextureClearValue
     };
 
     /**
-     * @brief: Default Constructor that creates a black clear color
+     * @brief - Default Constructor that creates a black clear color
      */
     FTextureClearValue()
         : Type(EType::Color)
@@ -686,11 +696,10 @@ struct FTextureClearValue
     { }
 
     /**
-     * @brief: Constructor that creates a DepthStencil-ClearValue
-     *
-     * @param InFormat: Format to clear
-     * @param InDepth: Depth-value
-     * @param InStencil: Stencil-value
+     * @brief           - Constructor that creates a DepthStencil-ClearValue
+     * @param InFormat  - Format to clear
+     * @param InDepth   - Depth-value
+     * @param InStencil - Stencil-value
      */
     FTextureClearValue(EFormat InFormat, float InDepth, uint8 InStencil)
         : Type(EType::DepthStencil)
@@ -699,13 +708,12 @@ struct FTextureClearValue
     { }
 
     /**
-     * @brief: Constructor that creates Color-ClearValue
-     *
-     * @param InFormat: Format to clear
-     * @param InR: Red-Channel value
-     * @param InG: Green-Channel value
-     * @param InB: Blue-Channel value
-     * @param InA: Alpha-Channel value
+     * @brief          - Constructor that creates Color-ClearValue
+     * @param InFormat - Format to clear
+     * @param InR      - Red-Channel value
+     * @param InG      - Green-Channel value
+     * @param InB      - Blue-Channel value
+     * @param InA      - Alpha-Channel value
      */
     FTextureClearValue(EFormat InFormat, float InR, float InG, float InB, float InA)
         : Type(EType::Color)
@@ -714,9 +722,8 @@ struct FTextureClearValue
     { }
 
     /**
-     * @brief: Copy-constructor
-     *
-     * @param Other: Instance to copy
+     * @brief       - Copy-constructor
+     * @param Other - Instance to copy
      */
     FTextureClearValue(const FTextureClearValue& Other)
         : Type(Other.Type)
@@ -734,34 +741,46 @@ struct FTextureClearValue
         }
     }
 
-    /** @return: Returns a true if the value is a FloatColor */
+    /** 
+     * @return - Returns a true if the value is a FloatColor
+     */
     bool IsColorValue() const { return (Type == EType::Color); }
 
-    /** @return: Returns a true if the value is a DepthStencilClearValue */
+    /** 
+     * @return - Returns a true if the value is a DepthStencilClearValue 
+     */
     bool IsDepthStencilValue() const { return (Type == EType::DepthStencil); }
 
-    /** @return: Returns a FloatColor */
+    /**
+     * @return - Returns a FloatColor
+     */
     FFloatColor& AsColor()
     {
         CHECK(IsColorValue());
         return ColorValue;
     }
 
-    /** @return: Returns a FloatColor */
+    /**
+     * @return - Returns a FloatColor
+     */
     const FFloatColor& AsColor() const
     {
         CHECK(IsColorValue());
         return ColorValue;
     }
 
-    /** @return: Returns a DepthStencilClearValue */
+    /** 
+     * @return - Returns a DepthStencilClearValue 
+     */
     FTextureDepthStencilValue& AsDepthStencil()
     {
         CHECK(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
-    /** @return: Returns a DepthStencilClearValue */
+    /** 
+     * @return - Returns a DepthStencilClearValue 
+     */
     const FTextureDepthStencilValue& AsDepthStencil() const
     {
         CHECK(IsDepthStencilValue());
@@ -769,80 +788,75 @@ struct FTextureClearValue
     }
 
     /**
-     * @brief: Copy-assignment operator
-     *
-     * @param RHS: Instance to copy
-     * @return: Returns a reference to this instance
+     * @brief       - Copy-assignment operator
+     * @param Other - Instance to copy
+     * @return      - Returns a reference to this instance
      */
-    FTextureClearValue& operator=(const FTextureClearValue& RHS)
+    FTextureClearValue& operator=(const FTextureClearValue& Other)
     {
-        Type = RHS.Type;
-        Format = RHS.Format;
+        Type   = Other.Type;
+        Format = Other.Format;
 
-        if (RHS.IsColorValue())
+        if (Other.IsColorValue())
         {
-            ColorValue = RHS.ColorValue;
+            ColorValue = Other.ColorValue;
         }
         else
         {
-            CHECK(RHS.IsDepthStencilValue());
-            DepthStencilValue = RHS.DepthStencilValue;
+            CHECK(Other.IsDepthStencilValue());
+            DepthStencilValue = Other.DepthStencilValue;
         }
 
         return *this;
     }
 
     /**
-     * @brief: Compare with another instance
-     *
-     * @param RHS: Instance to compare with
-     * @return: Returns true if the instances are equal
+     * @brief       - Compare with another instance
+     * @param Other - Instance to compare with
+     * @return      - Returns true if the instances are equal
      */
-    bool operator==(const FTextureClearValue& RHS) const
+    bool operator==(const FTextureClearValue& Other) const
     {
-        if ((Type != RHS.Type) || (Format != RHS.Format))
+        if ((Type != Other.Type) || (Format != Other.Format))
         {
             return false;
         }
 
         if (IsColorValue())
         {
-            return (ColorValue == RHS.ColorValue);
+            return (ColorValue == Other.ColorValue);
         }
 
         CHECK(IsDepthStencilValue());
-        return (DepthStencilValue == RHS.DepthStencilValue);
+        return (DepthStencilValue == Other.DepthStencilValue);
     }
 
     /**
-     * @brief: Compare with another instance
-     *
-     * @param RHS: Instance to compare with
-     * @return: Returns false if the instances are equal
+     * @brief       - Compare with another instance
+     * @param Other - Instance to compare with
+     * @return      - Returns false if the instances are equal
      */
-    bool operator!=(const FTextureClearValue& RHS) const
+    bool operator!=(const FTextureClearValue& Other) const
     {
-        return !(*this == RHS);
+        return !(*this == Other);
     }
 
-    /** @brief: Type of ClearValue */
+    /** @brief - Type of ClearValue */
     EType Type;
 
-    /** @brief: Format of the ClearValue */
+    /** @brief - Format of the ClearValue */
     EFormat Format;
 
     union
     {
-        /** @brief: Color-value */
+        /** @brief - Color-value */
         FFloatColor ColorValue;
 
-        /** @brief: DepthStencil-value */
+        /** @brief - DepthStencil-value */
         FTextureDepthStencilValue DepthStencilValue;
     };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHICopyBufferInfo
 
 struct FRHICopyBufferInfo
 {
@@ -859,8 +873,6 @@ struct FRHICopyBufferInfo
     uint32 SizeInBytes       = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHICopyTextureSubresourceInfo
 
 struct FRHICopyTextureSubresourceInfo
 {
@@ -879,8 +891,6 @@ struct FRHICopyTextureSubresourceInfo
     uint32 SubresourceIndex = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHICopyTextureInfo
 
 struct FRHICopyTextureInfo
 {

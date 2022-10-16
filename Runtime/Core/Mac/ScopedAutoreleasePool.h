@@ -5,9 +5,6 @@
 
 #define SCOPED_AUTORELEASE_POOL() const FScopedAutoreleasePool STRING_CONCAT(AutoReleasePool_, __LINE__)
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FScopedAutoreleasePool
-
 class FScopedAutoreleasePool
 {
 public:

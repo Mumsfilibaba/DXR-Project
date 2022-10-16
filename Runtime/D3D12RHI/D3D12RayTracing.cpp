@@ -4,21 +4,13 @@
 #include "D3D12Interface.h"
 #include "D3D12RayTracing.h"
 
-#include "RHI/RHIModule.h"
-
 #include "Engine/Assets/MeshFactory.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayTracingGeometry
 
 FD3D12AccelerationStructure::FD3D12AccelerationStructure(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , ResultBuffer(nullptr)
     , ScratchBuffer(nullptr)
 { }
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayTracingGeometry
 
 FD3D12RayTracingGeometry::FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryInitializer& Initializer)
     : FRHIRayTracingGeometry(Initializer)
@@ -27,12 +19,19 @@ FD3D12RayTracingGeometry::FD3D12RayTracingGeometry(FD3D12Device* InDevice, const
     , IndexBuffer(nullptr)
 { }
 
-bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, FD3D12VertexBuffer* InVertexBuffer, FD3D12IndexBuffer* InIndexBuffer, bool bUpdate)
+bool FD3D12RayTracingGeometry::Build(
+    FD3D12CommandContext& CmdContext,
+    FD3D12Buffer* InVertexBuffer,
+    uint32 InNumVertices,
+    FD3D12Buffer* InIndexBuffer,
+    uint32 InNumIndices,
+    EIndexFormat InIndexFormat,
+    bool bUpdate)
 {
     CHECK(VertexBuffer != nullptr);
 
-    VertexBuffer = MakeSharedRef<FD3D12VertexBuffer>(InVertexBuffer);
-    IndexBuffer  = MakeSharedRef<FD3D12IndexBuffer>(InIndexBuffer);
+    VertexBuffer = MakeSharedRef<FD3D12Buffer>(InVertexBuffer);
+    IndexBuffer  = MakeSharedRef<FD3D12Buffer>(InIndexBuffer);
 
     D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc;
     FMemory::Memzero(&GeometryDesc);
@@ -41,15 +40,14 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, FD3D12Ver
     GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
     GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetStride();
     GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
-    GeometryDesc.Triangles.VertexCount                = VertexBuffer->GetNumVertices();
+    GeometryDesc.Triangles.VertexCount                = InNumVertices;
     GeometryDesc.Flags                                = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
     if (IndexBuffer)
     {
-        EIndexFormat IndexFormat           = IndexBuffer->GetFormat();
-        GeometryDesc.Triangles.IndexFormat = IndexFormat == EIndexFormat::uint32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+        GeometryDesc.Triangles.IndexFormat = ConvertIndexFormat(InIndexFormat);
         GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
-        GeometryDesc.Triangles.IndexCount  = IndexBuffer->GetNumIndicies();
+        GeometryDesc.Triangles.IndexCount  = InNumIndices;
     }
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
@@ -222,9 +220,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         SrvDesc.Shader4ComponentMapping                  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
 
-        FD3D12Interface* D3D12CoreInterface = GetDevice()->GetAdapter()->GetD3D12Interface();
-
-        View = dbg_new FD3D12ShaderResourceView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap(), this);
+        View = dbg_new FD3D12ShaderResourceView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap(), this);
         if (!View->AllocateHandle())
         {
             return false;
@@ -513,10 +509,10 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
         GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
         GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
 
-        for (FRHIConstantBuffer* CBuffer : Resources.ConstantBuffers)
+        for (FRHIBuffer* ConstantBuffer : Resources.ConstantBuffers)
         {
-            FD3D12ConstantBuffer* DxConstantBuffer = static_cast<FD3D12ConstantBuffer*>(CBuffer);
-            ResourceHandles[CPUResourceIndex++] = DxConstantBuffer->GetView().GetOfflineHandle();
+            FD3D12Buffer* D3D12ConstantBuffer = static_cast<FD3D12Buffer*>(ConstantBuffer);
+            ResourceHandles[CPUResourceIndex++] = D3D12ConstantBuffer->GetConstantBufferView()->GetOfflineHandle();
         }
     }
     if (!Resources.ShaderResourceViews.IsEmpty())

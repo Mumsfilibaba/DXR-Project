@@ -11,9 +11,6 @@
 
 #include <tiny_obj_loader.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FOBJLoader
-
 bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool ReverseHandedness)
 {
     // Make sure to clear everything

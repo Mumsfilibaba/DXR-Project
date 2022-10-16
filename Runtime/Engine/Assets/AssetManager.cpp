@@ -8,9 +8,6 @@
 
 #include "RHI/RHICommandList.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FAssetManager
-
 FAssetManager* FAssetManager::GInstance = nullptr;
 
 FAssetManager::FAssetManager()

@@ -6,9 +6,6 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTemporalAA
-
 bool FTemporalAA::Init(FFrameResources& FrameResources)
 {
     if (!CreateRenderTarget(FrameResources))

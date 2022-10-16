@@ -10,9 +10,6 @@
 #define MEMORY_STACK_PAGE_SIZE   int32(64 * 1024)
 #define MEMORY_STACK_ZERO_MEMORY (1)
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMemoryStack
-
 class CORE_API FMemoryStack
     : FNonCopyable
 {

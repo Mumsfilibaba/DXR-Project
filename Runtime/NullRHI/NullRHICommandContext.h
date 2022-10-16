@@ -11,9 +11,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHICommandContext
-
 class FNullRHICommandContext final 
     : public IRHICommandContext
 {
@@ -25,9 +22,6 @@ private:
 
 public:
     static FNullRHICommandContext* CreateNullRHIContext() { return dbg_new FNullRHICommandContext(); }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRHICommandContext Interface
 
     virtual void StartContext()  override final { }
     virtual void FinishContext() override final { }
@@ -47,8 +41,8 @@ public:
 
     virtual void SetBlendFactor(const FVector4& Color) override final { }
 
-    virtual void SetVertexBuffers(const TArrayView<FRHIVertexBuffer* const> InVertexBuffers, uint32 BufferSlot) override final { }
-    virtual void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer)                                                   override final { }
+    virtual void SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) override final { }
+    virtual void SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)                        override final { }
 
     virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final { }
 
@@ -63,8 +57,8 @@ public:
     virtual void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)                             override final { }
     virtual void SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex) override final { }
 
-    virtual void SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)                             override final { }
-    virtual void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIConstantBuffer* const> InConstantBuffers, uint32 ParameterIndex) override final { }
+    virtual void SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex)                             override final { }
+    virtual void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex) override final { }
 
     virtual void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)                             override final { }
     virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) override final { }
@@ -82,8 +76,19 @@ public:
 
     virtual void DiscardContents(class FRHITexture* Texture) override final { }
 
-    virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate)       override final { }
-    virtual void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final { }
+    virtual void BuildRayTracingGeometry(
+        FRHIRayTracingGeometry* RayTracingGeometry,
+        FRHIBuffer* VertexBuffer,
+        uint32 NumVertices,
+        FRHIBuffer* IndexBuffer,
+        uint32 NumIndices,
+        EIndexFormat IndexFormat,
+        bool bUpdate) override final { }
+
+    virtual void BuildRayTracingScene(
+        FRHIRayTracingScene* RayTracingScene,
+        const TArrayView<const FRHIRayTracingGeometryInstance>& Instances,
+        bool bUpdate) override final { }
 
     virtual void SetRayTracingBindings(
         FRHIRayTracingScene* RayTracingScene,

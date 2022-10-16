@@ -1,9 +1,6 @@
 #pragma once
 #include "Core/Core.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CoreApplication API
-
 #if MONOLITHIC_BUILD
     #define COREAPPLICATION_API
 #else

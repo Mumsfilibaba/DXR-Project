@@ -5,9 +5,6 @@
 
 #include <imgui.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FFrameProfilerWindow
-
 class FFrameProfilerWindow 
     : public FWindow
 {
@@ -24,13 +21,13 @@ private:
     FFrameProfilerWindow() = default;
     ~FFrameProfilerWindow() = default;
 
-     /** @brief: Draw a simple FPS counter */
+     /** @brief - Draw a simple FPS counter */
     void DrawFPS();
 
-     /** @brief: Draw the profiler window */
+     /** @brief - Draw the profiler window */
     void DrawWindow();
 
-     /** @brief: Draw the CPU data */
+     /** @brief - Draw the CPU data */
     void DrawCPUData(float Width);
 
     ProfileSamplesTable Samples;

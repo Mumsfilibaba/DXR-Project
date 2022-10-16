@@ -5,8 +5,6 @@
 template<typename T>
 using THash = std::hash<T>;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Create and combine hash values
 
 template<typename T, typename THashType = size_t>
 inline void HashCombine(THashType& OutHash, const T& Value)

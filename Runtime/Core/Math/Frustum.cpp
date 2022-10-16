@@ -1,7 +1,5 @@
 #include "Frustum.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Frustum
 
 FFrustum::FFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Projection)
     : Planes()

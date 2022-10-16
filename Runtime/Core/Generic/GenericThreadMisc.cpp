@@ -8,8 +8,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FGenericThreadMisc
 
 FGenericThread* FGenericThreadMisc::CreateThread(FThreadInterface* Runnable)
 {

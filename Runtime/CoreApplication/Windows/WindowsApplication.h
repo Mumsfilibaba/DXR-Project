@@ -12,9 +12,6 @@
 
 #define ENABLE_DPI_AWARENESS (1)
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsMessage
-
 struct FWindowsMessage
 {
     FORCEINLINE FWindowsMessage(
@@ -43,8 +40,6 @@ struct FWindowsMessage
     int32 MouseDeltaY;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// IWindowsMessageListener
 
 struct IWindowsMessageListener
 {
@@ -57,8 +52,6 @@ struct IWindowsMessageListener
     virtual LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam) = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsApplication
 
 class COREAPPLICATION_API FWindowsApplication final 
     : public FGenericApplication

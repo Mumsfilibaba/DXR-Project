@@ -6,9 +6,6 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EWindowsMasks
-
 enum EWindowsMasks : uint32
 {
     ScanCodeMask   = 0x01ff,
@@ -16,8 +13,6 @@ enum EWindowsMasks : uint32
     BackButtonMask = 0x0001
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FPointMessage
 
 struct FPointMessage
 {
@@ -45,8 +40,6 @@ struct FPointMessage
     };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsApplication
 
 FWindowsApplication* WindowsApplication = nullptr;
 

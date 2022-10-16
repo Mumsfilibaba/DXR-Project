@@ -1,8 +1,5 @@
 #pragma once
 #include <Appkit/Appkit.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCocoaWindowView
-
 @interface FCocoaWindowView : NSView<NSTextInputClient>
 @end

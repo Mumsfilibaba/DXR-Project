@@ -1,9 +1,6 @@
 #include "CocoaWindowView.h"
 #include "MacApplication.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCocoaWindowView
-
 @implementation FCocoaWindowView
 
 - (instancetype)initWithFrame:(NSRect)Frame

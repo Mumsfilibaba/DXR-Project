@@ -9,9 +9,6 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRayTracer
-
 bool FRayTracer::Init(FFrameResources& Resources)
 {
     TArray<uint8> Code;

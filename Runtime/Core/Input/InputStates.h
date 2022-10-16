@@ -1,9 +1,6 @@
 #pragma once
 #include "InputCodes.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FKeyState
-
 struct FKeyState
 {
     FORCEINLINE FKeyState(EKey InKeyCode)
@@ -14,24 +11,21 @@ struct FKeyState
         , TimePressed(0.0f)
     { }
 
-    /** The key for this key-state */
+    /** @brief - The key for this key-state */
     const EKey KeyCode;
     
-    /** Indicates if the current state of the key is down */
+    /** @brief - Indicates if the current state of the key is down */
     uint32 IsDown : 1;
     
-    /** Indicates if the last state of the key was down (1) or if it was up (0) */
+    /** @brief - Indicates if the last state of the key was down (1) or if it was up (0) */
     uint32 PreviousState : 1;
     
-    /** If this state is repeated due to the user holding down the key, the repeat-count is increased */
+    /** @brief - If this state is repeated due to the user holding down the key, the repeat-count is increased */
     uint32 RepeatCount : 30;
 
-    /** Time pressed */
+    /** @brief - Time pressed */
     float TimePressed = 0.0f;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMouseButtonState
 
 struct FMouseButtonState
 {
@@ -42,15 +36,15 @@ struct FMouseButtonState
         , TimePressed(0.0f)
     { }
 
-    /** The button associated with this button-state */
+    /** @brief - The button associated with this button-state */
     const EMouseButton Button;
     
-    /** Indicates if the current state of the button is down */
+    /** @brief - Indicates if the current state of the button is down */
     uint32 IsDown : 1;
     
-    /** Indicates if the last state of the button was down (1) or if it was up (0) */
+    /** @brief - Indicates if the last state of the button was down (1) or if it was up (0) */
     uint32 PreviousState : 1;
     
-    /** Time pressed */
+    /** @brief - Time pressed */
     float TimePressed = 0.0f;
 };

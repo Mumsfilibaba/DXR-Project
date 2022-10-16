@@ -3,21 +3,12 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Input/Generic/GenericKeyMapping.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacKeyMapping
 
 class FMacKeyMapping : public FGenericKeyMapping
 {
-    enum
-    {
-        kNumKeys = 256
-    };
+    enum { kNumKeys = 256 };
 
 public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericKeyMapping Interface
-
     static void Initialize();
     
     static FORCEINLINE EKey GetKeyCodeFromScanCode(uint32 ScanCode)
@@ -33,10 +24,9 @@ public:
 public:
 
     /**
-     * @brief: Retrieve the mousebutton-code from mousebutton-index
-     *
-     * @param ButtonIndex: Mousebutton-index for mousebutton-code
-     * @return: Returns a engine mousebutton-code representing the buttonindex
+     * @brief             - Retrieve the mousebutton-code from mousebutton-index
+     * @param ButtonIndex - Mousebutton-index for mousebutton-code
+     * @return            - Returns a engine mousebutton-code representing the buttonindex
      */
     static FORCEINLINE EMouseButton GetButtonFromIndex(uint32 ButtonIndex)
     {
@@ -44,10 +34,9 @@ public:
     }
 
     /**
-     * @brief: Retrieve the mousebutton-code from mousebutton-index
-     *
-     * @param Button: Mousebutton-code for mousebutton index
-     * @return: Returns a mousebutton-index representing the mousebutton-code
+     * @brief        - Retrieve the mousebutton-code from mousebutton-index
+     * @param Button - Mousebutton-code for mousebutton index
+     * @return       - Returns a mousebutton-index representing the mousebutton-code
      */
     static FORCEINLINE uint32 GetButtonFromIndex(EMouseButton Button)
     {
@@ -55,7 +44,6 @@ public:
     }
 
 private:
-
     static TStaticArray<EKey        , kNumKeys>                        KeyCodeFromScanCodeTable;
     static TStaticArray<uint16      , kNumKeys>                        ScanCodeFromKeyCodeTable;
     static TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> ButtonFromButtonIndex;

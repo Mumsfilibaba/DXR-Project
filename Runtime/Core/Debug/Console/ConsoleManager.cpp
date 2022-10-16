@@ -5,9 +5,6 @@
 // TODO: Remove (Make own? Slow?)
 #include <regex>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console commands for the console
-
 FAutoConsoleCommand GClearHistory(
     "ClearHistory",
     FCommandDelegateType::CreateRaw(&FConsoleInterface::Get(), &FConsoleInterface::ClearHistory));
@@ -24,8 +21,6 @@ TAutoConsoleVariable<FString> GEcho(
         }
     }));
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FConsoleManager
 
 void FConsoleManager::RegisterCommand(const FString& Name, IConsoleCommand* Command)
 {

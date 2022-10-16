@@ -14,14 +14,9 @@ class FTexture2D;
 // This is based on the max texture-size 32678
 #define MAX_TEXTURE_MIPS (15)
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedefs
-
 typedef TSharedRef<FTexture>   FTextureResourceRef;
 typedef TSharedRef<FTexture2D> FTextureResource2DRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTextureResourceData 
 
 class ENGINE_API FTextureResourceData
     : public ITextureResourceData
@@ -58,8 +53,6 @@ private:
     int64 TextureDataSlicePitch[MAX_TEXTURE_MIPS];
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTextureResource 
 
 struct ENGINE_API FTexture
     : public FRefCounted
@@ -77,8 +70,6 @@ struct ENGINE_API FTexture
     virtual void SetName(const FString& InName) = 0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTextureResource2D
 
 class ENGINE_API FTexture2D
     : public FTexture

@@ -13,9 +13,6 @@ using TSet = std::set<KeyType, PredicateType>;
 #else
 #include "Iterator.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TSet - Contains unique elements which are stored in a tree structure
-
 template<typename T, typename CompareType>
 class TSet
 {
@@ -72,7 +69,7 @@ public:
     using ConstIteratorType = TTreeIterator<const STreeNode, const ElementType>;
 
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE TSet()
         : RootNode(nullptr)
@@ -82,7 +79,7 @@ public:
     }
 
     /**
-     * @brief: Destructor 
+     * @brief - Destructor 
      */
     FORCEINLINE ~TSet()
     {

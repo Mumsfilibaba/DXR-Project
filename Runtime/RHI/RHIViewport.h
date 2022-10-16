@@ -10,13 +10,7 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedefs
-
 typedef TSharedRef<class FRHIViewport> FRHIViewportRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIViewportInitializer
 
 struct FRHIViewportInitializer
 {
@@ -64,9 +58,6 @@ struct FRHIViewportInitializer
     uint16  Height;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIViewport
-
 class FRHIViewport 
     : public FRHIResource
 {
@@ -78,8 +69,6 @@ protected:
         , Height(Initializer.Height)
     { }
 
-    ~FRHIViewport() = default;
-
 public:
     virtual bool Resize(uint32 InWidth, uint32 InHeight) { return true; }
 
@@ -87,8 +76,8 @@ public:
 
     EFormat GetColorFormat() const { return Format; }
 
-    uint32  GetWidth()       const { return Width;  }
-    uint32  GetHeight()      const { return Height; }
+    uint32 GetWidth()  const { return Width;  }
+    uint32 GetHeight() const { return Height; }
 
 protected:
     EFormat Format;

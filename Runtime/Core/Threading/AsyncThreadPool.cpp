@@ -5,13 +5,8 @@
 #include "Core/Debug/Console/ConsoleInterface.h"
 #include "Core/Platform/PlatformMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-Variables
 
 TAutoConsoleVariable<bool> CVarEnableAsyncWork("Core.EnableAsyncWork", true);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FAsyncThreadPool
 
 FAsyncWorkThread::FAsyncWorkThread()
     : CurrentTask(nullptr)
@@ -122,8 +117,6 @@ void FAsyncWorkThread::Stop()
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FAsyncThreadPool
 
 FAsyncThreadPool* FAsyncThreadPool::GInstance = nullptr;
 

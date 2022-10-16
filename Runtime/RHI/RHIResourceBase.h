@@ -5,9 +5,6 @@
 #include "Core/IRefCounted.h"
 #include "Core/Threading/AtomicInt.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIResource
-
 class RHI_API FRHIResource 
     : public IRefCounted
 {

@@ -11,9 +11,6 @@
 #include "Core/Core.h"
 #include "Core/Memory/Memory.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// DefaultConstructElements
-
 template<typename ElementType, typename SizeType>
 FORCEINLINE void DefaultConstructElements(void* StartAddress, SizeType Count) noexcept
 {
@@ -33,17 +30,12 @@ FORCEINLINE void DefaultConstructElements(void* StartAddress, SizeType Count) no
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// DefaultConstructElement
 
 template<typename ElementType>
 FORCEINLINE void DefaultConstructElement(void* Address) noexcept
 {
     DefaultConstructElements<ElementType>(Address, 1);
 }
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ConstructElementsFrom
 
 template<typename ElementType, typename SizeType>
 FORCEINLINE void ConstructElementsFrom(void* RESTRICT StartAddress, SizeType Count, const ElementType& Element) noexcept
@@ -83,8 +75,6 @@ FORCEINLINE void ConstructElementsFrom(void* RESTRICT StartAddress, SizeType Cou
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CopyConstructElements
 
 template<typename ElementType, typename SizeType>
 FORCEINLINE void CopyConstructElements(void* RESTRICT StartAddress, const ElementType* RESTRICT Source, SizeType Count) noexcept
@@ -106,8 +96,6 @@ FORCEINLINE void CopyConstructElements(void* RESTRICT StartAddress, const Elemen
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CopyConstructElement
 
 template<typename ElementType>
 FORCEINLINE void CopyConstructElement(void* const RESTRICT Address, const ElementType* RESTRICT Source) noexcept
@@ -115,8 +103,6 @@ FORCEINLINE void CopyConstructElement(void* const RESTRICT Address, const Elemen
     CopyConstructElements<ElementType>(Address, Source, 1);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CopyAssignElements
 
 template<typename ElementType, typename SizeType>
 FORCEINLINE void CopyAssignElements(ElementType* RESTRICT Destination, const ElementType* RESTRICT Source, SizeType Count) noexcept
@@ -137,8 +123,6 @@ FORCEINLINE void CopyAssignElements(ElementType* RESTRICT Destination, const Ele
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CopyAssignElement
 
 template<typename ElementType>
 FORCEINLINE void CopyAssignElement(ElementType* RESTRICT Destination, const ElementType* RESTRICT Source) noexcept
@@ -146,8 +130,6 @@ FORCEINLINE void CopyAssignElement(ElementType* RESTRICT Destination, const Elem
     CopyAssignElements<ElementType>(Destination, Source, 1);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MoveConstructElements
 
 template<typename ElementType, typename SizeType>
 FORCEINLINE void MoveConstructElements(void* StartAddress, const ElementType* Source, SizeType Count) noexcept
@@ -169,8 +151,6 @@ FORCEINLINE void MoveConstructElements(void* StartAddress, const ElementType* So
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MoveConstructElement
 
 template<typename ElementType>
 FORCEINLINE void MoveConstructElement(void* StartAddress, const ElementType* Source) noexcept
@@ -178,8 +158,6 @@ FORCEINLINE void MoveConstructElement(void* StartAddress, const ElementType* Sou
     MoveConstructElements<ElementType>(StartAddress, Source, 1);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MoveAssignElements
 
 template<typename ElementType, typename SizeType>
 FORCEINLINE void MoveAssignElements(ElementType* Destination, const ElementType* Source, SizeType Count) noexcept
@@ -200,8 +178,6 @@ FORCEINLINE void MoveAssignElements(ElementType* Destination, const ElementType*
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MoveAssignElement
 
 template<typename ElementType>
 FORCEINLINE void MoveAssignElement(ElementType* Destination, const ElementType* Source) noexcept
@@ -209,8 +185,6 @@ FORCEINLINE void MoveAssignElement(ElementType* Destination, const ElementType* 
     MoveAssignElements<ElementType>(Destination, Source, 1);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// DestroyElements
 
 template<typename ElementType, typename SizeType>
 FORCEINLINE void DestroyElements(ElementType* StartObject, SizeType Count) noexcept
@@ -227,8 +201,6 @@ FORCEINLINE void DestroyElements(ElementType* StartObject, SizeType Count) noexc
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// DestroyElements
 
 template<typename ElementType>
 FORCEINLINE void DestroyElement(ElementType* Object) noexcept
@@ -236,8 +208,6 @@ FORCEINLINE void DestroyElement(ElementType* Object) noexcept
     DestroyElements<ElementType>(Object, 1);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RelocateElements
 
 template<typename ElementType, typename SizeType>
 FORCEINLINE void RelocateElements(void* StartAddress, ElementType* Source, SizeType Count) noexcept
@@ -316,8 +286,6 @@ FORCEINLINE void RelocateElements(void* StartAddress, ElementType* Source, SizeT
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CompareElements
 
 template<typename ElementType, typename SizeType>
 FORCEINLINE bool CompareElements(const ElementType* LHS, const ElementType* RHS, SizeType Count) noexcept
@@ -342,8 +310,6 @@ FORCEINLINE bool CompareElements(const ElementType* LHS, const ElementType* RHS,
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// AssignElements
 
 template<typename ElementType, typename SizeType>
 FORCEINLINE void AssignElements(ElementType* RESTRICT Dst, const ElementType& Element, SizeType Count) noexcept
@@ -363,8 +329,6 @@ FORCEINLINE void AssignElements(ElementType* RESTRICT Dst, const ElementType& El
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// AssignElementsAndReturn
 
 template<typename ElementType, typename SizeType>
 FORCEINLINE ElementType* AssignElementsAndReturn(ElementType* RESTRICT Dst, const ElementType& Element, SizeType Count) noexcept

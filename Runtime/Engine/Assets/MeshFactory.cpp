@@ -3,9 +3,6 @@
 
 #include "Core/Math/MathCommon.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMeshFactory
-
 FMeshData FMeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
 {
     const float HalfWidth  = Width * 0.5f;

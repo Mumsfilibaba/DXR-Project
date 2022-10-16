@@ -10,9 +10,6 @@
 
 #include "CoreApplication/ICursor.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FUser
-
 class APPLICATION_API FUser
 {
     friend class FApplicationInterface;
@@ -115,7 +112,7 @@ public:
 private:
     FUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
 
-     /** @brief: Get the index in the key-state array */
+     /** @brief - Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const
     {
         FKeyState TmpState(KeyCode);
@@ -125,7 +122,7 @@ private:
         });
     }
 
-     /** @brief: Get the index in the key-state array */
+     /** @brief - Get the index in the key-state array */
     FORCEINLINE int32 GetMouseButtonStateIndexFromMouseButton(EMouseButton Button) const
     {
         FMouseButtonState TmpState(Button);

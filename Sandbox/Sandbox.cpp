@@ -18,7 +18,7 @@
 
 #include <Application/ApplicationInterface.h>
 
-#include <InterfaceRenderer/InterfaceRenderer.h>
+#include <ViewportRenderer/ViewportRenderer.h>
 
 // TODO: Custom random
 #include <random>
@@ -43,7 +43,10 @@ bool FSandbox::Init()
     }
 
     // Initialize Scene
-    FActor*         NewActor     = nullptr;
+    MAYBE_UNUSED
+    FActor* NewActor = nullptr;
+    
+    MAYBE_UNUSED
     FMeshComponent* NewComponent = nullptr;
 
     TSharedPtr<FScene> CurrentScene = GEngine->Scene;
@@ -335,6 +338,7 @@ bool FSandbox::Init()
     CurrentScene->AddCamera(CurrentCamera);
 
     // Add PointLight- Source
+    MAYBE_UNUSED
     const float Intensity = 50.0f;
 
 #if LOAD_SPONZA

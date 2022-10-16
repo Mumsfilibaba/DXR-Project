@@ -14,9 +14,6 @@
  * also means that objects can be memmove:ed without issues.
  */
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TIsReallocatable
-
 template<typename T>
 struct TIsReallocatable
 {

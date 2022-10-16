@@ -1,8 +1,5 @@
 #pragma once
 #include "AddReference.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// DeclVal
-
 template<typename T>
 typename TAddReference<T>::RValue DeclVal() noexcept;

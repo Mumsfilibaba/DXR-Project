@@ -7,9 +7,6 @@
 #include <cstdlib>
 #include <sstream>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FConsoleVariable
-
 class FConsoleVariable 
     : public IConsoleVariable
 {
@@ -40,8 +37,6 @@ protected:
     FCVarChangedDelegate ChangedDelegate;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TConsoleVariable - Templated console-variable for storing a specific type of variable
 
 template<typename T>
 class TConsoleVariable 
@@ -107,8 +102,6 @@ private:
     T Value;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Int32 - Specialization
 
 template<>
 inline void TConsoleVariable<int32>::SetString(const FString& InValue)
@@ -131,8 +124,6 @@ inline FString TConsoleVariable<int32>::GetString() const
     return String;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Float - Specialization
 
 template<>
 inline void TConsoleVariable<float>::SetString(const FString& InValue)
@@ -155,8 +146,6 @@ inline FString TConsoleVariable<float>::GetString() const
     return String;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Bool - Specialization
 
 template<>
 inline void TConsoleVariable<bool>::SetString(const FString& InValue)
@@ -195,8 +184,6 @@ inline bool TConsoleVariable<bool>::IsBool() const
     return true;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// String - Specialization
 
 template<>
 inline void TConsoleVariable<FString>::SetInt(int32 InValue)

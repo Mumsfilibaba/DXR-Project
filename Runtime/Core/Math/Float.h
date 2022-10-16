@@ -8,9 +8,6 @@
     #pragma warning(disable : 4556) // Disable "value of intrinsic immediate argument '8' is out of range '0 - 7'"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Constants
-
 #define FP32_HIDDEN_BIT   (0x800000U)
 #define FP32_MAX_EXPONENT (0xff)
 #define FP16_MAX_EXPONENT (0x1f)
@@ -18,40 +15,35 @@
 #define DENORM_EXPONENT   (127 - 15)
 #define MIN_EXPONENT      (DENORM_EXPONENT - 10)
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FFloat64
 
 struct FFloat64
 {
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE FFloat64()
         : Float64(0.0)
     { }
 
     /**
-     * @brief: Construct a Float64 with a double
-     *
-     * @param InFloat64: Value to set the float64 to
+     * @brief           - Construct a Float64 with a double
+     * @param InFloat64 - Value to set the float64 to
      */
     FORCEINLINE FFloat64(double InFloat64)
         : Float64(InFloat64)
     { }
 
     /**
-     * @brief: Copy constructor
-     *
-     * @param Other: Other instance to copy
+     * @brief       - Copy constructor
+     * @param Other - Other instance to copy
      */
     FORCEINLINE FFloat64(const FFloat64& Other)
         : Float64(Other.Float64)
     { }
 
     /**
-     * @brief: Set the instance to a new value
-     *
-     * @param InFloat64: Value to set the float64 to
+     * @brief           - Set the instance to a new value
+     * @param InFloat64 - Value to set the float64 to
      */
     FORCEINLINE void SetFloat(double InFloat64)
     {
@@ -101,8 +93,6 @@ struct FFloat64
 
 MARK_AS_REALLOCATABLE(FFloat64);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FFloat32
 
 struct FFloat32
 {
@@ -166,8 +156,6 @@ struct FFloat32
 
 MARK_AS_REALLOCATABLE(FFloat32);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FFloat16
 
 struct FFloat16
 {

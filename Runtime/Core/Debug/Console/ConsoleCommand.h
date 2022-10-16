@@ -3,9 +3,6 @@
 
 #include "Core/Delegates/MulticastDelegate.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FConsoleCommand - Executes a single function from the console
-
 class FConsoleCommand 
     : public IConsoleCommand
 {

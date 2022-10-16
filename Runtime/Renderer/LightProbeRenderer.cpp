@@ -3,9 +3,6 @@
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FLightProbeRenderer
-
 bool FLightProbeRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameResources)
 {
     if (!CreateSkyLightResources(LightSetup))

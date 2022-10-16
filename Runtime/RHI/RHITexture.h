@@ -18,9 +18,6 @@
 struct ITextureResourceData;
 class FRHIShaderResourceView;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedefs
-
 typedef TSharedRef<class FRHITexture>          FRHITextureRef;
 typedef TSharedRef<class FRHITexture2D>        FRHITexture2DRef;
 typedef TSharedRef<class FRHITexture2DArray>   FRHITexture2DArrayRef;
@@ -28,8 +25,6 @@ typedef TSharedRef<class FRHITextureCube>      FRHITextureCubeRef;
 typedef TSharedRef<class FRHITextureCubeArray> FRHITextureCubeArrayRef;
 typedef TSharedRef<class FRHITexture3D>        FRHITexture3DRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ETextureUsageFlags
 
 enum class ETextureUsageFlags
 {
@@ -54,8 +49,6 @@ enum class ETextureUsageFlags
 
 ENUM_CLASS_OPERATORS(ETextureUsageFlags);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITextureInitializer
 
 struct FRHITextureInitializer
 {
@@ -124,8 +117,6 @@ struct FRHITextureInitializer
     uint8                 NumMips;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITexture2DInitializer
 
 struct FRHITexture2DInitializer 
     : public FRHITextureInitializer
@@ -176,8 +167,6 @@ struct FRHITexture2DInitializer
     uint8  NumSamples;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITexture2DArrayInitializer
 
 struct FRHITexture2DArrayInitializer
     : public FRHITexture2DInitializer
@@ -215,8 +204,6 @@ struct FRHITexture2DArrayInitializer
     uint16 ArraySize;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITextureCubeInitializer
 
 struct FRHITextureCubeInitializer
     : public FRHITextureInitializer
@@ -257,8 +244,6 @@ struct FRHITextureCubeInitializer
     uint16 Extent;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITextureCubeArrayInitializer
 
 struct FRHITextureCubeArrayInitializer
     : public FRHITextureCubeInitializer
@@ -295,8 +280,6 @@ struct FRHITextureCubeArrayInitializer
     uint16 ArraySize;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITexture3DInitializer
 
 struct FRHITexture3DInitializer
     : public FRHITextureInitializer
@@ -342,8 +325,6 @@ struct FRHITexture3DInitializer
     uint16 Depth;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITexture
 
 class FRHITexture 
     : public FRHIResource
@@ -403,8 +384,6 @@ protected:
     FTextureClearValue ClearValue;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITexture2D
 
 class FRHITexture2D 
     : public FRHITexture
@@ -421,10 +400,6 @@ protected:
     }
 
 public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
-
     virtual FRHITexture2D* GetTexture2D() override { return this; }
 
     virtual FIntVector3 GetExtent() const override { return FIntVector3(Width, Height, 1); }
@@ -442,8 +417,6 @@ protected:
     uint16 Height;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITexture2DArray
 
 class FRHITexture2DArray 
     : public FRHITexture2D
@@ -457,10 +430,6 @@ protected:
     }
 
 public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
-
     virtual FRHITexture2D*      GetTexture2D()      override final { return nullptr; }
     virtual FRHITexture2DArray* GetTexture2DArray() override final { return this; }
 
@@ -472,8 +441,6 @@ protected:
     uint16 ArraySize;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITextureCube
 
 class FRHITextureCube 
     : public FRHITexture
@@ -488,10 +455,6 @@ protected:
     }
 
 public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
-
     virtual FRHITextureCube* GetTextureCube() override { return this; }
 
     virtual FIntVector3 GetExtent() const override { return FIntVector3(Extent, Extent, 1); }
@@ -506,8 +469,6 @@ protected:
     uint16 Extent;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITextureCubeArray
 
 class FRHITextureCubeArray 
     : public FRHITextureCube
@@ -521,10 +482,6 @@ protected:
     }
 
 public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
-
     virtual FRHITextureCube*      GetTextureCube()      override final { return nullptr; }
     virtual FRHITextureCubeArray* GetTextureCubeArray() override final { return this; }
 
@@ -536,8 +493,6 @@ protected:
     uint16 ArraySize;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHITexture3D
 
 class FRHITexture3D 
     : public FRHITexture
@@ -555,10 +510,6 @@ protected:
     }
 
 public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHITexture Interface
-
     virtual FRHITexture3D* GetTexture3D() override { return this; }
 
     virtual FIntVector3 GetExtent() const override final { return FIntVector3(Width, Height, Depth); }

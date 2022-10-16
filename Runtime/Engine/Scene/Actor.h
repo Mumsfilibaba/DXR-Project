@@ -76,56 +76,48 @@ private:
 class FScene;
 class FComponent;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FActor
-
 class ENGINE_API FActor 
     : public FCoreObject
 {
     CORE_OBJECT(FActor, FCoreObject);
 
 public:
-    FActor(class FScene* InSceneOwner);
+    FActor(FScene* InSceneOwner);
     ~FActor();
 
     /**
-     * @brief: Start actor, called in the beginning of the run, perform initialization here
+     * @brief - Start actor, called in the beginning of the run, perform initialization here
      */
     virtual void Start();
 
     /**
-     * @brief: Tick component, should be called once every frame
-     *
-     * @param DeltaTime: Time since the last call to tick
+     * @brief           - Tick component, should be called once every frame
+     * @param DeltaTime - Time since the last call to tick
      */
     virtual void Tick(FTimespan DeltaTime);
 
     /**
-     * @brief: Add a new component to the actor 
-     * 
-     * @param InComponent: Component to add to the Actor
+     * @brief             - Add a new component to the actor 
+     * @param InComponent - Component to add to the Actor
      */
     void AddComponent(FComponent* InComponent);
 
     /**
-     * @brief: Set name of the actor 
-     * 
-     * @param InName: Name of the actor
+     * @brief        - Set name of the actor 
+     * @param InName - Name of the actor
      */
     void SetName(const FString& InName);
 
     /**
-     * @brief: Check if the actor has a component of the component-class 
-     * 
-     * @param ComponentClass: ClassObject to of the component to retrieve 
-     * @return: Returns true if the actor contains a component of a certain type
+     * @brief                - Check if the actor has a component of the component-class 
+     * @param ComponentClass - ClassObject to of the component to retrieve 
+     * @return               - Returns true if the actor contains a component of a certain type
      */
     bool HasComponentOfClass(class FClassType* ComponentClass) const;
 
     /**
-     * @brief: Check if the actor has a component of the component-class
-     *
-     * @return: Returns true if the actor contains a component of a certain type
+     * @brief  - Check if the actor has a component of the component-class
+     * @return - Returns true if the actor contains a component of a certain type
      */
     template<typename ComponentType>
     inline bool HasComponentOfType() const
@@ -134,17 +126,15 @@ public:
     }
 
     /**
-     * @brief: Retrieve a component from the actor of the component-class 
-     * 
-     * @param ComponentClass: ClassObject to of the component to retrieve
-     * @return: Returns a pointer to the requested component, or nullptr if no component of the type exist
+     * @brief                - Retrieve a component from the actor of the component-class 
+     * @param ComponentClass - ClassObject to of the component to retrieve
+     * @return               - Returns a pointer to the requested component, or nullptr if no component of the type exist
      */
     FComponent* GetComponentOfClass(class FClassType* ComponentClass) const;
 
     /**
-     * @brief: Retrieve a component from the actor of the component-class
-     *
-     * @return: Returns a pointer to the requested component, or nullptr if no component of the type exist
+     * @brief  - Retrieve a component from the actor of the component-class
+     * @return - Returns a pointer to the requested component, or nullptr if no component of the type exist
      */
     template <typename ComponentType>
     inline ComponentType* GetComponentOfType() const
@@ -153,9 +143,8 @@ public:
     }
 
     /**
-     * @brief: Set the transform of the actor
-     * 
-     * @param InTransform: New transform of the actor
+     * @brief             - Set the transform of the actor
+     * @param InTransform - New transform of the actor
      */
     FORCEINLINE void SetTransform(const FActorTransform& InTransform)
     {
@@ -163,9 +152,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the name of the actor
-     * 
-     * @return: Returns the name of the actor
+     * @brief  - Retrieve the name of the actor
+     * @return - Returns the name of the actor
      */
     FORCEINLINE const FString& GetName() const
     {
@@ -173,9 +161,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the Scene that owns the actor
-     *
-     * @return: Returns the Scene that owns the actor
+     * @brief  - Retrieve the Scene that owns the actor
+     * @return - Returns the Scene that owns the actor
      */
     FORCEINLINE FScene* GetScene() const
     {
@@ -183,9 +170,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the transform of the actor
-     *
-     * @return: Returns the transform of the actor
+     * @brief  - Retrieve the transform of the actor
+     * @return - Returns the transform of the actor
      */
     FORCEINLINE FActorTransform& GetTransform()
     {
@@ -193,9 +179,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the transform of the actor
-     *
-     * @return: Returns the transform of the actor
+     * @brief  - Retrieve the transform of the actor
+     * @return - Returns the transform of the actor
      */
     FORCEINLINE const FActorTransform& GetTransform() const
     {
@@ -203,9 +188,8 @@ public:
     }
 
     /**
-     * @brief: Check if Start should be called on the component
-     *
-     * @return: Returns true if the component's Start-method should be called
+     * @brief  - Check if Start should be called on the component
+     * @return - Returns true if the component's Start-method should be called
      */
     FORCEINLINE bool IsStartable() const
     {
@@ -213,9 +197,8 @@ public:
     }
 
     /**
-     * @brief: Check if Tick should be called on the component
-     *
-     * @return: Returns true if the component's Tick-method should be called
+     * @brief  - Check if Tick should be called on the component
+     * @return - Returns true if the component's Tick-method should be called
      */
     FORCEINLINE bool IsTickable() const
     {

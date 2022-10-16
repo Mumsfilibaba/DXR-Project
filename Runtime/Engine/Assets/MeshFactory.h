@@ -3,9 +3,6 @@
 
 #include "Core/Core.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMeshFactory
-
 struct ENGINE_API FMeshFactory
 {
     static FMeshData CreateCube(float Width = 1.0f, float Height = 1.0f, float Depth = 1.0f) noexcept;

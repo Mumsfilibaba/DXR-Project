@@ -112,7 +112,10 @@ void FScene::AddMeshComponent(FMeshComponent* Component)
     Command.CurrentActor = Component->GetActor();
     Command.Geometry     = Component->Mesh->RTGeometry.Get();
     Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();
+    Command.NumVertices  = Component->Mesh->VertexCount;
     Command.IndexBuffer  = Component->Mesh->IndexBuffer.Get();
+    Command.NumIndices   = Component->Mesh->IndexCount;
+    Command.IndexFormat  = Component->Mesh->IndexFormat;
     Command.Material     = Component->Material.Get();
     Command.Mesh         = Component->Mesh.Get();
     MeshDrawCommands.Push(Command);

@@ -4,9 +4,6 @@
 
 #include "Engine/Assets/SceneData.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EFBXFlags - Flags for loading
-
 enum EFBXFlags : uint8
 {
     FBXFlags_None             = 0,
@@ -15,9 +12,6 @@ enum EFBXFlags : uint8
 
     FBXFlags_Default = FBXFlags_EnsureLeftHanded
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FFBXLoader
 
 // TODO: Extend to save as well? 
 class ENGINE_API FFBXLoader

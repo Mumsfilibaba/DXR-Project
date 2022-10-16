@@ -2,8 +2,6 @@
 #include "Delegate.h"
 #include "MulticastDelegateBase.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* Macros for declaring multi-cast delegate types */
 
 #define DECLARE_MULTICAST_DELEGATE(DelegateName, ...)                          \
     /* The type pf delegates that will be executed by the multicast-delegate*/ \
@@ -14,8 +12,6 @@
     {                                                                          \
     };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TMulticastDelegate
 
 template<typename... ArgTypes>
 class TMulticastDelegate 
@@ -55,17 +51,16 @@ private:
 public:
 
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE TMulticastDelegate()
         : Super()
     { }
 
     /**
-     * @brief: Add a function to the delegate
-     *
-     * @param Function: Function to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief          - Add a function to the delegate
+     * @param Function - Function to bind to the delegate
+     * @param Payload  - Arguments to bind to the delegate
      */
     template<typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddStatic(FunctionType<PayloadTypes...> Function, PayloadTypes... Payload)
@@ -74,11 +69,10 @@ public:
     }
 
     /**
-     * @brief: Add a member-function to the delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief          - Add a member-function to the delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to the delegate
+     * @param Payload  - Arguments to bind to the delegate
      */
     template<typename InstanceType, typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddRaw(InstanceType* This, MemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -87,11 +81,10 @@ public:
     }
 
     /**
-     * @brief: Add a member-function to the delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief          - Add a member-function to the delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to the delegate
+     * @param Payload  - Arguments to bind to the delegate
      */
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddRaw(InstanceType* This, MemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -100,11 +93,10 @@ public:
     }
 
     /**
-     * @brief: Add a const member-function to the delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief          - Add a const member-function to the delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to the delegate
+     * @param Payload  - Arguments to bind to the delegate
      */
     template<typename InstanceType, typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddRaw(InstanceType* This, ConstMemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -113,11 +105,10 @@ public:
     }
 
     /**
-     * @brief: Add a const member-function to the delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief          - Add a const member-function to the delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to the delegate
+     * @param Payload  - Arguments to bind to the delegate
      */
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddRaw(InstanceType* This, ConstMemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -126,10 +117,9 @@ public:
     }
 
     /**
-     * @brief: Bind a lambda to the delegate
-     *
-     * @param Functor: Functor to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief         - Bind a lambda to the delegate
+     * @param Functor - Functor to bind to the delegate
+     * @param Payload - Arguments to bind to the delegate
      */
     template<typename FunctorType, typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddLambda(FunctorType Functor, PayloadTypes... Payload)
@@ -138,10 +128,9 @@ public:
     }
 
     /**
-     * @brief: Add any delegate
-     * 
-     * @param Delegate: Delegate to add
-     * @return: Returns the delegate-handle of the added delegate
+     * @brief          - Add any delegate
+     * @param Delegate - Delegate to add
+     * @return         - Returns the delegate-handle of the added delegate
      */
     FORCEINLINE FDelegateHandle Add(const DelegateType& Delegate)
     {
@@ -149,9 +138,8 @@ public:
     }
 
     /**
-     * @brief: Execute all bound delegates
-     * 
-     * @param Args: Arguments for the function-calls
+     * @brief      - Execute all bound delegates
+     * @param Args - Arguments for the function-calls
      */
     FORCEINLINE void Broadcast(ArgTypes... Args)
     {

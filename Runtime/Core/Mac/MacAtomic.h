@@ -1,8 +1,6 @@
 #pragma once
 #include "Core/Generic/GenericAtomic.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacAtomic
 
 struct FMacAtomic final 
     : public FGenericAtomic

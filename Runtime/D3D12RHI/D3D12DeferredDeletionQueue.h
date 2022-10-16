@@ -4,9 +4,6 @@
 #include "Core/Containers/Queue.h"
 #include "Core/Platform/CriticalSection.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12DeferredDeletionQueue
-
 class FD3D12DeferredDeletionQueue
     : public FD3D12DeviceChild
 {

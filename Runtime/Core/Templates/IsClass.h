@@ -1,10 +1,7 @@
 #pragma once
-#include "Core/CoreTypes.h"
-
 #include "IsUnion.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TIsClass
+#include "Core/CoreTypes.h"
 
 template<typename T>
 struct TIsClass

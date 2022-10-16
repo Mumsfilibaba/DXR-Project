@@ -8,13 +8,7 @@
 
 RHI_API FRHICommandListExecutor GRHICommandExecutor;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-Variables
-
 TAutoConsoleVariable<bool> CVarEnableRHIThread("RHI.EnableRHIThread", true);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIThread
 
 FRHIThread* FRHIThread::GInstance = nullptr;
 
@@ -159,8 +153,6 @@ void FRHIThread::WaitForOutstandingTasks()
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHICommandListExecutor
 
 FRHICommandListExecutor::FRHICommandListExecutor()
     : Statistics()

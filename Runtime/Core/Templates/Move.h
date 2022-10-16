@@ -8,9 +8,6 @@
 
 /** Move an object by converting it into a r-value */
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Move
-
 template<typename T>
 CONSTEXPR typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
 {
@@ -18,9 +15,6 @@ CONSTEXPR typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
 }
 
 /** Forward an object by converting it into a rvalue from an l-value */
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Forward
 
 template<typename T>
 CONSTEXPR T&& Forward(typename TRemoveReference<T>::Type& Value) noexcept
@@ -44,8 +38,6 @@ FORCEINLINE typename TEnableIf<TNot<TIsConst<T>>::Value>::Type Swap(T& LHS, T& R
     RHS = Move(TempElement);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ExpandPacks
 
 template<typename... Packs>
 inline void ExpandPacks(Packs&&...)

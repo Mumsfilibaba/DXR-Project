@@ -3,9 +3,6 @@
 #include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMesh
-
 bool FMesh::Init(const FMeshData& Data)
 {
     const bool bRTOn = RHISupportsRayTracing();
@@ -13,12 +10,14 @@ bool FMesh::Init(const FMeshData& Data)
     VertexCount = static_cast<uint32>(Data.Vertices.GetSize());
     IndexCount  = static_cast<uint32>(Data.Indices.GetSize());
 
-    const EBufferUsageFlags BufferFlags = bRTOn ? (EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default) : EBufferUsageFlags::Default;
+    const EBufferUsageFlags BufferFlags = bRTOn ? (EBufferUsageFlags::ShaderResource | EBufferUsageFlags::Default) : EBufferUsageFlags::Default;
 
-    FRHIBufferDataInitializer InitialData(Data.Vertices.GetData(), Data.Vertices.SizeInBytes());
-    
-    FRHIVertexBufferInitializer VBInitializer(BufferFlags, VertexCount, sizeof(FVertex), EResourceAccess::VertexAndConstantBuffer, &InitialData);
-    VertexBuffer = RHICreateVertexBuffer(VBInitializer);
+    FRHIBufferDesc VBDesc(
+        VertexCount * sizeof(FVertex),
+        sizeof(FVertex),
+        BufferFlags | EBufferUsageFlags::VertexBuffer);
+
+    VertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, Data.Vertices.GetData());
     if (!VertexBuffer)
     {
         return false;
@@ -28,9 +27,13 @@ bool FMesh::Init(const FMeshData& Data)
         VertexBuffer->SetName("VertexBuffer");
     }
 
+    // If we can get away with 16-bit indices, store them in this array
     TArray<uint16> NewIndicies;
+    
+    // Initial data
+    const void* InitialIndicies = nullptr;
 
-    const EIndexFormat IndexFormat = (IndexCount < TNumericLimits<uint16>::Max()) && (!bRTOn) ? EIndexFormat::uint16 : EIndexFormat::uint32;
+    IndexFormat = ((IndexCount < TNumericLimits<uint16>::Max()) && !bRTOn) ? EIndexFormat::uint16 : EIndexFormat::uint32;
     if (IndexFormat == EIndexFormat::uint16)
     {
         NewIndicies.Reserve(Data.Indices.GetSize());
@@ -40,15 +43,19 @@ bool FMesh::Init(const FMeshData& Data)
             NewIndicies.Emplace(uint16(Index));
         }
 
-        InitialData = FRHIBufferDataInitializer(NewIndicies.GetData(), NewIndicies.SizeInBytes());
+        InitialIndicies = NewIndicies.GetData();
     }
     else
     {
-        InitialData = FRHIBufferDataInitializer(Data.Indices.GetData(), Data.Indices.SizeInBytes());
+        InitialIndicies = Data.Indices.GetData();
     }
 
-    FRHIIndexBufferInitializer IndexBufferInitializer(BufferFlags, IndexFormat, IndexCount, EResourceAccess::IndexBuffer, &InitialData);
-    IndexBuffer = RHICreateIndexBuffer(IndexBufferInitializer);
+    FRHIBufferDesc IBDesc(
+        IndexCount * GetStrideFromIndexFormat(IndexFormat),
+        GetStrideFromIndexFormat(IndexFormat),
+        BufferFlags | EBufferUsageFlags::IndexBuffer);
+
+    IndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, InitialIndicies);
     if (!IndexBuffer)
     {
         return false;
@@ -60,7 +67,14 @@ bool FMesh::Init(const FMeshData& Data)
 
     if (bRTOn)
     {
-        FRHIRayTracingGeometryInitializer GeometryInitializer(VertexBuffer.Get(), IndexBuffer.Get(), EAccelerationStructureBuildFlags::None);
+        FRHIRayTracingGeometryInitializer GeometryInitializer(
+            VertexBuffer.Get(),
+            VertexCount,
+            IndexBuffer.Get(),
+            IndexCount,
+            IndexFormat,
+            EAccelerationStructureBuildFlags::None);
+
         RTGeometry = RHICreateRayTracingGeometry(GeometryInitializer);
         if (!RTGeometry)
         {
@@ -92,7 +106,15 @@ bool FMesh::Init(const FMeshData& Data)
 
 bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
 {
-    CommandList.BuildRayTracingGeometry(RTGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), true);
+    CommandList.BuildRayTracingGeometry(
+        RTGeometry.Get(),
+        VertexBuffer.Get(),
+        VertexCount,
+        IndexBuffer.Get(),
+        IndexCount,
+        IndexFormat,
+        true);
+
     return true;
 }
 

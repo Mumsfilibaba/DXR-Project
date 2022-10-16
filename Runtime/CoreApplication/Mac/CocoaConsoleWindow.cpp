@@ -3,9 +3,6 @@
 
 #include "Core/Mac/Mac.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCocoaConsoleWindow
-
 @implementation FCocoaConsoleWindow
 
 - (instancetype) init:(FMacOutputDeviceConsole*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag

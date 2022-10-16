@@ -8,9 +8,6 @@
 
 class FD3D12CommandBatch;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TD3D12ViewCache
-
 template <typename ViewType, D3D12_DESCRIPTOR_HEAP_TYPE HeapType, uint32 kDescriptorTableSize>
 class TD3D12ViewCache
 {
@@ -99,15 +96,11 @@ public:
     bool bDirty[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
 using FD3D12ConstantBufferViewCache  = TD3D12ViewCache<FD3D12ConstantBufferView , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT>;
 using FD3D12ShaderResourceViewCache  = TD3D12ViewCache<FD3D12ShaderResourceView , D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT>;
 using FD3D12UnorderedAccessViewCache = TD3D12ViewCache<FD3D12UnorderedAccessView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT>;
 using FD3D12SamplerStateCache        = TD3D12ViewCache<FD3D12SamplerState       , D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER    , D3D12_DEFAULT_SAMPLER_STATE_COUNT>;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12PipelineStageMask
 
 struct FD3D12PipelineStageMask
 {
@@ -153,7 +146,7 @@ struct FD3D12PipelineStageMask
     CONSTEXPR bool CheckShaderVisibility(EShaderVisibility ShaderVisibility) const
     {
         const uint8 Flag = (1 << ShaderVisibility);
-        return (*GetClassAsData<const uint8>(this)) & Flag;
+        return (*GetAsBytes<const uint8>(this)) & Flag;
     }
 
     CONSTEXPR bool operator==(FD3D12PipelineStageMask RHS) const
@@ -180,8 +173,6 @@ struct FD3D12PipelineStageMask
     uint8 PixelStage    : 1;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12VertexBufferCache
 
 struct FD3D12VertexBufferCache
 {
@@ -205,8 +196,6 @@ struct FD3D12VertexBufferCache
     FD3D12Resource*          VBResources[D3D12_MAX_VERTEX_BUFFER_SLOTS];
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12IndexBufferCache
 
 struct FD3D12IndexBufferCache
 {
@@ -230,8 +219,6 @@ struct FD3D12IndexBufferCache
     FD3D12Resource*         IBResource;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RenderTargetViewCache
 
 struct FD3D12RenderTargetViewCache
 {
@@ -258,28 +245,13 @@ struct FD3D12RenderTargetViewCache
     uint32                  NumRenderTargets;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ConstantBufferCache
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TD3D12ResourceViewCache
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12SamplerStateCache
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12DescriptorCache
 
 class FD3D12DescriptorCache 
     : public FD3D12DeviceChild
 {
 public:
     FD3D12DescriptorCache(FD3D12Device* Device);
-    
-    ~FD3D12DescriptorCache()
-    {
-        SAFE_DELETE(NullCBV);
-    }
+    ~FD3D12DescriptorCache() = default;
 
     bool Initialize();
 
@@ -302,7 +274,7 @@ public:
     {
         if (!Descriptor)
         {
-            Descriptor = NullCBV;
+            Descriptor = NullCBV.Get();
         }
 
         ConstantBufferViewCache.BindView(Visibility, Descriptor, ShaderRegister);
@@ -400,7 +372,7 @@ private:
 
     ID3D12DescriptorHeap*          PreviousDescriptorHeaps[2] = { nullptr, nullptr };
 
-    FD3D12ConstantBufferView*      NullCBV;
+    FD3D12ConstantBufferViewRef    NullCBV;
     FD3D12ShaderResourceViewRef    NullSRV;
     FD3D12UnorderedAccessViewRef   NullUAV;
     FD3D12RenderTargetViewRef      NullRTV;
@@ -414,8 +386,6 @@ private:
     UINT RangeSizes[D3D12_CACHED_DESCRIPTORS_COUNT];
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ShaderConstantsCache
 
 class FD3D12ShaderConstantsCache
 {

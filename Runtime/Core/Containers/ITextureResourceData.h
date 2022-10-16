@@ -1,9 +1,6 @@
 #pragma once
 #include "Core/Core.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ITextureResourceData
-
 struct ITextureResourceData
 {
     virtual ~ITextureResourceData() = default;

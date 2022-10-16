@@ -1,9 +1,6 @@
 #pragma once
 #include "Or.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TIsLValueReference
-
 template<typename T>
 struct TIsLValueReference
 {
@@ -16,9 +13,6 @@ struct TIsLValueReference<T&>
     enum { Value = true };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TIsRValueReference
-
 template<typename T>
 struct TIsRValueReference
 {
@@ -30,9 +24,6 @@ struct TIsRValueReference<T&&>
 {
     enum { Value = true };
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TIsReference
 
 template<typename T>
 struct TIsReference

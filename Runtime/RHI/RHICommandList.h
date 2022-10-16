@@ -1,5 +1,5 @@
 #pragma once
-#include "RHIModule.h"
+#include "RHIInterface.h"
 #include "RHIResources.h"
 #include "RHICommands.h"
 #include "RHITimestampQuery.h"
@@ -25,9 +25,6 @@ class FRHIViewport;
     #define INSERT_DEBUG_CMDLIST_MARKER(CommandList, MarkerString)
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHICommandStatistics
-
 struct FRHICommandStatistics
 {
     FORCEINLINE FRHICommandStatistics()
@@ -48,8 +45,6 @@ struct FRHICommandStatistics
     uint32 NumCommands;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHICommandList
 
 class RHI_API FRHICommandList 
     : FNonCopyable
@@ -246,26 +241,22 @@ public:
 
     FORCEINLINE void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) noexcept
     {
-        CHECK(RenderTargetView.Texture != nullptr);
         EmplaceCommand<FRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
 
     FORCEINLINE void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) noexcept
     {
-        CHECK(DepthStencilView.Texture != nullptr);
         EmplaceCommand<FRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
     }
 
     FORCEINLINE void ClearUnorderedAccessView(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) noexcept
     {
-        CHECK(UnorderedAccessView != nullptr);
         EmplaceCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
 
     FORCEINLINE void BeginRenderPass(const FRHIRenderPassInitializer& RenderPassInitializer) noexcept
     {
         CHECK(bIsRenderPassActive == false);
-
         EmplaceCommand<FRHICommandBeginRenderPass>(RenderPassInitializer);
         bIsRenderPassActive = true;
     }
@@ -273,7 +264,6 @@ public:
     FORCEINLINE void EndRenderPass() noexcept
     {
         CHECK(bIsRenderPassActive == true);
-
         EmplaceCommand<FRHICommandEndRenderPass>();
         bIsRenderPassActive = false;
     }
@@ -293,15 +283,15 @@ public:
         EmplaceCommand<FRHICommandSetBlendFactor>(Color);
     }
 
-    FORCEINLINE void SetVertexBuffers(const TArrayView<FRHIVertexBuffer* const> InVertexBuffers, uint32 BufferSlot) noexcept
+    FORCEINLINE void SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) noexcept
     {
-        TArrayView<FRHIVertexBuffer* const> VertexBuffers = AllocateArray(InVertexBuffers);
+        TArrayView<FRHIBuffer* const> VertexBuffers = AllocateArray(InVertexBuffers);
         EmplaceCommand<FRHICommandSetVertexBuffers>(VertexBuffers, BufferSlot);
     }
 
-    FORCEINLINE void SetIndexBuffer(FRHIIndexBuffer* IndexBuffer) noexcept
+    FORCEINLINE void SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) noexcept
     {
-        EmplaceCommand<FRHICommandSetIndexBuffer>(IndexBuffer);
+        EmplaceCommand<FRHICommandSetIndexBuffer>(IndexBuffer, IndexFormat);
     }
 
     FORCEINLINE void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) noexcept
@@ -321,12 +311,11 @@ public:
 
     FORCEINLINE void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) noexcept
     {
-        CHECK(Num32BitConstants <= kRHIMaxShaderConstants);
-
         const int32 Size = Num32BitConstants * sizeof(uint32);
         void* SourceData = Allocate(Size, alignof(uint32));
         FMemory::Memcpy(SourceData, Shader32BitConstants, Size);
 
+        CHECK(Num32BitConstants <= kRHIMaxShaderConstants);
         EmplaceCommand<FRHICommandSet32BitShaderConstants>(Shader, SourceData, Num32BitConstants);
     }
 
@@ -352,14 +341,14 @@ public:
         EmplaceCommand<FRHICommandSetUnorderedAccessViews>(Shader, UnorderedAccessViews, ParameterIndex);
     }
 
-    FORCEINLINE void SetConstantBuffer(FRHIShader* Shader, FRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex) noexcept
     {
         EmplaceCommand<FRHICommandSetConstantBuffer>(Shader, ConstantBuffer, ParameterIndex);
     }
 
-    FORCEINLINE void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIConstantBuffer* const> InConstantBuffers, uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex) noexcept
     {
-        TArrayView<FRHIConstantBuffer* const> ConstantBuffers = AllocateArray(InConstantBuffers);
+        TArrayView<FRHIBuffer* const> ConstantBuffers = AllocateArray(InConstantBuffers);
         EmplaceCommand<FRHICommandSetConstantBuffers>(Shader, ConstantBuffers, ParameterIndex);
     }
 
@@ -390,10 +379,9 @@ public:
         uint32 InSrcRowPitch) noexcept
     {
         const uint32 SizeInBytes = InSrcRowPitch * Height;
-
+        
         void* SrcData = Allocate(SizeInBytes, alignof(uint8));
         FMemory::Memcpy(SrcData, InSrcData, SizeInBytes);
-
         EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, Width, Height, MipLevel, SrcData, InSrcRowPitch);
     }
 
@@ -427,15 +415,25 @@ public:
         EmplaceCommand<FRHICommandDiscardContents>(Texture);
     }
 
-    FORCEINLINE void BuildRayTracingGeometry(FRHIRayTracingGeometry* Geometry, FRHIVertexBuffer* VertexBuffer, FRHIIndexBuffer* IndexBuffer, bool bUpdate) noexcept
+    FORCEINLINE void BuildRayTracingGeometry(
+        FRHIRayTracingGeometry* RayTracingGeometry,
+        FRHIBuffer* VertexBuffer,
+        uint32 NumVertices,
+        FRHIBuffer* IndexBuffer,
+        uint32 NumIndices,
+        EIndexFormat IndexFormat,
+        bool bUpdate) noexcept
     {
-        CHECK((Geometry != nullptr) && (!bUpdate || (bUpdate && IsEnumFlagSet(Geometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))));
-        EmplaceCommand<FRHICommandBuildRayTracingGeometry>(Geometry, VertexBuffer, IndexBuffer, bUpdate);
+        CHECK(!bUpdate || (bUpdate && RayTracingGeometry && IsEnumFlagSet(RayTracingGeometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
+        EmplaceCommand<FRHICommandBuildRayTracingGeometry>(RayTracingGeometry, VertexBuffer, NumVertices, IndexBuffer, NumIndices, IndexFormat, bUpdate);
     }
 
-    FORCEINLINE void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance> Instances, bool bUpdate) noexcept
+    FORCEINLINE void BuildRayTracingScene(
+        FRHIRayTracingScene* Scene,
+        const TArrayView<const FRHIRayTracingGeometryInstance> Instances,
+        bool bUpdate) noexcept
     {
-        CHECK((Scene != nullptr) && (!bUpdate || (bUpdate && IsEnumFlagSet(Scene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))));
+        CHECK(!bUpdate || (bUpdate && Scene && IsEnumFlagSet(Scene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
         EmplaceCommand<FRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);
     }
 
@@ -505,29 +503,23 @@ public:
 
     FORCEINLINE void Draw(uint32 VertexCount, uint32 StartVertexLocation) noexcept
     {
-        if (VertexCount > 0)
-        {
-            EmplaceCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);
-            Statistics.NumDrawCalls++;
-        }
+        CHECK(VertexCount > 0);
+        EmplaceCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);
+        Statistics.NumDrawCalls++;
     }
 
     FORCEINLINE void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) noexcept
     {
-        if (IndexCount > 0)
-        {
-            EmplaceCommand<FRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
-            Statistics.NumDrawCalls++;
-        }
+        CHECK(IndexCount > 0);
+        EmplaceCommand<FRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
+        Statistics.NumDrawCalls++;
     }
 
     FORCEINLINE void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) noexcept
     {
-        if ((VertexCountPerInstance > 0) && (InstanceCount > 0))
-        {
-            EmplaceCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
-            Statistics.NumDrawCalls++;
-        }
+        CHECK((VertexCountPerInstance > 0) && (InstanceCount > 0));
+        EmplaceCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+        Statistics.NumDrawCalls++;
     }
      
     FORCEINLINE void DrawIndexedInstanced(
@@ -537,33 +529,28 @@ public:
         uint32 BaseVertexLocation,
         uint32 StartInstanceLocation) noexcept
     {
-        if ((IndexCountPerInstance > 0) && (InstanceCount > 0))
-        {
-            EmplaceCommand<FRHICommandDrawIndexedInstanced>(
-                IndexCountPerInstance,
-                InstanceCount,
-                StartIndexLocation,
-                BaseVertexLocation,
-                StartInstanceLocation);
-            Statistics.NumDrawCalls++;
-        }
+        CHECK((IndexCountPerInstance > 0) && (InstanceCount > 0));
+        EmplaceCommand<FRHICommandDrawIndexedInstanced>(
+            IndexCountPerInstance,
+            InstanceCount,
+            StartIndexLocation,
+            BaseVertexLocation,
+            StartInstanceLocation);
+
+        Statistics.NumDrawCalls++;
     }
 
     FORCEINLINE void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) noexcept
     {
-        if ((ThreadGroupCountX > 0) || (ThreadGroupCountY > 0) || (ThreadGroupCountZ > 0))
-        {
-            EmplaceCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
-            Statistics.NumDispatchCalls++;
-        }
+        CHECK((ThreadGroupCountX > 0) || (ThreadGroupCountY > 0) || (ThreadGroupCountZ > 0));
+        EmplaceCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+        Statistics.NumDispatchCalls++;
     }
 
     FORCEINLINE void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) noexcept
     {
-        if ((Width > 0) || (Height > 0) || (Depth > 0))
-        {
-            EmplaceCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
-        }
+        CHECK((Width > 0) || (Height > 0) || (Depth > 0));
+        EmplaceCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
     }
 
     FORCEINLINE void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) noexcept
@@ -596,7 +583,7 @@ public:
 private:
     FMemoryStack          Memory;
 
-    /** @brief: pointer to FirstCommand to avoid branching */
+    /** @brief - pointer to FirstCommand to avoid branching */
     FRHICommand**         CommandPointer;
     FRHICommand*          FirstCommand;
     IRHICommandContext*   CommandContext;
@@ -607,8 +594,6 @@ private:
     bool                  bIsRenderPassActive = false;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHICommandExecuteCommandList
 
 void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
 {
@@ -616,8 +601,6 @@ void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
     CommandList->~FRHICommandList();
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIThreadTask
 
 struct FRHIThreadTask
     : FNonCopyable
@@ -656,8 +639,6 @@ struct FRHIThreadTask
     FRHICommandList* CommandList;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHIThread
 
 class RHI_API FRHIThread 
     : public FThreadInterface
@@ -706,8 +687,6 @@ private:
     static FRHIThread* GInstance;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRHICommandListExecutor
 
 class RHI_API FRHICommandListExecutor 
     : private FNonCopyable

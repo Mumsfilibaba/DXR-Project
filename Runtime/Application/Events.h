@@ -7,21 +7,16 @@
 
 #include "CoreApplication/Generic/GenericWindow.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FEvent 
-
 struct FEvent
 {
     FORCEINLINE FEvent()
         : bIsConsumed(false)
     { }
 
-    /** @brief: If the key was down or nor */
+    /** @brief - If the key was down or nor */
     bool bIsConsumed;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FKeyEvent
 
 struct FKeyEvent 
     : public FEvent
@@ -33,21 +28,19 @@ struct FKeyEvent
         , ModiferKeyState(InModiferKeyState)
     { }
 
-    /** @brief: The KeyCode for this event */
+    /** @brief - The KeyCode for this event */
     EKey KeyCode;
     
-    /** @brief: If the key was down or not */
+    /** @brief - If the key was down or not */
     bool bIsDown : 1;
     
-    /** @brief: Is a repeated key event */
+    /** @brief - Is a repeated key event */
     bool bIsRepeat : 1;
     
-    /** @brief: The other modifier keys that where down at the same time as the event */
+    /** @brief - The other modifier keys that where down at the same time as the event */
     FModifierKeyState ModiferKeyState;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FKeyCharEvent
 
 struct FKeyCharEvent 
     : public FEvent
@@ -61,12 +54,10 @@ struct FKeyCharEvent
         return static_cast<CHAR>(Character);
     }
 
-    /** @brief: The character that where pressed, this is a ascii character in most cases */
+    /** @brief - The character that where pressed, this is a ascii character in most cases */
     uint32 Character;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMouseMovedEvent
 
 struct FMouseMovedEvent 
     : public FEvent
@@ -76,15 +67,13 @@ struct FMouseMovedEvent
         , Y(InY)
     { }
 
-    /** @brief: Cursor X-Position */
+    /** @brief - Cursor X-Position */
     int32 X;
 
-    /** @brief: Cursor Y-Position */
+    /** @brief - Cursor Y-Position */
     int32 Y;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FHighPrecisionMouseEvent
 
 struct FHighPrecisionMouseEvent 
     : public FEvent
@@ -95,18 +84,16 @@ struct FHighPrecisionMouseEvent
         , Y(InY)
     { }
 
-    /** @brief: Window that the cursor moved inside */
+    /** @brief - Window that the cursor moved inside */
     FGenericWindowRef Window;
 
-    /** @brief: Cursor X-Position */
+    /** @brief - Cursor X-Position */
     int32 X;
 
-    /** @brief: Cursor Y-Position */
+    /** @brief - Cursor Y-Position */
     int32 Y;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMouseButtonEvent
 
 struct FMouseButtonEvent 
     : public FEvent
@@ -117,18 +104,16 @@ struct FMouseButtonEvent
         , Modifiers(InModifiers)
     { }
 
-    /** @brief: The mouse button that for the event */
+    /** @brief - The mouse button that for the event */
     EMouseButton Button;
     
-    /** @brief: If the button where pressed or released */
+    /** @brief - If the button where pressed or released */
     bool bIsDown;
     
-    /** @brief: The modifier keys that also where pressed */
+    /** @brief - The modifier keys that also where pressed */
     FModifierKeyState Modifiers;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMouseScrolledEvent
 
 struct FMouseScrolledEvent 
     : public FEvent
@@ -138,15 +123,13 @@ struct FMouseScrolledEvent
         , VerticalDelta(InVerticalDelta)
     { }
 
-    /** @brief: Horizontal mouse-wheel delta */
+    /** @brief - Horizontal mouse-wheel delta */
     float HorizontalDelta;
     
-    /** @brief: Vertical mouse-wheel delta */
+    /** @brief - Vertical mouse-wheel delta */
     float VerticalDelta;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowResizeEvent
 
 struct FWindowResizeEvent 
     : public FEvent
@@ -157,18 +140,16 @@ struct FWindowResizeEvent
         , Height(InHeight)
     { }
 
-    /** @brief: Window that got resized */
+    /** @brief - Window that got resized */
     FGenericWindowRef Window;
 
-    /** @brief: New width of the window */
+    /** @brief - New width of the window */
     uint32 Width;
     
-    /** @brief: New height of the window */
+    /** @brief - New height of the window */
     uint32 Height;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowFocusChangedEvent
 
 struct FWindowFocusChangedEvent : public FEvent
 {
@@ -177,15 +158,13 @@ struct FWindowFocusChangedEvent : public FEvent
         , bHasFocus(bInHasFocus)
     { }
 
-    /** @brief: Window that had focus-status changed */
+    /** @brief - Window that had focus-status changed */
     FGenericWindowRef Window;
 
-    /** @brief: Indicates weather the window got or lost focus */
+    /** @brief - Indicates weather the window got or lost focus */
     bool bHasFocus;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowMovedEvent
 
 struct FWindowMovedEvent 
     : public FEvent
@@ -196,18 +175,16 @@ struct FWindowMovedEvent
         , Y(InY)
     { }
 
-    /** @brief: Window that moved */
+    /** @brief - Window that moved */
     FGenericWindowRef Window;
 
-    /** @brief: New x-position of the window */
+    /** @brief - New x-position of the window */
     int32 X;
     
-    /** @brief: New y-position of the window */
+    /** @brief - New y-position of the window */
     int32 Y;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowFrameMouseEvent
 
 struct FWindowFrameMouseEvent 
     : public FEvent
@@ -217,15 +194,13 @@ struct FWindowFrameMouseEvent
         , bMouseEntered(bInMouseEntered)
     { }
 
-    /** @brief: Window that is affected by the event */
+    /** @brief - indow that is affected by the event */
     FGenericWindowRef Window;
 
-    /** @brief: True if the cursor just entered the window, false otherwise */
+    /** @brief - True if the cursor just entered the window, false otherwise */
     bool bMouseEntered;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowClosedEvent
 
 struct FWindowClosedEvent 
     : public FEvent
@@ -234,6 +209,6 @@ struct FWindowClosedEvent
         : Window(InWindow)
     { }
 
-    /** @brief: Window that got closed */
+    /** @brief - Window that got closed */
     FGenericWindowRef Window;
 };

@@ -5,9 +5,6 @@
 
 #include "Engine/Engine.h"
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMaterial
-
 FMaterial::FMaterial(const FMaterialDesc& InProperties)
     : AlbedoMap()
     , NormalMap()
@@ -21,8 +18,12 @@ FMaterial::FMaterial(const FMaterialDesc& InProperties)
 
 void FMaterial::Initialize()
 {
-    FRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(FMaterialDesc));
-    MaterialBuffer = RHICreateConstantBuffer(Initializer);
+    FRHIBufferDesc Desc(
+        sizeof(FMaterialDesc),
+        sizeof(FMaterialDesc),
+        EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
+
+    MaterialBuffer = RHICreateBuffer(Desc, EResourceAccess::VertexAndConstantBuffer, nullptr);
     if (MaterialBuffer)
     {
         MaterialBuffer->SetName("MaterialBuffer");

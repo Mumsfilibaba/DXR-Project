@@ -3,9 +3,6 @@
 
 #include "Components/Component.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CTransform
-
 FActorTransform::FActorTransform()
     : Matrix()
     , Translation(0.0f, 0.0f, 0.0f)
@@ -58,10 +55,8 @@ void FActorTransform::CalculateMatrix()
     Matrix = Matrix.Transpose();
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FActor
 
-FActor::FActor(class FScene* InSceneOwner)
+FActor::FActor(FScene* InSceneOwner)
     : FCoreObject()
     , Name()
     , SceneOwner(InSceneOwner)

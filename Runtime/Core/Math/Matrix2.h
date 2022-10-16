@@ -2,15 +2,12 @@
 #include "Vector2.h"
 #include "VectorOp.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMatrix2
-
 class VECTOR_ALIGN FMatrix2
 {
 public:
 
     /** 
-     * @brief: Default constructor (Initialize components to zero) 
+     * @brief - Default constructor (Initialize components to zero) 
      */
     FORCEINLINE FMatrix2() noexcept 
         : m00(0.0f), m01(0.0f)
@@ -18,9 +15,8 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
-     *
-     * @param Diagonal: Value to set on the diagonal
+     * @brief          - Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
+     * @param Diagonal - Value to set on the diagonal
      */
     FORCEINLINE explicit FMatrix2(float Diagonal) noexcept
         : m00(Diagonal), m01(0.0f)
@@ -28,10 +24,9 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all values with vectors specifying each row
-     *
-     * @param Row0: Vector to set the first row to
-     * @param Row1: Vector to set the second row to
+     * @brief      - Constructor initializing all values with vectors specifying each row
+     * @param Row0 - Vector to set the first row to
+     * @param Row1 - Vector to set the second row to
      */
     FORCEINLINE explicit FMatrix2(const FVector2& Row0, const FVector2& Row1) noexcept
         : m00(Row0.x), m01(Row0.y)
@@ -39,12 +34,11 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all values with corresponding value
-     *
-     * @param In00: Value to set on row 0 and column 0
-     * @param In01: Value to set on row 0 and column 1
-     * @param In10: Value to set on row 1 and column 0
-     * @param In11: Value to set on row 1 and column 1
+     * @brief      - Constructor initializing all values with corresponding value
+     * @param In00 - Value to set on row 0 and column 0
+     * @param In01 - Value to set on row 0 and column 1
+     * @param In10 - Value to set on row 1 and column 0
+     * @param In11 - Value to set on row 1 and column 1
      */
     FORCEINLINE explicit FMatrix2(float In00, float In01, float In10, float In11) noexcept
         : m00(In00), m01(In01)
@@ -52,9 +46,8 @@ public:
     { }
 
     /**
-     * @brief: Constructor initializing all components with an array
-     *
-     * @param Arr: Array with at least 4 elements
+     * @brief     - Constructor initializing all components with an array
+     * @param Arr - Array with at least 4 elements
      */
     FORCEINLINE explicit FMatrix2(const float* Arr) noexcept
         : m00(Arr[0]), m01(Arr[1])
@@ -62,9 +55,8 @@ public:
     { }
 
     /**
-     * @brief: Returns the transposed version of this matrix
-     *
-     * @return: Transposed matrix
+     * @brief  - Returns the transposed version of this matrix
+     * @return - Transposed matrix
      */
     inline FMatrix2 Transpose() const noexcept
     {
@@ -88,9 +80,8 @@ public:
     }
 
     /**
-     * @brief: Returns the inverted version of this matrix
-     *
-     * @return: Inverse matrix
+     * @brief  - Returns the inverted version of this matrix
+     * @return - Inverse matrix
      */
     inline FMatrix2 Invert() const noexcept
     {
@@ -126,9 +117,8 @@ public:
     }
 
     /**
-     * @brief: Returns the adjugate of this matrix
-     *
-     * @return: Adjugate matrix
+     * @brief  - Returns the adjugate of this matrix
+     * @return - Adjugate matrix
      */
     FORCEINLINE FMatrix2 Adjoint() const noexcept
     {
@@ -157,9 +147,8 @@ public:
     }
 
     /**
-     * @brief: Returns the determinant of this matrix
-     *
-     * @return: The determinant
+     * @brief  - Returns the determinant of this matrix
+     * @return - The determinant
      */
     FORCEINLINE float Determinant() const noexcept
     {
@@ -167,9 +156,8 @@ public:
     }
 
     /**
-     * @brief: Checks weather this matrix has any value that equals NaN
-     *
-     * @return: True if the any value equals NaN, false if not
+     * @brief  - Checks weather this matrix has any value that equals NaN
+     * @return - True if the any value equals NaN, false if not
      */
     inline bool HasNaN() const noexcept
     {
@@ -185,9 +173,8 @@ public:
     }
 
     /**
-     * @brief: Checks weather this matrix has any value that equals infinity
-     *
-     * @return: True if the any value equals infinity, false if not
+     * @brief  - Checks weather this matrix has any value that equals infinity
+     * @return - True if the any value equals infinity, false if not
      */
     inline bool HasInfinity() const noexcept
     {
@@ -203,9 +190,8 @@ public:
     }
 
     /**
-     * @brief: Checks weather this matrix has any value that equals infinity or NaN
-     *
-     * @return: False if the any value equals infinity or NaN, true if not
+     * @brief  - Checks weather this matrix has any value that equals infinity or NaN
+     * @return - False if the any value equals infinity or NaN, true if not
      */
     FORCEINLINE bool IsValid() const noexcept
     {
@@ -213,10 +199,9 @@ public:
     }
 
     /**
-     * @brief: Compares, within a threshold Epsilon, this matrix with another matrix
-     *
-     * @param Other: matrix to compare against
-     * @return: True if equal, false if not
+     * @brief       - Compares, within a threshold Epsilon, this matrix with another matrix
+     * @param Other - matrix to compare against
+     * @return      - True if equal, false if not
      */
     inline bool IsEqual(const FMatrix2& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
@@ -245,7 +230,7 @@ public:
 #endif
     }
 
-     /** @brief: @brief: Sets this matrix to an identity matrix */
+     /** @brief - Sets this matrix to an identity matrix */
     FORCEINLINE void SetIdentity() noexcept
     {
 #if !USE_VECTOR_OP
@@ -261,10 +246,9 @@ public:
     }
 
     /**
-     * @brief: Returns a row of this matrix
-     *
-     * @param Row: The row to retrieve
-     * @return: A vector containing the specified row
+     * @brief     - Returns a row of this matrix
+     * @param Row - The row to retrieve
+     * @return    - A vector containing the specified row
      */
     FORCEINLINE FVector2 GetRow(int32 Row) const noexcept
     {
@@ -273,10 +257,9 @@ public:
     }
 
     /**
-     * @brief: Returns a column of this matrix
-     *
-     * @param Column: The column to retrieve
-     * @return: A vector containing the specified column
+     * @brief        - Returns a column of this matrix
+     * @param Column - The column to retrieve
+     * @return       - A vector containing the specified column
      */
     FORCEINLINE FVector2 GetColumn(int32 Column) const noexcept
     {
@@ -285,9 +268,8 @@ public:
     }
 
     /**
-     * @brief: Returns the data of this matrix as a pointer
-     *
-     * @return: A pointer to the data
+     * @brief  - Returns the data of this matrix as a pointer
+     * @return - A pointer to the data
      */
     FORCEINLINE float* GetData() noexcept
     {
@@ -295,9 +277,8 @@ public:
     }
 
     /**
-     * @brief: Returns the data of this matrix as a pointer
-     *
-     * @return: A pointer to the data
+     * @brief  - Returns the data of this matrix as a pointer
+     * @return - A pointer to the data
      */
     FORCEINLINE const float* GetData() const noexcept
     {
@@ -307,10 +288,9 @@ public:
 public:
 
     /**
-     * @brief: Transforms a 2-D vector
-     *
-     * @param RHS: The vector to transform
-     * @return: A vector containing the transformation
+     * @brief     - Transforms a 2-D vector
+     * @param RHS - The vector to transform
+     * @return    - A vector containing the transformation
      */
     FORCEINLINE FVector2 operator*(const FVector2& RHS) const noexcept
     {
@@ -336,10 +316,9 @@ public:
     }
 
     /**
-     * @brief: Multiplies a matrix with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A matrix containing the result of the multiplication
+     * @brief     - Multiplies a matrix with another matrix
+     * @param RHS - The other matrix
+     * @return    - A matrix containing the result of the multiplication
      */
     FORCEINLINE FMatrix2 operator*(const FMatrix2& RHS) const noexcept
     {
@@ -364,10 +343,9 @@ public:
     }
 
     /**
-     * @brief: Multiplies this matrix with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A reference to this matrix
+     * @brief     - Multiplies this matrix with another matrix
+     * @param RHS - The other matrix
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix2& operator*=(const FMatrix2& RHS) noexcept
     {
@@ -375,10 +353,9 @@ public:
     }
 
     /**
-     * @brief: Multiplies a matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A matrix containing the result of the multiplication
+     * @brief     - Multiplies a matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A matrix containing the result of the multiplication
      */
     FORCEINLINE FMatrix2 operator*(float RHS) const noexcept
     {
@@ -402,10 +379,9 @@ public:
     }
 
     /**
-     * @brief: Multiplies this matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A reference to this matrix
+     * @brief     - Multiplies this matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix2& operator*=(float RHS) noexcept
     {
@@ -413,10 +389,9 @@ public:
     }
 
     /**
-     * @brief: Adds a matrix component-wise with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A matrix containing the result of the addition
+     * @brief     - Adds a matrix component-wise with another matrix
+     * @param RHS - The other matrix
+     * @return    - A matrix containing the result of the addition
      */
     FORCEINLINE FMatrix2 operator+(const FMatrix2& RHS) const noexcept
     {
@@ -437,10 +412,9 @@ public:
     }
 
     /**
-     * @brief: Adds this matrix component-wise with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A reference to this matrix
+     * @brief     - Adds this matrix component-wise with another matrix
+     * @param RHS - The other matrix
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix2& operator+=(const FMatrix2& RHS) noexcept
     {
@@ -448,10 +422,9 @@ public:
     }
 
     /**
-     * @brief: Adds a matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A matrix containing the result of the addition
+     * @brief     - Adds a matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A matrix containing the result of the addition
      */
     FORCEINLINE FMatrix2 operator+(float RHS) const noexcept
     {
@@ -475,10 +448,9 @@ public:
     }
 
     /**
-     * @brief: Adds this matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A reference to this matrix
+     * @brief     - Adds this matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix2& operator+=(float RHS) noexcept
     {
@@ -486,10 +458,9 @@ public:
     }
 
     /**
-     * @brief: Subtracts a matrix component-wise with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A matrix containing the result of the subtraction
+     * @brief     - Subtracts a matrix component-wise with another matrix
+     * @param RHS - The other matrix
+     * @return    - A matrix containing the result of the subtraction
      */
     FORCEINLINE FMatrix2 operator-(const FMatrix2& RHS) const noexcept
     {
@@ -510,10 +481,9 @@ public:
     }
 
     /**
-     * @brief: Subtracts this matrix component-wise with another matrix
-     *
-     * @param RHS: The other matrix
-     * @return: A reference to this matrix
+     * @brief     - Subtracts this matrix component-wise with another matrix
+     * @param RHS - The other matrix
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix2& operator-=(const FMatrix2& RHS) noexcept
     {
@@ -521,10 +491,9 @@ public:
     }
 
     /**
-     * @brief: Subtracts a matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A matrix containing the result of the subtraction
+     * @brief     - Subtracts a matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A matrix containing the result of the subtraction
      */
     FORCEINLINE FMatrix2 operator-(float RHS) const noexcept
     {
@@ -548,10 +517,9 @@ public:
     }
 
     /**
-     * @brief: Subtracts this matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A reference to this matrix
+     * @brief     - Subtracts this matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix2& operator-=(float RHS) noexcept
     {
@@ -559,10 +527,9 @@ public:
     }
 
     /**
-     * @brief: Divides a matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A matrix containing the result of the division
+     * @brief     - Divides a matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A matrix containing the result of the division
      */
     FORCEINLINE FMatrix2 operator/(float RHS) const noexcept
     {
@@ -589,10 +556,9 @@ public:
     }
 
     /**
-     * @brief: Divides this matrix component-wise with a scalar
-     *
-     * @param RHS: The scalar
-     * @return: A reference to this matrix
+     * @brief     - Divides this matrix component-wise with a scalar
+     * @param RHS - The scalar
+     * @return    - A reference to this matrix
      */
     FORCEINLINE FMatrix2& operator/=(float RHS) noexcept
     {
@@ -600,10 +566,9 @@ public:
     }
 
     /**
-     * @brief: Returns the result after comparing this and another matrix
-     *
-     * @param Other: The matrix to compare with
-     * @return: True if equal, false if not
+     * @brief       - Returns the result after comparing this and another matrix
+     * @param Other - The matrix to compare with
+     * @return      - True if equal, false if not
      */
     FORCEINLINE bool operator==(const FMatrix2& Other) const noexcept
     {
@@ -611,10 +576,9 @@ public:
     }
 
     /**
-     * @brief: Returns the negated result after comparing this and another matrix
-     *
-     * @param Other: The matrix to compare with
-     * @return: False if equal, true if not
+     * @brief       - Returns the negated result after comparing this and another matrix
+     * @param Other - The matrix to compare with
+     * @return      - False if equal, true if not
      */
     FORCEINLINE bool operator!=(const FMatrix2& Other) const noexcept
     {
@@ -624,9 +588,8 @@ public:
 public:
 
     /**
-     * @brief: Creates and returns a identity matrix
-     *
-     * @return: A identity matrix
+     * @brief  - Creates and returns a identity matrix
+     * @return - A identity matrix
      */
     inline static FMatrix2 Identity() noexcept
     {
@@ -634,10 +597,9 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a uniform scale matrix
-     *
-     * @param Scale: Uniform scale that represents this matrix
-     * @return: A scale matrix
+     * @brief       - Creates and returns a uniform scale matrix
+     * @param Scale - Uniform scale that represents this matrix
+     * @return      - A scale matrix
      */
     inline static FMatrix2 Scale(float Scale) noexcept
     {
@@ -645,11 +607,10 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a scale matrix for each axis
-     *
-     * @param x: Scale for the x-axis
-     * @param y: Scale for the y-axis
-     * @return: A scale matrix
+     * @brief   - Creates and returns a scale matrix for each axis
+     * @param x - Scale for the x-axis
+     * @param y - Scale for the y-axis
+     * @return  - A scale matrix
      */
     inline static FMatrix2 Scale(float x, float y) noexcept
     {
@@ -657,10 +618,9 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a scale matrix for each axis
-     *
-     * @param VectorWithScale: A vector containing the scale for each axis in the x-, and y-components
-     * @return: A scale matrix
+     * @brief                 - Creates and returns a scale matrix for each axis
+     * @param VectorWithScale - A vector containing the scale for each axis in the x-, and y-components
+     * @return                - A scale matrix
      */
     inline static FMatrix2 Scale(const FVector2& VectorWithScale) noexcept
     {
@@ -668,10 +628,9 @@ public:
     }
 
     /**
-     * @brief: Creates and returns a rotation matrix around the x-axis
-     *
-     * @param Rotation: Rotation around in radians
-     * @return: A rotation matrix
+     * @brief          - Creates and returns a rotation matrix around the x-axis
+     * @param Rotation - Rotation around in radians
+     * @return         - A rotation matrix
      */
     inline static FMatrix2 Rotation(float Rotation) noexcept
     {
@@ -684,14 +643,14 @@ public:
 public:
     union
     {
-         /** @brief: Each element of the matrix */
+         /** @brief - Each element of the matrix */
         struct
         {
             float m00, m01;
             float m10, m11;
         };
 
-         /** @brief: 2-D array of the matrix */
+         /** @brief - 2-D array of the matrix */
         float f[2][2];
     };
 };

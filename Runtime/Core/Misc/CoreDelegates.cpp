@@ -1,8 +1,5 @@
 #include "CoreDelegates.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EngineLoop delegates
-
 namespace NCoreDelegates
 {
     CORE_API FPostInitRHIDelegate PostInitRHIDelegate;

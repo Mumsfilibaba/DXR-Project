@@ -2,9 +2,6 @@
 #include "Core/CoreTypes.h"
 #include "IsInteger.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TIntegerSequence
-
 template <
     typename T,
     T... Sequence>
@@ -17,8 +14,6 @@ struct TIntegerSequence
     enum { Size = sizeof...(Sequence) };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TMakeIntegerSequenceImpl
 
 namespace Internal
 {
@@ -28,9 +23,6 @@ namespace Internal
     struct TMakeIntegerSequenceImpl;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TMakeIntegerSequence
-
 template<
     typename T,
     T N>
@@ -38,9 +30,6 @@ using TMakeIntegerSequence = typename Internal::TMakeIntegerSequenceImpl<T, N>::
 
 namespace Internal
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TSequenceHelper
-
     template<
         uint32 N,
         typename FirstSequence,
@@ -58,8 +47,6 @@ namespace Internal
         using Type = TIntegerSequence<T, First..., (T(N + Second))...>;
     };
     
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TSequenceHelperType
 
     template<
         uint32 N,
@@ -67,8 +54,6 @@ namespace Internal
         typename SecondSequence>
     using TSequenceHelperType = typename TSequenceHelper<N, FirstSequence, SecondSequence>::Type;
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TMakeIntegerSequenceImpl
 
     template<
         typename T,

@@ -4,8 +4,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacPlatformString
 
 struct FMacPlatformString : public FGenericPlatformString
 {

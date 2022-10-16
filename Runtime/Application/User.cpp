@@ -1,9 +1,6 @@
 #include "User.h"
 #include "ApplicationInterface.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FUser
-
 FUser::FUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
     : UserIndex(InUserIndex)
     , Cursor(InCursor)

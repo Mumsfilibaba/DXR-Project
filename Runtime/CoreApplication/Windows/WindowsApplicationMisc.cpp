@@ -4,9 +4,6 @@
 
 #include "Core/Input/ModifierKeyState.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsApplicationMisc
-
 FGenericApplication* FWindowsApplicationMisc::CreateApplication()
 {
     return FWindowsApplication::CreateWindowsApplication();

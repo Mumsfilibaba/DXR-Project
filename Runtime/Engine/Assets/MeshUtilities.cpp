@@ -1,8 +1,5 @@
 #include "MeshUtilities.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMeshUtilities
-
 void FMeshUtilities::Subdivide(FMeshData& OutData, uint32 Subdivisions) noexcept
 {
     if (Subdivisions < 1)

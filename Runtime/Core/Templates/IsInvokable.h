@@ -6,9 +6,6 @@
 
 // TODO: This may need another check
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TIsInvokable
-
 template<
     typename FuncType,
     typename... ArgTypes>
@@ -35,9 +32,6 @@ private:
 public:
     enum { Value = TIsInvokableHelper<FuncType, void, ArgTypes...>::Value };
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TIsInvokableR
 
 template<
     typename FuncType,

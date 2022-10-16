@@ -3,8 +3,6 @@
 
 #include "Core/Containers/Allocators.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDelegateBase
 
 class FDelegateBase
 {
@@ -17,9 +15,8 @@ class FDelegateBase
 public:
 
     /**
-     * @brief: Copy constructor 
-     * 
-     * @param Other: Delegate to copy from
+     * @brief       - Copy constructor 
+     * @param Other - Delegate to copy from
      */
     FORCEINLINE FDelegateBase(const FDelegateBase& Other)
         : Storage()
@@ -29,9 +26,8 @@ public:
     }
 
     /**
-     * @brief: Move constructor
-     *
-     * @param Other: Delegate to move from
+     * @brief       - Move constructor
+     * @param Other - Delegate to move from
      */
     FORCEINLINE FDelegateBase(FDelegateBase&& Other) noexcept
         : Storage()
@@ -42,7 +38,7 @@ public:
     }
 
     /**
-     * @brief: Destructor 
+     * @brief - Destructor 
      */
     FORCEINLINE ~FDelegateBase()
     {
@@ -50,7 +46,7 @@ public:
     }
 
     /**
-     * @brief: Unbinds any bound delegate 
+     * @brief - Unbinds any bound delegate 
      */
     FORCEINLINE void Unbind()
     {
@@ -58,9 +54,8 @@ public:
     }
 
     /**
-     * @brief: Swaps two delegates 
-     * 
-     * @param Other: Delegate to swap with
+     * @brief       - Swaps two delegates 
+     * @param Other - Delegate to swap with
      */
     FORCEINLINE void Swap(FDelegateBase& Other)
     {
@@ -73,9 +68,8 @@ public:
     }
 
     /**
-     * @brief: Checks weather or not there exist any delegate bound 
-     * 
-     * @return: Returns true if there is a delegate bound
+     * @brief  - Checks weather or not there exist any delegate bound 
+     * @return - Returns true if there is a delegate bound
      */
     FORCEINLINE bool IsBound() const
     {
@@ -83,10 +77,9 @@ public:
     }
 
     /**
-     * @brief: Check if an object is bound to this delegate
-     * 
-     * @param Object: Pointer to object to check for
-     * @return: Returns true if this Object is bound to the delegate
+     * @brief        - Check if an object is bound to this delegate
+     * @param Object - Pointer to object to check for
+     * @return       - Returns true if this Object is bound to the delegate
      */
     FORCEINLINE bool IsObjectBound(const void* Object) const
     {
@@ -101,10 +94,9 @@ public:
     }
 
     /**
-     * @brief: Check if object is bound to this delegate
-     *
-     * @param Object: Pointer to object to check for
-     * @return: Returns true if the Object was unbound from the delegate
+     * @brief        - Check if object is bound to this delegate
+     * @param Object - Pointer to object to check for
+     * @return       - Returns true if the Object was unbound from the delegate
      */
     FORCEINLINE bool UnbindIfBound(const void* Object)
     {
@@ -120,9 +112,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the bound object, returns nullptr for non-member delegates 
-     * 
-     * @return: Returns the pointer to the object bound to the delegate
+     * @brief  - Retrieve the bound object, returns nullptr for non-member delegates 
+     * @return - Returns the pointer to the object bound to the delegate
      */
     FORCEINLINE const void* GetBoundObject() const
     {
@@ -137,9 +128,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the delegate handle for this delegate
-     * 
-     * @return: Returns the delegate handle to this delegate
+     * @brief  - Retrieve the delegate handle for this delegate
+     * @return - Returns the delegate handle to this delegate
      */
     FORCEINLINE FDelegateHandle GetHandle() const
     {
@@ -154,26 +144,24 @@ public:
     }
 
     /**
-     * @brief: Move-assignment operator
-     * 
-     * @param RHS: Instance to move from
-     * @return: A reference to this instance
+     * @brief       - Move-assignment operator
+     * @param Other - Instance to move from
+     * @return      - A reference to this instance
      */
-    FORCEINLINE FDelegateBase& operator=(FDelegateBase&& RHS) noexcept
+    FORCEINLINE FDelegateBase& operator=(FDelegateBase&& Other) noexcept
     {
-        FDelegateBase(Move(RHS)).Swap(*this);
+        FDelegateBase(Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Copy-assignment operator
-     *
-     * @param RHS: Instance to copy from
-     * @return: A reference to this instance
+     * @brief       - Copy-assignment operator
+     * @param Other - Instance to copy from
+     * @return      - A reference to this instance
      */
-    FORCEINLINE FDelegateBase& operator=(const FDelegateBase& RHS)
+    FORCEINLINE FDelegateBase& operator=(const FDelegateBase& Other)
     {
-        FDelegateBase(RHS).Swap(*this);
+        FDelegateBase(Other).Swap(*this);
         return *this;
     }
 

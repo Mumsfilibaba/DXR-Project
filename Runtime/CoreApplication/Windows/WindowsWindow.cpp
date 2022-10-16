@@ -6,9 +6,6 @@
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsWindow
-
 const CHAR* FWindowsWindow::GetClassName()
 {
     return "WindowClass";

@@ -1,9 +1,6 @@
 #pragma once
 #include "Core/CoreDefines.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNonCopyable
-
 struct FNonCopyable
 {
     FNonCopyable()  = default;
@@ -13,9 +10,6 @@ struct FNonCopyable
     FNonCopyable& operator=(const FNonCopyable&) = delete;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNonMovable
-
 struct FNonMovable
 {
     FNonMovable()  = default;
@@ -24,9 +18,6 @@ struct FNonMovable
     FNonMovable(const FNonMovable&)            = delete;
     FNonMovable& operator=(const FNonMovable&) = delete;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNonCopyAndNonMovable
 
 struct FNonCopyAndNonMovable
 {
@@ -40,11 +31,9 @@ struct FNonCopyAndNonMovable
     FNonCopyAndNonMovable& operator=(FNonCopyAndNonMovable&&) = delete;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// GetClassAsData
 
 template<typename NewType, typename ClassType>
-CONSTEXPR NewType* GetClassAsData(ClassType* Class) noexcept
+CONSTEXPR NewType* GetAsBytes(ClassType* Class) noexcept
 {
     return reinterpret_cast<NewType*>(Class);
 }

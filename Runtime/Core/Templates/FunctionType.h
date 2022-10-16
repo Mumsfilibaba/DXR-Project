@@ -1,7 +1,5 @@
 #pragma once
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TFunctionType
 
 template<typename FunctionType>
 struct TFunctionType;
@@ -12,8 +10,6 @@ struct TFunctionType<ReturnType(ArgTypes...)>
     typedef ReturnType(*Type)(ArgTypes...);
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TMemberFunctionType
 
 template<bool IsConst, typename ClassType, typename FunctionType>
 struct TMemberFunctionType;

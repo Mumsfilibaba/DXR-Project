@@ -9,17 +9,12 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHISamplerState
-
 struct FNullRHISamplerState 
     : public FRHISamplerState
 {
-    FNullRHISamplerState()  = default;
-    ~FNullRHISamplerState() = default;
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHISamplerState Interface
+    FNullRHISamplerState(const FRHISamplerStateInitializer& InInitializer)
+        : FRHISamplerState(InInitializer)
+    { }
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };

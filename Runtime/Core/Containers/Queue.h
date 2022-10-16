@@ -3,17 +3,11 @@
 #include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Templates/Move.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EQueueType 
-
 enum class EQueueType
 {
     Lockfree,
     Standard,
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TQueue 
 
 template<typename T, EQueueType QueueMode = EQueueType::Standard>
 class TQueue
@@ -49,7 +43,7 @@ public:
     TQueue& operator=(const TQueue&) = delete;
 
     /**
-     * @breif: Constructor
+     * @brief - Constructor
      */
     FORCEINLINE TQueue()
         : Head(nullptr)
@@ -60,7 +54,7 @@ public:
     }
 
     /**
-     * @breif: Destructor
+     * @brief - Destructor
      */
     FORCEINLINE ~TQueue()
     {
@@ -73,10 +67,9 @@ public:
     }
 
     /**
-     * @breif: Pop the next element
-     * 
-     * @param OutElement: Storage for the popped element
-     * @return: Returns true if an element was popped
+     * @brief            - Pop the next element
+     * @param OutElement - Storage for the popped element
+     * @return           - Returns true if an element was popped
      */
     FORCEINLINE bool Pop(ElementType& OutElement)
     {
@@ -97,9 +90,8 @@ public:
     }
 
     /**
-     * @breif: Pop the next element
-     *
-     * @return: Returns true if an element was popped
+     * @brief  - Pop the next element
+     * @return - Returns true if an element was popped
      */
     FORCEINLINE bool Pop()
     {
@@ -118,7 +110,7 @@ public:
     }
 
     /**
-     * @breif: Clears the queue
+     * @brief - Clears the queue
      */
     FORCEINLINE void Clear()
     {
@@ -126,10 +118,9 @@ public:
     }
 
     /**
-     * @breif: Push an element to the back of the queue 
-     * 
-     * @param Item: The new element to push
-     * @return: Returns true if the element was successfully pushed
+     * @brief      - Push an element to the back of the queue 
+     * @param Item - The new element to push
+     * @return     - Returns true if the element was successfully pushed
      */
     FORCEINLINE bool Push(const ElementType& Item)
     {
@@ -137,10 +128,9 @@ public:
     }
 
     /**
-     * @breif: Push an element to the back of the queue 
-     * 
-     * @param Item: The new element to push
-     * @return: Returns true if the element was successfully pushed
+     * @brief      - Push an element to the back of the queue 
+     * @param Item - The new element to push
+     * @return     - Returns true if the element was successfully pushed
      */
     FORCEINLINE bool Push(ElementType&& Item)
     {
@@ -148,10 +138,9 @@ public:
     }
 
     /**
-     * @breif: Push an element to the back of the queue
-     *
-     * @param Args: Arguments used to construct the new element in-place
-     * @return: Returns true if the element was successfully pushed
+     * @brief      - Push an element to the back of the queue
+     * @param Args - Arguments used to construct the new element in-place
+     * @return     - Returns true if the element was successfully pushed
      */
     template<typename... ArgTypes>
     FORCEINLINE bool Emplace(ArgTypes&&... Args) noexcept
@@ -179,7 +168,7 @@ public:
     }
 
     /** 
-     * @return: Returns true if the queue is empty
+     * @return - Returns true if the queue is empty
      */
     FORCEINLINE bool IsEmpty() const
     {
@@ -187,10 +176,9 @@ public:
     }
 
     /**
-     * @breif: Peek at the first element of the queue without popping from the queue
-     *
-     * @param OutItem: Storage for the item to peek
-     * @return: Returns true if the element was successfully stored
+     * @brief         - Peek at the first element of the queue without popping from the queue
+     * @param OutItem - Storage for the item to peek
+     * @return        - Returns true if the element was successfully stored
      */
     FORCEINLINE bool Peek(ElementType& OutItem) const
     {
@@ -204,7 +192,7 @@ public:
     }
 
     /**
-     * @return: Returns a pointer to the first element in the queue, nullptr if the queue is empty
+     * @return - Returns a pointer to the first element in the queue, nullptr if the queue is empty
      */
     FORCEINLINE ElementType* Peek()
     {
@@ -217,7 +205,7 @@ public:
     }
 
     /**
-    * @return: Returns a pointer to the first element in the queue, nullptr if the queue is empty
+    * @return - Returns a pointer to the first element in the queue, nullptr if the queue is empty
     */
     FORCEINLINE const ElementType* Peek() const
     {

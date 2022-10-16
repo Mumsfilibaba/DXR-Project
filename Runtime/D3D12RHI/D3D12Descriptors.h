@@ -13,9 +13,6 @@ class FD3D12OnlineDescriptorManager;
 typedef TSharedRef<FD3D12DescriptorHeap>          FD3D12DescriptorHeapRef;
 typedef TSharedRef<FD3D12OnlineDescriptorManager> FD3D12OnlineDescriptorManagerRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12DescriptorHeap
-
 class FD3D12DescriptorHeap 
     : public FD3D12DeviceChild
     , public FD3D12RefCounted
@@ -55,16 +52,11 @@ private:
     uint32                        DescriptorHandleIncrementSize;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12OfflineDescriptorHeap
 
 class FD3D12OfflineDescriptorHeap 
     : public FD3D12DeviceChild
     , public FD3D12RefCounted
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FDescriptorRange
-
     struct FDescriptorRange
     {
         FORCEINLINE FDescriptorRange()
@@ -85,9 +77,6 @@ class FD3D12OfflineDescriptorHeap
         D3D12_CPU_DESCRIPTOR_HANDLE Begin = { 0 };
         D3D12_CPU_DESCRIPTOR_HANDLE End   = { 0 };
     };
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FDescriptorHeap
 
     struct FDescriptorHeap
     {
@@ -132,8 +121,6 @@ private:
     FCriticalSection           CriticalSection;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12OnlineDescriptorHeap
 
 class FD3D12OnlineDescriptorHeap 
     : public FD3D12DeviceChild
@@ -188,8 +175,6 @@ private:
     D3D12_DESCRIPTOR_HEAP_TYPE      Type;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12DescriptorBlock
 
 struct FD3D12DescriptorBlock
 {
@@ -207,8 +192,6 @@ struct FD3D12DescriptorBlock
     uint32 NumDescriptors;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12OnlineDescriptorManager
 
 class FD3D12OnlineDescriptorManager 
     : public FD3D12DeviceChild

@@ -3,9 +3,6 @@
 
 #include "Core/Core.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMeshUtilities
-
 struct ENGINE_API FMeshUtilities
 {
     static void Subdivide(FMeshData& OutData, uint32 Subdivisions = 1) noexcept;

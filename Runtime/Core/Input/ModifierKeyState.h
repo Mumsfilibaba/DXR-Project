@@ -1,9 +1,6 @@
 #pragma once
 #include "Core/Core.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FModifierKeyState
-
 struct FModifierKeyState
 {
     FModifierKeyState() = default;
@@ -14,7 +11,7 @@ struct FModifierKeyState
 
     union
     {
-         /** @brief: Flags */
+         /** @brief - Flags */
         struct
         {
             uint8 bIsCtrlDown     : 1;
@@ -25,7 +22,7 @@ struct FModifierKeyState
             uint8 bIsNumPadDown   : 1;
         };
 
-         /** @brief: Mask */
+         /** @brief - Mask */
         uint8 ModifierMask = 0;
     };
 };

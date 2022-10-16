@@ -8,14 +8,8 @@
 
 #include <imgui.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-variables
-
 TAutoConsoleVariable<bool> GDrawFps("Renderer.DrawFps", true);
 TAutoConsoleVariable<bool> GDrawFrameProfiler("Renderer.DrawFrameProfiler", false);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FrameProfilerWindow
 
 TSharedRef<FFrameProfilerWindow> FFrameProfilerWindow::Make()
 {

@@ -3,9 +3,6 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12Viewport
-
 FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportInitializer& Initializer)
     : FD3D12DeviceChild(InDevice)
     , FRHIViewport(Initializer)

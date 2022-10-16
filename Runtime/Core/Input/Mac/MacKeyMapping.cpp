@@ -2,9 +2,6 @@
 #include "MacKeyMapping.h"
 
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMacKeyMapping
-
 TStaticArray<EKey        , FMacKeyMapping::kNumKeys>        FMacKeyMapping::KeyCodeFromScanCodeTable;
 TStaticArray<uint16      , FMacKeyMapping::kNumKeys>        FMacKeyMapping::ScanCodeFromKeyCodeTable;
 TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> FMacKeyMapping::ButtonFromButtonIndex;

@@ -9,21 +9,13 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHIShaderResourceView
-
 struct FNullRHIShaderResourceView
     : public FRHIShaderResourceView
 { 
     explicit FNullRHIShaderResourceView(FRHIResource* InResource)
         : FRHIShaderResourceView(InResource)
     { }
-
-    ~FNullRHIShaderResourceView() = default;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHIUnorderedAccessView
 
 struct FNullRHIUnorderedAccessView 
     : public FRHIUnorderedAccessView
@@ -31,8 +23,6 @@ struct FNullRHIUnorderedAccessView
     explicit FNullRHIUnorderedAccessView(FRHIResource* InResource)
         : FRHIUnorderedAccessView(InResource)
     { }
-
-    ~FNullRHIUnorderedAccessView() = default;
 };
 
 #if defined(PLATFORM_COMPILER_MSVC)

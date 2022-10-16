@@ -3,8 +3,6 @@
 
 #include <Foundation/Foundation.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helper macros
 
 #ifndef NSSafeRelease
     #define NSSafeRelease(OutObject)   \
@@ -27,8 +25,6 @@
         } while (false)
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helper to cast an NSObject
 
 template<typename CastType>
 inline CastType* NSClassCast(NSObject* Object)

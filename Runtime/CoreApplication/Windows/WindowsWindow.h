@@ -9,9 +9,6 @@ class FWindowsApplication;
 
 typedef TSharedRef<class FWindowsWindow> FWindowsWindowRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsWindow
-
 class COREAPPLICATION_API FWindowsWindow final 
     : public FGenericWindow
 {

@@ -21,18 +21,16 @@ class FRunLoopSourceContext;
 // Main-thread runloop source
 FRunLoopSourceContext* GMainThread = nullptr;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRunLoopSource
 
 @interface FRunLoopSource : NSObject
 {
     // Use a NSObject since we want the source to be CFRunLoopSourceContext for lifetime-handling 
 
 @private
-	FRunLoopSourceContext* Context;
+    FRunLoopSourceContext* Context;
 
-	CFRunLoopRef ScheduledRunLoop;
-	CFStringRef  ScheduledMode;
+    CFRunLoopRef ScheduledRunLoop;
+    CFStringRef  ScheduledMode;
 }
 
 - (id)initWithContext:(FRunLoopSourceContext*)InContext;
@@ -45,8 +43,6 @@ FRunLoopSourceContext* GMainThread = nullptr;
 - (void)perform;
 @end
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRunLoopTask
 
 struct FRunLoopTask
 {
@@ -65,8 +61,6 @@ struct FRunLoopTask
     dispatch_block_t Block;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRunLoopSourceContext
 
 class FRunLoopSourceContext
     : public FRefCounted
@@ -93,7 +87,7 @@ public:
         // This dictionary is created so that keys and values are automatically retained and released when added or removed
         CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Destroy, RunLoop);
         
-		CFRelease(SourceAndModeDictionary);
+        CFRelease(SourceAndModeDictionary);
         CFRelease(RunLoop);
     }
     
@@ -118,24 +112,24 @@ public:
             // Setup so that the context is called via the FRunLoopSource
             SourceContext.perform  = &FRunLoopSourceContext::Perform;
             SourceContext.schedule = &FRunLoopSourceContext::Schedule;
-			SourceContext.cancel   = &FRunLoopSourceContext::Cancel;
+            SourceContext.cancel   = &FRunLoopSourceContext::Cancel;
 
             CFRunLoopSourceRef Source = CFRunLoopSourceCreate(nullptr, 0, &SourceContext);
 
             // This dictionary is created so that keys and values are automatically retained and released when added or removed
-			CFDictionaryAddValue(SourceAndModeDictionary, InRunLoopMode, Source);
+            CFDictionaryAddValue(SourceAndModeDictionary, InRunLoopMode, Source);
 
             CFRunLoopAddSource(RunLoop, Source, InRunLoopMode);
-			CFRelease(Source);
+            CFRelease(Source);
         }
     }
 
     void ScheduleBlock(dispatch_block_t Block, NSArray* InModes)
     {
-		for (NSString* Mode in InModes)
-		{
-			RegisterForMode((CFStringRef)Mode);
-		}
+        for (NSString* Mode in InModes)
+        {
+            RegisterForMode((CFStringRef)Mode);
+        }
 
         Tasks.Emplace(new FRunLoopTask(InModes, Block));
         NumTasks++;
@@ -175,23 +169,23 @@ public:
 private:
     static void Destroy(const void* Key, const void* Value, void* Context)
     {
-		CFRunLoopRef RunLoop = static_cast<CFRunLoopRef>(Context);
-		if(RunLoop)
-		{
+        CFRunLoopRef RunLoop = static_cast<CFRunLoopRef>(Context);
+        if(RunLoop)
+        {
             CFStringRef        RunMode = (CFStringRef)Key;
             CFRunLoopSourceRef Source  = (CFRunLoopSourceRef)Value;
-			CFRunLoopRemoveSource(RunLoop, Source, RunMode);
-		}
+            CFRunLoopRemoveSource(RunLoop, Source, RunMode);
+        }
     }
 
-	static void Signal(const void* Key, const void* Value, void* Context)
-	{
-		CFRunLoopSourceRef RunLoopSource = (CFRunLoopSourceRef)Value;
-		if(RunLoopSource)
-		{
-			CFRunLoopSourceSignal(RunLoopSource);
-		}
-	}
+    static void Signal(const void* Key, const void* Value, void* Context)
+    {
+        CFRunLoopSourceRef RunLoopSource = (CFRunLoopSourceRef)Value;
+        if(RunLoopSource)
+        {
+            CFRunLoopSourceSignal(RunLoopSource);
+        }
+    }
 
     static void Schedule(void* Info, CFRunLoopRef InRunLoop, CFRunLoopMode InRunLoopMode)
     {
@@ -228,30 +222,28 @@ private:
     FAtomicInt32 NumTasks;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRunLoopSource
 
 @implementation FRunLoopSource
 
 - (id)initWithContext:(FRunLoopSourceContext*)InContext
 {
-	id Self = [super init];
-	if(Self)
-	{
-		CHECK(InContext);
+    id Self = [super init];
+    if(Self)
+    {
+        CHECK(InContext);
         Context = InContext;
         Context->AddRef();
-	}
+    }
 
-	return Self;
+    return Self;
 }
 
 - (void)dealloc
 {
-	CHECK(Context);
+    CHECK(Context);
     Context->Release();
     Context = nullptr;
-	[super dealloc];
+    [super dealloc];
 }
 
 - (void)scheduleOn:(CFRunLoopRef)InRunLoop inMode:(CFStringRef)InMode
@@ -264,11 +256,11 @@ private:
 
 - (void)cancelFrom:(CFRunLoopRef)InRunLoop inMode:(CFStringRef)InMode
 {
-	if(CFEqual(InRunLoop, ScheduledRunLoop) && CFEqual(ScheduledMode, InMode))
-	{
+    if(CFEqual(InRunLoop, ScheduledRunLoop) && CFEqual(ScheduledMode, InMode))
+    {
         ScheduledRunLoop = nullptr;
         ScheduledMode    = nullptr;
-	}
+    }
 }
 
 - (void)perform
@@ -278,11 +270,11 @@ private:
     CHECK(ScheduledMode);
     CHECK(CFEqual(ScheduledRunLoop, CFRunLoopGetCurrent()));
     
-	CFStringRef CurrentMode = CFRunLoopCopyCurrentMode(CFRunLoopGetCurrent());
+    CFStringRef CurrentMode = CFRunLoopCopyCurrentMode(CFRunLoopGetCurrent());
     CHECK(CFEqual(CurrentMode, ScheduledMode));
-	
+    
     Context->Execute(CurrentMode);
-	CFRelease(CurrentMode);
+    CFRelease(CurrentMode);
 }
 
 @end

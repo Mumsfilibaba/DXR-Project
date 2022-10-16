@@ -3,9 +3,6 @@
 
 #include "Core/Generic/GenericFile.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsFileHandle
-
 class CORE_API FWindowsFileHandle 
     : public IFileHandle
 {
@@ -54,8 +51,6 @@ private:
     int64  FileSize;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsFile
 
 struct CORE_API FWindowsFile 
     : public FGenericFile

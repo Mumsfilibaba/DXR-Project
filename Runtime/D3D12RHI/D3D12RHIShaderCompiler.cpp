@@ -1,5 +1,6 @@
 #include "D3D12RHIShaderCompiler.h"
 
+#include "Core/CoreTypes.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Windows/Windows.h"
@@ -9,27 +10,28 @@
 
 DxcCreateInstanceProc DxcCreateInstanceFunc = nullptr;
 
+// NOTE: Does not compile when using CHAR, why? 
 #ifndef MAKEFOURCC
-#define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned CHAR)(a) | (unsigned CHAR)(b) << 8 | (unsigned CHAR)(c) << 16 | (unsigned CHAR)(d) << 24)
+#define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | ((unsigned char)(b) << 8) | ((unsigned char)(c) << 16) | ((unsigned char)(d) << 24))
 #endif
 
 enum DxilFourCC
 {
-    DFCC_Container = MAKEFOURCC('D', 'X', 'B', 'C'),
-    DFCC_ResourceDef = MAKEFOURCC('R', 'D', 'E', 'F'),
-    DFCC_InputSignature = MAKEFOURCC('I', 'S', 'G', '1'),
-    DFCC_OutputSignature = MAKEFOURCC('O', 'S', 'G', '1'),
-    DFCC_PatchConstantSignature = MAKEFOURCC('P', 'S', 'G', '1'),
-    DFCC_ShaderStatistics = MAKEFOURCC('S', 'T', 'A', 'T'),
-    DFCC_ShaderDebugInfoDXIL = MAKEFOURCC('I', 'L', 'D', 'B'),
-    DFCC_ShaderDebugName = MAKEFOURCC('I', 'L', 'D', 'N'),
-    DFCC_FeatureInfo = MAKEFOURCC('S', 'F', 'I', '0'),
-    DFCC_PrivateData = MAKEFOURCC('P', 'R', 'I', 'V'),
-    DFCC_RootSignature = MAKEFOURCC('R', 'T', 'S', '0'),
-    DFCC_DXIL = MAKEFOURCC('D', 'X', 'I', 'L'),
+    DFCC_Container               = MAKEFOURCC('D', 'X', 'B', 'C'),
+    DFCC_ResourceDef             = MAKEFOURCC('R', 'D', 'E', 'F'),
+    DFCC_InputSignature          = MAKEFOURCC('I', 'S', 'G', '1'),
+    DFCC_OutputSignature         = MAKEFOURCC('O', 'S', 'G', '1'),
+    DFCC_PatchConstantSignature  = MAKEFOURCC('P', 'S', 'G', '1'),
+    DFCC_ShaderStatistics        = MAKEFOURCC('S', 'T', 'A', 'T'),
+    DFCC_ShaderDebugInfoDXIL     = MAKEFOURCC('I', 'L', 'D', 'B'),
+    DFCC_ShaderDebugName         = MAKEFOURCC('I', 'L', 'D', 'N'),
+    DFCC_FeatureInfo             = MAKEFOURCC('S', 'F', 'I', '0'),
+    DFCC_PrivateData             = MAKEFOURCC('P', 'R', 'I', 'V'),
+    DFCC_RootSignature           = MAKEFOURCC('R', 'T', 'S', '0'),
+    DFCC_DXIL                    = MAKEFOURCC('D', 'X', 'I', 'L'),
     DFCC_PipelineStateValidation = MAKEFOURCC('P', 'S', 'V', '0'),
-    DFCC_RuntimeData = MAKEFOURCC('R', 'D', 'A', 'T'),
-    DFCC_ShaderHash = MAKEFOURCC('H', 'A', 'S', 'H'),
+    DFCC_RuntimeData             = MAKEFOURCC('R', 'D', 'A', 'T'),
+    DFCC_ShaderHash              = MAKEFOURCC('H', 'A', 'S', 'H'),
 };
 
 #undef MAKEFOURCC
@@ -38,21 +40,21 @@ static LPCWSTR GetShaderStageText(EShaderStage Stage)
 {
     switch (Stage)
     {
-        // Compute
+    // Compute
     case EShaderStage::Compute:       return L"cs";
 
-        // Graphics
+    // Graphics
     case EShaderStage::Vertex:        return L"vs";
     case EShaderStage::Hull:          return L"hs";
     case EShaderStage::Domain:        return L"ds";
     case EShaderStage::Geometry:      return L"gs";
     case EShaderStage::Pixel:         return L"ps";
 
-        // New Graphics Pipeline
+    // New Graphics Pipeline
     case EShaderStage::Mesh:          return L"ms";
     case EShaderStage::Amplification: return L"as";
 
-        // Ray tracing
+     // Ray tracing
     case EShaderStage::RayGen:
     case EShaderStage::RayAnyHit:
     case EShaderStage::RayClosestHit:
@@ -66,27 +68,25 @@ static LPCWSTR GetShaderModelText(EShaderModel Model)
 {
     switch (Model)
     {
-    case EShaderModel::SM_5_0: return L"5_0";
-    case EShaderModel::SM_5_1: return L"5_1";
     case EShaderModel::SM_6_0: return L"6_0";
     case EShaderModel::SM_6_1: return L"6_1";
     case EShaderModel::SM_6_2: return L"6_2";
     case EShaderModel::SM_6_3: return L"6_3";
     case EShaderModel::SM_6_4: return L"6_4";
     case EShaderModel::SM_6_5: return L"6_5";
+    case EShaderModel::SM_6_6: return L"6_6";
+    case EShaderModel::SM_6_7: return L"6_7";
     default: break;
     }
 
     return L"0_0";
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ExistingBlob - Custom blob for existing data
 
-class CExistingBlob : public IDxcBlob
+class FExistingBlob : public IDxcBlob
 {
 public:
-    CExistingBlob(LPVOID InData, SIZE_T InSizeInBytes)
+    FExistingBlob(LPVOID InData, SIZE_T InSizeInBytes)
         : Data(nullptr)
         , SizeInBytes(InSizeInBytes)
         , References(1)
@@ -95,7 +95,7 @@ public:
         FMemory::Memcpy(Data, InData, SizeInBytes);
     }
 
-    ~CExistingBlob()
+    ~FExistingBlob()
     {
         FMemory::Free(Data);
     }
@@ -153,8 +153,6 @@ private:
     ULONG References;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIShaderCompiler
 
 FD3D12ShaderCompiler* GD3D12ShaderCompiler = nullptr;
 
@@ -230,13 +228,13 @@ bool FD3D12ShaderCompiler::CompileShader(
 
 bool FD3D12ShaderCompiler::GetReflection(FD3D12Shader* Shader, ID3D12ShaderReflection** Reflection)
 {
-    TComPtr<IDxcBlob> ShaderBlob = dbg_new CExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
+    TComPtr<IDxcBlob> ShaderBlob = dbg_new FExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     return InternalGetReflection(ShaderBlob, IID_PPV_ARGS(Reflection));
 }
 
 bool FD3D12ShaderCompiler::GetLibraryReflection(FD3D12Shader* Shader, ID3D12LibraryReflection** Reflection)
 {
-    TComPtr<IDxcBlob> ShaderBlob = dbg_new CExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
+    TComPtr<IDxcBlob> ShaderBlob = dbg_new FExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     return InternalGetReflection(ShaderBlob, IID_PPV_ARGS(Reflection));
 }
 
@@ -250,7 +248,7 @@ bool FD3D12ShaderCompiler::HasRootSignature(FD3D12Shader* Shader)
         return false;
     }
 
-    TComPtr<IDxcBlob> ShaderBlob = dbg_new CExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
+    TComPtr<IDxcBlob> ShaderBlob = dbg_new FExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     Result = Reflection->Load(ShaderBlob.Get());
     if (FAILED(Result))
     {

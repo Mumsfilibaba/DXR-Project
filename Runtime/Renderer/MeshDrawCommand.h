@@ -1,19 +1,21 @@
 #pragma once
 #include "Core/Core.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMeshDrawCommand
+#include "RHI/RHITypes.h"
 
 struct FMeshDrawCommand
 {
-    class FMaterial*              Material     = nullptr;
-    class FMesh*                  Mesh         = nullptr;
-    class FActor*                 CurrentActor = nullptr;
+    class FMaterial*  Material     = nullptr;
+    class FMesh*      Mesh         = nullptr;
+    class FActor*     CurrentActor = nullptr;
 
-    class FRHIVertexBuffer*       VertexBuffer = nullptr;
-    class FRHIIndexBuffer*        IndexBuffer  = nullptr;
+    class FRHIBuffer* VertexBuffer = nullptr;
+    uint32            NumVertices  = 0;
+    class FRHIBuffer* IndexBuffer  = nullptr;
+    uint32            NumIndices   = 0;
+    EIndexFormat      IndexFormat  = EIndexFormat::Unknown;
 
-    class FRHIRayTracingGeometry* Geometry     = nullptr;
+    class FRHIRayTracingGeometry* Geometry = nullptr;
 };
 
 MARK_AS_REALLOCATABLE(FMeshDrawCommand);

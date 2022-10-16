@@ -6,9 +6,6 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Global Pointers
-
 void* FDynamicD3D12::DXGILib  = nullptr;
 void* FDynamicD3D12::D3D12Lib = nullptr;
 void* FDynamicD3D12::PIXLib   = nullptr;
@@ -36,8 +33,6 @@ PFN_SetMarkerOnCommandList                             FDynamicD3D12::SetMarkerO
         }                                                                                            \
     } while(false)
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDynamicD3D12
 
 bool FDynamicD3D12::Initialize(bool bEnablePIX)
 {

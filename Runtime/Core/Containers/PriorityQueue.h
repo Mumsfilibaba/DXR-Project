@@ -8,9 +8,6 @@
 #include "Core/Templates/AddReference.h"
 #include "Core/Templates/NumericLimits.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EQueuePriority
-
 enum class EQueuePriority
 {
     Highest = 0,
@@ -20,9 +17,6 @@ enum class EQueuePriority
     Lowest  = 4,
     Count
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TPriorityQueue
 
 template<typename T>
 class TPriorityQueue
@@ -36,7 +30,7 @@ public:
         typename TAddReference<typename TAddConst<ElementType>::Type>::LValue>::Type;
 
     /**
-     * @breif: Constructor
+     * @brief - Constructor
      */
     FORCEINLINE TPriorityQueue()
         : PriorityQueues(0)
@@ -45,10 +39,9 @@ public:
     { }
 
     /**
-     * @breif: Enqueue a new element in the queue
-     * 
-     * @param Element: New element in the queue
-     * @param Priority: Priority of the new element
+     * @brief          - Enqueue a new element in the queue
+     * @param Element  - New element in the queue
+     * @param Priority - Priority of the new element
      */
     inline void Enqueue(ElementInputType Element, EQueuePriority Priority = EQueuePriority::Normal)
     {
@@ -69,10 +62,9 @@ public:
     }
 
     /**
-     * @breif: Removes an element from the queue
-     * 
-     * @param Element: Element to search for
-     * @return: Returns true if the element was found and removed, false otherwise
+     * @brief         - Removes an element from the queue
+     * @param Element - Element to search for
+     * @return        - Returns true if the element was found and removed, false otherwise
      */
     inline bool Remove(ElementInputType Element)
     {
@@ -89,11 +81,10 @@ public:
     }
 
     /**
-     * @breif: Removes the first element off the queue and returns it
-     * 
-     * @param OutElement: Pointer the storage of the element
-     * @param OutPriority: Optional pointer to a variable that will store the priority of the element
-     * @return: Returns true if an element was popped, false otherwise
+     * @brief             - Removes the first element off the queue and returns it
+     * @param OutElement  - Pointer the storage of the element
+     * @param OutPriority - Optional pointer to a variable that will store the priority of the element
+     * @return            - Returns true if an element was popped, false otherwise
      */
     inline bool Dequeue(ElementType* OutElement, EQueuePriority* OutPriority = nullptr)
     {
@@ -124,10 +115,9 @@ public:
     }
 
     /**
-     * @breif: Peeks the first element in the queue, without removing
-     * 
-     * @param OutPriority: Optional pointer to a variable that will store the priority of the element
-     * @return: Returns a pointer to the first element if the queue is not empty, false otherwise
+     * @brief             - Peeks the first element in the queue, without removing
+     * @param OutPriority - Optional pointer to a variable that will store the priority of the element
+     * @return            - Returns a pointer to the first element if the queue is not empty, false otherwise
      */
     inline ElementType* Peek(EQueuePriority* OutPriority = nullptr)
     {
@@ -149,7 +139,7 @@ public:
     }
 
     /**
-     * @breif: Resets the queue
+     * @brief - Resets the queue
      */
     inline void Reset()
     {
@@ -159,7 +149,7 @@ public:
     }
 
     /**
-     * @return: Returns the size of the queue
+     * @return - Returns the size of the queue
      */
     FORCEINLINE int32 GetSize() const
     {

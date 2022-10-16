@@ -11,20 +11,12 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHIRayTracingGeometry
-
 struct FNullRHIRayTracingGeometry 
     : public FRHIRayTracingGeometry
 {
     explicit FNullRHIRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
         : FRHIRayTracingGeometry(Initializer)
     { }
-
-    ~FNullRHIRayTracingGeometry() = default;
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIRayTracingGeometry Interface
 
     virtual void* GetRHIBaseBVHBuffer()             { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
@@ -41,11 +33,6 @@ public:
         : FRHIRayTracingScene(Initializer)
         , View(dbg_new FNullRHIShaderResourceView(this))
     { }
-
-    ~FNullRHIRayTracingScene() = default;
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FRHIRayTracingScene Interface
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
     virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final { return FRHIDescriptorHandle(); }

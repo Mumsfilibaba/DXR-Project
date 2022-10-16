@@ -19,7 +19,7 @@
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 
-#include "RHI/RHIModule.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIViewport.h"
 
@@ -29,10 +29,7 @@
 
 #include "Application/WindowMessageHandler.h"
 
-#include "InterfaceRenderer/InterfaceRenderer.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRendererWindowHandler
+#include "ViewportRenderer/ViewportRenderer.h"
 
 class FRendererWindowHandler final 
     : public FWindowMessageHandler
@@ -42,7 +39,7 @@ public:
     DECLARE_DELEGATE(CWindowResizedDelegate, const FWindowResizeEvent& ResizeEvent);
     CWindowResizedDelegate WindowResizedDelegate;
 
-    FRendererWindowHandler() = default;
+    FRendererWindowHandler()  = default;
     ~FRendererWindowHandler() = default;
 
     virtual bool OnWindowResized(const FWindowResizeEvent& ResizeEvent) override final
@@ -51,9 +48,6 @@ public:
         return true;
     }
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCameraBuffer
 
 struct FCameraBuffer
 {
@@ -88,9 +82,6 @@ struct FCameraBuffer
     float    Padding0;
     float    Padding1;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FRenderer
 
 class RENDERER_API FRenderer
 {

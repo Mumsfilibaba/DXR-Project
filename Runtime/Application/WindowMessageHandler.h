@@ -11,9 +11,6 @@
 
 // TODO: Will be moved to the viewport in the future
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowMessageHandler
-
 struct FWindowMessageHandler
 {
     virtual ~FWindowMessageHandler() = default;

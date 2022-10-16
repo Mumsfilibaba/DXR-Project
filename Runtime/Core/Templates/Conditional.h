@@ -1,8 +1,5 @@
 #pragma once
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TConditional
-
 template<bool Condition, typename TrueType, typename FalseType>
 struct TConditional
 {
