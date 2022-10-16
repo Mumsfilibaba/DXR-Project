@@ -43,7 +43,6 @@ class TConsoleVariable
     : public FConsoleVariable
 {
 public:
-	
     TConsoleVariable()
         : FConsoleVariable()
         , Value()

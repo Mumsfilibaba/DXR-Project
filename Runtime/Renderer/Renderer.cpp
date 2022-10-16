@@ -1004,12 +1004,12 @@ bool FRenderer::InitAA()
     TArray<uint8> ShaderCode;
     
     {
-		FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
-		if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
-		{
-			DEBUG_BREAK();
-			return false;
-		}
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     FRHIVertexShaderRef VShader = RHICreateVertexShader(ShaderCode);
@@ -1020,12 +1020,12 @@ bool FRenderer::InitAA()
     }
 
     {
-		FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
-		if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
-		{
-			DEBUG_BREAK();
-			return false;
-		}
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     PostShader = RHICreatePixelShader(ShaderCode);

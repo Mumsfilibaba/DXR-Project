@@ -20,8 +20,8 @@ class FMetalInterface final
     : public FRHIInterface
 {
 public:
-	FMetalInterface();
-	~FMetalInterface();
+    FMetalInterface();
+    ~FMetalInterface();
 
     virtual bool Initialize() override final;
 
@@ -93,7 +93,7 @@ private:
     template<typename MetalBufferType, typename InitializerType, const uint32 BufferAlignment = kBufferAlignment>
     MetalBufferType* CreateBuffer(const InitializerType& Initializer);
     
-	FMetalDeviceContext*  DeviceContext;
+    FMetalDeviceContext*  DeviceContext;
     FMetalCommandContext* CommandContext;
 };
 

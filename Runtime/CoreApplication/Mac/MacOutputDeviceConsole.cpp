@@ -12,14 +12,14 @@
 
 FMacOutputDeviceConsole::FMacOutputDeviceConsole()
     : WindowHandle(nullptr)
-	, TextView(nullptr)
-	, ScrollView(nullptr)
-	, ConsoleColor(nullptr)
+    , TextView(nullptr)
+    , ScrollView(nullptr)
+    , ConsoleColor(nullptr)
 { }
 
 FMacOutputDeviceConsole::~FMacOutputDeviceConsole()
 {
-	DestroyConsole();
+    DestroyConsole();
 }
 
 void FMacOutputDeviceConsole::CreateConsole()
@@ -111,22 +111,22 @@ void FMacOutputDeviceConsole::DestroyConsole()
     {
         ExecuteOnMainThread(^
         {
-			SCOPED_AUTORELEASE_POOL();
-		
-			FPlatformApplicationMisc::PumpMessages(true);
-			
+            SCOPED_AUTORELEASE_POOL();
+        
+            FPlatformApplicationMisc::PumpMessages(true);
+            
             NSSafeRelease(WindowHandle);
             NSSafeRelease(ConsoleColor);
-			
-			DestroyResources();
-		}, NSDefaultRunLoopMode, true);
-	}
+            
+            DestroyResources();
+        }, NSDefaultRunLoopMode, true);
+    }
 }
 
 void FMacOutputDeviceConsole::DestroyResources()
 {
-	SCOPED_AUTORELEASE_POOL();
-	
+    SCOPED_AUTORELEASE_POOL();
+    
     CHECK(FPlatformThreadMisc::IsMainThread());
     
     NSSafeRelease(TextView);
@@ -138,14 +138,14 @@ void FMacOutputDeviceConsole::Show(bool bShow)
     if (IsVisible() != bShow)
     {
         if (bShow)
-		{
-			CreateConsole();
-		}
-		else
-		{
-			DestroyConsole();
-		}
-	}
+        {
+            CreateConsole();
+        }
+        else
+        {
+            DestroyConsole();
+        }
+    }
 }
 
 void FMacOutputDeviceConsole::Log(const FString& Message)
@@ -162,7 +162,7 @@ void FMacOutputDeviceConsole::Log(const FString& Message)
             SCOPED_AUTORELEASE_POOL();
 
             NSString* String = [NativeMessage stringByAppendingString:@"\n"];
-			AppendStringAndScroll(String);
+            AppendStringAndScroll(String);
             [NativeMessage release];
             
             if(!MacApplication)
@@ -207,9 +207,9 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
             SetTextColor(NewColor);
 
             NSString* String = [NativeMessage stringByAppendingString:@"\n"];
-			AppendStringAndScroll(String);
+            AppendStringAndScroll(String);
             [NativeMessage release];
-			
+            
             SetTextColor(EConsoleColor::White);
             
             if(!MacApplication)
@@ -226,8 +226,8 @@ void FMacOutputDeviceConsole::Flush()
     {
         ExecuteOnMainThread(^
         {
-			SCOPED_AUTORELEASE_POOL();
-			TextView.string = @"";
+            SCOPED_AUTORELEASE_POOL();
+            TextView.string = @"";
             
             if(!MacApplication)
             {
@@ -303,31 +303,31 @@ void FMacOutputDeviceConsole::SetTextColor(EConsoleColor Color)
 
 int32 FMacOutputDeviceConsole::GetLineCount() const
 {
-	if (WindowHandle)
-	{
-		__block NSUInteger NumberOfLines = 0;
-		ExecuteOnMainThread(^
-		{
-			NSString* String = TextView.string;
-			
-			NSUInteger StringLength = String.length;
-			for (NSUInteger LineIndex = 0; LineIndex < StringLength; NumberOfLines++)
-			{
-				LineIndex = NSMaxRange([String lineRangeForRange:NSMakeRange(LineIndex, 0)]);
-			}
-		}, NSDefaultRunLoopMode, true);
-		
-		return static_cast<int32>(NumberOfLines);
-	}
-	else
-	{
-		return -1;
-	}
+    if (WindowHandle)
+    {
+        __block NSUInteger NumberOfLines = 0;
+        ExecuteOnMainThread(^
+        {
+            NSString* String = TextView.string;
+            
+            NSUInteger StringLength = String.length;
+            for (NSUInteger LineIndex = 0; LineIndex < StringLength; NumberOfLines++)
+            {
+                LineIndex = NSMaxRange([String lineRangeForRange:NSMakeRange(LineIndex, 0)]);
+            }
+        }, NSDefaultRunLoopMode, true);
+        
+        return static_cast<int32>(NumberOfLines);
+    }
+    else
+    {
+        return -1;
+    }
 }
 
 void FMacOutputDeviceConsole::OnWindowDidClose()
 {
-	DestroyResources();
+    DestroyResources();
     
     // Exit the application, this gives the same behaviour as on Windows
     FPlatformApplicationMisc::RequestExit(0);
@@ -335,54 +335,54 @@ void FMacOutputDeviceConsole::OnWindowDidClose()
 
 void FMacOutputDeviceConsole::AppendStringAndScroll(NSString* String)
 {
-	if (WindowHandle)
-	{
-		ExecuteOnMainThread(^
-		{
-			SCOPED_AUTORELEASE_POOL();
-			
-			// TODO: CVar
-			const NSUInteger MaxLineCount = 512;
-			
+    if (WindowHandle)
+    {
+        ExecuteOnMainThread(^
+        {
+            SCOPED_AUTORELEASE_POOL();
+            
+            // TODO: CVar
+            const NSUInteger MaxLineCount = 512;
+            
             NSAttributedString* AttributedString = nil;
             {
                 AttributedString = [[NSAttributedString alloc] initWithString:String attributes:ConsoleColor];
             }
-				
-			NSTextStorage* Storage = TextView.textStorage;
-			[Storage beginEditing];
-			
-			// Remove lines
-			NSUInteger LineCount  = GetLineCount();
-			NSString*  TextString = TextView.string;
-			if (LineCount >= MaxLineCount)
-			{
-				NSUInteger LineIndex;
-				NSUInteger NumberOfLines = 0;
-				NSUInteger StringLength  = TextString.length;
-				for (LineIndex = 0; LineIndex < StringLength; NumberOfLines++)
-				{
-					LineIndex = NSMaxRange([TextString lineRangeForRange:NSMakeRange(LineIndex, 0)]);
-					if (NumberOfLines >= 1)
-					{
-						break;
-					}
-				}
-				
-				NSRange Range = NSMakeRange(0, LineIndex);
-				[Storage deleteCharactersInRange:Range];
-			}
-			
-			// Add the new String
-			[Storage appendAttributedString:AttributedString];
-			Storage.font = [NSFont fontWithName:@"Courier" size:12.0f];
-			
-			[Storage endEditing];
-			
-			// Scroll
-			[TextView scrollToEndOfDocument:TextView];
-			
-			[AttributedString release];
-		}, NSDefaultRunLoopMode, true);
-	}
+                
+            NSTextStorage* Storage = TextView.textStorage;
+            [Storage beginEditing];
+            
+            // Remove lines
+            NSUInteger LineCount  = GetLineCount();
+            NSString*  TextString = TextView.string;
+            if (LineCount >= MaxLineCount)
+            {
+                NSUInteger LineIndex;
+                NSUInteger NumberOfLines = 0;
+                NSUInteger StringLength  = TextString.length;
+                for (LineIndex = 0; LineIndex < StringLength; NumberOfLines++)
+                {
+                    LineIndex = NSMaxRange([TextString lineRangeForRange:NSMakeRange(LineIndex, 0)]);
+                    if (NumberOfLines >= 1)
+                    {
+                        break;
+                    }
+                }
+                
+                NSRange Range = NSMakeRange(0, LineIndex);
+                [Storage deleteCharactersInRange:Range];
+            }
+            
+            // Add the new String
+            [Storage appendAttributedString:AttributedString];
+            Storage.font = [NSFont fontWithName:@"Courier" size:12.0f];
+            
+            [Storage endEditing];
+            
+            // Scroll
+            [TextView scrollToEndOfDocument:TextView];
+            
+            [AttributedString release];
+        }, NSDefaultRunLoopMode, true);
+    }
 }

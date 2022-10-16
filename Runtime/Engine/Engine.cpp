@@ -2,7 +2,7 @@
 
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Modules/ModuleInterface.h"
+#include "Core/Modules/ModuleManager.h"
 
 #include "Application/ApplicationInterface.h"
 
@@ -24,7 +24,7 @@ FAutoConsoleCommand GToggleFullscreen("MainViewport.ToggleFullscreen");
 
 FEngine::FEngine()
 {
-	GExit.GetDelgate().AddRaw(this, &FEngine::Exit);
+    GExit.GetDelgate().AddRaw(this, &FEngine::Exit);
 }
 
 bool FEngine::Initialize()

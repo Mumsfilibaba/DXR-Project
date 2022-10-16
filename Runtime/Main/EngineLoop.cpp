@@ -8,7 +8,7 @@
     #include "EditorEngine.h"
 #endif
 
-#include "Core/Modules/ModuleInterface.h"
+#include "Core/Modules/ModuleManager.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/AsyncThreadPool.h"
 #include "Core/Misc/CoreDelegates.h"

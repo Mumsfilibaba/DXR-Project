@@ -32,7 +32,7 @@ public:
     FD3D12DepthStencilView* GetOrCreateDSV(const FRHIDepthStencilView& DSVInitializer);
 
     void DestroyRTVs() { RenderTargetViews.Clear(); }
-	void DestroyDSVs() { DepthStencilViews.Clear(); }
+    void DestroyDSVs() { DepthStencilViews.Clear(); }
 
     FD3D12Resource*           GetResource()           const { return Resource.Get(); }
     FD3D12ShaderResourceView* GetShaderResourceView() const { return ShaderResourceView.Get(); }

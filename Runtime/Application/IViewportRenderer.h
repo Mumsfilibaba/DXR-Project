@@ -2,7 +2,7 @@
 #include "DrawableTexture.h"
 #include "Window.h"
 
-#include "Core/Modules/ModuleInterface.h"
+#include "Core/Modules/ModuleManager.h"
 #include "Core/Containers/SharedRef.h"
 
 struct IViewportRenderer 

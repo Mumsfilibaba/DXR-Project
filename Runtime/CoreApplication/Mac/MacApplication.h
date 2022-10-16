@@ -20,18 +20,18 @@ struct FDeferredMacEvent
         : NotificationName(nil)
         , Event(nil)
         , Window(nil)
-		, Size()
-		, Position()
-		, Character(uint32(-1))
+        , Size()
+        , Position()
+        , Character(uint32(-1))
     { }
 
     FORCEINLINE FDeferredMacEvent(const FDeferredMacEvent& Other)
         : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nil)
         , Event(Other.Event ? [Other.Event retain] : nil)
         , Window(Other.Window ? [Other.Window retain] : nil)
-		, Size(Other.Size)
-		, Position(Other.Position)
-		, Character(Other.Character)
+        , Size(Other.Size)
+        , Position(Other.Position)
+        , Character(Other.Character)
     { }
 
     FORCEINLINE ~FDeferredMacEvent()
@@ -44,14 +44,14 @@ struct FDeferredMacEvent
         }
     }
 
-	NSNotificationName NotificationName;
+    NSNotificationName NotificationName;
     NSEvent*           Event;
-	
-	FCocoaWindow*      Window;
-	CGSize             Size;
-	CGPoint            Position;
+    
+    FCocoaWindow*      Window;
+    CGSize             Size;
+    CGPoint            Position;
 
-	uint32             Character;
+    uint32             Character;
 };
 
 

@@ -157,8 +157,8 @@ protected:
     void ForwardExitEvent(int32 ExitCode) { ExitEvent.Broadcast(ExitCode); }
     void ForwardViewportChangedEvent(const FGenericWindowRef& NewMainViewport) { ViewportChangedEvent.Broadcast(NewMainViewport); }
 
-	FExitEvent            ExitEvent;
-	FViewportChangedEvent ViewportChangedEvent;
+    FExitEvent            ExitEvent;
+    FViewportChangedEvent ViewportChangedEvent;
 
     static TSharedPtr<FApplicationInterface> GInstance;
 };

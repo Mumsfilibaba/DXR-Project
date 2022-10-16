@@ -10,8 +10,8 @@
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:NSBackingStoreBuffered defer:NO];
     if (self)
     {
-		ConsoleWindow = InConsoleWindow;
-		self.delegate = self;
+        ConsoleWindow = InConsoleWindow;
+        self.delegate = self;
     }
     
     return self;
@@ -32,7 +32,7 @@
 
 - (void) windowWillClose:(NSNotification*) Notification
 {
-	ConsoleWindow->OnWindowDidClose();
+    ConsoleWindow->OnWindowDidClose();
 }
 
 + (NSString*) convertStringWithArgs:(const CHAR*) Format Args:(va_list)Args

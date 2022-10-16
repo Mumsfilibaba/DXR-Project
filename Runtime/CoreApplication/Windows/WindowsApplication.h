@@ -69,7 +69,7 @@ public:
 
     virtual void Tick(float Delta) override final;
 
-	virtual bool SupportsHighPrecisionMouse() const override final { return false; }
+    virtual bool SupportsHighPrecisionMouse() const override final { return false; }
 
     virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) override final;
 

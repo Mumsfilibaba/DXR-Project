@@ -1,4 +1,4 @@
-#include "ModuleInterface.h"
+#include "ModuleManager.h"
 #include "Core/Misc/EngineLoopTicker.h"
 
 CORE_API FApplicationModule* GApplicationModule;

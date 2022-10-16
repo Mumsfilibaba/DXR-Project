@@ -9,7 +9,7 @@
 #include "RHITimestampQuery.h"
 #include "IRHICommandContext.h"
 
-#include "Core/Modules/ModuleInterface.h"
+#include "Core/Modules/ModuleManager.h"
 
 #include "CoreApplication/Generic/GenericWindow.h"
 

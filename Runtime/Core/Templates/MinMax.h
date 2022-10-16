@@ -29,5 +29,5 @@ struct TMax<Arg0>
 template<int32 Arg0, int32 Arg1, int32... RestArgs>
 struct TMax<Arg0, Arg1, RestArgs...>
 {
-	enum { Value = (Arg0 >= Arg1) ? TMax<Arg0, RestArgs...>::Value : TMax<Arg1, RestArgs...>::Value };
+    enum { Value = (Arg0 >= Arg1) ? TMax<Arg0, RestArgs...>::Value : TMax<Arg1, RestArgs...>::Value };
 };

@@ -55,7 +55,7 @@ public:
         , CommandPointer(nullptr)
         , FirstCommand(nullptr)
         , CommandContext(nullptr)
-	    , Statistics()
+        , Statistics()
         , NumCommands(0)
         , bIsRenderPassActive(false)
     {

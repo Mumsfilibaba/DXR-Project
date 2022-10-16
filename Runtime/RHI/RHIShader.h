@@ -67,9 +67,9 @@ inline const CHAR* ToString(EShaderStage ShaderStage)
         case EShaderStage::RayAnyHit:       return "RayAnyHit";
         case EShaderStage::RayClosestHit:   return "RayClosestHit";
         case EShaderStage::RayMiss:         return "RayMiss";
-		case EShaderStage::RayIntersection: return "RayIntersection";
-		case EShaderStage::RayCallable:     return "RayCallable";
-		default:                            return "Unknown";
+        case EShaderStage::RayIntersection: return "RayIntersection";
+        case EShaderStage::RayCallable:     return "RayCallable";
+        default:                            return "Unknown";
     }
 }
 

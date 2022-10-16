@@ -570,7 +570,7 @@ public:
      */
     FRHIDescriptorHandle()
         : Index(InvalidHandle)
-	    , Type(EDescriptorType::Unknown)
+        , Type(EDescriptorType::Unknown)
     { }
 
     /**
@@ -580,7 +580,7 @@ public:
      */
     FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
         : Index(InIndex)
-	    , Type(InType)
+        , Type(InType)
     { }
 
     /** 

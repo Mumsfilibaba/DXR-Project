@@ -24,9 +24,9 @@
 
 #ifndef FORCEINLINE
     #ifndef DEBUG_BUILD
-	    #define FORCEINLINE __attribute__((always_inline)) inline
+        #define FORCEINLINE __attribute__((always_inline)) inline
     #else
-	    #define FORCEINLINE inline
+        #define FORCEINLINE inline
     #endif
 #endif
 

@@ -39,7 +39,7 @@ void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
     SCOPED_AUTORELEASE_POOL();
     
     CHECK(NSApp != nil);
-	
+    
     do
     {
         NSEvent* Event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
@@ -60,29 +60,29 @@ FModifierKeyState FMacApplicationMisc::GetModifierKeyState()
 {
     SCOPED_AUTORELEASE_POOL();
     
-	NSUInteger CurrentModifiers = ([NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask);
+    NSUInteger CurrentModifiers = ([NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask);
 
     uint32 Mask = 0;
     if (CurrentModifiers & NSEventModifierFlagControl)
     {
         Mask |= EModifierFlag::ModifierFlag_Ctrl;
     }
-	
+    
     if (CurrentModifiers & NSEventModifierFlagShift)
     {
         Mask |= EModifierFlag::ModifierFlag_Shift;
     }
-	
+    
     if (CurrentModifiers & NSEventModifierFlagOption)
     {
         Mask |= EModifierFlag::ModifierFlag_Alt;
     }
-	
+    
     if (CurrentModifiers & NSEventModifierFlagCommand)
     {
         Mask |= EModifierFlag::ModifierFlag_Super;
     }
-	
+    
     if (CurrentModifiers & NSEventModifierFlagCapsLock)
     {
         Mask |= EModifierFlag::ModifierFlag_CapsLock;

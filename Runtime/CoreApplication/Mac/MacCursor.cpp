@@ -74,7 +74,7 @@ void FMacCursor::SetPosition(FGenericWindow* InRelativeWindow, int32 x, int32 y)
     CGPoint NewPosition;
     if (InRelativeWindow)
     {
-		FCocoaWindow* RelativeWindow = reinterpret_cast<FCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
+        FCocoaWindow* RelativeWindow = reinterpret_cast<FCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
         const NSRect ContentRect = RelativeWindow.frame;
         const NSRect LocalRect   = NSMakeRect(x, ContentRect.size.height - y - 1, 0, 0);
         const NSRect GlobalRect  = [RelativeWindow convertRectToScreen:LocalRect];
@@ -117,7 +117,7 @@ void FMacCursor::SetVisibility(bool bVisible)
         if (! bIsVisible)
         {
             [NSCursor unhide];
-			bIsVisible = true;
+            bIsVisible = true;
         }
     }
     else
@@ -125,7 +125,7 @@ void FMacCursor::SetVisibility(bool bVisible)
         if (bIsVisible)
         {
             [NSCursor hide];
-			bIsVisible = false;
+            bIsVisible = false;
         }
     }
 }

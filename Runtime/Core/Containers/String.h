@@ -48,7 +48,7 @@ public:
     enum { INVALID_INDEX = SizeType(-1) };
 
 public:
-	
+    
     /**
      * @brief          - Create a string from a formatted string
      * @param InFormat - Formatted string
@@ -65,7 +65,7 @@ public:
     }
 
 public:
-	
+    
     /**
      * @brief - Default constructor
      */
@@ -1311,24 +1311,23 @@ public:
     }
 
 #if defined(__OBJC__)
-	/**
-	 * @brief - Retrieve a null-terminated string
-	 *
-	 * @return - Returns a pointer containing a null-terminated string
-	 */
+    /**
+     * @brief  - Retrieve a null-terminated string
+     * @return - Returns a pointer containing a null-terminated string
+     */
     NODISCARD FORCEINLINE NSString* GetNSString() const noexcept
-	{
-		if constexpr (TIsSame<CharType, CHAR>::Value)
-		{
-			return [[[NSString alloc] initWithBytes:Characters.GetData() length:GetLength() * sizeof(CharType) encoding:NSUTF8StringEncoding] autorelease];
-		}
-		else
-		{
-			return [[[NSString alloc] initWithBytes:Characters.GetData() length:GetLength() * sizeof(CharType) encoding:NSUTF32LittleEndianStringEncoding] autorelease];
-		}
-	}
+    {
+        if constexpr (TIsSame<CharType, CHAR>::Value)
+        {
+            return [[[NSString alloc] initWithBytes:Characters.GetData() length:GetLength() * sizeof(CharType) encoding:NSUTF8StringEncoding] autorelease];
+        }
+        else
+        {
+            return [[[NSString alloc] initWithBytes:Characters.GetData() length:GetLength() * sizeof(CharType) encoding:NSUTF32LittleEndianStringEncoding] autorelease];
+        }
+    }
 #endif
-	
+    
     /**
      * @brief  - Returns the size of the container
      * @return - The current size of the container
@@ -1536,7 +1535,7 @@ public:
         TString(Move(Other)).Swap(*this);
         return *this;
     }
-	
+    
 public:
     NODISCARD
     friend FORCEINLINE TString operator+(const TString& LHS, const TString& RHS) noexcept

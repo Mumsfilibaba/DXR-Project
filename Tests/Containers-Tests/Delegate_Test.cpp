@@ -162,28 +162,28 @@ void Delegate_Test()
     std::cout << "operator==" << std::boolalpha << (Tuple == Tuple3) << std::endl;
     std::cout << "operator!=" << std::boolalpha << (Tuple != Tuple3) << std::endl;
     std::cout << "operator<=" << std::boolalpha << (Tuple <= Tuple3) << std::endl;
-	std::cout << "operator<"  << std::boolalpha << (Tuple < Tuple3) << std::endl;
-	std::cout << "operator>"  << std::boolalpha << (Tuple > Tuple3) << std::endl;
-	std::cout << "operator>=" << std::boolalpha << (Tuple >= Tuple3) << std::endl;
-	
-	TTuple<int32, float, double> Tuple4(5, 32.0f, 500.0) ;
-	TTuple<int32, float, double> Tuple5(2, 22.0f, 100.0) ;
-	Tuple4.Swap(Tuple5) ;
-	
-	std::cout << "operator==" << std::boolalpha << (Tuple4 == Tuple5) << std::endl;
-	std::cout << "operator!=" << std::boolalpha << (Tuple4 != Tuple5) << std::endl;
-	std::cout << "operator<=" << std::boolalpha << (Tuple4 <= Tuple5) << std::endl;
-	std::cout << "operator<"  << std::boolalpha << (Tuple4 <  Tuple5) << std::endl;
-	std::cout << "operator>"  << std::boolalpha << (Tuple4 >  Tuple5) << std::endl;
-	std::cout << "operator>=" << std::boolalpha << (Tuple4 >= Tuple5) << std::endl;
+    std::cout << "operator<"  << std::boolalpha << (Tuple < Tuple3) << std::endl;
+    std::cout << "operator>"  << std::boolalpha << (Tuple > Tuple3) << std::endl;
+    std::cout << "operator>=" << std::boolalpha << (Tuple >= Tuple3) << std::endl;
+    
+    TTuple<int32, float, double> Tuple4(5, 32.0f, 500.0) ;
+    TTuple<int32, float, double> Tuple5(2, 22.0f, 100.0) ;
+    Tuple4.Swap(Tuple5) ;
+    
+    std::cout << "operator==" << std::boolalpha << (Tuple4 == Tuple5) << std::endl;
+    std::cout << "operator!=" << std::boolalpha << (Tuple4 != Tuple5) << std::endl;
+    std::cout << "operator<=" << std::boolalpha << (Tuple4 <= Tuple5) << std::endl;
+    std::cout << "operator<"  << std::boolalpha << (Tuple4 <  Tuple5) << std::endl;
+    std::cout << "operator>"  << std::boolalpha << (Tuple4 >  Tuple5) << std::endl;
+    std::cout << "operator>=" << std::boolalpha << (Tuple4 >= Tuple5) << std::endl;
 
-	TTuple<float, float> PairTuple0(80.0f, 900.0f) ;
-	TTuple<float, float> PairTuple1(50.0f, 100.0f) ;
-	PairTuple1.First = 30.0f;
-	PairTuple1.Second = 200.0f;
+    TTuple<float, float> PairTuple0(80.0f, 900.0f) ;
+    TTuple<float, float> PairTuple1(50.0f, 100.0f) ;
+    PairTuple1.First = 30.0f;
+    PairTuple1.Second = 200.0f;
 
-	PairTuple0.Swap(PairTuple1);
-	
+    PairTuple0.Swap(PairTuple1);
+    
     std::cout << "First=" << PairTuple0.First << std::endl;
     std::cout << "Second=" << PairTuple0.Second << std::endl;
 
@@ -329,14 +329,14 @@ void Delegate_Test()
     std::cout << std::endl << "----Testing MultiCastDelegate----" << std::endl << std::endl;
 
     {
-		TMulticastDelegate<> VoidMultiDelegates;
-		VoidMultiDelegates.AddLambda([]()
-		{
-			std::cout << "Lambda Void" << std::endl;
-		});
-		
-		VoidMultiDelegates.Broadcast();
-		
+        TMulticastDelegate<> VoidMultiDelegates;
+        VoidMultiDelegates.AddLambda([]()
+        {
+            std::cout << "Lambda Void" << std::endl;
+        });
+        
+        VoidMultiDelegates.Broadcast();
+        
         TMulticastDelegate<int32> MultiDelegates;
         std::cout << "IsBound=" << std::boolalpha << MultiDelegates.IsBound() << std::endl;
 

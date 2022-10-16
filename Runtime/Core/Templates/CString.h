@@ -218,7 +218,7 @@ public:
         return FPlatformString::Strtod(String, End);
     }
     
-	static FORCEINLINE int32 Atoi(const CHARTYPE* String) noexcept
+    static FORCEINLINE int32 Atoi(const CHARTYPE* String) noexcept
     {
         return FPlatformString::Atoi(String);
     }

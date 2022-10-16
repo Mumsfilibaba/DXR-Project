@@ -30,13 +30,13 @@ void FFrameProfiler::Tick()
 
 void FFrameProfiler::Enable()
 {
-	FFrameProfiler& Instance = FFrameProfiler::Get();
+    FFrameProfiler& Instance = FFrameProfiler::Get();
     Instance.bEnabled = true;
 }
 
 void FFrameProfiler::Disable()
 {
-	FFrameProfiler& Instance = FFrameProfiler::Get();
+    FFrameProfiler& Instance = FFrameProfiler::Get();
     Instance.bEnabled = false;
 }
 

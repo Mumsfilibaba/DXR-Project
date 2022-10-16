@@ -4,27 +4,27 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 FMetalInterface::FMetalInterface()
-	: FRHIInterface(ERHIInstanceType::Metal)
-	, CommandContext()
+    : FRHIInterface(ERHIInstanceType::Metal)
+    , CommandContext()
 { }
 
 FMetalInterface::~FMetalInterface()
 {
-	SAFE_DELETE(CommandContext);
-	SAFE_DELETE(DeviceContext);
+    SAFE_DELETE(CommandContext);
+    SAFE_DELETE(DeviceContext);
 }
 
 bool FMetalInterface::Initialize()
 {
-	DeviceContext = FMetalDeviceContext::CreateContext(this);
-	if (!DeviceContext)
-	{
-		METAL_ERROR("Failed to create DeviceContext");
-		return false;
-	}
-	
-	METAL_INFO("Created DeviceContext");
-	
+    DeviceContext = FMetalDeviceContext::CreateContext(this);
+    if (!DeviceContext)
+    {
+        METAL_ERROR("Failed to create DeviceContext");
+        return false;
+    }
+    
+    METAL_INFO("Created DeviceContext");
+    
     CommandContext = FMetalCommandContext::CreateMetalContext(GetDeviceContext());
     if (!CommandContext)
     {

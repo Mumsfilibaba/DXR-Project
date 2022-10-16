@@ -5,11 +5,11 @@
 #include "Core/Templates/AlignedStorage.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
-	#pragma warning(push)
-	#pragma warning(disable : 4100) // Disable unreferenced variable
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(PLATFORM_COMPILER_CLANG)
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Wunused-parameter"
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 template<typename T>
@@ -256,7 +256,7 @@ private:
 };
 
 #if defined(PLATFORM_COMPILER_MSVC)
-	#pragma warning(pop)
+    #pragma warning(pop)
 #elif defined(PLATFORM_COMPILER_CLANG)
-	#pragma clang diagnostic pop
+    #pragma clang diagnostic pop
 #endif

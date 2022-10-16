@@ -31,19 +31,19 @@ public:
     int32 GetLineCount() const;
     
     void OnWindowDidClose();
-	
+    
 private:
-	void CreateConsole();
-	
-	void DestroyConsole();
-	void DestroyResources();
-	
-	void AppendStringAndScroll(NSString* String);
-	
+    void CreateConsole();
+    
+    void DestroyConsole();
+    void DestroyResources();
+    
+    void AppendStringAndScroll(NSString* String);
+    
     FCocoaConsoleWindow*     WindowHandle;
     mutable FCriticalSection WindowCS;
 
     NSTextView*              TextView;
-	NSScrollView*            ScrollView;
-	NSDictionary*            ConsoleColor;
+    NSScrollView*            ScrollView;
+    NSDictionary*            ConsoleColor;
 };

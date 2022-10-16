@@ -9,7 +9,7 @@ class FMacOutputDeviceConsole;
 
 @interface FCocoaConsoleWindow : NSWindow<NSWindowDelegate>
 {
-	FMacOutputDeviceConsole* ConsoleWindow;
+    FMacOutputDeviceConsole* ConsoleWindow;
 }
 
 // Instance

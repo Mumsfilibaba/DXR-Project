@@ -19,8 +19,8 @@ struct FMacLibrary final : public FGenericLibrary
 #else
         const int32 Mode = RTLD_NOW;
 #endif
-		
-		const CHAR* LibraryNameWithExtension = RealName.GetCString();
+        
+        const CHAR* LibraryNameWithExtension = RealName.GetCString();
         return dlopen(LibraryNameWithExtension, Mode);
     }
 

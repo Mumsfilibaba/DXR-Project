@@ -13,7 +13,7 @@ class FMaterial;
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) FD3D12ShaderBindingTableEntry
 {
     CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
-    D3D12_GPU_DESCRIPTOR_HANDLE	RootDescriptorTables[4] = { 0, 0, 0, 0 };
+    D3D12_GPU_DESCRIPTOR_HANDLE    RootDescriptorTables[4] = { 0, 0, 0, 0 };
 };
 
 
