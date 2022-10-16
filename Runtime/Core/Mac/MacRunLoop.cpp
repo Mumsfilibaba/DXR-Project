@@ -1,7 +1,6 @@
 #include "MacRunLoop.h"
 #include "ScopedAutoreleasePool.h"
 
-
 #include "Core/RefCounted.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
@@ -20,7 +19,6 @@ class FRunLoopSourceContext;
 
 // Main-thread runloop source
 FRunLoopSourceContext* GMainThread = nullptr;
-
 
 @interface FRunLoopSource : NSObject
 {

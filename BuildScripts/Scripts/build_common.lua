@@ -8,7 +8,7 @@ newoption
 -- Check if the module should be built monolithicly
 function IsMonolithic()
     if GbIsMonolithic == nil then
-        GbIsMonolithic = (_OPTIONS['monolithic'] ~= nil)
+        GbIsMonolithic = (_OPTIONS["monolithic"] ~= nil)
     end
     
     return GbIsMonolithic
@@ -25,20 +25,20 @@ end
 
 -- Check the action being used
 function BuildWithXcode()
-    return _ACTION == 'xcode4'
+    return _ACTION == "xcode4"
 end
 
 function BuildWithVS()
     return 
-        _ACTION == 'vs2022' or 
-        _ACTION == 'vs2019' or 
-        _ACTION == 'vs2017' or 
-        _ACTION == 'vs2015' or 
-        _ACTION == 'vs2013' or
-        _ACTION == 'vs2012' or
-        _ACTION == 'vs2010' or
-        _ACTION == 'vs2008' or
-        _ACTION == 'vs2005'
+        _ACTION == "vs2022" or 
+        _ACTION == "vs2019" or 
+        _ACTION == "vs2017" or 
+        _ACTION == "vs2015" or 
+        _ACTION == "vs2013" or
+        _ACTION == "vs2012" or
+        _ACTION == "vs2010" or
+        _ACTION == "vs2008" or
+        _ACTION == "vs2005"
 end
 
 -- Helper for printing all strings in a table and ending with endline
@@ -53,7 +53,7 @@ function PrintTableWithEndLine(Format, Table)
         end
 
         -- Empty line
-        printf('')
+        printf("")
     end
 end
 
@@ -103,7 +103,7 @@ function GetModule(ModuleName)
     if GModules ~= nil then
         return GModules[ModuleName]
     else
-        printf('Global list of modules does not exist')
+        printf("Global list of modules does not exist")
         return nil
     end
 end
@@ -116,7 +116,7 @@ function AddModule(ModuleName, Module)
     if GModules ~= nil then
         GModules[ModuleName] = Module
     else
-        printf('Global list of modules does not exist')
+        printf("Global list of modules does not exist")
     end
 end
 
@@ -127,7 +127,7 @@ function GetTarget(TargetName)
     if GTargets ~= nil then
         return GTargets[TargetName]
     else
-        printf('Global list of targets does not exist')
+        printf("Global list of targets does not exist")
         return nil
     end
 end
@@ -140,21 +140,21 @@ function AddTarget(TargetName, Target)
     if GTargets ~= nil then
         GTargets[TargetName] = Target
     else
-        printf('Global list of targets does not exist')
+        printf("Global list of targets does not exist")
     end
 end
 
 -- Output path for dependencies (ImGui etc.)
-GOutputPath = '%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}'
-printf('\nINFO:\nBuildPath = \'%s\'', GOutputPath)
+GOutputPath = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
+printf("\nINFO:\nBuildPath = \"%s\"", GOutputPath)
 
 function GetOutputPath()
     return GOutputPath
 end
 
 -- Mainpath ../BuildScripts
-GEnginePath = path.getabsolute( '../', _PREMAKE_DIR)  
-printf('EnginePath = \'%s\'\n', GEnginePath)
+GEnginePath = path.getabsolute( "../", _PREMAKE_DIR)  
+printf("EnginePath = \"%s\"\n", GEnginePath)
 
 function GetEnginePath()
     return GEnginePath
@@ -167,22 +167,22 @@ end
 
 -- Retrieve the path to the Runtime folder containing all the engine modules
 function GetRuntimeFolderPath()
-    return GEnginePath .. '/Runtime'
+    return GEnginePath .. "/Runtime"
 end
 
 -- Retrieve the path to the solutions folder containing solution and project files
 function GetSolutionsFolderPath()
-    return GEnginePath .. '/Solutions'
+    return GEnginePath .. "/Solutions"
 end
 
 -- Retrieve the path to the dependencies folder containing external dependecy projects
 function GetExternalDependenciesFolderPath()
-    return GEnginePath .. '/Dependencies'
+    return GEnginePath .. "/Dependencies"
 end
 
 -- Make path relative to dependency folder
 function CreateExternalDependencyPath(Path)
-    return GetExternalDependenciesFolderPath() .. '/' .. Path
+    return GetExternalDependenciesFolderPath() .. "/" .. Path
 end
 
 -- Deep copy a table

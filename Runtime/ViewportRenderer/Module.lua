@@ -1,28 +1,28 @@
-include '../../BuildScripts/Scripts/build_module.lua'
+include "../../BuildScripts/Scripts/build_module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- ViewportRenderer Module
 
-local ViewportRendererModule = FModuleBuildRules('ViewportRenderer')
+local ViewportRendererModule = FModuleBuildRules("ViewportRenderer")
 ViewportRendererModule.bRuntimeLinking = false
 
 ViewportRendererModule.AddSystemIncludes( 
 {
-    CreateExternalDependencyPath('imgui'),
+    CreateExternalDependencyPath("imgui"),
 })
 
 ViewportRendererModule.AddModuleDependencies( 
 {
-    'Core',
-    'CoreApplication',
-    'Application',
-    'Engine',
-    'RHI',
+    "Core",
+    "CoreApplication",
+    "Application",
+    "Engine",
+    "RHI",
 })
 
 ViewportRendererModule.AddLinkLibraries( 
 {
-    'ImGui',
+    "ImGui",
 })
 
 ViewportRendererModule.Generate()

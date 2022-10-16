@@ -14,8 +14,7 @@ private:
 public:
     static FMetalDeviceContext* CreateContext(FMetalInterface* InCoreInterface);
     
-    FORCEINLINE id<MTLDevice>       GetMTLDevice() const { return Device; }
-    
+    FORCEINLINE id<MTLDevice>       GetMTLDevice()       const { return Device; }
     FORCEINLINE id<MTLCommandQueue> GetMTLCommandQueue() const { return CommandQueue; }
 
     FORCEINLINE FMetalInterface*    GetMetalInterface() const { return CoreInterface; }

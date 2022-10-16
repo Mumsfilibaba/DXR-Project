@@ -1,30 +1,30 @@
 
-include '../../BuildScripts/Scripts/build_module.lua'
+include "../../BuildScripts/Scripts/build_module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- Application Module
 
-local ApplicationModule = FModuleBuildRules('Application')
+local ApplicationModule = FModuleBuildRules("Application")
 ApplicationModule.AddSystemIncludes( 
 {
-    CreateExternalDependencyPath('imgui')
+    CreateExternalDependencyPath("imgui")
 })
 
 ApplicationModule.AddModuleDependencies( 
 {
-    'Core',
-    'CoreApplication',
+    "Core",
+    "CoreApplication",
 })
 
 ApplicationModule.AddLinkLibraries( 
 {
-    'ImGui',
+    "ImGui",
 })
 
 if BuildWithXcode() then
     ApplicationModule.AddFrameWorks( 
     {
-        'AppKit',
+        "AppKit",
     })
 end
 

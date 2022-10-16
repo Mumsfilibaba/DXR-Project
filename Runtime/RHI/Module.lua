@@ -1,25 +1,25 @@
-include '../../BuildScripts/Scripts/build_module.lua'
+include "../../BuildScripts/Scripts/build_module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- RHI Module
 
-local RHIModule = FModuleBuildRules('RHI')
+local RHIModule = FModuleBuildRules("RHI")
 
 RHIModule.AddSystemIncludes(
 {
-    CreateExternalDependencyPath('DXC/include'),
-    CreateExternalDependencyPath('SPIRV-Cross')
+    CreateExternalDependencyPath("DXC/include"),
+    CreateExternalDependencyPath("SPIRV-Cross")
 })
 
 RHIModule.AddModuleDependencies( 
 {
-    'Core',
-    'CoreApplication'
+    "Core",
+    "CoreApplication"
 })
 
 RHIModule.AddLinkLibraries( 
 {
-    'SPIRV-Cross',
+    "SPIRV-Cross",
 })
 
 RHIModule.Generate()

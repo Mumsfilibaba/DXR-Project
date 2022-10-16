@@ -3,7 +3,6 @@
 
 #include <pthread.h>
 
-
 class FMacThread final 
     : public FGenericThread
 {

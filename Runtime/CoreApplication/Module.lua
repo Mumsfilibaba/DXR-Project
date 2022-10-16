@@ -1,19 +1,19 @@
-include '../../BuildScripts/Scripts/build_module.lua'
+include "../../BuildScripts/Scripts/build_module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- CoreApplication Module
 
-local CoreApplicationModule = FModuleBuildRules('CoreApplication')
+local CoreApplicationModule = FModuleBuildRules("CoreApplication")
 CoreApplicationModule.AddModuleDependencies( 
 {
-    'Core'
+    "Core"
 })
 
 if BuildWithXcode() then
     CoreApplicationModule.AddFrameWorks( 
     {
-        'Cocoa',
-        'AppKit',
+        "Cocoa",
+        "AppKit",
     })
 end
 

@@ -147,9 +147,9 @@ project ( projectname )
 	filter {}
 
 	-- Remove non-windows files
-	filter "system:windows"
-		removefiles
-		{
-			"%{wks.location}/**/Mac/**"
-		}
-	filter {}
+	-- filter "system:windows"
+		--removefiles
+		--{
+		--	"%{wks.location}/**/Mac/**"
+		--}
+	--filter {}

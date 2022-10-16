@@ -1,31 +1,31 @@
-include '../BuildScripts/Scripts/build_workspace.lua'
+include "../BuildScripts/Scripts/build_workspace.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- Sandbox Project
 
-local SandboxProject = FTargetBuildRules('Sandbox')
+local SandboxProject = FTargetBuildRules("Sandbox")
 SandboxProject.AddModuleDependencies(
 {
-    'Core',
-    'CoreApplication',
-    'Application',
-    'RHI',
-    'Engine',
-    'Renderer',
-    'ViewportRenderer',
-    'NullRHI',
+    "Core",
+    "CoreApplication",
+    "Application",
+    "RHI",
+    "Engine",
+    "Renderer",
+    "ViewportRenderer",
+    "NullRHI",
 })
 
 if BuildWithXcode() then
     SandboxProject.AddModuleDependencies(
     { 
-        'MetalRHI'
+        "MetalRHI"
     })
 else
     SandboxProject.AddModuleDependencies(
     { 
-        'D3D12RHI'
+        "D3D12RHI"
     })
 end
 
-GenerateWorkspace('DXR-Engine Sandbox', { SandboxProject })
+GenerateWorkspace("DXR-Engine Sandbox", { SandboxProject })

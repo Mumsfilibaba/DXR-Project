@@ -1,19 +1,19 @@
-include 'build_rule.lua'
+include "build_rule.lua"
 
 -- Module build rules
 function FModuleBuildRules(InName)
-    printf('Creating Module \'%s\'', InName)
+    printf("Creating Module \"%s\"", InName)
 
     -- Init parent class
     local self = FBuildRules(InName)
     if self == nil then
-        printf('Module Error: Failed to create BuildRule')
+        printf("Module Error: Failed to create BuildRule")
         return nil
     end
 
     -- Ensure that module does not already exist
     if IsModule(NewModuleName) then
-        printf('Module is already created')
+        printf("Module is already created")
         return GetModule(NewModuleName)
     end
        
@@ -29,37 +29,46 @@ function FModuleBuildRules(InName)
     -- Generate the module
     local BaseGenerate = self.Generate 
     function self.Generate()
-        printf('    Generating Module %s\n', self.Name)
+        printf("    Generating Module %s\n", self.Name)
   
         -- Is the build monolithic
         local bIsMonolithic = IsMonolithic()
         if bIsMonolithic then
-            printf('    Build is monolithic\n')
+            printf("    Build is monolithic\n")
             
             self.bIsDynamic      = false
             self.bRuntimeLinking = true
         else
-            printf('    Build is NOT monolithic\n')
+            printf("    Build is NOT monolithic\n")
         end
         
         -- Dynamic or static
         if self.bIsDynamic then
+            
+            -- Add define to control the module implementation (For export/import)
             local UpperCaseName  = self.Name:upper()
-            local ModuleImplName = UpperCaseName .. '_IMPL=(1)'
+            local ModuleImplName = UpperCaseName .. "_IMPL=(1)"
             self.AddDefines(
             {
                 ModuleImplName
             })
 
-            self.Kind = 'SharedLib'
+            -- Add files for the new operator (TODO: investigate if this could be a static lib)
+            self.AddFiles(
+            {
+                RuntimeFolderPath .. "/Core/Memory/New.h",
+                RuntimeFolderPath .. "/Core/Memory/New.cpp",
+            })
+
+            self.Kind = "SharedLib"
         else
-            self.Kind = 'StaticLib'
+            self.Kind = "StaticLib"
         end
         
         -- Always add module name as a define
         self.AddDefines(
         {
-            ('MODULE_NAME=' .. '\"' .. self.Name .. '\"')
+            ("MODULE_NAME=" .. "\"" .. self.Name .. "\"")
         })
 
         -- Generate the project

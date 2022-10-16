@@ -1,15 +1,15 @@
-include 'build_common.lua'
+include "build_common.lua"
 
 -- Build rules for a project
 function FBuildRules(InName)
 
     -- Needs to have a valid modulename
     if InName == nil then
-        printf('BuildRule failed to due invalid name')
+        printf("BuildRule failed to due invalid name")
         return nil
     end
 
-    printf('Creating BuildRule \'%s\'\n', InName)
+    printf("Creating BuildRule \"%s\"\n", InName)
 
     -- Folder path for engine-modules
     local RuntimeFolderPath = GetRuntimeFolderPath()
@@ -23,9 +23,9 @@ function FBuildRules(InName)
         -- Location for IDE project files
         Location = GetSolutionsFolderPath(),
         -- Location for generated files from the build
-        BuildFolderPath = GetEnginePath() .. '/Build',
+        BuildFolderPath = GetEnginePath() .. "/Build",
         -- Location for the build (Inside the build folder specified inside the build-folder )
-        OutputPath = '/%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}',
+        OutputPath = "/%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}",
 
         -- Should use precompiled headers. Should be named Precompiled.h and Precompiled.cpp
         bUsePrecompiledHeaders = false,
@@ -39,31 +39,31 @@ function FBuildRules(InName)
         bEnableIntrinsics = true,
 
         -- Architecture to compile for
-        Architecture = 'x64',
+        Architecture = "x64",
         -- Warning level to compile with
-        Warnings = 'extra',
+        Warnings = "extra",
         -- How to handle C++ exceptions
-        Exceptionhandling = 'Off',
+        Exceptionhandling = "Off",
         -- Floating point settings 
-        Floatingpoint = 'Fast',
+        Floatingpoint = "Fast",
         -- Enable vector extensions
-        VectorExtensions = 'SSE2',
+        VectorExtensions = "SSE2",
         -- Language to compile
-        Language   = 'C++',
-        CppVersion = 'C++20',
+        Language   = "C++",
+        CppVersion = "C++20",
         -- Version of system SDK
-        SystemVersion = 'latest',
+        SystemVersion = "latest",
         -- Ascii or Unicode
-        Characterset = 'Ascii',
+        Characterset = "Ascii",
         -- Premake Flags
         Flags = 
         { 
-            'MultiProcessorCompile',
-            'NoIncrementalLink',
+            "MultiProcessorCompile",
+            "NoIncrementalLink",
         },
 
         --The kind of project to generate (SharedLib, StaticLib, WindowedApp, ConsoleApp etc.)
-        Kind = 'SharedLib',
+        Kind = "SharedLib",
         -- System includes example: #include <vector>
         SystemIncludes = {},
         -- Forceinclude these files
@@ -72,22 +72,22 @@ function FBuildRules(InName)
         -- Paths to search library files in
         LibraryPaths = {},
 
-        -- Files to build compile into the module
+        -- Files to compile into the module
         Files =
         { 
-            '**.h',
-            '**.hpp',
-            '**.inl',
-            '**.c',
-            '**.cpp',
-            '**.hlsl',
-            '**.hlsli'
+            "**.h",
+            "**.hpp",
+            "**.inl",
+            "**.c",
+            "**.cpp",
+            "**.hlsl",
+            "**.hlsli"
         },
         -- Files to exclude
         ExcludeFiles =
         {
-            '**.hlsl',
-            '**.hlsli'
+            "**.hlsl",
+            "**.hlsli"
         },
 
         -- Defines
@@ -111,7 +111,7 @@ function FBuildRules(InName)
 
     -- Helper function for retrieving path
     function self.GetPath()
-        return RuntimeFolderPath .. '/' ..  self.Name
+        return RuntimeFolderPath .. "/" ..  self.Name
     end
 
     -- Helper function for adding flags
@@ -172,7 +172,7 @@ function FBuildRules(InName)
     -- Helper for adding the .framework extention to a table
     function self.AddFrameWorkExtension()
         for Index = 1, #self.FrameWorks do
-            self.FrameWorks[Index] = self.FrameWorks[Index] .. '.framework'
+            self.FrameWorks[Index] = self.FrameWorks[Index] .. ".framework"
         end
     end
 
@@ -180,7 +180,7 @@ function FBuildRules(InName)
     function self.MakeFileNamesRelativeToPath(FileArray)
         for Index = 1, #FileArray do
             if not path.isabsolute(FileArray[Index]) then
-                FileArray[Index] = self.GetPath() .. '/' .. FileArray[Index]
+                FileArray[Index] = self.GetPath() .. "/" .. FileArray[Index]
             end
         end
     end
@@ -188,7 +188,7 @@ function FBuildRules(InName)
     -- Project generation
     function self.GenerateProject()
         project(self.Name)
-            printf('    Generating Project \'%s\'', self.Name) 
+            printf("    Generating Project \"%s\"", self.Name) 
 
             architecture(self.Architecture)
             warnings(self.Warnings)
@@ -198,24 +198,24 @@ function FBuildRules(InName)
             kind(self.Kind)
 
             if self.bEnableRunTimeTypeInfo then
-                rtti 'On'
+                rtti "On"
             else
-                rtti 'Off'
+                rtti "Off"
             end
 
             floatingpoint(self.Floatingpoint)
             vectorextensions(self.VectorExtensions)
 
             if self.bEnableEditAndContinue then
-                editandcontinue 'On'
+                editandcontinue "On"
             else
-                editandcontinue 'Off'
+                editandcontinue "Off"
             end
 
             if self.bEnableIntrinsics then
-                intrinsics 'On'
+                intrinsics "On"
             else
-                intrinsics 'Off'
+                intrinsics "Off"
             end
 
             language(self.Language)
@@ -223,69 +223,69 @@ function FBuildRules(InName)
             systemversion(self.SystemVersion)
             characterset(self.Characterset)
 
-            printf('    Generated project location \'%s\'\n', self.Location)
+            printf("    Generated project location \"%s\"\n", self.Location)
             location(self.Location)
 
             -- All targets except the dependencies
-            targetdir(self.BuildFolderPath .. '/bin/' .. self.OutputPath)
-            objdir(self.BuildFolderPath .. '/bin-int/' .. self.OutputPath)
+            targetdir(self.BuildFolderPath .. "/bin/" .. self.OutputPath)
+            objdir(self.BuildFolderPath .. "/bin-int/" .. self.OutputPath)
 
             -- Pre-Compiled Headers
             if self.bUsePrecompiledHeaders then
                 filter "action:vs*"
-                    pchheader 'PreCompiled.h'
-                    pchsource 'PreCompiled.cpp'
+                    pchheader "PreCompiled.h"
+                    pchsource "PreCompiled.cpp"
                 filter "action:not vs*"
-                    pchheader(self.GetPath() .. '/PreCompiled.h')
+                    pchheader(self.GetPath() .. "/PreCompiled.h")
                 filter{}
 
-                printf('    Project is using PreCompiled Headers\n')
+                printf("    Project is using PreCompiled Headers\n")
 
                 self.AddForceIncludes(
                 {
-                    'PreCompiled.h'
+                    "PreCompiled.h"
                 })
             else
-                printf('    Project does NOT use PreCompiled Headers\n')
+                printf("    Project does NOT use PreCompiled Headers\n")
             end
 
             -- Debug print
-            printf('    Num ForceIncludes=%d', #self.ForceIncludes)
+            printf("    Num ForceIncludes=%d", #self.ForceIncludes)
             if #self.ForceIncludes > 0 then
-                PrintTableWithEndLine('    Using ForceInclude \'%s\'', self.ForceIncludes)
+                PrintTableWithEndLine("    Using ForceInclude \"%s\"", self.ForceIncludes)
             else
-                printf('')
+                printf("")
             end
 
             -- Add ForceIncludes
             forceincludes(self.ForceIncludes)
 
             -- Add Module Defines
-            printf('    Num Defines=%d', #self.Defines)
+            printf("    Num Defines=%d", #self.Defines)
             if #self.Defines > 0 then
-                PrintTableWithEndLine('    Using define \'%s\'', self.Defines)
+                PrintTableWithEndLine("    Using define \"%s\"", self.Defines)
             else
-                printf('')
+                printf("")
             end
             
             defines(self.Defines)
 
             -- Add System Includes
-            printf('    Num SystemIncludes=%d', #self.SystemIncludes)
+            printf("    Num SystemIncludes=%d", #self.SystemIncludes)
             if #self.SystemIncludes > 0 then
-                PrintTableWithEndLine('    Using SystemInclude \'%s\'', self.SystemIncludes)
+                PrintTableWithEndLine("    Using SystemInclude \"%s\"", self.SystemIncludes)
             else
-                printf('')
+                printf("")
             end
 
             sysincludedirs(self.SystemIncludes)
 
             -- Add Library Paths
-            printf('    Num LibraryPaths=%d', #self.LibraryPaths)
+            printf("    Num LibraryPaths=%d", #self.LibraryPaths)
             if #self.LibraryPaths > 0 then
-                PrintTableWithEndLine('    Using LibraryPaths \'%s\'', self.LibraryPaths)
+                PrintTableWithEndLine("    Using LibraryPaths \"%s\"", self.LibraryPaths)
             else
-                printf('')
+                printf("")
             end
 
             libdirs(self.LibraryPaths)
@@ -293,51 +293,32 @@ function FBuildRules(InName)
             -- Add Module Files
             files(self.Files)
 
+            -- Exclude OS-files
+            filter { "system:macosx", "files:Windows/**.cpp" }
+                flags { "ExcludeFromBuild" }
+            filter { "system:windows", "files:Mac/**.cpp" }
+                flags { "ExcludeFromBuild" }
+            filter {}
+
+            -- On macOS compile all cpp files to objective-C++ to avoid pre-processor check
+            if self.bCompileCppAsObjectiveCpp then
+                filter { "system:macosx", "files:**.cpp" }
+                    compileas "Objective-C++"
+                filter {}
+            end
+
             -- In visual studio show natvis files
-            filter 'action:vs*'
-                vpaths { ['Natvis'] = '**.natvis' }
+            filter "action:vs*"
+                vpaths { ["Natvis"] = "**.natvis" }
 
                 files 
                 {
-                    (self.GetPath() .. '/**.natvis')
+                    (self.GetPath() .. "/**.natvis")
                 }
             filter {}
 
             -- Remove files
-            excludes(self.ExcludeFiles)
-
-            -- On macOS compile all cpp files to objective-C++ to avoid pre-processor check
-            if self.bCompileCppAsObjectiveCpp then
-                filter { 'system:macosx', 'files:**.cpp' }
-                    compileas 'Objective-C++'
-                filter {}
-            end
-
-            -- TODO Enable removefiles to user
-            -- TODO: Check for OS
-            -- Remove OS-files
-            local FilesToRemove = {}
-            if BuildWithXcode() then
-                FilesToRemove = 
-                {
-                    (RuntimeFolderPath .. '/**/Windows/**')
-                }
-            else
-                FilesToRemove = 
-                {
-                    (RuntimeFolderPath .. '/**/Mac/**')
-                }
-            end
-
-            removefiles(FilesToRemove)
-
-            -- Debug print
-            printf('    Num FilesToRemove=%d', #FilesToRemove)
-            if #FilesToRemove > 0 then
-                PrintTableWithEndLine('    Removing file  \'%s\'', FilesToRemove)
-            else
-                printf('')
-            end
+            removefiles(self.ExcludeFiles)
 
             -- Linking
             filter "system:macosx"
@@ -351,7 +332,7 @@ function FBuildRules(InName)
 
             -- Dependencies
             dependson(self.ModuleDependencies)
-        project '*'
+        project "*"
     end
 
     -- Base generate (generates project files)
@@ -359,17 +340,17 @@ function FBuildRules(InName)
 
         -- Ensure dependencies are included
         for Index = 1, #self.ModuleDependencies do
-            printf('\n----Including dependency for project \'%s\'---', self.Name)            
+            printf("\n----Including dependency for project \"%s\"---", self.Name)            
             
             if IsModule(self.ModuleDependencies[Index]) then
-                printf('-Dependency \'%s\' is already included', self.ModuleDependencies[Index])
+                printf("-Dependency \"%s\" is already included", self.ModuleDependencies[Index])
             else
-                local DependecyPath = RuntimeFolderPath .. '/' .. self.ModuleDependencies[Index] .. '/Module.lua'
-                printf('-Including Dependency \'%s\' Path=\'%s\'\n', self.ModuleDependencies[Index], DependecyPath)
+                local DependecyPath = RuntimeFolderPath .. "/" .. self.ModuleDependencies[Index] .. "/Module.lua"
+                printf("-Including Dependency \"%s\" Path=\"%s\"\n", self.ModuleDependencies[Index], DependecyPath)
                 include(DependecyPath)
             end
 
-            printf('----Dependency for project \'%s\'---\n', self.Name)  
+            printf("----Dependency for project \"%s\"---\n", self.Name)  
         end
 
         -- Ensure that the runtime folder is added to the include folders
@@ -400,14 +381,14 @@ function FBuildRules(InName)
                 -- System includes can be included in a dependency header and therefore necessary in this module aswell
                 self.AddSystemIncludes(TempModule.SystemIncludes)
             else
-                printf('BuildRule Error: Module \'%s\' has not been included', self.ModuleDependencies[Index])
+                printf("BuildRule Error: Module \"%s\" has not been included", self.ModuleDependencies[Index])
             end
         end
 
         -- Add link options
         if not BuildWithXcode() then
             for Index = 1, #LinkModules do
-                LinkOptions[#LinkOptions + 1] = '/INCLUDE:LinkModule_' .. LinkModules[Index]
+                LinkOptions[#LinkOptions + 1] = "/INCLUDE:LinkModule_" .. LinkModules[Index]
             end
         end
 
@@ -416,53 +397,53 @@ function FBuildRules(InName)
         self.MakeFileNamesRelativeToPath(self.ExcludeFiles)
 
         -- Debug print
-        printf('    Num FrameWorks=%d', #self.FrameWorks)
+        printf("    Num FrameWorks=%d", #self.FrameWorks)
         if #self.FrameWorks > 0 then
-            PrintTableWithEndLine('    Using framework dependency \'%s\'', self.FrameWorks)
+            PrintTableWithEndLine("    Using framework dependency \"%s\"", self.FrameWorks)
         else
-            printf('')
+            printf("")
         end
 
-        printf('    Num ModuleDependencies=%d', #self.ModuleDependencies)
+        printf("    Num ModuleDependencies=%d", #self.ModuleDependencies)
         if #self.ModuleDependencies > 0 then
-            PrintTableWithEndLine('    Using module dependency \'%s\'', self.ModuleDependencies)
+            PrintTableWithEndLine("    Using module dependency \"%s\"", self.ModuleDependencies)
         else
-            printf('')
+            printf("")
         end
 
-        printf('    Num LinkLibraries=%d', #self.LinkLibraries)
+        printf("    Num LinkLibraries=%d", #self.LinkLibraries)
         if #self.LinkLibraries > 0 then
-            PrintTableWithEndLine('    Linking library \'%s\'', self.LinkLibraries)
+            PrintTableWithEndLine("    Linking library \"%s\"", self.LinkLibraries)
         else
-            printf('')
+            printf("")
         end
 
-        printf('    Num Files=%d', #self.Files)
+        printf("    Num Files=%d", #self.Files)
         if #self.Files > 0 then
-            PrintTableWithEndLine('    Including file  \'%s\'', self.Files)
+            PrintTableWithEndLine("    Including file  \"%s\"", self.Files)
         else
-            printf('')
+            printf("")
         end
 
-        printf('    Num ExcludeFiles=%d', #self.ExcludeFiles)
+        printf("    Num ExcludeFiles=%d", #self.ExcludeFiles)
         if #self.ExcludeFiles > 0 then
-            PrintTableWithEndLine('    Excluding file  \'%s\'', self.ExcludeFiles)
+            PrintTableWithEndLine("    Excluding file  \"%s\"", self.ExcludeFiles)
         else
-            printf('')
+            printf("")
         end
 
-        printf('    Num LinkModules=%d', #LinkModules)
+        printf("    Num LinkModules=%d", #LinkModules)
         if #LinkModules > 0 then
-            PrintTableWithEndLine('    Linking module \'%s\'', LinkModules)
+            PrintTableWithEndLine("    Linking module \"%s\"", LinkModules)
         else
-            printf('')
+            printf("")
         end
 
-        printf('    Num LinkOptions=%d', #LinkOptions)
+        printf("    Num LinkOptions=%d", #LinkOptions)
         if #LinkOptions > 0 then
-            PrintTableWithEndLine('    Link options \'%s\'', LinkOptions)
+            PrintTableWithEndLine("    Link options \"%s\"", LinkOptions)
         else
-            printf('')
+            printf("")
         end
 
         -- Project
