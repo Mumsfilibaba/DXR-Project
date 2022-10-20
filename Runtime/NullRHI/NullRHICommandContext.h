@@ -33,8 +33,8 @@ public:
     virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)   override final { }
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final { }
 
-    virtual void BeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer) override final { }
-    virtual void EndRenderPass()                                                         override final { }
+    virtual void BeginRenderPass(const FRHIRenderPassDesc& RenderPassDesc) override final { }
+    virtual void EndRenderPass()                                           override final { }
 
     virtual void SetViewport(const FRHIViewportRegion& ViewportRegion)  override final { }
     virtual void SetScissorRect(const FRHIScissorRegion& ScissorRegion) override final { }
@@ -63,8 +63,8 @@ public:
     virtual void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)                             override final { }
     virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) override final { }
 
-    virtual void UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)           override final { }
-    virtual void UpdateTexture2D(FRHITexture2D* Dst, const FTextureRegion2D& BufferRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) override final { }
+    virtual void UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)                                             override final { }
+    virtual void UpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& BufferRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) override final { }
 
     virtual void ResolveTexture(FRHITexture* Dst, FRHITexture* Src) override final { }
 
@@ -78,12 +78,12 @@ public:
 
     virtual void BuildRayTracingGeometry(
         FRHIRayTracingGeometry* RayTracingGeometry,
-        FRHIBuffer* VertexBuffer,
-        uint32 NumVertices,
-        FRHIBuffer* IndexBuffer,
-        uint32 NumIndices,
-        EIndexFormat IndexFormat,
-        bool bUpdate) override final { }
+        FRHIBuffer*             VertexBuffer,
+        uint32                  NumVertices,
+        FRHIBuffer*             IndexBuffer,
+        uint32                  NumIndices,
+        EIndexFormat            IndexFormat,
+        bool                    bUpdate) override final { }
 
     virtual void BuildRayTracingScene(
         FRHIRayTracingScene* RayTracingScene,
@@ -91,8 +91,8 @@ public:
         bool bUpdate) override final { }
 
     virtual void SetRayTracingBindings(
-        FRHIRayTracingScene* RayTracingScene,
-        FRHIRayTracingPipelineState* PipelineState,
+        FRHIRayTracingScene*              RayTracingScene,
+        FRHIRayTracingPipelineState*      PipelineState,
         const FRayTracingShaderResources* GlobalResource,
         const FRayTracingShaderResources* RayGenLocalResources,
         const FRayTracingShaderResources* MissLocalResources,

@@ -371,11 +371,11 @@ public:
     }
 
     FORCEINLINE void UpdateTexture2D(
-        FRHITexture2D* Dst,
+        FRHITexture*            Dst,
         const FTextureRegion2D& TextureRegion,
-        uint32 MipLevel,
-        const void* InSrcData,
-        uint32 InSrcRowPitch) noexcept
+        uint32                  MipLevel,
+        const void*             InSrcData,
+        uint32                  InSrcRowPitch) noexcept
     {
         const uint32 SizeInBytes = InSrcRowPitch * TextureRegion.Height;
         
@@ -416,12 +416,12 @@ public:
 
     FORCEINLINE void BuildRayTracingGeometry(
         FRHIRayTracingGeometry* RayTracingGeometry,
-        FRHIBuffer* VertexBuffer,
-        uint32 NumVertices,
-        FRHIBuffer* IndexBuffer,
-        uint32 NumIndices,
-        EIndexFormat IndexFormat,
-        bool bUpdate) noexcept
+        FRHIBuffer*             VertexBuffer,
+        uint32                  NumVertices,
+        FRHIBuffer*             IndexBuffer,
+        uint32                  NumIndices,
+        EIndexFormat            IndexFormat,
+        bool                    bUpdate) noexcept
     {
         CHECK(!bUpdate || (bUpdate && RayTracingGeometry && IsEnumFlagSet(RayTracingGeometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
         EmplaceCommand<FRHICommandBuildRayTracingGeometry>(RayTracingGeometry, VertexBuffer, NumVertices, IndexBuffer, NumIndices, IndexFormat, bUpdate);
@@ -438,13 +438,13 @@ public:
 
     // TODO: Refactor
     FORCEINLINE void SetRayTracingBindings(
-        FRHIRayTracingScene* RayTracingScene,
-        FRHIRayTracingPipelineState* PipelineState,
+        FRHIRayTracingScene*              RayTracingScene,
+        FRHIRayTracingPipelineState*      PipelineState,
         const FRayTracingShaderResources* GlobalResource,
         const FRayTracingShaderResources* RayGenLocalResources,
         const FRayTracingShaderResources* MissLocalResources,
         const FRayTracingShaderResources* HitGroupResources,
-        uint32 NumHitGroupResources) noexcept
+        uint32                            NumHitGroupResources) noexcept
     {
         EmplaceCommand<FRHICommandSetRayTracingBindings>(
             RayTracingScene, 

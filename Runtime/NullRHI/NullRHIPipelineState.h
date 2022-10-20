@@ -11,57 +11,39 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-struct FNullRHIInputLayoutState 
+struct FNullRHIInputLayoutState
     : public FRHIVertexInputLayout
 {
-    FNullRHIInputLayoutState() = default;
 };
 
-struct FNullRHIDepthStencilState 
+struct FNullRHIDepthStencilState
     : public FRHIDepthStencilState
 {
-    FNullRHIDepthStencilState() = default;
 };
 
-struct FNullRHIRasterizerState 
+struct FNullRHIRasterizerState
     : public FRHIRasterizerState
 {
-    FNullRHIRasterizerState() = default;
 };
 
-struct FNullRHIBlendState 
+struct FNullRHIBlendState
     : public FRHIBlendState
 {
-    FNullRHIBlendState() = default;
 };
 
-struct FNullRHIGraphicsPipelineState 
+struct FNullRHIGraphicsPipelineState
     : public FRHIGraphicsPipelineState
 {
-    FNullRHIGraphicsPipelineState() = default;
-
-    virtual void    SetName(const FString& InName) override final { }
-    virtual FString GetName() const override final                { return ""; }
 };
 
-struct FNullRHIComputePipelineState 
+struct FNullRHIComputePipelineState
     : public FRHIComputePipelineState
 {
-    FNullRHIComputePipelineState()  = default;
-    ~FNullRHIComputePipelineState() = default;
-
-    virtual void    SetName(const FString& InName) override final { }
-    virtual FString GetName() const override final                { return ""; }
 };
 
-struct FNullRHIRayTracingPipelineState 
+struct FNullRHIRayTracingPipelineState
     : public FRHIRayTracingPipelineState
 {
-    FNullRHIRayTracingPipelineState()  = default;
-    ~FNullRHIRayTracingPipelineState() = default;
-
-    virtual void    SetName(const FString& InName) override final { }
-    virtual FString GetName() const override final                { return ""; }
 };
 
 #if defined(PLATFORM_COMPILER_MSVC)

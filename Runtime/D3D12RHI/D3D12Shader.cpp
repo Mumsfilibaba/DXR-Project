@@ -262,7 +262,7 @@ bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShade
 }
 
 
-bool FD3D12ComputeShader::Init()
+bool FD3D12ComputeShader::Initialize()
 {
     TComPtr<ID3D12ShaderReflection> Reflection;
     if (!GD3D12ShaderCompiler->GetReflection(this, &Reflection))

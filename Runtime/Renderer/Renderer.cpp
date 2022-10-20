@@ -150,8 +150,8 @@ bool FRenderer::Create()
         GEngine->MainWindow->GetPlatformHandle(),
         EFormat::R8G8B8A8_Unorm,
         EFormat::Unknown,
-        GEngine->MainWindow->GetWidth(),
-        GEngine->MainWindow->GetHeight());
+        static_cast<uint16>(GEngine->MainWindow->GetWidth()),
+        static_cast<uint16>(GEngine->MainWindow->GetHeight()));
 
     Resources.MainWindowViewport = RHICreateViewport(ViewportInitializer);
     if (!Resources.MainWindowViewport)
@@ -193,7 +193,7 @@ bool FRenderer::Create()
     }
 
     {
-        FRHISamplerStateInitializer Initializer;
+        FRHISamplerStateDesc Initializer;
         Initializer.AddressU    = ESamplerMode::Border;
         Initializer.AddressV    = ESamplerMode::Border;
         Initializer.AddressW    = ESamplerMode::Border;
@@ -209,7 +209,7 @@ bool FRenderer::Create()
     }
 
     {
-        FRHISamplerStateInitializer Initializer;
+        FRHISamplerStateDesc Initializer;
         Initializer.AddressU       = ESamplerMode::Wrap;
         Initializer.AddressV       = ESamplerMode::Wrap;
         Initializer.AddressW       = ESamplerMode::Wrap;
@@ -596,8 +596,8 @@ void FRenderer::Tick(const FScene& Scene)
     CameraBuffer.NearPlane      = Scene.GetCamera()->GetNearPlane();
     CameraBuffer.FarPlane       = Scene.GetCamera()->GetFarPlane();
     CameraBuffer.AspectRatio    = Scene.GetCamera()->GetAspectRatio();
-    CameraBuffer.ViewportWidth  = Resources.BackBuffer->GetWidth();
-    CameraBuffer.ViewportHeight = Resources.BackBuffer->GetHeight();
+    CameraBuffer.ViewportWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
+    CameraBuffer.ViewportHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
 
     if (GEnableTemporalAA.GetBool())
     {
@@ -1140,7 +1140,7 @@ bool FRenderer::InitAA()
     }
 
     // FXAA
-    FRHISamplerStateInitializer SamplerInitializer;
+    FRHISamplerStateDesc SamplerInitializer;
     SamplerInitializer.AddressU = ESamplerMode::Clamp;
     SamplerInitializer.AddressV = ESamplerMode::Clamp;
     SamplerInitializer.AddressW = ESamplerMode::Clamp;
@@ -1227,8 +1227,14 @@ bool FRenderer::InitShadingImage()
     const uint32 Width  = Resources.MainWindowViewport->GetWidth() / Support.ShadingRateImageTileSize;
     const uint32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
 
-    FRHITexture2DInitializer Initializer(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::ShadingRateSource);
-    ShadingImage = RHICreateTexture2D(Initializer);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(
+        EFormat::R8_Uint, 
+        Width, 
+        Height, 
+        1, 
+        1, 
+        ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
+    ShadingImage = RHICreateTexture(TextureDesc, EResourceAccess::ShadingRateSource);
     if (!ShadingImage)
     {
         DEBUG_BREAK();

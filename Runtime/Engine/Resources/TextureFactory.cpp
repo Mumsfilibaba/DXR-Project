@@ -53,7 +53,7 @@ void FTextureFactory::Release()
     GlobalFactoryData.ComputeShader.Reset();
 }
 
-FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format)
+FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format)
 {
     CHECK(Pixels != nullptr);
 
@@ -69,17 +69,15 @@ FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
     FTextureResourceData InitalData;
     InitalData.InitMipData(Pixels, RowPitch, RowPitch*Height);
 
-    FRHITexture2DInitializer Initializer(
-        Format, 
-        Width, 
-        Height, 
-        NumMips, 
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(
+        Format,
+        Width,
+        Height,
+        NumMips,
         1, 
-        ETextureUsageFlags::AllowSRV, 
-        EResourceAccess::PixelShaderResource,
-        &InitalData);
+        ETextureUsageFlags::ShaderResource);
 
-    FRHITexture2DRef Texture = RHICreateTexture2D(Initializer);
+    FRHITextureRef Texture = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, &InitalData);
     if (!Texture)
     {
         DEBUG_BREAK();
@@ -99,22 +97,22 @@ FRHITexture2D* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
     return Texture.ReleaseOwnership();
 }
 
-FRHITextureCube* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format)
+FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format)
 {
-    CHECK(IsEnumFlagSet(PanoramaSource->GetFlags(), ETextureUsageFlags::AllowSRV));
+    CHECK(IsEnumFlagSet(PanoramaSource->GetFlags(), ETextureUsageFlags::ShaderResource));
 
     const bool bGenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
 
     const uint32 NumMips = (bGenerateNumMips) ? NMath::Max<uint32>(NMath::Log2(CubeMapSize), 1u) : 1u;
-    FRHITextureCubeInitializer Initializer(
+
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTextureCube(
         Format,
         CubeMapSize, 
         NumMips,
         1,
-        ETextureUsageFlags::AllowUAV,
-        EResourceAccess::Common);
+        ETextureUsageFlags::UnorderedAccess);
 
-    FRHITextureCubeRef StagingTexture = RHICreateTextureCube(Initializer);
+    FRHITextureRef StagingTexture = RHICreateTexture(TextureDesc, EResourceAccess::Common, nullptr);
     if (!StagingTexture)
     {
         return nullptr;
@@ -131,9 +129,9 @@ FRHITextureCube* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture2D* Pa
         return nullptr;
     }
 
-    Initializer.UsageFlags = ETextureUsageFlags::AllowSRV;
+    TextureDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
 
-    FRHITextureCubeRef Texture = RHICreateTextureCube(Initializer);
+    FRHITextureRef Texture = RHICreateTexture(TextureDesc, EResourceAccess::Common, nullptr);
     if (!Texture)
     {
         return nullptr;

@@ -569,9 +569,8 @@ public:
     /**
      * @brief - Default Constructor
      */
-    FRHIDescriptorHandle()
-        : Index(InvalidHandle)
-        , Type(EDescriptorType::Unknown)
+    CONSTEXPR FRHIDescriptorHandle()
+        : Data(0)
     { }
 
     /**
@@ -579,7 +578,7 @@ public:
      * @param InType  - Type of descriptor
      * @param InIndex - Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
      */
-    FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
+    CONSTEXPR FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
         : Index(InIndex)
         , Type(InType)
     { }
@@ -587,24 +586,29 @@ public:
     /** 
      * @return - Returns true if the handle is valid
      */
-    bool IsValid() const { return (Type != EDescriptorType::Unknown) && (Index != InvalidHandle); }
-
-    /**
-     * @brief  - Compare two descriptor-handles to see if the reference the same resource
-     * @return - Returns true if the handles are equal
-     */
-    bool operator==(const FRHIDescriptorHandle& RHS) const
-    {
-        return (Type == RHS.Type) && (Index == RHS.Index);
+    CONSTEXPR bool IsValid() const
+    { 
+        return (Type != EDescriptorType::Unknown) && (Index != InvalidHandle); 
     }
 
     /**
-     * @brief  - Compare two descriptor-handles to see if the reference the same resource
-     * @return - Returns false if the handles are equal
+     * @brief       - Compare two descriptor-handles to see if the reference the same resource
+     * @param Other - Other instance to compare with
+     * @return      - Returns true if the handles are equal
      */
-    bool operator!=(const FRHIDescriptorHandle& RHS) const
+    CONSTEXPR bool operator==(const FRHIDescriptorHandle& Other) const
     {
-        return !(*this == RHS);
+        return (Data == Other.Data);
+    }
+
+    /**
+     * @brief       - Compare two descriptor-handles to see if the reference the same resource
+     * @param Other - Other instance to compare with
+     * @return      - Returns false if the handles are equal
+     */
+    CONSTEXPR bool operator!=(const FRHIDescriptorHandle& Other) const
+    {
+        return (Data != Other.Data);
     }
 
 private:
@@ -626,7 +630,7 @@ struct FDepthStencilValue
     /**
      * @brief - Default Constructor
      */
-    FDepthStencilValue()
+    CONSTEXPR FDepthStencilValue()
         : Depth(1.0f)
         , Stencil(0)
     { }
@@ -636,7 +640,7 @@ struct FDepthStencilValue
      * @param InDepth   - Depth-value
      * @param InStencil - Stencil-value
      */
-    FDepthStencilValue(float InDepth, uint8 InStencil)
+    CONSTEXPR FDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     { }
@@ -644,7 +648,7 @@ struct FDepthStencilValue
     /** 
      * @return - Returns and calculates the hash for this type
      */
-    uint64 GetHash() const
+    CONSTEXPR uint64 GetHash() const
     {
         uint64 Hash = Stencil;
         HashCombine(Hash, Depth);
@@ -656,7 +660,7 @@ struct FDepthStencilValue
      * @param Other - Other instance to compare with
      * @return      - Returns true if the instances are equal
      */
-    bool operator==(const FDepthStencilValue& Other) const
+    CONSTEXPR bool operator==(const FDepthStencilValue& Other) const
     {
         return (Depth == Other.Depth) && (Stencil && Other.Stencil);
     }
@@ -666,7 +670,7 @@ struct FDepthStencilValue
      * @param Other - Other instance to compare with
      * @return      - Returns false if the instances are equal
      */
-    bool operator!=(const FDepthStencilValue& Other) const
+    CONSTEXPR bool operator!=(const FDepthStencilValue& Other) const
     {
         return !(*this == Other);
     }

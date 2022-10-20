@@ -39,40 +39,20 @@ public:
         return true; 
     }
 
-    virtual FRHITexture2D* RHICreateTexture2D(const FRHITexture2DInitializer& Initializer) override final
+    virtual FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final
     {
-        return dbg_new FNullRHITexture2D(Initializer);
-    }
-
-    virtual FRHITexture2DArray* RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer) override final
-    {
-        return dbg_new FNullRHITexture2DArray(Initializer);
-    }
-
-    virtual FRHITextureCube* RHICreateTextureCube(const FRHITextureCubeInitializer& Initializer) override final
-    {
-        return dbg_new FNullRHITextureCube(Initializer);
-    }
-
-    virtual FRHITextureCubeArray* RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer) override final
-    {
-        return dbg_new FNullRHITextureCubeArray(Initializer);
-    }
-
-    virtual FRHITexture3D* RHICreateTexture3D(const FRHITexture3DInitializer& Initializer) override final
-    {
-        return dbg_new FNullRHITexture3D(Initializer);
-    }
-
-    virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer) override final
-    {
-        return dbg_new FNullRHISamplerState(Initializer);
+        return dbg_new FNullRHITexture(InDesc);
     }
 
     virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) override final
     {
         return dbg_new FNullRHIBuffer(InDesc);
-    } 
+    }
+
+    virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& InDesc) override final
+    {
+        return dbg_new FNullRHISamplerState(InDesc);
+    }
 
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer) override final
     {

@@ -181,56 +181,30 @@ public:
     virtual bool Initialize() = 0;
 
     /**
-     * @brief             - Creates a Texture2D
-     * @param Initializer - Struct with information about the Texture2D
-     * @return            - Returns the newly created texture
+     * @brief                - Creates a Texture
+     * @param InDesc         - Description of a RHITexture
+     * @param InInitialState - Initial state of the texture
+     * @param InInitialData  - Initial data of the texture
+     * @return               - Returns the newly created texture
      */
-    virtual FRHITexture2D* RHICreateTexture2D(const FRHITexture2DInitializer& Initializer) = 0;
+    virtual FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) = 0;
 
     /**
-     * @brief             - Creates a Texture2DArray
-     * @param Initializer - Struct with information about the Texture2DArray
-     * @return            - Returns the newly created texture
+     * @brief                - Creates a Buffer
+     * @param InDesc         - Description of a RHIBuffer
+     * @param InInitialState - Initial state of the buffer
+     * @param InInitialData  - Initial data of the buffer
+     * @return               - Returns the newly created Buffer
      */
-    virtual FRHITexture2DArray* RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer) = 0;
-
-    /**
-     * @brief             - Creates a TextureCube
-     * @param Initializer - Struct with information about the TextureCube
-     * @return            - Returns the newly created texture
-     */
-    virtual FRHITextureCube* RHICreateTextureCube(const FRHITextureCubeInitializer& Initializer) = 0;
-
-    /**
-     * @brief             - Creates a TextureCubeArray
-     * @param Initializer - Struct with information about the TextureCubeArray
-     * @return            - Returns the newly created texture
-     */
-    virtual FRHITextureCubeArray* RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer) = 0;
-
-    /**
-     * @brief             - Creates a Texture3D
-     * @param Initializer - Struct with information about the Texture3D
-     * @return            - Returns the newly created texture
-     */
-    virtual FRHITexture3D* RHICreateTexture3D(const FRHITexture3DInitializer& Initializer) = 0;
+    virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) = 0;
 
     /**
      * @brief             - Create a SamplerState
      * @param Initializer - Structure with information about the SamplerState
      * @return            - Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
      */
-    virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer) = 0;
+    virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& InDesc) = 0;
 
-    /**
-     * @brief                - Creates a Buffer
-     * @param InDesc         - Description of a RHIBuffer
-     * @param InInitialState - Initial state of the resource
-     * @param InInitialData  - Initial data of the buffer
-     * @return               - Returns the newly created Buffer
-     */
-    virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) = 0;
-    
     /**
      * @brief             - Create a new Ray Tracing Scene
      * @param Initializer - Struct containing information about the Ray Tracing Scene
@@ -491,39 +465,25 @@ FORCEINLINE FRHIInterface* GetRHIInterface()
     return GRHIInterface;
 }
 
-FORCEINLINE FRHITexture2D* RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)
+FORCEINLINE FRHITexture* RHICreateTexture(
+    const FRHITextureDesc& InDesc,
+    EResourceAccess InInitialState = EResourceAccess::Common,
+    const IRHITextureData* InInitialData = nullptr)
 {
-    return GetRHIInterface()->RHICreateTexture2D(Initializer);
+    return GetRHIInterface()->RHICreateTexture(InDesc, InInitialState, InInitialData);
 }
 
-FORCEINLINE FRHITexture2DArray* RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)
-{
-    return GetRHIInterface()->RHICreateTexture2DArray(Initializer);
-}
-
-FORCEINLINE FRHITextureCube* RHICreateTextureCube(const FRHITextureCubeInitializer& Initializer)
-{
-    return GetRHIInterface()->RHICreateTextureCube(Initializer);
-}
-
-FORCEINLINE FRHITextureCubeArray* RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer)
-{
-    return GetRHIInterface()->RHICreateTextureCubeArray(Initializer);
-}
-
-FORCEINLINE FRHITexture3D* RHICreateTexture3D(const FRHITexture3DInitializer& Initializer)
-{
-    return GetRHIInterface()->RHICreateTexture3D(Initializer);
-}
-
-FORCEINLINE FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer)
-{
-    return GetRHIInterface()->RHICreateSamplerState(Initializer);
-}
-
-FORCEINLINE FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& Desc, EResourceAccess InitialAccess, const void* InitialData)
+FORCEINLINE FRHIBuffer* RHICreateBuffer(
+    const FRHIBufferDesc& Desc,
+    EResourceAccess InitialAccess = EResourceAccess::Common,
+    const void* InitialData = nullptr)
 {
     return GetRHIInterface()->RHICreateBuffer(Desc, InitialAccess, InitialData);
+}
+
+FORCEINLINE FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& Initializer)
+{
+    return GetRHIInterface()->RHICreateSamplerState(Initializer);
 }
 
 FORCEINLINE FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)

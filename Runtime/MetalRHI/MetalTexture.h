@@ -49,12 +49,12 @@ protected:
 
 class FMetalTexture2D 
     : public FMetalTexture
-    , public FRHITexture2D
+    , public FRHITexture
 {
 public:
     FMetalTexture2D(FMetalDeviceContext* InDeviceContext, const FRHITexture2DInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
-        , FRHITexture2D(Initializer)
+        , FRHITexture(Initializer)
         , UnorderedAccessView(dbg_new FMetalUnorderedAccessView(InDeviceContext, this))
     { }
 
@@ -87,12 +87,12 @@ private:
 
 class FMetalTexture2DArray 
     : public FMetalTexture
-    , public FRHITexture2DArray
+    , public FRHITexture
 {
 public:
     FMetalTexture2DArray(FMetalDeviceContext* InDeviceContext, const FRHITexture2DArrayInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
-        , FRHITexture2DArray(Initializer)
+        , FRHITexture(Initializer)
     { }
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }

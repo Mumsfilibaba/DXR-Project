@@ -325,7 +325,7 @@ void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, u
 {
 }
 
-void FMetalCommandContext::UpdateTexture2D(FRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
+void FMetalCommandContext::UpdateTexture2D(FRHITexture* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
 {
 }
 

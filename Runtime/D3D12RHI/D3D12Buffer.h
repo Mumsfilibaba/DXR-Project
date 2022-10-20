@@ -14,8 +14,10 @@ class FD3D12Buffer
 {
 public:
     FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferDesc& InDesc);
-    ~FD3D12Buffer() = default;
+    ~FD3D12Buffer();
 
+    bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
+    
     virtual int32 AddRef()            override final { return FD3D12RefCounted::AddRef(); }
     virtual int32 Release()           override final { return FD3D12RefCounted::Release(); }
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
@@ -25,13 +27,13 @@ public:
     
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void    SetName(const FString& InName) override final;
+    FD3D12ConstantBufferView* GetConstantBufferView() const { return View.Get(); }
+
+    virtual void SetName(const FString& InName) override final;
     virtual FString GetName() const override final;
 
     void SetResource(FD3D12Resource* InResource);
     FD3D12Resource* GetD3D12Resource() const { return Resource.Get(); }
-
-    FD3D12ConstantBufferView* GetConstantBufferView() const { return View.Get(); }
 
 private:
     FD3D12ResourceRef           Resource;

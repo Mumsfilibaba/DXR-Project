@@ -118,11 +118,11 @@ inline MTLTextureType GetMTLTextureType(FRHITexture* Texture)
 {
     CHECK(Texture != nullptr);
     
-    if (FRHITexture2D* Texture2D = Texture->GetTexture2D())
+    if (FRHITexture* Texture2D = Texture->GetTexture2D())
     {
         return Texture2D->IsMultiSampled() ? MTLTextureType2DMultisample : MTLTextureType2D;
     }
-    else if (FRHITexture2DArray* Texture2DArray = Texture->GetTexture2DArray())
+    else if (FRHITexture* Texture2DArray = Texture->GetTexture2DArray())
     {
         return Texture2DArray->IsMultiSampled() ? MTLTextureType2DMultisampleArray : MTLTextureType2DArray;
     }

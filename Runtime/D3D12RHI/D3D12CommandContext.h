@@ -292,7 +292,7 @@ public:
     virtual void UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData) override final;
     
     virtual void UpdateTexture2D(
-        FRHITexture2D*          Dst,
+        FRHITexture*          Dst,
         const FTextureRegion2D& TextureRegion,
         uint32                  MipLevel,
         const void*             SrcData,

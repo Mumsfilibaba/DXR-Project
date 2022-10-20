@@ -93,7 +93,7 @@ private:
     FRHIComputeShaderRef         TemporalAAShader;
 
     // Two buffers to ping-pong between
-    FRHITexture2DRef             TAAHistoryBuffers[2];
+    FRHITextureRef             TAAHistoryBuffers[2];
     FRHISamplerStateRef          LinearSampler;
 
     uint32                       CurrentBufferIndex = 0;

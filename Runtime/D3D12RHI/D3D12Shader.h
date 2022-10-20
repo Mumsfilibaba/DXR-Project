@@ -273,7 +273,7 @@ public:
         , ThreadGroupXYZ(0, 0, 0)
     { }
 
-    bool Init();
+    bool Initialize();
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
     virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }

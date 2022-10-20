@@ -9,11 +9,8 @@
     #define NULLRHI_API 
 #endif
 
-struct FNullRHIModule final 
+struct NULLRHI_API FNullRHIModule final
     : public FRHIInterfaceModule
 {
-    FNullRHIModule()  = default;
-    ~FNullRHIModule() = default;
-
-    virtual class FRHIInterface* CreateInterface() override final;
+    virtual FRHIInterface* CreateInterface() override final;
 };

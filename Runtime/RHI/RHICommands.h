@@ -154,16 +154,16 @@ DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
 
 DECLARE_RHICOMMAND(FRHICommandBeginRenderPass)
 {
-    FRHICommandBeginRenderPass(const FRHIRenderPassDesc& InRenderPassInitializer)
-        : RenderPassInitializer(InRenderPassInitializer)
+    FRHICommandBeginRenderPass(const FRHIRenderPassDesc& InRenderPassDesc)
+        : RenderPassDesc(InRenderPassDesc)
     { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BeginRenderPass(RenderPassInitializer);
+        CommandContext.BeginRenderPass(RenderPassDesc);
     }
 
-    FRHIRenderPassDesc RenderPassInitializer;
+    FRHIRenderPassDesc RenderPassDesc;
 };
 
 DECLARE_RHICOMMAND(FRHICommandEndRenderPass)
@@ -495,15 +495,15 @@ DECLARE_RHICOMMAND(FRHICommandUpdateBuffer)
         CommandContext.UpdateBuffer(Dst, BufferRegion, SrcData);
     }
 
-    FRHIBuffer*      Dst;
-    const void*      SrcData;
+    FRHIBuffer*   Dst;
+    const void*   SrcData;
     FBufferRegion BufferRegion;
 };
 
 DECLARE_RHICOMMAND(FRHICommandUpdateTexture2D)
 {
     FORCEINLINE FRHICommandUpdateTexture2D(
-        FRHITexture2D*          InDst,
+        FRHITexture*            InDst,
         const FTextureRegion2D& InTextureRegion,
         uint32                  InMipLevel,
         const void*             InSrcData,
@@ -520,7 +520,7 @@ DECLARE_RHICOMMAND(FRHICommandUpdateTexture2D)
         CommandContext.UpdateTexture2D(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch);
     }
 
-    FRHITexture2D*   Dst;
+    FRHITexture*     Dst;
     FTextureRegion2D TextureRegion;
     uint32           MipLevel;
     const void*      SrcData;
@@ -696,7 +696,7 @@ DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
         const FRayTracingShaderResources* InRayGenLocalResources,
         const FRayTracingShaderResources* InMissLocalResources,
         const FRayTracingShaderResources* InHitGroupResources,
-        uint32 InNumHitGroupResources)
+        uint32                            InNumHitGroupResources)
         : RayTracingScene(InRayTracingScene)
         , PipelineState(InPipelineState)
         , GlobalResource(InGlobalResource)
@@ -772,7 +772,7 @@ DECLARE_RHICOMMAND(FRHICommandTransitionBuffer)
         CommandContext.TransitionBuffer(Buffer, BeforeState, AfterState);
     }
 
-    FRHIBuffer*       Buffer;
+    FRHIBuffer*     Buffer;
     EResourceAccess BeforeState;
     EResourceAccess AfterState;
 };
@@ -907,11 +907,11 @@ DECLARE_RHICOMMAND(FRHICommandDispatch)
 DECLARE_RHICOMMAND(FRHICommandDispatchRays)
 {
     FORCEINLINE FRHICommandDispatchRays(
-        FRHIRayTracingScene* InScene,
+        FRHIRayTracingScene*         InScene,
         FRHIRayTracingPipelineState* InPipelineState,
-        uint32 InWidth,
-        uint32 InHeight,
-        uint32 InDepth)
+        uint32                       InWidth,
+        uint32                       InHeight,
+        uint32                       InDepth)
         : Scene(InScene)
         , PipelineState(InPipelineState)
         , Width(InWidth)

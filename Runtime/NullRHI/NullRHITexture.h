@@ -11,82 +11,28 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-template<typename T>
-class TNullRHITexture;
-
-typedef TNullRHITexture<class FNullRHITexture2DBase>         FNullRHITexture2D;
-typedef TNullRHITexture<struct FNullRHITexture2DArrayBase>   FNullRHITexture2DArray;
-typedef TNullRHITexture<struct FNullRHITextureCubeBase>      FNullRHITextureCube;
-typedef TNullRHITexture<struct FNullRHITextureCubeArrayBase> FNullRHITextureCubeArray;
-typedef TNullRHITexture<struct FNullRHITexture3DBase>        FNullRHITexture3D;
-
-class FNullRHITexture2DBase 
-    : public FRHITexture2D
+class FNullRHITexture
+    : public FRHITexture
 {
 public:
-    explicit FNullRHITexture2DBase(const FRHITexture2DInitializer& Initializer)
-        : FRHITexture2D(Initializer)
+    explicit FNullRHITexture(const FRHITextureDesc& InDesc)
+        : FRHITexture(InDesc)
+        , ShaderResourceView(dbg_new FNullRHIShaderResourceView(this))
         , UnorderedAccessView(dbg_new FNullRHIUnorderedAccessView(this))
     { }
 
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
-
-private:
-    TSharedRef<FNullRHIUnorderedAccessView> UnorderedAccessView;
-};
-
-struct FNullRHITexture2DArrayBase 
-    : public FRHITexture2DArray
-{
-    explicit FNullRHITexture2DArrayBase(const FRHITexture2DArrayInitializer& Initializer)
-        : FRHITexture2DArray(Initializer)
-    { }
-};
-
-struct FNullRHITextureCubeBase 
-    : public FRHITextureCube
-{
-    explicit FNullRHITextureCubeBase(const FRHITextureCubeInitializer& Initializer)
-        : FRHITextureCube(Initializer)
-    { }
-};
-
-struct FNullRHITextureCubeArrayBase 
-    : public FRHITextureCubeArray
-{
-    explicit FNullRHITextureCubeArrayBase(const FRHITextureCubeArrayInitializer& Initializer)
-        : FRHITextureCubeArray(Initializer)
-    { }
-};
-
-struct FNullRHITexture3DBase 
-    : public FRHITexture3D
-{
-    explicit FNullRHITexture3DBase(const FRHITexture3DInitializer& Initializer)
-        : FRHITexture3D(Initializer)
-    { }
-};
-
-
-template<typename BaseTextureType>
-class TNullRHITexture final 
-    : public BaseTextureType
-{
-public:
-    template<typename BaseTextureInitializer>
-    explicit TNullRHITexture(const BaseTextureInitializer& Initializer)
-        : BaseTextureType(Initializer)
-        , ShaderResourceView(dbg_new FNullRHIShaderResourceView(this))
-    { }
-
+    virtual void* GetRHIBaseTexture()        override final { return reinterpret_cast<void*>(this); }
     virtual void* GetRHIBaseResource() const override final { return nullptr; }
-    virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(this); }
 
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
-    virtual FRHIDescriptorHandle    GetBindlessSRVHandle()  const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return nullptr; }
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
+
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
 
 private:
-    TSharedRef<FNullRHIShaderResourceView> ShaderResourceView;
+    TSharedRef<FNullRHIShaderResourceView>  ShaderResourceView;
+    TSharedRef<FNullRHIUnorderedAccessView> UnorderedAccessView;
 };
 
 #if defined(PLATFORM_COMPILER_MSVC)

@@ -42,7 +42,7 @@ bool FTemporalAA::Init(FFrameResources& FrameResources)
         }
     }
 
-    FRHISamplerStateInitializer SamplerInitializer(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
+    FRHISamplerStateDesc SamplerInitializer(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
     LinearSampler = RHICreateSamplerState(SamplerInitializer);
     if (!LinearSampler)
     {
@@ -55,7 +55,7 @@ bool FTemporalAA::Init(FFrameResources& FrameResources)
 
 void FTemporalAA::Release()
 {
-    for (FRHITexture2DRef& TAABuffer : TAAHistoryBuffers)
+    for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)
     {
         TAABuffer.Reset();
     }
@@ -73,7 +73,7 @@ void FTemporalAA::Render(FRHICommandList& CommandList, FFrameResources& FrameRes
 
     GPU_TRACE_SCOPE(CommandList, "TemporalAA");
 
-    FRHITexture2DRef CurrentBuffer = TAAHistoryBuffers[CurrentBufferIndex];
+    FRHITextureRef CurrentBuffer = TAAHistoryBuffers[CurrentBufferIndex];
     CommandList.TransitionTexture(
         CurrentBuffer.Get(),
         EResourceAccess::NonPixelShaderResource,
@@ -91,7 +91,7 @@ void FTemporalAA::Render(FRHICommandList& CommandList, FFrameResources& FrameRes
     CommandList.SetShaderResourceView(TemporalAAShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 0);
     CommandList.SetShaderResourceView(TemporalAAShader.Get(), FrameResources.GBuffer[GBufferIndex_Velocity]->GetShaderResourceView(), 1);
     
-    FRHITexture2DRef CurrentReadBuffer = TAAHistoryBuffers[CurrentBufferIndex];
+    FRHITextureRef CurrentReadBuffer = TAAHistoryBuffers[CurrentBufferIndex];
     CommandList.SetShaderResourceView(TemporalAAShader.Get(), CurrentReadBuffer->GetShaderResourceView(), 2);
 
     CommandList.SetSamplerState(TemporalAAShader.Get(), LinearSampler.Get(), 0);
@@ -132,20 +132,18 @@ bool FTemporalAA::CreateRenderTarget(FFrameResources& FrameResources)
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
 
     // TAA History-Buffer
-    FRHITexture2DInitializer TextureInitializer(
+    FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(
         FrameResources.FinalTargetFormat, 
         Width,
         Height, 
         1,
         1, 
-        ETextureUsageFlags::AllowSRV | ETextureUsageFlags::AllowUAV,
-        EResourceAccess::NonPixelShaderResource, 
-        nullptr);
+        ETextureUsageFlags::ShaderResource | ETextureUsageFlags::UnorderedAccess);
 
     uint32 Index = 0;
-    for (FRHITexture2DRef& TAABuffer : TAAHistoryBuffers)
+    for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)
     {
-        TAABuffer = RHICreateTexture2D(TextureInitializer);
+        TAABuffer = RHICreateTexture(TAABufferDesc, EResourceAccess::NonPixelShaderResource);
         if (TAABuffer)
         {
             TAABuffer->SetName(FString::CreateFormatted("TAA History-Buffer[%u]", Index++));

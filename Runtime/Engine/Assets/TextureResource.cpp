@@ -75,17 +75,15 @@ FTexture2D::~FTexture2D()
 
 bool FTexture2D::CreateRHITexture(bool bGenerateMips)
 {
-    FRHITexture2DInitializer Initializer(
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(
         Format,
         Width,
         Height,
         NumMips,
         1,
-        ETextureUsageFlags::AllowSRV,
-        EResourceAccess::PixelShaderResource,
-        TextureData);
+        ETextureUsageFlags::ShaderResource);
 
-    TextureRHI = RHICreateTexture2D(Initializer);
+    TextureRHI = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, TextureData);
     if (!TextureRHI)
     {
         DEBUG_BREAK();

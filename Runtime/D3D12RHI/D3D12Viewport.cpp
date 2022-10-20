@@ -212,25 +212,24 @@ bool FD3D12Viewport::Present(bool VerticalSync)
 
 bool FD3D12Viewport::RetriveBackBuffers()
 {
-    if (BackBuffers.GetSize() < static_cast<int32>(NumBackBuffers))
-    {
-        BackBuffers.Resize(NumBackBuffers);
-        for (FD3D12TextureRef& Texture : BackBuffers)
-        {
-            Texture = dbg_new FD3D12Texture(GetDevice());
-        }
-    }
-
-    FRHITexture2DInitializer BackBufferInitializer(
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(
         GetColorFormat(),
         Width, 
         Height, 
         1, 
         1,
-        ETextureUsageFlags::AllowRTV | ETextureUsageFlags::Presentable,
-        EResourceAccess::Common);
+        ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
 
-    BackBuffer = dbg_new FD3D12BackBufferTexture(GetDevice(), this, BackBufferInitializer);
+    if (BackBuffers.GetSize() < static_cast<int32>(NumBackBuffers))
+    {
+        BackBuffers.Resize(NumBackBuffers);
+        for (FD3D12TextureRef& Texture : BackBuffers)
+        {
+            Texture = dbg_new FD3D12Texture(GetDevice(), BackBufferDesc);
+        }
+    }
+
+    BackBuffer = dbg_new FD3D12BackBufferTexture(GetDevice(), this, BackBufferDesc);
 
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
     {
@@ -244,7 +243,7 @@ bool FD3D12Viewport::RetriveBackBuffers()
         }
 
         BackBuffers[Index]->SetResource(dbg_new FD3D12Resource(GetDevice(), BackBufferResource));
-        BackBuffers[Index]->GetResource()->SetName(FString::CreateFormatted("BackBuffer[%u]", Index));
+        BackBuffers[Index]->GetD3D12Resource()->SetName(FString::CreateFormatted("BackBuffer[%u]", Index));
     }
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();

@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Containers/SharedRef.h"
-#include "Core/Containers/ITextureResourceData.h"
 #include "Core/RefCounted.h"
 
 #include "RHI/RHITexture.h"
@@ -19,7 +18,7 @@ typedef TSharedRef<FTexture2D> FTextureResource2DRef;
 
 
 class ENGINE_API FTextureResourceData
-    : public ITextureResourceData
+    : public IRHITextureData
 {
 public:
     FTextureResourceData();
@@ -88,7 +87,7 @@ public:
 
     virtual void SetName(const FString& InName) override final;
 
-    FRHITexture2DRef GetRHITexture() const { return TextureRHI; }
+    FRHITextureRef GetRHITexture() const { return TextureRHI; }
 
     FTextureResourceData* GetTextureResourceData() const { return TextureData; }
 
@@ -99,7 +98,7 @@ public:
 
 private:
 
-    FRHITexture2DRef      TextureRHI;
+    FRHITextureRef      TextureRHI;
     FTextureResourceData* TextureData;
 
     EFormat Format;

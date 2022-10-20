@@ -129,70 +129,6 @@
 
 void D3D12DeviceRemovedHandlerRHI(class FD3D12Device* Device);
 
-template<typename D3D12TextureType>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
-
-template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12Texture2D>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12Texture2DArray>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12TextureCube>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12TextureCubeArray>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class FD3D12Texture3D>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-}
-
-template<typename D3D12TextureType>
-CONSTEXPR bool IsTextureCube()
-{
-    return false;
-}
-
-template<>
-CONSTEXPR bool IsTextureCube<class FD3D12TextureCube>()
-{
-    return true;
-}
-
-template<>
-CONSTEXPR bool IsTextureCube<class FD3D12TextureCubeArray>()
-{
-    return true;
-}
-
-template<typename D3D12TextureType>
-constexpr uint16 GetDepthOrArraySize(uint32 DepthOrArraySize)
-{
-    if constexpr (IsTextureCube<D3D12TextureType>())
-    {
-        return static_cast<uint16>(DepthOrArraySize * kRHINumCubeFaces);
-    }
-    else
-    {
-        return static_cast<uint16>(DepthOrArraySize);
-    }
-}
-
 
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
@@ -285,28 +221,41 @@ CONSTEXPR D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
 CONSTEXPR D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if (IsEnumFlagSet(Flag, ETextureUsageFlags::AllowUAV))
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::UnorderedAccess))
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
-    if (IsEnumFlagSet(Flag, ETextureUsageFlags::AllowRTV))
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::RenderTarget))
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     }
 
-    const bool bAllowDSV = IsEnumFlagSet(Flag, ETextureUsageFlags::AllowDSV);
+    const bool bAllowDSV = IsEnumFlagSet(Flag, ETextureUsageFlags::DepthStencil);
     if (bAllowDSV)
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
     }
 
-    const bool bAllowSRV = IsEnumFlagSet(Flag, ETextureUsageFlags::AllowSRV);
+    const bool bAllowSRV = IsEnumFlagSet(Flag, ETextureUsageFlags::ShaderResource);
     if (bAllowDSV && !bAllowSRV)
     {
         Result |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
     }
 
     return Result;
+}
+
+CONSTEXPR D3D12_RESOURCE_DIMENSION ConvertTextureDimension(ETextureDimension TextureDimension)
+{
+    switch (TextureDimension)
+    {
+        case ETextureDimension::Texture2D:
+        case ETextureDimension::Texture2DArray:
+        case ETextureDimension::TextureCube:
+        case ETextureDimension::TextureCubeArray: return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        case ETextureDimension::Texture3D:        return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+        default:                                  return D3D12_RESOURCE_DIMENSION_UNKNOWN;
+    }
 }
 
 CONSTEXPR DXGI_FORMAT ConvertFormat(EFormat Format)

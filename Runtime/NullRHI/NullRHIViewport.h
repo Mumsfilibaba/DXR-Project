@@ -19,8 +19,15 @@ public:
         : FRHIViewport(Initializer)
         , BackBuffer(nullptr)
     { 
-        FRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
-        BackBuffer = dbg_new FNullRHITexture2D(BackBufferInitializer);
+        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(
+            Initializer.ColorFormat,
+            Width,
+            Height,
+            1,
+            1,
+            ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
+
+        BackBuffer = dbg_new FNullRHITexture(BackBufferDesc);
     }
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final
@@ -30,10 +37,10 @@ public:
         return true;
     }
 
-    virtual FRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
+    virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
 private:
-    TSharedRef<FNullRHITexture2D> BackBuffer;
+    TSharedRef<FNullRHITexture> BackBuffer;
 };
 
 #if defined(PLATFORM_COMPILER_MSVC)

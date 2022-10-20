@@ -16,7 +16,7 @@ enum class ESamplerMode : uint8
     MirrorOnce = 5,
 };
 
-inline const CHAR* ToString(ESamplerMode SamplerMode)
+CONSTEXPR const CHAR* ToString(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
@@ -52,7 +52,7 @@ enum class ESamplerFilter : uint8
     Comparison_Anistrotopic                 = 18,
 };
 
-inline const CHAR* ToString(ESamplerFilter SamplerFilter)
+CONSTEXPR const CHAR* ToString(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
@@ -79,9 +79,9 @@ inline const CHAR* ToString(ESamplerFilter SamplerFilter)
 }
 
 
-struct FRHISamplerStateInitializer
+struct FRHISamplerStateDesc
 {
-    FRHISamplerStateInitializer()
+    FRHISamplerStateDesc()
         : AddressU(ESamplerMode::Clamp)
         , AddressV(ESamplerMode::Clamp)
         , AddressW(ESamplerMode::Clamp)
@@ -94,7 +94,7 @@ struct FRHISamplerStateInitializer
         , BorderColor()
     { }
 
-    FRHISamplerStateInitializer(ESamplerMode InAddressMode, ESamplerFilter InFilter)
+    FRHISamplerStateDesc(ESamplerMode InAddressMode, ESamplerFilter InFilter)
         : AddressU(InAddressMode)
         , AddressV(InAddressMode)
         , AddressW(InAddressMode)
@@ -107,7 +107,7 @@ struct FRHISamplerStateInitializer
         , BorderColor(0.0f, 0.0f, 0.0f, 1.0f)
     { }
 
-    FRHISamplerStateInitializer(
+    FRHISamplerStateDesc(
         ESamplerMode       InAddressU,
         ESamplerMode       InAddressV,
         ESamplerMode       InAddressW,
@@ -145,7 +145,7 @@ struct FRHISamplerStateInitializer
         return Hash;
     }
 
-    bool operator==(const FRHISamplerStateInitializer& RHS) const
+    bool operator==(const FRHISamplerStateDesc& RHS) const
     {
         return (AddressU       == RHS.AddressU)
             && (AddressV       == RHS.AddressV)
@@ -159,7 +159,7 @@ struct FRHISamplerStateInitializer
             && (BorderColor    == RHS.BorderColor);
     }
 
-    bool operator!=(const FRHISamplerStateInitializer& RHS) const
+    bool operator!=(const FRHISamplerStateDesc& RHS) const
     {
         return !(*this == RHS);
     }
@@ -187,7 +187,7 @@ class FRHISamplerState
     : public FRHIResource
 {
 protected:
-    explicit FRHISamplerState(const FRHISamplerStateInitializer& InInitializer)
+    explicit FRHISamplerState(const FRHISamplerStateDesc& InInitializer)
         : Initializer(InInitializer)
     { }
 
@@ -196,8 +196,8 @@ public:
     /** @return - Returns the Bindless descriptor-handle if the RHI-supports descriptor-handles */
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-    const FRHISamplerStateInitializer& GetInitializer() const { return Initializer; } 
+    const FRHISamplerStateDesc& GetInitializer() const { return Initializer; } 
 
 private:
-    FRHISamplerStateInitializer Initializer;
+    FRHISamplerStateDesc Initializer;
 };

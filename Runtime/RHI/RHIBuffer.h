@@ -55,12 +55,12 @@ struct FRHIBufferDesc
     bool IsDynamic()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Dynamic); }
     bool IsReadBack() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ReadBack); }
     
-    bool IsConstantBuffer()   const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ConstantBuffer); }
-    bool IsShaderResource()   const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ShaderResource); }
-    bool IsVertexBuffer()     const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::VertexBuffer); }
-    bool IsIndexBuffer()      const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::IndexBuffer); }
+    bool IsConstantBuffer() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ConstantBuffer); }
+    bool IsShaderResource() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ShaderResource); }
+    bool IsVertexBuffer()   const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::VertexBuffer); }
+    bool IsIndexBuffer()    const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::IndexBuffer); }
     
-    bool HasUnorderedAccess() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::UnorderedAccess); }
+    bool IsUnorderedAccess() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::UnorderedAccess); }
 
     bool operator==(const FRHIBufferDesc& Other) const
     {

@@ -222,21 +222,20 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
 
 bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameResources)
 {
-    const ETextureUsageFlags Flags = ETextureUsageFlags::RWTexture;
+    const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
     
     const uint32 Width  = FrameResources.MainWindowViewport->GetWidth() / 2;
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight() / 2;
 
-    FRHITexture2DInitializer SSAOBufferInitializer(
+    FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(
         FrameResources.SSAOBufferFormat,
         Width, 
         Height, 
         1,
         1,
-        Flags,
-        EResourceAccess::Common);
+        Flags);
 
-    FrameResources.SSAOBuffer = RHICreateTexture2D(SSAOBufferInitializer);
+    FrameResources.SSAOBuffer = RHICreateTexture(SSAOBufferDesc);
     if (!FrameResources.SSAOBuffer)
     {
         DEBUG_BREAK();

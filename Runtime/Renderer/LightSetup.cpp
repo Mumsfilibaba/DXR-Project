@@ -351,7 +351,7 @@ void FLightSetup::Release()
 
     PointLightShadowMaps.Reset();
 
-    for (FRHITexture2DRef& ShadowMap : ShadowMapCascades)
+    for (FRHITextureRef& ShadowMap : ShadowMapCascades)
     {
         ShadowMap.Reset();
     }

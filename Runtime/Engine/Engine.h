@@ -64,10 +64,10 @@ struct ENGINE_API FEngine
     TSharedPtr<FScene> Scene;
 
     /** @brief - A completely white texture */
-    FRHITexture2DRef BaseTexture;
+    FRHITextureRef BaseTexture;
 
     /** @brief - A completely flat normal map*/
-    FRHITexture2DRef BaseNormal;
+    FRHITextureRef BaseNormal;
 
     /** @brief - Base sampler used by all materials */
     FRHISamplerStateRef BaseMaterialSampler;

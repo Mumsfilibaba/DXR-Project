@@ -7,6 +7,100 @@ FD3D12Buffer::FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferDesc& InDesc)
     , Resource(nullptr)
 { }
 
+FD3D12Buffer::~FD3D12Buffer()
+{
+    // NOTE: Empty for now
+}
+
+bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InInitialData)
+{
+    const uint64 Alignment   = GetBufferAlignment(Desc.UsageFlags);
+    const uint64 AlignedSize = NMath::AlignUp(Desc.Size, Alignment);
+
+    D3D12_RESOURCE_DESC ResourceDesc;
+    FMemory::Memzero(&ResourceDesc);
+
+    ResourceDesc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    ResourceDesc.Flags              = ConvertBufferFlags(Desc.UsageFlags);
+    ResourceDesc.Format             = DXGI_FORMAT_UNKNOWN;
+    ResourceDesc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    ResourceDesc.Width              = AlignedSize;
+    ResourceDesc.Height             = 1;
+    ResourceDesc.DepthOrArraySize   = 1;
+    ResourceDesc.MipLevels          = 1;
+    ResourceDesc.Alignment          = 0;
+    ResourceDesc.SampleDesc.Count   = 1;
+    ResourceDesc.SampleDesc.Quality = 0;
+
+    D3D12_HEAP_TYPE       D3D12HeapType     = D3D12_HEAP_TYPE_DEFAULT;
+    D3D12_RESOURCE_STATES D3D12InitialState = D3D12_RESOURCE_STATE_COMMON;
+    if (Desc.IsDynamic())
+    {
+        D3D12HeapType     = D3D12_HEAP_TYPE_UPLOAD;
+        D3D12InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
+    }
+
+    // Limit the scope of the new resource
+    {
+        FD3D12ResourceRef NewResource = dbg_new FD3D12Resource(GetDevice(), ResourceDesc, D3D12HeapType);
+        if (!NewResource->Initialize(D3D12InitialState, nullptr))
+        {
+            return false;
+        }
+        else
+        {
+            Resource = NewResource;
+        }
+    }
+
+    if (InInitialData)
+    {
+        if (Desc.IsDynamic())
+        {
+            FD3D12Resource* D3D12Resource = GetD3D12Resource();
+
+            void* BufferData = D3D12Resource->MapRange(0, 0);
+            if (!BufferData)
+            {
+                return false;
+            }
+
+            // Copy over relevant data
+            FMemory::Memcpy(BufferData, InInitialData, Desc.Size);
+
+            D3D12Resource->UnmapRange(0, 0);
+        }
+        else
+        {
+            FD3D12CommandContext* Context = FD3D12Interface::GetRHI()->ObtainCommandContext();
+            Context->StartContext();
+
+            Context->TransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+            Context->UpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
+
+            // NOTE: Transfer to the initial state
+            if (InInitialAccess != EResourceAccess::CopyDest)
+            {
+                Context->TransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
+            }
+
+            Context->FinishContext();
+        }
+    }
+    else
+    {
+        if (InInitialAccess != EResourceAccess::Common && Desc.IsDynamic())
+        {
+            FD3D12CommandContext* Context = FD3D12Interface::GetRHI()->ObtainCommandContext();
+            Context->StartContext();
+            Context->TransitionBuffer(this, EResourceAccess::Common, InInitialAccess);
+            Context->FinishContext();
+        }
+    }
+
+    return true;
+}
+
 void FD3D12Buffer::SetName(const FString& InName)
 {
     if (Resource)

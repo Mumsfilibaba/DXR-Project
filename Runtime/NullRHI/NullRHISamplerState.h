@@ -12,7 +12,7 @@
 struct FNullRHISamplerState 
     : public FRHISamplerState
 {
-    FNullRHISamplerState(const FRHISamplerStateInitializer& InInitializer)
+    explicit FNullRHISamplerState(const FRHISamplerStateDesc& InInitializer)
         : FRHISamplerState(InInitializer)
     { }
 

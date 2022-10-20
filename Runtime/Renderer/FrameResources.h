@@ -82,37 +82,37 @@ struct RENDERER_API FFrameResources
     const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
     const EFormat VelocityFormat     = EFormat::R16G16_Float;
 
-    FRHITexture2D*           BackBuffer = nullptr;
+    FRHITexture*           BackBuffer = nullptr;
 
     // GlobalBuffers
-    FRHIBufferRef            CameraBuffer;
-    FRHIBufferRef            TransformBuffer;
+    FRHIBufferRef          CameraBuffer;
+    FRHIBufferRef          TransformBuffer;
 
     // Samplers
-    FRHISamplerStateRef      PointLightShadowSampler;
-    FRHISamplerStateRef      DirectionalLightShadowSampler;
-    FRHISamplerStateRef      IrradianceSampler;
-    FRHISamplerStateRef      GBufferSampler;
-    FRHISamplerStateRef      FXAASampler;
+    FRHISamplerStateRef    PointLightShadowSampler;
+    FRHISamplerStateRef    DirectionalLightShadowSampler;
+    FRHISamplerStateRef    IrradianceSampler;
+    FRHISamplerStateRef    GBufferSampler;
+    FRHISamplerStateRef    FXAASampler;
 
-    FRHITextureCubeRef       Skybox;
+    FRHITextureRef         Skybox;
 
-    FRHITexture2DRef         IntegrationLUT;
-    FRHISamplerStateRef      IntegrationLUTSampler;
+    FRHITextureRef         IntegrationLUT;
+    FRHISamplerStateRef    IntegrationLUTSampler;
 
     // GBuffer
-    FRHITexture2DRef         SSAOBuffer;
-    FRHITexture2DRef         FinalTarget;
-    FRHITexture2DRef         GBuffer[GBuffer_NumBuffers];
+    FRHITextureRef         SSAOBuffer;
+    FRHITextureRef         FinalTarget;
+    FRHITextureRef         GBuffer[GBuffer_NumBuffers];
 
     // Two resources that can be ping-ponged between
-    FRHITexture2DRef         ReducedDepthBuffer[2];
+    FRHITextureRef         ReducedDepthBuffer[2];
 
     FRHIVertexInputLayoutRef MeshInputLayout;
 
     // RayTracing
-    FRHITexture2DRef         RTOutput;
-    FRHIRayTracingSceneRef   RTScene;
+    FRHITextureRef         RTOutput;
+    FRHIRayTracingSceneRef RTScene;
 
     FRayTracingShaderResources             GlobalResources;
     FRayTracingShaderResources             RayGenLocalResources;

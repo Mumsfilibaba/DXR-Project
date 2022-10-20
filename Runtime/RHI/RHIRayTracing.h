@@ -170,10 +170,10 @@ struct FRHIRayTracingGeometryInitializer
     {
         return FRHIAccelerationStructureInitializer::operator==(RHS)
             && (VertexBuffer == RHS.VertexBuffer) 
-            && (NumVertices == RHS.NumVertices)
+            && (NumVertices  == RHS.NumVertices)
             && (IndexBuffer  == RHS.IndexBuffer)
-            && (NumIndices == RHS.NumIndices)
-            && (IndexFormat == RHS.IndexFormat);
+            && (NumIndices   == RHS.NumIndices)
+            && (IndexFormat  == RHS.IndexFormat);
     }
 
     bool operator!=(const FRHIRayTracingGeometryInitializer& RHS) const
@@ -218,7 +218,7 @@ struct FRHIRayTracingSceneInitializer
 };
 
 
-class FRHIAccelerationStructure 
+class FRHIAccelerationStructure
     : public FRHIResource
 {
 protected:
@@ -266,8 +266,9 @@ protected:
     { }
 
 public:
-    virtual FRHIShaderResourceView* GetShaderResourceView() const       { return nullptr; }
-    virtual FRHIRayTracingScene*    GetRayTracingScene() override final { return this; }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
+
+    virtual FRHIRayTracingScene* GetRayTracingScene() override final { return this; }
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };

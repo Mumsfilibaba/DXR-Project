@@ -239,7 +239,7 @@ bool FViewportRenderer::InitContext(InterfaceContext Context)
         IndexBuffer->SetName("ImGui IndexBuffer");
     }
 
-    FRHISamplerStateInitializer SamplerInitializer;
+    FRHISamplerStateDesc SamplerInitializer;
     SamplerInitializer.AddressU = ESamplerMode::Clamp;
     SamplerInitializer.AddressV = ESamplerMode::Clamp;
     SamplerInitializer.AddressW = ESamplerMode::Clamp;

@@ -35,12 +35,12 @@ bool FMetalInterface::Initialize()
     return true;
 }
 
-FRHITexture2D* FMetalInterface::RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)
+FRHITexture* FMetalInterface::RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)
 {
     return CreateTexture<FMetalTexture2D>(Initializer);
 }
 
-FRHITexture2DArray* FMetalInterface::RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)
+FRHITexture* FMetalInterface::RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)
 {
     return CreateTexture<FMetalTexture2DArray>(Initializer);
 }

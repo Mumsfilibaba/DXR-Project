@@ -149,7 +149,7 @@ private:
     FDebugRenderer                DebugRenderer;
     FTemporalAA                   TemporalAA;
 
-    FRHITexture2DRef             ShadingImage;
+    FRHITextureRef             ShadingImage;
     FRHIComputePipelineStateRef  ShadingRatePipeline;
     FRHIComputeShaderRef         ShadingRateShader;
 

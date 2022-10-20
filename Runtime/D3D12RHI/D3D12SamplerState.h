@@ -13,7 +13,7 @@ class FD3D12SamplerState
     , public FD3D12DeviceChild
 {
 public:
-    FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap, const FRHISamplerStateInitializer& InInitializer)
+    FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap, const FRHISamplerStateDesc& InInitializer)
         : FRHISamplerState(InInitializer)
         , FD3D12DeviceChild(InDevice)
         , OfflineHeap(InOfflineHeap)

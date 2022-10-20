@@ -42,7 +42,6 @@ bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D1
     Resource = MakeSharedRef<FD3D12Resource>(InResource);
     Desc = InDesc;
     GetDevice()->GetD3D12Device()->CreateConstantBufferView(&Desc, OfflineHandle);
-
     return true;
 }
 
@@ -63,6 +62,7 @@ bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D1
     ID3D12Resource* NativeResource = nullptr;
     if (FD3D12View::Resource)
     {
+        CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0);
         NativeResource = FD3D12View::Resource->GetD3D12Resource();
     }
 
@@ -95,6 +95,7 @@ bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD
     ID3D12Resource* NativeResource = nullptr;
     if (FD3D12View::Resource)
     {
+        CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0);
         NativeResource = FD3D12View::Resource->GetD3D12Resource();
     }
 
@@ -118,6 +119,7 @@ bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_
     ID3D12Resource* NativeResource = nullptr;
     if (FD3D12View::Resource)
     {
+        CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0);
         NativeResource = FD3D12View::Resource->GetD3D12Resource();
     }
 
@@ -141,6 +143,7 @@ bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_
     ID3D12Resource* NativeResource = nullptr;
     if (FD3D12View::Resource)
     {
+        CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0);
         NativeResource = FD3D12View::Resource->GetD3D12Resource();
     }
 

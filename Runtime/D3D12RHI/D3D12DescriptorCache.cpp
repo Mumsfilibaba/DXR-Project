@@ -113,7 +113,7 @@ bool FD3D12DescriptorCache::Initialize()
     SamplerDesc.MinLOD         = TNumericLimits<float>::Lowest();
     SamplerDesc.MipLODBias     = 0.0f;
 
-    NullSampler = dbg_new FD3D12SamplerState(GetDevice(), FD3D12Interface::GetRHI()->GetSamplerOfflineDescriptorHeap(), FRHISamplerStateInitializer());
+    NullSampler = dbg_new FD3D12SamplerState(GetDevice(), FD3D12Interface::GetRHI()->GetSamplerOfflineDescriptorHeap(), FRHISamplerStateDesc());
     if (!NullSampler->CreateSampler(SamplerDesc))
     {
         return false;

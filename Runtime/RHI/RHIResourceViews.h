@@ -456,7 +456,7 @@ struct FRHIDepthStencilView
         , ClearValue()
     { }
 
-    FRHIDepthStencilView(
+    explicit FRHIDepthStencilView(
         FRHITexture*              InTexture,
         EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
         EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
@@ -470,7 +470,7 @@ struct FRHIDepthStencilView
         , ClearValue(InClearValue)
     { }
 
-    explicit FRHIDepthStencilView(
+    FRHIDepthStencilView(
         FRHITexture*              InTexture,
         uint16                    InArrayIndex,
         uint8                     InMipLevel,
@@ -486,7 +486,7 @@ struct FRHIDepthStencilView
         , ClearValue(InClearValue)
     { }
 
-    explicit FRHIDepthStencilView(
+    FRHIDepthStencilView(
         FRHITexture*              InTexture,
         uint16                    InArrayIndex,
         uint8                     InMipLevel,
@@ -561,7 +561,7 @@ struct FRHIRenderPassDesc
         const FRHIRenderTargetViewArray& InRenderTargets,
         uint32                           InNumRenderTargets,
         FRHIDepthStencilView             InDepthStencilView,
-        FRHITexture2D*                   InShadingRateTexture = nullptr,
+        FRHITexture*                     InShadingRateTexture = nullptr,
         EShadingRate                     InStaticShadingRate  = EShadingRate::VRS_1x1)
         : ShadingRateTexture(InShadingRateTexture)
         , DepthStencilView(InDepthStencilView)
@@ -584,7 +584,7 @@ struct FRHIRenderPassDesc
         return !(*this == RHS);
     }
 
-    FRHITexture2D*       ShadingRateTexture;
+    FRHITexture*         ShadingRateTexture;
 
     FRHIDepthStencilView DepthStencilView;
 

@@ -27,7 +27,7 @@ public:
 
     virtual bool Resize(uint32 Width, uint32 Height) override final;
 
-    virtual FRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
+    virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
 private:
     bool RetriveBackBuffers();

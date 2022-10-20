@@ -29,7 +29,7 @@ public:
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
 
-    virtual FRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
+    virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
     
     // TODO: This needs to be a command for Vulkan and Metal since we can be using the texture and present will change the resource
     bool Present(bool bVerticalSync);

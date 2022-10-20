@@ -25,8 +25,8 @@ public:
 
     virtual bool Initialize() override final;
 
-    virtual FRHITexture2D*               RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)               override final;
-    virtual FRHITexture2DArray*          RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)     override final;
+    virtual FRHITexture*               RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)               override final;
+    virtual FRHITexture*          RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)     override final;
     virtual FRHITextureCube*             RHICreateTextureCube(const FRHITextureCubeInitializer& Initializer)           override final;
     virtual FRHITextureCubeArray*        RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer) override final;
     virtual FRHITexture3D*               RHICreateTexture3D(const FRHITexture3DInitializer& Initializer)               override final;

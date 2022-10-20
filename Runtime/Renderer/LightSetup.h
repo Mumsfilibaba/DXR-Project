@@ -83,8 +83,8 @@ struct FProxyLightProbe
         WeakSpecularIrradianceMapUAVs.Clear();
     }
 
-    FRHITextureCubeRef IrradianceMap;
-    FRHITextureCubeRef SpecularIrradianceMap;
+    FRHITextureRef IrradianceMap;
+    FRHITextureRef SpecularIrradianceMap;
 
     // TODO: We should be able to do this without the UAVs saved
     FRHIUnorderedAccessViewRef         IrradianceMapUAV;
@@ -132,7 +132,7 @@ struct RENDERER_API FLightSetup
     FRHIBufferRef                        ShadowCastingPointLightsBuffer;
     FRHIBufferRef                        ShadowCastingPointLightsPosRadBuffer;
 
-    FRHITextureCubeArrayRef              PointLightShadowMaps;
+    FRHITextureRef                       PointLightShadowMaps;
 
     // DirectionalLight
     // NOTE: Only one directional light (TODO: This is ugly)
@@ -148,9 +148,9 @@ struct RENDERER_API FLightSetup
 
     FRHIBufferRef              DirectionalLightsBuffer;
 
-    FRHITexture2DRef           ShadowMapCascades[4];
-    FRHITexture2DRef           DirectionalShadowMask;
-    FRHITexture2DRef           CascadeIndexBuffer;
+    FRHITextureRef           ShadowMapCascades[4];
+    FRHITextureRef           DirectionalShadowMask;
+    FRHITextureRef           CascadeIndexBuffer;
 
     FRHIBufferRef              CascadeMatrixBuffer;
     FRHIShaderResourceViewRef  CascadeMatrixBufferSRV;

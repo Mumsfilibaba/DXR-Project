@@ -312,7 +312,7 @@ void FD3D12CommandContextState::ApplyGraphics(FD3D12CommandList& CommandList, FD
         {
             if (Graphics.ShadingRateTexture)
             {
-                CommandList.RSSetShadingRateImage(Graphics.ShadingRateTexture->GetResource()->GetD3D12Resource());
+                CommandList.RSSetShadingRateImage(Graphics.ShadingRateTexture->GetD3D12Resource()->GetD3D12Resource());
             }
             else
             {
@@ -890,7 +890,7 @@ void FD3D12CommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     //TODO: For now texture must be the same format. I.e typeless does probably not work
     D3D12_ERROR_COND(DstFormat == SrcFormat, "Dst and Src texture must have the same format");
 
-    CommandList->ResolveSubresource(D3D12Destination->GetResource(), D3D12Source->GetResource(), DstFormat);
+    CommandList->ResolveSubresource(D3D12Destination->GetD3D12Resource(), D3D12Source->GetD3D12Resource(), DstFormat);
 
     CmdBatch->AddInUseResource(Dst);
     CmdBatch->AddInUseResource(Src);
@@ -908,7 +908,7 @@ void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
 }
 
 void FD3D12CommandContext::UpdateTexture2D(
-    FRHITexture2D*          Dst,
+    FRHITexture*          Dst,
     const FTextureRegion2D& TextureRegion,
     uint32                  MipLevel,
     const void*             SrcData,
@@ -921,7 +921,7 @@ void FD3D12CommandContext::UpdateTexture2D(
     FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
     D3D12_ERROR_COND(D3D12Destination != nullptr, "Dst cannot be nullptr");
 
-    FD3D12Resource* D3D12Resource = D3D12Destination->GetResource();
+    FD3D12Resource* D3D12Resource = D3D12Destination->GetD3D12Resource();
     D3D12_ERROR_COND(D3D12Resource != nullptr, "Resource cannot be nullptr");
 
     D3D12_RESOURCE_DESC Desc = D3D12Resource->GetDesc();
@@ -1022,7 +1022,7 @@ void FD3D12CommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     FD3D12Texture* D3D12Source = GetD3D12Texture(Src);
     CHECK(D3D12Source != nullptr);
     
-    CommandList->CopyResource(D3D12Destination->GetResource(), D3D12Source->GetResource());
+    CommandList->CopyResource(D3D12Destination->GetD3D12Resource(), D3D12Source->GetD3D12Resource());
 
     CmdBatch->AddInUseResource(Dst);
     CmdBatch->AddInUseResource(Src);
@@ -1042,8 +1042,14 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
     D3D12_TEXTURE_COPY_LOCATION SrcLocation;
     FMemory::Memzero(&SrcLocation);
 
-    const uint32 SrcSubresourceIndex = D3D12CalcSubresource(InCopyDesc.SrcMipSlice, InCopyDesc.SrcArraySlice, 0, Src->GetNumMips(), Src->GetArraySize());
-    SrcLocation.pResource        = D3D12Source->GetResource()->GetD3D12Resource();
+    const uint32 SrcSubresourceIndex = D3D12CalcSubresource(
+        InCopyDesc.SrcMipSlice,
+        InCopyDesc.SrcArraySlice, 
+        0, 
+        Src->GetNumMipLevels(), 
+        Src->GetNumArraySlices());
+
+    SrcLocation.pResource        = D3D12Source->GetD3D12Resource()->GetD3D12Resource();
     SrcLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     SrcLocation.SubresourceIndex = SrcSubresourceIndex;
 
@@ -1059,8 +1065,14 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
     D3D12_TEXTURE_COPY_LOCATION DstLocation;
     FMemory::Memzero(&DstLocation);
 
-    const uint32 DstSubresourceIndex = D3D12CalcSubresource(InCopyDesc.DstMipSlice, InCopyDesc.DstArraySlice, 0, Dst->GetNumMips(), Dst->GetArraySize());
-    DstLocation.pResource        = D3D12Destination->GetResource()->GetD3D12Resource();
+    const uint32 DstSubresourceIndex = D3D12CalcSubresource(
+        InCopyDesc.DstMipSlice, 
+        InCopyDesc.DstArraySlice, 
+        0, 
+        Dst->GetNumMipLevels(), 
+        Dst->GetNumArraySlices());
+
+    DstLocation.pResource        = D3D12Destination->GetD3D12Resource()->GetD3D12Resource();
     DstLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     DstLocation.SubresourceIndex = DstSubresourceIndex;
 
@@ -1260,12 +1272,12 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
     D3D12_ERROR_COND(D3D12Texture != nullptr, "Texture cannot be nullptr");
 
-    D3D12_RESOURCE_DESC Desc = D3D12Texture->GetResource()->GetDesc();
+    D3D12_RESOURCE_DESC Desc = D3D12Texture->GetD3D12Resource()->GetDesc();
     Desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     D3D12_ERROR_COND(Desc.MipLevels > 1, "MipLevels must be more than one in order to generate any MipLevels");
 
     // TODO: Create this placed from a Heap? See what performance is 
-    FD3D12ResourceRef StagingTexture = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12Texture->GetResource()->GetHeapType());
+    FD3D12ResourceRef StagingTexture = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12Texture->GetD3D12Resource()->GetHeapType());
     if (!StagingTexture->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
     {
         LOG_ERROR("[FD3D12CommandContext] Failed to create StagingTexture for GenerateMips");
@@ -1276,14 +1288,13 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
         StagingTexture->SetName("GenerateMips StagingTexture");
     }
 
-    // Check Type
-    const bool bIsTextureCube = (Texture->GetTextureCube() != nullptr);
-
     D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
     FMemory::Memzero(&SrvDesc);
 
     SrvDesc.Format                  = Desc.Format;
     SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    
+    const bool bIsTextureCube = Texture->GetDesc().IsTextureCube();
     if (bIsTextureCube)
     {
         SrvDesc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
@@ -1326,7 +1337,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
 
     const D3D12_CPU_DESCRIPTOR_HANDLE SrvHandle_CPU = ResourceDescriptors->GetCPUDescriptorHandleAt(StartDescriptorHandleIndex);
     GetDevice()->GetD3D12Device()->CreateShaderResourceView(
-        D3D12Texture->GetResource()->GetD3D12Resource(), 
+        D3D12Texture->GetD3D12Resource()->GetD3D12Resource(), 
         &SrvDesc, 
         SrvHandle_CPU);
 
@@ -1366,14 +1377,14 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     }
 
     // We assume the destination is in D3D12_RESOURCE_STATE_COPY_DEST
-    TransitionResource(D3D12Texture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
     TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
     
     FlushResourceBarriers();
 
-    CommandList->CopyResource(StagingTexture.Get(), D3D12Texture->GetResource());
+    CommandList->CopyResource(StagingTexture.Get(), D3D12Texture->GetD3D12Resource());
 
-    TransitionResource(D3D12Texture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     
     FlushResourceBarriers();
@@ -1425,14 +1436,14 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
 
         UnorderedAccessBarrier(StagingTexture.Get());
 
-        TransitionResource(D3D12Texture->GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+        TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
         TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
         FlushResourceBarriers();
 
         // TODO: Copy only MipLevels (Maybe faster?)
-        CommandList->CopyResource(D3D12Texture->GetResource(), StagingTexture.Get());
+        CommandList->CopyResource(D3D12Texture->GetD3D12Resource(), StagingTexture.Get());
 
-        TransitionResource(D3D12Texture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         FlushResourceBarriers();
 
@@ -1443,7 +1454,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
         RemainingMiplevels       -= MipLevelsPerDispatch;
     }
 
-    TransitionResource(D3D12Texture->GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
 
     FlushResourceBarriers();
 
@@ -1456,7 +1467,7 @@ void FD3D12CommandContext::TransitionTexture(FRHITexture* Texture, EResourceAcce
     const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(AfterState);
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
-    TransitionResource(D3D12Texture->GetResource(), D3D12BeforeState, D3D12AfterState);
+    TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
 
     CmdBatch->AddInUseResource(Texture);
 }
@@ -1479,7 +1490,7 @@ void FD3D12CommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
     CHECK(D3D12Texture != nullptr);
 
-    UnorderedAccessBarrier(D3D12Texture->GetResource());
+    UnorderedAccessBarrier(D3D12Texture->GetD3D12Resource());
 
     CmdBatch->AddInUseResource(Texture);
 }

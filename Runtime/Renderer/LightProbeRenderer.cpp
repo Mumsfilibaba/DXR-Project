@@ -60,7 +60,7 @@ bool FLightProbeRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRe
         SpecularIrradianceGenPSO->SetName("Specular IrradianceGen PSO");
     }
 
-    FRHISamplerStateInitializer SamplerInitializer;
+    FRHISamplerStateDesc SamplerInitializer;
     SamplerInitializer.AddressU = ESamplerMode::Wrap;
     SamplerInitializer.AddressV = ESamplerMode::Wrap;
     SamplerInitializer.AddressW = ESamplerMode::Wrap;
@@ -128,7 +128,7 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, const FL
     uint32 Width = Skylight.SpecularIrradianceMap->GetWidth();
     float  Roughness = 0.0f;
 
-    const uint32 NumMiplevels   = Skylight.SpecularIrradianceMap->GetNumMips();
+    const uint32 NumMiplevels   = Skylight.SpecularIrradianceMap->GetNumMipLevels();
     const float  RoughnessDelta = 1.0f / (NumMiplevels - 1);
     for (uint32 Mip = 0; Mip < NumMiplevels; Mip++)
     {
@@ -163,15 +163,14 @@ bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
     FProxyLightProbe& Skylight = LightSetup.Skylight;
 
     // Generate global irradiance (From Skybox)
-    FRHITextureCubeInitializer LightProbeInitializer(
+    FRHITextureDesc LightProbeDesc = FRHITextureDesc::CreateTextureCube(
         LightSetup.LightProbeFormat, 
         LightSetup.IrradianceSize,
         1, 
         1, 
-        ETextureUsageFlags::RWTexture,
-        EResourceAccess::Common);
+        ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
 
-    Skylight.IrradianceMap = RHICreateTextureCube(LightProbeInitializer);
+    Skylight.IrradianceMap = RHICreateTexture(LightProbeDesc);
     if (!Skylight.IrradianceMap)
     {
         DEBUG_BREAK();
@@ -191,10 +190,10 @@ bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
     }
 
     const uint16 SpecularIrradianceMiplevels = NMath::Max<uint16>(NMath::Log2(LightSetup.SpecularIrradianceSize), 1u);
-    LightProbeInitializer.Extent  = LightSetup.SpecularIrradianceSize;
-    LightProbeInitializer.NumMips = uint8(SpecularIrradianceMiplevels);
+    LightProbeDesc.Extent       = FIntVector3(LightSetup.SpecularIrradianceSize, LightSetup.SpecularIrradianceSize, 0);
+    LightProbeDesc.NumMipLevels = uint8(SpecularIrradianceMiplevels);
 
-    Skylight.SpecularIrradianceMap = RHICreateTextureCube(LightProbeInitializer);
+    Skylight.SpecularIrradianceMap = RHICreateTexture(LightProbeDesc);
     if (!Skylight.SpecularIrradianceMap)
     {
         DEBUG_BREAK();

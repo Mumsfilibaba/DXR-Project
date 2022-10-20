@@ -73,7 +73,7 @@ protected:
 public:
     virtual bool Resize(uint32 InWidth, uint32 InHeight) { return true; }
 
-    virtual FRHITexture2D* GetBackBuffer() const { return nullptr; };
+    virtual FRHITexture* GetBackBuffer() const { return nullptr; };
 
     EFormat GetColorFormat() const { return Format; }
 

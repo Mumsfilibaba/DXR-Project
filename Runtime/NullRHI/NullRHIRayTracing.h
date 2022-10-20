@@ -22,9 +22,6 @@ struct FNullRHIRayTracingGeometry
     virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FNullRHIRayTracingScene
-
 class FNullRHIRayTracingScene 
     : public FRHIRayTracingScene
 {

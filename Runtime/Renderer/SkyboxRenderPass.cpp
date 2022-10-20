@@ -77,7 +77,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         }
     }
 
-    FRHISamplerStateInitializer Initializer;
+    FRHISamplerStateDesc Initializer;
     Initializer.AddressU = ESamplerMode::Wrap;
     Initializer.AddressV = ESamplerMode::Wrap;
     Initializer.AddressW = ESamplerMode::Wrap;

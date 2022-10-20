@@ -22,7 +22,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
     }
 
     {
-        FRHISamplerStateInitializer SamplerInitializer;
+        FRHISamplerStateDesc SamplerInitializer;
         SamplerInitializer.AddressU = ESamplerMode::Clamp;
         SamplerInitializer.AddressV = ESamplerMode::Clamp;
         SamplerInitializer.AddressW = ESamplerMode::Clamp;
@@ -220,16 +220,15 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHITexture2DInitializer LUTInitializer(
+        FRHITextureDesc LUTDesc = FRHITextureDesc::CreateTexture2D(
             LUTFormat, 
             LUTSize,
             LUTSize,
             1, 
             1, 
-            ETextureUsageFlags::AllowUAV,
-            EResourceAccess::Common);
+            ETextureUsageFlags::UnorderedAccess);
 
-        FRHITexture2DRef StagingTexture = RHICreateTexture2D(LUTInitializer);
+        FRHITextureRef StagingTexture = RHICreateTexture(LUTDesc, EResourceAccess::Common);
         if (!StagingTexture)
         {
             DEBUG_BREAK();
@@ -240,9 +239,9 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             StagingTexture->SetName("Staging IntegrationLUT");
         }
 
-        LUTInitializer.UsageFlags = ETextureUsageFlags::AllowSRV;
+        LUTDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
 
-        FrameResources.IntegrationLUT = RHICreateTexture2D(LUTInitializer);
+        FrameResources.IntegrationLUT = RHICreateTexture(LUTDesc, EResourceAccess::Common);
         if (!FrameResources.IntegrationLUT)
         {
             DEBUG_BREAK();
@@ -253,7 +252,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             FrameResources.IntegrationLUT->SetName("IntegrationLUT");
         }
 
-        FRHISamplerStateInitializer SamplerInitializer;
+        FRHISamplerStateDesc SamplerInitializer;
         SamplerInitializer.AddressU = ESamplerMode::Clamp;
         SamplerInitializer.AddressV = ESamplerMode::Clamp;
         SamplerInitializer.AddressW = ESamplerMode::Clamp;
@@ -823,7 +822,7 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
 
     Settings.NumShadowCastingPointLights = LightSetup.ShadowCastingPointLightsData.GetSize();
     Settings.NumPointLights              = LightSetup.PointLightsData.GetSize();
-    Settings.NumSkyLightMips             = Skylight.SpecularIrradianceMap->GetNumMips();
+    Settings.NumSkyLightMips             = Skylight.SpecularIrradianceMap->GetNumMipLevels();
     Settings.ScreenWidth                 = FrameResources.FinalTarget->GetWidth();
     Settings.ScreenHeight                = FrameResources.FinalTarget->GetHeight();
 
@@ -844,7 +843,7 @@ bool FDeferredRenderer::ResizeResources(FFrameResources& FrameResources)
 
 bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
 {
-    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget;
+    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
 
     const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
@@ -855,9 +854,15 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     }
 
     // Albedo
-    FRHITexture2DInitializer TextureInitializer(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage, EResourceAccess::Common, nullptr);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(
+        FrameResources.AlbedoFormat,
+        Width,
+        Height,
+        1,
+        1,
+        Usage);
 
-    FrameResources.GBuffer[GBufferIndex_Albedo] = RHICreateTexture2D(TextureInitializer);
+    FrameResources.GBuffer[GBufferIndex_Albedo] = RHICreateTexture(TextureDesc);
     if (FrameResources.GBuffer[GBufferIndex_Albedo])
     {
         FrameResources.GBuffer[GBufferIndex_Albedo]->SetName("GBuffer Albedo");
@@ -868,9 +873,9 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     }
 
     // Normal
-    TextureInitializer.Format = FrameResources.NormalFormat;
+    TextureDesc.Format = FrameResources.NormalFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Normal] = RHICreateTexture2D(TextureInitializer);
+    FrameResources.GBuffer[GBufferIndex_Normal] = RHICreateTexture(TextureDesc);
     if (FrameResources.GBuffer[GBufferIndex_Normal])
     {
         FrameResources.GBuffer[GBufferIndex_Normal]->SetName("GBuffer Normal");
@@ -881,9 +886,9 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     }
 
     // Material Properties
-    TextureInitializer.Format = FrameResources.MaterialFormat;
+    TextureDesc.Format = FrameResources.MaterialFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Material] = RHICreateTexture2D(TextureInitializer);
+    FrameResources.GBuffer[GBufferIndex_Material] = RHICreateTexture(TextureDesc);
     if (FrameResources.GBuffer[GBufferIndex_Material])
     {
         FrameResources.GBuffer[GBufferIndex_Material]->SetName("GBuffer Material");
@@ -894,9 +899,9 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     }
 
     // View Normal
-    TextureInitializer.Format = FrameResources.ViewNormalFormat;
+    TextureDesc.Format = FrameResources.ViewNormalFormat;
 
-    FrameResources.GBuffer[GBufferIndex_ViewNormal] = RHICreateTexture2D(TextureInitializer);
+    FrameResources.GBuffer[GBufferIndex_ViewNormal] = RHICreateTexture(TextureDesc);
     if (FrameResources.GBuffer[GBufferIndex_ViewNormal])
     {
         FrameResources.GBuffer[GBufferIndex_ViewNormal]->SetName("GBuffer ViewNormal");
@@ -907,9 +912,9 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     }
 
     // Velocity
-    TextureInitializer.Format = FrameResources.VelocityFormat;
+    TextureDesc.Format = FrameResources.VelocityFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Velocity] = RHICreateTexture2D(TextureInitializer);
+    FrameResources.GBuffer[GBufferIndex_Velocity] = RHICreateTexture(TextureDesc);
     if (FrameResources.GBuffer[GBufferIndex_Velocity])
     {
         FrameResources.GBuffer[GBufferIndex_Velocity]->SetName("GBuffer Velocity");
@@ -920,10 +925,10 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     }
 
     // Final Image
-    TextureInitializer.Format     = FrameResources.FinalTargetFormat;
-    TextureInitializer.UsageFlags = Usage | ETextureUsageFlags::AllowUAV;
+    TextureDesc.Format     = FrameResources.FinalTargetFormat;
+    TextureDesc.UsageFlags = Usage | ETextureUsageFlags::UnorderedAccess;
 
-    FrameResources.FinalTarget = RHICreateTexture2D(TextureInitializer);
+    FrameResources.FinalTarget = RHICreateTexture(TextureDesc);
     if (FrameResources.FinalTarget)
     {
         FrameResources.FinalTarget->SetName("Final Target");
@@ -935,11 +940,11 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
 
     // DepthStencil
     const FClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
-    TextureInitializer.Format     = FrameResources.DepthBufferFormat;
-    TextureInitializer.UsageFlags = ETextureUsageFlags::ShadowMap;
-    TextureInitializer.ClearValue = DepthClearValue;
+    TextureDesc.Format     = FrameResources.DepthBufferFormat;
+    TextureDesc.UsageFlags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
+    TextureDesc.ClearValue = DepthClearValue;
 
-    FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture2D(TextureInitializer);
+    FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture(TextureDesc);
     if (FrameResources.GBuffer[GBufferIndex_Depth])
     {
         FrameResources.GBuffer[GBufferIndex_Depth]->SetName("GBuffer DepthStencil");
@@ -954,15 +959,14 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     const uint32 ReducedWidth  = NMath::DivideByMultiple(Width, Alignment);
     const uint32 ReducedHeight = NMath::DivideByMultiple(Height, Alignment);
 
-    TextureInitializer.Format        = EFormat::R32G32_Float;
-    TextureInitializer.Width         = uint16(ReducedWidth);
-    TextureInitializer.Height        = uint16(ReducedHeight);
-    TextureInitializer.UsageFlags    = ETextureUsageFlags::RWTexture;
-    TextureInitializer.InitialAccess = EResourceAccess::NonPixelShaderResource;
+    TextureDesc.Format     = EFormat::R32G32_Float;
+    TextureDesc.Extent.x   = uint16(ReducedWidth);
+    TextureDesc.Extent.y   = uint16(ReducedHeight);
+    TextureDesc.UsageFlags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
 
     for (uint32 i = 0; i < 2; i++)
     {
-        FrameResources.ReducedDepthBuffer[i] = RHICreateTexture2D(TextureInitializer);
+        FrameResources.ReducedDepthBuffer[i] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
         if (FrameResources.ReducedDepthBuffer[i])
         {
             FrameResources.ReducedDepthBuffer[i]->SetName("Reduced DepthStencil[" + ToString(i) + "]");

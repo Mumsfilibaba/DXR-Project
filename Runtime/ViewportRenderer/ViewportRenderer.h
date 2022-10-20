@@ -33,7 +33,7 @@ public:
 private:
     TArray<FDrawableTexture*>    RenderedImages;
 
-    FRHITexture2DRef             FontTexture;
+    FRHITextureRef             FontTexture;
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIGraphicsPipelineStateRef PipelineStateNoBlending;
     FRHIPixelShaderRef           PShader;

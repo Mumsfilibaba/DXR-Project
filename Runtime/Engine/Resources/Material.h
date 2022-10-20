@@ -105,13 +105,13 @@ public:
     }
 
 public:
-    FRHITexture2DRef AlbedoMap;
-    FRHITexture2DRef NormalMap;
-    FRHITexture2DRef RoughnessMap;
-    FRHITexture2DRef HeightMap;
-    FRHITexture2DRef AOMap;
-    FRHITexture2DRef MetallicMap;
-    FRHITexture2DRef AlphaMask;
+    FRHITextureRef AlbedoMap;
+    FRHITextureRef NormalMap;
+    FRHITextureRef RoughnessMap;
+    FRHITextureRef HeightMap;
+    FRHITextureRef AOMap;
+    FRHITextureRef MetallicMap;
+    FRHITextureRef AlphaMask;
 
 private:
     FString DebugName;

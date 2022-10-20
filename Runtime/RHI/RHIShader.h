@@ -242,18 +242,18 @@ protected:
 };
 
 
-inline bool ShaderStageIsGraphics(EShaderStage ShaderStage)
+CONSTEXPR bool ShaderStageIsGraphics(EShaderStage ShaderStage)
 {
     return ((ShaderStage >= EShaderStage::Vertex) && (ShaderStage < EShaderStage::Compute)) ? true : false;
 }
 
 /** @brief - Determine if the Compute Pipeline is used (DXR uses the compute pipeline for RootSignatures) */
-inline bool ShaderStageIsCompute(EShaderStage ShaderStage)
+CONSTEXPR bool ShaderStageIsCompute(EShaderStage ShaderStage)
 {
     return (ShaderStage >= EShaderStage::Compute) ? true : false;
 }
 
-inline bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
+CONSTEXPR bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
 {
     return (ShaderStage >= EShaderStage::RayGen) ? true : false;
 }

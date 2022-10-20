@@ -22,7 +22,7 @@ void FFrameResources::Release()
     SSAOBuffer.Reset();
     FinalTarget.Reset();
 
-    for (FRHITexture2DRef& Buffer : GBuffer)
+    for (FRHITextureRef& Buffer : GBuffer)
     {
         Buffer.Reset();
     }

@@ -210,7 +210,7 @@ struct IRHICommandContext
      * @param SrcData       - SrcData to copy to the GPU
      * @param SrcRowPitch   - RowPitch of the SrcData
      */
-    virtual void UpdateTexture2D(FRHITexture2D* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) = 0;
+    virtual void UpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) = 0;
 
     /**
      * @brief     - Resolves a multi-sampled texture, must have the same sizes and compatible formats

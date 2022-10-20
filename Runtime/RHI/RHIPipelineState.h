@@ -527,15 +527,15 @@ struct FRenderTargetBlendDesc
     { }
 
     FRenderTargetBlendDesc(
-        bool       bInBlendEnable,
-        EBlendType InSrcBlend,
-        EBlendType InDstBlend,
-        EBlendOp   InBlendOp        = EBlendOp::Add,
-        EBlendType InSrcBlendAlpha  = EBlendType::One,
-        EBlendType InDstBlendAlpha  = EBlendType::Zero,
-        EBlendOp   InBlendOpAlpha   = EBlendOp::Add,
-        ELogicOp   InLogicOp        = ELogicOp::Noop,
-        bool       bInLogicOpEnable = false,
+        bool                    bInBlendEnable,
+        EBlendType              InSrcBlend,
+        EBlendType              InDstBlend,
+        EBlendOp                InBlendOp        = EBlendOp::Add,
+        EBlendType              InSrcBlendAlpha  = EBlendType::One,
+        EBlendType              InDstBlendAlpha  = EBlendType::Zero,
+        EBlendOp                InBlendOpAlpha   = EBlendOp::Add,
+        ELogicOp                InLogicOp        = ELogicOp::Noop,
+        bool                    bInLogicOpEnable = false,
         FRenderTargetWriteState InRenderTargetWriteMask = FRenderTargetWriteState())
         : SrcBlend(InSrcBlend)
         , DstBlend(InDstBlend)
@@ -887,17 +887,17 @@ struct FRHIGraphicsPipelineStateInitializer
     { }
 
     FRHIGraphicsPipelineStateInitializer(
-        FRHIVertexInputLayout*    InVertexInputLayout,
-        FRHIDepthStencilState*    InDepthStencilState,
-        FRHIRasterizerState*      InRasterizerState,
-        FRHIBlendState*           InBlendState,
-        const                     FGraphicsPipelineShaders& InShaderState,
-        const                     FGraphicsPipelineFormats& InPipelineFormats,
-        EPrimitiveTopologyType    InPrimitiveTopologyType   = EPrimitiveTopologyType::Triangle,
-        uint32                    InSampleCount             = 1,
-        uint32                    InSampleQuality           = 0,
-        uint32                    InSampleMask              = 0xffffffff,
-        EIndexBufferStripCutValue InIBStripCutValue = IndexBufferStripCutValue_Disabled)
+        FRHIVertexInputLayout*          InVertexInputLayout,
+        FRHIDepthStencilState*          InDepthStencilState,
+        FRHIRasterizerState*            InRasterizerState,
+        FRHIBlendState*                 InBlendState,
+        const FGraphicsPipelineShaders& InShaderState,
+        const FGraphicsPipelineFormats& InPipelineFormats,
+        EPrimitiveTopologyType          InPrimitiveTopologyType = EPrimitiveTopologyType::Triangle,
+        uint32                          InSampleCount           = 1,
+        uint32                          InSampleQuality         = 0,
+        uint32                          InSampleMask            = 0xffffffff,
+        EIndexBufferStripCutValue       InIBStripCutValue       = IndexBufferStripCutValue_Disabled)
         : VertexInputLayout(InVertexInputLayout)
         , DepthStencilState(InDepthStencilState)
         , RasterizerState(InRasterizerState)
