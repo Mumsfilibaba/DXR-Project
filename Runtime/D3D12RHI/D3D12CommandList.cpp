@@ -19,32 +19,32 @@ bool FD3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAl
         // TODO: Ensure that this compiles on different WinSDK versions
         if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList1>(&CmdList1)))
         {
-            D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList1");
+            D3D12_WARNING("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList1");
         }
 
         if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList2>(&CmdList2)))
         {
-            D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList2");
+            D3D12_WARNING("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList2");
         }
 
         if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList3>(&CmdList3)))
         {
-            D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList3");
+            D3D12_WARNING("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList3");
         }
 
         if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList4>(&CmdList4)))
         {
-            D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList4");
+            D3D12_WARNING("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList4");
         }
 
         if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList5>(&CmdList5)))
         {
-            D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList5");
+            D3D12_WARNING("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList5");
         }
 
         if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList6>(&CmdList6)))
         {
-            D3D12_ERROR("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList6");
+            D3D12_WARNING("[FD3D12CommandList]: FAILED to retrieve ID3D12GraphicsCommandList6");
         }
 
         return true;

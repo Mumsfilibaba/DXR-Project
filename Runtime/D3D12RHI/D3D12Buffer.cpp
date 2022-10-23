@@ -43,13 +43,22 @@ bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
     // Limit the scope of the new resource
     {
         FD3D12ResourceRef NewResource = dbg_new FD3D12Resource(GetDevice(), ResourceDesc, D3D12HeapType);
-        if (!NewResource->Initialize(D3D12InitialState, nullptr))
+        if (NewResource->Initialize(D3D12InitialState, nullptr))
         {
-            return false;
+            Resource = NewResource;
+
+            if (Desc.IsConstantBuffer())
+            {
+		        View = dbg_new FD3D12ConstantBufferView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap());
+                if (!CreateCBV())
+                {
+                    return false;
+                }
+            }
         }
         else
         {
-            Resource = NewResource;
+            return false;
         }
     }
 
@@ -125,32 +134,34 @@ void FD3D12Buffer::SetResource(FD3D12Resource* InResource)
 
     if (Desc.IsConstantBuffer())
     {
-        if (!View)
-        {
-            View = dbg_new FD3D12ConstantBufferView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap());
-        }
-
-        if (Resource)
-        {
-            D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
-            FMemory::Memzero(&ViewDesc);
-
-            ViewDesc.BufferLocation = Resource->GetGPUVirtualAddress();
-            ViewDesc.SizeInBytes    = static_cast<uint32>(Resource->GetSize());
-
-            if (View->GetOfflineHandle() == 0)
-            {
-                if (!View->AllocateHandle())
-                {
-                    D3D12_ERROR("Failed to allocate ConstantBuffer Descriptor");
-                    return;
-                }
-            }
-
-            if (!View->CreateView(Resource.Get(), ViewDesc))
-            {
-                D3D12_ERROR("Failed to Create ConstantBufferView");
-            }
-        }
+        CreateCBV();
     }
+}
+
+bool FD3D12Buffer::CreateCBV()
+{
+    CHECK(Resource != nullptr);
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
+	FMemory::Memzero(&ViewDesc);
+
+	ViewDesc.BufferLocation = Resource->GetGPUVirtualAddress();
+	ViewDesc.SizeInBytes = static_cast<uint32>(Resource->GetSize());
+
+	if (View->GetOfflineHandle() == 0)
+	{
+		if (!View->AllocateHandle())
+		{
+			D3D12_ERROR("Failed to allocate ConstantBuffer Descriptor");
+			return false;
+		}
+	}
+
+	if (!View->CreateView(Resource.Get(), ViewDesc))
+	{
+		D3D12_ERROR("Failed to Create ConstantBufferView");
+		return false;
+	}
+
+    return true;
 }
