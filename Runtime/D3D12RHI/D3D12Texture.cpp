@@ -200,6 +200,12 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
             uint32 Height = Desc.Extent.y;
             for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
             {
+                // TODO: This does not feel optimal
+                if (IsCompressed(Desc.Format) && ((Width % 4 != 0) || (Height % 4 != 0)))
+                {
+                    break;
+                }
+
                 FTextureRegion2D TextureRegion(Width, Height);
                 Context->UpdateTexture2D(
                     this,
