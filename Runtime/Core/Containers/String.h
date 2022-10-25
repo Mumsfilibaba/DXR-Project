@@ -2,8 +2,7 @@
 #include "Array.h"
 #include "StringView.h"
 
-#include "Core/Templates/Identity.h"
-#include "Core/Templates/AddReference.h"
+#include "Core/Templates/TypeTraits.h"
 
 #if defined(__OBJC__)
     #include <Foundation/Foundation.h>
@@ -33,19 +32,18 @@ public:
     using SizeType    = int32;
     using StorageType = TArray<CharType, TStringAllocator<CharType>>;
 
-    static_assert(
-        TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value,
+	static_assert(
+		TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value,
         "TString only supports 'CHAR' and 'WIDECHAR'");
-    static_assert(
-        TIsSigned<SizeType>::Value,
-        "TString only supports a SizeType that's signed");
+    
+    static_assert(TIsSigned<SizeType>::Value, "TString only supports a SizeType that's signed");
 
     typedef TArrayIterator<TString, CharType>                    IteratorType;
     typedef TArrayIterator<const TString, const CharType>        ConstIteratorType;
     typedef TReverseArrayIterator<TString, CharType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TString, const CharType> ReverseConstIteratorType;
     
-    enum { INVALID_INDEX = SizeType(-1) };
+    enum : SizeType { INVALID_INDEX = SizeType(-1) };
 
 public:
     

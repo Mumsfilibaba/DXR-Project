@@ -1,8 +1,7 @@
 #pragma once
-#include "RHIShader.h"
-#include "RHIResourceBase.h"
+#include "RHIResources.h"
 
-#include "Core/Templates/UnderlyingType.h"
+#include "Core/Templates/TypeTraits.h"
 #include "Core/Containers/StaticArray.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
@@ -12,6 +11,24 @@
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
+
+class FRHIShader;
+class FRHIVertexShader;
+class FRHIHullShader;
+class FRHIDomainShader;
+class FRHIGeometryShader;
+class FRHIPixelShader;
+class FRHIMeshShader;
+class FRHIAmplificationShader;
+class FRHIAmplificationShader;
+class FRHIComputeShader;
+class FRHIRayTracingShader;
+class FRHIRayGenShader;
+class FRHIRayCallableShader;
+class FRHIRayMissShader;
+class FRHIRayAnyHitShader;
+class FRHIRayClosestHitShader;
+
 
 typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
 typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;

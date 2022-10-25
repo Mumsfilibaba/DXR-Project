@@ -4,7 +4,7 @@
 #include "D3D12CommandContext.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Templates/EnumUtilities.h"
+#include "Core/Templates/TypeTraits.h"
 
 FD3D12DescriptorCache::FD3D12DescriptorCache(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)

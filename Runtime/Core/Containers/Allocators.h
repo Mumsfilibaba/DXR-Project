@@ -1,8 +1,7 @@
 #pragma once
-#include "Core/CoreTypes.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Templates/ObjectHandling.h"
-#include "Core/Templates/AlignedStorage.h"
+#include "Core/Templates/TypeTraits.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
@@ -100,9 +99,7 @@ public:
     FORCEINLINE void MoveFrom(TDefaultArrayAllocator&& Other)
     {
         CHECK(this != &Other);
-
         Free();
-
         Allocation       = Other.Allocation;
         Other.Allocation = nullptr;
     }
@@ -132,14 +129,10 @@ private:
 };
 
 
-template<
-    typename T,
-    int32 NumInlineElements>
+template<typename T, int32 NumInlineElements>
 class TInlineArrayAllocator
 {
-    template<
-        typename ElementType,
-        int32 NumElements>
+    template<typename ElementType, int32 NumElements>
     class TInlineStorage
     {
     public:

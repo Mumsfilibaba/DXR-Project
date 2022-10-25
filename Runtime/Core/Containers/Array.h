@@ -3,25 +3,18 @@
 #include "UniquePtr.h"
 #include "ArrayView.h"
 
-#include "Core/Templates/Move.h"
-#include "Core/Templates/IsPointer.h"
-#include "Core/Templates/IsSame.h"
+#include "Core/Templates/Utility.h"
+#include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ObjectHandling.h"
-#include "Core/Templates/Not.h"
-#include "Core/Templates/IsReallocatable.h"
 
-template<
-    typename T,
-    typename AllocatorType = TDefaultArrayAllocator<T>>
+template<typename T, typename AllocatorType = TDefaultArrayAllocator<T>>
 class TArray
 {
 public:
     using ElementType = T;
     using SizeType    = int32;
 
-    static_assert(
-        TIsSigned<SizeType>::Value,
-        "TArray only supports a SizeType that's signed");
+    static_assert(TIsSigned<SizeType>::Value, "TArray only supports a SizeType that's signed");
 
     typedef TArrayIterator<TArray, ElementType>                    IteratorType;
     typedef TArrayIterator<const TArray, const ElementType>        ConstIteratorType;

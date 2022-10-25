@@ -5,7 +5,7 @@
 #include "Core/Core.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Math/Math.h"
-#include "Core/Templates/IsInteger.h"
+#include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/BitHelper.h"
 #include "Core/Templates/BitReference.h"
 #include "Core/Templates/ContiguousContainerHelper.h"
@@ -20,9 +20,7 @@ public:
     using StorageType   = InStorageType;
     using AllocatorType = InAllocatorType;
 
-    static_assert(
-        TIsUnsigned<StorageType>::Value,
-        "BitArray must have an unsigned StorageType");
+    static_assert(TIsUnsigned<StorageType>::Value, "BitArray must have an unsigned StorageType");
 
     using BitReferenceType      = TBitReference<StorageType>;
     using ConstBitReferenceType = TBitReference<const StorageType>;

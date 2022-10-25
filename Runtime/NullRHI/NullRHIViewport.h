@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/ArrayView.h"
 
-#include "RHI/RHIViewport.h"
+#include "RHI/RHIResources.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)
@@ -15,14 +15,14 @@ class FNullRHIViewport
     : public FRHIViewport
 {
 public:
-    FNullRHIViewport(const FRHIViewportInitializer& Initializer)
-        : FRHIViewport(Initializer)
+    FNullRHIViewport(const FRHIViewportDesc& InDesc)
+        : FRHIViewport(InDesc)
         , BackBuffer(nullptr)
     { 
         FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(
-            Initializer.ColorFormat,
-            Width,
-            Height,
+            Desc.ColorFormat,
+            Desc.Width,
+            Desc.Height,
             1,
             1,
             ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
@@ -32,8 +32,8 @@ public:
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final
     {
-        Width  = uint16(InWidth);
-        Height = uint16(InHeight);
+        Desc.Width  = uint16(InWidth);
+        Desc.Height = uint16(InHeight);
         return true;
     }
 

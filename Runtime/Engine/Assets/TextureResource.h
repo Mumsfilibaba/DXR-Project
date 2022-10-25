@@ -3,7 +3,7 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/RefCounted.h"
 
-#include "RHI/RHITexture.h"
+#include "RHI/RHIResources.h"
 
 #include "Engine/EngineModule.h"
 

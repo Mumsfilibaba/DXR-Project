@@ -1,7 +1,0 @@
-#pragma once
-
-template<typename T>
-struct TIsUnion
-{
-    enum { Value = __is_union(T) };
-};

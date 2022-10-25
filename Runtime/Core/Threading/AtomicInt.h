@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Templates/IsSigned.h"
+#include "Core/Templates/TypeTraits.h"
 #include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformAtomic.h"
 
@@ -270,7 +270,6 @@ public:
 private:
     mutable volatile T Value;
 };
-
 
 typedef TAtomicInt<int8>  FAtomicInt8;
 typedef TAtomicInt<int16> FAtomicInt16;

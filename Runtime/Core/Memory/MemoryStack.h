@@ -3,8 +3,8 @@
 
 #include "Core/Core.h"
 #include "Core/Math/Math.h"
-#include "Core/Templates/ClassUtilities.h"
-#include "Core/Templates/Move.h"
+#include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/Utility.h"
 
 // Currently each page is 64Kb
 #define MEMORY_STACK_PAGE_SIZE   int32(64 * 1024)

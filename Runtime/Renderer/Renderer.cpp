@@ -146,14 +146,14 @@ FRenderer& FRenderer::Get()
 
 bool FRenderer::Create()
 {
-    FRHIViewportInitializer ViewportInitializer(
+    FRHIViewportDesc ViewportDesc(
         GEngine->MainWindow->GetPlatformHandle(),
         EFormat::R8G8B8A8_Unorm,
         EFormat::Unknown,
         static_cast<uint16>(GEngine->MainWindow->GetWidth()),
         static_cast<uint16>(GEngine->MainWindow->GetHeight()));
 
-    Resources.MainWindowViewport = RHICreateViewport(ViewportInitializer);
+    Resources.MainWindowViewport = RHICreateViewport(ViewportDesc);
     if (!Resources.MainWindowViewport)
     {
         DEBUG_BREAK();

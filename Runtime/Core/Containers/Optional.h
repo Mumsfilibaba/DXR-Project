@@ -1,10 +1,6 @@
 #pragma once
-#include "Core/Templates/AlignedStorage.h"
-#include "Core/Templates/IsNullptr.h"
-#include "Core/Templates/Move.h"
-#include "Core/Templates/IsConstructible.h"
-#include "Core/Templates/RemoveReference.h"
-#include "Core/Templates/InPlace.h"
+#include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/Utility.h"
 
 template<typename T>
 class TOptional

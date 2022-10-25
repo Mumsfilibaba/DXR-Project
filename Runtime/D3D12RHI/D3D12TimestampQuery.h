@@ -1,7 +1,7 @@
 #pragma once
-#include "RHI/RHITimestampQuery.h"
-
 #include "D3D12Resource.h"
+
+#include "RHI/RHIResources.h"
 
 typedef TSharedRef<class FD3D12TimestampQuery> FD3D12TimestampQueryRef;
 

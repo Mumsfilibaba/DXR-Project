@@ -1,14 +1,11 @@
 #pragma once
 #include "StringView.h"
 
-#include "Core/Templates/Identity.h"
-#include "Core/Templates/AddReference.h"
+#include "Core/Templates/TypeTraits.h"
 
 #define STANDARD_STATIC_STRING_LENGTH (128)
 
-template<
-    typename InCharType,
-    int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
+template<typename InCharType, int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
 class TStaticString
 {
 public:
@@ -18,9 +15,8 @@ public:
     static_assert(
         TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value, 
         "TStaticString only supports 'CHAR' and 'WIDECHAR'");
-    static_assert(
-        NUM_CHARS > 0,
-        "TStaticString does not support a zero element count");
+    
+    static_assert(NUM_CHARS > 0, "TStaticString does not support a zero element count");
 
     typedef TArrayIterator<TStaticString, CharType>                    IteratorType;
     typedef TArrayIterator<const TStaticString, const CharType>        ConstIteratorType;

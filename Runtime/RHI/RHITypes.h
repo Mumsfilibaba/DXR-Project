@@ -1,7 +1,8 @@
 #pragma once
 #include "Core/Math/Color.h"
 #include "Core/Math/IntVector3.h"
-#include "Core/Templates/EnumUtilities.h"
+#include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/Utility.h"
 
 enum class EFormat : uint16
 {

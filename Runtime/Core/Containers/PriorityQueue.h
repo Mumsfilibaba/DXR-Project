@@ -2,10 +2,7 @@
 #include "Array.h"
 
 #include "Core/Threading/AtomicInt.h"
-#include "Core/Templates/UnderlyingType.h"
-#include "Core/Templates/IsFundamental.h"
-#include "Core/Templates/AddCV.h"
-#include "Core/Templates/AddReference.h"
+#include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/NumericLimits.h"
 
 enum class EQueuePriority

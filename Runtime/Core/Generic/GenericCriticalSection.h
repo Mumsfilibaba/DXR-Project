@@ -1,8 +1,6 @@
 #pragma once
 #include "Core/Core.h"
-
-#include "Core/Templates/ClassUtilities.h"
-
+#include "Core/Templates/Utility.h"
 
 struct FGenericCriticalSection
     : FNonCopyable

@@ -1,12 +1,6 @@
 #pragma once
-#include "Move.h"
-#include "IsTrivial.h"
-#include "EnableIf.h"
-#include "Not.h"
-#include "And.h"
-#include "IsMovable.h"
-#include "IsCopyable.h"
-#include "IsReallocatable.h"
+#include "Utility.h"
+#include "TypeTraits.h"
 
 #include "Core/Core.h"
 #include "Core/Memory/Memory.h"

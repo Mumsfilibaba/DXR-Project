@@ -1,9 +1,5 @@
 #pragma once
-#include "EnableIf.h"
-#include "IsSigned.h"
-
-#include "Core/CoreTypes.h"
-
+#include "TypeTraits.h"
 
 struct FBitHelper
 {

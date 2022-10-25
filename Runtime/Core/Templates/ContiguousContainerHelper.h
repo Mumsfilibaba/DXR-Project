@@ -1,10 +1,5 @@
 #pragma once
-#include "IsTArrayType.h"
-#include "IsContiguousContainer.h"
-#include "Identity.h"
-#include "Decay.h"
-
-#include "Core/CoreTypes.h"
+#include "TypeTraits.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)

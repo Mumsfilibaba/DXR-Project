@@ -181,7 +181,7 @@ bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
         Skylight.IrradianceMap->SetName("Irradiance Map");
     }
 
-    FRHITextureUAVInitializer UAVInitializer(Skylight.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0, 0, 6);
+    FRHITextureUAVDesc UAVInitializer(Skylight.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0, 0, 6);
     Skylight.IrradianceMapUAV = RHICreateUnorderedAccessView(UAVInitializer);
     if (!Skylight.IrradianceMapUAV)
     {
@@ -206,7 +206,7 @@ bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
 
     for (uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        UAVInitializer = FRHITextureUAVInitializer(Skylight.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel, 0, 6);
+        UAVInitializer = FRHITextureUAVDesc(Skylight.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel, 0, 6);
         FRHIUnorderedAccessViewRef UAV = RHICreateUnorderedAccessView(UAVInitializer);
         if (UAV)
         {

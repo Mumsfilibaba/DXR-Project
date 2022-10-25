@@ -1,11 +1,7 @@
 #pragma once
 #include "Core/CoreDefines.h"
 #include "Core/CoreTypes.h"
-
-#include "Core/Templates/IsInteger.h"
-#include "Core/Templates/EnableIf.h"
-#include "Core/Templates/IsFloatingPoint.h"
-#include "Core/Templates/IsReallocatable.h"
+#include "Core/Templates/TypeTraits.h"
 
 #include <algorithm>
 #include <cmath>
@@ -18,7 +14,6 @@
 #else
     #error No platform defined
 #endif
-
 
 namespace NMath
 {

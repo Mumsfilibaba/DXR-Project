@@ -2,7 +2,7 @@
 #include "Core/RefCounted.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedRef.h"
-#include "Core/Templates/EnumUtilities.h"
+#include "Core/Templates/TypeTraits.h"
 
 #include "CoreApplication/CoreApplication.h"
 
@@ -15,7 +15,6 @@
 #endif
 
 typedef TSharedRef<class FGenericWindow> FGenericWindowRef;
-
 
 enum EWindowStyleFlag : uint32
 {

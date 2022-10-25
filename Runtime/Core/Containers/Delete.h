@@ -1,9 +1,7 @@
 #pragma once
 #include "Core/CoreDefines.h"
-#include "Core/Templates/RemoveExtent.h"
-#include "Core/Templates/IsConvertible.h"
-#include "Core/Templates/EnableIf.h"
-#include "Core/Templates/Move.h"
+#include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/Utility.h"
 
 template<typename T>
 struct TDefaultDelete

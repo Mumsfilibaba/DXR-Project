@@ -1,7 +1,5 @@
 #pragma once
-#include "Core/Templates/EnableIf.h"
-#include "Core/Templates/IsConvertible.h"
-#include "Core/Templates/IsNullptr.h"
+#include "Core/Templates/TypeTraits.h"
 
 template<typename InComInterfaceType>
 class TComPtr

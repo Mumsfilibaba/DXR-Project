@@ -6,7 +6,7 @@
 
 IMPLEMENT_ENGINE_MODULE(FRHIInterfaceModule, RHI);
 
-TAutoConsoleVariable<bool> CVarEnableDebugLayer("RHI.EnableDebugLayer", false);
+TAutoConsoleVariable<bool> CVarEnableDebugLayer("RHI.EnableDebugLayer", true);
 
 RHI_API FRHIInterface* GRHIInterface = nullptr;
 

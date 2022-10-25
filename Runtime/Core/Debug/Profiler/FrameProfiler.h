@@ -2,7 +2,7 @@
 #include "Core/Time/Timer.h"
 
 #include "RHI/RHICommandList.h"
-#include "RHI/RHITimestampQuery.h"
+#include "RHI/RHIResources.h"
 
 #include "Core/Threading/Spinlock.h"
 #include "Core/Containers/Map.h"

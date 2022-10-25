@@ -2,7 +2,7 @@
 #include "RHIInterface.h"
 #include "RHIResources.h"
 #include "RHICommands.h"
-#include "RHITimestampQuery.h"
+#include "RHIRayTracing.h"
 
 #include "Core/Memory/MemoryStack.h"
 #include "Core/Threading/ThreadInterface.h"

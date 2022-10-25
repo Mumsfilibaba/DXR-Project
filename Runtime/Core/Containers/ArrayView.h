@@ -1,13 +1,10 @@
 #pragma once
 #include "Iterator.h"
 
-#include "Core/Templates/Move.h"
-#include "Core/Templates/IsTArrayType.h"
-#include "Core/Templates/RemoveCV.h"
-#include "Core/Templates/RemoveReference.h"
-#include "Core/Templates/RemovePointer.h"
+#include "Core/Memory/Memory.h"
+#include "Core/Templates/Utility.h"
+#include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ContiguousContainerHelper.h"
-#include "Core/Templates/DeclVal.h"
 
 template<typename T>
 class TArrayView
@@ -16,9 +13,7 @@ public:
     using ElementType = T;
     using SizeType    = int32;
 
-    static_assert(
-        TIsSigned<SizeType>::Value,
-        "TArrayView only supports a SizeType that's signed");
+    static_assert(TIsSigned<SizeType>::Value, "TArrayView only supports a SizeType that's signed");
 
     typedef TArrayIterator<TArrayView, ElementType>                    IteratorType;
     typedef TArrayIterator<const TArrayView, const ElementType>        ConstIteratorType;
@@ -459,7 +454,6 @@ public:
     }
 
 public:
-
     NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
     NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
 

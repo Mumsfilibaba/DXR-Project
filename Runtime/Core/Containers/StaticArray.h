@@ -1,29 +1,19 @@
 #pragma once
 #include "Iterator.h"
 
-#include "Core/Templates/Move.h"
-#include "Core/Templates/IsCopyable.h"
-#include "Core/Templates/IsMovable.h"
-#include "Core/Templates/AddReference.h"
+#include "Core/Templates/Utility.h"
+#include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ObjectHandling.h"
-#include "Core/Templates/Not.h"
-#include "Core/Templates/IsTArrayType.h"
 #include "Core/Templates/ContiguousContainerHelper.h"
 
-template<
-    typename T,
-    int32 NUM_ELEMENTS>
+template<typename T, int32 NUM_ELEMENTS>
 struct TStaticArray
 {
     using ElementType = T;
     using SizeType    = int32;
 
-    static_assert(
-        NUM_ELEMENTS > 0,
-        "TStaticArray does not support a zero element count");
-    static_assert(
-        TIsSigned<SizeType>::Value,
-        "TStaticArray only supports a SizeType that's signed");
+    static_assert(NUM_ELEMENTS > 0          , "TStaticArray does not support a zero element count");
+    static_assert(TIsSigned<SizeType>::Value, "TStaticArray only supports a SizeType that's signed");
 
     typedef TArrayIterator<TStaticArray, ElementType>                    IteratorType;
     typedef TArrayIterator<const TStaticArray, const ElementType>        ConstIteratorType;

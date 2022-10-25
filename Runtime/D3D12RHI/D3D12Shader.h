@@ -2,7 +2,8 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12Constants.h"
 
-#include "RHI/RHIResources.h"
+#include "RHI/RHIShader.h"
+#include "RHI/RHIPipelineState.h"
 
 #include <d3d12shader.h>
 

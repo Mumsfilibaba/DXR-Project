@@ -1,6 +1,5 @@
 #pragma once
-#include "RHIResourceBase.h"
-#include "RHIResourceViews.h"
+#include "RHIResources.h"
 
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix3x4.h"
@@ -15,6 +14,10 @@
 #endif
 
 class FRHIRayTracingGeometry;
+class FRHIShaderResourceView;
+class FRHIUnorderedAccessView;
+class FRHIBuffer;
+class FRHISamplerState;
 
 typedef TSharedRef<class FRHIAccelerationStructure>  FRHIAccelerationStructureRef;
 typedef TSharedRef<class FRHIRayTracingGeometry>     FRHIRayTracingGeometryRef;

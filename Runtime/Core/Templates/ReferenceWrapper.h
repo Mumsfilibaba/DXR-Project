@@ -1,8 +1,7 @@
 #pragma once
-#include "IsObject.h"
-#include "IsFunction.h"
-#include "Invoke.h"
-#include "AddressOf.h"
+#include "TypeTraits.h"
+#include "Functional.h"
+#include "Utility.h"
 
 template<typename T>
 class TReferenceWrapper

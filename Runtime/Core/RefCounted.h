@@ -2,10 +2,7 @@
 #include "IRefCounted.h"
 
 #include "Core/Threading/AtomicInt.h"
-#include "Core/Templates/IsBaseOf.h"
-#include "Core/Templates/EnableIf.h"
-#include "Core/Templates/AddPointer.h"
-
+#include "Core/Templates/TypeTraits.h"
 
 class CORE_API FRefCounted 
     : public IRefCounted
@@ -15,15 +12,13 @@ protected:
     virtual ~FRefCounted();
 
 public:
-    virtual int32 AddRef()  override;
-    virtual int32 Release() override;
-
+    virtual int32 AddRef()            override;
+    virtual int32 Release()           override;
     virtual int32 GetRefCount() const override;
 
 private:
     FAtomicInt32 StrongReferences;
 };
-
 
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsBaseOf<FRefCounted, T>::Value, typename TAddPointer<T>::Type>::Type AddRef(T* InRefCounted)

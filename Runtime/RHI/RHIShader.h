@@ -1,9 +1,8 @@
 #pragma once
-#include "RHIResourceBase.h"
+#include "RHIResources.h"
 
 #include "Core/Math/IntVector3.h"
 #include "Core/Containers/String.h"
-#include "Core/Containers/SharedRef.h"
 
 typedef TSharedRef<class FRHIShader>                FRHIShaderRef;
 

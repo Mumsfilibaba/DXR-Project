@@ -132,7 +132,7 @@
 #if ENABLE_CONSTEXPR
     #define CONSTEXPR constexpr
 #else
-    #define CONSTEXPR inline
+    #define CONSTEXPR
 #endif
 
 

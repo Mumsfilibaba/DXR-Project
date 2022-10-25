@@ -3,8 +3,8 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Time/Timer.h"
 
-#include "RHI/RHIResources.h"
-#include "RHI/RHIResourceViews.h"
+#include "RHI/RHIPipelineState.h"
+#include "RHI/RHIShader.h"
 
 #include "Application/InputHandler.h"
 #include "Application/IViewportRenderer.h"
@@ -33,7 +33,7 @@ public:
 private:
     TArray<FDrawableTexture*>    RenderedImages;
 
-    FRHITextureRef             FontTexture;
+    FRHITextureRef               FontTexture;
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIGraphicsPipelineStateRef PipelineStateNoBlending;
     FRHIPixelShaderRef           PShader;

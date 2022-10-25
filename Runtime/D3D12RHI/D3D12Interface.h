@@ -39,18 +39,18 @@ public:
     virtual FRHIBuffer*              RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData)              override final;
     virtual FRHISamplerState*        RHICreateSamplerState(const FRHISamplerStateDesc& InDesc)                                                             override final;
     
-    virtual FRHIViewport*            RHICreateViewport(const FRHIViewportInitializer& Initializer) override final;
+    virtual FRHIViewport*            RHICreateViewport(const FRHIViewportDesc& InDesc) override final;
 
     virtual FRHITimestampQuery*      RHICreateTimestampQuery() override final;
     
     virtual FRHIRayTracingScene*     RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)       override final;
     virtual FRHIRayTracingGeometry*  RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer) override final;
 
-    virtual FRHIShaderResourceView*  RHICreateShaderResourceView(const FRHITextureSRVInitializer& Initializer) override final;
-    virtual FRHIShaderResourceView*  RHICreateShaderResourceView(const FRHIBufferSRVInitializer& Initializer)  override final;
+    virtual FRHIShaderResourceView*  RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer) override final;
+    virtual FRHIShaderResourceView*  RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer)  override final;
 
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVInitializer& Initializer) override final;
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVInitializer& Initializer)  override final;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer) override final;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer)  override final;
 
     virtual FRHIComputeShader*       RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final;
 

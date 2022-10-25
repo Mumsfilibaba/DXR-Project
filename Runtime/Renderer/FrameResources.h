@@ -1,15 +1,15 @@
 #pragma once
 #include "RendererModule.h"
 
+#include "Core/Containers/Map.h"
+#include "Core/Containers/ArrayView.h"
+
 #include "RHI/RHIResources.h"
-#include "RHI/RHIViewport.h"
+#include "RHI/RHIRayTracing.h"
 
 #include "Renderer/MeshDrawCommand.h"
 
 #include "ViewportRenderer/ViewportRenderer.h"
-
-#include "Core/Containers/Map.h"
-#include "Core/Containers/ArrayView.h"
 
 enum EGBufferIndex
 {

@@ -1,11 +1,6 @@
 #pragma once
-#include "Core/CoreTypes.h"
-#include "Core/CoreDefines.h"
-
-#include "Core/Templates/IsSigned.h"
-#include "Core/Templates/AddressOf.h"
+#include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ReferenceWrapper.h"
-#include "Core/Templates/RemoveCV.h"
 #include "Core/Templates/BitReference.h"
 
 // TODO: Put some functionality into a base-class

@@ -1,7 +1,7 @@
 #pragma once
 #include "DelegateBase.h"
 
-#include "Core/Templates/FunctionType.h"
+#include "Core/Templates/TypeTraits.h"
 
 #define DECLARE_DELEGATE(DelegateName, ...) \
     typedef TDelegate<void(__VA_ARGS__)> DelegateName;

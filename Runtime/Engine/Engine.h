@@ -7,7 +7,7 @@
 #include "Application/User.h"
 #include "Application/WindowMessageHandler.h"
 
-#include "RHI/RHIViewport.h"
+#include "RHI/RHIResources.h"
 
 #include "Engine/Scene/Scene.h"
 #include "Engine/Resources/Material.h"

@@ -1,17 +1,11 @@
 #pragma once
-#include "Core/CoreTypes.h"
 #include "Allocators.h"
 #include "Tuple.h"
 
-#include "Core/Templates/Move.h"
-#include "Core/Templates/IsPointer.h"
-#include "Core/Templates/IsNullptr.h"
-#include "Core/Templates/IsInvokable.h"
-#include "Core/Templates/FunctionType.h"
-#include "Core/Templates/Identity.h"
-#include "Core/Templates/Decay.h"
+#include "Core/Templates/Utility.h"
+#include "Core/Templates/TypeTraits.h"
 
-namespace NInternal
+namespace Internal
 {
     template<typename FunctionType, typename... PayloadTypes>
     class TBindPayload
@@ -71,7 +65,7 @@ namespace NInternal
 template<typename FunctionType, typename... ArgTypes>
 NODISCARD FORCEINLINE auto Bind(FunctionType Function, ArgTypes&&... Args)
 {
-    return NInternal::TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
+    return Internal::TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
 }
 
 

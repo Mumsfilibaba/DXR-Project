@@ -2,25 +2,16 @@
 #include "Delete.h"
 
 #include "Core/Memory/New.h"
-#include "Core/Templates/EnableIf.h"
-#include "Core/Templates/RemoveExtent.h"
-#include "Core/Templates/IsArray.h"
-#include "Core/Templates/IsNullptr.h"
-#include "Core/Templates/IsConvertible.h"
-#include "Core/Templates/AddressOf.h"
+#include "Core/Templates/TypeTraits.h"
 
-template<
-    typename T,
-    typename DeleterType = TDefaultDelete<T>>
+template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TUniquePtr 
     : private DeleterType // Using inheritance instead of composition to avoid extra memory usage
 {
 public:
     using ElementType = T;
 
-    template<
-        typename OtherType,
-        typename OtherDeleterType>
+    template<typename OtherType, typename OtherDeleterType>
     friend class TUniquePtr;
 
     TUniquePtr(const TUniquePtr& Other) = delete;
@@ -219,9 +210,7 @@ public:
      * @param Other - UniquePtr to move from
      * @return      - A reference to this instance
      */
-    template<
-        typename OtherType,
-        typename OtherDeleterType>
+    template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type 
         operator=(TUniquePtr<OtherType, OtherDeleterType>&& Other) noexcept
     {
@@ -261,9 +250,7 @@ private:
 };
 
 
-template<
-    typename T,
-    typename DeleterType>
+template<typename T, typename DeleterType>
 class TUniquePtr<T[], DeleterType> 
     : private DeleterType
 {
@@ -271,9 +258,7 @@ public:
     using ElementType = T;
     using SizeType    = int32;
 
-    template<
-        typename OtherType,
-        typename OtherDeleterType>
+    template<typename OtherType, typename OtherDeleterType>
     friend class TUniquePtr;
 
     TUniquePtr(const TUniquePtr& Other) = delete;
@@ -508,49 +493,37 @@ private:
 };
 
 
-template<
-    typename T,
-    typename U>
+template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-template<
-    typename T,
-    typename U>
+template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(T* LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-template<
-    typename T,
-    typename U>
+template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-template<
-    typename T,
-    typename U>
+template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(T* LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-template<
-    typename T,
-    typename U>
+template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-template<
-    typename T,
-    typename U>
+template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
@@ -581,9 +554,7 @@ NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TUniquePtr<T>& RHS) no
 }
 
 
-template<
-    typename T,
-    typename... ArgTypes>
+template<typename T, typename... ArgTypes>
 NODISCARD FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TUniquePtr<T>>::Type MakeUnique(ArgTypes&&... Args) noexcept
 {
     T* UniquePtr = dbg_new T(Forward<ArgTypes>(Args)...);

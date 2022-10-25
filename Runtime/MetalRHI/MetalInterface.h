@@ -41,11 +41,11 @@ public:
     virtual FRHIRayTracingScene*         RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)       override final;
     virtual FRHIRayTracingGeometry*      RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer) override final;
 
-    virtual FRHIShaderResourceView*      RHICreateShaderResourceView(const FRHITextureSRVInitializer& Initializer) override final;
-    virtual FRHIShaderResourceView*      RHICreateShaderResourceView(const FRHIBufferSRVInitializer& Initializer)  override final;
+    virtual FRHIShaderResourceView*      RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer) override final;
+    virtual FRHIShaderResourceView*      RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer)  override final;
 
-    virtual FRHIUnorderedAccessView*     RHICreateUnorderedAccessView(const FRHITextureUAVInitializer& Initializer) override final;
-    virtual FRHIUnorderedAccessView*     RHICreateUnorderedAccessView(const FRHIBufferUAVInitializer& Initializer)  override final;
+    virtual FRHIUnorderedAccessView*     RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer) override final;
+    virtual FRHIUnorderedAccessView*     RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer)  override final;
 
     virtual FRHIComputeShader*           RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final;
 

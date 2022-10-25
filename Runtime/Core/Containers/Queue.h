@@ -1,7 +1,6 @@
 #pragma once
-#include "Core/CoreTypes.h"
+#include "Core/Templates/Utility.h"
 #include "Core/Platform/PlatformInterlocked.h"
-#include "Core/Templates/Move.h"
 
 enum class EQueueType
 {

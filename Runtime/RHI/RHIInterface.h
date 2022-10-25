@@ -1,12 +1,8 @@
 #pragma once
 #include "RHITypes.h"
 #include "RHIResources.h"
-#include "RHIResourceViews.h"
 #include "RHICommandList.h"
-#include "RHISamplerState.h"
-#include "RHIViewport.h"
 #include "RHIPipelineState.h"
-#include "RHITimestampQuery.h"
 #include "IRHICommandContext.h"
 
 #include "Core/Modules/ModuleManager.h"
@@ -25,6 +21,9 @@ class FRHIInterface;
 class FRHIRayTracingGeometry;
 class FRHIRayTracingScene;
 struct IRHICommandContext;
+struct FRHIRayTracingSceneInitializer;
+struct FRHIRayTracingGeometryInitializer;
+
 
 enum class ERHIInstanceType : uint32
 {
@@ -224,28 +223,28 @@ public:
      * @param Initializer - Struct containing information about the ShaderResourceView
      * @return            - Returns the newly created ShaderResourceView
      */
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVInitializer& Initializer) = 0;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer) = 0;
 
     /**
      * @brief             - Create a new ShaderResourceView for a Buffer
      * @param Initializer - Struct containing information about the ShaderResourceView
      * @return            - Returns the newly created ShaderResourceView
      */
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVInitializer& Initializer) = 0;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer) = 0;
     
     /**
      * @brief             - Create a new UnorderedAccessView for a Texture
      * @param Initializer - Struct containing information about the UnorderedAccessView
      * @return            - Returns the newly created UnorderedAccessView
      */
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVInitializer& Initializer) = 0;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer) = 0;
 
     /**
      * @brief             - Create a new UnorderedAccessView for a Buffer
      * @param Initializer - Struct containing information about the UnorderedAccessView
      * @return            - Returns the newly created UnorderedAccessView
      */
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVInitializer& Initializer) = 0;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer) = 0;
 
     /**
      * @brief            - Creates a new Compute Shader
@@ -391,7 +390,7 @@ public:
      * @param Initializer - Structure containing the information for the Viewport
      * @return            - Returns the newly created viewport
      */
-    virtual FRHIViewport* RHICreateViewport(const FRHIViewportInitializer& Initializer) = 0;
+    virtual FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) = 0;
 
     /**
      * @return - Returns the a CommandContext
@@ -496,22 +495,22 @@ FORCEINLINE FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTra
     return GetRHIInterface()->RHICreateRayTracingGeometry(Initializer);
 }
 
-FORCEINLINE FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVInitializer& Initializer)
+FORCEINLINE FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateShaderResourceView(Initializer);
 }
 
-FORCEINLINE FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVInitializer& Initializer)
+FORCEINLINE FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateShaderResourceView(Initializer);
 }
 
-FORCEINLINE FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVInitializer& Initializer)
+FORCEINLINE FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateUnorderedAccessView(Initializer);
 }
 
-FORCEINLINE FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVInitializer& Initializer)
+FORCEINLINE FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateUnorderedAccessView(Initializer);
 }
@@ -616,7 +615,7 @@ FORCEINLINE class FRHITimestampQuery* RHICreateTimestampQuery()
     return GetRHIInterface()->RHICreateTimestampQuery();
 }
 
-FORCEINLINE class FRHIViewport* RHICreateViewport(const FRHIViewportInitializer& Initializer)
+FORCEINLINE class FRHIViewport* RHICreateViewport(const FRHIViewportDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateViewport(Initializer);
 }

@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Templates/Move.h"
-#include "Core/Templates/FunctionType.h"
+#include "Core/Templates/Utility.h"
 #include "Core/Containers/Tuple.h"
 #include "Core/Threading/AtomicInt.h"
 

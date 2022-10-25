@@ -287,7 +287,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             LightSetup.CascadeMatrixBuffer->SetName("Cascade MatrixBuffer");
         }
 
-        FRHIBufferSRVInitializer SRVInitializer(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        FRHIBufferSRVDesc SRVInitializer(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
         LightSetup.CascadeMatrixBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!LightSetup.CascadeMatrixBufferSRV)
         {
@@ -295,7 +295,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIBufferUAVInitializer UAVInitializer(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        FRHIBufferUAVDesc UAVInitializer(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
         LightSetup.CascadeMatrixBufferUAV = RHICreateUnorderedAccessView(UAVInitializer);
         if (!LightSetup.CascadeMatrixBufferUAV)
         {
@@ -319,7 +319,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             LightSetup.CascadeSplitsBuffer->SetName("Cascade SplitBuffer");
         }
 
-        SRVInitializer = FRHIBufferSRVInitializer(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        SRVInitializer = FRHIBufferSRVDesc(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
         LightSetup.CascadeSplitsBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!LightSetup.CascadeSplitsBufferSRV)
         {
@@ -327,7 +327,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        UAVInitializer = FRHIBufferUAVInitializer(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        UAVInitializer = FRHIBufferUAVDesc(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
         LightSetup.CascadeSplitsBufferUAV = RHICreateUnorderedAccessView(UAVInitializer);
         if (!LightSetup.CascadeSplitsBufferUAV)
         {

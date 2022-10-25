@@ -122,7 +122,7 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
         StagingTexture->SetName("TextureCube From Panorama StagingTexture");
     }
 
-    FRHITextureUAVInitializer UAVInitializer(StagingTexture.Get(), Format, 0, 0, 6);
+    FRHITextureUAVDesc UAVInitializer(StagingTexture.Get(), Format, 0, 0, 6);
     FRHIUnorderedAccessViewRef StagingTextureUAV = RHICreateUnorderedAccessView(UAVInitializer);
     if (!StagingTextureUAV)
     {

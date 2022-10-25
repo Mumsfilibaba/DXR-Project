@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/ArrayView.h"
 
-#include "RHI/RHIViewport.h"
+#include "RHI/RHIResources.h"
 
 #include "Core/Windows/Windows.h"
 
@@ -17,7 +17,7 @@ class FD3D12Viewport
     , public FD3D12DeviceChild
 {
 public:
-    FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportInitializer& Initializer);
+    FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportDesc& InDesc);
     ~FD3D12Viewport();
 
     bool Initialize();

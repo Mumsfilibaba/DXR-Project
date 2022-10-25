@@ -282,7 +282,7 @@ FRHIRayTracingScene* FD3D12Interface::RHICreateRayTracingScene(const FRHIRayTrac
     return D3D12Scene.ReleaseOwnership();
 }
 
-FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHITextureSRVInitializer& Initializer)
+FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer)
 {
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Initializer.Texture);
     if (!D3D12Texture)
@@ -377,7 +377,7 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIT
     }
 }
 
-FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIBufferSRVInitializer& Initializer)
+FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Initializer.Buffer);
     if (!D3D12Buffer)
@@ -429,7 +429,7 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIB
     }
 }
 
-FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRHITextureUAVInitializer& Initializer)
+FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer)
 {
     FD3D12Texture* Texture = GetD3D12Texture(Initializer.Texture);
     if (!Texture)
@@ -517,7 +517,7 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
     }
 }
 
-FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRHIBufferUAVInitializer& Initializer)
+FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Initializer.Buffer);
     if (!D3D12Buffer)
@@ -801,9 +801,9 @@ FRHITimestampQuery* FD3D12Interface::RHICreateTimestampQuery()
     return FD3D12TimestampQuery::Create(GetDevice());
 }
 
-FRHIViewport* FD3D12Interface::RHICreateViewport(const FRHIViewportInitializer& Initializer)
+FRHIViewport* FD3D12Interface::RHICreateViewport(const FRHIViewportDesc& InDesc)
 {
-    FD3D12ViewportRef Viewport = dbg_new FD3D12Viewport(GetDevice(), DirectContext, Initializer);
+    FD3D12ViewportRef Viewport = dbg_new FD3D12Viewport(GetDevice(), DirectContext, InDesc);
     if (Viewport->Initialize())
     {
         return Viewport.ReleaseOwnership();

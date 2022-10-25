@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Templates/ClassUtilities.h"
+#include "Core/Templates/TypeTraits.h"
 
 #define SCOPED_LOCK(Lock) TScopedLock<decltype(Lock)> STRING_CONCAT(ScopedLock_, __LINE__)(Lock) 
 

@@ -1,14 +1,13 @@
 #pragma once
 #include "RendererModule.h"
 
+#include "Core/Math/Vector4.h"
+
 #include "RHI/RHIResources.h"
-#include "RHI/RHIResourceViews.h"
 #include "RHI/RHICommandList.h"
 
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
-
-#include "Core/Math/Vector4.h"
 
 struct FPointLightData
 {

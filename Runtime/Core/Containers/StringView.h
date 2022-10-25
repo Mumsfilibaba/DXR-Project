@@ -2,11 +2,7 @@
 #include "Iterator.h"
 
 #include "Core/Math/Math.h"
-#include "Core/Templates/IsTStringType.h"
-#include "Core/Templates/IsSame.h"
-#include "Core/Templates/Move.h"
-#include "Core/Templates/EnableIf.h"
-#include "Core/Templates/IsTStringType.h"
+#include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/CString.h"
 
 template<typename InCharType>
@@ -19,14 +15,13 @@ public:
     static_assert(
         TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value,
         "TStringView only supports 'CHAR' and 'WIDECHAR'");
-    static_assert(
-        TIsSigned<SizeType>::Value,
-        "TStringView only supports a SizeType that's signed");
+    
+    static_assert(TIsSigned<SizeType>::Value, "TStringView only supports a SizeType that's signed");
 
     typedef TArrayIterator<const TStringView, const CharType>        ConstIteratorType;
     typedef TReverseArrayIterator<const TStringView, const CharType> ReverseConstIteratorType;
 
-    enum { INVALID_INDEX = SizeType(-1) };
+    enum : SizeType { INVALID_INDEX = SizeType(-1) };
 
 public:
     

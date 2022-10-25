@@ -1,12 +1,7 @@
 #pragma once
 #include "UniquePtr.h"
 
-#include "Core/Templates/IsConvertible.h"
-#include "Core/Templates/IsArray.h"
-#include "Core/Templates/RemoveExtent.h"
-#include "Core/Templates/AddReference.h"
-#include "Core/Templates/EnableIf.h"
-#include "Core/Templates/And.h"
+#include "Core/Templates/TypeTraits.h"
 #include "Core/Threading/AtomicInt.h"
 
 class FPointerReferenceCounter

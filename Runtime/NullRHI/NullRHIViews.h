@@ -1,5 +1,5 @@
 #pragma once
-#include "RHI/RHIResourceViews.h"
+#include "RHI/RHIResources.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)

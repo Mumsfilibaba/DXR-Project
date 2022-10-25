@@ -1,12 +1,9 @@
 #pragma once
-#include "AddPointer.h"
+#include "TypeTraits.h"
 #include "ObjectHandling.h"
 
 #include "Core/Memory/Memory.h"
 #include "Core/Platform/PlatformString.h"
-
-#include <cstring>
-#include <cstdarg>
 
 template<typename InCharType>
 struct TChar 
@@ -17,68 +14,57 @@ struct TChar
 
     static CONSTEXPR CHARTYPE Zero = 0;
 
-    NODISCARD
-    static FORCEINLINE CHARTYPE ToUpper(CHARTYPE Char)
+    NODISCARD static FORCEINLINE CHARTYPE ToUpper(CHARTYPE Char)
     {
         return FPlatformString::ToUpper(Char);
     }
 
-    NODISCARD
-    static FORCEINLINE CHARTYPE ToLower(CHARTYPE Char)
+    NODISCARD static FORCEINLINE CHARTYPE ToLower(CHARTYPE Char)
     {
         return FPlatformString::ToLower(Char);
     }
 
-    NODISCARD
-    static FORCEINLINE bool IsSpace(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsSpace(CHARTYPE Char)
     {
         return FPlatformString::IsSpace(Char);
     }
     
-    NODISCARD
-    static FORCEINLINE bool IsUpper(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsUpper(CHARTYPE Char)
     {
         return FPlatformString::IsUpper(Char);
     }
     
-    NODISCARD
-    static FORCEINLINE bool IsLower(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsLower(CHARTYPE Char)
     {
         return FPlatformString::IsLower(Char);
     }
     
-    NODISCARD
-    static FORCEINLINE bool IsAlnum(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsAlnum(CHARTYPE Char)
     {
         return FPlatformString::IsAlnum(Char);
     }
     
-    NODISCARD
-    static FORCEINLINE bool IsDigit(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsDigit(CHARTYPE Char)
     {
         return FPlatformString::IsDigit(Char);
     }
     
-    NODISCARD
-    static FORCEINLINE bool IsAlpha(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsAlpha(CHARTYPE Char)
     {
         return FPlatformString::IsAlpha(Char);
     }
     
-    NODISCARD
-    static FORCEINLINE bool IsPunct(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsPunct(CHARTYPE Char)
     {
         return FPlatformString::IsPunct(Char);
     }
     
-    NODISCARD
-    static FORCEINLINE bool IsHexDigit(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsHexDigit(CHARTYPE Char)
     {
         return FPlatformString::IsHexDigit(Char);
     }
 
-    NODISCARD
-    static FORCEINLINE bool IsZero(CHARTYPE Char) 
+    NODISCARD static FORCEINLINE bool IsZero(CHARTYPE Char) 
     { 
         return (Char == Zero); 
     }

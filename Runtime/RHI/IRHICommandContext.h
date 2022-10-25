@@ -1,9 +1,16 @@
 #pragma once
 #include "RHITypes.h"
 #include "RHIResources.h"
-#include "RHIResourceViews.h"
 
 class FRHIViewport;
+class FRHIRayTracingGeometry;
+class FRHIRayTracingScene;
+class FRHITimestampQuery;
+class FRHITimestampQuery;
+class FRHIShader;
+class FRHIRayTracingPipelineState;
+struct FRayTracingShaderResources;
+struct FRHIRayTracingGeometryInstance;
 
 struct IRHICommandContext
 {

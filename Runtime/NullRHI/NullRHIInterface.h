@@ -64,22 +64,22 @@ public:
         return dbg_new FNullRHIRayTracingGeometry(Initializer);
     }
 
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVInitializer& Initializer) override final
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer) override final
     {
         return dbg_new FNullRHIShaderResourceView(Initializer.Texture);
     }
 
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVInitializer& Initializer) override final
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer) override final
     {
         return dbg_new FNullRHIShaderResourceView(Initializer.Buffer);
     }
 
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVInitializer& Initializer) override final
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer) override final
     {
         return dbg_new FNullRHIUnorderedAccessView(Initializer.Texture);
     }
 
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVInitializer& Initializer) override final
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer) override final
     {
         return dbg_new FNullRHIUnorderedAccessView(Initializer.Buffer);
     }
@@ -184,9 +184,9 @@ public:
         return dbg_new FNullRHITimestampQuery();
     }
 
-    virtual class FRHIViewport* RHICreateViewport(const FRHIViewportInitializer& Initializer) override final
+    virtual class FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) override final
     {
-        return dbg_new FNullRHIViewport(Initializer);
+        return dbg_new FNullRHIViewport(InDesc);
     }
 
     virtual struct IRHICommandContext* RHIObtainCommandContext() override final

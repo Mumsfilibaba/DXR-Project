@@ -1,7 +1,7 @@
 #pragma once
 #include "D3D12Core.h"
 
-#include "Core/Templates/ClassUtilities.h"
+#include "Core/Templates/TypeTraits.h"
 
 class FD3D12Device;
 
