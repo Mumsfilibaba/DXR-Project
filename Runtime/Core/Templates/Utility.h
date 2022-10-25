@@ -80,7 +80,7 @@ struct TFunctionType;
 template<typename ReturnType, typename... ArgTypes>
 struct TFunctionType<ReturnType(ArgTypes...)>
 {
-	typedef ReturnType(*Type)(ArgTypes...);
+    typedef ReturnType(*Type)(ArgTypes...);
 };
 
 
@@ -90,13 +90,13 @@ struct TMemberFunctionType;
 template<typename ClassType, typename ReturnType, typename... ArgTypes>
 struct TMemberFunctionType<false, ClassType, ReturnType(ArgTypes...)>
 {
-	typedef ReturnType(ClassType::* Type)(ArgTypes...);
+    typedef ReturnType(ClassType::* Type)(ArgTypes...);
 };
 
 template<typename ClassType, typename ReturnType, typename... ArgTypes>
 struct TMemberFunctionType<true, ClassType, ReturnType(ArgTypes...)>
 {
-	typedef ReturnType(ClassType::* Type)(ArgTypes...) const;
+    typedef ReturnType(ClassType::* Type)(ArgTypes...) const;
 };
 
 
@@ -104,38 +104,38 @@ template<int32 kNumBytes, int32 kAlignment>
 class TAlignedStorage
 {
 public:
-	TAlignedStorage() = default;
-	TAlignedStorage(const TAlignedStorage&) = default;
-	TAlignedStorage(TAlignedStorage&&) = default;
-	~TAlignedStorage() = default;
+    TAlignedStorage() = default;
+    TAlignedStorage(const TAlignedStorage&) = default;
+    TAlignedStorage(TAlignedStorage&&) = default;
+    ~TAlignedStorage() = default;
 
-	TAlignedStorage& operator=(const TAlignedStorage&) = default;
-	TAlignedStorage& operator=(TAlignedStorage&&) = default;
+    TAlignedStorage& operator=(const TAlignedStorage&) = default;
+    TAlignedStorage& operator=(TAlignedStorage&&) = default;
 
-	FORCEINLINE void* GetStorage() noexcept
-	{
-		return Storage;
-	}
+    FORCEINLINE void* GetStorage() noexcept
+    {
+        return Storage;
+    }
 
-	FORCEINLINE const void* GetStorage() const noexcept
-	{
-		return Storage;
-	}
+    FORCEINLINE const void* GetStorage() const noexcept
+    {
+        return Storage;
+    }
 
-	template<typename T>
-	FORCEINLINE T* CastStorage() noexcept
-	{
-		return reinterpret_cast<T*>(GetStorage());
-	}
+    template<typename T>
+    FORCEINLINE T* CastStorage() noexcept
+    {
+        return reinterpret_cast<T*>(GetStorage());
+    }
 
-	template<typename T>
-	FORCEINLINE const T* CastStorage() const noexcept
-	{
-		return reinterpret_cast<const T*>(GetStorage());
-	}
+    template<typename T>
+    FORCEINLINE const T* CastStorage() const noexcept
+    {
+        return reinterpret_cast<const T*>(GetStorage());
+    }
 
 private:
-	ALIGN_AS(kAlignment) uint8 Storage[kNumBytes];
+    ALIGN_AS(kAlignment) uint8 Storage[kNumBytes];
 };
 
 
@@ -143,28 +143,28 @@ template<typename T>
 class TTypedStorage
 {
 public:
-	using StorageType = TAlignedStorage<sizeof(T), AlignmentOf<T>>;
+    using StorageType = TAlignedStorage<sizeof(T), AlignmentOf<T>>;
 
-	TTypedStorage() = default;
-	TTypedStorage(const TTypedStorage&) = default;
-	TTypedStorage(TTypedStorage&&) = default;
-	~TTypedStorage() = default;
+    TTypedStorage() = default;
+    TTypedStorage(const TTypedStorage&) = default;
+    TTypedStorage(TTypedStorage&&) = default;
+    ~TTypedStorage() = default;
 
-	TTypedStorage& operator=(const TTypedStorage&) = default;
-	TTypedStorage& operator=(TTypedStorage&&) = default;
+    TTypedStorage& operator=(const TTypedStorage&) = default;
+    TTypedStorage& operator=(TTypedStorage&&) = default;
 
-	FORCEINLINE T* GetStorage() noexcept
-	{
-		return Storage.template CastStorage<T>();
-	}
+    FORCEINLINE T* GetStorage() noexcept
+    {
+        return Storage.template CastStorage<T>();
+    }
 
-	FORCEINLINE const T* GetStorage() const noexcept
-	{
-		return Storage.template CastStorage<T>();
-	}
+    FORCEINLINE const T* GetStorage() const noexcept
+    {
+        return Storage.template CastStorage<T>();
+    }
 
 private:
-	StorageType Storage;
+    StorageType Storage;
 };
 
 

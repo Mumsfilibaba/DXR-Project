@@ -12,7 +12,7 @@
 #define STRING_FORMAT_BUFFER_SIZE   (512)
 
 #if STRING_USE_INLINE_ALLOCATOR 
-     #define STRING_ALLOCATOR_INLINE_ELEMENTS (16)
+#define STRING_ALLOCATOR_INLINE_ELEMENTS (16)
 
 // Use a small static buffer for small strings
 template<typename CharType>
@@ -32,8 +32,8 @@ public:
     using SizeType    = int32;
     using StorageType = TArray<CharType, TStringAllocator<CharType>>;
 
-	static_assert(
-		TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value,
+    static_assert(
+        TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value,
         "TString only supports 'CHAR' and 'WIDECHAR'");
     
     static_assert(TIsSigned<SizeType>::Value, "TString only supports a SizeType that's signed");

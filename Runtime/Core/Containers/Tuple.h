@@ -451,15 +451,15 @@ namespace Internal
             return TTupleComparators<Index - 1>::IsEqual(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() == RHS.template GetByIndex<Index - 1>());
         }
 
-		template<typename FirstTupleType, typename SecondTupleType>
-		NODISCARD static FORCEINLINE bool IsLessThan(const FirstTupleType& LHS, const SecondTupleType& RHS)
+        template<typename FirstTupleType, typename SecondTupleType>
+        NODISCARD static FORCEINLINE bool IsLessThan(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
             return TTupleComparators<Index - 1>::IsLessThan(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() < RHS.template GetByIndex<Index - 1>());
         }
 
-		template<typename FirstTupleType, typename SecondTupleType>
-		NODISCARD static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
+        template<typename FirstTupleType, typename SecondTupleType>
+        NODISCARD static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
             return TTupleComparators<Index - 1>::IsLessThanOrEqual(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() <= RHS.template GetByIndex<Index - 1>());
@@ -469,20 +469,20 @@ namespace Internal
     template <>
     struct TTupleComparators<0>
     {
-		template<typename FirstTupleType, typename SecondTupleType>
-		NODISCARD static  FORCEINLINE bool IsEqual(const FirstTupleType&, const SecondTupleType&)
+        template<typename FirstTupleType, typename SecondTupleType>
+        NODISCARD static  FORCEINLINE bool IsEqual(const FirstTupleType&, const SecondTupleType&)
         {
             return true;
         }
 
-		template<typename FirstTupleType, typename SecondTupleType>
-		NODISCARD static FORCEINLINE bool IsLessThan(const FirstTupleType&, const SecondTupleType&)
+        template<typename FirstTupleType, typename SecondTupleType>
+        NODISCARD static FORCEINLINE bool IsLessThan(const FirstTupleType&, const SecondTupleType&)
         {
             return true;
         }
 
-		template<typename FirstTupleType, typename SecondTupleType>
-		NODISCARD static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType&, const SecondTupleType&)
+        template<typename FirstTupleType, typename SecondTupleType>
+        NODISCARD static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType&, const SecondTupleType&)
         {
             return true;
         }

@@ -2224,8 +2224,8 @@ struct FGraphicsPipelineFormats
 
     FGraphicsPipelineFormats(
         const FRenderTargetFormats& InRenderTargetFormats,
-		uint32                      InNumRenderTargets,
-		EFormat                     InDepthStencilFormat = EFormat::Unknown)
+        uint32                      InNumRenderTargets,
+        EFormat                     InDepthStencilFormat = EFormat::Unknown)
         : RenderTargetFormats(InRenderTargetFormats)
         , NumRenderTargets(InNumRenderTargets)
         , DepthStencilFormat(InDepthStencilFormat)
@@ -2480,9 +2480,9 @@ struct FRHIRayTracingPipelineStateDesc
         return !(*this == Other);
     }
 
-	TArray<FRHIRayGenShader*>          RayGenShaders;
-	TArray<FRHIRayCallableShader*>     CallableShaders;
-	TArray<FRHIRayMissShader*>         MissShaders;
+    TArray<FRHIRayGenShader*>          RayGenShaders;
+    TArray<FRHIRayCallableShader*>     CallableShaders;
+    TArray<FRHIRayMissShader*>         MissShaders;
     TArray<FRHIRayTracingHitGroupDesc> HitGroups;
     
     uint32 MaxAttributeSizeInBytes;

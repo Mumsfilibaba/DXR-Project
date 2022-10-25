@@ -454,26 +454,26 @@ struct TIsVolatile<volatile T>
 template<typename T>
 struct TIsCopyConstructable
 {
-	enum { Value = TIsConstructible<T, typename TAddLValueReference<const T>::Type>::Value };
+    enum { Value = TIsConstructible<T, typename TAddLValueReference<const T>::Type>::Value };
 };
 
 template<typename T>
 struct TIsCopyAssignable
 {
-	enum { Value = TIsAssignable<T, typename TAddLValueReference<const T>::Type>::Value };
+    enum { Value = TIsAssignable<T, typename TAddLValueReference<const T>::Type>::Value };
 };
 
 
 template<typename T>
 struct TIsMoveConstructable
 {
-	enum { Value = TIsConstructible<T, typename TAddRValueReference<T>::Type>::Value };
+    enum { Value = TIsConstructible<T, typename TAddRValueReference<T>::Type>::Value };
 };
 
 template<typename T>
 struct TIsMoveAssignable
 {
-	enum { Value = TIsAssignable<T, typename TAddRValueReference<T>::Type>::Value };
+    enum { Value = TIsAssignable<T, typename TAddRValueReference<T>::Type>::Value };
 };
 
 

@@ -9,7 +9,7 @@ EngineModule.AddSystemIncludes(
     CreateExternalDependencyPath("imgui"),
     CreateExternalDependencyPath("stb_image"),
     CreateExternalDependencyPath("tinyobjloader"),
-	CreateExternalDependencyPath("tinyddsloader"),
+    CreateExternalDependencyPath("tinyddsloader"),
     CreateExternalDependencyPath("OpenFBX/src"),
 })
 
