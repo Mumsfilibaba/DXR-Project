@@ -5,7 +5,6 @@
 #include "Core/Debug/Console/ConsoleInterface.h"
 #include "Core/Platform/PlatformMisc.h"
 
-
 TAutoConsoleVariable<bool> CVarEnableAsyncWork("Core.EnableAsyncWork", true);
 
 FAsyncWorkThread::FAsyncWorkThread()
@@ -77,7 +76,7 @@ int32 FAsyncWorkThread::Run()
 
         if (!CurrentTask)
         {
-            LOG_ERROR("Num Tasks = %d", FAsyncThreadPool::Get().GetNumTasks());
+            // LOG_ERROR("Num Tasks = %d", FAsyncThreadPool::Get().GetNumTasks());
             WorkEvent->Wait(FTimespan::Infinity());
         }
         

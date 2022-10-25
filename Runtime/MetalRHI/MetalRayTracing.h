@@ -10,7 +10,7 @@ class FMetalRayTracingGeometry
     : public FRHIRayTracingGeometry
 {
 public:
-    FMetalRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
+    FMetalRayTracingGeometry(const FRHIRayTracingGeometryDesc& Initializer)
         : FRHIRayTracingGeometry(Initializer)
     { }
 
@@ -25,7 +25,7 @@ class FMetalRayTracingScene
     : public FRHIRayTracingScene
 {
 public:
-    FMetalRayTracingScene(FMetalDeviceContext* InDeviceContext, const FRHIRayTracingSceneInitializer& Initializer)
+    FMetalRayTracingScene(FMetalDeviceContext* InDeviceContext, const FRHIRayTracingSceneDesc& Initializer)
         : FRHIRayTracingScene(Initializer)
         , View(dbg_new FMetalShaderResourceView(InDeviceContext, this))
     { }

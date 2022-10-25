@@ -82,7 +82,7 @@ class FD3D12RayTracingGeometry
     , public FD3D12AccelerationStructure
 {
 public:
-    FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryInitializer& Initializer);
+    FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryDesc& Initializer);
     ~FD3D12RayTracingGeometry() = default;
 
     bool Build(
@@ -120,7 +120,7 @@ class FD3D12RayTracingScene
     , public FD3D12AccelerationStructure
 {
 public:
-    FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneInitializer& Initializer);
+    FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneDesc& Initializer);
     ~FD3D12RayTracingScene() = default;
 
     bool Build(class FD3D12CommandContext& CmdContext, const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances, bool bUpdate);

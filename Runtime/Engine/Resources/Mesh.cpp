@@ -67,7 +67,7 @@ bool FMesh::Init(const FMeshData& Data)
 
     if (bRTOn)
     {
-        FRHIRayTracingGeometryInitializer GeometryInitializer(
+        FRHIRayTracingGeometryDesc GeometryInitializer(
             VertexBuffer.Get(),
             VertexCount,
             IndexBuffer.Get(),

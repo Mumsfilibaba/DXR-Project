@@ -12,7 +12,7 @@ FD3D12AccelerationStructure::FD3D12AccelerationStructure(FD3D12Device* InDevice)
     , ScratchBuffer(nullptr)
 { }
 
-FD3D12RayTracingGeometry::FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryInitializer& Initializer)
+FD3D12RayTracingGeometry::FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryDesc& Initializer)
     : FRHIRayTracingGeometry(Initializer)
     , FD3D12AccelerationStructure(InDevice)
     , VertexBuffer(nullptr)
@@ -151,7 +151,7 @@ bool FD3D12RayTracingGeometry::Build(
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FD3D12RayTracingScene
 
-FD3D12RayTracingScene::FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneInitializer& Initializer)
+FD3D12RayTracingScene::FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneDesc& Initializer)
     : FRHIRayTracingScene(Initializer)
     , FD3D12AccelerationStructure(InDevice)
     , InstanceBuffer(nullptr)

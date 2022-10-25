@@ -2,7 +2,6 @@
 #include "RHITypes.h"
 #include "RHIResources.h"
 #include "RHICommandList.h"
-#include "RHIPipelineState.h"
 #include "IRHICommandContext.h"
 
 #include "Core/Modules/ModuleManager.h"
@@ -21,8 +20,8 @@ class FRHIInterface;
 class FRHIRayTracingGeometry;
 class FRHIRayTracingScene;
 struct IRHICommandContext;
-struct FRHIRayTracingSceneInitializer;
-struct FRHIRayTracingGeometryInitializer;
+struct FRHIRayTracingSceneDesc;
+struct FRHIRayTracingGeometryDesc;
 
 
 enum class ERHIInstanceType : uint32
@@ -198,53 +197,60 @@ public:
     virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) = 0;
 
     /**
-     * @brief             - Create a SamplerState
-     * @param Initializer - Structure with information about the SamplerState
-     * @return            - Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
+     * @brief        - Create a SamplerState
+     * @param InDesc - Structure with information about the SamplerState
+     * @return       - Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
      */
     virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& InDesc) = 0;
 
     /**
-     * @brief             - Create a new Ray Tracing Scene
-     * @param Initializer - Struct containing information about the Ray Tracing Scene
-     * @return            - Returns the newly created Ray tracing Scene
+     * @brief             - Create a new Viewport
+     * @param Initializer - Structure containing the information for the Viewport
+     * @return            - Returns the newly created viewport
      */
-    virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer) = 0;
+    virtual FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) = 0;
+
+    /**
+     * @brief        - Create a new Ray Tracing Scene
+     * @param InDesc - Struct containing information about the Ray Tracing Scene
+     * @return       - Returns the newly created Ray tracing Scene
+     */
+    virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) = 0;
     
     /**
-     * @brief             - Create a new Ray tracing geometry
-     * @param Initializer - Struct containing information about the Ray Tracing Geometry
-     * @return            - Returns the newly created Ray tracing Geometry
+     * @brief        - Create a new Ray tracing geometry
+     * @param InDesc - Struct containing information about the Ray Tracing Geometry
+     * @return       - Returns the newly created Ray tracing Geometry
      */
-    virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer) = 0;
+    virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) = 0;
 
     /**
-     * @brief             - Create a new ShaderResourceView for a Texture
-     * @param Initializer - Struct containing information about the ShaderResourceView
-     * @return            - Returns the newly created ShaderResourceView
+     * @brief        - Create a new ShaderResourceView for a Texture
+     * @param InDesc - Struct containing information about the ShaderResourceView
+     * @return       - Returns the newly created ShaderResourceView
      */
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer) = 0;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) = 0;
 
     /**
-     * @brief             - Create a new ShaderResourceView for a Buffer
-     * @param Initializer - Struct containing information about the ShaderResourceView
-     * @return            - Returns the newly created ShaderResourceView
+     * @brief        - Create a new ShaderResourceView for a Buffer
+     * @param InDesc - Struct containing information about the ShaderResourceView
+     * @return       - Returns the newly created ShaderResourceView
      */
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer) = 0;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc) = 0;
     
     /**
-     * @brief             - Create a new UnorderedAccessView for a Texture
-     * @param Initializer - Struct containing information about the UnorderedAccessView
-     * @return            - Returns the newly created UnorderedAccessView
+     * @brief        - Create a new UnorderedAccessView for a Texture
+     * @param InDesc - Struct containing information about the UnorderedAccessView
+     * @return       - Returns the newly created UnorderedAccessView
      */
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer) = 0;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc) = 0;
 
     /**
-     * @brief             - Create a new UnorderedAccessView for a Buffer
-     * @param Initializer - Struct containing information about the UnorderedAccessView
-     * @return            - Returns the newly created UnorderedAccessView
+     * @brief        - Create a new UnorderedAccessView for a Buffer
+     * @param InDesc - Struct containing information about the UnorderedAccessView
+     * @return       - Returns the newly created UnorderedAccessView
      */
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer) = 0;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc) = 0;
 
     /**
      * @brief            - Creates a new Compute Shader
@@ -386,13 +392,6 @@ public:
     virtual FRHITimestampQuery* RHICreateTimestampQuery() = 0;
 
     /**
-     * @brief             - Create a new Viewport
-     * @param Initializer - Structure containing the information for the Viewport
-     * @return            - Returns the newly created viewport
-     */
-    virtual FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) = 0;
-
-    /**
      * @return - Returns the a CommandContext
      */
     virtual IRHICommandContext* RHIObtainCommandContext() = 0;
@@ -485,12 +484,12 @@ FORCEINLINE FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& 
     return GetRHIInterface()->RHICreateSamplerState(Initializer);
 }
 
-FORCEINLINE FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)
+FORCEINLINE FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateRayTracingScene(Initializer);
 }
 
-FORCEINLINE FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
+FORCEINLINE FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateRayTracingGeometry(Initializer);
 }

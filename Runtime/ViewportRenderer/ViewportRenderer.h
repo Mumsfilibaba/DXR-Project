@@ -3,7 +3,7 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Time/Timer.h"
 
-#include "RHI/RHIPipelineState.h"
+#include "RHI/RHIResources.h"
 #include "RHI/RHIShader.h"
 
 #include "Application/InputHandler.h"

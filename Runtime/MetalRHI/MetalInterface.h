@@ -38,8 +38,8 @@ public:
     virtual FRHIGenericBuffer*           RHICreateBuffer(const FRHIGenericBufferInitializer& Initializer)   override final;
     virtual FRHIConstantBuffer*          RHICreateBuffer(const FRHIConstantBufferInitializer& Initializer) override final;
 
-    virtual FRHIRayTracingScene*         RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)       override final;
-    virtual FRHIRayTracingGeometry*      RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer) override final;
+    virtual FRHIRayTracingScene*         RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& Initializer)       override final;
+    virtual FRHIRayTracingGeometry*      RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& Initializer) override final;
 
     virtual FRHIShaderResourceView*      RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer) override final;
     virtual FRHIShaderResourceView*      RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer)  override final;

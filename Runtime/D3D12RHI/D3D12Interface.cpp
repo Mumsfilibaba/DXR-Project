@@ -123,7 +123,6 @@ bool FD3D12Interface::Initialize()
 
     // Initialize GenerateMips Shaders and pipeline states 
     TArray<uint8> Code;
-
     {
         FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTex2D.hlsl", CompileInfo, Code))
@@ -238,22 +237,22 @@ FRHISamplerState* FD3D12Interface::RHICreateSamplerState(const FRHISamplerStateD
     }
 }
 
-FRHIRayTracingGeometry* FD3D12Interface::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
+FRHIRayTracingGeometry* FD3D12Interface::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc)
 {
-    FD3D12Buffer* D3D12VertexBuffer = static_cast<FD3D12Buffer*>(Initializer.VertexBuffer);
-    FD3D12Buffer* D3D12IndexBuffer  = static_cast<FD3D12Buffer*>(Initializer.IndexBuffer);
+    FD3D12Buffer* D3D12VertexBuffer = static_cast<FD3D12Buffer*>(InDesc.VertexBuffer);
+    FD3D12Buffer* D3D12IndexBuffer  = static_cast<FD3D12Buffer*>(InDesc.IndexBuffer);
 
-    TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = dbg_new FD3D12RayTracingGeometry(GetDevice(), Initializer);
+    TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = dbg_new FD3D12RayTracingGeometry(GetDevice(), InDesc);
     
     DirectContext->StartContext();
 
     if (!D3D12Geometry->Build(
         *DirectContext,
         D3D12VertexBuffer,
-        Initializer.NumVertices,
+        InDesc.NumVertices,
         D3D12IndexBuffer,
-        Initializer.NumIndices,
-        Initializer.IndexFormat,
+        InDesc.NumIndices,
+        InDesc.IndexFormat,
         false))
     {
         DEBUG_BREAK();
@@ -265,13 +264,13 @@ FRHIRayTracingGeometry* FD3D12Interface::RHICreateRayTracingGeometry(const FRHIR
     return D3D12Geometry.ReleaseOwnership();
 }
 
-FRHIRayTracingScene* FD3D12Interface::RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)
+FRHIRayTracingScene* FD3D12Interface::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)
 {
-    TSharedRef<FD3D12RayTracingScene> D3D12Scene = dbg_new FD3D12RayTracingScene(GetDevice(), Initializer);
+    TSharedRef<FD3D12RayTracingScene> D3D12Scene = dbg_new FD3D12RayTracingScene(GetDevice(), InDesc);
 
     DirectContext->StartContext();
 
-    if (!D3D12Scene->Build(*DirectContext, Initializer.Instances.CreateView(), false))
+    if (!D3D12Scene->Build(*DirectContext, InDesc.Instances.CreateView(), false))
     {
         DEBUG_BREAK();
         D3D12Scene.Reset();
@@ -282,9 +281,9 @@ FRHIRayTracingScene* FD3D12Interface::RHICreateRayTracingScene(const FRHIRayTrac
     return D3D12Scene.ReleaseOwnership();
 }
 
-FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer)
+FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc)
 {
-    FD3D12Texture* D3D12Texture = GetD3D12Texture(Initializer.Texture);
+    FD3D12Texture* D3D12Texture = GetD3D12Texture(InDesc.Texture);
     if (!D3D12Texture)
     {
         D3D12_ERROR("Texture cannot be nullptr");
@@ -292,12 +291,12 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIT
     }
 
     const FRHITextureDesc& TextureDesc = D3D12Texture->GetDesc();
-    CHECK(TextureDesc.IsShaderResource() && (Initializer.Format != EFormat::Unknown));
+    CHECK(TextureDesc.IsShaderResource() && (InDesc.Format != EFormat::Unknown));
     
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    Desc.Format                  = ConvertFormat(Initializer.Format);
+    Desc.Format                  = ConvertFormat(InDesc.Format);
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     
     if (TextureDesc.IsTexture2D())
@@ -305,9 +304,9 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIT
         if (!TextureDesc.IsMultisampled())
         {
             Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
-            Desc.Texture2D.MostDetailedMip     = Initializer.FirstMipLevel;
-            Desc.Texture2D.MipLevels           = Initializer.NumMips;
-            Desc.Texture2D.ResourceMinLODClamp = Initializer.MinLODClamp;
+            Desc.Texture2D.MostDetailedMip     = InDesc.FirstMipLevel;
+            Desc.Texture2D.MipLevels           = InDesc.NumMips;
+            Desc.Texture2D.ResourceMinLODClamp = InDesc.MinLODClamp;
             Desc.Texture2D.PlaneSlice          = 0;
         }
         else
@@ -320,42 +319,42 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIT
         if (!TextureDesc.IsMultisampled())
         {
             Desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-            Desc.Texture2DArray.MostDetailedMip     = Initializer.FirstMipLevel;
-            Desc.Texture2DArray.MipLevels           = Initializer.NumMips;
-            Desc.Texture2DArray.ResourceMinLODClamp = Initializer.MinLODClamp;
-            Desc.Texture2DArray.FirstArraySlice     = Initializer.FirstArraySlice;
-            Desc.Texture2DArray.ArraySize           = Initializer.NumSlices;
+            Desc.Texture2DArray.MostDetailedMip     = InDesc.FirstMipLevel;
+            Desc.Texture2DArray.MipLevels           = InDesc.NumMips;
+            Desc.Texture2DArray.ResourceMinLODClamp = InDesc.MinLODClamp;
+            Desc.Texture2DArray.FirstArraySlice     = InDesc.FirstArraySlice;
+            Desc.Texture2DArray.ArraySize           = InDesc.NumSlices;
             Desc.Texture2DArray.PlaneSlice          = 0;
         }
         else
         {
             Desc.ViewDimension                    = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-            Desc.Texture2DMSArray.FirstArraySlice = Initializer.FirstArraySlice;
-            Desc.Texture2DMSArray.ArraySize       = Initializer.NumSlices;
+            Desc.Texture2DMSArray.FirstArraySlice = InDesc.FirstArraySlice;
+            Desc.Texture2DMSArray.ArraySize       = InDesc.NumSlices;
         }
     }
     else if (TextureDesc.IsTextureCube())
     {
         Desc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
-        Desc.TextureCube.MostDetailedMip     = Initializer.FirstMipLevel;
-        Desc.TextureCube.MipLevels           = Initializer.NumMips;
-        Desc.TextureCube.ResourceMinLODClamp = Initializer.MinLODClamp;
+        Desc.TextureCube.MostDetailedMip     = InDesc.FirstMipLevel;
+        Desc.TextureCube.MipLevels           = InDesc.NumMips;
+        Desc.TextureCube.ResourceMinLODClamp = InDesc.MinLODClamp;
     }
     else if (TextureDesc.IsTextureCubeArray())
     {
         Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-        Desc.TextureCubeArray.MostDetailedMip     = Initializer.FirstMipLevel;
-        Desc.TextureCubeArray.MipLevels           = Initializer.NumMips;
-        Desc.TextureCubeArray.ResourceMinLODClamp = Initializer.MinLODClamp;
-        Desc.TextureCubeArray.First2DArrayFace    = Initializer.FirstArraySlice * kRHINumCubeFaces;
-        Desc.TextureCubeArray.NumCubes            = Initializer.NumSlices;
+        Desc.TextureCubeArray.MostDetailedMip     = InDesc.FirstMipLevel;
+        Desc.TextureCubeArray.MipLevels           = InDesc.NumMips;
+        Desc.TextureCubeArray.ResourceMinLODClamp = InDesc.MinLODClamp;
+        Desc.TextureCubeArray.First2DArrayFace    = InDesc.FirstArraySlice * kRHINumCubeFaces;
+        Desc.TextureCubeArray.NumCubes            = InDesc.NumSlices;
     }
     else if (TextureDesc.IsTexture3D())
     {
         Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE3D;
-        Desc.Texture3D.MostDetailedMip     = Initializer.FirstMipLevel;
-        Desc.Texture3D.MipLevels           = Initializer.NumMips;
-        Desc.Texture3D.ResourceMinLODClamp = Initializer.MinLODClamp;
+        Desc.Texture3D.MostDetailedMip     = InDesc.FirstMipLevel;
+        Desc.Texture3D.MipLevels           = InDesc.NumMips;
+        Desc.Texture3D.ResourceMinLODClamp = InDesc.MinLODClamp;
     }
 
     FD3D12ShaderResourceViewRef D3D12View = dbg_new FD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap, D3D12Texture);
@@ -377,9 +376,9 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIT
     }
 }
 
-FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer)
+FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc)
 {
-    FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Initializer.Buffer);
+    FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(InDesc.Buffer);
     if (!D3D12Buffer)
     {
         D3D12_ERROR("Cannot create a ShaderResourceView from a nullptr Buffer");
@@ -394,14 +393,14 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIB
 
     Desc.ViewDimension           = D3D12_SRV_DIMENSION_BUFFER;
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    Desc.Buffer.FirstElement     = Initializer.FirstElement;
-    Desc.Buffer.NumElements      = Initializer.NumElements;
+    Desc.Buffer.FirstElement     = InDesc.FirstElement;
+    Desc.Buffer.NumElements      = InDesc.NumElements;
 
-    if (Initializer.Format == EBufferSRVFormat::None)
+    if (InDesc.Format == EBufferSRVFormat::None)
     {
         Desc.Format                     = DXGI_FORMAT_UNKNOWN;
         Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
-        Desc.Buffer.StructureByteStride = Initializer.Buffer->GetStride();
+        Desc.Buffer.StructureByteStride = InDesc.Buffer->GetStride();
     }
     else
     {
@@ -410,7 +409,7 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIB
         Desc.Buffer.StructureByteStride = 0;
     }
 
-    FD3D12ShaderResourceViewRef D3D12View = dbg_new FD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap, Initializer.Buffer);
+    FD3D12ShaderResourceViewRef D3D12View = dbg_new FD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap, InDesc.Buffer);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -429,9 +428,9 @@ FRHIShaderResourceView* FD3D12Interface::RHICreateShaderResourceView(const FRHIB
     }
 }
 
-FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer)
+FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc)
 {
-    FD3D12Texture* Texture = GetD3D12Texture(Initializer.Texture);
+    FD3D12Texture* Texture = GetD3D12Texture(InDesc.Texture);
     if (!Texture)
     {
         D3D12_ERROR("Texture cannot be nullptr");
@@ -441,17 +440,17 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    Desc.Format = ConvertFormat(Initializer.Format);
+    Desc.Format = ConvertFormat(InDesc.Format);
     
     const FRHITextureDesc& TextureDesc = Texture->GetDesc();
-    CHECK(TextureDesc.IsUnorderedAccess() && (Initializer.Format != EFormat::Unknown));
+    CHECK(TextureDesc.IsUnorderedAccess() && (InDesc.Format != EFormat::Unknown));
 
     if (TextureDesc.IsTexture2D())
     {
         if (!TextureDesc.IsMultisampled())
         {
             Desc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
-            Desc.Texture2D.MipSlice   = Initializer.MipLevel;
+            Desc.Texture2D.MipSlice   = InDesc.MipLevel;
             Desc.Texture2D.PlaneSlice = 0;
         }
         else
@@ -464,10 +463,10 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
         if (!TextureDesc.IsMultisampled())
         {
             Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-            Desc.Texture2DArray.MipSlice        = Initializer.MipLevel;
+            Desc.Texture2DArray.MipSlice        = InDesc.MipLevel;
             Desc.Texture2DArray.PlaneSlice      = 0;
-            Desc.Texture2DArray.FirstArraySlice = Initializer.FirstArraySlice;
-            Desc.Texture2DArray.ArraySize       = Initializer.NumSlices;
+            Desc.Texture2DArray.FirstArraySlice = InDesc.FirstArraySlice;
+            Desc.Texture2DArray.ArraySize       = InDesc.NumSlices;
         }
         else
         {
@@ -477,34 +476,34 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
     else if (TextureDesc.IsTextureCube())
     {
         Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-        Desc.Texture2DArray.MipSlice        = Initializer.MipLevel;
+        Desc.Texture2DArray.MipSlice        = InDesc.MipLevel;
         Desc.Texture2DArray.PlaneSlice      = 0;
-        Desc.Texture2DArray.FirstArraySlice = Initializer.FirstArraySlice;
-        Desc.Texture2DArray.ArraySize       = Initializer.NumSlices;
+        Desc.Texture2DArray.FirstArraySlice = InDesc.FirstArraySlice;
+        Desc.Texture2DArray.ArraySize       = InDesc.NumSlices;
     }
     else if (TextureDesc.IsTextureCubeArray())
     {
         Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-        Desc.Texture2DArray.MipSlice        = Initializer.MipLevel;
+        Desc.Texture2DArray.MipSlice        = InDesc.MipLevel;
         Desc.Texture2DArray.PlaneSlice      = 0;
-        Desc.Texture2DArray.FirstArraySlice = Initializer.FirstArraySlice;
-        Desc.Texture2DArray.ArraySize       = Initializer.NumSlices;
+        Desc.Texture2DArray.FirstArraySlice = InDesc.FirstArraySlice;
+        Desc.Texture2DArray.ArraySize       = InDesc.NumSlices;
     }
     else if (TextureDesc.IsTexture3D())
     {
         Desc.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE3D;
-        Desc.Texture3D.FirstWSlice = Initializer.FirstArraySlice;
-        Desc.Texture3D.WSize       = Initializer.NumSlices;
-        Desc.Texture3D.MipSlice    = Initializer.MipLevel;
+        Desc.Texture3D.FirstWSlice = InDesc.FirstArraySlice;
+        Desc.Texture3D.WSize       = InDesc.NumSlices;
+        Desc.Texture3D.MipSlice    = InDesc.MipLevel;
     }
 
-    FD3D12UnorderedAccessViewRef D3D12View = dbg_new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, Initializer.Texture);
+    FD3D12UnorderedAccessViewRef D3D12View = dbg_new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, InDesc.Texture);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
     }
 
-    FD3D12Resource* D3D12Resource = GetD3D12Resource(Initializer.Texture);
+    FD3D12Resource* D3D12Resource = GetD3D12Resource(InDesc.Texture);
     CHECK(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(nullptr, D3D12Resource, Desc))
@@ -517,9 +516,9 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
     }
 }
 
-FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer)
+FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc)
 {
-    FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Initializer.Buffer);
+    FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(InDesc.Buffer);
     if (!D3D12Buffer)
     {
         D3D12_ERROR("Cannot create a UnorderedAccessView from a nullptr Buffer");
@@ -533,14 +532,14 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
     FMemory::Memzero(&Desc);
 
     Desc.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
-    Desc.Buffer.FirstElement = Initializer.FirstElement;
-    Desc.Buffer.NumElements  = Initializer.NumElements;
+    Desc.Buffer.FirstElement = InDesc.FirstElement;
+    Desc.Buffer.NumElements  = InDesc.NumElements;
 
-    if (Initializer.Format == EBufferUAVFormat::None)
+    if (InDesc.Format == EBufferUAVFormat::None)
     {
         Desc.Format                     = DXGI_FORMAT_UNKNOWN;
         Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_NONE;
-        Desc.Buffer.StructureByteStride = Initializer.Buffer->GetStride();
+        Desc.Buffer.StructureByteStride = InDesc.Buffer->GetStride();
     }
     else
     {
@@ -549,7 +548,7 @@ FRHIUnorderedAccessView* FD3D12Interface::RHICreateUnorderedAccessView(const FRH
         Desc.Buffer.StructureByteStride = 0;
     }
 
-    FD3D12UnorderedAccessViewRef D3D12View = dbg_new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, Initializer.Buffer);
+    FD3D12UnorderedAccessViewRef D3D12View = dbg_new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, InDesc.Buffer);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -773,7 +772,8 @@ FRHIComputePipelineState* FD3D12Interface::RHICreateComputePipelineState(const F
 {
     CHECK(Initializer.Shader != nullptr);
 
-    TSharedRef<FD3D12ComputeShader>        Shader           = MakeSharedRef<FD3D12ComputeShader>(Initializer.Shader);
+    auto Shader = MakeSharedRef<FD3D12ComputeShader>(Initializer.Shader);
+    
     FD3D12ComputePipelineStateRef NewPipelineState = dbg_new FD3D12ComputePipelineState(GetDevice(), Shader);
     if (!NewPipelineState->Initialize())
     {

@@ -2,7 +2,6 @@
 #include "D3D12Constants.h"
 
 #include "RHI/RHIResources.h"
-#include "RHI/RHIPipelineState.h"
 #include "RHI/RHIRayTracing.h"
 
 #include "Core/Debug/Debug.h"

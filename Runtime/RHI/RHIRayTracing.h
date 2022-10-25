@@ -142,10 +142,10 @@ struct FRHIAccelerationStructureInitializer
 };
 
 
-struct FRHIRayTracingGeometryInitializer 
+struct FRHIRayTracingGeometryDesc 
     : public FRHIAccelerationStructureInitializer
 {
-    FRHIRayTracingGeometryInitializer()
+    FRHIRayTracingGeometryDesc()
         : FRHIAccelerationStructureInitializer()
         , VertexBuffer(nullptr)
         , NumVertices(0)
@@ -154,7 +154,7 @@ struct FRHIRayTracingGeometryInitializer
         , IndexFormat(EIndexFormat::Unknown)
     { }
 
-    FRHIRayTracingGeometryInitializer(
+    FRHIRayTracingGeometryDesc(
         FRHIBuffer*                      InVertexBuffer,
         uint32                           InNumVerticies,
         FRHIBuffer*                      InIndexBuffer,
@@ -169,7 +169,7 @@ struct FRHIRayTracingGeometryInitializer
         , IndexFormat(InIndexFormat)
     { }
 
-    bool operator==(const FRHIRayTracingGeometryInitializer& RHS) const
+    bool operator==(const FRHIRayTracingGeometryDesc& RHS) const
     {
         return FRHIAccelerationStructureInitializer::operator==(RHS)
             && (VertexBuffer == RHS.VertexBuffer) 
@@ -179,7 +179,7 @@ struct FRHIRayTracingGeometryInitializer
             && (IndexFormat  == RHS.IndexFormat);
     }
 
-    bool operator!=(const FRHIRayTracingGeometryInitializer& RHS) const
+    bool operator!=(const FRHIRayTracingGeometryDesc& RHS) const
     {
         return !(*this == RHS);
     }
@@ -192,27 +192,27 @@ struct FRHIRayTracingGeometryInitializer
 };
 
 
-struct FRHIRayTracingSceneInitializer 
+struct FRHIRayTracingSceneDesc 
     : public FRHIAccelerationStructureInitializer
 {
-    FRHIRayTracingSceneInitializer()
+    FRHIRayTracingSceneDesc()
         : FRHIAccelerationStructureInitializer()
         , Instances()
     { }
 
-    FRHIRayTracingSceneInitializer(
+    FRHIRayTracingSceneDesc(
         const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances,
         EAccelerationStructureBuildFlags InFlags)
         : FRHIAccelerationStructureInitializer(InFlags)
         , Instances(InInstances)
     { }
 
-    bool operator==(const FRHIRayTracingSceneInitializer& RHS) const
+    bool operator==(const FRHIRayTracingSceneDesc& RHS) const
     {
         return FRHIAccelerationStructureInitializer::operator==(RHS) && (Instances == RHS.Instances);
     }
 
-    bool operator!=(const FRHIRayTracingSceneInitializer& RHS) const
+    bool operator!=(const FRHIRayTracingSceneDesc& RHS) const
     {
         return !(*this == RHS);
     }
@@ -251,7 +251,7 @@ class FRHIRayTracingGeometry
     : public FRHIAccelerationStructure
 {
 protected: 
-    explicit FRHIRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
+    explicit FRHIRayTracingGeometry(const FRHIRayTracingGeometryDesc& Initializer)
         : FRHIAccelerationStructure(Initializer)
     { }
 
@@ -264,7 +264,7 @@ class FRHIRayTracingScene
     : public FRHIAccelerationStructure
 {
 protected:
-    explicit FRHIRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)
+    explicit FRHIRayTracingScene(const FRHIRayTracingSceneDesc& Initializer)
         : FRHIAccelerationStructure(Initializer)
     { }
 

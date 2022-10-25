@@ -1,14 +1,8 @@
 #pragma once
-#include "NullRHIBuffer.h"
-#include "NullRHITexture.h"
-#include "NullRHIViews.h"
-#include "NullRHISamplerState.h"
-#include "NullRHIViewport.h"
+#include "NullRHI.h"
+#include "NullRHIResources.h"
 #include "NullRHIShader.h"
 #include "NullRHICommandContext.h"
-#include "NullRHITimestampQuery.h"
-#include "NullRHIPipelineState.h"
-#include "NullRHIRayTracing.h"
 
 #include "RHI/RHIInterface.h"
 
@@ -20,13 +14,20 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-class FNullRHIInterface final 
+struct NULLRHI_API FNullRHIInterfaceModule final
+    : public FRHIInterfaceModule
+{
+    virtual FRHIInterface* CreateInterface() override final;
+};
+
+
+class NULLRHI_API FNullRHIInterface final 
     : public FRHIInterface
 {
 public:
     FNullRHIInterface()
         : FRHIInterface(ERHIInstanceType::Null)
-        , CommandContext(FNullRHICommandContext::CreateNullRHIContext())
+        , CommandContext(dbg_new FNullRHICommandContext())
     { }
 
     ~FNullRHIInterface()
@@ -34,7 +35,7 @@ public:
         SAFE_DELETE(CommandContext);
     }
 
-    virtual bool Initialize() override final 
+    virtual bool Initialize() override final
     { 
         return true; 
     }
@@ -54,34 +55,34 @@ public:
         return dbg_new FNullRHISamplerState(InDesc);
     }
 
-    virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer) override final
+    virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final
     {
-        return dbg_new FNullRHIRayTracingScene(Initializer);
+        return dbg_new FNullRHIRayTracingScene(InDesc);
     }
 
-    virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer) override final
+    virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) override final
     {
-        return dbg_new FNullRHIRayTracingGeometry(Initializer);
+        return dbg_new FNullRHIRayTracingGeometry(InDesc);
     }
 
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer) override final
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) override final
     {
-        return dbg_new FNullRHIShaderResourceView(Initializer.Texture);
+        return dbg_new FNullRHIShaderResourceView(InDesc.Texture);
     }
 
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer) override final
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc) override final
     {
-        return dbg_new FNullRHIShaderResourceView(Initializer.Buffer);
+        return dbg_new FNullRHIShaderResourceView(InDesc.Buffer);
     }
 
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer) override final
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc) override final
     {
-        return dbg_new FNullRHIUnorderedAccessView(Initializer.Texture);
+        return dbg_new FNullRHIUnorderedAccessView(InDesc.Texture);
     }
 
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer) override final
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc) override final
     {
-        return dbg_new FNullRHIUnorderedAccessView(Initializer.Buffer);
+        return dbg_new FNullRHIUnorderedAccessView(InDesc.Buffer);
     }
 
     virtual class FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final

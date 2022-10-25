@@ -3,7 +3,7 @@
 #include "D3D12Constants.h"
 
 #include "RHI/RHIShader.h"
-#include "RHI/RHIPipelineState.h"
+#include "RHI/RHIResources.h"
 
 #include <d3d12shader.h>
 

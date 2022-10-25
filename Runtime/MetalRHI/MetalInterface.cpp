@@ -243,12 +243,12 @@ MetalBufferType* FMetalInterface::CreateBuffer(const InitializerType& Initialize
     return NewBuffer.ReleaseOwnership();
 }
 
-FRHIRayTracingScene* FMetalInterface::RHICreateRayTracingScene(const FRHIRayTracingSceneInitializer& Initializer)
+FRHIRayTracingScene* FMetalInterface::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& Initializer)
 {
     return dbg_new FMetalRayTracingScene(GetDeviceContext(), Initializer);
 }
 
-FRHIRayTracingGeometry* FMetalInterface::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInitializer& Initializer)
+FRHIRayTracingGeometry* FMetalInterface::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& Initializer)
 {
     return dbg_new FMetalRayTracingGeometry(Initializer);
 }
