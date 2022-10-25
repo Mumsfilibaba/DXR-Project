@@ -75,7 +75,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
         DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
         DepthStencilStateInitializer.bDepthEnable   = true;
         DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
@@ -87,7 +87,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIRasterizerStateInitializer RasterizerInitializer;
+        FRHIRasterizerStateDesc RasterizerInitializer;
         RasterizerInitializer.CullMode = ECullMode::Back;
 
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
@@ -97,7 +97,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
+        FRHIBlendStateDesc BlendStateInitializer;
 
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
@@ -106,7 +106,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
+        FRHIGraphicsPipelineStateDesc PSOInitializer;
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
         PSOInitializer.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
@@ -165,7 +165,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
         DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
         DepthStencilStateInitializer.bDepthEnable   = true;
         DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
@@ -177,7 +177,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIRasterizerStateInitializer RasterizerInitializer;
+        FRHIRasterizerStateDesc RasterizerInitializer;
         RasterizerInitializer.CullMode = ECullMode::Back;
 
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
@@ -187,7 +187,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
+        FRHIBlendStateDesc BlendStateInitializer;
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
@@ -195,7 +195,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
+        FRHIGraphicsPipelineStateDesc PSOInitializer;
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
         PSOInitializer.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
@@ -238,7 +238,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIComputePipelineStateInitializer CascadePSO;
+        FRHIComputePipelineStateDesc CascadePSO;
         CascadePSO.Shader = CascadeGenShader.Get();
 
         CascadeGen = RHICreateComputePipelineState(CascadePSO);
@@ -354,7 +354,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIComputePipelineStateInitializer MaskPSOInitializer(DirectionalShadowMaskShader.Get());
+        FRHIComputePipelineStateDesc MaskPSOInitializer(DirectionalShadowMaskShader.Get());
         DirectionalShadowMaskPSO = RHICreateComputePipelineState(MaskPSOInitializer);
         if (!DirectionalShadowMaskPSO)
         {
@@ -390,7 +390,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIComputePipelineStateInitializer MaskPSOInitializer(DirectionalShadowMaskShader_Debug.Get());
+        FRHIComputePipelineStateDesc MaskPSOInitializer(DirectionalShadowMaskShader_Debug.Get());
         DirectionalShadowMaskPSO_Debug = RHICreateComputePipelineState(MaskPSOInitializer);
         if (!DirectionalShadowMaskPSO_Debug)
         {

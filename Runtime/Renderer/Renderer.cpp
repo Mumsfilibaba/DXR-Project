@@ -177,7 +177,7 @@ bool FRenderer::Create()
     }
 
     // Initialize standard input layout
-    FRHIVertexInputLayoutInitializer InputLayout =
+    FRHIVertexInputLayoutDesc InputLayout =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 0,  EVertexInputClass::Vertex, 0 },
         { "NORMAL",   0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 12, EVertexInputClass::Vertex, 0 },
@@ -1089,7 +1089,7 @@ bool FRenderer::InitAA()
         return false;
     }
 
-    FRHIDepthStencilStateInitializer DepthStencilInitializer;
+    FRHIDepthStencilStateDesc DepthStencilInitializer;
     DepthStencilInitializer.DepthFunc      = EComparisonFunc::Always;
     DepthStencilInitializer.bDepthEnable   = false;
     DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::Zero;
@@ -1101,7 +1101,7 @@ bool FRenderer::InitAA()
         return false;
     }
 
-    FRHIRasterizerStateInitializer RasterizerInitializer;
+    FRHIRasterizerStateDesc RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
@@ -1111,7 +1111,7 @@ bool FRenderer::InitAA()
         return false;
     }
 
-    FRHIBlendStateInitializer BlendStateInfo;
+    FRHIBlendStateDesc BlendStateInfo;
 
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
@@ -1120,7 +1120,7 @@ bool FRenderer::InitAA()
         return false;
     }
 
-    FRHIGraphicsPipelineStateInitializer PSOInitializer;
+    FRHIGraphicsPipelineStateDesc PSOInitializer;
     PSOInitializer.VertexInputLayout                      = nullptr;
     PSOInitializer.BlendState                             = BlendState.Get();
     PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
@@ -1263,7 +1263,7 @@ bool FRenderer::InitShadingImage()
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInitializer(ShadingRateShader.Get());
+    FRHIComputePipelineStateDesc PSOInitializer(ShadingRateShader.Get());
     ShadingRatePipeline = RHICreateComputePipelineState(PSOInitializer);
     if (!ShadingRatePipeline)
     {

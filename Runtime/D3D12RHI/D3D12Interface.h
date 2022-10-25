@@ -69,14 +69,14 @@ public:
     virtual FRHIRayClosestHitShader* RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIRayMissShader*       RHICreateRayMissShader(const TArray<uint8>& ShaderCode)       override final;
 
-    virtual FRHIDepthStencilState*       RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer) override final;
-    virtual FRHIRasterizerState*         RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer)     override final;
-    virtual FRHIBlendState*              RHICreateBlendState(const FRHIBlendStateInitializer& Initializer)               override final;
-    virtual FRHIVertexInputLayout*       RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer) override final;
+    virtual FRHIDepthStencilState*       RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) override final;
+    virtual FRHIRasterizerState*         RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)     override final;
+    virtual FRHIBlendState*              RHICreateBlendState(const FRHIBlendStateDesc& InDesc)               override final;
+    virtual FRHIVertexInputLayout*       RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& InDesc) override final;
 
-    virtual FRHIGraphicsPipelineState*   RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& Initializer)     override final;
-    virtual FRHIComputePipelineState*    RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer)       override final;
-    virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Initializer) override final;
+    virtual FRHIGraphicsPipelineState*   RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)     override final;
+    virtual FRHIComputePipelineState*    RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)       override final;
+    virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final;
 
     virtual IRHICommandContext* RHIObtainCommandContext() override final { return DirectContext; }
 

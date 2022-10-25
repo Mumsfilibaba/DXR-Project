@@ -158,21 +158,60 @@ struct FNullRHIInputLayoutState
 };
 
 
-struct FNullRHIDepthStencilState
+class FNullRHIDepthStencilState
     : public FRHIDepthStencilState
 {
+public:
+    FNullRHIDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
+        : FRHIDepthStencilState()
+        , Desc(InDesc)
+    { }
+
+    virtual FRHIDepthStencilStateDesc GetDesc() const override final
+    {
+        return Desc;
+    }
+
+private:
+    FRHIDepthStencilStateDesc Desc;
 };
 
 
-struct FNullRHIRasterizerState
+class FNullRHIRasterizerState
     : public FRHIRasterizerState
 {
+public:
+    FNullRHIRasterizerState(const FRHIRasterizerStateDesc& InDesc)
+        : FRHIRasterizerState()
+        , Desc(InDesc)
+    { }
+
+    virtual FRHIRasterizerStateDesc GetDesc() const override final
+    {
+        return Desc;
+    }
+
+private:
+    FRHIRasterizerStateDesc Desc;
 };
 
 
 struct FNullRHIBlendState
     : public FRHIBlendState
 {
+public:
+    FNullRHIBlendState(const FRHIBlendStateDesc& InDesc)
+        : FRHIBlendState()
+        , Desc(InDesc)
+    { }
+
+    virtual FRHIBlendStateDesc GetDesc() const override final
+    {
+        return Desc;
+    }
+
+private:
+    FRHIBlendStateDesc Desc;
 };
 
 

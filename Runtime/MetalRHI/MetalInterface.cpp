@@ -333,37 +333,37 @@ FRHIRayMissShader* FMetalInterface::RHICreateRayMissShader(const TArray<uint8>& 
     return dbg_new FMetalRayMissShader(GetDeviceContext(), ShaderCode);
 }
 
-FRHIDepthStencilState* FMetalInterface::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer)
+FRHIDepthStencilState* FMetalInterface::RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& Initializer)
 {
     return dbg_new FMetalDepthStencilState(GetDeviceContext(), Initializer);
 }
 
-FRHIRasterizerState* FMetalInterface::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer)
+FRHIRasterizerState* FMetalInterface::RHICreateRasterizerState(const FRHIRasterizerStateDesc& Initializer)
 {
     return dbg_new FMetalRasterizerState(GetDeviceContext(), Initializer);
 }
 
-FRHIBlendState* FMetalInterface::RHICreateBlendState(const FRHIBlendStateInitializer& Initializer)
+FRHIBlendState* FMetalInterface::RHICreateBlendState(const FRHIBlendStateDesc& Initializer)
 {
     return dbg_new FMetalBlendState();
 }
 
-FRHIVertexInputLayout* FMetalInterface::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
+FRHIVertexInputLayout* FMetalInterface::RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& Initializer)
 {
     return dbg_new FMetalInputLayoutState(GetDeviceContext(), Initializer);
 }
 
-FRHIGraphicsPipelineState* FMetalInterface::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& Initializer)
+FRHIGraphicsPipelineState* FMetalInterface::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& Initializer)
 {
     return dbg_new FMetalGraphicsPipelineState(GetDeviceContext(), Initializer);
 }
 
-FRHIComputePipelineState* FMetalInterface::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer)
+FRHIComputePipelineState* FMetalInterface::RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& Initializer)
 {
     return dbg_new FMetalComputePipelineState();
 }
 
-FRHIRayTracingPipelineState* FMetalInterface::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Initializer)
+FRHIRayTracingPipelineState* FMetalInterface::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Initializer)
 {
     return dbg_new FMetalRayTracingPipelineState();
 }

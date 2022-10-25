@@ -48,7 +48,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIDepthStencilStateInitializer DepthStencilInitializer;
+    FRHIDepthStencilStateDesc DepthStencilInitializer;
     DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
     DepthStencilInitializer.bDepthEnable   = true;
     DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::All;
@@ -60,7 +60,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIRasterizerStateInitializer RasterizerStateInfo;
+    FRHIRasterizerStateDesc RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -70,7 +70,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIBlendStateInitializer BlendStateInitializer( { FRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero) }, false , false);
+    FRHIBlendStateDesc BlendStateInitializer( { FRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero) }, false , false);
 
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
@@ -79,7 +79,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIGraphicsPipelineStateInitializer PSOInitializer;
+    FRHIGraphicsPipelineStateDesc PSOInitializer;
     PSOInitializer.ShaderState.VertexShader               = VShader.Get();
     PSOInitializer.ShaderState.PixelShader                = PShader.Get();
     PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();

@@ -14,7 +14,7 @@ class FMetalInputLayoutState
     , public FMetalObject
 {
 public:
-    FMetalInputLayoutState(FMetalDeviceContext* DeviceContext, const FRHIVertexInputLayoutInitializer& Initializer)
+    FMetalInputLayoutState(FMetalDeviceContext* DeviceContext, const FRHIVertexInputLayoutDesc& Initializer)
         : FMetalObject(DeviceContext)
         , VertexDescriptor(nil)
     {
@@ -46,7 +46,7 @@ class FMetalDepthStencilState
     , public FMetalObject
 {
 public:
-    FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInitializer& Initializer)
+    FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateDesc& Initializer)
         : FMetalObject(DeviceContext)
         , DepthStencilState()
     {
@@ -104,7 +104,7 @@ class FMetalRasterizerState
     , public FMetalObject
 {
 public:
-    FMetalRasterizerState(FMetalDeviceContext* DeviceContext, const FRHIRasterizerStateInitializer& Initializer)
+    FMetalRasterizerState(FMetalDeviceContext* DeviceContext, const FRHIRasterizerStateDesc& Initializer)
         : FMetalObject(DeviceContext)
         , FillMode(ConvertFillMode(Initializer.FillMode))
         , FrontFaceWinding(Initializer.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
@@ -150,7 +150,7 @@ class FMetalGraphicsPipelineState
     , public FMetalObject
 {
 public:
-    FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInitializer& Initializer)
+    FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateDesc& Initializer)
         : FMetalObject(DeviceContext)
         , BlendState(nullptr)
         , DepthStencilState(nullptr)

@@ -7,7 +7,7 @@ FD3D12GraphicsPipelineState::FD3D12GraphicsPipelineState(FD3D12Device* InDevice)
     , FD3D12PipelineState(InDevice)
 { }
 
-bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer)
+bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateDesc& Initializer)
 {
     struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12GraphicsPipelineStream
     {
@@ -146,21 +146,21 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     CHECK(D3D12RasterizerState != nullptr);
 
     D3D12_RASTERIZER_DESC& RasterizerDesc = PipelineStream.RasterizerDesc;
-    RasterizerDesc = D3D12RasterizerState->GetDesc();
+    RasterizerDesc = D3D12RasterizerState->GetD3D12Desc();
 
     // DepthStencilState
     FD3D12DepthStencilState* D3D12DepthStencilState = static_cast<FD3D12DepthStencilState*>(Initializer.DepthStencilState);
     CHECK(D3D12DepthStencilState != nullptr);
 
     D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc = PipelineStream.DepthStencilDesc;
-    DepthStencilDesc = D3D12DepthStencilState->GetDesc();
+    DepthStencilDesc = D3D12DepthStencilState->GetD3D12Desc();
 
     // BlendState
     FD3D12BlendState* D3D12BlendState = static_cast<FD3D12BlendState*>(Initializer.BlendState);
     CHECK(D3D12BlendState != nullptr);
 
     D3D12_BLEND_DESC& BlendStateDesc = PipelineStream.BlendStateDesc;
-    BlendStateDesc = D3D12BlendState->GetDesc();
+    BlendStateDesc = D3D12BlendState->GetD3D12Desc();
 
     // Topology
     PipelineStream.PrimitiveTopologyType = ConvertPrimitiveTopologyType(Initializer.PrimitiveTopologyType);
@@ -487,7 +487,7 @@ FD3D12RayTracingPipelineState::FD3D12RayTracingPipelineState(FD3D12Device* InDev
     , StateObject(nullptr)
 { }
 
-bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer)
+bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineStateDesc& Initializer)
 {
     FD3D12RayTracingPipelineStateStream PipelineStream;
     TArray<FD3D12Shader*> Shaders;
@@ -526,7 +526,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     TArray<FRHIRayAnyHitShader*>     AnyHitShaders;
     TArray<FRHIRayClosestHitShader*> ClosestHitShaders;
 
-    for (const FRHIRayTracingHitGroupInitializer& HitGroup : Initializer.HitGroups)
+    for (const FRHIRayTracingHitGroupDesc& HitGroup : Initializer.HitGroups)
     {
         HitGroupName.Clear();
         ClosestHitName.Clear();

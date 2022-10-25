@@ -691,76 +691,79 @@ FRHIRayMissShader* FD3D12Interface::RHICreateRayMissShader(const TArray<uint8>& 
     }
 }
 
-FRHIDepthStencilState* FD3D12Interface::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer)
+FRHIDepthStencilState* FD3D12Interface::RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
 {
     D3D12_DEPTH_STENCIL_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    Desc.DepthEnable      = Initializer.bDepthEnable;
-    Desc.DepthFunc        = ConvertComparisonFunc(Initializer.DepthFunc);
-    Desc.DepthWriteMask   = ConvertDepthWriteMask(Initializer.DepthWriteMask);
-    Desc.StencilEnable    = Initializer.bStencilEnable;
-    Desc.StencilReadMask  = Initializer.StencilReadMask;
-    Desc.StencilWriteMask = Initializer.StencilWriteMask;
-    Desc.FrontFace        = ConvertDepthStencilOp(Initializer.FrontFace);
-    Desc.BackFace         = ConvertDepthStencilOp(Initializer.BackFace);
+    Desc.DepthEnable      = InDesc.bDepthEnable;
+    Desc.DepthFunc        = ConvertComparisonFunc(InDesc.DepthFunc);
+    Desc.DepthWriteMask   = ConvertDepthWriteMask(InDesc.DepthWriteMask);
+    Desc.StencilEnable    = InDesc.bStencilEnable;
+    Desc.StencilReadMask  = InDesc.StencilReadMask;
+    Desc.StencilWriteMask = InDesc.StencilWriteMask;
+    Desc.FrontFace        = ConvertDepthStencilOp(InDesc.FrontFace);
+    Desc.BackFace         = ConvertDepthStencilOp(InDesc.BackFace);
 
     return dbg_new FD3D12DepthStencilState(GetDevice(), Desc);
 }
 
-FRHIRasterizerState* FD3D12Interface::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer)
+FRHIRasterizerState* FD3D12Interface::RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
 {
     D3D12_RASTERIZER_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    Desc.AntialiasedLineEnable = Initializer.bAntialiasedLineEnable;
-    Desc.ConservativeRaster    = (Initializer.bEnableConservativeRaster) ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-    Desc.CullMode              = ConvertCullMode(Initializer.CullMode);
-    Desc.DepthBias             = Initializer.DepthBias;
-    Desc.DepthBiasClamp        = Initializer.DepthBiasClamp;
-    Desc.DepthClipEnable       = Initializer.bDepthClipEnable;
-    Desc.SlopeScaledDepthBias  = Initializer.SlopeScaledDepthBias;
-    Desc.FillMode              = ConvertFillMode(Initializer.FillMode);
-    Desc.ForcedSampleCount     = Initializer.ForcedSampleCount;
-    Desc.FrontCounterClockwise = Initializer.bFrontCounterClockwise;
-    Desc.MultisampleEnable     = Initializer.bMultisampleEnable;
+    Desc.AntialiasedLineEnable = InDesc.bAntialiasedLineEnable;
+    Desc.CullMode              = ConvertCullMode(InDesc.CullMode);
+    Desc.DepthBias             = InDesc.DepthBias;
+    Desc.DepthBiasClamp        = InDesc.DepthBiasClamp;
+    Desc.DepthClipEnable       = InDesc.bDepthClipEnable;
+    Desc.SlopeScaledDepthBias  = InDesc.SlopeScaledDepthBias;
+    Desc.FillMode              = ConvertFillMode(InDesc.FillMode);
+    Desc.ForcedSampleCount     = InDesc.ForcedSampleCount;
+    Desc.FrontCounterClockwise = InDesc.bFrontCounterClockwise;
+    Desc.MultisampleEnable     = InDesc.bMultisampleEnable;
+    Desc.ConservativeRaster    = 
+        (InDesc.bEnableConservativeRaster) ? 
+        D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : 
+        D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
     return dbg_new FD3D12RasterizerState(GetDevice(), Desc);
 }
 
-FRHIBlendState* FD3D12Interface::RHICreateBlendState(const FRHIBlendStateInitializer& Initializer)
+FRHIBlendState* FD3D12Interface::RHICreateBlendState(const FRHIBlendStateDesc& InDesc)
 {
     D3D12_BLEND_DESC Desc;
     FMemory::Memzero(&Desc);
 
-    Desc.AlphaToCoverageEnable  = Initializer.bAlphaToCoverageEnable;
-    Desc.IndependentBlendEnable = Initializer.bIndependentBlendEnable;
+    Desc.AlphaToCoverageEnable  = InDesc.bAlphaToCoverageEnable;
+    Desc.IndependentBlendEnable = InDesc.bIndependentBlendEnable;
     for (uint32 i = 0; i < 8; i++)
     {
-        Desc.RenderTarget[i].BlendEnable           = Initializer.RenderTargets[i].bBlendEnable;
-        Desc.RenderTarget[i].BlendOp               = ConvertBlendOp(Initializer.RenderTargets[i].BlendOp);
-        Desc.RenderTarget[i].BlendOpAlpha          = ConvertBlendOp(Initializer.RenderTargets[i].BlendOpAlpha);
-        Desc.RenderTarget[i].DestBlend             = ConvertBlend(Initializer.RenderTargets[i].DstBlend);
-        Desc.RenderTarget[i].DestBlendAlpha        = ConvertBlend(Initializer.RenderTargets[i].DstBlendAlpha);
-        Desc.RenderTarget[i].SrcBlend              = ConvertBlend(Initializer.RenderTargets[i].SrcBlend);
-        Desc.RenderTarget[i].SrcBlendAlpha         = ConvertBlend(Initializer.RenderTargets[i].SrcBlendAlpha);
-        Desc.RenderTarget[i].LogicOpEnable         = Initializer.RenderTargets[i].bLogicOpEnable;
-        Desc.RenderTarget[i].LogicOp               = ConvertLogicOp(Initializer.RenderTargets[i].LogicOp);
-        Desc.RenderTarget[i].RenderTargetWriteMask = ConvertRenderTargetWriteState(Initializer.RenderTargets[i].RenderTargetWriteMask);
+        Desc.RenderTarget[i].BlendEnable           = InDesc.RenderTargets[i].bBlendEnable;
+        Desc.RenderTarget[i].BlendOp               = ConvertBlendOp(InDesc.RenderTargets[i].BlendOp);
+        Desc.RenderTarget[i].BlendOpAlpha          = ConvertBlendOp(InDesc.RenderTargets[i].BlendOpAlpha);
+        Desc.RenderTarget[i].DestBlend             = ConvertBlend(InDesc.RenderTargets[i].DstBlend);
+        Desc.RenderTarget[i].DestBlendAlpha        = ConvertBlend(InDesc.RenderTargets[i].DstBlendAlpha);
+        Desc.RenderTarget[i].SrcBlend              = ConvertBlend(InDesc.RenderTargets[i].SrcBlend);
+        Desc.RenderTarget[i].SrcBlendAlpha         = ConvertBlend(InDesc.RenderTargets[i].SrcBlendAlpha);
+        Desc.RenderTarget[i].LogicOpEnable         = InDesc.RenderTargets[i].bLogicOpEnable;
+        Desc.RenderTarget[i].LogicOp               = ConvertLogicOp(InDesc.RenderTargets[i].LogicOp);
+        Desc.RenderTarget[i].RenderTargetWriteMask = ConvertRenderTargetWriteState(InDesc.RenderTargets[i].RenderTargetWriteMask);
     }
 
     return dbg_new FD3D12BlendState(GetDevice(), Desc);
 }
 
-FRHIVertexInputLayout* FD3D12Interface::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
+FRHIVertexInputLayout* FD3D12Interface::RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& Initializer)
 {
     return dbg_new FD3D12VertexInputLayout(GetDevice(), Initializer);
 }
 
-FRHIGraphicsPipelineState* FD3D12Interface::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& Initializer)
+FRHIGraphicsPipelineState* FD3D12Interface::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
 {
     FD3D12GraphicsPipelineStateRef NewPipelineState = dbg_new FD3D12GraphicsPipelineState(GetDevice());
-    if (!NewPipelineState->Initialize(Initializer))
+    if (!NewPipelineState->Initialize(InDesc))
     {
         return nullptr;
     }
@@ -768,11 +771,11 @@ FRHIGraphicsPipelineState* FD3D12Interface::RHICreateGraphicsPipelineState(const
     return NewPipelineState.ReleaseOwnership();
 }
 
-FRHIComputePipelineState* FD3D12Interface::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer)
+FRHIComputePipelineState* FD3D12Interface::RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
 {
-    CHECK(Initializer.Shader != nullptr);
+    CHECK(InDesc.Shader != nullptr);
 
-    auto Shader = MakeSharedRef<FD3D12ComputeShader>(Initializer.Shader);
+    auto Shader = MakeSharedRef<FD3D12ComputeShader>(InDesc.Shader);
     
     FD3D12ComputePipelineStateRef NewPipelineState = dbg_new FD3D12ComputePipelineState(GetDevice(), Shader);
     if (!NewPipelineState->Initialize())
@@ -783,10 +786,10 @@ FRHIComputePipelineState* FD3D12Interface::RHICreateComputePipelineState(const F
     return NewPipelineState.ReleaseOwnership();
 }
 
-FRHIRayTracingPipelineState* FD3D12Interface::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Initializer)
+FRHIRayTracingPipelineState* FD3D12Interface::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
 {
     FD3D12RayTracingPipelineStateRef NewPipelineState = dbg_new FD3D12RayTracingPipelineState(GetDevice());
-    if (NewPipelineState->Initialize(Initializer))
+    if (NewPipelineState->Initialize(InDesc))
     {
         return NewPipelineState.ReleaseOwnership();
     }

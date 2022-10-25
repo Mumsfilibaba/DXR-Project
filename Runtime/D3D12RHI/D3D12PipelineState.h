@@ -24,7 +24,7 @@ class FD3D12VertexInputLayout
     , public FD3D12DeviceChild
 {
 public:
-    FD3D12VertexInputLayout(FD3D12Device* InDevice, const FRHIVertexInputLayoutInitializer& Initializer)
+    FD3D12VertexInputLayout(FD3D12Device* InDevice, const FRHIVertexInputLayoutDesc& Initializer)
         : FRHIVertexInputLayout()
         , FD3D12DeviceChild(InDevice)
         , SemanticNames()
@@ -73,7 +73,12 @@ public:
         , Desc(InDesc)
     { }
 
-    FORCEINLINE const D3D12_DEPTH_STENCIL_DESC& GetDesc() const { return Desc; }
+    virtual FRHIDepthStencilStateDesc GetDesc() const override final
+    {
+        return FRHIDepthStencilStateDesc();
+    }
+
+    FORCEINLINE const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const { return Desc; }
 
 private:
     D3D12_DEPTH_STENCIL_DESC Desc;
@@ -91,7 +96,12 @@ public:
         , Desc(InDesc)
     { }
 
-    FORCEINLINE const D3D12_RASTERIZER_DESC& GetDesc() const { return Desc; }
+    virtual FRHIRasterizerStateDesc GetDesc() const override final
+    {
+        return FRHIRasterizerStateDesc();
+    }
+
+    FORCEINLINE const D3D12_RASTERIZER_DESC& GetD3D12Desc() const { return Desc; }
 
 private:
     D3D12_RASTERIZER_DESC Desc;
@@ -108,8 +118,13 @@ public:
         , FD3D12DeviceChild(InDevice)
         , Desc(InDesc)
     { }
+    
+    virtual FRHIBlendStateDesc GetDesc() const override final
+    {
+        return FRHIBlendStateDesc();
+    }
 
-    FORCEINLINE const D3D12_BLEND_DESC& GetDesc() const { return Desc; }
+    FORCEINLINE const D3D12_BLEND_DESC& GetD3D12Desc() const { return Desc; }
 
 private:
     D3D12_BLEND_DESC Desc;
@@ -123,8 +138,6 @@ public:
     FD3D12PipelineState(FD3D12Device* InDevice)
         : FD3D12DeviceChild(InDevice)
     { }
-
-    ~FD3D12PipelineState() = default;
 
     void SetDebugName(const FString& InName)
     {
@@ -149,7 +162,7 @@ public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
     ~FD3D12GraphicsPipelineState() = default;
 
-    bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
+    bool Initialize(const FRHIGraphicsPipelineStateDesc& Initializer);
 
     virtual void SetName(const FString& InName) override final { FD3D12PipelineState::SetDebugName(InName); }
 };
@@ -186,7 +199,7 @@ public:
     FD3D12RayTracingPipelineState(FD3D12Device* InDevice);
     ~FD3D12RayTracingPipelineState() = default;
 
-    bool Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer);
+    bool Initialize(const FRHIRayTracingPipelineStateDesc& Initializer);
 
     virtual void SetName(const FString& InName) override
     {
@@ -196,8 +209,8 @@ public:
 
     void* GetShaderIdentifer(const FString& ExportName);
 
+    FORCEINLINE ID3D12StateObject*           GetD3D12StateObject() const           { return StateObject.Get(); }
     FORCEINLINE ID3D12StateObjectProperties* GetD3D12StateObjectProperties() const { return StateObjectProperties.Get(); }
-    FORCEINLINE ID3D12StateObject*           GetD3D12StateObject()           const { return StateObject.Get(); }
 
     FORCEINLINE FD3D12RootSignature* GetGlobalRootSignature()      const { return GlobalRootSignature.Get(); }
     FORCEINLINE FD3D12RootSignature* GetRayGenLocalRootSignature() const { return RayGenLocalRootSignature.Get(); }

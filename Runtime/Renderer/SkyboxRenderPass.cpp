@@ -125,7 +125,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIRasterizerStateInitializer RasterizerInitializer;
+    FRHIRasterizerStateDesc RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
@@ -135,7 +135,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIBlendStateInitializer BlendStateInitializer;
+    FRHIBlendStateDesc BlendStateInitializer;
 
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
@@ -144,7 +144,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+    FRHIDepthStencilStateDesc DepthStencilStateInitializer;
     DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
     DepthStencilStateInitializer.bDepthEnable   = true;
     DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
@@ -156,7 +156,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIGraphicsPipelineStateInitializer PSOInitializer;
+    FRHIGraphicsPipelineStateDesc PSOInitializer;
     PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();
     PSOInitializer.BlendState                             = BlendState.Get();
     PSOInitializer.DepthStencilState                      = DepthStencilState.Get();

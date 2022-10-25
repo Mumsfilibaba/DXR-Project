@@ -61,10 +61,10 @@ bool FRayTracer::Init(FFrameResources& Resources)
         return false;
     }
 
-    FRHIRayTracingPipelineStateInitializer PSOInitializer;
+    FRHIRayTracingPipelineStateDesc PSOInitializer;
     PSOInitializer.RayGenShaders           = { RayGenShader.Get() };
     PSOInitializer.MissShaders             = { RayMissShader.Get() };
-    PSOInitializer.HitGroups               = { FRHIRayTracingHitGroupInitializer("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
+    PSOInitializer.HitGroups               = { FRHIRayTracingHitGroupDesc("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
     PSOInitializer.MaxRecursionDepth       = 4;
     PSOInitializer.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
     PSOInitializer.MaxPayloadSizeInBytes   = sizeof(FRayPayload);

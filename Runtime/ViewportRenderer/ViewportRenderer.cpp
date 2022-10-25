@@ -120,7 +120,7 @@ bool FViewportRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    FRHIVertexInputLayoutInitializer InputLayoutInfo =
+    FRHIVertexInputLayoutDesc InputLayoutInfo =
     {
         { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EVertexInputClass::Vertex, 0 },
         { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EVertexInputClass::Vertex, 0 },
@@ -134,7 +134,7 @@ bool FViewportRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    FRHIDepthStencilStateInitializer DepthStencilStateInfo;
+    FRHIDepthStencilStateDesc DepthStencilStateInfo;
     DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
@@ -145,7 +145,7 @@ bool FViewportRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    FRHIRasterizerStateInitializer RasterizerStateInfo;
+    FRHIRasterizerStateDesc RasterizerStateInfo;
     RasterizerStateInfo.CullMode               = ECullMode::None;
     RasterizerStateInfo.bAntialiasedLineEnable = true;
 
@@ -156,7 +156,7 @@ bool FViewportRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    FRHIBlendStateInitializer BlendStateInfo;
+    FRHIBlendStateDesc BlendStateInfo;
     BlendStateInfo.bIndependentBlendEnable        = false;
     BlendStateInfo.RenderTargets[0].bBlendEnable  = true;
     BlendStateInfo.RenderTargets[0].SrcBlend      = EBlendType ::SrcAlpha;
@@ -182,7 +182,7 @@ bool FViewportRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    FRHIGraphicsPipelineStateInitializer PSOProperties;
+    FRHIGraphicsPipelineStateDesc PSOProperties;
     PSOProperties.ShaderState.VertexShader               = VShader.Get();
     PSOProperties.ShaderState.PixelShader                = PShader.Get();
     PSOProperties.VertexInputLayout                      = InputLayout.Get();

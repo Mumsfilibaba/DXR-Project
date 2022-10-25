@@ -55,6 +55,11 @@ public:
         return dbg_new FNullRHISamplerState(InDesc);
     }
 
+    virtual class FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) override final
+    {
+        return dbg_new FNullRHIViewport(InDesc);
+    }
+
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final
     {
         return dbg_new FNullRHIRayTracingScene(InDesc);
@@ -145,37 +150,37 @@ public:
         return dbg_new TNullRHIShader<FRHIRayMissShader>();
     }
 
-    virtual class FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer) override final
+    virtual class FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) override final
     {
-        return dbg_new FNullRHIDepthStencilState();
+        return dbg_new FNullRHIDepthStencilState(InDesc);
     }
 
-    virtual class FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer) override final
+    virtual class FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) override final
     {
-        return dbg_new FNullRHIRasterizerState();
+        return dbg_new FNullRHIRasterizerState(InDesc);
     }
 
-    virtual class FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& Initializer) override final
+    virtual class FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& InDesc) override final
     {
-        return dbg_new FNullRHIBlendState();
+        return dbg_new FNullRHIBlendState(InDesc);
     }
 
-    virtual class FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer) override final
+    virtual class FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& InDesc) override final
     {
         return dbg_new FNullRHIInputLayoutState();
     }
 
-    virtual class FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& Initializer) override final
+    virtual class FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) override final
     {
         return dbg_new FNullRHIGraphicsPipelineState();
     }
 
-    virtual class FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer) override final
+    virtual class FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) override final
     {
         return dbg_new FNullRHIComputePipelineState();
     }
 
-    virtual class FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Initializer) override final
+    virtual class FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final
     {
         return dbg_new FNullRHIRayTracingPipelineState();
     }
@@ -183,11 +188,6 @@ public:
     virtual class FRHITimestampQuery* RHICreateTimestampQuery() override final
     {
         return dbg_new FNullRHITimestampQuery();
-    }
-
-    virtual class FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) override final
-    {
-        return dbg_new FNullRHIViewport(InDesc);
     }
 
     virtual struct IRHICommandContext* RHIObtainCommandContext() override final

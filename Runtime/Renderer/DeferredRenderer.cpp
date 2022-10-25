@@ -73,7 +73,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilInitializer;
+        FRHIDepthStencilStateDesc DepthStencilInitializer;
         DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
         DepthStencilInitializer.bDepthEnable   = true;
         // TODO: We should use zero here, but alpha-masks are not rendered in pre-pass right now
@@ -86,7 +86,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInfo;
+        FRHIRasterizerStateDesc RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
         FRHIRasterizerStateRef GeometryRasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -96,7 +96,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
+        FRHIBlendStateDesc BlendStateInitializer;
 
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
@@ -105,7 +105,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
+        FRHIGraphicsPipelineStateDesc PSOInitializer;
         PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();
         PSOInitializer.BlendState                             = BlendState.Get();
         PSOInitializer.DepthStencilState                      = GeometryDepthStencilState.Get();
@@ -162,7 +162,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencil;
+        FRHIDepthStencilStateDesc DepthStencil;
         DepthStencil.DepthFunc      = EComparisonFunc::Less;
         DepthStencil.bDepthEnable   = true;
         DepthStencil.DepthWriteMask = EDepthWriteMask::All;
@@ -174,7 +174,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInfo;
+        FRHIRasterizerStateDesc RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -184,7 +184,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIBlendStateInitializer BlendStateInfo;
+        FRHIBlendStateDesc BlendStateInfo;
 
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
@@ -193,7 +193,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
+        FRHIGraphicsPipelineStateDesc PSOInitializer;
         PSOInitializer.VertexInputLayout                  = FrameResources.MeshInputLayout.Get();
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
@@ -281,7 +281,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInitializer PSOInitializer(CShader.Get());
+        FRHIComputePipelineStateDesc PSOInitializer(CShader.Get());
 
         FRHIComputePipelineStateRef BRDF_PipelineState = RHICreateComputePipelineState(PSOInitializer);
         if (!BRDF_PipelineState)
@@ -351,7 +351,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader.Get());
+        FRHIComputePipelineStateDesc DeferredLightPassInitializer(TiledLightShader.Get());
         TiledLightPassPSO = RHICreateComputePipelineState(DeferredLightPassInitializer);
         if (!TiledLightPassPSO)
         {
@@ -381,7 +381,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader_TileDebug.Get());
+        FRHIComputePipelineStateDesc DeferredLightPassInitializer(TiledLightShader_TileDebug.Get());
         TiledLightPassPSO_TileDebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
         if (!TiledLightPassPSO_TileDebug)
         {
@@ -415,7 +415,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader_CascadeDebug.Get());
+        FRHIComputePipelineStateDesc DeferredLightPassInitializer(TiledLightShader_CascadeDebug.Get());
         TiledLightPassPSO_CascadeDebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
         if (!TiledLightPassPSO_CascadeDebug)
         {
@@ -444,7 +444,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInitializer PipelineStateInfo(ReduceDepthInitalShader.Get());
+        FRHIComputePipelineStateDesc PipelineStateInfo(ReduceDepthInitalShader.Get());
         ReduceDepthInitalPSO = RHICreateComputePipelineState(PipelineStateInfo);
         if (!ReduceDepthInitalPSO)
         {
@@ -469,7 +469,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInitializer PSOInitializer(ReduceDepthShader.Get());
+        FRHIComputePipelineStateDesc PSOInitializer(ReduceDepthShader.Get());
         ReduceDepthPSO = RHICreateComputePipelineState(PSOInitializer);
         if (!ReduceDepthPSO)
         {

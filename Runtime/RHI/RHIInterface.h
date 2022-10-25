@@ -337,53 +337,53 @@ public:
     virtual FRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
-     * @brief             - Create a new DepthStencilState
-     * @param Initializer - Info about a DepthStencilState
-     * @return            - Returns the newly created DepthStencilState
+     * @brief        - Create a new DepthStencilState
+     * @param InDesc - Info about a DepthStencilState
+     * @return       - Returns the newly created DepthStencilState
      */
-    virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer) = 0;
+    virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) = 0;
 
     /**
-     * @brief             - Create a new RasterizerState
-     * @param Initializer - Info about a RasterizerState
-     * @return            - Returns the newly created RasterizerState
+     * @brief        - Create a new RasterizerState
+     * @param InDesc - Info about a RasterizerState
+     * @return       - Returns the newly created RasterizerState
      */
-    virtual FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer) = 0;
+    virtual FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) = 0;
 
     /**
-     * @brief             - Create a new BlendState
-     * @param Initializer - Info about a BlendState
-     * @return            - Returns the newly created BlendState
+     * @brief        - Create a new BlendState
+     * @param InDesc - Info about a BlendState
+     * @return       - Returns the newly created BlendState
      */
-    virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& Initializer) = 0;
+    virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& InDesc) = 0;
 
     /**
-     * @brief             - Create a new InputLayoutState
-     * @param Initializer - Info about a InputLayoutState
-     * @return            - Returns the newly created InputLayoutState
+     * @brief        - Create a new InputLayoutState
+     * @param InDesc - Info about a InputLayoutState
+     * @return       - Returns the newly created InputLayoutState
      */
-    virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer) = 0;
+    virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& InDesc) = 0;
 
     /**
-     * @brief             - Create a Graphics PipelineState
-     * @param Initializer - Info about the Graphics PipelineState
-     * @return            - Returns the newly created PipelineState
+     * @brief        - Create a Graphics PipelineState
+     * @param InDesc - Info about the Graphics PipelineState
+     * @return       - Returns the newly created PipelineState
      */
-    virtual FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& Initializer) = 0;
+    virtual FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) = 0;
     
     /**
-     * @brief             - Create a Compute PipelineState
-     * @param Initializer - Info about the Compute PipelineState
-     * @return            - Returns the newly created PipelineState
+     * @brief        - Create a Compute PipelineState
+     * @param InDesc - Info about the Compute PipelineState
+     * @return       - Returns the newly created PipelineState
      */
-    virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer) = 0;
+    virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) = 0;
     
     /**
-     * @brief             - Create a Ray-Tracing PipelineState
-     * @param Initializer - Info about the Ray-Tracing PipelineState
-     * @return            - Returns the newly created PipelineState
+     * @brief        - Create a Ray-Tracing PipelineState
+     * @param InDesc - Info about the Ray-Tracing PipelineState
+     * @return       - Returns the newly created PipelineState
      */
-    virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Initializer) = 0;
+    virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) = 0;
 
     /**
      * @brief  - Create a new Timestamp Query
@@ -574,37 +574,37 @@ FORCEINLINE FRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& Shade
     return GetRHIInterface()->RHICreateRayMissShader(ShaderCode);
 }
 
-FORCEINLINE FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
+FORCEINLINE FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateVertexInputLayout(Initializer);
 }
 
-FORCEINLINE FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer)
+FORCEINLINE FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateDepthStencilState(Initializer);
 }
 
-FORCEINLINE FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer)
+FORCEINLINE FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateRasterizerState(Initializer);
 }
 
-FORCEINLINE FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& Initializer)
+FORCEINLINE FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateBlendState(Initializer);
 }
 
-FORCEINLINE FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& Initializer)
+FORCEINLINE FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateGraphicsPipelineState(Initializer);
 }
 
-FORCEINLINE FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer)
+FORCEINLINE FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateComputePipelineState(Initializer);
 }
 
-FORCEINLINE FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Initializer)
+FORCEINLINE FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Initializer)
 {
     return GetRHIInterface()->RHICreateRayTracingPipelineState(Initializer);
 }

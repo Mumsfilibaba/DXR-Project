@@ -49,7 +49,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIVertexInputLayoutInitializer InputLayout =
+        FRHIVertexInputLayoutDesc InputLayout =
         {
             { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 },
         };
@@ -61,7 +61,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilInitializer;
+        FRHIDepthStencilStateDesc DepthStencilInitializer;
         DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
         DepthStencilInitializer.bDepthEnable   = false;
         DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::Zero;
@@ -73,7 +73,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        FRHIRasterizerStateDesc RasterizerStateInitializer;
         RasterizerStateInitializer.CullMode = ECullMode::None;
 
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
@@ -83,7 +83,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
+        FRHIBlendStateDesc BlendStateInitializer;
 
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
@@ -92,7 +92,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
+        FRHIGraphicsPipelineStateDesc PSOInitializer;
         PSOInitializer.BlendState                             = BlendState.Get();
         PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
         PSOInitializer.VertexInputLayout                      = InputLayoutState.Get();
@@ -205,7 +205,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
         DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
         DepthStencilStateInitializer.bDepthEnable   = true;
         DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::Zero;
@@ -217,7 +217,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        FRHIRasterizerStateDesc RasterizerStateInitializer;
         RasterizerStateInitializer.CullMode = ECullMode::None;
 
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
@@ -227,7 +227,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
+        FRHIBlendStateDesc BlendStateInitializer;
 
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
@@ -236,7 +236,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
+        FRHIGraphicsPipelineStateDesc PSOInitializer;
         PSOInitializer.BlendState               = BlendState.Get();
         PSOInitializer.DepthStencilState        = DepthStencilState.Get();
         PSOInitializer.VertexInputLayout        = Resources.MeshInputLayout.Get();

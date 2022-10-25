@@ -42,7 +42,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     }
 
     {
-        FRHIComputePipelineStateInitializer PSOInitializer(SSAOShader.Get());
+        FRHIComputePipelineStateDesc PSOInitializer(SSAOShader.Get());
         PipelineState = RHICreateComputePipelineState(PSOInitializer);
         if (!PipelineState)
         {
@@ -75,7 +75,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     }
 
     {
-        FRHIComputePipelineStateInitializer PSOInitializer;
+        FRHIComputePipelineStateDesc PSOInitializer;
         PSOInitializer.Shader = BlurHorizontalShader.Get();
 
         BlurHorizontalPSO = RHICreateComputePipelineState(PSOInitializer);
@@ -110,7 +110,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     }
 
     {
-        FRHIComputePipelineStateInitializer PSOInitializer;
+        FRHIComputePipelineStateDesc PSOInitializer;
         PSOInitializer.Shader = BlurVerticalShader.Get();
 
         BlurVerticalPSO = RHICreateComputePipelineState(PSOInitializer);

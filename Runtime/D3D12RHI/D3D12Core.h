@@ -532,7 +532,7 @@ CONSTEXPR D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
     return D3D12_LOGIC_OP();
 }
 
-inline uint8 ConvertRenderTargetWriteState(const FRenderTargetWriteState& RenderTargetWriteState)
+inline uint8 ConvertRenderTargetWriteState(const FRenderTargetWriteMask& RenderTargetWriteState)
 {
     uint8 RenderTargetWriteMask = 0;
     if (RenderTargetWriteState.WriteAll())
