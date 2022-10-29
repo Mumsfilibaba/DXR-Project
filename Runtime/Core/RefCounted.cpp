@@ -1,24 +1,24 @@
 #include "RefCounted.h"
 
 FRefCounted::FRefCounted()
-    : StrongReferences(1)
+    : NumRefs(1)
 { }
 
 FRefCounted::~FRefCounted()
 {
-    CHECK(StrongReferences.Load() == 0);
+    CHECK(NumRefs.Load() == 0);
 }
 
 int32 FRefCounted::AddRef()
 {
-    CHECK(StrongReferences.Load() > 0);
-    ++StrongReferences;
-    return StrongReferences.Load();
+    CHECK(NumRefs.Load() > 0);
+    ++NumRefs;
+    return NumRefs.Load();
 }
 
 int32 FRefCounted::Release()
 {
-    const int32 RefCount = --StrongReferences;
+    const int32 RefCount = --NumRefs;
     CHECK(RefCount >= 0);
 
     if (RefCount < 1)
@@ -31,5 +31,5 @@ int32 FRefCounted::Release()
 
 int32 FRefCounted::GetRefCount() const
 {
-    return StrongReferences.Load();
+    return NumRefs.Load();
 }

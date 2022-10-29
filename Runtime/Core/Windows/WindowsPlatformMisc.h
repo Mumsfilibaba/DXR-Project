@@ -5,7 +5,6 @@
 #include "Core/Containers/String.h"
 #include "Core/Generic/GenericPlatformMisc.h"
 
-
 struct FWindowsPlatformMisc final 
     : public FGenericPlatformMisc
 {
@@ -27,15 +26,13 @@ struct FWindowsPlatformMisc final
     static FORCEINLINE int32 GetLastErrorString(FString& OutErrorString)
     {
         const int32 LastError = ::GetLastError();
+        const int32 Flags     = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
 
-        const uint32 Flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
+        LPSTR MessageBuffer = nullptr;
 
-        LPSTR  MessageBuffer = nullptr;
-        uint32 MessageLength = FormatMessageA(Flags, nullptr, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&MessageBuffer, 0, nullptr);
-
+        const uint32 MessageLength = FormatMessageA(Flags, nullptr, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&MessageBuffer, 0, nullptr);
         OutErrorString.Clear();
         OutErrorString.Append(MessageBuffer, MessageLength);
-
         LocalFree(MessageBuffer);
         return LastError;
     }

@@ -17,16 +17,6 @@ public:
     virtual int32 GetRefCount() const override;
 
 private:
-    FAtomicInt32 StrongReferences;
+    FAtomicInt32 NumRefs;
 };
 
-template<typename T>
-FORCEINLINE typename TEnableIf<TIsBaseOf<FRefCounted, T>::Value, typename TAddPointer<T>::Type>::Type AddRef(T* InRefCounted)
-{
-    if (InRefCounted)
-    {
-        InRefCounted->AddRef();
-    }
-
-    return InRefCounted;
-}

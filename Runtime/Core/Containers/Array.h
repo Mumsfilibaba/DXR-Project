@@ -6,6 +6,7 @@
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ObjectHandling.h"
+#include "Core/Templates/Functional.h"
 
 template<typename T, typename AllocatorType = TDefaultArrayAllocator<T>>
 class TArray
@@ -737,7 +738,7 @@ public:
      * @param Element - Element to remove
      */
     template<typename PredicateType>
-    FORCEINLINE void RemoveAll(PredicateType&& Predicate) noexcept
+    FORCEINLINE void RemoveAllWithPredicate(PredicateType&& Predicate) noexcept
     {
         for (SizeType Index = 0; Index < ArraySize;)
         {

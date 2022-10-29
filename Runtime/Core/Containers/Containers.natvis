@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="TArray&lt;*,TDefaultArrayAllocator&lt;*&gt;&gt;">
+    <DisplayString>{{ Size={ArraySize} Capacity={ArrayCapacity} }}</DisplayString>
+    <Expand>
+      <Item Name="[Size]">ArraySize</Item>
+      <Item Name="[Capacity]">ArrayCapacity</Item>
+      <ArrayItems>
+        <Size>ArraySize</Size>
+        <ValuePointer>Allocator.Allocation</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  
+  <Type Name="TArray&lt;*, TInlineArrayAllocator&lt;*,*&gt;&gt;">
+    <DisplayString>{{ Size={ArraySize} Capacity={ArrayCapacity} }}</DisplayString>
+    <Expand>
+      <Item Name="[Size]">ArraySize</Item>
+      <Item Name="[Capacity]">ArrayCapacity</Item>
+      <ArrayItems>
+        <Size>ArraySize</Size>
+        <ValuePointer Condition="ArrayCapacity &lt;= $T3">($T1*)Allocator.InlineAllocation.InlineAllocation</ValuePointer>
+        <ValuePointer Condition="ArrayCapacity &gt;  $T3">Allocator.DynamicAllocation.Allocation</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="TArrayView&lt;*&gt;">
+    <DisplayString>{{ Size={ViewSize} }}</DisplayString>
+    <Expand>
+      <Item Name="[Size]">ViewSize</Item>
+      <ArrayItems Condition="View != 0">
+        <Size>ViewSize</Size>
+        <ValuePointer>View</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="TStaticArray&lt;*,*&gt;">
+    <DisplayString>{{ Size={$T2} }}</DisplayString>
+    <Expand>
+      <Item Name="[Size]">$T2</Item>
+      <ArrayItems>
+        <Size>$T2</Size>
+        <ValuePointer>Elements</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="TString&lt;char&gt;">
+    <DisplayString Condition="Characters.ArrayCapacity &lt;= 16">{Characters.Allocator.InlineAllocation.InlineAllocation,s}</DisplayString>
+    <DisplayString Condition="Characters.ArrayCapacity &gt; 16">{Characters.Allocator.DynamicAllocation.Allocation,s}</DisplayString>
+    <StringView Condition="Characters.ArrayCapacity &lt;= 16">Characters.Allocator.InlineAllocation.InlineAllocation,s</StringView>
+    <StringView Condition="Characters.ArrayCapacity &gt; 16">Characters.Allocator.DynamicAllocation.Allocation,s</StringView>
+    <Expand>
+      <Item Name="[Size]"     ExcludeView="simple">Characters.ArraySize</Item>
+      <Item Name="[Capacity]" ExcludeView="simple">Characters.ArrayCapacity</Item>
+      <ArrayItems>
+        <Size>Characters.ArraySize</Size>
+        <ValuePointer Condition="Characters.ArrayCapacity &lt;= 16">(const char*)(&amp;Characters.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
+        <ValuePointer Condition="Characters.ArrayCapacity &gt; 16">Characters.Allocator.DynamicAllocation.Allocation</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="TString&lt;wchar_t&gt;">
+    <DisplayString Condition="Characters.ArrayCapacity &lt;= 16">{Characters.Allocator.InlineAllocation.InlineAllocation,su}</DisplayString>
+    <DisplayString Condition="Characters.ArrayCapacity &gt; 16">{Characters.Allocator.DynamicAllocation.Allocation,su}</DisplayString>
+    <StringView Condition="Characters.ArrayCapacity &lt;= 16">Characters.Allocator.InlineAllocation.InlineAllocation,su</StringView>
+    <StringView Condition="Characters.ArrayCapacity &gt; 16">Characters.Allocator.DynamicAllocation.Allocation,su</StringView>
+    <Expand>
+      <Item Name="[Size]"     ExcludeView="simple">Characters.ArraySize</Item>
+      <Item Name="[Capacity]" ExcludeView="simple">Characters.ArrayCapacity</Item>
+      <ArrayItems>
+        <Size>Characters.ArraySize</Size>
+        <ValuePointer Condition="Characters.ArrayCapacity &lt;= 16">(const wchar_t*)(&amp;Characters.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
+        <ValuePointer Condition="Characters.ArrayCapacity &gt; 16">Characters.Allocator.DynamicAllocation.Allocation</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="TStaticString&lt;char,*&gt;">
+    <DisplayString>{Characters,s}</DisplayString>
+    <StringView>Characters,s</StringView>
+    <Expand>
+      <Item Name="[Size]" ExcludeView="simple">$T1</Item>
+      <ArrayItems>
+        <Size>$T1</Size>
+        <ValuePointer>Characters</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="TStaticString&lt;wchar_t,*&gt;">
+    <DisplayString>{Characters,su}</DisplayString>
+    <StringView>Characters,su</StringView>
+    <Expand>
+      <Item Name="[Size]" ExcludeView="simple">$T1</Item>
+      <ArrayItems>
+        <Size>$T1</Size>
+        <ValuePointer>Characters</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="TStringView&lt;*&gt;">
+    <DisplayString>{ViewStart,[ViewEnd-ViewStart]}</DisplayString>
+    <StringView>ViewStart,[ViewEnd-ViewStart]</StringView>
+    <Expand>
+      <Item Name="[Size]" ExcludeView="simple">ViewEnd-ViewStart</Item>
+      <ArrayItems>
+        <Size>ViewEnd-ViewStart</Size>
+        <ValuePointer>ViewStart</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="TSharedPtr&lt;*&gt;">
+    <DisplayString Condition="(Storage.Object != 0) &amp;&amp; ((Storage.Counter != 0) &amp;&amp; (Storage.Counter->NumStrongRefs.Value &gt; 0))">
+      {Storage.Object} [NumStrongRefs={ Storage.Counter->NumStrongRefs } NumWeakRefs={ Storage.Counter->NumWeakRefs }]
+    </DisplayString>
+    <DisplayString Condition="(Storage.Counter != 0)">{{ NumStrongRefs={Storage.Counter->NumStrongRefs} NumWeakRefs={Storage.Counter->NumWeakRefs} }}</DisplayString>
+    <DisplayString>Empty</DisplayString>
+    <Expand>
+      <Item Name="[Pointer]" Condition="(Storage.Object != 0) &amp;&amp; ((Storage.Counter != 0) &amp;&amp; (Storage.Counter->NumStrongRefs.Value &gt; 0))">Storage.Object</Item>
+      <Item Name="[NumStrongRefs]" Condition="(Storage.Counter != 0)">Storage.Counter->NumStrongRefs</Item>
+      <Item Name="[NumWeakRefs]" Condition="(Storage.Counter != 0)">Storage.Counter->NumWeakRefs</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="TWeakPtr&lt;*&gt;">
+    <DisplayString Condition="(Storage.Object != 0) &amp;&amp; ((Storage.Counter != 0) &amp;&amp; (Storage.Counter->NumStrongRefs.Value &gt; 0))">
+      {Storage.Object} [NumStrongRefs={ Storage.Counter->NumStrongRefs } NumWeakRefs={ Storage.Counter->NumWeakRefs }]
+    </DisplayString>
+    <DisplayString Condition="Storage.Counter != 0">{{ NumStrongRefs={Storage.Counter->NumStrongRefs} NumWeakRefs={Storage.Counter->NumWeakRefs} }}</DisplayString>
+    <DisplayString>Empty</DisplayString>
+    <Expand>
+      <Item Name="[Pointer]" Condition="(Storage.Object != 0) &amp;&amp; ((Storage.Counter != 0) &amp;&amp; (Storage.Counter->NumStrongRefs.Value &gt; 0))">Storage.Object</Item>
+      <Item Name="[NumStrongRefs]" Condition="(Storage.Counter != 0)">Storage.Counter->NumStrongRefs</Item>
+      <Item Name="[NumWeakRefs]" Condition="(Storage.Counter != 0)">Storage.Counter->NumWeakRefs</Item>
+    </Expand>
+  </Type>
+
+
+  <Type Name="TSharedRef&lt;*&gt;">
+    <DisplayString Condition="(Object != 0)">{{ Pointer={Object} References={Object->GetRefCount()} }}</DisplayString>
+    <DisplayString>Empty</DisplayString>
+    <Expand>
+      <Item Name="[Pointer]">Object</Item>
+      <Item Name="[References]" Condition="(Object != 0)">Object->GetRefCount()</Item>
+    </Expand>
+  </Type>
+
+
+  <Type Name="TUniquePtr&lt;*&gt;">
+    <DisplayString Condition="(Object != 0)">{{ Pointer={Object} }}</DisplayString>
+    <DisplayString>Empty</DisplayString>
+    <Expand>
+      <Item Name="[Pointer]" Condition="(Object != 0)">Object</Item>
+    </Expand>
+  </Type>
+</AutoVisualizer>

@@ -15,6 +15,7 @@
 #include "Core/Misc/EngineLoopTicker.h"
 #include "Core/Misc/OutputDeviceConsole.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/EngineConfig.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
@@ -115,6 +116,9 @@ bool FEngineLoop::PreInit()
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Load Core-Modules");
         return false;
     }
+
+    // Parse the main engine config
+    GConfig.ParseFile();
 
 #if !PRODUCTION_BUILD
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");

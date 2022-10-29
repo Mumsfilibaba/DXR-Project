@@ -10,7 +10,7 @@ void TStaticArray_Test()
 {
     std::cout << std::endl << "----------TStaticArray----------" << std::endl << std::endl;
 
-    constexpr uint32 Num = 16;
+    CONSTEXPR uint32 Num = 16;
     TStaticArray<int32, Num> Numbers;
     const TStaticArray<int32, Num>& ConstNumbers = Numbers;
 
@@ -57,18 +57,18 @@ void TStaticArray_Test()
 
     std::cout << "Testing Range Based For-Loops" << std::endl;
 
-    constexpr uint32 Num2 = 6;
+    CONSTEXPR uint32 Num2 = 6;
     TStaticArray<uint32, Num2> Numbers1 = { 5, 6, 7 };
     TStaticArray<uint32, Num2> Numbers2 = { 15, 16, 17 };
 
-    for ( const uint32 Number : Numbers1 )
+    for (const uint32 Number : Numbers1)
     {
         std::cout << Number << std::endl;
     }
 
     std::cout << "Testing Swap" << std::endl;
 
-    for ( const uint32 Number : Numbers2 )
+    for (const uint32 Number : Numbers2)
     {
         std::cout << Number << std::endl;
     }

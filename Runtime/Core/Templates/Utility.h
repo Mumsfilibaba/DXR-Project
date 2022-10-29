@@ -100,7 +100,7 @@ struct TMemberFunctionType<true, ClassType, ReturnType(ArgTypes...)>
 };
 
 
-template<int32 kNumBytes, int32 kAlignment>
+template<int32 NumBytes, int32 Alignment>
 class TAlignedStorage
 {
 public:
@@ -135,7 +135,7 @@ public:
     }
 
 private:
-    ALIGN_AS(kAlignment) uint8 Storage[kNumBytes];
+    ALIGN_AS(Alignment) uint8 Storage[NumBytes];
 };
 
 

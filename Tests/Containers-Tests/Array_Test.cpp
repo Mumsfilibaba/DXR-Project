@@ -11,7 +11,7 @@
 
 #include <Core/Containers/Array.h>
 
-#define ENABLE_INLINE_ALLOCATOR         (0)
+#define ENABLE_INLINE_ALLOCATOR         (1)
 #define ENABLE_STD_STRING_REALLOCATABLE (1)
 #define ENABLE_SHRINKTOFIT_BENCHMARK    (0)
 #define ENABLE_SORT_BENCHMARK           (0)
@@ -881,13 +881,13 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Testing Constructors:" << '\n' << '\n';
 
         TArray<std::string, TArrayAllocator<std::string>> Strings0;
-        CHECK(Strings0.IsEmpty());
+        TEST_CHECK(Strings0.IsEmpty());
 
         TArray<std::string, TArrayAllocator<std::string>> Strings1(5, "Hello");
-        CHECK_ARRAY(Strings1, { "Hello", "Hello", "Hello", "Hello", "Hello" });
+        TEST_CHECK_ARRAY(Strings1, { "Hello", "Hello", "Hello", "Hello", "Hello" });
 
         TArray<std::string, TArrayAllocator<std::string>> Strings2(Strings1.GetData(), Strings1.GetSize());
-        CHECK_ARRAY(Strings2, { "Hello", "Hello", "Hello", "Hello", "Hello" });
+        TEST_CHECK_ARRAY(Strings2, { "Hello", "Hello", "Hello", "Hello", "Hello" });
 
         TArray<std::string, TArrayAllocator<std::string>> Strings3 =
         {
@@ -896,7 +896,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
             "This is a longer teststring"
         };
 
-        CHECK_ARRAY(Strings3, { "Hello World", "TArray", "This is a longer teststring" });
+        TEST_CHECK_ARRAY(Strings3, { "Hello World", "TArray", "This is a longer teststring" });
 
         {
             /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -905,14 +905,14 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
             std::cout << '\n' << "Test Copy Constructor" << '\n' << '\n';
 
             TArray<std::string, TArrayAllocator<std::string>> Strings4 = Strings0;
-            CHECK(Strings4.IsEmpty());
+            TEST_CHECK(Strings4.IsEmpty());
             
             TArray<std::string, TArrayAllocator<std::string>> Strings5 = Strings1;
 
             std::cout << '\n' << "Before move" << '\n' << '\n';
 
-            CHECK(!Strings5.IsEmpty());
-            CHECK_ARRAY(Strings5, { "Hello", "Hello", "Hello", "Hello", "Hello" });
+            TEST_CHECK(!Strings5.IsEmpty());
+            TEST_CHECK_ARRAY(Strings5, { "Hello", "Hello", "Hello", "Hello", "Hello" });
 
             /*///////////////////////////////////////////////////////////////////////////////////////////////*/
             // Testing Move Constructor
@@ -923,8 +923,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
             std::cout << '\n' << "After move" << '\n' << '\n';
 
-            CHECK(Strings5.IsEmpty());
-            CHECK_ARRAY(Strings6, { "Hello", "Hello", "Hello", "Hello", "Hello" });
+            TEST_CHECK(Strings5.IsEmpty());
+            TEST_CHECK_ARRAY(Strings6, { "Hello", "Hello", "Hello", "Hello", "Hello" });
         }
 
         /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -933,7 +933,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Testing Reset" << '\n' << '\n';
 
         Strings0.Reset(7, "This is a teststring");
-        CHECK_ARRAY(Strings0,
+        TEST_CHECK_ARRAY(Strings0,
         {
             "This is a teststring",
             "This is a teststring",
@@ -945,10 +945,10 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings1.Reset({ "Test-String #1", "Test-String #2", "Test-String #3" });
-        CHECK_ARRAY(Strings1, { "Test-String #1", "Test-String #2", "Test-String #3" });
+        TEST_CHECK_ARRAY(Strings1, { "Test-String #1", "Test-String #2", "Test-String #3" });
 
         Strings2.Reset(Strings3.GetData(), Strings3.GetSize());
-        CHECK_ARRAY(Strings2, { "Hello World", "TArray", "This is a longer teststring" });
+        TEST_CHECK_ARRAY(Strings2, { "Hello World", "TArray", "This is a longer teststring" });
 
         /*///////////////////////////////////////////////////////////////////////////////////////////////*/
         // Testing Resize
@@ -958,7 +958,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         TArray<std::string, TArrayAllocator<std::string>> Strings4;
 
         Strings4.Resize(10, "New String");
-        CHECK_ARRAY(Strings4,
+        TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
             "New String",
@@ -973,9 +973,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings3.Resize(4, "Hi, hi");
-        CHECK(Strings3.GetSize()     == 4);
-        CHECK(Strings3.GetCapacity() == 4);
-        CHECK_ARRAY(Strings3,
+        TEST_CHECK(Strings3.GetSize()     == 4);
+        TEST_CHECK(Strings3.GetCapacity() == 4);
+        TEST_CHECK_ARRAY(Strings3,
         {
             "Hello World",
             "TArray",
@@ -984,9 +984,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings1.Resize(6, "Hello World");
-        CHECK(Strings1.GetSize()     == 6);
-        CHECK(Strings1.GetCapacity() == 6);
-        CHECK_ARRAY(Strings1, 
+        TEST_CHECK(Strings1.GetSize()     == 6);
+        TEST_CHECK(Strings1.GetCapacity() == 6);
+        TEST_CHECK_ARRAY(Strings1, 
         { 
             "Test-String #1",
             "Test-String #2",
@@ -997,9 +997,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings3.Resize(5, "No i am your father");
-        CHECK(Strings3.GetSize()     == 5);
-        CHECK(Strings3.GetCapacity() == 5);
-        CHECK_ARRAY(Strings3,
+        TEST_CHECK(Strings3.GetSize()     == 5);
+        TEST_CHECK(Strings3.GetCapacity() == 5);
+        TEST_CHECK_ARRAY(Strings3,
         {
             "Hello World",
             "TArray",
@@ -1014,12 +1014,12 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << "Testing Shrinking Resize" << '\n' << '\n';
         
         Strings4.Resize(2, "New String");
-        CHECK_ARRAY(Strings4, { "New String", "New String" });
+        TEST_CHECK_ARRAY(Strings4, { "New String", "New String" });
 
         std::cout << "Testing Growing Resize" << '\n' << '\n';
 
         Strings4.Resize(15, "New String");
-        CHECK_ARRAY(Strings4,
+        TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
             "New String",
@@ -1044,9 +1044,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Testing Reserve" << '\n' << '\n';
 
         Strings4.Reserve(Strings4.GetCapacity());
-        CHECK(Strings4.GetSize()     == 15);
-        CHECK(Strings4.GetCapacity() == 15);
-        CHECK_ARRAY(Strings4,
+        TEST_CHECK(Strings4.GetSize()     == 15);
+        TEST_CHECK(Strings4.GetCapacity() == 15);
+        TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
             "New String",
@@ -1068,9 +1068,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << "Shrinking" << '\n' << '\n';
 
         Strings4.Reserve(5);
-        CHECK(Strings4.GetSize()     == 5);
-        CHECK(Strings4.GetCapacity() == 5);
-        CHECK_ARRAY(Strings4,
+        TEST_CHECK(Strings4.GetSize()     == 5);
+        TEST_CHECK(Strings4.GetCapacity() == 5);
+        TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
             "New String",
@@ -1082,9 +1082,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << "Growing" << '\n' << '\n';
         
         Strings4.Reserve(10);
-        CHECK(Strings4.GetSize()     == 5);
-        CHECK(Strings4.GetCapacity() == 10);
-        CHECK_ARRAY(Strings4,
+        TEST_CHECK(Strings4.GetSize()     == 5);
+        TEST_CHECK(Strings4.GetCapacity() == 10);
+        TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
             "New String",
@@ -1096,9 +1096,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << "Resize" << '\n' << '\n';
 
         Strings4.Resize(Strings4.GetCapacity() - 2, "This spot is reserved");
-        CHECK(Strings4.GetSize()     == 8);
-        CHECK(Strings4.GetCapacity() == 10);
-        CHECK_ARRAY(Strings4,
+        TEST_CHECK(Strings4.GetSize()     == 8);
+        TEST_CHECK(Strings4.GetCapacity() == 10);
+        TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
             "New String",
@@ -1116,9 +1116,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Testing Shrink" << '\n' << '\n';
 
         Strings4.Shrink();
-        CHECK(Strings4.GetSize()     == 8);
-        CHECK(Strings4.GetCapacity() == 8);
-        CHECK_ARRAY(Strings4,
+        TEST_CHECK(Strings4.GetSize()     == 8);
+        TEST_CHECK(Strings4.GetCapacity() == 8);
+        TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
             "New String",
@@ -1136,9 +1136,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Testing Assignment" << '\n' << '\n';
 
         Strings0 = Strings4;
-        CHECK(Strings0.GetSize()     == 8);
-        CHECK(Strings0.GetCapacity() == 8);
-        CHECK_ARRAY(Strings0,
+        TEST_CHECK(Strings0.GetSize()     == 8);
+        TEST_CHECK(Strings0.GetCapacity() == 8);
+        TEST_CHECK_ARRAY(Strings0,
         {
             "New String",
             "New String",
@@ -1151,9 +1151,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings1 = Move(Strings3);
-        CHECK(Strings1.GetSize()     == 5);
-        CHECK(Strings1.GetCapacity() == 5);
-        CHECK_ARRAY(Strings1,
+        TEST_CHECK(Strings1.GetSize()     == 5);
+        TEST_CHECK(Strings1.GetCapacity() == 5);
+        TEST_CHECK_ARRAY(Strings1,
         {
             "Hello World",
             "TArray",
@@ -1169,9 +1169,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
             "Letters to fill up space in a string"
         };
 
-        CHECK(Strings2.GetSize()     == 3);
-        CHECK(Strings2.GetCapacity() == 5);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize()     == 3);
+        TEST_CHECK(Strings2.GetCapacity() == 5);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Another String in a InitializerList",
             "Strings are kinda cool",
@@ -1188,8 +1188,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
             Strings2.Push("This is Pushed String #" + std::to_string(i));
         }
 
-        CHECK(Strings2.GetSize() == 9);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 9);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Another String in a InitializerList",
             "Strings are kinda cool",
@@ -1210,8 +1210,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         PRINT_ARRAY(Strings2);
 
-        CHECK(Strings2.GetSize() == 15);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 15);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Another String in a InitializerList",
             "Strings are kinda cool",
@@ -1239,8 +1239,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
             Strings2.Emplace("This is an Emplaced String #" + std::to_string(i));
         }
 
-        CHECK(Strings2.GetSize() == 21);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 21);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Another String in a InitializerList",
             "Strings are kinda cool",
@@ -1276,8 +1276,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         PRINT_ARRAY(Strings2);
         
-        CHECK(Strings2.GetSize() == 18);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 18);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Another String in a InitializerList",
             "Strings are kinda cool",
@@ -1309,8 +1309,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         PRINT_ARRAY(Strings2);
 
-        CHECK(Strings2.GetSize() == 19);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 19);
+        TEST_CHECK_ARRAY(Strings2,
         {
             ArgvStr.c_str(),
             "Another String in a InitializerList",
@@ -1334,8 +1334,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings2.Insert(0, "Inserted String");
-        CHECK(Strings2.GetSize() == 20);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 20);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String",
             ArgvStr.c_str(),
@@ -1360,8 +1360,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings2.Insert(0, { "Inserted String #1", "Inserted String #2" });
-        CHECK(Strings2.GetSize() == 22);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 22);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String #1",
             "Inserted String #2",
@@ -1391,8 +1391,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         Strings2.Insert(2, ArgvStr);
         PRINT_ARRAY(Strings2);
 
-        CHECK(Strings2.GetSize() == 23);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 23);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String #1",
             "Inserted String #2",
@@ -1420,8 +1420,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings2.Insert(2, "Inserted String Again");
-        CHECK(Strings2.GetSize() == 24);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 24);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String #1",
             "Inserted String #2",
@@ -1450,8 +1450,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings2.Insert(2, { "Inserted String Again #1", "Inserted String Again #2" });
-        CHECK(Strings2.GetSize() == 26);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 26);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String #1",
             "Inserted String #2",
@@ -1484,8 +1484,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "At End" << '\n' << '\n';
 
         Strings2.Insert(Strings2.GetSize(), { "Inserted String At End #1", "Inserted String At End #2" });
-        CHECK(Strings2.GetSize() == 28);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 28);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String #1",
             "Inserted String #2",
@@ -1521,14 +1521,14 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        CHECK(Strings2.GetCapacity() == 28);
+        TEST_CHECK(Strings2.GetCapacity() == 28);
 
         Strings2.Insert(0, ArgvStr);
         
         PRINT_ARRAY(Strings2);
 
-        CHECK(Strings2.GetSize() == 29);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 29);
+        TEST_CHECK_ARRAY(Strings2,
         {
             ArgvStr.c_str(),
             "Inserted String #1",
@@ -1563,11 +1563,11 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        CHECK(Strings2.GetCapacity() == 29);
+        TEST_CHECK(Strings2.GetCapacity() == 29);
 
         Strings2.Insert(0, "Inserted String Reallocated");
-        CHECK(Strings2.GetSize() == 30);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 30);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated",
             ArgvStr.c_str(),
@@ -1603,11 +1603,11 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        CHECK(Strings2.GetCapacity() == 30);
+        TEST_CHECK(Strings2.GetCapacity() == 30);
 
         Strings2.Insert(0, { "Inserted String Reallocated #1", "Inserted String Reallocated #2" });
-        CHECK(Strings2.GetSize() == 32);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 32);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #1",
             "Inserted String Reallocated #2",
@@ -1647,13 +1647,13 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        CHECK(Strings2.GetCapacity() == 32);
+        TEST_CHECK(Strings2.GetCapacity() == 32);
 
         Strings2.Insert(2, ArgvStr);
         PRINT_ARRAY(Strings2);
 
-        CHECK(Strings2.GetSize() == 33);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 33);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #1",
             "Inserted String Reallocated #2",
@@ -1692,11 +1692,11 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        CHECK(Strings2.GetCapacity() == 33);
+        TEST_CHECK(Strings2.GetCapacity() == 33);
 
         Strings2.Insert(2, "Inserted String Again Reallocated");
-        CHECK(Strings2.GetSize() == 34);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 34);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #1",
             "Inserted String Reallocated #2",
@@ -1736,11 +1736,11 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        CHECK(Strings2.GetCapacity() == 34);
+        TEST_CHECK(Strings2.GetCapacity() == 34);
 
         Strings2.Insert(2, { "Inserted String Again Reallocated #1", "Inserted String Again Reallocated #2" });
-        CHECK(Strings2.GetSize() == 36);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 36);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #1",
             "Inserted String Reallocated #2",
@@ -1784,11 +1784,11 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        CHECK(Strings2.GetCapacity() == 36);
+        TEST_CHECK(Strings2.GetCapacity() == 36);
 
         Strings2.Insert(Strings2.GetSize(), { "Inserted String At End Reallocated #1", "Inserted String At End Reallocated #2" });
-        CHECK(Strings2.GetSize() == 38);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 38);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #1",
             "Inserted String Reallocated #2",
@@ -1838,8 +1838,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "At front" << '\n' << '\n';
 
         Strings2.RemoveAt(0);
-        CHECK(Strings2.GetSize() == 37);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 37);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #2",
             "Inserted String Again Reallocated #1",
@@ -1883,8 +1883,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "At Arbitrary" << '\n' << '\n';
 
         Strings2.RemoveAt(2);
-        CHECK(Strings2.GetSize() == 36);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 36);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #2",
             "Inserted String Again Reallocated #1",
@@ -1932,8 +1932,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Range At front" << '\n' << '\n';
         
         Strings2.RemoveRangeAt(0, 2);
-        CHECK(Strings2.GetSize() == 34);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 34);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Again Reallocated",
             ArgvStr.c_str(),
@@ -1974,8 +1974,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Range At Arbitrary" << '\n' << '\n';
 
         Strings2.RemoveRangeAt(4, 3);
-        CHECK(Strings2.GetSize() == 31);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 31);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Again Reallocated",
             ArgvStr.c_str(),
@@ -2013,8 +2013,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Range At End" << '\n' << '\n';
         
         Strings2.RemoveRangeAt(Strings2.GetSize() - 3, 3);
-        CHECK(Strings2.GetSize() == 28);
-        CHECK_ARRAY(Strings2,
+        TEST_CHECK(Strings2.GetSize() == 28);
+        TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Again Reallocated",
             ArgvStr.c_str(),

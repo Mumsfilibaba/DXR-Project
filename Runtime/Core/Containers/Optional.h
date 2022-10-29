@@ -242,8 +242,10 @@ public:
      * @return      - Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType,
-        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& Other) noexcept
+    FORCEINLINE typename TEnableIf<
+            TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value,
+            typename TAddLValueReference<TOptional>::Type
+        >::Type operator=(const TOptional<OtherType>& Other) noexcept
     {
         TOptional(Other).Swap(*this);
         return *this;
@@ -266,8 +268,10 @@ public:
      * @return      - Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType,
-        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& Other) noexcept
+    FORCEINLINE typename TEnableIf<
+            TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value,
+            typename TAddLValueReference<TOptional>::Type
+        >::Type operator=(TOptional<OtherType>&& Other) noexcept
     {
         TOptional(Other).Swap(*this);
         return *this;
@@ -279,8 +283,10 @@ public:
      * @return      - Returns a reference to this instance
      */
     template<typename OtherType = T>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType,
-        typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& Other) noexcept
+    FORCEINLINE typename TEnableIf<
+            TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value,
+            typename TAddLValueReference<TOptional>::Type
+        >::Type operator=(OtherType&& Other) noexcept
     {
         TOptional(Other).Swap(*this);
         return *this;
@@ -343,8 +349,7 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns true if the values are equal
      */
-    NODISCARD
-    friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!LHS.HasValue() && !RHS.HasValue())
         {
@@ -365,8 +370,7 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns false if the values are equal
      */
-    NODISCARD
-    friend FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS != RHS);
     }
@@ -377,8 +381,7 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns true if the LHS is less than RHS
      */
-    NODISCARD
-    friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!LHS.HasValue() && !RHS.HasValue())
         {
@@ -399,8 +402,7 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns true if the LHS is less than or equal to RHS
      */
-    NODISCARD
-    friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!LHS.HasValue() && !RHS.HasValue())
         {
@@ -421,8 +423,7 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns true if LHS is greater than RHS
      */
-    NODISCARD
-    friend FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS <= RHS);
     }
@@ -433,8 +434,7 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns true if the LHS is greater than or equal to RHS
      */
-    NODISCARD
-    friend FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS < RHS);
     }

@@ -138,20 +138,16 @@ class TInlineArrayAllocator
     public:
         using SizeType = int32;
 
-        TInlineStorage()  = default;
-        ~TInlineStorage() = default;
-
-        NODISCARD FORCEINLINE ElementType* GetElements() noexcept
+        NODISCARD CONSTEXPR ElementType* GetElements() noexcept
         {
             return reinterpret_cast<ElementType*>(InlineAllocation);
         }
 
-        NODISCARD FORCEINLINE const ElementType* GetElements() const noexcept
+        NODISCARD CONSTEXPR const ElementType* GetElements() const noexcept
         {
             return reinterpret_cast<const ElementType*>(InlineAllocation);
         }
 
-    public:
         NODISCARD CONSTEXPR SizeType GetSize() const noexcept
         {
             return sizeof(InlineAllocation);
@@ -207,7 +203,14 @@ public:
 
     FORCEINLINE void Free() noexcept
     {
-        DynamicAllocation.Free();
+        if (!DynamicAllocation.HasAllocation())
+        {
+            FMemory::Memzero(reinterpret_cast<void*>(InlineAllocation.GetElements()), InlineAllocation.GetSize());
+        }
+        else
+        {
+            DynamicAllocation.Free();
+        }
     }
 
     FORCEINLINE void MoveFrom(TInlineArrayAllocator&& Other)
@@ -217,6 +220,7 @@ public:
         if (!Other.DynamicAllocation.HasAllocation())
         {
             ::RelocateElements<ElementType>(InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements);
+            FMemory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.GetSize());
         }
 
         // This call Free's any potential dynamic allocation we own

@@ -3,6 +3,7 @@
 #if RUN_TSHAREDPTR_TEST
 
 #include <Core/Containers/SharedPtr.h>
+#include <Core/Containers/SharedRef.h>
 #include <Core/Containers/UniquePtr.h>
 #include <Core/Containers/Array.h>
 
@@ -10,28 +11,27 @@
 
 /* Helper classes */
 
-struct Base
+struct FBase
 {
     uint32 X = 0;
 };
 
-struct Derived : public Base
+struct FDerived : public FBase
 {
     uint32 Y = 0;
 };
 
-class VirtualBase
+class FVirtualBase
 {
 public:
-    virtual ~VirtualBase() = default;
+    virtual ~FVirtualBase() = default;
     virtual void Func() = 0;
 };
 
-class VirtualDerived : public VirtualBase
+class FVirtualDerived : public FVirtualBase
 {
 public:
-    virtual void Func() override
-    { }
+    virtual void Func() override { }
 };
 
 template<typename RefPointerType>
@@ -44,8 +44,49 @@ void PrintRefCountFunc( const RefPointerType& Pointer, const CHAR* Name )
 
 /* Test */
 
+struct FRefCountedTest : public IRefCounted
+{
+public:
+    virtual int32 AddRef() override
+    {
+        CHECK(StrongReferences.Load() > 0);
+        ++StrongReferences;
+        return StrongReferences.Load();
+    }
+
+    virtual int32 Release() override
+    {
+        const int32 RefCount = --StrongReferences;
+        CHECK(RefCount >= 0);
+
+        if (RefCount < 1)
+        {
+            delete this;
+        }
+
+        return RefCount;
+    }
+
+    virtual int32 GetRefCount() const override
+    {
+        return StrongReferences.Load();
+    }
+
+private:
+    FAtomicInt32 StrongReferences = 1;
+};
+
+
 void TSharedPtr_Test()
 {
+    {
+        TSharedRef<FRefCountedTest> Test;
+
+        TSharedRef<FRefCountedTest> Test0 = new FRefCountedTest();
+        TSharedRef<FRefCountedTest> Test1 = Test0;
+        TSharedRef<FRefCountedTest> Test2 = Test0;
+    }
+
     // TSharedPtr
     std::cout << std::endl << "----------TSharedPtr----------" << std::endl << std::endl;
 
@@ -55,6 +96,7 @@ void TSharedPtr_Test()
     // Test nullptr
     std::cout << std::endl << "----Testing Constructors----" << std::endl << std::endl;
     TSharedPtr<uint32> Null;
+    TWeakPtr<uint32>   NullWeak;
     Null = Ptr0; // Takes ownership of Ptr0
 
     TSharedPtr<uint32> SharedNullPtr = nullptr;
@@ -66,28 +108,31 @@ void TSharedPtr_Test()
     TSharedPtr<uint32> UintPtr2 = TSharedPtr<uint32>( Ptr1 ); // Takes ownership of Ptr1
     PrintRefCount( UintPtr2 );
 
+    std::shared_ptr<int> t = std::make_shared<int>(5);
+    std::weak_ptr<int> w(t);
+
     std::cout << std::endl << "----Testing StaticCast (Scalar)----" << std::endl << std::endl;
-    TSharedPtr<Derived> DerivedPtr0 = MakeShared<Derived>();
+    TSharedPtr<FDerived> DerivedPtr0 = MakeShared<FDerived>();
     PrintRefCount( DerivedPtr0 );
-    TSharedPtr<Base> BasePtr0 = DerivedPtr0;
+    TSharedPtr<FBase> BasePtr0 = DerivedPtr0;
     PrintRefCount( BasePtr0 );
-    TSharedPtr<Base> BasePtr = TSharedPtr<Base>( new Derived() );
+    TSharedPtr<FBase> BasePtr = TSharedPtr<FBase>( new FDerived() );
     PrintRefCount( BasePtr );
-    TSharedPtr<Derived> DerivedPtr1 = StaticCastSharedPtr<Derived>( BasePtr0 );
+    TSharedPtr<FDerived> DerivedPtr1 = StaticCastSharedPtr<FDerived>( BasePtr0 );
     PrintRefCount( DerivedPtr1 );
-    TSharedPtr<Derived> DerivedPtr3 = StaticCastSharedPtr<Derived>( Move( BasePtr0 ) );
+    TSharedPtr<FDerived> DerivedPtr3 = StaticCastSharedPtr<FDerived>( Move( BasePtr0 ) );
     PrintRefCount( DerivedPtr3 );
 
     std::cout << std::endl << "----Testing StaticCast (Array)----" << std::endl << std::endl;
-    TSharedPtr<Derived[]> DerivedPtr2 = MakeShared<Derived[]>( 5 );
+    TSharedPtr<FDerived[]> DerivedPtr2 = MakeShared<FDerived[]>( 5 );
     PrintRefCount( DerivedPtr2 );
-    TSharedPtr<Base[]> BasePtr1 = DerivedPtr2;
+    TSharedPtr<FBase[]> BasePtr1 = DerivedPtr2;
     PrintRefCount( BasePtr1 );
-    TSharedPtr<Base[]> BasePtrArray = TSharedPtr<Base[]>( new Derived[5] );
+    TSharedPtr<FBase[]> BasePtrArray = TSharedPtr<FBase[]>( new FDerived[5] );
     PrintRefCount( BasePtrArray );
-    TSharedPtr<Derived[]> BasePtr2 = StaticCastSharedPtr<Derived[]>( DerivedPtr2 );
+    TSharedPtr<FDerived[]> BasePtr2 = StaticCastSharedPtr<FDerived[]>( DerivedPtr2 );
     PrintRefCount( BasePtr2 );
-    TSharedPtr<Derived[]> BasePtr3 = StaticCastSharedPtr<Derived[]>( Move( DerivedPtr2 ) );
+    TSharedPtr<FDerived[]> BasePtr3 = StaticCastSharedPtr<FDerived[]>( Move( DerivedPtr2 ) );
     PrintRefCount( BasePtr3 );
 
     std::cout << std::endl << "----Testing ConstCast----" << std::endl << std::endl;
@@ -109,14 +154,14 @@ void TSharedPtr_Test()
     PrintRefCount( ReintPtr1 );
 
     std::cout << std::endl << "----Testing DynamicCast----" << std::endl << std::endl;
-    TSharedPtr<VirtualBase> VirtualPtr0 = MakeShared<VirtualDerived>();
+    TSharedPtr<FVirtualBase> VirtualPtr0 = MakeShared<FVirtualDerived>();
     PrintRefCount( VirtualPtr0 );
 
-    TSharedPtr<VirtualDerived> VirtualPtr1 = DynamicCastSharedPtr<VirtualDerived>( VirtualPtr0 );
+    TSharedPtr<FVirtualDerived> VirtualPtr1 = DynamicCastSharedPtr<FVirtualDerived>( VirtualPtr0 );
     PrintRefCount( VirtualPtr1 );
 
     std::cout << std::endl << "----Testing Operator[]----" << std::endl << std::endl;
-    constexpr uint32 Num = 5;
+    CONSTEXPR uint32 Num = 5;
     TSharedPtr<uint32[]> ConstPtr3 = MakeShared<uint32[]>( 5 );
     PrintRefCount( ConstPtr3 );
 
@@ -137,10 +182,10 @@ void TSharedPtr_Test()
     }
 
     std::cout << std::endl << "----Testing WeakPtr----" << std::endl << std::endl;
-    TWeakPtr<Base> WeakBase0 = BasePtr;
+    TWeakPtr<FBase> WeakBase0 = BasePtr;
     PrintRefCount( WeakBase0 );
 
-    TWeakPtr<Derived> WeakBase1 = DerivedPtr0;
+    TWeakPtr<FDerived> WeakBase1 = DerivedPtr0;
     PrintRefCount( WeakBase1 );
 
     std::cout << std::endl << "----Testing Equality----" << std::endl << std::endl;

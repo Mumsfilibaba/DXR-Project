@@ -16,34 +16,24 @@ struct TDefaultDelete
     TDefaultDelete& operator=(const TDefaultDelete&) = default;
     TDefaultDelete& operator=(TDefaultDelete&&) = default;
 
-    template<
-        typename U,
-        typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
-    FORCEINLINE TDefaultDelete(const TDefaultDelete<U>&) noexcept
-    { }
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
+    FORCEINLINE TDefaultDelete(const TDefaultDelete<U>&) noexcept { }
 
-    template<
-        typename U,
-        typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
-    FORCEINLINE TDefaultDelete(TDefaultDelete<U>&&) noexcept
-    { }
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
+    FORCEINLINE TDefaultDelete(TDefaultDelete<U>&&) noexcept { }
 
     FORCEINLINE void DeleteElement(ElementType* Pointer) noexcept
     {
         delete Pointer;
     }
 
-    template<
-        typename U,
-        typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete& operator=(const TDefaultDelete<U>&) noexcept
     {
         return *this;
     }
 
-    template<
-        typename U,
-        typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete& operator=(TDefaultDelete<U>&&) noexcept
     {
         return *this;
@@ -64,34 +54,24 @@ struct TDefaultDelete<T[]>
     TDefaultDelete& operator=(const TDefaultDelete&) = default;
     TDefaultDelete& operator=(TDefaultDelete&&) = default;
 
-    template<
-        typename U,
-        typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
-    FORCEINLINE TDefaultDelete(const TDefaultDelete<U>&) noexcept
-    { }
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
+    FORCEINLINE TDefaultDelete(const TDefaultDelete<U>&) noexcept { }
 
-    template<
-        typename U,
-        typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
-    FORCEINLINE TDefaultDelete(TDefaultDelete<U>&&) noexcept
-    { }
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
+    FORCEINLINE TDefaultDelete(TDefaultDelete<U>&&) noexcept { }
 
     FORCEINLINE void DeleteElement(ElementType* Pointer) noexcept
     {
         delete[] Pointer;
     }
 
-    template<
-        typename U,
-        typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete& operator=(const TDefaultDelete<U>&) noexcept
     {
         return *this;
     }
 
-    template<
-        typename U,
-        typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete& operator=(TDefaultDelete<U>&&) noexcept
     {
         return *this;

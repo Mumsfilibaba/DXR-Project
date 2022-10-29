@@ -5,7 +5,6 @@
 
 #include <Core/Containers/Optional.h>
 #include <Core/Memory/Memory.h>
-#include <Core/Templates/ClassUtilities.h>
 
 #include <iostream>
 
@@ -139,12 +138,12 @@ bool TOptional_Test()
         TOptional<FTest> Optional0;
         TOptional<FTest> Optional1(InPlace, 65);
 
-        CHECK(!Optional0);
-        CHECK( Optional1);
+        TEST_CHECK(!Optional0);
+        TEST_CHECK( Optional1);
 
         Optional1.Reset();
 
-        CHECK(!Optional1);
+        TEST_CHECK(!Optional1);
     }
 
     {
@@ -159,20 +158,20 @@ bool TOptional_Test()
 
     {
         TOptional<FTest> Optional0(InPlace, 70);
-        CHECK(*Optional0 == 70);
-        CHECK(Optional0.Emplace(245) == 245);
-        CHECK(Optional0.Emplace(235) == 235);
-        CHECK(Optional0.Emplace(225) == 225);
-        CHECK(Optional0.Emplace(215) == 215);
-        CHECK(Optional0.Emplace(205) == 205);
+        TEST_CHECK(*Optional0 == 70);
+        TEST_CHECK(Optional0.Emplace(245) == 245);
+        TEST_CHECK(Optional0.Emplace(235) == 235);
+        TEST_CHECK(Optional0.Emplace(225) == 225);
+        TEST_CHECK(Optional0.Emplace(215) == 215);
+        TEST_CHECK(Optional0.Emplace(205) == 205);
 
         TOptional<int32> Optional1;
-        CHECK(Optional1.Emplace(10) == 10);
-        CHECK(Optional1.Emplace(20) == 20);
-        CHECK(Optional1.Emplace(30) == 30);
-        CHECK(Optional1.Emplace(40) == 40);
-        CHECK(Optional1.Emplace(50) == 50);
-        CHECK(Optional1.Emplace(60) == 60);
+        TEST_CHECK(Optional1.Emplace(10) == 10);
+        TEST_CHECK(Optional1.Emplace(20) == 20);
+        TEST_CHECK(Optional1.Emplace(30) == 30);
+        TEST_CHECK(Optional1.Emplace(40) == 40);
+        TEST_CHECK(Optional1.Emplace(50) == 50);
+        TEST_CHECK(Optional1.Emplace(60) == 60);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -181,23 +180,23 @@ bool TOptional_Test()
     {
         TOptional<int64> Optional0;
         TOptional<int64> Optional1(InPlace, 100);
-        CHECK(*Optional1 == 100);
+        TEST_CHECK(*Optional1 == 100);
 
-        CHECK(!Optional0.HasValue());
+        TEST_CHECK(!Optional0.HasValue());
 
-        CHECK(Optional0.Emplace(255) == 255);
+        TEST_CHECK(Optional0.Emplace(255) == 255);
 
-        CHECK(Optional0.HasValue());
-        CHECK(Optional1.HasValue());
+        TEST_CHECK(Optional0.HasValue());
+        TEST_CHECK(Optional1.HasValue());
 
         Optional0.Swap(Optional1);
 
-        CHECK(*Optional0 == 100);
-        CHECK(*Optional1 == 255);
+        TEST_CHECK(*Optional0 == 100);
+        TEST_CHECK(*Optional1 == 255);
 
         Optional0.Reset();
 
-        CHECK(Optional0.GetValueOrDefault(50) == 50);
+        TEST_CHECK(Optional0.GetValueOrDefault(50) == 50);
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -207,34 +206,34 @@ bool TOptional_Test()
         TOptional<FTest> Optional0;
         TOptional<FTest> Optional1(InPlace, 100);
         
-        CHECK(!Optional0.HasValue());
-        CHECK( Optional1.HasValue());
+        TEST_CHECK(!Optional0.HasValue());
+        TEST_CHECK( Optional1.HasValue());
 
-        CHECK(*Optional1 == 100);
+        TEST_CHECK(*Optional1 == 100);
 
-        CHECK(Optional0.Emplace(255) == 255);
-        CHECK(Optional0.HasValue());
-
-        Optional0.Swap(Optional1);
-
-        CHECK(*Optional0 == 100);
-        CHECK(*Optional1 == 255);
-        CHECK(Optional0.HasValue());
-        CHECK(Optional1.HasValue());
+        TEST_CHECK(Optional0.Emplace(255) == 255);
+        TEST_CHECK(Optional0.HasValue());
 
         Optional0.Swap(Optional1);
 
-        CHECK(*Optional0 == 255);
-        CHECK(*Optional1 == 100);
-        CHECK(Optional0.HasValue());
-        CHECK(Optional1.HasValue());
+        TEST_CHECK(*Optional0 == 100);
+        TEST_CHECK(*Optional1 == 255);
+        TEST_CHECK(Optional0.HasValue());
+        TEST_CHECK(Optional1.HasValue());
 
         Optional0.Swap(Optional1);
 
-        CHECK(*Optional0 == 100);
-        CHECK(*Optional1 == 255);
-        CHECK(Optional0.HasValue());
-        CHECK(Optional1.HasValue());
+        TEST_CHECK(*Optional0 == 255);
+        TEST_CHECK(*Optional1 == 100);
+        TEST_CHECK(Optional0.HasValue());
+        TEST_CHECK(Optional1.HasValue());
+
+        Optional0.Swap(Optional1);
+
+        TEST_CHECK(*Optional0 == 100);
+        TEST_CHECK(*Optional1 == 255);
+        TEST_CHECK(Optional0.HasValue());
+        TEST_CHECK(Optional1.HasValue());
     }
     
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -243,11 +242,11 @@ bool TOptional_Test()
     {
         TOptional<int32> Optional0;
         TOptional<int32> Optional1(InPlace);
-        CHECK(!Optional0.HasValue());
-        CHECK(Optional1.HasValue());
+        TEST_CHECK(!Optional0.HasValue());
+        TEST_CHECK(Optional1.HasValue());
 
-        CHECK(Optional0.TryGetValue() == nullptr);
-        CHECK(Optional1.TryGetValue() != nullptr);
+        TEST_CHECK(Optional0.TryGetValue() == nullptr);
+        TEST_CHECK(Optional1.TryGetValue() != nullptr);
     }
 
     SUCCESS();

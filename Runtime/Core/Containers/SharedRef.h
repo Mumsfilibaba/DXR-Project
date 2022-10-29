@@ -16,7 +16,7 @@ public:
      * @brief -  Default constructor that set the pointer to nullptr
      */
     FORCEINLINE TSharedRef() noexcept
-        : Ptr(nullptr)
+        : Object(nullptr)
     { }
 
     /**
@@ -24,7 +24,7 @@ public:
      * @param Other - SharedRef to copy from
      */
     FORCEINLINE TSharedRef(const TSharedRef& Other) noexcept
-        : Ptr(Other.Ptr)
+        : Object(Other.Object)
     {
         AddRef();
     }
@@ -37,7 +37,7 @@ public:
         typename OtherType, 
         typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedRef(const TSharedRef<OtherType>& Other) noexcept
-        : Ptr(Other.Ptr)
+        : Object(Other.Object)
     {
         AddRef();
     }
@@ -47,9 +47,9 @@ public:
      * @param Other - SharedRef to move from
      */
     FORCEINLINE TSharedRef(TSharedRef&& Other) noexcept
-        : Ptr(Other.Ptr)
+        : Object(Other.Object)
     {
-        Other.Ptr = nullptr;
+        Other.Object = nullptr;
     }
 
     /**
@@ -60,9 +60,9 @@ public:
         typename OtherType,
         typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedRef(TSharedRef<OtherType>&& Other) noexcept
-        : Ptr(Other.Ptr)
+        : Object(Other.Object)
     {
-        Other.Ptr = nullptr;
+        Other.Object = nullptr;
     }
 
     /**
@@ -70,7 +70,7 @@ public:
      * @param InPointer - Pointer to reference
      */
     FORCEINLINE TSharedRef(ElementType* InPointer) noexcept
-        : Ptr(InPointer)
+        : Object(InPointer)
     { }
 
     /**
@@ -81,7 +81,7 @@ public:
         typename OtherType, 
         typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedRef(OtherType* InPtr) noexcept
-        : Ptr(InPtr)
+        : Object(InPtr)
     { }
 
     /**
@@ -117,7 +117,7 @@ public:
      */
     FORCEINLINE void Swap(TSharedRef& Other)
     {
-        ::Swap(Ptr, Other.Ptr);
+        ::Swap(Object, Other.Object);
     }
 
     /**
@@ -126,8 +126,8 @@ public:
      */
     NODISCARD FORCEINLINE ElementType* ReleaseOwnership() noexcept
     {
-        ElementType* OldPtr = Ptr;
-        Ptr = nullptr;
+        ElementType* OldPtr = Object;
+        Object = nullptr;
         return OldPtr;
     }
 
@@ -136,9 +136,9 @@ public:
      */
     FORCEINLINE void AddRef() noexcept
     {
-        if (Ptr)
+        if (Object)
         {
-            Ptr->AddRef();
+            Object->AddRef();
         }
     }
 
@@ -148,7 +148,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType* Get() const noexcept
     {
-        return Ptr;
+        return Object;
     }
 
     /**
@@ -158,7 +158,7 @@ public:
     NODISCARD FORCEINLINE uint64 GetRefCount() const noexcept
     {
         CHECK(IsValid());
-        return Ptr->GetRefCount();
+        return Object->GetRefCount();
     }
 
     /**
@@ -168,8 +168,8 @@ public:
     NODISCARD FORCEINLINE ElementType** ReleaseAndGetAddressOf() noexcept
     {
         CHECK(IsValid());
-        Ptr->Release();
-        return &Ptr;
+        Object->Release();
+        return &Object;
     }
 
     /**
@@ -179,7 +179,7 @@ public:
     NODISCARD FORCEINLINE ElementType* GetAndAddRef() noexcept
     {
         AddRef();
-        return Ptr;
+        return Object;
     }
 
     /**
@@ -189,7 +189,7 @@ public:
     template<typename CastType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsConvertible<CastType*, ElementType*>::Value, CastType*>::Type GetAs() const noexcept
     {
-        return static_cast<CastType*>(Ptr);
+        return static_cast<CastType*>(Object);
     }
 
     /**
@@ -198,7 +198,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType** GetAddressOf() noexcept
     {
-        return &Ptr;
+        return &Object;
     }
 
     /**
@@ -207,7 +207,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
-        return &Ptr;
+        return &Object;
     }
 
     /**
@@ -217,7 +217,7 @@ public:
     NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
         CHECK(IsValid());
-        return *Ptr;
+        return *Object;
     }
 
     /**
@@ -226,7 +226,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (Ptr != nullptr);
+        return (Object != nullptr);
     }
 
 public:
@@ -358,14 +358,14 @@ public:
 private:
     FORCEINLINE void Release() noexcept
     {
-        if (Ptr)
+        if (Object)
         {
-            Ptr->Release();
-            Ptr = nullptr;
+            Object->Release();
+            Object = nullptr;
         }
     }
 
-    ElementType* Ptr = nullptr;
+    ElementType* Object = nullptr;
 };
 
 

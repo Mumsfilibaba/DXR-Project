@@ -4,7 +4,6 @@
 
 #include <Core/Containers/Variant.h>
 #include <Core/Memory/Memory.h>
-#include <Core/Templates/ClassUtilities.h>
 
 #include <iostream>
 #include <variant>
@@ -32,9 +31,15 @@ void TVariant_Test()
         std::cout << "Variant.IsType<std::string>()=" << std::boolalpha << Variant.IsType<std::string>() << '\n';
 
         std::cout << "Variant.GetValue<std::string>()=" << Variant.GetValue<std::string>() << '\n';
+        
+        const auto& VariantRef = Variant;
+        std::cout << "Variant.GetValue<std::string>()=" << VariantRef.GetValue<std::string>() << '\n';
 
         std::cout << "Variant.TryGetValue<int32>()="       << Variant.TryGetValue<int32>()       << '\n';
         std::cout << "Variant.TryGetValue<std::string>()=" << Variant.TryGetValue<std::string>() << '\n';
+
+		std::cout << "Variant.TryGetValue<int32>()="       << VariantRef.TryGetValue<int32>()       << '\n';
+		std::cout << "Variant.TryGetValue<std::string>()=" << VariantRef.TryGetValue<std::string>() << '\n';
     }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/

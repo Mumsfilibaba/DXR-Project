@@ -163,7 +163,16 @@ FORCEINLINE IFileHandle* FWindowsFile::OpenForRead(const FString& Filename)
 
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
-        MAYBE_UNUSED const auto LastError = ::GetLastError();
+        FString ErrorString;
+        FWindowsPlatformMisc::GetLastErrorString(ErrorString);
+        
+        auto Position = ErrorString.FindLast("\r\n");
+        if (Position != FString::INVALID_INDEX)
+        {
+            ErrorString.Remove(Position, 2);
+        }
+
+        LOG_ERROR("[FWindowsFile] Failed to open file. Error '%s'", ErrorString.GetCString());
         return nullptr;
     }
 
@@ -185,7 +194,16 @@ FORCEINLINE IFileHandle* FWindowsFile::OpenForWrite(const FString& Filename)
 
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
-        MAYBE_UNUSED const auto LastError = ::GetLastError();
+        FString ErrorString;
+        FWindowsPlatformMisc::GetLastErrorString(ErrorString);
+
+        auto Position = ErrorString.FindLast("\r\n");
+        if (Position != FString::INVALID_INDEX)
+        {
+            ErrorString.Remove(Position, 2);
+        }
+
+        LOG_ERROR("[FWindowsFile] Failed to open file. Error '%s'", ErrorString.GetCString());
         return nullptr;
     }
 

@@ -50,31 +50,31 @@ struct IFileHandle
 class FFileHandleRef
 { 
 public:
-    FFileHandleRef()
+    FORCEINLINE FFileHandleRef()
         : Handle(nullptr)
     { }
 
-    FFileHandleRef(IFileHandle* InHandle)
+    FORCEINLINE FFileHandleRef(IFileHandle* InHandle)
         : Handle(InHandle)
     { }
     
-    FFileHandleRef(FFileHandleRef&& Other)
+    FORCEINLINE FFileHandleRef(FFileHandleRef&& Other)
         : Handle(Other.Handle)
     {
         Other.Handle = nullptr;
     }
 
-    ~FFileHandleRef()
+    FORCEINLINE ~FFileHandleRef()
     {
         Close();
     }
 
-    bool IsValid() const
+    FORCEINLINE bool IsValid() const
     {
         return (Handle != nullptr);
     }
 
-    void Close()
+    FORCEINLINE void Close()
     {
         if (Handle)
         {
@@ -83,17 +83,22 @@ public:
         }
     }
 
-    IFileHandle* operator->() const
+    FORCEINLINE IFileHandle* Get() const
     {
         return Handle;
     }
 
-    operator bool()
+    FORCEINLINE IFileHandle* operator->() const
+    {
+        return Handle;
+    }
+
+    FORCEINLINE operator bool()
     {
         return IsValid();
     }
 
-    FFileHandleRef& operator=(FFileHandleRef&& Other)
+    FORCEINLINE FFileHandleRef& operator=(FFileHandleRef&& Other)
     {
         if (this != ::AddressOf(Other))
         {
@@ -119,6 +124,28 @@ struct FGenericFile
     static FORCEINLINE IFileHandle* OpenForWrite(const FString& Filename)
     {
         return nullptr;
+    }
+};
+
+
+struct FFileHelpers
+{
+    static bool ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText)
+    {
+        CHECK(File != nullptr);
+
+        // Get the filesize and add an extra character for the null-terminator
+        const int64 FileSize = File->Size();
+        OutText.Resize(static_cast<int32>(FileSize) + 1, '\0');
+
+        const int32 ReadBytes = File->Read(reinterpret_cast<uint8*>(OutText.GetData()), static_cast<uint32>(FileSize));
+        if (ReadBytes <= 0)
+        {
+            OutText.Clear(true);
+            return false;
+        }
+
+        return true;
     }
 };
 

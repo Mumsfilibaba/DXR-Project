@@ -1,8 +1,6 @@
 #include <Core/Containers/String.h>
 #include <Core/Containers/UniquePtr.h>
 #include <Core/Templates/TypeTraits.h>
-#include <Core/Templates/MemberPointerTraits.h>
-#include <Core/Templates/IntegerSequence.h>
 
 #include <iostream>
 #include <type_traits>
@@ -165,73 +163,74 @@ int main()
     static_assert(TIsSame<int, typename TRemoveVolatile<volatile int>::Type>::Value == true);
 
     /* Remove extent */
-    static_assert(TIsSame<int, typename TRemoveExtent<int>::Type>::Value == true);
+    static_assert(TIsSame<int, typename TRemoveExtent<int>::Type>::Value       == true);
     static_assert(TIsSame<int, typename TRemoveExtent<const int>::Type>::Value == false);
-    static_assert(TIsSame<int, typename TRemoveExtent<int[]>::Type>::Value == true);
-    static_assert(TIsSame<int, typename TRemoveExtent<int[5]>::Type>::Value == true);
+    static_assert(TIsSame<int, typename TRemoveExtent<int[]>::Type>::Value     == true);
+    static_assert(TIsSame<int, typename TRemoveExtent<int[5]>::Type>::Value    == true);
 
     /* Remove pointer */
-    static_assert(TIsSame<int, typename TRemovePointer<int>::Type>::Value == true);
-    static_assert(TIsSame<int, typename TRemovePointer<const int>::Type>::Value == false);
-    static_assert(TIsSame<int, typename TRemovePointer<int*>::Type>::Value == true);
-    static_assert(TIsSame<int, typename TRemovePointer<int* const>::Type>::Value == true);
-    static_assert(TIsSame<int, typename TRemovePointer<int* volatile>::Type>::Value == true);
+    static_assert(TIsSame<int, typename TRemovePointer<int>::Type>::Value                 == true);
+    static_assert(TIsSame<int, typename TRemovePointer<const int>::Type>::Value           == false);
+    static_assert(TIsSame<int, typename TRemovePointer<int*>::Type>::Value                == true);
+    static_assert(TIsSame<int, typename TRemovePointer<int* const>::Type>::Value          == true);
+    static_assert(TIsSame<int, typename TRemovePointer<int* volatile>::Type>::Value       == true);
     static_assert(TIsSame<int, typename TRemovePointer<int* const volatile>::Type>::Value == true);
 
     /* Remove reference */
-    static_assert(TIsSame<int, typename TRemoveReference<int>::Type>::Value == true);
+    static_assert(TIsSame<int, typename TRemoveReference<int>::Type>::Value       == true);
     static_assert(TIsSame<int, typename TRemoveReference<const int>::Type>::Value == false);
-    static_assert(TIsSame<int, typename TRemoveReference<int&>::Type>::Value == true);
-    static_assert(TIsSame<int, typename TRemoveReference<int&&>::Type>::Value == true);
+    static_assert(TIsSame<int, typename TRemoveReference<int&>::Type>::Value      == true);
+    static_assert(TIsSame<int, typename TRemoveReference<int&&>::Type>::Value     == true);
 
     /* Identity */
     static_assert(TIsSame<int, typename TIdentity<int>::Type>::Value == true);
 
     /* Add CV */
     static_assert(TIsSame<const volatile int, typename TAddCV<int>::Type>::Value == true);
-    static_assert(TIsSame<int, typename TAddCV<int>::Type>::Value == false);
+    static_assert(TIsSame<int,                typename TAddCV<int>::Type>::Value == false);
 
     /* Add Const */
     static_assert(TIsSame<const int, typename TAddConst<int>::Type>::Value == true);
-    static_assert(TIsSame<int, typename TAddConst<int>::Type>::Value == false);
+    static_assert(TIsSame<int,       typename TAddConst<int>::Type>::Value == false);
 
     /* Add Const */
     static_assert(TIsSame<volatile int, typename TAddVolatile<int>::Type>::Value == true);
-    static_assert(TIsSame<int, typename TAddVolatile<int>::Type>::Value == false);
+    static_assert(TIsSame<int,          typename TAddVolatile<int>::Type>::Value == false);
 
     /* Add Pointer */
     static_assert(TIsSame<int*, typename TAddPointer<int>::Type>::Value == true);
-    static_assert(TIsSame<int, typename TAddPointer<int>::Type>::Value == false);
+    static_assert(TIsSame<int,  typename TAddPointer<int>::Type>::Value == false);
 
     /* Add LValue Reference */
-    static_assert(TIsSame<int&, typename TAddLValueReference<int>::Type>::Value == true);
-    static_assert(TIsSame<int, typename TAddLValueReference<int>::Type>::Value == false);
+    static_assert(TIsSame<int&,       typename TAddLValueReference<int>::Type>::Value == true);
+    static_assert(TIsSame<int,        typename TAddLValueReference<int>::Type>::Value == false);
+	static_assert(TIsSame<const int&, typename TAddLValueReference<typename TAddConst<int>::Type>::Type>::Value == true);
 
     /* Add RValue Reference */
     static_assert(TIsSame<int&&, typename TAddRValueReference<int>::Type>::Value == true);
-    static_assert(TIsSame<int, typename TAddRValueReference<int>::Type>::Value == false);
+    static_assert(TIsSame<int,   typename TAddRValueReference<int>::Type>::Value == false);
 
     /* Add Reference */
-    static_assert(TIsSame<int&, typename TAddReference<int>::LValue>::Value == true);
-    static_assert(TIsSame<int, typename TAddReference<int>::LValue>::Value == false);
+    static_assert(TIsSame<int&,  typename TAddReference<int>::LValue>::Value == true);
+    static_assert(TIsSame<int,   typename TAddReference<int>::LValue>::Value == false);
     static_assert(TIsSame<int&&, typename TAddReference<int>::RValue>::Value == true);
-    static_assert(TIsSame<int, typename TAddReference<int>::RValue>::Value == false);
+    static_assert(TIsSame<int,   typename TAddReference<int>::RValue>::Value == false);
 
     /* Void */
-    static_assert(TIsSame<void, typename TVoid<void>::Type>::Value == true);
-    static_assert(TIsSame<void, typename TVoid<int>::Type>::Value == true);
+    static_assert(TIsSame<void, typename TVoid<void>::Type>::Value      == true);
+    static_assert(TIsSame<void, typename TVoid<int>::Type>::Value       == true);
     static_assert(TIsSame<void, typename TVoid<const int>::Type>::Value == true);
 
     /* Or */
-    static_assert(TOr<TIsSame<float, int>, TIsSame<bool, int>, TIsSame<int, int>>::Value == true);
+    static_assert(TOr<TIsSame<float, int>, TIsSame<bool, int>, TIsSame<int, int>>::Value  == true);
     static_assert(TOr<TIsSame<float, int>, TIsSame<bool, int>, TIsSame<void, int>>::Value == false);
 
     /* And */
-    static_assert(TAnd<TIsSame<float, int>, TIsSame<bool, int>, TIsSame<int, int>>::Value == false);
-    static_assert(TAnd<TIsSame<float, float>, TIsSame<int, int>, TIsSame<void, void>>::Value == true);
+    static_assert(TAnd<TIsSame<float, int>,   TIsSame<bool, int>, TIsSame<int, int>>::Value   == false);
+    static_assert(TAnd<TIsSame<float, float>, TIsSame<int, int>,  TIsSame<void, void>>::Value == true);
 
     /* Not */
-    static_assert(TNot<TIsSame<float, int>>::Value == true);
+    static_assert(TNot<TIsSame<float, int>>::Value   == true);
     static_assert(TNot<TIsSame<float, float>>::Value == false);
 
     /* Is Volatile*/
@@ -239,15 +238,15 @@ int main()
     static_assert(TIsVolatile<volatile int>::Value == true);
 
     /* Is Void*/
-    static_assert(TIsVoid<int>::Value == false);
-    static_assert(TIsVoid<const int>::Value == false);
+    static_assert(TIsVoid<int>::Value                == false);
+    static_assert(TIsVoid<const int>::Value          == false);
     static_assert(TIsVoid<const volatile int>::Value == false);
-    static_assert(TIsVoid<void>::Value == true);
+    static_assert(TIsVoid<void>::Value               == true);
 
     /* Is LValue Reference */
-    static_assert(TIsLValueReference<int>::Value == false);
+    static_assert(TIsLValueReference<int>::Value        == false);
     static_assert(TIsLValueReference<const int&>::Value == true);
-    static_assert(TIsLValueReference<int&>::Value == true);
+    static_assert(TIsLValueReference<int&>::Value       == true);
 
     /* Is RValue Reference */
     static_assert(TIsRValueReference<int>::Value == false);

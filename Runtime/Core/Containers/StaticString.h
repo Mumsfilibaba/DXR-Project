@@ -34,8 +34,7 @@ public:
      * @return       - Returns the formatted string based on the format string
      */
     template<typename... ArgTypes>
-    NODISCARD
-    static FORCEINLINE TStaticString CreateFormatted(const CharType* Format, ArgTypes&&... Args) noexcept
+    NODISCARD static FORCEINLINE TStaticString CreateFormatted(const CharType* Format, ArgTypes&&... Args) noexcept
     {
         TStaticString NewString;
         NewString.Format(Format, Forward<ArgTypes>(Args)...);
@@ -1320,32 +1319,28 @@ public:
     }
 
 public:
-    NODISCARD
-    friend FORCEINLINE TStaticString operator+(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE TStaticString operator+(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         TStaticString NewString = LHS;
         NewString.Append(RHS);
         return NewString;
     }
 
-    NODISCARD
-    friend FORCEINLINE TStaticString operator+(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE TStaticString operator+(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         TStaticString NewString = LHS;
         NewString.Append(RHS);
         return NewString;
     }
 
-    NODISCARD
-    friend FORCEINLINE TStaticString operator+(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD friend FORCEINLINE TStaticString operator+(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         TStaticString NewString = LHS;
         NewString.Append(RHS);
         return NewString;
     }
 
-    NODISCARD
-    friend FORCEINLINE TStaticString operator+(CharType LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE TStaticString operator+(CharType LHS, const TStaticString& RHS) noexcept
     {
         TStaticString NewString;
         NewString.Append(LHS);
@@ -1353,118 +1348,99 @@ public:
         return NewString;
     }
 
-    NODISCARD
-    friend FORCEINLINE TStaticString operator+(const TStaticString& LHS, CharType RHS) noexcept
+    NODISCARD friend FORCEINLINE TStaticString operator+(const TStaticString& LHS, CharType RHS) noexcept
     {
         TStaticString NewString = LHS;
         NewString.Append(RHS);
         return NewString;
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator==(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator==(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) == 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator==(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator==(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return (RHS.Compare(LHS) == 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator==(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator==(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return (LHS.Compare(RHS) == 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator!=(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator!=(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return !(LHS == RHS);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator!=(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator!=(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return !(LHS == RHS);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator!=(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator!=(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return !(LHS == RHS);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator<(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) < 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator<(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return (RHS.Compare(LHS) < 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator<(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return (LHS.Compare(RHS) < 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator<=(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<=(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) <= 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator<=(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<=(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return (RHS.Compare(LHS) <= 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator<=(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<=(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return (LHS.Compare(RHS) <= 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator>(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) > 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator>(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return (RHS.Compare(LHS) > 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator>(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return (LHS.Compare(RHS) > 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator>=(const TStaticString& LHS, const CharType* RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>=(const TStaticString& LHS, const CharType* RHS) noexcept
     {
         return (LHS.Compare(RHS) >= 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator>=(const CharType* LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>=(const CharType* LHS, const TStaticString& RHS) noexcept
     {
         return (RHS.Compare(LHS) >= 0);
     }
 
-    NODISCARD
-    friend FORCEINLINE bool operator>=(const TStaticString& LHS, const TStaticString& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>=(const TStaticString& LHS, const TStaticString& RHS) noexcept
     {
         return (LHS.Compare(RHS) >= 0);
     }
@@ -1472,7 +1448,7 @@ public:
 public:
 
     /**
-     * @brief - Retrieve the capacity of the container
+     * @brief  - Retrieve the capacity of the container
      * @return - The capacity of the container
      */
     NODISCARD CONSTEXPR SizeType GetCapacity() const noexcept
@@ -1492,7 +1468,7 @@ public:
 public:
 
     /**
-     * @brief - Retrieve an iterator to the beginning of the array
+     * @brief  - Retrieve an iterator to the beginning of the array
      * @return - A iterator that points to the first element
      */
     NODISCARD FORCEINLINE IteratorType StartIterator() noexcept
@@ -1510,7 +1486,7 @@ public:
     }
 
     /**
-     * @brief - Retrieve an iterator to the beginning of the array
+     * @brief  - Retrieve an iterator to the beginning of the array
      * @return - A iterator that points to the first element
      */
     NODISCARD FORCEINLINE ConstIteratorType StartIterator() const noexcept
@@ -1519,7 +1495,7 @@ public:
     }
 
     /**
-     * @brief - Retrieve an iterator to the end of the array
+     * @brief  - Retrieve an iterator to the end of the array
      * @return - A iterator that points to the element past the end
      */
     NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
@@ -1528,7 +1504,7 @@ public:
     }
 
     /**
-     * @brief - Retrieve an reverse-iterator to the end of the array
+     * @brief  - Retrieve an reverse-iterator to the end of the array
      * @return - A reverse-iterator that points to the last element
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
@@ -1537,7 +1513,7 @@ public:
     }
 
     /**
-     * @brief - Retrieve an reverse-iterator to the start of the array
+     * @brief  - Retrieve an reverse-iterator to the start of the array
      * @return - A reverse-iterator that points to the element before the first element
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
@@ -1546,7 +1522,7 @@ public:
     }
 
     /**
-     * @brief - Retrieve an reverse-iterator to the end of the array
+     * @brief  - Retrieve an reverse-iterator to the end of the array
      * @return - A reverse-iterator that points to the last element
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
@@ -1555,7 +1531,7 @@ public:
     }
 
     /**
-     * @brief - Retrieve an reverse-iterator to the start of the array
+     * @brief  - Retrieve an reverse-iterator to the start of the array
      * @return - A reverse-iterator that points to the element before the first element
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
@@ -1564,9 +1540,6 @@ public:
     }
 
 public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // STL Iterators
 
     NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
     NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
@@ -1597,8 +1570,6 @@ private:
     SizeType Length;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Predefined types
 
 template<TSIZE NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
 using FStaticString = TStaticString<CHAR, NUM_CHARS>;
@@ -1606,23 +1577,16 @@ using FStaticString = TStaticString<CHAR, NUM_CHARS>;
 template<TSIZE NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
 using FStaticStringWide = TStaticString<WIDECHAR, NUM_CHARS>;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Add TStaticString to be a string-type
 
-template<
-    typename CharType,
-    int32 NUM_CHARS>
+template<typename CharType, int32 NUM_CHARS>
 struct TIsTStringType<TStaticString<CharType, NUM_CHARS>>
 {
     enum { Value = true };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Convert between CHAR and wide
 
 template<int32 NUM_CHARS>
-NODISCARD
-inline FStaticStringWide<NUM_CHARS> CharToWide(const FStaticString<NUM_CHARS>& CharString) noexcept
+NODISCARD inline FStaticStringWide<NUM_CHARS> CharToWide(const FStaticString<NUM_CHARS>& CharString) noexcept
 {
     FStaticStringWide<NUM_CHARS> NewString;
     NewString.Resize(CharString.GetLength());
@@ -1630,9 +1594,9 @@ inline FStaticStringWide<NUM_CHARS> CharToWide(const FStaticString<NUM_CHARS>& C
     return NewString;
 }
 
+
 template<int32 NUM_CHARS>
-NODISCARD
-inline FStaticString<NUM_CHARS> WideToChar(const FStaticStringWide<NUM_CHARS>& WideString) noexcept
+NODISCARD inline FStaticString<NUM_CHARS> WideToChar(const FStaticStringWide<NUM_CHARS>& WideString) noexcept
 {
     FStaticString<NUM_CHARS> NewString;
     NewString.Resize(WideString.GetLength());

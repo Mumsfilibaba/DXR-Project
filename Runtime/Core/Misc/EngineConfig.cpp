@@ -1,74 +1,72 @@
 #include "EngineConfig.h"
 
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Platform/PlatformFile.h"
+
+FConfigFile GConfig(ENGINE_LOCATION"/Engine.ini");
 
 FConfigFile::FConfigFile(const CHAR* InFilename)
     : Filename(InFilename)
     , Sections()
 { }
 
-bool FConfigFile::SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue)
-{
-    FConfigValue* Value = GetValue(SectionName, Name);
-    if (Value)
-    {
-        Value->CurrentValue = NewValue;
-        return true;
-    }
-    else
-    {
-        LOG_ERROR("Failed to set config value '%s' in section '%s'", Name, SectionName);
-        return false;
-    }
-}
-
-bool FConfigFile::SetInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue)
-{
-    return SetString(SectionName, Name, ToString(NewValue));
-}
-
-bool FConfigFile::SetFloat(const CHAR* SectionName, const CHAR* Name, float NewValue)
-{
-    return SetString(SectionName, Name, ToString(NewValue));
-}
-
-bool FConfigFile::SetBoolean(const CHAR* SectionName, const CHAR* Name, bool bNewValue)
-{
-    return SetString(SectionName, Name, ToString(bNewValue));
-}
-
-bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue)
-{
-    FConfigValue* Value = GetValue(SectionName, Name);
-    if (Value)
-    {
-        OutValue = Value->CurrentValue;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool FConfigFile::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue)
-{
-    return GetTypedValue(SectionName, Name, OutValue);
-}
-
-bool FConfigFile::GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue)
-{
-    return GetTypedValue(SectionName, Name, OutValue);
-}
-
-bool FConfigFile::GetBoolean(const CHAR* SectionName, const CHAR* Name, bool& bOutValue)
-{
-    return GetTypedValue(SectionName, Name, bOutValue);
-}
-
 bool FConfigFile::ParseFile()
 {
-    return false;
+    TArray<CHAR> FileContents;
+    {
+        FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
+        if (!File)
+        {
+            return false;
+        }
+
+        // Read the full file
+        if (!FFileHelpers::ReadTextFile(File.Get(), FileContents))
+        {
+            return false;
+        }
+    }
+
+    // Remove all carriage returns if there are any (Easier to process)
+    FileContents.RemoveAll('\r');
+
+    FStringView FileString(FileContents.GetData());
+    
+    FConfigSection Section;
+    while (!FileString.IsEmpty())
+    {
+        int32 Position = FileString.FindChar('\n');
+        if (Position == FStringView::INVALID_INDEX)
+        {
+            break;
+        }
+
+        // Get the current line and remove from the file-string
+        FStringView CurrentLine = FileString.SubStringView(0, Position);
+        FileString.ShrinkLeftInline(Position + 1);
+
+        Position = CurrentLine.FindChar('=');
+        if (Position == FStringView::INVALID_INDEX)
+        {
+            continue;
+        }
+
+        FStringView Key = CurrentLine.SubStringView(0, Position);
+        Key.TrimInline();
+
+        FStringView Value = CurrentLine.SubStringView(Position + 1, CurrentLine.GetLength() - Position - 1);
+        Value.TrimInline();
+
+        Section.Values.insert(std::make_pair(FString(Key), FString(Value)));
+        continue;
+    }
+
+    for (const auto& [key, value] : Section.Values)
+    {
+        LOG_INFO("'%s' = '%s'", key.GetCString(), value.CurrentValue.GetCString());
+    }
+
+    return true;
 }
 
 bool FConfigFile::SaveFile()
@@ -100,12 +98,63 @@ bool FConfigFile::SaveFile()
     return false;
 }
 
-void FConfigFile::Append(const FConfigFile& OtherFile)
+bool FConfigFile::SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue)
 {
-    //    for ( auto& OtherSection : OtherFile.Sections )
-    //    {
-    //        FConfigSection& Section = Sections[OtherSection.first];
-    //    }
+    FConfigValue* Value = GetValue(SectionName, Name);
+    if (Value)
+    {
+        Value->CurrentValue = NewValue;
+        return true;
+    }
+    else
+    {
+        LOG_ERROR("Failed to set config value '%s' in section '%s'", Name, SectionName);
+        return false;
+    }
+}
+
+bool FConfigFile::SetInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue)
+{
+    return SetString(SectionName, Name, ToString(NewValue));
+}
+
+bool FConfigFile::SetFloat(const CHAR* SectionName, const CHAR* Name, float NewValue)
+{
+    return SetString(SectionName, Name, ToString(NewValue));
+}
+
+bool FConfigFile::SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewValue)
+{
+    return SetString(SectionName, Name, ToString(bNewValue));
+}
+
+bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue)
+{
+    FConfigValue* Value = GetValue(SectionName, Name);
+    if (Value)
+    {
+        OutValue = Value->CurrentValue;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool FConfigFile::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue)
+{
+    return false;
+}
+
+bool FConfigFile::GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue)
+{
+    return false;
+}
+
+bool FConfigFile::GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue)
+{
+    return false;
 }
 
 FConfigValue* FConfigFile::GetValue(const CHAR* Name)

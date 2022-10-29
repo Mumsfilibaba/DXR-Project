@@ -26,7 +26,7 @@ FORCEINLINE void PrintString<WIDECHAR>(const WIDECHAR* String)
 #define MAKE_STRING(...) #__VA_ARGS__
 #define MAKE_VAR(...)     __VA_ARGS__
 
-#define CHECK(bCondition)                                                             \
+#define TEST_CHECK(bCondition)                                                             \
     if (!(bCondition))                                                                \
     {                                                                                 \
         std::cout << "[TEST FAILED] Condition='" << MAKE_STRING(bCondition) << "'\n"; \
@@ -38,7 +38,7 @@ FORCEINLINE void PrintString<WIDECHAR>(const WIDECHAR* String)
         std::cout << "[TEST SUCCEEDED]: '" << MAKE_STRING(bCondition) << "'\n";       \
     }
 
-#define CHECK_ARRAY(Array, ...)                                                                                                  \
+#define TEST_CHECK_ARRAY(Array, ...)                                                                                                  \
     if (Array.IsEmpty())                                                                                                         \
     {                                                                                                                            \
         std::cout << "[TEST FAILED] '" << MAKE_STRING(Array) "' is empty\n";                                                     \
@@ -65,7 +65,7 @@ FORCEINLINE void PrintString<WIDECHAR>(const WIDECHAR* String)
         std::cout << "[TEST SUCCEEDED]: '" << MAKE_STRING(Array) << "' == " << MAKE_STRING(__VA_ARGS__) << '\n';                 \
     }
 
-#define CHECK_STRING_N(String, Value, NumChars)                                                         \
+#define TEST_CHECK_STRING_N(String, Value, NumChars)                                                         \
     {                                                                                                   \
         const bool bResult = String.IsEmpty() ?                                                         \
             (TCString<decltype(String)::CharType>::Strlen(Value) == 0) :                                \
@@ -89,7 +89,7 @@ FORCEINLINE void PrintString<WIDECHAR>(const WIDECHAR* String)
         }                                                                                               \
     }
 
-#define CHECK_STRING(String, Value) CHECK_STRING_N(String, Value, String.GetLength())
+#define TEST_CHECK_STRING(String, Value) TEST_CHECK_STRING_N(String, Value, String.GetLength())
 
 #define SUCCESS()                       \
     std::cout << "[TESTS SUCCEEDED]\n"; \

@@ -178,11 +178,13 @@ public:
         const CharType* Current = ViewEnd;
         while (Current != ViewStart)
         {
-            Current--;
-            if (!TChar<CharType>::IsSpace(*Current) && !TChar<CharType>::IsZero(*Current))
+            const auto CurrentChar = *(Current - 1);
+            if (!TChar<CharType>::IsSpace(CurrentChar) && !TChar<CharType>::IsZero(CurrentChar))
             {
                 break;
             }
+
+            Current--;
         }
 
         ViewEnd = Current;
@@ -206,7 +208,8 @@ public:
      */
     FORCEINLINE void ShrinkLeftInline(int32 Num = 1) noexcept
     {
-        if (GetLength() <= Num)
+		const auto CurrentLength = GetLength();
+		if (CurrentLength <= Num)
         {
             ViewStart = ViewEnd;
         }
@@ -234,7 +237,8 @@ public:
      */
     FORCEINLINE void ShrinkRightInline(int32 Num = 1) noexcept
     {
-        if (GetLength() <= Num)
+        const auto CurrentLength = GetLength();
+        if (CurrentLength <= Num)
         {
             ViewEnd = ViewStart;
         }
@@ -831,7 +835,7 @@ public:
     FORCEINLINE void Swap(TStringView& Other) noexcept
     {
         ::Swap<const CharType*>(ViewStart, Other.ViewStart);
-        ::Swap<const CharType*>(ViewEnd  , Other.ViewEnd);
+        ::Swap<const CharType*>(ViewEnd, Other.ViewEnd);
     }
 
     /**
@@ -897,7 +901,7 @@ public:
      */
     NODISCARD FORCEINLINE TStringView SubStringView(SizeType Offset, SizeType Count) const noexcept
     {
-        CHECK((Count < GetLength()) && (Offset + Count < GetLength()));
+        CHECK((Count < GetLength()) && (Offset + Count <= GetLength()));
         return TStringView(GetData() + Offset, Count);
     }
 
