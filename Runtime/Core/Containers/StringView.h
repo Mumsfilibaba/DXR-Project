@@ -5,6 +5,13 @@
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/CString.h"
 
+enum class EStringCaseType
+{
+    NoCase        = 1,
+    CaseSensitive = 2
+};
+
+
 template<typename InCharType>
 class TStringView
 {

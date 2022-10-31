@@ -206,8 +206,8 @@ bool TString_Test_Internal(const CHAR* Args)
 
         FString CompareString1 = "compare";
         TEST_CHECK_STRING(CompareString1, "compare");
-        TEST_CHECK(CompareString0.Compare(CompareString1)       != 0);
-        TEST_CHECK(CompareString0.CompareNoCase(CompareString1) == 0);
+        TEST_CHECK(CompareString0.Compare(CompareString1)                          != 0);
+        TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
         CompareString1.Resize(20, 'A');
         TEST_CHECK_STRING(CompareString1, "compareAAAAAAAAAAAAA");
@@ -241,7 +241,8 @@ bool TString_Test_Internal(const CHAR* Args)
         CompareString0.Replace('X', 0);
         TEST_CHECK_STRING(CompareString0, "XOMPupperARE");
 
-        FString CombinedString = CompareString0 + '5';
+        FString CombinedString;
+        CombinedString = CompareString0 + '5';
         TEST_CHECK_STRING(CombinedString, "XOMPupperARE5");
 
         CombinedString = '5' + CombinedString;
@@ -443,8 +444,8 @@ bool TString_Test_Internal(const CHAR* Args)
 
         FStringWide CompareString1 = L"compare";
         TEST_CHECK_STRING(CompareString1, L"compare");
-        TEST_CHECK(CompareString0.Compare(CompareString1)       != 0);
-        TEST_CHECK(CompareString0.CompareNoCase(CompareString1) == 0);
+        TEST_CHECK(CompareString0.Compare(CompareString1)                          != 0);
+        TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
         CompareString1.Resize(20, L'A');
         TEST_CHECK_STRING(CompareString1, L"compareAAAAAAAAAAAAA");

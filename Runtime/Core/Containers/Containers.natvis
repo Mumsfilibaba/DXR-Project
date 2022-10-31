@@ -51,33 +51,33 @@
 
 
   <Type Name="TString&lt;char&gt;">
-    <DisplayString Condition="Characters.ArrayCapacity &lt;= 16">{Characters.Allocator.InlineAllocation.InlineAllocation,s}</DisplayString>
-    <DisplayString Condition="Characters.ArrayCapacity &gt; 16">{Characters.Allocator.DynamicAllocation.Allocation,s}</DisplayString>
-    <StringView Condition="Characters.ArrayCapacity &lt;= 16">Characters.Allocator.InlineAllocation.InlineAllocation,s</StringView>
-    <StringView Condition="Characters.ArrayCapacity &gt; 16">Characters.Allocator.DynamicAllocation.Allocation,s</StringView>
+    <DisplayString Condition="Data.ArrayCapacity &lt;= 16">{Data.Allocator.InlineAllocation.InlineAllocation,s}</DisplayString>
+    <DisplayString Condition="Data.ArrayCapacity &gt; 16">{Data.Allocator.DynamicAllocation.Allocation,s}</DisplayString>
+    <StringView Condition="Data.ArrayCapacity &lt;= 16">Data.Allocator.InlineAllocation.InlineAllocation,s</StringView>
+    <StringView Condition="Data.ArrayCapacity &gt; 16">Data.Allocator.DynamicAllocation.Allocation,s</StringView>
     <Expand>
-      <Item Name="[Size]"     ExcludeView="simple">Characters.ArraySize</Item>
-      <Item Name="[Capacity]" ExcludeView="simple">Characters.ArrayCapacity</Item>
+      <Item Name="[Size]"     ExcludeView="simple">Data.ArraySize</Item>
+      <Item Name="[Capacity]" ExcludeView="simple">Data.ArrayCapacity</Item>
       <ArrayItems>
-        <Size>Characters.ArraySize</Size>
-        <ValuePointer Condition="Characters.ArrayCapacity &lt;= 16">(const char*)(&amp;Characters.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
-        <ValuePointer Condition="Characters.ArrayCapacity &gt; 16">Characters.Allocator.DynamicAllocation.Allocation</ValuePointer>
+        <Size>Data.ArraySize</Size>
+        <ValuePointer Condition="Data.ArrayCapacity &lt;= 16">(const char*)(&amp;Data.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
+        <ValuePointer Condition="Data.ArrayCapacity &gt; 16">Data.Allocator.DynamicAllocation.Allocation</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
 
   <Type Name="TString&lt;wchar_t&gt;">
-    <DisplayString Condition="Characters.ArrayCapacity &lt;= 16">{Characters.Allocator.InlineAllocation.InlineAllocation,su}</DisplayString>
-    <DisplayString Condition="Characters.ArrayCapacity &gt; 16">{Characters.Allocator.DynamicAllocation.Allocation,su}</DisplayString>
-    <StringView Condition="Characters.ArrayCapacity &lt;= 16">Characters.Allocator.InlineAllocation.InlineAllocation,su</StringView>
-    <StringView Condition="Characters.ArrayCapacity &gt; 16">Characters.Allocator.DynamicAllocation.Allocation,su</StringView>
+    <DisplayString Condition="Data.ArrayCapacity &lt;= 16">{Data.Allocator.InlineAllocation.InlineAllocation,su}</DisplayString>
+    <DisplayString Condition="Data.ArrayCapacity &gt; 16">{Data.Allocator.DynamicAllocation.Allocation,su}</DisplayString>
+    <StringView Condition="Data.ArrayCapacity &lt;= 16">Data.Allocator.InlineAllocation.InlineAllocation,su</StringView>
+    <StringView Condition="Data.ArrayCapacity &gt; 16">Data.Allocator.DynamicAllocation.Allocation,su</StringView>
     <Expand>
-      <Item Name="[Size]"     ExcludeView="simple">Characters.ArraySize</Item>
-      <Item Name="[Capacity]" ExcludeView="simple">Characters.ArrayCapacity</Item>
+      <Item Name="[Size]"     ExcludeView="simple">Data.ArraySize</Item>
+      <Item Name="[Capacity]" ExcludeView="simple">Data.ArrayCapacity</Item>
       <ArrayItems>
-        <Size>Characters.ArraySize</Size>
-        <ValuePointer Condition="Characters.ArrayCapacity &lt;= 16">(const wchar_t*)(&amp;Characters.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
-        <ValuePointer Condition="Characters.ArrayCapacity &gt; 16">Characters.Allocator.DynamicAllocation.Allocation</ValuePointer>
+        <Size>Data.ArraySize</Size>
+        <ValuePointer Condition="Data.ArrayCapacity &lt;= 16">(const wchar_t*)(&amp;Data.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
+        <ValuePointer Condition="Data.ArrayCapacity &gt; 16">Data.Allocator.DynamicAllocation.Allocation</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>

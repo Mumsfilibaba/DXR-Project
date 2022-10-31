@@ -91,22 +91,22 @@ struct TCString
         return FPlatformString::Snprintf(Buffer, BufferSize, Format, Forward<ArgTypes>(Args)...);
     }
 
-    static FORCEINLINE const CHARTYPE* Strstr(const CHARTYPE* String, const CHARTYPE* Substring) noexcept
+    static FORCEINLINE CHARTYPE* Strstr(const CHARTYPE* String, const CHARTYPE* Substring) noexcept
     {
         return FPlatformString::Strstr(String, Substring);
     }
 
-    static FORCEINLINE const CHARTYPE* Strpbrk(const CHARTYPE* String, const CHARTYPE* Set) noexcept
+    static FORCEINLINE CHARTYPE* Strpbrk(const CHARTYPE* String, const CHARTYPE* Set) noexcept
     {
-        return FPlatformString::Strstr(String, Set);
+        return FPlatformString::Strpbrk(String, Set);
     }
 
-    static FORCEINLINE const CHARTYPE* Strchr(const CHARTYPE* String, CHARTYPE Char) noexcept
+    static FORCEINLINE CHARTYPE* Strchr(const CHARTYPE* String, CHARTYPE Char) noexcept
     {
-        return FPlatformString::Strstr(String, Char);
+        return FPlatformString::Strchr(String, Char);
     }
 
-    static FORCEINLINE const CHARTYPE* Strrchr(const CHARTYPE* String, CHARTYPE Char) noexcept
+    static FORCEINLINE CHARTYPE* Strrchr(const CHARTYPE* String, CHARTYPE Char) noexcept
     {
         return FPlatformString::Strrchr(String, Char);
     }
@@ -224,7 +224,7 @@ public:
         return FPlatformString::Atod(String);
     }
 
-    static FORCEINLINE const CHARTYPE* Empty() noexcept;
+    NODISCARD static FORCEINLINE const CHARTYPE* Empty() noexcept;
 };
 
 typedef TCString<CHAR>     FCString;

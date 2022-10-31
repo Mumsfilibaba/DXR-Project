@@ -1,9 +1,81 @@
 #include "EngineConfig.h"
+#include "Parse.h"
 
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Templates/CString.h"
 
 FConfigFile GConfig(ENGINE_LOCATION"/Engine.ini");
+
+FConfigSection::FConfigSection()
+    : Name()
+    , Values()
+{ }
+
+FConfigSection::FConfigSection(const CHAR* InName)
+    : Name(InName)
+    , Values()
+{ }
+
+bool FConfigSection::AddValue(const CHAR* NewKey, const CHAR* NewValue)
+{
+    auto Value = Values.find(FString(NewValue));
+    if (Value != Values.end())
+    {
+        return false;
+    }
+
+    const auto Result = Values.insert(std::make_pair(NewKey, NewValue));
+    return Result.second;
+}
+
+FConfigValue* FConfigSection::FindOrAddValue(const CHAR* InKey, const CHAR* InValue)
+{
+    auto Value = Values.find(FString(InValue));
+    if (Value != Values.end())
+    {
+        return &Value->second;
+    }
+
+    auto Result = Values.insert(std::make_pair(InKey, InValue));
+    if (Result.second)
+    {
+        return &Result.first->second;
+    }
+
+    return nullptr;
+}
+
+FConfigValue* FConfigSection::FindValue(const CHAR* Key)
+{
+    auto Value = Values.find(FString(Key));
+    if (Value != Values.end())
+    {
+        return &Value->second;
+    }
+
+    return nullptr;
+}
+
+const FConfigValue* FConfigSection::FindValue(const CHAR* Key) const
+{
+    auto Value = Values.find(FString(Key));
+    if (Value != Values.end())
+    {
+        return &Value->second;
+    }
+
+    return nullptr;
+}
+
+void FConfigSection::Restore()
+{
+    for (auto Value : Values)
+    {
+        Value.second.Restore();
+    }
+}
+
 
 FConfigFile::FConfigFile(const CHAR* InFilename)
     : Filename(InFilename)
@@ -30,40 +102,94 @@ bool FConfigFile::ParseFile()
     // Remove all carriage returns if there are any (Easier to process)
     FileContents.RemoveAll('\r');
 
-    FStringView FileString(FileContents.GetData());
-    
-    FConfigSection Section;
-    while (!FileString.IsEmpty())
+    // Create an empty Section
+    FConfigSection* CurrentSection = nullptr;
+
+    CHAR* Start = FileContents.GetData();
+    while (Start && (*Start != '\0'))
     {
-        int32 Position = FileString.FindChar('\n');
-        if (Position == FStringView::INVALID_INDEX)
+        // Skip newline chars
+        while (*Start == '\n')
+            ++Start;
+
+        CHAR* LineStart = Start;
+        FParse::ParseLine(&Start);
+
+        // End string at the end of line
+        if (*Start == '\n')
         {
-            break;
+            *(Start++) = '\0';
         }
 
-        // Get the current line and remove from the file-string
-        FStringView CurrentLine = FileString.SubStringView(0, Position);
-        FileString.ShrinkLeftInline(Position + 1);
-
-        Position = CurrentLine.FindChar('=');
-        if (Position == FStringView::INVALID_INDEX)
+        // Skip any spaces at the beginning of the line
+        FParse::ParseWhiteSpace(&LineStart);
+        
+        // This is a section
+        if (*LineStart == '[')
         {
-            continue;
+            if (CHAR* SectionEnd = FCString::Strchr(++LineStart, ']'))
+            {
+                CHAR* SectionStart = LineStart;
+                *SectionEnd = '\0';
+                CurrentSection = FindOrAddSection(SectionStart);
+            }
         }
+        else if (*LineStart != ';') // Check if this is a comment line
+        {
+            if (CHAR* EqualSign = FCString::Strchr(LineStart, '='))
+            {
+                CHAR* KeyEnd = EqualSign - 1;
+                while (*KeyEnd == ' ')
+                    *(KeyEnd--) = '\0';
 
-        FStringView Key = CurrentLine.SubStringView(0, Position);
-        Key.TrimInline();
+                // The parsed key
+                CHAR* Key = LineStart;
+                LineStart = EqualSign + 1;
+                
+                FParse::ParseWhiteSpace(&LineStart);
 
-        FStringView Value = CurrentLine.SubStringView(Position + 1, CurrentLine.GetLength() - Position - 1);
-        Value.TrimInline();
+                // Find the end of the value
+                CHAR* Value    = LineStart;
+                CHAR* ValueEnd = nullptr;
 
-        Section.Values.insert(std::make_pair(FString(Key), FString(Value)));
-        continue;
-    }
+                // Special case for string-values
+                if (*Value == '\"')
+                {
+                    Value++;
+                    ValueEnd = FCString::Strchr(Value, '\"');
+                    *ValueEnd = '\0';
+                }
+                else
+                {
+                    ValueEnd = FCString::Strchr(LineStart, ' ');
+                }
 
-    for (const auto& [key, value] : Section.Values)
-    {
-        LOG_INFO("'%s' = '%s'", key.GetCString(), value.CurrentValue.GetCString());
+                // Use line-end as backup
+                if (!ValueEnd)
+                {
+                    ValueEnd = Start;
+                }
+
+                while (*ValueEnd == ' ')
+                    *(ValueEnd--) = '\0';
+
+                // If there are no section, use the global one
+                if (!CurrentSection)
+                {
+                    CurrentSection = FindOrAddSection("");
+                }
+
+                // The parsed value
+                if (FConfigValue* CurrentValue = CurrentSection->FindValue(Key))
+                {
+                    *CurrentValue = ::Move(FConfigValue(Value));
+                }
+                else
+                {
+                    CurrentSection->AddValue(Key, Value);
+                }
+            }
+        }
     }
 
     return true;
@@ -100,7 +226,7 @@ bool FConfigFile::SaveFile()
 
 bool FConfigFile::SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue)
 {
-    FConfigValue* Value = GetValue(SectionName, Name);
+    FConfigValue* Value = FindValue(SectionName, Name);
     if (Value)
     {
         Value->CurrentValue = NewValue;
@@ -130,8 +256,7 @@ bool FConfigFile::SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewVa
 
 bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue)
 {
-    FConfigValue* Value = GetValue(SectionName, Name);
-    if (Value)
+    if (FConfigValue* Value = FindValue(SectionName, Name))
     {
         OutValue = Value->CurrentValue;
         return true;
@@ -157,35 +282,53 @@ bool FConfigFile::GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutV
     return false;
 }
 
-FConfigValue* FConfigFile::GetValue(const CHAR* Name)
+FConfigValue* FConfigFile::FindValue(const CHAR* Key)
 {
-    //    for ( auto& CurrentSection : Sections )
-    //    {
-    //        FConfigSection& ConfigSection = CurrentSection.second;
-    //        return ConfigSection.GetValue( Name );
-    //    }
+    for (auto& CurrentSection : Sections)
+    {
+        FConfigSection& ConfigSection = CurrentSection.second;
+        return ConfigSection.FindValue(Key);
+    }
 
     return nullptr;
 }
 
-FConfigValue* FConfigFile::GetValue(const CHAR* SectionName, const CHAR* Name)
+FConfigValue* FConfigFile::FindValue(const CHAR* SectionName, const CHAR* Name)
 {
-    //    FConfigSection* Section = GetSection( SectionName );
-    //    if ( Section )
-    //    {
-    //        return Section->GetValue( Name );
-    //    }
+    if (FConfigSection* Section = FindSection(SectionName))
+    {
+        return Section->FindValue( Name );
+    }
 
     return nullptr;
 }
 
-FConfigSection* FConfigFile::GetSection(const CHAR* SectionName)
+FConfigSection* FConfigFile::FindSection(const CHAR* SectionName)
 {
-    //    auto Section = Sections.find( SectionName );
-    //    if ( Section != Sections.end() )
-    //    {
-    //        return &Section->second;
-    //    }
+    auto Section = Sections.find(SectionName);
+    if (Section != Sections.end())
+    {
+        return &Section->second;
+    }
+
+    return nullptr;
+}
+
+FConfigSection* FConfigFile::FindOrAddSection(const CHAR* SectionName)
+{
+    const FString TempName = SectionName;
+
+    auto Section = Sections.find(TempName);
+    if (Section != Sections.end())
+    {
+        return &Section->second;
+    }
+
+    auto Result = Sections.insert(std::make_pair(SectionName, FConfigSection(SectionName)));
+    if (Result.second)
+    {
+        return &Result.first->second;
+    }
 
     return nullptr;
 }

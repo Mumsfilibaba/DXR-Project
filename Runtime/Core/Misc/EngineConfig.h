@@ -43,23 +43,26 @@ struct CORE_API FConfigSection
 {
     typedef TMap<FString, FConfigValue, FStringHasher> FConfigValueMap;
 
-    FConfigSection() = default;
+    FConfigSection();
+    FConfigSection(const CHAR* InName);
 
-     /** @brief - Restores all values in the section */
+     /** @brief - Add a specific value to a new string */
+    bool AddValue(const CHAR* NewKey, const CHAR* NewValue);
+
+    /** @brief - Find a value with a certain or add it with the specified value */
+    FConfigValue* FindOrAddValue(const CHAR* Key, const CHAR* Value);
+
+     /** @brief - Retrieve a value */
+    FConfigValue* FindValue(const CHAR* Key);
+
+     /** @brief - Retrieve a value */
+    const FConfigValue* FindValue(const CHAR* Key) const;
+
+    /** @brief - Restores all values in the section */
     void Restore();
 
-     /** @brief - Restores a specific value in the section */
-    bool Restore(const CHAR* Name);
-
-     /** @brief - Set a specific value to a new string */
-    void SetValue(const CHAR* Name, const FString& NewValue);
-
-     /** @brief - Retrieve a value */
-    FConfigValue* GetValue(const CHAR* Name);
-
-     /** @brief - Retrieve a value */
-    const FConfigValue* GetValue(const CHAR* Name) const;
-
+private:
+    FString         Name;
     FConfigValueMap Values;
 };
 
@@ -102,10 +105,11 @@ public:
     bool GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue);
 
 private:
-    FConfigValue*   GetValue(const CHAR* Name);
-    FConfigValue*   GetValue(const CHAR* SectionName, const CHAR* Name);
-    
-    FConfigSection* GetSection(const CHAR* SectionName);
+    FConfigSection* FindSection(const CHAR* SectionName);
+    FConfigSection* FindOrAddSection(const CHAR* SectionName);
+
+    FConfigValue*   FindValue(const CHAR* Name);
+    FConfigValue*   FindValue(const CHAR* SectionName, const CHAR* Name);
 
     FString           Filename;
     FConfigSectionMap Sections;
