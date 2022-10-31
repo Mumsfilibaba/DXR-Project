@@ -133,9 +133,11 @@ bool FRenderer::Initialize()
 
 void FRenderer::Release()
 {
-    CHECK(GInstance != nullptr);
-    delete GInstance;
-    GInstance = nullptr;
+    if (GInstance)
+    {
+        delete GInstance;
+        GInstance = nullptr;
+    }
 }
 
 FRenderer& FRenderer::Get()

@@ -181,7 +181,7 @@ IFileHandle* FMacFile::OpenForWrite(const FString& Filename)
 {
     const int32 Flags = 
         O_WRONLY | // Writing only 
-        O_CREAT  ;   // Create if the file does not exist
+        O_CREAT  ; // Create if the file does not exist
 
     const int32 PermissonFlags = 
         S_IRUSR | // Read for Permission for User

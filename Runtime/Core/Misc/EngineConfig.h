@@ -61,6 +61,9 @@ struct CORE_API FConfigSection
     /** @brief - Restores all values in the section */
     void Restore();
 
+    /** @brief - Dump the values to a string */
+    void DumpToString(FString& OutString);
+
 private:
     FString         Name;
     FConfigValueMap Values;

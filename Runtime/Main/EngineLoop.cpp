@@ -119,6 +119,7 @@ bool FEngineLoop::PreInit()
 
     // Parse the main engine config
     GConfig.ParseFile();
+    GConfig.SaveFile();
 
 #if !PRODUCTION_BUILD
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");

@@ -188,7 +188,7 @@ FORCEINLINE IFileHandle* FWindowsFile::OpenForWrite(const FString& Filename)
         GENERIC_WRITE,
         0,
         0,
-        CREATE_NEW,
+        CREATE_ALWAYS,
         FILE_ATTRIBUTE_NORMAL,
         0);
 

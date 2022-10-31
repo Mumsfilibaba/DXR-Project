@@ -76,6 +76,15 @@ void FConfigSection::Restore()
     }
 }
 
+void FConfigSection::DumpToString(FString& OutString)
+{
+    for (auto& ValuePair : Values)
+    {
+        FConfigValue& Value = ValuePair.second;
+        OutString.AppendFormat("%s=%s\n", ValuePair.first.GetCString(), Value.CurrentValue.GetCString());
+    }
+}
+
 
 FConfigFile::FConfigFile(const CHAR* InFilename)
     : Filename(InFilename)
@@ -197,30 +206,28 @@ bool FConfigFile::ParseFile()
 
 bool FConfigFile::SaveFile()
 {
-    //    FILE* File = fopen( Filename.GetCString(), "w" );
-    //    if ( File )
-    //    {
-    //        for ( auto& CurrentSectionPair : Sections )
-    //        {
-    //            fprintf( File, "[%s]", CurrentSectionPair.first.GetCString() );
-    //
-    //            FConfigSection& CurrentSection = CurrentSectionPair.second;
-    //            for ( auto& ValuePair : CurrentSection.ConfigValues )
-    //            {
-    //                FConfigValue& Value = ValuePair.second;
-    //                fprintf( File, "%s=%s", ValuePair.first.GetCString(), Value.CurrentValue.GetCString() );
-    //
-    //                Value.MakeCurrentSaved();
-    //            }
-    //        }
-    //
-    //        fclose( File );
-    //        return true;
-    //    }
-    //    else
-    //    {
-    //        return false;
-    //    }
+    FString ConfigString;
+    for (auto& CurrentSection : Sections)
+    {
+        const FString& SectionName = CurrentSection.first;
+        if (!SectionName.IsEmpty())
+        {
+            ConfigString.AppendFormat("[%s]\n", SectionName.GetCString());
+        }
+
+        FConfigSection& Section = CurrentSection.second;
+        Section.DumpToString(ConfigString);
+
+        ConfigString += '\n';
+    }
+
+    FFileHandleRef File = FPlatformFile::OpenForWrite(Filename);
+    if (!File)
+    {
+        return false;
+    }
+
+    File->Write((const uint8*)ConfigString.GetData(), ConfigString.SizeInBytes());
     return false;
 }
 
