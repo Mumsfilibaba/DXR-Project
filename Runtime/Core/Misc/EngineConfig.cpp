@@ -147,6 +147,8 @@ bool FConfigFile::ParseFile()
         {
             if (CHAR* EqualSign = FCString::Strchr(LineStart, '='))
             {
+                *EqualSign = '\0';
+
                 CHAR* KeyEnd = EqualSign - 1;
                 while (*KeyEnd == ' ')
                     *(KeyEnd--) = '\0';
