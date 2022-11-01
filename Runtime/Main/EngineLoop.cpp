@@ -119,7 +119,6 @@ bool FEngineLoop::PreInit()
 
     // Parse the main engine config
     GConfig.ParseFile();
-    GConfig.SaveFile();
 
 #if !PRODUCTION_BUILD
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
@@ -172,15 +171,10 @@ bool FEngineLoop::PreInit()
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return false;
     }
-        
-    // TODO: Decide this via command line or config file
-    ERHIInstanceType RHIInstanceType =
-#if PLATFORM_MACOS
-        ERHIInstanceType::Metal;
-#else
-        ERHIInstanceType::D3D12;
-#endif
-    if (!RHIInitialize(RHIInstanceType))
+
+
+    // Initialize the RHI
+    if (!RHIInitialize())
     {
         return false;
     }
@@ -195,6 +189,7 @@ bool FEngineLoop::PreInit()
     }
 
     NCoreDelegates::PostInitRHIDelegate.Broadcast();
+
 
     if (!FGPUProfiler::Init())
     {

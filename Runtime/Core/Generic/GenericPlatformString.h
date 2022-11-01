@@ -315,7 +315,7 @@ struct FGenericPlatformString
     
     NODISCARD static FORCEINLINE uint64 Strtoui64(const WIDECHAR* String, WIDECHAR** End, int32 Base) noexcept
     {
-        return static_cast<uint64>(::wcstoll(String, End, Base));
+        return static_cast<uint64>(::wcstoull(String, End, Base));
     }
     
     NODISCARD static FORCEINLINE float Strtof(const WIDECHAR* String, WIDECHAR** End) noexcept

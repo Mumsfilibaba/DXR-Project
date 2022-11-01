@@ -235,7 +235,16 @@ bool FConfigFile::SaveFile()
 
 bool FConfigFile::SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue)
 {
-    FConfigValue* Value = FindValue(SectionName, Name);
+    FConfigValue* Value = nullptr;
+    if (SectionName)
+    {
+        Value = FindValue(SectionName, Name);
+    }
+    else
+    {
+        Value = FindValue(Name);
+    }
+
     if (Value)
     {
         Value->CurrentValue = NewValue;
@@ -265,7 +274,17 @@ bool FConfigFile::SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewVa
 
 bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue)
 {
-    if (FConfigValue* Value = FindValue(SectionName, Name))
+    FConfigValue* Value = nullptr;
+    if (SectionName)
+    {
+        Value = FindValue(SectionName, Name);
+    }
+    else
+    {
+        Value = FindValue(Name);
+    }
+
+    if (Value)
     {
         OutValue = Value->CurrentValue;
         return true;
@@ -278,17 +297,68 @@ bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& 
 
 bool FConfigFile::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue)
 {
-    return false;
+    FConfigValue* Value = nullptr;
+    if (SectionName)
+    {
+        Value = FindValue(SectionName, Name);
+    }
+    else
+    {
+        Value = FindValue(Name);
+    }
+
+    if (Value)
+    {
+        return FromString<int32>(Value->CurrentValue, OutValue);
+    }
+    else
+    {
+        return false;
+    }
 }
 
 bool FConfigFile::GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue)
 {
-    return false;
+    FConfigValue* Value = nullptr;
+    if (SectionName)
+    {
+        Value = FindValue(SectionName, Name);
+    }
+    else
+    {
+        Value = FindValue(Name);
+    }
+
+    if (Value)
+    {
+        return FromString<float>(Value->CurrentValue, OutValue);
+    }
+    else
+    {
+        return false;
+    }
 }
 
 bool FConfigFile::GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue)
 {
-    return false;
+    FConfigValue* Value = nullptr;
+    if (SectionName)
+    {
+        Value = FindValue(SectionName, Name);
+    }
+    else
+    {
+        Value = FindValue(Name);
+    }
+
+    if (Value)
+    {
+        return FromString<bool>(Value->CurrentValue, bOutValue);
+    }
+    else
+    {
+        return false;
+    }
 }
 
 FConfigValue* FConfigFile::FindValue(const CHAR* Key)

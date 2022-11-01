@@ -2021,14 +2021,71 @@ NODISCARD inline FStringWide ToWideString<bool>(bool bElement)
 
 
 template<typename T>
-inline typename TEnableIf<TNot<TIsIntegerNotBool<T>>::Value, bool>::Type FromString(const FString& Value, T& OutElement);
+NODISCARD inline bool FromString(const FString& Value, T& OutElement);
+
+template<>
+NODISCARD inline bool FromString<int32>(const FString& Value, int32& OutElement)
+{
+	CHAR* End;
+	OutElement = FCString::Strtoi(Value.GetCString(), &End, 10);
+	if (*End)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+template<>
+NODISCARD inline bool FromString<int64>(const FString& Value, int64& OutElement)
+{
+	CHAR* End;
+	OutElement = FCString::Strtoi64(Value.GetCString(), &End, 10);
+	if (*End)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+template<>
+NODISCARD inline bool FromString<uint32>(const FString& Value, uint32& OutElement)
+{
+	CHAR* End;
+	OutElement = FCString::Strtoui(Value.GetCString(), &End, 10);
+	if (*End)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+template<>
+NODISCARD inline bool FromString<uint64>(const FString& Value, uint64& OutElement)
+{
+	CHAR* End;
+	OutElement = FCString::Strtoui64(Value.GetCString(), &End, 10);
+	if (*End)
+	{
+		return true;
+	}
+
+	return false;
+}
 
 template<>
 NODISCARD inline bool FromString<float>(const FString& Value, float& OutElement)
 {
     CHAR* End;
     OutElement = FCString::Strtof(Value.GetCString(), &End);
-    return (*End != 0);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 template<>
@@ -2036,7 +2093,12 @@ NODISCARD inline bool FromString<double>(const FString& Value, double& OutElemen
 {
     CHAR* End;
     OutElement = FCString::Strtod(Value.GetCString(), &End);
-    return (*End != 0);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 template<>

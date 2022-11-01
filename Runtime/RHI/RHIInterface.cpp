@@ -2,6 +2,7 @@
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
 
+#include "Core/Misc/EngineConfig.h"
 #include "Core/Debug/Console/ConsoleInterface.h"
 
 IMPLEMENT_ENGINE_MODULE(FRHIInterfaceModule, RHI);
@@ -15,19 +16,70 @@ static FRHIInterfaceModule* LoadNullRHI()
     return FModuleManager::Get().LoadModule<FRHIInterfaceModule>("NullRHI");
 }
 
-bool RHIInitialize(ERHIInstanceType InRenderApi)
+static ERHIInstanceType GetRHITypeFromConfig()
 {
+    FString RHITypeString;
+    if (GConfig.GetString(nullptr, "RHI.Type", RHITypeString))
+    {
+        if (RHITypeString == "D3D12")
+        {
+    #if PLATFORM_WINDOWS
+            return ERHIInstanceType::D3D12;
+    #else
+            LOG_ERROR("D3D12RHI Is not supported on this platform");
+    #endif
+        }
+        else if (RHITypeString == "Metal")
+        {
+#if PLATFORM_MACOS
+            return ERHIInstanceType::Metal;
+#else
+            LOG_ERROR("MetalRHI Is not supported on this platform");
+#endif
+        }
+        else if (RHITypeString == "Null")
+        {
+            return ERHIInstanceType::Null;
+        }
+    }
+
+    return ERHIInstanceType::Unknown;
+}
+
+static ERHIInstanceType GetRHIType()
+{
+    ERHIInstanceType InstanceType = GetRHITypeFromConfig();
+    if (InstanceType == ERHIInstanceType::Unknown)
+    {
+#if PLATFORM_WINDOWS
+        return ERHIInstanceType::D3D12;
+#elif PLATFORM_MACOS
+        return ERHIInstanceType::Metal;
+#else
+        return ERHIInstanceType::Null;
+#endif
+    }
+
+    return InstanceType;
+}
+
+
+bool RHIInitialize()
+{
+    // Select RHI
+    ERHIInstanceType InstanceType = GetRHIType();
+
     // Load Selected RHI
     FRHIInterfaceModule* RHIModule = nullptr;
-    if (InRenderApi == ERHIInstanceType::D3D12)
+    if (InstanceType == ERHIInstanceType::D3D12)
     {
         RHIModule = FModuleManager::Get().LoadModule<FRHIInterfaceModule>("D3D12RHI");
     }
-    else if (InRenderApi == ERHIInstanceType::Metal)
+    else if (InstanceType == ERHIInstanceType::Metal)
     {
         RHIModule = FModuleManager::Get().LoadModule<FRHIInterfaceModule>("MetalRHI");
     }
-    else if (InRenderApi == ERHIInstanceType::Null)
+    else if (InstanceType == ERHIInstanceType::Null)
     {
         RHIModule = LoadNullRHI();
     }

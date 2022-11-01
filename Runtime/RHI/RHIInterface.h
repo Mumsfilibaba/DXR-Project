@@ -47,10 +47,9 @@ inline const CHAR* ToString(ERHIInstanceType RenderLayerApi)
 extern RHI_API FRHIInterface* GRHIInterface;
 
 /**
- * @brief                - Initializes the RHI Interface and sets the global pointer
- * @param InInstanceType - The RHI module that should be loaded
+ * @brief - Initializes the RHI Interface and sets the global pointer
  */
-RHI_API bool RHIInitialize(ERHIInstanceType InInstanceType);
+RHI_API bool RHIInitialize();
 
 /**
  * @brief - Releases the RHI Interface
