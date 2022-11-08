@@ -2,7 +2,7 @@
 #include "AsyncTask.h"
 
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Debug/Console/ConsoleInterface.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 #include "Core/Platform/PlatformMisc.h"
 
 TAutoConsoleVariable<bool> CVarEnableAsyncWork("Core.EnableAsyncWork", true);
@@ -139,7 +139,7 @@ bool FAsyncThreadPool::Initialize(int32 NumThreads)
     {
         GInstance = dbg_new FAsyncThreadPool();
 
-        if (!CVarEnableAsyncWork.GetBool())
+        if (!CVarEnableAsyncWork.GetValue())
         {
             NumThreads = 0;
         }
@@ -185,7 +185,7 @@ bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
     CHECK(NewTask != nullptr);
 
     // We can disable the async work pool, execute tasks here in these cases
-    if (!CVarEnableAsyncWork.GetBool())
+    if (!CVarEnableAsyncWork.GetValue())
     {
         NewTask->DoAsyncWork();
         return true;

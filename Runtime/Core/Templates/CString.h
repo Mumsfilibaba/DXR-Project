@@ -241,3 +241,51 @@ FORCEINLINE const WIDECHAR* TCString<WIDECHAR>::Empty() noexcept
 {
     return L"";
 }
+
+
+#define DECLARE_FORMAT_STRING_SPECIFIER(Type, Specifier)                              \
+template<>                                                                            \
+NODISCARD FORCEINLINE decltype(auto) TFormatSpecifier<Type>::GetStringSpecifier()     \
+{                                                                                     \
+    return Specifier;                                                                 \
+}                                                                                     \
+                                                                                      \
+template<>                                                                            \
+NODISCARD FORCEINLINE decltype(auto) TFormatSpecifierWide<Type>::GetStringSpecifier() \
+{                                                                                     \
+    return L##Specifier;                                                              \
+}
+
+template<typename T>
+struct TFormatSpecifier
+{
+    NODISCARD static FORCEINLINE decltype(auto) GetStringSpecifier() 
+    { 
+        return  ""; 
+    }
+};
+
+template<typename T>
+struct TFormatSpecifierWide
+{
+    NODISCARD static FORCEINLINE decltype(auto) GetStringSpecifier()
+    {
+        return L"";
+    }
+};
+
+DECLARE_FORMAT_STRING_SPECIFIER(bool, "%d");
+
+DECLARE_FORMAT_STRING_SPECIFIER(int8, "%d");
+DECLARE_FORMAT_STRING_SPECIFIER(int16, "%d");
+DECLARE_FORMAT_STRING_SPECIFIER(int32, "%d");
+DECLARE_FORMAT_STRING_SPECIFIER(int64, "%lld");
+
+DECLARE_FORMAT_STRING_SPECIFIER(uint8, "%u");
+DECLARE_FORMAT_STRING_SPECIFIER(uint16, "%u");
+DECLARE_FORMAT_STRING_SPECIFIER(uint32, "%u");
+DECLARE_FORMAT_STRING_SPECIFIER(uint64, "%llu");
+
+DECLARE_FORMAT_STRING_SPECIFIER(float, "%f");
+DECLARE_FORMAT_STRING_SPECIFIER(double, "%f");
+DECLARE_FORMAT_STRING_SPECIFIER(long double, "%f");

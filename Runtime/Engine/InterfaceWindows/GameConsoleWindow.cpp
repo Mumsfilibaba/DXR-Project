@@ -2,7 +2,7 @@
 
 #include "Application/ApplicationInterface.h"
 
-#include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 #include "Core/Templates/CString.h"
 
 #include <imgui.h>
@@ -125,19 +125,19 @@ void FGameConsoleWindow::Tick()
                     FString Value = Variable->GetString();
                     ImGui::Text("%s", Value.GetCString());
 
-                    if (Variable->IsBool())
+                    if (Variable->IsVariableBool())
                     {
                         PostFix = "Boolean";
                     }
-                    else if (Variable->IsInt())
+                    else if (Variable->IsVariableInt())
                     {
                         PostFix = "Integer";
                     }
-                    else if (Variable->IsFloat())
+                    else if (Variable->IsVariableFloat())
                     {
                         PostFix = "Float";
                     }
-                    else if (Variable->IsString())
+                    else if (Variable->IsVariableString())
                     {
                         PostFix = "String";
                     }
@@ -173,7 +173,7 @@ void FGameConsoleWindow::Tick()
         }
         else
         {
-            const TArray<TPair<FString, EConsoleSeverity>>& ConsoleMessages = FConsoleInterface::Get().GetMessages();
+            const TArray<TPair<FString, EConsoleSeverity>>& ConsoleMessages = FConsoleManager::Get().GetMessages();
             for (const TPair<FString, EConsoleSeverity>& Text : ConsoleMessages)
             {
                 ImVec4 Color;
@@ -255,7 +255,7 @@ void FGameConsoleWindow::Tick()
             else
             {
                 const FString Text = FString(TextBuffer.GetData());
-                FConsoleInterface::Get().Execute(Text);
+                FConsoleManager::Get().Execute(Text);
 
                 TextBuffer[0] = 0;
                 bScrollDown = true;
@@ -329,7 +329,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
         }
 
         const FStringView CandidateName(WordStart, WordLength);
-        FConsoleInterface::Get().FindCandidates(CandidateName, Candidates);
+        FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
         break;
     }
     case ImGuiInputTextFlags_CallbackCompletion:
@@ -385,7 +385,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
     {
         if (Candidates.IsEmpty())
         {
-            const TArray<FString>& History = FConsoleInterface::Get().GetHistory();
+            const TArray<FString>& History = FConsoleManager::Get().GetHistory();
             if (History.IsEmpty())
             {
                 HistoryIndex = -1;

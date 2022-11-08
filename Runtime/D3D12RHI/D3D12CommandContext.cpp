@@ -14,7 +14,7 @@
 #include "D3D12Viewport.h"
 
 #include "Core/Math/Vector2.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Misc/FrameProfiler.h"
 
 #include <pix.h>
 

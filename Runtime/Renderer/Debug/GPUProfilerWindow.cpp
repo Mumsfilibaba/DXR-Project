@@ -1,7 +1,7 @@
 #include "GPUProfilerWindow.h"
 
 #include "Core/Time/Timer.h"
-#include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 
 #include "Application/WidgetUtilities.h"
 #include "Application/ApplicationInterface.h"
@@ -17,7 +17,7 @@ TSharedRef<FGPUProfilerWindow> FGPUProfilerWindow::Create()
 
 void FGPUProfilerWindow::Tick()
 {
-    if (GDrawGPUProfiler.GetBool())
+    if (GDrawGPUProfiler.GetValue())
     {
         DrawWindow();
     }
@@ -25,7 +25,7 @@ void FGPUProfilerWindow::Tick()
 
 bool FGPUProfilerWindow::IsTickable()
 {
-    return GDrawGPUProfiler.GetBool();
+    return GDrawGPUProfiler.GetValue();
 }
 
 void FGPUProfilerWindow::DrawGPUData(float Width)
@@ -189,7 +189,7 @@ void FGPUProfilerWindow::DrawWindow()
         ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoSavedSettings;
 
-    bool bTempDrawProfiler = GDrawGPUProfiler.GetBool();
+    bool bTempDrawProfiler = GDrawGPUProfiler.GetValue();
     if (ImGui::Begin("Profiler", &bTempDrawProfiler, Flags))
     {
         if (ImGui::Button("Start Profile"))
@@ -222,5 +222,5 @@ void FGPUProfilerWindow::DrawWindow()
 
     ImGui::End();
 
-    GDrawGPUProfiler.SetBool(bTempDrawProfiler);
+    GDrawGPUProfiler->SetAsBool(bTempDrawProfiler);
 }

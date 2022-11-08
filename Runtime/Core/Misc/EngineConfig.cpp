@@ -259,17 +259,17 @@ bool FConfigFile::SetString(const CHAR* SectionName, const CHAR* Name, const FSt
 
 bool FConfigFile::SetInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue)
 {
-    return SetString(SectionName, Name, ToString(NewValue));
+    return SetString(SectionName, Name, TTypeToString<int32>::ToString(NewValue));
 }
 
 bool FConfigFile::SetFloat(const CHAR* SectionName, const CHAR* Name, float NewValue)
 {
-    return SetString(SectionName, Name, ToString(NewValue));
+    return SetString(SectionName, Name, TTypeToString<float>::ToString(NewValue));
 }
 
 bool FConfigFile::SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewValue)
 {
-    return SetString(SectionName, Name, ToString(bNewValue));
+    return SetString(SectionName, Name, TTypeToString<bool>::ToString(bNewValue));
 }
 
 bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue)
@@ -309,7 +309,7 @@ bool FConfigFile::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutVa
 
     if (Value)
     {
-        return FromString<int32>(Value->CurrentValue, OutValue);
+        return TTypeFromString<int32>::FromString(Value->CurrentValue, OutValue);
     }
     else
     {
@@ -331,7 +331,7 @@ bool FConfigFile::GetFloat(const CHAR* SectionName, const CHAR* Name, float& Out
 
     if (Value)
     {
-        return FromString<float>(Value->CurrentValue, OutValue);
+        return TTypeFromString<float>::FromString(Value->CurrentValue, OutValue);
     }
     else
     {
@@ -353,7 +353,7 @@ bool FConfigFile::GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutV
 
     if (Value)
     {
-        return FromString<bool>(Value->CurrentValue, bOutValue);
+        return TTypeFromString<bool>::FromString(Value->CurrentValue, bOutValue);
     }
     else
     {

@@ -1,7 +1,7 @@
 #pragma once
 #include "Application/Window.h"
 
-#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Misc/FrameProfiler.h"
 
 #include <imgui.h>
 

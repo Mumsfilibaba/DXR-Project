@@ -5,10 +5,8 @@
 #include <random>
 
 #if PLATFORM_WINDOWS
-#include "Core/Windows/PreCompiledWindows.h"
+    #include "Core/Windows/PreCompiledWindows.h"
 #endif
-
-#include "Core/Debug/Debug.h"
 
 #include "Core/Core.h"
 #include "Core/RefCounted.h"
@@ -32,6 +30,7 @@
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/ReferenceWrapper.h"
 
+#include "Core/Misc/Debug.h"
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Misc/OutputDeviceConsole.h"
 #include "Core/Misc/OutputDeviceLogger.h"

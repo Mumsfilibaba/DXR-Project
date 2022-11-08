@@ -5,7 +5,7 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Debug/Console/ConsoleInterface.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 
 #include <spirv_cross_c.h>
 
@@ -274,7 +274,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShad
         CompileArgs.Emplace(L"-spirv");
     }
 
-    if (CVarShaderDebug.GetBool())
+    if (CVarShaderDebug.GetValue())
     {
         CompileArgs.Emplace(L"-Zi");
         CompileArgs.Emplace(L"-Qembed_debug");
@@ -446,7 +446,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FR
         CompileArgs.Emplace(L"-spirv");
     }
 
-    if (CVarShaderDebug.GetBool())
+    if (CVarShaderDebug.GetValue())
     {
         CompileArgs.Emplace(L"-Zi");
         CompileArgs.Emplace(L"-Qembed_debug");

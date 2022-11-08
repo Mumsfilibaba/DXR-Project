@@ -7,8 +7,8 @@
 #include "Engine/Resources/Mesh.h"
 #include "Engine//Resources/Material.h"
 
-#include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 
 #include "Renderer/Debug/GPUProfiler.h"
 
@@ -756,13 +756,13 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
     GPU_TRACE_SCOPE(CommandList, "Light Pass");
 
     bool bDrawCascades = false;
-    if (IConsoleVariable* CVarDrawCascades = FConsoleInterface::Get().FindVariable("Renderer.Debug.DrawCascades"))
+    if (IConsoleVariable* CVarDrawCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawCascades"))
     {
         bDrawCascades = CVarDrawCascades->GetBool();
     }
 
     FRHIComputeShader* LightPassShader = nullptr;
-    if (GDrawTileDebug.GetBool())
+    if (GDrawTileDebug.GetValue())
     {
         LightPassShader = TiledLightShader_TileDebug.Get();
         CommandList.SetComputePipelineState(TiledLightPassPSO_TileDebug.Get());
@@ -969,7 +969,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
         FrameResources.ReducedDepthBuffer[i] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
         if (FrameResources.ReducedDepthBuffer[i])
         {
-            FrameResources.ReducedDepthBuffer[i]->SetName("Reduced DepthStencil[" + ToString(i) + "]");
+            FrameResources.ReducedDepthBuffer[i]->SetName("Reduced DepthStencil[" + TTypeToString<int32>::ToString(i) + "]");
         }
         else
         {

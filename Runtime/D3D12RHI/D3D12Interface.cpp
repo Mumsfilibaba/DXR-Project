@@ -15,7 +15,7 @@
 #include "D3D12TimestampQuery.h"
 #include "DynamicD3D12.h"
 
-#include "Core/Debug/Console/ConsoleInterface.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 
 #include "CoreApplication/Windows/WindowsWindow.h"
 
@@ -68,7 +68,7 @@ FD3D12Interface::~FD3D12Interface()
 
 bool FD3D12Interface::Initialize()
 {
-    const bool bEnablePIX = CVarEnablePix.GetBool();
+    const bool bEnablePIX = CVarEnablePix.GetValue();
 
     // Load Library and Function-Pointers etc.
     const bool bResult = FDynamicD3D12::Initialize(bEnablePIX);

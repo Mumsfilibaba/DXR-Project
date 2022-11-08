@@ -1,7 +1,7 @@
 #include "RHICommandList.h"
 
-#include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Debug/Console/ConsoleInterface.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -24,7 +24,7 @@ bool FRHIThread::Startup()
     if (!GInstance)
     {
         GInstance = dbg_new FRHIThread();
-        if (!CVarEnableRHIThread.GetBool())
+        if (!CVarEnableRHIThread.GetValue())
         {
             return true;
         }
@@ -42,7 +42,7 @@ void FRHIThread::Shutdown()
 {
     if (GInstance)
     {
-        if (CVarEnableRHIThread.GetBool())
+        if (CVarEnableRHIThread.GetValue())
         {
             GInstance->Stop();
         }
@@ -187,7 +187,7 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
         Statistics.NumDispatchCalls += CommandList.GetNumDispatchCalls();
         Statistics.NumCommands      += CommandList.GetNumCommands();
 
-        if (CVarEnableRHIThread.GetBool())
+        if (CVarEnableRHIThread.GetValue())
         {
             FRHICommandList* NewCommandList = dbg_new FRHICommandList();
             NewCommandList->ExchangeState(CommandList);

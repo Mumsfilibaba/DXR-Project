@@ -2,7 +2,7 @@
 #include "D3D12CommandAllocator.h"
 #include "D3D12Device.h"
 
-#include "Core/Debug/Console/ConsoleInterface.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
 
 TAutoConsoleVariable<bool> CVarEnableGPUTimeout("D3D12RHI.EnableGPUTimeout", true);
@@ -28,7 +28,7 @@ bool FD3D12CommandListManager::Initialize()
         Desc.Type     = CommandListType;
         Desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
         Desc.NodeMask = GetDevice()->GetNodeMask();
-        Desc.Flags    = CVarEnableGPUTimeout.GetBool() ? D3D12_COMMAND_QUEUE_FLAG_NONE : D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT;
+        Desc.Flags    = CVarEnableGPUTimeout.GetValue() ? D3D12_COMMAND_QUEUE_FLAG_NONE : D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT;
 
         HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandQueue(&Desc, IID_PPV_ARGS(&NewCommandQueue));
         if (FAILED(Result))

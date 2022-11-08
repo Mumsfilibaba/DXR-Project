@@ -1,7 +1,7 @@
 #include "ViewportRenderer.h"
 
 #include "Core/Time/Timer.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Containers/Array.h"
 
 #include "Engine/Engine.h"
@@ -17,7 +17,7 @@
 
 FViewportRenderer* FViewportRenderer::Make()
 {
-    return dbg_new FViewportRenderer();;
+    return dbg_new FViewportRenderer();
 }
 
 bool FViewportRenderer::InitContext(InterfaceContext Context)

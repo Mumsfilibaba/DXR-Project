@@ -12,7 +12,7 @@
 class FViewportRenderer final
     : public IViewportRenderer
 {
-    FViewportRenderer() = default;
+    FViewportRenderer()  = default;
     ~FViewportRenderer() = default;
 
 public:
@@ -34,8 +34,10 @@ private:
     TArray<FDrawableTexture*>    RenderedImages;
 
     FRHITextureRef               FontTexture;
+    
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIGraphicsPipelineStateRef PipelineStateNoBlending;
+
     FRHIPixelShaderRef           PShader;
     
     FRHIBufferRef                VertexBuffer;

@@ -1935,151 +1935,65 @@ using FStringHasherWide = TStringHasher<WIDECHAR>;
 
 
 template<typename T>
-NODISCARD typename TEnableIf<TIsFloatingPoint<T>::Value, FString>::Type ToString(T Element)
+struct TTypeToString
 {
-    return FString::CreateFormatted("%f", Element);
-}
+    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, FString>::Type ToString(T Element)
+    {
+        return FString::CreateFormatted(TFormatSpecifier<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
+    }
 
-template<typename T>
-typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, FString>::Type ToString(T Element);
+    //NODISCARD static FORCEINLINE typename TEnableIf<TIsPointer<T>::Value, FString>::Type ToString(T Element)
+    //{
+    //    return FString::CreateFormatted("%p", Element);
+    //}
+};
 
 template<>
-NODISCARD inline FString ToString<int32>(int32 Element)
-{
-    return FString::CreateFormatted("%d", Element);
-}
-
-template<>
-NODISCARD inline FString ToString<int64>(int64 Element)
-{
-    return FString::CreateFormatted("%lld", Element);
-}
-
-template<>
-NODISCARD inline FString ToString<uint32>(uint32 Element)
-{
-    return FString::CreateFormatted("%u", Element);
-}
-
-template<>
-NODISCARD inline FString ToString<uint64>(uint64 Element)
-{
-    return FString::CreateFormatted("%llu", Element);
-}
-
-template<>
-NODISCARD inline FString ToString<void*>(void* Element)
-{
-    return FString::CreateFormatted("%p", Element);
-}
-
-template<>
-NODISCARD inline FString ToString<bool>(bool bElement)
+NODISCARD FORCEINLINE FString TTypeToString<bool>::ToString(bool bElement)
 {
     return FString(bElement ? "true" : "false");
 }
 
-template<typename T>
-NODISCARD
-typename TEnableIf<TIsFloatingPoint<T>::Value, FStringWide>::Type ToWideString(T Element)
-{
-    return FStringWide::CreateFormatted(L"%f", Element);
-}
 
 template<typename T>
-typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, FStringWide>::Type ToWideString(T Element);
-
-template<>
-NODISCARD inline FStringWide ToWideString<int32>(int32 Element)
+struct TTypeToStringWide
 {
-    return FStringWide::CreateFormatted(L"%d", Element);
-}
+    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, FStringWide>::Type ToString(T Element)
+    {
+        return FStringWide::CreateFormatted(TFormatSpecifierWide<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
+    }
+
+    //NODISCARD static FORCEINLINE typename TEnableIf<TIsPointer<T>::Value, FStringWide>::Type ToString(T Element)
+    //{
+    //    return FStringWide::CreateFormatted(L"%p", Element);
+    //}
+};
 
 template<>
-NODISCARD inline FStringWide ToWideString<int64>(int64 Element)
-{
-    return FStringWide::CreateFormatted(L"%lld", Element);
-}
-
-template<>
-NODISCARD inline FStringWide ToWideString<uint32>(uint32 Element)
-{
-    return FStringWide::CreateFormatted(L"%u", Element);
-}
-
-template<>
-NODISCARD inline FStringWide ToWideString<uint64>(uint64 Element)
-{
-    return FStringWide::CreateFormatted(L"%llu", Element);
-}
-
-template<>
-NODISCARD inline FStringWide ToWideString<bool>(bool bElement)
+NODISCARD FORCEINLINE FStringWide TTypeToStringWide<bool>::ToString(bool bElement)
 {
     return FStringWide(bElement ? L"true" : L"false");
 }
 
 
 template<typename T>
-NODISCARD inline bool FromString(const FString& Value, T& OutElement);
+struct TTypeFromString
+{
+    static FORCEINLINE bool FromString(const FString& String, T& OutElement);
+};
 
 template<>
-NODISCARD inline bool FromString<int32>(const FString& Value, int32& OutElement)
+FORCEINLINE bool TTypeFromString<FString>::FromString(const FString& String, FString& OutElement)
 {
-	CHAR* End;
-	OutElement = FCString::Strtoi(Value.GetCString(), &End, 10);
-	if (*End)
-	{
-		return true;
-	}
-
-	return false;
+    OutElement = String;
+    return true;
 }
 
 template<>
-NODISCARD inline bool FromString<int64>(const FString& Value, int64& OutElement)
-{
-	CHAR* End;
-	OutElement = FCString::Strtoi64(Value.GetCString(), &End, 10);
-	if (*End)
-	{
-		return true;
-	}
-
-	return false;
-}
-
-template<>
-NODISCARD inline bool FromString<uint32>(const FString& Value, uint32& OutElement)
-{
-	CHAR* End;
-	OutElement = FCString::Strtoui(Value.GetCString(), &End, 10);
-	if (*End)
-	{
-		return true;
-	}
-
-	return false;
-}
-
-template<>
-NODISCARD inline bool FromString<uint64>(const FString& Value, uint64& OutElement)
-{
-	CHAR* End;
-	OutElement = FCString::Strtoui64(Value.GetCString(), &End, 10);
-	if (*End)
-	{
-		return true;
-	}
-
-	return false;
-}
-
-template<>
-NODISCARD inline bool FromString<float>(const FString& Value, float& OutElement)
+FORCEINLINE bool TTypeFromString<int32>::FromString(const FString& String, int32& OutElement)
 {
     CHAR* End;
-    OutElement = FCString::Strtof(Value.GetCString(), &End);
+    OutElement = FCString::Strtoi(String.GetCString(), &End, 10);
     if (*End)
     {
         return true;
@@ -2089,10 +2003,10 @@ NODISCARD inline bool FromString<float>(const FString& Value, float& OutElement)
 }
 
 template<>
-NODISCARD inline bool FromString<double>(const FString& Value, double& OutElement)
+FORCEINLINE bool TTypeFromString<int64>::FromString(const FString& String, int64& OutElement)
 {
     CHAR* End;
-    OutElement = FCString::Strtod(Value.GetCString(), &End);
+    OutElement = FCString::Strtoi64(String.GetCString(), &End, 10);
     if (*End)
     {
         return true;
@@ -2102,10 +2016,189 @@ NODISCARD inline bool FromString<double>(const FString& Value, double& OutElemen
 }
 
 template<>
-NODISCARD inline bool FromString<bool>(const FString& Value, bool& OutElement)
+FORCEINLINE bool TTypeFromString<uint32>::FromString(const FString& String, uint32& OutElement)
 {
     CHAR* End;
-    OutElement = static_cast<bool>(FCString::Strtoi(Value.GetCString(), &End, 10));
+    OutElement = FCString::Strtoui(String.GetCString(), &End, 10);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+template<>
+FORCEINLINE bool TTypeFromString<uint64>::FromString(const FString& String, uint64& OutElement)
+{
+    CHAR* End;
+    OutElement = FCString::Strtoui64(String.GetCString(), &End, 10);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+template<>
+FORCEINLINE bool TTypeFromString<float>::FromString(const FString& String, float& OutElement)
+{
+    CHAR* End;
+    OutElement = FCString::Strtof(String.GetCString(), &End);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+template<>
+FORCEINLINE bool TTypeFromString<double>::FromString(const FString& String, double& OutElement)
+{
+    CHAR* End;
+    OutElement = FCString::Strtod(String.GetCString(), &End);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+template<>
+FORCEINLINE bool TTypeFromString<bool>::FromString(const FString& String, bool& OutElement)
+{
+    if (FCString::Stricmp(String.GetCString(), "true"))
+    {
+        OutElement = true;
+        return true;
+    }
+    else if (FCString::Stricmp(String.GetCString(), "false"))
+    {
+        OutElement = false;
+        return true;
+    }
+
+    CHAR* End;
+    OutElement = static_cast<bool>(FCString::Strtoi(String.GetCString(), &End, 10));
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+template<typename T>
+struct TTypeFromStringWide
+{
+    static FORCEINLINE bool FromString(const FStringWide& String, T& OutElement);
+};
+
+template<>
+FORCEINLINE bool TTypeFromStringWide<FStringWide>::FromString(const FStringWide& String, FStringWide& OutElement)
+{
+    OutElement = String;
+    return true;
+}
+
+template<>
+FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const FStringWide& String, int32& OutElement)
+{
+    WIDECHAR* End;
+    OutElement = FCStringWide::Strtoi(String.GetCString(), &End, 10);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+template<>
+FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const FStringWide& String, int64& OutElement)
+{
+    WIDECHAR* End;
+    OutElement = FCStringWide::Strtoi64(String.GetCString(), &End, 10);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+template<>
+FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const FStringWide& String, uint32& OutElement)
+{
+    WIDECHAR* End;
+    OutElement = FCStringWide::Strtoui(String.GetCString(), &End, 10);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+template<>
+FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const FStringWide& String, uint64& OutElement)
+{
+    WIDECHAR* End;
+    OutElement = FCStringWide::Strtoui64(String.GetCString(), &End, 10);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+template<>
+FORCEINLINE bool TTypeFromStringWide<float>::FromString(const FStringWide& String, float& OutElement)
+{
+    WIDECHAR* End;
+    OutElement = FCStringWide::Strtof(String.GetCString(), &End);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+template<>
+FORCEINLINE bool TTypeFromStringWide<double>::FromString(const FStringWide& String, double& OutElement)
+{
+    WIDECHAR* End;
+    OutElement = FCStringWide::Strtod(String.GetCString(), &End);
+    if (*End)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+template<>
+FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const FStringWide& String, bool& OutElement)
+{
+    if (FCStringWide::Stricmp(String.GetCString(), L"true"))
+    {
+        OutElement = true;
+        return true;
+    }
+    else if (FCStringWide::Stricmp(String.GetCString(), L"false"))
+    {
+        OutElement = false;
+        return true;
+    }
+
+    WIDECHAR* End;
+    OutElement = static_cast<bool>(FCStringWide::Strtoi(String.GetCString(), &End, 10));
     if (*End)
     {
         return true;

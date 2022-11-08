@@ -14,7 +14,6 @@
 
 struct ENGINE_API FEngine
 {
-    FEngine();
     virtual ~FEngine() = default;
 
     /**

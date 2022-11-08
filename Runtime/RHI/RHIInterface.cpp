@@ -3,7 +3,7 @@
 #include "RHIShaderCompiler.h"
 
 #include "Core/Misc/EngineConfig.h"
-#include "Core/Debug/Console/ConsoleInterface.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 
 IMPLEMENT_ENGINE_MODULE(FRHIInterfaceModule, RHI);
 
@@ -105,7 +105,7 @@ bool RHIInitialize()
 
     if (!RHIInterface->Initialize())
     {
-        LOG_ERROR("[RHIInitialize] Failed to Ïnitialize RHIInterface, the application has to terminate");
+        LOG_ERROR("[RHIInitialize] Failed to ï¿½nitialize RHIInterface, the application has to terminate");
         return false;
     }
 

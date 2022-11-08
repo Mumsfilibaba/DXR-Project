@@ -1,7 +1,7 @@
 #include "Engine.h"
 
-#include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
 
 #include "Application/ApplicationInterface.h"
@@ -19,13 +19,31 @@
 
 ENGINE_API FEngine* GEngine;
 
-FAutoConsoleCommand GExit("Engine.Exit");
-FAutoConsoleCommand GToggleFullscreen("MainViewport.ToggleFullscreen");
-
-FEngine::FEngine()
+static void ExitEngineFunc()
 {
-    GExit.GetDelgate().AddRaw(this, &FEngine::Exit);
+    if (GEngine)
+    {
+        GEngine->Exit();
+    }
 }
+
+static FAutoConsoleCommand GExit(
+    "Engine.Exit",
+    FConsoleCommandDelegate::CreateStatic(&ExitEngineFunc));
+
+static void ToggleFullScreenFunc()
+{
+    FGenericWindowRef MainWindow = FApplicationInterface::Get().GetMainViewport();
+    if (MainWindow)
+    {
+        MainWindow->ToggleFullscreen();
+    }
+}
+
+static FAutoConsoleCommand GToggleFullscreen(
+    "MainViewport.ToggleFullscreen",
+    FConsoleCommandDelegate::CreateStatic(&ToggleFullScreenFunc));
+
 
 bool FEngine::Initialize()
 {
@@ -52,8 +70,6 @@ bool FEngine::Initialize()
         if (MainWindow && MainWindow->Initialize(FProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
         {
             MainWindow->Show(false);
-
-            GToggleFullscreen.GetDelgate().AddRaw(MainWindow.Get(), &FGenericWindow::ToggleFullscreen);
         }
         else
         {

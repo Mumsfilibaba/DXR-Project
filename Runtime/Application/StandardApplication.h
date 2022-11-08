@@ -163,7 +163,7 @@ protected:
     TSharedPtr<FGenericApplication>  PlatformApplication;
 
     FGenericWindowRef                MainViewport;
-    TSharedRef<IViewportRenderer> Renderer;
+    TSharedRef<IViewportRenderer>    Renderer;
 
     TArray<FString>                  DebugStrings;
     TArray<TSharedRef<FWindow>>      InterfaceWindows;

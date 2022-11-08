@@ -6,7 +6,7 @@
 #include "Core/Containers/Optional.h"
 #include "Core/Delegates/Event.h"
 #include "Core/Delegates/Delegate.h"
-#include "Core/Debug/Debug.h"
+#include "Core/Misc/Debug.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Time/Timespan.h"

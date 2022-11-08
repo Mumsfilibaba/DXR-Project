@@ -1,7 +1,7 @@
 #include "D3D12Interface.h"
 #include "D3D12Viewport.h"
 
-#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Misc/FrameProfiler.h"
 
 FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportDesc& InDesc)
     : FD3D12DeviceChild(InDevice)

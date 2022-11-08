@@ -3,7 +3,7 @@
 #include "D3D12Interface.h"
 #include "D3D12CommandContext.h"
 
-#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Templates/TypeTraits.h"
 
 FD3D12DescriptorCache::FD3D12DescriptorCache(FD3D12Device* InDevice)

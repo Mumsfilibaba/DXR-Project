@@ -2,7 +2,7 @@
 #include "D3D12Device.h"
 #include "D3D12ResourceViews.h"
 
-#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Misc/FrameProfiler.h"
 
 FD3D12DescriptorHeap::FD3D12DescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
     : FD3D12DeviceChild(InDevice)
@@ -146,7 +146,7 @@ void FD3D12OfflineDescriptorHeap::SetName(const FString& InName)
     uint32 HeapIndex = 0;
     for (FDescriptorHeap& Heap : Heaps)
     {
-        FString DbgName = Name + "[" + ToString(HeapIndex) + "]";
+        FString DbgName = Name + "[" + TTypeToString<uint32>::ToString(HeapIndex) + "]";
         Heap.Heap->SetName(DbgName.GetCString());
     }
 }
@@ -160,7 +160,7 @@ bool FD3D12OfflineDescriptorHeap::AllocateHeap()
     {
         if (!Name.IsEmpty())
         {
-            FString DbgName = Name + ToString(Heaps.GetSize());
+            FString DbgName = Name + TTypeToString<int32>::ToString(Heaps.GetSize());
             Heap->SetName(DbgName.GetCString());
         }
 

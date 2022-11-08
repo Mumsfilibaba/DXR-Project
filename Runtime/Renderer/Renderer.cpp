@@ -14,8 +14,8 @@
 #include "Engine/Scene/Lights/DirectionalLight.h"
 
 #include "Core/Math/Frustum.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
 #include "Renderer/Debug/GPUProfiler.h"
@@ -480,7 +480,7 @@ void FRenderer::PerformFXAA(FRHICommandList& InCommandList)
     InCommandList.BeginRenderPass(RenderPass);
 
     FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
-    if (GFXAADebug.GetBool())
+    if (GFXAADebug.GetValue())
     {
         InCommandList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
         InCommandList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
@@ -556,7 +556,7 @@ void FRenderer::Tick(const FScene& Scene)
     TextureDebugger->ClearImages();
 
     // FrustumCulling
-    if (!GFrustumCullEnabled.GetBool())
+    if (!GFrustumCullEnabled.GetValue())
     {
         for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.GetSize(); ++CommandIndex)
         {
@@ -601,7 +601,7 @@ void FRenderer::Tick(const FScene& Scene)
     CameraBuffer.ViewportWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
     CameraBuffer.ViewportHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
 
-    if (GEnableTemporalAA.GetBool())
+    if (GEnableTemporalAA.GetValue())
     {
         const FVector2 CameraJitter    = HaltonState.NextSample();
         const FVector2 ClipSpaceJitter = CameraJitter / FVector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
@@ -666,7 +666,7 @@ void FRenderer::Tick(const FScene& Scene)
         EResourceAccess::DepthWrite);
 
     // PrePass
-    if (GPrePassEnabled.GetBool())
+    if (GPrePassEnabled.GetValue())
     {
         DeferredRenderer.RenderPrePass(CommandList, Resources, Scene);
     }
@@ -678,7 +678,7 @@ void FRenderer::Tick(const FScene& Scene)
     ShadowMapRenderer.RenderDirectionalLightShadows(CommandList, LightSetup, Resources, Scene);
 
 #if 0
-    if (ShadingImage && GEnableVariableRateShading.GetBool())
+    if (ShadingImage && GEnableVariableRateShading.GetValue())
     {
         INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin VRS Image");
         CommandList.SetShadingRate(EShadingRate::VRS_1x1);
@@ -787,7 +787,7 @@ void FRenderer::Tick(const FScene& Scene)
         EResourceAccess::NonPixelShaderResource, 
         EResourceAccess::UnorderedAccess);
 
-    if (GEnableSSAO.GetBool())
+    if (GEnableSSAO.GetValue())
     {
         GPU_TRACE_SCOPE(CommandList, "SSAO");
         SSAORenderer.Render(CommandList, Resources);
@@ -906,12 +906,12 @@ void FRenderer::Tick(const FScene& Scene)
         ForwardRenderer.Render(CommandList, Resources, LightSetup);
     }
 
-    if (GDrawPointLights.GetBool())
+    if (GDrawPointLights.GetValue())
     {
         DebugRenderer.RenderPointLights(CommandList, Resources, Scene);
     }
 
-    if (GDrawAABBs.GetBool())
+    if (GDrawAABBs.GetValue())
     {
         DebugRenderer.RenderObjectAABBs(CommandList, Resources);
     }
@@ -927,7 +927,7 @@ void FRenderer::Tick(const FScene& Scene)
         EResourceAccess::PixelShaderResource,
         EResourceAccess::PixelShaderResource);
 
-    if (GEnableTemporalAA.GetBool())
+    if (GEnableTemporalAA.GetValue())
     {
         CommandList.TransitionTexture(
             Resources.FinalTarget.Get(),
@@ -949,7 +949,7 @@ void FRenderer::Tick(const FScene& Scene)
             EResourceAccess::PixelShaderResource);
     }
 
-    if (GEnableFXAA.GetBool())
+    if (GEnableFXAA.GetValue())
     {
         PerformFXAA(CommandList);
     }
@@ -1003,7 +1003,7 @@ void FRenderer::Tick(const FScene& Scene)
     CommandList.EndExternalCapture();
 #endif
 
-    CommandList.PresentViewport(Resources.MainWindowViewport.Get(), GVSyncEnabled.GetBool());
+    CommandList.PresentViewport(Resources.MainWindowViewport.Get(), GVSyncEnabled.GetValue());
 
     {
         TRACE_SCOPE("ExecuteCommandList");

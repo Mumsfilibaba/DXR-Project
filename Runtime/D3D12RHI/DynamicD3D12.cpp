@@ -2,7 +2,7 @@
 #include "DynamicD3D12.h"
 
 #include "Core/Platform/PlatformLibrary.h"
-#include "Core/Debug/Console/ConsoleInterface.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 

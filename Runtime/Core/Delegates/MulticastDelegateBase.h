@@ -200,7 +200,6 @@ public:
     }
 
 protected:
-
     FORCEINLINE explicit FMulticastDelegateBase() noexcept
         : Delegates()
         , LockVariable(0)

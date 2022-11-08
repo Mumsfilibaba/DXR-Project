@@ -3,9 +3,9 @@
 #include "IRHICommandContext.h"
 #include "RHIResources.h"
 
-#include "Core/Debug/Debug.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/Debug.h"
 #include "Core/Containers/ArrayView.h"
 
 #define DECLARE_RHICOMMAND(RHICommandName) \

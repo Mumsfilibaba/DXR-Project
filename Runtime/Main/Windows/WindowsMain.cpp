@@ -1,4 +1,4 @@
-#include "Core/Debug/Debug.h"
+#include "Core/Misc/Debug.h"
 #include "Core/Windows/Windows.h"
 
 extern int32 GenericMain();

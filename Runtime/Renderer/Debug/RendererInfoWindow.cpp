@@ -1,6 +1,6 @@
 #include "RendererInfoWindow.h"
 
-#include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 
 #include "RHI/RHIInterface.h"
 
@@ -76,5 +76,5 @@ void FRendererInfoWindow::Tick()
 
 bool FRendererInfoWindow::IsTickable()
 {
-    return GDrawRendererInfo.GetBool();
+    return GDrawRendererInfo.GetValue();
 }

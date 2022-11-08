@@ -1,8 +1,7 @@
 #include "DirectionalLight.h"
 
 #include "Core/Math/Math.h"
-#include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Debug/Console/ConsoleVariable.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 
 #include "Engine/Scene/Camera.h"
 
@@ -15,29 +14,29 @@ FDirectionalLight::FDirectionalLight()
     , Rotation(0.0f, 0.0f, 0.0f)
     , LookAt(0.0f, 0.0f, 0.0f)
     , Position(0.0f, 0.0f, 0.0f)
-    , CascadeSplitLambda(GCascadeSplitLambda.GetFloat())
-    , Size(GSunSize.GetFloat())
+    , CascadeSplitLambda(GCascadeSplitLambda.GetValue())
+    , Size(GSunSize.GetValue())
 {
     CORE_OBJECT_INIT();
 
     // TODO: Probably move to scene
-    GSunSize.GetChangedDelegate().AddLambda([this](IConsoleVariable* SunLight)
+    GSunSize->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* SunLight)
     {
-        if (SunLight && SunLight->IsFloat())
+        if (SunLight && SunLight->IsVariableFloat())
         {
             const float NewSize = NMath::Clamp(0.0f, 1.0f, SunLight->GetFloat());
             this->Size = NewSize;
         }
-    });
+    }));
 
-    GCascadeSplitLambda.GetChangedDelegate().AddLambda([this](IConsoleVariable* CascadeSplitLambda)
+    GCascadeSplitLambda->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* CascadeSplitLambda)
     {
-        if (CascadeSplitLambda && CascadeSplitLambda->IsFloat())
+        if (CascadeSplitLambda && CascadeSplitLambda->IsVariableFloat())
         {
             const float NewLambda = NMath::Clamp(0.0f, 1.0f, CascadeSplitLambda->GetFloat());
             this->CascadeSplitLambda = NewLambda;
         }
-    });
+    }));
 
     ShadowMatrix.SetIdentity();
     ViewMatrix.SetIdentity();
@@ -132,10 +131,10 @@ void FDirectionalLight::SetRotation(const FVector3& InRotation)
 
 void FDirectionalLight::SetCascadeSplitLambda(float InCascadeSplitLambda)
 {
-    GCascadeSplitLambda.SetFloat(InCascadeSplitLambda);
+    GCascadeSplitLambda->SetAsFloat(InCascadeSplitLambda);
 }
 
 void FDirectionalLight::SetSize(float InSize)
 {
-    GSunSize.SetFloat(InSize);
+    GSunSize->SetAsFloat(InSize);
 }

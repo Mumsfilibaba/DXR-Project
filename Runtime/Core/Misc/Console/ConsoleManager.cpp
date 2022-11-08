@@ -1,0 +1,646 @@
+#include "ConsoleManager.h"
+
+#include "Core/Containers/AutoPtr.h"
+#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Platform/PlatformMisc.h"
+
+// TODO: Remove (Make own? Slow?)
+#include <regex>
+
+
+FAutoConsoleCommand GClearHistory(
+    "ClearHistory",
+    FConsoleCommandDelegate::CreateRaw(&FConsoleManager::Get(), &FConsoleManager::ClearHistory));
+
+TAutoConsoleVariable<FString> GEcho(
+    "Echo",
+    "",
+    FConsoleVariableDelegate::CreateLambda([](IConsoleVariable* InVariable) -> void
+    {
+        if (InVariable->IsVariableString())
+        {
+            FConsoleManager& ConsoleManager = FConsoleManager::Get();
+            ConsoleManager.PrintMessage(InVariable->GetString(), EConsoleSeverity::Info);
+        }
+    }));
+
+
+class FConsoleCommand 
+    : public IConsoleCommand
+{
+public:
+    FConsoleCommand()
+        : ExecuteDelegate()
+    { }
+
+    FConsoleCommand(const FConsoleCommandDelegate& Delegate)
+        : ExecuteDelegate(Delegate)
+    { }
+
+    virtual ~FConsoleCommand() = default;
+
+    virtual IConsoleCommand*  AsCommand()  override final { return this; }
+    virtual IConsoleVariable* AsVariable() override final { return nullptr; }
+ 
+    // TODO: Add parameters to console commands
+    virtual void Execute() override final
+    {
+        ExecuteDelegate.ExecuteIfBound();
+    }
+
+private:
+    FConsoleCommandDelegate ExecuteDelegate;
+};
+
+
+class FConsoleVariableBase 
+    : public IConsoleVariable
+{
+public:
+    FConsoleVariableBase()
+        : IConsoleVariable()
+        , ChangedDelegate()
+    { }
+
+    virtual ~FConsoleVariableBase() = default;
+
+    virtual IConsoleCommand*  AsCommand()  override final { return nullptr; }
+    virtual IConsoleVariable* AsVariable() override final { return this; }
+
+    virtual void SetOnChangedDelegate(const FConsoleVariableDelegate& NewChangedDelegate) override final
+    {
+        ChangedDelegate = NewChangedDelegate;
+    }
+
+    virtual FConsoleVariableDelegate& GetOnChangedDelegate() override final
+    {
+        return ChangedDelegate;
+    }
+
+protected:
+    FORCEINLINE void OnChanged()
+    {
+        ChangedDelegate.ExecuteIfBound(this);
+    }
+
+    FConsoleVariableDelegate ChangedDelegate;
+};
+
+
+template<typename T>
+class TConsoleVariable;
+
+typedef TConsoleVariable<int32>   FConsoleVariableInt32;
+typedef TConsoleVariable<float>   FConsoleVariableFloat;
+typedef TConsoleVariable<bool>    FConsoleVariableBool;
+typedef TConsoleVariable<FString> FConsoleVariableString;
+
+template<typename T>
+class TConsoleVariable 
+    : public FConsoleVariableBase
+{
+    using FConsoleVariableBase::OnChanged;
+
+public:
+    explicit TConsoleVariable(const T& StartValue)
+        : FConsoleVariableBase()
+        , Data(StartValue)
+    { }
+
+    virtual TConsoleVariableData<int32>*   GetIntData()    override final { return nullptr; }
+    virtual TConsoleVariableData<float>*   GetFloatData()  override final { return nullptr; }
+    virtual TConsoleVariableData<bool>*    GetBoolData()   override final { return nullptr; }
+    virtual TConsoleVariableData<FString>* GetStringData() override final { return nullptr; }
+
+    virtual bool IsVariableInt()    const override final { return false; }
+    virtual bool IsVariableFloat()  const override final { return false; }
+    virtual bool IsVariableBool()   const override final { return false; }
+    virtual bool IsVariableString() const override final { return false; }
+
+    virtual void SetAsInt(int32 InValue)   override final;
+    virtual void SetAsFloat(float InValue) override final;
+    virtual void SetAsBool(bool bValue)    override final;
+
+    virtual void SetString(const FString& InValue) override final
+    {
+        T NewValue = 0;
+        if (TTypeFromString<T>::FromString(InValue, NewValue))
+        {
+            *Data = ::Move(NewValue);
+            OnChanged();
+        }
+    }
+
+    virtual int32 GetInt()   const override final;
+    virtual float GetFloat() const override final;
+    virtual bool  GetBool()  const override final;
+    
+    virtual FString GetString() const override final
+    {
+        return TTypeToString<T>::ToString(*Data);
+    }
+
+private:
+    TConsoleVariableData<T> Data;
+};
+
+// Int32
+
+template<>
+TConsoleVariableData<int32>* TConsoleVariable<int32>::GetIntData()
+{
+    return &Data;
+}
+
+template<>
+bool TConsoleVariable<int32>::IsVariableInt() const
+{
+    return true;
+}
+
+template<>
+void TConsoleVariable<int32>::SetAsInt(int32 InValue)
+{
+    *Data = InValue;
+    OnChanged();
+}
+
+template<>
+void TConsoleVariable<int32>::SetAsFloat(float InValue)
+{
+    *Data = static_cast<int32>(InValue);
+    OnChanged();
+}
+
+template<>
+void TConsoleVariable<int32>::SetAsBool(bool bValue)
+{
+    *Data = bValue ? 1 : 0;
+    OnChanged();
+}
+
+template<>
+int32 TConsoleVariable<int32>::GetInt() const
+{
+    return *Data;
+}
+
+template<>
+float TConsoleVariable<int32>::GetFloat() const
+{
+    return static_cast<float>(*Data);
+}
+
+template<>
+bool TConsoleVariable<int32>::GetBool() const
+{
+    return (*Data != 0);
+}
+
+// Float
+
+template<>
+TConsoleVariableData<float>* TConsoleVariable<float>::GetFloatData()
+{
+    return &Data;
+}
+
+template<>
+bool TConsoleVariable<float>::IsVariableFloat() const
+{
+    return true;
+}
+
+template<>
+void TConsoleVariable<float>::SetAsInt(int32 InValue)
+{
+    *Data = static_cast<float>(InValue);
+    OnChanged();
+}
+
+template<>
+void TConsoleVariable<float>::SetAsFloat(float InValue)
+{
+    *Data = InValue;
+    OnChanged();
+}
+
+template<>
+void TConsoleVariable<float>::SetAsBool(bool bValue)
+{
+    *Data = bValue ? 1.0f : 0.0f;
+    OnChanged();
+}
+
+template<>
+int32 TConsoleVariable<float>::GetInt() const
+{
+    return static_cast<int32>(*Data);
+}
+
+template<>
+float TConsoleVariable<float>::GetFloat() const
+{
+    return *Data;
+}
+
+template<>
+bool TConsoleVariable<float>::GetBool() const
+{
+    return (*Data != 0.0f);
+}
+
+// Bool
+
+template<>
+TConsoleVariableData<bool>* TConsoleVariable<bool>::GetBoolData()
+{
+    return &Data;
+}
+
+template<>
+bool TConsoleVariable<bool>::IsVariableBool() const
+{
+    return true;
+}
+
+template<>
+void TConsoleVariable<bool>::SetAsInt(int32 InValue)
+{
+    *Data = (InValue != 0);
+    OnChanged();
+}
+
+template<>
+void TConsoleVariable<bool>::SetAsFloat(float InValue)
+{
+    *Data = (InValue != 0.0f);
+    OnChanged();
+}
+
+template<>
+void TConsoleVariable<bool>::SetAsBool(bool bValue)
+{
+    *Data = bValue;
+    OnChanged();
+}
+
+template<>
+int32 TConsoleVariable<bool>::GetInt() const
+{
+    return *Data ? 1 : 0;
+}
+
+template<>
+float TConsoleVariable<bool>::GetFloat() const
+{
+    return *Data ? 1.0f : 0.0f;
+}
+
+template<>
+bool TConsoleVariable<bool>::GetBool() const
+{
+    return *Data;
+}
+
+// FString
+
+template<>
+TConsoleVariableData<FString>* TConsoleVariable<FString>::GetStringData()
+{
+    return &Data;
+}
+
+template<>
+bool TConsoleVariable<FString>::IsVariableString() const
+{
+    return true;
+}
+
+template<>
+inline void TConsoleVariable<FString>::SetAsInt(int32 InValue)
+{
+    *Data = TTypeToString<int32>::ToString(InValue);
+    OnChanged();
+}
+
+template<>
+inline void TConsoleVariable<FString>::SetAsFloat(float InValue)
+{
+    *Data = TTypeToString<float>::ToString(InValue);
+    OnChanged();
+}
+
+template<>
+inline void TConsoleVariable<FString>::SetAsBool(bool InValue)
+{
+    *Data = TTypeToString<bool>::ToString(InValue);
+    OnChanged();
+}
+
+template<>
+inline void TConsoleVariable<FString>::SetString(const FString& InValue)
+{
+    *Data = InValue;
+    OnChanged();
+}
+
+template<>
+int32 TConsoleVariable<FString>::GetInt() const
+{
+    int32 Value = false;
+    TTypeFromString<int32>::FromString(Data.GetValue(), Value);
+    return Value;
+}
+
+template<>
+float TConsoleVariable<FString>::GetFloat() const
+{
+    float Value = false;
+    TTypeFromString<float>::FromString(Data.GetValue(), Value);
+    return Value;
+}
+
+template<>
+bool TConsoleVariable<FString>::GetBool() const
+{
+    bool bValue = false;
+    TTypeFromString<bool>::FromString(Data.GetValue(), bValue);
+    return bValue;
+}
+
+template<>
+FString TConsoleVariable<FString>::GetString() const
+{
+    return Data.GetValue();
+}
+
+
+FConsoleManager* FConsoleManager::GInstance;
+
+void FConsoleManager::CreateConsoleManager()
+{
+    CHECK(GInstance == nullptr);
+
+    if (!GInstance)
+    {
+        GInstance = dbg_new FConsoleManager();
+    }
+
+    CHECK(GInstance != nullptr);
+}
+
+FConsoleManager::~FConsoleManager()
+{
+    for (auto ConsoleObject : ConsoleObjects)
+    {
+        IConsoleObject* Object = ConsoleObject.second;
+        delete Object;
+    }
+
+    ConsoleObjects.clear();
+}
+
+IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const FConsoleCommandDelegate& CommandDelegate)
+{
+    if (IConsoleObject* NewObject = RegisterObject(InName, dbg_new FConsoleCommand(CommandDelegate)))
+    {
+        return NewObject->AsCommand();
+    }
+
+    return nullptr;
+}
+
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* DefaultValue)
+{
+    if (IConsoleObject* NewObject = RegisterObject(InName, dbg_new FConsoleVariableString(DefaultValue)))
+    {
+        return NewObject->AsVariable();
+    }
+
+    return nullptr;
+}
+
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, int32 DefaultValue)
+{
+    if (IConsoleObject* NewObject = RegisterObject(InName, dbg_new FConsoleVariableInt32(DefaultValue)))
+    {
+        return NewObject->AsVariable();
+    }
+
+    return nullptr;
+}
+
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, float DefaultValue)
+{
+    if (IConsoleObject* NewObject = RegisterObject(InName, dbg_new FConsoleVariableFloat(DefaultValue)))
+    {
+        return NewObject->AsVariable();
+    }
+
+    return nullptr;
+}
+
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, bool bDefaultValue)
+{
+    if (IConsoleObject* NewObject = RegisterObject(InName, dbg_new FConsoleVariableBool(bDefaultValue)))
+    {
+        return NewObject->AsVariable();
+    }
+
+    return nullptr;
+}
+
+void FConsoleManager::UnregisterObject(IConsoleObject* ConsoleObject)
+{
+    const FString Name = FindConsoleObjectName(ConsoleObject);
+
+    auto ExistingObject = ConsoleObjects.find(Name);
+    if (ExistingObject != ConsoleObjects.end())
+    {
+        // Delete and erase reference to object
+        IConsoleObject* Object = ExistingObject->second;
+        delete Object;
+
+        ConsoleObjects.erase(ExistingObject);
+    }
+}
+
+bool FConsoleManager::IsConsoleObject(const CHAR* InName) const
+{
+    return (FindConsoleObject(InName) != nullptr);
+}
+
+FString FConsoleManager::FindConsoleObjectName(IConsoleObject* ConsoleObject)
+{
+    for (const auto CurrentObject : ConsoleObjects)
+    {
+        if (ConsoleObject == CurrentObject.second)
+        {
+            return CurrentObject.first;
+        }
+    }
+
+    return FString();
+}
+
+IConsoleCommand* FConsoleManager::FindConsoleCommand(const CHAR* Name) const
+{
+    if (IConsoleObject* Object = FindConsoleObject(Name))
+    {
+        return Object->AsCommand();
+    }
+
+    return nullptr;
+}
+
+IConsoleVariable* FConsoleManager::FindConsoleVariable(const CHAR* Name) const
+{
+    if (IConsoleObject* Object = FindConsoleObject(Name))
+    {
+        return Object->AsVariable();
+    }
+
+    return nullptr;
+}
+
+IConsoleObject* FConsoleManager::FindConsoleObject(const CHAR* InName) const
+{
+    const FString Name(InName);
+
+    auto ExisitingObject = ConsoleObjects.find(Name);
+    if (ExisitingObject != ConsoleObjects.end())
+    {
+        return ExisitingObject->second;
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+void FConsoleManager::PrintMessage(const FString& Message, EConsoleSeverity Severity)
+{
+    ConsoleMessages.Emplace(Message, Severity);
+}
+
+void FConsoleManager::ClearHistory()
+{
+    History.Clear();
+    ConsoleMessages.Clear();
+}
+
+void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates)
+{
+    for (const auto& Object : ConsoleObjects)
+    {
+        const FString& ObjectName = Object.first;
+
+        int32 Length = CandidateName.GetLength();
+        if (Length <= ObjectName.GetLength())
+        {
+            const CHAR* Command = ObjectName.GetCString();
+            const CHAR* WordIt  = CandidateName.GetCString();
+
+            int32 CharDiff = -1;
+            while (Length > 0 && (CharDiff = (toupper(*WordIt) - toupper(*Command))) == 0)
+            {
+                Command++;
+                WordIt++;
+                Length--;
+            }
+
+            if (CharDiff == 0)
+            {
+                IConsoleObject* ConsoleObject = Object.second;
+                OutCandidates.Emplace(ConsoleObject, ObjectName);
+            }
+        }
+    }
+}
+
+void FConsoleManager::Execute(const FString& Command)
+{
+    PrintMessage(Command, EConsoleSeverity::Info);
+
+    // Erase history
+    History.Emplace(Command);
+    if (History.GetSize() > HistoryLength)
+    {
+        History.RemoveAt(History.StartIterator());
+    }
+
+    int32 Pos = Command.FindChar(' ');
+    if (Pos == FString::INVALID_INDEX)
+    {
+        IConsoleCommand* CommandObject = FindConsoleCommand(Command.GetCString());
+        if (!CommandObject)
+        {
+            PrintMessage("'" + Command + "' is not a registered command", EConsoleSeverity::Error);
+        }
+        else
+        {
+            CommandObject->Execute();
+        }
+    }
+    else
+    {
+        const FString VariableName(Command.GetCString(), Pos);
+
+        IConsoleVariable* VariableObject = FindConsoleVariable(VariableName.GetCString());
+        if (!VariableObject)
+        {
+            PrintMessage("'" + Command + "' is not a registered variable", EConsoleSeverity::Error);
+            return;
+        }
+
+        Pos++;
+
+        const FString Value(Command.GetCString() + Pos, Command.GetLength() - Pos);
+        if (std::regex_match(Value.GetCString(), std::regex("[-]?[0-9]+")))
+        {
+            VariableObject->SetString(Value);
+        }
+        else if (std::regex_match(Value.GetCString(), std::regex("[-]?[0-9]*[.][0-9]+")) && VariableObject->IsVariableFloat())
+        {
+            VariableObject->SetString(Value);
+        }
+        else if (std::regex_match(Value.GetCString(), std::regex("(false)|(true)")) && VariableObject->IsVariableBool())
+        {
+            VariableObject->SetString(Value);
+        }
+        else
+        {
+            if (VariableObject->IsVariableString())
+            {
+                VariableObject->SetString(Value);
+            }
+            else
+            {
+                PrintMessage("'" + Value + "' Is an invalid value for '" + VariableName + "'", EConsoleSeverity::Error);
+            }
+        }
+    }
+}
+
+IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObject* Object)
+{
+    const FString Name(InName);
+
+    auto ExistingObject = ConsoleObjects.find(Name);
+    if (ExistingObject != ConsoleObjects.end())
+    {
+        LOG_WARNING("Trying to register an already existing ConsoleObject '%s'", InName);
+        return ExistingObject->second;
+    }
+
+    auto Result = ConsoleObjects.insert(std::make_pair(Name, Object));
+    if (Result.second)
+    {
+        LOG_INFO("Registered ConsoleObject '%s'", Name.GetCString());
+        return Result.first->second;
+    }
+
+    LOG_ERROR("Failed to register ConsoleObject '%s'", InName);
+    return nullptr;
+}

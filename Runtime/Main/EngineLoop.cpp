@@ -16,8 +16,8 @@
 #include "Core/Misc/OutputDeviceConsole.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/EngineConfig.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 
 #include "Application/ApplicationInterface.h"
 
@@ -327,6 +327,8 @@ bool FEngineLoop::Release()
     }
 
     RHIRelease();
+
+    FRHIShaderCompiler::Destroy();
 
     FAsyncThreadPool::Release();
 

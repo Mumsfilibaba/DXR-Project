@@ -3,7 +3,7 @@
 #include "Application/WidgetUtilities.h"
 #include "Application/ApplicationInterface.h"
 
-#include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 #include "Core/Time/Timer.h"
 
 #include <imgui.h>
@@ -18,12 +18,12 @@ TSharedRef<FFrameProfilerWindow> FFrameProfilerWindow::Make()
 
 void FFrameProfilerWindow::Tick()
 {
-    if (GDrawFps.GetBool())
+    if (GDrawFps.GetValue())
     {
         DrawFPS();
     }
 
-    if (GDrawFrameProfiler.GetBool())
+    if (GDrawFrameProfiler.GetValue())
     {
         DrawWindow();
     }
@@ -31,7 +31,7 @@ void FFrameProfilerWindow::Tick()
 
 bool FFrameProfilerWindow::IsTickable()
 {
-    return GDrawFps.GetBool() || GDrawFrameProfiler.GetBool();
+    return GDrawFps.GetValue() || GDrawFrameProfiler.GetValue();
 }
 
 void FFrameProfilerWindow::DrawFPS()
@@ -54,7 +54,7 @@ void FFrameProfilerWindow::DrawFPS()
 
     ImGui::Begin("FPS Window", nullptr, Flags);
 
-    const FString FpsString = ToString(FFrameProfiler::Get().GetFramesPerSecond());
+    const FString FpsString = TTypeToString<int32>::ToString(FFrameProfiler::Get().GetFramesPerSecond());
     ImGui::Text("%s", FpsString.GetCString());
 
     ImGui::End();
@@ -229,7 +229,7 @@ void FFrameProfilerWindow::DrawWindow()
         ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoSavedSettings;
 
-    bool bTempDrawProfiler = GDrawFrameProfiler.GetBool();
+    bool bTempDrawProfiler = GDrawFrameProfiler.GetValue();
     if (ImGui::Begin("Profiler", &bTempDrawProfiler, Flags))
     {
         if (ImGui::Button("Start Profile"))
@@ -262,5 +262,5 @@ void FFrameProfilerWindow::DrawWindow()
 
     ImGui::End();
 
-    GDrawFrameProfiler.SetBool(bTempDrawProfiler);
+    GDrawFrameProfiler->SetAsBool(bTempDrawProfiler);
 }

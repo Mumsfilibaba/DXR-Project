@@ -2,14 +2,13 @@
 #include "Delegate.h"
 #include "MulticastDelegateBase.h"
 
-
-#define DECLARE_MULTICAST_DELEGATE(DelegateName, ...)                          \
-    /* The type pf delegates that will be executed by the multicast-delegate*/ \
-    typedef TDelegate<void(__VA_ARGS__)> DelegateName##Type;                   \
-    /* Multicast-delegate type */                                              \
-    class DelegateName                                                         \
-        : public TMulticastDelegate<__VA_ARGS__>                               \
-    {                                                                          \
+#define DECLARE_MULTICAST_DELEGATE(DelegateName, ...)                           \
+    /** The type of delegates that will be executed by the MulticastDelegate */ \
+    typedef TDelegate<void(__VA_ARGS__)> DelegateName##Type;                    \
+                                                                                \
+    class DelegateName                                                          \
+        : public TMulticastDelegate<__VA_ARGS__>                                \
+    {                                                                           \
     };
 
 

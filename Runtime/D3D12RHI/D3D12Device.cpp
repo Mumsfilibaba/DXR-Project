@@ -10,7 +10,7 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/CoreDelegates.h"
-#include "Core/Debug/Console/ConsoleInterface.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 #include "Core/Containers/String.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -156,7 +156,7 @@ FD3D12Adapter::FD3D12Adapter()
 
 bool FD3D12Adapter::Initialize()
 {
-    IConsoleVariable* CVarEnableDebugLayer = FConsoleInterface::Get().FindVariable("RHI.EnableDebugLayer");
+    IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer");
     bEnableDebugLayer = (CVarEnableDebugLayer && CVarEnableDebugLayer->GetBool());
     
     if (bEnableDebugLayer)
@@ -172,7 +172,7 @@ bool FD3D12Adapter::Initialize()
             DebugInterface->EnableDebugLayer();
         }
 
-        const bool bEnableDRED = CVarEnableDRED.GetBool();
+        const bool bEnableDRED = CVarEnableDRED.GetValue();
         if (bEnableDRED)
         {
             TComPtr<ID3D12DeviceRemovedExtendedDataSettings> DredSettings;
@@ -187,7 +187,7 @@ bool FD3D12Adapter::Initialize()
             }
         }
 
-        const bool bEnableGPUValidation = CVarEnableGPUValidation.GetBool();
+        const bool bEnableGPUValidation = CVarEnableGPUValidation.GetValue();
         if (bEnableGPUValidation)
         {
             TComPtr<ID3D12Debug1> DebugInterface1;
@@ -227,7 +227,7 @@ bool FD3D12Adapter::Initialize()
             D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve InfoQueue");
         }
 
-        IConsoleVariable* CVarEnablePIX = FConsoleInterface::Get().FindVariable("D3D12RHI.EnablePIX");
+        IConsoleVariable* CVarEnablePIX = FConsoleManager::Get().FindConsoleVariable("D3D12RHI.EnablePIX");
         if (CVarEnablePIX && CVarEnablePIX->GetBool())
         {
             TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
@@ -342,7 +342,7 @@ bool FD3D12Adapter::Initialize()
         HRESULT Result = Factory.GetAs<IDXGIFactory6>(Factory6.GetAddressOf());
         D3D12_ERROR_COND(SUCCEEDED(Result), "[FD3D12Adapter]: Failed to Query IDXGIFactory6");
 
-        const DXGI_GPU_PREFERENCE GPUPreference = CVarPreferDedicatedGPU.GetBool() ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED;
+        const DXGI_GPU_PREFERENCE GPUPreference = CVarPreferDedicatedGPU.GetValue() ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED;
 
         TComPtr<IDXGIAdapter1> TempAdapter;
         for (uint32 Index = 0; DXGI_ERROR_NOT_FOUND != Factory6->EnumAdapterByGpuPreference(Index, GPUPreference, IID_PPV_ARGS(&TempAdapter)); Index++)

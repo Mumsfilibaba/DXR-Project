@@ -1,7 +1,7 @@
 #include "SkyboxRenderPass.h"
 
-#include "Core/Debug/Debug.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Misc/Debug.h"
+#include "Core/Misc/FrameProfiler.h"
 
 #include "Renderer/Debug/GPUProfiler.h"
 

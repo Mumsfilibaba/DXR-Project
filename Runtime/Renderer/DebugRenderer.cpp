@@ -3,7 +3,7 @@
 
 #include "Core/Math/AABB.h"
 #include "Core/Math/Matrix4.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Misc/FrameProfiler.h"
 
 #include "Engine/Scene/Actor.h"
 #include "Engine/Scene/Lights/PointLight.h"

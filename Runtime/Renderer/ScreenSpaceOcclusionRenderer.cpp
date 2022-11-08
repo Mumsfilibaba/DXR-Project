@@ -7,8 +7,8 @@
 #include "Core/Math/Vector2.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Math/IntVector2.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 
 // TODO: Remove and replace. There are better and easier implementations to do yourself
 #include <random>
@@ -169,9 +169,9 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
     SSAOSettings.ScreenSize  = FVector2(float(Width), float(Height));
     SSAOSettings.NoiseSize   = FVector2(4.0f, 4.0f);
     SSAOSettings.GBufferSize = FIntVector2(GBufferWidth, GBufferHeight);
-    SSAOSettings.Radius      = GSSAORadius.GetFloat();
-    SSAOSettings.KernelSize  = GSSAOKernelSize.GetInt();
-    SSAOSettings.Bias        = GSSAOBias.GetFloat();
+    SSAOSettings.Radius      = GSSAORadius.GetValue();
+    SSAOSettings.KernelSize  = GSSAOKernelSize.GetValue();
+    SSAOSettings.Bias        = GSSAOBias.GetValue();
 
     CommandList.SetComputePipelineState(PipelineState.Get());
     CommandList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);

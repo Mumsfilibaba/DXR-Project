@@ -1,6 +1,6 @@
 #include "TextureDebugger.h"
 
-#include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Misc/Console/ConsoleManager.h"
 
 #include "Application/ApplicationInterface.h"
 #include "Application/WidgetUtilities.h"
@@ -16,7 +16,7 @@ TSharedRef<FRenderTargetDebugWindow> FRenderTargetDebugWindow::Create()
 
 void FRenderTargetDebugWindow::Tick()
 {
-    if (GDrawTextureDebugger.GetBool())
+    if (GDrawTextureDebugger.GetValue())
     {
         FGenericWindowRef MainViewport = FApplicationInterface::Get().GetMainViewport();
 
@@ -39,7 +39,7 @@ void FRenderTargetDebugWindow::Tick()
 
         constexpr float MinImageSize = 96.0f;
 
-        bool bTempDrawTextureDebugger = GDrawTextureDebugger.GetBool();
+        bool bTempDrawTextureDebugger = GDrawTextureDebugger.GetValue();
         if (ImGui::Begin("RenderTarget Debugger", &bTempDrawTextureDebugger, Flags))
         {
             const int32 ImageIndex = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
@@ -93,7 +93,7 @@ void FRenderTargetDebugWindow::Tick()
 
                 if (ButtonCenteredOnLine("Close"))
                 {
-                    GDrawTextureDebugger.SetBool(false);
+                    GDrawTextureDebugger->SetAsBool(false);
                 }
 
                 ImGui::Separator();
@@ -152,7 +152,7 @@ void FRenderTargetDebugWindow::Tick()
 
 bool FRenderTargetDebugWindow::IsTickable()
 {
-    return GDrawTextureDebugger.GetBool();
+    return GDrawTextureDebugger.GetValue();
 }
 
 void FRenderTargetDebugWindow::AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
