@@ -1,12 +1,12 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-    #include "Core/Windows/WindowsTLS.h"
-    typedef FWindowsTLS FPlatformTLS;
+    #include "Core/Windows/WindowsPlatformTLS.h"
+    typedef FWindowsPlatformTLS FPlatformTLS;
 #elif PLATFORM_MACOS
-    #include "Core/Mac/MacTLS.h"
-    typedef FMacTLS FPlatformTLS;
+    #include "Core/Mac/MacPlatformTLS.h"
+    typedef FMacPlatformTLS FPlatformTLS;
 #else
-    #include "Core/Generic/GenericTLS.h"
-    typedef FGenericTLS FPlatformTLS;
+    #include "Core/Generic/GenericPlatformTLS.h"
+    typedef FGenericPlatformTLS FPlatformTLS;
 #endif

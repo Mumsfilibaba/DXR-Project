@@ -1,9 +1,9 @@
 #pragma once
-#include "Core/Generic/GenericAtomic.h"
+#include "Core/Generic/GenericPlatformAtomic.h"
 #include "Core/Platform/PlatformInterlocked.h"
 
-struct FWindowsAtomic final 
-    : public FGenericAtomic
+struct FWindowsPlatformAtomic final 
+    : public FGenericPlatformAtomic
 {
     static FORCEINLINE int8 Read(volatile const int8* Source)
     {

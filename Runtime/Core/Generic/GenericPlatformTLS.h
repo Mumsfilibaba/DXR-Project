@@ -11,7 +11,7 @@
 #endif
 
 
-struct FGenericTLS
+struct FGenericPlatformTLS
 {
     /**
      * @return - Returns the current thread ID

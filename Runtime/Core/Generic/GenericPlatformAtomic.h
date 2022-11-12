@@ -9,7 +9,7 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-struct FGenericAtomic
+struct FGenericPlatformAtomic
 {
     /**
      * @brief        - Reads a value atomically. All memory loads and stores are synced.

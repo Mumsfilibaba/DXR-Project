@@ -1,8 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 
-
-struct FGenericTime
+struct FGenericPlatformTime
 {
     /** @return - Returns the current value of the performance counter */
     static FORCEINLINE uint64 QueryPerformanceCounter() { return 0; }

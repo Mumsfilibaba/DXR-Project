@@ -1,12 +1,11 @@
 #pragma once
-#include "Core/Generic/GenericTime.h"
+#include "Core/Generic/GenericPlatformTime.h"
 #include "Core/Time/Time.h"
 
 #include <mach/mach_time.h>
 
-
-struct FMacTime 
-    : public FGenericTime
+struct FMacPlatformTime 
+    : public FGenericPlatformTime
 {
     static FORCEINLINE uint64 QueryPerformanceCounter()
     {

@@ -9,7 +9,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-
 struct FGenericLibrary
 {
     /**

@@ -1,11 +1,10 @@
 #pragma once
 #include "Mac.h"
 
-#include "Core/Generic/GenericTLS.h"
+#include "Core/Generic/GenericPlatformTLS.h"
 
-
-struct FMacTLS 
-    : public FGenericTLS
+struct FMacPlatformTLS 
+    : public FGenericPlatformTLS
 {
     static FORCEINLINE uint32 GetCurrentThreadID()
     {
@@ -17,7 +16,7 @@ struct FMacTLS
         pthread_key_t Slot = 0;
         if (pthread_key_create(&Slot) != 0)
         {
-            // Same as FWindowsTLS
+            // Same as FWindowsPlatformTLS
             Slot = TNumericLimits<uint32>::Max();
         }
 

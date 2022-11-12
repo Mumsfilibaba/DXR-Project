@@ -1,10 +1,10 @@
 #pragma once
 #include "Windows.h"
 
-#include "Core/Generic/GenericTLS.h"
+#include "Core/Generic/GenericPlatformTLS.h"
 
-struct FWindowsTLS
-    : public FGenericTLS
+struct FWindowsPlatformTLS
+    : public FGenericPlatformTLS
 {
     static FORCEINLINE uint32 GetCurrentThreadID()
     {

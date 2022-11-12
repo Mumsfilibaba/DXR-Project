@@ -1,12 +1,12 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-    #include "Core/Windows/WindowsAtomic.h"
-    typedef FWindowsAtomic FPlatformAtomic;
+    #include "Core/Windows/WindowsPlatformAtomic.h"
+    typedef FWindowsPlatformAtomic FPlatformAtomic;
 #elif PLATFORM_MACOS
     #include "Core/Mac/MacAtomic.h"
-    typedef FMacAtomic FPlatformAtomic;
+    typedef FMacPlatformAtomic FPlatformAtomic;
 #else
-    #include "Core/Generic/GenericAtomic.h"
-    typedef FGenericAtomic FPlatformAtomic;
+    #include "Core/Generic/GenericPlatformAtomic.h"
+    typedef FGenericPlatformAtomic FPlatformAtomic;
 #endif
