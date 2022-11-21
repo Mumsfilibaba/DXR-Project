@@ -5,7 +5,7 @@
 #include "Core/Misc/Console/ConsoleManager.h"
 #include "Core/Platform/PlatformMisc.h"
 
-TAutoConsoleVariable<bool> CVarEnableAsyncWork("Core.EnableAsyncWork", true);
+TAutoConsoleVariable<bool> CVarEnableAsyncWork("Core.EnableAsyncWork", false);
 
 FAsyncWorkThread::FAsyncWorkThread()
     : CurrentTask(nullptr)
@@ -48,9 +48,8 @@ void FAsyncWorkThread::WakeUpAndStartTask(IAsyncTask* NewTask)
     // New task must be nullptr and current-task must be nullptr
     CHECK(NewTask != nullptr);
     CHECK(CurrentTask == nullptr);
-    CurrentTask = NewTask;
 
-    // Ensure that everyone can see the CurrentTask
+    CurrentTask = NewTask;
     FPlatformMisc::MemoryBarrier();
 
     CHECK(WorkEvent != nullptr);
@@ -96,6 +95,9 @@ int32 FAsyncWorkThread::Run()
             // been submitted in that case start work on that
             LocalTask = FAsyncThreadPool::Get().ReturnThreadOrRetrieveNextTask(this);
         }
+
+        // Delay for a bit to avoid deadlocks where the CurrentTask "disappears" when being worked on by multiple threads
+        FPlatformThreadMisc::Sleep(FTimespan());
     }
 
     return 0;
@@ -137,7 +139,7 @@ bool FAsyncThreadPool::Initialize(int32 NumThreads)
 {
     if (!GInstance)
     {
-        GInstance = dbg_new FAsyncThreadPool();
+        GInstance = new FAsyncThreadPool();
 
         if (!CVarEnableAsyncWork.GetValue())
         {
@@ -201,11 +203,13 @@ bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
     if (AvailableWorkers.IsEmpty())
     {
         TaskQueue.Enqueue(NewTask, Priority);
+        FPlatformMisc::MemoryBarrier();
     }
     else
     {
         FAsyncWorkThread* WorkerThread = AvailableWorkers.FirstElement();
         AvailableWorkers.RemoveAt(0);
+        FPlatformMisc::MemoryBarrier();
 
         WorkerThread->WakeUpAndStartTask(NewTask);
     }
@@ -221,6 +225,7 @@ bool FAsyncThreadPool::AbandonTask(IAsyncTask* NewTask)
     {
         if (TaskQueue.Remove(NewTask))
         {
+            FPlatformMisc::MemoryBarrier();
             return true;
         }
     }
@@ -237,11 +242,13 @@ IAsyncTask* FAsyncThreadPool::ReturnThreadOrRetrieveNextTask(FAsyncWorkThread* I
     IAsyncTask* NewTask = nullptr;
     if (TaskQueue.Dequeue(&NewTask))
     {
+        FPlatformMisc::MemoryBarrier();
         return NewTask;
     }
     else
     {
         AvailableWorkers.Emplace(InThread);
+        FPlatformMisc::MemoryBarrier();
         return nullptr;
     }
 }
@@ -253,7 +260,7 @@ bool FAsyncThreadPool::CreateWorkers(int32 NumWorkers)
     {
         const FString Name = FString::CreateFormatted("Async Worker[%d]", Index);
 
-        FAsyncWorkThread* NewWorker = dbg_new FAsyncWorkThread();
+        FAsyncWorkThread* NewWorker = new FAsyncWorkThread();
         if (NewWorker->Create(Name.GetCString()))
         {
             Workers.Emplace(NewWorker);

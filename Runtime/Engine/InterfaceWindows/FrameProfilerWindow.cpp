@@ -13,7 +13,7 @@ TAutoConsoleVariable<bool> GDrawFrameProfiler("Renderer.DrawFrameProfiler", fals
 
 TSharedRef<FFrameProfilerWindow> FFrameProfilerWindow::Make()
 {
-    return dbg_new FFrameProfilerWindow();
+    return new FFrameProfilerWindow();
 }
 
 void FFrameProfilerWindow::Tick()

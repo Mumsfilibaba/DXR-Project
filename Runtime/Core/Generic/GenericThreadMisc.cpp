@@ -11,12 +11,12 @@
 
 FGenericThread* FGenericThreadMisc::CreateThread(FThreadInterface* Runnable)
 {
-    return dbg_new FGenericThread(Runnable);
+    return new FGenericThread(Runnable);
 }
 
 FGenericEvent* FGenericThreadMisc::CreateEvent(bool bManualReset)
 {
-    return dbg_new FGenericEvent();
+    return new FGenericEvent();
 }
 
 #if defined(PLATFORM_COMPILER_MSVC)

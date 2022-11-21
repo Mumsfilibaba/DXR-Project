@@ -14,7 +14,7 @@ TAutoConsoleVariable<bool> GDrawRendererInfo("Renderer.DrawRendererInfo", true);
 
 TSharedRef<FRendererInfoWindow> FRendererInfoWindow::Create()
 {
-    return dbg_new FRendererInfoWindow();
+    return new FRendererInfoWindow();
 }
 
 void FRendererInfoWindow::Tick()

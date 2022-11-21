@@ -174,7 +174,7 @@ IFileHandle* FMacFile::OpenForRead(const FString& Filename)
         return nullptr;
     }
 
-    return dbg_new FMacFileHandle(FileHandle, true);
+    return new FMacFileHandle(FileHandle, true);
 }
 
 IFileHandle* FMacFile::OpenForWrite(const FString& Filename)
@@ -208,5 +208,5 @@ IFileHandle* FMacFile::OpenForWrite(const FString& Filename)
         return nullptr;
     }
 
-    return dbg_new FMacFileHandle(FileHandle, false);
+    return new FMacFileHandle(FileHandle, false);
 }

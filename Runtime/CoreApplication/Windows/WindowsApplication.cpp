@@ -48,12 +48,12 @@ FWindowsApplication* FWindowsApplication::CreateWindowsApplication()
     HINSTANCE TempInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0));
 
     // TODO: Load icon here
-    WindowsApplication = dbg_new FWindowsApplication(TempInstanceHandle);
+    WindowsApplication = new FWindowsApplication(TempInstanceHandle);
     return WindowsApplication;
 }
 
 FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle)
-    : FGenericApplication(TSharedPtr<ICursor>(dbg_new FWindowsCursor()))
+    : FGenericApplication(TSharedPtr<ICursor>(new FWindowsCursor()))
     , Windows()
     , Messages()
     , MessagesCS()
@@ -156,7 +156,7 @@ bool FWindowsApplication::UnregisterRawInputDevices()
 
 FGenericWindowRef FWindowsApplication::CreateWindow()
 {
-    FWindowsWindowRef NewWindow = dbg_new FWindowsWindow(this);
+    FWindowsWindowRef NewWindow = new FWindowsWindow(this);
  
     {
         TScopedLock Lock(WindowsCS);

@@ -1204,7 +1204,7 @@ NODISCARD FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TSharedPtr<T>>::Ty
 {
     typedef typename TRemoveExtent<T>::Type Type;
 
-    Type* RefCountedPtr = dbg_new Type(Forward<ArgTypes>(Args)...);
+    Type* RefCountedPtr = new Type(Forward<ArgTypes>(Args)...);
     return TSharedPtr<T>(RefCountedPtr);
 }
 
@@ -1213,7 +1213,7 @@ NODISCARD FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Typ
 {
     typedef typename TRemoveExtent<T>::Type Type;
 
-    Type* RefCountedPtr = dbg_new Type[Size];
+    Type* RefCountedPtr = new Type[Size];
     return TSharedPtr<T>(RefCountedPtr);
 }
 

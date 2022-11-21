@@ -3,11 +3,10 @@
 
 #include <sys/sysctl.h>
 
-
 struct FMacPlatformMisc final 
     : public FGenericPlatformMisc
 {
-    static void OutputDebugString(const FString& Message);
+    static void OutputDebugString(const CHAR* Message);
 
     static FORCEINLINE bool IsDebuggerPresent()
     {

@@ -384,7 +384,7 @@ void FConsoleManager::CreateConsoleManager()
 
     if (!GInstance)
     {
-        GInstance = dbg_new FConsoleManager();
+        GInstance = new FConsoleManager();
     }
 
     CHECK(GInstance != nullptr);
@@ -403,7 +403,7 @@ FConsoleManager::~FConsoleManager()
 
 IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const FConsoleCommandDelegate& CommandDelegate)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, dbg_new FConsoleCommand(CommandDelegate)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleCommand(CommandDelegate)))
     {
         return NewObject->AsCommand();
     }
@@ -413,7 +413,7 @@ IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const FCon
 
 IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* DefaultValue)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, dbg_new FConsoleVariableString(DefaultValue)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableString(DefaultValue)))
     {
         return NewObject->AsVariable();
     }
@@ -423,7 +423,7 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
 
 IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, int32 DefaultValue)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, dbg_new FConsoleVariableInt32(DefaultValue)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableInt32(DefaultValue)))
     {
         return NewObject->AsVariable();
     }
@@ -433,7 +433,7 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, int32 De
 
 IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, float DefaultValue)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, dbg_new FConsoleVariableFloat(DefaultValue)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableFloat(DefaultValue)))
     {
         return NewObject->AsVariable();
     }
@@ -443,7 +443,7 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, float De
 
 IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, bool bDefaultValue)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, dbg_new FConsoleVariableBool(bDefaultValue)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableBool(bDefaultValue)))
     {
         return NewObject->AsVariable();
     }

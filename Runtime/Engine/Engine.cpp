@@ -9,6 +9,7 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 #include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/AssetLoaders/MeshImporter.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/TextureFactory.h"
 #include "Engine/InterfaceWindows/GameConsoleWindow.h"
@@ -48,6 +49,11 @@ static FAutoConsoleCommand GToggleFullscreen(
 bool FEngine::Initialize()
 {
     if (!FAssetManager::Initialize())
+    {
+        return false;
+    }
+
+    if (!FMeshImporter::Initialize())
     {
         return false;
     }
@@ -145,6 +151,7 @@ bool FEngine::Initialize()
     BaseMaterial->RoughnessMap = GEngine->BaseTexture;
     BaseMaterial->AOMap        = GEngine->BaseTexture;
     BaseMaterial->MetallicMap  = GEngine->BaseTexture;
+    BaseMaterial->AlphaMask    = GEngine->BaseTexture;
     BaseMaterial->Initialize();
 
     /* Create the start scene */
@@ -189,5 +196,8 @@ void FEngine::Exit()
 void FEngine::Destroy()
 {
     FAssetManager::Release();
+
+    FMeshImporter::Release();
+
     delete this;
 }

@@ -15,7 +15,7 @@ bool FApplicationInterface::Create()
         return false;
     }
 
-    FStandardApplication* NewApplication = dbg_new FStandardApplication(Application);
+    FStandardApplication* NewApplication = new FStandardApplication(Application);
     GInstance = MakeSharedPtr(NewApplication);
     if (!NewApplication->CreateContext())
     {

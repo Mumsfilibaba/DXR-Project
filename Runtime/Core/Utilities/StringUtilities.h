@@ -10,3 +10,4 @@ inline void ConvertBackslashes(FString& OutString)
         Position = OutString.FindChar('\\', Position + 1);
     }
 }
+

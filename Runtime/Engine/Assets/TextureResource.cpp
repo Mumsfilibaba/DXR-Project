@@ -109,7 +109,7 @@ void FTexture2D::CreateData()
 {
     if (!TextureData)
     {
-        TextureData = dbg_new FTextureResourceData();
+        TextureData = new FTextureResourceData();
     }
 }
 

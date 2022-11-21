@@ -155,7 +155,7 @@ bool FD3D12OfflineDescriptorHeap::AllocateHeap()
 {
     constexpr uint32 DescriptorCount = D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT;
 
-    TSharedRef<FD3D12DescriptorHeap> Heap = dbg_new FD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+    TSharedRef<FD3D12DescriptorHeap> Heap = new FD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
     if (Heap->Initialize())
     {
         if (!Name.IsEmpty())
@@ -183,7 +183,7 @@ FD3D12OnlineDescriptorHeap::FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, u
 
 bool FD3D12OnlineDescriptorHeap::Initialize()
 {
-    Heap = dbg_new FD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    Heap = new FD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     if (Heap->Initialize())
     {
         return true;
@@ -219,7 +219,7 @@ bool FD3D12OnlineDescriptorHeap::AllocateFreshHeap()
 
     if (HeapPool.IsEmpty())
     {
-        Heap = dbg_new FD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+        Heap = new FD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
         if (!Heap->Initialize())
         {
             DEBUG_BREAK();

@@ -106,6 +106,13 @@ function FTargetBuildRules(InName)
                 {
                     ModuleImplName
                 })
+
+                -- Add files for the new operator (TODO: investigate if this could be a static lib)
+                self.AddFiles(
+                {
+                    RuntimeFolderPath .. "/Core/Memory/New.h",
+                    RuntimeFolderPath .. "/Core/Memory/New.cpp",
+                })
     
                 -- Generate the project
                 printf("    ---Generating target project")
@@ -130,6 +137,9 @@ function FTargetBuildRules(InName)
                 {
                     (RuntimeFolderPath .. "/Main/EngineLoop.cpp"),
                     (RuntimeFolderPath .. "/Main/GenericMain.cpp"),
+                    -- Add files for the new operator (TODO: investigate if this could be a static lib)
+                    (RuntimeFolderPath .. "/Core/Memory/New.h"),
+                    (RuntimeFolderPath .. "/Core/Memory/New.cpp"),
                     MainFile
                 }
 

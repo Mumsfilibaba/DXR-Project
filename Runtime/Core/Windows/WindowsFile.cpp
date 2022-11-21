@@ -176,7 +176,7 @@ FORCEINLINE IFileHandle* FWindowsFile::OpenForRead(const FString& Filename)
         return nullptr;
     }
 
-    return dbg_new FWindowsFileHandle(NewHandle);
+    return new FWindowsFileHandle(NewHandle);
 }
 
 FORCEINLINE IFileHandle* FWindowsFile::OpenForWrite(const FString& Filename)
@@ -207,5 +207,5 @@ FORCEINLINE IFileHandle* FWindowsFile::OpenForWrite(const FString& Filename)
         return nullptr;
     }
 
-    return dbg_new FWindowsFileHandle(NewHandle);
+    return new FWindowsFileHandle(NewHandle);
 }

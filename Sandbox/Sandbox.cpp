@@ -8,8 +8,7 @@
 
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
-#include <Engine/Assets/AssetLoaders/OBJLoader.h>
-#include <Engine/Assets/AssetLoaders/FBXLoader.h>
+#include <Engine/Assets/AssetLoaders/MeshImporter.h>
 #include <Engine/Scene/Scene.h>
 #include <Engine/Scene/Lights/PointLight.h>
 #include <Engine/Scene/Lights/DirectionalLight.h>
@@ -55,10 +54,10 @@ bool FSandbox::Init()
     {
         FSceneData SceneData;
 #if LOAD_SPONZA
-        FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
+        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
         SceneData.Scale = 0.015f;
 #elif LOAD_BISTRO
-        FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
+        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
         {
             Material.bAlphaDiffuseCombined = true;
@@ -66,20 +65,20 @@ bool FSandbox::Init()
         
         SceneData.AddToScene(CurrentScene.Get());
 
-        FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
+        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
 
         for (auto& Material : SceneData.Materials)
         {
             Material.bAlphaDiffuseCombined = true;
         }
 #elif LOAD_SUN_TEMPLE
-        FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"), SceneData);
+        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
         {
             Material.bAlphaDiffuseCombined = true;
         }
 #else
-        FFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), SceneData);
+        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
         {
             Material.bAlphaDiffuseCombined = true;
@@ -116,7 +115,7 @@ bool FSandbox::Init()
             NewActor->SetName("Sphere[" + ToString(SphereIndex) + "]");
             SphereIndex++;
 
-            NewComponent = dbg_new FMeshComponent(NewActor);
+            NewComponent = new FMeshComponent(NewActor);
             NewComponent->Mesh = SphereMesh;
             NewComponent->Material = MakeShared<FMaterial>(MatProperties);
 
@@ -170,12 +169,12 @@ bool FSandbox::Init()
             NewActor->GetTransform().SetTranslation(PositionX, PositionY + 10.0f, Offset + PositionZ);
 
             // MovingBallComponent
-            NewActor->AddComponent(dbg_new FMovingBallComponent(NewActor, Random4(Generator)));
+            NewActor->AddComponent(new FMovingBallComponent(NewActor, Random4(Generator)));
 
             NewActor->SetName("Random Sphere[" + ToString(i) + "]");
 
             // MeshComponent
-            NewComponent           = dbg_new FMeshComponent(NewActor);
+            NewComponent           = new FMeshComponent(NewActor);
             NewComponent->Mesh     = SphereMesh;
             NewComponent->Material = MakeShared<FMaterial>(MatProperties);
 
@@ -207,7 +206,7 @@ bool FSandbox::Init()
     MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 1;
 
-    NewComponent           = dbg_new FMeshComponent(NewActor);
+    NewComponent           = new FMeshComponent(NewActor);
     NewComponent->Mesh     = FMesh::Create(CubeMeshData);
     NewComponent->Material = MakeShared<FMaterial>(MatProperties);
 
@@ -246,7 +245,7 @@ bool FSandbox::Init()
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo       = FVector3(1.0f);
 
-    NewComponent                         = dbg_new FMeshComponent(NewActor);
+    NewComponent                         = new FMeshComponent(NewActor);
     NewComponent->Mesh                   = FMesh::Create(FMeshFactory::CreatePlane(10, 10));
     NewComponent->Material               = MakeShared<FMaterial>(MatProperties);
     NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
@@ -288,7 +287,7 @@ bool FSandbox::Init()
         NewActor->GetTransform().SetUniformScale(0.25f);
         NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - ((float)i * 3.0f));
 
-        NewComponent                         = dbg_new FMeshComponent(NewActor);
+        NewComponent                         = new FMeshComponent(NewActor);
         NewComponent->Mesh                   = StreetLight;
         NewComponent->Material               = StreetLightMat;
         NewComponent->Material->AlbedoMap    = AlbedoMap->GetRHITexture();;
@@ -320,7 +319,7 @@ bool FSandbox::Init()
         NewActor->GetTransform().SetUniformScale(0.25f);
         NewActor->GetTransform().SetTranslation(-15.0f + ((float)i * 1.75f), 0.0f, 60.0f);
 
-        NewComponent                         = dbg_new FMeshComponent(NewActor);
+        NewComponent                         = new FMeshComponent(NewActor);
         NewComponent->Mesh                   = Pillar;
         NewComponent->Material               = PillarMaterial;
         NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
@@ -334,7 +333,7 @@ bool FSandbox::Init()
     }
 #endif
 
-    CurrentCamera = dbg_new FCamera();
+    CurrentCamera = new FCamera();
     CurrentScene->AddCamera(CurrentCamera);
 
     // Add PointLight- Source
@@ -342,7 +341,7 @@ bool FSandbox::Init()
     const float Intensity = 50.0f;
 
 #if LOAD_SPONZA
-    FPointLight* Light0 = dbg_new FPointLight();
+    FPointLight* Light0 = new FPointLight();
     Light0->SetPosition(FVector3(16.5f, 1.0f, 0.0f));
     Light0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light0->SetShadowBias(0.001f);
@@ -352,7 +351,7 @@ bool FSandbox::Init()
     Light0->SetShadowCaster(true);
     CurrentScene->AddLight(Light0);
 
-    FPointLight* Light1 = dbg_new FPointLight();
+    FPointLight* Light1 = new FPointLight();
     Light1->SetPosition(FVector3(-17.5f, 1.0f, 0.0f));
     Light1->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light1->SetShadowBias(0.001f);
@@ -362,7 +361,7 @@ bool FSandbox::Init()
     Light1->SetShadowCaster(true);
     CurrentScene->AddLight(Light1);
 
-    FPointLight* Light2 = dbg_new FPointLight();
+    FPointLight* Light2 = new FPointLight();
     Light2->SetPosition(FVector3(16.5f, 11.0f, 0.0f));
     Light2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light2->SetShadowBias(0.001f);
@@ -372,7 +371,7 @@ bool FSandbox::Init()
     Light2->SetShadowCaster(true);
     CurrentScene->AddLight(Light2);
 
-    FPointLight* Light3 = dbg_new FPointLight();
+    FPointLight* Light3 = new FPointLight();
     Light3->SetPosition(FVector3(-17.5f, 11.0f, 0.0f));
     Light3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light3->SetShadowBias(0.001f);
@@ -396,7 +395,7 @@ bool FSandbox::Init()
             float z = RandomFloats(Generator) * 16.0f - 8.0f;
             float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
 
-            FPointLight* Light = dbg_new FPointLight();
+            FPointLight* Light = new FPointLight();
             Light->SetPosition(x, y, z);
             Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
             Light->SetIntensity(Intentsity);
@@ -406,7 +405,7 @@ bool FSandbox::Init()
 #endif
 
     // Add DirectionalLight- Source
-    FDirectionalLight* Light4 = dbg_new FDirectionalLight();
+    FDirectionalLight* Light4 = new FDirectionalLight();
     Light4->SetShadowBias(0.0005f);
     Light4->SetMaxShadowBias(0.0009f);
     Light4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
@@ -419,7 +418,7 @@ bool FSandbox::Init()
     Light4->SetCascadeSplitLambda(0.9f);
     CurrentScene->AddLight(Light4);
 
-    FLightProbe* LightProbe = dbg_new FLightProbe();
+    FLightProbe* LightProbe = new FLightProbe();
     LightProbe->SetPosition(FVector3(0.0f));
     CurrentScene->AddLightProbe(LightProbe);
 

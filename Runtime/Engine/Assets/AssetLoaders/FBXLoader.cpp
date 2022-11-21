@@ -47,7 +47,6 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
     const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
     if (MaterialTexture)
     {
-        // Non-static buffer to support multi threading
         CHAR StringBuffer[256];
         MaterialTexture->getRelativeFileName().toString(StringBuffer);
 
@@ -61,7 +60,7 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
     return FTextureResource2DRef();
 }
 
-bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 Flags) noexcept
+bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFlags Flags) noexcept
 {
     OutScene.Models.Clear();
     OutScene.Materials.Clear();
@@ -99,15 +98,30 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
     const ofbx::GlobalSettings* Settings = FBXScene->getGlobalSettings();
     const float UnitScaleFactorRecip     = Settings->UnitScaleFactor;
 
+    // Estimate sizes to avoid to many allocations
+    const uint32 MeshCount = FBXScene->getMeshCount();
+
+    uint32 EstimatedMaterialCount = 0;
+    for (uint32 MeshIndex = 0; MeshIndex < MeshCount; ++MeshIndex)
+    {
+        const ofbx::Mesh* CurrentMesh = FBXScene->getMesh(MeshIndex);
+        EstimatedMaterialCount += CurrentMesh->getMaterialCount();
+    }
+
     // Unique tables
     TMap<FVertex, uint32, FVertexHasher> UniqueVertices;
-    TMap<uint64, uint32>                 UniqueMaterials;
 
-    FString Path = ExtractPath(Filename);
+    TMap<uint64, uint32> UniqueMaterials;
+    UniqueMaterials.reserve(EstimatedMaterialCount);
 
-    FModelData Data;
+    // Estimate resource count
+    OutScene.Models.Reserve(MeshCount);
+    OutScene.Materials.Reserve(EstimatedMaterialCount);
 
-    uint32 MeshCount = FBXScene->getMeshCount();
+    // Convert data
+    const FString Path = ExtractPath(Filename);
+
+    FModelData TempModelData;
     for (uint32 i = 0; i < MeshCount; i++)
     {
         const ofbx::Mesh*     CurrentMesh = FBXScene->getMesh(i);
@@ -145,8 +159,8 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
 
         int32 VertexCount = (int32)CurrentGeom->getVertexCount();
         int32 IndexCount  = (int32)CurrentGeom->getIndexCount();
-        Data.Mesh.Indices.Reserve(IndexCount);
-        Data.Mesh.Vertices.Reserve(VertexCount);
+        TempModelData.Mesh.Indices.Reserve(IndexCount);
+        TempModelData.Mesh.Vertices.Reserve(VertexCount);
         UniqueVertices.reserve(VertexCount);
 
         const auto* Materials = CurrentGeom->getMaterials();
@@ -171,7 +185,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
         int32 LastMaterialIndex = 0;
         while (CurrentIndex < IndexCount)
         {
-            Data.Mesh.Clear();
+            TempModelData.Mesh.Clear();
             UniqueVertices.clear();
 
             LastMaterialIndex = MaterialIndex;
@@ -202,7 +216,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
                 TempVertex.Position = Transform.Transform(Position);
 
                 // Apply the scene scale
-                if (Flags & EFBXFlags::FBXFlags_ApplyScaleFactor)
+                if ((Flags & EFBXFlags::ApplyScaleFactor) != EFBXFlags::None)
                 {
                     TempVertex.Position *= UnitScaleFactorRecip;
                 }
@@ -233,56 +247,53 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, uint32 
                 uint32 UniqueIndex = 0;
                 if (UniqueVertices.count(TempVertex) == 0)
                 {
-                    UniqueIndex = static_cast<uint32>(Data.Mesh.Vertices.GetSize());
+                    UniqueIndex = static_cast<uint32>(TempModelData.Mesh.Vertices.GetSize());
                     UniqueVertices[TempVertex] = UniqueIndex;
-                    Data.Mesh.Vertices.Push(TempVertex);
+                    TempModelData.Mesh.Vertices.Push(TempVertex);
                 }
                 else
                 {
                     UniqueIndex = UniqueVertices[TempVertex];
                 }
 
-                Data.Mesh.Indices.Emplace(UniqueIndex);
+                TempModelData.Mesh.Indices.Emplace(UniqueIndex);
             }
 
             if (!Tangents)
             {
-                FMeshUtilities::CalculateTangents(Data.Mesh);
+                FMeshUtilities::CalculateTangents(TempModelData.Mesh);
             }
 
             // Convert to left-handed
-            if (Flags & EFBXFlags::FBXFlags_EnsureLeftHanded)
+            if ((Flags & EFBXFlags::EnsureLeftHanded) != EFBXFlags::None)
             {
                 if (Settings->CoordAxis == ofbx::CoordSystem_RightHanded)
                 {
-                    FMeshUtilities::ReverseHandedness(Data.Mesh);
+                    FMeshUtilities::ReverseHandedness(TempModelData.Mesh);
                 }
             }
-
 
             // Find the correct unique material and set it to the mesh
             const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(LastMaterialIndex);
             if ((LastMaterialIndex != INVALID_MATERIAL_INDEX) && (UniqueMaterials.count(CurrentMaterial->id) != 0))
             {
-                Data.MaterialIndex = UniqueMaterials[CurrentMaterial->id];
+                TempModelData.MaterialIndex = UniqueMaterials[CurrentMaterial->id];
             }
             else
             {
-                Data.MaterialIndex = INVALID_MATERIAL_INDEX;
+                TempModelData.MaterialIndex = INVALID_MATERIAL_INDEX;
             }
 
-            if (Data.MaterialIndex == INVALID_MATERIAL_INDEX)
+            if (TempModelData.MaterialIndex == INVALID_MATERIAL_INDEX)
             {
-                LOG_WARNING("Mesh '%s' has no material", Data.Name.GetCString());
+                LOG_WARNING("Mesh '%s' has no material", TempModelData.Name.GetCString());
             }
 
-            if (Data.Mesh.Hasdata())
+            if (TempModelData.Mesh.Hasdata())
             {
-                Data.Name = CurrentMesh->name;
+                TempModelData.Name = CurrentMesh->name;
                 LOG_INFO("Loaded Mesh '%s'", CurrentMesh->name);
-                
-                Data.Mesh.RefitContainers();
-                OutScene.Models.Emplace(Data);
+                OutScene.Models.Emplace(TempModelData);
             }
             else
             {

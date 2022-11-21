@@ -28,7 +28,7 @@
     {                                                                                                                               \
         MODULE_EXPORT FModuleInterface* LoadEngineModule()                                                                                   \
         {                                                                                                                           \
-            return dbg_new ModuleClassType();                                                                                       \
+            return new ModuleClassType();                                                                                       \
         }                                                                                                                           \
     }                                                                                                                               \
                                                                                                                                     \
@@ -264,7 +264,7 @@ public:
      */
     FModuleInterface* CreateModuleInterface()
     {
-        return dbg_new ModuleClassType();
+        return new ModuleClassType();
     }
 };
 

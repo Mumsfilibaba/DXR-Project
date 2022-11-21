@@ -45,5 +45,5 @@ FMetalDeviceContext* FMetalDeviceContext::CreateContext(FMetalInterface* InCoreI
     METAL_INFO("bSupportRayTracing=%s, bSupportRayTracingFromRender=%s", bSupportRayTracing ? "true" : "false", bSupportRayTracingFromRender ? "true" : "false");
     
     NSRelease(AvailableDevices);
-    return dbg_new FMetalDeviceContext(InCoreInterface, SelectedDevice);
+    return new FMetalDeviceContext(InCoreInterface, SelectedDevice);
 }

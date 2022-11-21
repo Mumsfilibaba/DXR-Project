@@ -16,12 +16,12 @@ FMacApplication* MacApplication = nullptr;
 FMacApplication* FMacApplication::CreateMacApplication()
 {
     // Set the global instance
-    MacApplication = dbg_new FMacApplication();
+    MacApplication = new FMacApplication();
     return MacApplication;
 }
 
 FMacApplication::FMacApplication()
-    : FGenericApplication(TSharedPtr<ICursor>(dbg_new FMacCursor()))
+    : FGenericApplication(TSharedPtr<ICursor>(new FMacCursor()))
     , Windows()
     , WindowsCS()
     , DeferredEvents()
@@ -92,7 +92,7 @@ FMacApplication::~FMacApplication()
 
 FGenericWindowRef FMacApplication::CreateWindow()
 {
-    TSharedRef<FMacWindow> NewWindow = dbg_new FMacWindow(this);
+    TSharedRef<FMacWindow> NewWindow = new FMacWindow(this);
     
     {
         TScopedLock Lock(WindowsCS);

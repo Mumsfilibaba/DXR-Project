@@ -19,7 +19,7 @@ FMetalCommandContext::FMetalCommandContext(FMetalDeviceContext* InDeviceContext)
 
 FMetalCommandContext* FMetalCommandContext::CreateMetalContext(FMetalDeviceContext* InDeviceContext)
 { 
-    return dbg_new FMetalCommandContext(InDeviceContext);
+    return new FMetalCommandContext(InDeviceContext);
 }
 
 void FMetalCommandContext::StartContext() 

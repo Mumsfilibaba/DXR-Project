@@ -42,14 +42,14 @@ bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
 
     // Limit the scope of the new resource
     {
-        FD3D12ResourceRef NewResource = dbg_new FD3D12Resource(GetDevice(), ResourceDesc, D3D12HeapType);
+        FD3D12ResourceRef NewResource = new FD3D12Resource(GetDevice(), ResourceDesc, D3D12HeapType);
         if (NewResource->Initialize(D3D12InitialState, nullptr))
         {
             Resource = NewResource;
 
             if (Desc.IsConstantBuffer())
             {
-                View = dbg_new FD3D12ConstantBufferView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap());
+                View = new FD3D12ConstantBufferView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap());
                 if (!CreateCBV())
                 {
                     return false;

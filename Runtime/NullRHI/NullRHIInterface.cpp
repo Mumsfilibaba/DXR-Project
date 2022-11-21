@@ -5,5 +5,5 @@ IMPLEMENT_ENGINE_MODULE(FNullRHIInterfaceModule, NullRHI);
 
 FRHIInterface* FNullRHIInterfaceModule::CreateInterface()
 {
-    return dbg_new FNullRHIInterface();
+    return new FNullRHIInterface();
 }

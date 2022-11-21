@@ -563,7 +563,7 @@ NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TUniquePtr<T>& RHS) no
 template<typename T, typename... ArgTypes>
 NODISCARD FORCEINLINE typename TEnableIf<TNot<TIsArray<T>>::Value, TUniquePtr<T>>::Type MakeUnique(ArgTypes&&... Args) noexcept
 {
-    T* UniquePtr = dbg_new T(Forward<ArgTypes>(Args)...);
+    T* UniquePtr = new T(Forward<ArgTypes>(Args)...);
     return TUniquePtr<T>(UniquePtr);
 }
 
@@ -572,6 +572,6 @@ NODISCARD FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TUniquePtr<T>>::Typ
 {
     typedef typename TRemoveExtent<T>::Type Type;
 
-    Type* UniquePtr = dbg_new Type[Size];
+    Type* UniquePtr = new Type[Size];
     return TUniquePtr<T>(UniquePtr);
 }

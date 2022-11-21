@@ -5,5 +5,5 @@ IMPLEMENT_ENGINE_MODULE(FMetalModule, MetalRHI);
 
 FRHIInterface* FMetalModule::CreateInterface()
 {
-    return dbg_new FMetalInterface();
+    return new FMetalInterface();
 }

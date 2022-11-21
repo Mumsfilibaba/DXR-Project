@@ -4,12 +4,12 @@
 
 FGenericThread* FWindowsThreadMisc::CreateThread(FThreadInterface* Runnable)
 {
-    return dbg_new FWindowsThread(Runnable);
+    return new FWindowsThread(Runnable);
 }
 
 FGenericEvent* FWindowsThreadMisc::CreateEvent(bool bManualReset)
 {
-    FWindowsEventRef NewEvent = dbg_new FWindowsEvent();
+    FWindowsEventRef NewEvent = new FWindowsEvent();
     if (!NewEvent->Create(bManualReset))
     {
         return nullptr;

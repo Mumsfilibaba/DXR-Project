@@ -31,17 +31,17 @@ struct CORE_API FMemory
 
     /**
      * @brief      - Reallocate memory
-     * @param Ptr  - Ptr to the memory to reallocate
+     * @param Block  - Block to the memory to reallocate
      * @param Size - The number of bytes to reallocate
      * @return     - Returns the newly allocated memory
      */
-    static void* Realloc(void* Ptr, uint64 Size) noexcept;
+    static void* Realloc(void* Block, uint64 Size) noexcept;
 
     /**
      * @brief     - Free memory
-     * @param Ptr - A pointer to the memory to deallocate
+     * @param Block - A pointer to the memory to deallocate
      */
-    static void Free(void* Ptr) noexcept;
+    static void Free(void* Block) noexcept;
 
     /**
      * @brief      - Move memory from one location to another. Can be overlapping memory-ranges.
@@ -112,11 +112,11 @@ struct CORE_API FMemory
 
     /**
      * @brief     - Free memory of const pointers
-     * @param Ptr - A pointer to the memory to deallocate
+     * @param Block - A pointer to the memory to deallocate
      */
-    static FORCEINLINE void Free(const void* Ptr) noexcept
+    static FORCEINLINE void Free(const void* Block) noexcept
     {
-        Free((void*)Ptr);
+        Free((void*)Block);
     }
 
     /**
@@ -132,15 +132,14 @@ struct CORE_API FMemory
 
     /**
      * @brief       - Reallocate memory typed
-     * @param Ptr   - Ptr to the memory to reallocate
+     * @param Block   - Block to the memory to reallocate
      * @param Count - Number of elements to allocate
      * @return      - Returns the pointer
      */
     template<typename T>
-    static FORCEINLINE T* Realloc(T* Ptr, uint64 Count) noexcept
+    static FORCEINLINE T* Realloc(T* Block, uint64 Count) noexcept
     {
-        const uint64 NumBytes = Count * sizeof(T);
-        return reinterpret_cast<T*>(Realloc(reinterpret_cast<void*>(Ptr), NumBytes));
+        return reinterpret_cast<T*>(Realloc(reinterpret_cast<void*>(Block), Count * sizeof(T)));
     }
 
     /**

@@ -122,7 +122,7 @@ bool FRenderer::Initialize()
 {
     CHECK(GInstance == nullptr);
 
-    GInstance = dbg_new FRenderer();
+    GInstance = new FRenderer();
     if (!GInstance->Create())
     {
         return false;
@@ -427,7 +427,7 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
         TPair<uint32, uint32>& ReadMeshCommands = ReadableMeshCommands.Emplace(StartCommand, NumCommands);
         StartCommand += NumCommands;
 
-        FAsyncTaskBase* AsyncTask = dbg_new TAsyncLambdaTask([&]() -> void
+        FAsyncTaskBase* AsyncTask = new TAsyncLambdaTask([&]() -> void
         {
             FrustumCullingAndSortingInternal(
                 CameraPtr,

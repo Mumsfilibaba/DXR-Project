@@ -12,11 +12,9 @@
 class FViewportRenderer final
     : public IViewportRenderer
 {
+public:
     FViewportRenderer()  = default;
     ~FViewportRenderer() = default;
-
-public:
-    static FViewportRenderer* Make();
 
      /** @brief - Initialize the context */
     virtual bool InitContext(InterfaceContext Context) override final;

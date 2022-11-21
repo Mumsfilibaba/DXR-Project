@@ -65,7 +65,7 @@ FD3D12FenceManager::FD3D12FenceManager(FD3D12Device* InDevice)
 
 bool FD3D12FenceManager::Initialize()
 {
-    FD3D12FenceRef NewFence = dbg_new FD3D12Fence(GetDevice());
+    FD3D12FenceRef NewFence = new FD3D12Fence(GetDevice());
     if (!(NewFence && NewFence->Initialize(CurrentValue)))
     {
         return false;

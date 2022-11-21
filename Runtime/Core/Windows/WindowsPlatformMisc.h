@@ -8,9 +8,9 @@
 struct FWindowsPlatformMisc final 
     : public FGenericPlatformMisc
 {
-    static FORCEINLINE void OutputDebugString(const FString& Message)
+    static FORCEINLINE void OutputDebugString(const CHAR* Message)
     {
-        OutputDebugStringA(Message.GetCString());
+        OutputDebugStringA(Message);
     }
 
     static FORCEINLINE bool IsDebuggerPresent()

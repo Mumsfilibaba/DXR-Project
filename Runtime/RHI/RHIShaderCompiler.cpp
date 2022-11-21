@@ -171,7 +171,7 @@ FRHIShaderCompiler::~FRHIShaderCompiler()
 bool FRHIShaderCompiler::Create(const CHAR* InAssetFolderPath)
 {
     CHECK(GInstance == nullptr);
-    GInstance = dbg_new FRHIShaderCompiler(InAssetFolderPath);
+    GInstance = new FRHIShaderCompiler(InAssetFolderPath);
     if (!GInstance->Initialize())
     {
         delete GInstance;
@@ -485,7 +485,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FR
     // Use the asset-folder as base for the shader-files
     const FStringWide WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
-    TComPtr<IDxcBlob>            SourceBlob = dbg_new FShaderBlob(ShaderSource.GetData(), ShaderSource.SizeInBytes());
+    TComPtr<IDxcBlob>            SourceBlob = new FShaderBlob(ShaderSource.GetData(), ShaderSource.SizeInBytes());
     TComPtr<IDxcOperationResult> Result;
     hResult = Compiler->Compile(
         SourceBlob.Get(),

@@ -16,7 +16,7 @@ FGenericApplication* FMacApplicationMisc::CreateApplication()
 
 FOutputDeviceConsole* FMacApplicationMisc::CreateOutputDeviceConsole()
 {
-    return dbg_new FMacOutputDeviceConsole();
+    return new FMacOutputDeviceConsole();
 }
 
 void FMacApplicationMisc::MessageBox(const FString& Title, const FString& Message)

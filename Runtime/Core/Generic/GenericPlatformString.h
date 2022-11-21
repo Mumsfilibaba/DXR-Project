@@ -81,11 +81,10 @@ struct FGenericPlatformString
         return static_cast<int32>(::snprintf(Buffer, BufferSize, Format, Forward<ArgTypes>(Args)...));
     }
 
-    // NOTE: This is super strange looking at the docs this function should return 'char' but seems to return 'const char'
-    // https://en.cppreference.com/w/c/string/byte/strstr
-
     NODISCARD static FORCEINLINE CHAR* Strstr(const CHAR* String, const CHAR* Find) noexcept
     {
+        // NOTE: This is super strange looking at the docs this function should return 'char' but seems to return 'const char'
+        // https://en.cppreference.com/w/c/string/byte/strstr
         return const_cast<CHAR*>(static_cast<const CHAR*>(::strstr(String, Find)));
     }
 
@@ -122,6 +121,16 @@ struct FGenericPlatformString
     static FORCEINLINE CHAR* Strncpy(CHAR* Dst, const CHAR* Src, TSIZE InLength) noexcept
     {
         return static_cast<CHAR*>(::strncpy(Dst, Src, InLength));
+    }
+
+    static FORCEINLINE CHAR* Strcat(CHAR* Dst, const CHAR* Src) noexcept
+    {
+        return static_cast<CHAR*>(::strcat(Dst, Src));
+    }
+
+    static FORCEINLINE CHAR* Strncat(CHAR* Dst, const CHAR* Src, TSIZE InLength) noexcept
+    {
+        return static_cast<CHAR*>(::strncat(Dst, Src, InLength));
     }
 
     NODISCARD static FORCEINLINE int32 Strcmp(const CHAR* String0, const CHAR* String1) noexcept
@@ -286,6 +295,16 @@ struct FGenericPlatformString
     static FORCEINLINE WIDECHAR* Strncpy(WIDECHAR* Dst, const WIDECHAR* Src, TSIZE InLength) noexcept
     {
         return static_cast<WIDECHAR*>(::wcsncpy(Dst, Src, InLength));
+    }
+
+    static FORCEINLINE WIDECHAR* Strcat(WIDECHAR* Dst, const WIDECHAR* Src) noexcept
+    {
+        return static_cast<WIDECHAR*>(::wcscat(Dst, Src));
+    }
+
+    static FORCEINLINE WIDECHAR* Strncat(WIDECHAR* Dst, const WIDECHAR* Src, TSIZE InLength) noexcept
+    {
+        return static_cast<WIDECHAR*>(::wcsncat(Dst, Src, InLength));
     }
 
     NODISCARD static FORCEINLINE int32 Strcmp(const WIDECHAR* String0, const WIDECHAR* String1) noexcept

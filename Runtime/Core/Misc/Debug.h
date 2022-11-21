@@ -5,7 +5,7 @@ struct FDebug
 {
     static FORCEINLINE void OutputDebugString(const FString& Message)
     {
-        FPlatformMisc::OutputDebugString(Message);
+        FPlatformMisc::OutputDebugString(Message.GetCString());
     }
 
     /**
@@ -15,7 +15,7 @@ struct FDebug
     template<typename... ArgTypes>
     static FORCEINLINE void OutputDebugFormat(const CHAR* InFormat, ArgTypes&&... Args)
     {
-        FString FormattedMessage = FString::CreateFormatted(InFormat, Forward<ArgTypes>(Args)...);
+        const FString FormattedMessage = FString::CreateFormatted(InFormat, Forward<ArgTypes>(Args)...);
         OutputDebugString(FormattedMessage);
     }
 

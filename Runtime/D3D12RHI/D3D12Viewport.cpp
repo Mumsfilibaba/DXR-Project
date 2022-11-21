@@ -225,11 +225,11 @@ bool FD3D12Viewport::RetriveBackBuffers()
         BackBuffers.Resize(NumBackBuffers);
         for (FD3D12TextureRef& Texture : BackBuffers)
         {
-            Texture = dbg_new FD3D12Texture(GetDevice(), BackBufferDesc);
+            Texture = new FD3D12Texture(GetDevice(), BackBufferDesc);
         }
     }
 
-    BackBuffer = dbg_new FD3D12BackBufferTexture(GetDevice(), this, BackBufferDesc);
+    BackBuffer = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferDesc);
 
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
     {
@@ -242,7 +242,7 @@ bool FD3D12Viewport::RetriveBackBuffers()
             return false;
         }
 
-        BackBuffers[Index]->SetResource(dbg_new FD3D12Resource(GetDevice(), BackBufferResource));
+        BackBuffers[Index]->SetResource(new FD3D12Resource(GetDevice(), BackBufferResource));
         BackBuffers[Index]->GetD3D12Resource()->SetName(FString::CreateFormatted("BackBuffer[%u]", Index));
     }
 

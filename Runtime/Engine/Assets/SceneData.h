@@ -21,21 +21,31 @@ struct FMeshData
     FMeshData& operator=(FMeshData&&) = default;
     FMeshData& operator=(const FMeshData&) = default;
 
-    inline void Clear()
+    FORCEINLINE void Clear()
     {
         Vertices.Clear();
         Indices.Clear();
     }
 
-    inline bool Hasdata() const
+    FORCEINLINE bool Hasdata() const
     {
         return !Vertices.IsEmpty();
     }
 
-    inline void RefitContainers()
+    FORCEINLINE void RefitContainers()
     {
         Vertices.Shrink();
         Indices.Shrink();
+    }
+
+    FORCEINLINE auto GetVertexCount() const
+    {
+        return Vertices.GetSize();
+    }
+
+    FORCEINLINE auto GetIndexCount() const
+    {
+        return Indices.GetSize();
     }
 
     TArray<FVertex> Vertices;
@@ -53,52 +63,52 @@ struct FModelData
     FModelData& operator=(FModelData&&) = default;
     FModelData& operator=(const FModelData&) = default;
 
-     /** @brief - Name of the mesh specified in the model-file */
+    /** @brief - Name of the mesh specified in the model-file */
     FString Name;
 
-     /** @brief - Model mesh data */
+    /** @brief - Model mesh data */
     FMeshData Mesh;
 
-     /** @brief - The Material index in the FSceneData Materials Array */
+    /** @brief - The Material index in the FSceneData Materials Array */
     int32 MaterialIndex = -1;
 };
 
 struct FMaterialData
 {
-     /** @brief - Diffuse texture */
+    /** @brief - Diffuse texture */
     FTextureResource2DRef DiffuseTexture;
 
-     /** @brief - Normal texture */
+    /** @brief - Normal texture */
     FTextureResource2DRef NormalTexture;
 
-     /** @brief - Specular texture - Stores AO, Metallic, and Roughness in the same textures */
+    /** @brief - Specular texture - Stores AO, Metallic, and Roughness in the same textures */
     FTextureResource2DRef SpecularTexture;
 
-     /** @brief - Emissive texture */
+    /** @brief - Emissive texture */
     FTextureResource2DRef EmissiveTexture;
 
-     /** @brief - AO texture - Ambient Occlusion */
+    /** @brief - AO texture - Ambient Occlusion */
     FTextureResource2DRef AOTexture;
 
-     /** @brief - Roughness texture*/
+    /** @brief - Roughness texture*/
     FTextureResource2DRef RoughnessTexture;
 
-     /** @brief - Metallic Texture*/
+    /** @brief - Metallic Texture*/
     FTextureResource2DRef MetallicTexture;
 
-     /** @brief - Metallic Texture*/
+    /** @brief - Metallic Texture*/
     FTextureResource2DRef AlphaMaskTexture;
 
-     /** @brief - Diffuse Parameter */
+    /** @brief - Diffuse Parameter */
     FVector3 Diffuse;
 
-     /** @brief - AO Parameter */
+    /** @brief - AO Parameter */
     float AO = 1.0f;
 
-     /** @brief - Roughness Parameter */
+    /** @brief - Roughness Parameter */
     float Roughness = 1.0f;
 
-     /** @brief - Metallic Parameter */
+    /** @brief - Metallic Parameter */
     float Metallic = 1.0f;
 
     /** @brief - Is the diffuse and alpha stored in the same texture? */

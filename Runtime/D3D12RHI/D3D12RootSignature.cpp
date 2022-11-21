@@ -536,7 +536,7 @@ FD3D12RootSignature* FD3D12RootSignatureCache::GetOrCreateRootSignature(const FD
 
 FD3D12RootSignature* FD3D12RootSignatureCache::CreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount)
 {
-    FD3D12RootSignatureRef NewRootSignature = dbg_new FD3D12RootSignature(GetDevice());
+    FD3D12RootSignatureRef NewRootSignature = new FD3D12RootSignature(GetDevice());
     if (!NewRootSignature->Initialize(ResourceCount))
     {
         return nullptr;

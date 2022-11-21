@@ -10,7 +10,6 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-
 struct FGenericConditionVariable 
     : FNonCopyable
 {

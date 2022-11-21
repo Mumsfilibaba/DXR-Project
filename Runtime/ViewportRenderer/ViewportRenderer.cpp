@@ -15,11 +15,6 @@
 
 #include <imgui.h>
 
-FViewportRenderer* FViewportRenderer::Make()
-{
-    return dbg_new FViewportRenderer();
-}
-
 bool FViewportRenderer::InitContext(InterfaceContext Context)
 {
     INIT_CONTEXT(Context);

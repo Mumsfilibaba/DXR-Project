@@ -18,7 +18,7 @@ public:
 
     static FORCEINLINE TSharedPtr<FUser> Make(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
     {
-        return TSharedPtr<FUser>(dbg_new FUser(InUserIndex, InCursor));
+        return TSharedPtr<FUser>(new FUser(InUserIndex, InCursor));
     }
 
     virtual ~FUser() = default;

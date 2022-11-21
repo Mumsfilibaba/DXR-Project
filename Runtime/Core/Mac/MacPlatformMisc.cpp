@@ -2,8 +2,7 @@
 
 #include <Foundation/Foundation.h>
 
-
-void FMacPlatformMisc::OutputDebugString(const FString& Message)
+void FMacPlatformMisc::OutputDebugString(const CHAR* Message)
 {
-    NSLog(@"%s\n", Message.GetCString());
+    NSLog(@"%s", Message);
 }

@@ -47,8 +47,8 @@ class FNullRHITexture
 public:
     explicit FNullRHITexture(const FRHITextureDesc& InDesc)
         : FRHITexture(InDesc)
-        , ShaderResourceView(dbg_new FNullRHIShaderResourceView(this))
-        , UnorderedAccessView(dbg_new FNullRHIUnorderedAccessView(this))
+        , ShaderResourceView(new FNullRHIShaderResourceView(this))
+        , UnorderedAccessView(new FNullRHIUnorderedAccessView(this))
     { }
 
     virtual void* GetRHIBaseTexture()        override final { return reinterpret_cast<void*>(this); }
@@ -83,7 +83,7 @@ class FNullRHIRayTracingScene
 public:
     explicit FNullRHIRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)
         : FRHIRayTracingScene(InDesc)
-        , View(dbg_new FNullRHIShaderResourceView(this))
+        , View(new FNullRHIShaderResourceView(this))
     { }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
@@ -124,7 +124,7 @@ public:
             1,
             ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
 
-        BackBuffer = dbg_new FNullRHITexture(BackBufferDesc);
+        BackBuffer = new FNullRHITexture(BackBufferDesc);
     }
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final

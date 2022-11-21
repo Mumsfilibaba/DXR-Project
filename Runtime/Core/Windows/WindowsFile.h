@@ -8,7 +8,7 @@ class CORE_API FWindowsFileHandle
 {
 public:
     FWindowsFileHandle(HANDLE InFileHandle);
-    ~FWindowsFileHandle() = default;
+    virtual ~FWindowsFileHandle() = default;
 
     virtual bool SeekFromStart(int64 InOffset) override final;
     virtual bool SeekFromCurrent(int64 InOffset) override final;

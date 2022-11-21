@@ -206,14 +206,14 @@ bool FD3D12CommandBatch::Initialize(uint32 Index)
     const uint32 ResourceCount = 100000;
     const uint32 SamplerCount  = 500;
 
-    OnlineResourceDescriptorHeap = dbg_new FD3D12OnlineDescriptorManager(
+    OnlineResourceDescriptorHeap = new FD3D12OnlineDescriptorManager(
         Device,
         Device->GetGlobalResourceHeap(),
         Index * ResourceCount, ResourceCount);
     
     CHECK(OnlineResourceDescriptorHeap != nullptr);
 
-    OnlineSamplerDescriptorHeap = dbg_new FD3D12OnlineDescriptorManager(
+    OnlineSamplerDescriptorHeap = new FD3D12OnlineDescriptorManager(
         Device,
         Device->GetGlobalSamplerHeap(),
         Index * SamplerCount, SamplerCount);
@@ -928,7 +928,7 @@ void FD3D12CommandContext::UpdateTexture2D(
 
     UINT64 RequiredSize = 0;
     UINT64 RowPitch     = 0;
-    UINT   NumRows      = 0;
+    UINT32 NumRows      = 0;
 
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT PlacedSubresourceFootprint;
     GetDevice()->GetD3D12Device()->GetCopyableFootprints(
@@ -1277,7 +1277,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     D3D12_ERROR_COND(Desc.MipLevels > 1, "MipLevels must be more than one in order to generate any MipLevels");
 
     // TODO: Create this placed from a Heap? See what performance is 
-    FD3D12ResourceRef StagingTexture = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12Texture->GetD3D12Resource()->GetHeapType());
+    FD3D12ResourceRef StagingTexture = new FD3D12Resource(GetDevice(), Desc, D3D12Texture->GetD3D12Resource()->GetHeapType());
     if (!StagingTexture->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
     {
         LOG_ERROR("[FD3D12CommandContext] Failed to create StagingTexture for GenerateMips");

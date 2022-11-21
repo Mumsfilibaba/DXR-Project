@@ -12,7 +12,7 @@ TAutoConsoleVariable<bool> GDrawGPUProfiler("Renderer.DrawGPUProfiler", false);
 
 TSharedRef<FGPUProfilerWindow> FGPUProfilerWindow::Create()
 {
-    return dbg_new FGPUProfilerWindow();
+    return new FGPUProfilerWindow();
 }
 
 void FGPUProfilerWindow::Tick()

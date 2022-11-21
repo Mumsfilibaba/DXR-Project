@@ -165,7 +165,7 @@ bool FEngineLoop::PreInit()
         }
     }
 
-   // Initialize the ShaderCompiler before RHI since RHI might need to compile shaders
+    // Initialize the ShaderCompiler before RHI since RHI might need to compile shaders
     if (!FRHIShaderCompiler::Create(FProjectManager::GetAssetPath()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
@@ -214,7 +214,7 @@ bool FEngineLoop::Init()
 #if PROJECT_EDITOR
     GEngine = FEditorEngine::Make();
 #else
-    GEngine = dbg_new FEngine();
+    GEngine = new FEngine();
 #endif
     if (!GEngine->Initialize())
     {

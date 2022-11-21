@@ -198,7 +198,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateDesc
         // TODO: Maybe use all shaders and create one that fits all
         D3D12_SHADER_BYTECODE ByteCode = ShadersWithRootSignature.FirstElement()->GetByteCode();
 
-        RootSignature = dbg_new FD3D12RootSignature(GetDevice());
+        RootSignature = new FD3D12RootSignature(GetDevice());
         if (!RootSignature->Initialize(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
         {
             return false;
@@ -271,7 +271,7 @@ bool FD3D12ComputePipelineState::Initialize()
     {
         D3D12_SHADER_BYTECODE ByteCode = Shader->GetByteCode();
 
-        RootSignature = dbg_new FD3D12RootSignature(GetDevice());
+        RootSignature = new FD3D12RootSignature(GetDevice());
         if (!RootSignature->Initialize(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
         {
             return false;

@@ -92,7 +92,7 @@ void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CommandCon
 
 FD3D12TimestampQuery* FD3D12TimestampQuery::Create(FD3D12Device* InDevice)
 {
-    TSharedRef<FD3D12TimestampQuery> NewProfiler = dbg_new FD3D12TimestampQuery(InDevice);
+    TSharedRef<FD3D12TimestampQuery> NewProfiler = new FD3D12TimestampQuery(InDevice);
 
     ID3D12Device* DxDevice = InDevice->GetD3D12Device();
 
@@ -126,7 +126,7 @@ FD3D12TimestampQuery* FD3D12TimestampQuery::Create(FD3D12Device* InDevice)
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    FD3D12ResourceRef WriteResource = dbg_new FD3D12Resource(InDevice, Desc, D3D12_HEAP_TYPE_DEFAULT);
+    FD3D12ResourceRef WriteResource = new FD3D12Resource(InDevice, Desc, D3D12_HEAP_TYPE_DEFAULT);
     if (!WriteResource->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
     {
         return nullptr;
@@ -167,7 +167,7 @@ bool FD3D12TimestampQuery::AllocateReadResource()
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    FD3D12ResourceRef ReadResource = dbg_new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK);
+    FD3D12ResourceRef ReadResource = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK);
     if (ReadResource->Initialize(D3D12_RESOURCE_STATE_COPY_DEST, nullptr))
     {
         ReadResource->SetName("Query Readback Resource");

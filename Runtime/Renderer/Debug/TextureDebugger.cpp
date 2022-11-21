@@ -11,7 +11,7 @@ TAutoConsoleVariable<bool> GDrawTextureDebugger("Renderer.Debug.ViewRenderTarget
 
 TSharedRef<FRenderTargetDebugWindow> FRenderTargetDebugWindow::Create()
 {
-    return dbg_new FRenderTargetDebugWindow();
+    return new FRenderTargetDebugWindow();
 }
 
 void FRenderTargetDebugWindow::Tick()

@@ -6,6 +6,9 @@
 #include "Core/Platform/PlatformMisc.h"
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_MALLOC FMemory::Malloc
+#define STBI_REALLOC FMemory::Realloc
+#define STBI_FREE FMemory::Free
 #include <stb_image.h>
 
 static EFormat GetByteFormat(int32 Channels)
@@ -162,12 +165,11 @@ FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
     const int64 RowPitch   = Width * GetByteStrideFromFormat(Format);
     const int64 SlicePitch = RowPitch * Height;
 
-    FTexture2D* NewTexture = dbg_new FTexture2D(Format, Width, Height, 1);
+    FTexture2D* NewTexture = new FTexture2D(Format, Width, Height, 1);
     NewTexture->CreateData();
 
     FTextureResourceData* TextureData = NewTexture->GetTextureResourceData();
     TextureData->InitMipData(Pixels.Get(), RowPitch, SlicePitch);
-
     return NewTexture;
 }
 

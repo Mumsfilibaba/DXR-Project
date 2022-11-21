@@ -4,18 +4,20 @@
 
 #include "Engine/Assets/SceneData.h"
 
-enum EFBXFlags : uint8
+enum class EFBXFlags : uint8
 {
-    FBXFlags_None             = 0,
-    FBXFlags_ApplyScaleFactor = BIT(1),
-    FBXFlags_EnsureLeftHanded = BIT(2),
+    None             = 0,
+    ApplyScaleFactor = BIT(1),
+    EnsureLeftHanded = BIT(2),
 
-    FBXFlags_Default = FBXFlags_EnsureLeftHanded
+    Default = EnsureLeftHanded
 };
+
+ENUM_CLASS_OPERATORS(EFBXFlags);
 
 // TODO: Extend to save as well? 
 class ENGINE_API FFBXLoader
 {
 public:
-    static bool LoadFile(const FString& Filename, FSceneData& OutScene, uint32 Flags = EFBXFlags::FBXFlags_Default) noexcept;
+    static bool LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFlags Flags = EFBXFlags::Default) noexcept;
 };

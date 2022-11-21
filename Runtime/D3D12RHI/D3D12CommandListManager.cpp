@@ -62,7 +62,7 @@ FD3D12CommandListRef FD3D12CommandListManager::ObtainCommandList(FD3D12CommandAl
     FD3D12CommandListRef CommandList;
     if (CommandLists.IsEmpty())
     {
-        CommandList = dbg_new FD3D12CommandList(GetDevice());
+        CommandList = new FD3D12CommandList(GetDevice());
         if (!CommandList->Initialize(CommandListType, CommandAllocator, InitialPipelineState))
         {
             return nullptr;

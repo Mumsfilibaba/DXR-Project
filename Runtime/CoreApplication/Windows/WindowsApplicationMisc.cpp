@@ -11,7 +11,7 @@ FGenericApplication* FWindowsApplicationMisc::CreateApplication()
 
 FOutputDeviceConsole* FWindowsApplicationMisc::CreateOutputDeviceConsole()
 {
-    return dbg_new FWindowsOutputDeviceConsole();
+    return new FWindowsOutputDeviceConsole();
 }
 
 void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)

@@ -144,7 +144,7 @@ public:
     template<typename... ArgTypes>
     FORCEINLINE bool Emplace(ArgTypes&&... Args) noexcept
     {
-        FNode* NewNode = dbg_new FNode(::Forward<ArgTypes>(Args)...);
+        FNode* NewNode = new FNode(::Forward<ArgTypes>(Args)...);
         if (NewNode == nullptr)
         {
             return false;

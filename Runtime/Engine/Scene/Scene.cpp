@@ -23,20 +23,19 @@ FScene::~FScene()
     {
         SAFE_DELETE(CurrentActor);
     }
-    Actors.Clear();
-
+    
     for (FLight* CurrentLight : Lights)
     {
         SAFE_DELETE(CurrentLight);
     }
-    Lights.Clear();
 
+    // TODO: Fix crash on exit
     SAFE_DELETE(CurrentCamera);
 }
 
 FActor* FScene::CreateActor()
 {
-    FActor* NewActor = dbg_new FActor(this);
+    FActor* NewActor = new FActor(this);
     AddActor(NewActor);
     return NewActor;
 }

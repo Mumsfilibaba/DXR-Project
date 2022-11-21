@@ -2,7 +2,7 @@
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
 
-struct FTexture;
+class FTexture;
 
 struct ITextureImporter
 {

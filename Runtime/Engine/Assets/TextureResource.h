@@ -7,7 +7,7 @@
 
 #include "Engine/EngineModule.h"
 
-struct FTexture;
+class FTexture;
 class FTexture2D;
 
 // This is based on the max texture-size 32678
@@ -53,9 +53,10 @@ private:
 };
 
 
-struct ENGINE_API FTexture
+class ENGINE_API FTexture
     : public FRefCounted
 {
+public:
     FTexture()          = default;
     virtual ~FTexture() = default;
 
@@ -66,7 +67,22 @@ struct ENGINE_API FTexture
     virtual void CreateData()  = 0;
     virtual void ReleaseData() = 0;
 
+    virtual EFormat GetFormat() const = 0;
+
     virtual void SetName(const FString& InName) = 0;
+
+    void SetFilename(const FString& InFilename)
+    {
+        Filename = InFilename;
+    }
+
+    const FString& GetFilename() const
+    {
+        return Filename;
+    }
+
+protected:
+    FString Filename;
 };
 
 
@@ -87,18 +103,17 @@ public:
 
     virtual void SetName(const FString& InName) override final;
 
+    virtual EFormat GetFormat() const override final { return Format; }
+
     FRHITextureRef GetRHITexture() const { return TextureRHI; }
 
     FTextureResourceData* GetTextureResourceData() const { return TextureData; }
-
-    EFormat GetFormat() const { return Format; }
 
     uint32 GetWidth() const { return Width; }
     uint32 GetHeight() const { return Height; }
 
 private:
-
-    FRHITextureRef      TextureRHI;
+    FRHITextureRef        TextureRHI;
     FTextureResourceData* TextureData;
 
     EFormat Format;

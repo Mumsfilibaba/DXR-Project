@@ -6,15 +6,21 @@
 struct CORE_API FWindowsPlatformStackTrace 
     : public FGenericPlatformStackTrace
 {
-    static bool InitializeSymbols();
+    using FGenericPlatformStackTrace::CaptureStackTrace;
 
+    static bool InitializeSymbols();
     static void ReleaseSymbols();
 
-    static TArray<FStackTraceEntry> GetStack(int32 MaxDepth = 128);
+    static int32 CaptureStackTrace(uint64* StackTrace, int32 MaxDepth);
+
+    static void GetStackTraceEntryFromAddress(uint64 Address, FStackTraceEntry& OutStackTraceEntry);
+
+    static TArray<FStackTraceEntry> GetStack(int32 MaxDepth = 128, int32 IgnoreCount = 0);
 
     static FORCEINLINE FString GetSymbolPath()
     {
-        FString Path;// = GetExecutableFilename();
+        // TODO: Assumed to be the same as the executable path
+        const FString Path = GetExecutableFilename();
         return Path;
     }
 

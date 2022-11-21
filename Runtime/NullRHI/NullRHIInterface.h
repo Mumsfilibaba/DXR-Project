@@ -27,7 +27,7 @@ class NULLRHI_API FNullRHIInterface final
 public:
     FNullRHIInterface()
         : FRHIInterface(ERHIInstanceType::Null)
-        , CommandContext(dbg_new FNullRHICommandContext())
+        , CommandContext(new FNullRHICommandContext())
     { }
 
     ~FNullRHIInterface()
@@ -42,62 +42,62 @@ public:
 
     virtual FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final
     {
-        return dbg_new FNullRHITexture(InDesc);
+        return new FNullRHITexture(InDesc);
     }
 
     virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) override final
     {
-        return dbg_new FNullRHIBuffer(InDesc);
+        return new FNullRHIBuffer(InDesc);
     }
 
     virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& InDesc) override final
     {
-        return dbg_new FNullRHISamplerState(InDesc);
+        return new FNullRHISamplerState(InDesc);
     }
 
     virtual class FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) override final
     {
-        return dbg_new FNullRHIViewport(InDesc);
+        return new FNullRHIViewport(InDesc);
     }
 
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final
     {
-        return dbg_new FNullRHIRayTracingScene(InDesc);
+        return new FNullRHIRayTracingScene(InDesc);
     }
 
     virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) override final
     {
-        return dbg_new FNullRHIRayTracingGeometry(InDesc);
+        return new FNullRHIRayTracingGeometry(InDesc);
     }
 
     virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) override final
     {
-        return dbg_new FNullRHIShaderResourceView(InDesc.Texture);
+        return new FNullRHIShaderResourceView(InDesc.Texture);
     }
 
     virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc) override final
     {
-        return dbg_new FNullRHIShaderResourceView(InDesc.Buffer);
+        return new FNullRHIShaderResourceView(InDesc.Buffer);
     }
 
     virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc) override final
     {
-        return dbg_new FNullRHIUnorderedAccessView(InDesc.Texture);
+        return new FNullRHIUnorderedAccessView(InDesc.Texture);
     }
 
     virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc) override final
     {
-        return dbg_new FNullRHIUnorderedAccessView(InDesc.Buffer);
+        return new FNullRHIUnorderedAccessView(InDesc.Buffer);
     }
 
     virtual class FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final
     {
-        return dbg_new FNullRHIComputeShader();
+        return new FNullRHIComputeShader();
     }
 
     virtual class FRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode) override final
     {
-        return dbg_new FNullRHIVertexShader();
+        return new FNullRHIVertexShader();
     }
 
     virtual class FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) override final
@@ -127,67 +127,67 @@ public:
 
     virtual class FRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode) override final
     {
-        return dbg_new FNullRHIPixelShader();
+        return new FNullRHIPixelShader();
     }
 
     virtual class FRHIRayGenShader* RHICreateRayGenShader(const TArray<uint8>& ShaderCode) override final
     {
-        return dbg_new FNullRHIRayGenShader();
+        return new FNullRHIRayGenShader();
     }
 
     virtual class FRHIRayAnyHitShader* RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final
     {
-        return dbg_new TNullRHIShader<FRHIRayAnyHitShader>();
+        return new TNullRHIShader<FRHIRayAnyHitShader>();
     }
 
     virtual class FRHIRayClosestHitShader* RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final
     {
-        return dbg_new TNullRHIShader<FRHIRayClosestHitShader>();
+        return new TNullRHIShader<FRHIRayClosestHitShader>();
     }
 
     virtual class FRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode) override final
     {
-        return dbg_new TNullRHIShader<FRHIRayMissShader>();
+        return new TNullRHIShader<FRHIRayMissShader>();
     }
 
     virtual class FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) override final
     {
-        return dbg_new FNullRHIDepthStencilState(InDesc);
+        return new FNullRHIDepthStencilState(InDesc);
     }
 
     virtual class FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) override final
     {
-        return dbg_new FNullRHIRasterizerState(InDesc);
+        return new FNullRHIRasterizerState(InDesc);
     }
 
     virtual class FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& InDesc) override final
     {
-        return dbg_new FNullRHIBlendState(InDesc);
+        return new FNullRHIBlendState(InDesc);
     }
 
     virtual class FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& InDesc) override final
     {
-        return dbg_new FNullRHIInputLayoutState();
+        return new FNullRHIInputLayoutState();
     }
 
     virtual class FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) override final
     {
-        return dbg_new FNullRHIGraphicsPipelineState();
+        return new FNullRHIGraphicsPipelineState();
     }
 
     virtual class FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) override final
     {
-        return dbg_new FNullRHIComputePipelineState();
+        return new FNullRHIComputePipelineState();
     }
 
     virtual class FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final
     {
-        return dbg_new FNullRHIRayTracingPipelineState();
+        return new FNullRHIRayTracingPipelineState();
     }
 
     virtual class FRHITimestampQuery* RHICreateTimestampQuery() override final
     {
-        return dbg_new FNullRHITimestampQuery();
+        return new FNullRHITimestampQuery();
     }
 
     virtual struct IRHICommandContext* RHIObtainCommandContext() override final

@@ -246,7 +246,7 @@ inline void Async(LambdaType&& InLambda, EQueuePriority Priority = EQueuePriorit
 {
     using AsyncType = TAutoAsyncTask<TAsyncLambda<LambdaType>>;
 
-    AsyncType* AsynTask = dbg_new AsyncType(::Forward<LambdaType>(InLambda));
+    AsyncType* AsynTask = new AsyncType(::Forward<LambdaType>(InLambda));
     CHECK(AsynTask != nullptr);
     AsynTask->Launch(Priority, bExecuteAsync);
 }

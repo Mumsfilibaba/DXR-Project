@@ -12,7 +12,7 @@ template <typename ViewType, D3D12_DESCRIPTOR_HEAP_TYPE HeapType, uint32 kDescri
 class TD3D12ViewCache
 {
 public:
-    static CONSTEXPR D3D12_DESCRIPTOR_HEAP_TYPE GetDescriptorHeapType()  { return HeapType; }
+    static CONSTEXPR D3D12_DESCRIPTOR_HEAP_TYPE GetDescriptorHeapType() { return HeapType; }
     static CONSTEXPR uint32                     GetDescriptorTableSize() { return kDescriptorTableSize; }
 
 public:

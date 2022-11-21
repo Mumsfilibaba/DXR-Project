@@ -1,4 +1,5 @@
 #include "Memory.h"
+#include "Malloc.h"
 
 #include "Core/Platform/PlatformStackTrace.h"
 
@@ -9,21 +10,13 @@
 #include <crtdbg.h>
 #endif
 
-
-class FMemoryChecker
-{
-
-};
-
-
 void* FMemory::Malloc(uint64 Size) noexcept
 {
     // Since malloc is not guaranteed to return nullptr, we check for it here
     // Src: https://www.cplusplus.com/reference/cstdlib/malloc/
     if (Size)
     {
-        const auto CallStack = FPlatformStackTrace::GetStack(16);
-        return ::malloc(Size);
+         return FMalloc::Get().Malloc(Size);
     }
     else
     {
@@ -38,14 +31,14 @@ void* FMemory::MallocZeroed(uint64 Size) noexcept
     return NewMemory;
 }
 
-void* FMemory::Realloc(void* Ptr, uint64 Size) noexcept
+void* FMemory::Realloc(void* Block, uint64 Size) noexcept
 {
-    return ::realloc(Ptr, Size);
+    return FMalloc::Get().Realloc(Block, Size);
 }
 
-void FMemory::Free(void* Ptr) noexcept
+void FMemory::Free(void* Block) noexcept
 {
-    free(Ptr);
+    FMalloc::Get().Free(Block);
 }
 
 void* FMemory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept

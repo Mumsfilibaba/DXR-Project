@@ -1,6 +1,9 @@
 #include "Main/EngineLoop.h"
 
 #include "Core/Core.h"
+#include "Core/Misc/OutputDevice.h"
+#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Memory/Malloc.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -36,6 +39,28 @@ FORCEINLINE bool EngineRelease()
 }
 
 
+struct FDebuggerOutputDevice
+    : public FOutputDevice
+{
+    virtual void Log(const FString& Message) 
+    {
+        FPlatformMisc::OutputDebugString(Message.GetCString());
+        FPlatformMisc::OutputDebugString("\n");
+    }
+
+    virtual void Log(ELogSeverity Severity, const FString& Message)
+    {
+        Log(Message);
+    }
+
+    virtual void Flush() override final { }
+};
+
+// NOTE: OutputDevice for the debugger
+FOutputDevice* GDebugOutput = nullptr;
+
+
+// Application EntryPoint
 int32 GenericMain()
 {
     struct FGenericMainGuard
@@ -46,6 +71,12 @@ int32 GenericMain()
             {
                 FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Release Failed");
             }
+
+            // Only report the leaking to the debugger output device
+            if (FPlatformMisc::IsDebuggerPresent())
+            {
+                FMalloc::Get().DumpAllocations(GDebugOutput);
+            }
         }
     };
 
@@ -53,11 +84,20 @@ int32 GenericMain()
         // Make sure that the engine is released if the main function exits early
         FGenericMainGuard GenericMainGuard;
 
+        // Only report the leaking to the debugger output device
+        if (FPlatformMisc::IsDebuggerPresent())
+        {
+            GDebugOutput = new FDebuggerOutputDevice();
+            FOutputDeviceLogger::Get()->AddOutputDevice(GDebugOutput);
+        }
+
         if (!EnginePreInit())
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::PreInit Failed");
             return -1;
         }
+
+        FMalloc::Get().DumpAllocations(GDebugOutput);
 
         if (!EngineInit())
         {

@@ -64,7 +64,7 @@ FD3D12CommandAllocatorRef FD3D12CommandAllocatorManager::ObtainAllocator()
     }
     else
     {
-        CommandAllocator = dbg_new FD3D12CommandAllocator(GetDevice(), QueueType);
+        CommandAllocator = new FD3D12CommandAllocator(GetDevice(), QueueType);
         if (!(CommandAllocator && CommandAllocator->Create()))
         {
             return nullptr;

@@ -78,7 +78,7 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
 
     // Create BackBuffer
     FRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
-    BackBuffer = dbg_new FMetalTexture2D(InDeviceContext, BackBufferInitializer);   
+    BackBuffer = new FMetalTexture2D(InDeviceContext, BackBufferInitializer);   
     BackBuffer->SetViewport(this);
 }
 

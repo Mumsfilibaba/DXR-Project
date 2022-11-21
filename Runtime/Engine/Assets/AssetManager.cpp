@@ -16,8 +16,8 @@ FAssetManager::FAssetManager()
     , TexturesCS()
     , TextureImporters()
 {
-    TextureImporters.Emplace(dbg_new FTextureImporterBase());
-    TextureImporters.Emplace(dbg_new FTextureImporterDDS());
+    TextureImporters.Emplace(new FTextureImporterBase());
+    TextureImporters.Emplace(new FTextureImporterDDS());
 }
 
 FAssetManager::~FAssetManager()
@@ -34,7 +34,7 @@ bool FAssetManager::Initialize()
 {
     if (!GInstance)
     {
-        GInstance = dbg_new FAssetManager();
+        GInstance = new FAssetManager();
         return true;
     }
 
@@ -87,6 +87,11 @@ FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGe
         return nullptr;
     }
 
+    if (IsCompressed(NewTexture->GetFormat()))
+    {
+        bGenerateMips = false;
+    }
+
     if (!NewTexture->CreateRHITexture(bGenerateMips))
     {
         return nullptr;
@@ -95,7 +100,8 @@ FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGe
     LOG_INFO("[FAssetManager]: Loaded Texture '%s'", FinalPath.GetCString());
 
     // Set name 
-    NewTexture->SetName(FinalPath);
+    NewTexture->SetName(FinalPath);     // For the RHI
+    NewTexture->SetFilename(FinalPath); // For the AssetSystem
 
     // Release the data after the texture is loaded
     NewTexture->ReleaseData();

@@ -23,7 +23,7 @@ bool FRHIThread::Startup()
 {
     if (!GInstance)
     {
-        GInstance = dbg_new FRHIThread();
+        GInstance = new FRHIThread();
         if (!CVarEnableRHIThread.GetValue())
         {
             return true;
@@ -189,7 +189,7 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 
         if (CVarEnableRHIThread.GetValue())
         {
-            FRHICommandList* NewCommandList = dbg_new FRHICommandList();
+            FRHICommandList* NewCommandList = new FRHICommandList();
             NewCommandList->ExchangeState(CommandList);
             NewCommandList->SetCommandContext(CommandContext);
 

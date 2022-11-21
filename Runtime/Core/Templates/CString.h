@@ -131,8 +131,17 @@ struct TCString
         return FPlatformString::Strncpy(Dst, Src, InLength);
     }
 
-public: 
-    
+    static FORCEINLINE CHARTYPE* Strcat(CHARTYPE* Dst, const CHARTYPE* Src) noexcept
+    {
+        return FPlatformString::Strcat(Dst, Src);
+    }
+
+    static FORCEINLINE CHARTYPE* Strncat(CHARTYPE* Dst, const CHARTYPE* Src, TSIZE InLength) noexcept
+    {
+        return FPlatformString::Strncat(Dst, Src, InLength);
+    }
+
+public:
     static FORCEINLINE CHARTYPE* Strmove(CHARTYPE* Dst, const CHARTYPE* Src) noexcept
     {
         return Strnmove(Dst, Src, Strlen(Src));
@@ -227,9 +236,6 @@ public:
     NODISCARD static FORCEINLINE const CHARTYPE* Empty() noexcept;
 };
 
-typedef TCString<CHAR>     FCString;
-typedef TCString<WIDECHAR> FCStringWide;
-
 template<>
 FORCEINLINE const CHAR* TCString<CHAR>::Empty() noexcept
 {
@@ -241,6 +247,9 @@ FORCEINLINE const WIDECHAR* TCString<WIDECHAR>::Empty() noexcept
 {
     return L"";
 }
+
+typedef TCString<CHAR>     FCString;
+typedef TCString<WIDECHAR> FCStringWide;
 
 
 #define DECLARE_FORMAT_STRING_SPECIFIER(Type, Specifier)                              \

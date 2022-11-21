@@ -69,7 +69,7 @@ void FSceneData::AddToScene(FScene* Scene)
             NewActor->SetName(ModelData.Name.GetCString());
             NewActor->GetTransform().SetUniformScale(Scale);
 
-            FMeshComponent* MeshComponent = dbg_new FMeshComponent(NewActor);
+            FMeshComponent* MeshComponent = new FMeshComponent(NewActor);
             MeshComponent->Mesh = FMesh::Create(ModelData.Mesh);
 
             if (!CreatedMaterials.IsEmpty() && ModelData.MaterialIndex >= 0)

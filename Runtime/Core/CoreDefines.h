@@ -156,7 +156,6 @@
 
 #define STANDARD_ALIGNMENT (__STDCPP_DEFAULT_NEW_ALIGNMENT__)
 
-
 #if PLATFORM_COMPILER_MSVC
     #include "Core/CompilerSpecific/CompilerMSVC.h"
 #elif PLATFORM_COMPILER_CLANG
@@ -166,4 +165,10 @@
 #elif PLATFORM_COMPILER_UNDEFINED 
     #include "Core/CompilerSpecific/CompilerDefault.h"
     #error "Unknown Compiler"
+#endif
+
+#if PLATFORM_ARCHITECTURE_X86_X64
+    #define PLATFORM_64BIT (1)
+#else
+    #define PLATFORM_64BIT (0)
 #endif

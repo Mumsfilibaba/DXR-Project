@@ -27,7 +27,7 @@ class FMetalRayTracingScene
 public:
     FMetalRayTracingScene(FMetalDeviceContext* InDeviceContext, const FRHIRayTracingSceneDesc& Initializer)
         : FRHIRayTracingScene(Initializer)
-        , View(dbg_new FMetalShaderResourceView(InDeviceContext, this))
+        , View(new FMetalShaderResourceView(InDeviceContext, this))
     { }
 
     ~FMetalRayTracingScene() = default;

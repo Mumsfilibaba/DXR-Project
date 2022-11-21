@@ -55,7 +55,7 @@ public:
     FMetalTexture2D(FMetalDeviceContext* InDeviceContext, const FRHITexture2DInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
         , FRHITexture(Initializer)
-        , UnorderedAccessView(dbg_new FMetalUnorderedAccessView(InDeviceContext, this))
+        , UnorderedAccessView(new FMetalUnorderedAccessView(InDeviceContext, this))
     { }
 
     FMetalUnorderedAccessView* GetMetalUnorderedAccessView() const { return UnorderedAccessView.Get(); }

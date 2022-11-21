@@ -135,7 +135,7 @@ FTexture* FTextureImporterDDS::ImportFromFile(const FStringView& FileName)
 
     const EFormat Format = ConvertFormat(File.GetFormat());
     
-    FTexture2D* NewTexture = dbg_new FTexture2D(Format, File.GetWidth(), File.GetHeight(), File.GetMipCount());
+    FTexture2D* NewTexture = new FTexture2D(Format, File.GetWidth(), File.GetHeight(), File.GetMipCount());
     NewTexture->CreateData();
 
     FTextureResourceData* TextureData = NewTexture->GetTextureResourceData();

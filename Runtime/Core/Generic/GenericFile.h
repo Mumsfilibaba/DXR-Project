@@ -130,6 +130,24 @@ struct FGenericFile
 
 struct FFileHelpers
 {
+public:
+    static bool ReadFile(IFileHandle* File, TArray<uint8>& OutData)
+    {
+        CHECK(File != nullptr);
+
+        const int64 FileSize = File->Size();
+        OutData.Resize(static_cast<int32>(FileSize));
+
+        const int32 ReadBytes = File->Read(reinterpret_cast<uint8*>(OutData.GetData()), static_cast<uint32>(FileSize));
+        if (ReadBytes <= 0)
+        {
+            OutData.Clear(true);
+            return false;
+        }
+
+        return true;
+    }
+
     static bool ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText)
     {
         CHECK(File != nullptr);
@@ -142,6 +160,30 @@ struct FFileHelpers
         if (ReadBytes <= 0)
         {
             OutText.Clear(true);
+            return false;
+        }
+
+        return true;
+    }
+
+    static bool WriteTextFile(IFileHandle* File, const TArray<CHAR>& Text)
+    {
+        return WriteTextFile(File, Text.GetData(), Text.SizeInBytes());
+    }
+
+    static bool WriteTextFile(IFileHandle* File, const FString& Text)
+    {
+        return WriteTextFile(File, Text.GetData(), Text.SizeInBytes());
+    }
+
+private:
+    static bool WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Size)
+    {
+        CHECK(File != nullptr);
+
+        const int32 WrittenBytes = File->Write(reinterpret_cast<const uint8*>(Text), Size);
+        if (WrittenBytes <= 0)
+        {
             return false;
         }
 

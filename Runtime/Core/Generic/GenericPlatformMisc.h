@@ -14,7 +14,7 @@
 
 struct FGenericPlatformMisc
 {
-    static FORCEINLINE void OutputDebugString(const FString& Message) { }
+    static FORCEINLINE void OutputDebugString(const CHAR* Message) { }
 
     static FORCEINLINE bool IsDebuggerPresent() { return false; }
 

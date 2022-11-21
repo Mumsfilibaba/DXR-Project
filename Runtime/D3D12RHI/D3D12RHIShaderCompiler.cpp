@@ -227,13 +227,13 @@ bool FD3D12ShaderCompiler::CompileShader(
 
 bool FD3D12ShaderCompiler::GetReflection(FD3D12Shader* Shader, ID3D12ShaderReflection** Reflection)
 {
-    TComPtr<IDxcBlob> ShaderBlob = dbg_new FExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
+    TComPtr<IDxcBlob> ShaderBlob = new FExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     return InternalGetReflection(ShaderBlob, IID_PPV_ARGS(Reflection));
 }
 
 bool FD3D12ShaderCompiler::GetLibraryReflection(FD3D12Shader* Shader, ID3D12LibraryReflection** Reflection)
 {
-    TComPtr<IDxcBlob> ShaderBlob = dbg_new FExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
+    TComPtr<IDxcBlob> ShaderBlob = new FExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     return InternalGetReflection(ShaderBlob, IID_PPV_ARGS(Reflection));
 }
 
@@ -247,7 +247,7 @@ bool FD3D12ShaderCompiler::HasRootSignature(FD3D12Shader* Shader)
         return false;
     }
 
-    TComPtr<IDxcBlob> ShaderBlob = dbg_new FExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
+    TComPtr<IDxcBlob> ShaderBlob = new FExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     Result = Reflection->Load(ShaderBlob.Get());
     if (FAILED(Result))
     {

@@ -580,7 +580,7 @@ bool FD3D12Device::Initialize()
     }
 
     // Create DescriptorHeaps
-    GlobalResourceHeap = dbg_new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    GlobalResourceHeap = new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     if (!GlobalResourceHeap->Initialize())
     {
         D3D12_ERROR("Failed to create global resource descriptor heap");
@@ -591,7 +591,7 @@ bool FD3D12Device::Initialize()
         GlobalResourceHeap->SetName("Global Resource Descriptor Heap");
     }
 
-    GlobalSamplerHeap = dbg_new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    GlobalSamplerHeap = new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     if (!GlobalSamplerHeap->Initialize())
     {
         D3D12_ERROR("Failed to create global sampler descriptor heap");

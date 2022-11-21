@@ -10,12 +10,15 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
+#define MAX_STACK_DEPTH (128)
+
 struct FStackTraceEntry
 {
-    enum { MaxNameLength = 1024 };
+    enum { MaxNameLength = 512 };
 
-    CHAR Name[MaxNameLength];
-    CHAR File[MaxNameLength];
+    CHAR FunctionName[MaxNameLength];
+    CHAR Filename[MaxNameLength];
+    CHAR ModuleName[MaxNameLength];
 
     uint32 Line;
 };
@@ -23,10 +26,14 @@ struct FStackTraceEntry
 struct CORE_API FGenericPlatformStackTrace
 {
     static FORCEINLINE bool InitializeSymbols() { return true; }
-
     static FORCEINLINE void ReleaseSymbols() { } 
 
-    static FORCEINLINE TArray<FStackTraceEntry> GetStack(int32 MaxDepth) 
+    static int32 CaptureStackTrace(uint64* StackTrace, int32 MaxDepth, int32 IgnoreCount);
+    static FORCEINLINE int32 CaptureStackTrace(uint64* StackTrace, int32 MaxDepth) { return 0; }
+
+    static FORCEINLINE void GetStackTraceEntryFromAddress(uint64 Address, FStackTraceEntry& OutStackTraceEntry) { }
+
+    static FORCEINLINE TArray<FStackTraceEntry> GetStack(int32 MaxDepth = 128, int32 IgnoreCount = 0)
     { 
         return TArray<FStackTraceEntry>();
     }
