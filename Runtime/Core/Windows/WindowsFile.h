@@ -61,5 +61,8 @@ struct CORE_API FWindowsFile
 
     static FString GetCurrentDirectory();
 
-    static bool IsPathRelative(const CHAR* Filepath);
+    static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
+    {
+        return !!::PathIsRelativeA(Filepath);
+    }
 };

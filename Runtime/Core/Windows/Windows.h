@@ -11,6 +11,7 @@
 #include <Windows.h>
 #include <windowsx.h>
 #include <sdkddkver.h>
+#include <shlwapi.h>
 
 #ifdef CreateWindow
     #undef CreateWindow

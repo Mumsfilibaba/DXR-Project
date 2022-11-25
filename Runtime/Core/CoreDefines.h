@@ -128,7 +128,6 @@
 
 
 #define ENABLE_CONSTEXPR (1)
-
 #if ENABLE_CONSTEXPR
     #define CONSTEXPR constexpr
 #else
@@ -137,7 +136,6 @@
 
 
 #define ENABLE_NODISCARD (1)
-
 #if ENABLE_NODISCARD
     #define NODISCARD [[nodiscard]]
 #else
@@ -146,11 +144,18 @@
 
 
 #define ENABLE_MAYBE_UNUSED (1)
-
 #if ENABLE_MAYBE_UNUSED
     #define MAYBE_UNUSED [[maybe_unused]]
 #else
     #define MAYBE_UNUSED
+#endif
+
+
+#define ENABLE_DEPRECATED (1)
+#if ENABLE_DEPRECATED
+    #define DEPRECATED(Message) [[deprecated(Message)]]
+#else
+    #define DEPRECATED(Message)
 #endif
 
 

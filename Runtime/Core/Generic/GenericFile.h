@@ -116,6 +116,8 @@ private:
 
 struct FGenericFile
 {
+    static void ObtainRelativePath(const FString& Path);
+
     static FORCEINLINE IFileHandle* OpenForRead(const FString& Filename) 
     {
         return nullptr;
