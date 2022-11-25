@@ -88,6 +88,10 @@
     #undef GetModuleHandle
 #endif
 
+#ifdef GetCurrentDirectory
+    #undef GetCurrentDirectory
+#endif
+
 #ifdef NTDDI_VISTA
     #define PLATFORM_WINDOWS_VISTA (1)
 #endif

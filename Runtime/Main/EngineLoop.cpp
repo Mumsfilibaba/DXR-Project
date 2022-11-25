@@ -117,8 +117,14 @@ bool FEngineLoop::PreInit()
         return false;
     }
 
-    // Parse the main engine config
-    GConfig.ParseFile();
+    // Initialize the config system
+    if (!FConfigSystem::Initialize())
+    {
+        LOG_ERROR("Failed to initialize the ConfigSystem");
+        return false;
+    }
+
+    FConfigSystem::Get().FindConfigFile("Engine.ini");
 
 #if !PRODUCTION_BUILD
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
@@ -335,6 +341,8 @@ bool FEngineLoop::Release()
     FApplicationInterface::Release();
 
     FThreadManager::Release();
+
+    FConfigSystem::Release();
 
     SAFE_DELETE(ConsoleWindow);
 

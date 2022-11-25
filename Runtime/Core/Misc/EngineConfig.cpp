@@ -1,11 +1,12 @@
 #include "EngineConfig.h"
 #include "Parse.h"
+#include "OutputDeviceLogger.h"
+// TODO: Move out of /Console -> /Misc
+#include "Console/ConsoleManager.h"
 
-#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"
 
-FConfigFile GConfig(ENGINE_LOCATION"/Engine.ini");
 
 FConfigSection::FConfigSection()
     : Name()
@@ -19,25 +20,23 @@ FConfigSection::FConfigSection(const CHAR* InName)
 
 bool FConfigSection::AddValue(const CHAR* NewKey, const CHAR* NewValue)
 {
-    auto Value = Values.find(FString(NewValue));
-    if (Value != Values.end())
+    if (FConfigValue* CurrentValue = FindValue(NewKey))
     {
         return false;
     }
 
-    const auto Result = Values.insert(std::make_pair(NewKey, NewValue));
+    const auto Result = Values.emplace(NewKey, NewValue);
     return Result.second;
 }
 
 FConfigValue* FConfigSection::FindOrAddValue(const CHAR* InKey, const CHAR* InValue)
 {
-    auto Value = Values.find(FString(InValue));
-    if (Value != Values.end())
+    if (FConfigValue* CurrentValue = FindValue(InKey))
     {
-        return &Value->second;
+        return CurrentValue;
     }
 
-    auto Result = Values.insert(std::make_pair(InKey, InValue));
+    auto Result = Values.emplace(InKey, InValue);
     if (Result.second)
     {
         return &Result.first->second;
@@ -86,127 +85,7 @@ void FConfigSection::DumpToString(FString& OutString)
 }
 
 
-FConfigFile::FConfigFile(const CHAR* InFilename)
-    : Filename(InFilename)
-    , Sections()
-{ }
-
-bool FConfigFile::ParseFile()
-{
-    TArray<CHAR> FileContents;
-    {
-        FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
-        if (!File)
-        {
-            return false;
-        }
-
-        // Read the full file
-        if (!FFileHelpers::ReadTextFile(File.Get(), FileContents))
-        {
-            return false;
-        }
-    }
-
-    // Remove all carriage returns if there are any (Easier to process)
-    FileContents.RemoveAll('\r');
-
-    // Create an empty Section
-    FConfigSection* CurrentSection = nullptr;
-
-    CHAR* Start = FileContents.GetData();
-    while (Start && (*Start != '\0'))
-    {
-        // Skip newline chars
-        while (*Start == '\n')
-            ++Start;
-
-        CHAR* LineStart = Start;
-        FParse::ParseLine(&Start);
-
-        // End string at the end of line
-        if (*Start == '\n')
-        {
-            *(Start++) = '\0';
-        }
-
-        // Skip any spaces at the beginning of the line
-        FParse::ParseWhiteSpace(&LineStart);
-        
-        // This is a section
-        if (*LineStart == '[')
-        {
-            if (CHAR* SectionEnd = FCString::Strchr(++LineStart, ']'))
-            {
-                CHAR* SectionStart = LineStart;
-                *SectionEnd = '\0';
-                CurrentSection = FindOrAddSection(SectionStart);
-            }
-        }
-        else if (*LineStart != ';') // Check if this is a comment line
-        {
-            if (CHAR* EqualSign = FCString::Strchr(LineStart, '='))
-            {
-                *EqualSign = '\0';
-
-                CHAR* KeyEnd = EqualSign - 1;
-                while (*KeyEnd == ' ')
-                    *(KeyEnd--) = '\0';
-
-                // The parsed key
-                CHAR* Key = LineStart;
-                LineStart = EqualSign + 1;
-                
-                FParse::ParseWhiteSpace(&LineStart);
-
-                // Find the end of the value
-                CHAR* Value    = LineStart;
-                CHAR* ValueEnd = nullptr;
-
-                // Special case for string-values
-                if (*Value == '\"')
-                {
-                    Value++;
-                    ValueEnd = FCString::Strchr(Value, '\"');
-                    *ValueEnd = '\0';
-                }
-                else
-                {
-                    ValueEnd = FCString::Strchr(LineStart, ' ');
-                }
-
-                // Use line-end as backup
-                if (!ValueEnd)
-                {
-                    ValueEnd = Start;
-                }
-
-                while (*ValueEnd == ' ')
-                    *(ValueEnd--) = '\0';
-
-                // If there are no section, use the global one
-                if (!CurrentSection)
-                {
-                    CurrentSection = FindOrAddSection("");
-                }
-
-                // The parsed value
-                if (FConfigValue* CurrentValue = CurrentSection->FindValue(Key))
-                {
-                    *CurrentValue = ::Move(FConfigValue(Value));
-                }
-                else
-                {
-                    CurrentSection->AddValue(Key, Value);
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
-bool FConfigFile::SaveFile()
+bool FConfigFile::WriteToFile()
 {
     FString ConfigString;
     for (auto& CurrentSection : Sections)
@@ -223,14 +102,25 @@ bool FConfigFile::SaveFile()
         ConfigString += '\n';
     }
 
-    FFileHandleRef File = FPlatformFile::OpenForWrite(Filename);
-    if (!File)
     {
-        return false;
+        FFileHandleRef File = FPlatformFile::OpenForWrite(Filename);
+        if (!File)
+        {
+            return false;
+        }
+
+        File->Write((const uint8*)ConfigString.GetData(), ConfigString.SizeInBytes());
     }
 
-    File->Write((const uint8*)ConfigString.GetData(), ConfigString.SizeInBytes());
     return false;
+}
+
+void FConfigFile::Combine(const FConfigFile& ConfigFile)
+{
+    for (const auto& Section : ConfigFile.Sections)
+    {
+        Sections.insert(Section);
+    }
 }
 
 bool FConfigFile::SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue)
@@ -395,19 +285,295 @@ FConfigSection* FConfigFile::FindSection(const CHAR* SectionName)
 
 FConfigSection* FConfigFile::FindOrAddSection(const CHAR* SectionName)
 {
-    const FString TempName = SectionName;
-
-    auto Section = Sections.find(TempName);
-    if (Section != Sections.end())
+    if (FConfigSection* CurrentSection = FindSection(SectionName))
     {
-        return &Section->second;
+        return CurrentSection;
     }
 
-    auto Result = Sections.insert(std::make_pair(SectionName, FConfigSection(SectionName)));
+    auto Result = Sections.emplace(SectionName, FConfigSection(SectionName));
     if (Result.second)
     {
         return &Result.first->second;
     }
 
     return nullptr;
+}
+
+
+FConfigSystem* FConfigSystem::GConfig = nullptr;
+
+FConfigSystem::FConfigSystem()
+    : ConfigFiles()
+{ }
+
+bool FConfigSystem::Initialize()
+{
+    CHECK(GConfig == nullptr);
+    
+    GConfig = new FConfigSystem();
+    if (!GConfig->LoadConfigFile(ENGINE_LOCATION"Engine.ini"))
+    {
+        LOG_ERROR("Failed to load Engine.ini");
+        return false;
+    }
+
+    return true;
+}
+
+void FConfigSystem::Release()
+{
+    CHECK(GConfig != nullptr);
+    delete GConfig;
+    GConfig = nullptr;
+}
+
+bool FConfigSystem::LoadConfigFile(const FString& Filename)
+{
+    CHECK(GConfig != nullptr);
+
+    if (!GConfig)
+    {
+        return false;
+    }
+
+    TArray<CHAR> FileContents;
+    {
+        FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
+        if (!File)
+        {
+            return false;
+        }
+
+        // Read the full file
+        if (!FFileHelpers::ReadTextFile(File.Get(), FileContents))
+        {
+            return false;
+        }
+    }
+
+    // Remove all carriage returns if there are any (Easier to process)
+    FileContents.RemoveAll('\r');
+
+    // Get a config file, if the file already exists the values will be overwritten
+    FConfigFile*    ConfigFile = AddConfigFile(Filename);
+    FConfigSection* CurrentSection = nullptr;
+
+    CHAR* Start = FileContents.GetData();
+    while (Start && (*Start != '\0'))
+    {
+        // Skip newline chars
+        while (*Start == '\n')
+            ++Start;
+
+        CHAR* LineStart = Start;
+        FParse::ParseLine(&Start);
+
+        // End string at the end of line
+        if (*Start == '\n')
+        {
+            *(Start++) = '\0';
+        }
+
+        // Skip any spaces at the beginning of the line
+        FParse::ParseWhiteSpace(&LineStart);
+
+        // This is a section
+        if (*LineStart == '[')
+        {
+            if (CHAR* SectionEnd = FCString::Strchr(++LineStart, ']'))
+            {
+                CHAR* SectionStart = LineStart;
+                *SectionEnd = '\0';
+                CurrentSection = ConfigFile->FindOrAddSection(SectionStart);
+            }
+        }
+        else if (*LineStart != ';') // Check if this is a comment line
+        {
+            if (CHAR* EqualSign = FCString::Strchr(LineStart, '='))
+            {
+                *EqualSign = '\0';
+
+                CHAR* KeyEnd = EqualSign - 1;
+                while (*KeyEnd == ' ')
+                    *(KeyEnd--) = '\0';
+
+                // The parsed key
+                CHAR* Key = LineStart;
+                LineStart = EqualSign + 1;
+
+                FParse::ParseWhiteSpace(&LineStart);
+
+                // Find the end of the value
+                CHAR* Value = LineStart;
+                CHAR* ValueEnd = nullptr;
+
+                // Special case for string-values
+                if (*Value == '\"')
+                {
+                    Value++;
+                    ValueEnd = FCString::Strchr(Value, '\"');
+                    *ValueEnd = '\0';
+                }
+                else
+                {
+                    ValueEnd = FCString::Strchr(LineStart, ' ');
+                }
+
+                // Use line-end as backup
+                if (!ValueEnd)
+                {
+                    ValueEnd = Start;
+                }
+
+                while (*ValueEnd == ' ')
+                    *(ValueEnd--) = '\0';
+
+                // If there are no section, use the global one
+                if (!CurrentSection)
+                {
+                    CurrentSection = ConfigFile->FindOrAddSection("");
+                }
+
+                // The parsed value
+                if (FConfigValue* CurrentValue = CurrentSection->FindValue(Key))
+                {
+                    *CurrentValue = ::Move(FConfigValue(Value));
+                }
+                else
+                {
+                    CurrentSection->AddValue(Key, Value);
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+void FConfigSystem::LoadConsoleVariables()
+{
+    FConsoleManager& ConsoleManager = FConsoleManager::Get();
+    for (const auto& FilePair : ConfigFiles)
+    {
+        for (const auto& SectionPair : FilePair.second.Sections)
+        {
+            for (const auto& ValuePair : SectionPair.second.Values)
+            {
+                const auto& Key = ValuePair.first;
+                const auto& Value = ValuePair.second;
+
+                if (IConsoleVariable* Variable = ConsoleManager.FindConsoleVariable(Key.GetCString()))
+                {
+                    Variable->SetString(Value.CurrentValue.GetCString(), EConsoleVariableFlags::SetByConfigFile);
+                }
+            }
+        }
+    }
+}
+
+FConfigFile* FConfigSystem::FindConfigFile(const FString& Filename)
+{
+    auto CurrentFile = ConfigFiles.find(Filename);
+    if (CurrentFile != ConfigFiles.end())
+    {
+        return &CurrentFile->second;
+    }
+
+    return nullptr;
+}
+
+bool FConfigSystem::SetString(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, const FString& NewValue)
+{
+    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
+    {
+        return ConfigFile->SetString(SectionName, Name, NewValue);
+    }
+
+    return false;
+}
+
+bool FConfigSystem::SetInt(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, int32 NewValue)
+{
+    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
+    {
+        return ConfigFile->SetInt(SectionName, Name, NewValue);
+    }
+
+    return false;
+}
+
+bool FConfigSystem::SetFloat(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, float NewValue)
+{
+    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
+    {
+        return ConfigFile->SetFloat(SectionName, Name, NewValue);
+    }
+
+    return false;
+}
+
+bool FConfigSystem::SetBool(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, bool bNewValue)
+{
+    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
+    {
+        return ConfigFile->SetBool(SectionName, Name, bNewValue);
+    }
+
+    return false;
+}
+
+bool FConfigSystem::GetString(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, FString& OutValue)
+{
+    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
+    {
+        return ConfigFile->GetString(SectionName, Name, OutValue);
+    }
+
+    return false;
+}
+
+bool FConfigSystem::GetInt(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, int32& OutValue)
+{
+    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
+    {
+        return ConfigFile->GetInt(SectionName, Name, OutValue);
+    }
+
+    return false;
+}
+
+bool FConfigSystem::GetFloat(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, float& OutValue)
+{
+    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
+    {
+        return ConfigFile->GetFloat(SectionName, Name, OutValue);
+    }
+
+    return false;
+}
+
+bool FConfigSystem::GetBool(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, bool& bOutValue)
+{
+    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
+    {
+        return ConfigFile->GetBool(SectionName, Name, bOutValue);
+    }
+
+    return false;
+}
+
+FConfigFile* FConfigSystem::AddConfigFile(const FString& Filename)
+{
+    if (FConfigFile* CurrentFile = FindConfigFile(Filename))
+    {
+        return CurrentFile;
+    }
+
+    auto Result = ConfigFiles.emplace(Filename, FConfigFile());
+    if (!Result.second)
+    {
+        return nullptr;
+    }
+
+    return &Result.first->second;
 }

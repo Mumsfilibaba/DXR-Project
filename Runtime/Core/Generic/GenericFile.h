@@ -125,10 +125,20 @@ struct FGenericFile
     {
         return nullptr;
     }
+
+    static FORCEINLINE FString GetCurrentDirectory()
+    {
+        return FString();
+    }
+
+    static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
+    {
+        return false;
+    }
 };
 
 
-struct FFileHelpers
+class CORE_API FFileHelpers
 {
 public:
     static bool ReadFile(IFileHandle* File, TArray<uint8>& OutData)

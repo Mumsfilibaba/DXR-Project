@@ -58,4 +58,8 @@ struct CORE_API FWindowsFile
     static IFileHandle* OpenForRead(const FString& Filename);
 
     static IFileHandle* OpenForWrite(const FString& Filename);
+
+    static FString GetCurrentDirectory();
+
+    static bool IsPathRelative(const CHAR* Filepath);
 };
