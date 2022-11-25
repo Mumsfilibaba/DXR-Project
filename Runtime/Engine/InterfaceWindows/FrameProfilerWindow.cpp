@@ -262,5 +262,5 @@ void FFrameProfilerWindow::DrawWindow()
 
     ImGui::End();
 
-    GDrawFrameProfiler->SetAsBool(bTempDrawProfiler);
+    GDrawFrameProfiler->SetAsBool(bTempDrawProfiler, EConsoleVariableFlags::SetByCode);
 }

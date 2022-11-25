@@ -93,7 +93,7 @@ void FRenderTargetDebugWindow::Tick()
 
                 if (ButtonCenteredOnLine("Close"))
                 {
-                    GDrawTextureDebugger->SetAsBool(false);
+                    GDrawTextureDebugger->SetAsBool(false, EConsoleVariableFlags::SetByCode);
                 }
 
                 ImGui::Separator();

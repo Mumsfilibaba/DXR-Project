@@ -463,7 +463,7 @@ public:
         const T& DefaultValue, 
         const FConsoleVariableDelegate& VariableChangedDelegate, 
         EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
-        : TAutoConsoleVariable(InName, InFlags, DefaultValue)
+        : TAutoConsoleVariable(InName, DefaultValue, InFlags)
     {
         AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
     }

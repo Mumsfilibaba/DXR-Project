@@ -222,5 +222,5 @@ void FGPUProfilerWindow::DrawWindow()
 
     ImGui::End();
 
-    GDrawGPUProfiler->SetAsBool(bTempDrawProfiler);
+    GDrawGPUProfiler->SetAsBool(bTempDrawProfiler, EConsoleVariableFlags::SetByCode);
 }

@@ -3,6 +3,8 @@
 
 #include "Core/Templates/NumericLimits.h"
 
+#pragma comment(lib, "shlwapi.lib")
+
 FWindowsFileHandle::FWindowsFileHandle(HANDLE InFileHandle)
     : IFileHandle()
     , FileHandle(InFileHandle)
@@ -233,9 +235,4 @@ FString FWindowsFile::GetCurrentDirectory()
     }
 
     return Result;
-}
-
-bool FWindowsFile::IsPathRelative(const CHAR* Filepath)
-{
-    return false;
 }

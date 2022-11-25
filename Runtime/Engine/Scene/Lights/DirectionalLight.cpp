@@ -131,10 +131,10 @@ void FDirectionalLight::SetRotation(const FVector3& InRotation)
 
 void FDirectionalLight::SetCascadeSplitLambda(float InCascadeSplitLambda)
 {
-    GCascadeSplitLambda->SetAsFloat(InCascadeSplitLambda);
+    GCascadeSplitLambda->SetAsFloat(InCascadeSplitLambda, EConsoleVariableFlags::SetByCode);
 }
 
 void FDirectionalLight::SetSize(float InSize)
 {
-    GSunSize->SetAsFloat(InSize);
+    GSunSize->SetAsFloat(InSize, EConsoleVariableFlags::SetByCode);
 }
