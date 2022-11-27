@@ -26,8 +26,25 @@
 #endif
 
 
+// Works only on macOS and Windows right now
 #if (!PLATFORM_WINDOWS) && (!PLATFORM_MACOS)
     #error No platform defined
+#endif
+
+#if defined(PLATFORM_COMPILER_MSVC)
+    #define DISABLE_UNREFERENCED_VARIABLE_WARNING \
+        _Pragma("warning(push)")                  \
+        _Pragma("warning(disable : 4100)") // Disable unreferenced variable
+
+    #define ENABLE_UNREFERENCED_VARIABLE_WARNING \
+        _Pragma("warning(pop)")
+#elif defined(PLATFORM_COMPILER_CLANG)
+#define DISABLE_UNREFERENCED_VARIABLE_WARNING \
+        _Pragma("clang diagnostic push")      \
+        _Pragma("clang diagnostic ignored \"-Wunused-parameter\"") // Disable unreferenced variable
+
+    #define ENABLE_UNREFERENCED_VARIABLE_WARNING \
+        _Pragma("clang diagnostic pop")
 #endif
 
 // TODO: Move asserts to separate module/header

@@ -1,13 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(PLATFORM_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FGenericPlatformAtomic
 {
@@ -124,8 +118,4 @@ struct FGenericPlatformAtomic
     static FORCEINLINE void RelaxedStore(volatile const int64* Dest, int64 Value) { }
 };
 
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(PLATFORM_COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING
