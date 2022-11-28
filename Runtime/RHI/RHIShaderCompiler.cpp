@@ -5,7 +5,7 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include <spirv_cross_c.h>
 

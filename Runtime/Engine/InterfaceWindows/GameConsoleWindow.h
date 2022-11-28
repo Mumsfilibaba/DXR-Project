@@ -9,7 +9,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/SharedPtr.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include <imgui.h>
 

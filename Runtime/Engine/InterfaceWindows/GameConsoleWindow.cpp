@@ -2,7 +2,7 @@
 
 #include "Application/ApplicationInterface.h"
 
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/CString.h"
 
 #include <imgui.h>

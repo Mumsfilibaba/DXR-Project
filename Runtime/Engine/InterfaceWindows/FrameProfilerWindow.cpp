@@ -3,7 +3,7 @@
 #include "Application/WidgetUtilities.h"
 #include "Application/ApplicationInterface.h"
 
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Time/Timer.h"
 
 #include <imgui.h>

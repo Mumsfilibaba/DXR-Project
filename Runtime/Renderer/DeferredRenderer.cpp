@@ -8,7 +8,7 @@
 #include "Engine//Resources/Material.h"
 
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include "Renderer/Debug/GPUProfiler.h"
 

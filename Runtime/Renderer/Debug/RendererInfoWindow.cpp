@@ -1,6 +1,6 @@
 #include "RendererInfoWindow.h"
 
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include "RHI/RHIInterface.h"
 

@@ -2,7 +2,7 @@
 #include "AsyncTask.h"
 
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformMisc.h"
 
 TAutoConsoleVariable<bool> CVarEnableAsyncWork("Core.EnableAsyncWork", false);

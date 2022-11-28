@@ -3,7 +3,7 @@
 #include "RHIShaderCompiler.h"
 
 #include "Core/Misc/EngineConfig.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 IMPLEMENT_ENGINE_MODULE(FRHIInterfaceModule, RHI);
 

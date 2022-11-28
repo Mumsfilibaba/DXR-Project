@@ -8,7 +8,7 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 // TODO: Remove and replace. There are better and easier implementations to do yourself
 #include <random>

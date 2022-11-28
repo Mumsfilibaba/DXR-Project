@@ -1,6 +1,6 @@
 #include "TextureDebugger.h"
 
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include "Application/ApplicationInterface.h"
 #include "Application/WidgetUtilities.h"

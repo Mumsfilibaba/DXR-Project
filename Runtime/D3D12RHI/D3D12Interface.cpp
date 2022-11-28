@@ -15,7 +15,7 @@
 #include "D3D12TimestampQuery.h"
 #include "DynamicD3D12.h"
 
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include "CoreApplication/Windows/WindowsWindow.h"
 
