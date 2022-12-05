@@ -8,11 +8,12 @@
 template<typename InCharType>
 struct TChar 
 {
-    using CHARTYPE         = InCharType;
+    using CHARTYPE = InCharType;
+
     using PointerType      = typename TAddPointer<CHARTYPE>::Type;
     using ConstPointerType = const PointerType;
 
-    static CONSTEXPR CHARTYPE Zero = 0;
+    static CONSTEXPR CHARTYPE Null = 0;
 
     NODISCARD static FORCEINLINE CHARTYPE ToUpper(CHARTYPE Char)
     {
@@ -66,7 +67,7 @@ struct TChar
 
     NODISCARD static FORCEINLINE bool IsZero(CHARTYPE Char) 
     { 
-        return (Char == Zero); 
+        return (Char == Null); 
     }
 };
 

@@ -1,10 +1,9 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Windows/Windows.h"
 
-extern int32 GenericMain();
+extern int32 GenericMain(const CHAR** Args, int32 NumArgs);
 
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 static void InitCRunTime()
 {
@@ -16,11 +15,12 @@ static void InitCRunTime()
 #endif
 }
 
-int WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, int CmdShow)
+int WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CommandLine, int CmdShow)
 {
     InitCRunTime();
 
-    return GenericMain();
+    const CHAR* TempCommandLine = CommandLine;
+    return GenericMain(&TempCommandLine, 1);
 }
 
-#pragma warning(pop)
+ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -43,6 +43,7 @@ struct FConfigValue
 
      /** @brief - Current value in the config file */
     FString SavedValue;
+
      /** @brief - Current value in the runtime, this will be saved when the file is flushed to disk */
     FString CurrentValue;
 };
@@ -102,9 +103,6 @@ struct CORE_API FConfigFile
     FConfigValue* FindValue(const CHAR* Name);
     FConfigValue* FindValue(const CHAR* SectionName, const CHAR* Name);
 
-     /** @brief - Saves the content to the file */
-    bool WriteToFile();
-
     /** @brief - Combines this config-file with another */
     void Combine(const FConfigFile& ConfigFile);
 
@@ -132,6 +130,12 @@ struct CORE_API FConfigFile
      /** @brief - Retrieve a boolean from the Engine config */
     bool GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue);
 
+	/** @brief - Saves the content to the file */
+	bool WriteToFile();
+
+	/** @brief - Prints the content into a string */
+	void DumpToString(FString& OutString);
+
     bool operator==(const FConfigFile& Other) const
     {
         return (Filename == Other.Filename) && (Sections == Other.Sections);
@@ -147,54 +151,26 @@ struct CORE_API FConfigFile
 };
 
 
-class CORE_API FConfigSystem
+extern CORE_API FConfigFile* GConfig;
+
+class CORE_API FConfig
 {
-    FConfigSystem();
-    ~FConfigSystem() = default;
+    FConfig();
+    ~FConfig() = default;
 
 public:
     static bool Initialize();
     static void Release();
 
-    static FConfigSystem& Get()
-    {
-        CHECK(GConfig != nullptr);
-        return *GConfig;
-    }
-
-    bool LoadConfigFile(const FString& Filename);
+    FConfigFile* LoadFile(const FString& Filename);
+    FConfigFile* FindFile(const FString& Filename);
+    
     void LoadConsoleVariables();
-
-    FConfigFile* FindConfigFile(const FString& Filename);
-
-    /** @brief - Set a string from the Engine config */
-    bool SetString(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, const FString& NewValue);
-
-    /** @brief - Set a int from the Engine config */
-    bool SetInt(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, int32 NewValue);
-
-    /** @brief - Set a float from the Engine config */
-    bool SetFloat(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, float NewValue);
-
-    /** @brief - Set a boolean from the Engine config */
-    bool SetBool(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, bool bNewValue);
-
-    /** @brief - Retrieve a string from the Engine config */
-    bool GetString(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, FString& OutValue);
-
-    /** @brief - Retrieve a int from the Engine config */
-    bool GetInt(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, int32& OutValue);
-
-    /** @brief - Retrieve a float from the Engine config */
-    bool GetFloat(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, float& OutValue);
-
-    /** @brief - Retrieve a boolean from the Engine config */
-    bool GetBool(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, bool& bOutValue);
 
 private:
     FConfigFile* AddConfigFile(const FString& Filename);
     
     TMap<FString, FConfigFile> ConfigFiles;
 
-    static FConfigSystem* GConfig;
+    static FConfig* GInstance;
 };

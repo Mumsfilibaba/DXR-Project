@@ -171,6 +171,7 @@ FRHIShaderCompiler::~FRHIShaderCompiler()
 bool FRHIShaderCompiler::Create(const CHAR* InAssetFolderPath)
 {
     CHECK(GInstance == nullptr);
+
     GInstance = new FRHIShaderCompiler(InAssetFolderPath);
     if (!GInstance->Initialize())
     {
@@ -184,9 +185,11 @@ bool FRHIShaderCompiler::Create(const CHAR* InAssetFolderPath)
 
 void FRHIShaderCompiler::Destroy()
 {
-    CHECK(GInstance != nullptr);
-    delete GInstance;
-    GInstance = nullptr;
+    if (GInstance)
+    {
+        delete GInstance;
+        GInstance = nullptr;
+    }
 }
 
 bool FRHIShaderCompiler::Initialize()

@@ -1,12 +1,10 @@
 #include "EngineConfig.h"
 #include "Parse.h"
 #include "OutputDeviceLogger.h"
-// TODO: Move out of /Console -> /Misc
-#include "Console/ConsoleManager.h"
+#include "ConsoleManager.h"
 
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"
-
 
 FConfigSection::FConfigSection()
     : Name()
@@ -85,35 +83,6 @@ void FConfigSection::DumpToString(FString& OutString)
 }
 
 
-bool FConfigFile::WriteToFile()
-{
-    FString ConfigString;
-    for (auto& CurrentSection : Sections)
-    {
-        const FString& SectionName = CurrentSection.first;
-        if (!SectionName.IsEmpty())
-        {
-            ConfigString.AppendFormat("[%s]\n", SectionName.GetCString());
-        }
-
-        FConfigSection& Section = CurrentSection.second;
-        Section.DumpToString(ConfigString);
-
-        ConfigString += '\n';
-    }
-
-    {
-        FFileHandleRef File = FPlatformFile::OpenForWrite(Filename);
-        if (!File)
-        {
-            return false;
-        }
-
-        File->Write((const uint8*)ConfigString.GetData(), ConfigString.SizeInBytes());
-    }
-
-    return false;
-}
 
 void FConfigFile::Combine(const FConfigFile& ConfigFile)
 {
@@ -251,6 +220,9 @@ bool FConfigFile::GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutV
     }
 }
 
+// NOTE: Why this warning is a thing is a mystery to me
+DISABLE_UNREACHABLE_CODE_WARNING
+
 FConfigValue* FConfigFile::FindValue(const CHAR* Key)
 {
     for (auto& CurrentSection : Sections)
@@ -262,11 +234,13 @@ FConfigValue* FConfigFile::FindValue(const CHAR* Key)
     return nullptr;
 }
 
+ENABLE_UNREACHABLE_CODE_WARNING
+
 FConfigValue* FConfigFile::FindValue(const CHAR* SectionName, const CHAR* Name)
 {
     if (FConfigSection* Section = FindSection(SectionName))
     {
-        return Section->FindValue( Name );
+        return Section->FindValue(Name);
     }
 
     return nullptr;
@@ -299,55 +273,95 @@ FConfigSection* FConfigFile::FindOrAddSection(const CHAR* SectionName)
     return nullptr;
 }
 
-
-FConfigSystem* FConfigSystem::GConfig = nullptr;
-
-FConfigSystem::FConfigSystem()
-    : ConfigFiles()
-{ }
-
-bool FConfigSystem::Initialize()
+bool FConfigFile::WriteToFile()
 {
-    CHECK(GConfig == nullptr);
-    
-    GConfig = new FConfigSystem();
-    if (!GConfig->LoadConfigFile(ENGINE_LOCATION"Engine.ini"))
+    FString ConfigString;
+    DumpToString(ConfigString);
+
     {
-        LOG_ERROR("Failed to load Engine.ini");
-        return false;
-    }
-
-    return true;
-}
-
-void FConfigSystem::Release()
-{
-    CHECK(GConfig != nullptr);
-    delete GConfig;
-    GConfig = nullptr;
-}
-
-bool FConfigSystem::LoadConfigFile(const FString& Filename)
-{
-    CHECK(GConfig != nullptr);
-
-    if (!GConfig)
-    {
-        return false;
-    }
-
-    TArray<CHAR> FileContents;
-    {
-        FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
+        FFileHandleRef File = FPlatformFile::OpenForWrite(Filename);
         if (!File)
         {
             return false;
         }
 
+        File->Write((const uint8*)ConfigString.GetData(), ConfigString.SizeInBytes());
+    }
+
+    return false;
+}
+
+void FConfigFile::DumpToString(FString& OutString)
+{
+    for (auto& CurrentSection : Sections)
+    {
+        const FString& SectionName = CurrentSection.first;
+        if (!SectionName.IsEmpty())
+        {
+            OutString.AppendFormat("[%s]\n", SectionName.GetCString());
+        }
+
+        FConfigSection& Section = CurrentSection.second;
+        Section.DumpToString(OutString);
+
+        OutString += '\n';
+    }
+}
+
+
+FConfigFile* GConfig = nullptr;
+
+FConfig* FConfig::GInstance = nullptr;
+
+FConfig::FConfig()
+    : ConfigFiles()
+{ }
+
+bool FConfig::Initialize()
+{
+    CHECK(GInstance == nullptr);
+    
+    // TODO: Only have the name of the file
+    GInstance = new FConfig();
+    if (FConfigFile* NewFile = GInstance->LoadFile(ENGINE_LOCATION"/Engine.ini"))
+    {
+        GConfig = NewFile;
+    }
+    else
+    {
+        LOG_WARNING("Did not find 'Engine.ini'");
+    }
+
+    GInstance->LoadConsoleVariables();
+    return true;
+}
+
+void FConfig::Release()
+{
+    if (GInstance)
+    {
+        delete GInstance;
+        GInstance = nullptr;
+
+        // Invalidate pointer after the config is deleted
+        GConfig = nullptr;
+    }
+}
+
+FConfigFile* FConfig::LoadFile(const FString& Filename)
+{
+    TArray<CHAR> FileContents;
+    {
+        FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
+        if (!File)
+        {
+            return nullptr;
+        }
+
         // Read the full file
         if (!FFileHelpers::ReadTextFile(File.Get(), FileContents))
         {
-            return false;
+            return nullptr;
         }
     }
 
@@ -359,7 +373,7 @@ bool FConfigSystem::LoadConfigFile(const FString& Filename)
     FConfigSection* CurrentSection = nullptr;
 
     CHAR* Start = FileContents.GetData();
-    while (Start && (*Start != '\0'))
+    while (Start && *Start)
     {
         // Skip newline chars
         while (*Start == '\n')
@@ -447,10 +461,10 @@ bool FConfigSystem::LoadConfigFile(const FString& Filename)
         }
     }
 
-    return true;
+    return ConfigFile;
 }
 
-void FConfigSystem::LoadConsoleVariables()
+void FConfig::LoadConsoleVariables()
 {
     FConsoleManager& ConsoleManager = FConsoleManager::Get();
     for (const auto& FilePair : ConfigFiles)
@@ -471,7 +485,7 @@ void FConfigSystem::LoadConsoleVariables()
     }
 }
 
-FConfigFile* FConfigSystem::FindConfigFile(const FString& Filename)
+FConfigFile* FConfig::FindFile(const FString& Filename)
 {
     auto CurrentFile = ConfigFiles.find(Filename);
     if (CurrentFile != ConfigFiles.end())
@@ -482,89 +496,9 @@ FConfigFile* FConfigSystem::FindConfigFile(const FString& Filename)
     return nullptr;
 }
 
-bool FConfigSystem::SetString(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, const FString& NewValue)
+FConfigFile* FConfig::AddConfigFile(const FString& Filename)
 {
-    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
-    {
-        return ConfigFile->SetString(SectionName, Name, NewValue);
-    }
-
-    return false;
-}
-
-bool FConfigSystem::SetInt(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, int32 NewValue)
-{
-    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
-    {
-        return ConfigFile->SetInt(SectionName, Name, NewValue);
-    }
-
-    return false;
-}
-
-bool FConfigSystem::SetFloat(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, float NewValue)
-{
-    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
-    {
-        return ConfigFile->SetFloat(SectionName, Name, NewValue);
-    }
-
-    return false;
-}
-
-bool FConfigSystem::SetBool(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, bool bNewValue)
-{
-    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
-    {
-        return ConfigFile->SetBool(SectionName, Name, bNewValue);
-    }
-
-    return false;
-}
-
-bool FConfigSystem::GetString(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, FString& OutValue)
-{
-    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
-    {
-        return ConfigFile->GetString(SectionName, Name, OutValue);
-    }
-
-    return false;
-}
-
-bool FConfigSystem::GetInt(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, int32& OutValue)
-{
-    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
-    {
-        return ConfigFile->GetInt(SectionName, Name, OutValue);
-    }
-
-    return false;
-}
-
-bool FConfigSystem::GetFloat(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, float& OutValue)
-{
-    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
-    {
-        return ConfigFile->GetFloat(SectionName, Name, OutValue);
-    }
-
-    return false;
-}
-
-bool FConfigSystem::GetBool(const CHAR* SectionName, const CHAR* Name, const CHAR* Filename, bool& bOutValue)
-{
-    if (FConfigFile* ConfigFile = FindConfigFile(Filename))
-    {
-        return ConfigFile->GetBool(SectionName, Name, bOutValue);
-    }
-
-    return false;
-}
-
-FConfigFile* FConfigSystem::AddConfigFile(const FString& Filename)
-{
-    if (FConfigFile* CurrentFile = FindConfigFile(Filename))
+    if (FConfigFile* CurrentFile = FindFile(Filename))
     {
         return CurrentFile;
     }

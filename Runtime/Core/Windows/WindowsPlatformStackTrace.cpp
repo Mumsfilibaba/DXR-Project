@@ -79,9 +79,10 @@ int32 FWindowsPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 Ma
 #endif
 
     HANDLE ProcessHandle = ::GetCurrentProcess();
-    HANDLE ThreadHandle  = ::GetCurrentThread();
-    uint32 CurrentDepth  = 0;
+    HANDLE ThreadHandle = ::GetCurrentThread();
+    int32  CurrentDepth = 0;
     
+    // Reset last error
     ::SetLastError(0);
 
     bool bStackWalkSucceeded = true;
@@ -100,7 +101,6 @@ int32 FWindowsPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 Ma
 
         if (!bStackWalkSucceeded)
         {
-            auto LastError = ::GetLastError();
             break;
         }
 

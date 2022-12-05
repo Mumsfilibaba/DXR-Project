@@ -50,7 +50,7 @@ public:
         : Characters()
         , Length(0)
     {
-        Characters[Length] = TChar<CharType>::Zero;
+        Characters[Length] = TChar<CharType>::Null;
     }
 
     /**
@@ -130,7 +130,7 @@ public:
     FORCEINLINE void Clear() noexcept
     {
         Length = 0;
-        Characters[Length] = TChar<CharType>::Zero;
+        Characters[Length] = TChar<CharType>::Null;
     }
 
     /**
@@ -141,7 +141,7 @@ public:
     {
         CHECK((Length + 1) < GetCapacity());
         Characters[Length]   = Char;
-        Characters[++Length] = TChar<CharType>::Zero;
+        Characters[++Length] = TChar<CharType>::Null;
     }
 
     /**
@@ -177,7 +177,7 @@ public:
         TCString<CharType>::Strncpy(Characters + Length, InString, MinLength);
 
         Length = Length + InLength;
-        Characters[Length] = TChar<CharType>::Zero;
+        Characters[Length] = TChar<CharType>::Null;
     }
 
     /**
@@ -204,7 +204,7 @@ public:
         }
 
         Length = NewLength;
-        Characters[Length] = TChar<CharType>::Zero;
+        Characters[Length] = TChar<CharType>::Null;
     }
 
     /**
@@ -240,7 +240,7 @@ public:
             Length = NUM_CHARS - 1;
         }
 
-        Characters[Length] = TChar<CharType>::Zero;
+        Characters[Length] = TChar<CharType>::Null;
     }
 
     /**
@@ -262,7 +262,7 @@ public:
             Length = NUM_CHARS - 1;
         }
 
-        Characters[Length] = TChar<CharType>::Zero;
+        Characters[Length] = TChar<CharType>::Null;
     }
 
     /**
@@ -392,7 +392,7 @@ public:
             }
         }
 
-        Characters[Length] = TChar<CharType>::Zero;
+        Characters[Length] = TChar<CharType>::Null;
     }
 
     /**
@@ -957,7 +957,7 @@ public:
         TCString<CharType>::Strncpy(Src, InString, InLength);
 
         Length += InLength;
-        Characters[Length] = TChar<CharType>::Zero;
+        Characters[Length] = TChar<CharType>::Null;
     }
 
     /**
@@ -978,7 +978,7 @@ public:
 
         // Copy String
         *Src = Char;
-        Characters[++Length] = TChar<CharType>::Zero;
+        Characters[++Length] = TChar<CharType>::Null;
     }
 
     /**
@@ -1046,7 +1046,7 @@ public:
         if (Length > 0)
         {
             --Length;
-            Characters[Length] = TChar<CharType>::Zero;
+            Characters[Length] = TChar<CharType>::Null;
         }
     }
 
@@ -1554,7 +1554,7 @@ private:
 
         TCString<CharType>::Strncpy(Characters, InString, InLength);
         Length = InLength;
-        Characters[Length] = TChar<CharType>::Zero;
+        Characters[Length] = TChar<CharType>::Null;
     }
 
     FORCEINLINE void MoveFrom(TStaticString&& Other) noexcept
@@ -1563,7 +1563,7 @@ private:
         Other.Length = 0;
 
         FMemory::Memexchange(Characters, Other.Characters, SizeInBytes());
-        Characters[Length] = TChar<CharType>::Zero;
+        Characters[Length] = TChar<CharType>::Null;
     }
 
     CharType Characters[NUM_CHARS];

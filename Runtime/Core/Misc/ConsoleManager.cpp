@@ -1,4 +1,5 @@
 #include "ConsoleManager.h"
+#include "EngineConfig.h"
 
 #include "Core/Containers/AutoPtr.h"
 #include "Core/Misc/OutputDeviceLogger.h"
@@ -719,6 +720,19 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObje
     auto Result = ConsoleObjects.insert(std::make_pair(Name, Object));
     if (Result.second)
     {
+        // TODO: Refactor this, right now it only works with a single ConfigFile
+        if (IConsoleVariable* Variable = Object->AsVariable())
+        {
+            if (GConfig)
+            {
+                FString Value;
+                if (GConfig->GetString("", InName, Value))
+                {
+                    Variable->SetString(Value, EConsoleVariableFlags::SetByConfigFile);
+                }
+            }
+        }
+
         LOG_INFO("Registered ConsoleObject '%s'", Name.GetCString());
         return Result.first->second;
     }

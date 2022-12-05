@@ -7,7 +7,8 @@
 
 IMPLEMENT_ENGINE_MODULE(FRHIInterfaceModule, RHI);
 
-TAutoConsoleVariable<bool> CVarEnableDebugLayer("RHI.EnableDebugLayer", false);
+TAutoConsoleVariable<bool>    CVarEnableDebugLayer("RHI.EnableDebugLayer", false);
+TAutoConsoleVariable<FString> CVarType("RHI.Type", "");
 
 RHI_API FRHIInterface* GRHIInterface = nullptr;
 
@@ -18,29 +19,26 @@ static FRHIInterfaceModule* LoadNullRHI()
 
 static ERHIInstanceType GetRHITypeFromConfig()
 {
-    FString RHITypeString;
-    if (GConfig.GetString(nullptr, "RHI.Type", RHITypeString))
+    const FString RHITypeString = CVarType->GetString();
+    if (RHITypeString == "D3D12")
     {
-        if (RHITypeString == "D3D12")
-        {
-    #if PLATFORM_WINDOWS
-            return ERHIInstanceType::D3D12;
-    #else
-            LOG_ERROR("D3D12RHI Is not supported on this platform");
-    #endif
-        }
-        else if (RHITypeString == "Metal")
-        {
-#if PLATFORM_MACOS
-            return ERHIInstanceType::Metal;
+#if PLATFORM_WINDOWS
+        return ERHIInstanceType::D3D12;
 #else
-            LOG_ERROR("MetalRHI Is not supported on this platform");
+        LOG_ERROR("D3D12RHI Is not supported on this platform");
 #endif
-        }
-        else if (RHITypeString == "Null")
-        {
-            return ERHIInstanceType::Null;
-        }
+    }
+    else if (RHITypeString == "Metal")
+    {
+#if PLATFORM_MACOS
+        return ERHIInstanceType::Metal;
+#else
+        LOG_ERROR("MetalRHI Is not supported on this platform");
+#endif
+    }
+    else if (RHITypeString == "Null")
+    {
+        return ERHIInstanceType::Null;
     }
 
     return ERHIInstanceType::Unknown;

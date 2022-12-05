@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/CommandLine.h"
 #include "Core/Memory/Malloc.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -61,7 +62,7 @@ FOutputDevice* GDebugOutput = nullptr;
 
 
 // Application EntryPoint
-int32 GenericMain()
+int32 GenericMain(const CHAR** Args, int32 NumArgs)
 {
     struct FGenericMainGuard
     {
@@ -89,6 +90,11 @@ int32 GenericMain()
         {
             GDebugOutput = new FDebuggerOutputDevice();
             FOutputDeviceLogger::Get()->AddOutputDevice(GDebugOutput);
+        }
+
+        if (!FCommandLine::Initialize(Args, NumArgs))
+        {
+            LOG_WARNING("Invalid CommandLine");
         }
 
         if (!EnginePreInit())

@@ -118,13 +118,11 @@ bool FEngineLoop::PreInit()
     }
 
     // Initialize the config system
-    if (!FConfigSystem::Initialize())
+    if (!FConfig::Initialize())
     {
-        LOG_ERROR("Failed to initialize the ConfigSystem");
+        LOG_ERROR("Failed to initialize EngineConfig");
         return false;
     }
-
-    FConfigSystem::Get().FindConfigFile("Engine.ini");
 
 #if !PRODUCTION_BUILD
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
@@ -177,7 +175,6 @@ bool FEngineLoop::PreInit()
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return false;
     }
-
 
     // Initialize the RHI
     if (!RHIInitialize())
@@ -342,7 +339,7 @@ bool FEngineLoop::Release()
 
     FThreadManager::Release();
 
-    FConfigSystem::Release();
+    FConfig::Release();
 
     SAFE_DELETE(ConsoleWindow);
 
