@@ -1,8 +1,4 @@
 #pragma once
-#include "Application/Window.h"
-#include "Application/InputHandler.h"
-#include "Application/Events.h"
-
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/StaticArray.h"
@@ -10,13 +6,17 @@
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/OutputDevice.h"
+
+#include "Application/Window.h"
+#include "Application/InputHandler.h"
+#include "Application/Events.h"
 
 #include <imgui.h>
 
-class FConsoleInputHandler final 
+struct FConsoleInputHandler final
     : public FInputHandler
 {
-public:
     DECLARE_DELEGATE(FHandleKeyEventDelegate, const FKeyEvent&);
     FHandleKeyEventDelegate HandleKeyEventDelegate;
 
@@ -34,11 +34,12 @@ public:
 
 class FGameConsoleWindow final 
     : public FWindow
+    , public IOutputDevice
 {
     INTERFACE_GENERATE_BODY();
 
     FGameConsoleWindow();
-    ~FGameConsoleWindow() = default;
+    ~FGameConsoleWindow();
 
 public:
     static TSharedRef<FGameConsoleWindow> Make();
@@ -47,12 +48,14 @@ public:
 
     virtual bool IsTickable() override final;
 
-private:
+    virtual void Log(const FString& Message) override final;
+    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
 
-    /** Callback from the input */
+    virtual void Flush() override final;
+
+private:
     int32 TextCallback(struct ImGuiInputTextCallbackData* Data);
 
-    /** Called when a key is pressed */
     void HandleKeyPressedEvent(const FKeyEvent& Event);
 
     TSharedPtr<FConsoleInputHandler> InputHandler;
@@ -65,6 +68,7 @@ private:
     int32 CandidatesIndex = -1;
 
     // Index in the history
+    TArray<TPair<FString, ELogSeverity>> Messages;
     int32 HistoryIndex = -1;
 
     TStaticArray<CHAR, 256> TextBuffer;

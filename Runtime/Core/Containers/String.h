@@ -2206,3 +2206,75 @@ FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const FStringWide& String
 
     return false;
 }
+
+
+template<typename T>
+struct TTryParseType
+{
+    static FORCEINLINE bool TryParse(const FString& InString);
+};
+
+template<>
+FORCEINLINE bool TTryParseType<int32>::TryParse(const FString& InString)
+{
+    CHAR* End;
+    FCString::Strtoi(InString.GetCString(), &End, 10);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<uint32>::TryParse(const FString& InString)
+{
+	CHAR* End;
+	FCString::Strtoui(InString.GetCString(), &End, 10);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<int64>::TryParse(const FString& InString)
+{
+	CHAR* End;
+	FCString::Strtoi64(InString.GetCString(), &End, 10);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<uint64>::TryParse(const FString& InString)
+{
+	CHAR* End;
+	FCString::Strtoui64(InString.GetCString(), &End, 10);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<float>::TryParse(const FString& InString)
+{
+    CHAR* End;
+    FCString::Strtof(InString.GetCString(), &End);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<double>::TryParse(const FString& InString)
+{
+    CHAR* End;
+    FCString::Strtod(InString.GetCString(), &End);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<bool>::TryParse(const FString& InString)
+{
+    if (FCString::Stricmp(InString.GetCString(), "true"))
+    {
+        return true;
+    }
+    else if (FCString::Stricmp(InString.GetCString(), "false"))
+    {
+        return true;
+    }
+
+    CHAR* End;
+    static_cast<bool>(FCString::Strtoi(InString.GetCString(), &End, 10));
+    return *End != 0;
+}

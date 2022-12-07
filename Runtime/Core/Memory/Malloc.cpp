@@ -132,7 +132,7 @@ void FMallocLeakTracker::Free(void* InBlock)
     }
 }
 
-void FMallocLeakTracker::DumpAllocations(FOutputDevice* OutputDevice)
+void FMallocLeakTracker::DumpAllocations(IOutputDevice* OutputDevice)
 {
     DisableTacking();
 
@@ -287,7 +287,7 @@ void FMallocStackTraceTracker::Free(void* InBlock)
     }
 }
 
-void FMallocStackTraceTracker::DumpAllocations(FOutputDevice* OutputDevice)
+void FMallocStackTraceTracker::DumpAllocations(IOutputDevice* OutputDevice)
 {
     DisableTacking();
 

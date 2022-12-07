@@ -5,10 +5,6 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformMisc.h"
 
-// TODO: Remove (Make own? Slow?)
-#include <regex>
-
-
 FAutoConsoleCommand GClearHistory("ClearHistory",
     FConsoleCommandDelegate::CreateRaw(&FConsoleManager::Get(), &FConsoleManager::ClearHistory));
 
@@ -17,8 +13,8 @@ TAutoConsoleVariable<FString> GEcho("Echo", "",
     {
         if (InVariable->IsVariableString())
         {
-            FConsoleManager& ConsoleManager = FConsoleManager::Get();
-            ConsoleManager.PrintMessage(InVariable->GetString(), EConsoleSeverity::Info);
+            IOutputDevice* OutputDevice = FOutputDeviceLogger::Get();
+            OutputDevice->Log(ELogSeverity::Info, InVariable->GetString());
         }
     }));
 
@@ -118,7 +114,7 @@ protected:
         CHECK(CanBeSet(SetBy));
 
         const EConsoleVariableFlags CurrentSetBy = Flags & EConsoleVariableFlags::SetByMask;
-        Flags = (Flags ^ ~CurrentSetBy) | SetBy;
+        Flags = (Flags ^ CurrentSetBy) | SetBy;
 
         ChangedDelegate.ExecuteIfBound(this);
     }
@@ -602,15 +598,9 @@ IConsoleObject* FConsoleManager::FindConsoleObject(const CHAR* InName) const
     }
 }
 
-void FConsoleManager::PrintMessage(const FString& Message, EConsoleSeverity Severity)
-{
-    ConsoleMessages.Emplace(Message, Severity);
-}
-
 void FConsoleManager::ClearHistory()
 {
     History.Clear();
-    ConsoleMessages.Clear();
 }
 
 void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates)
@@ -642,9 +632,9 @@ void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TP
     }
 }
 
-void FConsoleManager::Execute(const FString& Command)
+void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString& Command)
 {
-    PrintMessage(Command, EConsoleSeverity::Info);
+    OutputDevice.Log(ELogSeverity::Info, Command);
 
     // Erase history
     History.Emplace(Command);
@@ -659,7 +649,7 @@ void FConsoleManager::Execute(const FString& Command)
         IConsoleCommand* CommandObject = FindConsoleCommand(Command.GetCString());
         if (!CommandObject)
         {
-            PrintMessage("'" + Command + "' is not a registered command", EConsoleSeverity::Error);
+            OutputDevice.Log(ELogSeverity::Error, "'" + Command + "' is not a registered command");
         }
         else
         {
@@ -673,22 +663,22 @@ void FConsoleManager::Execute(const FString& Command)
         IConsoleVariable* VariableObject = FindConsoleVariable(VariableName.GetCString());
         if (!VariableObject)
         {
-            PrintMessage("'" + Command + "' is not a registered variable", EConsoleSeverity::Error);
+            OutputDevice.Log(ELogSeverity::Error, "'" + Command + "' is not a registered variable");
             return;
         }
 
         Pos++;
 
         const FString Value(Command.GetCString() + Pos, Command.GetLength() - Pos);
-        if (std::regex_match(Value.GetCString(), std::regex("[-]?[0-9]+")))
+        if (TTryParseType<int64>::TryParse(Value))
         {
             VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
         }
-        else if (std::regex_match(Value.GetCString(), std::regex("[-]?[0-9]*[.][0-9]+")) && VariableObject->IsVariableFloat())
+        else if (TTryParseType<float>::TryParse(Value) && VariableObject->IsVariableFloat())
         {
             VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
         }
-        else if (std::regex_match(Value.GetCString(), std::regex("(false)|(true)")) && VariableObject->IsVariableBool())
+        else if (TTryParseType<bool>::TryParse(Value) && VariableObject->IsVariableBool())
         {
             VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
         }
@@ -700,7 +690,7 @@ void FConsoleManager::Execute(const FString& Command)
             }
             else
             {
-                PrintMessage("'" + Value + "' Is an invalid value for '" + VariableName + "'", EConsoleSeverity::Error);
+                OutputDevice.Log(ELogSeverity::Error, "'" + Value + "' Is an invalid value for '" + VariableName + "'");
             }
         }
     }

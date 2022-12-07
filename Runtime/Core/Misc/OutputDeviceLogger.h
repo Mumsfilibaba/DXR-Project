@@ -25,7 +25,7 @@
 
 
 class CORE_API FOutputDeviceLogger
-    : public FOutputDevice
+    : public IOutputDevice
 {
     FOutputDeviceLogger();
     ~FOutputDeviceLogger();
@@ -44,7 +44,7 @@ public:
     /** @brief - Flush all output devices */
     virtual void Flush() override final;
 
-    void AddOutputDevice(FOutputDevice* InOutputDevice)
+    void AddOutputDevice(IOutputDevice* InOutputDevice)
     {
         if (this != InOutputDevice)
         {
@@ -56,7 +56,7 @@ public:
         }
     }
 
-    void RemoveOutputDevice(FOutputDevice* InOutputDevice)
+    void RemoveOutputDevice(IOutputDevice* InOutputDevice)
     {
         if (this != InOutputDevice)
         {
@@ -66,6 +66,6 @@ public:
     }
 
 private:
-    TArray<FOutputDevice*> OutputDevices;
+    TArray<IOutputDevice*> OutputDevices;
     FCriticalSection       OutputDevicesCS;
 };

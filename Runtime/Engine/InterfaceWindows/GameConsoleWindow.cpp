@@ -3,6 +3,7 @@
 #include "Application/ApplicationInterface.h"
 
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 
 #include <imgui.h>
@@ -19,9 +20,25 @@ TSharedRef<FGameConsoleWindow> FGameConsoleWindow::Make()
 
 FGameConsoleWindow::FGameConsoleWindow()
     : FWindow()
+    , IOutputDevice()
     , InputHandler(MakeShared<FConsoleInputHandler>())
 {
+	auto OutputDeviceManager = FOutputDeviceLogger::Get();
+    if (OutputDeviceManager)
+    {
+        OutputDeviceManager->AddOutputDevice(this);
+    }
+
     TextBuffer.Fill(0);
+}
+
+FGameConsoleWindow::~FGameConsoleWindow()
+{
+    auto OutputDeviceManager = FOutputDeviceLogger::Get();
+    if (OutputDeviceManager)
+    {
+        OutputDeviceManager->RemoveOutputDevice(this);
+    }
 }
 
 void FGameConsoleWindow::Tick()
@@ -127,11 +144,11 @@ void FGameConsoleWindow::Tick()
 
                     if (Variable->IsVariableBool())
                     {
-                        PostFix = "Boolean";
+                        PostFix = "Bool";
                     }
                     else if (Variable->IsVariableInt())
                     {
-                        PostFix = "Integer";
+                        PostFix = "Int";
                     }
                     else if (Variable->IsVariableFloat())
                     {
@@ -173,19 +190,18 @@ void FGameConsoleWindow::Tick()
         }
         else
         {
-            const TArray<TPair<FString, EConsoleSeverity>>& ConsoleMessages = FConsoleManager::Get().GetMessages();
-            for (const TPair<FString, EConsoleSeverity>& Text : ConsoleMessages)
+            for (const TPair<FString, ELogSeverity>& Text : Messages)
             {
                 ImVec4 Color;
-                if (Text.Second == EConsoleSeverity::Info)
+                if (Text.Second == ELogSeverity::Info)
                 {
                     Color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
                 }
-                else if (Text.Second == EConsoleSeverity::Warning)
+                else if (Text.Second == ELogSeverity::Warning)
                 {
                     Color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
                 }
-                else if (Text.Second == EConsoleSeverity::Error)
+                else if (Text.Second == ELogSeverity::Error)
                 {
                     Color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
                 }
@@ -255,7 +271,7 @@ void FGameConsoleWindow::Tick()
             else
             {
                 const FString Text = FString(TextBuffer.GetData());
-                FConsoleManager::Get().Execute(Text);
+                FConsoleManager::Get().ExecuteCommand(*this, Text);
 
                 TextBuffer[0] = 0;
                 bScrollDown = true;
@@ -291,6 +307,20 @@ bool FGameConsoleWindow::IsTickable()
     return bIsActive;
 }
 
+void FGameConsoleWindow::Log(const FString& Message)
+{
+    Log(ELogSeverity::Info, Message);
+}
+
+void FGameConsoleWindow::Log(ELogSeverity Severity, const FString& Message)
+{
+    Messages.Push(MakePair<FString, ELogSeverity>(Message, Severity));
+}
+
+void FGameConsoleWindow::Flush()
+{
+}
+
 int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
 {
     if (bUpdateCursorPosition)
@@ -305,7 +335,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
     {
     case ImGuiInputTextFlags_CallbackEdit:
     {
-        const CHAR* WordEnd = Data->Buf + Data->CursorPos;
+        const CHAR* WordEnd   = Data->Buf + Data->CursorPos;
         const CHAR* WordStart = WordEnd;
         while (WordStart > Data->Buf)
         {

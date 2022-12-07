@@ -10,10 +10,10 @@ enum class ELogSeverity
     Error   = 3,
 };
 
-struct CORE_API FOutputDevice
+struct CORE_API IOutputDevice
 {
-    FOutputDevice()          = default;
-    virtual ~FOutputDevice() = default;
+    IOutputDevice() = default;
+    virtual ~IOutputDevice() = default;
 
     /** @brief - Log a simple message */
     virtual void Log(const FString& Message) = 0;

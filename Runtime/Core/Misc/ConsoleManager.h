@@ -9,6 +9,7 @@
 DECLARE_DELEGATE(FConsoleCommandDelegate);
 DECLARE_DELEGATE(FConsoleVariableDelegate, struct IConsoleVariable*);
 
+struct IOutputDevice;
 
 struct IConsoleObject
 {
@@ -188,14 +189,6 @@ struct IConsoleVariable
 };
 
 
-enum class EConsoleSeverity
-{
-    Info    = 0,
-    Warning = 1,
-    Error   = 2
-};
-
-
 class CORE_API FConsoleManager
 {
     FConsoleManager()  = default;
@@ -302,31 +295,16 @@ public:
     void FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates);
 
     /**
-     * @brief          - Print a message to the console
-     * @param Message  - Message to print to the console
-     * @param Severity - Severity of the message
-     */
-    void PrintMessage(const FString& Message, EConsoleSeverity Severity);
-
-    /**
      * @brief - Clears the console history
      */
     void ClearHistory();
 
     /**
-     * @brief         - Execute a string from the console
-     * @param Command - Command to execute by the console
+     * @brief              - Execute a string from the console
+     * @param OutputDevice - OutputDevice to print any messages to
+     * @param Command      - Command to execute by the console
      */
-    void Execute(const FString& Command);
-
-    /**
-     * @brief  - Retrieve all the messages printed to the console
-     * @return - An array containing pairs of the console-messages and console-severity that has been printed to the console.
-     */
-    const TArray<TPair<FString, EConsoleSeverity>>& GetMessages() const
-    {
-        return ConsoleMessages;
-    }
+    void ExecuteCommand(IOutputDevice& OutputDevice, const FString& Command);
 
     /**
      * @brief  - Retrieve all the history that has been written to the console
@@ -343,7 +321,6 @@ private:
     IConsoleObject* RegisterObject(const CHAR* Name, IConsoleObject* Variable);
 
     TMap<FString, IConsoleObject*, FStringHasher> ConsoleObjects;
-    TArray<TPair<FString, EConsoleSeverity>>      ConsoleMessages;
 
     TArray<FString> History;
     int32           HistoryLength = 50;

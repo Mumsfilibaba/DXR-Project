@@ -73,7 +73,7 @@ public:
      * @brief              - Dumps information about the current allocations. For the standard implementation no info is available.
      * @param OutputDevice - Device to output the information to
      */
-    virtual void DumpAllocations(FOutputDevice* OutputDevice) { }
+    virtual void DumpAllocations(IOutputDevice* OutputDevice) { }
 
 private:
     static void CreateMalloc();
@@ -107,7 +107,7 @@ public:
 
     virtual void Free(void* InBlock) override final;
 
-    virtual void DumpAllocations(FOutputDevice* OutputDevice) override final;
+    virtual void DumpAllocations(IOutputDevice* OutputDevice) override final;
 
     void EnableTracking() { bTrackingEnabled = true; }
     void DisableTacking() { bTrackingEnabled = false; }
@@ -169,7 +169,7 @@ public:
 
     virtual void Free(void* InBlock) override final;
 
-    virtual void DumpAllocations(FOutputDevice* OutputDevice) override final;
+    virtual void DumpAllocations(IOutputDevice* OutputDevice) override final;
 
     void EnableTracking() { bTrackingEnabled = true; }
     void DisableTacking() { bTrackingEnabled = false; }

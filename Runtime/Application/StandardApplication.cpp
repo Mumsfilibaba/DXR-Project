@@ -652,7 +652,7 @@ void FStandardApplication::HandleMouseScrolled(float HorizontalDelta, float Vert
     }
 
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.MouseWheel += Event.VerticalDelta;
+    UIState.MouseWheel  += Event.VerticalDelta;
     UIState.MouseWheelH += Event.HorizontalDelta;
 
     if (UIState.WantCaptureMouse)
@@ -706,6 +706,15 @@ void FStandardApplication::HandleWindowFocusChanged(const FGenericWindowRef& Win
             WindowFocusChangedEvent.bIsConsumed = true;
         }
     }
+
+    RegisteredUsers.Foreach([](const TSharedPtr<FUser>& User)
+    {
+        CHECK(User != nullptr);
+        User->ResetState();
+    });
+
+	ImGuiIO& UIState = ImGui::GetIO();
+    FMemory::Memzero(UIState.KeysDown, sizeof(UIState.KeysDown));
 }
 
 void FStandardApplication::HandleWindowMouseLeft(const FGenericWindowRef& Window)

@@ -121,3 +121,9 @@ FIntVector2 FUser::GetCursorPosition() const
         return FIntVector2(-1, -1);
     }
 }
+
+void FUser::ResetState()
+{
+    KeyStates.Clear();
+	MouseButtonStates.Clear();
+}

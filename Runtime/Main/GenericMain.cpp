@@ -41,7 +41,7 @@ FORCEINLINE bool EngineRelease()
 
 
 struct FDebuggerOutputDevice
-    : public FOutputDevice
+    : public IOutputDevice
 {
     virtual void Log(const FString& Message) 
     {
@@ -58,7 +58,7 @@ struct FDebuggerOutputDevice
 };
 
 // NOTE: OutputDevice for the debugger
-FOutputDevice* GDebugOutput = nullptr;
+IOutputDevice* GDebugOutput = nullptr;
 
 
 // Application EntryPoint
