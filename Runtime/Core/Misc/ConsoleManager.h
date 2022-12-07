@@ -54,18 +54,32 @@ enum class EConsoleVariableFlags : int32
     SetByConstructor = BIT(3),
     // Indicates that the ConsoleVariable was last set by a config-file
     SetByConfigFile  = BIT(4),
+	// Indicates that the ConsoleVariable was last set by the CommandLine
+	SetByCommandLine = BIT(5),
     // Indicates that the ConsoleVariable was last set by the console
-    SetByConsole     = BIT(5),
+    SetByConsole     = BIT(6),
     // Indicates that the ConsoleVariable was last set by code
-    SetByCode        = BIT(6),
+    SetByCode        = BIT(7),
 
-    SetByMask = SetByConstructor | SetByConfigFile | SetByConsole | SetByCode,
+    SetByMask = SetByConstructor | SetByConfigFile | SetByCommandLine | SetByConsole | SetByCode,
 
     Default = None,
 };
 
 ENUM_CLASS_OPERATORS(EConsoleVariableFlags);
 
+CONSTEXPR const CHAR* SetByFlagToString(EConsoleVariableFlags Flag)
+{
+    switch (Flag)
+    {
+        case EConsoleVariableFlags::SetByConstructor: return "Constructor";
+        case EConsoleVariableFlags::SetByConfigFile:  return "ConfigFile";
+        case EConsoleVariableFlags::SetByCommandLine: return "CommandLine";
+        case EConsoleVariableFlags::SetByConsole:     return "Console";
+        case EConsoleVariableFlags::SetByCode:        return "Code";
+        default:                                      return "Unknown";
+    }
+}
 
 template<typename T>
 class TConsoleVariableData;

@@ -6,6 +6,9 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
+// TODO: Add all these to the buildsystem
+#pragma comment(lib, "Shcore.lib")
+
 enum EWindowsMasks : uint32
 {
     ScanCodeMask   = 0x01ff,
@@ -194,9 +197,7 @@ void FWindowsApplication::Tick(float)
         for (const FWindowsWindowRef& Window : ClosedWindows)
         {
             HWND WindowHandle = Window->GetWindowHandle();
-            
             MessageListener->HandleWindowClosed(Window);
-
             DestroyWindow(WindowHandle);
         }
 
@@ -253,6 +254,33 @@ FGenericWindowRef FWindowsApplication::GetActiveWindow() const
     // TODO: Should we add a reference here
     HWND ActiveWindow = ::GetActiveWindow();
     return GetWindowsWindowFromHWND(ActiveWindow);
+}
+
+FMonitorDesc FWindowsApplication::GetMonitorDescFromWindow(const FGenericWindowRef& Window) const
+{
+    TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
+    if (WindowsWindow)
+    {
+        HWND hWindow = WindowsWindow->GetWindowHandle();
+
+        HMONITOR hMonitor = ::MonitorFromWindow(hWindow, MONITOR_DEFAULTTOPRIMARY);
+        if (hMonitor != 0)
+        {
+            FMonitorDesc MonitorDesc;
+
+            DEVICE_SCALE_FACTOR ScalingFactor;
+            HRESULT hr = ::GetScaleFactorForMonitor(hMonitor, &ScalingFactor);
+            if (SUCCEEDED(hr))
+            {
+                // NOTE: Convert into a value in the form 1.75 for example
+                MonitorDesc.DisplayScaling = static_cast<float>(ScalingFactor) / 100.0f;
+            }
+
+            return MonitorDesc;
+        }
+    }
+
+    return FMonitorDesc{ 1.0f };
 }
 
 FGenericWindowRef FWindowsApplication::GetWindowUnderCursor() const

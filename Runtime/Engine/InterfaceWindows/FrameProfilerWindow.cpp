@@ -36,13 +36,12 @@ bool FFrameProfilerWindow::IsTickable()
 
 void FFrameProfilerWindow::DrawFPS()
 {
-    const uint32 WindowWidth = FApplicationInterface::Get().GetMainViewport()->GetWidth();
-
+    ImGuiIO& GuiIO = ImGui::GetIO();
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(5.0f, 5.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
 
-    ImGui::SetNextWindowPos(ImVec2(float(WindowWidth), 0.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+    ImGui::SetNextWindowPos(ImVec2(GuiIO.DisplaySize.x, 0.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
 
     const ImGuiWindowFlags Flags =
         ImGuiWindowFlags_NoDecoration |

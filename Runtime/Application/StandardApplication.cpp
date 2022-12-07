@@ -227,10 +227,13 @@ void FStandardApplication::Tick(FTimespan DeltaTime)
     Window->GetWindowShape(CurrentWindowShape);
 
     UIState.DeltaTime               = static_cast<float>(DeltaTime.AsSeconds());
-    UIState.DisplaySize             = ImVec2(float(CurrentWindowShape.Width), float(CurrentWindowShape.Height));
-    UIState.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+    UIState.DisplaySize             = ImVec2{ float(CurrentWindowShape.Width), float(CurrentWindowShape.Height) };
 
-    FIntVector2 Position = FStandardApplication::Get().GetCursorPos(Window);
+    FMonitorDesc MonitorDesc = PlatformApplication->GetMonitorDescFromWindow(Window);
+    UIState.DisplayFramebufferScale = ImVec2{ MonitorDesc.DisplayScaling, MonitorDesc.DisplayScaling };
+    UIState.FontGlobalScale         = MonitorDesc.DisplayScaling;
+
+    const FIntVector2 Position = GetCursorPos(Window);
     UIState.MousePos = ImVec2(static_cast<float>(Position.x), static_cast<float>(Position.y));
 
     FModifierKeyState KeyState = FPlatformApplicationMisc::GetModifierKeyState();

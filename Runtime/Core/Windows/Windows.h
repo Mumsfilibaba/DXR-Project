@@ -13,6 +13,9 @@
 #include <sdkddkver.h>
 #include <shlwapi.h>
 
+// TODO: Wrap in define for Win 8.1 and above
+#include <shellscalingapi.h>
+
 #ifdef CreateWindow
     #undef CreateWindow
 #endif

@@ -7,6 +7,7 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDevice.h"
+#include "Core/Platform/CriticalSection.h"
 
 #include "Application/Window.h"
 #include "Application/InputHandler.h"
@@ -51,7 +52,7 @@ public:
     virtual void Log(const FString& Message) override final;
     virtual void Log(ELogSeverity Severity, const FString& Message) override final;
 
-    virtual void Flush() override final;
+    virtual void Flush() override final { }
 
 private:
     int32 TextCallback(struct ImGuiInputTextCallbackData* Data);
@@ -69,6 +70,8 @@ private:
 
     // Index in the history
     TArray<TPair<FString, ELogSeverity>> Messages;
+    FCriticalSection MessagesCS;
+
     int32 HistoryIndex = -1;
 
     TStaticArray<CHAR, 256> TextBuffer;

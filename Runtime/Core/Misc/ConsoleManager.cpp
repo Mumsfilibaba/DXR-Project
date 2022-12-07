@@ -3,6 +3,7 @@
 
 #include "Core/Containers/AutoPtr.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/CommandLine.h"
 #include "Core/Platform/PlatformMisc.h"
 
 FAutoConsoleCommand GClearHistory("ClearHistory",
@@ -713,7 +714,13 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObje
         // TODO: Refactor this, right now it only works with a single ConfigFile
         if (IConsoleVariable* Variable = Object->AsVariable())
         {
-            if (GConfig)
+            FStringView CommandLineValue;
+            if (FCommandLine::Parse(InName, CommandLineValue))
+            {
+                const FString Value = FString(CommandLineValue);
+                Variable->SetString(Value, EConsoleVariableFlags::SetByCommandLine);
+            }
+            else if (GConfig)
             {
                 FString Value;
                 if (GConfig->GetString("", InName, Value))

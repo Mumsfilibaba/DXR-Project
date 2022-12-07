@@ -8,6 +8,11 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+struct FMonitorDesc
+{
+    float DisplayScaling = 1.0f;
+};
+
 class COREAPPLICATION_API FGenericApplication
 {
 public:
@@ -36,6 +41,8 @@ public:
     
     virtual FGenericWindowRef GetActiveWindow() const { return nullptr; }
 
+    virtual FMonitorDesc GetMonitorDescFromWindow(const FGenericWindowRef& Window) const { return FMonitorDesc{}; }
+
     virtual void SetMessageListener(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
     { 
         MessageListener = InMessageHandler; 
@@ -43,10 +50,9 @@ public:
 
     TSharedPtr<FGenericApplicationMessageHandler> GetMessageListener() const { return MessageListener; }
 
-    TSharedPtr<ICursor> GetCursor() const { return Cursor; }
+    const TSharedPtr<ICursor> Cursor;
 
 protected:
-    TSharedPtr<ICursor>                           Cursor;
     TSharedPtr<FGenericApplicationMessageHandler> MessageListener;
 };
 
