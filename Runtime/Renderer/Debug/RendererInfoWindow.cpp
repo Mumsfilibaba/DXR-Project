@@ -10,7 +10,10 @@
 
 #include <imgui.h>
 
-TAutoConsoleVariable<bool> GDrawRendererInfo("Renderer.DrawRendererInfo", true);
+TAutoConsoleVariable<bool> GDrawRendererInfo(
+    "Renderer.DrawRendererInfo",
+    "Enables the drawing of the Renderer Info Window", 
+    true);
 
 TSharedRef<FRendererInfoWindow> FRendererInfoWindow::Create()
 {

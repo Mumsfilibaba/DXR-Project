@@ -8,10 +8,17 @@
 
 #include <imgui.h>
 
-TAutoConsoleVariable<bool> GDrawFps("Renderer.DrawFps", true);
-TAutoConsoleVariable<bool> GDrawFrameProfiler("Renderer.DrawFrameProfiler", false);
+TAutoConsoleVariable<bool> GDrawFps(
+    "Renderer.DrawFps", 
+    "Enable FPS counter in the top right corner",
+    true);
 
-TSharedRef<FFrameProfilerWindow> FFrameProfilerWindow::Make()
+TAutoConsoleVariable<bool> GDrawFrameProfiler(
+    "Renderer.DrawFrameProfiler",
+    "Enables the FrameProfiler and displays the profiler window",
+    false);
+
+TSharedRef<FFrameProfilerWindow> FFrameProfilerWindow::Create()
 {
     return new FFrameProfilerWindow();
 }

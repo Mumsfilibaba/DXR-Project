@@ -39,6 +39,7 @@ FORCEINLINE bool EngineRelease()
     return GEngineLoop.Release();
 }
 
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FDebuggerOutputDevice
     : public IOutputDevice
@@ -53,9 +54,9 @@ struct FDebuggerOutputDevice
     {
         Log(Message);
     }
-
-    virtual void Flush() override final { }
 };
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING
 
 // NOTE: OutputDevice for the debugger
 IOutputDevice* GDebugOutput = nullptr;

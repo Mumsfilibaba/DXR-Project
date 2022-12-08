@@ -14,7 +14,10 @@
 
 #include "Renderer/Debug/GPUProfiler.h"
 
-TAutoConsoleVariable<bool> GCascadeDebug("Renderer.Debug.DrawCascades", false);
+TAutoConsoleVariable<bool> GCascadeDebug(
+    "Renderer.Debug.DrawCascades",
+    "Draws an overlay that shows which pixel uses what shadow cascade",
+    false);
 
 bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameResources)
 {

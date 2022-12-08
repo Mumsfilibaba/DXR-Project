@@ -5,7 +5,10 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformMisc.h"
 
-TAutoConsoleVariable<bool> CVarEnableAsyncWork("Core.EnableAsyncWork", true);
+TAutoConsoleVariable<bool> CVarEnableAsyncWork(
+    "Core.EnableAsyncWork",
+    "Enables worker thread to perform Async work",
+    true);
 
 FAsyncWorkThread::FAsyncWorkThread()
     : CurrentTask(nullptr)

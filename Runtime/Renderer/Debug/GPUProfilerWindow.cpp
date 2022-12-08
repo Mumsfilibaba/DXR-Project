@@ -8,7 +8,10 @@
 
 #include <imgui.h>
 
-TAutoConsoleVariable<bool> GDrawGPUProfiler("Renderer.DrawGPUProfiler", false);
+TAutoConsoleVariable<bool> GDrawGPUProfiler(
+    "Renderer.DrawGPUProfiler",
+    "Enables the profiling on the GPU and displays the GPU Profiler window", 
+    false);
 
 TSharedRef<FGPUProfilerWindow> FGPUProfilerWindow::Create()
 {

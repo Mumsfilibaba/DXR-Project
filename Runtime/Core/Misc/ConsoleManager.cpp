@@ -6,10 +6,15 @@
 #include "Core/Misc/CommandLine.h"
 #include "Core/Platform/PlatformMisc.h"
 
-FAutoConsoleCommand GClearHistory("ClearHistory",
+FAutoConsoleCommand GClearHistory(
+    "ClearHistory",
+    "Clears the history of the Console",
     FConsoleCommandDelegate::CreateRaw(&FConsoleManager::Get(), &FConsoleManager::ClearHistory));
 
-TAutoConsoleVariable<FString> GEcho("Echo", "",
+TAutoConsoleVariable<FString> GEcho(
+    "Echo", 
+    "Prints the entered text to the console",
+    "",
     FConsoleVariableDelegate::CreateLambda([](IConsoleVariable* InVariable) -> void
     {
         if (InVariable->IsVariableString())
@@ -24,19 +29,17 @@ class FConsoleCommand
     : public IConsoleCommand
 {
 public:
-    FConsoleCommand()
-        : ExecuteDelegate()
-    { }
-
-    FConsoleCommand(const FConsoleCommandDelegate& Delegate)
+    FConsoleCommand(const FConsoleCommandDelegate& Delegate, const CHAR* InHelpString)
         : ExecuteDelegate(Delegate)
+        , HelpString(InHelpString)
     { }
 
     virtual ~FConsoleCommand() = default;
 
-    virtual IConsoleCommand*  AsCommand()  override final { return this; }
-    virtual IConsoleVariable* AsVariable() override final { return nullptr; }
+    virtual IConsoleCommand* AsCommand() override final { return this; }
  
+    virtual const CHAR* GetHelpString() const override final { return HelpString; }
+
     // TODO: Add parameters to console commands
     virtual void Execute() override final
     {
@@ -45,6 +48,7 @@ public:
 
 private:
     FConsoleCommandDelegate ExecuteDelegate;
+    const CHAR*             HelpString;
 };
 
 
@@ -52,16 +56,18 @@ class FConsoleVariableBase
     : public IConsoleVariable
 {
 public:
-    FConsoleVariableBase(EConsoleVariableFlags InFlags)
+    FConsoleVariableBase(EConsoleVariableFlags InFlags, const CHAR* InHelpString)
         : IConsoleVariable()
         , Flags((InFlags & ~EConsoleVariableFlags::SetByMask) | EConsoleVariableFlags::SetByConstructor)
         , ChangedDelegate()
+        , HelpString(InHelpString)
     { }
 
     virtual ~FConsoleVariableBase() = default;
 
-    virtual IConsoleCommand*  AsCommand()  override final { return nullptr; }
     virtual IConsoleVariable* AsVariable() override final { return this; }
+    
+    virtual const CHAR* GetHelpString() const override final { return HelpString; }
 
     virtual void SetOnChangedDelegate(const FConsoleVariableDelegate& NewChangedDelegate) override final
     {
@@ -122,6 +128,7 @@ protected:
 
     EConsoleVariableFlags    Flags;
     FConsoleVariableDelegate ChangedDelegate;
+    const CHAR*              HelpString;
 };
 
 
@@ -140,8 +147,8 @@ class TConsoleVariable
     using FConsoleVariableBase::OnChanged;
 
 public:
-    explicit TConsoleVariable(const T& InDefaultValue, EConsoleVariableFlags InFlags)
-        : FConsoleVariableBase(InFlags)
+    explicit TConsoleVariable(const T& InDefaultValue, EConsoleVariableFlags InFlags, const CHAR* InHelpString)
+        : FConsoleVariableBase(InFlags, InHelpString)
         , Data(InDefaultValue)
     { }
 
@@ -481,9 +488,9 @@ FConsoleManager::~FConsoleManager()
     ConsoleObjects.clear();
 }
 
-IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const FConsoleCommandDelegate& CommandDelegate)
+IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const CHAR* HelpString, const FConsoleCommandDelegate& CommandDelegate)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleCommand(CommandDelegate)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleCommand(CommandDelegate, HelpString)))
     {
         return NewObject->AsCommand();
     }
@@ -491,9 +498,9 @@ IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const FCon
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* DefaultValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, const CHAR* DefaultValue, EConsoleVariableFlags Flags)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableString(DefaultValue, Flags)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableString(DefaultValue, Flags, HelpString)))
     {
         return NewObject->AsVariable();
     }
@@ -501,9 +508,9 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, int32 DefaultValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, int32 DefaultValue, EConsoleVariableFlags Flags)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableInt32(DefaultValue, Flags)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableInt32(DefaultValue, Flags, HelpString)))
     {
         return NewObject->AsVariable();
     }
@@ -511,9 +518,9 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, int32 De
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, float DefaultValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, float DefaultValue, EConsoleVariableFlags Flags)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableFloat(DefaultValue, Flags)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableFloat(DefaultValue, Flags, HelpString)))
     {
         return NewObject->AsVariable();
     }
@@ -521,9 +528,9 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, float De
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, bool bDefaultValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, bool bDefaultValue, EConsoleVariableFlags Flags)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableBool(bDefaultValue, Flags)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableBool(bDefaultValue, Flags, HelpString)))
     {
         return NewObject->AsVariable();
     }

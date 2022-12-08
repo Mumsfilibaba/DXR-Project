@@ -7,8 +7,15 @@
 
 IMPLEMENT_ENGINE_MODULE(FRHIInterfaceModule, RHI);
 
-TAutoConsoleVariable<bool>    CVarEnableDebugLayer("RHI.EnableDebugLayer", false);
-TAutoConsoleVariable<FString> CVarType("RHI.Type", "");
+TAutoConsoleVariable<bool> CVarEnableDebugLayer(
+    "RHI.EnableDebugLayer", 
+    "Enables the DebugLayer for the RHI",
+    false);
+
+TAutoConsoleVariable<FString> CVarType(
+    "RHI.Type", 
+    "Selects the RHI Layer to use",
+    "Unknown");
 
 RHI_API FRHIInterface* GRHIInterface = nullptr;
 

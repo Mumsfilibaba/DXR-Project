@@ -12,7 +12,10 @@
 
 #include "Renderer/Debug/GPUProfiler.h"
 
-TAutoConsoleVariable<bool> GDrawTileDebug("Renderer.Debug.DrawTiledLightning", false);
+TAutoConsoleVariable<bool> GDrawTileDebug(
+    "Renderer.Debug.DrawTiledLightning", 
+    "Draws the tiled lightning overlay, that displays how many lights are used in a certain tile", 
+    false);
 
 bool FDeferredRenderer::Init(FFrameResources& FrameResources)
 {

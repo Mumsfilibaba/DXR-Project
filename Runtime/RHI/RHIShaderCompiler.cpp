@@ -9,7 +9,10 @@
 
 #include <spirv_cross_c.h>
 
-TAutoConsoleVariable<bool> CVarShaderDebug("RHI.ShaderCompiler.Debug", true);
+TAutoConsoleVariable<bool> CVarShaderDebug(
+    "RHI.ShaderCompiler.Debug",
+    "Enable debug information in the Shaders",
+    true);
 
 enum class EDXCPart
 {

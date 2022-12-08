@@ -52,8 +52,6 @@ public:
     virtual void Log(const FString& Message) override final;
     virtual void Log(ELogSeverity Severity, const FString& Message) override final;
 
-    virtual void Flush() override final { }
-
 private:
     int32 TextCallback(struct ImGuiInputTextCallbackData* Data);
 

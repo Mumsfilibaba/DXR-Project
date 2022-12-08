@@ -134,6 +134,19 @@ void FGameConsoleWindow::Tick()
                 const CHAR* SetBy  = "";
 
                 // Value
+                static float PostFixSize = 
+                    NMath::Max(ImGui::CalcTextSize("Bool").x,
+                    NMath::Max(ImGui::CalcTextSize("Int").x,
+                    NMath::Max(ImGui::CalcTextSize("Float").x,
+                    ImGui::CalcTextSize("String").x)));
+
+                static float SetBySize = 
+                    NMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConstructor)).x,
+                    NMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCommandLine)).x,
+                    NMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConfigFile)).x,
+                    NMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCode)).x,
+                    ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConsole)).x))));
+
                 IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
                 if (ConsoleVariable)
                 {
@@ -165,18 +178,25 @@ void FGameConsoleWindow::Tick()
                     PostFix = "Command";
                 }
 
-                // Offset from the start is name + value 
-                ImGui::SameLine(VariableNameWidth + VariableValueWidth);
+                // Offset from the start is name + value
+                const float PostFixOffset = VariableNameWidth + VariableValueWidth;
+                ImGui::SameLine(PostFixOffset);
 
                 // PostFix
+                ImGui::Text("[%s]", PostFix);
+
+                const float SetByOffset = PostFixOffset + PostFixSize + 20.0f * Scale;
                 if (ConsoleVariable)
                 {
-                    ImGui::Text("[%s] [%s]", PostFix, SetBy);
+                    ImGui::SameLine(SetByOffset);
+                    ImGui::Text("[%s]", SetBy);
                 }
-                else
-                {
-                    ImGui::Text("[%s]", PostFix);
-                }
+
+                const float HelpStringOffset = SetByOffset + SetBySize + 20.0f * Scale;
+                ImGui::SameLine(HelpStringOffset);
+
+                const CHAR* HelpString = Candidate.First->GetHelpString();
+                ImGui::Text(" [Help: %s]", HelpString);
 
                 ImGui::PopStyleColor();
 

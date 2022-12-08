@@ -18,9 +18,20 @@
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 
-TAutoConsoleVariable<bool> CVarEnableGPUValidation("D3D12RHI.EnableGPUValidation", false);
-TAutoConsoleVariable<bool> CVarEnableDRED("D3D12RHI.EnableDRED", false);
-TAutoConsoleVariable<bool> CVarPreferDedicatedGPU("D3D12RHI.PreferDedicatedGPU", true);
+TAutoConsoleVariable<bool> CVarEnableGPUValidation(
+    "D3D12RHI.EnableGPUValidation",
+    "Enables GPU Based Validation if true",
+    false);
+
+TAutoConsoleVariable<bool> CVarEnableDRED(
+    "D3D12RHI.EnableDRED",
+    "Enables Device Removed Extended Data (DRED) if the Device gets removed",
+    false);
+
+TAutoConsoleVariable<bool> CVarPreferDedicatedGPU(
+    "D3D12RHI.PreferDedicatedGPU",
+    "When enabled, a dedicated GPU will be selected when creating a the Device", 
+    true);
 
 static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {

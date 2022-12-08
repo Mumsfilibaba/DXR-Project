@@ -22,7 +22,7 @@ struct CORE_API IOutputDevice
     virtual void Log(ELogSeverity Severity, const FString& Message) = 0;
     
     /** @brief - Clear the output device */
-    virtual void Flush() = 0;
+    virtual void Flush() { }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

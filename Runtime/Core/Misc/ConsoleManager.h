@@ -19,13 +19,19 @@ struct IConsoleObject
      * @brief  - Cast to a console-variable if the console-variable interface is implemented
      * @return - Returns either a console-variable or nullptr
      */
-    virtual struct IConsoleVariable* AsVariable() = 0;
+    virtual struct IConsoleVariable* AsVariable() { return nullptr; }
 
     /**
      * @brief  - Cast to a console-command if the console-command interface is implemented
      * @return - Returns either a console-command or nullptr
      */
-    virtual struct IConsoleCommand* AsCommand() = 0;
+    virtual struct IConsoleCommand* AsCommand() { return nullptr; }
+
+    /**
+	 * @brief  - Retrieve a short help string describing what the ConsoleObject does
+	 * @return - Returns the help string
+	 */
+    virtual const CHAR* GetHelpString() const = 0;
 };
 
 
@@ -230,35 +236,35 @@ public:
      * @param Name            - Name of the console-command
      * @param CommandDelegate - CommandDelegate to call when executing the command
      */
-    IConsoleCommand* RegisterCommand(const CHAR* InName, const FConsoleCommandDelegate& CommandDelegate);
+    IConsoleCommand* RegisterCommand(const CHAR* InName, const CHAR* HelpString, const FConsoleCommandDelegate& CommandDelegate);
 
     /**
      * @brief              - Register a new String ConsoleVariable
      * @param Name         - Name of the ConsoleVariable
      * @param DefaultValue - Default value for the ConsoleVariable
      */
-    IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* DefaultValue, EConsoleVariableFlags Flags);
+    IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, const CHAR* DefaultValue, EConsoleVariableFlags Flags);
 
     /**
      * @brief              - Register a new int32 ConsoleVariable
      * @param Name         - Name of the ConsoleVariable
      * @param DefaultValue - Default value for the ConsoleVariable
      */
-    IConsoleVariable* RegisterVariable(const CHAR* InName, int32 DefaultValue, EConsoleVariableFlags Flags);
+    IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, int32 DefaultValue, EConsoleVariableFlags Flags);
 
     /**
      * @brief              - Register a new float ConsoleVariable
      * @param Name         - Name of the ConsoleVariable
      * @param DefaultValue - Default value for the ConsoleVariable
      */
-    IConsoleVariable* RegisterVariable(const CHAR* InName, float DefaultValue, EConsoleVariableFlags Flags);
+    IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, float DefaultValue, EConsoleVariableFlags Flags);
 
     /**
      * @brief               - Register a new bool ConsoleVariable
      * @param Name          - Name of the ConsoleVariable
      * @param bDefaultValue - Default value for the ConsoleVariable
      */
-    IConsoleVariable* RegisterVariable(const CHAR* InName, bool bDefaultValue, EConsoleVariableFlags Flags);
+    IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, bool bDefaultValue, EConsoleVariableFlags Flags);
 
     /**
      * @brief               - Unregister a ConsoleObject
@@ -382,8 +388,8 @@ class FAutoConsoleCommand
     : public FAutoConsoleObject
 {
 public:
-    FAutoConsoleCommand(const CHAR* InName, const FConsoleCommandDelegate& Delegate)
-        : FAutoConsoleObject(FConsoleManager::Get().RegisterCommand(InName, Delegate))
+    FAutoConsoleCommand(const CHAR* InName, const CHAR* InHelpString, const FConsoleCommandDelegate& Delegate)
+        : FAutoConsoleObject(FConsoleManager::Get().RegisterCommand(InName, InHelpString, Delegate))
     { }
 
     FORCEINLINE IConsoleCommand& operator*()
@@ -446,15 +452,17 @@ class TAutoConsoleVariable
 public:
     TAutoConsoleVariable(
         const CHAR* InName, 
+        const CHAR* InHelpString,
         const T& DefaultValue, 
         EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default);
 
     TAutoConsoleVariable(
         const CHAR* InName, 
+        const CHAR* InHelpString,
         const T& DefaultValue, 
         const FConsoleVariableDelegate& VariableChangedDelegate, 
         EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
-        : TAutoConsoleVariable(InName, DefaultValue, InFlags)
+        : TAutoConsoleVariable(InName, InHelpString, DefaultValue, InFlags)
     {
         AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
     }
@@ -490,32 +498,32 @@ private:
 };
 
 template<>
-FORCEINLINE TAutoConsoleVariable<FString>::TAutoConsoleVariable(const CHAR* InName, const FString& DefaultValue, EConsoleVariableFlags InFlags)
-    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, DefaultValue.GetCString(), InFlags))
+FORCEINLINE TAutoConsoleVariable<FString>::TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const FString& DefaultValue, EConsoleVariableFlags InFlags)
+    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, InHelpString, DefaultValue.GetCString(), InFlags))
 { 
     Data = static_cast<FConsoleVariableData*>(AsVariable()->GetStringData());
     CHECK(Data != nullptr);
 }
 
 template<>
-FORCEINLINE TAutoConsoleVariable<int32>::TAutoConsoleVariable(const CHAR* InName, const int32& DefaultValue, EConsoleVariableFlags InFlags)
-    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, DefaultValue, InFlags))
+FORCEINLINE TAutoConsoleVariable<int32>::TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const int32& DefaultValue, EConsoleVariableFlags InFlags)
+    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, InHelpString, DefaultValue, InFlags))
 { 
     Data = static_cast<FConsoleVariableData*>(AsVariable()->GetIntData());
     CHECK(Data != nullptr);
 }
 
 template<>
-FORCEINLINE TAutoConsoleVariable<float>::TAutoConsoleVariable(const CHAR* InName, const float& DefaultValue, EConsoleVariableFlags InFlags)
-    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, DefaultValue, InFlags))
+FORCEINLINE TAutoConsoleVariable<float>::TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const float& DefaultValue, EConsoleVariableFlags InFlags)
+    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, InHelpString, DefaultValue, InFlags))
 { 
     Data = static_cast<FConsoleVariableData*>(AsVariable()->GetFloatData());
     CHECK(Data != nullptr);
 }
 
 template<>
-FORCEINLINE TAutoConsoleVariable<bool>::TAutoConsoleVariable(const CHAR* InName, const bool& bDefaultValue, EConsoleVariableFlags InFlags)
-    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, bDefaultValue, InFlags))
+FORCEINLINE TAutoConsoleVariable<bool>::TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const bool& bDefaultValue, EConsoleVariableFlags InFlags)
+    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, InHelpString, bDefaultValue, InFlags))
 { 
     Data = static_cast<FConsoleVariableData*>(AsVariable()->GetBoolData());
     CHECK(Data != nullptr);

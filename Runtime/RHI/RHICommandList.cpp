@@ -8,7 +8,10 @@
 
 RHI_API FRHICommandListExecutor GRHICommandExecutor;
 
-TAutoConsoleVariable<bool> CVarEnableRHIThread("RHI.EnableRHIThread", true);
+TAutoConsoleVariable<bool> CVarEnableRHIThread(
+    "RHI.EnableRHIThread",
+    "Enables the use of a separate Thread for executing RHI Commands",
+    true);
 
 FRHIThread* FRHIThread::GInstance = nullptr;
 

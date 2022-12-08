@@ -7,7 +7,10 @@
 
 #include <imgui.h>
 
-TAutoConsoleVariable<bool> GDrawTextureDebugger("Renderer.Debug.ViewRenderTargets", false);
+TAutoConsoleVariable<bool> GDrawTextureDebugger(
+    "Renderer.Debug.ViewRenderTargets",
+    "Enables the Debug RenderTarget-viewer",
+    false);
 
 TSharedRef<FRenderTargetDebugWindow> FRenderTargetDebugWindow::Create()
 {

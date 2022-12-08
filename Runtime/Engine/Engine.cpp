@@ -30,6 +30,7 @@ static void ExitEngineFunc()
 
 static FAutoConsoleCommand GExit(
     "Engine.Exit",
+    "Exits the engine",
     FConsoleCommandDelegate::CreateStatic(&ExitEngineFunc));
 
 static void ToggleFullScreenFunc()
@@ -43,6 +44,7 @@ static void ToggleFullScreenFunc()
 
 static FAutoConsoleCommand GToggleFullscreen(
     "MainViewport.ToggleFullscreen",
+    "Toggles fullscreen on the main Viewport",
     FConsoleCommandDelegate::CreateStatic(&ToggleFullScreenFunc));
 
 
@@ -158,7 +160,7 @@ bool FEngine::Initialize()
     Scene = MakeShared<FScene>();
 
     /* Create windows */
-    TSharedRef<FFrameProfilerWindow> ProfilerWindow = FFrameProfilerWindow::Make();
+    TSharedRef<FFrameProfilerWindow> ProfilerWindow = FFrameProfilerWindow::Create();
     Application.AddWindow(ProfilerWindow);
 
     TSharedRef<FGameConsoleWindow> ConsoleWindow = FGameConsoleWindow::Make();

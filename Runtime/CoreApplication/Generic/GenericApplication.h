@@ -18,7 +18,7 @@ class COREAPPLICATION_API FGenericApplication
 public:
     FGenericApplication(const TSharedPtr<ICursor>& InCursor)
         : Cursor(InCursor)
-        , MessageListener(nullptr)
+        , MessageHandler(nullptr)
     { }
 
     virtual ~FGenericApplication() = default;
@@ -45,15 +45,15 @@ public:
 
     virtual void SetMessageListener(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
     { 
-        MessageListener = InMessageHandler; 
+        MessageHandler = InMessageHandler; 
     }
 
-    TSharedPtr<FGenericApplicationMessageHandler> GetMessageListener() const { return MessageListener; }
+    TSharedPtr<FGenericApplicationMessageHandler> GetMessageListener() const { return MessageHandler; }
 
     const TSharedPtr<ICursor> Cursor;
 
 protected:
-    TSharedPtr<FGenericApplicationMessageHandler> MessageListener;
+    TSharedPtr<FGenericApplicationMessageHandler> MessageHandler;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

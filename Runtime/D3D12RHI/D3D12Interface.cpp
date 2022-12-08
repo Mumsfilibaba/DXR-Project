@@ -21,7 +21,10 @@
 
 IMPLEMENT_ENGINE_MODULE(FD3D12InterfaceModule, D3D12RHI);
 
-TAutoConsoleVariable<bool> CVarEnablePix("D3D12RHI.EnablePIX", false);
+TAutoConsoleVariable<bool> CVarEnablePix(
+    "D3D12RHI.EnablePIX",
+    "Enables loading of PIX when creating device to capture frame's programmatically",
+    false);
 
 
 FRHIInterface* FD3D12InterfaceModule::CreateInterface()
