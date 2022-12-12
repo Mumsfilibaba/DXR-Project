@@ -28,19 +28,20 @@ bool FAsyncWorkThread::Create(const CHAR* InThreadName)
         return false;
     }
 
-    Thread->SetName(InThreadName);
-
-    if (!Thread->Start())
-    {
-        LOG_ERROR("[FAsyncWorkThread] Failed to Start Thread");
-        return false;
-    }
-
+    // Create the event before we start the threads otherwise we will hit an assert
     WorkEvent = FPlatformThreadMisc::CreateEvent(false);
     if (!WorkEvent)
     {
         LOG_ERROR("[FAsyncWorkThread] Failed to Create Event");
         this->Stop();
+        return false;
+    }
+
+    Thread->SetName(InThreadName);
+
+    if (!Thread->Start())
+    {
+        LOG_ERROR("[FAsyncWorkThread] Failed to Start Thread");
         return false;
     }
 
@@ -52,6 +53,8 @@ void FAsyncWorkThread::WakeUpAndStartTask(IAsyncTask* NewTask)
     // New task must be nullptr and current-task must be nullptr
     CHECK(NewTask != nullptr);
     CHECK(CurrentTask == nullptr);
+
+    LOG_INFO("[%p] [%llu] WakeUpAndStartTask", this, reinterpret_cast<uint64>(FPlatformThreadMisc::GetThreadHandle()));
 
     CurrentTask = NewTask;
     FPlatformMisc::MemoryBarrier();
@@ -68,10 +71,7 @@ bool FAsyncWorkThread::Start()
 
 int32 FAsyncWorkThread::Run()
 {
-    if (!WorkEvent)
-    {
-        return -1;
-    }
+    CHECK(WorkEvent != nullptr);
 
     while(bIsRunning)
     {
@@ -79,7 +79,6 @@ int32 FAsyncWorkThread::Run()
 
         if (!CurrentTask)
         {
-            LOG_INFO("Putting Workthread to Sleep");
             WorkEvent->Wait(FTimespan::Infinity());
         }
         
@@ -94,15 +93,10 @@ int32 FAsyncWorkThread::Run()
         {
             // Perform the task
             LocalTask->DoAsyncWork();
-            
-            // Delay for a bit to avoid deadlocks where the CurrentTask "disappears" when being worked on by multiple threads
-            FPlatformThreadMisc::Sleep(FTimespan());
 
-            // Then return the thread to the pool and check if any new tasks has 
-            // been submitted in that case start work on that
+            // Then return the thread to the pool and check if any new tasks has been submitted in that case start work on that
             LocalTask = FAsyncThreadPool::Get().ReturnThreadOrRetrieveNextTask(this);
         }
-
     }
 
     return 0;
@@ -187,8 +181,9 @@ FAsyncThreadPool& FAsyncThreadPool::Get()
 
 bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
 {
-
     CHECK(NewTask != nullptr);
+
+    LOG_INFO("Submitting task");
 
     // We can disable the async work pool, execute tasks here in these cases
     if (!CVarEnableAsyncWork.GetValue())
