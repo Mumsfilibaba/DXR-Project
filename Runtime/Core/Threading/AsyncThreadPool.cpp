@@ -3,6 +3,7 @@
 
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformMisc.h"
 
 TAutoConsoleVariable<bool> CVarEnableAsyncWork(
@@ -78,7 +79,7 @@ int32 FAsyncWorkThread::Run()
 
         if (!CurrentTask)
         {
-            // LOG_ERROR("Num Tasks = %d", FAsyncThreadPool::Get().GetNumTasks());
+            LOG_INFO("Putting Workthread to Sleep");
             WorkEvent->Wait(FTimespan::Infinity());
         }
         
@@ -94,13 +95,14 @@ int32 FAsyncWorkThread::Run()
             // Perform the task
             LocalTask->DoAsyncWork();
             
+            // Delay for a bit to avoid deadlocks where the CurrentTask "disappears" when being worked on by multiple threads
+            FPlatformThreadMisc::Sleep(FTimespan());
+
             // Then return the thread to the pool and check if any new tasks has 
             // been submitted in that case start work on that
             LocalTask = FAsyncThreadPool::Get().ReturnThreadOrRetrieveNextTask(this);
         }
 
-        // Delay for a bit to avoid deadlocks where the CurrentTask "disappears" when being worked on by multiple threads
-        FPlatformThreadMisc::Sleep(FTimespan());
     }
 
     return 0;
@@ -185,7 +187,6 @@ FAsyncThreadPool& FAsyncThreadPool::Get()
 
 bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
 {
-    SCOPED_LOCK(TaskQueueCS);
 
     CHECK(NewTask != nullptr);
 
@@ -203,18 +204,22 @@ bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
         return false;
     }
 
-    if (AvailableWorkers.IsEmpty())
     {
-        TaskQueue.Enqueue(NewTask, Priority);
-        FPlatformMisc::MemoryBarrier();
-    }
-    else
-    {
-        FAsyncWorkThread* WorkerThread = AvailableWorkers.FirstElement();
-        AvailableWorkers.RemoveAt(0);
-        FPlatformMisc::MemoryBarrier();
+        SCOPED_LOCK(TaskQueueCS);
 
-        WorkerThread->WakeUpAndStartTask(NewTask);
+        if (AvailableWorkers.IsEmpty())
+        {
+            TaskQueue.Enqueue(NewTask, Priority);
+            FPlatformMisc::MemoryBarrier();
+        }
+        else
+        {
+            FAsyncWorkThread* WorkerThread = AvailableWorkers.FirstElement();
+            AvailableWorkers.RemoveAt(0);
+            FPlatformMisc::MemoryBarrier();
+
+            WorkerThread->WakeUpAndStartTask(NewTask);
+        }
     }
 
     return true;

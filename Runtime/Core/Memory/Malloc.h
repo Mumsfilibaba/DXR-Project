@@ -3,6 +3,9 @@
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Platform/PlatformStackTrace.h"
 #include "Core/Platform/CriticalSection.h"
+#include "Core/Containers/Map.h"
+
+struct FMalloc;
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -34,26 +37,20 @@ struct FUseUnmanagedMalloc
 };
 
 
-class CORE_API FMalloc
+extern CORE_API FMalloc* GMalloc;
+
+struct CORE_API FMalloc
     : public FUseUnmanagedMalloc
 {
-public:
-
     // FMalloc instead of IMalloc since IMalloc is already defined in the WindowsHeaders
     virtual ~FMalloc() = default;
-
-    /**
-     * @brief  - Retrieve the global Malloc instance 
-     * @return - Returns the global Malloc instance
-     */
-    static FMalloc& Get();
 
     /**
      * @brief        - Allocates memory  
      * @param InSize - Number of bytes to allocate
      * @return       - Returns a pointer with allocated memory
      */
-    virtual void* Malloc(uint64 InSize);
+    virtual void* Malloc(uint64 InSize) = 0;
 
     /**
      * @brief        - Allocates memory, from an existing block and copies over the old content to the new  
@@ -61,40 +58,42 @@ public:
      * @param InSize - Number of bytes to allocate
      * @return       - Returns a pointer with allocated memory
      */
-    virtual void* Realloc(void* Block, uint64 InSize);
+    virtual void* Realloc(void* Block, uint64 InSize) = 0;
 
     /**
      * @brief       - Frees a block of memory  
      * @param Block - Block to free
      */
-    virtual void Free(void* Block);
+    virtual void Free(void* Block) = 0;
 
     /**
      * @brief              - Dumps information about the current allocations. For the standard implementation no info is available.
      * @param OutputDevice - Device to output the information to
      */
     virtual void DumpAllocations(IOutputDevice* OutputDevice) { }
-
-private:
-    static void CreateMalloc();
-
-    static FMalloc* GInstance;
 };
+
+
+struct CORE_API FMallocANSI
+    : public FMalloc
+{
+    FMallocANSI() = default;
+    ~FMallocANSI() = default;
+
+    virtual void* Malloc(uint64 InSize) override final;
+
+    virtual void* Realloc(void* InBlock, uint64 InSize) override final;
+
+    virtual void Free(void* InBlock) override final;
+};
+
 
 class CORE_API FMallocLeakTracker
     : public FMalloc
 {
-    struct ALIGN_AS(16) FMemoryHeader
+    struct FAllocationInfo
     {
-        FORCEINLINE void* GetData()
-        {
-            return reinterpret_cast<uint8*>(this) + sizeof(FMemoryHeader);
-        }
-
-        FMemoryHeader* Next;
-        FMemoryHeader* Previous;
-        
-        uint64         Size;
+        uint64 Size;
     };
 
 public:
@@ -109,29 +108,18 @@ public:
 
     virtual void DumpAllocations(IOutputDevice* OutputDevice) override final;
 
+    void TrackAllocationMalloc(void* Block, uint64 Size);
+    void TrackAllocationFree(void* Block);
+
     void EnableTracking() { bTrackingEnabled = true; }
     void DisableTacking() { bTrackingEnabled = false; }
 
 private:
-    static FORCEINLINE void* RetrieveRealPointer(void* Block)
-    {
-        return reinterpret_cast<uint8*>(Block) - sizeof(FMemoryHeader);
-    }
+    TMap<void*, FAllocationInfo> Allocations;
+    FCriticalSection             AllocationsCS;
 
-    static FORCEINLINE uint64 RealSize(uint64 InSize)
-    {
-        return InSize + sizeof(FMemoryHeader);
-    }
-
-    void AppendBlock(FMemoryHeader* Block);
-    void RemoveBlock(FMemoryHeader* Block);
-
-    FCriticalSection CriticalSection;
-
-    FMalloc*       BaseMalloc;
-    FMemoryHeader* Head;
-    FMemoryHeader* Tail;
-    bool           bTrackingEnabled;
+	FMalloc* BaseMalloc;
+	bool     bTrackingEnabled;
 };
 
 
@@ -143,20 +131,11 @@ class CORE_API FMallocStackTraceTracker
         NumStackTraces = 8
     };
 
-    struct ALIGN_AS(16) FMemoryHeader
+    struct FAllocationStackTrace
     {
-        FORCEINLINE void* GetData()
-        {
-            return reinterpret_cast<uint8*>(this) + sizeof(FMemoryHeader);
-        }
-
-        FMemoryHeader* Next;
-        FMemoryHeader* Previous;
-
-        uint64         StackTrace[NumStackTraces];
-        uint64         StackDepth;
-        
-        uint64         Size;
+        uint64 StackTrace[NumStackTraces];
+        uint64 StackDepth;
+        uint64 Size;
     };
 
 public:
@@ -171,29 +150,18 @@ public:
 
     virtual void DumpAllocations(IOutputDevice* OutputDevice) override final;
 
+	void TrackAllocationMalloc(void* Block, uint64 Size);
+	void TrackAllocationFree(void* Block);
+
     void EnableTracking() { bTrackingEnabled = true; }
     void DisableTacking() { bTrackingEnabled = false; }
 
 private:
-    static FORCEINLINE void* RetrieveRealPointer(void* Block)
-    {
-        return reinterpret_cast<uint8*>(Block) - sizeof(FMemoryHeader);
-    }
+	TMap<void*, FAllocationStackTrace> Allocations;
+	FCriticalSection                   AllocationsCS;
 
-    static FORCEINLINE uint64 RealSize(uint64 InSize)
-    {
-        return InSize + sizeof(FMemoryHeader);
-    }
-
-    void AppendBlock(FMemoryHeader* Block);
-    void RemoveBlock(FMemoryHeader* Block);
-
-    FCriticalSection CriticalSection;
-
-    FMalloc*       BaseMalloc;
-    FMemoryHeader* Head;
-    FMemoryHeader* Tail;
-    bool           bTrackingEnabled;
+	FMalloc* BaseMalloc;
+	bool     bTrackingEnabled;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

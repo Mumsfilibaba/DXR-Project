@@ -77,7 +77,7 @@ public:
 
     FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) noexcept
     {
-        Allocation = FMemory::Realloc<ElementType>(Allocation, NewCount);
+        Allocation = reinterpret_cast<ElementType*>(FMemory::Realloc(Allocation, NewCount * sizeof(ElementType)));
         return Allocation;
     }
 

@@ -15,7 +15,7 @@ bool FCommandLine::Initialize(const CHAR** Args, int32 NumArgs)
 
     CHAR* CommandLineIt  = CommandLine;
     CHAR* CommandLineEnd = CommandLine + MaxCommandLineLength;
-    CHAR* OrigianlCommandLineIt = OriginalCommandLine;
+    CHAR* OriginalCommandLineIt = OriginalCommandLine;
 
     for (int32 Index = 0; Index < NumArgs; ++Index)
     {
@@ -27,8 +27,8 @@ bool FCommandLine::Initialize(const CHAR** Args, int32 NumArgs)
 
         {
             const int32 Length = FCString::Strlen(CurrentArg);
-            FCString::Strncpy(OrigianlCommandLineIt, CurrentArg, Length);
-            OrigianlCommandLineIt += Length;
+            FCString::Strncpy(OriginalCommandLineIt, CurrentArg, Length);
+            OriginalCommandLineIt += Length;
         }
 
         while (CurrentArg && *CurrentArg && (CommandLineIt < CommandLineEnd))

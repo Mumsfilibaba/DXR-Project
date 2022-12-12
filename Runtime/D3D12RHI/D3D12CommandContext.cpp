@@ -308,7 +308,7 @@ void FD3D12CommandContextState::ApplyGraphics(FD3D12CommandList& CommandList, FD
         DescriptorCache.SetRenderTargets(Graphics.RTCache, Graphics.DepthStencil);
 
         FD3D12VariableRateShadingDesc VRSSupport = GetDevice()->GetVariableRateShadingDesc();
-        if (VRSSupport.IsSupported())
+        if (VRSSupport.IsTier2())
         {
             if (Graphics.ShadingRateTexture)
             {

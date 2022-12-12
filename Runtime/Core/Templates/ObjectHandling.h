@@ -206,9 +206,7 @@ FORCEINLINE void DestroyElement(ElementType* Object) noexcept
 template<typename ElementType, typename SizeType>
 FORCEINLINE void RelocateElements(void* StartAddress, ElementType* Source, SizeType Count) noexcept
 {
-    static_assert(
-        TIsReallocatable<ElementType>::Value || TIsMoveConstructable<ElementType>::Value || TIsCopyConstructable<ElementType>::Value,
-        "ElementType cannot be relocated");
+    static_assert(TIsReallocatable<ElementType>::Value || TIsMoveConstructable<ElementType>::Value || TIsCopyConstructable<ElementType>::Value, "ElementType cannot be relocated");
 
     if CONSTEXPR (TIsReallocatable<ElementType>::Value)
     {
@@ -286,7 +284,7 @@ FORCEINLINE bool CompareElements(const ElementType* LHS, const ElementType* RHS,
 {
     if CONSTEXPR (TIsTrivial<ElementType>::Value)
     {
-        return FMemory::Memcmp<ElementType>(LHS, RHS, Count);
+        return FMemory::Memcmp(LHS, RHS, Count * sizeof(ElementType));
     }
     else
     {

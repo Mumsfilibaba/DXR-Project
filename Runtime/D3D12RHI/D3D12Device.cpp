@@ -167,8 +167,10 @@ FD3D12Adapter::FD3D12Adapter()
 
 bool FD3D12Adapter::Initialize()
 {
-    IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer");
-    bEnableDebugLayer = (CVarEnableDebugLayer && CVarEnableDebugLayer->GetBool());
+    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
+    {
+        bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
+    }
     
     if (bEnableDebugLayer)
     {
@@ -238,17 +240,19 @@ bool FD3D12Adapter::Initialize()
             D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve InfoQueue");
         }
 
-        IConsoleVariable* CVarEnablePIX = FConsoleManager::Get().FindConsoleVariable("D3D12RHI.EnablePIX");
-        if (CVarEnablePIX && CVarEnablePIX->GetBool())
+        if (IConsoleVariable* CVarEnablePIX = FConsoleManager::Get().FindConsoleVariable("D3D12RHI.EnablePIX"))
         {
-            TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
-            if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
+            if (CVarEnablePIX->GetBool())
             {
-                DXGraphicsAnalysis = TempGraphicsAnalysis;
-            }
-            else
-            {
-                D3D12_INFO("[FD3D12Adapter]: PIX is not connected to the application");
+				TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
+				if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
+				{
+					DXGraphicsAnalysis = TempGraphicsAnalysis;
+				}
+				else
+				{
+					D3D12_INFO("[FD3D12Adapter]: PIX is not connected to the application");
+				}
             }
         }
     }
@@ -292,7 +296,7 @@ bool FD3D12Adapter::Initialize()
     
     const D3D_FEATURE_LEVEL TestFeatureLevels[] =
     {
-#if WIN10_BUILD_20348
+#if 0 /*&& WIN10_BUILD_20348*/
         D3D_FEATURE_LEVEL_12_2,
 #endif
         D3D_FEATURE_LEVEL_12_1,

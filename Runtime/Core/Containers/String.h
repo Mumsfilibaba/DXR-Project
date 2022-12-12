@@ -2070,12 +2070,12 @@ FORCEINLINE bool TTypeFromString<double>::FromString(const FString& String, doub
 template<>
 FORCEINLINE bool TTypeFromString<bool>::FromString(const FString& String, bool& OutElement)
 {
-    if (FCString::Stricmp(String.GetCString(), "true"))
+    if (FCString::Stricmp(String.GetCString(), "true") == 0)
     {
         OutElement = true;
         return true;
     }
-    else if (FCString::Stricmp(String.GetCString(), "false"))
+    else if (FCString::Stricmp(String.GetCString(), "false") == 0)
     {
         OutElement = false;
         return true;
@@ -2186,12 +2186,12 @@ FORCEINLINE bool TTypeFromStringWide<double>::FromString(const FStringWide& Stri
 template<>
 FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const FStringWide& String, bool& OutElement)
 {
-    if (FCStringWide::Stricmp(String.GetCString(), L"true"))
+    if (FCStringWide::Stricmp(String.GetCString(), L"true") == 0)
     {
         OutElement = true;
         return true;
     }
-    else if (FCStringWide::Stricmp(String.GetCString(), L"false"))
+    else if (FCStringWide::Stricmp(String.GetCString(), L"false") == 0)
     {
         OutElement = false;
         return true;
@@ -2265,11 +2265,11 @@ FORCEINLINE bool TTryParseType<double>::TryParse(const FString& InString)
 template<>
 FORCEINLINE bool TTryParseType<bool>::TryParse(const FString& InString)
 {
-    if (FCString::Stricmp(InString.GetCString(), "true"))
+    if (FCString::Stricmp(InString.GetCString(), "true") == 0)
     {
         return true;
     }
-    else if (FCString::Stricmp(InString.GetCString(), "false"))
+    else if (FCString::Stricmp(InString.GetCString(), "false") == 0)
     {
         return true;
     }

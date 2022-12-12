@@ -53,6 +53,16 @@ struct FD3D12VariableRateShadingDesc
         return (Tier != D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED);
     }
 
+	bool IsTier1() const
+	{
+		return (Tier >= D3D12_VARIABLE_SHADING_RATE_TIER_1);
+	}
+
+    bool IsTier2() const
+    {
+        return (Tier >= D3D12_VARIABLE_SHADING_RATE_TIER_2);
+    }
+
     D3D12_VARIABLE_SHADING_RATE_TIER Tier;
     uint32 ShadingRateImageTileSize;
 };

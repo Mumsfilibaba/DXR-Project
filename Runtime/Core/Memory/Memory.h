@@ -23,25 +23,39 @@ struct CORE_API FMemory
     static void* Malloc(uint64 Size) noexcept;
 
     /**
-     * @brief      - Allocate memory and zero it
-     * @param Size - The number of bytes to allocate
-     * @return     - Returns the newly allocated memory
-     */
-    static void* MallocZeroed(uint64 Size) noexcept;
-
-    /**
-     * @brief      - Reallocate memory
-     * @param Block  - Block to the memory to reallocate
-     * @param Size - The number of bytes to reallocate
-     * @return     - Returns the newly allocated memory
+     * @brief       - Reallocate memory
+     * @param Block - Block to the memory to reallocate
+     * @param Size  - The number of bytes to reallocate
+     * @return      - Returns the newly allocated memory
      */
     static void* Realloc(void* Block, uint64 Size) noexcept;
 
     /**
-     * @brief     - Free memory
+     * @brief       - Free memory
      * @param Block - A pointer to the memory to deallocate
      */
     static void Free(void* Block) noexcept;
+
+    /**
+	 * @brief       - Free memory of const pointers
+	 * @param Block - A pointer to the memory to deallocate
+	 */
+    static FORCEINLINE void Free(const void* Block) noexcept
+    {
+        Free((void*)Block);
+    }
+
+    /**
+     * @brief      - Allocate memory and zero it
+     * @param Size - The number of bytes to allocate
+     * @return     - Returns the newly allocated memory
+     */
+    static FORCEINLINE void* MallocZeroed(uint64 Size) noexcept
+    {
+        void* NewMemory = Malloc(Size);
+        Memzero(NewMemory, Size);
+        return NewMemory;
+    }
 
     /**
      * @brief      - Move memory from one location to another. Can be overlapping memory-ranges.
@@ -111,38 +125,6 @@ struct CORE_API FMemory
     }
 
     /**
-     * @brief     - Free memory of const pointers
-     * @param Block - A pointer to the memory to deallocate
-     */
-    static FORCEINLINE void Free(const void* Block) noexcept
-    {
-        Free((void*)Block);
-    }
-
-    /**
-     * @brief       - Allocate memory typed
-     * @param Count - Number of elements to allocate
-     * @return      - Returns of the newly allocated memory
-     */
-    template<typename T>
-    static FORCEINLINE T* Malloc(uint32 Count) noexcept
-    {
-        return reinterpret_cast<T*>(Malloc(sizeof(T) * Count));
-    }
-
-    /**
-     * @brief       - Reallocate memory typed
-     * @param Block   - Block to the memory to reallocate
-     * @param Count - Number of elements to allocate
-     * @return      - Returns the pointer
-     */
-    template<typename T>
-    static FORCEINLINE T* Realloc(T* Block, uint64 Count) noexcept
-    {
-        return reinterpret_cast<T*>(Realloc(reinterpret_cast<void*>(Block), Count * sizeof(T)));
-    }
-
-    /**
      * @brief     - Set memory to zero
      * @param Dst - Destination of memory to zero
      * @return    - Returns the destination pointer
@@ -151,65 +133,5 @@ struct CORE_API FMemory
     static FORCEINLINE T* Memzero(T* Dst) noexcept
     {
         return reinterpret_cast<T*>(Memzero(reinterpret_cast<void*>(Dst), sizeof(T)));
-    }
-
-    /**
-     * @brief     - Set memory to zero
-     * @param Dst - Destination of memory to zero
-     * @return    - Returns the destination pointer
-     */
-    template<typename T>
-    static FORCEINLINE T* MemzeroTyped(T* Dst, uint32 NumElements) noexcept
-    {
-        return reinterpret_cast<T*>(Memzero(reinterpret_cast<void*>(Dst), sizeof(T) * NumElements));
-    }
-
-    /**
-     * @brief     - Copy memory typed
-     * @param Dst - Destination of memory to copy
-     * @param Src - Src of the memory to copy
-     * @return    - Returns the destination pointer
-     */
-    template<typename T>
-    static FORCEINLINE T* Memcpy(T* RESTRICT Dst, const T* RESTRICT Src) noexcept
-    {
-        return reinterpret_cast<T*>(Memcpy(reinterpret_cast<void*>(Dst), reinterpret_cast<const void*>(Src), sizeof(T)));
-    }
-
-    /**
-     * @brief             - Copy memory typed
-     * @param Dst         - Destination of memory to copy
-     * @param Src         - Src of the memory to copy
-     * @param NumElements - Number of elements to copy
-     * @return            - Returns the destination pointer
-     */
-    template<typename T>
-    static FORCEINLINE T* MemcpyTyped(T* RESTRICT Dst, const T* RESTRICT Src, uint32 NumElements) noexcept
-    {
-        return reinterpret_cast<T*>(Memcpy(reinterpret_cast<void*>(Dst), reinterpret_cast<const void*>(Src), sizeof(T) * NumElements));
-    }
-
-    /**
-     * @brief       - Compare memory typed
-     * @param LHS   - Destination of memory to copy
-     * @param RHS   - Src of the memory to copy
-     * @param Count - Number of elements to compare
-     * @return      - Returns true if the memory is equal to each other
-     */
-    template<typename T>
-    static FORCEINLINE bool Memcmp(const T* LHS, const T* RHS, uint64 Count) noexcept
-    {
-        return Memcmp(reinterpret_cast<const void*>(LHS), reinterpret_cast<const void*>(RHS), sizeof(T) * Count);
-    }
-
-    /**
-     * @brief     - Copy typed memory range from one memory range to another and then set the source to zero
-     * @param Dst - Destination memory range
-     * @param Src - Src memory range
-     */
-    template<typename T>
-    static FORCEINLINE T* Memexchange(T* RESTRICT Dst, T* RESTRICT Src) noexcept
-    {
-        return Memexchange(reinterpret_cast<void*>(Dst), reinterpret_cast<void*>(Src), sizeof(T));
     }
 };

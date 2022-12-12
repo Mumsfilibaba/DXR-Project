@@ -3,92 +3,53 @@
 #include "Core/Platform/PlatformStackTrace.h"
 #include "Core/Threading/ScopedLock.h"
 
-#if DEBUG_BUILD
-    #define USE_DEBUG_MALLOC (0)
-#else
-    #define USE_DEBUG_MALLOC (0)
-#endif
+CORE_API FMalloc* GMalloc = nullptr;
 
-#if DEBUG_BUILD
-    #define TRACK_MALLOC_CALLSTACK (0)
-#else
-    #define TRACK_MALLOC_CALLSTACK (0)
-#endif
-
-FMalloc* FMalloc::GInstance = nullptr;
-
-void FMalloc::CreateMalloc()
+void* FMallocANSI::Malloc(uint64 InSize)
 {
-    CHECK(GInstance == nullptr);
-
-    if (!GInstance)
+    if (InSize)
     {
-        GInstance = new FMalloc();
-        if CONSTEXPR (USE_DEBUG_MALLOC)
-        {
-            GInstance = new FMallocLeakTracker(GInstance);
-        }
-        else if CONSTEXPR (TRACK_MALLOC_CALLSTACK)
-        {
-            GInstance = new FMallocStackTraceTracker(GInstance);
-        }
+        return ::malloc(InSize);
     }
 
-    CHECK(GInstance != nullptr);
+    return nullptr;
 }
 
-FMalloc& FMalloc::Get()
+void* FMallocANSI::Realloc(void* Block, uint64 InSize)
 {
-    if (!GInstance)
+    if (Block)
     {
-        CreateMalloc();
-        CHECK(GInstance != nullptr);
+        return ::realloc(Block, InSize);
     }
 
-    return *GInstance;
+    return Malloc(InSize);
 }
 
-void* FMalloc::Malloc(uint64 InSize)
+void FMallocANSI::Free(void* Block)
 {
-    return ::malloc(InSize);
-}
-
-void* FMalloc::Realloc(void* Block, uint64 InSize)
-{
-    return ::realloc(Block, InSize);
-}
-
-void FMalloc::Free(void* Block)
-{
-    ::free(Block);
+    if (Block)
+    {
+        ::free(Block);
+    }
 }
 
 
 FMallocLeakTracker::FMallocLeakTracker(FMalloc* InBaseMalloc)
-    : BaseMalloc(InBaseMalloc)
-    , Head(nullptr)
-    , Tail(nullptr)
+    : Allocations()
+    , AllocationsCS()
+    , BaseMalloc(InBaseMalloc)
     , bTrackingEnabled(true)
 { }
 
 void* FMallocLeakTracker::Malloc(uint64 InSize)
 {
-    FMemoryHeader* Block = reinterpret_cast<FMemoryHeader*>(BaseMalloc->Malloc(RealSize(InSize)));
-    if (!Block)
-    {
-        return nullptr;
-    }
-
-    Block->Next = nullptr;
-    Block->Previous = nullptr;
-    Block->Size = InSize;
-
+    void* Block = BaseMalloc->Malloc(InSize);
     if (bTrackingEnabled)
     {
-        AppendBlock(Block);
+        TrackAllocationMalloc(Block, InSize);
     }
 
-    return Block->GetData();
+    return Block;
 }
 
 void* FMallocLeakTracker::Realloc(void* InBlock, uint64 InSize)
@@ -98,37 +59,28 @@ void* FMallocLeakTracker::Realloc(void* InBlock, uint64 InSize)
         return Malloc(InSize);
     }
 
-    void* RealBlock = RetrieveRealPointer(InBlock);
-    FMemoryHeader* Block = reinterpret_cast<FMemoryHeader*>(RealBlock);
-    RemoveBlock(Block);
+    TrackAllocationFree(InBlock);
 
-    Block = reinterpret_cast<FMemoryHeader*>(BaseMalloc->Realloc(RealBlock, RealSize(InSize)));
+    void* Block = BaseMalloc->Realloc(InBlock, InSize);
     if (!Block)
     {
         return nullptr;
     }
 
-    Block->Next = nullptr;
-    Block->Previous = nullptr;
-    Block->Size = InSize;
-
     if (bTrackingEnabled)
     {
-        AppendBlock(Block);
+        TrackAllocationMalloc(Block, InSize);
     }
 
-    return Block->GetData();
+    return Block;
 }
 
 void FMallocLeakTracker::Free(void* InBlock)
 {
     if (InBlock)
     {
-        void* RealBlock = RetrieveRealPointer(InBlock);
-        FMemoryHeader* Block = reinterpret_cast<FMemoryHeader*>(RealBlock);
-        RemoveBlock(Block);
-
-        BaseMalloc->Free(RealBlock);
+        TrackAllocationFree(InBlock);
+        BaseMalloc->Free(InBlock);
     }
 }
 
@@ -137,110 +89,70 @@ void FMallocLeakTracker::DumpAllocations(IOutputDevice* OutputDevice)
     DisableTacking();
 
     {
-        SCOPED_LOCK(CriticalSection);
+        SCOPED_LOCK(AllocationsCS);
 
-        uint32 NumAllocations = 0;
-        {
-            FMemoryHeader* Current = Head;
-            while (Current)
-            {
-                Current = Current->Next;
-                NumAllocations++;
-            }
-        }
-
+        const uint32 NumAllocations = static_cast<uint32>(Allocations.size());
         OutputDevice->Log(FString::CreateFormatted("Current Allocations (Num=%u):", NumAllocations));
 
-        FMemoryHeader* Current = Head;
-        while (Current)
+        for (auto CurrentAllocation : Allocations)
         {
             OutputDevice->Log(FString::CreateFormatted(
                 "    Address=0x%p Size=%llu",
-                Current->GetData(),
-                Current->Size));
-
-            Current = Current->Next;
+                CurrentAllocation.first,
+                CurrentAllocation.second.Size));
         }
     }
 
     EnableTracking();
 }
 
-void FMallocLeakTracker::AppendBlock(FMemoryHeader* Block)
+void FMallocLeakTracker::TrackAllocationMalloc(void* Block, uint64 Size)
 {
-    SCOPED_LOCK(CriticalSection);
+    DisableTacking();
 
-    if (Tail)
-    {
-        Tail->Next = Block;
-        Block->Previous = Tail;
-        Tail = Block;
-    }
-    else
-    {
-        Block->Previous = nullptr;
-        Head = Tail = Block;
-    }
+    SCOPED_LOCK(AllocationsCS);
+
+    auto ExistingInfo = Allocations.find(Block);
+    CHECK(ExistingInfo == Allocations.end());
+
+    auto Result = Allocations.insert(std::make_pair(Block, FAllocationInfo{ Size }));
+    CHECK(Result.second == true);
+
+    EnableTracking();
 }
 
-void FMallocLeakTracker::RemoveBlock(FMemoryHeader* Block)
+void FMallocLeakTracker::TrackAllocationFree(void* Block)
 {
-    SCOPED_LOCK(CriticalSection);
+    DisableTacking();
 
-    FMemoryHeader* Previous = Block->Previous;
-    if (Previous)
+    SCOPED_LOCK(AllocationsCS);
+
+    auto ExistingInfo = Allocations.find(Block);
+    if (ExistingInfo != Allocations.end())
     {
-        Previous->Next  = Block->Next;
-        Block->Previous = nullptr;
+        Allocations.erase(ExistingInfo);
     }
 
-    FMemoryHeader* Next = Block->Next;
-    if (Next)
-    {
-        Next->Previous = Previous;
-        Block->Next    = nullptr;
-    }
-
-    if (Block == Head)
-    {
-        Head = Next;
-    }
-
-    if (Block == Tail)
-    {
-        Tail = Previous;
-    }
+    EnableTracking();
 }
 
 
 FMallocStackTraceTracker::FMallocStackTraceTracker(FMalloc* InBaseMalloc)
-    : BaseMalloc(InBaseMalloc)
-    , Head(nullptr)
-    , Tail(nullptr)
+    : Allocations()
+    , AllocationsCS()
+    , BaseMalloc(InBaseMalloc)
     , bTrackingEnabled(true)
 { }
 
 void* FMallocStackTraceTracker::Malloc(uint64 InSize)
 {
-    FMemoryHeader* Block = reinterpret_cast<FMemoryHeader*>(BaseMalloc->Malloc(RealSize(InSize)));
-    if (!Block)
-    {
-        return nullptr;
-    }
-
-    FMemory::Memzero(Block, sizeof(FMemoryHeader));
-    Block->Size = InSize;
-
+    void* Block = BaseMalloc->Malloc(InSize);
     if (bTrackingEnabled)
     {
-        DisableTacking();
-        Block->StackDepth = FPlatformStackTrace::CaptureStackTrace(Block->StackTrace, NumStackTraces, 2);
-        EnableTracking();
-
-        AppendBlock(Block);
+        TrackAllocationMalloc(Block, InSize);
     }
 
-    return Block->GetData();
+    return Block;
 }
 
 void* FMallocStackTraceTracker::Realloc(void* InBlock, uint64 InSize)
@@ -250,40 +162,28 @@ void* FMallocStackTraceTracker::Realloc(void* InBlock, uint64 InSize)
         return Malloc(InSize);
     }
 
-    void* RealBlock = RetrieveRealPointer(InBlock);
-    FMemoryHeader* Block = reinterpret_cast<FMemoryHeader*>(RealBlock);
-    RemoveBlock(Block);
+    TrackAllocationFree(InBlock);
 
-    Block = reinterpret_cast<FMemoryHeader*>(BaseMalloc->Realloc(RealBlock, RealSize(InSize)));
+    void* Block = BaseMalloc->Realloc(InBlock, InSize);
     if (!Block)
     {
         return nullptr;
     }
 
-    FMemory::Memzero(Block, sizeof(FMemoryHeader));
-    Block->Size = InSize;
-
     if (bTrackingEnabled)
     {
-        DisableTacking();
-        Block->StackDepth = FPlatformStackTrace::CaptureStackTrace(Block->StackTrace, NumStackTraces, 2);
-        EnableTracking();
-
-        AppendBlock(Block);
+        TrackAllocationMalloc(Block, InSize);
     }
 
-    return Block->GetData();
+    return Block;
 }
 
 void FMallocStackTraceTracker::Free(void* InBlock)
 {
     if (InBlock)
     {
-        void* RealBlock = RetrieveRealPointer(InBlock);
-        FMemoryHeader* Block = reinterpret_cast<FMemoryHeader*>(RealBlock);
-        RemoveBlock(Block);
-
-        BaseMalloc->Free(RealBlock);
+        TrackAllocationFree(InBlock);
+        BaseMalloc->Free(InBlock);
     }
 }
 
@@ -292,44 +192,33 @@ void FMallocStackTraceTracker::DumpAllocations(IOutputDevice* OutputDevice)
     DisableTacking();
 
     {
-        SCOPED_LOCK(CriticalSection);
+        SCOPED_LOCK(AllocationsCS);
 
-        uint32 NumAllocations = 0;
-        {
-            FMemoryHeader* Current = Head;
-            while (Current)
-            {
-                Current = Current->Next;
-                NumAllocations++;
-            }
-        }
-
+        const uint32 NumAllocations = static_cast<uint32>(Allocations.size());
         OutputDevice->Log(FString::CreateFormatted("Current Allocations (Num=%u):", NumAllocations));
 
         FPlatformStackTrace::InitializeSymbols();
 
-        FMemoryHeader* Current = Head;
-        while (Current)
+        for (auto CurrentAllocation : Allocations)
         {
             FString Message = FString::CreateFormatted(
                 "    Address=0x%p Size=%llu\n"
                 "        Callstack:\n",
-                Current->GetData(),
-                Current->Size);
+                CurrentAllocation.first,
+                CurrentAllocation.second.Size);
 
             // Skip first since this is the FPlatformStackTrace::CaptureStackTrace
-            for (uint64 Depth = 0; Depth < Current->StackDepth; ++Depth)
+            const auto Current = CurrentAllocation.second;
+            for (uint64 Depth = 0; Depth < Current.StackDepth; ++Depth)
             {
                 FStackTraceEntry Entry;
                 FMemory::Memzero(&Entry);
 
-                FPlatformStackTrace::GetStackTraceEntryFromAddress(Current->StackTrace[Depth], Entry);
+                FPlatformStackTrace::GetStackTraceEntryFromAddress(Current.StackTrace[Depth], Entry);
                 Message.AppendFormat("        %d | %s | %s | %s\n", Entry.Line, Entry.FunctionName, Entry.Filename, Entry.ModuleName);
             }
 
             OutputDevice->Log(Message);
-
-            Current = Current->Next;
         }
 
         FPlatformStackTrace::ReleaseSymbols();
@@ -338,48 +227,35 @@ void FMallocStackTraceTracker::DumpAllocations(IOutputDevice* OutputDevice)
     EnableTracking();
 }
 
-void FMallocStackTraceTracker::AppendBlock(FMemoryHeader* Block)
+void FMallocStackTraceTracker::TrackAllocationMalloc(void* Block, uint64 Size)
 {
-    SCOPED_LOCK(CriticalSection);
+    DisableTacking();
 
-    if (Tail)
-    {
-        Tail->Next = Block;
-        Block->Previous = Tail;
-        Tail = Block;
-    }
-    else
-    {
-        Block->Previous = nullptr;
-        Head = Tail = Block;
-    }
+    SCOPED_LOCK(AllocationsCS);
+
+    auto ExistingInfo = Allocations.find(Block);
+    CHECK(ExistingInfo == Allocations.end());
+
+    auto Result = Allocations.insert(std::make_pair(Block, FAllocationStackTrace()));
+    CHECK(Result.second == true);
+
+    Result.first->second.StackDepth = FPlatformStackTrace::CaptureStackTrace(Result.first->second.StackTrace, NumStackTraces, 3);
+    Result.first->second.Size = Size;
+
+    EnableTracking();
 }
 
-void FMallocStackTraceTracker::RemoveBlock(FMemoryHeader* Block)
+void FMallocStackTraceTracker::TrackAllocationFree(void* Block)
 {
-    SCOPED_LOCK(CriticalSection);
+    DisableTacking();
 
-    FMemoryHeader* Previous = Block->Previous;
-    if (Previous)
+    SCOPED_LOCK(AllocationsCS);
+
+    auto ExistingInfo = Allocations.find(Block);
+    if (ExistingInfo != Allocations.end())
     {
-        Previous->Next  = Block->Next;
-        Block->Previous = nullptr;
+        Allocations.erase(ExistingInfo);
     }
 
-    FMemoryHeader* Next = Block->Next;
-    if (Next)
-    {
-        Next->Previous = Previous;
-        Block->Next    = nullptr;
-    }
-
-    if (Block == Head)
-    {
-        Head = Next;
-    }
-
-    if (Block == Tail)
-    {
-        Tail = Previous;
-    }
+    EnableTracking();
 }
