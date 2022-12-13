@@ -6,13 +6,7 @@
 
 #include "RHI/RHIInterface.h"
 
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(PLATFORM_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct NULLRHI_API FNullRHIInterfaceModule final
     : public FRHIInterfaceModule
@@ -219,8 +213,4 @@ private:
     FNullRHICommandContext* CommandContext;
 };
 
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(PLATFORM_COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

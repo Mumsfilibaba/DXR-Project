@@ -10,7 +10,7 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/CoreDelegates.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Containers/String.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -18,9 +18,20 @@
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 
-TAutoConsoleVariable<bool> CVarEnableGPUValidation("D3D12RHI.EnableGPUValidation", false);
-TAutoConsoleVariable<bool> CVarEnableDRED("D3D12RHI.EnableDRED", false);
-TAutoConsoleVariable<bool> CVarPreferDedicatedGPU("D3D12RHI.PreferDedicatedGPU", true);
+TAutoConsoleVariable<bool> CVarEnableGPUValidation(
+    "D3D12RHI.EnableGPUValidation",
+    "Enables GPU Based Validation if true",
+    false);
+
+TAutoConsoleVariable<bool> CVarEnableDRED(
+    "D3D12RHI.EnableDRED",
+    "Enables Device Removed Extended Data (DRED) if the Device gets removed",
+    false);
+
+TAutoConsoleVariable<bool> CVarPreferDedicatedGPU(
+    "D3D12RHI.PreferDedicatedGPU",
+    "When enabled, a dedicated GPU will be selected when creating a the Device", 
+    true);
 
 static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
@@ -156,8 +167,10 @@ FD3D12Adapter::FD3D12Adapter()
 
 bool FD3D12Adapter::Initialize()
 {
-    IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer");
-    bEnableDebugLayer = (CVarEnableDebugLayer && CVarEnableDebugLayer->GetBool());
+    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
+    {
+        bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
+    }
     
     if (bEnableDebugLayer)
     {
@@ -227,17 +240,19 @@ bool FD3D12Adapter::Initialize()
             D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve InfoQueue");
         }
 
-        IConsoleVariable* CVarEnablePIX = FConsoleManager::Get().FindConsoleVariable("D3D12RHI.EnablePIX");
-        if (CVarEnablePIX && CVarEnablePIX->GetBool())
+        if (IConsoleVariable* CVarEnablePIX = FConsoleManager::Get().FindConsoleVariable("D3D12RHI.EnablePIX"))
         {
-            TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
-            if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
+            if (CVarEnablePIX->GetBool())
             {
-                DXGraphicsAnalysis = TempGraphicsAnalysis;
-            }
-            else
-            {
-                D3D12_INFO("[FD3D12Adapter]: PIX is not connected to the application");
+				TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
+				if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
+				{
+					DXGraphicsAnalysis = TempGraphicsAnalysis;
+				}
+				else
+				{
+					D3D12_INFO("[FD3D12Adapter]: PIX is not connected to the application");
+				}
             }
         }
     }
@@ -281,7 +296,7 @@ bool FD3D12Adapter::Initialize()
     
     const D3D_FEATURE_LEVEL TestFeatureLevels[] =
     {
-#if WIN10_BUILD_20348
+#if 0 /*&& WIN10_BUILD_20348*/
         D3D_FEATURE_LEVEL_12_2,
 #endif
         D3D_FEATURE_LEVEL_12_1,

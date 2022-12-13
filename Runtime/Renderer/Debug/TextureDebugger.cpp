@@ -1,13 +1,16 @@
 #include "TextureDebugger.h"
 
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include "Application/ApplicationInterface.h"
 #include "Application/WidgetUtilities.h"
 
 #include <imgui.h>
 
-TAutoConsoleVariable<bool> GDrawTextureDebugger("Renderer.Debug.ViewRenderTargets", false);
+TAutoConsoleVariable<bool> GDrawTextureDebugger(
+    "Renderer.Debug.ViewRenderTargets",
+    "Enables the Debug RenderTarget-viewer",
+    false);
 
 TSharedRef<FRenderTargetDebugWindow> FRenderTargetDebugWindow::Create()
 {
@@ -93,7 +96,7 @@ void FRenderTargetDebugWindow::Tick()
 
                 if (ButtonCenteredOnLine("Close"))
                 {
-                    GDrawTextureDebugger->SetAsBool(false);
+                    GDrawTextureDebugger->SetAsBool(false, EConsoleVariableFlags::SetByCode);
                 }
 
                 ImGui::Separator();

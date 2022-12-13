@@ -2,10 +2,14 @@
 #include "AsyncTask.h"
 
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformMisc.h"
 
-TAutoConsoleVariable<bool> CVarEnableAsyncWork("Core.EnableAsyncWork", false);
+TAutoConsoleVariable<bool> CVarEnableAsyncWork(
+    "Core.EnableAsyncWork",
+    "Enables worker thread to perform Async work",
+    true);
 
 FAsyncWorkThread::FAsyncWorkThread()
     : CurrentTask(nullptr)
@@ -24,19 +28,20 @@ bool FAsyncWorkThread::Create(const CHAR* InThreadName)
         return false;
     }
 
-    Thread->SetName(InThreadName);
-
-    if (!Thread->Start())
-    {
-        LOG_ERROR("[FAsyncWorkThread] Failed to Start Thread");
-        return false;
-    }
-
+    // Create the event before we start the threads otherwise we will hit an assert
     WorkEvent = FPlatformThreadMisc::CreateEvent(false);
     if (!WorkEvent)
     {
         LOG_ERROR("[FAsyncWorkThread] Failed to Create Event");
         this->Stop();
+        return false;
+    }
+
+    Thread->SetName(InThreadName);
+
+    if (!Thread->Start())
+    {
+        LOG_ERROR("[FAsyncWorkThread] Failed to Start Thread");
         return false;
     }
 
@@ -64,10 +69,7 @@ bool FAsyncWorkThread::Start()
 
 int32 FAsyncWorkThread::Run()
 {
-    if (!WorkEvent)
-    {
-        return -1;
-    }
+    CHECK(WorkEvent != nullptr);
 
     while(bIsRunning)
     {
@@ -75,7 +77,6 @@ int32 FAsyncWorkThread::Run()
 
         if (!CurrentTask)
         {
-            // LOG_ERROR("Num Tasks = %d", FAsyncThreadPool::Get().GetNumTasks());
             WorkEvent->Wait(FTimespan::Infinity());
         }
         
@@ -90,14 +91,10 @@ int32 FAsyncWorkThread::Run()
         {
             // Perform the task
             LocalTask->DoAsyncWork();
-            
-            // Then return the thread to the pool and check if any new tasks has 
-            // been submitted in that case start work on that
+
+            // Then return the thread to the pool and check if any new tasks has been submitted in that case start work on that
             LocalTask = FAsyncThreadPool::Get().ReturnThreadOrRetrieveNextTask(this);
         }
-
-        // Delay for a bit to avoid deadlocks where the CurrentTask "disappears" when being worked on by multiple threads
-        FPlatformThreadMisc::Sleep(FTimespan());
     }
 
     return 0;
@@ -182,9 +179,9 @@ FAsyncThreadPool& FAsyncThreadPool::Get()
 
 bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
 {
-    SCOPED_LOCK(TaskQueueCS);
-
     CHECK(NewTask != nullptr);
+
+    LOG_INFO("Submitting task");
 
     // We can disable the async work pool, execute tasks here in these cases
     if (!CVarEnableAsyncWork.GetValue())
@@ -200,18 +197,22 @@ bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
         return false;
     }
 
-    if (AvailableWorkers.IsEmpty())
     {
-        TaskQueue.Enqueue(NewTask, Priority);
-        FPlatformMisc::MemoryBarrier();
-    }
-    else
-    {
-        FAsyncWorkThread* WorkerThread = AvailableWorkers.FirstElement();
-        AvailableWorkers.RemoveAt(0);
-        FPlatformMisc::MemoryBarrier();
+        SCOPED_LOCK(TaskQueueCS);
 
-        WorkerThread->WakeUpAndStartTask(NewTask);
+        if (AvailableWorkers.IsEmpty())
+        {
+            TaskQueue.Enqueue(NewTask, Priority);
+            FPlatformMisc::MemoryBarrier();
+        }
+        else
+        {
+            FAsyncWorkThread* WorkerThread = AvailableWorkers.FirstElement();
+            AvailableWorkers.RemoveAt(0);
+            FPlatformMisc::MemoryBarrier();
+
+            WorkerThread->WakeUpAndStartTask(NewTask);
+        }
     }
 
     return true;

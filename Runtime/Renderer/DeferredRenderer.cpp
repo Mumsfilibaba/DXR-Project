@@ -8,11 +8,14 @@
 #include "Engine//Resources/Material.h"
 
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include "Renderer/Debug/GPUProfiler.h"
 
-TAutoConsoleVariable<bool> GDrawTileDebug("Renderer.Debug.DrawTiledLightning", false);
+TAutoConsoleVariable<bool> GDrawTileDebug(
+    "Renderer.Debug.DrawTiledLightning", 
+    "Draws the tiled lightning overlay, that displays how many lights are used in a certain tile", 
+    false);
 
 bool FDeferredRenderer::Init(FFrameResources& FrameResources)
 {

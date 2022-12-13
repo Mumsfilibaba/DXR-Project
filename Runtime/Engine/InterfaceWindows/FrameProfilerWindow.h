@@ -11,7 +11,7 @@ class FFrameProfilerWindow
     INTERFACE_GENERATE_BODY();
 
 public:
-    static TSharedRef<FFrameProfilerWindow> Make();
+    static TSharedRef<FFrameProfilerWindow> Create();
 
     virtual void Tick() override final;
 

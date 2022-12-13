@@ -3,6 +3,8 @@
 
 #include "Core/Templates/NumericLimits.h"
 
+#pragma comment(lib, "shlwapi.lib")
+
 FWindowsFileHandle::FWindowsFileHandle(HANDLE InFileHandle)
     : IFileHandle()
     , FileHandle(InFileHandle)
@@ -208,4 +210,29 @@ FORCEINLINE IFileHandle* FWindowsFile::OpenForWrite(const FString& Filename)
     }
 
     return new FWindowsFileHandle(NewHandle);
+}
+
+FString FWindowsFile::GetCurrentDirectory()
+{
+    int32 Length = ::GetCurrentDirectoryA(0, nullptr);
+    if (!Length)
+    {
+        FString Error;
+        const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
+        LOG_ERROR("GetCurrentDirectory failed with error %d '%s' ", ErrorCode, Error.GetCString());
+        return FString();
+    }
+
+    FString Result;
+    Result.Resize(Length);
+    Length = ::GetCurrentDirectoryA(Result.GetSize(), Result.GetData());
+    if (!Length)
+    {
+        FString Error;
+        const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
+        LOG_ERROR("GetCurrentDirectory failed with error %d '%s' ", ErrorCode, Error.GetCString());
+        return FString();
+    }
+
+    return Result;
 }

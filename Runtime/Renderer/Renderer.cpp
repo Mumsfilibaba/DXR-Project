@@ -15,25 +15,63 @@
 
 #include "Core/Math/Frustum.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
 #include "Renderer/Debug/GPUProfiler.h"
 
-TAutoConsoleVariable<bool> GEnableSSAO("Renderer.Feature.SSAO", true);
+TAutoConsoleVariable<bool> GEnableSSAO(
+    "Renderer.Feature.SSAO",
+    "Enables Screen-Space Ambient Occlusion",
+    true);
 
-TAutoConsoleVariable<bool> GEnableFXAA("Renderer.Feature.FXAA", false);
-TAutoConsoleVariable<bool> GEnableTemporalAA("Renderer.Feature.TemporalAA", true);
-TAutoConsoleVariable<bool> GFXAADebug("Renderer.Debug.FXAADebug", false);
+TAutoConsoleVariable<bool> GEnableFXAA(
+    "Renderer.Feature.FXAA",
+    "Enables FXAA for Anti-Aliasing",
+    false);
+TAutoConsoleVariable<bool> GFXAADebug(
+    "Renderer.Debug.FXAADebug",
+    "Enables FXAA (Anti-Aliasing) Debugging mode",
+    false);
 
-TAutoConsoleVariable<bool> GEnableVariableRateShading("Renderer.Feature.VariableRateShading", false);
+TAutoConsoleVariable<bool> GEnableTemporalAA(
+    "Renderer.Feature.TemporalAA",
+    "Enables Temporal Anti-Aliasing",
+    true);
 
-TAutoConsoleVariable<bool> GPrePassEnabled("Renderer.Feature.PrePass", true);
-TAutoConsoleVariable<bool> GDrawAABBs("Renderer.Debug.DrawAABBs", false);
-TAutoConsoleVariable<bool> GDrawPointLights("Renderer.Debug.DrawPointLights", false);
-TAutoConsoleVariable<bool> GVSyncEnabled("Renderer.Feature.VerticalSync", false);
-TAutoConsoleVariable<bool> GFrustumCullEnabled("Renderer.Feature.FrustumCulling", true);
-TAutoConsoleVariable<bool> GRayTracingEnabled("Renderer.Feature.RayTracing", false);
+TAutoConsoleVariable<bool> GEnableVariableRateShading(
+    "Renderer.Feature.VariableRateShading",
+    "Enables VRS (Variable Rate Shading)",
+    false);
+
+// TODO: Remove this, should always be enabled
+TAutoConsoleVariable<bool> GPrePassEnabled(
+    "Renderer.Feature.PrePass",
+    "Enables Pre-Pass",
+    true);
+
+TAutoConsoleVariable<bool> GDrawAABBs(
+    "Renderer.Debug.DrawAABBs",
+    "Draws all the objects bounding boxes (AABB)",
+    false);
+TAutoConsoleVariable<bool> GDrawPointLights(
+    "Renderer.Debug.DrawPointLights", 
+    "Draws all the PointLights as spheres with the light-color",
+    false);
+
+TAutoConsoleVariable<bool> GVSyncEnabled(
+    "Renderer.Feature.VerticalSync",
+    "Enables Vertical-Sync", 
+    false);
+TAutoConsoleVariable<bool> GFrustumCullEnabled(
+    "Renderer.Feature.FrustumCulling",
+    "Enables Frustum Culling (CPU) for the main scene and for all shadow frustums",
+    true);
+
+TAutoConsoleVariable<bool> GRayTracingEnabled(
+    "Renderer.Feature.RayTracing",
+    "Enables Ray Tracing (Currently broken)",
+    false);
 
 
 FRenderer* FRenderer::GInstance = nullptr;

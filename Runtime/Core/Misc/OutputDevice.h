@@ -1,13 +1,7 @@
 #pragma once
 #include "Core/Containers/String.h"
 
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(PLATFORM_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 enum class ELogSeverity
 {
@@ -16,10 +10,10 @@ enum class ELogSeverity
     Error   = 3,
 };
 
-struct CORE_API FOutputDevice
+struct CORE_API IOutputDevice
 {
-    FOutputDevice()          = default;
-    virtual ~FOutputDevice() = default;
+    IOutputDevice() = default;
+    virtual ~IOutputDevice() = default;
 
     /** @brief - Log a simple message */
     virtual void Log(const FString& Message) = 0;
@@ -28,11 +22,7 @@ struct CORE_API FOutputDevice
     virtual void Log(ELogSeverity Severity, const FString& Message) = 0;
     
     /** @brief - Clear the output device */
-    virtual void Flush() = 0;
+    virtual void Flush() { }
 };
 
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(PLATFORM_COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

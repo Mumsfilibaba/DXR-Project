@@ -83,6 +83,8 @@ public:
     
     virtual FGenericWindowRef GetActiveWindow() const override final;
 
+    virtual FMonitorDesc GetMonitorDescFromWindow(const FGenericWindowRef& Window) const override final;
+
 public:
     FWindowsWindowRef GetWindowsWindowFromHWND(HWND Window) const;
 

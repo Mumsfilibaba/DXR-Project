@@ -1,26 +1,26 @@
 #include "ConsoleManager.h"
+#include "EngineConfig.h"
 
 #include "Core/Containers/AutoPtr.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/CommandLine.h"
 #include "Core/Platform/PlatformMisc.h"
-
-// TODO: Remove (Make own? Slow?)
-#include <regex>
-
 
 FAutoConsoleCommand GClearHistory(
     "ClearHistory",
+    "Clears the history of the Console",
     FConsoleCommandDelegate::CreateRaw(&FConsoleManager::Get(), &FConsoleManager::ClearHistory));
 
 TAutoConsoleVariable<FString> GEcho(
-    "Echo",
+    "Echo", 
+    "Prints the entered text to the console",
     "",
     FConsoleVariableDelegate::CreateLambda([](IConsoleVariable* InVariable) -> void
     {
         if (InVariable->IsVariableString())
         {
-            FConsoleManager& ConsoleManager = FConsoleManager::Get();
-            ConsoleManager.PrintMessage(InVariable->GetString(), EConsoleSeverity::Info);
+            IOutputDevice* OutputDevice = FOutputDeviceLogger::Get();
+            OutputDevice->Log(ELogSeverity::Info, InVariable->GetString());
         }
     }));
 
@@ -29,19 +29,17 @@ class FConsoleCommand
     : public IConsoleCommand
 {
 public:
-    FConsoleCommand()
-        : ExecuteDelegate()
-    { }
-
-    FConsoleCommand(const FConsoleCommandDelegate& Delegate)
+    FConsoleCommand(const FConsoleCommandDelegate& Delegate, const CHAR* InHelpString)
         : ExecuteDelegate(Delegate)
+        , HelpString(InHelpString)
     { }
 
     virtual ~FConsoleCommand() = default;
 
-    virtual IConsoleCommand*  AsCommand()  override final { return this; }
-    virtual IConsoleVariable* AsVariable() override final { return nullptr; }
+    virtual IConsoleCommand* AsCommand() override final { return this; }
  
+    virtual const CHAR* GetHelpString() const override final { return HelpString; }
+
     // TODO: Add parameters to console commands
     virtual void Execute() override final
     {
@@ -50,6 +48,7 @@ public:
 
 private:
     FConsoleCommandDelegate ExecuteDelegate;
+    const CHAR*             HelpString;
 };
 
 
@@ -57,15 +56,18 @@ class FConsoleVariableBase
     : public IConsoleVariable
 {
 public:
-    FConsoleVariableBase()
+    FConsoleVariableBase(EConsoleVariableFlags InFlags, const CHAR* InHelpString)
         : IConsoleVariable()
+        , Flags((InFlags & ~EConsoleVariableFlags::SetByMask) | EConsoleVariableFlags::SetByConstructor)
         , ChangedDelegate()
+        , HelpString(InHelpString)
     { }
 
     virtual ~FConsoleVariableBase() = default;
 
-    virtual IConsoleCommand*  AsCommand()  override final { return nullptr; }
     virtual IConsoleVariable* AsVariable() override final { return this; }
+    
+    virtual const CHAR* GetHelpString() const override final { return HelpString; }
 
     virtual void SetOnChangedDelegate(const FConsoleVariableDelegate& NewChangedDelegate) override final
     {
@@ -77,13 +79,56 @@ public:
         return ChangedDelegate;
     }
 
+    virtual EConsoleVariableFlags GetFlags() const override final 
+    { 
+        return Flags; 
+    }
+
 protected:
-    FORCEINLINE void OnChanged()
+    bool CanBeSet(EConsoleVariableFlags SetBy)
     {
+        // Only flags should be sent in here
+        CHECK((SetBy & ~EConsoleVariableFlags::SetByMask) == EConsoleVariableFlags::None);
+
+        const bool bIsDefault = (Flags & EConsoleVariableFlags::SetByConstructor) != EConsoleVariableFlags::None;
+        if ((Flags & EConsoleVariableFlags::ReadOnly) != EConsoleVariableFlags::None)
+        {
+            if (!bIsDefault)
+            {
+                return false;
+            }
+
+            if (SetBy == EConsoleVariableFlags::SetByConfigFile)
+            {
+                return (Flags & EConsoleVariableFlags::DoNotSetViaConfigFile) == EConsoleVariableFlags::None;
+            }
+            
+            return false;
+        }
+        else if ((Flags & EConsoleVariableFlags::DoNotSetViaConfigFile) != EConsoleVariableFlags::None)
+        {
+            if (SetBy == EConsoleVariableFlags::SetByConfigFile)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    void OnChanged(EConsoleVariableFlags SetBy)
+    {
+        CHECK(CanBeSet(SetBy));
+
+        const EConsoleVariableFlags CurrentSetBy = Flags & EConsoleVariableFlags::SetByMask;
+        Flags = (Flags ^ CurrentSetBy) | SetBy;
+
         ChangedDelegate.ExecuteIfBound(this);
     }
 
+    EConsoleVariableFlags    Flags;
     FConsoleVariableDelegate ChangedDelegate;
+    const CHAR*              HelpString;
 };
 
 
@@ -102,9 +147,9 @@ class TConsoleVariable
     using FConsoleVariableBase::OnChanged;
 
 public:
-    explicit TConsoleVariable(const T& StartValue)
-        : FConsoleVariableBase()
-        , Data(StartValue)
+    explicit TConsoleVariable(const T& InDefaultValue, EConsoleVariableFlags InFlags, const CHAR* InHelpString)
+        : FConsoleVariableBase(InFlags, InHelpString)
+        , Data(InDefaultValue)
     { }
 
     virtual TConsoleVariableData<int32>*   GetIntData()    override final { return nullptr; }
@@ -117,17 +162,20 @@ public:
     virtual bool IsVariableBool()   const override final { return false; }
     virtual bool IsVariableString() const override final { return false; }
 
-    virtual void SetAsInt(int32 InValue)   override final;
-    virtual void SetAsFloat(float InValue) override final;
-    virtual void SetAsBool(bool bValue)    override final;
+    virtual void SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)   override final;
+    virtual void SetAsFloat(float InValue, EConsoleVariableFlags InFlags) override final;
+    virtual void SetAsBool(bool bValue, EConsoleVariableFlags InFlags)    override final;
 
-    virtual void SetString(const FString& InValue) override final
+    virtual void SetString(const FString& InValue, EConsoleVariableFlags InFlags) override final
     {
-        T NewValue = 0;
-        if (TTypeFromString<T>::FromString(InValue, NewValue))
+        if (CanBeSet(InFlags))
         {
-            *Data = ::Move(NewValue);
-            OnChanged();
+            T NewValue = 0;
+            if (TTypeFromString<T>::FromString(InValue, NewValue))
+            {
+                *Data = ::Move(NewValue);
+                OnChanged(InFlags);
+            }
         }
     }
 
@@ -159,24 +207,33 @@ bool TConsoleVariable<int32>::IsVariableInt() const
 }
 
 template<>
-void TConsoleVariable<int32>::SetAsInt(int32 InValue)
+void TConsoleVariable<int32>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
 {
-    *Data = InValue;
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = InValue;
+        OnChanged(InFlags);
+    }
 }
 
 template<>
-void TConsoleVariable<int32>::SetAsFloat(float InValue)
+void TConsoleVariable<int32>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
 {
-    *Data = static_cast<int32>(InValue);
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = static_cast<int32>(InValue);
+        OnChanged(InFlags);
+    }
 }
 
 template<>
-void TConsoleVariable<int32>::SetAsBool(bool bValue)
+void TConsoleVariable<int32>::SetAsBool(bool bValue, EConsoleVariableFlags InFlags)
 {
-    *Data = bValue ? 1 : 0;
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = bValue ? 1 : 0;
+        OnChanged(InFlags);
+    }
 }
 
 template<>
@@ -212,24 +269,33 @@ bool TConsoleVariable<float>::IsVariableFloat() const
 }
 
 template<>
-void TConsoleVariable<float>::SetAsInt(int32 InValue)
+void TConsoleVariable<float>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
 {
-    *Data = static_cast<float>(InValue);
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = static_cast<float>(InValue);
+        OnChanged(InFlags);
+    }
 }
 
 template<>
-void TConsoleVariable<float>::SetAsFloat(float InValue)
+void TConsoleVariable<float>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
 {
-    *Data = InValue;
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = InValue;
+        OnChanged(InFlags);
+    }
 }
 
 template<>
-void TConsoleVariable<float>::SetAsBool(bool bValue)
+void TConsoleVariable<float>::SetAsBool(bool bValue, EConsoleVariableFlags InFlags)
 {
-    *Data = bValue ? 1.0f : 0.0f;
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = bValue ? 1.0f : 0.0f;
+        OnChanged(InFlags);
+    }
 }
 
 template<>
@@ -265,24 +331,33 @@ bool TConsoleVariable<bool>::IsVariableBool() const
 }
 
 template<>
-void TConsoleVariable<bool>::SetAsInt(int32 InValue)
+void TConsoleVariable<bool>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
 {
-    *Data = (InValue != 0);
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = (InValue != 0);
+        OnChanged(InFlags);
+    }
 }
 
 template<>
-void TConsoleVariable<bool>::SetAsFloat(float InValue)
+void TConsoleVariable<bool>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
 {
-    *Data = (InValue != 0.0f);
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = (InValue != 0.0f);
+        OnChanged(InFlags);
+    }
 }
 
 template<>
-void TConsoleVariable<bool>::SetAsBool(bool bValue)
+void TConsoleVariable<bool>::SetAsBool(bool bValue, EConsoleVariableFlags InFlags)
 {
-    *Data = bValue;
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = bValue;
+        OnChanged(InFlags);
+    }
 }
 
 template<>
@@ -318,31 +393,43 @@ bool TConsoleVariable<FString>::IsVariableString() const
 }
 
 template<>
-inline void TConsoleVariable<FString>::SetAsInt(int32 InValue)
+inline void TConsoleVariable<FString>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
 {
-    *Data = TTypeToString<int32>::ToString(InValue);
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = TTypeToString<int32>::ToString(InValue);
+        OnChanged(InFlags);
+    }
 }
 
 template<>
-inline void TConsoleVariable<FString>::SetAsFloat(float InValue)
+inline void TConsoleVariable<FString>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
 {
-    *Data = TTypeToString<float>::ToString(InValue);
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = TTypeToString<float>::ToString(InValue);
+        OnChanged(InFlags);
+    }
 }
 
 template<>
-inline void TConsoleVariable<FString>::SetAsBool(bool InValue)
+inline void TConsoleVariable<FString>::SetAsBool(bool InValue, EConsoleVariableFlags InFlags)
 {
-    *Data = TTypeToString<bool>::ToString(InValue);
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = TTypeToString<bool>::ToString(InValue);
+        OnChanged(InFlags);
+    }
 }
 
 template<>
-inline void TConsoleVariable<FString>::SetString(const FString& InValue)
+inline void TConsoleVariable<FString>::SetString(const FString& InValue, EConsoleVariableFlags InFlags)
 {
-    *Data = InValue;
-    OnChanged();
+    if (CanBeSet(InFlags))
+    {
+        *Data = InValue;
+        OnChanged(InFlags);
+    }
 }
 
 template<>
@@ -401,9 +488,9 @@ FConsoleManager::~FConsoleManager()
     ConsoleObjects.clear();
 }
 
-IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const FConsoleCommandDelegate& CommandDelegate)
+IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const CHAR* HelpString, const FConsoleCommandDelegate& CommandDelegate)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleCommand(CommandDelegate)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleCommand(CommandDelegate, HelpString)))
     {
         return NewObject->AsCommand();
     }
@@ -411,9 +498,9 @@ IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const FCon
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* DefaultValue)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, const CHAR* DefaultValue, EConsoleVariableFlags Flags)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableString(DefaultValue)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableString(DefaultValue, Flags, HelpString)))
     {
         return NewObject->AsVariable();
     }
@@ -421,9 +508,9 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, int32 DefaultValue)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, int32 DefaultValue, EConsoleVariableFlags Flags)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableInt32(DefaultValue)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableInt32(DefaultValue, Flags, HelpString)))
     {
         return NewObject->AsVariable();
     }
@@ -431,9 +518,9 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, int32 De
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, float DefaultValue)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, float DefaultValue, EConsoleVariableFlags Flags)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableFloat(DefaultValue)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableFloat(DefaultValue, Flags, HelpString)))
     {
         return NewObject->AsVariable();
     }
@@ -441,9 +528,9 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, float De
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, bool bDefaultValue)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, bool bDefaultValue, EConsoleVariableFlags Flags)
 {
-    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableBool(bDefaultValue)))
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableBool(bDefaultValue, Flags, HelpString)))
     {
         return NewObject->AsVariable();
     }
@@ -519,15 +606,9 @@ IConsoleObject* FConsoleManager::FindConsoleObject(const CHAR* InName) const
     }
 }
 
-void FConsoleManager::PrintMessage(const FString& Message, EConsoleSeverity Severity)
-{
-    ConsoleMessages.Emplace(Message, Severity);
-}
-
 void FConsoleManager::ClearHistory()
 {
     History.Clear();
-    ConsoleMessages.Clear();
 }
 
 void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates)
@@ -559,9 +640,9 @@ void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TP
     }
 }
 
-void FConsoleManager::Execute(const FString& Command)
+void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString& Command)
 {
-    PrintMessage(Command, EConsoleSeverity::Info);
+    OutputDevice.Log(ELogSeverity::Info, Command);
 
     // Erase history
     History.Emplace(Command);
@@ -576,7 +657,7 @@ void FConsoleManager::Execute(const FString& Command)
         IConsoleCommand* CommandObject = FindConsoleCommand(Command.GetCString());
         if (!CommandObject)
         {
-            PrintMessage("'" + Command + "' is not a registered command", EConsoleSeverity::Error);
+            OutputDevice.Log(ELogSeverity::Error, "'" + Command + "' is not a registered command");
         }
         else
         {
@@ -590,34 +671,34 @@ void FConsoleManager::Execute(const FString& Command)
         IConsoleVariable* VariableObject = FindConsoleVariable(VariableName.GetCString());
         if (!VariableObject)
         {
-            PrintMessage("'" + Command + "' is not a registered variable", EConsoleSeverity::Error);
+            OutputDevice.Log(ELogSeverity::Error, "'" + Command + "' is not a registered variable");
             return;
         }
 
         Pos++;
 
         const FString Value(Command.GetCString() + Pos, Command.GetLength() - Pos);
-        if (std::regex_match(Value.GetCString(), std::regex("[-]?[0-9]+")))
+        if (TTryParseType<int64>::TryParse(Value))
         {
-            VariableObject->SetString(Value);
+            VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
         }
-        else if (std::regex_match(Value.GetCString(), std::regex("[-]?[0-9]*[.][0-9]+")) && VariableObject->IsVariableFloat())
+        else if (TTryParseType<float>::TryParse(Value) && VariableObject->IsVariableFloat())
         {
-            VariableObject->SetString(Value);
+            VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
         }
-        else if (std::regex_match(Value.GetCString(), std::regex("(false)|(true)")) && VariableObject->IsVariableBool())
+        else if (TTryParseType<bool>::TryParse(Value) && VariableObject->IsVariableBool())
         {
-            VariableObject->SetString(Value);
+            VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
         }
         else
         {
             if (VariableObject->IsVariableString())
             {
-                VariableObject->SetString(Value);
+                VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
             }
             else
             {
-                PrintMessage("'" + Value + "' Is an invalid value for '" + VariableName + "'", EConsoleSeverity::Error);
+                OutputDevice.Log(ELogSeverity::Error, "'" + Value + "' Is an invalid value for '" + VariableName + "'");
             }
         }
     }
@@ -637,6 +718,25 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObje
     auto Result = ConsoleObjects.insert(std::make_pair(Name, Object));
     if (Result.second)
     {
+        // TODO: Refactor this, right now it only works with a single ConfigFile
+        if (IConsoleVariable* Variable = Object->AsVariable())
+        {
+            FStringView CommandLineValue;
+            if (FCommandLine::Parse(InName, CommandLineValue))
+            {
+                const FString Value = FString(CommandLineValue);
+                Variable->SetString(Value, EConsoleVariableFlags::SetByCommandLine);
+            }
+            else if (GConfig)
+            {
+                FString Value;
+                if (GConfig->GetString("", InName, Value))
+                {
+                    Variable->SetString(Value, EConsoleVariableFlags::SetByConfigFile);
+                }
+            }
+        }
+
         LOG_INFO("Registered ConsoleObject '%s'", Name.GetCString());
         return Result.first->second;
     }

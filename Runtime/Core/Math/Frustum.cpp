@@ -7,6 +7,8 @@ FFrustum::FFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Project
     Create(FarPlane, View, Projection);
 }
 
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
 void FFrustum::Create(float FarPlane, const FMatrix4& InView, const FMatrix4& InProjection)
 {
     // Create the frustum Matrix from the view Matrix and updated projection Matrix.
@@ -74,6 +76,8 @@ void FFrustum::Create(float FarPlane, const FMatrix4& InView, const FMatrix4& In
         Points[Corner] = InverseViewProjection.TransformCoord(FrustumCorners[Corner]);
     }
 }
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING
 
 bool FFrustum::CheckAABB(const FAABB& Box) const
 {

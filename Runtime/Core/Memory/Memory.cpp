@@ -6,39 +6,69 @@
 #include <cstdlib>
 #include <cstring>
 
-#ifdef PLATFORM_WINDOWS
-#include <crtdbg.h>
+#if DEBUG_BUILD
+    #define USE_DEBUG_MALLOC (0)
+#else
+    #define USE_DEBUG_MALLOC (0)
 #endif
+
+#if DEBUG_BUILD
+    #define TRACK_MALLOC_CALLSTACK (0)
+#else
+    #define TRACK_MALLOC_CALLSTACK (0)
+#endif
+
+static void CreateMalloc()
+{
+    CHECK(GMalloc == nullptr);
+
+    if (!GMalloc)
+    {
+        GMalloc = new FMallocANSI();
+        if CONSTEXPR(USE_DEBUG_MALLOC)
+        {
+            GMalloc = new FMallocLeakTracker(GMalloc);
+        }
+        else if CONSTEXPR(TRACK_MALLOC_CALLSTACK)
+        {
+            GMalloc = new FMallocStackTraceTracker(GMalloc);
+        }
+    }
+
+    CHECK(GMalloc != nullptr);
+}
 
 void* FMemory::Malloc(uint64 Size) noexcept
 {
-    // Since malloc is not guaranteed to return nullptr, we check for it here
-    // Src: https://www.cplusplus.com/reference/cstdlib/malloc/
-    if (Size)
+    if (!GMalloc)
     {
-         return FMalloc::Get().Malloc(Size);
+        CreateMalloc();
+        CHECK(GMalloc != nullptr);
     }
-    else
-    {
-        return nullptr;
-    }
-}
 
-void* FMemory::MallocZeroed(uint64 Size) noexcept
-{
-    void* NewMemory = Malloc(Size);
-    Memzero(NewMemory, Size);
-    return NewMemory;
+    return GMalloc->Malloc(Size);
 }
 
 void* FMemory::Realloc(void* Block, uint64 Size) noexcept
 {
-    return FMalloc::Get().Realloc(Block, Size);
+    if (!GMalloc)
+    {
+        CreateMalloc();
+        CHECK(GMalloc != nullptr);
+    }
+
+    return GMalloc->Realloc(Block, Size);
 }
 
 void FMemory::Free(void* Block) noexcept
 {
-    FMalloc::Get().Free(Block);
+    if (!GMalloc)
+    {
+        CreateMalloc();
+        CHECK(GMalloc != nullptr);
+    }
+
+    return GMalloc->Free(Block);
 }
 
 void* FMemory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept

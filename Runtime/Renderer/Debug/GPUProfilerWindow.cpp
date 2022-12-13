@@ -1,14 +1,17 @@
 #include "GPUProfilerWindow.h"
 
 #include "Core/Time/Timer.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include "Application/WidgetUtilities.h"
 #include "Application/ApplicationInterface.h"
 
 #include <imgui.h>
 
-TAutoConsoleVariable<bool> GDrawGPUProfiler("Renderer.DrawGPUProfiler", false);
+TAutoConsoleVariable<bool> GDrawGPUProfiler(
+    "Renderer.DrawGPUProfiler",
+    "Enables the profiling on the GPU and displays the GPU Profiler window", 
+    false);
 
 TSharedRef<FGPUProfilerWindow> FGPUProfilerWindow::Create()
 {
@@ -222,5 +225,5 @@ void FGPUProfilerWindow::DrawWindow()
 
     ImGui::End();
 
-    GDrawGPUProfiler->SetAsBool(bTempDrawProfiler);
+    GDrawGPUProfiler->SetAsBool(bTempDrawProfiler, EConsoleVariableFlags::SetByCode);
 }

@@ -77,6 +77,23 @@
 // Define the rest of the defines to a default value
 #include "CompilerDefault.h"
 
+
+// Disable unreferenced variable warning
+#if !defined(DISABLE_UNREFERENCED_VARIABLE_WARNING)
+    #define DISABLE_UNREFERENCED_VARIABLE_WARNING                  \
+        _Pragma("clang diagnostic push")                           \
+        _Pragma("clang diagnostic ignored \"-Wunused-parameter\"") 
+    #define ENABLE_UNREFERENCED_VARIABLE_WARNING \
+        _Pragma("clang diagnostic pop")
+#endif
+
+// TODO: Finish up
+// Disable unreachable code warning
+#if !defined(DISABLE_UNREACHABLE_CODE_WARNING)
+    #define DISABLE_UNREACHABLE_CODE_WARNING
+    #define ENABLE_UNREACHABLE_CODE_WARNING
+#endif
+
 #else
     #error "Clang Compiler-file included in non Clang- compiler"
 #endif

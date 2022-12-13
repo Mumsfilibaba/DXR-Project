@@ -37,9 +37,11 @@ public:
 
     virtual FIntVector2 GetCursorPosition() const;
 
+    void ResetState();
+
     FORCEINLINE FKeyState GetKeyState(EKey KeyCode) const
     {
-        int32 Index = GetKeyStateIndexFromKeyCode(KeyCode);
+        const int32 Index = GetKeyStateIndexFromKeyCode(KeyCode);
         if (Index < 0)
         {
             return FKeyState(KeyCode);
@@ -52,7 +54,7 @@ public:
 
     FORCEINLINE FMouseButtonState GetMouseButtonState(EMouseButton Button) const
     {
-        int32 Index = GetMouseButtonStateIndexFromMouseButton(Button);
+        const int32 Index = GetMouseButtonStateIndexFromMouseButton(Button);
         if (Index < 0)
         {
             return FMouseButtonState(Button);
@@ -112,7 +114,7 @@ public:
 private:
     FUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
 
-     /** @brief - Get the index in the key-state array */
+    /** @brief - Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const
     {
         FKeyState TmpState(KeyCode);
@@ -122,7 +124,7 @@ private:
         });
     }
 
-     /** @brief - Get the index in the key-state array */
+    /** @brief - Get the index in the key-state array */
     FORCEINLINE int32 GetMouseButtonStateIndexFromMouseButton(EMouseButton Button) const
     {
         FMouseButtonState TmpState(Button);
@@ -136,6 +138,6 @@ private:
     
     TSharedPtr<ICursor>       Cursor;
 
-    TArray<FKeyState>         KeyStates; // TODO: Use a map instead? 
+    TArray<FKeyState>         KeyStates;
     TArray<FMouseButtonState> MouseButtonStates;
 };

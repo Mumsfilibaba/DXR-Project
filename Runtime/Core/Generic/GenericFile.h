@@ -2,13 +2,7 @@
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
 
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(PLATFORM_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 
 struct IFileHandle
@@ -116,6 +110,8 @@ private:
 
 struct FGenericFile
 {
+    static void ObtainRelativePath(const FString& Path);
+
     static FORCEINLINE IFileHandle* OpenForRead(const FString& Filename) 
     {
         return nullptr;
@@ -125,10 +121,20 @@ struct FGenericFile
     {
         return nullptr;
     }
+
+    static FORCEINLINE FString GetCurrentDirectory()
+    {
+        return FString();
+    }
+
+    static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
+    {
+        return false;
+    }
 };
 
 
-struct FFileHelpers
+class CORE_API FFileHelpers
 {
 public:
     static bool ReadFile(IFileHandle* File, TArray<uint8>& OutData)
@@ -191,8 +197,4 @@ private:
     }
 };
 
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(PLATFORM_COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

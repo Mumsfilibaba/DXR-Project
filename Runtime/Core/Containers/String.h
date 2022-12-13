@@ -168,7 +168,7 @@ public:
         else if (!Data.IsEmpty())
         {
             Data.Reset(1);
-            Data[0] = TChar<CharType>::Zero;
+            Data[0] = TChar<CharType>::Null;
         }
     }
     
@@ -185,7 +185,7 @@ public:
 
         if (CharType* TempData = Data.GetData())
         {
-            TempData[0] = TChar<CharType>::Zero;
+            TempData[0] = TChar<CharType>::Null;
         }
     }
 
@@ -204,7 +204,7 @@ public:
         if (CharType* TempData = Data.GetData())
         {
             TCString<CharType>::Strnset(TempData, CharToFill, NewLength);
-            TempData[NewLength] = TChar<CharType>::Zero;
+            TempData[NewLength] = TChar<CharType>::Null;
         }
     }
 
@@ -223,7 +223,7 @@ public:
         if (CharType* TempData = Data.GetData())
         {
             TCString<CharType>::Strncpy(TempData, InString, InLength);
-            TempData[InLength] = TChar<CharType>::Zero;
+            TempData[InLength] = TChar<CharType>::Null;
         }
     }
 
@@ -260,7 +260,7 @@ public:
 
         CharType* TempData = Data.GetData();
         TempData[PreviousLength]     = Char;
-        TempData[PreviousLength + 1] = TChar<CharType>::Zero;
+        TempData[PreviousLength + 1] = TChar<CharType>::Null;
     }
 
     /**
@@ -297,7 +297,7 @@ public:
 
         CharType* TempData = Data.GetData() + PreviousLength;
         TCString<CharType>::Strncpy(TempData, InString, InLength);
-        TempData[InLength] = TChar<CharType>::Zero;
+        TempData[InLength] = TChar<CharType>::Null;
     }
 
     /**
@@ -311,7 +311,7 @@ public:
 
         if (CharType* TempData = Data.GetData())
         {
-            TempData[NewLength] = TChar<CharType>::Zero;
+            TempData[NewLength] = TChar<CharType>::Null;
         }
     }
 
@@ -328,7 +328,7 @@ public:
 
         if (CharType* TempData = Data.GetData())
         {
-            TempData[NewLength] = TChar<CharType>::Zero;
+            TempData[NewLength] = TChar<CharType>::Null;
         }
     }
 
@@ -390,7 +390,7 @@ public:
             FMemory::Free(DynamicBuffer);
         }
 
-        Data.Emplace(TChar<CharType>::Zero);
+        Data.Emplace(TChar<CharType>::Null);
     }
 
     /**
@@ -427,7 +427,7 @@ public:
             FMemory::Free(DynamicBuffer);
         }
 
-        Data.Emplace(TChar<CharType>::Zero);
+        Data.Emplace(TChar<CharType>::Null);
     }
 
     /**
@@ -568,7 +568,7 @@ public:
         if (Count > 1)
         {
             Data.PopRange(Count);
-            Data.Emplace(TChar<CharType>::Zero);
+            Data.Emplace(TChar<CharType>::Null);
         }
     }
 
@@ -1269,7 +1269,7 @@ public:
         if (Length)
         {
             Data.Pop();
-            Data[Length] = TChar<CharType>::Zero;
+            Data[Length] = TChar<CharType>::Null;
         }
     }
 
@@ -1595,7 +1595,7 @@ public:
         TCString<CharType>::Strncpy(TempData, LHS.GetCString(), LHSLength);
         TCString<CharType>::Strncpy(TempData + LHSLength, RHS.GetCString(), RHSLength);
 
-        TempData[CombinedLength] = TChar<CharType>::Zero;
+        TempData[CombinedLength] = TChar<CharType>::Null;
         return NewString;
     }
 
@@ -1611,7 +1611,7 @@ public:
         TCString<CharType>::Strncpy(TempData, LHS, LHSLength);
         TCString<CharType>::Strncpy(TempData + LHSLength, RHS.GetCString(), RHSLength);
 
-        TempData[CombinedLength] = TChar<CharType>::Zero;
+        TempData[CombinedLength] = TChar<CharType>::Null;
         return NewString;
     }
 
@@ -1627,7 +1627,7 @@ public:
         TCString<CharType>::Strncpy(TempData, LHS.GetCString(), LHSLength);
         TCString<CharType>::Strncpy(TempData + LHSLength, RHS, RHSLength);
 
-        TempData[CombinedLength] = TChar<CharType>::Zero;
+        TempData[CombinedLength] = TChar<CharType>::Null;
         return NewString;
     }
 
@@ -1642,7 +1642,7 @@ public:
         TempData[0] = LHS;
 
         TCString<CharType>::Strncpy(TempData + 1, RHS.GetCString(), RHSLength);
-        TempData[CombinedLength] = TChar<CharType>::Zero;
+        TempData[CombinedLength] = TChar<CharType>::Null;
         return NewString;
     }
 
@@ -1657,7 +1657,7 @@ public:
 
         TCString<CharType>::Strncpy(TempData, LHS.GetCString(), LHSLength);
         TempData[LHSLength]      = RHS;
-        TempData[CombinedLength] = TChar<CharType>::Zero;
+        TempData[CombinedLength] = TChar<CharType>::Null;
         return NewString;
     }
     
@@ -1840,7 +1840,7 @@ private:
 
         CharType* TempData = Data.GetData();
         TCString<CharType>::Strncpy(TempData, InString, InLength);
-        TempData[InLength] = TChar<CharType>::Zero;
+        TempData[InLength] = TChar<CharType>::Null;
     }
 
     FORCEINLINE void MoveFrom(TString&& Other) noexcept
@@ -2070,12 +2070,12 @@ FORCEINLINE bool TTypeFromString<double>::FromString(const FString& String, doub
 template<>
 FORCEINLINE bool TTypeFromString<bool>::FromString(const FString& String, bool& OutElement)
 {
-    if (FCString::Stricmp(String.GetCString(), "true"))
+    if (FCString::Stricmp(String.GetCString(), "true") == 0)
     {
         OutElement = true;
         return true;
     }
-    else if (FCString::Stricmp(String.GetCString(), "false"))
+    else if (FCString::Stricmp(String.GetCString(), "false") == 0)
     {
         OutElement = false;
         return true;
@@ -2186,12 +2186,12 @@ FORCEINLINE bool TTypeFromStringWide<double>::FromString(const FStringWide& Stri
 template<>
 FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const FStringWide& String, bool& OutElement)
 {
-    if (FCStringWide::Stricmp(String.GetCString(), L"true"))
+    if (FCStringWide::Stricmp(String.GetCString(), L"true") == 0)
     {
         OutElement = true;
         return true;
     }
-    else if (FCStringWide::Stricmp(String.GetCString(), L"false"))
+    else if (FCStringWide::Stricmp(String.GetCString(), L"false") == 0)
     {
         OutElement = false;
         return true;
@@ -2205,4 +2205,76 @@ FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const FStringWide& String
     }
 
     return false;
+}
+
+
+template<typename T>
+struct TTryParseType
+{
+    static FORCEINLINE bool TryParse(const FString& InString);
+};
+
+template<>
+FORCEINLINE bool TTryParseType<int32>::TryParse(const FString& InString)
+{
+    CHAR* End;
+    FCString::Strtoi(InString.GetCString(), &End, 10);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<uint32>::TryParse(const FString& InString)
+{
+	CHAR* End;
+	FCString::Strtoui(InString.GetCString(), &End, 10);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<int64>::TryParse(const FString& InString)
+{
+	CHAR* End;
+	FCString::Strtoi64(InString.GetCString(), &End, 10);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<uint64>::TryParse(const FString& InString)
+{
+	CHAR* End;
+	FCString::Strtoui64(InString.GetCString(), &End, 10);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<float>::TryParse(const FString& InString)
+{
+    CHAR* End;
+    FCString::Strtof(InString.GetCString(), &End);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<double>::TryParse(const FString& InString)
+{
+    CHAR* End;
+    FCString::Strtod(InString.GetCString(), &End);
+    return *End != 0;
+}
+
+template<>
+FORCEINLINE bool TTryParseType<bool>::TryParse(const FString& InString)
+{
+    if (FCString::Stricmp(InString.GetCString(), "true") == 0)
+    {
+        return true;
+    }
+    else if (FCString::Stricmp(InString.GetCString(), "false") == 0)
+    {
+        return true;
+    }
+
+    CHAR* End;
+    static_cast<bool>(FCString::Strtoi(InString.GetCString(), &End, 10));
+    return *End != 0;
 }

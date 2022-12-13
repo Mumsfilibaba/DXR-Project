@@ -87,7 +87,7 @@ public:
     
     virtual void RemoveWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& WindowMessageHandler) override final;
     
-    virtual TSharedPtr<ICursor> GetCursor() const override final { return PlatformApplication->GetCursor(); }
+    virtual TSharedPtr<ICursor> GetCursor() const override final { return PlatformApplication->Cursor; }
 
 public:
     virtual void HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState) override final;

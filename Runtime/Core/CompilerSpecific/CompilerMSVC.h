@@ -76,6 +76,27 @@
 // Define the rest of the defines to a default value
 #include "CompilerDefault.h"
 
+
+// Disable unreferenced variable warning
+#if !defined(DISABLE_UNREFERENCED_VARIABLE_WARNING)
+    #define DISABLE_UNREFERENCED_VARIABLE_WARNING \
+        _Pragma("warning(push)")                  \
+        _Pragma("warning(disable : 4100)") 
+    #define ENABLE_UNREFERENCED_VARIABLE_WARNING \
+        _Pragma("warning(pop)")
+#endif
+
+ // Disable unreachable code warning
+#if !defined(DISABLE_UNREACHABLE_CODE_WARNING)
+    #define DISABLE_UNREACHABLE_CODE_WARNING \
+        _Pragma("warning(push)")             \
+        _Pragma("warning(disable : 4702)")
+
+    #define ENABLE_UNREACHABLE_CODE_WARNING \
+        _Pragma("warning(pop)")
+#endif
+
+
 // Disable some warnings
 #pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
 #pragma warning(disable : 4324) // structure was padded due to alignment specifier

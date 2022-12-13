@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/CommandLine.h"
 #include "Core/Memory/Malloc.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -38,9 +39,10 @@ FORCEINLINE bool EngineRelease()
     return GEngineLoop.Release();
 }
 
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FDebuggerOutputDevice
-    : public FOutputDevice
+    : public IOutputDevice
 {
     virtual void Log(const FString& Message) 
     {
@@ -52,16 +54,16 @@ struct FDebuggerOutputDevice
     {
         Log(Message);
     }
-
-    virtual void Flush() override final { }
 };
 
+ENABLE_UNREFERENCED_VARIABLE_WARNING
+
 // NOTE: OutputDevice for the debugger
-FOutputDevice* GDebugOutput = nullptr;
+IOutputDevice* GDebugOutput = nullptr;
 
 
 // Application EntryPoint
-int32 GenericMain()
+int32 GenericMain(const CHAR* Args[], int32 NumArgs)
 {
     struct FGenericMainGuard
     {
@@ -75,7 +77,7 @@ int32 GenericMain()
             // Only report the leaking to the debugger output device
             if (FPlatformMisc::IsDebuggerPresent())
             {
-                FMalloc::Get().DumpAllocations(GDebugOutput);
+                GMalloc->DumpAllocations(GDebugOutput);
             }
         }
     };
@@ -91,19 +93,26 @@ int32 GenericMain()
             FOutputDeviceLogger::Get()->AddOutputDevice(GDebugOutput);
         }
 
+
+        if (!FCommandLine::Initialize(Args, NumArgs))
+        {
+            LOG_WARNING("Invalid CommandLine");
+        }
+
+
         if (!EnginePreInit())
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::PreInit Failed");
             return -1;
         }
 
-        FMalloc::Get().DumpAllocations(GDebugOutput);
 
         if (!EngineInit())
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Init Failed");
             return -1;
         }
+
 
         // Run loop
         while (FApplicationInterface::Get().IsRunning())

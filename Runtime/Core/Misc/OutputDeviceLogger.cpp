@@ -19,7 +19,7 @@ FOutputDeviceLogger* FOutputDeviceLogger::Get()
 
 void FOutputDeviceLogger::Log(const FString& Message)
 {
-    TArray<FOutputDevice*> CurrentOutputDevices;
+    TArray<IOutputDevice*> CurrentOutputDevices;
     {
         TScopedLock Lock(OutputDevicesCS);
         CurrentOutputDevices = OutputDevices;
@@ -27,7 +27,7 @@ void FOutputDeviceLogger::Log(const FString& Message)
 
     if (!CurrentOutputDevices.IsEmpty())
     {
-        for (FOutputDevice* OutputDevice : CurrentOutputDevices)
+        for (IOutputDevice* OutputDevice : CurrentOutputDevices)
         {
             OutputDevice->Log(Message);
         }
@@ -36,7 +36,7 @@ void FOutputDeviceLogger::Log(const FString& Message)
 
 void FOutputDeviceLogger::Log(ELogSeverity Severity, const FString& Message)
 {
-    TArray<FOutputDevice*> CurrentOutputDevices;
+    TArray<IOutputDevice*> CurrentOutputDevices;
     {
         TScopedLock Lock(OutputDevicesCS);
         CurrentOutputDevices = OutputDevices;
@@ -44,7 +44,7 @@ void FOutputDeviceLogger::Log(ELogSeverity Severity, const FString& Message)
 
     if (!CurrentOutputDevices.IsEmpty())
     {
-        for (FOutputDevice* OutputDevice : CurrentOutputDevices)
+        for (IOutputDevice* OutputDevice : CurrentOutputDevices)
         {
             OutputDevice->Log(Severity, Message);
         }
@@ -53,7 +53,7 @@ void FOutputDeviceLogger::Log(ELogSeverity Severity, const FString& Message)
 
 void FOutputDeviceLogger::Flush()
 {
-    TArray<FOutputDevice*> CurrentOutputDevices;
+    TArray<IOutputDevice*> CurrentOutputDevices;
     {
         TScopedLock Lock(OutputDevicesCS);
         CurrentOutputDevices = OutputDevices;
@@ -61,7 +61,7 @@ void FOutputDeviceLogger::Flush()
 
     if (!CurrentOutputDevices.IsEmpty())
     {
-        for (FOutputDevice* OutputDevice : CurrentOutputDevices)
+        for (IOutputDevice* OutputDevice : CurrentOutputDevices)
         {
             OutputDevice->Flush();
         }

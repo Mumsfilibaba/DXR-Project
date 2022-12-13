@@ -2,8 +2,10 @@
 
 #include "Application/ApplicationInterface.h"
 
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
+#include "Core/Threading/ScopedLock.h"
 
 #include <imgui.h>
 
@@ -19,18 +21,31 @@ TSharedRef<FGameConsoleWindow> FGameConsoleWindow::Make()
 
 FGameConsoleWindow::FGameConsoleWindow()
     : FWindow()
+    , IOutputDevice()
     , InputHandler(MakeShared<FConsoleInputHandler>())
 {
+	if (auto OutputDeviceManager = FOutputDeviceLogger::Get())
+	{
+        OutputDeviceManager->AddOutputDevice(this);
+    }
+
     TextBuffer.Fill(0);
+}
+
+FGameConsoleWindow::~FGameConsoleWindow()
+{
+    if (auto OutputDeviceManager = FOutputDeviceLogger::Get())
+    {
+        OutputDeviceManager->RemoveOutputDevice(this);
+    }
 }
 
 void FGameConsoleWindow::Tick()
 {
-    FGenericWindowRef MainWindow = FApplicationInterface::Get().GetMainViewport();
-
-    const uint32 WindowWidth = MainWindow->GetWidth();
-    const float Width  = float(WindowWidth);
-    const float Height = 256.0f;
+    ImGuiIO& GuiIO = ImGui::GetIO();
+    const float Scale  = GuiIO.DisplayFramebufferScale.y;
+    const float Width  = float(GuiIO.DisplaySize.x);
+    const float Height = 256.0f * Scale;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
@@ -47,7 +62,7 @@ void FGameConsoleWindow::Tick()
         ImGuiWindowFlags_NoSavedSettings;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f * Scale, 10.0f * Scale));
 
     if (ImGui::Begin("Console Window", nullptr, StyleFlags))
     {
@@ -70,19 +85,18 @@ void FGameConsoleWindow::Tick()
             ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
             ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
 
-            const float Padding = 8.0f;
-            float VariableNameWidth = 30.0f;
-            float VariableValueWidth = 20.0f;
+            const float Padding = 8.0f * Scale;
+            float VariableNameWidth  = 30.0f * Scale;
+            float VariableValueWidth = 20.0f * Scale;
 
             // First find the maximum length of each column for the selectable
             Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
             {
                 VariableNameWidth = NMath::Max(VariableNameWidth, ImGui::CalcTextSize(Candidate.Second.GetCString()).x);
 
-                IConsoleVariable* Variable = Candidate.First->AsVariable();
-                if (Variable)
+                if (IConsoleVariable* Variable = Candidate.First->AsVariable())
                 {
-                    FString Value = Variable->GetString();
+                    const FString Value = Variable->GetString();
                     VariableValueWidth = NMath::Max(VariableValueWidth, ImGui::CalcTextSize(Value.GetCString()).x);
                 }
             });
@@ -117,41 +131,72 @@ void FGameConsoleWindow::Tick()
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
 
                 const CHAR* PostFix = "";
+                const CHAR* SetBy  = "";
 
                 // Value
-                IConsoleVariable* Variable = Candidate.First->AsVariable();
-                if (Variable)
+                static float PostFixSize = 
+                    NMath::Max(ImGui::CalcTextSize("Bool").x,
+                    NMath::Max(ImGui::CalcTextSize("Int").x,
+                    NMath::Max(ImGui::CalcTextSize("Float").x,
+                    ImGui::CalcTextSize("String").x)));
+
+                static float SetBySize = 
+                    NMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConstructor)).x,
+                    NMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCommandLine)).x,
+                    NMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConfigFile)).x,
+                    NMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCode)).x,
+                    ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConsole)).x))));
+
+                IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
+                if (ConsoleVariable)
                 {
-                    FString Value = Variable->GetString();
+                    const FString Value = ConsoleVariable->GetString();
                     ImGui::Text("%s", Value.GetCString());
 
-                    if (Variable->IsVariableBool())
+                    if (ConsoleVariable->IsVariableBool())
                     {
-                        PostFix = "Boolean";
+                        PostFix = "Bool";
                     }
-                    else if (Variable->IsVariableInt())
+                    else if (ConsoleVariable->IsVariableInt())
                     {
-                        PostFix = "Integer";
+                        PostFix = "Int";
                     }
-                    else if (Variable->IsVariableFloat())
+                    else if (ConsoleVariable->IsVariableFloat())
                     {
                         PostFix = "Float";
                     }
-                    else if (Variable->IsVariableString())
+                    else if (ConsoleVariable->IsVariableString())
                     {
                         PostFix = "String";
                     }
+
+                    const EConsoleVariableFlags VariableFlags = (ConsoleVariable->GetFlags() & EConsoleVariableFlags::SetByMask);
+                    SetBy = SetByFlagToString(VariableFlags);
                 }
                 else if (Candidate.First->AsCommand())
                 {
                     PostFix = "Command";
                 }
 
-                // Offset from the start is name + value 
-                ImGui::SameLine(VariableNameWidth + VariableValueWidth);
+                // Offset from the start is name + value
+                const float PostFixOffset = VariableNameWidth + VariableValueWidth;
+                ImGui::SameLine(PostFixOffset);
 
                 // PostFix
                 ImGui::Text("[%s]", PostFix);
+
+                const float SetByOffset = PostFixOffset + PostFixSize + 20.0f * Scale;
+                if (ConsoleVariable)
+                {
+                    ImGui::SameLine(SetByOffset);
+                    ImGui::Text("[%s]", SetBy);
+                }
+
+                const float HelpStringOffset = SetByOffset + SetBySize + 20.0f * Scale;
+                ImGui::SameLine(HelpStringOffset);
+
+                const CHAR* HelpString = Candidate.First->GetHelpString();
+                ImGui::Text(" [Help: %s]", HelpString);
 
                 ImGui::PopStyleColor();
 
@@ -173,19 +218,20 @@ void FGameConsoleWindow::Tick()
         }
         else
         {
-            const TArray<TPair<FString, EConsoleSeverity>>& ConsoleMessages = FConsoleManager::Get().GetMessages();
-            for (const TPair<FString, EConsoleSeverity>& Text : ConsoleMessages)
+            SCOPED_LOCK(MessagesCS);
+            
+            for (const TPair<FString, ELogSeverity>& Text : Messages)
             {
                 ImVec4 Color;
-                if (Text.Second == EConsoleSeverity::Info)
+                if (Text.Second == ELogSeverity::Info)
                 {
                     Color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
                 }
-                else if (Text.Second == EConsoleSeverity::Warning)
+                else if (Text.Second == ELogSeverity::Warning)
                 {
                     Color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
                 }
-                else if (Text.Second == EConsoleSeverity::Error)
+                else if (Text.Second == ELogSeverity::Error)
                 {
                     Color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
                 }
@@ -207,17 +253,17 @@ void FGameConsoleWindow::Tick()
         // Draw the Input Sign for the text input 
         {
             ImVec2 CursorPos = ImGui::GetCursorScreenPos();
-            ImGui::SetCursorScreenPos(ImVec2(CursorPos.x, CursorPos.y + 2.0f));
+            ImGui::SetCursorScreenPos(ImVec2(CursorPos.x, CursorPos.y + 2.0f * Scale));
 
             ImGui::Text(">");
             ImGui::SameLine();
 
             CursorPos = ImGui::GetCursorScreenPos();
-            ImGui::SetCursorScreenPos(ImVec2(CursorPos.x, CursorPos.y - 2.0f));
+            ImGui::SetCursorScreenPos(ImVec2(CursorPos.x, CursorPos.y - 2.0f * Scale));
         }
 
         // Text Input
-        ImGui::PushItemWidth(Width - 32.0f);
+        ImGui::PushItemWidth(Width - 32.0f * Scale);
 
         const ImGuiInputTextFlags InputFlags =
             ImGuiInputTextFlags_EnterReturnsTrue |
@@ -255,7 +301,7 @@ void FGameConsoleWindow::Tick()
             else
             {
                 const FString Text = FString(TextBuffer.GetData());
-                FConsoleManager::Get().Execute(Text);
+                FConsoleManager::Get().ExecuteCommand(*this, Text);
 
                 TextBuffer[0] = 0;
                 bScrollDown = true;
@@ -291,13 +337,34 @@ bool FGameConsoleWindow::IsTickable()
     return bIsActive;
 }
 
+void FGameConsoleWindow::Log(const FString& Message)
+{
+    Log(ELogSeverity::Info, Message);
+}
+
+void FGameConsoleWindow::Log(ELogSeverity Severity, const FString& Message)
+{
+    SCOPED_LOCK(MessagesCS);
+
+    CONSTEXPR int32 MaxMessages = 100;
+
+    // Insert in the beginning to get the correct order
+    Messages.Push(MakePair<FString, ELogSeverity>(Message, Severity));
+
+    if (Messages.GetSize() > MaxMessages)
+    {
+        Messages.RemoveAt(0);
+    }
+
+    bScrollDown = true;
+}
+
 int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
 {
     if (bUpdateCursorPosition)
     {
         Data->CursorPos = int32(PopupSelectedText.GetLength());
         PopupSelectedText.Clear();
-
         bUpdateCursorPosition = false;
     }
 
@@ -305,7 +372,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
     {
     case ImGuiInputTextFlags_CallbackEdit:
     {
-        const CHAR* WordEnd = Data->Buf + Data->CursorPos;
+        const CHAR* WordEnd   = Data->Buf + Data->CursorPos;
         const CHAR* WordStart = WordEnd;
         while (WordStart > Data->Buf)
         {

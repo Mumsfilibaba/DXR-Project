@@ -3,7 +3,9 @@
 
 #include <Appkit/Appkit.h>
 
-extern int GenericMain();
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+extern int32 GenericMain(const CHAR* Args[], int32 NumArgs);
 
 class FMacApplication;
 
@@ -43,9 +45,6 @@ static int32 GEngineMainResult = 0;
 
 int main(int NumArgs, const CHAR** Args)
 {
-    UNREFERENCED_VARIABLE(NumArgs);
-    UNREFERENCED_VARIABLE(Args);
-    
     [NSApplication sharedApplication];
     [NSApplication sharedApplication].delegate = [FCocoaAppDelegate new];
     
@@ -56,3 +55,5 @@ int main(int NumArgs, const CHAR** Args)
     [[NSApplication sharedApplication] run];
     return GEngineMainResult;
 }
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING

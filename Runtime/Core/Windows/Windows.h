@@ -11,6 +11,10 @@
 #include <Windows.h>
 #include <windowsx.h>
 #include <sdkddkver.h>
+#include <shlwapi.h>
+
+// TODO: Wrap in define for Win 8.1 and above
+#include <shellscalingapi.h>
 
 #ifdef CreateWindow
     #undef CreateWindow
@@ -86,6 +90,10 @@
 
 #ifdef GetModuleHandle
     #undef GetModuleHandle
+#endif
+
+#ifdef GetCurrentDirectory
+    #undef GetCurrentDirectory
 #endif
 
 #ifdef NTDDI_VISTA

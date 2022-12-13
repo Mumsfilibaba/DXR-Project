@@ -5,11 +5,14 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include <spirv_cross_c.h>
 
-TAutoConsoleVariable<bool> CVarShaderDebug("RHI.ShaderCompiler.Debug", true);
+TAutoConsoleVariable<bool> CVarShaderDebug(
+    "RHI.ShaderCompiler.Debug",
+    "Enable debug information in the Shaders",
+    true);
 
 enum class EDXCPart
 {
@@ -171,6 +174,7 @@ FRHIShaderCompiler::~FRHIShaderCompiler()
 bool FRHIShaderCompiler::Create(const CHAR* InAssetFolderPath)
 {
     CHECK(GInstance == nullptr);
+
     GInstance = new FRHIShaderCompiler(InAssetFolderPath);
     if (!GInstance->Initialize())
     {
@@ -184,9 +188,11 @@ bool FRHIShaderCompiler::Create(const CHAR* InAssetFolderPath)
 
 void FRHIShaderCompiler::Destroy()
 {
-    CHECK(GInstance != nullptr);
-    delete GInstance;
-    GInstance = nullptr;
+    if (GInstance)
+    {
+        delete GInstance;
+        GInstance = nullptr;
+    }
 }
 
 bool FRHIShaderCompiler::Initialize()

@@ -1,12 +1,18 @@
 #include "DirectionalLight.h"
 
 #include "Core/Math/Math.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include "Engine/Scene/Camera.h"
 
-TAutoConsoleVariable<float> GSunSize("Scene.Lightning.Sun.Size", 0.05f);
-TAutoConsoleVariable<float> GCascadeSplitLambda("Scene.Lightning.CascadeSplitLambda", 1.0f);
+TAutoConsoleVariable<float> GSunSize(
+    "Scene.Lightning.Sun.Size",
+    "Sets the size of the sun, used to determine the penumbra for soft-shadows", 
+    0.05f);
+TAutoConsoleVariable<float> GCascadeSplitLambda(
+    "Scene.Lightning.CascadeSplitLambda",
+    "Determines how the Cascades should be split for the Cascaded Shadow Maps", 
+    1.0f);
 
 FDirectionalLight::FDirectionalLight()
     : FLight()
@@ -131,10 +137,10 @@ void FDirectionalLight::SetRotation(const FVector3& InRotation)
 
 void FDirectionalLight::SetCascadeSplitLambda(float InCascadeSplitLambda)
 {
-    GCascadeSplitLambda->SetAsFloat(InCascadeSplitLambda);
+    GCascadeSplitLambda->SetAsFloat(InCascadeSplitLambda, EConsoleVariableFlags::SetByCode);
 }
 
 void FDirectionalLight::SetSize(float InSize)
 {
-    GSunSize->SetAsFloat(InSize);
+    GSunSize->SetAsFloat(InSize, EConsoleVariableFlags::SetByCode);
 }

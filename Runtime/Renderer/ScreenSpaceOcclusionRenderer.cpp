@@ -8,14 +8,23 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 // TODO: Remove and replace. There are better and easier implementations to do yourself
 #include <random>
 
-TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAO.Radius", 0.2f);
-TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAO.Bias", 0.075f);
-TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAO.KernelSize", 16);
+TAutoConsoleVariable<float> GSSAORadius(
+    "Renderer.SSAO.Radius",
+    "Specifies the radius of the Screen-Space Ray-Trace in SSAO",
+    0.2f);
+TAutoConsoleVariable<float> GSSAOBias(
+    "Renderer.SSAO.Bias", 
+    "Specifies the bias when testing the Screen-Space Rays against the depth-buffer",
+    0.075f);
+TAutoConsoleVariable<int32> GSSAOKernelSize(
+    "Renderer.SSAO.KernelSize",
+    "Specifies the number of samples for each pixel",
+    16);
 
 bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
 {

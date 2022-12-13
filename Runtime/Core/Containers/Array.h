@@ -1518,7 +1518,6 @@ private:
     SizeType      ArrayCapacity;
 };
 
-
 template<
     typename T,
     typename AllocatorType>

@@ -1,5 +1,5 @@
 #pragma once 
-#include "Core/Core.h"
+#include "Core/Templates/CString.h"
 
 struct FParse
 {
@@ -34,6 +34,24 @@ struct FParse
     {
         const CHAR* TempStart = *Start;
         while (*TempStart != '\0' && *TempStart == ' ')
+            ++TempStart;
+
+        *Start = TempStart;
+    }
+
+    static FORCEINLINE void ParseAlnum(CHAR** Start)
+    {
+        CHAR* TempStart = *Start;
+        while (FChar::IsAlnum(*TempStart))
+            ++TempStart;
+
+        *Start = TempStart;
+    }
+
+    static FORCEINLINE void ParseAlnum(const CHAR** Start)
+    {
+        const CHAR* TempStart = *Start;
+        while (FChar::IsAlnum(*TempStart))
             ++TempStart;
 
         *Start = TempStart;

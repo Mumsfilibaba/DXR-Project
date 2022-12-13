@@ -2,10 +2,13 @@
 #include "D3D12CommandAllocator.h"
 #include "D3D12Device.h"
 
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
 
-TAutoConsoleVariable<bool> CVarEnableGPUTimeout("D3D12RHI.EnableGPUTimeout", true);
+TAutoConsoleVariable<bool> CVarEnableGPUTimeout(
+    "D3D12RHI.EnableGPUTimeout",
+    "Enables or disables the GPU timeout on all ID3D12CommandQueues",
+    true);
 
 FD3D12CommandListManager::FD3D12CommandListManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : FD3D12DeviceChild(InDevice)

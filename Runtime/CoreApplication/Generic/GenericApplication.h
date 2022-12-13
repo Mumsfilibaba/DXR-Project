@@ -6,20 +6,19 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/SharedRef.h"
 
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(PLATFORM_COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+struct FMonitorDesc
+{
+    float DisplayScaling = 1.0f;
+};
 
 class COREAPPLICATION_API FGenericApplication
 {
 public:
     FGenericApplication(const TSharedPtr<ICursor>& InCursor)
         : Cursor(InCursor)
-        , MessageListener(nullptr)
+        , MessageHandler(nullptr)
     { }
 
     virtual ~FGenericApplication() = default;
@@ -42,22 +41,19 @@ public:
     
     virtual FGenericWindowRef GetActiveWindow() const { return nullptr; }
 
+    virtual FMonitorDesc GetMonitorDescFromWindow(const FGenericWindowRef& Window) const { return FMonitorDesc{}; }
+
     virtual void SetMessageListener(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
     { 
-        MessageListener = InMessageHandler; 
+        MessageHandler = InMessageHandler; 
     }
 
-    TSharedPtr<FGenericApplicationMessageHandler> GetMessageListener() const { return MessageListener; }
+    TSharedPtr<FGenericApplicationMessageHandler> GetMessageListener() const { return MessageHandler; }
 
-    TSharedPtr<ICursor> GetCursor() const { return Cursor; }
+    const TSharedPtr<ICursor> Cursor;
 
 protected:
-    TSharedPtr<ICursor>                           Cursor;
-    TSharedPtr<FGenericApplicationMessageHandler> MessageListener;
+    TSharedPtr<FGenericApplicationMessageHandler> MessageHandler;
 };
 
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(PLATFORM_COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

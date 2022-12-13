@@ -17,7 +17,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/Console/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #include "Application/ApplicationInterface.h"
 
@@ -117,8 +117,12 @@ bool FEngineLoop::PreInit()
         return false;
     }
 
-    // Parse the main engine config
-    GConfig.ParseFile();
+    // Initialize the config system
+    if (!FConfig::Initialize())
+    {
+        LOG_ERROR("Failed to initialize EngineConfig");
+        return false;
+    }
 
 #if !PRODUCTION_BUILD
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
@@ -171,7 +175,6 @@ bool FEngineLoop::PreInit()
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return false;
     }
-
 
     // Initialize the RHI
     if (!RHIInitialize())
@@ -335,6 +338,8 @@ bool FEngineLoop::Release()
     FApplicationInterface::Release();
 
     FThreadManager::Release();
+
+    FConfig::Release();
 
     SAFE_DELETE(ConsoleWindow);
 

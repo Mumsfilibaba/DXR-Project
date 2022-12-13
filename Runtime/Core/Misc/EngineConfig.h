@@ -3,6 +3,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Map.h"
+#include "Core/Utilities/HashUtilities.h"
 
 struct FConfigValue
 {
@@ -14,13 +15,11 @@ struct FConfigValue
     FConfigValue& operator=(FConfigValue&& Other) = default;
     FConfigValue& operator=(const FConfigValue& Other) = default;
 
-     /** @brief - Create value from string */
     explicit FConfigValue(FString&& InString)
         : SavedValue(InString)
-        , CurrentValue(Move(InString))
+        , CurrentValue(::Move(InString))
     { }
 
-     /** @brief - Create value from string */
     explicit FConfigValue(const FString& InString)
         : SavedValue(InString)
         , CurrentValue(InString)
@@ -32,8 +31,19 @@ struct FConfigValue
      /** @brief - Sets the current value to the saved value */
     FORCEINLINE void SaveCurrent() { SavedValue = CurrentValue; }
 
+    bool operator==(const FConfigValue& Other) const 
+    {
+        return (SavedValue == Other.SavedValue) && (CurrentValue == Other.CurrentValue);
+    }
+
+    bool operator!=(const FConfigValue& Other) const
+    {
+        return !(*this == Other);
+    }
+
      /** @brief - Current value in the config file */
     FString SavedValue;
+
      /** @brief - Current value in the runtime, this will be saved when the file is flushed to disk */
     FString CurrentValue;
 };
@@ -41,8 +51,6 @@ struct FConfigValue
 
 struct CORE_API FConfigSection
 {
-    typedef TMap<FString, FConfigValue, FStringHasher> FConfigValueMap;
-
     FConfigSection();
     FConfigSection(const CHAR* InName);
 
@@ -64,24 +72,39 @@ struct CORE_API FConfigSection
     /** @brief - Dump the values to a string */
     void DumpToString(FString& OutString);
 
-private:
-    FString         Name;
-    FConfigValueMap Values;
+    bool operator==(const FConfigSection& Other) const
+    {
+        return (Name == Other.Name) && (Values == Other.Values);
+    }
+
+    bool operator!=(const FConfigSection& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    FString                     Name;
+    TMap<FString, FConfigValue> Values;
 };
 
 
-class CORE_API FConfigFile
+struct CORE_API FConfigFile
 {
-    typedef TMap<FString, FConfigSection, FStringHasher> FConfigSectionMap;
+    FConfigFile()
+        : Filename()
+        , Sections()
+    { }
 
-public:
-    FConfigFile(const CHAR* Filename);
+    /** @brief - Looks up a section and returns nullptr when not found */
+    FConfigSection* FindSection(const CHAR* SectionName);
+    
+    /** @brief - Looks up a section and adds it when not found */
+    FConfigSection* FindOrAddSection(const CHAR* SectionName);
 
-     /** @brief - Loads the file and parses its contents */
-    bool ParseFile();
+    FConfigValue* FindValue(const CHAR* Name);
+    FConfigValue* FindValue(const CHAR* SectionName, const CHAR* Name);
 
-     /** @brief - Saves the content to the file */
-    bool SaveFile();
+    /** @brief - Combines this config-file with another */
+    void Combine(const FConfigFile& ConfigFile);
 
      /** @brief - Set a string from the Engine config */
     bool SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue);
@@ -107,15 +130,47 @@ public:
      /** @brief - Retrieve a boolean from the Engine config */
     bool GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue);
 
-private:
-    FConfigSection* FindSection(const CHAR* SectionName);
-    FConfigSection* FindOrAddSection(const CHAR* SectionName);
+	/** @brief - Saves the content to the file */
+	bool WriteToFile();
 
-    FConfigValue*   FindValue(const CHAR* Name);
-    FConfigValue*   FindValue(const CHAR* SectionName, const CHAR* Name);
+	/** @brief - Prints the content into a string */
+	void DumpToString(FString& OutString);
 
-    FString           Filename;
-    FConfigSectionMap Sections;
+    bool operator==(const FConfigFile& Other) const
+    {
+        return (Filename == Other.Filename) && (Sections == Other.Sections);
+    }
+
+    bool operator!=(const FConfigFile& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    FString                       Filename;
+    TMap<FString, FConfigSection> Sections;
 };
 
-extern CORE_API FConfigFile GConfig;
+
+extern CORE_API FConfigFile* GConfig;
+
+class CORE_API FConfig
+{
+    FConfig();
+    ~FConfig() = default;
+
+public:
+    static bool Initialize();
+    static void Release();
+
+    FConfigFile* LoadFile(const FString& Filename);
+    FConfigFile* FindFile(const FString& Filename);
+    
+    void LoadConsoleVariables();
+
+private:
+    FConfigFile* AddConfigFile(const FString& Filename);
+    
+    TMap<FString, FConfigFile> ConfigFiles;
+
+    static FConfig* GInstance;
+};
