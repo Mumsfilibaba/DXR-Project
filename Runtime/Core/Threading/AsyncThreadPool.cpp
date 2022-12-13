@@ -54,8 +54,6 @@ void FAsyncWorkThread::WakeUpAndStartTask(IAsyncTask* NewTask)
     CHECK(NewTask != nullptr);
     CHECK(CurrentTask == nullptr);
 
-    LOG_INFO("[%p] [%llu] WakeUpAndStartTask", this, reinterpret_cast<uint64>(FPlatformThreadMisc::GetThreadHandle()));
-
     CurrentTask = NewTask;
     FPlatformMisc::MemoryBarrier();
 

@@ -13,7 +13,7 @@
 #endif
 
 #if DEBUG_BUILD
-    #define TRACK_MALLOC_CALLSTACK (1)
+    #define TRACK_MALLOC_CALLSTACK (0)
 #else
     #define TRACK_MALLOC_CALLSTACK (0)
 #endif
