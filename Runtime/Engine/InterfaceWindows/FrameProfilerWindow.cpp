@@ -4,7 +4,7 @@
 #include "Application/ApplicationInterface.h"
 
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Time/Timer.h"
+#include "Core/Time/Stopwatch.h"
 
 #include <imgui.h>
 

@@ -1,14 +1,14 @@
-#include "Timer.h"
+#include "Stopwatch.h"
 
 #include "Core/Platform/PlatformTime.h"
 
-FTimer::FTimer()
+FStopwatch::FStopwatch()
 {
     Frequency = FPlatformTime::QueryPerformanceFrequency();
     Tick();
 }
 
-void FTimer::Tick()
+void FStopwatch::Tick()
 {
     const uint64 Now = FPlatformTime::QueryPerformanceCounter();
     

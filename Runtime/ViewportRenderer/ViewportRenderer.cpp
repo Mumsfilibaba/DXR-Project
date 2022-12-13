@@ -1,6 +1,6 @@
 #include "ViewportRenderer.h"
 
-#include "Core/Time/Timer.h"
+#include "Core/Time/Stopwatch.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Containers/Array.h"
 

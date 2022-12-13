@@ -1,6 +1,6 @@
 #include "GPUProfilerWindow.h"
 
-#include "Core/Time/Timer.h"
+#include "Core/Time/Stopwatch.h"
 #include "Core/Misc/ConsoleManager.h"
 
 #include "Application/WidgetUtilities.h"

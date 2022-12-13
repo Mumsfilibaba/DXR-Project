@@ -1,11 +1,11 @@
 #pragma once
 #include "Timespan.h"
 
-class CORE_API FTimer
+class CORE_API FStopwatch
 {
 public:
-    FTimer();
-    ~FTimer() = default;
+    FStopwatch();
+    ~FStopwatch() = default;
 
     /** @brief - Measure time between this and last call to tick */
     void Tick();
@@ -31,6 +31,6 @@ private:
     FTimespan TotalTime;
     FTimespan DeltaTime;
 
-    uint64     LastTime  = 0;
-    uint64     Frequency = 0;
+    uint64 LastTime  = 0;
+    uint64 Frequency = 0;
 };

@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Time/Timer.h"
+#include "Core/Time/Stopwatch.h"
 
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIResources.h"
@@ -84,7 +84,7 @@ struct FProfileSample
 
     TStaticArray<float, NUM_PROFILER_SAMPLES> Samples;
 
-    FTimer Clock;
+    FStopwatch Clock;
 
     float Max = TNumericLimits<float>::Lowest();
     float Min = TNumericLimits<float>::Max();
@@ -148,7 +148,7 @@ private:
 
     FProfileSample CPUFrameTime;
 
-    FTimer Clock;
+    FStopwatch Clock;
 
     int32 CurrentFps = 0;
     int32 Fps        = 0;

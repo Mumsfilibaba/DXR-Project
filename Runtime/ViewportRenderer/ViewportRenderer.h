@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/SharedRef.h"
-#include "Core/Time/Timer.h"
+#include "Core/Time/Stopwatch.h"
 
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShader.h"

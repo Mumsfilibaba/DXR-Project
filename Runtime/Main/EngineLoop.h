@@ -1,7 +1,7 @@
 #pragma once
 #include "IEngineLoop.h"
 
-#include "Core/Time/Timer.h"
+#include "Core/Time/Stopwatch.h"
 
 struct FOutputDeviceConsole;
 
@@ -28,6 +28,6 @@ public:
     virtual bool Release() override final;
 
 private:
-    FTimer                FrameTimer;
+    FStopwatch            FrameTimer;
     FOutputDeviceConsole* ConsoleWindow;
 };

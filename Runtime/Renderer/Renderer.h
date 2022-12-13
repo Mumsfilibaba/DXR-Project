@@ -9,7 +9,7 @@
 #include "DebugRenderer.h"
 #include "TemporalAA.h"
 
-#include "Core/Time/Timer.h"
+#include "Core/Time/Stopwatch.h"
 #include "Core/Threading/AsyncTask.h"
 
 #include "Engine/Scene/Actor.h"
