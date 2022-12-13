@@ -1,10 +1,9 @@
 #pragma once
 #include "Core/Containers/StaticArray.h"
 #include "Core/Input/InputCodes.h"
-#include "Core/Input/Generic/GenericKeyMapping.h"
+#include "Core/Generic/GenericKeyMapping.h"
 
-
-class FMacKeyMapping : public FGenericKeyMapping
+class CORE_API FMacKeyMapping : public FGenericKeyMapping
 {
     enum { kNumKeys = 256 };
 

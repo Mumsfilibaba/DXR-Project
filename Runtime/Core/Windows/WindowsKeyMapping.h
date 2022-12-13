@@ -1,10 +1,8 @@
 #pragma once
-
 #include "Core/Core.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Input/InputCodes.h"
-#include "Core/Input/Generic/GenericKeyMapping.h"
-
+#include "Core/Generic/GenericKeyMapping.h"
 
 class CORE_API FWindowsKeyMapping 
     : public FGenericKeyMapping

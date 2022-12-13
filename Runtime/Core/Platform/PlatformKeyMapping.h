@@ -1,12 +1,12 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-    #include "Core/Input/Windows/WindowsKeyMapping.h"
+    #include "Core/Windows/WindowsKeyMapping.h"
     typedef FWindowsKeyMapping FPlatformKeyMapping;
 #elif PLATFORM_MACOS
-    #include "Core/Input/Mac/MacKeyMapping.h"
+    #include "Core/Mac/MacKeyMapping.h"
     typedef FMacKeyMapping FPlatformKeyMapping;
 #else
-    #include "Core/Input/Generic/GenericKeyMapping.h"
+    #include "Core/Generic/GenericKeyMapping.h"
     typedef FGenericKeyMapping FPlatformKeyMapping;
 #endif

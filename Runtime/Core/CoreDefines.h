@@ -163,13 +163,13 @@
 #define STANDARD_ALIGNMENT (__STDCPP_DEFAULT_NEW_ALIGNMENT__)
 
 #if PLATFORM_COMPILER_MSVC
-    #include "Core/CompilerSpecific/CompilerMSVC.h"
+    #include "Core/CoreDefines/CoreDefinesMSVC.h"
 #elif PLATFORM_COMPILER_CLANG
-    #include "Core/CompilerSpecific/CompilerClang.h" 
+    #include "Core/CoreDefines/CoreDefinesClang.h" 
 #elif PLATFORM_COMPILER_GCC 
-    #include "Core/CompilerSpecific/CompilerGCC.h"
+    #include "Core/CoreDefines/CoreDefinesGCC.h"
 #elif PLATFORM_COMPILER_UNDEFINED 
-    #include "Core/CompilerSpecific/CompilerDefault.h"
+    #include "Core/CoreDefines/CoreDefinesDefault.h"
     #error "Unknown Compiler"
 #endif
 

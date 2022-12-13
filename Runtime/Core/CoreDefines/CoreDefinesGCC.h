@@ -70,7 +70,7 @@
 #endif
 
 // Define the rest of the defines to a default value
-#include "CompilerDefault.h"
+#include "CoreDefinesDefault.h"
 
 #else
     #error "GCC Compiler-file included in non GCC- compiler"

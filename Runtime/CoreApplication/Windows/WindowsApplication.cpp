@@ -1,7 +1,7 @@
 #include "WindowsApplication.h"
 
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Input/Windows/WindowsKeyMapping.h"
+#include "Core/Windows/WindowsKeyMapping.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"

@@ -181,8 +181,6 @@ bool FAsyncThreadPool::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
 {
     CHECK(NewTask != nullptr);
 
-    LOG_INFO("Submitting task");
-
     // We can disable the async work pool, execute tasks here in these cases
     if (!CVarEnableAsyncWork.GetValue())
     {

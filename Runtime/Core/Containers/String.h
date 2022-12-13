@@ -1993,8 +1993,9 @@ template<>
 FORCEINLINE bool TTypeFromString<int32>::FromString(const FString& String, int32& OutElement)
 {
     CHAR* End;
-    OutElement = FCString::Strtoi(String.GetCString(), &End, 10);
-    if (*End)
+    const CHAR* Start = String.GetCString();
+    OutElement = FCString::Strtoi(Start, &End, 10);
+    if (End != Start)
     {
         return true;
     }
@@ -2006,8 +2007,9 @@ template<>
 FORCEINLINE bool TTypeFromString<int64>::FromString(const FString& String, int64& OutElement)
 {
     CHAR* End;
-    OutElement = FCString::Strtoi64(String.GetCString(), &End, 10);
-    if (*End)
+    const CHAR* Start = String.GetCString();
+    OutElement = FCString::Strtoi64(Start, &End, 10);
+    if (End != Start)
     {
         return true;
     }
@@ -2019,8 +2021,9 @@ template<>
 FORCEINLINE bool TTypeFromString<uint32>::FromString(const FString& String, uint32& OutElement)
 {
     CHAR* End;
-    OutElement = FCString::Strtoui(String.GetCString(), &End, 10);
-    if (*End)
+    const CHAR* Start = String.GetCString();
+    OutElement = FCString::Strtoui(Start, &End, 10);
+    if (End != Start)
     {
         return true;
     }
@@ -2032,8 +2035,9 @@ template<>
 FORCEINLINE bool TTypeFromString<uint64>::FromString(const FString& String, uint64& OutElement)
 {
     CHAR* End;
-    OutElement = FCString::Strtoui64(String.GetCString(), &End, 10);
-    if (*End)
+    const CHAR* Start = String.GetCString();
+    OutElement = FCString::Strtoui64(Start, &End, 10);
+    if (End != Start)
     {
         return true;
     }
@@ -2045,8 +2049,9 @@ template<>
 FORCEINLINE bool TTypeFromString<float>::FromString(const FString& String, float& OutElement)
 {
     CHAR* End;
-    OutElement = FCString::Strtof(String.GetCString(), &End);
-    if (*End)
+    const CHAR* Start = String.GetCString();
+    OutElement = FCString::Strtof(Start, &End);
+    if (End != Start)
     {
         return true;
     }
@@ -2058,8 +2063,9 @@ template<>
 FORCEINLINE bool TTypeFromString<double>::FromString(const FString& String, double& OutElement)
 {
     CHAR* End;
-    OutElement = FCString::Strtod(String.GetCString(), &End);
-    if (*End)
+    const CHAR* Start = String.GetCString();
+    OutElement = FCString::Strtod(Start, &End);
+    if (End != Start)
     {
         return true;
     }
@@ -2070,20 +2076,21 @@ FORCEINLINE bool TTypeFromString<double>::FromString(const FString& String, doub
 template<>
 FORCEINLINE bool TTypeFromString<bool>::FromString(const FString& String, bool& OutElement)
 {
-    if (FCString::Stricmp(String.GetCString(), "true") == 0)
+    const CHAR* Start = String.GetCString();
+    if (FCString::Stricmp(Start, "true") == 0)
     {
         OutElement = true;
         return true;
     }
-    else if (FCString::Stricmp(String.GetCString(), "false") == 0)
+    else if (FCString::Stricmp(Start, "false") == 0)
     {
         OutElement = false;
         return true;
     }
 
     CHAR* End;
-    OutElement = static_cast<bool>(FCString::Strtoi(String.GetCString(), &End, 10));
-    if (*End)
+    OutElement = static_cast<bool>(FCString::Strtoi(Start, &End, 10));
+    if (End != Start)
     {
         return true;
     }
@@ -2109,8 +2116,9 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const FStringWide& String, int32& OutElement)
 {
     WIDECHAR* End;
-    OutElement = FCStringWide::Strtoi(String.GetCString(), &End, 10);
-    if (*End)
+    const WIDECHAR* Start = String.GetCString();
+    OutElement = FCStringWide::Strtoi(Start, &End, 10);
+    if (End != Start)
     {
         return true;
     }
@@ -2122,8 +2130,9 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const FStringWide& String, int64& OutElement)
 {
     WIDECHAR* End;
-    OutElement = FCStringWide::Strtoi64(String.GetCString(), &End, 10);
-    if (*End)
+    const WIDECHAR* Start = String.GetCString();
+    OutElement = FCStringWide::Strtoi64(Start, &End, 10);
+    if (End != Start)
     {
         return true;
     }
@@ -2135,11 +2144,12 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const FStringWide& String, uint32& OutElement)
 {
     WIDECHAR* End;
-    OutElement = FCStringWide::Strtoui(String.GetCString(), &End, 10);
-    if (*End)
-    {
-        return true;
-    }
+    const WIDECHAR* Start = String.GetCString();
+    OutElement = FCStringWide::Strtoui(Start, &End, 10);
+	if (End != Start)
+	{
+		return true;
+	}
 
     return false;
 }
@@ -2148,11 +2158,12 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const FStringWide& String, uint64& OutElement)
 {
     WIDECHAR* End;
-    OutElement = FCStringWide::Strtoui64(String.GetCString(), &End, 10);
-    if (*End)
-    {
-        return true;
-    }
+    const WIDECHAR* Start = String.GetCString();
+    OutElement = FCStringWide::Strtoui64(Start, &End, 10);
+	if (End != Start)
+	{
+		return true;
+	}
 
     return false;
 }
@@ -2161,8 +2172,9 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<float>::FromString(const FStringWide& String, float& OutElement)
 {
     WIDECHAR* End;
-    OutElement = FCStringWide::Strtof(String.GetCString(), &End);
-    if (*End)
+	const WIDECHAR* Start = String.GetCString();
+	OutElement = FCStringWide::Strtof(Start, &End);
+    if (End != Start)
     {
         return true;
     }
@@ -2174,8 +2186,9 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<double>::FromString(const FStringWide& String, double& OutElement)
 {
     WIDECHAR* End;
-    OutElement = FCStringWide::Strtod(String.GetCString(), &End);
-    if (*End)
+    const WIDECHAR* Start = String.GetCString();
+    OutElement = FCStringWide::Strtod(Start, &End);
+    if (End != Start)
     {
         return true;
     }
@@ -2186,20 +2199,21 @@ FORCEINLINE bool TTypeFromStringWide<double>::FromString(const FStringWide& Stri
 template<>
 FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const FStringWide& String, bool& OutElement)
 {
-    if (FCStringWide::Stricmp(String.GetCString(), L"true") == 0)
+    const WIDECHAR* Start = String.GetCString();
+    if (FCStringWide::Stricmp(Start, L"true") == 0)
     {
         OutElement = true;
         return true;
     }
-    else if (FCStringWide::Stricmp(String.GetCString(), L"false") == 0)
+    else if (FCStringWide::Stricmp(Start, L"false") == 0)
     {
         OutElement = false;
         return true;
     }
 
     WIDECHAR* End;
-    OutElement = static_cast<bool>(FCStringWide::Strtoi(String.GetCString(), &End, 10));
-    if (*End)
+    OutElement = static_cast<bool>(FCStringWide::Strtoi(Start, &End, 10));
+    if (End != Start)
     {
         return true;
     }
@@ -2217,64 +2231,71 @@ struct TTryParseType
 template<>
 FORCEINLINE bool TTryParseType<int32>::TryParse(const FString& InString)
 {
-    CHAR* End;
-    FCString::Strtoi(InString.GetCString(), &End, 10);
-    return *End != 0;
+	CHAR* End;
+	const CHAR* Start = InString.GetCString();
+	FCString::Strtoi(Start, &End, 10);
+	return (End != Start);
 }
 
 template<>
 FORCEINLINE bool TTryParseType<uint32>::TryParse(const FString& InString)
 {
 	CHAR* End;
-	FCString::Strtoui(InString.GetCString(), &End, 10);
-    return *End != 0;
+	const CHAR* Start = InString.GetCString();
+	FCString::Strtoui(Start, &End, 10);
+    return (End != Start);
 }
 
 template<>
 FORCEINLINE bool TTryParseType<int64>::TryParse(const FString& InString)
 {
-	CHAR* End;
-	FCString::Strtoi64(InString.GetCString(), &End, 10);
-    return *End != 0;
+    CHAR* End;
+    const CHAR* Start = InString.GetCString();
+    FCString::Strtoi64(Start, &End, 10);
+    return (End != Start);
 }
 
 template<>
 FORCEINLINE bool TTryParseType<uint64>::TryParse(const FString& InString)
 {
 	CHAR* End;
-	FCString::Strtoui64(InString.GetCString(), &End, 10);
-    return *End != 0;
+	const CHAR* Start = InString.GetCString();
+	FCString::Strtoui64(Start, &End, 10);
+    return (End != Start);
 }
 
 template<>
 FORCEINLINE bool TTryParseType<float>::TryParse(const FString& InString)
 {
     CHAR* End;
-    FCString::Strtof(InString.GetCString(), &End);
-    return *End != 0;
+    const CHAR* Start = InString.GetCString();
+    FCString::Strtof(Start, &End);
+    return (End != Start);
 }
 
 template<>
 FORCEINLINE bool TTryParseType<double>::TryParse(const FString& InString)
 {
-    CHAR* End;
-    FCString::Strtod(InString.GetCString(), &End);
-    return *End != 0;
+	CHAR* End;
+	const CHAR* Start = InString.GetCString();
+	FCString::Strtof(Start, &End);
+    return (End != Start);
 }
 
 template<>
 FORCEINLINE bool TTryParseType<bool>::TryParse(const FString& InString)
 {
-    if (FCString::Stricmp(InString.GetCString(), "true") == 0)
+	const CHAR* Start = InString.GetCString();
+    if (FCString::Stricmp(Start, "true") == 0)
     {
         return true;
     }
-    else if (FCString::Stricmp(InString.GetCString(), "false") == 0)
+    else if (FCString::Stricmp(Start, "false") == 0)
     {
         return true;
     }
 
     CHAR* End;
-    static_cast<bool>(FCString::Strtoi(InString.GetCString(), &End, 10));
-    return *End != 0;
+	FCString::Strtoi64(Start, &End, 10);
+    return (End != Start);
 }
