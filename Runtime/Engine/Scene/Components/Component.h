@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Time/Timespan.h"
-
 #include "Engine/CoreObject/CoreObject.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -8,9 +7,9 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 class FActor;
 
 class ENGINE_API FComponent
-    : public FCoreObject
+    : public FObject
 {
-    CORE_OBJECT(FComponent, FCoreObject);
+    FOBJECT_BODY(FComponent, FObject);
 
 public:
     FComponent(FActor* InActorOwner);

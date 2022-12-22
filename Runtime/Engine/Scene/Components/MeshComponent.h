@@ -1,15 +1,13 @@
 #pragma once
 #include "Component.h"
-
 #include "Core/Containers/SharedPtr.h"
-
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 
 class ENGINE_API FMeshComponent 
     : public FComponent
 {
-    CORE_OBJECT(FMeshComponent, FComponent);
+    FOBJECT_BODY(FMeshComponent, FComponent);
 
 public:
     FMeshComponent(FActor* InActorOwner)
@@ -17,7 +15,7 @@ public:
         , Material(nullptr)
         , Mesh(nullptr)
     {
-        CORE_OBJECT_INIT();
+        FOBJECT_INIT();
     }
 
     TSharedPtr<FMaterial> Material;

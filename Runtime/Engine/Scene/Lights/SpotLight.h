@@ -4,7 +4,7 @@
 class ENGINE_API FSpotLight 
     : public FLight
 {
-    CORE_OBJECT(FSpotLight, FLight);
+    FOBJECT_BODY(FSpotLight, FLight);
 
 public:
     FSpotLight();

@@ -1,4 +1,5 @@
 #include "Sandbox.h"
+#include "SandboxPlayer.h"
 #include "GameComponents.h"
 
 #include <Core/Math/Math.h>
@@ -12,6 +13,7 @@
 #include <Engine/Scene/Scene.h>
 #include <Engine/Scene/Lights/PointLight.h>
 #include <Engine/Scene/Lights/DirectionalLight.h>
+#include <Engine/Scene/Actors/PlayerController.h>
 #include <Engine/Scene/Components/MeshComponent.h>
 #include <Engine/Resources/TextureFactory.h>
 
@@ -30,9 +32,6 @@
 #define ENABLE_MANY_SPHERES (0)
 
 IMPLEMENT_ENGINE_MODULE(FSandbox, Sandbox);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FSandbox
 
 bool FSandbox::Init()
 {
@@ -332,6 +331,11 @@ bool FSandbox::Init()
         NewActor->AddComponent(NewComponent);
     }
 #endif
+
+    FSandboxPlayerController* Player = new FSandboxPlayerController(CurrentScene);
+    Player->SetupInputComponent();
+
+    CurrentScene->AddActor(Player);
 
     CurrentCamera = new FCamera();
     CurrentScene->AddCamera(CurrentCamera);

@@ -1,11 +1,11 @@
 #include "LightProbe.h"
 
 FLightProbe::FLightProbe()
-    : FCoreObject()
+    : FObject()
     , Position()
     , Bounds()
 {
-    CORE_OBJECT_INIT();
+    FOBJECT_INIT();
 }
 
 void FLightProbe::SetPosition(const FVector3& InPosition)

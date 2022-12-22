@@ -6,7 +6,7 @@
 class ENGINE_API FPointLight 
     : public FLight
 {
-    CORE_OBJECT(FPointLight, FLight);
+    FOBJECT_BODY(FPointLight, FLight);
 
 public:
     FPointLight();

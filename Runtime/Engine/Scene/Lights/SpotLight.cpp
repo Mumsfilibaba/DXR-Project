@@ -4,7 +4,7 @@ FSpotLight::FSpotLight()
     : FLight()
     , ConeAngle(45.0f)
 {
-    CORE_OBJECT_INIT();
+    FOBJECT_INIT();
 }
 
 void FSpotLight::SetConeAngle(float InConeAngle)

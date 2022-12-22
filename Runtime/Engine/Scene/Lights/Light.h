@@ -4,9 +4,9 @@
 #include "Engine/CoreObject/CoreObject.h"
 
 class ENGINE_API FLight 
-    : public FCoreObject
+    : public FObject
 {
-    CORE_OBJECT(FLight, FCoreObject);
+    FOBJECT_BODY(FLight, FObject);
 
 public:
     FLight();

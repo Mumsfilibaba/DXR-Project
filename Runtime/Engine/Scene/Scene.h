@@ -1,11 +1,8 @@
 #pragma once
-#include "Actor.h"
 #include "Camera.h"
-
+#include "Actors/Actor.h"
 #include "Lights/Light.h"
-
 #include "Reflections/LightProbe.h"
-
 #include "Renderer/MeshDrawCommand.h"
 
 #include "Core/Time/Timespan.h"

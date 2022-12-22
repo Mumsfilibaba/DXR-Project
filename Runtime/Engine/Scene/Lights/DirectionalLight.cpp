@@ -23,7 +23,7 @@ FDirectionalLight::FDirectionalLight()
     , CascadeSplitLambda(GCascadeSplitLambda.GetValue())
     , Size(GSunSize.GetValue())
 {
-    CORE_OBJECT_INIT();
+    FOBJECT_INIT();
 
     // TODO: Probably move to scene
     GSunSize->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* SunLight)

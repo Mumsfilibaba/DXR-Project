@@ -1,21 +1,21 @@
 #include "Component.h"
 
 FComponent::FComponent(FActor* InActorOwner)
-    : FCoreObject()
+    : FObject()
     , ActorOwner(InActorOwner)
     , bIsStartable(true)
     , bIsTickable(true)
 {
     CHECK(InActorOwner != nullptr);
-    CORE_OBJECT_INIT();
+    FOBJECT_INIT();
 }
 
 FComponent::FComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTickable)
-    : FCoreObject()
+    : FObject()
     , ActorOwner(InActorOwner)
     , bIsStartable(bInIsStartable)
     , bIsTickable(bInIsTickable)
 {
     CHECK(InActorOwner != nullptr);
-    CORE_OBJECT_INIT();
+    FOBJECT_INIT();
 }

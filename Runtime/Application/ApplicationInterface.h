@@ -37,11 +37,12 @@ public:
     static FApplicationInterface& Get() { return GInstance.Dereference(); }
     
 public:
+
     DECLARE_EVENT(FExitEvent, FApplicationInterface, int32);
-    FExitEvent GetExitEvent() const { return ExitEvent; };
+    FExitEvent ExitEvent;
     
     DECLARE_EVENT(FViewportChangedEvent, FApplicationInterface, const FGenericWindowRef&);
-    FViewportChangedEvent GetViewportChangedEvent() const { return ViewportChangedEvent; };
+    FViewportChangedEvent ViewportChangedEvent;
 
     /** @return - Returns the newly created window */
     virtual FGenericWindowRef CreateWindow() = 0;
@@ -156,9 +157,6 @@ public:
 protected:
     void ForwardExitEvent(int32 ExitCode) { ExitEvent.Broadcast(ExitCode); }
     void ForwardViewportChangedEvent(const FGenericWindowRef& NewMainViewport) { ViewportChangedEvent.Broadcast(NewMainViewport); }
-
-    FExitEvent            ExitEvent;
-    FViewportChangedEvent ViewportChangedEvent;
 
     static TSharedPtr<FApplicationInterface> GInstance;
 };

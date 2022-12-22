@@ -8,7 +8,7 @@
 class ENGINE_API FDirectionalLight 
     : public FLight
 {
-    CORE_OBJECT(FDirectionalLight, FLight);
+    FOBJECT_BODY(FDirectionalLight, FLight);
 
 public:
     FDirectionalLight();

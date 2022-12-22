@@ -7,7 +7,7 @@ FLight::FLight()
     , ShadowBias(0.005f)
     , MaxShadowBias(0.05f)
 {
-    CORE_OBJECT_INIT();
+    FOBJECT_INIT();
 }
 
 void FLight::SetColor(const FVector3& InColor)

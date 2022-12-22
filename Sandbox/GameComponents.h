@@ -2,12 +2,9 @@
 #include <Engine/Scene/Actor.h>
 #include <Engine/Scene/Components/Component.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMovingBallComponent
-
 class FMovingBallComponent : public FComponent
 {
-    CORE_OBJECT(FMovingBallComponent, FComponent);
+    FOBJECT_BODY(FMovingBallComponent, FComponent);
 
 public:
 
