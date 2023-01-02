@@ -1,10 +1,8 @@
 #pragma once
 #include "Core/Core.h"
-
 #include "Core/Input/ModifierKeyState.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/SharedRef.h"
-
 #include "CoreApplication/Generic/GenericWindow.h"
 
 struct FEvent

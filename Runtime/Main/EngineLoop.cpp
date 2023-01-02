@@ -19,7 +19,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 
 #include "ViewportRenderer/ViewportRenderer.h"
 
@@ -47,14 +47,13 @@ bool FEngineLoop::LoadCoreModules()
 {
     FModuleManager& ModuleManager = FModuleManager::Get();
 
-    FModuleInterface* CoreModule = ModuleManager.LoadModule("Core");
-    if (!CoreModule)
+    if (!(FModuleInterface* CoreModule = ModuleManager.LoadModule("Core")))
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* CoreApplicationModule = ModuleManager.LoadModule("CoreApplication");
+    FModuleInterface* CoreApplicationModule = ModuleManager.LoadModule("CoreApplication"))
     if (!CoreApplicationModule)
     {
         DEBUG_BREAK();
@@ -154,7 +153,7 @@ bool FEngineLoop::PreInit()
         return false;
     }
 
-    if (!FApplicationInterface::Create())
+    if (!FApplication::Create())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return false;
@@ -192,7 +191,6 @@ bool FEngineLoop::PreInit()
     }
 
     NCoreDelegates::PostInitRHIDelegate.Broadcast();
-
 
     if (!FGPUProfiler::Init())
     {
@@ -251,21 +249,14 @@ bool FEngineLoop::Init()
         }
     }
 
-    IViewportRendererModule* ViewportRendererModule = FModuleManager::Get().LoadModule<IViewportRendererModule>("ViewportRenderer");
-    if (!ViewportRendererModule)
+    if (FApplication::IsInitialized())
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load ViewportRenderer");
-        return false;
+        if (!FApplication::Get().InitializeRHI())
+        {
+            FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to initialize RHI layer for the Application");
+            return false;
+        }
     }
-
-    TSharedRef<IViewportRenderer> ViewportRenderer = ViewportRendererModule->CreateRenderer();
-    if (!ViewportRenderer)
-    {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create ViewportRenderer");
-        return false;
-    }
-
-    FApplicationInterface::Get().SetRenderer(ViewportRenderer);
 
     // Final thing is to startup the engine
     if (!GEngine->Start())
@@ -284,7 +275,7 @@ void FEngineLoop::Tick()
     // Tick the timer
     FrameTimer.Tick();
 
-    FApplicationInterface::Get().Tick(FrameTimer.GetDeltaTime());
+    FApplication::Get().Tick(FrameTimer.GetDeltaTime());
 
     FEngineLoopTicker::Get().Tick(FrameTimer.GetDeltaTime());
 
@@ -309,9 +300,9 @@ bool FEngineLoop::Release()
     FRenderer::Release();
 
     // Release the Application. Protect against failed initialization where the global pointer was never initialized
-    if (FApplicationInterface::IsInitialized())
+    if (FApplication::IsInitialized())
     {
-        FApplicationInterface::Get().SetRenderer(nullptr);
+        FApplication::Get().SetRenderer(nullptr);
     }
 
     // Release the Engine. Protect against failed initialization where the global pointer was never initialized
@@ -335,7 +326,7 @@ bool FEngineLoop::Release()
 
     FAsyncThreadPool::Release();
 
-    FApplicationInterface::Release();
+    FApplication::Release();
 
     FThreadManager::Release();
 

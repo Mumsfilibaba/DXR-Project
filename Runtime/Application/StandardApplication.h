@@ -2,11 +2,10 @@
 #include "ApplicationInterface.h"
 
 class APPLICATION_API FStandardApplication 
-    : public FApplicationInterface
+    : public FApplication
 {
 public:
-    FStandardApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication);
-    virtual ~FStandardApplication();
+
     
     bool CreateContext();
     
@@ -14,7 +13,7 @@ public:
 
     virtual void Tick(FTimespan DeltaTime) override final;
 
-    virtual bool IsRunning() const override final { return bIsRunning; }
+    virtual bool IsRunning() const override final 
     
     virtual void SetCursor(ECursor Cursor) override final;
 
@@ -31,33 +30,22 @@ public:
     virtual bool IsCursorVisibile() const override final;
 
     virtual bool SupportsHighPrecisionMouse() const override final
-    {
-        return PlatformApplication->SupportsHighPrecisionMouse();
-    }
+
 
     virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) override final
-    {
-        return PlatformApplication->EnableHighPrecisionMouseForWindow(Window);
-    }
+
 
     virtual void SetCapture(const FGenericWindowRef& CaptureWindow) override final;
     
     virtual void SetActiveWindow(const FGenericWindowRef& ActiveWindow) override final;
 
     virtual FGenericWindowRef GetActiveWindow() const override final
-    {
-        return PlatformApplication->GetActiveWindow();
-    }
+
     
     virtual FGenericWindowRef GetWindowUnderCursor() const override final
-    {
-        return PlatformApplication->GetActiveWindow();
-    }
+
     
     virtual FGenericWindowRef GetCapture() const override final
-    {
-        return PlatformApplication->GetCapture();
-    }
 
     virtual void AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority) override final;
     
@@ -65,11 +53,11 @@ public:
 
     virtual void RegisterMainViewport(const FGenericWindowRef& NewMainViewport) override final;
     
-    virtual FGenericWindowRef GetMainViewport() const override final { return MainViewport; }
+    virtual FGenericWindowRef GetMainViewport() const override final 
 
     virtual void SetRenderer(const TSharedRef<IViewportRenderer>& NewRenderer) override final;
     
-    virtual TSharedRef<IViewportRenderer> GetRenderer() const override final { return Renderer; }
+    virtual TSharedRef<IViewportRenderer> GetRenderer() const override final 
 
     virtual void AddWindow(const TSharedRef<FWindow>& NewWindow) override final;
     
@@ -81,13 +69,13 @@ public:
 
     virtual void SetPlatformApplication(const TSharedPtr<FGenericApplication>& InFPlatformApplication) override final;
     
-    virtual TSharedPtr<FGenericApplication> GetPlatformApplication() const override final { return PlatformApplication; }
+    virtual TSharedPtr<FGenericApplication> GetPlatformApplication() const override final 
 
     virtual void AddWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority) override final;
     
     virtual void RemoveWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& WindowMessageHandler) override final;
     
-    virtual TSharedPtr<ICursor> GetCursor() const override final { return PlatformApplication->Cursor; }
+    virtual TSharedPtr<ICursor> GetCursor() const override final 
 
 public:
     virtual void HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState) override final;
@@ -148,33 +136,6 @@ public:
     }
 
 protected:
-    template<typename MessageHandlerType>
-    static void InsertMessageHandler(
-        TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray,
-        const TSharedPtr<MessageHandlerType>& NewMessageHandler,
-        uint32 NewPriority);
 
-    void HandleKeyEvent(const FKeyEvent& KeyEvent);
-    void HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent);
-    void HandleWindowFrameMouseEvent(const FWindowFrameMouseEvent& WindowFrameMouseEvent);
-
-    void RenderStrings();
-
-    TSharedPtr<FGenericApplication>  PlatformApplication;
-
-    FGenericWindowRef                MainViewport;
-    TSharedRef<IViewportRenderer>    Renderer;
-
-    TArray<FString>                  DebugStrings;
-    TArray<TSharedRef<FWindow>>      InterfaceWindows;
-    TArray<TSharedPtr<FUser>>        RegisteredUsers;
-
-    TArray<TPair<TSharedPtr<FInputHandler>        , uint32>> InputHandlers;
-    TArray<TPair<TSharedPtr<FWindowMessageHandler>, uint32>> WindowMessageHandlers;
-
-    // Is false when the platform application reports that the application should exit
-    bool bIsRunning = true;
-
-    struct ImGuiContext* Context = nullptr;
 };
 

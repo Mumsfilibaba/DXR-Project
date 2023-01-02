@@ -1,6 +1,7 @@
 #pragma once
 #include "ApplicationImpl.h"
 #include "Events.h"
+#include "Core/RefCounted.h"
 #include "Core/Delegates/Event.h"
 #include "CoreApplication/Generic/GenericWindow.h"
 #include "RHI/RHIResources.h"
@@ -8,16 +9,11 @@
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class APPLICATION_API FViewport
+    public FRefCounted
 {
 public:
     FViewport();
     ~FViewport() = default;
-
-    DECLARE_EVENT(FViewportClosedEvent, FViewport);
-    FViewportClosedEvent ClosedEvent;
-
-    DECLARE_EVENT(FViewportResizedEvent, FViewport);
-    FViewportResizedEvent ResizedEvent;
 
     virtual bool Initialize();
 
@@ -37,10 +33,19 @@ public:
     virtual bool OnViewportFocusGained()   { return false; }
     virtual bool OnViewportClosed()        { return false; }
 
+    DECLARE_EVENT(FViewportClosedEvent, FViewport);
+    FViewportClosedEvent GetClosedEvent() const { return ClosedEvent; }
+
+    DECLARE_EVENT(FViewportResizedEvent, FViewport);
+    FViewportResizedEvent GetResizedEvent() const { return ResizedEvent; }
+
     FRHIViewportRef   GetRHI()    const { return Viewport; }
     FGenericWindowRef GetWindow() const { return Window; };
 
 private:
+    FViewportClosedEvent  ClosedEvent;
+    FViewportResizedEvent ResizedEvent;
+
     FRHIViewportRef   Viewport;
     FGenericWindowRef Window;
 };

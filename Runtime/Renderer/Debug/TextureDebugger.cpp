@@ -21,7 +21,7 @@ void FRenderTargetDebugWindow::Tick()
 {
     if (GDrawTextureDebugger.GetValue())
     {
-        FGenericWindowRef MainViewport = FApplicationInterface::Get().GetMainViewport();
+        FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();
 
         const uint32 WindowWidth  = MainViewport->GetWidth();
         const uint32 WindowHeight = MainViewport->GetHeight();

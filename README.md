@@ -17,6 +17,10 @@ Feel free to make a pull request but please ensure that code follow the code-sta
 * SSAO
 * TAA
 * FXAA
+* Custom containers
+    * TArray
+    * TString
+    * TBitArray
 
 **Planed:**
 * Vulkan backend

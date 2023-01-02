@@ -50,11 +50,8 @@ struct ENGINE_API FEngine
      */
     void Destroy();
 
-    /** @brief - The main window of the app */
-    FGenericWindowRef MainWindow;
-
     /** @brief - The main viewport */
-    FRHIViewportRef MainViewport;
+    FSceneViewport MainViewport;
 
     /** @brief - User */
     TSharedPtr<FUser> User;

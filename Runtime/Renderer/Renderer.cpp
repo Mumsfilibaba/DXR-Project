@@ -142,9 +142,9 @@ FRenderer::~FRenderer()
 
     FrameStatistics.Reset();
 
-    if (FApplicationInterface::IsInitialized())
+    if (FApplication::IsInitialized())
     {
-        FApplicationInterface& Application = FApplicationInterface::Get();
+        FApplication& Application = FApplication::Get();
         Application.RemoveWindow(TextureDebugger);
         TextureDebugger.Reset();
 
@@ -330,7 +330,7 @@ bool FRenderer::Create()
     LightProbeRenderer.RenderSkyLightProbe(CommandList, LightSetup, Resources);
     GRHICommandExecutor.ExecuteCommandList(CommandList);
 
-    FApplicationInterface& Application = FApplicationInterface::Get();
+    FApplication& Application = FApplication::Get();
 
     // Register EventFunc
     WindowHandler->WindowResizedDelegate.BindRaw(this, &FRenderer::OnWindowResize);
@@ -1021,7 +1021,7 @@ void FRenderer::Tick(const FScene& Scene)
 
         CommandList.BeginRenderPass(RenderPass);
         
-        FApplicationInterface::Get().DrawWindows(CommandList);
+        FApplication::Get().DrawWindows(CommandList);
         
         CommandList.EndRenderPass();
     }

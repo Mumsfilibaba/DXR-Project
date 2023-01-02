@@ -14,7 +14,7 @@ TSharedRef<FGameConsoleWindow> FGameConsoleWindow::Make()
     TSharedRef<FGameConsoleWindow> NewWindow = new FGameConsoleWindow();
 
     NewWindow->InputHandler->HandleKeyEventDelegate.BindRaw(NewWindow.Get(), &FGameConsoleWindow::HandleKeyPressedEvent);
-    FApplicationInterface::Get().AddInputHandler(NewWindow->InputHandler, uint32(-1));
+    FApplication::Get().AddInputHandler(NewWindow->InputHandler, uint32(-1));
 
     return NewWindow;
 }

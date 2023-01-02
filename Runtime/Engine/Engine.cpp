@@ -1,13 +1,9 @@
 #include "Engine.h"
-
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
-
 #include "Application/ApplicationInterface.h"
-
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetLoaders/MeshImporter.h"
 #include "Engine/Resources/Material.h"
@@ -15,7 +11,6 @@
 #include "Engine/InterfaceWindows/GameConsoleWindow.h"
 #include "Engine/InterfaceWindows/FrameProfilerWindow.h"
 #include "Engine/Project/ProjectManager.h"
-
 #include "RHI/RHIInterface.h"
 
 ENGINE_API FEngine* GEngine;
@@ -28,19 +23,19 @@ static void ExitEngineFunc()
     }
 }
 
-static FAutoConsoleCommand GExit(
-    "Engine.Exit",
-    "Exits the engine",
-    FConsoleCommandDelegate::CreateStatic(&ExitEngineFunc));
-
 static void ToggleFullScreenFunc()
 {
-    FGenericWindowRef MainWindow = FApplicationInterface::Get().GetMainViewport();
+    FGenericWindowRef MainWindow = FApplication::Get().GetMainViewport();
     if (MainWindow)
     {
         MainWindow->ToggleFullscreen();
     }
 }
+
+static FAutoConsoleCommand GExit(
+    "Engine.Exit",
+    "Exits the engine",
+    FConsoleCommandDelegate::CreateStatic(&ExitEngineFunc));
 
 static FAutoConsoleCommand GToggleFullscreen(
     "MainViewport.ToggleFullscreen",
@@ -60,7 +55,7 @@ bool FEngine::Initialize()
         return false;
     }
 
-    FApplicationInterface& Application = FApplicationInterface::Get();
+    FApplication& Application = FApplication::Get();
     
     // Initialize the GameViewport
     {

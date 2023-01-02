@@ -115,7 +115,7 @@ int32 GenericMain(const CHAR* Args[], int32 NumArgs)
 
 
         // Run loop
-        while (FApplicationInterface::Get().IsRunning())
+        while (FApplication::Get().IsRunning())
         {
             EngineTick();
         }

@@ -214,7 +214,7 @@ void FFrameProfilerWindow::DrawCPUData(float Width)
 void FFrameProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    FGenericWindowRef MainViewport = FApplicationInterface::Get().GetMainViewport();
+    FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

@@ -29,18 +29,5 @@ public:
     virtual void Render(class FRHICommandList& Commandlist) override final;
 
 private:
-    TArray<FDrawableTexture*>    RenderedImages;
 
-    FRHITextureRef               FontTexture;
-    
-    FRHIGraphicsPipelineStateRef PipelineState;
-    FRHIGraphicsPipelineStateRef PipelineStateNoBlending;
-
-    FRHIPixelShaderRef           PShader;
-    
-    FRHIBufferRef                VertexBuffer;
-    FRHIBufferRef                IndexBuffer;
-
-    FRHISamplerStateRef          LinearSampler;
-    FRHISamplerStateRef          PointSampler;
 };

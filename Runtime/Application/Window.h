@@ -4,7 +4,7 @@
 typedef void* InterfaceContext;
 
 // Helper for init the current context
-#define INIT_CONTEXT( ContextHandle )                                                       \
+#define INIT_CONTEXT(ContextHandle)                                                       \
     {                                                                                       \
         ImGuiContext* NewImGuiContext     = reinterpret_cast<ImGuiContext*>(ContextHandle); \
         ImGuiContext* CurrentImGuiContext = ImGui::GetCurrentContext();                     \
@@ -17,16 +17,14 @@ typedef void* InterfaceContext;
 // Helper for generating the default init-context function since it is unsure how DLLs handle the UIContext
 #define INTERFACE_GENERATE_BODY()                                           \
 public:                                                                     \
-                                                                            \
     virtual void InitContext(InterfaceContext ContextHandle) override final \
     {                                                                       \
         INIT_CONTEXT(ContextHandle);                                        \
     }                                                                       \
-                                                                            \
 private:
 
 
-struct  FWindow 
+struct FWindow 
     : public FRefCounted
 {
     virtual ~FWindow() = default;

@@ -12,7 +12,7 @@
 
 class APPLICATION_API FUser
 {
-    friend class FApplicationInterface;
+    friend class FApplication;
 
 public:
 
