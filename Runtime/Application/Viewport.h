@@ -8,14 +8,29 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+enum class EViewportMode
+{
+
+};
+
+struct FViewportInitializer
+{
+    uint16 Width;
+    uint16 Height;
+};
+
 class APPLICATION_API FViewport
     public FRefCounted
 {
 public:
-    FViewport();
+    FViewport(const FViewportInitializer& InInitializer);
     ~FViewport() = default;
 
-    virtual bool Initialize();
+    virtual bool Create();
+    virtual bool CreateRHI();
+
+    virtual void Destroy();
+    virtual void DestroyRHI();
 
     virtual bool OnKeyDown(const FKeyEvent& KeyEvent)  { return false; }
     virtual bool OnKeyUp(const FKeyEvent& KeyEvent)    { return false; }
@@ -26,28 +41,33 @@ public:
     virtual bool OnCursorButtonUp(const FMouseButtonEvent& MouseEvent)   { return false; }
     virtual bool OnCursorScroll(const FMouseScrolledEvent& MouseEvent)   { return false; }
 
-    virtual bool OnViewportResized(const FWindowResizeEvent& ResizeEvent) { return false; }
+    virtual bool OnViewportResized(const FWindowResizeEvent& ResizeEvent);
+    virtual bool OnViewportClosed();
+
     virtual bool OnViewportCursorEntered() { return false; }
     virtual bool OnViewportCursorLeft()    { return false; }
     virtual bool OnViewportFocusLost()     { return false; }
     virtual bool OnViewportFocusGained()   { return false; }
-    virtual bool OnViewportClosed()        { return false; }
 
-    DECLARE_EVENT(FViewportClosedEvent, FViewport);
-    FViewportClosedEvent GetClosedEvent() const { return ClosedEvent; }
+    virtual FInt16Vector2 GetSize() const { return Size; }
 
-    DECLARE_EVENT(FViewportResizedEvent, FViewport);
-    FViewportResizedEvent GetResizedEvent() const { return ResizedEvent; }
+    DECLARE_EVENT(FViewportClosedEvent, FViewport*);
+    FViewportClosedEvent& GetClosedEvent() const { return ClosedEvent; }
+
+    DECLARE_EVENT(FViewportResizedEvent, FViewport*);
+    FViewportResizedEvent& GetResizedEvent() const { return ResizedEvent; }
 
     FRHIViewportRef   GetRHI()    const { return Viewport; }
     FGenericWindowRef GetWindow() const { return Window; };
 
 private:
-    FViewportClosedEvent  ClosedEvent;
-    FViewportResizedEvent ResizedEvent;
-
     FRHIViewportRef   Viewport;
     FGenericWindowRef Window;
+
+    FInt16Vector2     Size;
+
+    mutable FViewportClosedEvent  ClosedEvent;
+    mutable FViewportResizedEvent ResizedEvent;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -97,6 +97,7 @@ public:
     virtual void Show(bool bMaximized) { }
 
     virtual void Minimize() { }
+
     virtual void Maximize() { }
 
     virtual void Close() { }
@@ -106,22 +107,27 @@ public:
     virtual void ToggleFullscreen() { }
 
     virtual bool IsActiveWindow() const { return false; }
-    virtual bool IsValid()        const { return false; }
+    
+    virtual bool IsValid() const { return false; }
 
     virtual void SetTitle(const FString& Title) { }
-    virtual void GetTitle(FString& OutTitle)    { }
+    
+    virtual void GetTitle(FString& OutTitle) { }
 
     virtual void MoveTo(int32 x, int32 y) { }
 
     virtual void SetWindowShape(const FWindowShape& Shape, bool bMove) { }
-    virtual void GetWindowShape(FWindowShape& OutWindowShape) const    { }
+
+    virtual void GetWindowShape(FWindowShape& OutWindowShape) const { }
 
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const { }
 
-    virtual uint32 GetWidth()  const { return 0; }
+    virtual uint32 GetWidth() const { return 0; }
+
     virtual uint32 GetHeight() const { return 0; }
 
     virtual void  SetPlatformHandle(void* InPlatformHandle) { }
+    
     virtual void* GetPlatformHandle() const { return nullptr; }
 
     FORCEINLINE FWindowStyle GetStyle() const { return StyleParams; }

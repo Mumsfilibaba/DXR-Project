@@ -57,7 +57,7 @@ bool FEngine::Initialize()
 
     FApplication& Application = FApplication::Get();
     
-    // Initialize the GameViewport
+    // Initialize the Main Viewport
     {
         const uint32 Style =
             WindowStyleFlag_Titled      |
@@ -69,6 +69,7 @@ bool FEngine::Initialize()
         const uint32 WindowWidth  = 1920;
         const uint32 WindowHeight = 1080;
 
+        FSceneViewport* MainViewport = new FSceneViewport();
         MainWindow = Application.CreateWindow();
         if (MainWindow && MainWindow->Initialize(FProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
         {

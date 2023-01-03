@@ -1,13 +1,12 @@
 #pragma once
 #include "Scene.h"
-
 #include "Application/Viewport.h"
 
 class ENGINE_API FSceneViewport
     : public FViewport
 {
 public:
-    FSceneViewport();
+    FSceneViewport(const FViewportInitializer& InInitializer);
     ~FSceneViewport();
 
     virtual bool OnKeyEvent(const FKeyEvent& KeyEvent)   { return false; }

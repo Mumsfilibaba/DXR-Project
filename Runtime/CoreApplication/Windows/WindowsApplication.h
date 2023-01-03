@@ -2,12 +2,10 @@
 #include "Windows.h"
 #include "WindowsWindow.h"
 #include "WindowsCursor.h"
-
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
-
 #include "CoreApplication/Generic/GenericApplication.h"
 
 #define ENABLE_DPI_AWARENESS (1)
@@ -61,9 +59,6 @@ class COREAPPLICATION_API FWindowsApplication final
 
 public:
     static FWindowsApplication* CreateWindowsApplication();
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericApplication Interface
 
     virtual FGenericWindowRef CreateWindow() override final;
 

@@ -1,10 +1,8 @@
 #pragma once
 #include "MacCursor.h"
-
 #include "Core/Mac/Mac.h"
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
-
 #include "CoreApplication/Generic/GenericApplication.h"
 
 #include <AppKit/AppKit.h>
@@ -63,9 +61,6 @@ class COREAPPLICATION_API FMacApplication final
 
 public:
     static FMacApplication* CreateMacApplication();
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // FGenericApplication Interface
 
     virtual FGenericWindowRef CreateWindow() override final;
 
