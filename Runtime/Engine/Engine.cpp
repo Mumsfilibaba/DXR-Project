@@ -60,7 +60,7 @@ bool FEngine::Initialize()
     // Initialize the Main Viewport
     FViewportInitializer ViewportInitializer(1920, 1080);
 
-    TSharedRef<FSceneViewport> MainViewport = new FSceneViewport(ViewportInitializer);
+    MainViewport = new FSceneViewport(ViewportInitializer);
     if (MainViewport && MainViewport->Create())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Main Viewport");

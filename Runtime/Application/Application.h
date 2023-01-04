@@ -135,13 +135,7 @@ public:
 
     /** @brief - Sets the platform application used to dispatch messages from the platform */
     virtual void SetPlatformApplication(const TSharedPtr<FGenericApplication>& InFPlatformApplication);
-
-    /** @brief - Adds a WindowMessageHandler to the application, which gets processed before the application module */
-    virtual void AddWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority);
-
-    /** @brief - Removes a WindowMessageHandler from the application */
-    virtual void RemoveWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& WindowMessageHandler);
-
+    
     /** @return - Returns the FPlatformApplication */
     virtual TSharedPtr<FGenericApplication> GetPlatformApplication() const { return PlatformApplication; }
 
@@ -152,41 +146,37 @@ public:
     virtual TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->Cursor; }
 
 public:
-    virtual void HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState) override final;
+    virtual void OnKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState) override final;
     
-    virtual void HandleKeyPressed(EKey KeyCode, bool IsRepeat, FModifierKeyState ModierKeyState) override final;
+    virtual void OnKeyPressed(EKey KeyCode, bool IsRepeat, FModifierKeyState ModierKeyState) override final;
     
-    virtual void HandleKeyChar(uint32 Character) override final;
+    virtual void OnKeyChar(uint32 Character) override final;
 
-    virtual void HandleMouseMove(int32 x, int32 y) override final;
+    virtual void OnCursorMove(int32 x, int32 y) override final;
     
-    virtual void HandleMouseReleased(EMouseButton Button, FModifierKeyState ModierKeyState) override final;
+    virtual void OnCursorReleased(EMouseButton Button, FModifierKeyState ModierKeyState) override final;
     
-    virtual void HandleMousePressed(EMouseButton Button, FModifierKeyState ModierKeyState)  override final;
+    virtual void OnCursorPressed(EMouseButton Button, FModifierKeyState ModierKeyState)  override final;
     
-    virtual void HandleMouseScrolled(float HorizontalDelta, float VerticalDelta) override final;
+    virtual void OnCursorScrolled(float HorizontalDelta, float VerticalDelta) override final;
 
-    virtual void HandleWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height) override final;
+    virtual void OnWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height) override final;
     
-    virtual void HandleWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y) override final;
-    
-    virtual void HandleWindowFocusChanged(const FGenericWindowRef& Window, bool HasFocus) override final;
-    
-    virtual void HandleWindowMouseLeft(const FGenericWindowRef& Window) override final;
-    
-    virtual void HandleWindowMouseEntered(const FGenericWindowRef& Window) override final;
-    
-    virtual void HandleWindowClosed(const FGenericWindowRef& Window) override final;
+    virtual void OnWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y) override final;
 
-    virtual void HandleApplicationExit(int32 ExitCode) override final;
+    virtual void OnWindowFocusLost(const FGenericWindowRef& Window) override final;
+
+    virtual void OnWindowFocusGained(const FGenericWindowRef& Window) override final;
+    
+    virtual void OnWindowCursorLeft(const FGenericWindowRef& Window) override final;
+    
+    virtual void OnWindowCursorEntered(const FGenericWindowRef& Window) override final;
+    
+    virtual void OnWindowClosed(const FGenericWindowRef& Window) override final;
+
+    virtual void OnApplicationExit(int32 ExitCode) override final;
 
 protected:
-    template<typename MessageHandlerType>
-    static void InsertMessageHandler(
-        TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray,
-        const TSharedPtr<MessageHandlerType>& NewMessageHandler,
-        uint32 NewPriority);
-
     void HandleKeyEvent(const FKeyEvent& KeyEvent);
     void HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent);
     void HandleWindowFrameMouseEvent(const FWindowFrameMouseEvent& WindowFrameMouseEvent);
@@ -200,14 +190,12 @@ protected:
 
     TArray<FString>             DebugStrings;
     TArray<TSharedRef<FWindow>> InterfaceWindows;
-    TArray<TSharedPtr<FUser>>   RegisteredUsers;
 
     TArray<TPair<TSharedPtr<FInputHandler>, uint32>> InputHandlers;
 
     FExitEvent            ExitEvent;
     FViewportChangedEvent ViewportChangedEvent;
 
-    
     // Is false when the platform application reports that the application should exit
     bool bIsRunning = true;
 

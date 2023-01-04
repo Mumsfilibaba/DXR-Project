@@ -8,38 +8,27 @@
 #include "RayTracer.h"
 #include "DebugRenderer.h"
 #include "TemporalAA.h"
-
 #include "Core/Time/Stopwatch.h"
 #include "Core/Threading/AsyncTask.h"
-
 #include "Engine/Scene/Actor.h"
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Camera.h"
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
-
 #include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
-
 #include "Debug/TextureDebugger.h"
 #include "Debug/RendererInfoWindow.h"
 #include "Debug/GPUProfilerWindow.h"
-
 #include "Application/WindowMessageHandler.h"
-
 #include "ViewportRenderer/ViewportRenderer.h"
 
-class FRendererWindowHandler final 
+struct FRendererWindowHandler final 
     : public FWindowMessageHandler
 {
-public:
-
-    DECLARE_DELEGATE(CWindowResizedDelegate, const FWindowResizeEvent& ResizeEvent);
-    CWindowResizedDelegate WindowResizedDelegate;
-
-    FRendererWindowHandler()  = default;
-    ~FRendererWindowHandler() = default;
+    DECLARE_DELEGATE(FWindowResizedDelegate, const FWindowResizeEvent& ResizeEvent);
+    FWindowResizedDelegate WindowResizedDelegate;
 
     virtual bool OnWindowResized(const FWindowResizeEvent& ResizeEvent) override final
     {
@@ -148,7 +137,7 @@ private:
     FDebugRenderer                DebugRenderer;
     FTemporalAA                   TemporalAA;
 
-    FRHITextureRef             ShadingImage;
+    FRHITextureRef               ShadingImage;
     FRHIComputePipelineStateRef  ShadingRatePipeline;
     FRHIComputeShaderRef         ShadingRateShader;
 

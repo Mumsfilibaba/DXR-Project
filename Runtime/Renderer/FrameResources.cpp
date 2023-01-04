@@ -42,6 +42,4 @@ void FFrameResources::Release()
 
     DeferredVisibleCommands.Clear();
     ForwardVisibleCommands.Clear();
-
-    MainWindowViewport.Reset();
 }

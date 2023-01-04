@@ -1,4 +1,5 @@
 #include "Viewport.h"
+#include "RHI/RHIResources.h"
 // TODO: This needs to be moved to another module
 #include "Engine/Project/ProjectManager.h"
 
@@ -38,7 +39,20 @@ bool FViewport::Create()
 
 bool FViewport::CreateRHI()
 {
-    return false;
+    FRHIViewportDesc ViewportDesc(
+        Window->GetPlatformHandle(),
+        EFormat::R8G8B8A8_Unorm,
+        EFormat::Unknown,
+        Initializer.Width,
+        Initializer.Height);
+
+    Resources.MainWindowViewport = RHICreateViewport(ViewportDesc);
+    if (!Resources.MainWindowViewport)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 void FViewport::Destroy()
@@ -51,7 +65,7 @@ void FViewport::DestroyRHI()
     Viewport.Reset();
 }
 
-bool FViewport::OnViewportResized(const FWindowResizeEvent &ResizeEvent)
+bool FViewport::OnViewportResized(const FWindowResizeEvent& ResizeEvent)
 {
     ResizedEvent.Broadcast(this);
     return false;

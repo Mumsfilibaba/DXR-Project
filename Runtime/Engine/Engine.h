@@ -51,7 +51,7 @@ struct ENGINE_API FEngine
     void Destroy();
 
     /** @brief - The main viewport */
-    FSceneViewport MainViewport;
+    TSharedRef<FSceneViewport> MainViewport;
 
     /** @brief - User */
     TSharedPtr<FUser> User;

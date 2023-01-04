@@ -1,24 +1,17 @@
 #include "Renderer.h"
-
+#include "Debug/GPUProfiler.h"
+#include "Core/Math/Frustum.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 #include "Application/ApplicationInterface.h"
-
-#include "ViewportRenderer/ViewportRenderer.h"
-
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
-
 #include "Engine/Resources/TextureFactory.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Engine.h"
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
-
-#include "Core/Math/Frustum.h"
-#include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/ConsoleManager.h"
-#include "Core/Platform/PlatformThreadMisc.h"
-
-#include "Renderer/Debug/GPUProfiler.h"
 
 TAutoConsoleVariable<bool> GEnableSSAO(
     "Renderer.Feature.SSAO",
@@ -145,6 +138,8 @@ FRenderer::~FRenderer()
     if (FApplication::IsInitialized())
     {
         FApplication& Application = FApplication::Get();
+        Application.GetMainViewport()->DestroyRHI();
+
         Application.RemoveWindow(TextureDebugger);
         TextureDebugger.Reset();
 
@@ -186,15 +181,8 @@ FRenderer& FRenderer::Get()
 
 bool FRenderer::Create()
 {
-    FRHIViewportDesc ViewportDesc(
-        GEngine->MainWindow->GetPlatformHandle(),
-        EFormat::R8G8B8A8_Unorm,
-        EFormat::Unknown,
-        static_cast<uint16>(GEngine->MainWindow->GetWidth()),
-        static_cast<uint16>(GEngine->MainWindow->GetHeight()));
-
-    Resources.MainWindowViewport = RHICreateViewport(ViewportDesc);
-    if (!Resources.MainWindowViewport)
+    Resources.MainWindowViewport = GEngine->MainViewport;
+    if (Resources.MainWindowViewport)
     {
         DEBUG_BREAK();
         return false;

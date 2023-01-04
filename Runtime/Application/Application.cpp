@@ -38,20 +38,19 @@ void FApplication::Destroy()
 
 FApplication::FApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
     : PlatformApplication(InPlatformApplication)
-    , MainViewport()
-    , Renderer()
+    , MainViewport(nullptr)
+    , Renderer(nullptr)
     , DebugStrings()
     , InterfaceWindows()
-    , RegisteredUsers()
     , InputHandlers()
-    , WindowMessageHandlers()
     , bIsRunning(true)
     , Context(nullptr)
 { }
 
 bool FApplication::InitializeRHI()
 {
-    if (!Renderer.Initialize(Context))
+    Renderer = new FViewportRenderer();
+    if (!Renderer->Initialize(Context))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ViewportRenderer ");
     }
@@ -61,6 +60,9 @@ bool FApplication::InitializeRHI()
 
 FApplication::~FApplication()
 {
+    delete Renderer;
+    Renderer = nullptr;
+
     if (Context)
     {
         ImGui::DestroyContext(Context);
@@ -307,31 +309,26 @@ void FApplication::Tick(FTimespan DeltaTime)
     }
 
     // Update all the UI windows
-    Renderer->BeginTick();
-
-    InterfaceWindows.Foreach([](TSharedRef<FWindow>& Window)
+    if (Renderer)
     {
-        if (Window->IsTickable())
+        Renderer->BeginTick();
+
+        InterfaceWindows.Foreach([](TSharedRef<FWindow>& Window)
         {
-            Window->Tick();
-        }
-    });
+            if (Window->IsTickable())
+            {
+                Window->Tick();
+            }
+        });
 
-    RenderStrings();
+        RenderStrings();
 
-    Renderer->EndTick();
+        Renderer->EndTick();
+    }
 
     // Update platform
     const float Delta = static_cast<float>(DeltaTime.AsMilliseconds());
     PlatformApplication->Tick(Delta);
-
-    if (!RegisteredUsers.IsEmpty())
-    {
-        for (const TSharedPtr<FUser>& User : RegisteredUsers)
-        {
-            User->Tick(DeltaTime);
-        }
-    }
 }
 
 void FApplication::SetCursor(ECursor InCursor)
@@ -394,43 +391,31 @@ void FApplication::SetActiveWindow(const FGenericWindowRef& ActiveWindow)
     PlatformApplication->SetActiveWindow(ActiveWindow);
 }
 
-template<typename MessageHandlerType>
-void FApplication::InsertMessageHandler(
-    TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray,
-    const TSharedPtr<MessageHandlerType>& NewMessageHandler,
-    uint32 NewPriority)
+void FApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority)
 {
-    TPair NewPair(NewMessageHandler, NewPriority);
-    if (!OutMessageHandlerArray.Contains(NewPair))
+    TPair NewPair(NewInputHandler, NewPriority);
+    if (!InputHandlers.Contains(NewPair))
     {
-        for (int32 Index = 0; Index < OutMessageHandlerArray.GetSize(); )
+        for (int32 Index = 0; Index < InputHandlers.GetSize(); )
         {
-            const TPair<TSharedPtr<MessageHandlerType>, uint32> Handler = OutMessageHandlerArray[Index];
+            const auto Handler = OutMessageHandlerArray[Index];
             if (NewPriority <= Handler.Second)
             {
                 Index++;
-            }
-            else
-            {
-                OutMessageHandlerArray.Insert(Index, NewPair);
+                InputHandlers.Insert(Index, NewPair);
                 return;
             }
         }
 
-        OutMessageHandlerArray.Push(NewPair);
+        InputHandlers.Push(NewPair);
     }
-}
-
-void FApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority)
-{
-    InsertMessageHandler(InputHandlers, NewInputHandler, Priority);
 }
 
 void FApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler)
 {
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
     {
-        const TPair<TSharedPtr<FInputHandler>, uint32> Handler = InputHandlers[Index];
+        const auto Handler = InputHandlers[Index];
         if (Handler.First == InputHandler)
         {
             InputHandlers.RemoveAt(Index);
@@ -442,7 +427,7 @@ void FApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHand
 void FApplication::RegisterMainViewport(const TSharedRef<FViewport>& NewMainViewport)
 {
     MainViewport = NewMainViewport;
-    
+
     if (ViewportChangedEvent.IsBound())
     {
         ViewportChangedEvent.Broadcast(NewMainViewport);
@@ -481,25 +466,10 @@ void FApplication::DrawString(const FString& NewString)
 
 void FApplication::DrawWindows(FRHICommandList& CommandList)
 {
-    // NOTE: Renderer is not forced to be valid 
-    Renderer->Render(CommandList);
-}
-
-void FApplication::AddWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority)
-{
-    InsertMessageHandler(WindowMessageHandlers, NewWindowMessageHandler, Priority);
-}
-
-void FApplication::RemoveWindowMessageHandler(const TSharedPtr<FWindowMessageHandler>& WindowMessageHandler)
-{
-    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
+    // NOTE: Renderer is not forced to be valid
+    if (Renderer)
     {
-        const TPair<TSharedPtr<FWindowMessageHandler>, uint32> Handler = WindowMessageHandlers[Index];
-        if (Handler.First == WindowMessageHandler)
-        {
-            WindowMessageHandlers.RemoveAt(Index);
-            break;
-        }
+        Renderer->Render(CommandList);
     }
 }
 
