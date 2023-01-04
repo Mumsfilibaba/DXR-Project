@@ -1,6 +1,5 @@
 #pragma once
 #include "D3D12Core.h"
-
 #include "Core/Threading/AtomicInt.h"
 
 class D3D12_RHI_API FD3D12RefCounted

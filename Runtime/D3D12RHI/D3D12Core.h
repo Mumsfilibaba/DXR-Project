@@ -1,12 +1,10 @@
 #pragma once
 #include "D3D12Constants.h"
-
-#include "RHI/RHIResources.h"
-#include "RHI/RHIRayTracing.h"
-
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/ComPtr.h"
+#include "RHI/RHIResources.h"
+#include "RHI/RHIRayTracing.h"
 
 #if MONOLITHIC_BUILD
     #define D3D12_RHI_API

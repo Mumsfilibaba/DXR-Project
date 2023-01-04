@@ -1,9 +1,7 @@
 #pragma once
 #include "CocoaConsoleWindow.h"
-
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Misc/OutputDeviceConsole.h"
-
 #include "CoreApplication/CoreApplication.h"
 
 class COREAPPLICATION_API FMacOutputDeviceConsole final 

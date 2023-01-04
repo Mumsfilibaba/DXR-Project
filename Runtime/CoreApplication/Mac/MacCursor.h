@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Containers/SharedPtr.h"
-
 #include "CoreApplication/Generic/GenericCursor.h"
 
 class COREAPPLICATION_API FMacCursor final 

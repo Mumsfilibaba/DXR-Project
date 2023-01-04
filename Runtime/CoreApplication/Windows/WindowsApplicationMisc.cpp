@@ -1,7 +1,6 @@
 #include "WindowsApplication.h"
 #include "WindowsApplicationMisc.h"
 #include "WindowsOutputDeviceConsole.h"
-
 #include "Core/Input/ModifierKeyState.h"
 
 FGenericApplication* FWindowsApplicationMisc::CreateApplication()

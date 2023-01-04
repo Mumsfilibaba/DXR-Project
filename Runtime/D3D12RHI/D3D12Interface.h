@@ -6,9 +6,7 @@
 #include "D3D12SamplerState.h"
 #include "D3D12Shader.h"
 #include "D3D12RayTracing.h"
-
 #include "RHI/RHIInterface.h"
-
 #include "CoreApplication/Windows/WindowsWindow.h"
 
 class FD3D12CommandContext;

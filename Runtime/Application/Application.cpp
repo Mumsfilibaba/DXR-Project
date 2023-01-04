@@ -439,9 +439,10 @@ void FApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHand
     }
 }
 
-void FApplication::RegisterMainViewport(const FGenericWindowRef& NewMainViewport)
+void FApplication::RegisterMainViewport(const TSharedRef<FViewport>& NewMainViewport)
 {
     MainViewport = NewMainViewport;
+    
     if (ViewportChangedEvent.IsBound())
     {
         ViewportChangedEvent.Broadcast(NewMainViewport);
@@ -450,7 +451,8 @@ void FApplication::RegisterMainViewport(const FGenericWindowRef& NewMainViewport
     ImGuiIO& InterfaceState = ImGui::GetIO();
     if (MainViewport)
     {
-        InterfaceState.ImeWindowHandle = MainViewport->GetPlatformHandle();
+        const FGenericWindowRef Window = NewMainViewport->GetWindow();
+        InterfaceState.ImeWindowHandle = Window->GetPlatformHandle();
     }
     else
     {

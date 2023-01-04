@@ -1,10 +1,8 @@
 #include "MacWindow.h"
 #include "CocoaWindow.h"
-
 #include "Core/Mac/Mac.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Mac/MacRunLoop.h"
-
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 FMacWindow::FMacWindow(FMacApplication* InApplication)

@@ -1,6 +1,5 @@
 #include "CocoaConsoleWindow.h"
 #include "MacOutputDeviceConsole.h"
-
 #include "Core/Mac/Mac.h"
 
 @implementation FCocoaConsoleWindow

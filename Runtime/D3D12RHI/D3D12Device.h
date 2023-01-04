@@ -5,7 +5,6 @@
 #include "D3D12CommandListManager.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12DeferredDeletionQueue.h"
-
 #include "Core/Containers/SharedRef.h"
 
 #if WIN10_BUILD_17134

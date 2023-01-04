@@ -1,7 +1,6 @@
 #pragma once
 #include "D3D12DeviceChild.h"
 #include "D3D12Fence.h"
-
 #include "Core/Containers/Queue.h"
 #include "Core/Platform/CriticalSection.h"
 

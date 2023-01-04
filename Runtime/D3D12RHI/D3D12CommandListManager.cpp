@@ -1,7 +1,6 @@
 #include "D3D12CommandListManager.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12Device.h"
-
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
 

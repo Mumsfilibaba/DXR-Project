@@ -14,9 +14,7 @@
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12TimestampQuery.h"
 #include "DynamicD3D12.h"
-
 #include "Core/Misc/ConsoleManager.h"
-
 #include "CoreApplication/Windows/WindowsWindow.h"
 
 IMPLEMENT_ENGINE_MODULE(FD3D12InterfaceModule, D3D12RHI);

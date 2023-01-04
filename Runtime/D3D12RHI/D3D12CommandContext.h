@@ -1,8 +1,4 @@
 #pragma once
-#include "RHI/IRHICommandContext.h"
-
-#include "Core/Containers/SharedRef.h"
-
 #include "D3D12DeviceChild.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandList.h"
@@ -16,7 +12,8 @@
 #include "D3D12PipelineState.h"
 #include "D3D12TimestampQuery.h"
 #include "D3D12Texture.h"
-
+#include "RHI/IRHICommandContext.h"
+#include "Core/Containers/SharedRef.h"
 
 struct FD3D12UploadAllocation
 {

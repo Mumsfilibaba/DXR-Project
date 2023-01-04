@@ -1,9 +1,7 @@
 #include "D3D12Core.h"
 #include "DynamicD3D12.h"
-
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Misc/ConsoleManager.h"
-
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 void* FDynamicD3D12::DXGILib  = nullptr;

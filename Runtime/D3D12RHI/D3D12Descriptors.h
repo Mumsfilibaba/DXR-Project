@@ -1,7 +1,6 @@
 #pragma once
 #include "D3D12DeviceChild.h"
 #include "D3D12RefCounted.h"
-
 #include "Core/Containers/Array.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Threading/ScopedLock.h"

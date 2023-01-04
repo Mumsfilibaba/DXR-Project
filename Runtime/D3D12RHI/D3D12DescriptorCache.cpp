@@ -2,7 +2,6 @@
 #include "D3D12Descriptors.h"
 #include "D3D12Interface.h"
 #include "D3D12CommandContext.h"
-
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Templates/TypeTraits.h"
 

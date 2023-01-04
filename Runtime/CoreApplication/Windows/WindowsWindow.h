@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Windows/Windows.h"
 #include "Core/Containers/SharedRef.h"
-
 #include "CoreApplication/CoreApplication.h"
 #include "CoreApplication/Generic/GenericWindow.h"
 

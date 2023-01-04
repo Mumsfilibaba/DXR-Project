@@ -5,14 +5,12 @@
 #include "D3D12CommandAllocator.h"
 #include "D3D12PipelineState.h"
 #include "DynamicD3D12.h"
-
 #include "Core/Windows/Windows.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Containers/String.h"
-
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 #include <dxgidebug.h>

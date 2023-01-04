@@ -3,7 +3,6 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Templates/TypeTraits.h"
-
 #include "CoreApplication/CoreApplication.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING

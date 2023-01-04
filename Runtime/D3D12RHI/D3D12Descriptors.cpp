@@ -1,7 +1,6 @@
 #include "D3D12Descriptors.h"
 #include "D3D12Device.h"
 #include "D3D12ResourceViews.h"
-
 #include "Core/Misc/FrameProfiler.h"
 
 FD3D12DescriptorHeap::FD3D12DescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)

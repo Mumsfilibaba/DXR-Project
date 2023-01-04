@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Windows/Windows.h"
-
 #include "CoreApplication/Generic/GenericApplicationMisc.h"
 
 struct COREAPPLICATION_API FWindowsApplicationMisc final 

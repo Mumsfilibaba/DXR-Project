@@ -1,7 +1,6 @@
 #include "MacApplicationMisc.h"
 #include "MacApplication.h"
 #include "MacOutputDeviceConsole.h"
-
 #include "Core/Mac/Mac.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Misc/OutputDeviceLogger.h"

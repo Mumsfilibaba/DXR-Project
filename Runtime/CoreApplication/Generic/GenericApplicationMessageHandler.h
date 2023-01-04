@@ -1,6 +1,5 @@
 #pragma once
 #include "GenericWindow.h"
-
 #include "Core/Input/InputCodes.h"
 #include "Core/Input/ModifierKeyState.h"
 #include "Core/Containers/SharedRef.h"
@@ -11,35 +10,37 @@ struct FGenericApplicationMessageHandler
 {
     virtual ~FGenericApplicationMessageHandler() = default;
 
-    virtual void HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState) { }
+    virtual void OnKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState) { }
 
-    virtual void HandleKeyPressed(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState) { }
+    virtual void OnKeyPressed(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState) { }
 
-    virtual void HandleKeyChar(uint32 Character) { }
+    virtual void OnKeyChar(uint32 Character) { }
 
-    virtual void HandleMouseMove(int32 x, int32 y) { }
+    virtual void OnCursorMove(int32 x, int32 y) { }
 
-    virtual void HandleMouseReleased(EMouseButton Button, FModifierKeyState ModierKeyState) { }
+    virtual void OnCursorReleased(EMouseButton Button, FModifierKeyState ModierKeyState) { }
 
-    virtual void HandleMousePressed(EMouseButton Button, FModifierKeyState ModierKeyState) { }
+    virtual void OnCursorPressed(EMouseButton Button, FModifierKeyState ModierKeyState) { }
 
-    virtual void HandleMouseScrolled(float HorizontalDelta, float VerticalDelta) { }
+    virtual void OnCursorScrolled(float HorizontalDelta, float VerticalDelta) { }
 
-    virtual void HandleHighPrecisionMouseInput(const FGenericWindowRef& Window, int32 x, uint32 y) { }
+    virtual void OnHighPrecisionMouseInput(const FGenericWindowRef& Window, int32 x, uint32 y) { }
 
-    virtual void HandleWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height) { }
+    virtual void OnWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height) { }
 
-    virtual void HandleWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y) { }
+    virtual void OnWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y) { }
 
-    virtual void HandleWindowFocusChanged(const FGenericWindowRef& Window, bool bHasFocus) { }
+    virtual void OnWindowCursorEntered() { }
 
-    virtual void HandleWindowMouseLeft(const FGenericWindowRef& Window) { }
+    virtual void OnWindowCursorLeft() { }
+    
+    virtual void OnWindowsFocusLost() { }
+    
+    virtual void OnWindowsFocusGained() { }
 
-    virtual void HandleWindowMouseEntered(const FGenericWindowRef& Window) { }
+    virtual void OnWindowClosed(const FGenericWindowRef& Window) { }
 
-    virtual void HandleWindowClosed(const FGenericWindowRef& Window) { }
-
-    virtual void HandleApplicationExit(int32 ExitCode) { }
+    virtual void OnApplicationExit(int32 ExitCode) { }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

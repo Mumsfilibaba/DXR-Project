@@ -1,7 +1,6 @@
 #pragma once 
 #include "Core/Input/ModifierKeyState.h"
 #include "Core/Containers/String.h"
-
 #include "CoreApplication/CoreApplication.h"
 
 #ifdef MessageBox

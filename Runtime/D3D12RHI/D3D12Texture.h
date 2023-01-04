@@ -1,7 +1,6 @@
 #pragma once
 #include "D3D12Resource.h"
 #include "D3D12ResourceViews.h"
-
 #include "RHI/RHIResources.h"
 
 #ifdef PLATFORM_COMPILER_MSVC
@@ -13,7 +12,6 @@ class FD3D12Viewport;
 
 typedef TSharedRef<class FD3D12Texture>           FD3D12TextureRef;
 typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
-
 
 class FD3D12Texture 
     : public FD3D12DeviceChild

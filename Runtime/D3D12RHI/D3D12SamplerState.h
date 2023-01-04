@@ -1,10 +1,8 @@
 #pragma once
 #include "D3D12Descriptors.h"
 #include "D3D12Device.h"
-
-#include "RHI/RHIResources.h"
-
 #include "Core/Containers/SharedRef.h"
+#include "RHI/RHIResources.h"
 
 typedef TSharedRef<class FD3D12SamplerState> FD3D12SamplerStateRef;
 

@@ -2,13 +2,11 @@
 #include "MacWindow.h"
 #include "MacCursor.h"
 #include "CocoaWindow.h"
-
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Input/Platform/PlatformKeyMapping.h"
 #include "Core/Mac/MacRunLoop.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Threading/ScopedLock.h"
-
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 FMacApplication* MacApplication = nullptr;

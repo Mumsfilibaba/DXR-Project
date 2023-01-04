@@ -1,7 +1,6 @@
 #include "CocoaWindow.h"
 #include "MacApplication.h"
 #include "MacWindow.h"
-
 #include "Core/Mac/Mac.h"
 
 @implementation FCocoaWindow

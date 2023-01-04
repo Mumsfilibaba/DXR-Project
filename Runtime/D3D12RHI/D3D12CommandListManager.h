@@ -1,7 +1,6 @@
 #pragma once
 #include "D3D12CommandList.h"
 #include "D3D12Fence.h"
-
 #include "Core/Platform/CriticalSection.h"
 
 class FD3D12Device;

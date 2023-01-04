@@ -2,7 +2,6 @@
 #include "D3D12Resource.h"
 #include "D3D12ResourceViews.h"
 #include "D3D12RefCounted.h"
-
 #include "RHI/RHIResources.h"
 
 typedef TSharedRef<class FD3D12Buffer> FD3D12BufferRef;

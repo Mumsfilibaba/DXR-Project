@@ -1,5 +1,4 @@
 #include "WindowsOutputDeviceConsole.h"
-
 #include "Core/Threading/ScopedLock.h"
 
 FWindowsOutputDeviceConsole::FWindowsOutputDeviceConsole()

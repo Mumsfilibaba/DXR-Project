@@ -1,11 +1,9 @@
 #pragma once
-#include "RHI/RHIShaderCompiler.h"
-
 #include "D3D12Core.h"
 #include "D3D12Shader.h"
+#include "RHI/RHIShaderCompiler.h"
 
 #include <string>
-
 #include <d3d12shader.h>
 
 class FD3D12ShaderCompiler

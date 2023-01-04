@@ -2,9 +2,7 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12Buffer.h"
 #include "D3D12ResourceViews.h"
-
 #include "RHI/RHIRayTracing.h"
-
 #include "Core/Containers/Array.h"
 
 class FD3D12CommandList;

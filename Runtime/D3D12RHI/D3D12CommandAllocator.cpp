@@ -1,7 +1,6 @@
 #include "D3D12CommandAllocator.h"
 #include "D3D12Device.h"
 
-
 FD3D12CommandAllocator::FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : FD3D12DeviceChild(InDevice)
     , Allocator(nullptr)

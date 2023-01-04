@@ -1,7 +1,6 @@
 #include "MacCursor.h"
 #include "MacWindow.h"
 #include "CocoaWindow.h"
-
 #include "Core/Memory/Memory.h"
 
 #include <AppKit/AppKit.h>

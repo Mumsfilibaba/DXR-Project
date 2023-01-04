@@ -12,7 +12,6 @@
 #include "D3D12CommandContext.h"
 #include "DynamicD3D12.h"
 #include "D3D12Viewport.h"
-
 #include "Core/Math/Vector2.h"
 #include "Core/Misc/FrameProfiler.h"
 

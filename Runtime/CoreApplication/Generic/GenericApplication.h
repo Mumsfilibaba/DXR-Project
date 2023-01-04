@@ -1,8 +1,6 @@
 #pragma once
 #include "GenericApplicationMessageHandler.h"
-
 #include "CoreApplication/ICursor.h"
-
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/SharedRef.h"
 

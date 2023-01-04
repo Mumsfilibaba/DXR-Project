@@ -4,6 +4,7 @@
 #include "ViewportRenderer.h"
 #include "Core/Core.h"
 #include "Core/Containers/SharedPtr.h"
+#include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Time/Timespan.h"
@@ -118,7 +119,7 @@ public:
     virtual void RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler);
 
     /** @brief - Registers the main window of the application */
-    virtual void RegisterMainViewport(const FGenericWindowRef& NewMainViewport);
+    virtual void RegisterMainViewport(const TSharedRef<FViewport>& NewMainViewport);
 
     /** @brief - Register a window to add that should be drawn the next frame */
     virtual void AddWindow(const TSharedRef<FWindow>& NewWindow);
@@ -144,8 +145,8 @@ public:
     /** @return - Returns the FPlatformApplication */
     virtual TSharedPtr<FGenericApplication> GetPlatformApplication() const { return PlatformApplication; }
 
-    /** @return - Returns the window registered as the main viewport */
-    virtual FGenericWindowRef GetMainViewport() const { return MainViewport; }
+    /** @return - Returns the Viewport registered as the main viewport */
+    virtual TSharedRef<FViewport> GetMainViewport() const { return MainViewport; }
 
     /** @return - Returns the cursor interface */
     virtual TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->Cursor; }
@@ -194,8 +195,8 @@ protected:
 
     TSharedPtr<FGenericApplication> PlatformApplication;
 
-    FGenericWindowRef MainViewport;
-    FViewportRenderer Renderer;
+    TSharedRef<FViewport> MainViewport;
+    FViewportRenderer*    Renderer;
 
     TArray<FString>             DebugStrings;
     TArray<TSharedRef<FWindow>> InterfaceWindows;

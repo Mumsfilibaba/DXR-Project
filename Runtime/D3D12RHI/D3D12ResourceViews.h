@@ -2,7 +2,6 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12Resource.h"
 #include "D3D12RefCounted.h"
-
 #include "RHI/RHIResources.h"
 
 class FD3D12OfflineDescriptorHeap;

@@ -2,9 +2,7 @@
 #include "D3D12Shader.h"
 #include "D3D12RootSignature.h"
 #include "D3D12DeviceChild.h"
-
 #include "RHI/RHIResources.h"
-
 #include "Core/Utilities/StringUtilities.h"
 
 typedef TSharedRef<class FD3D12GraphicsPipelineState>   FD3D12GraphicsPipelineStateRef;
