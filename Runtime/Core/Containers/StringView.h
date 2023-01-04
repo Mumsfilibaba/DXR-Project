@@ -1,6 +1,5 @@
 #pragma once
 #include "Iterator.h"
-
 #include "Core/Math/Math.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/CString.h"

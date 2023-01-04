@@ -3,18 +3,21 @@
 #include "Events.h"
 #include "Core/RefCounted.h"
 #include "Core/Delegates/Event.h"
+#include "Core/Math/IntVector2.h"
 #include "CoreApplication/Generic/GenericWindow.h"
 #include "RHI/RHIResources.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-enum class EViewportMode
-{
-
-};
-
 struct FViewportInitializer
 {
+    FViewportInitializer() = default;
+
+    FViewportInitializer(uint16 InWidth, uint16 InHeight)
+        : Width(InWidth)
+        , Hwight(InHeight)
+    { }
+
     uint16 Width;
     uint16 Height;
 };
@@ -49,7 +52,7 @@ public:
     virtual bool OnViewportFocusLost()     { return false; }
     virtual bool OnViewportFocusGained()   { return false; }
 
-    virtual FInt16Vector2 GetSize() const { return Size; }
+    virtual FIntVector2 GetSize() const { return FIntVector2{ Initializer.Width, Initializer.Height }; }
 
     DECLARE_EVENT(FViewportClosedEvent, FViewport*);
     FViewportClosedEvent& GetClosedEvent() const { return ClosedEvent; }
@@ -64,7 +67,7 @@ private:
     FRHIViewportRef   Viewport;
     FGenericWindowRef Window;
 
-    FInt16Vector2     Size;
+    FViewportInitializer Initializer;
 
     mutable FViewportClosedEvent  ClosedEvent;
     mutable FViewportResizedEvent ResizedEvent;

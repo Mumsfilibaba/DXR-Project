@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Core.h"
-
 #include "Core/Math/Vector3.h"
 #include "Core/Containers/String.h"
 #include "Core/Templates/NumericLimits.h"

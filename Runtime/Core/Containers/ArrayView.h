@@ -1,6 +1,5 @@
 #pragma once
 #include "Iterator.h"
-
 #include "Core/Memory/Memory.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/TypeTraits.h"

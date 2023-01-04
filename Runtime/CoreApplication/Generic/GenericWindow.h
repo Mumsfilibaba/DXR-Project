@@ -10,14 +10,14 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 typedef TSharedRef<class FGenericWindow> FGenericWindowRef;
 
-enum EWindowStyleFlag : uint32
+enum class EWindowStyleFlag : uint32
 {
-    WindowStyleFlag_None        = 0x0,
-    WindowStyleFlag_Titled      = FLAG(1),
-    WindowStyleFlag_Closable    = FLAG(2),
-    WindowStyleFlag_Minimizable = FLAG(3),
-    WindowStyleFlag_Maximizable = FLAG(4),
-    WindowStyleFlag_Resizeable  = FLAG(5),
+    None        = 0x0,
+    Titled      = FLAG(1),
+    Closable    = FLAG(2),
+    Minimizable = FLAG(3),
+    Maximizable = FLAG(4),
+    Resizeable  = FLAG(5),
 };
 
 ENUM_CLASS_OPERATORS(EWindowStyleFlag);
@@ -27,36 +27,36 @@ struct FWindowStyle
 {
     FWindowStyle() = default;
 
-    FORCEINLINE FWindowStyle(uint32 InStyle)
+    FORCEINLINE FWindowStyle(EWindowStyleFlag InStyle)
         : Style(InStyle)
     { }
 
     FORCEINLINE bool IsTitled() const
     {
-        return Style & WindowStyleFlag_Titled;
+        return (Style & EWindowStyleFlag::Titled) != EWindowStyleFlag::None;
     }
 
     FORCEINLINE bool IsClosable() const
     {
-        return Style & WindowStyleFlag_Closable;
+        return (Style & EWindowStyleFlag::Closable) != EWindowStyleFlag::None;
     }
 
     FORCEINLINE bool IsMinimizable() const
     {
-        return Style & WindowStyleFlag_Minimizable;
+        return (Style & EWindowStyleFlag::Minimizable) != EWindowStyleFlag::None;
     }
 
     FORCEINLINE bool IsMaximizable() const
     {
-        return Style & WindowStyleFlag_Maximizable;
+        return (Style & EWindowStyleFlag::Maximizable) != EWindowStyleFlag::None;
     }
 
     FORCEINLINE bool IsResizeable() const
     {
-        return Style & WindowStyleFlag_Resizeable;
+        return (Style & EWindowStyleFlag::Resizeable) != EWindowStyleFlag::None;
     }
 
-    uint32 Style = 0;
+    EWindowStyleFlag Style = EWindowStyleFlag::None;
 };
 
 

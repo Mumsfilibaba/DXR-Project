@@ -1,6 +1,5 @@
 #pragma once
 #include "Array.h"
-
 #include "Core/Threading/AtomicInt.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/NumericLimits.h"

@@ -1,7 +1,6 @@
 #pragma once
 #include "Iterator.h"
 #include "Allocators.h"
-
 #include "Core/Core.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Math/Math.h"

@@ -1,7 +1,6 @@
 #pragma once
 #include "Array.h"
 #include "StringView.h"
-
 #include "Core/Templates/TypeTraits.h"
 
 #if defined(__OBJC__)

@@ -1,6 +1,5 @@
 #pragma once
 #include "Iterator.h"
-
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Templates/BitReference.h"

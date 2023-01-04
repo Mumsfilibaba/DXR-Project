@@ -13,7 +13,7 @@
 #include "Engine/Project/ProjectManager.h"
 #include "RHI/RHIInterface.h"
 
-ENGINE_API FEngine* GEngine;
+ENGINE_API FEngine* GEngine = nullptr;
 
 static void ExitEngineFunc()
 {
@@ -58,34 +58,19 @@ bool FEngine::Initialize()
     FApplication& Application = FApplication::Get();
     
     // Initialize the Main Viewport
+    FViewportInitializer ViewportInitializer(1920, 1080);
+
+    TSharedRef<FSceneViewport> MainViewport = new FSceneViewport(ViewportInitializer);
+    if (MainViewport && MainViewport->Create())
     {
-        const uint32 Style =
-            WindowStyleFlag_Titled      |
-            WindowStyleFlag_Closable    |
-            WindowStyleFlag_Minimizable |
-            WindowStyleFlag_Maximizable |
-            WindowStyleFlag_Resizeable;
-
-        const uint32 WindowWidth  = 1920;
-        const uint32 WindowHeight = 1080;
-
-        FSceneViewport* MainViewport = new FSceneViewport();
-        MainWindow = Application.CreateWindow();
-        if (MainWindow && MainWindow->Initialize(FProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
-        {
-            MainWindow->Show(false);
-        }
-        else
-        {
-            FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Main Window");
-            return false;
-        }
-
-        Application.RegisterMainViewport(MainWindow);
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Main Viewport");
+        return false;
     }
+    
+    Application.RegisterMainViewport(MainViewport);
 
+    // Register the user
     TSharedPtr<ICursor> Cursor = Application.GetCursor();
-
     User = FUser::Make(0, Cursor);
     if (!User)
     {

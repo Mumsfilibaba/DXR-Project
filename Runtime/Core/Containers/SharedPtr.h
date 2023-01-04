@@ -1,6 +1,5 @@
 #pragma once
 #include "UniquePtr.h"
-
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Threading/AtomicInt.h"
 

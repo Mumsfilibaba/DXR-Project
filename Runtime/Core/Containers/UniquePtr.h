@@ -1,6 +1,5 @@
 #pragma once
 #include "Delete.h"
-
 #include "Core/Memory/New.h"
 #include "Core/Templates/TypeTraits.h"
 

@@ -1,6 +1,5 @@
 #pragma once
 #include "StringView.h"
-
 #include "Core/Templates/TypeTraits.h"
 
 #define STANDARD_STATIC_STRING_LENGTH (128)
