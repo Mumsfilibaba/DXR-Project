@@ -14,6 +14,7 @@ ApplicationModule.AddModuleDependencies(
 {
     "Core",
     "CoreApplication",
+    "RHI",
 })
 
 ApplicationModule.AddLinkLibraries( 

@@ -1,7 +1,7 @@
 #pragma once
 #include "ApplicationImpl.h"
 #include "DrawableTexture.h"
-#include "Window.h"
+#include "Widget.h"
 #include "Core/Delegates/Delegate.h"
 #include "Core/Time/Stopwatch.h"
 #include "RHI/RHIResources.h"

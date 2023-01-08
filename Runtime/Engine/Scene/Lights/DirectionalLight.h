@@ -1,6 +1,5 @@
 #pragma once
 #include "Light.h"
-
 #include "Core/Math/Matrix4.h"
 
 #define NUM_SHADOW_CASCADES (4)

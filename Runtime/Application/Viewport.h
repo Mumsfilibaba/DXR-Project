@@ -9,21 +9,23 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+class FViewport;
+
 struct FViewportInitializer
 {
     FViewportInitializer() = default;
 
     FViewportInitializer(uint16 InWidth, uint16 InHeight)
         : Width(InWidth)
-        , Hwight(InHeight)
+        , Height(InHeight)
     { }
 
     uint16 Width;
     uint16 Height;
 };
 
-class APPLICATION_API FViewport
-    public FRefCounted
+class APPLICATION_API FViewport 
+    : public FRefCounted
 {
 public:
     FViewport(const FViewportInitializer& InInitializer);
@@ -34,6 +36,8 @@ public:
 
     virtual void Destroy();
     virtual void DestroyRHI();
+
+    virtual void ToggleFullscreen();
 
     virtual bool OnKeyDown(const FKeyEvent& KeyEvent)  { return false; }
     virtual bool OnKeyUp(const FKeyEvent& KeyEvent)    { return false; }
@@ -47,6 +51,7 @@ public:
     virtual bool OnViewportResized(const FWindowResizeEvent& ResizeEvent);
     virtual bool OnViewportClosed();
 
+    virtual bool OnViewportMoved(const FWindowMovedEvent& MoveEvent) { return false; }
     virtual bool OnViewportCursorEntered() { return false; }
     virtual bool OnViewportCursorLeft()    { return false; }
     virtual bool OnViewportFocusLost()     { return false; }
@@ -54,17 +59,17 @@ public:
 
     virtual FIntVector2 GetSize() const { return FIntVector2{ Initializer.Width, Initializer.Height }; }
 
-    DECLARE_EVENT(FViewportClosedEvent, FViewport*);
+    DECLARE_EVENT(FViewportClosedEvent, FViewport, FViewport*);
     FViewportClosedEvent& GetClosedEvent() const { return ClosedEvent; }
 
-    DECLARE_EVENT(FViewportResizedEvent, FViewport*);
+    DECLARE_EVENT(FViewportResizedEvent, FViewport, FViewport*);
     FViewportResizedEvent& GetResizedEvent() const { return ResizedEvent; }
 
-    FRHIViewportRef   GetRHI()    const { return Viewport; }
+    FRHIViewportRef   GetRHI()    const { return RHIViewport; }
     FGenericWindowRef GetWindow() const { return Window; };
 
 private:
-    FRHIViewportRef   Viewport;
+    FRHIViewportRef   RHIViewport;
     FGenericWindowRef Window;
 
     FViewportInitializer Initializer;

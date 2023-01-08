@@ -1,11 +1,8 @@
 #include "LightSetup.h"
-
+#include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHIInterface.h"
-
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
-
-#include "Core/Misc/FrameProfiler.h"
 
 bool FLightSetup::Init()
 {

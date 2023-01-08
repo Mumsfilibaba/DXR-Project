@@ -15,7 +15,7 @@
 
 #include <imgui.h>
 
-bool FViewportRenderer::InitContext(InterfaceContext Context)
+bool FViewportRenderer::Initialize(InterfaceContext Context)
 {
     INIT_CONTEXT(Context);
 
@@ -257,13 +257,13 @@ bool FViewportRenderer::InitContext(InterfaceContext Context)
     return true;
 }
 
-void FViewportRenderer::BeginTick()
+void FViewportRenderer::BeginFrame()
 {
     // Begin new frame
     ImGui::NewFrame();
 }
 
-void FViewportRenderer::EndTick()
+void FViewportRenderer::EndFrame()
 {
     // EndFrame
     ImGui::EndFrame();

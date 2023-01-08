@@ -1,12 +1,8 @@
 #include "FrameProfilerWindow.h"
-
-#include "Application/WidgetUtilities.h"
-#include "Application/ApplicationInterface.h"
-
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Time/Stopwatch.h"
-
-#include <imgui.h>
+#include "Application/WidgetUtilities.h"
+#include "Application/Application.h"
 
 TAutoConsoleVariable<bool> GDrawFps(
     "Renderer.DrawFps", 
@@ -214,19 +210,22 @@ void FFrameProfilerWindow::DrawCPUData(float Width)
 void FFrameProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    FGenericWindowRef MainViewport = FApplication::Get().GetMainViewport();
+    const TSharedRef<FViewport> MainViewport = FApplication::Get().GetMainViewport();
+    if (!MainViewport)
+    {
+        return;
+    }
 
-    const uint32 WindowWidth = MainViewport->GetWidth();
-    const uint32 WindowHeight = MainViewport->GetHeight();
+    const auto ViewportSize = MainViewport->GetSize();
 
-    const float Width = NMath::Max(WindowWidth * 0.6f, 400.0f);
-    const float Height = WindowHeight * 0.75f;
+    const float Width  = NMath::Max(ViewportSize.x * 0.6f, 400.0f);
+    const float Height = ViewportSize.y * 0.75f;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-    ImGui::SetNextWindowPos(ImVec2(float(WindowWidth) * 0.5f, float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+    ImGui::SetNextWindowPos(ImVec2(float(ViewportSize.x) * 0.5f, float(ViewportSize.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
     const ImGuiWindowFlags Flags =

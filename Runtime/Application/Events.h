@@ -149,21 +149,6 @@ struct FWindowResizeEvent
 };
 
 
-struct FWindowFocusChangedEvent : public FEvent
-{
-    FORCEINLINE FWindowFocusChangedEvent(const FGenericWindowRef& InWindow, bool bInHasFocus)
-        : Window(InWindow)
-        , bHasFocus(bInHasFocus)
-    { }
-
-    /** @brief - Window that had focus-status changed */
-    FGenericWindowRef Window;
-
-    /** @brief - Indicates weather the window got or lost focus */
-    bool bHasFocus;
-};
-
-
 struct FWindowMovedEvent 
     : public FEvent
 {

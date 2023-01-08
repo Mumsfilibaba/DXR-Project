@@ -1,14 +1,11 @@
 #pragma once
 #include "VertexFormat.h"
 #include "TextureResource.h"
-
 #include "Engine/EngineModule.h"
-
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
-
 #include "RHI/RHITypes.h"
 
 struct FMeshData

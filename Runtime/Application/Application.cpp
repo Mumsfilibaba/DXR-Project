@@ -1,9 +1,22 @@
 #include "Application.h"
-
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 #include <imgui.h>
+
+static uint32 GetMouseButtonIndex(EMouseButton Button)
+{
+    switch (Button)
+    {
+        case MouseButton_Left:    return 0;
+        case MouseButton_Right:   return 1;
+        case MouseButton_Middle:  return 2;
+        case MouseButton_Back:    return 3;
+        case MouseButton_Forward: return 4;
+        default:                  return static_cast<uint32>(-1);
+    }
+}
+
 
 TSharedPtr<FApplication> FApplication::GInstance;
 
@@ -17,6 +30,34 @@ bool FApplication::Create()
     }
 
     GInstance = MakeSharedPtr(new FApplication(Application));
+    if (!GInstance->Initialize())
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create UI Context");
+        return false;
+    }
+
+    Application->SetMessageListener(GInstance);
+    return true;
+}
+
+bool FApplication::Create(const TSharedPtr<FApplication>& NewApplication)
+{
+    TSharedPtr<FGenericApplication> Application = MakeSharedPtr(FPlatformApplicationMisc::CreateApplication());
+    if (!Application)
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create FPlatformApplication");
+        return false;
+    }
+
+    GInstance = NewApplication;
+    if (!GInstance)
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", "FApplication cannot be nullptr");
+        return false;
+    }
+
+    GInstance->SetPlatformApplication(Application);
+
     if (!GInstance->Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create UI Context");
@@ -58,11 +99,17 @@ bool FApplication::InitializeRHI()
     return true; 
 }
 
+void FApplication::ReleaseRHI()
+{
+    if (Renderer)
+    {
+        delete Renderer;
+        Renderer = nullptr;
+    }
+}
+
 FApplication::~FApplication()
 {
-    delete Renderer;
-    Renderer = nullptr;
-
     if (Context)
     {
         ImGui::DestroyContext(Context);
@@ -256,24 +303,27 @@ void FApplication::Tick(FTimespan DeltaTime)
     // Update UI
     ImGuiIO& UIState = ImGui::GetIO();
 
-    FGenericWindowRef Window = MainViewport;
-    if (UIState.WantSetMousePos)
+    FGenericWindowRef Window = MainViewport ? MainViewport->GetWindow() : nullptr;
+    if (Window)
     {
-        SetCursorPos(Window, FIntVector2(static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y)));
+        if (UIState.WantSetMousePos)
+        {
+            SetCursorPos(Window, FIntVector2(static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y)));
+        }
+
+        FWindowShape CurrentWindowShape;
+        Window->GetWindowShape(CurrentWindowShape);
+
+        UIState.DeltaTime   = static_cast<float>(DeltaTime.AsSeconds());
+        UIState.DisplaySize = ImVec2{ float(CurrentWindowShape.Width), float(CurrentWindowShape.Height) };
+
+        const FMonitorDesc MonitorDesc = PlatformApplication->GetMonitorDescFromWindow(Window);
+        UIState.DisplayFramebufferScale = ImVec2{ MonitorDesc.DisplayScaling, MonitorDesc.DisplayScaling };
+        UIState.FontGlobalScale = MonitorDesc.DisplayScaling;
+
+        const FIntVector2 Position = GetCursorPos(Window);
+        UIState.MousePos = ImVec2(static_cast<float>(Position.x), static_cast<float>(Position.y));
     }
-
-    FWindowShape CurrentWindowShape;
-    Window->GetWindowShape(CurrentWindowShape);
-
-    UIState.DeltaTime   = static_cast<float>(DeltaTime.AsSeconds());
-    UIState.DisplaySize = ImVec2{ float(CurrentWindowShape.Width), float(CurrentWindowShape.Height) };
-
-    FMonitorDesc MonitorDesc = PlatformApplication->GetMonitorDescFromWindow(Window);
-    UIState.DisplayFramebufferScale = ImVec2{ MonitorDesc.DisplayScaling, MonitorDesc.DisplayScaling };
-    UIState.FontGlobalScale         = MonitorDesc.DisplayScaling;
-
-    const FIntVector2 Position = GetCursorPos(Window);
-    UIState.MousePos = ImVec2(static_cast<float>(Position.x), static_cast<float>(Position.y));
 
     FModifierKeyState KeyState = FPlatformApplicationMisc::GetModifierKeyState();
     UIState.KeyCtrl  = KeyState.bIsCtrlDown;
@@ -311,9 +361,9 @@ void FApplication::Tick(FTimespan DeltaTime)
     // Update all the UI windows
     if (Renderer)
     {
-        Renderer->BeginTick();
+        Renderer->BeginFrame();
 
-        InterfaceWindows.Foreach([](TSharedRef<FWindow>& Window)
+        InterfaceWindows.Foreach([](TSharedRef<FWidget>& Window)
         {
             if (Window->IsTickable())
             {
@@ -323,7 +373,7 @@ void FApplication::Tick(FTimespan DeltaTime)
 
         RenderStrings();
 
-        Renderer->EndTick();
+        Renderer->EndFrame();
     }
 
     // Update platform
@@ -391,14 +441,14 @@ void FApplication::SetActiveWindow(const FGenericWindowRef& ActiveWindow)
     PlatformApplication->SetActiveWindow(ActiveWindow);
 }
 
-void FApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority)
+void FApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 NewPriority)
 {
     TPair NewPair(NewInputHandler, NewPriority);
     if (!InputHandlers.Contains(NewPair))
     {
         for (int32 Index = 0; Index < InputHandlers.GetSize(); )
         {
-            const auto Handler = OutMessageHandlerArray[Index];
+            const auto Handler = InputHandlers[Index];
             if (NewPriority <= Handler.Second)
             {
                 Index++;
@@ -426,35 +476,57 @@ void FApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHand
 
 void FApplication::RegisterMainViewport(const TSharedRef<FViewport>& NewMainViewport)
 {
-    MainViewport = NewMainViewport;
+    if (MainViewport != NewMainViewport)
+    {
+        MainViewport = NewMainViewport;
 
-    if (ViewportChangedEvent.IsBound())
-    {
-        ViewportChangedEvent.Broadcast(NewMainViewport);
-    }
+        if (ViewportChangedEvent.IsBound())
+        {
+            ViewportChangedEvent.Broadcast(NewMainViewport.Get());
+        }
 
-    ImGuiIO& InterfaceState = ImGui::GetIO();
-    if (MainViewport)
-    {
-        const FGenericWindowRef Window = NewMainViewport->GetWindow();
-        InterfaceState.ImeWindowHandle = Window->GetPlatformHandle();
-    }
-    else
-    {
-        InterfaceState.ImeWindowHandle = nullptr;
+        // TODO: What to do with multiple Viewports
+        ImGuiIO& InterfaceState = ImGui::GetIO();
+        if (MainViewport)
+        {
+            const FGenericWindowRef Window = NewMainViewport->GetWindow();
+            InterfaceState.ImeWindowHandle = Window->GetPlatformHandle();
+        }
+        else
+        {
+            InterfaceState.ImeWindowHandle = nullptr;
+        }
+
+        RegisterViewport(NewMainViewport);
     }
 }
 
-void FApplication::AddWindow(const TSharedRef<FWindow>& NewWindow)
+void FApplication::RegisterViewport(const TSharedRef<FViewport>& NewViewport)
+{
+    if (NewViewport)
+    {
+        Viewports.PushUnique(NewViewport);
+    }
+}
+
+void FApplication::UnregisterViewport(const TSharedRef<FViewport>& Viewport)
+{
+    if (Viewport)
+    {
+        Viewports.RemoveAll(Viewport);
+    }
+}
+
+void FApplication::AddWidget(const TSharedRef<FWidget>& NewWindow)
 {
     if (NewWindow && !InterfaceWindows.Contains(NewWindow))
     {
-        TSharedRef<FWindow>& Window = InterfaceWindows.Emplace(NewWindow);
+        TSharedRef<FWidget>& Window = InterfaceWindows.Emplace(NewWindow);
         Window->InitContext(Context);
     }
 }
 
-void FApplication::RemoveWindow(const TSharedRef<FWindow>& Window)
+void FApplication::RemoveWidget(const TSharedRef<FWidget>& Window)
 {
     InterfaceWindows.Remove(Window);
 }
@@ -473,6 +545,22 @@ void FApplication::DrawWindows(FRHICommandList& CommandList)
     }
 }
 
+TSharedRef<FViewport> FApplication::GetViewportFromWindow(const FGenericWindowRef& Window)
+{
+    if (Window)
+    {
+        for (const TSharedRef<FViewport>& Viewport : Viewports)
+        {
+            if (Window == Viewport->GetWindow())
+            {
+                return Viewport;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
 void FApplication::SetPlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
 {
     if (InPlatformApplication)
@@ -484,50 +572,59 @@ void FApplication::SetPlatformApplication(const TSharedPtr<FGenericApplication>&
     PlatformApplication = InPlatformApplication;
 }
 
-void FApplication::HandleKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState)
+void FApplication::OnKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState)
 {
     FKeyEvent KeyEvent(KeyCode, false, false, ModierKeyState);
-    HandleKeyEvent(KeyEvent);
-}
-
-void FApplication::HandleKeyPressed(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
-{
-    FKeyEvent KeyEvent(KeyCode, true, bIsRepeat, ModierKeyState);
-    HandleKeyEvent(KeyEvent);
-}
-
-void FApplication::HandleKeyEvent(const FKeyEvent& KeyEvent)
-{
-    FKeyEvent Event = KeyEvent;
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FInputHandler>, uint32>& Handler = InputHandlers[Index];
-        if (Handler.First->HandleKeyEvent(Event))
+        if (Handler.First->HandleKeyEvent(KeyEvent))
         {
-            Event.bIsConsumed = true;
+            KeyEvent.bIsConsumed = true;
         }
     }
 
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.KeysDown[Event.KeyCode] = Event.bIsDown;
+    UIState.KeysDown[KeyEvent.KeyCode] = KeyEvent.bIsDown;
 
     if (UIState.WantCaptureKeyboard)
     {
-        Event.bIsConsumed = true;
+        KeyEvent.bIsConsumed = true;
     }
 
-    if (!Event.bIsConsumed && !RegisteredUsers.IsEmpty())
+    for (TSharedRef<FViewport> Viewport : Viewports)
     {
-        for (const TSharedPtr<FUser>& User : RegisteredUsers)
+        Viewport->OnKeyUp(KeyEvent);
+    }
+}
+
+void FApplication::OnKeyPressed(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
+{
+    FKeyEvent KeyEvent(KeyCode, true, bIsRepeat, ModierKeyState);
+    for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
+    {
+        const TPair<TSharedPtr<FInputHandler>, uint32>& Handler = InputHandlers[Index];
+        if (Handler.First->HandleKeyEvent(KeyEvent))
         {
-            User->HandleKeyEvent(Event);
+            KeyEvent.bIsConsumed = true;
         }
     }
 
-    // TODO: Update viewport
+    ImGuiIO& UIState = ImGui::GetIO();
+    UIState.KeysDown[KeyEvent.KeyCode] = KeyEvent.bIsDown;
+
+    if (UIState.WantCaptureKeyboard)
+    {
+        KeyEvent.bIsConsumed = true;
+    }
+
+    for (TSharedRef<FViewport> Viewport : Viewports)
+    {
+        Viewport->OnKeyDown(KeyEvent);
+    }
 }
 
-void FApplication::HandleKeyChar(uint32 Character)
+void FApplication::OnKeyChar(uint32 Character)
 {
     FKeyCharEvent Event(Character);
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
@@ -541,9 +638,14 @@ void FApplication::HandleKeyChar(uint32 Character)
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.AddInputCharacter(Event.Character);
+
+    for (TSharedRef<FViewport> Viewport : Viewports)
+    {
+        Viewport->OnKeyChar(Event);
+    }
 }
 
-void FApplication::HandleMouseMove(int32 x, int32 y)
+void FApplication::OnCursorMove(int32 x, int32 y)
 {
     FMouseMovedEvent MouseMovedEvent(x, y);
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
@@ -555,16 +657,13 @@ void FApplication::HandleMouseMove(int32 x, int32 y)
         }
     }
 
-    if (!MouseMovedEvent.bIsConsumed && !RegisteredUsers.IsEmpty())
+    for (TSharedRef<FViewport> Viewport : Viewports)
     {
-        for (const TSharedPtr<FUser>& User : RegisteredUsers)
-        {
-            User->HandleMouseMovedEvent(MouseMovedEvent);
-        }
+        Viewport->OnCursorMove(MouseMovedEvent);
     }
 }
 
-void FApplication::HandleMouseReleased(EMouseButton Button, FModifierKeyState ModierKeyState)
+void FApplication::OnCursorReleased(EMouseButton Button, FModifierKeyState ModierKeyState)
 {
     FGenericWindowRef CaptureWindow = PlatformApplication->GetCapture();
     if (CaptureWindow)
@@ -573,10 +672,32 @@ void FApplication::HandleMouseReleased(EMouseButton Button, FModifierKeyState Mo
     }
 
     FMouseButtonEvent MouseButtonEvent(Button, false, ModierKeyState);
-    HandleMouseButtonEvent(MouseButtonEvent);
+    for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
+    {
+        const TPair<TSharedPtr<FInputHandler>, uint32>& Handler = InputHandlers[Index];
+        if (Handler.First->HandleMouseButtonEvent(MouseButtonEvent))
+        {
+            MouseButtonEvent.bIsConsumed = true;
+        }
+    }
+
+    ImGuiIO& UIState = ImGui::GetIO();
+
+    const uint32 ButtonIndex = GetMouseButtonIndex(MouseButtonEvent.Button);
+    UIState.MouseDown[ButtonIndex] = MouseButtonEvent.bIsDown;
+
+    if (UIState.WantCaptureMouse)
+    {
+        MouseButtonEvent.bIsConsumed = true;
+    }
+
+    for (TSharedRef<FViewport> Viewport : Viewports)
+    {
+        Viewport->OnCursorButtonUp(MouseButtonEvent);
+    }
 }
 
-void FApplication::HandleMousePressed(EMouseButton Button, FModifierKeyState ModierKeyState)
+void FApplication::OnCursorPressed(EMouseButton Button, FModifierKeyState ModierKeyState)
 {
     FGenericWindowRef CaptureWindow = PlatformApplication->GetCapture();
     if (!CaptureWindow)
@@ -586,54 +707,32 @@ void FApplication::HandleMousePressed(EMouseButton Button, FModifierKeyState Mod
     }
 
     FMouseButtonEvent MouseButtonEvent(Button, true, ModierKeyState);
-    HandleMouseButtonEvent(MouseButtonEvent);
-}
-
-static uint32 GetMouseButtonIndex(EMouseButton Button)
-{
-    switch (Button)
-    {
-    case MouseButton_Left:    return 0;
-    case MouseButton_Right:   return 1;
-    case MouseButton_Middle:  return 2;
-    case MouseButton_Back:    return 3;
-    case MouseButton_Forward: return 4;
-    default:                  return static_cast<uint32>(-1);
-    }
-}
-
-void FApplication::HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent)
-{
-    FMouseButtonEvent Event = MouseButtonEvent;
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
     {
         const TPair<TSharedPtr<FInputHandler>, uint32>& Handler = InputHandlers[Index];
-        if (Handler.First->HandleMouseButtonEvent(Event))
+        if (Handler.First->HandleMouseButtonEvent(MouseButtonEvent))
         {
-            Event.bIsConsumed = true;
+            MouseButtonEvent.bIsConsumed = true;
         }
     }
 
     ImGuiIO& UIState = ImGui::GetIO();
 
-    const uint32 ButtonIndex = GetMouseButtonIndex(Event.Button);
-    UIState.MouseDown[ButtonIndex] = Event.bIsDown;
+    const uint32 ButtonIndex = GetMouseButtonIndex(MouseButtonEvent.Button);
+    UIState.MouseDown[ButtonIndex] = MouseButtonEvent.bIsDown;
 
     if (UIState.WantCaptureMouse)
     {
-        Event.bIsConsumed = true;
+        MouseButtonEvent.bIsConsumed = true;
     }
 
-    if (!Event.bIsConsumed && !RegisteredUsers.IsEmpty())
+    for (TSharedRef<FViewport> Viewport : Viewports)
     {
-        for (const TSharedPtr<FUser>& User : RegisteredUsers)
-        {
-            User->HandleMouseButtonEvent(Event);
-        }
+        Viewport->OnCursorButtonDown(MouseButtonEvent);
     }
 }
 
-void FApplication::HandleMouseScrolled(float HorizontalDelta, float VerticalDelta)
+void FApplication::OnCursorScrolled(float HorizontalDelta, float VerticalDelta)
 {
     FMouseScrolledEvent Event(HorizontalDelta, VerticalDelta);
     for (int32 Index = 0; Index < InputHandlers.GetSize(); Index++)
@@ -654,85 +753,74 @@ void FApplication::HandleMouseScrolled(float HorizontalDelta, float VerticalDelt
         Event.bIsConsumed = true;
     }
 
-    if (!Event.bIsConsumed && !RegisteredUsers.IsEmpty())
+    for (TSharedRef<FViewport> Viewport : Viewports)
     {
-        for (const TSharedPtr<FUser>& User : RegisteredUsers)
-        {
-            User->HandleMouseScrolledEvent(Event);
-        }
+        Viewport->OnCursorScroll(Event);
     }
 }
 
-void FApplication::HandleWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height)
+void FApplication::OnWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height)
 {
-    FWindowResizeEvent WindowResizeEvent(Window, Width, Height);
-    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
+    TSharedRef<FViewport> Viewport = GetViewportFromWindow(Window);
+    if (Viewport)
     {
-        const TPair<TSharedPtr<FWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
-        if (Handler.First->OnWindowResized(WindowResizeEvent))
+        FWindowResizeEvent WindowResizeEvent(Window, Width, Height);
+        if (Viewport->OnViewportResized(WindowResizeEvent))
         {
             WindowResizeEvent.bIsConsumed = true;
         }
     }
 }
 
-void FApplication::HandleWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y)
+void FApplication::OnWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y)
 {
-    FWindowMovedEvent WindowsMovedEvent(Window, x, y);
-    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
+    TSharedRef<FViewport> Viewport = GetViewportFromWindow(Window);
+    if (Viewport)
     {
-        const TPair<TSharedPtr<FWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
-        if (Handler.First->OnWindowMoved(WindowsMovedEvent))
+        FWindowMovedEvent WindowsMovedEvent(Window, x, y);
+        if (Viewport->OnViewportMoved(WindowsMovedEvent))
         {
             WindowsMovedEvent.bIsConsumed = true;
         }
     }
 }
 
-void FApplication::HandleWindowFocusChanged(const FGenericWindowRef& Window, bool bHasFocus)
+void FApplication::OnWindowFocusLost(const FGenericWindowRef& Window)
 {
-    FWindowFocusChangedEvent WindowFocusChangedEvent(Window, bHasFocus);
-    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
+    TSharedRef<FViewport> Viewport = GetViewportFromWindow(Window);
+    if (Viewport)
     {
-        const TPair<TSharedPtr<FWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
-        if (Handler.First->OnWindowFocusChanged(WindowFocusChangedEvent))
-        {
-            WindowFocusChangedEvent.bIsConsumed = true;
-        }
+        Viewport->OnViewportFocusLost();
     }
 
-    RegisteredUsers.Foreach([](const TSharedPtr<FUser>& User)
-    {
-        CHECK(User != nullptr);
-        User->ResetState();
-    });
-
-	ImGuiIO& UIState = ImGui::GetIO();
+    ImGuiIO& UIState = ImGui::GetIO();
     FMemory::Memzero(UIState.KeysDown, sizeof(UIState.KeysDown));
 }
 
-void FApplication::HandleWindowMouseLeft(const FGenericWindowRef& Window)
+void FApplication::OnWindowFocusGained(const FGenericWindowRef& Window)
 {
-    FWindowFrameMouseEvent WindowFrameMouseEvent(Window, false);
-    HandleWindowFrameMouseEvent(WindowFrameMouseEvent);
-}
-
-void FApplication::HandleWindowMouseEntered(const FGenericWindowRef& Window)
-{
-    FWindowFrameMouseEvent WindowFrameMouseEvent(Window, true);
-    HandleWindowFrameMouseEvent(WindowFrameMouseEvent);
-}
-
-void FApplication::HandleWindowFrameMouseEvent(const FWindowFrameMouseEvent& WindowFrameMouseEvent)
-{
-    FWindowFrameMouseEvent Event = WindowFrameMouseEvent;
-    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
+    TSharedRef<FViewport> Viewport = GetViewportFromWindow(Window);
+    if (Viewport)
     {
-        const TPair<TSharedPtr<FWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
-        if (Handler.First->OnWindowFrameMouseEvent(Event))
-        {
-            Event.bIsConsumed = true;
-        }
+        Viewport->OnViewportFocusGained();
+    }
+}
+
+void FApplication::OnWindowCursorLeft(const FGenericWindowRef& Window)
+{
+    TSharedRef<FViewport> Viewport = GetViewportFromWindow(Window);
+    if (Viewport)
+    {
+        Viewport->OnViewportCursorLeft();
+    }
+}
+
+void FApplication::OnWindowCursorEntered(const FGenericWindowRef& Window)
+{
+    TSharedRef<FViewport> Viewport = GetViewportFromWindow(Window);
+    if (Viewport)
+    {
+        Viewport->OnViewportCursorEntered();
     }
 }
 
@@ -740,11 +828,10 @@ void FApplication::RenderStrings()
 {
     if (MainViewport && !DebugStrings.IsEmpty())
     {
-        FWindowShape CurrentWindowShape;
-        MainViewport->GetWindowShape(CurrentWindowShape);
+        const FIntVector2 Size = MainViewport->GetSize();
 
         constexpr float Width = 400.0f;
-        ImGui::SetNextWindowPos(ImVec2(static_cast<float>(CurrentWindowShape.Width - Width), 18.0f));
+        ImGui::SetNextWindowPos(ImVec2(static_cast<float>(Size.x - Width), 18.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, 0.0f));
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
@@ -767,25 +854,21 @@ void FApplication::RenderStrings()
     }
 }
 
-void FApplication::HandleWindowClosed(const FGenericWindowRef& Window)
+void FApplication::OnWindowClosed(const FGenericWindowRef& Window)
 {
-    FWindowClosedEvent WindowClosedEvent(Window);
-    for (int32 Index = 0; Index < WindowMessageHandlers.GetSize(); Index++)
+    TSharedRef<FViewport> Viewport = GetViewportFromWindow(Window);
+    if (Viewport)
     {
-        const TPair<TSharedPtr<FWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
-        if (Handler.First->OnWindowClosed(WindowClosedEvent))
-        {
-            WindowClosedEvent.bIsConsumed = true;
-        }
+        Viewport->OnViewportClosed();
     }
-    
-    LOG_INFO("HandleWindowClosed");
 
-    // TODO: Register a main viewport and when that closes, request exit for now just exit
-    FPlatformApplicationMisc::RequestExit(0);
+    if (Viewport == MainViewport)
+    {
+        FPlatformApplicationMisc::RequestExit(0);
+    }
 }
 
-void FApplication::HandleApplicationExit(int32 ExitCode)
+void FApplication::OnApplicationExit(int32 ExitCode)
 {
     bIsRunning = false;
     ExitEvent.Broadcast(ExitCode);

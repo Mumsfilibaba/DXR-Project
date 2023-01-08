@@ -1,15 +1,12 @@
 #include "Main/EngineLoop.h"
-
 #include "Core/Core.h"
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Memory/Malloc.h"
-
+#include "Core/Platform/PlatformMisc.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-
-#include "Application/ApplicationInterface.h"
-
+#include "Application/Application.h"
 #include "Engine/Engine.h"
 
 FEngineLoop GEngineLoop;
@@ -93,12 +90,10 @@ int32 GenericMain(const CHAR* Args[], int32 NumArgs)
             FOutputDeviceLogger::Get()->AddOutputDevice(GDebugOutput);
         }
 
-
         if (!FCommandLine::Initialize(Args, NumArgs))
         {
             LOG_WARNING("Invalid CommandLine");
         }
-
 
         if (!EnginePreInit())
         {
@@ -106,13 +101,11 @@ int32 GenericMain(const CHAR* Args[], int32 NumArgs)
             return -1;
         }
 
-
         if (!EngineInit())
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Init Failed");
             return -1;
         }
-
 
         // Run loop
         while (FApplication::Get().IsRunning())

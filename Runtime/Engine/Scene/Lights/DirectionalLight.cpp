@@ -1,8 +1,6 @@
 #include "DirectionalLight.h"
-
 #include "Core/Math/Math.h"
 #include "Core/Misc/ConsoleManager.h"
-
 #include "Engine/Scene/Camera.h"
 
 TAutoConsoleVariable<float> GSunSize(

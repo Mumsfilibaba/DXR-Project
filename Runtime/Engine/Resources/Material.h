@@ -1,10 +1,8 @@
 #pragma once
 #include "Engine/EngineModule.h"
-
-#include "RHI/RHIResources.h"
-
 #include "Core/Math/Vector3.h"
 #include "Core/Containers/StaticArray.h"
+#include "RHI/RHIResources.h"
 
 #define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetShaderResourceView() : nullptr)
 

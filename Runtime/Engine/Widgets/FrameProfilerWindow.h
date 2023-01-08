@@ -1,12 +1,11 @@
 #pragma once
-#include "Application/Window.h"
-
+#include "Application/Widget.h"
 #include "Core/Misc/FrameProfiler.h"
 
 #include <imgui.h>
 
 class FFrameProfilerWindow 
-    : public FWindow
+    : public FWidget
 {
     INTERFACE_GENERATE_BODY();
 

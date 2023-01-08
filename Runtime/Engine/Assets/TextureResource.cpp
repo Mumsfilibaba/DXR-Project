@@ -1,7 +1,5 @@
 #include "TextureResource.h"
-
 #include "Engine/Resources/TextureFactory.h"
-
 #include "RHI/RHIInterface.h"
 
 FTextureResourceData::FTextureResourceData()

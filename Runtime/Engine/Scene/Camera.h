@@ -1,11 +1,7 @@
 #pragma once
 #include "Engine/EngineModule.h"
-
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix4.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCamera
 
 class ENGINE_API FCamera
 {

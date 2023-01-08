@@ -1,5 +1,5 @@
 #pragma once
-#include <Engine/Scene/Actor.h>
+#include <Engine/Scene/Actors/Actor.h>
 #include <Engine/Scene/Components/Component.h>
 
 class FMovingBallComponent : public FComponent

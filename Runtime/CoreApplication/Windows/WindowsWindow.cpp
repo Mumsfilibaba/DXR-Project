@@ -32,7 +32,7 @@ bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 I
     // Determine the window style for WinAPI
     DWORD NewStyle   = 0;
     DWORD NewStyleEx = WS_EX_APPWINDOW;
-    if (InStyle.Style != 0)
+    if (InStyle.Style != EWindowStyleFlag::None)
     {
         NewStyle = WS_OVERLAPPED;
         if (InStyle.IsTitled())

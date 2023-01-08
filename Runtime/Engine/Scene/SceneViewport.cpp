@@ -20,7 +20,7 @@ bool FSceneViewport::OnKeyTyped(FKeyCharEvent KeyTypedEvent)
     return false; 
 }
 
-bool FSceneViewport::OnMouseMove(const FMouseMovedEvent& MouseEvent)         {
+bool FSceneViewport::OnMouseMove(const FMouseMovedEvent& MouseEvent)
 { 
     return false; 
 }

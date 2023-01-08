@@ -1,4 +1,4 @@
-#include "ApplicationInterface.h"
+#include "Application.h"
 
 #include "Core/Modules/ModuleManager.h"
 

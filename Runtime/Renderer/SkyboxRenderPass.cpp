@@ -1,13 +1,9 @@
 #include "SkyboxRenderPass.h"
-
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/FrameProfiler.h"
-
 #include "Renderer/Debug/GPUProfiler.h"
-
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
-
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Resources/TextureFactory.h"
 

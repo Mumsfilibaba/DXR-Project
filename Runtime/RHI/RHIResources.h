@@ -1,7 +1,6 @@
 #pragma once
 #include "RHITypes.h"
 #include "RHICore.h"
-
 #include "Core/IRefCounted.h"
 #include "Core/Math/Float.h"
 #include "Core/Math/IntVector3.h"

@@ -1,9 +1,7 @@
 #include "FBXLoader.h"
-
 #include "Engine/Assets/VertexFormat.h"
 #include "Engine/Assets/MeshUtilities.h"
 #include "Engine/Assets/AssetManager.h"
-
 #include "Core/Math/Matrix4.h"
 #include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"

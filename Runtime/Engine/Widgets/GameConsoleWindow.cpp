@@ -1,13 +1,9 @@
 #include "GameConsoleWindow.h"
-
-#include "Application/ApplicationInterface.h"
-
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
-
-#include <imgui.h>
+#include "Application/Application.h"
 
 TSharedRef<FGameConsoleWindow> FGameConsoleWindow::Make()
 {
@@ -20,7 +16,7 @@ TSharedRef<FGameConsoleWindow> FGameConsoleWindow::Make()
 }
 
 FGameConsoleWindow::FGameConsoleWindow()
-    : FWindow()
+    : FWidget()
     , IOutputDevice()
     , InputHandler(MakeShared<FConsoleInputHandler>())
 {

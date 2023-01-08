@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
-
 #include "Engine/Assets/SceneData.h"
 
 enum class EFBXFlags : uint8

@@ -1,10 +1,11 @@
 #include "Viewport.h"
-#include "RHI/RHIResources.h"
+#include "Application.h"
+#include "RHI/RHIInterface.h"
 // TODO: This needs to be moved to another module
 #include "Engine/Project/ProjectManager.h"
 
 FViewport::FViewport(const FViewportInitializer& InInitializer)
-    : Viewport(nullptr)
+    : RHIViewport(nullptr)
     , Window(nullptr)
     , ClosedEvent()
     , ResizedEvent()
@@ -19,9 +20,9 @@ bool FViewport::Create()
         EWindowStyleFlag::Maximizable |
         EWindowStyleFlag::Resizeable;
 
-    Window = Application.CreateWindow();
+    Window = FApplication::Get().CreateWindow();
     if (Window && Window->Initialize(
-        FProjectManager::GetProjectName(), 
+        FProjectManager::GetProjectName(),
         Initializer.Width, 
         Initializer.Height, 
         0,
@@ -33,7 +34,7 @@ bool FViewport::Create()
     }
     else
     {
-        return false
+        return false;
     }
 }
 
@@ -46,8 +47,8 @@ bool FViewport::CreateRHI()
         Initializer.Width,
         Initializer.Height);
 
-    Resources.MainWindowViewport = RHICreateViewport(ViewportDesc);
-    if (!Resources.MainWindowViewport)
+    RHIViewport = RHICreateViewport(ViewportDesc);
+    if (!RHIViewport)
     {
         return false;
     }
@@ -62,7 +63,15 @@ void FViewport::Destroy()
 
 void FViewport::DestroyRHI()
 {
-    Viewport.Reset();
+    RHIViewport.Reset();
+}
+
+void FViewport::ToggleFullscreen()
+{
+    if (Window)
+    {
+        Window->ToggleFullscreen();
+    }
 }
 
 bool FViewport::OnViewportResized(const FWindowResizeEvent& ResizeEvent)

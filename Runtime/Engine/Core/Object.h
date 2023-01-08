@@ -9,23 +9,23 @@
         alignof(FObjectType),           \
     }
 
-#define FOBJECT_BODY(FObjectType, TSuperClass)                       \
-private:                                                             \
-    typedef FObjectType This;                                        \
-    typedef TSuperClass Super;                                       \
-                                                                     \
-public:                                                              \
-    static FClass* GetStaticClass()                                  \
-    {                                                                \
-        DECLARE_CLASS_INFO(FObjectType);                             \
-        static FClass ClassInfo(Super::GetStaticClass(), ClassInfo); \
-        return &ClassInfo;                                           \
-    }                                                                \
-                                                                     \
+#define FOBJECT_BODY(FObjectType, FSuperClass)                         \
+private:                                                               \
+    typedef FObjectType This;                                          \
+    typedef FSuperClass Super;                                         \
+                                                                       \
+public:                                                                \
+    static FClass* GetStaticClass()                                    \
+    {                                                                  \
+        DECLARE_CLASS_INFO(FObjectType);                               \
+        static FClass StaticClass(Super::GetStaticClass(), ClassInfo); \
+        return &StaticClass;                                           \
+    }                                                                  \
 private:
 
 #define FOBJECT_INIT() \
     this->SetClass(This::GetStaticClass())
+
 
 class ENGINE_API FObject
 {
@@ -53,8 +53,6 @@ private:
     const FClass* Class = nullptr;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helpers
 
 inline bool IsSubClassOf(FObject* Object, FClass* Class)
 {

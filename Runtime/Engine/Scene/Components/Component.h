@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Time/Timespan.h"
-#include "Engine/CoreObject/CoreObject.h"
+#include "Engine/Core/Object.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

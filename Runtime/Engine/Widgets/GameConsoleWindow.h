@@ -8,8 +8,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Platform/CriticalSection.h"
-
-#include "Application/Window.h"
+#include "Application/Widget.h"
 #include "Application/InputHandler.h"
 #include "Application/Events.h"
 
@@ -34,7 +33,7 @@ struct FConsoleInputHandler final
 };
 
 class FGameConsoleWindow final 
-    : public FWindow
+    : public FWidget
     , public IOutputDevice
 {
     INTERFACE_GENERATE_BODY();

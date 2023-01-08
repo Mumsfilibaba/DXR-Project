@@ -2,9 +2,7 @@
 #include "Core/Core.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/RefCounted.h"
-
 #include "RHI/RHIResources.h"
-
 #include "Engine/EngineModule.h"
 
 class FTexture;

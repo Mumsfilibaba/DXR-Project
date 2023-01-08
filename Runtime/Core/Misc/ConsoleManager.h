@@ -2,7 +2,6 @@
 #include "Core/Containers/Map.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/StringView.h"
-#include "Core/Containers/AutoPtr.h"
 #include "Core/Containers/String.h"
 #include "Core/Delegates/MulticastDelegate.h"
 

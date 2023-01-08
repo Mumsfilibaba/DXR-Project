@@ -1,6 +1,5 @@
 #pragma once
 #include "SceneData.h"
-
 #include "Core/Core.h"
 
 struct ENGINE_API FMeshUtilities

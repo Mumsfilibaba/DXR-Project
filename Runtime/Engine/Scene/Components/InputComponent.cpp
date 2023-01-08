@@ -2,6 +2,5 @@
 
 FInputComponent::FInputComponent(FActor* InActorOwner)
     : FComponent(InActorOwner)
-    , ActionBinding()
 {
 }

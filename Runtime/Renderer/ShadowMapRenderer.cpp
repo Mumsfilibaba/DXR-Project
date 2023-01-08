@@ -1,17 +1,13 @@
 #include "ShadowMapRenderer.h"
 #include "MeshDrawCommand.h"
-
-#include "RHI/RHIInterface.h"
-#include "RHI/RHIShaderCompiler.h"
-
-#include "Engine/Resources/Mesh.h"
-#include "Engine/Scene/Lights/PointLight.h"
-#include "Engine/Scene/Lights/DirectionalLight.h"
-
 #include "Core/Math/Frustum.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
-
+#include "RHI/RHIInterface.h"
+#include "RHI/RHIShaderCompiler.h"
+#include "Engine/Resources/Mesh.h"
+#include "Engine/Scene/Lights/PointLight.h"
+#include "Engine/Scene/Lights/DirectionalLight.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
 TAutoConsoleVariable<bool> GCascadeDebug(

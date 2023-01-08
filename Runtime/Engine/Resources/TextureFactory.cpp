@@ -1,7 +1,5 @@
 #include "TextureFactory.h"
-
 #include "Engine/Assets/SceneData.h"
-
 #include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShaderCompiler.h"

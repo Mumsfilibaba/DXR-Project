@@ -4,12 +4,12 @@
 #include "RHI/RHIResources.h"
 
 #include "Application/DrawableTexture.h"
-#include "Application/Window.h"
+#include "Application/Widget.h"
 
 #include <imgui.h>
 
 class FRenderTargetDebugWindow 
-    : public FWindow
+    : public FWidget
 {
     INTERFACE_GENERATE_BODY();
 

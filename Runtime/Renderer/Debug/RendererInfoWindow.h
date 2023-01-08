@@ -1,12 +1,12 @@
 #pragma once
-#include "Application/Window.h"
+#include "Application/Widget.h"
 
 #include "Core/Containers/SharedRef.h"
 
 #include <imgui.h>
 
 class FRendererInfoWindow 
-    : public FWindow
+    : public FWidget
 {
     INTERFACE_GENERATE_BODY();
 

@@ -1,10 +1,9 @@
 #pragma once
 #include "FrameResources.h"
 #include "LightSetup.h"
-
 #include "Engine/Scene/Scene.h"
-
 #include "RHI/RHICommandList.h"
+#include "RHI/RHIShader.h"
 
 class RENDERER_API FDeferredRenderer
 {

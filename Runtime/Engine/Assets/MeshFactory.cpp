@@ -1,6 +1,5 @@
 #include "MeshFactory.h"
 #include "MeshUtilities.h"
-
 #include "Core/Math/MathCommon.h"
 
 FMeshData FMeshFactory::CreateCube(float Width, float Height, float Depth) noexcept

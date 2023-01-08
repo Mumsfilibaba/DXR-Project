@@ -1,7 +1,5 @@
 #include "ConsoleManager.h"
 #include "EngineConfig.h"
-
-#include "Core/Containers/AutoPtr.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Platform/PlatformMisc.h"

@@ -1,8 +1,7 @@
 #pragma once
 #include "Core/Math/Vector3.h"
 #include "Core/Math/AABB.h"
-
-#include "Engine/CoreObject/CoreObject.h"
+#include "Engine/Core/Object.h"
 
 class ENGINE_API FLightProbe
     : public FObject

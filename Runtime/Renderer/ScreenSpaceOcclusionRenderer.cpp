@@ -1,14 +1,12 @@
 #include "ScreenSpaceOcclusionRenderer.h"
 #include "Renderer.h"
-
-#include "RHI/RHIInterface.h"
-#include "RHI/RHIShaderCompiler.h"
-
 #include "Core/Math/Vector2.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "RHI/RHIInterface.h"
+#include "RHI/RHIShaderCompiler.h"
 
 // TODO: Remove and replace. There are better and easier implementations to do yourself
 #include <random>

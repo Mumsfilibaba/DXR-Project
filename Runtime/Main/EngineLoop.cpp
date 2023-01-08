@@ -1,13 +1,10 @@
 #include "EngineLoop.h"
-
 #include "Engine/Engine.h"
 #include "Engine/Project/ProjectManager.h"
 #include "Engine/Resources/TextureFactory.h"
-
 #if PROJECT_EDITOR
     #include "EditorEngine.h"
 #endif
-
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/AsyncThreadPool.h"
@@ -18,18 +15,12 @@
 #include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
-
 #include "Application/Application.h"
-
-#include "ViewportRenderer/ViewportRenderer.h"
-
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
-
 #include "Renderer/Renderer.h"
 #include "Renderer/Debug/GPUProfiler.h"
-
 #include "RHI/RHIShaderCompiler.h"
 
 FEngineLoop::FEngineLoop()
@@ -47,13 +38,14 @@ bool FEngineLoop::LoadCoreModules()
 {
     FModuleManager& ModuleManager = FModuleManager::Get();
 
-    if (!(FModuleInterface* CoreModule = ModuleManager.LoadModule("Core")))
+    FModuleInterface* CoreModule = ModuleManager.LoadModule("Core");
+    if (!CoreModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* CoreApplicationModule = ModuleManager.LoadModule("CoreApplication"))
+    FModuleInterface* CoreApplicationModule = ModuleManager.LoadModule("CoreApplication");
     if (!CoreApplicationModule)
     {
         DEBUG_BREAK();
@@ -302,7 +294,7 @@ bool FEngineLoop::Release()
     // Release the Application. Protect against failed initialization where the global pointer was never initialized
     if (FApplication::IsInitialized())
     {
-        FApplication::Get().SetRenderer(nullptr);
+        FApplication::Get().ReleaseRHI();
     }
 
     // Release the Engine. Protect against failed initialization where the global pointer was never initialized
@@ -326,7 +318,7 @@ bool FEngineLoop::Release()
 
     FAsyncThreadPool::Release();
 
-    FApplication::Release();
+    FApplication::Destroy();
 
     FThreadManager::Release();
 

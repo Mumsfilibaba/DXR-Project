@@ -10,7 +10,7 @@
 #include "TemporalAA.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Threading/AsyncTask.h"
-#include "Engine/Scene/Actor.h"
+#include "Engine/Scene/Actors/Actor.h"
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Camera.h"
 #include "Engine/Assets/MeshFactory.h"
@@ -21,21 +21,6 @@
 #include "Debug/TextureDebugger.h"
 #include "Debug/RendererInfoWindow.h"
 #include "Debug/GPUProfilerWindow.h"
-#include "Application/WindowMessageHandler.h"
-#include "ViewportRenderer/ViewportRenderer.h"
-
-struct FRendererWindowHandler final 
-    : public FWindowMessageHandler
-{
-    DECLARE_DELEGATE(FWindowResizedDelegate, const FWindowResizeEvent& ResizeEvent);
-    FWindowResizedDelegate WindowResizedDelegate;
-
-    virtual bool OnWindowResized(const FWindowResizeEvent& ResizeEvent) override final
-    {
-        WindowResizedDelegate.Execute(ResizeEvent);
-        return true;
-    }
-};
 
 struct FCameraBuffer
 {

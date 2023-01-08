@@ -1,5 +1,4 @@
 #include "ProjectManager.h"
-
 #include "Core/Templates/CString.h"
 
 CHAR FProjectManager::ProjectName[MAX_PROJECT_NAME_LENGTH];

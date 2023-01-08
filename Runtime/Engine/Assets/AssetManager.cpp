@@ -1,11 +1,9 @@
 #include "AssetManager.h"
 #include "TextureImporterBase.h"
 #include "TextureImporterDDS.h"
-
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Utilities/StringUtilities.h"
-
 #include "RHI/RHICommandList.h"
 
 FAssetManager* FAssetManager::GInstance = nullptr;

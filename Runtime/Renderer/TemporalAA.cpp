@@ -1,9 +1,7 @@
 #include "TemporalAA.h"
 #include "Renderer.h"
-
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
-
 #include "Core/Misc/FrameProfiler.h"
 
 bool FTemporalAA::Init(FFrameResources& FrameResources)

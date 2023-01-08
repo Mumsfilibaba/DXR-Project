@@ -24,10 +24,10 @@ public:                                                                     \
 private:
 
 
-struct FWindow 
+struct FWidget 
     : public FRefCounted
 {
-    virtual ~FWindow() = default;
+    virtual ~FWidget() = default;
 
     /**
      * @brief               - Initializes the window's context

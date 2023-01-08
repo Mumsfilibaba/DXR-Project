@@ -3,7 +3,6 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"
-
 #include "Engine/Assets/SceneData.h"
 
 enum class EMeshImportFlags : uint8

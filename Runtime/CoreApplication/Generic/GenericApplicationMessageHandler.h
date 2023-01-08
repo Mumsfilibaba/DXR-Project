@@ -30,13 +30,13 @@ struct FGenericApplicationMessageHandler
 
     virtual void OnWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y) { }
 
-    virtual void OnWindowCursorEntered() { }
+    virtual void OnWindowCursorEntered(const FGenericWindowRef& Window) { }
 
-    virtual void OnWindowCursorLeft() { }
+    virtual void OnWindowCursorLeft(const FGenericWindowRef& Window) { }
     
-    virtual void OnWindowsFocusLost() { }
+    virtual void OnWindowFocusLost(const FGenericWindowRef& Window) { }
     
-    virtual void OnWindowsFocusGained() { }
+    virtual void OnWindowFocusGained(const FGenericWindowRef& Window) { }
 
     virtual void OnWindowClosed(const FGenericWindowRef& Window) { }
 

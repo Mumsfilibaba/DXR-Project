@@ -1,17 +1,11 @@
 #pragma once
 #include "Engine/EngineModule.h"
-
+#include "Engine/Assets/MeshFactory.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Math/AABB.h"
-
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
-
-#include "Engine/Assets/MeshFactory.h"
-
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMesh
 
 class ENGINE_API FMesh
 {

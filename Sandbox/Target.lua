@@ -12,7 +12,6 @@ SandboxProject.AddModuleDependencies(
     "RHI",
     "Engine",
     "Renderer",
-    "ViewportRenderer",
     "NullRHI",
 })
 

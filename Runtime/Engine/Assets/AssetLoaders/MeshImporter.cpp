@@ -1,12 +1,10 @@
 #include "MeshImporter.h"
 #include "FBXLoader.h"
 #include "OBJLoader.h"
-
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"
 #include "Core/Misc/Parse.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Project/ProjectManager.h"
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "FrameResources.h"
 #include "LightSetup.h"
-
+#include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
 
 class RENDERER_API FLightProbeRenderer

@@ -4,7 +4,6 @@
 #include "Lights/Light.h"
 #include "Reflections/LightProbe.h"
 #include "Renderer/MeshDrawCommand.h"
-
 #include "Core/Time/Timespan.h"
 #include "Core/Containers/Array.h"
 

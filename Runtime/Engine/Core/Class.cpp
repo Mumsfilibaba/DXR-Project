@@ -1,15 +1,9 @@
 #include "Class.h"
 
-FClass::FClass(const FClass* InSuperClass, const FClassInfo& ClassDescription)
-    : Name(nullptr)
-    , SuperClass(InSuperClass)
-    , SizeInBytes(0)
-    , Alignment(0)
-{
-    Name        = ClassDescription.Name;
-    SizeInBytes = ClassDescription.SizeOf;
-    Alignment   = ClassDescription.Alignment;
-}
+FClass::FClass(const FClass* InSuperClass, const FClassInfo& InClassInfo)
+    : SuperClass(InSuperClass)
+    , ClassInfo(InClassInfo)
+{ }
 
 bool FClass::IsSubClassOf(const FClass* Class) const
 {

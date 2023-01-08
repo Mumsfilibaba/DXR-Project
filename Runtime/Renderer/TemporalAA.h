@@ -1,8 +1,7 @@
 #pragma once
 #include "FrameResources.h"
-
 #include "RHI/RHICommandList.h"
-
+#include "RHI/RHIShader.h"
 #include "Engine/Scene/Scene.h"
 
 namespace HaltonPrivate

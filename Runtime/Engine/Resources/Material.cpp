@@ -1,8 +1,6 @@
 #include "Material.h"
-
 #include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
-
 #include "Engine/Engine.h"
 
 FMaterial::FMaterial(const FMaterialDesc& InProperties)

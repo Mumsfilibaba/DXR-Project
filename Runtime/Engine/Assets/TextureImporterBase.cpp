@@ -1,6 +1,5 @@
 #include "TextureImporterBase.h"
 #include "TextureResource.h"
-
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Platform/PlatformMisc.h"

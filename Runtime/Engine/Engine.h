@@ -1,16 +1,13 @@
 #pragma once
+#include "Scene/Scene.h"
+#include "Scene/SceneViewport.h"
+#include "Resources/Material.h"
 #include "Core/Core.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Delegates/Event.h"
-
+#include "Core/Containers/SharedPtr.h"
 #include "Application/Events.h"
-#include "Application/User.h"
-#include "Application/WindowMessageHandler.h"
-
 #include "RHI/RHIResources.h"
-
-#include "Engine/Scene/Scene.h"
-#include "Engine/Resources/Material.h"
 
 struct ENGINE_API FEngine
 {
@@ -52,9 +49,6 @@ struct ENGINE_API FEngine
 
     /** @brief - The main viewport */
     TSharedRef<FSceneViewport> MainViewport;
-
-    /** @brief - User */
-    TSharedPtr<FUser> User;
 
     /** @brief - The current scene */
     TSharedPtr<FScene> Scene;

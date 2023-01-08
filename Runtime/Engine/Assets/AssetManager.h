@@ -1,7 +1,6 @@
 #pragma once
 #include "TextureResource.h"
 #include "ITextureImporter.h"
-
 #include "Core/Containers/Map.h"
 #include "Core/Platform/CriticalSection.h"
 

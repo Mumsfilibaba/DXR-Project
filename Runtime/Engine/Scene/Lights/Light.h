@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Math/Vector3.h"
-
-#include "Engine/CoreObject/CoreObject.h"
+#include "Engine/Core/Object.h"
 
 class ENGINE_API FLight 
     : public FObject

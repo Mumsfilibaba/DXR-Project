@@ -2,14 +2,14 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetLoaders/MeshImporter.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/TextureFactory.h"
-#include "Engine/InterfaceWindows/GameConsoleWindow.h"
-#include "Engine/InterfaceWindows/FrameProfilerWindow.h"
+#include "Engine/Widgets/GameConsoleWindow.h"
+#include "Engine/Widgets/FrameProfilerWindow.h"
 #include "Engine/Project/ProjectManager.h"
 #include "RHI/RHIInterface.h"
 
@@ -25,10 +25,10 @@ static void ExitEngineFunc()
 
 static void ToggleFullScreenFunc()
 {
-    FGenericWindowRef MainWindow = FApplication::Get().GetMainViewport();
-    if (MainWindow)
+    TSharedRef<FViewport> Viewport = FApplication::Get().GetMainViewport();
+    if (Viewport)
     {
-        MainWindow->ToggleFullscreen();
+        Viewport->ToggleFullscreen();
     }
 }
 
@@ -68,16 +68,6 @@ bool FEngine::Initialize()
     }
     
     Application.RegisterMainViewport(MainViewport);
-
-    // Register the user
-    TSharedPtr<ICursor> Cursor = Application.GetCursor();
-    User = FUser::Make(0, Cursor);
-    if (!User)
-    {
-        return false;
-    }
-
-    Application.RegisterUser(User);
 
     // Create standard textures
     uint8 Pixels[4] = { 255, 255, 255, 255 };
@@ -142,10 +132,10 @@ bool FEngine::Initialize()
 
     /* Create windows */
     TSharedRef<FFrameProfilerWindow> ProfilerWindow = FFrameProfilerWindow::Create();
-    Application.AddWindow(ProfilerWindow);
+    Application.AddWidget(ProfilerWindow);
 
     TSharedRef<FGameConsoleWindow> ConsoleWindow = FGameConsoleWindow::Make();
-    Application.AddWindow(ConsoleWindow);
+    Application.AddWidget(ConsoleWindow);
 
     return true;
 }

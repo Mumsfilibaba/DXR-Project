@@ -140,13 +140,13 @@ FRenderer::~FRenderer()
         FApplication& Application = FApplication::Get();
         Application.GetMainViewport()->DestroyRHI();
 
-        Application.RemoveWindow(TextureDebugger);
+        Application.RemoveWidget(TextureDebugger);
         TextureDebugger.Reset();
 
-        Application.RemoveWindow(InfoWindow);
+        Application.RemoveWidget(InfoWindow);
         InfoWindow.Reset();
 
-        Application.RemoveWindow(GPUProfilerWindow);
+        Application.RemoveWidget(GPUProfilerWindow);
         GPUProfilerWindow.Reset();
     }
 }
@@ -326,13 +326,13 @@ bool FRenderer::Create()
 
     // Register Windows
     TextureDebugger = FRenderTargetDebugWindow::Create();
-    Application.AddWindow(TextureDebugger);
+    Application.AddWidget(TextureDebugger);
 
     InfoWindow = FRendererInfoWindow::Create();
-    Application.AddWindow(InfoWindow);
+    Application.AddWidget(InfoWindow);
 
     GPUProfilerWindow = FGPUProfilerWindow::Create();
-    Application.AddWindow(GPUProfilerWindow);
+    Application.AddWidget(GPUProfilerWindow);
 
     return true;
 }

@@ -1,8 +1,6 @@
 #include "TextureImporterDDS.h"
 #include "TextureResource.h"
-
 #include "Core/Misc/OutputDeviceLogger.h"
-
 #include "RHI/RHITypes.h"
 
 // Temporarily disable 4456: variable hides a already existing variable

@@ -1,14 +1,11 @@
 #include "DebugRenderer.h"
 #include "MeshDrawCommand.h"
-
 #include "Core/Math/AABB.h"
 #include "Core/Math/Matrix4.h"
 #include "Core/Misc/FrameProfiler.h"
-
-#include "Engine/Scene/Actor.h"
+#include "Engine/Scene/Actors/Actor.h"
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Resources/Mesh.h"
-
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 

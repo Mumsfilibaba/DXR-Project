@@ -1,6 +1,5 @@
 #pragma once
 #include "RHIShader.h"
-
 #include "Core/Containers/Optional.h"
 
 // TODO: Check if this could be avoided

@@ -1,21 +1,14 @@
 #include "Scene.h"
-
 #include "Components/MeshComponent.h"
-
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Resources/TextureFactory.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Mesh.h"
-
 #include "RHI/RHIResources.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Scene
 
 FScene::FScene()
     : Actors()
-{
-}
+{ }
 
 FScene::~FScene()
 {

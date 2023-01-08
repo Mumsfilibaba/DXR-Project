@@ -1,12 +1,12 @@
 #pragma once
 #include "GPUProfiler.h"
 
-#include "Application/Window.h"
+#include "Application/Widget.h"
 
 #include <imgui.h>
 
 class FGPUProfilerWindow 
-    : public FWindow
+    : public FWidget
 {
     INTERFACE_GENERATE_BODY();
 
