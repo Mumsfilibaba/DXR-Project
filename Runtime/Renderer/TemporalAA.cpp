@@ -126,8 +126,8 @@ bool FTemporalAA::ResizeResources(FFrameResources& FrameResources)
 
 bool FTemporalAA::CreateRenderTarget(FFrameResources& FrameResources)
 {
-    const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
-    const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
+    const uint32 Width  = FrameResources.MainViewport->GetWidth();
+    const uint32 Height = FrameResources.MainViewport->GetHeight();
 
     // TAA History-Buffer
     FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(

@@ -4,7 +4,6 @@
 #include "Engine/Scene/Components/MeshComponent.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Resources/TextureFactory.h"
 
 void FSceneData::AddToScene(FScene* Scene)
 {

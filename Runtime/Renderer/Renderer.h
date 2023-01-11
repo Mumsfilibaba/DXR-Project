@@ -22,6 +22,8 @@
 #include "Debug/RendererInfoWindow.h"
 #include "Debug/GPUProfilerWindow.h"
 
+class FViewport;
+
 struct FCameraBuffer
 {
     FMatrix4 PrevViewProjection;
@@ -56,7 +58,6 @@ struct FCameraBuffer
     float    Padding1 = 0.0f;
 };
 
-
 class RENDERER_API FRenderer
 {
     FRenderer();
@@ -85,7 +86,7 @@ public:
     }
 
 private:
-    void OnWindowResize(const FWindowResizeEvent& Event);
+    void OnWindowResize(FViewport* Viewport, const FWindowResizeEvent& Event);
 
     bool Create();
     
@@ -97,8 +98,6 @@ private:
         const TPair<uint32, uint32>& DrawCommands,
         TArray<uint32>& OutDeferredDrawCommands,
         TArray<uint32>& OutForwardDrawCommands);
-
-    TSharedPtr<FRendererWindowHandler> WindowHandler;
 
     TSharedRef<FRenderTargetDebugWindow> TextureDebugger;
     TSharedRef<FRendererInfoWindow>      InfoWindow;

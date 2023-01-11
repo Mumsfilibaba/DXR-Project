@@ -2,16 +2,16 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
+#include "Core/Project/ProjectManager.h"
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetLoaders/MeshImporter.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Resources/TextureFactory.h"
 #include "Engine/Widgets/GameConsoleWindow.h"
 #include "Engine/Widgets/FrameProfilerWindow.h"
-#include "Engine/Project/ProjectManager.h"
 #include "RHI/RHIInterface.h"
+#include "RendererCore/TextureFactory.h"
 
 ENGINE_API FEngine* GEngine = nullptr;
 
@@ -128,7 +128,7 @@ bool FEngine::Initialize()
     BaseMaterial->Initialize();
 
     /* Create the start scene */
-    Scene = MakeShared<FScene>();
+    Scene = new FScene();
 
     /* Create windows */
     TSharedRef<FFrameProfilerWindow> ProfilerWindow = FFrameProfilerWindow::Create();

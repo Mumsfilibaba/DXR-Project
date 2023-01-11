@@ -516,8 +516,8 @@ void FDeferredRenderer::Release()
 
 void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, const FScene& Scene)
 {
-    const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
-    const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
+    const float RenderWidth  = float(FrameResources.MainViewport->GetWidth());
+    const float RenderHeight = float(FrameResources.MainViewport->GetHeight());
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin PrePass");
 
@@ -675,8 +675,8 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
 
     GPU_TRACE_SCOPE(CommandList, "Base Pass");
 
-    const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
-    const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
+    const float RenderWidth  = float(FrameResources.MainViewport->GetWidth());
+    const float RenderHeight = float(FrameResources.MainViewport->GetHeight());
 
     FRHIRenderPassDesc RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get());
@@ -848,8 +848,8 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
 {
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
 
-    const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
-    const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
+    const uint32 Width  = FrameResources.MainViewport->GetWidth();
+    const uint32 Height = FrameResources.MainViewport->GetHeight();
 
     if (!(Width > 0 && Height > 0))
     {

@@ -4,9 +4,7 @@
 
 #include <Core/Math/Math.h>
 #include <Core/Misc/OutputDeviceLogger.h>
-
 #include <Renderer/Renderer.h>
-
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
 #include <Engine/Assets/AssetLoaders/MeshImporter.h>
@@ -15,11 +13,7 @@
 #include <Engine/Scene/Lights/DirectionalLight.h>
 #include <Engine/Scene/Actors/PlayerController.h>
 #include <Engine/Scene/Components/MeshComponent.h>
-#include <Engine/Resources/TextureFactory.h>
-
-#include <Application/ApplicationInterface.h>
-
-#include <ViewportRenderer/ViewportRenderer.h>
+#include <Application/Application.h>
 
 // TODO: Custom random
 #include <random>
@@ -35,7 +29,7 @@ IMPLEMENT_ENGINE_MODULE(FSandbox, Sandbox);
 
 bool FSandbox::Init()
 {
-    if (!FApplicationModule::Init())
+    if (!FGameModule::Init())
     {
         return false;
     }
@@ -47,7 +41,8 @@ bool FSandbox::Init()
     MAYBE_UNUSED
     FMeshComponent* NewComponent = nullptr;
 
-    TSharedPtr<FScene> CurrentScene = GEngine->Scene;
+    // Store the Engine's scene pointer 
+    FScene* CurrentScene = GEngine->Scene;
 
     // Load Scene
     {
@@ -83,7 +78,7 @@ bool FSandbox::Init()
             Material.bAlphaDiffuseCombined = true;
         }
 #endif
-        SceneData.AddToScene(CurrentScene.Get());
+        SceneData.AddToScene(CurrentScene);
     }
 
 #if LOAD_SPONZA
@@ -333,12 +328,7 @@ bool FSandbox::Init()
 #endif
 
     FSandboxPlayerController* Player = new FSandboxPlayerController(CurrentScene);
-    Player->SetupInputComponent();
-
     CurrentScene->AddActor(Player);
-
-    CurrentCamera = new FCamera();
-    CurrentScene->AddCamera(CurrentCamera);
 
     // Add PointLight- Source
     MAYBE_UNUSED
@@ -432,71 +422,6 @@ bool FSandbox::Init()
 
 void FSandbox::Tick(FTimespan DeltaTime)
 {
-    FApplicationModule::Tick(DeltaTime);
-
+    FGameModule::Tick(DeltaTime);
     // LOG_INFO("Tick: %f", DeltaTime.AsMilliseconds());
-
-    const float Delta         = static_cast<float>(DeltaTime.AsSeconds());
-    const float RotationSpeed = 45.0f;
-
-    TSharedPtr<FUser> User = FApplication::Get().GetFirstUser();
-    if (User->IsKeyDown(EKey::Key_Right))
-    {
-        CurrentCamera->Rotate(0.0f, NMath::ToRadians(RotationSpeed * Delta), 0.0f);
-    }
-    else if (User->IsKeyDown(EKey::Key_Left))
-    {
-        CurrentCamera->Rotate(0.0f, NMath::ToRadians(-RotationSpeed * Delta), 0.0f);
-    }
-
-    if (User->IsKeyDown(EKey::Key_Up))
-    {
-        CurrentCamera->Rotate(NMath::ToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
-    }
-    else if (User->IsKeyDown(EKey::Key_Down))
-    {
-        CurrentCamera->Rotate(NMath::ToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
-    }
-
-    float Acceleration = 15.0f;
-    if (User->IsKeyDown(EKey::Key_LeftShift))
-    {
-        Acceleration = Acceleration * 3;
-    }
-
-    FVector3 CameraAcceleration;
-    if (User->IsKeyDown(EKey::Key_W))
-    {
-        CameraAcceleration.z = Acceleration;
-    }
-    else if (User->IsKeyDown(EKey::Key_S))
-    {
-        CameraAcceleration.z = -Acceleration;
-    }
-
-    if (User->IsKeyDown(EKey::Key_A))
-    {
-        CameraAcceleration.x = Acceleration;
-    }
-    else if (User->IsKeyDown(EKey::Key_D))
-    {
-        CameraAcceleration.x = -Acceleration;
-    }
-
-    if (User->IsKeyDown(EKey::Key_Q))
-    {
-        CameraAcceleration.y = Acceleration;
-    }
-    else if (User->IsKeyDown(EKey::Key_E))
-    {
-        CameraAcceleration.y = -Acceleration;
-    }
-
-    const float Deacceleration = -5.0f;
-    CameraSpeed = CameraSpeed + (CameraSpeed * Deacceleration) * Delta;
-    CameraSpeed = CameraSpeed + (CameraAcceleration * Delta);
-
-    FVector3 Speed = CameraSpeed * Delta;
-    CurrentCamera->Move(Speed.x, Speed.y, Speed.z);
-    CurrentCamera->UpdateMatrices();
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "SandboxCore.h"
-
+#include <Engine/Scene/Camera.h>
 #include <Engine/Scene/Actors/PlayerController.h>
 
 class SANDBOX_API FSandboxPlayerController
@@ -12,6 +12,8 @@ public:
     FSandboxPlayerController(FScene* InScene);
     ~FSandboxPlayerController() = default;
 
+    virtual void Tick(FTimespan DeltaTime) override;
+
     virtual void SetupInputComponent() override;
 
     void MoveForward();
@@ -20,5 +22,6 @@ public:
     void MoveLeft();
 
 private:
-    class FCamera* Camera;
+    FCamera* Camera;
+    FVector3 CameraSpeed;
 };

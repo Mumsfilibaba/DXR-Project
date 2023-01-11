@@ -154,7 +154,7 @@ private:
 
 FRHIShaderCompiler* FRHIShaderCompiler::GInstance = nullptr;
 
-FRHIShaderCompiler::FRHIShaderCompiler(const CHAR* InAssetPath)
+FRHIShaderCompiler::FRHIShaderCompiler(FStringView InAssetPath)
     : DXCLib(nullptr)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
@@ -171,7 +171,7 @@ FRHIShaderCompiler::~FRHIShaderCompiler()
     DxcCreateInstanceFunc = nullptr;
 }
 
-bool FRHIShaderCompiler::Create(const CHAR* InAssetFolderPath)
+bool FRHIShaderCompiler::Create(FStringView InAssetFolderPath)
 {
     CHECK(GInstance == nullptr);
 
@@ -225,7 +225,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShad
     OutByteCode.Clear();
 
     // Use the asset-folder as base for the shader-files
-    FStringWide WideFilePath   = CharToWide(AssetPath + '/' + Filename);
+    const FStringWide WideFilePath   = CharToWide(AssetPath + '/' + Filename);
 
     TComPtr<IDxcCompiler> Compiler;
     HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));

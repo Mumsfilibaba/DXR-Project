@@ -12,7 +12,7 @@ namespace NCoreDelegates
 
     CORE_API FPreApplicationLoadedDelegate PreApplicationLoadedDelegate;
 
-    CORE_API FPostApplicationLoadedDelegate PostApplicationLoadedDelegate;
+    CORE_API FPostApplicationLoadedDelegate PostGameModuleLoadedDelegate;
 
     CORE_API FDeviceRemovedDelegate DeviceRemovedDelegate;
 }

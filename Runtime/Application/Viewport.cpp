@@ -1,12 +1,12 @@
 #include "Viewport.h"
 #include "Application.h"
+#include "Core/Project/ProjectManager.h"
 #include "RHI/RHIInterface.h"
-// TODO: This needs to be moved to another module
-#include "Engine/Project/ProjectManager.h"
 
 FViewport::FViewport(const FViewportInitializer& InInitializer)
     : RHIViewport(nullptr)
     , Window(nullptr)
+    , Initializer(InInitializer)
     , ClosedEvent()
     , ResizedEvent()
 { }
@@ -22,7 +22,7 @@ bool FViewport::Create()
 
     Window = FApplication::Get().CreateWindow();
     if (Window && Window->Initialize(
-        FProjectManager::GetProjectName(),
+        FProjectManager::Get().GetProjectName().GetCString(),
         Initializer.Width, 
         Initializer.Height, 
         0,
@@ -40,6 +40,11 @@ bool FViewport::Create()
 
 bool FViewport::CreateRHI()
 {
+    if (RHIViewport)
+    {
+        return true;
+    }
+
     FRHIViewportDesc ViewportDesc(
         Window->GetPlatformHandle(),
         EFormat::R8G8B8A8_Unorm,
@@ -76,7 +81,7 @@ void FViewport::ToggleFullscreen()
 
 bool FViewport::OnViewportResized(const FWindowResizeEvent& ResizeEvent)
 {
-    ResizedEvent.Broadcast(this);
+    ResizedEvent.Broadcast(this, ResizeEvent);
     return false;
 }
 

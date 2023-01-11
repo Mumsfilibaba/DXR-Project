@@ -272,11 +272,11 @@ public:
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 
-class CORE_API FApplicationModule
+class CORE_API FGameModule
     : public FModuleInterface
 {
 public:
-    virtual ~FApplicationModule() = default;
+    virtual ~FGameModule() = default;
 
     /** 
      * @return - Returns true if the initialization is successful 
@@ -308,6 +308,6 @@ protected:
     FDelegateHandle TickHandle;
 };
 
-extern CORE_API FApplicationModule* GApplicationModule;
+extern CORE_API FGameModule* GGameModule;
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

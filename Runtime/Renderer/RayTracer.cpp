@@ -73,8 +73,8 @@ bool FRayTracer::Init(FFrameResources& Resources)
         return false;
     }
 
-    uint32 Width  = Resources.MainWindowViewport->GetWidth();
-    uint32 Height = Resources.MainWindowViewport->GetHeight();
+    uint32 Width  = Resources.MainViewport->GetWidth();
+    uint32 Height = Resources.MainViewport->GetHeight();
 
     FRHITextureDesc RTOutputDesc = FRHITextureDesc::CreateTexture2D(
         Resources.RTOutputFormat, 

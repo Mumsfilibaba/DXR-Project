@@ -1,7 +1,7 @@
 #include "ModuleManager.h"
 #include "Core/Misc/EngineLoopTicker.h"
 
-CORE_API FApplicationModule* GApplicationModule;
+CORE_API FGameModule* GGameModule;
 
 
 // This needs to be initialized with static variable behavior since we don't
@@ -248,28 +248,28 @@ int32 FModuleManager::GetModuleIndexUnlocked(const CHAR* ModuleName)
 }
 
 
-bool FApplicationModule::Init()
+bool FGameModule::Init()
 {
-    FTickDelegate TickDelegate = FTickDelegate::CreateRaw(this, &FApplicationModule::Tick);
+    FTickDelegate TickDelegate = FTickDelegate::CreateRaw(this, &FGameModule::Tick);
     TickHandle = TickDelegate.GetHandle();
 
     FEngineLoopTicker::Get().AddDelegate(TickDelegate);
     return true;
 }
 
-bool FApplicationModule::Release()
+bool FGameModule::Release()
 {
     FEngineLoopTicker::Get().RemoveDelegate(TickHandle);
     return true;
 }
 
 // TODO: Remove init and release? 
-bool FApplicationModule::Load()
+bool FGameModule::Load()
 {
     return Init();
 }
 
-bool FApplicationModule::Unload()
+bool FGameModule::Unload()
 {
     return Release();
 }

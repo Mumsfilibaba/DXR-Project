@@ -1,11 +1,11 @@
 #pragma once
 #include "Camera.h"
-#include "Actors/Actor.h"
+#include "Actors/PlayerController.h"
 #include "Lights/Light.h"
 #include "Reflections/LightProbe.h"
-#include "Renderer/MeshDrawCommand.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Containers/Array.h"
+#include "Renderer/MeshDrawCommand.h"
 
 class ENGINE_API FScene
 {
@@ -25,7 +25,7 @@ public:
      * @brief  - Create a new actor and add it to the scene 
      * @return - Returns the newly created actor
      */
-    class FActor* CreateActor();
+    FActor* CreateActor();
 
     /**
      * @brief - Start game 
@@ -33,7 +33,8 @@ public:
     void Start();
 
      /**
-      * @brief - Ticks all actors in the scene, should be called once per frame
+      * @brief          - Ticks all actors in the scene, should be called once per frame
+      * @param DeltaTime - The time between this and the last tick
       */
     void Tick(FTimespan DeltaTime);
 
@@ -137,9 +138,10 @@ public:
 private:
     void AddMeshComponent(class FMeshComponent* Component);
 
-    TArray<FActor*>          Actors;
-    TArray<FLight*>          Lights;
-    TArray<FLightProbe*>     LightProbes;
-    TArray<FMeshDrawCommand> MeshDrawCommands;
-    FCamera*                 CurrentCamera = nullptr;
+    TArray<FActor*>            Actors;
+    TArray<FPlayerController*> PlayerControllers;
+    TArray<FLight*>            Lights;
+    TArray<FLightProbe*>       LightProbes;
+    TArray<FMeshDrawCommand>   MeshDrawCommands;
+    FCamera*                   CurrentCamera = nullptr;
 };

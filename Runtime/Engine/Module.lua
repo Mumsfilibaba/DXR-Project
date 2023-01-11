@@ -19,6 +19,7 @@ EngineModule.AddModuleDependencies(
     "CoreApplication",
     "Application",
     "RHI",
+    "RendererCore",
 })
 
 EngineModule.AddLinkLibraries( 

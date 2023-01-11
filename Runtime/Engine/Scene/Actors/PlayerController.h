@@ -4,8 +4,8 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Input/InputStates.h"
 #include "CoreApplication/ICursor.h"
-#include "Engine/Scene/Components/InputComponent.h"
 #include "Application/Events.h"
+#include "Engine/Scene/Components/InputComponent.h"
 
 class ENGINE_API FPlayerInput
 {
@@ -13,95 +13,74 @@ public:
     FPlayerInput();
     ~FPlayerInput() = default;
 
-    virtual void HandleKeyEvent(const FKeyEvent& KeyEvent);
+    void Tick(FTimespan Delta);
 
-    virtual void HandleMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent);
+    void ResetState();
 
-    virtual void HandleMouseMovedEvent(const FMouseMovedEvent& MouseMovedEvent);
+    virtual void OnKeyEvent(const FKeyEvent& KeyEvent);
 
-    virtual void HandleMouseScrolledEvent(const FMouseScrolledEvent& MouseScolledEvent);
+    virtual void OnCursorButtonEvent(const FMouseButtonEvent& MouseButtonEvent);
+
+    virtual void OnCursorMovedEvent(const FMouseMovedEvent& MouseMovedEvent);
+
+    virtual void OnCursorScrolledEvent(const FMouseScrolledEvent& MouseScolledEvent);
 
     virtual void SetCursorPosition(const FIntVector2& Postion);
 
     virtual FIntVector2 GetCursorPosition() const;
 
-    void ResetState();
-
-    FORCEINLINE FKeyState GetKeyState(EKey KeyCode) const
+public:
+    FKeyState GetKeyState(EKey KeyCode) const
     {
         const int32 Index = GetKeyStateIndexFromKeyCode(KeyCode);
-        if (Index < 0)
-        {
-            return FKeyState(KeyCode);
-        }
-        else
-        {
-            return KeyStates[Index];
-        }
+        return (Index < 0) ? FKeyState(KeyCode) : KeyStates[Index];
     }
 
-    FORCEINLINE FMouseButtonState GetMouseButtonState(EMouseButton Button) const
+    FMouseButtonState GetMouseButtonState(EMouseButton Button) const
     {
         const int32 Index = GetMouseButtonStateIndexFromMouseButton(Button);
-        if (Index < 0)
-        {
-            return FMouseButtonState(Button);
-        }
-        else
-        {
-            return MouseButtonStates[Index];
-        }
+        return (Index < 0) ? FMouseButtonState(Button) : MouseButtonStates[Index];
     }
 
-    FORCEINLINE bool IsKeyDown(EKey KeyCode) const
+    bool IsKeyDown(EKey KeyCode) const
     {
-        FKeyState KeyState = GetKeyState(KeyCode);
+        const FKeyState KeyState = GetKeyState(KeyCode);
         return !!KeyState.IsDown;
     }
 
-    FORCEINLINE bool IsKeyUp(EKey KeyCode) const
+    bool IsKeyUp(EKey KeyCode) const
     {
-        FKeyState KeyState = GetKeyState(KeyCode);
+        const FKeyState KeyState = GetKeyState(KeyCode);
         return !KeyState.IsDown;
     }
 
-    FORCEINLINE bool IsKeyPressed(EKey KeyCode) const
+    bool IsKeyPressed(EKey KeyCode) const
     {
-        FKeyState KeyState = GetKeyState(KeyCode);
+        const FKeyState KeyState = GetKeyState(KeyCode);
         return KeyState.IsDown && !KeyState.PreviousState;
     }
 
-    FORCEINLINE bool IsMouseButtonDown(EMouseButton Button) const
+    bool IsButtonDown(EMouseButton Button) const
     {
-        FMouseButtonState ButtonState = GetMouseButtonState(Button);
+        const FMouseButtonState ButtonState = GetMouseButtonState(Button);
         return !!ButtonState.IsDown;
     }
 
-    FORCEINLINE bool IsMouseButtonUp(EMouseButton Button) const
+    bool IsButtonUp(EMouseButton Button) const
     {
-        FMouseButtonState ButtonState = GetMouseButtonState(Button);
+        const FMouseButtonState ButtonState = GetMouseButtonState(Button);
         return !ButtonState.IsDown;
     }
 
-    FORCEINLINE bool IsMouseButtonPressed(EMouseButton Button) const
+    bool IsButtonPressed(EMouseButton Button) const
     {
-        FMouseButtonState ButtonState = GetMouseButtonState(Button);
+        const FMouseButtonState ButtonState = GetMouseButtonState(Button);
         return ButtonState.IsDown && !ButtonState.PreviousState;
     }
 
-    FORCEINLINE TSharedPtr<ICursor> GetCursorDevice() const
-    {
-        return Cursor;
-    }
-
-    FORCEINLINE uint32 GetUserIndex() const
-    {
-        return UserIndex;
-    }
+    TSharedPtr<ICursor> GetCursorInterface() const { return Cursor; }
 
 private:
-    
-    /** @brief - Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const
     {
         FKeyState TmpState(KeyCode);
@@ -111,7 +90,6 @@ private:
         });
     }
 
-    /** @brief - Get the index in the key-state array */
     FORCEINLINE int32 GetMouseButtonStateIndexFromMouseButton(EMouseButton Button) const
     {
         FMouseButtonState TmpState(Button);
@@ -121,8 +99,6 @@ private:
         });
     }
 
-    const uint32              UserIndex;
-    
     TSharedPtr<ICursor>       Cursor;
 
     TArray<FKeyState>         KeyStates;
@@ -137,13 +113,14 @@ class ENGINE_API FPlayerController
 
 public:
     FPlayerController(FScene* InSceneOwner);
-    ~FPlayerController() = default;
+    ~FPlayerController();
 
     virtual void SetupInputComponent();
 
     virtual void Tick(FTimespan DeltaTime) override;
 
     FInputComponent* GetInputComponent() const { return InputComponent; }
+    FPlayerInput*    GetPlayerInput()    const { return PlayerInput; }
 
 protected:
     FInputComponent* InputComponent;

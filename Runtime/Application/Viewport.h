@@ -62,7 +62,7 @@ public:
     DECLARE_EVENT(FViewportClosedEvent, FViewport, FViewport*);
     FViewportClosedEvent& GetClosedEvent() const { return ClosedEvent; }
 
-    DECLARE_EVENT(FViewportResizedEvent, FViewport, FViewport*);
+    DECLARE_EVENT(FViewportResizedEvent, FViewport, FViewport*, const FWindowResizeEvent&);
     FViewportResizedEvent& GetResizedEvent() const { return ResizedEvent; }
 
     FRHIViewportRef   GetRHI()    const { return RHIViewport; }

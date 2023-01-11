@@ -1,7 +1,4 @@
 #include "EngineLoop.h"
-#include "Engine/Engine.h"
-#include "Engine/Project/ProjectManager.h"
-#include "Engine/Resources/TextureFactory.h"
 #if PROJECT_EDITOR
     #include "EditorEngine.h"
 #endif
@@ -15,6 +12,7 @@
 #include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Project/ProjectManager.h"
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -22,6 +20,9 @@
 #include "Renderer/Renderer.h"
 #include "Renderer/Debug/GPUProfiler.h"
 #include "RHI/RHIShaderCompiler.h"
+#include "Engine/Engine.h"
+#include "RendererCore/TextureFactory.h"
+
 
 FEngineLoop::FEngineLoop()
     : FrameTimer()
@@ -135,8 +136,8 @@ bool FEngineLoop::PreInit()
     }
 
 #if !PRODUCTION_BUILD
-    LOG_INFO("ProjectName=%s", FProjectManager::GetProjectName());
-    LOG_INFO("ProjectPath=%s", FProjectManager::GetProjectPath());
+    LOG_INFO("ProjectName=%s", FProjectManager::Get().GetProjectName().GetCString());
+    LOG_INFO("ProjectPath=%s", FProjectManager::Get().GetProjectPath().GetCString());
 #endif
 
     if (!FThreadManager::Initialize())
@@ -161,7 +162,7 @@ bool FEngineLoop::PreInit()
     }
 
     // Initialize the ShaderCompiler before RHI since RHI might need to compile shaders
-    if (!FRHIShaderCompiler::Create(FProjectManager::GetAssetPath()))
+    if (!FRHIShaderCompiler::Create(FProjectManager::Get().GetAssetPath()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return false;
@@ -230,14 +231,14 @@ bool FEngineLoop::Init()
 
     // Load application
     {
-        GApplicationModule = FModuleManager::Get().LoadModule<FApplicationModule>(FProjectManager::GetProjectModuleName());
-        if (!GApplicationModule)
+        GGameModule = FModuleManager::Get().LoadModule<FGameModule>(FProjectManager::Get().GetProjectModuleName().GetCString());
+        if (!GGameModule)
         {
-            LOG_WARNING("Application Init failed, may not behave as intended");
+            LOG_WARNING("Failed to load Game-module, the application may not behave as intended");
         }
         else
         {
-            NCoreDelegates::PostApplicationLoadedDelegate.Broadcast();
+            NCoreDelegates::PostGameModuleLoadedDelegate.Broadcast();
         }
     }
 
@@ -267,16 +268,22 @@ void FEngineLoop::Tick()
     // Tick the timer
     FrameTimer.Tick();
 
+    // Poll inputs and handle events from the system
     FApplication::Get().Tick(FrameTimer.GetDeltaTime());
 
+    // Tick all systems that have hooked into the EngineLoop::Tick
     FEngineLoopTicker::Get().Tick(FrameTimer.GetDeltaTime());
 
+    // Tick the engine (Actors etc.)
     GEngine->Tick(FrameTimer.GetDeltaTime());
 
+    // Tick Profiler
     FFrameProfiler::Get().Tick();
 
+    // Tick GPU-Profiler
     FGPUProfiler::Get().Tick();
 
+    // Tick the renderer
     FRenderer::Get().Tick(*GEngine->Scene);
 }
 
@@ -285,10 +292,13 @@ bool FEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
+    // Wait for the last RHI commands to finish
     GRHICommandExecutor.WaitForGPU();
 
+    // Release GPU profiler
     FGPUProfiler::Release();
 
+    // Release the renderer
     FRenderer::Release();
 
     // Release the Application. Protect against failed initialization where the global pointer was never initialized
@@ -301,21 +311,21 @@ bool FEngineLoop::Release()
     if (GEngine)
     {
         GEngine->Release();
-
         GEngine->Destroy();
         GEngine = nullptr;
     }
 
+    // Release all RHI resources
     FTextureFactory::Release();
 
-    {
-        FRHIThread::Shutdown();
-    }
-
+    // Wait for RHI thread and shutdown RHI Layer
+    FRHIThread::Shutdown();
     RHIRelease();
 
+    // Destroy the ShaderCompiler
     FRHIShaderCompiler::Destroy();
 
+    // Shutdown the Async-task system
     FAsyncThreadPool::Release();
 
     FApplication::Destroy();
@@ -326,6 +336,8 @@ bool FEngineLoop::Release()
 
     SAFE_DELETE(ConsoleWindow);
 
+    // Release all modules
     FModuleManager::Shutdown();
+
     return true;
 }

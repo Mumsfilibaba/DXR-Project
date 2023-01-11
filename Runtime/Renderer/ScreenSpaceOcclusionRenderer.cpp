@@ -231,8 +231,8 @@ bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameRes
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
     
-    const uint32 Width  = FrameResources.MainWindowViewport->GetWidth() / 2;
-    const uint32 Height = FrameResources.MainWindowViewport->GetHeight() / 2;
+    const uint32 Width  = FrameResources.MainViewport->GetWidth() / 2;
+    const uint32 Height = FrameResources.MainViewport->GetHeight() / 2;
 
     FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(
         FrameResources.SSAOBufferFormat,

@@ -4,14 +4,14 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
-#include "Engine/Resources/TextureFactory.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Engine.h"
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
+#include "RendererCore/TextureFactory.h"
 
 TAutoConsoleVariable<bool> GEnableSSAO(
     "Renderer.Feature.SSAO",
@@ -70,8 +70,7 @@ TAutoConsoleVariable<bool> GRayTracingEnabled(
 FRenderer* FRenderer::GInstance = nullptr;
 
 FRenderer::FRenderer()
-    : WindowHandler(MakeShared<FRendererWindowHandler>())
-    , TextureDebugger(nullptr)
+    : TextureDebugger(nullptr)
     , InfoWindow(nullptr)
     , GPUProfilerWindow(nullptr)
     , CommandList()
@@ -181,12 +180,13 @@ FRenderer& FRenderer::Get()
 
 bool FRenderer::Create()
 {
-    Resources.MainWindowViewport = GEngine->MainViewport;
-    if (Resources.MainWindowViewport)
+    if (!GEngine->MainViewport || !GEngine->MainViewport->CreateRHI())
     {
         DEBUG_BREAK();
         return false;
     }
+
+
 
     FRHIBufferDesc CBDesc(
         sizeof(FCameraBuffer),
@@ -321,8 +321,7 @@ bool FRenderer::Create()
     FApplication& Application = FApplication::Get();
 
     // Register EventFunc
-    WindowHandler->WindowResizedDelegate.BindRaw(this, &FRenderer::OnWindowResize);
-    Application.AddWindowMessageHandler(WindowHandler, uint32(-1));
+    GEngine->MainViewport->GetResizedEvent().AddRaw(this, &FRenderer::OnWindowResize);
 
     // Register Windows
     TextureDebugger = FRenderTargetDebugWindow::Create();
@@ -559,7 +558,7 @@ void FRenderer::Tick(const FScene& Scene)
 {
     GRHICommandExecutor.Tick();
 
-    Resources.BackBuffer             = Resources.MainWindowViewport->GetBackBuffer();
+    Resources.BackBuffer             = Resources.MainViewport->GetBackBuffer();
     Resources.GlobalMeshDrawCommands = TArrayView<const FMeshDrawCommand>(Scene.GetMeshDrawCommands());
 
     // Prepare Lights
@@ -1029,7 +1028,7 @@ void FRenderer::Tick(const FScene& Scene)
     CommandList.EndExternalCapture();
 #endif
 
-    CommandList.PresentViewport(Resources.MainWindowViewport.Get(), GVSyncEnabled.GetValue());
+    CommandList.PresentViewport(Resources.MainViewport.Get(), GVSyncEnabled.GetValue());
 
     {
         TRACE_SCOPE("ExecuteCommandList");
@@ -1040,8 +1039,14 @@ void FRenderer::Tick(const FScene& Scene)
     }
 }
 
-void FRenderer::OnWindowResize(const FWindowResizeEvent& Event)
+void FRenderer::OnWindowResize(FViewport* Viewport, const FWindowResizeEvent& Event)
 {
+    const bool bIsMainViewport = Viewport && Viewport->GetRHI() == Resources.MainViewport;
+    if (!bIsMainViewport)
+    {
+        return;
+    }
+
     const uint32 Width  = Event.Width;
     const uint32 Height = Event.Height;
 
@@ -1049,7 +1054,7 @@ void FRenderer::OnWindowResize(const FWindowResizeEvent& Event)
     {
         GRHICommandExecutor.WaitForOutstandingTasks();
 
-        if (!Resources.MainWindowViewport->Resize(Width, Height))
+        if (!Resources.MainViewport->Resize(Width, Height))
         {
             DEBUG_BREAK();
             return;
@@ -1252,8 +1257,8 @@ bool FRenderer::InitShadingImage()
         return true;
     }
 
-    const uint32 Width  = Resources.MainWindowViewport->GetWidth() / Support.ShadingRateImageTileSize;
-    const uint32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
+    const uint32 Width  = Resources.MainViewport->GetWidth() / Support.ShadingRateImageTileSize;
+    const uint32 Height = Resources.MainViewport->GetHeight() / Support.ShadingRateImageTileSize;
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(
         EFormat::R8_Uint, 

@@ -5,14 +5,14 @@
 #include "Core/Templates/CString.h"
 #include "Core/Misc/Parse.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Project/ProjectManager.h"
 #include "Engine/Assets/AssetManager.h"
-#include "Engine/Project/ProjectManager.h"
 
 FMeshImporter* FMeshImporter::GInstance = nullptr;
 
 FMeshImporter::FMeshImporter()
     : Cache()
-{}
+{ }
 
 bool FMeshImporter::Initialize()
 {
@@ -83,7 +83,7 @@ void FMeshImporter::LoadCacheFile()
 {
     TArray<CHAR> FileContents;
     {
-        FFileHandleRef File = FPlatformFile::OpenForRead(FString(FProjectManager::GetAssetPath()) + "/MeshCache.txt");
+        FFileHandleRef File = FPlatformFile::OpenForRead(FString(FProjectManager::Get().GetAssetPath()) + "/MeshCache.txt");
         if (!File)
         {
             return;
@@ -143,7 +143,7 @@ void FMeshImporter::LoadCacheFile()
                 *(ValueEnd--) = '\0';
 
             const FString OriginalValue = Key;
-            const FString NewValue = Value;
+            const FString NewValue      = Value;
             Cache.emplace(std::make_pair(OriginalValue, NewValue));
         }
     }
@@ -158,7 +158,7 @@ void FMeshImporter::UpdateCacheFile()
     }
 
     {
-        FFileHandleRef File = FPlatformFile::OpenForWrite(FString(FProjectManager::GetAssetPath()) + "/MeshCache.txt");
+        FFileHandleRef File = FPlatformFile::OpenForWrite(FString(FProjectManager::Get().GetAssetPath()) + "/MeshCache.txt");
         if (!File)
         {
             return;

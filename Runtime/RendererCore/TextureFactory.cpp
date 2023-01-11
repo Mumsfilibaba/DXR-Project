@@ -1,10 +1,8 @@
 #include "TextureFactory.h"
-#include "Engine/Assets/SceneData.h"
+#include "TextureResourceData.h"
 #include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShaderCompiler.h"
-
-#include <stb_image.h>
 
 struct TextureFactoryData
 {

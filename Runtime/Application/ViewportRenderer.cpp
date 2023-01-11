@@ -1,16 +1,12 @@
 #include "ViewportRenderer.h"
-
 #include "Core/Time/Stopwatch.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Containers/Array.h"
-
 #include "Engine/Engine.h"
-#include "Engine/Resources/TextureFactory.h"
-
+#include "RendererCore/TextureFactory.h"
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShaderCompiler.h"
-
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 #include <imgui.h>

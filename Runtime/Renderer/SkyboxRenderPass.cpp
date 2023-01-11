@@ -5,7 +5,7 @@
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 #include "Engine/Assets/AssetManager.h"
-#include "Engine/Resources/TextureFactory.h"
+#include "RendererCore/TextureFactory.h"
 
 bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
 {

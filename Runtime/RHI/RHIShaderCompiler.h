@@ -95,11 +95,11 @@ class RHI_API FRHIShaderCompiler
 private:
     friend class TOptional<FRHIShaderCompiler>;
 
-    FRHIShaderCompiler(const CHAR* InAssetPath);
+    FRHIShaderCompiler(FStringView InAssetPath);
     ~FRHIShaderCompiler();
 
 public:
-    static bool Create(const CHAR* AssetFolderPath);
+    static bool Create(FStringView AssetFolderPath);
     static void Destroy();
     
     static FRHIShaderCompiler& Get();

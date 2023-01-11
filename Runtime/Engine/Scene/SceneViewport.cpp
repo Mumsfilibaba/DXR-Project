@@ -12,12 +12,12 @@ FSceneViewport::~FSceneViewport()
 
 bool FSceneViewport::OnKeyEvent(const FKeyEvent& KeyEvent)
 { 
-    return false; 
+    return false;
 }
 
 bool FSceneViewport::OnKeyTyped(FKeyCharEvent KeyTypedEvent) 
 { 
-    return false; 
+    return false;
 }
 
 bool FSceneViewport::OnMouseMove(const FMouseMovedEvent& MouseEvent)
@@ -32,10 +32,10 @@ bool FSceneViewport::OnMouseButtonEvent(const FMouseButtonEvent& MouseEvent)
 
 bool FSceneViewport::OnMouseScrolled(const FMouseScrolledEvent& MouseEvent)
 { 
-    return false; 
+    return false;
 }
 
 bool FSceneViewport::OnHighPrecisionMouseInput(const FHighPrecisionMouseEvent& MouseEvent) 
 { 
-    return false; 
+    return false;
 }

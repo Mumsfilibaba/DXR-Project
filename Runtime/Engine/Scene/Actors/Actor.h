@@ -205,7 +205,6 @@ public:
 
 private:
     FString Name;
-
     FScene* SceneOwner = nullptr;
 
     FActorTransform     Transform;

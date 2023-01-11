@@ -11,14 +11,14 @@ public:
     FSceneViewport(const FViewportInitializer& InInitializer);
     ~FSceneViewport();
 
-    virtual bool OnKeyEvent(const FKeyEvent& KeyEvent)   { return false; }
-    virtual bool OnKeyTyped(FKeyCharEvent KeyTypedEvent) { return false; }
+    virtual bool OnKeyEvent(const FKeyEvent& KeyEvent);
+    virtual bool OnKeyTyped(FKeyCharEvent KeyTypedEvent);
 
-    virtual bool OnMouseMove(const FMouseMovedEvent& MouseEvent)         { return false; }
-    virtual bool OnMouseButtonEvent(const FMouseButtonEvent& MouseEvent) { return false; }
-    virtual bool OnMouseScrolled(const FMouseScrolledEvent& MouseEvent)  { return false; }
+    virtual bool OnMouseMove(const FMouseMovedEvent& MouseEvent);
+    virtual bool OnMouseButtonEvent(const FMouseButtonEvent& MouseEvent);
+    virtual bool OnMouseScrolled(const FMouseScrolledEvent& MouseEvent);
 
-    virtual bool OnHighPrecisionMouseInput(const FHighPrecisionMouseEvent& MouseEvent) { return false; }
+    virtual bool OnHighPrecisionMouseInput(const FHighPrecisionMouseEvent& MouseEvent);
 
     FScene* GetScene() const { return Scene; }
 

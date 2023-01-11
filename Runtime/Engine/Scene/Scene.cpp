@@ -1,7 +1,6 @@
 #include "Scene.h"
 #include "Components/MeshComponent.h"
 #include "Engine/Assets/MeshFactory.h"
-#include "Engine/Resources/TextureFactory.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Mesh.h"
 #include "RHI/RHIResources.h"
@@ -35,6 +34,13 @@ FActor* FScene::CreateActor()
 
 void FScene::Start()
 {
+    // Setup the input components for the PlayerControllers
+    for (FPlayerController* PlayerController : PlayerControllers)
+    {
+        PlayerController->SetupInputComponent();
+    }
+
+    // Start all the actors
     for (FActor* Actor : Actors)
     {
         if (Actor->IsStartable())
@@ -69,6 +75,11 @@ void FScene::AddActor(FActor* InActor)
 {
     CHECK(InActor != nullptr);
     Actors.Emplace(InActor);
+
+    if (IsSubClassOf<FPlayerController>(InActor))
+    {
+        PlayerControllers.Emplace(Cast<FPlayerController>(InActor));
+    }
 
     FMeshComponent* Component = InActor->GetComponentOfType<FMeshComponent>();
     if (Component)

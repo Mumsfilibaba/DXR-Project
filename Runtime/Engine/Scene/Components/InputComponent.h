@@ -13,6 +13,8 @@ enum class EActionState
 
 struct ENGINE_API FActionInputBinding
 {
+    FActionInputBinding() = default;
+
     FActionInputBinding(const FStringView& InName)
         : Name(InName)
     { }
@@ -30,8 +32,8 @@ public:
     FInputComponent(FActor* InActorOwner);
     ~FInputComponent() = default;
 
-    FActionInputBinding& BindAction(const FStringView& InName, EActionState ActionState, FActor* Actor);
-    FActionInputBinding& AddActionBinding(const FStringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate);
+    FActionInputBinding BindAction(const FStringView& InName, EActionState ActionState, FActor* Actor);
+    FActionInputBinding AddActionBinding(const FStringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate);
 
 private:
     TArray<FActionInputBinding> ActionBindings;

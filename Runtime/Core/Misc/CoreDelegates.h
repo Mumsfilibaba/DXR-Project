@@ -38,7 +38,7 @@ namespace NCoreDelegates
      * @brief - Delegate that gets called after the Application-Module is loaded
      */
     DECLARE_MULTICAST_DELEGATE(FPostApplicationLoadedDelegate);
-    extern CORE_API FPostApplicationLoadedDelegate PostApplicationLoadedDelegate;
+    extern CORE_API FPostApplicationLoadedDelegate PostGameModuleLoadedDelegate;
 
     /**
      * @brief - Delegate that gets called after the Application-Module is loaded

@@ -922,8 +922,8 @@ bool FShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, FLightSet
 
 bool FShadowMapRenderer::CreateShadowMaps(FLightSetup& LightSetup, FFrameResources& FrameResources)
 {
-    const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
-    const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
+    const uint32 Width  = FrameResources.MainViewport->GetWidth();
+    const uint32 Height = FrameResources.MainViewport->GetHeight();
 
     if (!CreateShadowMask(Width, Height, LightSetup))
     {

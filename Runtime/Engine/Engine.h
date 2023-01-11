@@ -51,7 +51,7 @@ struct ENGINE_API FEngine
     TSharedRef<FSceneViewport> MainViewport;
 
     /** @brief - The current scene */
-    TSharedPtr<FScene> Scene;
+    FScene* Scene;
 
     /** @brief - A completely white texture */
     FRHITextureRef BaseTexture;

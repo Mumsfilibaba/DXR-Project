@@ -122,6 +122,6 @@ struct RENDERER_API FFrameResources
     TArray<uint32>                         DeferredVisibleCommands;
     TArray<uint32>                         ForwardVisibleCommands;
 
-    FRHIViewportRef                        MainWindowViewport;
+    FRHIViewportRef                        MainViewport;
 };
 

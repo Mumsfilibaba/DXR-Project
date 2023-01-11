@@ -1,13 +1,11 @@
 #pragma once
 #include "SandboxCore.h"
-
 #include <Core/Core.h>
 #include <Core/Modules/ModuleManager.h>
-
 #include <Engine/Scene/Camera.h>
 
 class SANDBOX_API FSandbox 
-    : public FApplicationModule
+    : public FGameModule
 {
 public:
     FSandbox()  = default;
@@ -16,8 +14,4 @@ public:
     virtual bool Init() override;
 
     virtual void Tick(FTimespan DeltaTime) override;
-
-private:
-    FCamera* CurrentCamera = nullptr;
-    FVector3 CameraSpeed;
 };
