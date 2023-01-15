@@ -8,6 +8,17 @@ ETargetType =
     ["ConsoleApp"]  = 3,
 }
 
+GTargetName = {}
+
+function GetCurrentTargetName()
+    if GTargetName == nil then
+        printf("ERROR: GTargetName is nil")
+        return nil
+    end
+
+    return GTargetName
+end
+
 -- Target build rules
 function FTargetBuildRules(InName)
     printf("Creating Target \'%s\'", InName)
@@ -25,6 +36,9 @@ function FTargetBuildRules(InName)
         return GetTarget(InName)
     end
        
+    -- Setup global target name 
+    GTargetName = InName 
+
     -- Folder path for engine-modules
     local RuntimeFolderPath = GetRuntimeFolderPath()
 
@@ -67,19 +81,10 @@ function FTargetBuildRules(InName)
             local UpperCaseName = self.Name:upper()
             local ModuleApiName = UpperCaseName .. "_API"
 
-            -- TODO: Check for OS
-            -- Include EntryPoint
-            --local MainFile = "";
-            --if BuildWithXcode() then
-            --    MainFile = RuntimeFolderPath .. "/Main/Mac/MacMain.cpp"
-            --else
-            --    MainFile = RuntimeFolderPath .. "/Main/Windows/WindowsMain.cpp"
-            --end
-
             -- TODO: Should this be created as a module instead? 
             -- In a monolithic build then the client should be linked statically 
             if self.bIsMonolithic then                
-                self.Kind = "WindowedApp"
+                self.Kind            = "WindowedApp"
                 self.bRuntimeLinking = false
                 self.bIsDynamic      = false
 
@@ -90,15 +95,6 @@ function FTargetBuildRules(InName)
                     ("PROJECT_LOCATION=" .. "\"" .. FindWorkspaceDir() .. "/" .. self.Name .. "\""),
                     ModuleApiName,
                 })
-
-                --self.AddFiles( 
-                --{
-                --    (RuntimeFolderPath .. "/Main/IEngineLoop.h"),
-                --    (RuntimeFolderPath .. "/Main/EngineLoop.h"),
-                --    (RuntimeFolderPath .. "/Main/EngineLoop.cpp"),
-                --    (RuntimeFolderPath .. "/Main/GenericMain.cpp"),
-                --    MainFile
-                --})
 
                 -- Generate the project
                 printf("    ---Generating target project")
@@ -113,14 +109,7 @@ function FTargetBuildRules(InName)
                 {
                     ModuleApiName .. "=MODULE_EXPORT"
                 })
-
-                -- Add files for the new operator (TODO: investigate if this could be a static lib)
-                self.AddFiles(
-                {
-                    RuntimeFolderPath .. "/Core/Memory/New.h",
-                    RuntimeFolderPath .. "/Core/Memory/New.cpp",
-                })
-    
+   
                 -- Generate the project
                 printf("    ---Generating target project")
                 BaseGenerate()
@@ -139,17 +128,6 @@ function FTargetBuildRules(InName)
 
                 Executeble.AddModuleDependencies(self.ModuleDependencies)
 
-                -- Files
-                Executeble.Files = 
-                {
-                --    (RuntimeFolderPath .. "/Main/EngineLoop.cpp"),
-                --    (RuntimeFolderPath .. "/Main/GenericMain.cpp"),
-                    -- Add files for the new operator (TODO: investigate if this could be a static lib)
-                    (RuntimeFolderPath .. "/Core/Memory/New.h"),
-                    (RuntimeFolderPath .. "/Core/Memory/New.cpp"),
-                --    MainFile
-                }
-
                 if BuildWithXcode() then
                     Executeble.AddFrameWorks(
                     {
@@ -160,10 +138,7 @@ function FTargetBuildRules(InName)
                 -- Setup Defines
                 Executeble.AddDefines(
                 { 
-                    ("PROJECT_NAME=" .. "\"" .. self.Name .. "\""),
-                    ("PROJECT_LOCATION=" .. "\"" .. FindWorkspaceDir() .. "/" .. self.Name .. "\""),
                     ModuleApiName,
-                    "MY_COOL_DEFINE"
                 })
     
                 -- Overwrite all exclude-files

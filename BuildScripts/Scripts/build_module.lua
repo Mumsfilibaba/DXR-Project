@@ -45,17 +45,10 @@ function FModuleBuildRules(InName)
         -- Dynamic or static
         local ModuleApiName = self.Name:upper() .. "_API"
         if self.bIsDynamic then           
+            self.Kind = "SharedLib"
+            
             -- Add define to control the module implementation (For export/import)
             ModuleApiName = ModuleApiName .. "=MODULE_EXPORT"
-
-            -- Add files for the new operator (TODO: investigate if this could be a static lib)
-            self.AddFiles(
-            {
-                RuntimeFolderPath .. "/Core/Memory/New.h",
-                RuntimeFolderPath .. "/Core/Memory/New.cpp",
-            })
-
-            self.Kind = "SharedLib"
         else
             self.Kind = "StaticLib"
 

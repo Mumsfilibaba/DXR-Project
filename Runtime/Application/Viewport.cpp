@@ -1,6 +1,6 @@
 #include "Viewport.h"
 #include "Application.h"
-#include "Core/Project/ProjectManager.h"
+#include "Project/ProjectManager.h"
 #include "RHI/RHIInterface.h"
 
 FViewport::FViewport(const FViewportInitializer& InInitializer)

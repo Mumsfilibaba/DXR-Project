@@ -20,6 +20,7 @@ EngineModule.AddModuleDependencies(
     "Application",
     "RHI",
     "RendererCore",
+    "Project",
 })
 
 EngineModule.AddLinkLibraries( 
@@ -29,6 +30,7 @@ EngineModule.AddLinkLibraries(
     "OpenFBX",
 })
 
+-- TODO: Ensure that frameworks gets propagated up with dependencies
 if BuildWithXcode() then
     EngineModule.AddFrameWorks( 
     {

@@ -110,7 +110,6 @@ workspace "EngineTests"
 			"%{prj.name}/**.cpp",
 			
 			"../Runtime/Core/Memory/Memory.cpp",
-			"../Runtime/Core/Memory/New.cpp",
 			"../Runtime/Core/Delegates/DelegateInstance.cpp",
         }
 			

@@ -61,8 +61,21 @@ struct CORE_API FWindowsFile
 
     static FString GetCurrentDirectory();
 
+    static FORCEINLINE bool DoesDirectoryExist(const CHAR* Path)
+    {
+        const auto Result = ::PathIsDirectoryA(Path);
+        return Result == (BOOL)FILE_ATTRIBUTE_DIRECTORY;
+    }
+
+    static FORCEINLINE bool DoesFileExist(const CHAR* Path)
+    {
+        const auto Result = ::PathFileExistsA(Path);
+        return Result == TRUE;
+    }
+
     static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
     {
-        return !!::PathIsRelativeA(Filepath);
+        const auto Result = ::PathIsRelativeA(Filepath);
+        return Result == TRUE;
     }
 };

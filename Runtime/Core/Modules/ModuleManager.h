@@ -10,30 +10,31 @@
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Time/Timespan.h"
+#include "Core/Memory/NewOperators.h"
 
 /** 
  * Macro for implementing a new engine module based on monolithic or dynamic build
  */
 
 #if MONOLITHIC_BUILD
-#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                                 \
-    /* @brief - Self registering object for static modules */                                                                                \
-    static TStaticModuleInitializer<ModuleClassType> GModuleInitializer( #ModuleName );                                                      \
-                                                                                                                                             \
-    /* @brief - This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
+#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                                  \
+    /** @brief - Self registering object for static modules */                                                                                \
+    static TStaticModuleInitializer<ModuleClassType> GModuleInitializer( #ModuleName );                                                       \
+    /** @brief - This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
     extern "C" void LinkModule_##ModuleName() { }
 #else
-#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                                 \
-    extern "C"                                                                                                                               \
-    {                                                                                                                                        \
-        MODULE_EXPORT FModuleInterface* LoadEngineModule()                                                                                   \
-        {                                                                                                                                    \
-            return new ModuleClassType();                                                                                                    \
-        }                                                                                                                                    \
-    }                                                                                                                                        \
-                                                                                                                                             \
-    /* @brief - This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
-    extern "C" MODULE_EXPORT void LinkModule_##ModuleName() { }
+#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                                  \
+    extern "C"                                                                                                                                \
+    {                                                                                                                                         \
+        MODULE_EXPORT FModuleInterface* LoadEngineModule()                                                                                    \
+        {                                                                                                                                     \
+            return new ModuleClassType();                                                                                                     \
+        }                                                                                                                                     \
+    }                                                                                                                                         \
+                                                                                                                                              \
+    /** @brief - This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
+    extern "C" MODULE_EXPORT void LinkModule_##ModuleName() { }                                                                               \
+    IMPLEMENT_NEW_AND_DELETE_OPERATORS()
 #endif
 
 struct FModuleInterface;
@@ -271,7 +272,6 @@ public:
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-
 class CORE_API FGameModule
     : public FModuleInterface
 {
@@ -307,7 +307,5 @@ public:
 protected:
     FDelegateHandle TickHandle;
 };
-
-extern CORE_API FGameModule* GGameModule;
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

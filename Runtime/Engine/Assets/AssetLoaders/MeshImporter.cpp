@@ -5,7 +5,7 @@
 #include "Core/Templates/CString.h"
 #include "Core/Misc/Parse.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Project/ProjectManager.h"
+#include "Project/ProjectManager.h"
 #include "Engine/Assets/AssetManager.h"
 
 FMeshImporter* FMeshImporter::GInstance = nullptr;

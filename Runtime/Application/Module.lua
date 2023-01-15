@@ -16,6 +16,7 @@ ApplicationModule.AddModuleDependencies(
     "CoreApplication",
     "RHI",
     "RendererCore",
+    "Project",
 })
 
 ApplicationModule.AddLinkLibraries( 
@@ -23,6 +24,7 @@ ApplicationModule.AddLinkLibraries(
     "ImGui",
 })
 
+-- TODO: Ensure that frameworks gets propagated up with dependencies
 if BuildWithXcode() then
     ApplicationModule.AddFrameWorks( 
     {

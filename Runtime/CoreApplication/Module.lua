@@ -9,6 +9,7 @@ CoreApplicationModule.AddModuleDependencies(
     "Core"
 })
 
+-- TODO: Ensure that frameworks gets propagated up with dependencies
 if BuildWithXcode() then
     CoreApplicationModule.AddFrameWorks( 
     {

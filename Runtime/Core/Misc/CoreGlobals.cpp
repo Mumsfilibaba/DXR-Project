@@ -14,5 +14,5 @@ void RequestEngineExit(const CHAR* ExitReason)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-// OutputDevice for the Debugger
-IOutputDevice* GDebugOutput;
+CORE_API FGameModule*   GGameModule  = nullptr;
+CORE_API IOutputDevice* GDebugOutput = nullptr;

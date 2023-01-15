@@ -1,9 +1,6 @@
 #include "ModuleManager.h"
 #include "Core/Misc/EngineLoopTicker.h"
 
-CORE_API FGameModule* GGameModule;
-
-
 // This needs to be initialized with static variable behavior since we don't
 // know when FModuleManager::Get() is called from the TStaticModuleInitializers
 static auto& GetModuleManagerInstance()

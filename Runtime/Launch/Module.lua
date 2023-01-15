@@ -15,8 +15,10 @@ LaunchModule.AddModuleDependencies(
     "Renderer",
     "RendererCore",
     "Engine",
+    "Project",
 })
 
+-- TODO: Ensure that frameworks gets propagated up with dependencies
 if BuildWithXcode() then
     LaunchModule.AddFrameWorks( 
     {

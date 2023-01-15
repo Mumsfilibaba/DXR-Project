@@ -8,13 +8,15 @@ SandboxProject.AddModuleDependencies(
 {
     "Core",
     "CoreApplication",
+    -- TODO: Look into injecting this into the executable
     "Launch",
     "Application",
     "RHI",
     "Engine",
     "Renderer",
     "NullRHI",
-    "RendererCore"
+    "RendererCore",
+    "Project",
 })
 
 if BuildWithXcode() then

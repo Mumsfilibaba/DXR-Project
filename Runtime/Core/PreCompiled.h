@@ -7,10 +7,8 @@
 #if PLATFORM_WINDOWS
     #include "Core/Windows/PreCompiledWindows.h"
 #endif
-
 #include "Core/Core.h"
 #include "Core/RefCounted.h"
-
 #include "Core/Containers/BitArray.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
@@ -22,22 +20,18 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/StaticString.h"
 #include "Core/Containers/StringView.h"
-
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ContiguousContainerHelper.h"
 #include "Core/Templates/Functional.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/ReferenceWrapper.h"
-
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Misc/OutputDeviceConsole.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-
 #include "Core/Utilities/HashUtilities.h"
 #include "Core/Utilities/StringUtilities.h"
-
 #include "Core/Math/Math.h"
 #include "Core/Math/AABB.h"
 #include "Core/Math/Frustum.h"
@@ -54,6 +48,4 @@
 #include "Core/Math/Vector4.h"
 #include "Core/Math/Plane.h"
 #include "Core/Math/VectorOp.h"
-
-#include "Core/Memory/New.h"
 #include "Core/Memory/Memory.h"

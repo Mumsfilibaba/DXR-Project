@@ -4,7 +4,6 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-
 struct IFileHandle
 {
     virtual ~IFileHandle() = default;
@@ -39,7 +38,6 @@ struct IFileHandle
     /** @brief - Closes the FileHandle and deletes this instance */
     virtual void Close() = 0;
 };
-
 
 class FFileHandleRef
 { 
@@ -107,8 +105,7 @@ private:
     IFileHandle* Handle;
 };
 
-
-struct FGenericFile
+struct CORE_API FGenericFile
 {
     static void ObtainRelativePath(const FString& Path);
 
@@ -127,12 +124,21 @@ struct FGenericFile
         return FString();
     }
 
-    static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
+    static FORCEINLINE bool DoesDirectoryExist(const CHAR* Path)
+    {
+        return false;
+    }
+
+    static FORCEINLINE bool DoesFileExist(const CHAR* Path)
+    {
+        return false;
+    }
+
+    static FORCEINLINE bool IsPathRelative(const CHAR* Path)
     {
         return false;
     }
 };
-
 
 class CORE_API FFileHelpers
 {

@@ -1,6 +1,5 @@
 #include "Memory.h"
 #include "Malloc.h"
-
 #include "Core/Platform/PlatformStackTrace.h"
 
 #include <cstdlib>

@@ -12,7 +12,7 @@
 #include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Project/ProjectManager.h"
+#include "Project/ProjectManager.h"
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -90,6 +90,13 @@ bool FEngineLoop::LoadCoreModules()
         return false;
     }
 
+    FModuleInterface* ProjectModule = ModuleManager.LoadModule("Project");
+    if (!ProjectModule)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
     return true;
 }
 
@@ -134,14 +141,10 @@ bool FEngineLoop::PreInit()
 #endif
 
     // ProjectManager
+    if (!FProjectManager::Initialize())
     {
-        const FString ProjectLocation     = FString(ENGINE_LOCATION) + FString("/") + FString("");
-        const FString AssetFolderLocation = FString(ENGINE_LOCATION) + FString("/Assets");
-        if (!FProjectManager::Initialize("", ProjectLocation.GetCString(), AssetFolderLocation.GetCString()))
-        {
-            FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
-            return false;
-        }
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
+        return false;
     }
 
 #if !PRODUCTION_BUILD

@@ -2,7 +2,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
-#include "Core/Project/ProjectManager.h"
+#include "Project/ProjectManager.h"
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Engine/Assets/AssetManager.h"
@@ -61,7 +61,7 @@ bool FEngine::Initialize()
     FViewportInitializer ViewportInitializer(1920, 1080);
 
     MainViewport = new FSceneViewport(ViewportInitializer);
-    if (MainViewport && MainViewport->Create())
+    if (!MainViewport || !MainViewport->Create())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Main Viewport");
         return false;
