@@ -2,7 +2,7 @@
 #include "D3D12Core.h"
 #include "Core/Threading/AtomicInt.h"
 
-class D3D12_RHI_API FD3D12RefCounted
+class D3D12RHI_API FD3D12RefCounted
 {
 protected:
     FD3D12RefCounted()

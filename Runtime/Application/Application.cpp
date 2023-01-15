@@ -1,8 +1,11 @@
 #include "Application.h"
+#include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 #include <imgui.h>
+
+IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
 
 static uint32 GetMouseButtonIndex(EMouseButton Button)
 {
@@ -91,7 +94,7 @@ FApplication::FApplication(const TSharedPtr<FGenericApplication>& InPlatformAppl
 bool FApplication::InitializeRHI()
 {
     Renderer = new FViewportRenderer();
-    if (!Renderer->Initialize(Context))
+    if (!Renderer->Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ViewportRenderer ");
     }
@@ -365,7 +368,7 @@ void FApplication::Tick(FTimespan DeltaTime)
 
         InterfaceWindows.Foreach([](TSharedRef<FWidget>& Window)
         {
-            if (Window->IsTickable())
+            if (Window->ShouldTick())
             {
                 Window->Tick();
             }
@@ -521,8 +524,7 @@ void FApplication::AddWidget(const TSharedRef<FWidget>& NewWindow)
 {
     if (NewWindow && !InterfaceWindows.Contains(NewWindow))
     {
-        TSharedRef<FWidget>& Window = InterfaceWindows.Emplace(NewWindow);
-        Window->InitContext(Context);
+        InterfaceWindows.Emplace(NewWindow);
     }
 }
 

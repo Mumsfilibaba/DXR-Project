@@ -220,6 +220,16 @@ public:
      */
     virtual TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->Cursor; }
 
+    /**
+     * @return - Returns the Renderer
+     */
+    FViewportRenderer* GetRenderer() const { return Renderer; }
+
+    /**
+     * @return - Returns the Context for the UI
+     */
+    void* GetContext() const { return Context; }
+
 public:
     virtual void OnKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState) override final;
     

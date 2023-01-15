@@ -3,9 +3,7 @@
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Float.h"
-
 #include "Core/Utilities/HashUtilities.h"
-
 
 namespace std
 {

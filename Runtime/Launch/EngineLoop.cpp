@@ -23,6 +23,8 @@
 #include "Engine/Engine.h"
 #include "RendererCore/TextureFactory.h"
 
+IMPLEMENT_ENGINE_MODULE(FModuleInterface, Launch);
+
 
 FEngineLoop::FEngineLoop()
     : FrameTimer()
@@ -74,6 +76,13 @@ bool FEngineLoop::LoadCoreModules()
         return false;
     }
 
+    FModuleInterface* RendererCoreModule = ModuleManager.LoadModule("RendererCore");
+    if (!RendererCoreModule)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
     FModuleInterface* RendererModule = ModuleManager.LoadModule("Renderer");
     if (!RendererModule)
     {
@@ -94,7 +103,7 @@ bool FEngineLoop::PreInit()
         FOutputDeviceLogger::Get()->AddOutputDevice(ConsoleWindow);
         
         ConsoleWindow->Show(true);
-        ConsoleWindow->SetTitle(FString(PROJECT_NAME) + ": Error Console");
+        ConsoleWindow->SetTitle("DXR-Engine Output Console");
     }
     else
     {
@@ -109,6 +118,10 @@ bool FEngineLoop::PreInit()
         return false;
     }
 
+    // TODO: Use a separate profiler for booting the engine
+    FFrameProfiler::Enable();
+    TRACE_FUNCTION_SCOPE();
+
     // Initialize the config system
     if (!FConfig::Initialize())
     {
@@ -120,15 +133,11 @@ bool FEngineLoop::PreInit()
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
 #endif
 
-    // TODO: Use a separate profiler for booting the engine
-    FFrameProfiler::Enable();
-    TRACE_FUNCTION_SCOPE();
-
     // ProjectManager
     {
-        const FString ProjectLocation     = FString(ENGINE_LOCATION) + FString("/") + FString(PROJECT_NAME);
+        const FString ProjectLocation     = FString(ENGINE_LOCATION) + FString("/") + FString("");
         const FString AssetFolderLocation = FString(ENGINE_LOCATION) + FString("/Assets");
-        if (!FProjectManager::Initialize(PROJECT_NAME, ProjectLocation.GetCString(), AssetFolderLocation.GetCString()))
+        if (!FProjectManager::Initialize("", ProjectLocation.GetCString(), AssetFolderLocation.GetCString()))
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
             return false;
@@ -153,12 +162,10 @@ bool FEngineLoop::PreInit()
     }
 
     // Initialize the Async-worker threads
+    const auto NumProcessors = FPlatformThreadMisc::GetNumProcessors();
+    if (!FAsyncThreadPool::Initialize(NumProcessors))
     {
-        const auto NumProcessors = FPlatformThreadMisc::GetNumProcessors();
-        if (!FAsyncThreadPool::Initialize(NumProcessors))
-        {
-            return false;
-        }
+        return false;
     }
 
     // Initialize the ShaderCompiler before RHI since RHI might need to compile shaders
@@ -175,12 +182,10 @@ bool FEngineLoop::PreInit()
     }
 
     // Startup RHI Thread
+    if (!FRHIThread::Startup())
     {
-        if (!FRHIThread::Startup())
-        {
-            LOG_ERROR("Failed to startup RHI-Thread");
-            return false;
-        }
+        LOG_ERROR("Failed to startup RHI-Thread");
+        return false;
     }
 
     NCoreDelegates::PostInitRHIDelegate.Broadcast();
@@ -196,7 +201,6 @@ bool FEngineLoop::PreInit()
     }
 
     NCoreDelegates::PreInitFinishedDelegate.Broadcast();
-
     return true;
 }
 
@@ -219,29 +223,26 @@ bool FEngineLoop::Init()
     NCoreDelegates::PreEngineInitDelegate.Broadcast();
 
     // Initialize renderer
+    if (!FRenderer::Initialize())
     {
-        if (!FRenderer::Initialize())
-        {
-            FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
-            return false;
-        }
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
+        return false;
     }
 
     NCoreDelegates::PreApplicationLoadedDelegate.Broadcast();
 
     // Load application
+    GGameModule = FModuleManager::Get().LoadModule<FGameModule>(FProjectManager::Get().GetProjectModuleName().GetCString());
+    if (!GGameModule)
     {
-        GGameModule = FModuleManager::Get().LoadModule<FGameModule>(FProjectManager::Get().GetProjectModuleName().GetCString());
-        if (!GGameModule)
-        {
-            LOG_WARNING("Failed to load Game-module, the application may not behave as intended");
-        }
-        else
-        {
-            NCoreDelegates::PostGameModuleLoadedDelegate.Broadcast();
-        }
+        LOG_WARNING("Failed to load Game-module, the application may not behave as intended");
+    }
+    else
+    {
+        NCoreDelegates::PostGameModuleLoadedDelegate.Broadcast();
     }
 
+    // Prepare Application for Rendering
     if (FApplication::IsInitialized())
     {
         if (!FApplication::Get().InitializeRHI())

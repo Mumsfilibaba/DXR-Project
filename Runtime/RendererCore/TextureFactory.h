@@ -1,5 +1,4 @@
 #pragma once
-#include "RendererCore.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "RHI/RHITypes.h"
 

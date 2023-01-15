@@ -153,7 +153,7 @@ void FRenderTargetDebugWindow::Tick()
     }
 }
 
-bool FRenderTargetDebugWindow::IsTickable()
+bool FRenderTargetDebugWindow::ShouldTick()
 {
     return GDrawTextureDebugger.GetValue();
 }

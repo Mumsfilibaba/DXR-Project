@@ -11,14 +11,14 @@
 
 class FD3D12CommandContext;
 
-struct D3D12_RHI_API FD3D12InterfaceModule final
+struct D3D12RHI_API FD3D12InterfaceModule final
     : public FRHIInterfaceModule
 {
     virtual class FRHIInterface* CreateInterface() override final;
 };
 
 
-class D3D12_RHI_API FD3D12Interface 
+class D3D12RHI_API FD3D12Interface 
     : public FRHIInterface
 {
 public:

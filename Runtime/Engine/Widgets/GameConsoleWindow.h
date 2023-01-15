@@ -36,8 +36,6 @@ class FGameConsoleWindow final
     : public FWidget
     , public IOutputDevice
 {
-    INTERFACE_GENERATE_BODY();
-
     FGameConsoleWindow();
     ~FGameConsoleWindow();
 
@@ -46,7 +44,7 @@ public:
 
     virtual void Tick() override final;
 
-    virtual bool IsTickable() override final;
+    virtual bool ShouldTick() override final;
 
     virtual void Log(const FString& Message) override final;
     virtual void Log(ELogSeverity Severity, const FString& Message) override final;

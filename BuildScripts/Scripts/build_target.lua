@@ -1,4 +1,4 @@
-include "build_module.lua"
+include "Build_Module.lua"
 
 -- Target types
 ETargetType = 
@@ -10,30 +10,31 @@ ETargetType =
 
 -- Target build rules
 function FTargetBuildRules(InName)
-    printf("Creating Target \"%s\"", InName)
+    printf("Creating Target \'%s\'", InName)
     
     -- Init parent class
     local self = FBuildRules(InName)
     if self == nil then
-        printf("Target Error: Failed to create BuildRule")
+        printf("ERROR: Failed to create BuildRule")
         return nil
     end
 
     -- Ensure that target does not already exist
     if IsTarget(InName) then
-        printf("Target is already created")
+        printf("ERROR: Target is already created")
         return GetTarget(InName)
     end
        
     -- Folder path for engine-modules
     local RuntimeFolderPath = GetRuntimeFolderPath()
 
-    -- The type of target, decides if there should be a Standalone and DLL or if the application should be a ConsoleApp
+    -- @brief - The type of target, decides if there should be a Standalone and DLL or if the application should be a ConsoleApp
     self.TargetType = ETargetType.Client
-    -- Weather or not the build should be forced monolithic
+    
+    -- @brief - Weather or not the build should be forced monolithic
     self.bIsMonolithic = IsMonolithic()
 
-    -- Helper function for retrieving path
+    -- @brief - Helper function for retrieving path
     self.GetPath = nil
     function self.GetPath()
         return GetEnginePath() .. "/" ..  self.Name
@@ -42,9 +43,9 @@ function FTargetBuildRules(InName)
     -- Generate target
     local BaseGenerate = self.Generate
     function self.Generate()
-        printf("    Generating Target \"%s\"\n", self.Name)
+        printf("    Generating Target \'%s\'\n", self.Name)
   
-        -- Is the build monolithic
+        -- Setup monolithic builds
         if self.bIsMonolithic then
             printf("    Build is monolithic\n")
             SetIsMonlithic(true)
@@ -63,48 +64,54 @@ function FTargetBuildRules(InName)
                 ("MODULE_NAME=" .. "\"" .. self.Name .. "\"")
             })
 
+            local UpperCaseName = self.Name:upper()
+            local ModuleApiName = UpperCaseName .. "_API"
+
             -- TODO: Check for OS
             -- Include EntryPoint
-            local MainFile = "";
-            if BuildWithXcode() then
-                MainFile = RuntimeFolderPath .. "/Main/Mac/MacMain.cpp"
-            else
-                MainFile = RuntimeFolderPath .. "/Main/Windows/WindowsMain.cpp"
-            end
+            --local MainFile = "";
+            --if BuildWithXcode() then
+            --    MainFile = RuntimeFolderPath .. "/Main/Mac/MacMain.cpp"
+            --else
+            --    MainFile = RuntimeFolderPath .. "/Main/Windows/WindowsMain.cpp"
+            --end
 
             -- TODO: Should this be created as a module instead? 
             -- In a monolithic build then the client should be linked statically 
             if self.bIsMonolithic then                
                 self.Kind = "WindowedApp"
+                self.bRuntimeLinking = false
+                self.bIsDynamic      = false
 
                 -- Defines
                 self.AddDefines(
                 { 
                     ("PROJECT_NAME=" .. "\"" .. self.Name .. "\""),
-                    ("PROJECT_LOCATION=" .. "\"" .. FindWorkspaceDir() .. "/" .. self.Name .. "\"")
+                    ("PROJECT_LOCATION=" .. "\"" .. FindWorkspaceDir() .. "/" .. self.Name .. "\""),
+                    ModuleApiName,
                 })
 
-                self.AddFiles( 
-                {
-                    (RuntimeFolderPath .. "/Main/IEngineLoop.h"),
-                    (RuntimeFolderPath .. "/Main/EngineLoop.h"),
-                    (RuntimeFolderPath .. "/Main/EngineLoop.cpp"),
-                    (RuntimeFolderPath .. "/Main/GenericMain.cpp"),
-                    MainFile
-                })
+                --self.AddFiles( 
+                --{
+                --    (RuntimeFolderPath .. "/Main/IEngineLoop.h"),
+                --    (RuntimeFolderPath .. "/Main/EngineLoop.h"),
+                --    (RuntimeFolderPath .. "/Main/EngineLoop.cpp"),
+                --    (RuntimeFolderPath .. "/Main/GenericMain.cpp"),
+                --    MainFile
+                --})
 
                 -- Generate the project
                 printf("    ---Generating target project")
                 BaseGenerate()
                 printf("    ---Finished generating target project")
             else
-                self.Kind = "SharedLib"
+                self.Kind            = "SharedLib"
+                self.bRuntimeLinking = true
+                self.bIsDynamic      = true
 
-                local UpperCaseName  = self.Name:upper()
-                local ModuleImplName = UpperCaseName .. "_IMPL=(1)"
                 self.AddDefines(
                 {
-                    ModuleImplName
+                    ModuleApiName .. "=MODULE_EXPORT"
                 })
 
                 -- Add files for the new operator (TODO: investigate if this could be a static lib)
@@ -135,12 +142,12 @@ function FTargetBuildRules(InName)
                 -- Files
                 Executeble.Files = 
                 {
-                    (RuntimeFolderPath .. "/Main/EngineLoop.cpp"),
-                    (RuntimeFolderPath .. "/Main/GenericMain.cpp"),
+                --    (RuntimeFolderPath .. "/Main/EngineLoop.cpp"),
+                --    (RuntimeFolderPath .. "/Main/GenericMain.cpp"),
                     -- Add files for the new operator (TODO: investigate if this could be a static lib)
                     (RuntimeFolderPath .. "/Core/Memory/New.h"),
                     (RuntimeFolderPath .. "/Core/Memory/New.cpp"),
-                    MainFile
+                --    MainFile
                 }
 
                 if BuildWithXcode() then
@@ -150,14 +157,16 @@ function FTargetBuildRules(InName)
                     })
                 end
 
-                -- Defines
+                -- Setup Defines
                 Executeble.AddDefines(
                 { 
                     ("PROJECT_NAME=" .. "\"" .. self.Name .. "\""),
-                    ("PROJECT_LOCATION=" .. "\"" .. FindWorkspaceDir() .. "/" .. self.Name .. "\"")
+                    ("PROJECT_LOCATION=" .. "\"" .. FindWorkspaceDir() .. "/" .. self.Name .. "\""),
+                    ModuleApiName,
+                    "MY_COOL_DEFINE"
                 })
     
-                -- Overwrite all
+                -- Overwrite all exclude-files
                 Executeble.ExcludeFiles = {}
         
                 -- System includes can be included in a dependency header and therefore necessary in this module aswell

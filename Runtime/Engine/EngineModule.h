@@ -1,12 +1,8 @@
 #pragma once
-#include "Core/Core.h"
+#include "Core/Modules/ModuleManager.h"
 
-#if MONOLITHIC_BUILD
-    #define ENGINE_API
-#else
-    #if ENGINE_IMPL
-        #define ENGINE_API MODULE_EXPORT
-    #else
-        #define ENGINE_API MODULE_IMPORT
-    #endif
-#endif
+struct ENGINE_API FEngineModule
+    : public FModuleInterface
+{
+    virtual bool Load() override final;
+};

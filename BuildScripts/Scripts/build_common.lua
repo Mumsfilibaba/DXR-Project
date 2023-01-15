@@ -15,7 +15,7 @@ function IsMonolithic()
 end
 
 -- Sets the global state IsMonolithic, the project creation overrides this variable
-function SetIsMonlithic( bIsMonolithic )
+function SetIsMonlithic(bIsMonolithic)
     -- Ensures that global variable is created
     local bCurrent = IsMonolithic()
     if bCurrent ~= bIsMonolithic then
@@ -39,6 +39,17 @@ function BuildWithVS()
         _ACTION == "vs2010" or
         _ACTION == "vs2008" or
         _ACTION == "vs2005"
+end
+
+-- Verify language version
+function VerifyLanguageVersion(LanguageVersion)
+    return
+        LanguageVersion == "c++98" or
+        LanguageVersion == "c++11" or
+        LanguageVersion == "c++14" or
+        LanguageVersion == "c++17" or 
+        LanguageVersion == "c++20" or
+        LanguageVersion == "latest"
 end
 
 -- Helper for printing all strings in a table and ending with endline
@@ -96,6 +107,7 @@ function TableAppendUniqueElementMultiple(Elements, Table)
     end
 end
 
+
 -- Global variable that stores all created modules
 GModules = { }
 
@@ -103,7 +115,7 @@ function GetModule(ModuleName)
     if GModules ~= nil then
         return GModules[ModuleName]
     else
-        printf("Global list of modules does not exist")
+        printf("ERROR: Global Module-List has not been initialized")
         return nil
     end
 end
@@ -116,7 +128,7 @@ function AddModule(ModuleName, Module)
     if GModules ~= nil then
         GModules[ModuleName] = Module
     else
-        printf("Global list of modules does not exist")
+        printf("ERROR: Global Module-List has not been initialized")
     end
 end
 
@@ -127,7 +139,7 @@ function GetTarget(TargetName)
     if GTargets ~= nil then
         return GTargets[TargetName]
     else
-        printf("Global list of targets does not exist")
+        printf("ERROR: Global Target-List has not been initialized")
         return nil
     end
 end
@@ -140,13 +152,13 @@ function AddTarget(TargetName, Target)
     if GTargets ~= nil then
         GTargets[TargetName] = Target
     else
-        printf("Global list of targets does not exist")
+        printf("ERROR: Global Target-List has not been initialized")
     end
 end
 
 -- Output path for dependencies (ImGui etc.)
 GOutputPath = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
-printf("\nINFO:\nBuildPath = \"%s\"", GOutputPath)
+printf("\nINFO:\nBuildPath = \'%s\'", GOutputPath)
 
 function GetOutputPath()
     return GOutputPath
@@ -154,7 +166,7 @@ end
 
 -- Mainpath ../BuildScripts
 GEnginePath = path.getabsolute( "../", _PREMAKE_DIR)  
-printf("EnginePath = \"%s\"\n", GEnginePath)
+printf("EnginePath = \'%s\'\n", GEnginePath)
 
 function GetEnginePath()
     return GEnginePath

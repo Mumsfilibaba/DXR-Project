@@ -328,7 +328,7 @@ void FGameConsoleWindow::Tick()
     ImGui::PopStyleVar();
 }
 
-bool FGameConsoleWindow::IsTickable()
+bool FGameConsoleWindow::ShouldTick()
 {
     return bIsActive;
 }

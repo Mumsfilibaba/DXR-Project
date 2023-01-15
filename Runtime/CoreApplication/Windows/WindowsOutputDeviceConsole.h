@@ -2,7 +2,6 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Misc/OutputDeviceConsole.h"
-#include "CoreApplication/CoreApplication.h"
 
 #if defined(PLATFORM_COMPILER_MSVC)
     #pragma warning(push)

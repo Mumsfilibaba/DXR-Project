@@ -1,4 +1,4 @@
-include "../../BuildScripts/Scripts/build_module.lua"
+include "../../BuildScripts/Scripts/Build_Module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- CoreApplication Module

@@ -16,23 +16,23 @@
  */
 
 #if MONOLITHIC_BUILD
-#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                        \
-    /* Self registering object for static modules */                                                                                \
-    static TStaticModuleInitializer<ModuleClassType> GModuleInitializer( #ModuleName );                                             \
-                                                                                                                                    \
-    /* This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
+#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                                 \
+    /* @brief - Self registering object for static modules */                                                                                \
+    static TStaticModuleInitializer<ModuleClassType> GModuleInitializer( #ModuleName );                                                      \
+                                                                                                                                             \
+    /* @brief - This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
     extern "C" void LinkModule_##ModuleName() { }
 #else
-#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                        \
-    extern "C"                                                                                                                      \
-    {                                                                                                                               \
+#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                                 \
+    extern "C"                                                                                                                               \
+    {                                                                                                                                        \
         MODULE_EXPORT FModuleInterface* LoadEngineModule()                                                                                   \
-        {                                                                                                                           \
-            return new ModuleClassType();                                                                                       \
-        }                                                                                                                           \
-    }                                                                                                                               \
-                                                                                                                                    \
-    /* This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
+        {                                                                                                                                    \
+            return new ModuleClassType();                                                                                                    \
+        }                                                                                                                                    \
+    }                                                                                                                                        \
+                                                                                                                                             \
+    /* @brief - This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
     extern "C" MODULE_EXPORT void LinkModule_##ModuleName() { }
 #endif
 
@@ -44,7 +44,7 @@ typedef void* PlatformModule;
 
 struct FModuleInterface
 {
-    ~FModuleInterface() = default;
+    virtual ~FModuleInterface() = default;
 
     /** @return - Returns true if the load is successful */
     virtual bool Load() { return true; }

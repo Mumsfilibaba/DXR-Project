@@ -32,7 +32,7 @@ void FFrameProfilerWindow::Tick()
     }
 }
 
-bool FFrameProfilerWindow::IsTickable()
+bool FFrameProfilerWindow::ShouldTick()
 {
     return GDrawFps.GetValue() || GDrawFrameProfiler.GetValue();
 }

@@ -1,5 +1,4 @@
 #pragma once
-#include "ApplicationImpl.h"
 #include "Events.h"
 #include "Core/RefCounted.h"
 #include "Core/Delegates/Event.h"

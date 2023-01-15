@@ -1,18 +1,12 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
-
 #include "RHI/RHIResources.h"
-
 #include "Application/DrawableTexture.h"
 #include "Application/Widget.h"
-
-#include <imgui.h>
 
 class FRenderTargetDebugWindow 
     : public FWidget
 {
-    INTERFACE_GENERATE_BODY();
-
 public:
     static TSharedRef<FRenderTargetDebugWindow> Create();
 
@@ -20,7 +14,7 @@ public:
     virtual void Tick() override final;
 
      /** @brief - Returns true if the panel should be updated this frame */
-    virtual bool IsTickable() override final;
+    virtual bool ShouldTick() override final;
 
      /** @brief - Add image for debug drawing */
     void AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState);

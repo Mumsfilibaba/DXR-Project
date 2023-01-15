@@ -1,11 +1,11 @@
-include "../../BuildScripts/Scripts/build_module.lua"
+include "../../BuildScripts/Scripts/Build_Module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- MetalRHI Module
 
 if BuildWithXcode() then
     local MetalRHI = FModuleBuildRules("MetalRHI")
-    MetalRHI.bRuntimeLinking = false
+    MetalRHI.bRuntimeLinking = true
     
     MetalRHI.AddModuleDependencies( 
     {

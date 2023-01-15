@@ -2,12 +2,12 @@
 #include <Engine/Scene/Actors/Actor.h>
 #include <Engine/Scene/Components/Component.h>
 
-class FMovingBallComponent : public FComponent
+class FMovingBallComponent 
+    : public FComponent
 {
     FOBJECT_BODY(FMovingBallComponent, FComponent);
 
 public:
-
     FMovingBallComponent(FActor* InActorOwner, float InSpeed)
         : FComponent(InActorOwner, false, true)
         , Speed(InSpeed)

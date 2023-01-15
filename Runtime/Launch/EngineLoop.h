@@ -1,6 +1,5 @@
 #pragma once
 #include "IEngineLoop.h"
-
 #include "Core/Time/Stopwatch.h"
 
 struct FOutputDeviceConsole;
@@ -31,3 +30,5 @@ private:
     FStopwatch            FrameTimer;
     FOutputDeviceConsole* ConsoleWindow;
 };
+
+extern FEngineLoop GEngineLoop;

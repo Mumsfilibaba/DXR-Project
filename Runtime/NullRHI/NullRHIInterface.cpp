@@ -1,4 +1,3 @@
-#include "NullRHI.h"
 #include "NullRHIInterface.h"
 
 IMPLEMENT_ENGINE_MODULE(FNullRHIInterfaceModule, NullRHI);

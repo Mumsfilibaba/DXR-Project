@@ -24,7 +24,7 @@ void FGPUProfilerWindow::Tick()
     }
 }
 
-bool FGPUProfilerWindow::IsTickable()
+bool FGPUProfilerWindow::ShouldTick()
 {
     return GDrawGPUProfiler.GetValue();
 }

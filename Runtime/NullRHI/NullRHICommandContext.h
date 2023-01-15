@@ -1,6 +1,5 @@
 #pragma once
 #include "RHI/IRHICommandContext.h"
-
 #include "Core/Containers/SharedRef.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING

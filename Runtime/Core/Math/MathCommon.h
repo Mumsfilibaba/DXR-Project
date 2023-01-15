@@ -1,6 +1,5 @@
 #pragma once
-#include "Core/CoreDefines.h"
-#include "Core/CoreTypes.h"
+#include "Core/Core.h"
 #include "Core/Templates/TypeTraits.h"
 
 #include <algorithm>

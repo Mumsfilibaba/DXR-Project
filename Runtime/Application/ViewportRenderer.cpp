@@ -2,7 +2,6 @@
 #include "Core/Time/Stopwatch.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Containers/Array.h"
-#include "Engine/Engine.h"
 #include "RendererCore/TextureFactory.h"
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIResources.h"
@@ -11,10 +10,8 @@
 
 #include <imgui.h>
 
-bool FViewportRenderer::Initialize(InterfaceContext Context)
+bool FViewportRenderer::Initialize()
 {
-    INIT_CONTEXT(Context);
-
     // Build texture atlas
     uint8* Pixels = nullptr;
     int32  Width  = 0;

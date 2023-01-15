@@ -6,16 +6,6 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHIRayTracing.h"
 
-#if MONOLITHIC_BUILD
-    #define D3D12_RHI_API
-#else
-    #if D3D12RHI_IMPL
-        #define D3D12_RHI_API MODULE_EXPORT
-    #else
-        #define D3D12_RHI_API MODULE_IMPORT
-    #endif
-#endif
-
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
 
 // Windows 10 1507 

@@ -1,12 +1,8 @@
 #pragma once
-#include "Core/Core.h"
+#include "Core/Modules/ModuleManager.h"
 
-#if MONOLITHIC_BUILD
-    #define RENDERER_API
-#else
-    #if RENDERER_IMPL
-        #define RENDERER_API MODULE_EXPORT
-    #else
-        #define RENDERER_API MODULE_IMPORT
-    #endif
-#endif
+struct RENDERER_API FRendererModule
+    : public FModuleInterface
+{
+    virtual bool Load() override final;
+};

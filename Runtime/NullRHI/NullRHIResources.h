@@ -226,5 +226,4 @@ struct FNullRHIRayTracingPipelineState
 {
 };
 
-
 ENABLE_UNREFERENCED_VARIABLE_WARNING

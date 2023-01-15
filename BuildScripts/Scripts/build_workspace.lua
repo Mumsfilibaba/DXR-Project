@@ -1,9 +1,9 @@
-include "build_module.lua"
-include "build_target.lua"
+include "Build_Module.lua"
+include "Build_Target.lua"
 
 -- Generate a workspace from an array of target-rules
-function GenerateWorkspace(WorkspaceName, TargetRules)
-    printf("---Generating workspace \"%s\"", WorkspaceName)
+function FGenerateWorkspace(WorkspaceName, TargetRules)
+    printf("---Generating workspace \'%s\'", WorkspaceName)
     
     -- Early returns
     if TargetRules == nil then
@@ -21,7 +21,7 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
 
     -- Set location of the generated solution file
     local SolutionLocation = GetSolutionsFolderPath()
-    printf("    Generated solution location \"%s\"\n", SolutionLocation)
+    printf("    Generated solution location \'%s\'\n", SolutionLocation)
     location(SolutionLocation)
 
     -- Platforms
@@ -40,7 +40,7 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
 
     -- Define the workspace location
     local EngineLocation = "ENGINE_LOCATION=" .. "\"" .. GetEnginePath() .. "\""
-    printf("    ENGINE_LOCATION = \"%s\"", EngineLocation)
+    printf("    ENGINE_LOCATION=\'%s\'", EngineLocation)
     defines
     {
         EngineLocation
@@ -48,7 +48,7 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
 
     -- Includes
     local RuntimeFolderPath = GetRuntimeFolderPath()
-    printf("    RuntimeFolderPath = \"%s\"", RuntimeFolderPath)
+    printf("    RuntimeFolderPath = \'%s\'", RuntimeFolderPath)
     includedirs
     {
         RuntimeFolderPath,
@@ -62,10 +62,10 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
     filter {}
 
     filter "configurations:Debug"
-        symbols      "on"
-        runtime      "Debug"
-        optimize     "Off"
-        architecture "x86_64"
+        symbols("on")
+        runtime("Debug")
+        optimize("Off")
+        architecture("x86_64")
         defines
         {
             "_DEBUG",
@@ -74,10 +74,10 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
     filter {}
 
     filter "configurations:Release"
-        symbols      "on"
-        runtime      "Release"
-        optimize     "Full"
-        architecture "x86_64"
+        symbols("on")
+        runtime("Release")
+        optimize("Full")
+        architecture("x86_64")
         defines
         {
             "NDEBUG",
@@ -86,10 +86,10 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
     filter {}
 
     filter "configurations:Production"
-        symbols      "off"
-        runtime      "Release"
-        optimize     "Full"
-        architecture "x86_64"
+        symbols("off")
+        runtime("Release")
+        optimize("Full")
+        architecture("x86_64")
         defines
         {
             "NDEBUG",
@@ -198,15 +198,15 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
             
             -- Configurations
             filter "configurations:Debug or Release"
-                symbols  "on"
-                runtime  "Release"
-                optimize "Full"
+                symbols("on")
+                runtime("Release")
+                optimize("Full")
             filter {}
             
             filter "configurations:Production"
-                symbols  "off"
-                runtime  "Release"
-                optimize "Full"
+                symbols("off")
+                runtime("Release")
+                optimize("Full")
             filter {}
         
         -- tinyobjloader Project
@@ -247,15 +247,15 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
 
             -- Configurations
             filter "configurations:Debug or Release"
-                symbols  "on"
-                runtime  "Release"
-                optimize "Full"
+                symbols("on")
+                runtime("Release")
+                optimize("Full")
             filter {}
 
             filter "configurations:Production"
-                symbols  "off"
-                runtime  "Release"
-                optimize "Full"    
+                symbols("off")
+                runtime("Release")
+                optimize("Full")    
             filter {}
         
         -- OpenFBX Project
@@ -298,15 +298,15 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
 
             -- Configurations 
             filter "configurations:Debug or Release"
-                symbols  "on"
-                runtime  "Release"
-                optimize "Full"
+                symbols("on")
+                runtime("Release")
+                optimize("Full")
             filter {}
             
             filter "configurations:Production"
-                symbols  "off"
-                runtime  "Release"
-                optimize "Full"
+                symbols("off")
+                runtime("Release")
+                optimize("Full")
             filter {}
 
         -- SPIRV-Cross Project
@@ -383,15 +383,15 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
 
             -- Configurations 
             filter "configurations:Debug or Release"
-                symbols  "on"
-                runtime  "Release"
-                optimize "Full"
+                symbols("on")
+                runtime("Release")
+                optimize("Full")
             filter {}
             
             filter "configurations:Production"
-                symbols  "off"
-                runtime  "Release"
-                optimize "Full"
+                symbols("off")
+                runtime("Release")
+                optimize("Full")
             filter {}
     group ""
 
@@ -409,7 +409,7 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
 
         TempTarget.Generate()
 
-        printf("    StartProject = \"%s\"", StartProject)
+        printf("    StartProject = \'%s\'", StartProject)
         startproject(StartProject)
     end
 

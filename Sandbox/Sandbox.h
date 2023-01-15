@@ -1,5 +1,4 @@
 #pragma once
-#include "SandboxCore.h"
 #include <Core/Core.h>
 #include <Core/Modules/ModuleManager.h>
 #include <Engine/Scene/Camera.h>

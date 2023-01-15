@@ -1,9 +1,7 @@
 #pragma once
-#include "NullRHI.h"
 #include "NullRHIResources.h"
 #include "NullRHIShader.h"
 #include "NullRHICommandContext.h"
-
 #include "RHI/RHIInterface.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -13,7 +11,6 @@ struct NULLRHI_API FNullRHIInterfaceModule final
 {
     virtual FRHIInterface* CreateInterface() override final;
 };
-
 
 class NULLRHI_API FNullRHIInterface final 
     : public FRHIInterface

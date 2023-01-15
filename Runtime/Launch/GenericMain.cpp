@@ -1,14 +1,34 @@
-#include "Main/EngineLoop.h"
+#include "Launch/EngineLoop.h"
 #include "Core/Core.h"
+#include "Core/CoreGlobals.h"
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Memory/Malloc.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "Application/Application.h"
-#include "Engine/Engine.h"
 
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+struct FDebuggerOutputDevice
+    : public IOutputDevice
+{
+    virtual void Log(const FString& Message) 
+    {
+        FPlatformMisc::OutputDebugString(Message.GetCString());
+        FPlatformMisc::OutputDebugString("\n");
+    }
+
+    virtual void Log(ELogSeverity Severity, const FString& Message)
+    {
+        Log(Message);
+    }
+};
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING
+
+
+// EngineLoop
 FEngineLoop GEngineLoop;
 
 FORCEINLINE bool EngineLoadCoreModules()
@@ -36,30 +56,7 @@ FORCEINLINE bool EngineRelease()
     return GEngineLoop.Release();
 }
 
-DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FDebuggerOutputDevice
-    : public IOutputDevice
-{
-    virtual void Log(const FString& Message) 
-    {
-        FPlatformMisc::OutputDebugString(Message.GetCString());
-        FPlatformMisc::OutputDebugString("\n");
-    }
-
-    virtual void Log(ELogSeverity Severity, const FString& Message)
-    {
-        Log(Message);
-    }
-};
-
-ENABLE_UNREFERENCED_VARIABLE_WARNING
-
-// NOTE: OutputDevice for the debugger
-IOutputDevice* GDebugOutput = nullptr;
-
-
-// Application EntryPoint
 int32 GenericMain(const CHAR* Args[], int32 NumArgs)
 {
     struct FGenericMainGuard
@@ -108,7 +105,7 @@ int32 GenericMain(const CHAR* Args[], int32 NumArgs)
         }
 
         // Run loop
-        while (FApplication::Get().IsRunning())
+        while (!IsEngineExitRequested())
         {
             EngineTick();
         }

@@ -1,11 +1,8 @@
 #pragma once
 #include "Core/Time/Stopwatch.h"
-
-#include "RHI/RHICommandList.h"
-#include "RHI/RHIResources.h"
-
 #include "Core/Threading/Spinlock.h"
 #include "Core/Containers/Map.h"
+#include "Core/Containers/StaticArray.h"
 #include "Core/Templates/NumericLimits.h"
 
 #define ENABLE_PROFILER      (1)
@@ -145,7 +142,6 @@ public:
     }
 
 private:
-
     FProfileSample CPUFrameTime;
 
     FStopwatch Clock;

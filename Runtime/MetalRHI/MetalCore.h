@@ -2,23 +2,12 @@
 #include "Core/Mac/Mac.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Debug/Debug.h"
-
 #include "RHI/RHITexture.h"
 #include "RHI/RHIResourceViews.h"
 #include "RHI/RHIPipelineState.h"
 
 #include <Metal/Metal.h>
 #include <QuartzCore/QuartzCore.h>
-
-#if MONOLITHIC_BUILD
-    #define METALRHI_API
-#else
-    #if METALRHI_IMPL
-        #define METALRHI_API MODULE_EXPORT
-    #else
-        #define METALRHI_API MODULE_IMPORT
-    #endif
-#endif
 
 #if !PRODUCTION_BUILD
     #define METAL_ERROR(...)                      \

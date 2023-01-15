@@ -1,5 +1,4 @@
 #pragma once
-#include "ApplicationImpl.h"
 #include "DrawableTexture.h"
 #include "Widget.h"
 #include "Core/Delegates/Delegate.h"
@@ -17,7 +16,7 @@ public:
      * @param NewContext - Context to set to the renderer
      * @return           - Returns true if the initialization was successful
      */
-    bool Initialize(InterfaceContext NewContext);
+    bool Initialize();
 
     /** 
      * @brief - Start the update of the UI, after the call to this function, calls to UI window's tick are valid

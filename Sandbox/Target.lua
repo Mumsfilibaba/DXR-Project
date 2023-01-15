@@ -1,4 +1,4 @@
-include "../BuildScripts/Scripts/build_workspace.lua"
+include "../BuildScripts/Scripts/Build_Workspace.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- Sandbox Project
@@ -8,11 +8,13 @@ SandboxProject.AddModuleDependencies(
 {
     "Core",
     "CoreApplication",
+    "Launch",
     "Application",
     "RHI",
     "Engine",
     "Renderer",
     "NullRHI",
+    "RendererCore"
 })
 
 if BuildWithXcode() then
@@ -27,4 +29,4 @@ else
     })
 end
 
-GenerateWorkspace("DXR-Engine Sandbox", { SandboxProject })
+FGenerateWorkspace("DXR-Engine Sandbox", { SandboxProject })

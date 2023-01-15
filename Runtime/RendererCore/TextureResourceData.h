@@ -1,5 +1,4 @@
 #pragma once
-#include "RendererCore.h"
 #include "RHI/RHIResources.h"
 
 // This is based on the max texture-size 32678

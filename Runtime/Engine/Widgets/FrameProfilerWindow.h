@@ -2,19 +2,15 @@
 #include "Application/Widget.h"
 #include "Core/Misc/FrameProfiler.h"
 
-#include <imgui.h>
-
 class FFrameProfilerWindow 
     : public FWidget
 {
-    INTERFACE_GENERATE_BODY();
-
 public:
     static TSharedRef<FFrameProfilerWindow> Create();
 
     virtual void Tick() override final;
 
-    virtual bool IsTickable() override final;
+    virtual bool ShouldTick() override final;
 
 private:
     FFrameProfilerWindow() = default;

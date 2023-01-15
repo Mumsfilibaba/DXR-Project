@@ -3,7 +3,6 @@
 #include "D3D12Descriptors.h"
 #include "D3D12Interface.h"
 #include "D3D12RayTracing.h"
-#include "Engine/Assets/MeshFactory.h"
 
 FD3D12AccelerationStructure::FD3D12AccelerationStructure(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)

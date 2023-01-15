@@ -76,7 +76,7 @@ void FRendererInfoWindow::Tick()
     ImGui::End();
 }
 
-bool FRendererInfoWindow::IsTickable()
+bool FRendererInfoWindow::ShouldTick()
 {
     return GDrawRendererInfo.GetValue();
 }
