@@ -1,8 +1,9 @@
 #pragma once
 #include "Core.h"
 
-class FGameModule;
+struct FMalloc;
 struct IOutputDevice;
+class FGameModule;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Engine State
@@ -18,5 +19,8 @@ extern "C" CORE_API void RequestEngineExit(const CHAR* ExitReason);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern CORE_API FGameModule*   GGameModule;
+extern CORE_API FMalloc* GMalloc;
+
 extern CORE_API IOutputDevice* GDebugOutput;
+
+extern CORE_API FGameModule* GGameModule;

@@ -1,8 +1,12 @@
 #pragma once
 #include "Core/Modules/ModuleManager.h"
 
-struct ENGINE_API FEngineModule
+class ENGINE_API FEngineModule
     : public FModuleInterface
 {
+public:
     virtual bool Load() override final;
+
+private:
+    FDelegateHandle PostApplicationCreateHandle;
 };

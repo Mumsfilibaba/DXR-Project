@@ -1,9 +1,6 @@
 #include "Malloc.h"
-
 #include "Core/Platform/PlatformStackTrace.h"
 #include "Core/Threading/ScopedLock.h"
-
-CORE_API FMalloc* GMalloc = nullptr;
 
 void* FMallocANSI::Malloc(uint64 InSize)
 {

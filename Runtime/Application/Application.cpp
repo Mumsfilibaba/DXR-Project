@@ -872,6 +872,7 @@ void FApplication::OnWindowClosed(const FGenericWindowRef& Window)
 
 void FApplication::OnApplicationExit(int32 ExitCode)
 {
+    RequestEngineExit("Engine Exit");
     bIsRunning = false;
     ExitEvent.Broadcast(ExitCode);
 }

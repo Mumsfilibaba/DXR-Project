@@ -164,6 +164,8 @@ bool FEngineLoop::PreInit()
         return false;
     }
 
+    NCoreDelegates::PostApplicationCreateDelegate.Broadcast();
+
     // Initialize the Async-worker threads
     const auto NumProcessors = FPlatformThreadMisc::GetNumProcessors();
     if (!FAsyncThreadPool::Initialize(NumProcessors))

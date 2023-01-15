@@ -4,6 +4,8 @@ namespace NCoreDelegates
 {
     CORE_API FPostInitRHIDelegate PostInitRHIDelegate;
 
+    CORE_API FPostApplicationCreateDelegate PostApplicationCreateDelegate;
+
     CORE_API FPreInitFinishedDelegate PreInitFinishedDelegate;
 
     CORE_API FPreEngineInitDelegate PreEngineInitDelegate;

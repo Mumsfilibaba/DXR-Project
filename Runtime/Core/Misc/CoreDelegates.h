@@ -11,6 +11,12 @@ namespace NCoreDelegates
     extern CORE_API FPostInitRHIDelegate PostInitRHIDelegate;
 
     /**
+     * @brief - Delegate that gets called after the Application is created
+     */
+    DECLARE_MULTICAST_DELEGATE(FPostApplicationCreateDelegate);
+    extern CORE_API FPostApplicationCreateDelegate PostApplicationCreateDelegate;
+
+    /**
      * @brief - Delegate that gets called at the end of PreInit
      */
     DECLARE_MULTICAST_DELEGATE(FPreInitFinishedDelegate);

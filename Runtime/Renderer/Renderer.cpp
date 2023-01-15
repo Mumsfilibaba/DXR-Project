@@ -185,8 +185,10 @@ bool FRenderer::Create()
         DEBUG_BREAK();
         return false;
     }
-
-
+    else
+    {
+        Resources.MainViewport = GEngine->MainViewport->GetRHI();
+    }
 
     FRHIBufferDesc CBDesc(
         sizeof(FCameraBuffer),

@@ -37,8 +37,6 @@ struct FUseUnmanagedMalloc
 };
 
 
-extern CORE_API FMalloc* GMalloc;
-
 struct CORE_API FMalloc
     : public FUseUnmanagedMalloc
 {

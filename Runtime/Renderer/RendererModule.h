@@ -1,8 +1,12 @@
 #pragma once
 #include "Core/Modules/ModuleManager.h"
 
-struct RENDERER_API FRendererModule
+class RENDERER_API FRendererModule
     : public FModuleInterface
 {
+public:
     virtual bool Load() override final;
+
+private:
+    FDelegateHandle PostApplicationCreateHandle;
 };
