@@ -3,7 +3,7 @@
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Input/InputStates.h"
-#include "CoreApplication/ICursor.h"
+#include "CoreApplication/Generic/ICursor.h"
 #include "Application/Events.h"
 #include "Engine/Scene/Components/InputComponent.h"
 
@@ -19,14 +19,11 @@ public:
 
     virtual void OnKeyEvent(const FKeyEvent& KeyEvent);
 
-    virtual void OnCursorButtonEvent(const FMouseButtonEvent& MouseButtonEvent);
-
-    virtual void OnCursorMovedEvent(const FMouseMovedEvent& MouseMovedEvent);
-
-    virtual void OnCursorScrolledEvent(const FMouseScrolledEvent& MouseScolledEvent);
+    virtual void OnMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent);
+    virtual void OnMouseMovedEvent(const FMouseMovedEvent& MouseMovedEvent);
+    virtual void OnMouseScrolledEvent(const FMouseScrolledEvent& MouseScolledEvent);
 
     virtual void SetCursorPosition(const FIntVector2& Postion);
-
     virtual FIntVector2 GetCursorPosition() const;
 
 public:

@@ -137,15 +137,15 @@ FRenderer::~FRenderer()
     if (FApplication::IsInitialized())
     {
         FApplication& Application = FApplication::Get();
-        Application.GetMainViewport()->DestroyRHI();
+        // Application.GetMainViewport()->DestroyRHI();
 
-        Application.RemoveWidget(TextureDebugger);
+        // Application.RemoveWidget(TextureDebugger);
         TextureDebugger.Reset();
 
-        Application.RemoveWidget(InfoWindow);
+        // Application.RemoveWidget(InfoWindow);
         InfoWindow.Reset();
 
-        Application.RemoveWidget(GPUProfilerWindow);
+        // Application.RemoveWidget(GPUProfilerWindow);
         GPUProfilerWindow.Reset();
     }
 }
@@ -180,15 +180,15 @@ FRenderer& FRenderer::Get()
 
 bool FRenderer::Create()
 {
-    if (!GEngine->MainViewport || !GEngine->MainViewport->CreateRHI())
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        Resources.MainViewport = GEngine->MainViewport->GetRHI();
-    }
+    //if (!GEngine->MainViewport || !GEngine->MainViewport->CreateRHI())
+    //{
+    //    DEBUG_BREAK();
+    //    return false;
+    //}
+    //else
+    //{
+    //    Resources.MainViewport = GEngine->MainViewport->GetRHI();
+    //}
 
     FRHIBufferDesc CBDesc(
         sizeof(FCameraBuffer),
@@ -323,17 +323,17 @@ bool FRenderer::Create()
     FApplication& Application = FApplication::Get();
 
     // Register EventFunc
-    GEngine->MainViewport->GetResizedEvent().AddRaw(this, &FRenderer::OnWindowResize);
+    GEngine->MainWindow->GetWindowResizedEvent().AddRaw(this, &FRenderer::OnWindowResize);
 
     // Register Windows
-    TextureDebugger = FRenderTargetDebugWindow::Create();
-    Application.AddWidget(TextureDebugger);
+    TextureDebugger = MakeShared<FRenderTargetDebugWindow>();
+    // Application.AddWidget(TextureDebugger);
 
-    InfoWindow = FRendererInfoWindow::Create();
-    Application.AddWidget(InfoWindow);
+    InfoWindow = MakeShared<FRendererInfoWindow>();
+    // Application.AddWidget(InfoWindow);
 
-    GPUProfilerWindow = FGPUProfilerWindow::Create();
-    Application.AddWidget(GPUProfilerWindow);
+    GPUProfilerWindow = MakeShared<FGPUProfilerWindow>();
+    // Application.AddWidget(GPUProfilerWindow);
 
     return true;
 }
@@ -1041,14 +1041,8 @@ void FRenderer::Tick(const FScene& Scene)
     }
 }
 
-void FRenderer::OnWindowResize(FViewport* Viewport, const FWindowResizeEvent& Event)
+void FRenderer::OnWindowResize(const FWindowResizedEvent& Event)
 {
-    const bool bIsMainViewport = Viewport && Viewport->GetRHI() == Resources.MainViewport;
-    if (!bIsMainViewport)
-    {
-        return;
-    }
-
     const uint32 Width  = Event.Width;
     const uint32 Height = Event.Height;
 

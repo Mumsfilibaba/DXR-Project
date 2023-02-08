@@ -124,7 +124,7 @@ bool FWindowsApplication::UnregisterRawInputDevices()
     }
 }
 
-FGenericWindowRef FWindowsApplication::CreateWindow()
+TSharedRef<FGenericWindow> FWindowsApplication::CreateWindow()
 {
     FWindowsWindowRef NewWindow = new FWindowsWindow(this);
  
@@ -172,7 +172,7 @@ void FWindowsApplication::Tick(float)
     }
 }
 
-bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window)
+bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window)
 {
     TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
     if (WindowsWindow && WindowsWindow->IsValid())
@@ -185,7 +185,7 @@ bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const FGenericWindow
     }
 }
 
-void FWindowsApplication::SetCapture(const FGenericWindowRef& Window)
+void FWindowsApplication::SetCapture(const TSharedRef<FGenericWindow>& Window)
 {
     TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
     if (WindowsWindow && WindowsWindow->IsValid())
@@ -199,7 +199,7 @@ void FWindowsApplication::SetCapture(const FGenericWindowRef& Window)
     }
 }
 
-void FWindowsApplication::SetActiveWindow(const FGenericWindowRef& Window)
+void FWindowsApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
 {
     FWindowsWindowRef WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
     if (WindowsWindow && WindowsWindow->IsValid())
@@ -209,21 +209,21 @@ void FWindowsApplication::SetActiveWindow(const FGenericWindowRef& Window)
     }
 }
 
-FGenericWindowRef FWindowsApplication::GetCapture() const
+TSharedRef<FGenericWindow> FWindowsApplication::GetCapture() const
 {
     // TODO: Should we add a reference here
     HWND CaptureWindow = ::GetCapture();
     return GetWindowsWindowFromHWND(CaptureWindow);
 }
 
-FGenericWindowRef FWindowsApplication::GetActiveWindow() const
+TSharedRef<FGenericWindow> FWindowsApplication::GetActiveWindow() const
 {
     // TODO: Should we add a reference here
     HWND ActiveWindow = ::GetActiveWindow();
     return GetWindowsWindowFromHWND(ActiveWindow);
 }
 
-FMonitorDesc FWindowsApplication::GetMonitorDescFromWindow(const FGenericWindowRef& Window) const
+FMonitorDesc FWindowsApplication::GetMonitorDescFromWindow(const TSharedRef<FGenericWindow>& Window) const
 {
     TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
     if (WindowsWindow)
@@ -250,7 +250,7 @@ FMonitorDesc FWindowsApplication::GetMonitorDescFromWindow(const FGenericWindowR
     return FMonitorDesc{ 1.0f };
 }
 
-FGenericWindowRef FWindowsApplication::GetWindowUnderCursor() const
+TSharedRef<FGenericWindow> FWindowsApplication::GetWindowUnderCursor() const
 {
     POINT CursorPos;
     if (!GetCursorPos(&CursorPos))
@@ -355,7 +355,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             if (MessageWindow)
             {
-                MessageHandler->OnWindowCursorLeft(MessageWindow);
+                MessageHandler->OnWindowMouseLeft(MessageWindow);
             }
 
             bIsTrackingMouse = false;
@@ -391,7 +391,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WINDOWS_SCAN_CODE_MASK);
             const EKey Key = FWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
-            MessageHandler->OnKeyReleased(Key, FPlatformApplicationMisc::GetModifierKeyState());
+            MessageHandler->OnKeyUp(Key, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
 
@@ -400,9 +400,8 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WINDOWS_SCAN_CODE_MASK);
             const EKey Key = FWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
-
             const bool bIsRepeat = !!(lParam & WINDOWS_KEY_REPEAT_MASK);
-            MessageHandler->OnKeyPressed(Key, bIsRepeat, FPlatformApplicationMisc::GetModifierKeyState());
+            MessageHandler->OnKeyDown(Key, bIsRepeat, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
 
@@ -429,12 +428,12 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 TrackEvent.hwndTrack = Window;
                 TrackMouseEvent(&TrackEvent);
 
-                MessageHandler->OnWindowCursorEntered(MessageWindow);
+                MessageHandler->OnWindowMouseEntered(MessageWindow);
 
                 bIsTrackingMouse = true;
             }
 
-            MessageHandler->OnCursorMove(x, y);
+            MessageHandler->OnMouseMove(x, y);
             break;
         }
 
@@ -475,7 +474,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 Button = EMouseButton::MouseButton_Forward;
             }
 
-            MessageHandler->OnCursorPressed(Button, FPlatformApplicationMisc::GetModifierKeyState());
+            MessageHandler->OnMouseDown(Button, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
 
@@ -506,28 +505,23 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 Button = EMouseButton::MouseButton_Forward;
             }
 
-            MessageHandler->OnCursorReleased(Button, FPlatformApplicationMisc::GetModifierKeyState());
+            MessageHandler->OnMouseUp(Button, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
 
         case WM_MOUSEWHEEL:
-        {
-            const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
-            MessageHandler->OnCursorScrolled(0.0f, WheelDelta);
-            break;
-        }
-
         case WM_MOUSEHWHEEL:
         {
             const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
-            MessageHandler->OnCursorScrolled(WheelDelta, 0.0f);
-            break;
-        }
+            if (Message == WM_MOUSEWHEEL)
+            {
+                MessageHandler->OnMouseScrolled(0.0f, WheelDelta);
+            }
+            else
+            {
+                MessageHandler->OnMouseScrolled(WheelDelta, 0.0f);
+            }
 
-        case WM_QUIT:
-        {
-            int32 ExitCode = static_cast<int32>(wParam);
-            MessageHandler->OnApplicationExit(ExitCode);
             break;
         }
 

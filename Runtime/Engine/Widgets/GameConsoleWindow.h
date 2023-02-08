@@ -36,15 +36,11 @@ class FGameConsoleWindow final
     : public FWidget
     , public IOutputDevice
 {
+public:
     FGameConsoleWindow();
     ~FGameConsoleWindow();
 
-public:
-    static TSharedRef<FGameConsoleWindow> Make();
-
-    virtual void Tick() override final;
-
-    virtual bool ShouldTick() override final;
+    virtual void OnDraw() override final;
 
     virtual void Log(const FString& Message) override final;
     virtual void Log(ELogSeverity Severity, const FString& Message) override final;

@@ -9,7 +9,6 @@
 class APPLICATION_API FViewportRenderer
 {
 public:
-    ~FViewportRenderer() = default;
 
     /**
      * @brief            - Initialize the context

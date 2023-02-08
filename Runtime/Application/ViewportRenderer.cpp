@@ -2,11 +2,11 @@
 #include "Core/Time/Stopwatch.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Containers/Array.h"
-#include "RendererCore/TextureFactory.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShaderCompiler.h"
-#include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "RendererCore/TextureFactory.h"
 
 #include <imgui.h>
 
@@ -26,7 +26,7 @@ bool FViewportRenderer::Initialize()
         return false;
     }
 
-    static const CHAR* VSSource =
+    const CHAR* VSSource =
         R"*(
         cbuffer VertexBuffer : register(b0, space1)
         {
@@ -74,7 +74,7 @@ bool FViewportRenderer::Initialize()
         return false;
     }
 
-    static const CHAR* PSSource =
+    const CHAR* PSSource =
         R"*(
         struct PS_INPUT
         {

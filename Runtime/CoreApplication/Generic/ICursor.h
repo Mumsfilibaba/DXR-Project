@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Input/InputCodes.h"
+#include "Core/Math/IntVector2.h"
 
 enum class ECursor
 {
@@ -28,20 +28,17 @@ struct ICursor
     virtual void SetCursor(ECursor Cursor) = 0;
 
      /** 
-      * @brief                - Sets the position of the cursor 
-      * @param RelativeWindow - Window relative to the new position
-      * @param x              - New x-position of the cursor
-      * @param y              - New y-position of the cursor
+      * @brief   - Sets the position of the cursor
+      * @param x - New x-position of the cursor
+      * @param y - New y-position of the cursor
       */
-    virtual void SetPosition(FGenericWindow* RelativeWindow, int32 x, int32 y) const = 0;
+    virtual void SetPosition(int32 x, int32 y) const = 0;
 
      /**
-      * @brief                - Retrieve the cursor position of a window
-      * @param RelativeWindow - Window relative to the position
-      * @param OutX           - The x-position of the cursor
-      * @param OutY           - The y-position of the cursor
+      * @brief  - Retrieve the cursor position of a window
+      * @return - Returns the cursor position
       */
-    virtual void GetPosition(FGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const = 0;
+    virtual FIntVector2 GetPosition() const = 0;
 
      /**
       * @brief            - Set the cursor visibility

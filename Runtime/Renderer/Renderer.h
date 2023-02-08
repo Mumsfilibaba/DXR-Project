@@ -75,7 +75,7 @@ public:
     void PerformFXAA(FRHICommandList& InCmdList);
     void PerformBackBufferBlit(FRHICommandList& InCmdList);
 
-    FORCEINLINE TSharedRef<FRenderTargetDebugWindow> GetTextureDebugger() const
+    FORCEINLINE TSharedPtr<FRenderTargetDebugWindow> GetTextureDebugger() const
     {
         return TextureDebugger;
     }
@@ -86,7 +86,7 @@ public:
     }
 
 private:
-    void OnWindowResize(FViewport* Viewport, const FWindowResizeEvent& Event);
+    void OnWindowResize(const FWindowResizedEvent& Event);
 
     bool Create();
     
@@ -99,9 +99,9 @@ private:
         TArray<uint32>& OutDeferredDrawCommands,
         TArray<uint32>& OutForwardDrawCommands);
 
-    TSharedRef<FRenderTargetDebugWindow> TextureDebugger;
-    TSharedRef<FRendererInfoWindow>      InfoWindow;
-    TSharedRef<FGPUProfilerWindow>       GPUProfilerWindow;
+    TSharedPtr<FRenderTargetDebugWindow> TextureDebugger;
+    TSharedPtr<FRendererInfoWindow>      InfoWindow;
+    TSharedPtr<FGPUProfilerWindow>       GPUProfilerWindow;
 
     FRHICommandList CommandList;
 

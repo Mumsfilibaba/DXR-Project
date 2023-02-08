@@ -2,19 +2,11 @@
 #include "Application/Widget.h"
 #include "Core/Misc/FrameProfiler.h"
 
-class FFrameProfilerWindow 
+class FFrameProfilerWindow
     : public FWidget
 {
 public:
-    static TSharedRef<FFrameProfilerWindow> Create();
-
-    virtual void Tick() override final;
-
-    virtual bool ShouldTick() override final;
-
-private:
-    FFrameProfilerWindow() = default;
-    ~FFrameProfilerWindow() = default;
+    virtual void OnDraw() override final;
 
      /** @brief - Draw a simple FPS counter */
     void DrawFPS();
@@ -25,5 +17,6 @@ private:
      /** @brief - Draw the CPU data */
     void DrawCPUData(float Width);
 
+private:
     ProfileSamplesTable Samples;
 };

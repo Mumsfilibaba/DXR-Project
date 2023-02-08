@@ -1,5 +1,5 @@
 #pragma once
-#include "CoreApplication/ICursor.h"
+#include "CoreApplication/Generic/ICursor.h"
 
 class COREAPPLICATION_API FGenericCursor 
     : public ICursor

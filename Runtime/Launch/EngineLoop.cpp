@@ -107,8 +107,7 @@ bool FEngineLoop::PreInit()
     ConsoleWindow = FPlatformApplicationMisc::CreateOutputDeviceConsole();
     if (ConsoleWindow)
     {
-        FOutputDeviceLogger::Get()->AddOutputDevice(ConsoleWindow);
-        
+        FOutputDeviceLogger::Get()->AddOutputDevice(ConsoleWindow);  
         ConsoleWindow->Show(true);
         ConsoleWindow->SetTitle("DXR-Engine Output Console");
     }
@@ -121,7 +120,7 @@ bool FEngineLoop::PreInit()
     // Load the Core-Modules
     if (!LoadCoreModules())
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Load Core-Modules");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to load Core-Modules");
         return false;
     }
 
@@ -129,7 +128,7 @@ bool FEngineLoop::PreInit()
     FFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
 
-    // Initialize the config system
+    // Initialize the engine config
     if (!FConfig::Initialize())
     {
         LOG_ERROR("Failed to initialize EngineConfig");
@@ -219,7 +218,7 @@ bool FEngineLoop::Init()
 #else
     GEngine = new FEngine();
 #endif
-    if (!GEngine->Initialize())
+    if (!GEngine->Init())
     {
         LOG_ERROR("Failed to initialize engine");
         return false;
@@ -250,7 +249,7 @@ bool FEngineLoop::Init()
     // Prepare Application for Rendering
     if (FApplication::IsInitialized())
     {
-        if (!FApplication::Get().InitializeRHI())
+        if (!FApplication::Get().InitializeRenderer())
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to initialize RHI layer for the Application");
             return false;
@@ -310,14 +309,14 @@ bool FEngineLoop::Release()
     // Release the Application. Protect against failed initialization where the global pointer was never initialized
     if (FApplication::IsInitialized())
     {
-        FApplication::Get().ReleaseRHI();
+        FApplication::Get().ReleaseRenderer();
     }
 
     // Release the Engine. Protect against failed initialization where the global pointer was never initialized
     if (GEngine)
     {
         GEngine->Release();
-        GEngine->Destroy();
+        delete GEngine;
         GEngine = nullptr;
     }
 

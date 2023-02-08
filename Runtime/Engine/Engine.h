@@ -7,48 +7,39 @@
 #include "Core/Delegates/Event.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Application/Events.h"
+#include "Application/Window.h"
 #include "RHI/RHIResources.h"
 
 struct ENGINE_API FEngine
 {
     virtual ~FEngine() = default;
 
-    /**
-     * @brief  - Initialize the engine 
-     * @return - Returns true if the initialization was successful
-     */
-    virtual bool Initialize();
+    /** @brief - Creates the main window */
+    void CreateMainWindow();
 
-    /**
-     * @brief  - Start the engine
-     * @return - Returns true if the startup was successful
-     */
+    /** @return - Returns true the main viewport could be initialized */
+    bool CreateMainViewport();
+
+    /** @return - Returns true if Engine initialization was successful */
+    virtual bool Init();
+
+    /** @brief - Releases engine resource */
+    virtual void Release();
+
+    /** @return - Returns true if Starting the Engine was successful */
     virtual bool Start();
 
-    /**
-     * @brief           - Tick should be called once per frame 
-     * @param DeltaTime - Time since the last tick
-     */
+    /** @brief - Tick the engine */
     virtual void Tick(FTimespan DeltaTime);
+    
+    /** @brief - Exit the engine */
+    virtual void Exit();
 
-    /** 
-     * @brief  - Release engine resources
-     * @return - Returns true if the release was successful
-     */
-    virtual bool Release();
-
-    /**
-     * @brief - Request exit from the engine 
-     */
-    void Exit();
-
-    /**
-     * @brief - Destroy the engine 
-     */
-    void Destroy();
+    /** @brief - The main Window */
+    TSharedPtr<FWindow> MainWindow; 
 
     /** @brief - The main viewport */
-    TSharedRef<FSceneViewport> MainViewport;
+    TSharedPtr<FSceneViewport> MainViewport;
 
     /** @brief - The current scene */
     FScene* Scene;
@@ -56,7 +47,7 @@ struct ENGINE_API FEngine
     /** @brief - A completely white texture */
     FRHITextureRef BaseTexture;
 
-    /** @brief - A completely flat normal map*/
+    /** @brief - A completely flat normal map */
     FRHITextureRef BaseNormal;
 
     /** @brief - Base sampler used by all materials */

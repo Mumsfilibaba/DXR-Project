@@ -1,8 +1,6 @@
 #pragma once
 #include "IRefCounted.h"
-
 #include "Core/Threading/AtomicInt.h"
-#include "Core/Templates/TypeTraits.h"
 
 class CORE_API FRefCounted 
     : public IRefCounted

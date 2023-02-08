@@ -3,7 +3,6 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-
 struct FGenericInterlocked
 {
     /**

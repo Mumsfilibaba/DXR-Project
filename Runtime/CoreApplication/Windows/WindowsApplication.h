@@ -60,25 +60,25 @@ class COREAPPLICATION_API FWindowsApplication final
 public:
     static FWindowsApplication* CreateWindowsApplication();
 
-    virtual FGenericWindowRef CreateWindow() override final;
+    virtual TSharedRef<FGenericWindow> CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
 
     virtual bool SupportsHighPrecisionMouse() const override final { return false; }
 
-    virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) override final;
+    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
-    virtual void SetCapture(const FGenericWindowRef& Window) override final;
+    virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) override final;
     
-    virtual void SetActiveWindow(const FGenericWindowRef& Window) override final;
+    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
-    virtual FGenericWindowRef GetWindowUnderCursor() const override final;
+    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
 
-    virtual FGenericWindowRef GetCapture() const override final;
+    virtual TSharedRef<FGenericWindow> GetCapture() const override final;
     
-    virtual FGenericWindowRef GetActiveWindow() const override final;
+    virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
 
-    virtual FMonitorDesc GetMonitorDescFromWindow(const FGenericWindowRef& Window) const override final;
+    virtual FMonitorDesc GetMonitorDescFromWindow(const TSharedRef<FGenericWindow>& Window) const override final;
 
 public:
     FWindowsWindowRef GetWindowsWindowFromHWND(HWND Window) const;

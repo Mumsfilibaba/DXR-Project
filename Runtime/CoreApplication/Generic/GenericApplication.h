@@ -1,6 +1,6 @@
 #pragma once
 #include "GenericApplicationMessageHandler.h"
-#include "CoreApplication/ICursor.h"
+#include "CoreApplication/Generic/ICursor.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/SharedRef.h"
 
@@ -21,33 +21,34 @@ public:
 
     virtual ~FGenericApplication() = default;
 
-    virtual FGenericWindowRef CreateWindow() { return nullptr; }
+    virtual TSharedRef<FGenericWindow> CreateWindow() { return nullptr; }
 
     virtual void Tick(float Delta) { }
 
     virtual bool SupportsHighPrecisionMouse() const { return false; }
 
-    virtual bool EnableHighPrecisionMouseForWindow(const FGenericWindowRef& Window) { return true; }
+    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) { return true; }
 
-    virtual void SetActiveWindow(const FGenericWindowRef& Window) { }
+    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) { }
     
-    virtual void SetCapture(const FGenericWindowRef& Window) { }
+    virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) { }
 
-    virtual FGenericWindowRef GetWindowUnderCursor() const { return nullptr; }
+    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const { return nullptr; }
     
-    virtual FGenericWindowRef GetCapture() const { return nullptr; }
+    virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
     
-    virtual FGenericWindowRef GetActiveWindow() const { return nullptr; }
+    virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
 
-    virtual FMonitorDesc GetMonitorDescFromWindow(const FGenericWindowRef& Window) const { return FMonitorDesc{}; }
+    virtual FMonitorDesc GetMonitorDescFromWindow(const TSharedRef<FGenericWindow>& Window) const { return FMonitorDesc{}; }
 
-    virtual void SetMessageListener(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
+    virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
     { 
         MessageHandler = InMessageHandler; 
     }
 
-    TSharedPtr<FGenericApplicationMessageHandler> GetMessageListener() const { return MessageHandler; }
+    TSharedPtr<FGenericApplicationMessageHandler> GetMessageHandler() const { return MessageHandler; }
 
+public:
     const TSharedPtr<ICursor> Cursor;
 
 protected:

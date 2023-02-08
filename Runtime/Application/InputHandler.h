@@ -22,7 +22,7 @@ struct FInputHandler
      * @param KeyTypedEvent - Data for the key-typed event
      * @return              - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool HandleKeyTyped(FKeyCharEvent KeyTypedEvent)
+    virtual bool HandleKeyCharEvent(FKeyCharEvent KeyTypedEvent)
     {
         return false;
     }

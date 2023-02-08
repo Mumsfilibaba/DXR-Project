@@ -11,22 +11,12 @@ TAutoConsoleVariable<bool> GDrawGPUProfiler(
     "Enables the profiling on the GPU and displays the GPU Profiler window", 
     false);
 
-TSharedRef<FGPUProfilerWindow> FGPUProfilerWindow::Create()
-{
-    return new FGPUProfilerWindow();
-}
-
-void FGPUProfilerWindow::Tick()
+void FGPUProfilerWindow::OnDraw()
 {
     if (GDrawGPUProfiler.GetValue())
     {
         DrawWindow();
     }
-}
-
-bool FGPUProfilerWindow::ShouldTick()
-{
-    return GDrawGPUProfiler.GetValue();
 }
 
 void FGPUProfilerWindow::DrawGPUData(float Width)
@@ -169,7 +159,7 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
 void FGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    const TSharedRef<FViewport> MainViewport = FApplication::Get().GetMainViewport();
+    const TSharedPtr<FViewport> MainViewport;// = FApplication::Get().GetMainViewport();
     if (!MainViewport)
     {
         return;

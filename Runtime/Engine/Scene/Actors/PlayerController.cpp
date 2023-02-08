@@ -53,15 +53,15 @@ void FPlayerInput::OnKeyEvent(const FKeyEvent& KeyEvent)
 {
 }
 
-void FPlayerInput::OnCursorButtonEvent(const FMouseButtonEvent& MouseButtonEvent)
+void FPlayerInput::OnMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent)
 {
 }
 
-void FPlayerInput::OnCursorMovedEvent(const FMouseMovedEvent& MouseMovedEvent)
+void FPlayerInput::OnMouseMovedEvent(const FMouseMovedEvent& MouseMovedEvent)
 {
 }
 
-void FPlayerInput::OnCursorScrolledEvent(const FMouseScrolledEvent& MouseScolledEvent)
+void FPlayerInput::OnMouseScrolledEvent(const FMouseScrolledEvent& MouseScolledEvent)
 {
 }
 

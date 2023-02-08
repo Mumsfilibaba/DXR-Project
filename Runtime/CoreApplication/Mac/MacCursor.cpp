@@ -68,22 +68,9 @@ void FMacCursor::SetCursor(ECursor Cursor)
     [SelectedCursor set];
 }
 
-void FMacCursor::SetPosition(FGenericWindow* InRelativeWindow, int32 x, int32 y) const
+void FMacCursor::SetPosition(int32 x, int32 y) const
 {
-    CGPoint NewPosition;
-    if (InRelativeWindow)
-    {
-        FCocoaWindow* RelativeWindow = reinterpret_cast<FCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
-        const NSRect ContentRect = RelativeWindow.frame;
-        const NSRect LocalRect   = NSMakeRect(x, ContentRect.size.height - y - 1, 0, 0);
-        const NSRect GlobalRect  = [RelativeWindow convertRectToScreen:LocalRect];
-        NewPosition = CGPointMake(GlobalRect.origin.x, GlobalRect.origin.y);
-    }
-    else
-    {
-        NewPosition = CGPointMake(x, y);
-    }
-    
+    CGPoint NewPosition = CGPointMake(x, y);
     CGWarpMouseCursorPosition(CGPointMake(NewPosition.x, CGDisplayBounds(CGMainDisplayID()).size.height - NewPosition.y - 1));
     
     if (bIsVisible)
@@ -92,21 +79,10 @@ void FMacCursor::SetPosition(FGenericWindow* InRelativeWindow, int32 x, int32 y)
     }
 }
 
-void FMacCursor::GetPosition(FGenericWindow* InRelativeWindow, int32& OutX, int32& OutY) const
+FIntVector2 FMacCursor::GetPosition() const
 {
-    NSPoint CursorPosition;
-    if (InRelativeWindow)
-    {
-        NSWindow* RelativeWindow = reinterpret_cast<FCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
-        CursorPosition = RelativeWindow.mouseLocationOutsideOfEventStream;
-    }
-    else
-    {
-        CursorPosition = [NSEvent mouseLocation];
-    }
-    
-    OutX = CursorPosition.x;
-    OutY = CursorPosition.y;
+    NSPoint CursorPosition = [NSEvent mouseLocation];
+    return FIntVector2{ CursorPosition.x, CursorPosition.y };
 }
 
 void FMacCursor::SetVisibility(bool bVisible)

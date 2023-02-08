@@ -14,12 +14,7 @@ TAutoConsoleVariable<bool> GDrawFrameProfiler(
     "Enables the FrameProfiler and displays the profiler window",
     false);
 
-TSharedRef<FFrameProfilerWindow> FFrameProfilerWindow::Create()
-{
-    return new FFrameProfilerWindow();
-}
-
-void FFrameProfilerWindow::Tick()
+void FFrameProfilerWindow::OnDraw()
 {
     if (GDrawFps.GetValue())
     {
@@ -30,11 +25,6 @@ void FFrameProfilerWindow::Tick()
     {
         DrawWindow();
     }
-}
-
-bool FFrameProfilerWindow::ShouldTick()
-{
-    return GDrawFps.GetValue() || GDrawFrameProfiler.GetValue();
 }
 
 void FFrameProfilerWindow::DrawFPS()
@@ -210,7 +200,7 @@ void FFrameProfilerWindow::DrawCPUData(float Width)
 void FFrameProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    const TSharedRef<FViewport> MainViewport = FApplication::Get().GetMainViewport();
+    const TSharedPtr<FViewport> MainViewport;// = FApplication::Get().GetMainViewport();
     if (!MainViewport)
     {
         return;

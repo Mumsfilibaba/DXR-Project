@@ -756,6 +756,13 @@ public:
     { }
 
     /**
+     * @brief - Constructor taking a nullptr
+     */
+    FORCEINLINE TWeakPtr(nullptr_type) noexcept
+        : Storage()
+    { }
+
+    /**
      * @brief       - Copy - constructor
      * @param Other - WeakPtr to copy
      */
@@ -878,7 +885,7 @@ public:
      * @brief  - Creates a shared pointer from this WeakPtr
      * @return - A new SharedPtr that holds the same pointer as this WeakPtr
      */
-    NODISCARD FORCEINLINE TSharedPtr<T> MakeShared() noexcept
+    NODISCARD FORCEINLINE TSharedPtr<T> ToSharedPtr() noexcept
     {
         return TSharedPtr<T>(*this);
     }

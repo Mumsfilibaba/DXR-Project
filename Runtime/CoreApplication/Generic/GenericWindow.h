@@ -6,8 +6,6 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-typedef TSharedRef<class FGenericWindow> FGenericWindowRef;
-
 enum class EWindowStyleFlag : uint32
 {
     None        = 0x0,
@@ -19,6 +17,14 @@ enum class EWindowStyleFlag : uint32
 };
 
 ENUM_CLASS_OPERATORS(EWindowStyleFlag);
+
+enum class EWindowMode : uint8
+{
+    None       = 0,
+    Windowed   = 1,
+    Borderless = 2,
+    Fullscreen = 3,
+};
 
 
 struct FWindowStyle
@@ -61,6 +67,12 @@ struct FWindowStyle
 struct FWindowShape
 {
     FWindowShape() = default;
+
+    FORCEINLINE FWindowShape(uint32 InWidth, uint32 InHeight)
+        : Width(InWidth)
+        , Height(InHeight)
+        , Position({ 0, 0 })
+    { }
 
     FORCEINLINE FWindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
         : Width(InWidth)
@@ -128,7 +140,7 @@ public:
     
     virtual void* GetPlatformHandle() const { return nullptr; }
 
-    FORCEINLINE FWindowStyle GetStyle() const { return StyleParams; }
+    FWindowStyle GetStyle() const { return StyleParams; }
 
 protected:
     FWindowStyle StyleParams;

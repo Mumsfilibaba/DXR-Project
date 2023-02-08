@@ -936,7 +936,6 @@ struct TIsFunction
     #pragma warning(pop)
 #endif
 
-
 template<typename T>
 struct TIsFundamental
 {
@@ -950,12 +949,10 @@ struct TIsCompound
 };
 
 
-/**
- *  Decays T into the value that can be passed to a function by non-const/volatile value
- *  - T[N] -> T*
- *  - const T& -> T
- *  - etc.
- */
+// Decays T into the value that can be passed to a function by non-const/volatile value
+// - T[N] -> T*
+// - const T& -> T
+// - etc.
 
 template<typename T>
 struct TDecay
@@ -979,11 +976,9 @@ struct TAlignmentOf
 template<typename T>
 inline CONSTEXPR int32 AlignmentOf = TAlignmentOf<T>::Value;
 
-/**
- * Determine if the type can be reallocated using realloc, that is the type does
- * not reference itself or have classes pointing directly to an element. This
- * also means that objects can be memmove:ed without issues.
- */
+// Determine if the type can be reallocated using realloc, that is the type does
+// not reference itself or have classes pointing directly to an element. This
+// also means that objects can be memmove:ed without issues.
 
 #define MARK_AS_REALLOCATABLE(Type) \
     template<>                      \

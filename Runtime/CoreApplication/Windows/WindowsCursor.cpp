@@ -49,44 +49,16 @@ void FWindowsCursor::SetCursor(ECursor Cursor)
     // TODO: Log error
 }
 
-void FWindowsCursor::SetPosition(FGenericWindow* RelativeWindow, int32 x, int32 y) const
+void FWindowsCursor::SetPosition(int32 x, int32 y) const
 {
-    POINT CursorPos = { x, y };
-    if (RelativeWindow)
-    {
-        FWindowsWindowRef WinWindow = MakeSharedRef<FWindowsWindow>(RelativeWindow);
-
-        HWND hRelative = WinWindow->GetWindowHandle();
-        if (!ClientToScreen(hRelative, &CursorPos))
-        {
-            return;
-        }
-    }
-
-    ::SetCursorPos(CursorPos.x, CursorPos.y);
+    ::SetCursorPos(x, y);
 }
 
-void FWindowsCursor::GetPosition(FGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const
+FIntVector2 FWindowsCursor::GetPosition() const
 {
-    POINT CursorPos = { };
-    if (!GetCursorPos(&CursorPos))
-    {
-        return;
-    }
-
-    if (RelativeWindow)
-    {
-        FWindowsWindowRef WinRelative = MakeSharedRef<FWindowsWindow>(RelativeWindow);
-
-        HWND Relative = WinRelative->GetWindowHandle();
-        if (!ScreenToClient(Relative, &CursorPos))
-        {
-            return;
-        }
-    }
-
-    OutX = CursorPos.x;
-    OutY = CursorPos.y;
+    POINT CursorPos = { 0, 0 };
+    CHECK(::GetCursorPos(&CursorPos) == TRUE);
+    return FIntVector2{ CursorPos.x, CursorPos.y };
 }
 
 void FWindowsCursor::SetVisibility(bool bVisible)

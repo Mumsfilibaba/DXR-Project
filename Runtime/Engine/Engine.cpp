@@ -3,6 +3,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Project/ProjectManager.h"
+#include "Application/Window.h"
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Engine/Assets/AssetManager.h"
@@ -25,10 +26,19 @@ static void ExitEngineFunc()
 
 static void ToggleFullScreenFunc()
 {
-    TSharedRef<FViewport> Viewport = FApplication::Get().GetMainViewport();
-    if (Viewport)
+    if (GEngine && GEngine->MainWindow)
     {
-        Viewport->ToggleFullscreen();
+        EWindowMode WindowMode = GEngine->MainWindow->GetWindowMode();
+        if (WindowMode == EWindowMode::Fullscreen)
+        {
+            WindowMode = EWindowMode::Windowed;
+        }
+        else
+        {
+            WindowMode = EWindowMode::Fullscreen;
+        }
+
+        GEngine->MainWindow->SetWindowMode(WindowMode);
     }
 }
 
@@ -43,8 +53,52 @@ static FAutoConsoleCommand GToggleFullscreen(
     FConsoleCommandDelegate::CreateStatic(&ToggleFullScreenFunc));
 
 
-bool FEngine::Initialize()
+void FEngine::CreateMainWindow()
 {
+    // TODO: This should be loaded from a config file
+    TSharedPtr<FWindow> Window = MakeShared<FWindow>();
+    Window->SetTitle(FString(FProjectManager::Get().GetProjectName()));
+    Window->SetWindowMode(EWindowMode::Windowed);
+    Window->SetWidth(1920);
+    Window->SetHeight(1080);
+
+    MainWindow = Window;
+    FApplication::Get().AddWindow(MainWindow);
+}
+
+bool FEngine::CreateMainViewport()
+{
+    if (!MainWindow)
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", "MainWindow is not initialized");
+        return false;
+    }
+
+    TSharedPtr<FViewport> Viewport = MakeShared<FViewport>(TWeakPtr(MainWindow));
+    if (Viewport && Viewport->CreateRHI())
+    {
+        MainWindow->SetViewport(Viewport);
+    }
+    else
+    {
+        return false;
+    }
+
+    TSharedPtr<FSceneViewport> SceneViewport = MakeShared<FSceneViewport>(Viewport);
+    Viewport->SetViewportInterface(SceneViewport);
+    MainViewport = SceneViewport;
+    return true;
+}
+
+bool FEngine::Init()
+{
+    CreateMainWindow();
+
+    if (!CreateMainViewport())
+    {
+        return false;
+    }
+
     if (!FAssetManager::Initialize())
     {
         return false;
@@ -54,20 +108,6 @@ bool FEngine::Initialize()
     {
         return false;
     }
-
-    FApplication& Application = FApplication::Get();
-    
-    // Initialize the Main Viewport
-    FViewportInitializer ViewportInitializer(1920, 1080);
-
-    MainViewport = new FSceneViewport(ViewportInitializer);
-    if (!MainViewport || !MainViewport->Create())
-    {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Main Viewport");
-        return false;
-    }
-    
-    Application.RegisterMainViewport(MainViewport);
 
     // Create standard textures
     uint8 Pixels[4] = { 255, 255, 255, 255 };
@@ -131,11 +171,11 @@ bool FEngine::Initialize()
     Scene = new FScene();
 
     /* Create windows */
-    TSharedRef<FFrameProfilerWindow> ProfilerWindow = FFrameProfilerWindow::Create();
-    Application.AddWidget(ProfilerWindow);
+    TSharedPtr<FFrameProfilerWindow> ProfilerWindow = MakeShared<FFrameProfilerWindow>();
+    //Application.AddWidget(ProfilerWindow);
 
-    TSharedRef<FGameConsoleWindow> ConsoleWindow = FGameConsoleWindow::Make();
-    Application.AddWidget(ConsoleWindow);
+    TSharedPtr<FGameConsoleWindow> ConsoleWindow = MakeShared<FGameConsoleWindow>();
+    //Application.AddWidget(ConsoleWindow);
 
     return true;
 }
@@ -156,21 +196,14 @@ void FEngine::Tick(FTimespan DeltaTime)
     }
 }
 
-bool FEngine::Release()
+void FEngine::Release()
 {
-    return true;
+    FAssetManager::Release();
+
+    FMeshImporter::Release();
 }
 
 void FEngine::Exit()
 {
     FPlatformApplicationMisc::RequestExit(0);
-}
-
-void FEngine::Destroy()
-{
-    FAssetManager::Release();
-
-    FMeshImporter::Release();
-
-    delete this;
 }

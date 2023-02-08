@@ -4,7 +4,6 @@
 
 #include <intrin.h>
 
-
 struct FWindowsInterlocked 
     : public FGenericInterlocked
 {

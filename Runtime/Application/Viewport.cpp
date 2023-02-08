@@ -1,92 +1,209 @@
 #include "Viewport.h"
+#include "Window.h"
 #include "Application.h"
 #include "Project/ProjectManager.h"
 #include "RHI/RHIInterface.h"
 
-FViewport::FViewport(const FViewportInitializer& InInitializer)
-    : RHIViewport(nullptr)
-    , Window(nullptr)
-    , Initializer(InInitializer)
-    , ClosedEvent()
-    , ResizedEvent()
+FViewport::FViewport(const TWeakPtr<FWindow>& InParentWindow)
+    : FWidget(InParentWindow)
+    , ViewportRHI(nullptr)
+    , ViewportInterface(nullptr)
+    , ParentWindow(InParentWindow)
 { }
-
-bool FViewport::Create()
-{
-    const EWindowStyleFlag Style =
-        EWindowStyleFlag::Titled |
-        EWindowStyleFlag::Closable |
-        EWindowStyleFlag::Minimizable |
-        EWindowStyleFlag::Maximizable |
-        EWindowStyleFlag::Resizeable;
-
-    Window = FApplication::Get().CreateWindow();
-    if (Window && Window->Initialize(
-        FProjectManager::Get().GetProjectName().GetCString(),
-        Initializer.Width, 
-        Initializer.Height, 
-        0,
-        0, 
-        Style))
-    {
-        Window->Show(false);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
 
 bool FViewport::CreateRHI()
 {
-    if (RHIViewport)
+    if (!ParentWindow.IsValid())
     {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    if (ViewportRHI)
+    {
+        DEBUG_BREAK();
         return true;
     }
 
+    TSharedRef<FGenericWindow> NativeWindow = ParentWindow->GetNativeWindow();
+    if (!NativeWindow)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
     FRHIViewportDesc ViewportDesc(
-        Window->GetPlatformHandle(),
+        NativeWindow->GetPlatformHandle(),
         EFormat::R8G8B8A8_Unorm,
         EFormat::Unknown,
-        Initializer.Width,
-        Initializer.Height);
+        static_cast<uint16>(NativeWindow->GetWidth()),
+        static_cast<uint16>(NativeWindow->GetHeight()));
 
-    RHIViewport = RHICreateViewport(ViewportDesc);
-    if (!RHIViewport)
+    ViewportRHI = RHICreateViewport(ViewportDesc);
+    if (!ViewportRHI)
     {
+        DEBUG_BREAK();
         return false;
     }
 
     return true;
 }
 
-void FViewport::Destroy()
-{
-    Window.Reset();
-}
-
 void FViewport::DestroyRHI()
 {
-    RHIViewport.Reset();
+    ViewportRHI.Reset();
 }
 
-void FViewport::ToggleFullscreen()
+bool FViewport::OnKeyDown(const FKeyEvent& KeyEvent)
 {
-    if (Window)
+    if (ViewportInterface)
     {
-        Window->ToggleFullscreen();
+        return ViewportInterface->OnKeyDown(KeyEvent);
     }
-}
 
-bool FViewport::OnViewportResized(const FWindowResizeEvent& ResizeEvent)
-{
-    ResizedEvent.Broadcast(this, ResizeEvent);
     return false;
 }
 
-bool FViewport::OnViewportClosed()
+bool FViewport::OnKeyUp(const FKeyEvent& KeyEvent)
 {
-    ClosedEvent.Broadcast(this);
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnKeyUp(KeyEvent);
+    }
+
     return false;
+}
+
+bool FViewport::OnKeyChar(FKeyCharEvent KeyCharEvent)
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnKeyChar(KeyCharEvent);
+    }
+    
+    return false;
+}
+
+bool FViewport::OnMouseMove(const FMouseMovedEvent& MouseEvent)
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnMouseMove(MouseEvent);
+    }
+
+    return false;
+}
+
+bool FViewport::OnMouseDown(const FMouseButtonEvent& MouseEvent)
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnMouseDown(MouseEvent);
+    }
+
+    return false;
+}
+
+bool FViewport::OnMouseUp(const FMouseButtonEvent& MouseEvent)
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnMouseUp(MouseEvent);
+    }
+
+    return false;
+}
+
+bool FViewport::OnMouseScroll(const FMouseScrolledEvent& MouseEvent)
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnMouseScroll(MouseEvent);
+    }
+
+    return false;
+}
+
+bool FViewport::OnMouseEntered()
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnMouseEntered();
+    }
+
+    return false;
+}
+
+bool FViewport::OnMouseLeft()
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnMouseLeft();
+    }
+
+    return false;
+}
+
+bool FViewport::OnWindowResized(const FWindowResizedEvent& InResizeEvent)
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnWindowResized(InResizeEvent);
+    }
+
+    return false;
+}
+
+bool FViewport::OnWindowMove(const FWindowMovedEvent& InMoveEvent)
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnWindowMove(InMoveEvent);
+    }
+
+    return false;
+}
+
+bool FViewport::OnWindowFocusGained()
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnWindowFocusGained();
+    }
+
+    return false;
+}
+
+bool FViewport::OnWindowFocusLost()
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnWindowFocusLost();
+    }
+
+    return false;
+}
+
+bool FViewport::OnWindowClosed()
+{
+    if (ViewportInterface)
+    {
+        return ViewportInterface->OnWindowClosed();
+    }
+
+    return false;
+}
+
+FIntVector2 FViewport::GetSize() const
+{
+    if (ParentWindow.IsValid())
+    {
+        return FIntVector2
+        { 
+            static_cast<int32>(ParentWindow->GetWidth()),
+            static_cast<int32>(ParentWindow->GetHeight())
+        };
+    }
+
+    return FIntVector2{ 0, 0 };
 }

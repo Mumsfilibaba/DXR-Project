@@ -10,16 +10,11 @@ TAutoConsoleVariable<bool> GDrawTextureDebugger(
     "Enables the Debug RenderTarget-viewer",
     false);
 
-TSharedRef<FRenderTargetDebugWindow> FRenderTargetDebugWindow::Create()
-{
-    return new FRenderTargetDebugWindow();
-}
-
-void FRenderTargetDebugWindow::Tick()
+void FRenderTargetDebugWindow::OnDraw()
 {
     if (GDrawTextureDebugger.GetValue())
     {
-        const TSharedRef<FViewport> MainViewport = FApplication::Get().GetMainViewport();
+        const TSharedPtr<FViewport> MainViewport;// = FApplication::Get().GetMainViewport();
         if (!MainViewport)
         {
             return;
@@ -34,13 +29,13 @@ void FRenderTargetDebugWindow::Tick()
         ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height));
 
-        constexpr ImGuiWindowFlags Flags =
+        CONSTEXPR ImGuiWindowFlags Flags =
             ImGuiWindowFlags_NoDecoration |
             ImGuiWindowFlags_AlwaysAutoResize |
             ImGuiWindowFlags_NoFocusOnAppearing |
             ImGuiWindowFlags_NoSavedSettings;
 
-        constexpr float MinImageSize = 96.0f;
+        CONSTEXPR float MinImageSize = 96.0f;
 
         bool bTempDrawTextureDebugger = GDrawTextureDebugger.GetValue();
         if (ImGui::Begin("RenderTarget Debugger", &bTempDrawTextureDebugger, Flags))
@@ -153,12 +148,11 @@ void FRenderTargetDebugWindow::Tick()
     }
 }
 
-bool FRenderTargetDebugWindow::ShouldTick()
-{
-    return GDrawTextureDebugger.GetValue();
-}
-
-void FRenderTargetDebugWindow::AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FRenderTargetDebugWindow::AddTextureForDebugging(
+    const FRHIShaderResourceViewRef& ImageView, 
+    const FRHITextureRef& Image, 
+    EResourceAccess BeforeState, 
+    EResourceAccess AfterState)
 {
     DebugTextures.Emplace(ImageView, Image, BeforeState, AfterState);
 }

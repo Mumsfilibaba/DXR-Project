@@ -8,11 +8,13 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+class FGenericApplication;
+struct FOutputDeviceConsole;
+
 struct COREAPPLICATION_API FGenericApplicationMisc
 {
-    static class FGenericApplication* CreateApplication();
-
-    static struct FOutputDeviceConsole* CreateOutputDeviceConsole() { return nullptr; }
+    static FGenericApplication*  CreateApplication();
+    static FOutputDeviceConsole* CreateOutputDeviceConsole() { return nullptr; }
 
     static FORCEINLINE void MessageBox(const FString& Title, const FString& Message) { }
 

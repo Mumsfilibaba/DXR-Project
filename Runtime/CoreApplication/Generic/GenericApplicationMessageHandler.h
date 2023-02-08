@@ -10,35 +10,35 @@ struct FGenericApplicationMessageHandler
 {
     virtual ~FGenericApplicationMessageHandler() = default;
 
-    virtual void OnKeyReleased(EKey KeyCode, FModifierKeyState ModierKeyState) { }
+    virtual void OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState) { }
 
-    virtual void OnKeyPressed(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState) { }
+    virtual void OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState) { }
 
     virtual void OnKeyChar(uint32 Character) { }
 
-    virtual void OnCursorMove(int32 x, int32 y) { }
+    virtual void OnMouseMove(int32 x, int32 y) { }
 
-    virtual void OnCursorReleased(EMouseButton Button, FModifierKeyState ModierKeyState) { }
+    virtual void OnMouseDown(EMouseButton Button, FModifierKeyState ModierKeyState) { }
 
-    virtual void OnCursorPressed(EMouseButton Button, FModifierKeyState ModierKeyState) { }
+    virtual void OnMouseUp(EMouseButton Button, FModifierKeyState ModierKeyState) { }
 
-    virtual void OnCursorScrolled(float HorizontalDelta, float VerticalDelta) { }
+    virtual void OnMouseScrolled(float HorizontalDelta, float VerticalDelta) { }
 
-    virtual void OnHighPrecisionMouseInput(const FGenericWindowRef& Window, int32 x, uint32 y) { }
+    virtual void OnHighPrecisionMouseInput(const TSharedRef<FGenericWindow>& Window, int32 x, uint32 y) { }
 
-    virtual void OnWindowResized(const FGenericWindowRef& Window, uint32 Width, uint32 Height) { }
+    virtual void OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height) { }
 
-    virtual void OnWindowMoved(const FGenericWindowRef& Window, int32 x, int32 y) { }
+    virtual void OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 x, int32 y) { }
 
-    virtual void OnWindowCursorEntered(const FGenericWindowRef& Window) { }
+    virtual void OnWindowMouseEntered(const TSharedRef<FGenericWindow>& Window) { }
 
-    virtual void OnWindowCursorLeft(const FGenericWindowRef& Window) { }
+    virtual void OnWindowMouseLeft(const TSharedRef<FGenericWindow>& Window) { }
     
-    virtual void OnWindowFocusLost(const FGenericWindowRef& Window) { }
+    virtual void OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window) { }
     
-    virtual void OnWindowFocusGained(const FGenericWindowRef& Window) { }
+    virtual void OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window) { }
 
-    virtual void OnWindowClosed(const FGenericWindowRef& Window) { }
+    virtual void OnWindowClosed(const TSharedRef<FGenericWindow>& Window) { }
 
     virtual void OnApplicationExit(int32 ExitCode) { }
 };

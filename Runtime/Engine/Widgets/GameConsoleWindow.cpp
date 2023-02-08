@@ -5,16 +5,6 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Application/Application.h"
 
-TSharedRef<FGameConsoleWindow> FGameConsoleWindow::Make()
-{
-    TSharedRef<FGameConsoleWindow> NewWindow = new FGameConsoleWindow();
-
-    NewWindow->InputHandler->HandleKeyEventDelegate.BindRaw(NewWindow.Get(), &FGameConsoleWindow::HandleKeyPressedEvent);
-    FApplication::Get().AddInputHandler(NewWindow->InputHandler, uint32(-1));
-
-    return NewWindow;
-}
-
 FGameConsoleWindow::FGameConsoleWindow()
     : FWidget()
     , IOutputDevice()
@@ -23,6 +13,12 @@ FGameConsoleWindow::FGameConsoleWindow()
 	if (auto OutputDeviceManager = FOutputDeviceLogger::Get())
 	{
         OutputDeviceManager->AddOutputDevice(this);
+    }
+
+    if (FApplication::IsInitialized())
+    {
+        InputHandler->HandleKeyEventDelegate.BindRaw(this, &FGameConsoleWindow::HandleKeyPressedEvent);
+        FApplication::Get().AddInputHandler(InputHandler, uint32(-1));
     }
 
     TextBuffer.Fill(0);
@@ -34,10 +30,20 @@ FGameConsoleWindow::~FGameConsoleWindow()
     {
         OutputDeviceManager->RemoveOutputDevice(this);
     }
+
+    if (FApplication::IsInitialized())
+    {
+        FApplication::Get().RemoveInputHandler(InputHandler);
+    }
 }
 
-void FGameConsoleWindow::Tick()
+void FGameConsoleWindow::OnDraw()
 {
+    if (!bIsActive)
+    {
+        return;
+    }
+
     ImGuiIO& GuiIO = ImGui::GetIO();
     const float Scale  = GuiIO.DisplayFramebufferScale.y;
     const float Width  = float(GuiIO.DisplaySize.x);
@@ -200,7 +206,7 @@ void FGameConsoleWindow::Tick()
 
                 if (bIsActiveIndex && bCandidateSelectionChanged)
                 {
-                    ImGui::SetScrollHere();
+                    ImGui::SetScrollHereY();
                     PopupSelectedText = Candidate.Second;
                     bCandidateSelectionChanged = false;
                 }
@@ -326,11 +332,6 @@ void FGameConsoleWindow::Tick()
 
     ImGui::PopStyleVar();
     ImGui::PopStyleVar();
-}
-
-bool FGameConsoleWindow::ShouldTick()
-{
-    return bIsActive;
 }
 
 void FGameConsoleWindow::Log(const FString& Message)
