@@ -1,35 +1,33 @@
 #pragma once
 #include "IViewport.h"
-#include "Widget.h"
+#include "Element.h"
 
-class FWindow;
-
-class APPLICATION_API FViewport
-    : public FWidget
+class APPLICATION_API FViewportElement
+    : public FElement
 {
 public:
-    FViewport(const TWeakPtr<FWindow>& InParentWindow);
-    virtual ~FViewport() = default;
+    FViewportElement(const TWeakPtr<Element>& InParentElement);
+    virtual ~FViewportElement() = default;
 
     virtual bool CreateRHI();
     virtual void DestroyRHI();
 
-    virtual bool OnKeyDown(const FKeyEvent& KeyEvent)  override;
-    virtual bool OnKeyUp(const FKeyEvent& KeyEvent)    override;
+    virtual bool OnKeyDown(const FKeyEvent& KeyEvent) override;
+    virtual bool OnKeyUp(const FKeyEvent& KeyEvent) override;
     virtual bool OnKeyChar(FKeyCharEvent KeyCharEvent) override;
 
-    virtual bool OnMouseMove(const FMouseMovedEvent& MouseEvent)      override;
-    virtual bool OnMouseDown(const FMouseButtonEvent& MouseEvent)     override;
-    virtual bool OnMouseUp(const FMouseButtonEvent& MouseEvent)       override;
+    virtual bool OnMouseMove(const FMouseMovedEvent& MouseEvent) override;
+    virtual bool OnMouseDown(const FMouseButtonEvent& MouseEvent) override;
+    virtual bool OnMouseUp(const FMouseButtonEvent& MouseEvent) override;
     virtual bool OnMouseScroll(const FMouseScrolledEvent& MouseEvent) override;
     virtual bool OnMouseEntered() override;
-    virtual bool OnMouseLeft()    override;
+    virtual bool OnMouseLeft() override;
 
     virtual bool OnWindowResized(const FWindowResizedEvent& InResizeEvent) override;
-    virtual bool OnWindowMove(const FWindowMovedEvent& InMoveEvent)        override;
+    virtual bool OnWindowMove(const FWindowMovedEvent& InMoveEvent) override;
     virtual bool OnWindowFocusGained() override;
-    virtual bool OnWindowFocusLost()   override;
-    virtual bool OnWindowClosed()      override;
+    virtual bool OnWindowFocusLost() override;
+    virtual bool OnWindowClosed() override;
 
     void SetViewportInterface(const TSharedPtr<IViewport>& InViewportInterface)
     {
@@ -41,10 +39,12 @@ public:
 
     FIntVector2 GetSize() const;
 
-    FRHIViewportRef GetRHI() const { return ViewportRHI; }
+    FRHIViewportRef GetRHI() const 
+    { 
+        return ViewportRHI; 
+    }
 
 private:
-    TWeakPtr<FWindow>     ParentWindow;
     TSharedPtr<IViewport> ViewportInterface;
     FRHIViewportRef       ViewportRHI;
 };

@@ -33,14 +33,29 @@ public:
         return CurrentApplication.Dereference(); 
     }
 
-public:
+    virtual void OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState) override;
+    virtual void OnKeyDown(EKey KeyCode, bool IsRepeat, FModifierKeyState ModierKeyState) override;
+    virtual void OnKeyChar(uint32 Character) override;
+
+    virtual void OnMouseMove(int32 x, int32 y) override;
+    virtual void OnMouseUp(EMouseButton Button, FModifierKeyState ModierKeyState) override;
+    virtual void OnMouseDown(EMouseButton Button, FModifierKeyState ModierKeyState) override;
+    virtual void OnMouseScrolled(float HorizontalDelta, float VerticalDelta) override;
+
+    virtual void OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height) override;
+    virtual void OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 x, int32 y) override;
+    virtual void OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window) override;
+    virtual void OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window) override;
+    virtual void OnWindowMouseLeft(const TSharedRef<FGenericWindow>& Window) override;
+    virtual void OnWindowMouseEntered(const TSharedRef<FGenericWindow>& Window) override;
+    virtual void OnWindowClosed(const TSharedRef<FGenericWindow>& Window) override;
+
     bool InitializeRenderer();
     void ReleaseRenderer();
 
     void Tick(FTimespan DeltaTime);
 
     void SetCursor(ECursor Cursor);
-
     void SetCursorPos(const FIntVector2& Position);
 
     FIntVector2 GetCursorPos() const;
@@ -52,23 +67,18 @@ public:
     bool EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindow>& Window);
 
     void SetCapture(const TSharedPtr<FWindow>& CaptureWindow);
-
     void SetActiveWindow(const TSharedPtr<FWindow>& ActiveWindow);
 
     TSharedPtr<FWindow> GetActiveWindow() const;
-
     TSharedPtr<FWindow> GetWindowUnderCursor() const;
-
     TSharedPtr<FWindow> GetCapture() const;
 
     void AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority);
-
     void RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler);
 
     void RegisterMainViewport(const TSharedPtr<FViewport>& NewMainViewport);
 
     void AddWindow(const TSharedPtr<FWindow>& Window);
-
     void RemoveWindow(const TSharedPtr<FWindow>& Window);
 
     void DrawWindows(class FRHICommandList& InCommandList);
@@ -101,35 +111,6 @@ public:
     { 
         return Context; 
     }
-
-public:
-    virtual void OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState) override;
-    
-    virtual void OnKeyDown(EKey KeyCode, bool IsRepeat, FModifierKeyState ModierKeyState) override;
-    
-    virtual void OnKeyChar(uint32 Character) override;
-
-    virtual void OnMouseMove(int32 x, int32 y) override;
-    
-    virtual void OnMouseUp(EMouseButton Button, FModifierKeyState ModierKeyState) override;
-    
-    virtual void OnMouseDown(EMouseButton Button, FModifierKeyState ModierKeyState) override;
-    
-    virtual void OnMouseScrolled(float HorizontalDelta, float VerticalDelta) override;
-
-    virtual void OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height) override;
-    
-    virtual void OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 x, int32 y) override;
-    
-    virtual void OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window) override;
-    
-    virtual void OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window) override;
-    
-    virtual void OnWindowMouseLeft(const TSharedRef<FGenericWindow>& Window) override;
-    
-    virtual void OnWindowMouseEntered(const TSharedRef<FGenericWindow>& Window) override;
-    
-    virtual void OnWindowClosed(const TSharedRef<FGenericWindow>& Window) override;
 
 protected:
     TUniquePtr<FViewportRenderer> Renderer;

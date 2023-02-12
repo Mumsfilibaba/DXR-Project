@@ -13,7 +13,7 @@ FWindow::FWindow()
     , bIsMaximized{false}
 { }
 
-bool FWindow::Create()
+bool FWindow::Initialize(const FWindowInitializer& Initializer)
 {
     TSharedPtr<FGenericApplication> PlatfromApplication = FApplication::Get().GetPlatformApplication();
     if (!PlatfromApplication)
@@ -29,14 +29,14 @@ bool FWindow::Create()
         return false;
     }
 
-    if (Width == 0 || Height == 0 || WindowMode == EWindowMode::None)
+    if (Initializer.Width == 0 || Initializer.Height == 0 || Initializer.WindowMode == EWindowMode::None)
     {
         LOG_ERROR("[FWindow]: Width, Height or WindowMode is not Initialized");
         return false;
     }
 
     // TODO: Control these somehow
-    FWindowStyle WindowStyle
+    const FWindowStyle WindowStyle
     { 
         EWindowStyleFlag::Titled |
         EWindowStyleFlag::Closable |
@@ -44,6 +44,10 @@ bool FWindow::Create()
         EWindowStyleFlag::Maximizable |
         EWindowStyleFlag::Minimizable 
     };
+
+    WindowMode = Initializer.WindowMode;
+    Width  = Initializer.Width;
+    Height = Initializer.Height;
 
     return NativeWindow->Initialize(Title, Width, Height, 0, 0, WindowStyle);
 }
@@ -92,111 +96,56 @@ void FWindow::Restore()
     }
 }
 
-bool FWindow::IsActiveWindow() const 
-{
-    if (NativeWindow)
-    {
-        return NativeWindow->IsActiveWindow();
-    }
-
-    return false; 
-}
-
 bool FWindow::OnKeyDown(const FKeyEvent& KeyEvent)
 {
-    if (Viewport)
-    {
-        return Viewport->OnKeyDown(KeyEvent);
-    }
-
-    return false;
+    return Content ? Content->OnKeyDown(KeyEvent) : false;
 }
     
 bool FWindow::OnKeyUp(const FKeyEvent& KeyEvent)
 {
-    if (Viewport)
-    {
-        return Viewport->OnKeyUp(KeyEvent);
-    }
-
-    return false;
+    return Content ? Content->OnKeyUp(KeyEvent) : false;
 }
     
 bool FWindow::OnKeyChar(FKeyCharEvent KeyCharEvent)
 {
-    if (Viewport)
-    {
-        return Viewport->OnKeyChar(KeyCharEvent);
-    }
-
-    return false;
+    return Content ? Content->OnKeyChar(KeyCharEvent) : false;
 }
 
 bool FWindow::OnMouseMove(const FMouseMovedEvent& MouseEvent)
 {
-    if (Viewport)
-    {
-        return Viewport->OnMouseMove(MouseEvent);
-    }
-
-    return false;
+    return Content ? Content->OnMouseMove(MouseEvent) : false;
 }
     
 bool FWindow::OnMouseDown(const FMouseButtonEvent& MouseEvent)
 {
-    if (Viewport)
-    {
-        return Viewport->OnMouseDown(MouseEvent);
-    }
-
-    return false;
+    return Content ? Content->OnMouseDown(MouseEvent) : false;
 }
     
 bool FWindow::OnMouseUp(const FMouseButtonEvent& MouseEvent)
 {
-    if (Viewport)
-    {
-        return Viewport->OnMouseUp(MouseEvent);
-    }
-
-    return false;
+    return Content ? Content->OnMouseUp(MouseEvent) : false;
 }
     
 bool FWindow::OnMouseScroll(const FMouseScrolledEvent& MouseEvent)
 {
-    if (Viewport)
-    {
-        return Viewport->OnMouseScroll(MouseEvent);
-    }
-
-    return false;
+    return Content ? Content->OnMouseScroll(MouseEvent) : false;
 }
     
 bool FWindow::OnMouseEntered()
 {
-    if (Viewport)
-    {
-        return Viewport->OnMouseEntered();
-    }
-
-    return false;
+    return Content ? Content->OnMouseEntered() : false;
 }
     
 bool FWindow::OnMouseLeft()
 {
-    if (Viewport)
-    {
-        return Viewport->OnMouseLeft();
-    }
-
-    return false;
+    return Content ? Content->OnMouseLeft() : false;
 }
 
 bool FWindow::OnWindowResized(const FWindowResizedEvent& ResizeEvent)
 {
-    if (Viewport)
+    if (Content)
     {
-        return Viewport->OnWindowResized(ResizeEvent);
+        return Content->OnWindowResized(ResizeEvent);
     }
 
     Width  = ResizeEvent.Width;
@@ -206,9 +155,9 @@ bool FWindow::OnWindowResized(const FWindowResizedEvent& ResizeEvent)
     
 bool FWindow::OnWindowMoved(const FWindowMovedEvent& InMoveEvent)
 {
-    if (Viewport)
+    if (Content)
     {
-        return Viewport->OnWindowMove(InMoveEvent);
+        return Content->OnWindowMove(InMoveEvent);
     }
 
     return false;
@@ -216,29 +165,19 @@ bool FWindow::OnWindowMoved(const FWindowMovedEvent& InMoveEvent)
     
 bool FWindow::OnWindowFocusGained()
 {
-    if (Viewport)
-    {
-        return Viewport->OnWindowFocusGained();
-    }
-
-    return false;
+    return Content ? Content->OnWindowFocusGained() : false;
 }
     
 bool FWindow::OnWindowFocusLost()
 {
-    if (Viewport)
-    {
-       return  Viewport->OnWindowFocusLost();
-    }
-
-    return false;
+    return Content ? Content->OnWindowFocusLost() : false;
 }
     
 bool FWindow::OnWindowClosed()
 {
-    if (Viewport)
+    if (Content)
     {
-        return Viewport->OnWindowClosed();
+        return Content->OnWindowClosed();
     }
 
     return false;
@@ -258,38 +197,4 @@ void FWindow::SetWindowMode(EWindowMode InWindowMode)
     }
 
     WindowMode = InWindowMode;
-}
-
-void FWindow::SetTitle(const FString& InTitle)
-{
-    if (NativeWindow)
-    {
-        NativeWindow->SetTitle(Title);
-    }
-
-    Title = InTitle;
-}
-
-void FWindow::SetWidth(uint32 InWidth)
-{
-    CHECK(InWidth != 0);
-    Width = InWidth;
-
-    if (NativeWindow)
-    {
-        FWindowShape NewWindowShape{ Width, Height };
-        NativeWindow->SetWindowShape(NewWindowShape, false);
-    }
-}
-
-void FWindow::SetHeight(uint32 InHeight)
-{
-    CHECK(InHeight != 0);
-    Height = InHeight;
-
-    if (NativeWindow)
-    {
-        FWindowShape NewWindowShape{ Width, Height };
-        NativeWindow->SetWindowShape(NewWindowShape, false);
-    }
 }

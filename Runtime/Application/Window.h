@@ -6,16 +6,24 @@
 #include "Core/Math/IntVector2.h"
 #include "CoreApplication/Generic/GenericWindow.h"
 
+struct FWindowInitializer
+{
+    EWindowMode WindowMode;
+    uint32      Width;
+    uint32      Height;
+};
+
 class APPLICATION_API FWindow
+    : public FElement
 {
 public:
     FWindow();
     virtual ~FWindow() = default;
 
-    bool Create();
+    bool Initialize(const FWindowInitializer& Initializer);
 
-    void Show(bool bMaximized);
-    void Close();
+    void ShowWindow(bool bMaximized);
+    void CloseWindow();
 
     void Minimize();
     void Maximize();
@@ -30,54 +38,71 @@ public:
     DECLARE_EVENT(FOnWindowMovedEvent, FWindow, const FWindowResizedEvent&);
     FOnWindowMovedEvent& GetWindowMovedEvent() { return OnWindowMovedEvent; }
 
-    virtual bool OnKeyDown(const FKeyEvent& KeyEvent);
-    virtual bool OnKeyUp(const FKeyEvent& KeyEvent);
-    virtual bool OnKeyChar(FKeyCharEvent KeyCharEvent);
+    virtual bool OnKeyDown(const FKeyEvent& KeyEvent) override;
+    virtual bool OnKeyUp(const FKeyEvent& KeyEvent) override;
+    virtual bool OnKeyChar(FKeyCharEvent KeyCharEvent) override;
 
-    virtual bool OnMouseMove(const FMouseMovedEvent& MouseEvent);
-    virtual bool OnMouseDown(const FMouseButtonEvent& MouseEvent);
-    virtual bool OnMouseUp(const FMouseButtonEvent& MouseEvent);
-    virtual bool OnMouseScroll(const FMouseScrolledEvent& MouseEvent);
-    virtual bool OnMouseEntered();
-    virtual bool OnMouseLeft();
+    virtual bool OnMouseMove(const FMouseMovedEvent& MouseEvent) override;
+    virtual bool OnMouseDown(const FMouseButtonEvent& MouseEvent) override;
+    virtual bool OnMouseUp(const FMouseButtonEvent& MouseEvent) override;
+    virtual bool OnMouseScroll(const FMouseScrolledEvent& MouseEvent) override;
+    virtual bool OnMouseEntered() override;
+    virtual bool OnMouseLeft() override;
 
-    virtual bool OnWindowResized(const FWindowResizedEvent& InResizeEvent);
-    virtual bool OnWindowMoved(const FWindowMovedEvent& InMoveEvent);
-    virtual bool OnWindowFocusGained();
-    virtual bool OnWindowFocusLost();
-    virtual bool OnWindowClosed();
+    virtual bool OnWindowResized(const FWindowResizedEvent& InResizeEvent) override;
+    virtual bool OnWindowMoved(const FWindowMovedEvent& InMoveEvent) override;
+    virtual bool OnWindowFocusGained() override;
+    virtual bool OnWindowFocusLost() override;
+    virtual bool OnWindowClosed() override;
 
-    bool IsActiveWindow() const;
-    bool IsVisible()      const { return bIsVisible; }
-    bool IsIsMaximized()  const { return bIsMaximized; }
-
-    TSharedPtr<FViewport>       GetViewport()       { return Viewport; };
-    TSharedPtr<const FViewport> GetViewport() const { return Viewport; };
-
-    void SetViewport(const TSharedPtr<FViewport>& InViewport)
-    { 
-        Viewport = InViewport; 
+    bool IsActiveWindow() const 
+    {
+        return NativeWindow ? NativeWindow->IsActiveWindow() : false; 
     }
 
-    TSharedRef<FGenericWindow> GetNativeWindow() 
+    bool IsVisible()     const { return bIsVisible; }
+    bool IsIsMaximized() const { return bIsMaximized; }
+
+    void SetContent(const TSharedPtr<FElement>& InContent)
     { 
+        Content = InContent; 
+    }
+
+    TSharedPtr<FElement>       GetContent()       { return Content; };
+    TSharedPtr<const FElement> GetContent() const { return Content; };
+
+    TSharedRef<FGenericWindow> GetNativeWindow() 
+    {
         return NativeWindow; 
     }
     
-    void SetWidth(uint32 InWidth);
-    uint32 GetWidth()  const { return Width; }
-    
-    void SetHeight(uint32 InHeight);
-    uint32 GetHeight() const { return Height; }
+    void SetTitle(const FString& InTitle)
+    {
+        if (NativeWindow)
+        {
+            NativeWindow->SetTitle(Title);
+        }
 
-    void SetTitle(const FString& InTitle);
-    const FString& GetTitle() const { return Title; }
+        Title = InTitle;
+    }
+
+    const FString& GetTitle() const 
+    { 
+        return Title; 
+    }
+
+    void SetExtent(const FIntVector2& InExtent);
+    FIntVector2 GetExtent() const;
     
     void SetWindowMode(EWindowMode InWindowMode);
-    EWindowMode GetWindowMode() const { return WindowMode; }
+    
+    EWindowMode GetWindowMode() const 
+    { 
+        return WindowMode; 
+    }
 
 private:
-    TSharedPtr<FViewport>      Viewport;
+    TSharedPtr<FElement>       Content;
     TSharedRef<FGenericWindow> NativeWindow;
 
     FString     Title;

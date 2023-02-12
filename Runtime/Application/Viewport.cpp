@@ -4,16 +4,16 @@
 #include "Project/ProjectManager.h"
 #include "RHI/RHIInterface.h"
 
-FViewport::FViewport(const TWeakPtr<FWindow>& InParentWindow)
-    : FWidget(InParentWindow)
+FViewportElement::FViewportElement(const TWeakPtr<FElement>& InParentElement)
+    : FElement(InParentElement)
     , ViewportRHI(nullptr)
     , ViewportInterface(nullptr)
-    , ParentWindow(InParentWindow)
 { }
 
-bool FViewport::CreateRHI()
+bool FViewportElement::CreateRHI()
 {
-    if (!ParentWindow.IsValid())
+    TWeakPtr<FElement> ParentElement = GetParentElement();
+    if (!ParentElement.IsValid())
     {
         DEBUG_BREAK();
         return false;
@@ -49,12 +49,12 @@ bool FViewport::CreateRHI()
     return true;
 }
 
-void FViewport::DestroyRHI()
+void FViewportElement::DestroyRHI()
 {
     ViewportRHI.Reset();
 }
 
-bool FViewport::OnKeyDown(const FKeyEvent& KeyEvent)
+bool FViewportElement::OnKeyDown(const FKeyEvent& KeyEvent)
 {
     if (ViewportInterface)
     {
@@ -64,7 +64,7 @@ bool FViewport::OnKeyDown(const FKeyEvent& KeyEvent)
     return false;
 }
 
-bool FViewport::OnKeyUp(const FKeyEvent& KeyEvent)
+bool FViewportElement::OnKeyUp(const FKeyEvent& KeyEvent)
 {
     if (ViewportInterface)
     {
@@ -74,7 +74,7 @@ bool FViewport::OnKeyUp(const FKeyEvent& KeyEvent)
     return false;
 }
 
-bool FViewport::OnKeyChar(FKeyCharEvent KeyCharEvent)
+bool FViewportElement::OnKeyChar(FKeyCharEvent KeyCharEvent)
 {
     if (ViewportInterface)
     {
@@ -84,7 +84,7 @@ bool FViewport::OnKeyChar(FKeyCharEvent KeyCharEvent)
     return false;
 }
 
-bool FViewport::OnMouseMove(const FMouseMovedEvent& MouseEvent)
+bool FViewportElement::OnMouseMove(const FMouseMovedEvent& MouseEvent)
 {
     if (ViewportInterface)
     {
@@ -94,7 +94,7 @@ bool FViewport::OnMouseMove(const FMouseMovedEvent& MouseEvent)
     return false;
 }
 
-bool FViewport::OnMouseDown(const FMouseButtonEvent& MouseEvent)
+bool FViewportElement::OnMouseDown(const FMouseButtonEvent& MouseEvent)
 {
     if (ViewportInterface)
     {
@@ -104,7 +104,7 @@ bool FViewport::OnMouseDown(const FMouseButtonEvent& MouseEvent)
     return false;
 }
 
-bool FViewport::OnMouseUp(const FMouseButtonEvent& MouseEvent)
+bool FViewportElement::OnMouseUp(const FMouseButtonEvent& MouseEvent)
 {
     if (ViewportInterface)
     {
@@ -114,7 +114,7 @@ bool FViewport::OnMouseUp(const FMouseButtonEvent& MouseEvent)
     return false;
 }
 
-bool FViewport::OnMouseScroll(const FMouseScrolledEvent& MouseEvent)
+bool FViewportElement::OnMouseScroll(const FMouseScrolledEvent& MouseEvent)
 {
     if (ViewportInterface)
     {
@@ -124,7 +124,7 @@ bool FViewport::OnMouseScroll(const FMouseScrolledEvent& MouseEvent)
     return false;
 }
 
-bool FViewport::OnMouseEntered()
+bool FViewportElement::OnMouseEntered()
 {
     if (ViewportInterface)
     {
@@ -134,7 +134,7 @@ bool FViewport::OnMouseEntered()
     return false;
 }
 
-bool FViewport::OnMouseLeft()
+bool FViewportElement::OnMouseLeft()
 {
     if (ViewportInterface)
     {
@@ -144,7 +144,7 @@ bool FViewport::OnMouseLeft()
     return false;
 }
 
-bool FViewport::OnWindowResized(const FWindowResizedEvent& InResizeEvent)
+bool FViewportElement::OnWindowResized(const FWindowResizedEvent& InResizeEvent)
 {
     if (ViewportInterface)
     {
@@ -154,7 +154,7 @@ bool FViewport::OnWindowResized(const FWindowResizedEvent& InResizeEvent)
     return false;
 }
 
-bool FViewport::OnWindowMove(const FWindowMovedEvent& InMoveEvent)
+bool FViewportElement::OnWindowMove(const FWindowMovedEvent& InMoveEvent)
 {
     if (ViewportInterface)
     {
@@ -164,7 +164,7 @@ bool FViewport::OnWindowMove(const FWindowMovedEvent& InMoveEvent)
     return false;
 }
 
-bool FViewport::OnWindowFocusGained()
+bool FViewportElement::OnWindowFocusGained()
 {
     if (ViewportInterface)
     {
@@ -174,7 +174,7 @@ bool FViewport::OnWindowFocusGained()
     return false;
 }
 
-bool FViewport::OnWindowFocusLost()
+bool FViewportElement::OnWindowFocusLost()
 {
     if (ViewportInterface)
     {
@@ -184,7 +184,7 @@ bool FViewport::OnWindowFocusLost()
     return false;
 }
 
-bool FViewport::OnWindowClosed()
+bool FViewportElement::OnWindowClosed()
 {
     if (ViewportInterface)
     {
@@ -194,7 +194,7 @@ bool FViewport::OnWindowClosed()
     return false;
 }
 
-FIntVector2 FViewport::GetSize() const
+FIntVector2 FViewportElement::GetSize() const
 {
     if (ParentWindow.IsValid())
     {
