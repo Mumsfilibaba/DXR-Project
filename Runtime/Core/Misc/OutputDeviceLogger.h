@@ -24,8 +24,7 @@
     } while (false)
 
 
-class CORE_API FOutputDeviceLogger
-    : public IOutputDevice
+class CORE_API FOutputDeviceLogger : public IOutputDevice
 {
     FOutputDeviceLogger();
     ~FOutputDeviceLogger();

@@ -2,8 +2,7 @@
 #include "Core/Generic/GenericPlatformAtomic.h"
 #include "Core/Platform/PlatformInterlocked.h"
 
-struct FWindowsPlatformAtomic final 
-    : public FGenericPlatformAtomic
+struct FWindowsPlatformAtomic final : public FGenericPlatformAtomic
 {
     static FORCEINLINE int8 Read(volatile const int8* Source)
     {

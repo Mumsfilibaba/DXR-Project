@@ -1,7 +1,7 @@
 #include "WindowsPlatformStackTrace.h"
-
 #include "Core/Misc/OutputDeviceLogger.h"
 
+// TODO: This should probablu be included in the buildsystem
 #include <dbghelp.h>
 #pragma comment(lib, "Dbghelp.lib")
 

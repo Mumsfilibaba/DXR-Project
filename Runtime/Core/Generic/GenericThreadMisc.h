@@ -1,18 +1,15 @@
 #pragma once
 #include "GenericThread.h"
 #include "GenericEvent.h"
-
 #include "Core/Time/Timespan.h"
 #include "Core/Threading/ThreadInterface.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-
 struct FGenericThreadMisc
 {
-    static FGenericThread* CreateThread(FThreadInterface* Runnable);
-    
-    static FGenericEvent* CreateEvent(bool bManualReset);
+    static FGenericEvent*  CreateEvent(bool bManualReset);
+    static FGenericThread* CreateThread(FThreadInterface* Runnable, bool bSuspended = true);
 
     static FORCEINLINE bool Initialize() { return true; }
     static FORCEINLINE void Release()    { }

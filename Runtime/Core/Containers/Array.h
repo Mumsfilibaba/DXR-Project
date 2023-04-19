@@ -21,18 +21,22 @@ public:
     typedef TReverseArrayIterator<TArray, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TArray, const ElementType> ReverseConstIteratorType;
 
-    enum : SizeType { INVALID_INDEX = -1 };
+    enum : SizeType 
+    { 
+        INVALID_INDEX = -1
+    };
 
 public:
 
-    /** 
+    /**
      * @brief - Default constructor
      */
     FORCEINLINE TArray() noexcept
         : Allocator()
         , ArraySize(0)
-        , ArrayCapacity(0)
-    { }
+        , ArrayMax(0)
+    {
+    }
 
     /** 
      * @brief        - Constructor that default creates a certain number of elements 
@@ -41,9 +45,9 @@ public:
     FORCEINLINE explicit TArray(SizeType InSize) noexcept
         : Allocator()
         , ArraySize(0)
-        , ArrayCapacity(0)
+        , ArrayMax(0)
     {
-        ConstructEmpty(InSize);
+        InitializeEmpty(InSize);
     }
 
     /**
@@ -54,22 +58,22 @@ public:
     FORCEINLINE TArray(SizeType InSize, const ElementType& Element) noexcept
         : Allocator()
         , ArraySize(0)
-        , ArrayCapacity(0)
+        , ArrayMax(0)
     {
-        ConstructFrom(InSize, Element);
+        Initialize(InSize, Element);
     }
 
     /**
-     * @brief             - Constructor that creates an array from a raw pointer array 
-     * @param InputArray  - Pointer to the start of the array to copy from
-     * @param NumElements - Number of elements in 'InputArray', which also is the resulting size of the constructed array
+     * @brief               - Constructor that creates an array from a raw pointer array 
+     * @param InputArray    - Pointer to the start of the array to copy from
+     * @param InNumElements - Number of elements in 'InputArray', which also is the resulting size of the constructed array
      */
-    FORCEINLINE TArray(const ElementType* InputArray, SizeType NumElements) noexcept
+    FORCEINLINE TArray(const ElementType* InputArray, SizeType InNumElements) noexcept
         : Allocator()
         , ArraySize(0)
-        , ArrayCapacity(0)
+        , ArrayMax(0)
     {
-        CopyConstructFrom(InputArray, NumElements, 0);
+        InitializeByCopy(InputArray, InNumElements, 0);
     }
 
     /** 
@@ -79,9 +83,9 @@ public:
     FORCEINLINE TArray(const TArray& Other) noexcept
         : Allocator()
         , ArraySize(0)
-        , ArrayCapacity(0)
+        , ArrayMax(0)
     {
-        CopyConstructFrom(Other.GetData(), Other.GetSize(), 0);
+        InitializeByCopy(Other.Data(), Other.Size(), 0);
     }
 
     /**
@@ -94,9 +98,9 @@ public:
     FORCEINLINE explicit TArray(const ArrayType& Other) noexcept
         : Allocator()
         , ArraySize(0)
-        , ArrayCapacity(0)
+        , ArrayMax(0)
     {
-        CopyConstructFrom(FContiguousContainerHelper::GetData(Other), FContiguousContainerHelper::GetSize(Other), 0);
+        InitializeByCopy(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other), 0);
     }
 
     /** 
@@ -106,9 +110,9 @@ public:
     FORCEINLINE TArray(TArray&& Other) noexcept
         : Allocator()
         , ArraySize(0)
-        , ArrayCapacity(0)
+        , ArrayMax(0)
     {
-        MoveFrom(Forward<TArray>(Other));
+        InitializeByMove(::Forward<TArray>(Other));
     }
 
     /** 
@@ -118,9 +122,9 @@ public:
     FORCEINLINE TArray(std::initializer_list<ElementType> InList) noexcept
         : Allocator()
         , ArraySize(0)
-        , ArrayCapacity(0)
+        , ArrayMax(0)
     {
-        CopyConstructFrom(FContiguousContainerHelper::GetData(InList), FContiguousContainerHelper::GetSize(InList), 0);
+        InitializeByCopy(FArrayContainerHelper::Data(InList), FArrayContainerHelper::Size(InList), 0);
     }
 
     /** 
@@ -132,21 +136,21 @@ public:
     }
 
     /** 
-     * @brief             - Clear all elements of the container, but does not deallocate the memory
-     * @param bFreeMemory - Should the memory be deallocated or not
+     * @brief              - Clear all elements of the container, but does not deallocate the memory
+     * @param bRemoveSlack - Should the memory be deallocated or not
      */
-    FORCEINLINE void Clear(bool bFreeMemory = false) noexcept
+    void Clear(bool bRemoveSlack = false) noexcept
     {
         if (ArraySize)
         {
-            ::DestroyElements<ElementType>(GetData(), ArraySize);
+            ::DestroyElements<ElementType>(Allocator.Data(), ArraySize);
             ArraySize = 0;
         }
 
-        if (bFreeMemory)
+        if (bRemoveSlack)
         {
             Allocator.Free();
-            ArrayCapacity = 0;
+            ArrayMax = 0;
         }
     }
 
@@ -156,12 +160,12 @@ public:
      * 
      * @param NewSize - Number of elements to construct
      */
-    FORCEINLINE void Reset(SizeType NewSize = 0) noexcept
+    void Reset(SizeType InSize = 0) noexcept
     {
-        ::DestroyElements<ElementType>(GetData(), ArraySize);
-        if (NewSize)
+        ::DestroyElements<ElementType>(Allocator.Data(), ArraySize);
+        if (InSize)
         {
-            ConstructEmpty(NewSize);
+            InitializeEmpty(InSize);
         }
         else
         {
@@ -176,12 +180,12 @@ public:
      * @param NewSize - Number of elements to construct
      * @param Element - Element to copy-construct from
      */
-    FORCEINLINE void Reset(SizeType NewSize, const ElementType& Element) noexcept
+    void Reset(SizeType NewSize, const ElementType& Element) noexcept
     {
-        ::DestroyElements<ElementType>(GetData(), ArraySize);
+        ::DestroyElements<ElementType>(Allocator.Data(), ArraySize);
         if (NewSize)
         {
-            ConstructFrom(NewSize, Element);
+            Initialize(NewSize, Element);
         }
         else
         {
@@ -192,25 +196,26 @@ public:
     /** 
      * @brief - Resets the container, but does not deallocate the memory. Takes in pointer to copy-construct elements from.
      * 
-     * @param InputArray  - Array to copy-construct from
-     * @param NumElements - Number of elements from
+     * @param Elements      - Array to copy-construct from
+     * @param InNumElements - Number of elements from
      */
-    FORCEINLINE void Reset(const ElementType* InputArray, SizeType NumElements) noexcept
+    void Reset(const ElementType* Elements, SizeType NumElements) noexcept
     {
-        if (NumElements > 0)
+        if (NumElements <= 0)
         {
-            CHECK(InputArray != nullptr);
-            if (InputArray != GetData())
+            return;
+        }
+
+        if (Elements != Allocator.Data())
+        {
+            ::DestroyElements<ElementType>(Allocator.Data(), ArraySize);
+            if (NumElements)
             {
-                ::DestroyElements<ElementType>(GetData(), ArraySize);
-                if (NumElements)
-                {
-                    CopyConstructFrom(InputArray, NumElements, 0);
-                }
-                else
-                {
-                    ArraySize = 0;
-                }
+                InitializeByCopy(Elements, NumElements, 0);
+            }
+            else
+            {
+                ArraySize = 0;
             }
         }
     }
@@ -224,7 +229,7 @@ public:
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Reset(const ArrayType& InputArray) noexcept
     {
-        Reset(InputArray.GetData(), InputArray.GetSize());
+        Reset(FArrayContainerHelper::Data(InputArray), FArrayContainerHelper::Size(InputArray));
     }
 
     /**
@@ -233,7 +238,7 @@ public:
      */
     FORCEINLINE void Reset(TArray&& InputArray) noexcept
     {
-        MoveFrom(Forward<TArray>(InputArray));
+        InitializeByMove(::Forward<TArray>(InputArray));
     }
 
     /** 
@@ -242,7 +247,7 @@ public:
      */
     FORCEINLINE void Reset(std::initializer_list<ElementType> InList) noexcept
     {
-        Reset(FContiguousContainerHelper::GetData(InList), FContiguousContainerHelper::GetSize(InList));
+        Reset(FArrayContainerHelper::Data(InList), FArrayContainerHelper::Size(InList));
     }
 
     /** 
@@ -251,7 +256,7 @@ public:
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        ::AssignElements(GetData(), InputElement, GetSize());
+        ::AssignElements(Allocator.Data(), InputElement, ArraySize);
     }
 
     /**
@@ -262,17 +267,14 @@ public:
     {
         if (NewSize > ArraySize)
         {
-            if (NewSize >= ArrayCapacity)
-            {
-                ReserveUnchecked(NewSize);
-            }
+            EnsureCapacity(NewSize);
 
             // NewSize is always larger than array-size...
             const SizeType NumElementsToConstruct = NewSize - ArraySize;
             // ...However, assert just in case
             CHECK(NumElementsToConstruct > 0);
 
-            ElementType* LastElementPtr = GetData() + ArraySize;
+            ElementType* LastElementPtr = Allocator.Data() + ArraySize;
             ::DefaultConstructElements<ElementType>(LastElementPtr, NumElementsToConstruct);
             ArraySize = NewSize;
         }
@@ -293,17 +295,14 @@ public:
     {
         if (NewSize > ArraySize)
         {
-            if (NewSize >= ArrayCapacity)
-            {
-                ReserveUnchecked(NewSize);
-            }
+            EnsureCapacity(NewSize);
 
             // NewSize is always larger than arraysize...
             const SizeType NumElementsToConstruct = NewSize - ArraySize;
             // ...However, assert just in case
             CHECK(NumElementsToConstruct > 0);
 
-            ElementType* TmpLastElement = GetData() + ArraySize;
+            ElementType* TmpLastElement = Allocator.Data() + ArraySize;
             ::ConstructElementsFrom<ElementType>(TmpLastElement, NumElementsToConstruct, Element);
             ArraySize = NewSize;
         }
@@ -321,11 +320,11 @@ public:
      */
     void Reserve(SizeType NewCapacity) noexcept
     {
-        if (NewCapacity != ArrayCapacity)
+        if (NewCapacity != ArrayMax)
         {
             if (NewCapacity < ArraySize)
             {
-                ::DestroyElements<ElementType>(GetData() + NewCapacity, ArraySize - NewCapacity);
+                ::DestroyElements<ElementType>(Allocator.Data() + NewCapacity, ArraySize - NewCapacity);
                 ArraySize = NewCapacity;
             }
 
@@ -341,8 +340,8 @@ public:
     template<typename... ArgTypes>
     ElementType& Emplace(ArgTypes&&... Args) noexcept
     {
-        ExpandStorage();
-        new(GetData() + (ArraySize++)) ElementType(Forward<ArgTypes>(Args)...);
+        EnsureCapacity(ArraySize + 1);
+        new(reinterpret_cast<void*>(Allocator.Data() + (ArraySize++))) ElementType(::Forward<ArgTypes>(Args)...);
         return LastElement();
     }
 
@@ -351,7 +350,7 @@ public:
      * @param Element - Element to insert into the array by copy
      * @return        - Returns a reference to the newly created element
      */
-    FORCEINLINE ElementType& Push(const ElementType& Element) noexcept
+    FORCEINLINE ElementType& Add(const ElementType& Element) noexcept
     {
         return Emplace(Element);
     }
@@ -361,9 +360,9 @@ public:
      * @param Element - Element to insert into the array by move
      * @return        - Returns a reference to the newly created element
      */
-    FORCEINLINE ElementType& Push(ElementType&& Element) noexcept
+    FORCEINLINE ElementType& Add(ElementType&& Element) noexcept
     {
-        return Emplace(Forward<ElementType>(Element));
+        return Emplace(::Forward<ElementType>(Element));
     }
 
     /**
@@ -371,7 +370,7 @@ public:
      * @param Element - Element to insert into the array by copy
      * @return        - Returns a reference to the newly created element or element equal to Element
      */
-    FORCEINLINE SizeType PushUnique(const ElementType& Element) noexcept
+    SizeType AddUnique(const ElementType& Element) noexcept
     {
         const SizeType Index = Find(Element);
         if (Index >= 0)
@@ -388,7 +387,7 @@ public:
      * @param Element - Element to insert into the array by copy
      * @return        - Returns a reference to the newly created element or element equal to Element
      */
-    FORCEINLINE SizeType PushUnique(ElementType&& Element) noexcept
+    SizeType AddUnique(ElementType&& Element) noexcept
     {
         const SizeType Index = Find(Element);
         if (Index >= 0)
@@ -396,14 +395,14 @@ public:
             return Index;
         }
 
-        Emplace(Forward<ElementType>(Element));
+        Emplace(::Forward<ElementType>(Element));
         return (ArraySize - 1);
     }
 
     /**
      * @brief - Appends a new element at the end of the array, but does not call any constructor
      */
-    FORCEINLINE void PushUninitialized() noexcept
+    FORCEINLINE void AddUninitialized() noexcept
     {
         AppendUninitialized(1);
     }
@@ -414,11 +413,11 @@ public:
      * @param Args     - Arguments for the constructor of the element
      */
     template<typename... ArgTypes>
-    FORCEINLINE void EmplaceAt(SizeType Position, ArgTypes&&... Args) noexcept
+    void EmplaceAt(SizeType Position, ArgTypes&&... Args) noexcept
     {
         CHECK(Position <= ArraySize);
         InsertUninitializedUnchecked(Position, 1);
-        new(GetData() + Position) ElementType(Forward<ArgTypes>(Args)...);
+        new(reinterpret_cast<void*>(Allocator.Data() + Position)) ElementType(::Forward<ArgTypes>(Args)...);
         ArraySize++;
     }
 
@@ -430,7 +429,7 @@ public:
     template<typename... ArgTypes>
     FORCEINLINE void EmplaceAt(ConstIteratorType Position, ArgTypes&&... Args) noexcept
     {
-        EmplaceAt(Position.GetIndex(), Forward<ArgTypes>(Args)...);
+        EmplaceAt(Position.GetIndex(), ::Forward<ArgTypes>(Args)...);
     }
 
     /**
@@ -460,7 +459,7 @@ public:
      */
     FORCEINLINE void Insert(SizeType Position, ElementType&& Element) noexcept
     {
-        EmplaceAt(Position, Forward<ElementType>(Element));
+        EmplaceAt(Position, ::Forward<ElementType>(Element));
     }
 
     /**
@@ -470,7 +469,7 @@ public:
      */
     FORCEINLINE void Insert(ConstIteratorType Position, ElementType&& Element) noexcept
     {
-        EmplaceAt(Position.GetIndex(), Forward<ElementType>(Element));
+        EmplaceAt(Position.GetIndex(), ::Forward<ElementType>(Element));
     }
 
     /**
@@ -479,14 +478,14 @@ public:
      * @param InputArray  - Array to copy into the array
      * @param NumElements - Number of elements in the input-array
      */
-    FORCEINLINE void Insert(SizeType Position, const ElementType* InputArray, SizeType NumElements) noexcept
+    void Insert(SizeType Position, const ElementType* Elements, SizeType InNumElements) noexcept
     {
         CHECK(Position <= ArraySize);
-        CHECK(InputArray != nullptr);
+        CHECK(Elements != nullptr);
 
-        InsertUninitializedUnchecked(Position, NumElements);
-        ::CopyConstructElements<ElementType>(GetData() + Position, InputArray, NumElements);
-        ArraySize += NumElements;
+        InsertUninitializedUnchecked(Position, InNumElements);
+        ::CopyConstructElements<ElementType>(Allocator.Data() + Position, Elements, InNumElements);
+        ArraySize += InNumElements;
     }
 
     /**
@@ -507,7 +506,7 @@ public:
      */
     FORCEINLINE void Insert(SizeType Position, std::initializer_list<ElementType> InList) noexcept
     {
-        Insert(Position, FContiguousContainerHelper::GetData(InList), FContiguousContainerHelper::GetSize(InList));
+        Insert(Position, FArrayContainerHelper::Data(InList), FArrayContainerHelper::Size(InList));
     }
 
     /**
@@ -517,7 +516,7 @@ public:
      */
     FORCEINLINE void Insert(ConstIteratorType Position, std::initializer_list<ElementType> InList) noexcept
     {
-        Insert(Position.GetIndex(), FContiguousContainerHelper::GetData(InList), FContiguousContainerHelper::GetSize(InList));
+        Insert(Position.GetIndex(), FArrayContainerHelper::Data(InList), FArrayContainerHelper::Size(InList));
     }
 
     /**
@@ -530,7 +529,7 @@ public:
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Insert(SizeType Position, const ArrayType& InArray) noexcept
     {
-        Insert(Position, InArray.GetData(), InArray.GetSize());
+        Insert(Position, FArrayContainerHelper::Data(InArray), FArrayContainerHelper::Size(InArray));
     }
 
     /**
@@ -543,7 +542,7 @@ public:
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Insert(ConstIteratorType Position, const ArrayType& InArray) noexcept
     {
-        Insert(Position.GetIndex(), InArray.GetData(), InArray.GetSize());
+        Insert(Position.GetIndex(), FArrayContainerHelper::Data(InArray), FArrayContainerHelper::Size(InArray));
     }
 
     /**
@@ -551,7 +550,7 @@ public:
      * @param Position    - Start-position of the new elements
      * @param NumElements - Number of elements to insert
      */
-    FORCEINLINE void InsertUninitialized(SizeType Position, SizeType NumElements) noexcept
+    void InsertUninitialized(SizeType Position, SizeType NumElements) noexcept
     {
         CHECK(Position <= ArraySize);
         InsertUninitializedUnchecked(Position, NumElements);
@@ -568,8 +567,8 @@ public:
         if (NumElements > 0)
         {
             CHECK(InputArray != nullptr);
-            ExpandStorage(NumElements);
-            ::CopyConstructElements<ElementType>(GetData() + ArraySize, InputArray, NumElements);
+            EnsureCapacity(ArraySize + NumElements);
+            ::CopyConstructElements<ElementType>(Allocator.Data() + ArraySize, InputArray, NumElements);
             ArraySize += NumElements;
         }
     }
@@ -581,7 +580,7 @@ public:
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Append(const ArrayType& Other) noexcept
     {
-        Append(Other.GetData(), Other.GetSize());
+        Append(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other));
     }
 
     /**
@@ -590,7 +589,7 @@ public:
      */
     FORCEINLINE void Append(std::initializer_list<ElementType> InList) noexcept
     {
-        Append(FContiguousContainerHelper::GetData(InList), FContiguousContainerHelper::GetSize(InList));
+        Append(FArrayContainerHelper::Data(InList), FArrayContainerHelper::Size(InList));
     }
 
     /**
@@ -599,8 +598,9 @@ public:
      */
     FORCEINLINE void AppendUninitialized(SizeType NumElements) noexcept
     {
-        ExpandStorage(NumElements);
-        ArraySize += NumElements;
+        const SizeType NewSize = ArraySize + NumElements;
+        EnsureCapacity(NewSize);
+        ArraySize = NewSize;
     }
 
     /**
@@ -634,8 +634,9 @@ public:
 
         if (NumElements)
         {
-            ::DestroyElements<ElementType>(GetData() + Position, NumElements);
-            ::RelocateElements<ElementType>(GetData() + Position, GetData() + Position + NumElements, ArraySize - (Position + NumElements));
+            ElementType* TmpPositionData = Allocator.Data() + Position;
+            ::DestroyElements<ElementType>(TmpPositionData, NumElements);
+            ::RelocateElements<ElementType>(TmpPositionData, TmpPositionData + NumElements, ArraySize - (Position + NumElements));
             ArraySize -= NumElements;
         }
     }
@@ -676,13 +677,13 @@ public:
     /**
      * @brief         - Search the array and remove the first instance of the element from the array if it is found. 
      * @param Element - Element to remove
-     * @return        - Returns true if the element was found and remved, false otherwise
+     * @return        - Returns true if the element was found and removed, false otherwise
      */
     FORCEINLINE bool Remove(const ElementType& Element) noexcept
     {
         for(SizeType Index = 0; Index < ArraySize; ++Index)
         {
-            if (Element == GetElementAt(Index))
+            if (Element == Allocator[Index])
             {
                 RemoveAt(Index);
                 return true;
@@ -703,7 +704,7 @@ public:
     {
         for (SizeType Index = 0; Index < ArraySize; ++Index)
         {
-            if (Predicate(GetElementAt(Index)))
+            if (Predicate(Allocator[Index]))
             {
                 RemoveAt(Index);
                 break;
@@ -719,7 +720,7 @@ public:
     {
         for (SizeType Index = 0; Index < ArraySize;)
         {
-            if (Element == GetElementAt(Index))
+            if (Element == Allocator[Index])
             {
                 RemoveAt(Index);
             }
@@ -741,7 +742,7 @@ public:
     {
         for (SizeType Index = 0; Index < ArraySize;)
         {
-            if (Predicate(GetElementAt(Index)))
+            if (Predicate(Allocator[Index]))
             {
                 RemoveAt(Index);
             }
@@ -759,13 +760,13 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData();
-        const ElementType* RESTRICT EndAddress     = GetData() + ArraySize;
+        const ElementType* RESTRICT CurrentAddress = Allocator.Data();
+        const ElementType* RESTRICT EndAddress     = Allocator.Data() + ArraySize;
         while (CurrentAddress != EndAddress)
         {
             if (Element == *CurrentAddress)
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Allocator.Data());
             }
 
             ++CurrentAddress;
@@ -782,13 +783,13 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData();
-        const ElementType* RESTRICT EndAddress     = GetData() + ArraySize;
+        const ElementType* RESTRICT CurrentAddress = Allocator.Data();
+        const ElementType* RESTRICT EndAddress     = Allocator.Data() + ArraySize;
         while (CurrentAddress != EndAddress)
         {
             if (Predicate(*CurrentAddress))
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Allocator.Data());
             }
 
             ++CurrentAddress;
@@ -804,14 +805,14 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData() + ArraySize;
-        const ElementType* RESTRICT EndAddress     = GetData();
+        const ElementType* RESTRICT CurrentAddress = Allocator.Data() + ArraySize;
+        const ElementType* RESTRICT EndAddress     = Allocator.Data();
         while (CurrentAddress != EndAddress)
         {
             --CurrentAddress;
             if (Element == *CurrentAddress)
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Allocator.Data());
             }
         }
 
@@ -826,14 +827,14 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData() + ArraySize;
-        const ElementType* RESTRICT EndAddress     = GetData();
+        const ElementType* RESTRICT CurrentAddress = Allocator.Data() + ArraySize;
+        const ElementType* RESTRICT EndAddress     = Allocator.Data();
         while (CurrentAddress != EndAddress)
         {
             --CurrentAddress;
             if (Predicate(*CurrentAddress))
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Allocator.Data());
             }
         }
 
@@ -858,7 +859,7 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        return (FindWithPredicate(Forward<PredicateType>(Predicate)) != INVALID_INDEX);
+        return (FindWithPredicate(::Forward<PredicateType>(Predicate)) != INVALID_INDEX);
     }
 
     /**
@@ -868,8 +869,8 @@ public:
     template<class FunctorType>
     FORCEINLINE void Foreach(FunctorType&& Functor)
     {
-        ElementType* RESTRICT CurrentAddress = GetData();
-        ElementType* RESTRICT EndAddress     = GetData() + ArraySize;
+        ElementType* RESTRICT CurrentAddress = Allocator.Data();
+        ElementType* RESTRICT EndAddress     = Allocator.Data() + ArraySize;
         while (CurrentAddress != EndAddress)
         {
             Functor(*CurrentAddress);
@@ -883,9 +884,9 @@ public:
      */
     FORCEINLINE void Swap(TArray& Other) noexcept
     {
-        TArray TempArray(Move(*this));
-        MoveFrom(Move(Other));
-        Other.MoveFrom(Move(TempArray));
+        TArray TempArray(::Move(*this));
+        InitializeByMove(::Move(Other));
+        Other.InitializeByMove(::Move(TempArray));
     }
 
     /**
@@ -903,7 +904,7 @@ public:
      */
     NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const noexcept
     {
-        return (Address >= GetData()) && (Address < (GetData() + ArrayCapacity));
+        return (Address >= Allocator.Data()) && (Address < (Allocator.Data() + ArrayMax));
     }
 
     /**
@@ -931,7 +932,7 @@ public:
     NODISCARD FORCEINLINE ElementType& FirstElement() noexcept
     {
         CHECK(!IsEmpty());
-        return *GetData();
+        return Allocator[0];
     }
 
     /**
@@ -941,7 +942,7 @@ public:
     NODISCARD FORCEINLINE const ElementType& FirstElement() const noexcept
     {
         CHECK(!IsEmpty());
-        return *GetData();
+        return Allocator[0];
     }
 
     /**
@@ -951,7 +952,8 @@ public:
     NODISCARD FORCEINLINE ElementType& LastElement() noexcept
     {
         CHECK(!IsEmpty());
-        return *(GetData() + (ArraySize - 1));
+        const int32 LastIndex = ArraySize - 1; 
+        return Allocator[LastIndex];
     }
 
     /**
@@ -961,25 +963,26 @@ public:
     NODISCARD FORCEINLINE const ElementType& LastElement() const noexcept
     {
         CHECK(!IsEmpty());
-        return *(GetData() + (ArraySize - 1));
+        const int32 LastIndex = ArraySize - 1; 
+        return Allocator[LastIndex];
     }
 
     /**
      * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD FORCEINLINE ElementType* GetData() noexcept
+    NODISCARD FORCEINLINE ElementType* Data() noexcept
     {
-        return Allocator.GetAllocation();
+        return Allocator.Data();
     }
 
     /**
      * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD FORCEINLINE const ElementType* GetData() const noexcept
+    NODISCARD FORCEINLINE const ElementType* Data() const noexcept
     {
-        return Allocator.GetAllocation();
+        return Allocator.Data();
     }
 
     /**
@@ -994,7 +997,7 @@ public:
     /**
      * @return - Returns the size of the container
      */
-    NODISCARD FORCEINLINE SizeType GetSize() const noexcept
+    NODISCARD FORCEINLINE SizeType Size() const noexcept
     {
         return ArraySize;
     }
@@ -1002,7 +1005,7 @@ public:
     /**
      * @return - Returns the stride of each element of the container
      */
-    NODISCARD CONSTEXPR SizeType GetStride() const noexcept
+    NODISCARD CONSTEXPR SizeType Stride() const noexcept
     {
         return sizeof(ElementType);
     }
@@ -1012,15 +1015,15 @@ public:
      */
     NODISCARD FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return GetSize() * sizeof(ElementType);
+        return ArraySize * sizeof(ElementType);
     }
 
     /**
      * @return - Returns the capacity of the container
      */
-    NODISCARD FORCEINLINE SizeType GetCapacity() const noexcept
+    NODISCARD FORCEINLINE SizeType Capacity() const noexcept
     {
-        return ArrayCapacity;
+        return ArrayMax;
     }
 
     /**
@@ -1028,71 +1031,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType CapacityInBytes() const noexcept
     {
-        return GetCapacity() * sizeof(ElementType);
-    }
-
-    /**
-     * @brief       - Retrieve a element at a certain index of the array
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
-     */
-    NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) noexcept
-    {
-        CHECK(Index < ArraySize);
-        return *(GetData() + Index);
-    }
-
-    /**
-     * @brief       - Retrieve a element at a certain index of the array
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
-     */
-    NODISCARD FORCEINLINE const ElementType& GetElementAt(SizeType Index) const noexcept
-    {
-        CHECK(Index < ArraySize);
-        return *(GetData() + Index);
-    }
-
-    /**
-     * @brief  - Create an array-view of the array
-     * @return - A new array-view pointing this array's data
-     */
-    NODISCARD FORCEINLINE TArrayView<ElementType> CreateView() noexcept
-    {
-        return TArrayView<ElementType>(GetData(), GetSize());
-    }
-
-    /**
-     * @brief  - Create an array-view of the array
-     * @return - A new array-view pointing this array's data
-     */
-    NODISCARD FORCEINLINE TArrayView<const ElementType> CreateView() const noexcept
-    {
-        return TArrayView<const ElementType>(GetData(), GetSize());
-    }
-
-    /**
-     * @brief             - Create an array-view of the array
-     * @param Offset      - Offset into the array
-     * @param NumElements - Number of elements to include in the view
-     * @return            - A new array-view pointing to the specified elements
-     */
-    NODISCARD FORCEINLINE TArrayView<ElementType> CreateView(SizeType Offset, SizeType NumElements) noexcept
-    {
-        CHECK((NumElements < ArraySize) && (Offset + NumElements < ArraySize));
-        return TArrayView<ElementType>(GetData() + Offset, NumElements);
-    }
-
-    /**
-     * @brief             - Create an array-view of the array
-     * @param Offset      - Offset into the array
-     * @param NumElements - Number of elements to include in the view
-     * @return            - A new array-view pointing to the specified elements
-     */
-    NODISCARD FORCEINLINE TArrayView<const ElementType> CreateView(SizeType Offset, SizeType NumElements) const noexcept
-    {
-        CHECK((NumElements < ArraySize) && (Offset + NumElements < ArraySize));
-        return TArrayView<const ElementType>(GetData() + Offset, NumElements);
+        return ArrayMax * sizeof(ElementType);
     }
 
 public:
@@ -1115,7 +1054,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& HeapTop() noexcept
     {
-        return *GetData();
+        return Allocator[0];
     }
 
     /**
@@ -1124,7 +1063,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& HeapTop() const noexcept
     {
-        return *GetData();
+        return Allocator[0];
     }
 
     /**
@@ -1143,7 +1082,7 @@ public:
      */
     FORCEINLINE void HeapPush(ElementType&& Element) noexcept
     {
-        Insert(0, Forward<ElementType>(Element));
+        Insert(0, ::Forward<ElementType>(Element));
         Heapify(ArraySize, 0);
     }
 
@@ -1169,13 +1108,26 @@ public:
     /**
      * @brief - Performs heap sort on the array (assuming the operator> exists for the elements)
      */
-    FORCEINLINE void HeapSort()
+    void HeapSort()
     {
         Heapify();
         for (SizeType Index = ArraySize - 1; Index > 0; --Index)
         {
-            ::Swap<ElementType>(GetElementAt(0), GetElementAt(Index));
+            ::Swap<ElementType>(Allocator[0], Allocator[Index]);
             Heapify(Index, 0);
+        }
+    }
+
+    /**
+     * @brief - Reverses the order for the Array
+     */
+    void Reverse()
+    {
+        const int32 HalfSize = ArraySize / 2;
+        for (SizeType Index = 0; Index < HalfSize; ++Index)
+        {
+            const int32 ReverseIndex = ArraySize - Index - 1;
+            ::Swap(Allocator[Index], Allocator[ReverseIndex]);
         }
     }
 
@@ -1199,7 +1151,7 @@ public:
      */
     FORCEINLINE TArray& operator=(TArray&& Other) noexcept
     {
-        MoveFrom(Forward<TArray>(Other));
+        InitializeByMove(::Forward<TArray>(Other));
         return *this;
     }
 
@@ -1222,7 +1174,7 @@ public:
     template<typename ArrayType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& Other) const noexcept
     {
-        return (GetSize() == Other.GetSize()) ? ::CompareElements<ElementType>(GetData(), Other.GetData(), GetSize()) : (false);
+        return (ArraySize == Other.ArraySize) ? ::CompareElements<ElementType>(Allocator.Data(), FArrayContainerHelper::Data(Other), ArraySize) : (false);
     }
 
     /**
@@ -1243,7 +1195,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) noexcept
     {
-        return GetElementAt(Index);
+        return Allocator[Index];
     }
 
     /**
@@ -1253,7 +1205,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
     {
-        return GetElementAt(Index);
+        return Allocator[Index];
     }
 
 public:
@@ -1273,7 +1225,7 @@ public:
      */
     NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType(*this, GetSize());
+        return IteratorType(*this, Size());
     }
 
     /**
@@ -1291,7 +1243,7 @@ public:
      */
     NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType(*this, GetSize());
+        return ConstIteratorType(*this, Size());
     }
 
     /**
@@ -1300,7 +1252,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType(*this, GetSize());
+        return ReverseIteratorType(*this, Size());
     }
 
     /**
@@ -1318,7 +1270,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType(*this, GetSize());
+        return ReverseConstIteratorType(*this, Size());
     }
 
     /**
@@ -1331,7 +1283,6 @@ public:
     }
 
 public:
-
     NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
     NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
     
@@ -1341,46 +1292,46 @@ public:
 private:
     FORCEINLINE void CreateUnitialized(SizeType NumElements)
     {
-        if (ArrayCapacity < NumElements)
+        if (ArrayMax < NumElements)
         {
-            Allocator.Realloc(ArrayCapacity, NumElements);
-            ArrayCapacity = NumElements;
+            Allocator.Realloc(ArrayMax, NumElements);
+            ArrayMax = NumElements;
         }
 
         ArraySize = NumElements;
     }
 
-    FORCEINLINE void ConstructEmpty(SizeType NumElements)
+    FORCEINLINE void InitializeEmpty(SizeType NumElements)
     {
         CreateUnitialized(NumElements);
-        ::DefaultConstructElements<ElementType>(GetData(), NumElements);
+        ::DefaultConstructElements<ElementType>(Allocator.Data(), NumElements);
     }
 
-    FORCEINLINE void ConstructFrom(SizeType NumElements, const ElementType& Element)
+    FORCEINLINE void Initialize(SizeType NumElements, const ElementType& Element)
     {
         CreateUnitialized(NumElements);
-        ::ConstructElementsFrom<ElementType>(GetData(), NumElements, Element);
+        ::ConstructElementsFrom<ElementType>(Allocator.Data(), NumElements, Element);
     }
 
-    FORCEINLINE void CopyConstructFrom(const ElementType* Elements, SizeType NumElements, SizeType ExtraCapacity)
+    FORCEINLINE void InitializeByCopy(const ElementType* Elements, SizeType NumElements, SizeType ExtraCapacity)
     {
         const SizeType NewSize = NumElements + ExtraCapacity;
         CreateUnitialized(NewSize);
-        ::CopyConstructElements<ElementType>(GetData(), Elements, NumElements);
+        ::CopyConstructElements<ElementType>(Allocator.Data(), Elements, NumElements);
     }
 
-    FORCEINLINE void MoveFrom(TArray&& FromArray)
+    FORCEINLINE void InitializeByMove(TArray&& FromArray)
     {
-        if (FromArray.GetData() != GetData())
+        if (FromArray.Data() != Allocator.Data())
         {
             // Since the memory remains the same we should not need to use move-assignment or constructor. However, still need to call destructors
-            ::DestroyElements<ElementType>(GetData(), GetSize());
-            Allocator.MoveFrom(Move(FromArray.Allocator));
+            ::DestroyElements<ElementType>(Allocator.Data(), ArraySize);
+            Allocator.MoveFrom(::Move(FromArray.Allocator));
 
-            ArraySize               = FromArray.ArraySize;
-            ArrayCapacity           = FromArray.ArrayCapacity;
-            FromArray.ArraySize     = 0;
-            FromArray.ArrayCapacity = 0;
+            ArraySize           = FromArray.ArraySize;
+            ArrayMax            = FromArray.ArrayMax;
+            FromArray.ArraySize = 0;
+            FromArray.ArrayMax  = 0;
         }
     }
 
@@ -1388,62 +1339,57 @@ private:
     {
         if CONSTEXPR (TNot<TIsReallocatable<ElementType>>::Value)
         {
-            if (ArrayCapacity)
+            if (ArrayMax)
             {
                 // For non-trivial objects a new allocator is necessary in order to correctly reallocate objects. This in case
                 // objects has references to themselves or "child-objects" that references these objects.
                 AllocatorType NewAllocator;
-                NewAllocator.Realloc(ArrayCapacity, NewCapacity);
+                NewAllocator.Realloc(ArrayMax, NewCapacity);
                 if (ArraySize)
                 {
-                    ::RelocateElements<ElementType>(NewAllocator.GetAllocation(), Allocator.GetAllocation(), ArraySize);
+                    ::RelocateElements<ElementType>(NewAllocator.Data(), Allocator.Data(), ArraySize);
                 }
 
-                Allocator.MoveFrom(Move(NewAllocator));
+                Allocator.MoveFrom(::Move(NewAllocator));
             }
             else
             {
-                Allocator.Realloc(ArrayCapacity, NewCapacity);
+                Allocator.Realloc(ArrayMax, NewCapacity);
             }
         }
         else
         {
-            Allocator.Realloc(ArrayCapacity, NewCapacity);
+            Allocator.Realloc(ArrayMax, NewCapacity);
         }
 
-        ArrayCapacity = NewCapacity;
+        ArrayMax = NewCapacity;
     }
 
-    FORCEINLINE void InsertUninitializedUnchecked(const SizeType Position, const SizeType NumElements) noexcept
+    FORCEINLINE void InsertUninitializedUnchecked(const SizeType Position, const SizeType InNumElements) noexcept
     {
-        ExpandStorage(NumElements);
-        ElementType* const CurrentAddress = GetData() + Position;
-        ::RelocateElements<ElementType>(CurrentAddress + NumElements, CurrentAddress, ArraySize - Position);
+        EnsureCapacity(ArraySize + InNumElements);
+        ElementType* const CurrentAddress = Allocator.Data() + Position;
+        ::RelocateElements<ElementType>(CurrentAddress + InNumElements, CurrentAddress, ArraySize - Position);
     }
 
-    FORCEINLINE void PopRangeUnchecked(SizeType NumElements) noexcept
+    FORCEINLINE void PopRangeUnchecked(SizeType InNumElements) noexcept
     {
-        const SizeType NewArraySize = ArraySize - NumElements;
-        ::DestroyElements<ElementType>(GetData() + NewArraySize, NumElements);
+        const SizeType NewArraySize = ArraySize - InNumElements;
+        ::DestroyElements<ElementType>(Allocator.Data() + NewArraySize, InNumElements);
         ArraySize = NewArraySize;
     }
 
-    FORCEINLINE void ExpandStorage() noexcept
+    FORCEINLINE void EnsureCapacity(SizeType RequiredCapacity) noexcept
     {
-        ExpandStorage(1);
-    }
-
-    FORCEINLINE void ExpandStorage(SizeType NumElements) noexcept
-    {
-        if (ArraySize + NumElements > ArrayCapacity)
+        if (RequiredCapacity > ArrayMax)
         {
-            const SizeType NewCapacity = CalculateExpandCapacity(NumElements, ArrayCapacity);
+            const SizeType NewCapacity = CalculateGrowth(RequiredCapacity, ArrayMax);
             ReserveUnchecked(NewCapacity);
         }
     }
 
     // TODO: Better to have top in back? Better to do recursive?
-    FORCEINLINE void Heapify(SizeType Size, SizeType Index) noexcept
+    FORCEINLINE void Heapify(SizeType InSize, SizeType Index) noexcept
     {
         SizeType StartIndex = Index;
         SizeType Largest    = Index;
@@ -1453,19 +1399,19 @@ private:
             const SizeType Left  = LeftIndex(StartIndex);
             const SizeType Right = RightIndex(StartIndex);
 
-            if (Left < Size && GetElementAt(Left) > GetElementAt(Largest))
+            if (Left < InSize && Allocator[Left] > Allocator[Largest])
             {
                 Largest = Left;
             }
 
-            if (Right < Size && GetElementAt(Right) > GetElementAt(Largest))
+            if (Right < InSize && Allocator[Right] > Allocator[Largest])
             {
                 Largest = Right;
             }
 
             if (Largest != StartIndex)
             {
-                ::Swap<ElementType>(GetElementAt(StartIndex), GetElementAt(Largest));
+                ::Swap<ElementType>(Allocator[StartIndex], Allocator[Largest]);
                 StartIndex = Largest;
             }
             else
@@ -1475,22 +1421,18 @@ private:
         }
     }
 
-private:
-    NODISCARD
-    static FORCEINLINE SizeType LeftIndex(SizeType Index)
+    NODISCARD static FORCEINLINE SizeType LeftIndex(SizeType Index)
     {
         return (2 * Index + 1);
     }
 
-    NODISCARD
-    static FORCEINLINE SizeType RightIndex(SizeType Index)
+    NODISCARD static FORCEINLINE SizeType RightIndex(SizeType Index)
     {
         return (2 * Index + 2);
     }
 
     // Calculate how much the array should grow, will always be at least one
-    NODISCARD
-    static FORCEINLINE SizeType CalculateExpandCapacity(SizeType NumElements, SizeType CurrentCapacity) noexcept
+    NODISCARD static FORCEINLINE SizeType CalculateGrowth(SizeType NumElements, SizeType CurrentCapacity) noexcept
     {
         constexpr SizeType FirstAlloc = 4;
 
@@ -1514,30 +1456,17 @@ private:
 private:
     AllocatorType Allocator;
     SizeType      ArraySize;
-    SizeType      ArrayCapacity;
+    SizeType      ArrayMax;
 };
 
-template<
-    typename T,
-    typename AllocatorType>
+template<typename T, typename AllocatorType>
 struct TIsTArrayType<TArray<T, AllocatorType>>
 {
     enum { Value = true };
 };
 
-template<
-    typename T,
-    typename AllocatorType>
+template<typename T, typename AllocatorType>
 struct TIsContiguousContainer<TArray<T, AllocatorType>>
 {
     enum { Value = true };
 };
-
-
-template<typename T, typename AllocatorType>
-inline TUniquePtr<T[]> MakeUniquePtr(const TArray<T, AllocatorType>& Array) noexcept
-{
-    T* Memory = FMemory::Malloc<T>(Array.GetSize());
-    ::CopyConstructElements<T>(Memory, Array.GetData(), Array.GetSize());
-    return TUniquePtr<T[]>(Memory);
-}

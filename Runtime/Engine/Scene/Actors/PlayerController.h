@@ -4,7 +4,7 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Input/InputStates.h"
 #include "CoreApplication/Generic/ICursor.h"
-#include "Application/Events.h"
+#include "Application/Core/Events.h"
 #include "Engine/Scene/Components/InputComponent.h"
 
 class ENGINE_API FPlayerInput
@@ -17,13 +17,20 @@ public:
 
     void ResetState();
 
-    virtual void OnKeyEvent(const FKeyEvent& KeyEvent);
+    virtual void OnControllerButtonUp    (const FControllerEvent& ControllerEvent);
+    virtual void OnControllerButtonDown  (const FControllerEvent& ControllerEvent);
+    virtual void OnControllerButtonAnalog(const FControllerEvent& ControllerEvent);
 
-    virtual void OnMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent);
-    virtual void OnMouseMovedEvent(const FMouseMovedEvent& MouseMovedEvent);
-    virtual void OnMouseScrolledEvent(const FMouseScrolledEvent& MouseScolledEvent);
+    virtual void OnKeyUpEvent  (const FKeyEvent& KeyEvent);
+    virtual void OnKeyDownEvent(const FKeyEvent& KeyEvent);
+
+    virtual void OnMouseButtonUpEvent  (const FMouseEvent& MouseEvent);
+    virtual void OnMouseButtonDownEvent(const FMouseEvent& MouseEvent);
+    virtual void OnMouseMovedEvent     (const FMouseEvent& MouseEvent);
+    virtual void OnMouseScrolledEvent  (const FMouseEvent& MouseEvent);
 
     virtual void SetCursorPosition(const FIntVector2& Postion);
+    
     virtual FIntVector2 GetCursorPosition() const;
 
 public:

@@ -30,7 +30,8 @@ public:
      */
     CONSTEXPR TStaticBitArray() noexcept
         : Storage()
-    { }
+    {
+    }
 
     /**
      * @brief         - Constructor that sets the elements based on an integer
@@ -230,7 +231,7 @@ public:
      */
     CONSTEXPR void BitwiseAnd(const TStaticBitArray& Other) noexcept
     {
-        for (SizeType Index = 0; Index < GetCapacity(); Index++)
+        for (SizeType Index = 0; Index < Capacity(); Index++)
         {
             Storage[Index] &= Other.Storage[Index];
         }
@@ -242,7 +243,7 @@ public:
      */
     CONSTEXPR void BitwiseOr(const TStaticBitArray& Other) noexcept
     {
-        for (SizeType Index = 0; Index < GetCapacity(); Index++)
+        for (SizeType Index = 0; Index < Capacity(); Index++)
         {
             Storage[Index] |= Other.Storage[Index];
         }
@@ -254,7 +255,7 @@ public:
      */
     CONSTEXPR void BitwiseXor(const TStaticBitArray& Other) noexcept
     {
-        for (SizeType Index = 0; Index < GetCapacity(); Index++)
+        for (SizeType Index = 0; Index < Capacity(); Index++)
         {
             Storage[Index] |= Other.Storage[Index];
         }
@@ -266,7 +267,7 @@ public:
      */
     CONSTEXPR void BitwiseNot() noexcept
     {
-        for (SizeType Index = 0; Index < GetCapacity(); Index++)
+        for (SizeType Index = 0; Index < Capacity(); Index++)
         {
             Storage[Index] = ~Element;
         }
@@ -306,7 +307,7 @@ public:
         CHECK(BitIndex < NUM_BITS);
 
         const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
-        CHECK(ElementIndex < GetCapacity());
+        CHECK(ElementIndex < Capacity());
 
         return BitReferenceType(Storage[ElementIndex], ~Element);
     }
@@ -321,7 +322,7 @@ public:
         CHECK(Index < NUM_BITS);
 
         const SizeType ElementIndex = GetStorageIndexOfBit(Index);
-        CHECK(ElementIndex < GetCapacity());
+        CHECK(ElementIndex < Capacity());
 
         return ConstBitReferenceType(Storage[ElementIndex], CreateMaskForBit(Index));
     }
@@ -516,7 +517,7 @@ public:
      * @brief  - Retrieve the number of bits
      * @return - Returns the number of bits in the array
      */
-    NODISCARD CONSTEXPR SizeType GetSize() const noexcept
+    NODISCARD CONSTEXPR SizeType Size() const noexcept
     {
         return NUM_BITS;
     }
@@ -525,7 +526,7 @@ public:
      * @brief  - Retrieve the maximum number of bits
      * @return - Returns the maximum number of bits in the array
      */
-    NODISCARD CONSTEXPR SizeType GetCapacity() const noexcept
+    NODISCARD CONSTEXPR SizeType Capacity() const noexcept
     {
         return GetNumElements() * GetBitsPerStorage();
     }
@@ -552,7 +553,7 @@ public:
      * @brief  - Retrieve the data of the Array
      * @return - Returns a pointer to the stored data
      */
-    NODISCARD CONSTEXPR StorageType* GetData() noexcept
+    NODISCARD CONSTEXPR StorageType* Data() noexcept
     {
         return Storage;
     }
@@ -561,7 +562,7 @@ public:
      * @brief  - Retrieve the data of the Array
      * @return - Returns a pointer to the stored data
      */
-    NODISCARD CONSTEXPR const StorageType* GetData() const noexcept
+    NODISCARD CONSTEXPR const StorageType* Data() const noexcept
     {
         return Storage;
     }
@@ -583,7 +584,7 @@ public:
      */
     NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType(*this, GetSize());
+        return IteratorType(*this, Size());
     }
 
     /**
@@ -601,7 +602,7 @@ public:
      */
     NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType(*this, GetSize());
+        return ConstIteratorType(*this, Size());
     }
 
     /**
@@ -610,7 +611,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType(*this, GetSize());
+        return ReverseIteratorType(*this, Size());
     }
 
     /**
@@ -628,7 +629,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType(*this, GetSize());
+        return ReverseConstIteratorType(*this, Size());
     }
 
     /**
@@ -694,10 +695,10 @@ private:
     {
         const SizeType StartElementIndex = GetStorageIndexOfBit(StartBit);
 
-        StorageType* Pointer = GetData() + StartElementIndex;
+        StorageType* Pointer = Data() + StartElementIndex;
 
         const SizeType RemainingElements = StorageSize() - StartElementIndex;
-        const SizeType RemainingBits     = GetSize() - StartBit;
+        const SizeType RemainingBits     = Size() - StartBit;
         if (Steps < RemainingBits)
         {
             // Mask value to ensure that we get zeros shifted in
@@ -725,7 +726,7 @@ private:
 
     CONSTEXPR void BitshiftRight_Simple(SizeType Steps, SizeType StartElementIndex, SizeType ElementsToShift)
     {
-        StorageType* Pointer = GetData() + StartElementIndex + ElementsToShift;
+        StorageType* Pointer = Data() + StartElementIndex + ElementsToShift;
 
         const SizeType CurrShift = Steps % GetBitsPerStorage();
         const SizeType PrevShift = GetBitsPerStorage() - CurrShift;
@@ -745,10 +746,10 @@ private:
     {
         const SizeType StartElementIndex = GetStorageIndexOfBit(StartBit);
 
-        StorageType* Pointer = GetData() + StartElementIndex;
+        StorageType* Pointer = Data() + StartElementIndex;
 
         const SizeType RemainingElements = StorageSize() - StartElementIndex;
-        const SizeType RemainingBits     = GetSize() - StartBit;
+        const SizeType RemainingBits     = Size() - StartBit;
         if (Steps < RemainingBits)
         {
             // Mask value to ensure that we get zeros shifted in
@@ -776,7 +777,7 @@ private:
 
     CONSTEXPR void BitshiftLeft_Simple(SizeType Steps, SizeType StartElementIndex, SizeType ElementsToShift)
     {
-        StorageType* Pointer = GetData() + StartElementIndex;
+        StorageType* Pointer = Data() + StartElementIndex;
 
         const SizeType CurrShift = Steps % GetBitsPerStorage();
         const SizeType PrevShift = GetBitsPerStorage() - CurrShift;

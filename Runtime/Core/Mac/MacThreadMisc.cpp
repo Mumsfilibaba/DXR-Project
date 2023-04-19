@@ -4,12 +4,6 @@
 
 #include <Foundation/Foundation.h>
 
-
-FGenericThread* FMacThreadMisc::CreateThread(FThreadInterface* InRunnable)
-{
-    return new FMacThread(InRunnable);
-}
-
 FGenericEvent* FMacThreadMisc::CreateEvent(bool bManualReset)
 {
     FMacEventRef NewEvent = new FMacEvent();
@@ -19,4 +13,15 @@ FGenericEvent* FMacThreadMisc::CreateEvent(bool bManualReset)
     }
 
     return NewEvent.ReleaseOwnership();
+}
+
+FGenericThread* FMacThreadMisc::CreateThread(FThreadInterface* InRunnable, bool bSuspended)
+{
+    FMacThread* NewThread = new FMacThread(InRunnable);
+    if (!bSuspended)
+    {
+        NewThread->Start();
+    }
+
+    return NewThread;
 }

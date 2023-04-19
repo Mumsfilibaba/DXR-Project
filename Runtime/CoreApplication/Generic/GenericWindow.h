@@ -26,7 +26,6 @@ enum class EWindowMode : uint8
     Fullscreen = 3,
 };
 
-
 struct FWindowStyle
 {
     FWindowStyle() = default;
@@ -63,7 +62,6 @@ struct FWindowStyle
     EWindowStyleFlag Style = EWindowStyleFlag::None;
 };
 
-
 struct FWindowShape
 {
     FWindowShape() = default;
@@ -89,20 +87,18 @@ struct FWindowShape
     } Position;
 };
 
-
-class FGenericWindow 
-    : public FRefCounted
+class FGenericWindow : public FRefCounted
 {
 public:
     virtual ~FGenericWindow() = default;
 
     virtual bool Initialize(
         const FString& Title,
-        uint32 InWidth,
-        uint32 InHeight,
-        int32 x,
-        int32 y,
-        FWindowStyle Style) { return true; }
+        uint32         InWidth,
+        uint32         InHeight,
+        int32          x,
+        int32          y,
+        FWindowStyle   Style) { return true; }
 
     virtual void Show(bool bMaximized) { }
 

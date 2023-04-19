@@ -13,7 +13,8 @@ namespace Internal
         FORCEINLINE TBindPayload(FunctionType InFunc, PayloadTypes&&... PayloadArgs) noexcept
             : Payload(Forward<PayloadTypes>(PayloadArgs)...)
             , Func(Move(InFunc))
-        { }
+        {
+        }
 
         template<typename... ArgTypes>
         FORCEINLINE auto Execute(ArgTypes&&... Args) noexcept
@@ -41,7 +42,8 @@ namespace Internal
     public:
         FORCEINLINE TBindPayload(FunctionType InFunc) noexcept
             : Func(Move(InFunc))
-        { }
+        {
+        }
 
         template<typename... ArgTypes>
         FORCEINLINE auto Execute(ArgTypes&&... Args) noexcept
@@ -96,12 +98,14 @@ class TFunction<ReturnType(ArgTypes...)>
         FORCEINLINE TGenericFunctor(const FunctorType& InFunctor) noexcept
             : IFunctor()
             , Functor(InFunctor)
-        { }
+        {
+        }
 
         FORCEINLINE TGenericFunctor(const TGenericFunctor& Other) noexcept
             : IFunctor()
             , Functor(Other.Functor)
-        { }
+        {
+        }
 
         FORCEINLINE TGenericFunctor(TGenericFunctor&& Other) noexcept
             : IFunctor()
@@ -132,7 +136,8 @@ public:
     FORCEINLINE TFunction() noexcept
         : Storage()
         , Size(0)
-    { }
+    {
+    }
 
     /** 
      * @brief - Create from nullptr. Same as default constructor. 
@@ -140,7 +145,8 @@ public:
     FORCEINLINE TFunction(nullptr_type) noexcept
         : Storage()
         , Size(0)
-    { }
+    {
+    }
 
     /**
      * @brief         - Construct a function from a functor
@@ -306,7 +312,7 @@ private:
             int32 CurrentSize = Size;
             Storage.Realloc(CurrentSize, Other.Size);
 
-            Other.GetFunctor()->Clone(Storage.GetAllocation());
+            Other.GetFunctor()->Clone(Storage.Data());
 
             Size = Other.Size;
         }
@@ -326,12 +332,12 @@ private:
 
     NODISCARD FORCEINLINE IFunctor* GetFunctor() noexcept
     {
-        return reinterpret_cast<IFunctor*>(Storage.GetAllocation());
+        return reinterpret_cast<IFunctor*>(Storage.Data());
     }
 
     NODISCARD FORCEINLINE const IFunctor* GetFunctor() const noexcept
     {
-        return reinterpret_cast<const IFunctor*>(Storage.GetAllocation());
+        return reinterpret_cast<const IFunctor*>(Storage.Data());
     }
 
     AllocatorType Storage;

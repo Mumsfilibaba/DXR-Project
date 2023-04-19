@@ -498,9 +498,9 @@ void FD3D12RootSignatureCache::ReleaseAll()
 
 FD3D12RootSignature* FD3D12RootSignatureCache::GetOrCreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount)
 {
-    CHECK(RootSignatures.GetSize() == ResourceCounts.GetSize());
+    CHECK(RootSignatures.Size() == ResourceCounts.Size());
 
-    for (int32 i = 0; i < ResourceCounts.GetSize(); i++)
+    for (int32 i = 0; i < ResourceCounts.Size(); i++)
     {
         if (ResourceCount.IsCompatible(ResourceCounts[i]))
         {

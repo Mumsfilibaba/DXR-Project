@@ -74,7 +74,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
     const int32 FileSize = static_cast<int32>(File->Size());
 
     TArray<ofbx::u8> FileContent(FileSize);
-    ofbx::u8* Bytes = FileContent.GetData();
+    ofbx::u8* Bytes = FileContent.Data();
 
     const int32 NumBytesRead = File->Read(Bytes, FileSize);
     if (NumBytesRead <= 0)
@@ -83,7 +83,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
         return false;
     }
 
-    Bytes = FileContent.GetData();
+    Bytes = FileContent.Data();
 
     ofbx::IScene* FBXScene = ofbx::load(Bytes, FileSize, (ofbx::u64)ofbx::LoadFlags::TRIANGULATE);
     if (!FBXScene)
@@ -151,7 +151,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
             MaterialData.Metallic  = 1.0f; // CurrentMaterial->getSpecularColor().b;
 
             //TODO: Other material properties
-            UniqueMaterials[CurrentMaterial->id] = OutScene.Materials.GetSize();
+            UniqueMaterials[CurrentMaterial->id] = OutScene.Materials.Size();
             OutScene.Materials.Emplace(MaterialData);
         }
 
@@ -245,9 +245,9 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
                 uint32 UniqueIndex = 0;
                 if (UniqueVertices.count(TempVertex) == 0)
                 {
-                    UniqueIndex = static_cast<uint32>(TempModelData.Mesh.Vertices.GetSize());
+                    UniqueIndex = static_cast<uint32>(TempModelData.Mesh.Vertices.Size());
                     UniqueVertices[TempVertex] = UniqueIndex;
-                    TempModelData.Mesh.Vertices.Push(TempVertex);
+                    TempModelData.Mesh.Vertices.Add(TempVertex);
                 }
                 else
                 {

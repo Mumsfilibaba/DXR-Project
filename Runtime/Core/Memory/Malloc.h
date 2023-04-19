@@ -37,8 +37,7 @@ struct FUseUnmanagedMalloc
 };
 
 
-struct CORE_API FMalloc
-    : public FUseUnmanagedMalloc
+struct CORE_API FMalloc : public FUseUnmanagedMalloc
 {
     // FMalloc instead of IMalloc since IMalloc is already defined in the WindowsHeaders
     virtual ~FMalloc() = default;
@@ -72,10 +71,9 @@ struct CORE_API FMalloc
 };
 
 
-struct CORE_API FMallocANSI
-    : public FMalloc
+struct CORE_API FMallocANSI : public FMalloc
 {
-    FMallocANSI() = default;
+    FMallocANSI()  = default;
     ~FMallocANSI() = default;
 
     virtual void* Malloc(uint64 InSize) override final;
@@ -86,8 +84,7 @@ struct CORE_API FMallocANSI
 };
 
 
-class CORE_API FMallocLeakTracker
-    : public FMalloc
+class CORE_API FMallocLeakTracker : public FMalloc
 {
     struct FAllocationInfo
     {
@@ -96,7 +93,7 @@ class CORE_API FMallocLeakTracker
 
 public:
     FMallocLeakTracker(FMalloc* InBaseMalloc);
-    ~FMallocLeakTracker() = default;
+    ~FMallocLeakTracker();
 
     virtual void* Malloc(uint64 InSize) override final;
 
@@ -109,8 +106,15 @@ public:
     void TrackAllocationMalloc(void* Block, uint64 Size);
     void TrackAllocationFree(void* Block);
 
-    void EnableTracking() { bTrackingEnabled = true; }
-    void DisableTacking() { bTrackingEnabled = false; }
+    void EnableTracking() 
+    { 
+        bTrackingEnabled = true; 
+    }
+
+    void DisableTacking()
+    { 
+        bTrackingEnabled = false;
+    }
 
 private:
     TMap<void*, FAllocationInfo> Allocations;
@@ -121,8 +125,7 @@ private:
 };
 
 
-class CORE_API FMallocStackTraceTracker
-    : public FMalloc
+class CORE_API FMallocStackTraceTracker : public FMalloc
 {
     enum
     {
@@ -138,7 +141,7 @@ class CORE_API FMallocStackTraceTracker
 
 public:
     FMallocStackTraceTracker(FMalloc* InBaseMalloc);
-    ~FMallocStackTraceTracker() = default;
+    ~FMallocStackTraceTracker();
 
     virtual void* Malloc(uint64 InSize) override final;
 
@@ -151,8 +154,15 @@ public:
 	void TrackAllocationMalloc(void* Block, uint64 Size);
 	void TrackAllocationFree(void* Block);
 
-    void EnableTracking() { bTrackingEnabled = true; }
-    void DisableTacking() { bTrackingEnabled = false; }
+    void EnableTracking() 
+    { 
+        bTrackingEnabled = true;
+    }
+
+    void DisableTacking()
+    { 
+        bTrackingEnabled = false;
+    }
 
 private:
 	TMap<void*, FAllocationStackTrace> Allocations;

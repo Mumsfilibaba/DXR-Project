@@ -330,7 +330,7 @@ function FBuildRules(InName)
                 printf("")
             end
 
-            sysincludedirs(self.SystemIncludes)
+            externalincludedirs(self.SystemIncludes)
 
             -- Setup Library Paths
             printf("    Num LibraryPaths=%d", #self.LibraryPaths)

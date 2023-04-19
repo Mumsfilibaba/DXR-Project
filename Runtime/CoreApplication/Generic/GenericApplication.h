@@ -1,7 +1,6 @@
 #pragma once
-#include "GenericApplicationMessageHandler.h"
-#include "CoreApplication/Generic/ICursor.h"
-#include "Core/Containers/SharedPtr.h"
+#include "InputDevice.h"
+#include "ICursor.h"
 #include "Core/Containers/SharedRef.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -25,6 +24,10 @@ public:
 
     virtual void Tick(float Delta) { }
 
+    virtual void PollInputDevices() { }
+
+    virtual FInputDevice* GetInputDeviceInterface() { return nullptr; }
+
     virtual bool SupportsHighPrecisionMouse() const { return false; }
 
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) { return true; }
@@ -43,10 +46,13 @@ public:
 
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
     { 
-        MessageHandler = InMessageHandler; 
+        MessageHandler = InMessageHandler;
     }
 
-    TSharedPtr<FGenericApplicationMessageHandler> GetMessageHandler() const { return MessageHandler; }
+    TSharedPtr<FGenericApplicationMessageHandler> GetMessageHandler() const 
+    { 
+        return MessageHandler; 
+    }
 
 public:
     const TSharedPtr<ICursor> Cursor;

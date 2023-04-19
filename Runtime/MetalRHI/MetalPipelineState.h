@@ -19,7 +19,7 @@ public:
         , VertexDescriptor(nil)
     {
         VertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
-        for (int32 Index = 0; Index < Initializer.Elements.GetSize(); ++Index)
+        for (int32 Index = 0; Index < Initializer.Elements.Size(); ++Index)
         {
             const auto& Element = Initializer.Elements[Index];
             VertexDescriptor.attributes[Index].format      = ConvertVertexFormat(Element.Format);
@@ -227,7 +227,7 @@ public:
                 else
                 {
                     const auto Index = NumBuffers[ShaderVisibility_Vertex]++;
-                    CHECK(Index < BufferBindings[ShaderVisibility_Vertex].GetSize());
+                    CHECK(Index < BufferBindings[ShaderVisibility_Vertex].Size());
                     
                     BufferBindings[ShaderVisibility_Vertex][Index] = static_cast<uint8>(Argument.index);
                 }
@@ -257,7 +257,7 @@ public:
             if (Argument.type == MTLArgumentTypeBuffer)
             {
                 const auto Index = NumBuffers[ShaderVisibility_Pixel]++;
-                CHECK(Index < BufferBindings[ShaderVisibility_Pixel].GetSize());
+                CHECK(Index < BufferBindings[ShaderVisibility_Pixel].Size());
                 
                 BufferBindings[ShaderVisibility_Pixel][Index] = static_cast<uint8>(Argument.index);
             }

@@ -1,6 +1,5 @@
 #include "WindowsEvent.h"
 
-
 FWindowsEvent::~FWindowsEvent()
 {
     if (Event != nullptr)

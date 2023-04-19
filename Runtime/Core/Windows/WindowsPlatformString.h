@@ -1,8 +1,7 @@
 #pragma once
 #include "Core/Generic/GenericPlatformString.h"
 
-struct FWindowsPlatformString 
-    : public FGenericPlatformString
+struct FWindowsPlatformString final : public FGenericPlatformString
 {
     using FGenericPlatformString::Strtoui64;
 

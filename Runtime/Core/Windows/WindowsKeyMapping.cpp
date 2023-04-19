@@ -1,6 +1,5 @@
 #include "WindowsKeyMapping.h"
 
-
 TStaticArray<uint16, FWindowsKeyMapping::kNumKeys> FWindowsKeyMapping::ScanCodeFromKeyCodeTable;
 TStaticArray<EKey  , FWindowsKeyMapping::kNumKeys> FWindowsKeyMapping::KeyCodeFromScanCodeTable;
 

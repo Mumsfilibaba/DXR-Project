@@ -184,7 +184,7 @@ public:
     virtual void SetName(const FString& InName) { }
     
     /** @return - Returns the size of the buffer */
-    FORCEINLINE uint64 GetSize() const { return Desc.Size; }
+    FORCEINLINE uint64 Size() const { return Desc.Size; }
     
     /** @return - Returns the stride of each element in the buffer */
     FORCEINLINE uint32 GetStride() const { return Desc.Stride; }

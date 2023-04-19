@@ -1,10 +1,8 @@
 #pragma once
 #include "Windows.h"
-
 #include "Core/Generic/GenericPlatformStackTrace.h"
 
-struct CORE_API FWindowsPlatformStackTrace 
-    : public FGenericPlatformStackTrace
+struct CORE_API FWindowsPlatformStackTrace final : public FGenericPlatformStackTrace
 {
     using FGenericPlatformStackTrace::CaptureStackTrace;
 

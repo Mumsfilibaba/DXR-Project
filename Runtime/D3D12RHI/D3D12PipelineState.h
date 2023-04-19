@@ -29,7 +29,7 @@ public:
         , ElementDesc()
         , Desc()
     {
-        SemanticNames.Reserve(Initializer.Elements.GetSize());
+        SemanticNames.Reserve(Initializer.Elements.Size());
         for (const FVertexInputElement& Element : Initializer.Elements)
         {
             D3D12_INPUT_ELEMENT_DESC D3D12Element;
@@ -47,9 +47,9 @@ public:
         Desc.pInputElementDescs = GetElementData();
     }
 
-    const D3D12_INPUT_ELEMENT_DESC* GetElementData() const { return ElementDesc.GetData(); }
+    const D3D12_INPUT_ELEMENT_DESC* GetElementData() const { return ElementDesc.Data(); }
 
-    uint32 GetElementCount() const { return ElementDesc.GetSize(); }
+    uint32 GetElementCount() const { return ElementDesc.Size(); }
 
     FORCEINLINE const D3D12_INPUT_LAYOUT_DESC& GetDesc() const { return Desc; }
 

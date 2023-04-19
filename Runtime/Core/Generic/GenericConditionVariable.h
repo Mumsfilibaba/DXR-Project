@@ -4,18 +4,21 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FGenericConditionVariable 
-    : FNonCopyable
+struct FGenericConditionVariable : FNonCopyable
 {
     typedef void* PlatformHandle;
 
     FGenericConditionVariable()  = default;
     ~FGenericConditionVariable() = default;
 
-    /** @brief - Notifies a single CriticalSection */
+    /**
+     * @brief - Notifies a single CriticalSection
+     */
     FORCEINLINE void NotifyOne() noexcept { }
 
-    /** @brief - Notifies a all CriticalSections */
+    /**
+     * @brief - Notifies a all CriticalSections
+     */
     FORCEINLINE void NotifyAll() noexcept { }
 
     /**

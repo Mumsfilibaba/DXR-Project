@@ -37,7 +37,8 @@ public:
     FORCEINLINE TStringView() noexcept
         : ViewStart(nullptr)
         , ViewEnd(nullptr)
-    { }
+    {
+    }
 
     /**
      * @brief          - Create a view from a raw string
@@ -46,7 +47,8 @@ public:
     FORCEINLINE TStringView(const CharType* InString) noexcept
         : ViewStart(InString)
         , ViewEnd(InString + TCString<CharType>::Strlen(InString))
-    { }
+    {
+    }
 
     /**
      * @brief          - Create a view from a raw string with a fixed length
@@ -56,7 +58,8 @@ public:
     FORCEINLINE explicit TStringView(const CharType* InString, SizeType InLength) noexcept
         : ViewStart(InString)
         , ViewEnd(InString + InLength)
-    { }
+    {
+    }
 
     /**
      * @brief          - Create a view from a string-type 
@@ -68,7 +71,8 @@ public:
     FORCEINLINE explicit TStringView(const StringType& InString) noexcept
         : ViewStart(InString.GetCString())
         , ViewEnd(InString.GetCString() + InString.GetLength())
-    { }
+    {
+    }
 
     /**
      * @brief       - Copy Constructor
@@ -77,7 +81,8 @@ public:
     FORCEINLINE TStringView(const TStringView& Other) noexcept
         : ViewStart(Other.ViewStart)
         , ViewEnd(Other.ViewEnd)
-    { }
+    {
+    }
 
     /**
      * @brief       - Move Constructor
@@ -824,17 +829,6 @@ public:
     }
 
     /**
-     * @brief       - Retrieve a element at a certain index of the view
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
-     */
-    NODISCARD FORCEINLINE const CharType& GetElementAt(SizeType Index) const noexcept
-    {
-        CHECK(Index < GetLength());
-        return *(ViewStart + Index);
-    }
-
-    /**
      * @brief       - Swap this view with another
      * @param Other - String to swap with
      */
@@ -858,7 +852,7 @@ public:
      * @brief  - Returns the size of the view
      * @return - The current size of the view
      */
-    NODISCARD FORCEINLINE SizeType GetSize() const noexcept
+    NODISCARD FORCEINLINE SizeType Size() const noexcept
     {
         return GetLength();
     }
@@ -878,14 +872,14 @@ public:
      */
     NODISCARD FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return GetSize() * sizeof(CharType);
+        return Size() * sizeof(CharType);
     }
 
     /**
      * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD FORCEINLINE const CharType* GetData() const noexcept
+    NODISCARD FORCEINLINE const CharType* Data() const noexcept
     {
         return ViewStart;
     }
@@ -908,7 +902,7 @@ public:
     NODISCARD FORCEINLINE TStringView SubStringView(SizeType Offset, SizeType Count) const noexcept
     {
         CHECK((Count < GetLength()) && (Offset + Count <= GetLength()));
-        return TStringView(GetData() + Offset, Count);
+        return TStringView(Data() + Offset, Count);
     }
 
 public:
@@ -920,7 +914,8 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& operator[](SizeType Index) const noexcept
     {
-        return GetElementAt(Index);
+        CHECK(Index < GetLength());
+        return *(ViewStart + Index);
     }
 
     /**
@@ -962,7 +957,7 @@ public:
      */
     NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType(*this, GetSize());
+        return ConstIteratorType(*this, Size());
     }
 
     /**
@@ -971,7 +966,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType(*this, GetSize());
+        return ReverseConstIteratorType(*this, Size());
     }
 
     /**

@@ -3,9 +3,7 @@
 
 #include <pthread.h>
 
-
-class FMacCriticalSection final 
-    : public FGenericCriticalSection
+class FMacCriticalSection final : public FGenericCriticalSection
 {
 public:
     typedef pthread_mutex_t* PlatformHandle;

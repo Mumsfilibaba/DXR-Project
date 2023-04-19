@@ -12,7 +12,8 @@ public:
         : m00(0.0f), m01(0.0f), m02(0.0f)
         , m10(0.0f), m11(0.0f), m12(0.0f)
         , m20(0.0f), m21(0.0f), m22(0.0f)
-    { }
+    {
+    }
 
     /**
      * @brief          - Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
@@ -22,7 +23,8 @@ public:
         : m00(Diagonal), m01(0.0f), m02(0.0f)
         , m10(0.0f), m11(Diagonal), m12(0.0f)
         , m20(0.0f), m21(0.0f), m22(Diagonal)
-    { }
+    {
+    }
 
     /**
      * @brief      - Constructor initializing all values with vectors specifying each row
@@ -34,7 +36,8 @@ public:
         : m00(Row0.x), m01(Row0.y), m02(Row0.z)
         , m10(Row1.x), m11(Row1.y), m12(Row1.z)
         , m20(Row2.x), m21(Row2.y), m22(Row2.z)
-    { }
+    {
+    }
 
     /**
      * @brief      - Constructor initializing all values with corresponding value
@@ -55,7 +58,8 @@ public:
         : m00(In00), m01(In01), m02(In02)
         , m10(In10), m11(In11), m12(In12)
         , m20(In20), m21(In21), m22(In22)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with an array
@@ -65,13 +69,14 @@ public:
         : m00(Arr[0]), m01(Arr[1]), m02(Arr[2])
         , m10(Arr[3]), m11(Arr[4]), m12(Arr[5])
         , m20(Arr[6]), m21(Arr[7]), m22(Arr[8])
-    { }
+    {
+    }
 
     /**
      * @brief  - Returns the transposed version of this matrix
      * @return - Transposed matrix
      */
-    inline FMatrix3 Transpose() const noexcept
+    FMatrix3 Transpose() const noexcept
     {
         FMatrix3 Result;
         Result.f[0][0] = f[0][0];
@@ -92,7 +97,7 @@ public:
      * @brief  - Returns the inverted version of this matrix
      * @return - Inverse matrix
      */
-    inline FMatrix3 Invert() const noexcept
+    FMatrix3 Invert() const noexcept
     {
         FMatrix3 Result;
 
@@ -130,7 +135,7 @@ public:
      * @brief  - Returns the adjugate of this matrix
      * @return - Adjugate matrix
      */
-    inline FMatrix3 Adjoint() const noexcept
+    FMatrix3 Adjoint() const noexcept
     {
         FMatrix3 Adjugate;
 
@@ -161,7 +166,7 @@ public:
      * @brief  - Returns the determinant of this matrix
      * @return - The determinant
      */
-    inline float Determinant() const noexcept
+    FORCEINLINE float Determinant() const noexcept
     {
         float a = m00 * ((m11 * m22) - (m12 * m21));
         float b = m01 * ((m10 * m22) - (m12 * m20));
@@ -173,7 +178,7 @@ public:
      * @brief  - Checks weather this matrix has any value that equals NaN
      * @return - True if the any value equals NaN, false if not
      */
-    inline bool HasNaN() const noexcept
+    bool HasNaN() const noexcept
     {
         for (int32 i = 0; i < 9; i++)
         {
@@ -190,7 +195,7 @@ public:
      * @brief  - Checks weather this matrix has any value that equals infinity
      * @return - True if the any value equals infinity, false if not
      */
-    inline bool HasInfinity() const noexcept
+    bool HasInfinity() const noexcept
     {
         for (int32 i = 0; i < 9; i++)
         {
@@ -217,7 +222,7 @@ public:
      * @param Other - matrix to compare against
      * @return      - True if equal, false if not
      */
-    inline bool IsEqual(const FMatrix3& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    bool IsEqual(const FMatrix3& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
         Epsilon = NMath::Abs(Epsilon);
 
@@ -275,7 +280,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE float* GetData() noexcept
+    FORCEINLINE float* Data() noexcept
     {
         return reinterpret_cast<float*>(this);
     }
@@ -284,7 +289,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE const float* GetData() const noexcept
+    FORCEINLINE const float* Data() const noexcept
     {
         return reinterpret_cast<const float*>(this);
     }
@@ -557,7 +562,7 @@ public:
      * @brief  - Creates and returns a identity matrix
      * @return - A identity matrix
      */
-    inline static FMatrix3 Identity() noexcept
+    static FORCEINLINE FMatrix3 Identity() noexcept
     {
         return FMatrix3(1.0f);
     }
@@ -567,7 +572,7 @@ public:
      * @param Scale - Uniform scale that represents this matrix
      * @return      - A scale matrix
      */
-    inline static FMatrix3 Scale(float Scale) noexcept
+    static FORCEINLINE FMatrix3 Scale(float Scale) noexcept
     {
         return FMatrix3(Scale);
     }
@@ -579,7 +584,7 @@ public:
      * @param z - Scale for the z-axis
      * @return  - A scale matrix
      */
-    inline static FMatrix3 Scale(float x, float y, float z) noexcept
+    static FORCEINLINE FMatrix3 Scale(float x, float y, float z) noexcept
     {
         return FMatrix3(
             x   , 0.0f, 0.0f,
@@ -592,7 +597,7 @@ public:
      * @param VectorWithScale - A vector containing the scale for each axis in the x-, y-, z-components
      * @return                - A scale matrix
      */
-    inline static FMatrix3 Scale(const FVector3& VectorWithScale) noexcept
+    static FORCEINLINE FMatrix3 Scale(const FVector3& VectorWithScale) noexcept
     {
         return Scale(VectorWithScale.x, VectorWithScale.y, VectorWithScale.z);
     }
@@ -604,7 +609,7 @@ public:
      * @param Roll  - Rotation around the z-axis in radians
      * @return      - A rotation matrix
      */
-    inline static FMatrix3 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
+    static FORCEINLINE FMatrix3 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
     {
         const float SinP = NMath::Sin(Pitch);
         const float SinY = NMath::Sin(Yaw);
@@ -627,7 +632,7 @@ public:
      * @param x - Rotation around the x-axis in radians
      * @return  - A rotation matrix
      */
-    inline static FMatrix3 RotationX(float x) noexcept
+    static FORCEINLINE FMatrix3 RotationX(float x) noexcept
     {
         const float SinX = NMath::Sin(x);
         const float CosX = NMath::Cos(x);
@@ -643,7 +648,7 @@ public:
      * @param y - Rotation around the y-axis in radians
      * @return  - A rotation matrix
      */
-    inline static FMatrix3 RotationY(float y) noexcept
+    static FORCEINLINE FMatrix3 RotationY(float y) noexcept
     {
         const float SinY = NMath::Sin(y);
         const float CosY = NMath::Cos(y);
@@ -659,7 +664,7 @@ public:
      * @param z - Rotation around the z-axis in radians
      * @return  - A rotation matrix
      */
-    inline static FMatrix3 RotationZ(float z) noexcept
+    static FORCEINLINE FMatrix3 RotationZ(float z) noexcept
     {
         const float SinZ = NMath::Sin(z);
         const float CosZ = NMath::Cos(z);

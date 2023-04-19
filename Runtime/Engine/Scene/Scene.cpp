@@ -121,5 +121,5 @@ void FScene::AddMeshComponent(FMeshComponent* Component)
     Command.IndexFormat  = Component->Mesh->IndexFormat;
     Command.Material     = Component->Material.Get();
     Command.Mesh         = Component->Mesh.Get();
-    MeshDrawCommands.Push(Command);
+    MeshDrawCommands.Add(Command);
 }

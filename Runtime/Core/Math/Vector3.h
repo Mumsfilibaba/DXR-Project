@@ -12,7 +12,8 @@ public:
         : x(0.0f)
         , y(0.0f)
         , z(0.0f)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with a corresponding value.
@@ -24,7 +25,8 @@ public:
         : x(InX)
         , y(InY)
         , z(InZ)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with an array.
@@ -34,7 +36,8 @@ public:
         : x(Arr[0])
         , y(Arr[1])
         , z(Arr[2])
-    { }
+    {
+    }
 
     /**
      * @brief        - Constructor initializing all components with a single value.
@@ -44,7 +47,8 @@ public:
         : x(Scalar)
         , y(Scalar)
         , z(Scalar)
-    { }
+    {
+    }
 
      /** @brief - Normalized this vector */
     inline void Normalize() noexcept
@@ -214,7 +218,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE float* GetData() noexcept
+    FORCEINLINE float* Data() noexcept
     {
         return reinterpret_cast<float*>(this);
     }
@@ -223,7 +227,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE const float* GetData() const noexcept
+    FORCEINLINE const float* Data() const noexcept
     {
         return reinterpret_cast<const float*>(this);
     }

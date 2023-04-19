@@ -3,8 +3,7 @@
 #include "Core/Templates/TypeTraits.h"
 
 template<typename T, typename DeleterType = TDefaultDelete<T>>
-class TUniquePtr 
-    : private DeleterType // Using inheritance instead of composition to avoid extra memory usage
+class TUniquePtr : private DeleterType // Using inheritance instead of composition to avoid extra memory usage
 {
     using Super = DeleterType;
 
@@ -23,7 +22,8 @@ public:
     FORCEINLINE TUniquePtr() noexcept
         : Super()
         , Object(nullptr)
-    { }
+    {
+    }
 
     /**
      * @brief - Construct from nullptr
@@ -31,7 +31,8 @@ public:
     FORCEINLINE TUniquePtr(nullptr_type) noexcept
         : Super()
         , Object(nullptr)
-    { }
+    {
+    }
 
     /**
      * @brief           - Constructor that takes a raw pointer
@@ -40,7 +41,8 @@ public:
     FORCEINLINE explicit TUniquePtr(ElementType* InPointer) noexcept
         : Super()
         , Object(InPointer)
-    { }
+    {
+    }
 
     /**
      * @brief       - Move-constructor
@@ -211,10 +213,7 @@ public:
      * @return      - A reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<
-            TIsPointerConvertible<OtherType, ElementType>::Value,
-            typename TAddLValueReference<TUniquePtr>::Type
-        >::Type operator=(TUniquePtr<OtherType, OtherDeleterType>&& Other) noexcept
+    FORCEINLINE typename TEnableIf<TIsPointerConvertible<OtherType, ElementType>::Value, typename TAddLValueReference<TUniquePtr>::Type>::Type operator=(TUniquePtr<OtherType, OtherDeleterType>&& Other) noexcept
     {
         TUniquePtr(Move(Other)).Swap(*this);
         return *this;
@@ -253,8 +252,7 @@ private:
 
 
 template<typename T, typename DeleterType>
-class TUniquePtr<T[], DeleterType> 
-    : private DeleterType
+class TUniquePtr<T[], DeleterType> : private DeleterType
 {
     using Super = DeleterType;
 
@@ -265,7 +263,7 @@ public:
     template<typename OtherType, typename OtherDeleterType>
     friend class TUniquePtr;
 
-    TUniquePtr(const TUniquePtr& Other) = delete;
+    TUniquePtr(const TUniquePtr& Other)                     = delete;
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
     /**
@@ -274,7 +272,8 @@ public:
     FORCEINLINE TUniquePtr() noexcept
         : Super()
         , Object(nullptr)
-    { }
+    {
+    }
 
     /**
      * @brief - Construct from nullptr
@@ -282,7 +281,8 @@ public:
     FORCEINLINE TUniquePtr(nullptr_type) noexcept
         : Super()
         , Object(nullptr)
-    { }
+    {
+    }
 
     /**
      * @brief           - Constructor that takes a raw pointer
@@ -291,7 +291,8 @@ public:
     FORCEINLINE explicit TUniquePtr(ElementType* InPointer) noexcept
         : Super()
         , Object(InPointer)
-    { }
+    {
+    }
 
     /**
      * @brief       - Move-constructor
@@ -395,17 +396,6 @@ public:
         return (Object != nullptr);
     }
 
-    /**
-     * @brief       - Retrieve a element at a certain index of the array
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
-     */
-    NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) const noexcept
-    {
-        CHECK(IsValid());
-        return Object[Index];
-    }
-
 public:
 
     /**
@@ -415,7 +405,8 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) const noexcept
     {
-        return GetElementAt(Index);
+        CHECK(IsValid());
+        return Object[Index];
     }
 
     /**
@@ -455,10 +446,7 @@ public:
      * @return      - A reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<
-            TIsPointerConvertible<OtherType, ElementType>::Value,
-            typename TAddLValueReference<TUniquePtr>::Type
-        >::Type operator=(TUniquePtr<OtherType[], OtherDeleterType>&& Other) noexcept
+    FORCEINLINE typename TEnableIf<TIsPointerConvertible<OtherType, ElementType>::Value, typename TAddLValueReference<TUniquePtr>::Type>::Type operator=(TUniquePtr<OtherType[], OtherDeleterType>&& Other) noexcept
     {
         TUniquePtr(Move(Other)).Swap(*this);
         return *this;

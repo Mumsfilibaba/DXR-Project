@@ -2,11 +2,19 @@
 #include "Application/Widget.h"
 #include "Core/Misc/FrameProfiler.h"
 
-class FFrameProfilerWindow
-    : public FWidget
+class FFrameProfilerWindow : public FWidget
 {
+    DECLARE_WIDGET(FFrameProfilerWindow, FWidget);
+
 public:
-    virtual void OnDraw() override final;
+    FINITIALIZER_START(FFrameProfilerWindow)
+    FINITIALIZER_END();
+
+    void Initialize(const FInitializer& Initializer)
+    {
+    }
+
+    virtual void Paint(const FRectangle& AssignedBounds) override final;
 
      /** @brief - Draw a simple FPS counter */
     void DrawFPS();

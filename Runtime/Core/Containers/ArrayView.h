@@ -3,7 +3,7 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/TypeTraits.h"
-#include "Core/Templates/ContiguousContainerHelper.h"
+#include "Core/Templates/ArrayContainerHelper.h"
 
 template<typename T>
 class TArrayView
@@ -29,7 +29,8 @@ public:
     FORCEINLINE TArrayView() noexcept
         : View(nullptr)
         , ViewSize(0)
-    { }
+    {
+    }
 
     /**
      * @brief           - Construct a view from an array of ArrayType
@@ -40,18 +41,20 @@ public:
         typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type,
         typename = typename TEnableIf<TIsContiguousContainer<PureContainerType>::Value>::Type>
     FORCEINLINE TArrayView(ContainerType&& Container) noexcept
-        : View(FContiguousContainerHelper::GetData(Forward<ContainerType>(Container)))
-        , ViewSize(SizeType(FContiguousContainerHelper::GetSize(Forward<ContainerType>(Container))))
-    { }
+        : View(FArrayContainerHelper::Data(::Forward<ContainerType>(Container)))
+        , ViewSize(SizeType(FArrayContainerHelper::Size(::Forward<ContainerType>(Container))))
+    {
+    }
 
     /**
      * @brief          - Construct a view from an array of initializer_list
      * @param InitList - initializer_list to create view from
      */
     FORCEINLINE TArrayView(std::initializer_list<ElementType> InitList) noexcept
-        : View(FContiguousContainerHelper::GetData(InitList))
-        , ViewSize(SizeType(FContiguousContainerHelper::GetSize(InitList)))
-    { }
+        : View(FArrayContainerHelper::Data(InitList))
+        , ViewSize(SizeType(FArrayContainerHelper::Size(InitList)))
+    {
+    }
 
     /**
      * @brief             - Construct a view from a raw-array
@@ -62,7 +65,8 @@ public:
     FORCEINLINE TArrayView(OtherElementType* InArray, SizeType NumElements) noexcept
         : View(InArray)
         , ViewSize(NumElements)
-    { }
+    {
+    }
 
     /**
      * @brief  - Checks if an index is a valid index
@@ -89,7 +93,7 @@ public:
     NODISCARD FORCEINLINE ElementType& FirstElement() const noexcept
     {
         CHECK(IsEmpty());
-        return *GetData();
+        return *Data();
     }
 
     /**
@@ -99,18 +103,7 @@ public:
     NODISCARD FORCEINLINE ElementType& LastElement() const noexcept
     {
         CHECK(IsEmpty());
-        return *(GetData() + (ViewSize - 1));
-    }
-
-    /**
-     * @brief       - Retrieve a element at a certain index of the view
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
-     */
-    NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) const noexcept
-    {
-        CHECK(Index < ViewSize);
-        return *(GetData() + Index);
+        return *(Data() + (ViewSize - 1));
     }
 
     /**
@@ -120,13 +113,13 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData();
-        const ElementType* RESTRICT EndAddress     = GetData() + ViewSize;
+        const ElementType* RESTRICT CurrentAddress = Data();
+        const ElementType* RESTRICT EndAddress     = Data() + ViewSize;
         while (CurrentAddress != EndAddress)
         {
             if (Element == *CurrentAddress)
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Data());
             }
 
             ++CurrentAddress;
@@ -143,13 +136,13 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData();
-        const ElementType* RESTRICT EndAddress     = GetData() + ViewSize;
+        const ElementType* RESTRICT CurrentAddress = Data();
+        const ElementType* RESTRICT EndAddress     = Data() + ViewSize;
         while (CurrentAddress != EndAddress)
         {
             if (Predicate(*CurrentAddress))
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Data());
             }
 
             ++CurrentAddress;
@@ -165,14 +158,14 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData() + ViewSize;
-        const ElementType* RESTRICT EndAddress     = GetData();
+        const ElementType* RESTRICT CurrentAddress = Data() + ViewSize;
+        const ElementType* RESTRICT EndAddress     = Data();
         while (CurrentAddress != EndAddress)
         {
             --CurrentAddress;
             if (Element == *CurrentAddress)
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Data());
             }
         }
 
@@ -187,14 +180,14 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData() + ViewSize;
-        const ElementType* RESTRICT EndAddress     = GetData();
+        const ElementType* RESTRICT CurrentAddress = Data() + ViewSize;
+        const ElementType* RESTRICT EndAddress     = Data();
         while (CurrentAddress != EndAddress)
         {
             --CurrentAddress;
             if (Predicate(*CurrentAddress))
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Data());
             }
         }
 
@@ -229,8 +222,8 @@ public:
     template<class FunctorType>
     FORCEINLINE void Foreach(FunctorType&& Functor) const
     {
-        ElementType* RESTRICT CurrentAddress = GetData();
-        ElementType* RESTRICT EndAddress     = GetData() + ViewSize;
+        ElementType* RESTRICT CurrentAddress = Data();
+        ElementType* RESTRICT EndAddress     = Data() + ViewSize;
         while (CurrentAddress != EndAddress)
         {
             Functor(*CurrentAddress);
@@ -255,8 +248,8 @@ public:
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        ElementType* Elements = GetData();
-        ::AssignElements(Elements, InputElement, GetSize());
+        ElementType* Elements = Data();
+        ::AssignElements(Elements, InputElement, Size());
     }
 
     /**
@@ -265,7 +258,7 @@ public:
     template<typename U = ElementType>
     FORCEINLINE typename TEnableIf<TIsTrivial<U>::Value>::Type Memzero()
     {
-        ElementType* Elements = GetData();
+        ElementType* Elements = Data();
         FMemory::Memzero(Elements, SizeInBytes());
     }
 
@@ -282,7 +275,7 @@ public:
      * @brief  - Returns the size of the container
      * @return - The current size of the container
      */
-    NODISCARD FORCEINLINE SizeType GetSize() const noexcept
+    NODISCARD FORCEINLINE SizeType Size() const noexcept
     {
         return ViewSize;
     }
@@ -293,14 +286,14 @@ public:
      */
     NODISCARD FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return GetSize() * sizeof(ElementType);
+        return Size() * sizeof(ElementType);
     }
 
     /**
      * @brief  - Retrieve the data of the view
      * @return - Returns a pointer to the data of the view
      */
-    NODISCARD FORCEINLINE ElementType* GetData() const noexcept
+    NODISCARD FORCEINLINE ElementType* Data() const noexcept
     {
         return View;
     }
@@ -327,12 +320,12 @@ public:
     template<typename ArrayType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
     {
-        if (GetSize() != RHS.GetSize())
+        if (Size() != RHS.Size())
         {
             return false;
         }
 
-        return ::CompareElements<ElementType>(GetData(), RHS.GetData(), GetSize());
+        return ::CompareElements<ElementType>(Data(), RHS.Data(), Size());
     }
 
     /**
@@ -353,7 +346,8 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) noexcept
     {
-        return GetElementAt(Index);
+        CHECK(Index < ViewSize);
+        return *(Data() + Index);
     }
 
     /**
@@ -363,7 +357,8 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
     {
-        return GetElementAt(Index);
+        CHECK(Index < ViewSize);
+        return *(Data() + Index);
     }
 
     /**
@@ -395,7 +390,7 @@ public:
      */
     NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType(*this, GetSize());
+        return IteratorType(*this, Size());
     }
 
     /**
@@ -413,7 +408,7 @@ public:
      */
     NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType(*this, GetSize());
+        return ConstIteratorType(*this, Size());
     }
 
     /**
@@ -422,7 +417,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType(*this, GetSize());
+        return ReverseIteratorType(*this, Size());
     }
 
     /**
@@ -440,7 +435,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType(*this, GetSize());
+        return ReverseConstIteratorType(*this, Size());
     }
 
     /**
@@ -484,8 +479,8 @@ template<
     typename = typename TEnableIf<TIsContiguousContainer<PureContainerType>::Value>::Type>
 auto MakeArrayView(ContainerType&& Container)
 {
-    using ElementType = typename TRemovePointer<decltype(FContiguousContainerHelper::GetData(DeclVal<PureContainerType>()))>::Type;
-    return TArrayView<ElementType>(Forward<ContainerType>(Container));
+    using ElementType = typename TRemovePointer<decltype(FArrayContainerHelper::Data(::DeclVal<PureContainerType>()))>::Type;
+    return TArrayView<ElementType>(::Forward<ContainerType>(Container));
 }
 
 template<typename T>

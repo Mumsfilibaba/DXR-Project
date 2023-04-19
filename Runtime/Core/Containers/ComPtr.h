@@ -15,7 +15,8 @@ public:
      */
     FORCEINLINE TComPtr() noexcept
         : Ptr(nullptr)
-    { }
+    {
+    }
 
     /**
      * @brief       - Copy-constructor 

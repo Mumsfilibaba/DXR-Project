@@ -10,14 +10,16 @@ struct FR10G10B10A2
         , R(0)
         , G(0)
         , B(0)
-    { }
+    {
+    }
 
     FR10G10B10A2(uint8 InA, uint16 InR, uint16 InG, uint16 InB)
         : A(InA)
         , R(InR)
         , G(InG)
         , B(InB)
-    { }
+    {
+    }
 
     FR10G10B10A2(float InR, float InG, float InB)
         : A(0)
@@ -33,7 +35,10 @@ struct FR10G10B10A2
         B = uint32(NMath::Round(Vector.z * float(NMath::MaxNum<10>())));
     }
 
-    uint32 EncodeAsInteger() const { return *reinterpret_cast<const uint32*>(this); }
+    uint32 EncodeAsInteger() const 
+    { 
+        return *reinterpret_cast<const uint32*>(this);
+    }
 
     uint64 GetHash() const 
     {
@@ -60,25 +65,30 @@ struct FR10G10B10A2
 static_assert(sizeof(FR10G10B10A2) == sizeof(uint32), "FR10G10B10A2 is assumed to have the same size as a uint32");
 MARK_AS_REALLOCATABLE(FR10G10B10A2);
 
-
 struct FRG16F
 {
     FRG16F()
         : R(0)
         , G(0)
-    { }
+    {
+    }
 
     FRG16F(uint16 InR, uint16 InG)
         : R(InR)
         , G(InG)
-    { }
+    {
+    }
 
     FRG16F(float InR, float InG)
         : R(FFloat16(InR).Encoded)
         , G(FFloat16(InG).Encoded)
-    { }
+    {
+    }
 
-    uint32 EncodeAsInteger() const { return *reinterpret_cast<const uint32*>(this); }
+    uint32 EncodeAsInteger() const 
+    { 
+        return *reinterpret_cast<const uint32*>(this);
+    }
 
     uint64 GetHash() const
     {
@@ -103,7 +113,6 @@ struct FRG16F
 static_assert(sizeof(FRG16F) == sizeof(uint32), "FRG16F is assumed to have the same size as a uint32");
 MARK_AS_REALLOCATABLE(FRG16F);
 
-
 struct FRGBA16F
 {
     FRGBA16F()
@@ -111,23 +120,29 @@ struct FRGBA16F
         , R(0)
         , G(0)
         , B(0)
-    { }
+    {
+    }
 
     FRGBA16F(uint16 InA, uint16 InR, uint16 InG, uint16 InB)
         : A(InA)
         , R(InR)
         , G(InG)
         , B(InB)
-    { }
+    {
+    }
 
     FRGBA16F(float InA, float InR, float InG, float InB)
         : A(FFloat16(InA).Encoded)
         , R(FFloat16(InR).Encoded)
         , G(FFloat16(InG).Encoded)
         , B(FFloat16(InB).Encoded)
-    { }
+    {
+    }
 
-    uint64 EncodeAsInteger() const { return *reinterpret_cast<const uint64*>(this); }
+    uint64 EncodeAsInteger() const 
+    { 
+        return *reinterpret_cast<const uint64*>(this); 
+    }
 
     uint64 GetHash() const
     {

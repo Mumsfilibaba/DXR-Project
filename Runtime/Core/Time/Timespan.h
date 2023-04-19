@@ -17,17 +17,17 @@ public:
 
     FORCEINLINE double AsSeconds() const
     {
-        return NTime::ToSeconds(static_cast<double>(TimespanNS));
+        return TimeUtilities::ToSeconds(static_cast<double>(TimespanNS));
     }
 
     FORCEINLINE double AsMilliseconds() const
     {
-        return NTime::ToMilliseconds(static_cast<double>(TimespanNS));
+        return TimeUtilities::ToMilliseconds(static_cast<double>(TimespanNS));
     }
 
     FORCEINLINE double AsMicroseconds() const
     {
-        return NTime::ToMicroseconds(static_cast<double>(TimespanNS));
+        return TimeUtilities::ToMicroseconds(static_cast<double>(TimespanNS));
     }
 
     FORCEINLINE uint64 AsNanoseconds() const
@@ -73,17 +73,17 @@ public:
 public:
     static FORCEINLINE FTimespan Seconds(double InSeconds)
     {
-        return FTimespan(static_cast<uint64>(NTime::FromSeconds(InSeconds)));
+        return FTimespan(static_cast<uint64>(TimeUtilities::FromSeconds(InSeconds)));
     }
 
     static FORCEINLINE FTimespan Milliseconds(double InMilliseconds)
     {
-        return FTimespan(static_cast<uint64>(NTime::FromMilliseconds(InMilliseconds)));
+        return FTimespan(static_cast<uint64>(TimeUtilities::FromMilliseconds(InMilliseconds)));
     }
 
     static FORCEINLINE FTimespan Microseconds(double InMicroseconds)
     {
-        return FTimespan(static_cast<uint64>(NTime::FromMicroseconds(InMicroseconds)));
+        return FTimespan(static_cast<uint64>(TimeUtilities::FromMicroseconds(InMicroseconds)));
     }
 
     static FORCEINLINE FTimespan Nanoseconds(uint64 InNanoseconds)

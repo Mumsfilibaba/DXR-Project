@@ -20,12 +20,12 @@ void FEngineLoopTicker::Tick(FTimespan Deltatime)
 
 void FEngineLoopTicker::AddDelegate(const FTickDelegate& NewElement)
 {
-    TickDelegates.Push(NewElement);
+    TickDelegates.Add(NewElement);
 }
 
 void FEngineLoopTicker::RemoveDelegate(FDelegateHandle RemoveHandle)
 {
-    uint32 NumElements = TickDelegates.GetSize();
+    uint32 NumElements = TickDelegates.Size();
     for (uint32 Index = 0; Index < NumElements; Index++)
     {
         if (TickDelegates[Index].GetHandle() == RemoveHandle)

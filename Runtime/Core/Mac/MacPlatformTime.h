@@ -4,8 +4,7 @@
 
 #include <mach/mach_time.h>
 
-struct FMacPlatformTime 
-    : public FGenericPlatformTime
+struct FMacPlatformTime : public FGenericPlatformTime
 {
     static FORCEINLINE uint64 QueryPerformanceCounter()
     {
@@ -17,6 +16,6 @@ struct FMacPlatformTime
         mach_timebase_info_data_t TimeBaseInfo = {};
         mach_timebase_info(&TimeBaseInfo);
 
-        return NTime::FromSeconds<uint64>(uint64(TimeBaseInfo.numer)) / uint64(TimeBaseInfo.denom);
+        return TimeUtilities::FromSeconds<uint64>(uint64(TimeBaseInfo.numer)) / uint64(TimeBaseInfo.denom);
     }
 };

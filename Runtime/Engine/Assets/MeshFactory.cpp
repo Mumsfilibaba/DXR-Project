@@ -181,7 +181,7 @@ FMeshData FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
         FMeshUtilities::Subdivide(Sphere, Subdivisions);
     }
 
-    for (uint32 i = 0; i < static_cast<uint32>(Sphere.Vertices.GetSize()); i++)
+    for (uint32 i = 0; i < static_cast<uint32>(Sphere.Vertices.Size()); i++)
     {
         // Calculate the new position, normal and tangent
         FVector3 Position = Sphere.Vertices[i].Position;
@@ -489,7 +489,7 @@ FMeshData FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height)
 TArray<uint16> FMeshFactory::ConvertSmallIndices(const TArray<uint32>& Indicies) noexcept
 {
     TArray<uint16> NewArray;
-    NewArray.Reserve(Indicies.GetSize());
+    NewArray.Reserve(Indicies.Size());
 
     for (uint32 Index : Indicies)
     {

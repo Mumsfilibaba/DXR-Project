@@ -7,7 +7,6 @@
 // Lazy mode resolves symbols when they are called for the first time, disable to load everything at loadtime
 #define ENABLE_LIBRARY_LAZY_MODE (1)
 
-
 struct FMacLibrary final : public FGenericLibrary
 {
     static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)

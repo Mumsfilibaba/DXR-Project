@@ -3,80 +3,80 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FContiguousContainerHelper
+struct FArrayContainerHelper
 {
     template<
         typename ContainerType,
         typename = typename TEnableIf<TIsContiguousContainer<ContainerType>::Value>::Type>
-    static CONSTEXPR decltype(auto) GetData(ContainerType&& Container)
+    static CONSTEXPR decltype(auto) Data(ContainerType&& Container)
     {
-        return Container.GetData();
+        return Container.Data();
     }
 
     template<
         typename ContainerType,
         typename = typename TEnableIf<TIsContiguousContainer<ContainerType>::Value>::Type>
-    static CONSTEXPR decltype(auto) GetSize(ContainerType&& Container)
+    static CONSTEXPR decltype(auto) Size(ContainerType&& Container)
     {
-        return Container.GetSize();
+        return Container.Size();
     }
 
     template <typename T, TSIZE N> 
-    static CONSTEXPR T* GetData(T(&Container)[N]) 
+    static CONSTEXPR T* Data(T(&Container)[N]) 
     { 
         return Container; 
     }
 
     template <typename T, TSIZE N>
-    static CONSTEXPR decltype(auto) GetSize(T(&Container)[N])
+    static CONSTEXPR decltype(auto) Size(T(&Container)[N])
     {
         return N;
     }
     
     template <typename T, TSIZE N>
-    static CONSTEXPR T* GetData(T(&& Container)[N]) 
+    static CONSTEXPR T* Data(T(&& Container)[N]) 
     { 
         return Container; 
     }
 
     template <typename T, TSIZE N>
-    static CONSTEXPR decltype(auto) GetSize(T(&& Container)[N])
+    static CONSTEXPR decltype(auto) Size(T(&& Container)[N])
     {
         return N;
     }
     
     template <typename T, TSIZE N>
-    static CONSTEXPR const T* GetData(const T(&Container)[N]) 
+    static CONSTEXPR const T* Data(const T(&Container)[N]) 
     { 
         return Container; 
     }
     
     template <typename T, TSIZE N>
-    static CONSTEXPR decltype(auto) GetSize(const T(& Container)[N])
+    static CONSTEXPR decltype(auto) Size(const T(& Container)[N])
     {
         return N;
     }
 
     template <typename T, TSIZE N>
-    static CONSTEXPR const T* GetData(const T(&& Container)[N]) 
+    static CONSTEXPR const T* Data(const T(&& Container)[N]) 
     { 
         return Container; 
     }
 
     template <typename T, TSIZE N>
-    static CONSTEXPR decltype(auto) GetSize(const T(&& Container)[N])
+    static CONSTEXPR decltype(auto) Size(const T(&& Container)[N])
     {
         return N;
     }
 
     template<typename T>
-    static CONSTEXPR decltype(auto) GetData(std::initializer_list<T> Container)
+    static CONSTEXPR decltype(auto) Data(std::initializer_list<T> Container)
     {
         return const_cast<T*>(Container.begin());
     }
 
     template<typename T>
-    static CONSTEXPR decltype(auto) GetSize(std::initializer_list<T> Container)
+    static CONSTEXPR decltype(auto) Size(std::initializer_list<T> Container)
     {
         return static_cast<int32>(Container.size());
     }

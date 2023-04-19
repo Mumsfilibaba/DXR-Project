@@ -1,18 +1,17 @@
 #pragma once
 #include "Windows.h"
-
 #include "Core/Generic/GenericEvent.h"
 
 typedef TSharedRef<class FWindowsEvent> FWindowsEventRef;
 
-class CORE_API FWindowsEvent final
-    : public FGenericEvent
+class CORE_API FWindowsEvent final : public FGenericEvent
 {
 public:
     FWindowsEvent()
         : Event(nullptr)
         , bManualReset(false)
-    { }
+    {
+    }
 
     ~FWindowsEvent();
 

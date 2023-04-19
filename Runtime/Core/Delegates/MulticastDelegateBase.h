@@ -1,8 +1,6 @@
 #pragma once
 #include "DelegateBase.h"
-
 #include "Core/Containers/Array.h"
-
 
 class FMulticastDelegateBase
 {
@@ -15,7 +13,8 @@ public:
     FORCEINLINE FMulticastDelegateBase(const FMulticastDelegateBase& Other) noexcept
         : Delegates(Other.Delegates)
         , LockVariable(Other.LockVariable)
-    { }
+    {
+    }
 
     /**
      * @brief       - Move-constructor
@@ -24,7 +23,8 @@ public:
     FORCEINLINE FMulticastDelegateBase(FMulticastDelegateBase&& Other) noexcept
         : Delegates(Move(Other.Delegates))
         , LockVariable(Other.LockVariable)
-    { }
+    {
+    }
 
     /**
      * @brief - Destructor 
@@ -102,7 +102,7 @@ public:
 
         if (Object)
         {
-            for (int32 Index = 0; Index < Delegates.GetSize(); Index++)
+            for (int32 Index = 0; Index < Delegates.Size(); Index++)
             {
                 FDelegateBase& Delegate = Delegates[Index];
 
@@ -174,7 +174,7 @@ public:
      */
     FORCEINLINE uint32 GetCount() const noexcept
     {
-        return static_cast<uint32>(Delegates.GetSize());
+        return static_cast<uint32>(Delegates.Size());
     }
 
     /**
@@ -203,7 +203,8 @@ protected:
     FORCEINLINE explicit FMulticastDelegateBase() noexcept
         : Delegates()
         , LockVariable(0)
-    { }
+    {
+    }
 
     FORCEINLINE FDelegateHandle AddDelegate(const FDelegateBase& NewDelegate) noexcept
     {
@@ -234,7 +235,7 @@ protected:
 
         CompactArray();
 
-        Delegates.Push(NewDelegate);
+        Delegates.Add(NewDelegate);
         return NewHandle;
     }
 

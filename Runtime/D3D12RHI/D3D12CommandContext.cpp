@@ -159,7 +159,7 @@ void FD3D12GPUResourceUploader::Reset()
 
     // Clear garbage resource, and release memory we do not need
     GarbageResources.Clear();
-    if (GarbageResources.GetCapacity() >= MAX_RESERVED_GARBAGE_RESOURCES)
+    if (GarbageResources.Capacity() >= MAX_RESERVED_GARBAGE_RESOURCES)
     {
         GarbageResources.Reserve(NEW_RESERVED_GARBAGE_RESOURCES);
     }
@@ -281,7 +281,7 @@ void FD3D12CommandContextState::ApplyGraphics(FD3D12CommandList& CommandList, FD
     // BlendFactor
     if (Graphics.bBindBlendFactor)
     {
-        CommandList.OMSetBlendFactor(Graphics.BlendFactor.GetData());
+        CommandList.OMSetBlendFactor(Graphics.BlendFactor.Data());
         Graphics.bBindBlendFactor = false;
     }
 
@@ -390,7 +390,7 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
         FMemory::Memzero(&VertexBufferView);
 
         VertexBufferView.BufferLocation = NewResource->GetGPUVirtualAddress();
-        VertexBufferView.SizeInBytes    = static_cast<uint32>(VertexBuffer->GetSize());
+        VertexBufferView.SizeInBytes    = static_cast<uint32>(VertexBuffer->Size());
         VertexBufferView.StrideInBytes  = VertexBuffer->GetStride();
 
         Graphics.VBCache.VBViews[Slot]     = VertexBufferView;
@@ -420,7 +420,7 @@ void FD3D12CommandContextState::SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_F
 
         IndexBufferView.Format         = IndexFormat;
         IndexBufferView.BufferLocation = NewResource->GetGPUVirtualAddress();
-        IndexBufferView.SizeInBytes    = static_cast<uint32>(IndexBuffer->GetSize());
+        IndexBufferView.SizeInBytes    = static_cast<uint32>(IndexBuffer->Size());
 
         Graphics.IBCache.IBView     = IndexBufferView;
         Graphics.IBCache.IBResource = NewResource;
@@ -536,7 +536,7 @@ void FD3D12CommandContext::BeginTimeStamp(FRHITimestampQuery* TimestampQuery, ui
     ID3D12GraphicsCommandList* DxCmdList = CommandList->GetGraphicsCommandList();
     D3D12TimestampQuery->BeginQuery(DxCmdList, Index);
 
-    ResolveQueries.PushUnique(MakeSharedRef<FD3D12TimestampQuery>(D3D12TimestampQuery));
+    ResolveQueries.AddUnique(MakeSharedRef<FD3D12TimestampQuery>(D3D12TimestampQuery));
 }
 
 void FD3D12CommandContext::EndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
@@ -558,7 +558,7 @@ void FD3D12CommandContext::ClearRenderTargetView(const FRHIRenderTargetView& Ren
     FD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRTV(RenderTargetView);
     CHECK(D3D12RenderTargetView != nullptr);
 
-    CommandList->ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.GetData(), 0, nullptr);
+    CommandList->ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.Data(), 0, nullptr);
 }
 
 void FD3D12CommandContext::ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
@@ -591,7 +591,7 @@ void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
     GetDevice()->GetD3D12Device()->CopyDescriptorsSimple(1, OnlineHandle_CPU, OfflineHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     const D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandle_GPU = OnlineDescriptorHeap->GetGPUDescriptorHandleAt(OnlineDescriptorHandleIndex);
-    CommandList->ClearUnorderedAccessViewFloat(OnlineHandle_GPU, D3D12UnorderedAccessView, ClearColor.GetData());
+    CommandList->ClearUnorderedAccessViewFloat(OnlineHandle_GPU, D3D12UnorderedAccessView, ClearColor.Data());
 }
 
 void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer)
@@ -618,7 +618,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIRenderPassDesc& RenderPassI
             // it is not certain that there will be a call to draw inside of the RenderPass
             if (RenderTargetView.LoadAction == EAttachmentLoadAction::Clear)
             {
-                CommandList->ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), RenderTargetView.ClearValue.GetData(), 0, nullptr);
+                CommandList->ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), RenderTargetView.ClearValue.Data(), 0, nullptr);
             }
             
             State.Graphics.RTCache.SetRenderTarget(D3D12RenderTargetView, Index);
@@ -710,15 +710,15 @@ void FD3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTop
 
 void FD3D12CommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
 {
-    D3D12_ERROR_COND((BufferSlot + InVertexBuffers.GetSize()) < D3D12_MAX_VERTEX_BUFFER_SLOTS, "Trying to set a VertexBuffer to an invalid slot");
+    D3D12_ERROR_COND((BufferSlot + InVertexBuffers.Size()) < D3D12_MAX_VERTEX_BUFFER_SLOTS, "Trying to set a VertexBuffer to an invalid slot");
 
-    for (int32 Index = 0; Index < InVertexBuffers.GetSize(); ++Index)
+    for (int32 Index = 0; Index < InVertexBuffers.Size(); ++Index)
     {
         FD3D12Buffer* D3D12VertexBuffer = static_cast<FD3D12Buffer*>(InVertexBuffers[Index]);
         State.SetVertexBuffer(D3D12VertexBuffer, BufferSlot + Index);
     }
 
-    State.Graphics.VBCache.NumVertexBuffers = NMath::Max(State.Graphics.VBCache.NumVertexBuffers, BufferSlot + InVertexBuffers.GetSize());
+    State.Graphics.VBCache.NumVertexBuffers = NMath::Max(State.Graphics.VBCache.NumVertexBuffers, BufferSlot + InVertexBuffers.Size());
 }
 
 void FD3D12CommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
@@ -773,7 +773,7 @@ void FD3D12CommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArr
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
-    for (int32 Index = 0; Index < InShaderResourceViews.GetSize(); ++Index)
+    for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
     {
         FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(InShaderResourceViews[Index]);
         State.DescriptorCache.SetShaderResourceView(D3D12Shader->GetShaderVisibility(), D3D12ShaderResourceView, ParameterInfo.Register + Index);
@@ -800,7 +800,7 @@ void FD3D12CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TAr
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
-    for (int32 Index = 0; Index < InUnorderedAccessViews.GetSize(); ++Index)
+    for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
     {
         FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(InUnorderedAccessViews[Index]);
         State.DescriptorCache.SetUnorderedAccessView(D3D12Shader->GetShaderVisibility(), D3D12UnorderedAccessView, ParameterInfo.Register + Index);
@@ -834,7 +834,7 @@ void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayVi
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
-    for (int32 Index = 0; Index < InConstantBuffers.GetSize(); ++Index)
+    for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
         if (InConstantBuffers[Index])
         {
@@ -868,7 +868,7 @@ void FD3D12CommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
     FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
     D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
 
-    for (int32 Index = 0; Index < InSamplerStates.GetSize(); ++Index)
+    for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
     {
         FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(InSamplerStates[Index]);
         State.DescriptorCache.SetSamplerState(D3D12Shader->GetShaderVisibility(), D3D12SamplerState, ParameterInfo.Register + Index);
@@ -1226,7 +1226,7 @@ void FD3D12CommandContext::SetRayTracingBindings(
     {
         if (!GlobalResource->ConstantBuffers.IsEmpty())
         {
-            for (int32 i = 0; i < GlobalResource->ConstantBuffers.GetSize(); i++)
+            for (int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
             {
                 FD3D12ConstantBufferView* D3D12ConstantBufferView = static_cast<FD3D12Buffer*>(GlobalResource->ConstantBuffers[i])->GetConstantBufferView();
                 State.DescriptorCache.SetConstantBufferView(ShaderVisibility_All, D3D12ConstantBufferView, i);
@@ -1234,7 +1234,7 @@ void FD3D12CommandContext::SetRayTracingBindings(
         }
         if (!GlobalResource->ShaderResourceViews.IsEmpty())
         {
-            for (int32 i = 0; i < GlobalResource->ShaderResourceViews.GetSize(); i++)
+            for (int32 i = 0; i < GlobalResource->ShaderResourceViews.Size(); i++)
             {
                 FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(GlobalResource->ShaderResourceViews[i]);
                 State.DescriptorCache.SetShaderResourceView(ShaderVisibility_All, D3D12ShaderResourceView, i);
@@ -1242,7 +1242,7 @@ void FD3D12CommandContext::SetRayTracingBindings(
         }
         if (!GlobalResource->UnorderedAccessViews.IsEmpty())
         {
-            for (int32 i = 0; i < GlobalResource->UnorderedAccessViews.GetSize(); i++)
+            for (int32 i = 0; i < GlobalResource->UnorderedAccessViews.Size(); i++)
             {
                 FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(GlobalResource->UnorderedAccessViews[i]);
                 State.DescriptorCache.SetUnorderedAccessView(ShaderVisibility_All, D3D12UnorderedAccessView, i);
@@ -1250,7 +1250,7 @@ void FD3D12CommandContext::SetRayTracingBindings(
         }
         if (!GlobalResource->SamplerStates.IsEmpty())
         {
-            for (int32 i = 0; i < GlobalResource->SamplerStates.GetSize(); i++)
+            for (int32 i = 0; i < GlobalResource->SamplerStates.Size(); i++)
             {
                 FD3D12SamplerState* DxSampler = static_cast<FD3D12SamplerState*>(GlobalResource->SamplerStates[i]);
                 State.DescriptorCache.SetSamplerState(ShaderVisibility_All, DxSampler, i);
@@ -1646,7 +1646,7 @@ void FD3D12CommandContext::ObtainCommandList()
     TRACE_FUNCTION_SCOPE();
 
     CmdBatch     = &CmdBatches[NextCmdBatch];
-    NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.GetSize();
+    NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
 
     FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
     CommandListManager->GetFenceManager().WaitForFence(CmdBatch->AssignedFenceValue);
@@ -1676,7 +1676,7 @@ void FD3D12CommandContext::FinishCommandList()
 
     FlushResourceBarriers();
 
-    for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.GetSize(); ++QueryIndex)
+    for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.Size(); ++QueryIndex)
     {
         ResolveQueries[QueryIndex]->ResolveQueries(*this);
     }

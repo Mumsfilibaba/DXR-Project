@@ -104,13 +104,13 @@ template<int32 NumBytes, int32 Alignment>
 class TAlignedStorage
 {
 public:
-    TAlignedStorage() = default;
+    TAlignedStorage()                       = default;
     TAlignedStorage(const TAlignedStorage&) = default;
-    TAlignedStorage(TAlignedStorage&&) = default;
-    ~TAlignedStorage() = default;
+    TAlignedStorage(TAlignedStorage&&)      = default;
+    ~TAlignedStorage()                      = default;
 
     TAlignedStorage& operator=(const TAlignedStorage&) = default;
-    TAlignedStorage& operator=(TAlignedStorage&&) = default;
+    TAlignedStorage& operator=(TAlignedStorage&&)      = default;
 
     FORCEINLINE void* GetStorage() noexcept
     {
@@ -145,13 +145,13 @@ class TTypedStorage
 public:
     using StorageType = TAlignedStorage<sizeof(T), AlignmentOf<T>>;
 
-    TTypedStorage() = default;
+    TTypedStorage()                     = default;
     TTypedStorage(const TTypedStorage&) = default;
-    TTypedStorage(TTypedStorage&&) = default;
-    ~TTypedStorage() = default;
+    TTypedStorage(TTypedStorage&&)      = default;
+    ~TTypedStorage()                    = default;
 
     TTypedStorage& operator=(const TTypedStorage&) = default;
-    TTypedStorage& operator=(TTypedStorage&&) = default;
+    TTypedStorage& operator=(TTypedStorage&&)      = default;
 
     FORCEINLINE T* GetStorage() noexcept
     {
@@ -161,6 +161,26 @@ public:
     FORCEINLINE const T* GetStorage() const noexcept
     {
         return Storage.template CastStorage<T>();
+    }
+
+    FORCEINLINE T* operator->() noexcept
+    {
+        return GetStorage();
+    }
+
+    FORCEINLINE const T* operator->() const noexcept
+    {
+        return GetStorage();
+    }
+
+    FORCEINLINE T& operator*() noexcept
+    {
+        return *GetStorage();
+    }
+
+    FORCEINLINE const T& operator*() const noexcept
+    {
+        return *GetStorage();
     }
 
 private:

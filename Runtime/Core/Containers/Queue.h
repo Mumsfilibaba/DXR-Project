@@ -4,40 +4,34 @@
 
 enum class EQueueType
 {
-    Lockfree,
-    Standard,
+    // Single Producer, Multiple Consumers
+    SPMC,
+    // Multiple Producers, Single Consumer
+    MPSC,
+    // Single Producer, Single Consumer
+    SPSC,
 };
 
-template<typename T, EQueueType QueueMode = EQueueType::Standard>
+template<typename T, EQueueType QueueType = EQueueType::SPSC>
 class TQueue
 {
 public:
     using ElementType = T;
 
 private:
-
     struct FNode
     {
         FNode()
             : NextNode(nullptr)
-        { }
+            , Item()
+        {
+        }
 
-        explicit FNode(const ElementType& InItem)
-            : NextNode(nullptr)
-            , Item(InItem)
-        { }
-
-        explicit FNode(ElementType&& InItem)
-            : NextNode(nullptr)
-            , Item(::Move(InItem))
-        { }
-
-        FNode* volatile NextNode;
-        ElementType     Item;
+        FNode* volatile            NextNode;
+        TTypedStorage<ElementType> Item;
     };
 
 public:
-
     TQueue(const TQueue&)            = delete;
     TQueue& operator=(const TQueue&) = delete;
 
@@ -47,7 +41,9 @@ public:
     FORCEINLINE TQueue()
         : Head(nullptr)
         , Tail(nullptr)
+        , NodeList(nullptr)
     {
+        // Create a Node here to more easily handle edge-cases
         Head = new FNode();
         Tail = Head;
     }
@@ -61,6 +57,19 @@ public:
         {
             FNode* Node = Tail;
             Tail = Tail->NextNode;
+
+            // Call the destructor of the node since these elements are "constructed"
+            typedef ElementType ElementDestructType;
+            Node->Item->ElementDestructType::~ElementDestructType();
+
+            delete Node;
+        }
+
+        while (NodeList != nullptr)
+        {
+            FNode* Node = NodeList;
+            NodeList = NodeList->NextNode;
+            // These Elements are "deleted" (destructor called) when the node is returned
             delete Node;
         }
     }
@@ -70,21 +79,40 @@ public:
      * @param OutElement - Storage for the popped element
      * @return           - Returns true if an element was popped
      */
-    FORCEINLINE bool Pop(ElementType& OutElement)
+    FORCEINLINE bool Dequeue(ElementType& OutElement)
     {
-        FNode* Popped = Tail->NextNode;
-        if (Popped == nullptr)
+        FNode* NextNode;
+        if CONSTEXPR(QueueType == EQueueType::SPMC)
+        {
+            NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
+        }
+        else
+        {
+            NextNode = Tail->NextNode;
+        }
+
+        // We are empty
+        if (NextNode == nullptr)
         {
             return false;
         }
 
-        OutElement = ::Move(Popped->Item);
+        // Move the item and "reset" it
+        OutElement = ::Move(*NextNode->Item);
+        
+        // Set the next node
+        FNode* PreviousTail;
+        if CONSTEXPR (QueueType == EQueueType::SPMC)
+        {
+            PreviousTail = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
+        }
+        else
+        {
+            PreviousTail = Tail;
+            Tail = NextNode;
+        }
 
-        FNode* PreviousTail = Tail;
-        Tail       = Popped;
-        Tail->Item = ElementType();
-        delete PreviousTail;
-
+        ReturnNode(PreviousTail);
         return true;
     }
 
@@ -92,19 +120,36 @@ public:
      * @brief  - Pop the next element
      * @return - Returns true if an element was popped
      */
-    FORCEINLINE bool Pop()
+    FORCEINLINE bool Dequeue()
     {
-        FNode* Popped = Tail->NextNode;
-        if (Popped == nullptr)
+        FNode* NextNode;
+        if CONSTEXPR(QueueType == EQueueType::SPMC)
+        {
+            NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
+        }
+        else
+        {
+            NextNode = Tail->NextNode;
+        }
+
+        // We are empty
+        if (NextNode == nullptr)
         {
             return false;
         }
+        
+        FNode* PreviousTail;
+        if CONSTEXPR (QueueType == EQueueType::SPMC)
+        {
+            PreviousTail = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
+        }
+        else
+        {
+            PreviousTail = Tail;
+            Tail = NextNode;
+        }
 
-        FNode* OldTail = Tail;
-        Tail       = Popped;
-        Tail->Item = ElementType();
-        delete OldTail;
-
+        ReturnNode(PreviousTail);
         return true;
     }
 
@@ -113,45 +158,69 @@ public:
      */
     FORCEINLINE void Clear()
     {
-        while (Pop());
+        while (Dequeue());
     }
 
     /**
-     * @brief      - Push an element to the back of the queue 
+     * @brief - Deletes the "slack" nodes
+     */
+    FORCEINLINE void Shrink()
+    {
+        FNode* CurrentNode;
+        if constexpr (QueueType == EQueueType::MPSC)
+        {
+            CurrentNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&NodeList), nullptr));
+        }
+        else
+        {
+            CurrentNode = NodeList;
+            NodeList    = nullptr;
+        }
+
+        while (CurrentNode != nullptr)
+        {
+            FNode* Node = CurrentNode;
+            CurrentNode = CurrentNode->NextNode;
+            delete Node;
+        }
+    }
+
+    /**
+     * @brief      - Add an element to the back of the queue
      * @param Item - The new element to push
      * @return     - Returns true if the element was successfully pushed
      */
-    FORCEINLINE bool Push(const ElementType& Item)
+    FORCEINLINE bool Enqueue(const ElementType& Item)
     {
         return Emplace(Item);
     }
 
     /**
-     * @brief      - Push an element to the back of the queue 
+     * @brief      - Add an element to the back of the queue
      * @param Item - The new element to push
      * @return     - Returns true if the element was successfully pushed
      */
-    FORCEINLINE bool Push(ElementType&& Item)
+    FORCEINLINE bool Enqueue(ElementType&& Item)
     {
         return Emplace(::Forward<ElementType>(Item));
     }
 
     /**
-     * @brief      - Push an element to the back of the queue
+     * @brief      - Add an element to the back of the queue
      * @param Args - Arguments used to construct the new element in-place
      * @return     - Returns true if the element was successfully pushed
      */
     template<typename... ArgTypes>
     FORCEINLINE bool Emplace(ArgTypes&&... Args) noexcept
     {
-        FNode* NewNode = new FNode(::Forward<ArgTypes>(Args)...);
+        FNode* NewNode = GetOrCreateNode(::Forward<ArgTypes>(Args)...);
         if (NewNode == nullptr)
         {
             return false;
         }
 
         FNode* PreviousHead;
-        if constexpr (QueueMode == EQueueType::Lockfree)
+        if CONSTEXPR (QueueType == EQueueType::MPSC)
         {
             PreviousHead = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), NewNode));
             FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&PreviousHead->NextNode), NewNode);
@@ -159,14 +228,14 @@ public:
         else
         {
             PreviousHead = Head;
-            Head         = NewNode;
+            Head = NewNode;
             PreviousHead->NextNode = NewNode;
         }
 
         return true;
     }
 
-    /** 
+    /**
      * @return - Returns true if the queue is empty
      */
     FORCEINLINE bool IsEmpty() const
@@ -217,6 +286,50 @@ public:
     }
 
 private:
+    template<typename... ArgTypes>
+    FORCEINLINE FNode* GetOrCreateNode(ArgTypes&&... Args)
+    {
+        FNode* Result;
+        if constexpr (QueueType == EQueueType::MPSC)
+        {
+            Result = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&NodeList), nullptr));
+        }
+        else
+        {
+            Result = NodeList;
+        }
+
+        if (Result)
+        {
+            NodeList = Result->NextNode;
+            // Reset the Node
+            Result->NextNode = nullptr;
+            // Construct the new Item
+            new(reinterpret_cast<void*>(Result->Item.GetStorage())) ElementType(::Forward<ArgTypes>(Args)...);
+        }
+        else
+        {
+            // Construct a new node
+            Result = new FNode();
+            // Construct the new Item
+            new(reinterpret_cast<void*>(Result->Item.GetStorage())) ElementType(::Forward<ArgTypes>(Args)...);
+        }
+
+        return Result;
+    }
+
+    FORCEINLINE void ReturnNode(FNode* InNode)
+    {
+        // Call the destructor of the node
+        typedef ElementType ElementDestructType;
+        InNode->Item->ElementDestructType::~ElementDestructType();
+        
+        // Link up the new node
+        InNode->NextNode = NodeList;
+        NodeList = InNode;
+    }
+
     FNode* volatile Head;
-    FNode*          Tail;
+    FNode* volatile Tail;
+    FNode* volatile NodeList;
 };

@@ -143,14 +143,14 @@ public:
     {
         if (!Barriers.IsEmpty())
         {
-            CommandList.ResourceBarrier(Barriers.GetData(), Barriers.GetSize());
+            CommandList.ResourceBarrier(Barriers.Data(), Barriers.Size());
             Barriers.Clear();
         }
     }
 
-    FORCEINLINE const D3D12_RESOURCE_BARRIER* GetBarriers() const { return Barriers.GetData(); }
+    FORCEINLINE const D3D12_RESOURCE_BARRIER* GetBarriers() const { return Barriers.Data(); }
 
-    FORCEINLINE uint32 GetNumBarriers() const { return Barriers.GetSize(); }
+    FORCEINLINE uint32 GetNumBarriers() const { return Barriers.Size(); }
 
 private:
     TArray<D3D12_RESOURCE_BARRIER> Barriers;
@@ -405,7 +405,7 @@ public:
     
     FORCEINLINE uint32 GetCurrentBachIndex() const
     {
-        CHECK(int32(NextCmdBatch) < CmdBatches.GetSize());
+        CHECK(int32(NextCmdBatch) < CmdBatches.Size());
         return NMath::Max<int32>(int32(NextCmdBatch) - 1, 0);
     }
 

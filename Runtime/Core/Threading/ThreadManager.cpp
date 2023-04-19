@@ -65,7 +65,7 @@ FGenericThreadRef FThreadManager::CreateThread(FThreadInterface* InRunnable)
     FGenericThreadRef Thread = FPlatformThreadMisc::CreateThread(InRunnable);
     if (Thread)
     {
-        Threads.Push(Thread);
+        Threads.Add(Thread);
         return Thread;
     }
     else

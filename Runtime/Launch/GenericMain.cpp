@@ -10,8 +10,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FDebuggerOutputDevice
-    : public IOutputDevice
+struct FDebuggerOutputDevice : public IOutputDevice
 {
     virtual void Log(const FString& Message) 
     {

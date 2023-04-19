@@ -38,7 +38,7 @@ void CInspectorWindow::DrawSceneInfo()
     // Actors
     if ( ImGui::TreeNode( "Actors" ) )
     {
-        ImGui::Text( "Total Actor Count: %d", GEngine->Scene->GetActors().GetSize() );
+        ImGui::Text( "Total Actor Count: %d", GEngine->Scene->GetActors().Size() );
 
         for ( FActor* Actor : GEngine->Scene->GetActors() )
         {
@@ -435,7 +435,7 @@ void CInspectorWindow::DrawSceneInfo()
                         ImGui::Text( "Light Size" );
                         ImGui::NextColumn();
 
-                        float LightSize = CurrentDirectionalLight->GetSize();
+                        float LightSize = CurrentDirectionalLight->Size();
                         if ( ImGui::SliderFloat( "##LightSize", &LightSize, 0.0f, 1.0f, "%.2f" ) )
                         {
                             CurrentDirectionalLight->SetSize( LightSize );

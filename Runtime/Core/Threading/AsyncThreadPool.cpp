@@ -129,7 +129,7 @@ FAsyncThreadPool::~FAsyncThreadPool()
 {
     // Lock in-case we are currently trying to submit from another thread
     SCOPED_LOCK(TaskQueueCS);
-    CHECK(TaskQueue.GetSize() == 0);
+    CHECK(TaskQueue.Size() == 0);
 }
 
 bool FAsyncThreadPool::Initialize(int32 NumThreads)
@@ -165,7 +165,7 @@ bool FAsyncThreadPool::IsMultithreaded()
 {
     if (GInstance)
     {
-        return (GInstance->Workers.GetSize() > 0);
+        return (GInstance->Workers.Size() > 0);
     }
 
     return false;
@@ -316,7 +316,7 @@ void FAsyncThreadPool::DestroyWorkers()
             {
                 SCOPED_LOCK(TaskQueueCS);
 
-                if (Workers.GetSize() == AvailableWorkers.GetSize())
+                if (Workers.Size() == AvailableWorkers.Size())
                 {
                     break;
                 }

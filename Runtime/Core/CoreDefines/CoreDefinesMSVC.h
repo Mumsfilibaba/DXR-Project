@@ -70,8 +70,13 @@
 
 
 #ifndef DEBUG_BREAK
-    #define DEBUG_BREAK __debugbreak
+    #if !PRODUCTION_BUILD
+        #define DEBUG_BREAK __debugbreak
+    #else
+        #define DEBUG_BREAK
+    #endif
 #endif
+
 
 // Define the rest of the defines to a default value
 #include "CoreDefinesDefault.h"

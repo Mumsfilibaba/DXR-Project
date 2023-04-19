@@ -5,7 +5,7 @@
 #include "Application/Application.h"
 
 TAutoConsoleVariable<bool> GDrawFps(
-    "Renderer.DrawFps", 
+    "Renderer.DrawFps",
     "Enable FPS counter in the top right corner",
     true);
 
@@ -14,8 +14,10 @@ TAutoConsoleVariable<bool> GDrawFrameProfiler(
     "Enables the FrameProfiler and displays the profiler window",
     false);
 
-void FFrameProfilerWindow::OnDraw()
+void FFrameProfilerWindow::Paint(const FRectangle& AssignedBounds)
 {
+    UNREFERENCED_VARIABLE(AssignedBounds);
+
     if (GDrawFps.GetValue())
     {
         DrawFPS();
@@ -91,7 +93,7 @@ void FFrameProfilerWindow::DrawCPUData(float Width)
 
         ImGui::PlotHistogram(
             "",
-            CPUFrameTime.Samples.GetData(),
+            CPUFrameTime.Samples.Data(),
             CPUFrameTime.SampleCount,
             CPUFrameTime.CurrentSample,
             nullptr,
@@ -200,13 +202,13 @@ void FFrameProfilerWindow::DrawCPUData(float Width)
 void FFrameProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    const TSharedPtr<FViewport> MainViewport;// = FApplication::Get().GetMainViewport();
+    const TSharedPtr<FViewportWidget> MainViewport;// = FApplication::Get().GetMainViewport();
     if (!MainViewport)
     {
         return;
     }
 
-    const auto ViewportSize = MainViewport->GetSize();
+    const auto ViewportSize = MainViewport->Size();
 
     const float Width  = NMath::Max(ViewportSize.x * 0.6f, 400.0f);
     const float Height = ViewportSize.y * 0.75f;

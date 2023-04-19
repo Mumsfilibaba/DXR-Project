@@ -11,7 +11,7 @@ public:
     void Tick();
 
     /** @brief - Resets the time to zero */
-    FORCEINLINE void Reset()
+    void Reset()
     {
         DeltaTime = FTimespan(0);
         TotalTime = FTimespan(0);

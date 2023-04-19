@@ -38,7 +38,8 @@ public:
         : Storage()
         , NumBits(0)
         , NumElements(0)
-    { }
+    {
+    }
 
     /**
      * @brief         - Constructor that sets the elements based on an integer
@@ -97,7 +98,7 @@ public:
      */
     FORCEINLINE TBitArray(std::initializer_list<bool> InList) noexcept
         : Storage()
-        , NumBits(FContiguousContainerHelper::GetSize(InList))
+        , NumBits(FArrayContainerHelper::Size(InList))
         , NumElements(0)
     {
         AllocateAndZeroStorage(NumBits);
@@ -148,7 +149,7 @@ public:
      */
     FORCEINLINE void ResetWithZeros()
     {
-        FMemory::Memset(GetData(), 0x00, CapacityInBytes());
+        FMemory::Memset(Data(), 0x00, CapacityInBytes());
     }
 
     /**
@@ -156,7 +157,7 @@ public:
      */
     FORCEINLINE void ResetWithOnes()
     {
-        FMemory::Memset(GetData(), 0xff, CapacityInBytes());
+        FMemory::Memset(Data(), 0xff, CapacityInBytes());
         MaskOutLastStorageElement();
     }
 
@@ -179,10 +180,10 @@ public:
     }
 
     /**
-     * @brief        - Push a new bit with the specified value
+     * @brief        - Add a new bit with the specified value
      * @param bValue - Value of the new bit
      */
-    void Push(const bool bValue) noexcept
+    void Add(const bool bValue) noexcept
     {
         Reserve(NumBits + 1);
         AssignBitUnchecked(NumBits, bValue);
@@ -328,13 +329,13 @@ public:
      */
     FORCEINLINE void Reserve(SizeType InNumBits) noexcept
     {
-        const SizeType MaxBits = GetCapacity();
+        const SizeType MaxBits = Capacity();
         if (InNumBits >= MaxBits)
         {
             const SizeType NewNumElements = GetRequiredStorageForBits(InNumBits);
             Storage.Realloc(NumElements, NewNumElements);
 
-            StorageType* Pointer = Storage.GetAllocation();
+            StorageType* Pointer = Storage.Data();
             for (SizeType Index = NumElements; Index < NewNumElements; ++Index)
             {
                 Pointer[Index] = 0;
@@ -482,7 +483,7 @@ public:
      * @brief  - Retrieve the number of bits
      * @return - Returns the number of bits in the array
      */
-    NODISCARD FORCEINLINE SizeType GetSize() const noexcept
+    NODISCARD FORCEINLINE SizeType Size() const noexcept
     {
         return NumBits;
     }
@@ -500,7 +501,7 @@ public:
      * @brief  - Retrieve the maximum number of bits
      * @return - Returns the maximum number of bits in the array
      */
-    NODISCARD FORCEINLINE SizeType GetCapacity() const noexcept
+    NODISCARD FORCEINLINE SizeType Capacity() const noexcept
     {
         return NumElements * GetBitsPerStorage();
     }
@@ -518,18 +519,18 @@ public:
      * @brief  - Retrieve the data of the Array
      * @return - Returns a pointer to the stored data
      */
-    NODISCARD FORCEINLINE StorageType* GetData() noexcept
+    NODISCARD FORCEINLINE StorageType* Data() noexcept
     {
-        return Storage.GetAllocation();
+        return Storage.Data();
     }
 
     /**
      * @brief  - Retrieve the data of the Array
      * @return - Returns a pointer to the stored data
      */
-    NODISCARD FORCEINLINE const StorageType* GetData() const noexcept
+    NODISCARD FORCEINLINE const StorageType* Data() const noexcept
     {
-        return Storage.GetAllocation();
+        return Storage.Data();
     }
 
 public:
@@ -762,7 +763,7 @@ public:
      */
     NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType(*this, GetSize());
+        return IteratorType(*this, Size());
     }
 
     /**
@@ -780,7 +781,7 @@ public:
      */
     NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType(*this, GetSize());
+        return ConstIteratorType(*this, Size());
     }
 
     /**
@@ -789,7 +790,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType(*this, GetSize());
+        return ReverseIteratorType(*this, Size());
     }
 
     /**
@@ -807,7 +808,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType(*this, GetSize());
+        return ReverseConstIteratorType(*this, Size());
     }
 
     /**
@@ -873,12 +874,12 @@ private:
 
         NumElements = NewNumElements;
          
-        FMemory::Memzero(Storage.GetAllocation(), CapacityInBytes());
+        FMemory::Memzero(Storage.Data(), CapacityInBytes());
     }
 
     FORCEINLINE void CopyFrom(const TBitArray& Other) noexcept
     {
-        FMemory::Memcpy(Storage.GetAllocation(), Other.Storage.GetAllocation(), Other.NumElements * sizeof(StorageType));
+        FMemory::Memcpy(Storage.Data(), Other.Storage.Data(), Other.NumElements * sizeof(StorageType));
     }
 
     FORCEINLINE void MoveFrom(TBitArray&& Other) noexcept
@@ -904,10 +905,10 @@ private:
     {
         const SizeType StartElementIndex = GetStorageIndexOfBit(StartBit);
 
-        StorageType* Pointer = GetData() + StartElementIndex;
+        StorageType* Pointer = Data() + StartElementIndex;
 
         const SizeType RemainingElements = StorageSize() - StartElementIndex;
-        const SizeType RemainingBits     = GetSize() - StartBit;
+        const SizeType RemainingBits     = Size() - StartBit;
         if (Steps < RemainingBits)
         {
             // Mask value to ensure that we get zeros shifted in
@@ -935,7 +936,7 @@ private:
 
     FORCEINLINE void BitshiftRight_Simple(SizeType Steps, SizeType StartElementIndex, SizeType ElementsToShift)
     {
-        StorageType* Pointer = GetData() + StartElementIndex + ElementsToShift;
+        StorageType* Pointer = Data() + StartElementIndex + ElementsToShift;
 
         const SizeType CurrShift = Steps % GetBitsPerStorage();
         const SizeType PrevShift = GetBitsPerStorage() - CurrShift;
@@ -956,7 +957,7 @@ private:
         const SizeType StartElementIndex = GetStorageIndexOfBit(BitPosition);
         const SizeType ElementsToShift = NumElements - StartElementIndex;
 
-        StorageType* Pointer = GetData() + StartElementIndex;
+        StorageType* Pointer = Data() + StartElementIndex;
 
         // Mask value to ensure that we get zeros shifted in
         const StorageType StartValue  = *Pointer;
@@ -974,10 +975,10 @@ private:
     {
         const SizeType StartElementIndex = GetStorageIndexOfBit(StartBit);
 
-        StorageType* Pointer = GetData() + StartElementIndex;
+        StorageType* Pointer = Data() + StartElementIndex;
 
         const SizeType RemainingElements = StorageSize() - StartElementIndex;
-        const SizeType RemainingBits     = GetSize() - StartBit;
+        const SizeType RemainingBits     = Size() - StartBit;
         if (Steps < RemainingBits)
         {
             // Mask value to ensure that we get zeros shifted in
@@ -1005,7 +1006,7 @@ private:
 
     FORCEINLINE void BitshiftLeft_Simple(SizeType Steps, SizeType StartElementIndex, SizeType ElementsToShift)
     {
-        StorageType* Pointer = GetData() + StartElementIndex;
+        StorageType* Pointer = Data() + StartElementIndex;
 
         const SizeType CurrShift = Steps % GetBitsPerStorage();
         const SizeType PrevShift = GetBitsPerStorage() - CurrShift;
@@ -1026,7 +1027,7 @@ private:
         const SizeType StartElementIndex = GetStorageIndexOfBit(BitPosition);
         const SizeType ElementsToShift   = NumElements - StartElementIndex;
 
-        StorageType* Pointer = GetData() + StartElementIndex;
+        StorageType* Pointer = Data() + StartElementIndex;
 
         // Mask value to ensure that we get zeros shifted in
         const StorageType StartValue  = *Pointer;
@@ -1066,13 +1067,13 @@ private:
 
     NODISCARD FORCEINLINE StorageType& GetStorage(SizeType Index) noexcept
     {
-        StorageType* Pointer = Storage.GetAllocation();
+        StorageType* Pointer = Storage.Data();
         return Pointer[Index];
     }
 
     NODISCARD FORCEINLINE const StorageType& GetStorage(SizeType Index) const noexcept
     {
-        const StorageType* Pointer = Storage.GetAllocation();
+        const StorageType* Pointer = Storage.Data();
         return Pointer[Index];
     }
 

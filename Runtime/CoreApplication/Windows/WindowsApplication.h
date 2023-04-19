@@ -2,13 +2,12 @@
 #include "Windows.h"
 #include "WindowsWindow.h"
 #include "WindowsCursor.h"
+#include "XInputDevice.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
 #include "CoreApplication/Generic/GenericApplication.h"
-
-#define ENABLE_DPI_AWARENESS (1)
 
 struct FWindowsMessage
 {
@@ -38,7 +37,6 @@ struct FWindowsMessage
     int32 MouseDeltaY;
 };
 
-
 struct IWindowsMessageListener
 {
     virtual ~IWindowsMessageListener() = default;
@@ -51,10 +49,9 @@ struct IWindowsMessageListener
 };
 
 
-class COREAPPLICATION_API FWindowsApplication final 
-    : public FGenericApplication
+class COREAPPLICATION_API FWindowsApplication final : public FGenericApplication
 {
-    FWindowsApplication(HINSTANCE InInstance);
+    FWindowsApplication(HINSTANCE InInstance, HICON InIcon);
     virtual ~FWindowsApplication();
 
 public:
@@ -63,6 +60,10 @@ public:
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
+    
+    virtual void PollInputDevices();
+
+    virtual FInputDevice* GetInputDeviceInterface();
 
     virtual bool SupportsHighPrecisionMouse() const override final { return false; }
 
@@ -85,14 +86,14 @@ public:
 
     void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
-    void AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener);
+    void AddWindowsMessageListener   (const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener);
     void RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener);
 
     bool IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener) const;
 
     void CloseWindow(const FWindowsWindowRef& Window); 
 
-    FORCEINLINE HINSTANCE GetInstance() const 
+    HINSTANCE GetInstance() const 
     { 
         return InstanceHandle;
     }
@@ -105,7 +106,7 @@ private:
     bool UnregisterRawInputDevices();
 
     LRESULT ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
-    LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
+    LRESULT MessageProc    (HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
@@ -119,8 +120,11 @@ private:
     TArray<FWindowsWindowRef> ClosedWindows;
     FCriticalSection          ClosedWindowsCS;
 
-    HINSTANCE                 InstanceHandle;
-    bool                      bIsTrackingMouse;
+    HICON     Icon;
+    HINSTANCE InstanceHandle;
+    bool      bIsTrackingMouse;
+
+    FXInputDevice XInputDevice;
 
     TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
     mutable FCriticalSection                    WindowsMessageListenersCS;

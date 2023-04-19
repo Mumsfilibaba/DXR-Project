@@ -132,14 +132,14 @@ struct IDelegateInstance
 
 
 template<typename ReturnType, typename... ArgTypes>
-class TDelegateInstance 
-    : public IDelegateInstance
+class TDelegateInstance : public IDelegateInstance
 {
 protected:
     FORCEINLINE TDelegateInstance()
         : IDelegateInstance()
         , Handle(FDelegateHandle::EGenerateID::New)
-    { }
+    {
+    }
 
 public:
 
@@ -175,8 +175,7 @@ template<typename FunctionType, typename... PayloadTypes>
 class TFunctionDelegateInstance;
 
 template<typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
-class TFunctionDelegateInstance<ReturnType(ArgTypes...), PayloadTypes...> 
-    : public TDelegateInstance<ReturnType, ArgTypes...>
+class TFunctionDelegateInstance<ReturnType(ArgTypes...), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super        = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TFunctionType<ReturnType(ArgTypes..., PayloadTypes...)>::Type;
@@ -188,7 +187,8 @@ public:
         : Super()
         , Function(InFunction)
         , Payload(Forward<PayloadTypes>(InPayload)...)
-    { }
+    {
+    }
 
     virtual ReturnType Execute(ArgTypes... Args) override final
     {
@@ -207,8 +207,7 @@ private:
 
 
 template<typename ReturnType, typename... ArgTypes>
-class TFunctionDelegateInstance<ReturnType(ArgTypes...)> 
-    : public TDelegateInstance<ReturnType, ArgTypes...>
+class TFunctionDelegateInstance<ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super        = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TFunctionType<ReturnType(ArgTypes...)>::Type;
@@ -219,7 +218,8 @@ public:
     FORCEINLINE TFunctionDelegateInstance(FunctionType InFunction)
         : Super()
         , Function(InFunction)
-    { }
+    {
+    }
 
     virtual ReturnType Execute(ArgTypes... Args) override final
     {
@@ -240,8 +240,7 @@ template<bool IsConst, typename InstanceType, typename ClassType, typename Funct
 class TMemberDelegateInstance;
 
 template<bool IsConst, typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
-class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...), PayloadTypes...> 
-    : public TDelegateInstance<ReturnType, ArgTypes...>
+class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super        = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TMemberFunctionType<IsConst, ClassType, ReturnType(ArgTypes..., PayloadTypes...)>::Type;
@@ -286,8 +285,7 @@ private:
 
 
 template<bool IsConst, typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
-class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...)> 
-    : public TDelegateInstance<ReturnType, ArgTypes...>
+class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super        = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TMemberFunctionType<IsConst, ClassType, ReturnType(ArgTypes...)>::Type;
@@ -333,8 +331,7 @@ template<typename FunctorType, typename FunctionType, typename... PayloadTypes>
 class TLambdaDelegateInstance;
 
 template<typename FunctorType, typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
-class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...), PayloadTypes...> 
-    : public TDelegateInstance<ReturnType, ArgTypes...>
+class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super = TDelegateInstance<ReturnType, ArgTypes...>;
 
@@ -345,7 +342,8 @@ public:
         : Super()
         , Functor(InFunctor)
         , Payload(Forward<PayloadTypes>(InPayload)...)
-    { }
+    {
+    }
 
     virtual ReturnType Execute(ArgTypes... Args) override
     {
@@ -364,8 +362,7 @@ private:
 
 
 template<typename FunctorType, typename ReturnType, typename... ArgTypes>
-class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...)> 
-    : public TDelegateInstance<ReturnType, ArgTypes...>
+class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super = TDelegateInstance<ReturnType, ArgTypes...>;
 
@@ -375,7 +372,8 @@ public:
     FORCEINLINE TLambdaDelegateInstance(FunctorType&& InFunctor)
         : Super()
         , Functor(InFunctor)
-    { }
+    {
+    }
 
     virtual ReturnType Execute(ArgTypes... Args) override
     {

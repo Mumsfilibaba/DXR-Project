@@ -14,7 +14,8 @@ public:
         : m00(0.0f), m01(0.0f), m02(0.0f), m03(0.0f)
         , m10(0.0f), m11(0.0f), m12(0.0f), m13(0.0f)
         , m20(0.0f), m21(0.0f), m22(0.0f), m23(0.0f)
-    { }
+    {
+    }
 
     /**
      * @brief      - Constructor initializing all values with corresponding value
@@ -38,14 +39,15 @@ public:
         : m00(In00), m01(In01), m02(In02), m03(In03)
         , m10(In10), m11(In11), m12(In12), m13(In13)
         , m20(In20), m21(In21), m22(In22), m23(In23)
-    { }
+    {
+    }
 
     /**
      * @brief       - Compares, within a threshold Epsilon, this matrix with another matrix
      * @param Other - matrix to compare against
      * @return      - True if equal, false if not
      */
-    inline bool IsEqual(const FMatrix3x4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    bool IsEqual(const FMatrix3x4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
         Epsilon = NMath::Abs(Epsilon);
 
@@ -65,13 +67,13 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE float* GetData() noexcept { return reinterpret_cast<float*>(this); }
+    FORCEINLINE float* Data() noexcept { return reinterpret_cast<float*>(this); }
 
     /**
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE const float* GetData() const noexcept { return reinterpret_cast<const float*>(this); }
+    FORCEINLINE const float* Data() const noexcept { return reinterpret_cast<const float*>(this); }
 
     /**
      * @brief       - Returns the result after comparing this and another matrix

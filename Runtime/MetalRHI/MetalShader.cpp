@@ -11,7 +11,7 @@ FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVi
     {
         NSError* Error = nil;
         
-        FString SourceString(reinterpret_cast<const CHAR*>(InCode.GetData()), InCode.GetSize());
+        FString SourceString(reinterpret_cast<const CHAR*>(InCode.Data()), InCode.Size());
         
         NSString* Source = SourceString.GetNSString();
         CHECK(Source != nil);

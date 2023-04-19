@@ -3,18 +3,16 @@
 #include "Core/Platform/PlatformTime.h"
 
 FStopwatch::FStopwatch()
+    : Frequency(FPlatformTime::QueryPerformanceFrequency())
 {
-    Frequency = FPlatformTime::QueryPerformanceFrequency();
     Tick();
 }
 
 void FStopwatch::Tick()
 {
-    const uint64 Now = FPlatformTime::QueryPerformanceCounter();
-    
-    // TODO: Does this make sense? 
+    const uint64 Now = FPlatformTime::QueryPerformanceCounter();    
     uint64 Delta       = Now - LastTime;
-    uint64 Nanoseconds = NTime::FromSeconds(Delta) / Frequency;
+    uint64 Nanoseconds = TimeUtilities::FromSeconds(Delta) / Frequency;
 
     DeltaTime = FTimespan(Nanoseconds);
     LastTime  = Now;

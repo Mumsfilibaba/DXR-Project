@@ -69,34 +69,12 @@ public:
     }
 
     /**
-     * @brief       - Retrieve a element at a certain index of the array
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
-     */
-    NODISCARD FORCEINLINE ElementType& GetElementAt(SizeType Index) noexcept
-    {
-        CHECK(Index < NUM_ELEMENTS);
-        return Elements[Index];
-    }
-
-    /**
-     * @brief       - Retrieve a element at a certain index of the array
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
-     */
-    NODISCARD FORCEINLINE const ElementType& GetElementAt(SizeType Index) const noexcept
-    {
-        CHECK(Index < NUM_ELEMENTS);
-        return Elements[Index];
-    }
-
-    /**
      * @brief              - Fill the container with the specified value
      * @param InputElement - Element to copy into all elements in the array
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        ::AssignElements(Elements, InputElement, GetSize());
+        ::AssignElements(Elements, InputElement, Size());
     }
 
     /**
@@ -115,13 +93,13 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData();
-        const ElementType* RESTRICT EndAddress     = GetData() + GetSize();
+        const ElementType* RESTRICT CurrentAddress = Data();
+        const ElementType* RESTRICT EndAddress     = Data() + Size();
         while (CurrentAddress != EndAddress)
         {
             if (Element == *CurrentAddress)
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Data());
             }
 
             ++CurrentAddress;
@@ -138,13 +116,13 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData();
-        const ElementType* RESTRICT EndAddress     = GetData() + GetSize();
+        const ElementType* RESTRICT CurrentAddress = Data();
+        const ElementType* RESTRICT EndAddress     = Data() + Size();
         while (CurrentAddress != EndAddress)
         {
             if (Predicate(*CurrentAddress))
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Data());
             }
 
             ++CurrentAddress;
@@ -160,14 +138,14 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData() + GetSize();
-        const ElementType* RESTRICT EndAddress     = GetData();
+        const ElementType* RESTRICT CurrentAddress = Data() + Size();
+        const ElementType* RESTRICT EndAddress     = Data();
         while (CurrentAddress != EndAddress)
         {
             --CurrentAddress;
             if (Element == *CurrentAddress)
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Data());
             }
         }
 
@@ -182,14 +160,14 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = GetData() + GetSize();
-        const ElementType* RESTRICT EndAddress     = GetData();
+        const ElementType* RESTRICT CurrentAddress = Data() + Size();
+        const ElementType* RESTRICT EndAddress     = Data();
         while (CurrentAddress != EndAddress)
         {
             --CurrentAddress;
             if (Predicate(*CurrentAddress))
             {
-                return static_cast<SizeType>(CurrentAddress - GetData());
+                return static_cast<SizeType>(CurrentAddress - Data());
             }
         }
 
@@ -224,8 +202,8 @@ public:
     template<class FunctorType>
     FORCEINLINE void Foreach(FunctorType&& Functor)
     {
-        ElementType* RESTRICT CurrentAddress = GetData();
-        ElementType* RESTRICT EndAddress     = GetData() + GetSize();
+        ElementType* RESTRICT CurrentAddress = Data();
+        ElementType* RESTRICT EndAddress     = Data() + Size();
         while (CurrentAddress != EndAddress)
         {
             Functor(*CurrentAddress);
@@ -248,7 +226,7 @@ public:
      * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD FORCEINLINE ElementType* GetData() noexcept
+    NODISCARD FORCEINLINE ElementType* Data() noexcept
     {
         return Elements;
     }
@@ -257,7 +235,7 @@ public:
      * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD FORCEINLINE const ElementType* GetData() const noexcept
+    NODISCARD FORCEINLINE const ElementType* Data() const noexcept
     {
         return Elements;
     }
@@ -271,7 +249,8 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) noexcept
     {
-        return GetElementAt(Index);
+        CHECK(Index < NUM_ELEMENTS);
+        return Elements[Index];
     }
 
     /**
@@ -281,7 +260,8 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
     {
-        return GetElementAt(Index);
+        CHECK(Index < NUM_ELEMENTS);
+        return Elements[Index];
     }
 
     /**
@@ -292,12 +272,12 @@ public:
     template<typename ArrayType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
     {
-        if (GetSize() != RHS.GetSize())
+        if (Size() != RHS.Size())
         {
             return false;
         }
 
-        return ::CompareElements<ElementType>(GetData(), RHS.GetData(), GetSize());
+        return ::CompareElements<ElementType>(Data(), RHS.Data(), Size());
     }
 
     /**
@@ -326,7 +306,7 @@ public:
      * @brief  - Returns the size of the container
      * @return - The current size of the container
      */
-    NODISCARD CONSTEXPR SizeType GetSize() const noexcept
+    NODISCARD CONSTEXPR SizeType Size() const noexcept
     {
         return NUM_ELEMENTS;
     }
@@ -337,14 +317,14 @@ public:
      */
     NODISCARD CONSTEXPR SizeType SizeInBytes() const noexcept
     {
-        return GetSize() * sizeof(ElementType);
+        return Size() * sizeof(ElementType);
     }
 
     /**
      * @brief  - Returns the capacity of the container
      * @return - The current capacity of the container
      */
-    NODISCARD CONSTEXPR SizeType GetCapacity() const noexcept
+    NODISCARD CONSTEXPR SizeType Capacity() const noexcept
     {
         return NUM_ELEMENTS;
     }
@@ -355,7 +335,7 @@ public:
      */
     NODISCARD CONSTEXPR SizeType CapacityInBytes() const noexcept
     {
-        return GetCapacity() * sizeof(ElementType);
+        return Capacity() * sizeof(ElementType);
     }
 
 public:
@@ -375,7 +355,7 @@ public:
      */
     NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType(*this, GetSize());
+        return IteratorType(*this, Size());
     }
 
     /**
@@ -393,7 +373,7 @@ public:
      */
     NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType(*this, GetSize());
+        return ConstIteratorType(*this, Size());
     }
 
     /**
@@ -402,7 +382,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType(*this, GetSize());
+        return ReverseIteratorType(*this, Size());
     }
 
     /**
@@ -420,7 +400,7 @@ public:
      */
     NODISCARD  ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType(*this, GetSize());
+        return ReverseConstIteratorType(*this, Size());
     }
 
     /**

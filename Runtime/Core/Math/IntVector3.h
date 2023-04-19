@@ -12,7 +12,8 @@ public:
         : x(0)
         , y(0)
         , z(0)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with a corresponding value.
@@ -24,7 +25,8 @@ public:
         : x(InX)
         , y(InY)
         , z(InZ)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with an array.
@@ -34,7 +36,8 @@ public:
         : x(Array[0])
         , y(Array[1])
         , z(Array[2])
-    { }
+    {
+    }
 
     /**
      * @brief        - Constructor initializing all components with a single value.
@@ -44,7 +47,8 @@ public:
         : x(Scalar)
         , y(Scalar)
         , z(Scalar)
-    { }
+    {
+    }
 
     /**
      * @brief       - Compares this vector with another vector
@@ -319,7 +323,8 @@ public:
         : x(0)
         , y(0)
         , z(0)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with a corresponding value.
@@ -331,7 +336,8 @@ public:
         : x(InX)
         , y(InY)
         , z(InZ)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with an array.
@@ -341,7 +347,8 @@ public:
         : x(Array[0])
         , y(Array[1])
         , z(Array[2])
-    { }
+    {
+    }
 
     /**
      * @brief        - Constructor initializing all components with a single value.
@@ -351,7 +358,8 @@ public:
         : x(Scalar)
         , y(Scalar)
         , z(Scalar)
-    { }
+    {
+    }
 
     /**
      * @brief       - Compares this vector with another vector

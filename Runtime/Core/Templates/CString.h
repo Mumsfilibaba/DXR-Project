@@ -74,7 +74,6 @@ struct TChar
 typedef TChar<CHAR>     FChar;
 typedef TChar<WIDECHAR> FCharWide;
 
-
 template<typename InCharType>
 struct TCString
 {
@@ -251,7 +250,6 @@ FORCEINLINE const WIDECHAR* TCString<WIDECHAR>::Empty() noexcept
 
 typedef TCString<CHAR>     FCString;
 typedef TCString<WIDECHAR> FCStringWide;
-
 
 #define DECLARE_FORMAT_STRING_SPECIFIER(Type, Specifier)                              \
 template<>                                                                            \

@@ -11,10 +11,8 @@
     {                                                                           \
     };
 
-
 template<typename... ArgTypes>
-class TMulticastDelegate 
-    : public FMulticastDelegateBase
+class TMulticastDelegate : public FMulticastDelegateBase
 {
     using Super = FMulticastDelegateBase;
 
@@ -54,7 +52,8 @@ public:
      */
     FORCEINLINE TMulticastDelegate()
         : Super()
-    { }
+    {
+    }
 
     /**
      * @brief          - Add a function to the delegate
@@ -144,7 +143,7 @@ public:
     {
         Super::Lock();
 
-        for (int32 Index = 0; Index < Delegates.GetSize(); Index++)
+        for (int32 Index = 0; Index < Delegates.Size(); Index++)
         {
             DelegateType& Delegate = static_cast<DelegateType&>(Delegates[Index]);
 

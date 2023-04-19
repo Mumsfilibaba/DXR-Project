@@ -35,7 +35,7 @@ public:
     FORCEINLINE uint64                     GetHeight() const { return Desc.Height; }
     FORCEINLINE uint64                     GetDepth()  const { return Desc.DepthOrArraySize; }
 
-    FORCEINLINE uint64                     GetSize() const { return Desc.Width; }
+    FORCEINLINE uint64                     Size() const { return Desc.Width; }
 
 private:
     TComPtr<ID3D12Resource>   Resource;

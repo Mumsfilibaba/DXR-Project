@@ -118,8 +118,8 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
 
                 if (UniqueVertices.count(TempVertex) == 0)
                 {
-                    UniqueVertices[TempVertex] = static_cast<uint32>(Data.Mesh.Vertices.GetSize());
-                    Data.Mesh.Vertices.Push(TempVertex);
+                    UniqueVertices[TempVertex] = static_cast<uint32>(Data.Mesh.Vertices.Size());
+                    Data.Mesh.Vertices.Add(TempVertex);
                 }
 
                 Data.Mesh.Indices.Emplace(UniqueVertices[TempVertex]);

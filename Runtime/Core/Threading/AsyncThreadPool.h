@@ -53,7 +53,7 @@ public:
 
     IAsyncTask* ReturnThreadOrRetrieveNextTask(FAsyncWorkThread* InThread);
 
-    int32 GetNumTasks() const { return TaskQueue.GetSize(); }
+    int32 GetNumTasks() const { return TaskQueue.Size(); }
 
 private:
     bool CreateWorkers(int32 NumWorkers);

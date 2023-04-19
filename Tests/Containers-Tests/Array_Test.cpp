@@ -1,20 +1,23 @@
 #include "Array_Test.h"
 
 #if RUN_TARRAY_TEST || RUN_TARRAY_BENCHMARKS
-#include <iostream>
+// <-- These are use to compare our versions with the standard library ones since they likley "work" as intended
 #include <string>
 #include <vector>
-#include <chrono>
 #include <algorithm>
+// -->
 
 #include "TestUtils.h"
 
 #include <Core/Containers/Array.h>
+#include <Core/Time/TimeUtilities.h>
+#include <Core/Math/Random.h>
+#include <Core/Platform/PlatformTime.h>
 
 #define ENABLE_INLINE_ALLOCATOR         (1)
 #define ENABLE_STD_STRING_REALLOCATABLE (1)
 #define ENABLE_SHRINKTOFIT_BENCHMARK    (0)
-#define ENABLE_SORT_BENCHMARK           (0)
+#define ENABLE_SORT_BENCHMARK           (1)
 
 #if ENABLE_INLINE_ALLOCATOR
 template<typename T>
@@ -33,25 +36,29 @@ struct FClock
 
 public:
     FClock()
-        : Duration( 0 )
-        , TotalDuration( 0 )
-    { }
-
-    inline void Reset()
+        : Duration(0)
+        , TotalDuration(0)
+        , TimeFrequency(FPlatformTime::QueryPerformanceFrequency())
     {
-        Duration = 0;
+    }
+
+    void Reset()
+    {
+        Duration      = 0;
         TotalDuration = 0;
     }
 
-    inline int64 GetLastDuration() const
+    int64 GetLastDuration() const
     {
         return Duration;
     }
 
-    inline int64 GetTotalDuration() const
+    int64 GetTotalDuration() const
     {
         return TotalDuration;
     }
+
+    const int64 TimeFrequency;
 
 private:
     inline void AddDuration(int64 InDuration)
@@ -60,7 +67,7 @@ private:
         TotalDuration += Duration;
     }
 
-    int64 Duration = 0;
+    int64 Duration      = 0;
     int64 TotalDuration = 0;
 };
 
@@ -71,21 +78,23 @@ struct FScopedClock
 {
     FScopedClock(FClock& InParent)
         : Parent(InParent)
-        , t0(std::chrono::high_resolution_clock::now())
-        , t1()
+        , Start(FPlatformTime::QueryPerformanceCounter())
+        , End()
     {
-        t0 = std::chrono::high_resolution_clock::now();
     }
 
     ~FScopedClock()
     {
-        t1 = std::chrono::high_resolution_clock::now();
-        Parent.AddDuration(std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count());
+        End = FPlatformTime::QueryPerformanceCounter();
+
+        const uint64 Delta       = End - Start;
+        const uint64 Nanoseconds = TimeUtilities::FromSeconds(Delta) / Parent.TimeFrequency;
+        Parent.AddDuration(Nanoseconds);
     }
 
     FClock& Parent;
-    std::chrono::steady_clock::time_point t0;
-    std::chrono::steady_clock::time_point t1;
+    uint64  Start;
+    uint64  End;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -141,8 +150,8 @@ void PrintArr(const TArray<T, TArrayAllocator<T>>& Arr, const std::string& Name 
         std::cout << (std::string)i << '\n';
     }
 
-    std::cout << "Size: " << Arr.GetSize() << '\n';
-    std::cout << "GetCapacity: " << Arr.GetCapacity() << '\n';
+    std::cout << "Size: " << Arr.Size() << '\n';
+    std::cout << "Capacity: " << Arr.Capacity() << '\n';
 
     std::cout << "--------------------------------" << '\n' << '\n';
 }
@@ -158,8 +167,8 @@ void PrintArr<int32>(const TArray<int32, TArrayAllocator<int32>>& Arr, const std
         std::cout << i << '\n';
     }
 
-    std::cout << "Size: " << Arr.GetSize() << '\n';
-    std::cout << "GetCapacity: " << Arr.GetCapacity() << '\n';
+    std::cout << "Size: " << Arr.Size() << '\n';
+    std::cout << "Capacity: " << Arr.Capacity() << '\n';
 
     std::cout << "--------------------------------" << '\n' << '\n';
 }
@@ -176,7 +185,7 @@ void PrintArr(const std::vector<T>& Arr, const std::string& Name = "")
     }
 
     std::cout << "Size: " << Arr.size() << '\n';
-    std::cout << "GetCapacity: " << Arr.capacity() << '\n';
+    std::cout << "Capacity: " << Arr.capacity() << '\n';
 
     std::cout << "--------------------------------" << '\n' << '\n';
 }
@@ -213,7 +222,7 @@ void TArray_Benchmark()
             {
                 std::vector<std::string> Strings0;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -245,7 +254,7 @@ void TArray_Benchmark()
             {
                 TArray<std::string, TArrayAllocator<std::string>> Strings1;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -288,7 +297,7 @@ void TArray_Benchmark()
             {
                 std::vector<std::string> Strings0;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -320,7 +329,7 @@ void TArray_Benchmark()
             {
                 TArray<std::string, TArrayAllocator<std::string>> Strings1;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -349,21 +358,21 @@ void TArray_Benchmark()
 #endif
 
 #if 1
-    // Push
+    // Add
     {
 #if defined(DEBUG_BUILD) && PLATFORM_WINDOWS
         const uint32 Iterations = 1000;
 #else
         const uint32 Iterations = 10000;
 #endif
-        std::cout << '\n' << "Push/push_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
+        std::cout << '\n' << "Add/push_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
         {
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
                 std::vector<std::string> Strings0;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -395,14 +404,14 @@ void TArray_Benchmark()
             {
                 TArray<std::string, TArrayAllocator<std::string>> Strings1;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
 #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Strings1.Push("My name is jeff");
+                    Strings1.Add("My name is jeff");
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -438,7 +447,7 @@ void TArray_Benchmark()
             {
                 std::vector<std::string> Strings0;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -470,7 +479,7 @@ void TArray_Benchmark()
             {
                 TArray<std::string, TArrayAllocator<std::string>> Strings1;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -515,7 +524,7 @@ void TArray_Benchmark()
             {
                 std::vector<FVec3> Vectors0;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -547,7 +556,7 @@ void TArray_Benchmark()
             {
                 TArray<FVec3, TArrayAllocator<FVec3>> Vectors1;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -590,7 +599,7 @@ void TArray_Benchmark()
             {
                 std::vector<FVec3> Vectors0;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -622,7 +631,7 @@ void TArray_Benchmark()
             {
                 TArray<FVec3, TArrayAllocator<FVec3>> Vectors1;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -651,21 +660,21 @@ void TArray_Benchmark()
 #endif
 
 #if 1
-    // Push
+    // Add
     {
 #if defined(DEBUG_BUILD) && PLATFORM_WINDOWS
         const uint32 Iterations = 1000;
 #else
         const uint32 Iterations = 10000;
 #endif
-        std::cout << '\n' << "Push/push_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
+        std::cout << '\n' << "Add/push_back (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << '\n';
         {
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
                 std::vector<FVec3> Vectors0;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -697,14 +706,14 @@ void TArray_Benchmark()
             {
                 TArray<FVec3, TArrayAllocator<FVec3>> Vectors1;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
 #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Vectors1.Push(FVec3(3.0, 5.0, -6.0));
+                    Vectors1.Add(FVec3(3.0, 5.0, -6.0));
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -740,7 +749,7 @@ void TArray_Benchmark()
             {
                 std::vector<FVec3> Vectors0;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -772,7 +781,7 @@ void TArray_Benchmark()
             {
                 TArray<FVec3, TArrayAllocator<FVec3>> Vectors1;
 
-                FScopedClock FScopedClock(Clock);
+                FScopedClock ScopedClock(Clock);
 
 #if ENABLE_SHRINKTOFIT_BENCHMARK
                 int32 ResetCounter = 0;
@@ -808,10 +817,10 @@ void TArray_Benchmark()
         const uint32 SortTestCount = 100;
     #endif
 
-        const uint32 NumNumbers = 1000000;
+        const uint32 NumNumbers = 1'000'000;
         std::cout << '\n' << "HeapSort/heap_sort (NumNumbers=" << NumNumbers << ", SortTestCount=" << SortTestCount << ")" << '\n';
 
-        srand((unsigned int)time(0));
+        FRandom Random;
 
         {
             FClock Clock;
@@ -820,16 +829,16 @@ void TArray_Benchmark()
                 TArray<int32, TArrayAllocator<int32>> Heap;
                 for (uint32 n = 0; n < NumNumbers; n++)
                 {
-                    Heap.Emplace(rand());
+                    Heap.Emplace(static_cast<int32>(Random.Rand()));
                 }
 
                 {
-                    FScopedClock FScopedClock(Clock);
+                    FScopedClock ScopedClock(Clock);
                     Heap.HeapSort();
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / SortTestCount;
+            const auto Duration = Clock.GetTotalDuration() / SortTestCount;
             std::cout << "TArray      Sorting time: " << Duration << "ns" << '\n';
             std::cout << "TArray      Sorting time: " << Duration / (1000 * 1000) << "ms" << '\n';
         }
@@ -841,17 +850,17 @@ void TArray_Benchmark()
                 std::vector<int32> Heap;
                 for (uint32 n = 0; n < NumNumbers; n++)
                 {
-                    Heap.emplace_back(rand());
+                    Heap.emplace_back(static_cast<int32>(Random.Rand()));
                 }
 
                 {
-                    FScopedClock FScopedClock(Clock);
+                    FScopedClock ScopedClock(Clock);
                     std::make_heap(Heap.begin(), Heap.end());
                     std::sort_heap(Heap.begin(), Heap.end());
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / SortTestCount;
+            const auto Duration = Clock.GetTotalDuration() / SortTestCount;
             std::cout << "std::vector Sorting time: " << Duration << "ns" << '\n';
             std::cout << "std::vector Sorting time: " << Duration / (1000 * 1000) << "ms" << '\n';
         }
@@ -886,7 +895,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         TArray<std::string, TArrayAllocator<std::string>> Strings1(5, "Hello");
         TEST_CHECK_ARRAY(Strings1, { "Hello", "Hello", "Hello", "Hello", "Hello" });
 
-        TArray<std::string, TArrayAllocator<std::string>> Strings2(Strings1.GetData(), Strings1.GetSize());
+        TArray<std::string, TArrayAllocator<std::string>> Strings2(Strings1.Data(), Strings1.Size());
         TEST_CHECK_ARRAY(Strings2, { "Hello", "Hello", "Hello", "Hello", "Hello" });
 
         TArray<std::string, TArrayAllocator<std::string>> Strings3 =
@@ -947,7 +956,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         Strings1.Reset({ "Test-String #1", "Test-String #2", "Test-String #3" });
         TEST_CHECK_ARRAY(Strings1, { "Test-String #1", "Test-String #2", "Test-String #3" });
 
-        Strings2.Reset(Strings3.GetData(), Strings3.GetSize());
+        Strings2.Reset(Strings3.Data(), Strings3.Size());
         TEST_CHECK_ARRAY(Strings2, { "Hello World", "TArray", "This is a longer teststring" });
 
         /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -973,8 +982,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings3.Resize(4, "Hi, hi");
-        TEST_CHECK(Strings3.GetSize()     == 4);
-        TEST_CHECK(Strings3.GetCapacity() == 4);
+        TEST_CHECK(Strings3.Size()     == 4);
+        TEST_CHECK(Strings3.Capacity() == 4);
         TEST_CHECK_ARRAY(Strings3,
         {
             "Hello World",
@@ -984,8 +993,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings1.Resize(6, "Hello World");
-        TEST_CHECK(Strings1.GetSize()     == 6);
-        TEST_CHECK(Strings1.GetCapacity() == 6);
+        TEST_CHECK(Strings1.Size()     == 6);
+        TEST_CHECK(Strings1.Capacity() == 6);
         TEST_CHECK_ARRAY(Strings1, 
         { 
             "Test-String #1",
@@ -997,8 +1006,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings3.Resize(5, "No i am your father");
-        TEST_CHECK(Strings3.GetSize()     == 5);
-        TEST_CHECK(Strings3.GetCapacity() == 5);
+        TEST_CHECK(Strings3.Size()     == 5);
+        TEST_CHECK(Strings3.Capacity() == 5);
         TEST_CHECK_ARRAY(Strings3,
         {
             "Hello World",
@@ -1043,9 +1052,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         std::cout << '\n' << "Testing Reserve" << '\n' << '\n';
 
-        Strings4.Reserve(Strings4.GetCapacity());
-        TEST_CHECK(Strings4.GetSize()     == 15);
-        TEST_CHECK(Strings4.GetCapacity() == 15);
+        Strings4.Reserve(Strings4.Capacity());
+        TEST_CHECK(Strings4.Size()     == 15);
+        TEST_CHECK(Strings4.Capacity() == 15);
         TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
@@ -1068,8 +1077,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << "Shrinking" << '\n' << '\n';
 
         Strings4.Reserve(5);
-        TEST_CHECK(Strings4.GetSize()     == 5);
-        TEST_CHECK(Strings4.GetCapacity() == 5);
+        TEST_CHECK(Strings4.Size()     == 5);
+        TEST_CHECK(Strings4.Capacity() == 5);
         TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
@@ -1082,8 +1091,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << "Growing" << '\n' << '\n';
         
         Strings4.Reserve(10);
-        TEST_CHECK(Strings4.GetSize()     == 5);
-        TEST_CHECK(Strings4.GetCapacity() == 10);
+        TEST_CHECK(Strings4.Size()     == 5);
+        TEST_CHECK(Strings4.Capacity() == 10);
         TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
@@ -1095,9 +1104,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         std::cout << "Resize" << '\n' << '\n';
 
-        Strings4.Resize(Strings4.GetCapacity() - 2, "This spot is reserved");
-        TEST_CHECK(Strings4.GetSize()     == 8);
-        TEST_CHECK(Strings4.GetCapacity() == 10);
+        Strings4.Resize(Strings4.Capacity() - 2, "This spot is reserved");
+        TEST_CHECK(Strings4.Size()     == 8);
+        TEST_CHECK(Strings4.Capacity() == 10);
         TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
@@ -1116,8 +1125,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Testing Shrink" << '\n' << '\n';
 
         Strings4.Shrink();
-        TEST_CHECK(Strings4.GetSize()     == 8);
-        TEST_CHECK(Strings4.GetCapacity() == 8);
+        TEST_CHECK(Strings4.Size()     == 8);
+        TEST_CHECK(Strings4.Capacity() == 8);
         TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
@@ -1136,8 +1145,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Testing Assignment" << '\n' << '\n';
 
         Strings0 = Strings4;
-        TEST_CHECK(Strings0.GetSize()     == 8);
-        TEST_CHECK(Strings0.GetCapacity() == 8);
+        TEST_CHECK(Strings0.Size()     == 8);
+        TEST_CHECK(Strings0.Capacity() == 8);
         TEST_CHECK_ARRAY(Strings0,
         {
             "New String",
@@ -1151,8 +1160,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings1 = Move(Strings3);
-        TEST_CHECK(Strings1.GetSize()     == 5);
-        TEST_CHECK(Strings1.GetCapacity() == 5);
+        TEST_CHECK(Strings1.Size()     == 5);
+        TEST_CHECK(Strings1.Capacity() == 5);
         TEST_CHECK_ARRAY(Strings1,
         {
             "Hello World",
@@ -1169,8 +1178,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
             "Letters to fill up space in a string"
         };
 
-        TEST_CHECK(Strings2.GetSize()     == 3);
-        TEST_CHECK(Strings2.GetCapacity() == 5);
+        TEST_CHECK(Strings2.Size()     == 3);
+        TEST_CHECK(Strings2.Capacity() == 5);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Another String in a InitializerList",
@@ -1185,10 +1194,10 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         
         for (uint32 i = 0; i < 6; ++i)
         {
-            Strings2.Push("This is Pushed String #" + std::to_string(i));
+            Strings2.Add("This is Pushed String #" + std::to_string(i));
         }
 
-        TEST_CHECK(Strings2.GetSize() == 9);
+        TEST_CHECK(Strings2.Size() == 9);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Another String in a InitializerList",
@@ -1205,12 +1214,12 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Testing PushBack" << '\n' << '\n';
         for (uint32 i = 0; i < 6; ++i)
         {
-            Strings2.Push(ArgvStr);
+            Strings2.Add(ArgvStr);
         }
 
         PRINT_ARRAY(Strings2);
 
-        TEST_CHECK(Strings2.GetSize() == 15);
+        TEST_CHECK(Strings2.Size() == 15);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Another String in a InitializerList",
@@ -1239,7 +1248,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
             Strings2.Emplace("This is an Emplaced String #" + std::to_string(i));
         }
 
-        TEST_CHECK(Strings2.GetSize() == 21);
+        TEST_CHECK(Strings2.Size() == 21);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Another String in a InitializerList",
@@ -1276,7 +1285,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         PRINT_ARRAY(Strings2);
         
-        TEST_CHECK(Strings2.GetSize() == 18);
+        TEST_CHECK(Strings2.Size() == 18);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Another String in a InitializerList",
@@ -1309,7 +1318,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         PRINT_ARRAY(Strings2);
 
-        TEST_CHECK(Strings2.GetSize() == 19);
+        TEST_CHECK(Strings2.Size() == 19);
         TEST_CHECK_ARRAY(Strings2,
         {
             ArgvStr.c_str(),
@@ -1334,7 +1343,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings2.Insert(0, "Inserted String");
-        TEST_CHECK(Strings2.GetSize() == 20);
+        TEST_CHECK(Strings2.Size() == 20);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String",
@@ -1360,7 +1369,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings2.Insert(0, { "Inserted String #1", "Inserted String #2" });
-        TEST_CHECK(Strings2.GetSize() == 22);
+        TEST_CHECK(Strings2.Size() == 22);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String #1",
@@ -1391,7 +1400,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         Strings2.Insert(2, ArgvStr);
         PRINT_ARRAY(Strings2);
 
-        TEST_CHECK(Strings2.GetSize() == 23);
+        TEST_CHECK(Strings2.Size() == 23);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String #1",
@@ -1420,7 +1429,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings2.Insert(2, "Inserted String Again");
-        TEST_CHECK(Strings2.GetSize() == 24);
+        TEST_CHECK(Strings2.Size() == 24);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String #1",
@@ -1450,7 +1459,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         Strings2.Insert(2, { "Inserted String Again #1", "Inserted String Again #2" });
-        TEST_CHECK(Strings2.GetSize() == 26);
+        TEST_CHECK(Strings2.Size() == 26);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String #1",
@@ -1483,8 +1492,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         std::cout << '\n' << "At End" << '\n' << '\n';
 
-        Strings2.Insert(Strings2.GetSize(), { "Inserted String At End #1", "Inserted String At End #2" });
-        TEST_CHECK(Strings2.GetSize() == 28);
+        Strings2.Insert(Strings2.Size(), { "Inserted String At End #1", "Inserted String At End #2" });
+        TEST_CHECK(Strings2.Size() == 28);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String #1",
@@ -1521,13 +1530,13 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        TEST_CHECK(Strings2.GetCapacity() == 28);
+        TEST_CHECK(Strings2.Capacity() == 28);
 
         Strings2.Insert(0, ArgvStr);
         
         PRINT_ARRAY(Strings2);
 
-        TEST_CHECK(Strings2.GetSize() == 29);
+        TEST_CHECK(Strings2.Size() == 29);
         TEST_CHECK_ARRAY(Strings2,
         {
             ArgvStr.c_str(),
@@ -1563,10 +1572,10 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        TEST_CHECK(Strings2.GetCapacity() == 29);
+        TEST_CHECK(Strings2.Capacity() == 29);
 
         Strings2.Insert(0, "Inserted String Reallocated");
-        TEST_CHECK(Strings2.GetSize() == 30);
+        TEST_CHECK(Strings2.Size() == 30);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated",
@@ -1603,10 +1612,10 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        TEST_CHECK(Strings2.GetCapacity() == 30);
+        TEST_CHECK(Strings2.Capacity() == 30);
 
         Strings2.Insert(0, { "Inserted String Reallocated #1", "Inserted String Reallocated #2" });
-        TEST_CHECK(Strings2.GetSize() == 32);
+        TEST_CHECK(Strings2.Size() == 32);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #1",
@@ -1647,12 +1656,12 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        TEST_CHECK(Strings2.GetCapacity() == 32);
+        TEST_CHECK(Strings2.Capacity() == 32);
 
         Strings2.Insert(2, ArgvStr);
         PRINT_ARRAY(Strings2);
 
-        TEST_CHECK(Strings2.GetSize() == 33);
+        TEST_CHECK(Strings2.Size() == 33);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #1",
@@ -1692,10 +1701,10 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        TEST_CHECK(Strings2.GetCapacity() == 33);
+        TEST_CHECK(Strings2.Capacity() == 33);
 
         Strings2.Insert(2, "Inserted String Again Reallocated");
-        TEST_CHECK(Strings2.GetSize() == 34);
+        TEST_CHECK(Strings2.Size() == 34);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #1",
@@ -1736,10 +1745,10 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        TEST_CHECK(Strings2.GetCapacity() == 34);
+        TEST_CHECK(Strings2.Capacity() == 34);
 
         Strings2.Insert(2, { "Inserted String Again Reallocated #1", "Inserted String Again Reallocated #2" });
-        TEST_CHECK(Strings2.GetSize() == 36);
+        TEST_CHECK(Strings2.Size() == 36);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #1",
@@ -1784,10 +1793,10 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // Add a shrink to fit to force reallocation
         Strings2.Shrink();
-        TEST_CHECK(Strings2.GetCapacity() == 36);
+        TEST_CHECK(Strings2.Capacity() == 36);
 
-        Strings2.Insert(Strings2.GetSize(), { "Inserted String At End Reallocated #1", "Inserted String At End Reallocated #2" });
-        TEST_CHECK(Strings2.GetSize() == 38);
+        Strings2.Insert(Strings2.Size(), { "Inserted String At End Reallocated #1", "Inserted String At End Reallocated #2" });
+        TEST_CHECK(Strings2.Size() == 38);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #1",
@@ -1838,7 +1847,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "At front" << '\n' << '\n';
 
         Strings2.RemoveAt(0);
-        TEST_CHECK(Strings2.GetSize() == 37);
+        TEST_CHECK(Strings2.Size() == 37);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #2",
@@ -1883,7 +1892,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "At Arbitrary" << '\n' << '\n';
 
         Strings2.RemoveAt(2);
-        TEST_CHECK(Strings2.GetSize() == 36);
+        TEST_CHECK(Strings2.Size() == 36);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Reallocated #2",
@@ -1932,7 +1941,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Range At front" << '\n' << '\n';
         
         Strings2.RemoveRangeAt(0, 2);
-        TEST_CHECK(Strings2.GetSize() == 34);
+        TEST_CHECK(Strings2.Size() == 34);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Again Reallocated",
@@ -1974,7 +1983,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Range At Arbitrary" << '\n' << '\n';
 
         Strings2.RemoveRangeAt(4, 3);
-        TEST_CHECK(Strings2.GetSize() == 31);
+        TEST_CHECK(Strings2.Size() == 31);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Again Reallocated",
@@ -2012,8 +2021,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         std::cout << '\n' << "Range At End" << '\n' << '\n';
         
-        Strings2.RemoveRangeAt(Strings2.GetSize() - 3, 3);
-        TEST_CHECK(Strings2.GetSize() == 28);
+        Strings2.RemoveRangeAt(Strings2.Size() - 3, 3);
+        TEST_CHECK(Strings2.Size() == 28);
         TEST_CHECK_ARRAY(Strings2,
         {
             "Inserted String Again Reallocated",
@@ -2148,7 +2157,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         // Test constructors
         TArray<FVec3, TArrayAllocator<FVec3>> Vectors0;
         TArray<FVec3, TArrayAllocator<FVec3>> Vectors1(5, FVec3(1.0, 1.0, 1.0));
-        TArray<FVec3, TArrayAllocator<FVec3>> Vectors2(Vectors1.GetData(), Vectors1.GetSize());
+        TArray<FVec3, TArrayAllocator<FVec3>> Vectors2(Vectors1.Data(), Vectors1.Size());
         TArray<FVec3, TArrayAllocator<FVec3>> Vectors3 =
         {
             FVec3(1.0, 1.0, 1.0),
@@ -2188,7 +2197,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         Vectors1.Reset({ FVec3(1.0, 5.0, 5.0), FVec3(2.0, 5.0, 5.0), FVec3(3.0, 5.0, 5.0) });
         PRINT_ARRAY(Vectors1);
 
-        Vectors2.Reset(Vectors3.GetData(), Vectors3.GetSize());
+        Vectors2.Reset(Vectors3.Data(), Vectors3.Size());
         PRINT_ARRAY(Vectors2);
 
         // Resize
@@ -2225,7 +2234,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         PRINT_ARRAY(Vectors4);
 
         std::cout << "After Reserve" << '\n' << '\n';
-        Vectors4.Reserve(Vectors4.GetCapacity());
+        Vectors4.Reserve(Vectors4.Capacity());
         PRINT_ARRAY(Vectors4);
 
         std::cout << "Shrinking" << '\n' << '\n';
@@ -2237,7 +2246,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         PRINT_ARRAY(Vectors4);
 
         std::cout << "Resize" << '\n' << '\n';
-        Vectors4.Resize(Vectors4.GetCapacity() - 2, FVec3(-1.0f, -1.0f, -1.0f));
+        Vectors4.Resize(Vectors4.Capacity() - 2, FVec3(-1.0f, -1.0f, -1.0f));
         PRINT_ARRAY(Vectors4);
 
         // Shrink To Fit
@@ -2288,7 +2297,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Testing PushBack" << '\n' << '\n';
         for (uint32 i = 0; i < 6; ++i)
         {
-            Vectors2.Push(FVec3(7.0, 7.0, 7.0));
+            Vectors2.Add(FVec3(7.0, 7.0, 7.0));
         }
         PRINT_ARRAY(Vectors2);
 
@@ -2296,7 +2305,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Testing PushBack" << '\n' << '\n';
         for (uint32 i = 0; i < 6; ++i)
         {
-            Vectors2.Push(Vector);
+            Vectors2.Add(Vector);
         }
         PRINT_ARRAY(Vectors2);
 
@@ -2331,7 +2340,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         PRINT_ARRAY(Vectors2);
 
         std::cout << "At End" << '\n' << '\n';
-        Vectors2.Insert(Vectors2.GetSize(), { FVec3(1.0f, 1.0f, 3.0f), FVec3(2.0f, 2.0f, 4.0f) });
+        Vectors2.Insert(Vectors2.Size(), { FVec3(1.0f, 1.0f, 3.0f), FVec3(2.0f, 2.0f, 4.0f) });
         PRINT_ARRAY(Vectors2);
 
         std::cout << "At front after reallocation" << '\n' << '\n';
@@ -2361,7 +2370,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << "At End after reallocation" << '\n' << '\n';
         // Add a shrink to fit to force reallocation
         Vectors2.Shrink();
-        Vectors2.Insert(Vectors2.GetSize(), { FVec3(6.0f, 6.0f, 6.0f), FVec3(2.0f, 2.0f, 7.0f) });
+        Vectors2.Insert(Vectors2.Size(), { FVec3(6.0f, 6.0f, 6.0f), FVec3(2.0f, 2.0f, 7.0f) });
         PRINT_ARRAY(Vectors2);
 
         // Erase
@@ -2385,7 +2394,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         PRINT_ARRAY(Vectors2);
 
         std::cout << "Range At End" << '\n' << '\n';
-        Vectors2.RemoveRangeAt(Vectors2.GetSize() - 3, 3);
+        Vectors2.RemoveRangeAt(Vectors2.Size() - 3, 3);
         PRINT_ARRAY(Vectors2);
 
         // Swap
@@ -2408,14 +2417,14 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         // Append
         std::cout << '\n' << "Testing Append" << '\n';
         Vectors0.Append(
-            {
-                FVec3(103.0f, 103.0f, 103.0f),
-                FVec3(113.0f, 113.0f, 113.0f),
-                FVec3(123.0f, 123.0f, 123.0f),
-                FVec3(133.0f, 133.0f, 133.0f),
-                FVec3(143.0f, 143.0f, 143.0f),
-                FVec3(153.0f, 153.0f, 153.0f)
-            });
+        {
+            FVec3(103.0f, 103.0f, 103.0f),
+            FVec3(113.0f, 113.0f, 113.0f),
+            FVec3(123.0f, 123.0f, 123.0f),
+            FVec3(133.0f, 133.0f, 133.0f),
+            FVec3(143.0f, 143.0f, 143.0f),
+            FVec3(153.0f, 153.0f, 153.0f)
+        });
         PRINT_ARRAY(Vectors0);
 
         // PopBackRange

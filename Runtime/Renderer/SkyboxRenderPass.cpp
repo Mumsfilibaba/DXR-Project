@@ -10,15 +10,15 @@
 bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
 {
     SkyboxMesh = FMeshFactory::CreateSphere(1);
-    SkyboxIndexCount  = SkyboxMesh.Indices.GetSize();
+    SkyboxIndexCount  = SkyboxMesh.Indices.Size();
     SkyboxIndexFormat = EIndexFormat::uint32;
 
     FRHIBufferDesc VBDesc(
         SkyboxMesh.Vertices.SizeInBytes(),
-        SkyboxMesh.Vertices.GetStride(),
+        SkyboxMesh.Vertices.Stride(),
         EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
 
-    SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, SkyboxMesh.Vertices.GetData());
+    SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, SkyboxMesh.Vertices.Data());
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -30,10 +30,10 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
 
     FRHIBufferDesc IBDesc(
         SkyboxMesh.Indices.SizeInBytes(),
-        SkyboxMesh.Indices.GetStride(),
+        SkyboxMesh.Indices.Stride(),
         EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
 
-    SkyboxIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, SkyboxMesh.Indices.GetData());
+    SkyboxIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, SkyboxMesh.Indices.Data());
     if (!SkyboxIndexBuffer)
     {
         return false;

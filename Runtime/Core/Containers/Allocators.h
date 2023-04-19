@@ -37,13 +37,13 @@ public:
      * @brief  - Retrieve the allocation
      * @return - Returns the allocation
      */
-    NODISCARD FORCEINLINE ElementType* GetAllocation() noexcept { return nullptr; }
+    NODISCARD FORCEINLINE ElementType* Data() noexcept { return nullptr; }
 
     /**
      * @brief  - Retrieve the allocation
      * @return - Returns the allocation
      */
-    NODISCARD FORCEINLINE const ElementType* GetAllocation() const noexcept { return nullptr; }
+    NODISCARD FORCEINLINE const ElementType* Data() const noexcept { return nullptr; }
 
     /**
      * @brief  - Returns the current state of the allocation
@@ -56,6 +56,28 @@ public:
      * @return - Returns true or false if the allocation is allocated on the heap
      */
     NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept { return false; }
+
+    /**
+     * @brief       - Returns an element from the allocation with the specified Index
+     * @param Index - Index in the allocation to retrieve
+     * @return      - Returns a reference to the element specified by 'Index'
+     */
+    NODISCARD FORCEINLINE ElementType& operator[](int32 Index) noexcept
+    {
+        ElementType* Allocation = Data();
+        return Allocation[Index];
+    }
+
+    /**
+     * @brief       - Returns an element from the allocation with the specified Index
+     * @param Index - Index in the allocation to retrieve
+     * @return      - Returns a reference to the element specified by 'Index'
+     */
+    NODISCARD FORCEINLINE const ElementType& operator[](int32 Index) const noexcept
+    {
+        ElementType* Allocation = Data();
+        return Allocation[Index];
+    }
 };
 
 
@@ -68,7 +90,8 @@ public:
 
     FORCEINLINE TDefaultArrayAllocator() noexcept
         : Allocation(nullptr)
-    { }
+    {
+    }
 
     FORCEINLINE ~TDefaultArrayAllocator()
     {
@@ -94,16 +117,16 @@ public:
     {
         CHECK(this != &Other);
         Free();
-        Allocation       = Other.Allocation;
+        Allocation = Other.Allocation;
         Other.Allocation = nullptr;
     }
 
-    NODISCARD FORCEINLINE ElementType* GetAllocation() noexcept
+    NODISCARD FORCEINLINE ElementType* Data() noexcept
     {
         return Allocation;
     }
 
-    NODISCARD FORCEINLINE const ElementType* GetAllocation() const noexcept
+    NODISCARD FORCEINLINE const ElementType* Data() const noexcept
     {
         return Allocation;
     }
@@ -116,6 +139,16 @@ public:
     NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept
     {
         return true;
+    }
+
+    NODISCARD FORCEINLINE ElementType& operator[](int32 Index) noexcept
+    {
+        return Allocation[Index];
+    }
+
+    NODISCARD FORCEINLINE const ElementType& operator[](int32 Index) const noexcept
+    {
+        return Allocation[Index];
     }
 
 private:
@@ -142,7 +175,7 @@ class TInlineArrayAllocator
             return reinterpret_cast<const ElementType*>(InlineAllocation);
         }
 
-        NODISCARD CONSTEXPR SizeType GetSize() const noexcept
+        NODISCARD CONSTEXPR SizeType Size() const noexcept
         {
             return sizeof(InlineAllocation);
         }
@@ -158,7 +191,8 @@ public:
     FORCEINLINE TInlineArrayAllocator() noexcept
         : InlineAllocation()
         , DynamicAllocation()
-    { }
+    {
+    }
 
     FORCEINLINE ~TInlineArrayAllocator()
     {
@@ -173,21 +207,21 @@ public:
             {
                 CHECK(CurrentCount <= NumInlineElements);
                 DynamicAllocation.Realloc(CurrentCount, NewElementCount);
-                ::RelocateElements<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
+                ::RelocateElements<ElementType>(reinterpret_cast<void*>(DynamicAllocation.Data()), InlineAllocation.GetElements(), CurrentCount);
             }
             else
             {
                 DynamicAllocation.Realloc(CurrentCount, NewElementCount);
             }
 
-            return DynamicAllocation.GetAllocation();
+            return DynamicAllocation.Data();
         }
         else
         {
             if (DynamicAllocation.HasAllocation())
             {
                 CurrentCount = (CurrentCount <= NumInlineElements) ? CurrentCount : NumInlineElements;
-                ::RelocateElements<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.GetAllocation(), CurrentCount);
+                ::RelocateElements<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.Data(), CurrentCount);
                 Free();
             }
 
@@ -199,7 +233,7 @@ public:
     {
         if (!DynamicAllocation.HasAllocation())
         {
-            FMemory::Memzero(reinterpret_cast<void*>(InlineAllocation.GetElements()), InlineAllocation.GetSize());
+            FMemory::Memzero(reinterpret_cast<void*>(InlineAllocation.GetElements()), InlineAllocation.Size());
         }
         else
         {
@@ -214,21 +248,21 @@ public:
         if (!Other.DynamicAllocation.HasAllocation())
         {
             ::RelocateElements<ElementType>(InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements);
-            FMemory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.GetSize());
+            FMemory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.Size());
         }
 
         // This call Free's any potential dynamic allocation we own
         DynamicAllocation.MoveFrom(Move(Other.DynamicAllocation));
     }
 
-    NODISCARD FORCEINLINE ElementType* GetAllocation() noexcept
+    NODISCARD FORCEINLINE ElementType* Data() noexcept
     {
-        return IsHeapAllocated() ? DynamicAllocation.GetAllocation() : InlineAllocation.GetElements();
+        return IsHeapAllocated() ? DynamicAllocation.Data() : InlineAllocation.GetElements();
     }
 
-    NODISCARD FORCEINLINE const ElementType* GetAllocation() const noexcept
+    NODISCARD FORCEINLINE const ElementType* Data() const noexcept
     {
-        return IsHeapAllocated() ? DynamicAllocation.GetAllocation() : InlineAllocation.GetElements();
+        return IsHeapAllocated() ? DynamicAllocation.Data() : InlineAllocation.GetElements();
     }
 
     NODISCARD FORCEINLINE bool HasAllocation() const noexcept
@@ -239,6 +273,18 @@ public:
     NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept
     {
         return DynamicAllocation.HasAllocation();
+    }
+
+    NODISCARD FORCEINLINE ElementType& operator[](int32 Index) noexcept
+    {
+        ElementType* Allocation = Data();
+        return Allocation[Index];
+    }
+
+    NODISCARD FORCEINLINE const ElementType& operator[](int32 Index) const noexcept
+    {
+        ElementType* Allocation = Data();
+        return Allocation[Index];
     }
 
 private:

@@ -134,18 +134,15 @@ FRenderer::~FRenderer()
 
     FrameStatistics.Reset();
 
-    if (FApplication::IsInitialized())
+    if (GEngine && GEngine->MainWindow)
     {
-        FApplication& Application = FApplication::Get();
-        // Application.GetMainViewport()->DestroyRHI();
-
-        // Application.RemoveWidget(TextureDebugger);
+        GEngine->MainWindow->RemoveOverlayWidget(TextureDebugger);
         TextureDebugger.Reset();
 
-        // Application.RemoveWidget(InfoWindow);
+        GEngine->MainWindow->RemoveOverlayWidget(InfoWindow);
         InfoWindow.Reset();
 
-        // Application.RemoveWidget(GPUProfilerWindow);
+        GEngine->MainWindow->RemoveOverlayWidget(InfoWindow);
         GPUProfilerWindow.Reset();
     }
 }
@@ -190,11 +187,7 @@ bool FRenderer::Create()
     //    Resources.MainViewport = GEngine->MainViewport->GetRHI();
     //}
 
-    FRHIBufferDesc CBDesc(
-        sizeof(FCameraBuffer),
-        sizeof(FCameraBuffer),
-        EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
-    
+    FRHIBufferDesc CBDesc(sizeof(FCameraBuffer), sizeof(FCameraBuffer), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
     Resources.CameraBuffer = RHICreateBuffer(CBDesc, EResourceAccess::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
@@ -320,29 +313,26 @@ bool FRenderer::Create()
     LightProbeRenderer.RenderSkyLightProbe(CommandList, LightSetup, Resources);
     GRHICommandExecutor.ExecuteCommandList(CommandList);
 
-    FApplication& Application = FApplication::Get();
-
     // Register EventFunc
     GEngine->MainWindow->GetWindowResizedEvent().AddRaw(this, &FRenderer::OnWindowResize);
 
     // Register Windows
-    TextureDebugger = MakeShared<FRenderTargetDebugWindow>();
-    // Application.AddWidget(TextureDebugger);
+    TextureDebugger = NewWidget(FRenderTargetDebugWindow);
+    GEngine->MainWindow->AddOverlaySlot().AttachWidget(TextureDebugger);
 
-    InfoWindow = MakeShared<FRendererInfoWindow>();
-    // Application.AddWidget(InfoWindow);
+    InfoWindow = NewWidget(FRendererInfoWindow);
+    GEngine->MainWindow->AddOverlaySlot().AttachWidget(InfoWindow);
 
-    GPUProfilerWindow = MakeShared<FGPUProfilerWindow>();
-    // Application.AddWidget(GPUProfilerWindow);
-
+    GPUProfilerWindow = NewWidget(FGPUProfilerWindow);
+    GEngine->MainWindow->AddOverlaySlot().AttachWidget(GPUProfilerWindow);
     return true;
 }
 
 void FRenderer::FrustumCullingAndSortingInternal(
-    const FCamera* Camera,
+    const FCamera*               Camera,
     const TPair<uint32, uint32>& DrawCommands,
-    TArray<uint32>& OutDeferredDrawCommands,
-    TArray<uint32>& OutForwardDrawCommands)
+    TArray<uint32>&              OutDeferredDrawCommands,
+    TArray<uint32>&              OutForwardDrawCommands)
 {
 
     TRACE_SCOPE("Frustum Culling And Sorting Inner");
@@ -355,7 +345,7 @@ void FRenderer::FrustumCullingAndSortingInternal(
         TArray<float>& OutDistances,
         TArray<uint32>& OutCommands) -> void
     {
-        CHECK(OutDistances.GetSize() == OutCommands.GetSize());
+        CHECK(OutDistances.Size() == OutCommands.Size());
 
         FVector3 CameraPosition = Camera->GetPosition();
         FVector3 DistanceVector = WorldPosition - CameraPosition;
@@ -363,7 +353,7 @@ void FRenderer::FrustumCullingAndSortingInternal(
         const float NewDistance = DistanceVector.LengthSquared();
 
         int32 Index = 0;
-        for (; Index < OutCommands.GetSize(); ++Index)
+        for (; Index < OutCommands.Size(); ++Index)
         {
             const float Distance = OutDistances[Index];
             if (NewDistance < Distance)
@@ -434,7 +424,7 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
     ReadableMeshCommands.Reserve(NumThreads);
 
     const auto CameraPtr            = Scene.GetCamera();
-    const auto NumMeshCommands      = Scene.GetMeshDrawCommands().GetSize();
+    const auto NumMeshCommands      = Scene.GetMeshDrawCommands().Size();
     const auto NumCommandsPerThread = (NumMeshCommands / NumThreads) + 1;
 
     int32 RemainingCommands = NumMeshCommands;
@@ -585,7 +575,7 @@ void FRenderer::Tick(const FScene& Scene)
     // FrustumCulling
     if (!GFrustumCullEnabled.GetValue())
     {
-        for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.GetSize(); ++CommandIndex)
+        for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.Size(); ++CommandIndex)
         {
             const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
             if (Command.Material->ShouldRenderInForwardPass())
@@ -1010,7 +1000,7 @@ void FRenderer::Tick(const FScene& Scene)
 
         CommandList.BeginRenderPass(RenderPass);
         
-        FApplication::Get().DrawWindows(CommandList);
+        FWindowedApplication::Get().DrawWindows(CommandList);
         
         CommandList.EndRenderPass();
     }
@@ -1043,8 +1033,8 @@ void FRenderer::Tick(const FScene& Scene)
 
 void FRenderer::OnWindowResize(const FWindowResizedEvent& Event)
 {
-    const uint32 Width  = Event.Width;
-    const uint32 Height = Event.Height;
+    const uint32 Width  = Event.GetWidth();
+    const uint32 Height = Event.GetHeight();
 
     if (Width > 0 && Height > 0)
     {

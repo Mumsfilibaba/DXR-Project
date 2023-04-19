@@ -1,11 +1,8 @@
 #pragma once
 #include "Mac.h"
-
 #include "Core/Generic/GenericFile.h"
 
-
-class CORE_API FMacFileHandle 
-    : public IFileHandle
+class CORE_API FMacFileHandle : public IFileHandle
 {
     static constexpr int64 kMaxReadWriteSize = 1024 * 1024;
 
@@ -35,9 +32,7 @@ private:
     bool  bReadOnly;
 };
 
-
-struct CORE_API FMacFile 
-    : public FGenericFile
+struct CORE_API FMacFile final : public FGenericFile
 {
     static IFileHandle* OpenForRead(const FString& Filename);
 

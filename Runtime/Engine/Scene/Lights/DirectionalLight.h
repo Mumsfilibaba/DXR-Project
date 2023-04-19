@@ -65,7 +65,7 @@ public:
         return CascadeSplitLambda;
     }
 
-    FORCEINLINE float GetSize() const
+    FORCEINLINE float Size() const
     {
         return Size;
     }

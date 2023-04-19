@@ -2,8 +2,7 @@
 #include "MulticastDelegate.h"
 
 #define DECLARE_EVENT(NewEvent, OwnerType, ...)         \
-    class NewEvent                                      \
-        : public TEvent<__VA_ARGS__>                    \
+    class NewEvent : public TEvent<__VA_ARGS__>         \
     {                                                   \
         friend class OwnerType;                         \
                                                         \
@@ -18,8 +17,7 @@
     };
 
 template<typename... ArgTypes>
-class TEvent 
-    : public TMulticastDelegate<ArgTypes...>
+class TEvent : public TMulticastDelegate<ArgTypes...>
 {
     using Super = TMulticastDelegate<ArgTypes...>;
 

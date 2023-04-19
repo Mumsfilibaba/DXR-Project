@@ -56,7 +56,7 @@ bool FMeshImporter::LoadMesh(const FString& Filename, FSceneData& OutScene, EMes
 
         if (FFBXLoader::LoadFile(Filename, OutScene, FBXFlags))
         {
-            const auto Count = NMath::Max<int32>(Filename.GetSize() - 4, 0);
+            const auto Count = NMath::Max<int32>(Filename.Size() - 4, 0);
 
             FString NewFileName = Filename.SubString(0, Count);
             NewFileName += ".dxrmesh";
@@ -68,7 +68,7 @@ bool FMeshImporter::LoadMesh(const FString& Filename, FSceneData& OutScene, EMes
         const bool bReverseHandedness = ((Flags & EMeshImportFlags::Default) == EMeshImportFlags::None);
         if (FOBJLoader::LoadFile(Filename, OutScene, bReverseHandedness))
         {
-            const auto Count = NMath::Max<int32>(Filename.GetSize() - 4, 0);
+            const auto Count = NMath::Max<int32>(Filename.Size() - 4, 0);
 
             FString NewFileName = Filename.SubString(0, Count);
             NewFileName += ".dxrmesh";
@@ -96,7 +96,7 @@ void FMeshImporter::LoadCacheFile()
         }
     } 
 
-    CHAR* Start = FileContents.GetData();
+    CHAR* Start = FileContents.Data();
     while (Start && (*Start != '\0'))
     {
         // Skip newline chars
@@ -175,8 +175,8 @@ void FMeshImporter::UpdateCacheFile()
 bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& NewFile, const FSceneData& Scene)
 {
     FCustomScene SceneHeader;
-    SceneHeader.NumModels    = Scene.Models.GetSize();
-    SceneHeader.NumMaterials = Scene.Materials.GetSize();
+    SceneHeader.NumModels    = Scene.Models.Size();
+    SceneHeader.NumMaterials = Scene.Materials.Size();
 
     TArray<FCustomModel> Models;
     Models.Resize(SceneHeader.NumModels);
@@ -238,7 +238,7 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
     TextureNames.Resize(NumTextures);
 
     // Zero all names
-    FMemory::Memzero(TextureNames.GetData(), TextureNames.SizeInBytes());
+    FMemory::Memzero(TextureNames.Data(), TextureNames.SizeInBytes());
 
     TArray<FCustomMaterial> Materials;
     Materials.Resize(SceneHeader.NumMaterials);
@@ -346,15 +346,15 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
         // 1) Header
         File->Write(reinterpret_cast<const uint8*>(&SceneHeader), sizeof(FCustomScene));
         // 2) Model-Headers
-        File->Write(reinterpret_cast<const uint8*>(Models.GetData()), Models.SizeInBytes());
+        File->Write(reinterpret_cast<const uint8*>(Models.Data()), Models.SizeInBytes());
         // 3) All the vertices
-        File->Write(reinterpret_cast<const uint8*>(SceneVertices.GetData()), SceneVertices.SizeInBytes());
+        File->Write(reinterpret_cast<const uint8*>(SceneVertices.Data()), SceneVertices.SizeInBytes());
         // 4) All the indices
-        File->Write(reinterpret_cast<const uint8*>(SceneIndicies.GetData()), SceneIndicies.SizeInBytes());
+        File->Write(reinterpret_cast<const uint8*>(SceneIndicies.Data()), SceneIndicies.SizeInBytes());
         // 5) All Textures
-        File->Write(reinterpret_cast<const uint8*>(TextureNames.GetData()), TextureNames.SizeInBytes());
+        File->Write(reinterpret_cast<const uint8*>(TextureNames.Data()), TextureNames.SizeInBytes());
         // 6) All Materials
-        File->Write(reinterpret_cast<const uint8*>(Materials.GetData()), Materials.SizeInBytes());
+        File->Write(reinterpret_cast<const uint8*>(Materials.Data()), Materials.SizeInBytes());
     }
 
     Cache.emplace(std::make_pair(OriginalFile, NewFile));
@@ -381,7 +381,7 @@ bool FMeshImporter::LoadCustom(const FString& InFilename, FSceneData& OutScene)
     }
 
     // 1) Scene Header
-    FCustomScene* SceneHeader = reinterpret_cast<FCustomScene*>(FileContents.GetData());
+    FCustomScene* SceneHeader = reinterpret_cast<FCustomScene*>(FileContents.Data());
     CHECK(SceneHeader->NumModels <= FCustomScene::MaxModels);
     CHECK(SceneHeader->NumMaterials <= FCustomScene::MaxMaterials);
 
@@ -427,12 +427,12 @@ bool FMeshImporter::LoadCustom(const FString& InFilename, FSceneData& OutScene)
 
         const auto NumVertices = ModelHeaders[Index].NumVertices;
         CurrentModel.Mesh.Vertices.Resize(NumVertices);
-        FMemory::Memcpy(CurrentModel.Mesh.Vertices.GetData(), Vertices, NumVertices * sizeof(FVertex));
+        FMemory::Memcpy(CurrentModel.Mesh.Vertices.Data(), Vertices, NumVertices * sizeof(FVertex));
         Vertices += NumVertices;
 
         const auto NumIndices = ModelHeaders[Index].NumIndices;
         CurrentModel.Mesh.Indices.Resize(NumIndices);
-        FMemory::Memcpy(CurrentModel.Mesh.Indices.GetData(), Indices, NumIndices * sizeof(uint32));
+        FMemory::Memcpy(CurrentModel.Mesh.Indices.Data(), Indices, NumIndices * sizeof(uint32));
         Indices += NumIndices;
 
         CurrentModel.MaterialIndex = ModelHeaders[Index].MaterialIndex;

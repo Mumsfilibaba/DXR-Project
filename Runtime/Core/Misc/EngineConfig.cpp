@@ -285,7 +285,7 @@ bool FConfigFile::WriteToFile()
             return false;
         }
 
-        File->Write((const uint8*)ConfigString.GetData(), ConfigString.SizeInBytes());
+        File->Write((const uint8*)ConfigString.Data(), ConfigString.SizeInBytes());
     }
 
     return false;
@@ -372,7 +372,7 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
     FConfigFile*    ConfigFile = AddConfigFile(Filename);
     FConfigSection* CurrentSection = nullptr;
 
-    CHAR* Start = FileContents.GetData();
+    CHAR* Start = FileContents.Data();
     while (Start && *Start)
     {
         // Skip newline chars

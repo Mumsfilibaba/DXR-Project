@@ -219,7 +219,7 @@ bool FD3D12Viewport::RetriveBackBuffers()
         1,
         ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
 
-    if (BackBuffers.GetSize() < static_cast<int32>(NumBackBuffers))
+    if (BackBuffers.Size() < static_cast<int32>(NumBackBuffers))
     {
         BackBuffers.Resize(NumBackBuffers);
         for (FD3D12TextureRef& Texture : BackBuffers)

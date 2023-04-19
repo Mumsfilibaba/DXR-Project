@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/CoreDefines.h"
 
-namespace NTime
+namespace TimeUtilities
 {
     template<typename T>
     CONSTEXPR T ToMicroseconds(T Nanoseconds) { return Nanoseconds / T(1000); }

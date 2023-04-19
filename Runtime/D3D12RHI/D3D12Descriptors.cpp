@@ -85,7 +85,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE FD3D12OfflineDescriptorHeap::Allocate(uint32& OutHea
             return { 0 };
         }
 
-        HeapIndex = static_cast<uint32>(Heaps.GetSize()) - 1;
+        HeapIndex = static_cast<uint32>(Heaps.Size()) - 1;
     }
 
     FDescriptorHeap&  Heap  = Heaps[HeapIndex];
@@ -106,7 +106,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE FD3D12OfflineDescriptorHeap::Allocate(uint32& OutHea
 void FD3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex)
 {
     TScopedLock Lock(CriticalSection);
-    CHECK(HeapIndex < (uint32)Heaps.GetSize());
+    CHECK(HeapIndex < (uint32)Heaps.Size());
 
     FDescriptorHeap& Heap = Heaps[HeapIndex];
 
@@ -159,7 +159,7 @@ bool FD3D12OfflineDescriptorHeap::AllocateHeap()
     {
         if (!Name.IsEmpty())
         {
-            FString DbgName = Name + TTypeToString<int32>::ToString(Heaps.GetSize());
+            FString DbgName = Name + TTypeToString<int32>::ToString(Heaps.Size());
             Heap->SetName(DbgName.GetCString());
         }
 
@@ -262,7 +262,7 @@ void FD3D12OnlineDescriptorHeap::Reset()
 
 void FD3D12OnlineDescriptorHeap::SetNumPooledHeaps(uint32 NumHeaps)
 {
-    if (NumHeaps > static_cast<uint32>(HeapPool.GetSize()))
+    if (NumHeaps > static_cast<uint32>(HeapPool.Size()))
     {
         HeapPool.Resize(NumHeaps);
     }

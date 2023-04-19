@@ -194,7 +194,7 @@ MetalBufferType* FMetalInterface::CreateBuffer(const InitializerType& Initialize
         ResourceOptions |= MTLResourceStorageModePrivate | MTLResourceCPUCacheModeWriteCombined;
     }
     
-    const auto BufferLength = NMath::AlignUp(NewBuffer->GetSize(), BufferAlignment);
+    const auto BufferLength = NMath::AlignUp(NewBuffer->Size(), BufferAlignment);
     
     id<MTLDevice> Device       = GetDeviceContext()->GetMTLDevice();
     id<MTLBuffer> NewMTLBuffer = [Device newBufferWithLength:BufferLength options:ResourceOptions];

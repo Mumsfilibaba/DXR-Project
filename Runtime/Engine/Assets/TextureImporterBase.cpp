@@ -89,7 +89,7 @@ FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
     
     TArray<uint8> FileData;
     FileData.Resize(int32(FileSize));
-    File->Read(FileData.GetData(), FileData.GetSize());
+    File->Read(FileData.Data(), FileData.Size());
 
     if (FileData.IsEmpty())
     {
@@ -100,10 +100,10 @@ FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
     int32 Width        = 0;
     int32 Height       = 0;
     int32 ChannelCount = 0;
-    stbi_info_from_memory(FileData.GetData(), FileData.GetSize(), &Width, &Height, &ChannelCount);
+    stbi_info_from_memory(FileData.Data(), FileData.Size(), &Width, &Height, &ChannelCount);
 
-    const bool bIsFloat    = stbi_is_hdr_from_memory(FileData.GetData(), FileData.GetSize());
-    const bool bIsExtented = stbi_is_16_bit_from_memory(FileData.GetData(), FileData.GetSize());
+    const bool bIsFloat    = stbi_is_hdr_from_memory(FileData.Data(), FileData.Size());
+    const bool bIsExtented = stbi_is_16_bit_from_memory(FileData.Data(), FileData.Size());
 
     EFormat Format = EFormat::Unknown;
 
@@ -115,8 +115,8 @@ FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
         const auto NumChannels = (ChannelCount == 3) ? 4 : ChannelCount;
 
         Pixels = TUniquePtr<uint8[]>(reinterpret_cast<uint8*>(stbi_load_16_from_memory(
-            FileData.GetData(),
-            FileData.GetSize(),
+            FileData.Data(),
+            FileData.Size(),
             &Width,
             &Height,
             &ChannelCount,
@@ -127,8 +127,8 @@ FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
     else if (bIsFloat)
     {
         Pixels = TUniquePtr<uint8[]>(reinterpret_cast<uint8*>(stbi_loadf_from_memory(
-            FileData.GetData(),
-            FileData.GetSize(),
+            FileData.Data(),
+            FileData.Size(),
             &Width,
             &Height,
             &ChannelCount,
@@ -142,8 +142,8 @@ FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
         const auto NumChannels = (ChannelCount == 3) ? 4 : ChannelCount;
 
         Pixels = TUniquePtr<uint8[]>(stbi_load_from_memory(
-            FileData.GetData(),
-            FileData.GetSize(),
+            FileData.Data(),
+            FileData.Size(),
             &Width,
             &Height,
             &ChannelCount,

@@ -6,12 +6,14 @@ struct FAABB
     FAABB()
         : Top()
         , Bottom()
-    { }
+    {
+    }
 
     FAABB(const FVector3& InTop, const FVector3& InBottom)
         : Top(InTop)
         , Bottom(InBottom)
-    { }
+    {
+    }
 
    /**
     * @brief  - Returns the center position of the bounding box

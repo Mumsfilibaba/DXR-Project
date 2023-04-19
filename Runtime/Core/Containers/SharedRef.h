@@ -17,7 +17,8 @@ public:
      */
     FORCEINLINE TSharedRef() noexcept
         : Object(nullptr)
-    { }
+    {
+    }
 
     /**
      * @brief       - Copy-constructor

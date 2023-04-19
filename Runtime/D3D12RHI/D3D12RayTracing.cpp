@@ -167,7 +167,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
     FMemory::Memzero(&Inputs);
 
     Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    Inputs.NumDescs    = InInstances.GetSize();
+    Inputs.NumDescs    = InInstances.Size();
     Inputs.Type        = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
     Inputs.Flags       = ConvertAccelerationStructureBuildFlags(GetFlags());
     
@@ -263,8 +263,8 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         CmdContext.TransitionResource(ScratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(InInstances.GetSize());
-    for (int32 Instance = 0; Instance < InstanceDescs.GetSize(); Instance++)
+    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(InInstances.Size());
+    for (int32 Instance = 0; Instance < InstanceDescs.Size(); Instance++)
     {
         FD3D12RayTracingGeometry* D3D12Geometry = static_cast<FD3D12RayTracingGeometry*>(InInstances[Instance].Geometry);
         FMemory::Memcpy(&InstanceDescs[Instance].Transform, &InInstances[Instance].Transform, sizeof(FMatrix3x4));
@@ -309,7 +309,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
     }
 
     CmdContext.TransitionResource(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-    CmdContext.UpdateBuffer(InstanceBuffer.Get(), FBufferRegion(0, InstanceDescs.SizeInBytes()), InstanceDescs.GetData());
+    CmdContext.UpdateBuffer(InstanceBuffer.Get(), FBufferRegion(0, InstanceDescs.SizeInBytes()), InstanceDescs.Data());
     CmdContext.TransitionResource(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc;
@@ -500,7 +500,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
         uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_CBV);
         CHECK(RootIndex < 4);
 
-        uint32 NumDescriptors = Resources.ConstantBuffers.GetSize();
+        uint32 NumDescriptors = Resources.ConstantBuffers.Size();
         uint32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
         OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
 
@@ -518,7 +518,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
         uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_SRV);
         CHECK(RootIndex < 4);
 
-        uint32 NumDescriptors = Resources.ShaderResourceViews.GetSize();
+        uint32 NumDescriptors = Resources.ShaderResourceViews.Size();
         uint32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
         OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
 
@@ -536,7 +536,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
         uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_UAV);
         CHECK(RootIndex < 4);
 
-        uint32 NumDescriptors = Resources.UnorderedAccessViews.GetSize();
+        uint32 NumDescriptors = Resources.UnorderedAccessViews.Size();
         uint32 Handle = ResourceHeap->AllocateHandles(NumDescriptors);
         OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
 
@@ -554,7 +554,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
         uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_Sampler);
         CHECK(RootIndex < 4);
 
-        uint32 NumDescriptors = Resources.SamplerStates.GetSize();
+        uint32 NumDescriptors = Resources.SamplerStates.Size();
         uint32 Handle = SamplerHeap->AllocateHandles(NumDescriptors);
         OutShaderBindingEntry.RootDescriptorTables[RootIndex] = SamplerHeap->GetGPUDescriptorHandleAt(Handle);
 

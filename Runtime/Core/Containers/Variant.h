@@ -179,7 +179,8 @@ public:
     FORCEINLINE TVariant() noexcept
         : Value()
         , TypeIndex(InvalidTypeIndex)
-    { }
+    {
+    }
 
     /**
      * @brief      - In-Place constructor that constructs a variant of specified type with arguments for the types constructor
@@ -252,10 +253,7 @@ public:
      * @return     - Returns a reference to the newly created element
      */
     template<typename T, typename... ArgTypes>
-    FORCEINLINE typename TEnableIf<
-            TIsValidType<T>::Value,
-            typename TAddLValueReference<typename TRemoveReference<T>::Type>::Type
-        >::Type Emplace(ArgTypes&&... Args) noexcept
+    FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddLValueReference<typename TRemoveReference<T>::Type>::Type>::Type Emplace(ArgTypes&&... Args) noexcept
     {
         Reset();
         Construct<T>(Forward<ArgTypes>(Args)...);
@@ -310,10 +308,7 @@ public:
      * @return - Returns a reference to the currently held value
      */
     template<typename T>
-    NODISCARD FORCEINLINE typename TEnableIf<
-            TIsValidType<T>::Value,
-            typename TAddLValueReference<typename TRemoveReference<T>::Type>::Type
-        >::Type GetValue() noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddLValueReference<typename TRemoveReference<T>::Type>::Type>::Type GetValue() noexcept
     {
         CHECK(IsValid() && IsType<T>());
         return *Value.CastStorage<T>();
@@ -324,10 +319,7 @@ public:
      * @return - Returns a reference to the currently held value
      */
     template<typename T>
-    NODISCARD FORCEINLINE typename TEnableIf<
-            TIsValidType<T>::Value,
-            typename TAddLValueReference<typename TAddConst<typename TRemoveReference<T>::Type>::Type>::Type
-        >::Type GetValue() const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddLValueReference<typename TAddConst<typename TRemoveReference<T>::Type>::Type>::Type>::Type GetValue() const noexcept
     {
         CHECK(IsValid() && IsType<T>());
         return *Value.CastStorage<T>();
@@ -338,10 +330,7 @@ public:
      * @return - Returns a pointer to the currently stored value or nullptr if not correct type
      */
     template<typename T>
-    NODISCARD FORCEINLINE typename TEnableIf<
-            TIsValidType<T>::Value,
-            typename TAddPointer<typename TRemoveReference<T>::Type>::Type
-        >::Type TryGetValue() noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddPointer<typename TRemoveReference<T>::Type>::Type>::Type TryGetValue() noexcept
     {
         return IsType<T>() ? Value.CastStorage<T>() : nullptr;
     }
@@ -351,10 +340,7 @@ public:
      * @return - Returns a pointer to the currently stored value or nullptr if not correct type
      */
     template<typename T>
-    NODISCARD FORCEINLINE typename TEnableIf<
-            TIsValidType<T>::Value,
-            typename TAddPointer<typename TAddConst<typename TRemoveReference<T>::Type>::Type>::Type
-        >::Type TryGetValue() const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddPointer<typename TAddConst<typename TRemoveReference<T>::Type>::Type>::Type>::Type TryGetValue() const noexcept
     {
         return IsType<T>() ? Value.CastStorage<T>() : nullptr;
     }
@@ -505,7 +491,7 @@ private:
     template<typename T, typename... ArgTypes>
     FORCEINLINE void Construct(ArgTypes&&... Args) noexcept
     {
-        new(Value.GetStorage()) T(Forward<ArgTypes>(Args)...);
+        new(Value.GetStorage()) T(::Forward<ArgTypes>(Args)...);
         TypeIndex = TVariantIndex<T>::Value;
     }
 

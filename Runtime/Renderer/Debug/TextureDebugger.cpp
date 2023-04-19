@@ -10,17 +10,19 @@ TAutoConsoleVariable<bool> GDrawTextureDebugger(
     "Enables the Debug RenderTarget-viewer",
     false);
 
-void FRenderTargetDebugWindow::OnDraw()
+void FRenderTargetDebugWindow::Paint(const FRectangle& AssignedBounds)
 {
+    UNREFERENCED_PARAMETER(AssignedBounds);
+
     if (GDrawTextureDebugger.GetValue())
     {
-        const TSharedPtr<FViewport> MainViewport;// = FApplication::Get().GetMainViewport();
+        const TSharedPtr<FViewportWidget> MainViewport;// = FApplication::Get().GetMainViewport();
         if (!MainViewport)
         {
             return;
         }
 
-        const auto ViewportSize = MainViewport->GetSize();
+        const auto ViewportSize = MainViewport->Size();
         const float Width  = float(ViewportSize.x);
         const float Height = float(ViewportSize.y);
 
@@ -96,7 +98,7 @@ void FRenderTargetDebugWindow::OnDraw()
 
                 ImGui::Separator();
 
-                const int32 Count = DebugTextures.GetSize();
+                const int32 Count = DebugTextures.Size();
                 if (SelectedTextureIndex >= Count)
                 {
                     SelectedTextureIndex = -1;
@@ -150,9 +152,9 @@ void FRenderTargetDebugWindow::OnDraw()
 
 void FRenderTargetDebugWindow::AddTextureForDebugging(
     const FRHIShaderResourceViewRef& ImageView, 
-    const FRHITextureRef& Image, 
-    EResourceAccess BeforeState, 
-    EResourceAccess AfterState)
+    const FRHITextureRef&            Image, 
+    EResourceAccess                  BeforeState, 
+    EResourceAccess                  AfterState)
 {
     DebugTextures.Emplace(ImageView, Image, BeforeState, AfterState);
 }

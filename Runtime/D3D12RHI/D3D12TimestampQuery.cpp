@@ -14,7 +14,7 @@ FD3D12TimestampQuery::FD3D12TimestampQuery(FD3D12Device* InDevice)
 
 void FD3D12TimestampQuery::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const
 {
-    if (Index >= (uint32)TimeQueries.GetSize())
+    if (Index >= (uint32)TimeQueries.Size())
     {
         OutQuery.Begin = 0;
         OutQuery.End   = 0;
@@ -33,7 +33,7 @@ void FD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2));
 
     uint32 QueryCount = Index + 1;
-    if (QueryCount >= (uint32)TimeQueries.GetSize())
+    if (QueryCount >= (uint32)TimeQueries.Size())
     {
         TimeQueries.Resize(QueryCount);
     }
@@ -42,7 +42,7 @@ void FD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32
 void FD3D12TimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
     CHECK(CmdList != nullptr);
-    CHECK(Index < (uint32)TimeQueries.GetSize());
+    CHECK(Index < (uint32)TimeQueries.Size());
 
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2) + 1);
 }
@@ -58,7 +58,7 @@ void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CommandCon
     CHECK(D3D12CommandList != nullptr);
 
     uint32 ReadIndex = CommandContext.GetCurrentBachIndex();
-    if (ReadIndex >= (uint32)ReadResources.GetSize())
+    if (ReadIndex >= (uint32)ReadResources.Size())
     {
         if (!AllocateReadResource())
         {
@@ -72,7 +72,7 @@ void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CommandCon
     if (void* Data = CurrentReadResource->MapRange(0, nullptr))
     {
         const uint32 SizeInBytes = TimeQueries.SizeInBytes();
-        FMemory::Memcpy(TimeQueries.GetData(), Data, SizeInBytes);
+        FMemory::Memcpy(TimeQueries.Data(), Data, SizeInBytes);
         CurrentReadResource->UnmapRange(0, nullptr);
     }
 

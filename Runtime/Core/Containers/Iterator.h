@@ -16,15 +16,13 @@ public:
     using SizeType = typename ArrayType::SizeType;
 
     TArrayIterator(const TArrayIterator&) = default;
-    TArrayIterator(TArrayIterator&&) = default;
-    ~TArrayIterator() = default;
+    TArrayIterator(TArrayIterator&&)      = default;
+    ~TArrayIterator()                     = default;
 
     TArrayIterator& operator=(const TArrayIterator&) = default;
-    TArrayIterator& operator=(TArrayIterator&&) = default;
+    TArrayIterator& operator=(TArrayIterator&&)      = default;
 
-    static_assert(
-        TIsSigned<SizeType>::Value,
-        "TArrayIterator wants a signed SizeType");
+    static_assert(TIsSigned<SizeType>::Value, "TArrayIterator wants a signed SizeType");
 
     /**
      * @brief            - Create a new iterator
@@ -55,7 +53,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (Index >= 0) && (Index <= Array.Get().GetSize());
+        return (Index >= 0) && (Index <= Array.Get().Size());
     }
 
     /**
@@ -64,7 +62,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsEnd() const noexcept
     {
-        return (Index == Array.Get().GetSize());
+        return (Index == Array.Get().Size());
     }
 
     /**
@@ -74,7 +72,7 @@ public:
     NODISCARD FORCEINLINE ElementType* GetPointer() const noexcept
     {
         CHECK(IsValid());
-        return Array.Get().GetData() + GetIndex();
+        return Array.Get().Data() + GetIndex();
     }
 
     /**
@@ -298,7 +296,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (Index >= 0) && (Index <= Array.Get().GetSize());
+        return (Index >= 0) && (Index <= Array.Get().Size());
     }
 
     /**
@@ -317,7 +315,7 @@ public:
     NODISCARD FORCEINLINE ElementType* GetPointer() const noexcept
     {
         CHECK(IsValid());
-        return Array.Get().GetData() + GetIndex();
+        return Array.Get().Data() + GetIndex();
     }
 
     /**

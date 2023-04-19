@@ -3,8 +3,7 @@
 
 #include <pthread.h>
 
-class FMacThread final 
-    : public FGenericThread
+class FMacThread final : public FGenericThread
 {
 public:
     FMacThread(FThreadInterface* InRunnable);

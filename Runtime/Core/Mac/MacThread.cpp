@@ -1,15 +1,14 @@
 #include "MacThread.h"
 #include "MacThreadMisc.h"
-
 #include "Core/Misc/OutputDeviceLogger.h"
-
 
 FMacThread::FMacThread(FThreadInterface* InRunnable)
     : FGenericThread(InRunnable)
     , Name()
     , Thread()
     , bIsRunning(false)
-{ }
+{ 
+}
 
 bool FMacThread::Start()
 {

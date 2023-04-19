@@ -197,7 +197,7 @@ void FModuleManager::ReleaseAllModules()
 {
     SCOPED_LOCK(ModulesCS);
 
-    const int32 NumModules = Modules.GetSize();
+    const int32 NumModules = Modules.Size();
     for (int32 Index = 0; Index < NumModules; Index++)
     {
         FModuleData& Module = Modules[Index];

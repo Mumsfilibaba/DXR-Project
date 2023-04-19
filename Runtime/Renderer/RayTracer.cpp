@@ -115,7 +115,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     FRHISamplerState* Sampler = nullptr;
 
-    for (int32 Index = 0; Index < Resources.GlobalMeshDrawCommands.GetSize(); ++Index)
+    for (int32 Index = 0; Index < Resources.GlobalMeshDrawCommands.Size(); ++Index)
     {
         const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[Index];
 
@@ -139,7 +139,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         auto HitGroupIndexPair = Resources.RTMeshToHitGroupIndex.find(Command.Mesh);
         if (HitGroupIndexPair == Resources.RTMeshToHitGroupIndex.end())
         {
-            HitGroupIndex = Resources.RTHitGroupResources.GetSize();
+            HitGroupIndex = Resources.RTHitGroupResources.Size();
             Resources.RTMeshToHitGroupIndex[Command.Mesh] = HitGroupIndex;
 
             FRayTracingShaderResources HitGroupResources;
@@ -190,7 +190,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView());
 
-    for (uint32 i = 0; i < Resources.RTMaterialTextureCache.GetSize(); i++)
+    for (uint32 i = 0; i < Resources.RTMaterialTextureCache.Size(); i++)
     {
         Resources.GlobalResources.AddShaderResourceView(Resources.RTMaterialTextureCache.Get(i));
     }
@@ -208,8 +208,8 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         &Resources.GlobalResources,
         &Resources.RayGenLocalResources,
         &Resources.MissLocalResources,
-        Resources.RTHitGroupResources.GetData(),
-        Resources.RTHitGroupResources.GetSize());
+        Resources.RTHitGroupResources.Data(),
+        Resources.RTHitGroupResources.Size());
 
     uint32 Width  = Resources.RTOutput->GetWidth();
     uint32 Height = Resources.RTOutput->GetHeight();

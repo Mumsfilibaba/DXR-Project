@@ -15,7 +15,8 @@ public:
         , m10(0.0f), m11(0.0f), m12(0.0f), m13(0.0f)
         , m20(0.0f), m21(0.0f), m22(0.0f), m23(0.0f)
         , m30(0.0f), m31(0.0f), m32(0.0f), m33(0.0f)
-    { }
+    {
+    }
 
     /**
      * @brief          - Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
@@ -26,7 +27,8 @@ public:
         , m10(0.0f), m11(Diagonal), m12(0.0f), m13(0.0f)
         , m20(0.0f), m21(0.0f), m22(Diagonal), m23(0.0f)
         , m30(0.0f), m31(0.0f), m32(0.0f), m33(Diagonal)
-    { }
+    {
+    }
 
     /**
      * @brief      - Constructor initializing all values with vectors specifying each row
@@ -40,7 +42,8 @@ public:
         , m10(Row1.x), m11(Row1.y), m12(Row1.z), m13(Row1.w)
         , m20(Row2.x), m21(Row2.y), m22(Row2.z), m23(Row2.w)
         , m30(Row3.x), m31(Row3.y), m32(Row3.z), m33(Row3.w)
-    { }
+    {
+    }
 
     /**
      * @brief      - Constructor initializing all values with corresponding value
@@ -70,7 +73,8 @@ public:
         , m10(m10), m11(m11), m12(m12), m13(m13)
         , m20(m20), m21(m21), m22(m22), m23(m23)
         , m30(m30), m31(m31), m32(m32), m33(m33)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with an array
@@ -81,7 +85,8 @@ public:
         , m10(Arr[4]) , m11(Arr[5]) , m12(Arr[6]) , m13(Arr[7])
         , m20(Arr[8]) , m21(Arr[9]) , m22(Arr[10]), m23(Arr[11])
         , m30(Arr[12]), m31(Arr[13]), m32(Arr[14]), m33(Arr[15])
-    { }
+    {
+    }
 
     FORCEINLINE FVector4 Transform(const FVector4& Vector) const noexcept
     {
@@ -711,7 +716,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE float* GetData() noexcept
+    FORCEINLINE float* Data() noexcept
     {
         return reinterpret_cast<float*>(this);
     }
@@ -720,7 +725,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE const float* GetData() const noexcept
+    FORCEINLINE const float* Data() const noexcept
     {
         return reinterpret_cast<const float*>(this);
     }
@@ -1154,7 +1159,7 @@ public:
      * @brief  - Creates and returns a identity matrix
      * @return - A identity matrix
      */
-    inline static FMatrix4 Identity() noexcept
+    static FORCEINLINE FMatrix4 Identity() noexcept
     {
         return FMatrix4(1.0f);
     }
@@ -1164,7 +1169,7 @@ public:
      * @param Scale - Uniform scale that represents this matrix
      * @return      - A scale matrix
      */
-    inline static FMatrix4 Scale(float Scale) noexcept
+    static FORCEINLINE FMatrix4 Scale(float Scale) noexcept
     {
         return FMatrix4(
             Scale, 0.0f , 0.0f , 0.0f,
@@ -1180,7 +1185,7 @@ public:
      * @param z - Scale for the z-axis
      * @return  - A scale matrix
      */
-    inline static FMatrix4 Scale(float x, float y, float z) noexcept
+    static FORCEINLINE FMatrix4 Scale(float x, float y, float z) noexcept
     {
         return FMatrix4(
             x   , 0.0f, 0.0f, 0.0f,
@@ -1194,7 +1199,7 @@ public:
      * @param VectorWithScale - A vector containing the scale for each axis in the x-, y-, z-components
      * @return                - A scale matrix
      */
-    inline static FMatrix4 Scale(const FVector3& VectorWithScale) noexcept
+    static FORCEINLINE FMatrix4 Scale(const FVector3& VectorWithScale) noexcept
     {
         return Scale(VectorWithScale.x, VectorWithScale.y, VectorWithScale.z);
     }
@@ -1206,7 +1211,7 @@ public:
      * @param z - Translation for the z-axis
      * @return  - A translation matrix
      */
-    inline static FMatrix4 Translation(float x, float y, float z) noexcept
+    static FORCEINLINE FMatrix4 Translation(float x, float y, float z) noexcept
     {
         return FMatrix4(
             1.0f, 0.0f, 0.0f, 0.0f,
@@ -1220,7 +1225,7 @@ public:
      * @param Translation - A vector containing the translation
      * @return            - A translation matrix
      */
-    inline static FMatrix4 Translation(const FVector3& InTranslation) noexcept
+    static FORCEINLINE FMatrix4 Translation(const FVector3& InTranslation) noexcept
     {
         return Translation(InTranslation.x, InTranslation.y, InTranslation.z);
     }
@@ -1232,7 +1237,7 @@ public:
      * @param Roll  - Rotation around the z-axis in radians
      * @return      - A rotation matrix
      */
-    inline static FMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
+    static FORCEINLINE FMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
     {
         const float SinP = NMath::Sin(Pitch);
         const float SinY = NMath::Sin(Yaw);
@@ -1256,7 +1261,7 @@ public:
      * @param PitchYawRoll - A vector containing the PitchYawRoll (x = Pitch, y = Yaw, z = Roll)
      * @return             - A rotation matrix
      */
-    inline static FMatrix4 RotationRollPitchYaw(const FVector3& PitchYawRoll) noexcept
+    static FORCEINLINE FMatrix4 RotationRollPitchYaw(const FVector3& PitchYawRoll) noexcept
     {
         return RotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
     }
@@ -1266,7 +1271,7 @@ public:
      * @param x - Rotation around the x-axis in radians
      * @return  - A rotation matrix
      */
-    inline static FMatrix4 RotationX(float x) noexcept
+    static FORCEINLINE FMatrix4 RotationX(float x) noexcept
     {
         const float SinX = NMath::Sin(x);
         const float CosX = NMath::Cos(x);
@@ -1283,7 +1288,7 @@ public:
      * @param y - Rotation around the y-axis in radians
      * @return  - A rotation matrix
      */
-    inline static FMatrix4 RotationY(float y) noexcept
+    static FORCEINLINE FMatrix4 RotationY(float y) noexcept
     {
         const float SinY = NMath::Sin(y);
         const float CosY = NMath::Cos(y);
@@ -1300,7 +1305,7 @@ public:
      * @param z - Rotation around the z-axis in radians
      * @return  - A rotation matrix
      */
-    inline static FMatrix4 RotationZ(float z) noexcept
+    static FORCEINLINE FMatrix4 RotationZ(float z) noexcept
     {
         const float SinZ = NMath::Sin(z);
         const float CosZ = NMath::Cos(z);
@@ -1320,7 +1325,7 @@ public:
      * @param FarZ   - The distance to the far plane in world-units
      * @return       - A orthographic-projection matrix
      */
-    inline static FMatrix4 OrtographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
+    static FORCEINLINE FMatrix4 OrtographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
     {
         return FMatrix4(
             2.0f / Width, 0.0f         ,  0.0f                  , 0.0f,
@@ -1339,7 +1344,7 @@ public:
      * @param FarZ   - The distance to the far plane in world-units
      * @return       - A orthographic-projection matrix
      */
-    inline static FMatrix4 OrtographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept
+    static FORCEINLINE FMatrix4 OrtographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept
     {
         const float InvWidth  = 1.0f / (Right - Left);
         const float InvHeight = 1.0f / (Top - Bottom);
@@ -1360,7 +1365,7 @@ public:
      * @param FarZ        - The distance to the far plane in world-units
      * @return            - A perspective-projection matrix
      */
-    inline static FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
+    static FORCEINLINE FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
     {
         if ((Fov < NMath::kOneDegree_f) || (Fov > (NMath::kPI_f - NMath::kOneDegree_f)))
         {
@@ -1387,7 +1392,7 @@ public:
      * @param FarZ   - The distance to the far plane in world-units
      * @return       - A perspective-projection matrix
      */
-    inline static FMatrix4 PerspectiveProjection(float Fov, float Width, float Height, float NearZ, float FarZ) noexcept
+    static FORCEINLINE FMatrix4 PerspectiveProjection(float Fov, float Width, float Height, float NearZ, float FarZ) noexcept
     {
         const float AspectRatio = Width / Height;
         return PerspectiveProjection(Fov, AspectRatio, NearZ, FarZ);
@@ -1400,7 +1405,7 @@ public:
      * @param Up - The up-axis of the new coordinate system in the current world-space
      * @return - A look-at matrix
      */
-    inline static FMatrix4 LookAt(const FVector3& Eye, const FVector3& At, const FVector3& Up) noexcept
+    static FORCEINLINE FMatrix4 LookAt(const FVector3& Eye, const FVector3& At, const FVector3& Up) noexcept
     {
         const FVector3 Direction = At - Eye;
         return LookTo(Eye, Direction, Up);
@@ -1413,7 +1418,7 @@ public:
      * @param Up        - The up-axis of the new coordinate system in the current world-space
      * @return          - A look-to matrix
      */
-    inline static FMatrix4 LookTo(const FVector3& Eye, const FVector3& Direction, const FVector3& Up) noexcept
+    static FORCEINLINE FMatrix4 LookTo(const FVector3& Eye, const FVector3& Direction, const FVector3& Up) noexcept
     {
         FVector3 e2 = Direction.GetNormalized();
         FVector3 e0 = Up.CrossProduct(e2).GetNormalized();

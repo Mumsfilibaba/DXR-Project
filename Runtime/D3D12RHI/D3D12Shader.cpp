@@ -44,7 +44,7 @@ FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, 
     ByteCode.BytecodeLength  = InCode.SizeInBytes();
     ByteCode.pShaderBytecode = FMemory::Malloc(ByteCode.BytecodeLength);
 
-    FMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.GetData(), ByteCode.BytecodeLength);
+    FMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
 }
 
 FD3D12Shader::~FD3D12Shader()

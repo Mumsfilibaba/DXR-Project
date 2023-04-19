@@ -150,7 +150,7 @@ public:
         const int64 FileSize = File->Size();
         OutData.Resize(static_cast<int32>(FileSize));
 
-        const int32 ReadBytes = File->Read(reinterpret_cast<uint8*>(OutData.GetData()), static_cast<uint32>(FileSize));
+        const int32 ReadBytes = File->Read(reinterpret_cast<uint8*>(OutData.Data()), static_cast<uint32>(FileSize));
         if (ReadBytes <= 0)
         {
             OutData.Clear(true);
@@ -168,7 +168,7 @@ public:
         const int64 FileSize = File->Size();
         OutText.Resize(static_cast<int32>(FileSize) + 1, '\0');
 
-        const int32 ReadBytes = File->Read(reinterpret_cast<uint8*>(OutText.GetData()), static_cast<uint32>(FileSize));
+        const int32 ReadBytes = File->Read(reinterpret_cast<uint8*>(OutText.Data()), static_cast<uint32>(FileSize));
         if (ReadBytes <= 0)
         {
             OutText.Clear(true);
@@ -180,12 +180,12 @@ public:
 
     static bool WriteTextFile(IFileHandle* File, const TArray<CHAR>& Text)
     {
-        return WriteTextFile(File, Text.GetData(), Text.SizeInBytes());
+        return WriteTextFile(File, Text.Data(), Text.SizeInBytes());
     }
 
     static bool WriteTextFile(IFileHandle* File, const FString& Text)
     {
-        return WriteTextFile(File, Text.GetData(), Text.SizeInBytes());
+        return WriteTextFile(File, Text.Data(), Text.SizeInBytes());
     }
 
 private:

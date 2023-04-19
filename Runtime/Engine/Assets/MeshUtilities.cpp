@@ -12,13 +12,13 @@ void FMeshUtilities::Subdivide(FMeshData& OutData, uint32 Subdivisions) noexcept
     uint32 VertexCount = 0;
     uint32 OldVertexCount = 0;
 
-    OutData.Vertices.Reserve((OutData.Vertices.GetSize() * static_cast<uint32>(pow(2, Subdivisions))));
-    OutData.Indices.Reserve((OutData.Indices.GetSize() * static_cast<uint32>(pow(4, Subdivisions))));
+    OutData.Vertices.Reserve((OutData.Vertices.Size() * static_cast<uint32>(pow(2, Subdivisions))));
+    OutData.Indices.Reserve((OutData.Indices.Size() * static_cast<uint32>(pow(4, Subdivisions))));
 
     for (uint32 i = 0; i < Subdivisions; i++)
     {
-        OldVertexCount = uint32(OutData.Vertices.GetSize());
-        IndexCount = uint32(OutData.Indices.GetSize());
+        OldVertexCount = uint32(OutData.Vertices.Size());
+        IndexCount = uint32(OutData.Indices.Size());
 
         CHECK(IndexCount % 3 == 0);
 
@@ -86,13 +86,13 @@ void FMeshUtilities::Subdivide(FMeshData& OutData, uint32 Subdivisions) noexcept
             Tangent = Tangent * 0.5f;
             TempVertices[2].Tangent = Tangent.GetNormalized();
 
-            // Push the new Vertices
+            // Add the new Vertices
             OutData.Vertices.Emplace(TempVertices[0]);
             OutData.Vertices.Emplace(TempVertices[1]);
             OutData.Vertices.Emplace(TempVertices[2]);
 
-            // Push index of the new triangles
-            VertexCount = uint32(OutData.Vertices.GetSize());
+            // Add index of the new triangles
+            VertexCount = uint32(OutData.Vertices.Size());
             OutData.Indices.Emplace(VertexCount - 3);
             OutData.Indices.Emplace(VertexCount - 1);
             OutData.Indices.Emplace(VertexCount - 2);
@@ -119,8 +119,8 @@ void FMeshUtilities::Subdivide(FMeshData& OutData, uint32 Subdivisions) noexcept
 
 void FMeshUtilities::Optimize(FMeshData& OutData, uint32 StartVertex) noexcept
 {
-    uint32 VertexCount = static_cast<uint32>(OutData.Vertices.GetSize());
-    uint32 IndexCount = static_cast<uint32>(OutData.Indices.GetSize());
+    uint32 VertexCount = static_cast<uint32>(OutData.Vertices.Size());
+    uint32 IndexCount = static_cast<uint32>(OutData.Indices.Size());
 
     uint32 k = 0;
     uint32 j = 0;
@@ -158,9 +158,9 @@ void FMeshUtilities::Optimize(FMeshData& OutData, uint32 StartVertex) noexcept
 
 void FMeshUtilities::CalculateHardNormals(FMeshData& OutData) noexcept
 {
-    CHECK(OutData.Indices.GetSize() % 3 == 0);
+    CHECK(OutData.Indices.Size() % 3 == 0);
 
-    for (int32 i = 0; i < OutData.Indices.GetSize(); i += 3)
+    for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
         FVertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
         FVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
@@ -179,12 +179,12 @@ void FMeshUtilities::CalculateHardNormals(FMeshData& OutData) noexcept
 
 void FMeshUtilities::CalculateSoftNormals(FMeshData& OutData) noexcept
 {
-    CHECK(OutData.Indices.GetSize() % 3 == 0);
+    CHECK(OutData.Indices.Size() % 3 == 0);
 
     // TODO: Write better version. For now calculate the hard normals and then average all of them
     CalculateHardNormals(OutData);
 
-    for (int32 i = 0; i < OutData.Indices.GetSize(); i += 3)
+    for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
         FVertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
         FVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
@@ -207,7 +207,7 @@ void FMeshUtilities::CalculateSoftNormals(FMeshData& OutData) noexcept
 
 void FMeshUtilities::CalculateTangents(FMeshData& OutData) noexcept
 {
-    CHECK(OutData.Indices.GetSize() % 3 == 0);
+    CHECK(OutData.Indices.Size() % 3 == 0);
 
     auto CalculateTangentFromVectors = [](FVertex& Vertex1, const FVertex& Vertex2, const FVertex& Vertex3)
     {
@@ -225,7 +225,7 @@ void FMeshUtilities::CalculateTangents(FMeshData& OutData) noexcept
         Vertex1.Tangent = Tangent;
     };
 
-    for (int32 i = 0; i < OutData.Indices.GetSize(); i += 3)
+    for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
         FVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
         FVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];
@@ -239,16 +239,16 @@ void FMeshUtilities::CalculateTangents(FMeshData& OutData) noexcept
 
 void FMeshUtilities::ReverseHandedness(FMeshData& OutData) noexcept
 {
-    CHECK(OutData.Indices.GetSize() % 3 == 0);
+    CHECK(OutData.Indices.Size() % 3 == 0);
 
-    for (int32 i = 0; i < OutData.Indices.GetSize(); i += 3)
+    for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
         uint32 TempIndex = OutData.Indices[i + 1];
         OutData.Indices[i + 1] = OutData.Indices[i + 2];
         OutData.Indices[i + 2] = TempIndex;
     }
 
-    for (int32 i = 0; i < OutData.Vertices.GetSize(); ++i)
+    for (int32 i = 0; i < OutData.Vertices.Size(); ++i)
     {
         OutData.Vertices[i].Position.z = OutData.Vertices[i].Position.z * -1.0f;
         OutData.Vertices[i].Normal.z   = OutData.Vertices[i].Normal.z   * -1.0f;

@@ -2,15 +2,16 @@
 #include "Core/Core.h"
 #include "Core/Templates/Utility.h"
 
-struct FGenericCriticalSection
-    : FNonCopyable
+struct FGenericCriticalSection : FNonCopyable
 {
     typedef void* PlatformHandle;
 
     FGenericCriticalSection()  = default;
     ~FGenericCriticalSection() = default;
 
-    /** @brief - Lock CriticalSection for other threads */
+    /** 
+     * @brief - Lock CriticalSection for other threads
+     */
     FORCEINLINE void Lock() noexcept { }
 
     /**
@@ -19,7 +20,9 @@ struct FGenericCriticalSection
      */
     FORCEINLINE bool TryLock() noexcept { return false; }
 
-    /** @brief - Unlock CriticalSection for other threads */
+    /** 
+     * @brief - Unlock CriticalSection for other threads 
+     */
     FORCEINLINE void Unlock() noexcept { }
 
     /**

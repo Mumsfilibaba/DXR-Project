@@ -18,12 +18,8 @@ template<typename T>
 class TPriorityQueue
 {
 public:
-
     using ElementType      = T;
-    using ElementInputType = typename TConditional<
-        TOr<TIsPointer<ElementType>, TIsFundamental<T>>::Value,
-        ElementType,
-        typename TAddReference<typename TAddConst<ElementType>::Type>::LValue>::Type;
+    using ElementInputType = typename TConditional<TOr<TIsPointer<ElementType>, TIsFundamental<T>>::Value, ElementType, TAddReference<typename TAddConst<ElementType>::Type>::LValue>::Type;
 
     /**
      * @brief - Constructor
@@ -64,7 +60,7 @@ public:
      */
     inline bool Remove(ElementInputType Element)
     {
-        for (int32 Index = LowestPopulatedPriorityIndex; Index < PriorityQueues.GetSize(); ++Index)
+        for (int32 Index = LowestPopulatedPriorityIndex; Index < PriorityQueues.Size(); ++Index)
         {
             if (PriorityQueues[Index].Remove(Element))
             {
@@ -84,7 +80,7 @@ public:
      */
     inline bool Dequeue(ElementType* OutElement, EQueuePriority* OutPriority = nullptr)
     {
-        for (int32 Index = LowestPopulatedPriorityIndex; Index < PriorityQueues.GetSize(); ++Index)
+        for (int32 Index = LowestPopulatedPriorityIndex; Index < PriorityQueues.Size(); ++Index)
         {
             auto& CurrentQueue = PriorityQueues[Index];
             if (!CurrentQueue.IsEmpty())
@@ -117,7 +113,7 @@ public:
      */
     inline ElementType* Peek(EQueuePriority* OutPriority = nullptr)
     {
-        for (int32 Index = LowestPopulatedPriorityIndex; Index < PriorityQueues.GetSize(); ++Index)
+        for (int32 Index = LowestPopulatedPriorityIndex; Index < PriorityQueues.Size(); ++Index)
         {
             auto& CurrentQueue = PriorityQueues[Index];
             if (!CurrentQueue.IsEmpty())
@@ -147,7 +143,7 @@ public:
     /**
      * @return - Returns the size of the queue
      */
-    FORCEINLINE int32 GetSize() const
+    FORCEINLINE int32 Size() const
     {
         return NumElements.Load();
     }

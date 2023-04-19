@@ -9,19 +9,19 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 typedef TSharedRef<class FGenericThread> FGenericThreadRef;
 
-
-class CORE_API FGenericThread 
-    : public FRefCounted
+class CORE_API FGenericThread : public FRefCounted
 {
 public:
     FGenericThread(FThreadInterface* InRunnable)
-        : Runnable(InRunnable)
-    { }
+        : FRefCounted()
+        , Runnable(InRunnable)
+    {
+    }
 
     /** @brief - Start the thread and start executing the entrypoint */
     virtual bool Start() { return true; }
 
-    /** @brief - Waits for the thread and returns the return-value from the thread  */
+    /** @brief - Waits for the thread to finish */
     virtual void WaitForCompletion() { }
     
     /** @return - Returns the native platform handle */
@@ -34,7 +34,10 @@ public:
     virtual void SetName(const FString& InName) { }
 
     /** @return - Returns a pointer to the interface currently running on the thread */
-    FThreadInterface* GetRunnable() const { return Runnable; }
+    FThreadInterface* GetRunnable() const 
+    { 
+        return Runnable; 
+    }
 
 protected:
     FThreadInterface* Runnable;

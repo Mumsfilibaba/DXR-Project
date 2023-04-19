@@ -3,7 +3,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Project/ProjectManager.h"
-#include "Application/Window.h"
+#include "Application/Widgets/Window.h"
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Engine/Assets/AssetManager.h"
@@ -23,7 +23,7 @@ static void ExitEngineFunc()
         GEngine->Exit();
     }
 }
-
+ 
 static void ToggleFullScreenFunc()
 {
     if (GEngine && GEngine->MainWindow)
@@ -56,14 +56,14 @@ static FAutoConsoleCommand GToggleFullscreen(
 void FEngine::CreateMainWindow()
 {
     // TODO: This should be loaded from a config file
-    TSharedPtr<FWindow> Window = MakeShared<FWindow>();
-    Window->SetTitle(FString(FProjectManager::Get().GetProjectName()));
-    Window->SetWindowMode(EWindowMode::Windowed);
-    Window->SetWidth(1920);
-    Window->SetHeight(1080);
+    TSharedPtr<FWindow> Window = NewWidget(FWindow)
+        .SetWidth(1920)
+        .SetHeight(1080)
+        .SetTitle("My Window")
+        .SetWindowMode(EWindowMode::Windowed);
 
     MainWindow = Window;
-    FApplication::Get().AddWindow(MainWindow);
+    FWindowedApplication::Get().AddWindow(MainWindow);
 }
 
 bool FEngine::CreateMainViewport()
@@ -74,19 +74,23 @@ bool FEngine::CreateMainViewport()
         return false;
     }
 
-    TSharedPtr<FViewport> Viewport = MakeShared<FViewport>(TWeakPtr(MainWindow));
+    TSharedPtr<FViewportWidget> Viewport = NewWidget(FViewportWidget)
+        .SetWidth(1920)
+        .SetHeight(1080)
+        .SetViewportInterface(nullptr);
     if (Viewport && Viewport->CreateRHI())
     {
-        MainWindow->SetViewport(Viewport);
+        MainWindow->SetContent(Viewport);
     }
     else
     {
         return false;
     }
 
-    TSharedPtr<FSceneViewport> SceneViewport = MakeShared<FSceneViewport>(Viewport);
+    TSharedPtr<FSceneViewport> SceneViewport = MakeShared<FSceneViewport>(TWeakPtr(Viewport));
     Viewport->SetViewportInterface(SceneViewport);
-    MainViewport = SceneViewport;
+
+    FWindowedApplication::Get().RegisterMainViewport(Viewport);
     return true;
 }
 
@@ -171,12 +175,11 @@ bool FEngine::Init()
     Scene = new FScene();
 
     /* Create windows */
-    TSharedPtr<FFrameProfilerWindow> ProfilerWindow = MakeShared<FFrameProfilerWindow>();
-    //Application.AddWidget(ProfilerWindow);
+    TSharedPtr<FFrameProfilerWindow> ProfilerWindow = NewWidget(FFrameProfilerWindow);
+    MainWindow->AddOverlaySlot().AttachWidget(ProfilerWindow);
 
-    TSharedPtr<FGameConsoleWindow> ConsoleWindow = MakeShared<FGameConsoleWindow>();
-    //Application.AddWidget(ConsoleWindow);
-
+    TSharedPtr<FGameConsoleWindow> ConsoleWindow = NewWidget(FGameConsoleWindow);
+    MainWindow->AddOverlaySlot().AttachWidget(ConsoleWindow);
     return true;
 }
 

@@ -11,7 +11,8 @@ public:
     FORCEINLINE FInt16Vector2() noexcept
         : x(0)
         , y(0)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with a corresponding value.
@@ -21,7 +22,8 @@ public:
     FORCEINLINE explicit FInt16Vector2(int16 InX, int16 InY) noexcept
         : x(InX)
         , y(InY)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with an array.
@@ -30,7 +32,8 @@ public:
     FORCEINLINE explicit FInt16Vector2(const int16* Arr) noexcept
         : x(Arr[0])
         , y(Arr[1])
-    { }
+    {
+    }
 
     /**
      * @brief        - Constructor initializing all components with a single value.
@@ -39,7 +42,8 @@ public:
     FORCEINLINE explicit FInt16Vector2(int16 Scalar) noexcept
         : x(Scalar)
         , y(Scalar)
-    { }
+    {
+    }
 
     /**
      * @brief       - Compares this vector with another vector
@@ -310,7 +314,8 @@ public:
     FORCEINLINE FIntVector2() noexcept
         : x(0)
         , y(0)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with a corresponding value.
@@ -320,7 +325,8 @@ public:
     FORCEINLINE explicit FIntVector2(int32 InX, int32 InY) noexcept
         : x(InX)
         , y(InY)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with an array.
@@ -329,7 +335,8 @@ public:
     FORCEINLINE explicit FIntVector2(const int32* Arr) noexcept
         : x(Arr[0])
         , y(Arr[1])
-    { }
+    {
+    }
 
     /**
      * @brief        - Constructor initializing all components with a single value.
@@ -338,7 +345,8 @@ public:
     FORCEINLINE explicit FIntVector2(int32 Scalar) noexcept
         : x(Scalar)
         , y(Scalar)
-    { }
+    {
+    }
 
     /**
      * @brief       - Compares this vector with another vector

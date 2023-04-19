@@ -11,8 +11,10 @@ TAutoConsoleVariable<bool> GDrawGPUProfiler(
     "Enables the profiling on the GPU and displays the GPU Profiler window", 
     false);
 
-void FGPUProfilerWindow::OnDraw()
+void FGPUProfilerWindow::Paint(const FRectangle& AssignedBounds)
 {
+    UNREFERENCED_VARIABLE(AssignedBounds);
+
     if (GDrawGPUProfiler.GetValue())
     {
         DrawWindow();
@@ -55,7 +57,7 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
 
         ImGui::PlotHistogram(
             "",
-            GPUFrameTime.Samples.GetData(),
+            GPUFrameTime.Samples.Data(),
             GPUFrameTime.SampleCount,
             GPUFrameTime.CurrentSample,
             nullptr,
@@ -159,13 +161,13 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
 void FGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    const TSharedPtr<FViewport> MainViewport;// = FApplication::Get().GetMainViewport();
+    const TSharedPtr<FViewportWidget> MainViewport;// = FApplication::Get().GetMainViewport();
     if (!MainViewport)
     {
         return;
     }
 
-    const auto ViewportSize = MainViewport->GetSize();
+    const auto ViewportSize = MainViewport->Size();
 
     const float Width  = NMath::Max(ViewportSize.x * 0.6f, 400.0f);
     const float Height = ViewportSize.y * 0.75f;

@@ -1,10 +1,8 @@
 #pragma once
 #include "Windows.h"
-
 #include "Core/Generic/GenericFile.h"
 
-class CORE_API FWindowsFileHandle 
-    : public IFileHandle
+class CORE_API FWindowsFileHandle : public IFileHandle
 {
 public:
     FWindowsFileHandle(HANDLE InFileHandle);
@@ -51,9 +49,7 @@ private:
     int64  FileSize;
 };
 
-
-struct CORE_API FWindowsFile 
-    : public FGenericFile
+struct CORE_API FWindowsFile : public FGenericFile
 {
     static IFileHandle* OpenForRead(const FString& Filename);
 

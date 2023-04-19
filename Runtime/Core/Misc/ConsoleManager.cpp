@@ -644,7 +644,7 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
 
     // Erase history
     History.Emplace(Command);
-    if (History.GetSize() > HistoryLength)
+    if (History.Size() > HistoryLength)
     {
         History.RemoveAt(History.StartIterator());
     }

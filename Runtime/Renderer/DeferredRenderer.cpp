@@ -823,8 +823,8 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
         int32 ScreenHeight;
     } Settings;
 
-    Settings.NumShadowCastingPointLights = LightSetup.ShadowCastingPointLightsData.GetSize();
-    Settings.NumPointLights              = LightSetup.PointLightsData.GetSize();
+    Settings.NumShadowCastingPointLights = LightSetup.ShadowCastingPointLightsData.Size();
+    Settings.NumPointLights              = LightSetup.PointLightsData.Size();
     Settings.NumSkyLightMips             = Skylight.SpecularIrradianceMap->GetNumMipLevels();
     Settings.ScreenWidth                 = FrameResources.FinalTarget->GetWidth();
     Settings.ScreenHeight                = FrameResources.FinalTarget->GetHeight();

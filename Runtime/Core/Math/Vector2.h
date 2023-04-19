@@ -11,7 +11,8 @@ public:
     FORCEINLINE FVector2() noexcept
         : x(0.0f)
         , y(0.0f)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with a corresponding value.
@@ -21,7 +22,8 @@ public:
     FORCEINLINE explicit FVector2(float InX, float InY) noexcept
         : x(InX)
         , y(InY)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with an array.
@@ -30,7 +32,8 @@ public:
     FORCEINLINE explicit FVector2(const float* Arr) noexcept
         : x(Arr[0])
         , y(Arr[1])
-    { }
+    {
+    }
 
     /**
      * @brief        - Constructor initializing all components with a single value.
@@ -39,7 +42,8 @@ public:
     FORCEINLINE explicit FVector2(float Scalar) noexcept
         : x(Scalar)
         , y(Scalar)
-    { }
+    {
+    }
 
      /** @brief - Normalized this vector */
     inline void Normalize() noexcept
@@ -183,7 +187,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE float* GetData() noexcept
+    FORCEINLINE float* Data() noexcept
     {
         return reinterpret_cast<float*>(this);
     }
@@ -192,7 +196,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE const float* GetData() const noexcept
+    FORCEINLINE const float* Data() const noexcept
     {
         return reinterpret_cast<const float*>(this);
     }

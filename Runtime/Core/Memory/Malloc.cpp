@@ -38,6 +38,11 @@ FMallocLeakTracker::FMallocLeakTracker(FMalloc* InBaseMalloc)
     , bTrackingEnabled(true)
 { }
 
+FMallocLeakTracker::~FMallocLeakTracker()
+{
+    BaseMalloc = nullptr;
+}
+
 void* FMallocLeakTracker::Malloc(uint64 InSize)
 {
     void* Block = BaseMalloc->Malloc(InSize);
@@ -140,6 +145,12 @@ FMallocStackTraceTracker::FMallocStackTraceTracker(FMalloc* InBaseMalloc)
     , BaseMalloc(InBaseMalloc)
     , bTrackingEnabled(true)
 { }
+
+FMallocStackTraceTracker::~FMallocStackTraceTracker()
+{
+    Allocations.~TMap<void*, FAllocationStackTrace>();
+    BaseMalloc = nullptr;
+}
 
 void* FMallocStackTraceTracker::Malloc(uint64 InSize)
 {

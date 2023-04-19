@@ -23,7 +23,8 @@ struct FFloat64
      */
     FORCEINLINE FFloat64()
         : Float64(0.0)
-    { }
+    {
+    }
 
     /**
      * @brief           - Construct a Float64 with a double
@@ -31,7 +32,8 @@ struct FFloat64
      */
     FORCEINLINE FFloat64(double InFloat64)
         : Float64(InFloat64)
-    { }
+    {
+    }
 
     /**
      * @brief       - Copy constructor
@@ -39,7 +41,8 @@ struct FFloat64
      */
     FORCEINLINE FFloat64(const FFloat64& Other)
         : Float64(Other.Float64)
-    { }
+    {
+    }
 
     /**
      * @brief           - Set the instance to a new value
@@ -91,22 +94,25 @@ struct FFloat64
     };
 };
 
+static_assert(sizeof(FFloat64) == sizeof(double), "FFloat64 should have the same size as a regular double");
 MARK_AS_REALLOCATABLE(FFloat64);
-
 
 struct FFloat32
 {
     FORCEINLINE FFloat32()
         : Float32(0.0f)
-    { }
+    {
+    }
 
     FORCEINLINE FFloat32(float InFloat32)
         : Float32(InFloat32)
-    { }
+    {
+    }
 
     FORCEINLINE FFloat32(const FFloat32& Other)
         : Float32(Other.Float32)
-    { }
+    {
+    }
 
     FORCEINLINE void SetFloat(float InFloat32)
     {
@@ -154,14 +160,15 @@ struct FFloat32
     };
 };
 
+static_assert(sizeof(FFloat32) == sizeof(float), "FFloat32 should have the same size as a regular float");
 MARK_AS_REALLOCATABLE(FFloat32);
-
 
 struct FFloat16
 {
     FORCEINLINE FFloat16()
         : Encoded(0)
-    { }
+    {
+    }
 
     FORCEINLINE FFloat16(float Float32)
         : Encoded(0)
@@ -324,6 +331,7 @@ struct FFloat16
     };
 };
 
+static_assert(sizeof(FFloat16) == sizeof(uint16), "FFloat16 should have the same size as a uint16");
 MARK_AS_REALLOCATABLE(FFloat16);
 
 #if defined(PLATFORM_COMPILER_MSVC)

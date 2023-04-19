@@ -231,9 +231,9 @@ bool TestMatrix3()
         TEST_FAILED();
     }
 
-    // GetData
+    // Data
     FMatrix3 Matrix0 = FMatrix3::Identity();
-    FMatrix3 Matrix1 = FMatrix3(Matrix0.GetData());
+    FMatrix3 Matrix1 = FMatrix3(Matrix0.Data());
 
     if (Matrix0 != Matrix1)
     {

@@ -3,8 +3,11 @@
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Threading/AtomicInt.h"
 
-namespace Internal
+namespace SharedPointerInternal
 {
+    template<typename T>
+    class TEnableSharedFromThis;
+
     class FSharedRefCounter
     {
     public:
@@ -53,8 +56,7 @@ namespace Internal
     };
 
     template<typename T, typename DeleterType = TDefaultDelete<T>>
-    class TSharedPtrBlock 
-        : private DeleterType
+    class TSharedPtrBlock : private DeleterType
     {
         using Super = DeleterType;
 
@@ -74,7 +76,8 @@ namespace Internal
             : Super()
             , Object(nullptr)
             , Counter(nullptr)
-        { }
+        {
+        }
 
         FORCEINLINE TSharedPtrBlock(TSharedPtrBlock&& Other) noexcept
             : Super(Move(Other))
@@ -168,15 +171,18 @@ namespace Internal
             const CounterType StrongRefs = Counter->GetStrongRefCount();
             if (StrongRefs < 1)
             {
-                Super::DeleteElement(Object);
-                Object = nullptr;
-
+                // Start by checking the counter for weak references since there can be TWeakPtrs inside of the object
+                // about to be deleted, for instance when using TEnableSharedFromThis, which would cause an invalid read
+                // of the 'Counter' since it was deleted in the TWeakPtr destructor.
                 const CounterType WeakRefs = Counter->GetWeakRefCount();
                 if (WeakRefs < 1)
                 {
                     delete Counter;
                     Counter = nullptr;
                 }
+
+                Super::DeleteElement(Object);
+                Object = nullptr;
             }
         }
 
@@ -241,10 +247,7 @@ namespace Internal
         }
 
         template<typename OtherType, typename OtherDeleterType>
-        FORCEINLINE typename TEnableIf<
-                TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ElementType>::Value,
-                typename TAddLValueReference<TSharedPtrBlock>::Type
-            >::Type operator=(TSharedPtrBlock<OtherType, OtherDeleterType>&& Other) noexcept
+        FORCEINLINE typename TEnableIf<TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ElementType>::Value,typename TAddLValueReference<TSharedPtrBlock>::Type>::Type operator=(TSharedPtrBlock<OtherType, OtherDeleterType>&& Other) noexcept
         {
             TSharedPtrBlock(Move(Other)).Swap(*this);
             return *this;
@@ -264,7 +267,7 @@ class TSharedPtr
 {
 public:
     using ElementType    = typename TRemoveExtent<T>::Type;
-    using PointerStorage = Internal::TSharedPtrBlock<ElementType, DeleterType>;
+    using PointerStorage = SharedPointerInternal::TSharedPtrBlock<ElementType, DeleterType>;
     using CounterType    = typename PointerStorage::CounterType;
     using SizeType       = int32;
 
@@ -279,14 +282,16 @@ public:
      */
     FORCEINLINE TSharedPtr() noexcept
         : Storage()
-    { }
+    {
+    }
 
     /**
      * @brief - Constructor setting both counter and pointer to nullptr 
      */
     FORCEINLINE TSharedPtr(nullptr_type) noexcept
         : Storage()
-    { }
+    {
+    }
 
     /**
      * @brief           - Constructor that initializes a new SharedPtr from a raw-pointer
@@ -296,6 +301,7 @@ public:
         : Storage()
     {
         Storage.InitStrong(InPointer, nullptr);
+        EnableSharedFromThis(InPointer);
     }
 
     /**
@@ -309,6 +315,7 @@ public:
         : Storage()
     {
         Storage.InitStrong(static_cast<ElementType*>(InPointer), nullptr);
+        EnableSharedFromThis(InPointer);
     }
 
     /**
@@ -341,7 +348,8 @@ public:
      */
     FORCEINLINE TSharedPtr(TSharedPtr&& Other) noexcept
         : Storage(Move(Other.Storage))
-    { }
+    { 
+    }
 
     /**
      * @brief       - Move-constructor that copies from a convertible type
@@ -353,7 +361,8 @@ public:
         typename = typename TEnableIf<TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ElementType>::Value>::Type>
     FORCEINLINE TSharedPtr(TSharedPtr<OtherType, OtherDeleterType>&& Other) noexcept
         : Storage(Move(Other.Storage))
-    { }
+    {
+    }
 
     /**
      * @brief           - Copy constructor that copy the counter, but the pointer is taken from the raw-pointer to enable casting 
@@ -405,7 +414,9 @@ public:
     FORCEINLINE TSharedPtr(TUniquePtr<OtherType, OtherDeleterType>&& Other) noexcept
         : Storage()
     {
-        Storage.InitStrong(static_cast<ElementType*>(Other.Release()), nullptr);
+        auto* Pointer = Other.Release();
+        Storage.InitStrong(static_cast<ElementType*>(Pointer), nullptr);
+        EnableSharedFromThis(Pointer);
     }
 
     /**
@@ -434,9 +445,7 @@ public:
      * @param NewPointer - New pointer to store
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<
-            TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ElementType>::Value
-        >::Type Reset(typename TRemoveExtent<OtherType>::Type* NewPointer = nullptr) noexcept
+    FORCEINLINE typename TEnableIf<TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ElementType>::Value>::Type Reset(typename TRemoveExtent<OtherType>::Type* NewPointer = nullptr) noexcept
     {
         Reset(static_cast<ElementType*>(NewPointer));
     }
@@ -547,10 +556,7 @@ public:
 
      /** @brief - Retrieve element at a certain index */
     template<typename U = T>
-    NODISCARD FORCEINLINE typename TEnableIf<
-            TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value,
-            typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type
-        >::Type operator[](SizeType Index) const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type operator[](SizeType Index) const noexcept
     {
         CHECK(IsValid());
         auto* Pointer = Storage.GetPointer();
@@ -594,10 +600,7 @@ public:
      * @return      - A reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<
-            TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ElementType>::Value,
-            typename TAddLValueReference<TSharedPtr>::Type
-        >::Type operator=(const TSharedPtr<OtherType, OtherDeleterType>& Other) noexcept
+    FORCEINLINE typename TEnableIf<TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ElementType>::Value, typename TAddLValueReference<TSharedPtr>::Type>::Type operator=(const TSharedPtr<OtherType, OtherDeleterType>& Other) noexcept
     {
         TSharedPtr(Other).Swap(*this);
         return *this;
@@ -609,10 +612,7 @@ public:
      * @return      - A reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<
-            TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ElementType>::Value,
-            typename TAddLValueReference<TSharedPtr>::Type
-        >::Type operator=(TSharedPtr<OtherType, OtherDeleterType>&& Other) noexcept
+    FORCEINLINE typename TEnableIf<TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ElementType>::Value, typename TAddLValueReference<TSharedPtr>::Type>::Type operator=(TSharedPtr<OtherType, OtherDeleterType>&& Other) noexcept
     {
         TSharedPtr(Move(Other)).Swap(*this);
         return *this;
@@ -640,7 +640,16 @@ public:
     }
 
 private:
-    NODISCARD FORCEINLINE Internal::FSharedRefCounter* GetCounter() const noexcept
+    FORCEINLINE void EnableSharedFromThis(ElementType* InPointer) noexcept
+    {
+        if CONSTEXPR(TIsBaseOf<TEnableSharedFromThis<T>, T>::Value)
+        {
+            typedef typename TRemoveCV<ElementType>::Type PureElementType;
+            InPointer->WeakThisPointer = TSharedPtr<PureElementType>(*this, static_cast<PureElementType*>(InPointer));
+        }
+    }
+
+    NODISCARD FORCEINLINE SharedPointerInternal::FSharedRefCounter* GetCounter() const noexcept
     {
         return Storage.GetCounter();
     }
@@ -738,7 +747,7 @@ class TWeakPtr
 {
 public:
     using ElementType    = typename TRemoveExtent<T>::Type;
-    using PointerStorage = Internal::TSharedPtrBlock<ElementType, DeleterType>;
+    using PointerStorage = SharedPointerInternal::TSharedPtrBlock<ElementType, DeleterType>;
     using CounterType    = typename PointerStorage::CounterType;
     using SizeType       = int32;
 
@@ -753,14 +762,16 @@ public:
      */
     FORCEINLINE TWeakPtr() noexcept
         : Storage()
-    { }
+    {
+    }
 
     /**
      * @brief - Constructor taking a nullptr
      */
     FORCEINLINE TWeakPtr(nullptr_type) noexcept
         : Storage()
-    { }
+    {
+    }
 
     /**
      * @brief       - Copy - constructor
@@ -778,7 +789,8 @@ public:
      */
     FORCEINLINE TWeakPtr(TWeakPtr&& Other) noexcept
         : Storage(Move(Other.Storage))
-    { }
+    {
+    }
 
     /**
      * @brief       - Copy - constructor that copies from a convertible type
@@ -804,7 +816,8 @@ public:
         typename = typename TEnableIf<TIsPointerConvertible<OtherType, ElementType>::Value>::Type>
     FORCEINLINE TWeakPtr(TWeakPtr<OtherType, OtherDeleterType>&& Other) noexcept
         : Storage(Move(Other.Storage))
-    { }
+    {
+    }
 
     /**
      * @brief       - Constructor that constructs a WeakPtr from a SharedPtr
@@ -989,10 +1002,7 @@ public:
      * @return      - A reference to the retrieved element
      */
     template<typename U = T>
-    NODISCARD FORCEINLINE typename TEnableIf<
-            TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value,
-            typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type
-        >::Type operator[](SizeType Index) const noexcept
+    NODISCARD FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type operator[](SizeType Index) const noexcept
     {
         CHECK(IsValid());
         auto* Pointer = Storage.GetPointer();
@@ -1036,10 +1046,7 @@ public:
      * @return      - Return the reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<
-            TIsPointerConvertible<OtherType, ElementType>::Value,
-            typename TAddLValueReference<TWeakPtr>::Type
-        >::Type operator=(const TWeakPtr<OtherType, OtherDeleterType>& Other) noexcept
+    FORCEINLINE typename TEnableIf<TIsPointerConvertible<OtherType, ElementType>::Value, typename TAddLValueReference<TWeakPtr>::Type>::Type operator=(const TWeakPtr<OtherType, OtherDeleterType>& Other) noexcept
     {
         TWeakPtr(Other).Swap(*this);
         return *this;
@@ -1051,10 +1058,7 @@ public:
      * @return      - Return the reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<
-            TIsPointerConvertible<OtherType, ElementType>::Value,
-            typename TAddLValueReference<TWeakPtr>::Type
-        >::Type operator=(TWeakPtr<OtherType, OtherDeleterType>&& Other) noexcept
+    FORCEINLINE typename TEnableIf<TIsPointerConvertible<OtherType, ElementType>::Value, typename TAddLValueReference<TWeakPtr>::Type>::Type operator=(TWeakPtr<OtherType, OtherDeleterType>&& Other) noexcept
     {
         TWeakPtr(Move(Other)).Swap(*this);
         return *this;
@@ -1082,13 +1086,64 @@ public:
     }
 
 private:
-    NODISCARD FORCEINLINE Internal::FSharedRefCounter* GetCounter() const noexcept
+    NODISCARD FORCEINLINE SharedPointerInternal::FSharedRefCounter* GetCounter() const noexcept
     {
         return Storage.GetCounter();
     }
 
     PointerStorage Storage;
 };
+
+
+template<typename SharedType>
+class TEnableSharedFromThis
+{
+    template<typename, typename>
+    friend class TSharedPtr;
+
+protected:
+    ~TEnableSharedFromThis() = default;
+
+    TEnableSharedFromThis()
+        : WeakThisPointer()
+    {
+    }
+
+    TEnableSharedFromThis(const TEnableSharedFromThis&)
+        : WeakThisPointer()
+    {
+    }
+
+    TEnableSharedFromThis& operator=(const TEnableSharedFromThis&)
+    {
+        return *this;
+    }
+
+public:
+    NODISCARD TSharedPtr<SharedType> AsSharedPtr()
+    {
+        return TSharedPtr<SharedType>(WeakThisPointer);
+    }
+
+    NODISCARD TSharedPtr<const SharedType> AsSharedPtr() const
+    {
+        return TSharedPtr<const SharedType>(WeakThisPointer);
+    }
+
+    NODISCARD TWeakPtr<SharedType> AsWeakPtr()
+    {
+        return TWeakPtr<SharedType>(WeakThisPointer);
+    }
+
+    NODISCARD TWeakPtr<const SharedType> AsWeakPtr() const
+    {
+        return TWeakPtr<const SharedType>(WeakThisPointer);
+    }
+
+private:
+    mutable TWeakPtr<SharedType> WeakThisPointer;
+};
+
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, U* RHS) noexcept
@@ -1206,7 +1261,7 @@ NODISCARD FORCEINLINE TSharedPtr<T> MakeSharedPtr(T* InPointer) noexcept
 }
 
 template<typename T, typename... ArgTypes>
-NODISCARD FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShared(ArgTypes&&... Args) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<TNot<TIsArray<T>>::Value, TSharedPtr<T>>::Type MakeShared(ArgTypes&&... Args) noexcept
 {
     typedef typename TRemoveExtent<T>::Type Type;
 
@@ -1223,12 +1278,14 @@ NODISCARD FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Typ
     return TSharedPtr<T>(RefCountedPtr);
 }
 
+template<typename ToType, typename FromType>
+CONSTEXPR bool IsSameArrayType()
+{
+    return (TIsArray<ToType>::Value == TIsArray<FromType>::Value);
+}
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<
-        TIsArray<ToType>::Value == TIsArray<FromType>::Value,
-        TSharedPtr<ToType>
-    >::Type StaticCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type StaticCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1237,10 +1294,7 @@ NODISCARD FORCEINLINE typename TEnableIf<
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<
-        TIsArray<ToType>::Value == TIsArray<FromType>::Value,
-        TSharedPtr<ToType>
-    >::Type StaticCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type StaticCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1249,10 +1303,7 @@ NODISCARD FORCEINLINE typename TEnableIf<
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<
-        TIsArray<ToType>::Value == TIsArray<FromType>::Value,
-        TSharedPtr<ToType>
-    >::Type ConstCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type ConstCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1261,10 +1312,7 @@ NODISCARD FORCEINLINE typename TEnableIf<
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<
-        TIsArray<ToType>::Value == TIsArray<FromType>::Value,
-        TSharedPtr<ToType>
-    >::Type ConstCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type ConstCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1273,10 +1321,7 @@ NODISCARD FORCEINLINE typename TEnableIf<
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<
-        TIsArray<ToType>::Value == TIsArray<FromType>::Value,
-        TSharedPtr<ToType>
-    >::Type ReinterpretCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type ReinterpretCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1285,10 +1330,7 @@ NODISCARD FORCEINLINE typename TEnableIf<
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<
-        TIsArray<ToType>::Value == TIsArray<FromType>::Value,
-        TSharedPtr<ToType>
-    >::Type ReinterpretCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type ReinterpretCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1297,10 +1339,7 @@ NODISCARD FORCEINLINE typename TEnableIf<
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<
-        TIsArray<ToType>::Value == TIsArray<FromType>::Value,
-        TSharedPtr<ToType>
-    >::Type DynamicCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type DynamicCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 
@@ -1309,10 +1348,7 @@ NODISCARD FORCEINLINE typename TEnableIf<
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<
-        TIsArray<ToType>::Value == TIsArray<FromType>::Value,
-        TSharedPtr<ToType>
-    >::Type DynamicCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type DynamicCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
 

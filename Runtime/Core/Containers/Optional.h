@@ -17,7 +17,8 @@ public:
     FORCEINLINE TOptional() noexcept
         : Value()
         , bHasValue(false)
-    { }
+    {
+    }
 
     /**
      * @brief - Construct from nullptr
@@ -25,7 +26,8 @@ public:
     FORCEINLINE TOptional(nullptr_type) noexcept
         : Value()
         , bHasValue(false)
-    { }
+    {
+    }
 
     /**
      * @brief       - Copy-constructor
@@ -68,7 +70,7 @@ public:
     {
         if (Other)
         {
-            Construct(Move(*Other.Value.GetStorage()));
+            Construct(::Move(*Other.Value.GetStorage()));
             Other.Reset();
         }
     }
@@ -86,7 +88,7 @@ public:
     {
         if (Other)
         {
-            Construct(Move<ElementType>(*(Other.Value.GetStorage())));
+            Construct(::Move<ElementType>(*(Other.Value.GetStorage())));
             Other.Reset();
         }
     }
@@ -450,7 +452,7 @@ private:
     FORCEINLINE void Destruct() noexcept
     {
         typedef ElementType ElementDestructType;
-        Value.GetStorage()->ElementDestructType::~ElementDestructType();
+        Value->ElementDestructType::~ElementDestructType();
         bHasValue = false;
     }
 

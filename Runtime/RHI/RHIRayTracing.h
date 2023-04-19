@@ -295,12 +295,12 @@ struct FRayTracingShaderResources
 
     uint32 NumResources() const
     {
-        return ConstantBuffers.GetSize() + ShaderResourceViews.GetSize() + UnorderedAccessViews.GetSize();
+        return ConstantBuffers.Size() + ShaderResourceViews.Size() + UnorderedAccessViews.Size();
     }
 
     uint32 NumSamplers() const
     {
-        return SamplerStates.GetSize();
+        return SamplerStates.Size();
     }
 
     void Reset()

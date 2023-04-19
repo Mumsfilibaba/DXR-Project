@@ -30,7 +30,7 @@ bool FLightSetup::Init()
         
         FRHIBufferDesc BufferDesc(
             PointLightsData.CapacityInBytes(),
-            PointLightsData.GetStride(),
+            PointLightsData.Stride(),
             EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
 
         PointLightsBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
@@ -50,7 +50,7 @@ bool FLightSetup::Init()
 
         FRHIBufferDesc BufferDesc(
             PointLightsPosRad.CapacityInBytes(),
-            PointLightsPosRad.GetStride(),
+            PointLightsPosRad.Stride(),
             EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
 
         PointLightsPosRadBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
@@ -70,7 +70,7 @@ bool FLightSetup::Init()
 
         FRHIBufferDesc BufferDesc(
             ShadowCastingPointLightsData.CapacityInBytes(),
-            ShadowCastingPointLightsData.GetStride(),
+            ShadowCastingPointLightsData.Stride(),
             EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
 
         ShadowCastingPointLightsBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
@@ -90,7 +90,7 @@ bool FLightSetup::Init()
 
         FRHIBufferDesc BufferDesc(
             ShadowCastingPointLightsPosRad.CapacityInBytes(),
-            ShadowCastingPointLightsPosRad.GetStride(),
+            ShadowCastingPointLightsPosRad.Stride(),
             EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
 
         ShadowCastingPointLightsPosRadBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
@@ -206,7 +206,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
 
         FRHIBufferDesc BufferDesc(
             PointLightsData.CapacityInBytes(),
-            PointLightsData.GetStride(),
+            PointLightsData.Stride(),
             EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
 
         PointLightsBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
@@ -222,7 +222,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
 
         FRHIBufferDesc BufferDesc(
             PointLightsPosRad.CapacityInBytes(),
-            PointLightsPosRad.GetStride(),
+            PointLightsPosRad.Stride(),
             EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
 
         PointLightsPosRadBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
@@ -238,7 +238,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
 
         FRHIBufferDesc BufferDesc(
             ShadowCastingPointLightsData.CapacityInBytes(),
-            ShadowCastingPointLightsData.GetStride(),
+            ShadowCastingPointLightsData.Stride(),
             EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
 
         ShadowCastingPointLightsBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
@@ -254,7 +254,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
 
         FRHIBufferDesc BufferDesc(
             ShadowCastingPointLightsPosRad.CapacityInBytes(),
-            ShadowCastingPointLightsPosRad.GetStride(),
+            ShadowCastingPointLightsPosRad.Stride(),
             EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
 
         ShadowCastingPointLightsPosRadBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
@@ -293,8 +293,8 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
 
     if (!PointLightsData.IsEmpty())
     {
-        CommandList.UpdateBuffer(PointLightsBuffer.Get(), FBufferRegion(0, PointLightsData.SizeInBytes()), PointLightsData.GetData());
-        CommandList.UpdateBuffer(PointLightsPosRadBuffer.Get(), FBufferRegion(0, PointLightsPosRad.SizeInBytes()), PointLightsPosRad.GetData());
+        CommandList.UpdateBuffer(PointLightsBuffer.Get(), FBufferRegion(0, PointLightsData.SizeInBytes()), PointLightsData.Data());
+        CommandList.UpdateBuffer(PointLightsPosRadBuffer.Get(), FBufferRegion(0, PointLightsPosRad.SizeInBytes()), PointLightsPosRad.Data());
     }
 
     if (!ShadowCastingPointLightsData.IsEmpty())
@@ -302,11 +302,11 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
         CommandList.UpdateBuffer(
             ShadowCastingPointLightsBuffer.Get(),
             FBufferRegion(0, ShadowCastingPointLightsData.SizeInBytes()),
-            ShadowCastingPointLightsData.GetData());
+            ShadowCastingPointLightsData.Data());
         CommandList.UpdateBuffer(
             ShadowCastingPointLightsPosRadBuffer.Get(),
             FBufferRegion(0, ShadowCastingPointLightsPosRad.SizeInBytes()),
-            ShadowCastingPointLightsPosRad.GetData());
+            ShadowCastingPointLightsPosRad.Data());
     }
 
     CommandList.TransitionBuffer(

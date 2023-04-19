@@ -45,9 +45,7 @@ struct FRHICommandStatistics
     uint32 NumCommands;
 };
 
-
-class RHI_API FRHICommandList 
-    : FNonCopyable
+class RHI_API FRHICommandList : FNonCopyable
 {
 public:
     FRHICommandList() noexcept
@@ -81,9 +79,9 @@ public:
     template<typename T>
     FORCEINLINE TArrayView<T> AllocateArray(const TArrayView<T>& Array) noexcept
     {
-        void* NewArray = Allocate(Array.GetSize() * sizeof(T), alignof(T));
-        FMemory::Memcpy(NewArray, Array.GetData(), Array.SizeInBytes());
-        return TArrayView<T>(reinterpret_cast<T*>(NewArray), Array.GetSize());
+        void* NewArray = Allocate(Array.Size() * sizeof(T), alignof(T));
+        FMemory::Memcpy(NewArray, Array.Data(), Array.SizeInBytes());
+        return TArrayView<T>(reinterpret_cast<T*>(NewArray), Array.Size());
     }
 
     FORCEINLINE void* AllocateCommand(int32 Size, int32 Alignment) noexcept
@@ -214,7 +212,6 @@ public:
     }
 
 public:
-
     template<typename LambdaType>
     FORCEINLINE void ExecuteLambda(LambdaType Lambda) noexcept
     {
@@ -601,16 +598,17 @@ void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
 }
 
 
-struct FRHIThreadTask
-    : FNonCopyable
+struct FRHIThreadTask : FNonCopyable
 {
     FORCEINLINE FRHIThreadTask() noexcept
         : CommandList(nullptr)
-    { }
+    {
+    }
 
     FORCEINLINE explicit FRHIThreadTask(FRHICommandList* InCommandList) noexcept
         : CommandList(InCommandList)
-    { }
+    {
+    }
 
     FORCEINLINE FRHIThreadTask(FRHIThreadTask&& Other) noexcept
         : CommandList(Other.CommandList)
@@ -638,22 +636,25 @@ struct FRHIThreadTask
     FRHICommandList* CommandList;
 };
 
-
-class RHI_API FRHIThread 
-    : public FThreadInterface
-    , private FNonCopyable
+class RHI_API FRHIThread : public FThreadInterface, FNonCopyable
 {
 private:
     FRHIThread();
     ~FRHIThread() = default;
 
 public:
-    static FORCEINLINE const CHAR* GetThreadName() { return "RHI Executor-Thread"; }
+    static FORCEINLINE const CHAR* GetThreadName()
+    { 
+        return "RHI Executor-Thread"; 
+    }
     
     static bool Startup();
     static void Shutdown();
 
-    static bool IsRunning() { return (GInstance != nullptr); }
+    static bool IsRunning() 
+    { 
+        return (GInstance != nullptr);
+    }
 
     static FRHIThread& Get();
 
@@ -686,9 +687,7 @@ private:
     static FRHIThread* GInstance;
 };
 
-
-class RHI_API FRHICommandListExecutor 
-    : private FNonCopyable
+class RHI_API FRHICommandListExecutor : FNonCopyable
 {
 public:
     FRHICommandListExecutor();
@@ -704,7 +703,10 @@ public:
 
     void ExecuteCommandList(class FRHICommandList& CmdList);
 
-    FORCEINLINE void SetContext(IRHICommandContext* InCmdContext) { CommandContext = InCmdContext; }
+    FORCEINLINE void SetContext(IRHICommandContext* InCmdContext) 
+    { 
+        CommandContext = InCmdContext; 
+    }
 
     FORCEINLINE IRHICommandContext& GetContext()
     {
@@ -712,7 +714,10 @@ public:
         return *CommandContext;
     }
 
-    FORCEINLINE const FRHICommandStatistics& GetStatistics() const { return Statistics; }
+    FORCEINLINE const FRHICommandStatistics& GetStatistics() const 
+    { 
+        return Statistics; 
+    }
 
 private:
     FRHICommandStatistics Statistics;

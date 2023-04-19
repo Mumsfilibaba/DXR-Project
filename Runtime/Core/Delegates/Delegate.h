@@ -1,6 +1,5 @@
 #pragma once
 #include "DelegateBase.h"
-
 #include "Core/Templates/TypeTraits.h"
 
 #define DECLARE_DELEGATE(DelegateName, ...) \
@@ -8,7 +7,6 @@
 
 #define DECLARE_RETURN_DELEGATE(DelegateName, ReturnType, ...) \
     typedef TDelegate<ReturnType(__VA_ARGS__)> DelegateName;
-
 
 template<typename InvokableType>
 class TDelegate;
@@ -254,9 +252,8 @@ private:
     FORCEINLINE void Bind(ConstructorArgs&&... Args)
     {
         Release();
-
         void* Memory = AllocateStorage(sizeof(DelegateType));
-        new (Memory) DelegateType(Forward<ConstructorArgs>(Args)...);
+        new (Memory) DelegateType(::Forward<ConstructorArgs>(Args)...);
     }
 
     FORCEINLINE DelegateInstance* GetDelegateInstance() noexcept

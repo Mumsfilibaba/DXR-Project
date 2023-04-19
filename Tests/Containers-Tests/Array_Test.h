@@ -6,5 +6,4 @@
 
 void TArray_Benchmark();
 bool TArray_Test(int32 Argc, const CHAR** Argv);
-
 #endif

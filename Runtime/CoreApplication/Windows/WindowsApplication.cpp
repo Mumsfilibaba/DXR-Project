@@ -1,6 +1,7 @@
 #include "WindowsApplication.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Windows/WindowsKeyMapping.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -11,18 +12,25 @@
 #define WINDOWS_KEY_REPEAT_MASK  (0x40000000)
 #define WINDOWS_BACK_BUTTON_MASK (0x0001)
 
+TAutoConsoleVariable<bool> CVarIsProcessDPIAware(
+    "Windows.IsProcessDPIAware", 
+    "If set to true the process is set to be DPI aware, otherwise not", 
+    true,
+    EConsoleVariableFlags::Default);
+
 FWindowsApplication* WindowsApplication = nullptr;
 
 FWindowsApplication* FWindowsApplication::CreateWindowsApplication()
 {
     HINSTANCE TempInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0));
 
-    // TODO: Load icon here
-    WindowsApplication = new FWindowsApplication(TempInstanceHandle);
+    // TODO: Load icon resource here
+    HICON Icon = LoadIcon(NULL, IDI_APPLICATION);
+    WindowsApplication = new FWindowsApplication(TempInstanceHandle, Icon);
     return WindowsApplication;
 }
 
-FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle)
+FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIcon)
     : FGenericApplication(TSharedPtr<ICursor>(new FWindowsCursor()))
     , Windows()
     , Messages()
@@ -30,12 +38,16 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle)
     , WindowsMessageListeners()
     , bIsTrackingMouse(false)
     , InstanceHandle(InInstanceHandle)
+    , Icon(InIcon)
 {
     const bool bResult = RegisterWindowClass();
     CHECK(bResult == true);
 
-#if (PLATFORM_WINDOWS_VISTA && ENABLE_DPI_AWARENESS)
-    SetProcessDPIAware();
+#if PLATFORM_WINDOWS_VISTA
+    if (CVarIsProcessDPIAware.GetValue())
+    {
+        SetProcessDPIAware();
+    }
 #endif
 
     FWindowsKeyMapping::Initialize();
@@ -56,7 +68,9 @@ bool FWindowsApplication::RegisterWindowClass()
     WNDCLASS WindowClass;
     FMemory::Memzero(&WindowClass);
 
+    WindowClass.style         = CS_DBLCLKS | CS_HREDRAW | CS_OWNDC;
     WindowClass.hInstance     = InstanceHandle;
+    WindowClass.hIcon         = Icon;
     WindowClass.lpszClassName = FWindowsWindow::GetClassName();
     WindowClass.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
     WindowClass.hCursor       = LoadCursor(nullptr, IDC_ARROW);
@@ -170,6 +184,19 @@ void FWindowsApplication::Tick(float)
 
         ClosedWindows.Clear();
     }
+
+    // Poll InputDevices
+    PollInputDevices();
+}
+
+void FWindowsApplication::PollInputDevices()
+{
+    XInputDevice.PollDeviceState();
+}
+
+FInputDevice* FWindowsApplication::GetInputDeviceInterface()
+{
+    return &XInputDevice;
 }
 
 bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window)
@@ -253,11 +280,7 @@ FMonitorDesc FWindowsApplication::GetMonitorDescFromWindow(const TSharedRef<FGen
 TSharedRef<FGenericWindow> FWindowsApplication::GetWindowUnderCursor() const
 {
     POINT CursorPos;
-    if (!GetCursorPos(&CursorPos))
-    {
-        LOG_ERROR("Failed to retrieve the Cursor position");
-        return nullptr;
-    }
+    GetCursorPos(&CursorPos);
 
     HWND Handle = WindowFromPoint(CursorPos);
     return GetWindowsWindowFromHWND(Handle);
@@ -447,34 +470,73 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_MBUTTONDOWN:
         case WM_RBUTTONDOWN:
         case WM_XBUTTONDOWN:
+        {
+            EMouseButton Button = EMouseButton::MouseButton_Unknown;
+            if (Message == WM_LBUTTONDOWN)
+            {
+                Button = EMouseButton::MouseButton_Left;
+            }
+            else if (Message == WM_MBUTTONDOWN)
+            {
+                Button = EMouseButton::MouseButton_Middle;
+            }
+            else if (Message == WM_RBUTTONDOWN)
+            {
+                Button = EMouseButton::MouseButton_Right;
+            }
+            else if (Message == WM_XBUTTONDOWN)
+            {
+                if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
+                {
+                    Button = EMouseButton::MouseButton_Back;
+                }
+                else
+                {
+                    Button = EMouseButton::MouseButton_Forward;
+                }
+            }
+
+            const int32 x = GET_X_LPARAM(lParam);
+            const int32 y = GET_Y_LPARAM(lParam);
+
+            MessageHandler->OnMouseButtonDown(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState(), x, y);
+            break;
+        }
+
         case WM_LBUTTONDBLCLK:
         case WM_MBUTTONDBLCLK:
         case WM_RBUTTONDBLCLK:
         case WM_XBUTTONDBLCLK:
         {
             EMouseButton Button = EMouseButton::MouseButton_Unknown;
-            if (Message == WM_LBUTTONDOWN || Message == WM_LBUTTONDBLCLK)
+            if (Message == WM_LBUTTONDBLCLK)
             {
                 Button = EMouseButton::MouseButton_Left;
             }
-            else if (Message == WM_MBUTTONDOWN || Message == WM_MBUTTONDBLCLK)
+            else if (Message == WM_MBUTTONDBLCLK)
             {
                 Button = EMouseButton::MouseButton_Middle;
             }
-            else if (Message == WM_RBUTTONDOWN || Message == WM_RBUTTONDBLCLK)
+            else if (Message == WM_RBUTTONDBLCLK)
             {
                 Button = EMouseButton::MouseButton_Right;
             }
-            else if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
+            else if (Message == WM_XBUTTONDBLCLK)
             {
-                Button = EMouseButton::MouseButton_Back;
-            }
-            else
-            {
-                Button = EMouseButton::MouseButton_Forward;
+                if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
+                {
+                    Button = EMouseButton::MouseButton_Back;
+                }
+                else
+                {
+                    Button = EMouseButton::MouseButton_Forward;
+                }
             }
 
-            MessageHandler->OnMouseDown(Button, FPlatformApplicationMisc::GetModifierKeyState());
+            const int32 x = GET_X_LPARAM(lParam);
+            const int32 y = GET_Y_LPARAM(lParam);
+
+            MessageHandler->OnMouseButtonDoubleClick(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState(), x, y);
             break;
         }
 
@@ -496,32 +558,35 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
             {
                 Button = EMouseButton::MouseButton_Right;
             }
-            else if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
+            else if (Message == WM_XBUTTONUP)
             {
-                Button = EMouseButton::MouseButton_Back;
-            }
-            else
-            {
-                Button = EMouseButton::MouseButton_Forward;
+                if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
+                {
+                    Button = EMouseButton::MouseButton_Back;
+                }
+                else
+                {
+                    Button = EMouseButton::MouseButton_Forward;
+                }
             }
 
-            MessageHandler->OnMouseUp(Button, FPlatformApplicationMisc::GetModifierKeyState());
+            const int32 x = GET_X_LPARAM(lParam);
+            const int32 y = GET_Y_LPARAM(lParam);
+
+            MessageHandler->OnMouseButtonUp(Button, FPlatformApplicationMisc::GetModifierKeyState(), x, y);
             break;
         }
 
         case WM_MOUSEWHEEL:
         case WM_MOUSEHWHEEL:
         {
-            const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
-            if (Message == WM_MOUSEWHEEL)
-            {
-                MessageHandler->OnMouseScrolled(0.0f, WheelDelta);
-            }
-            else
-            {
-                MessageHandler->OnMouseScrolled(WheelDelta, 0.0f);
-            }
+            const int32 x = GET_X_LPARAM(lParam);
+            const int32 y = GET_Y_LPARAM(lParam);
 
+            const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
+
+            const bool bIsVertical = (Message == WM_MOUSEWHEEL);
+            MessageHandler->OnMouseScrolled(WheelDelta, bIsVertical, x, y);
             break;
         }
 

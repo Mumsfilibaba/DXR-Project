@@ -3,7 +3,7 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Generic/GenericKeyMapping.h"
 
-class CORE_API FMacKeyMapping : public FGenericKeyMapping
+class CORE_API FMacKeyMapping final : public FGenericKeyMapping
 {
     enum { kNumKeys = 256 };
 

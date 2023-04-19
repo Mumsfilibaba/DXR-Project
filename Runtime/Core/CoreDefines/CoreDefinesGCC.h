@@ -66,7 +66,11 @@
 
 
 #ifndef DEBUG_BREAK
-    #define DEBUG_BREAK __builtin_trap
+    #if !PRODUCTION_BUILD
+        #define DEBUG_BREAK __builtin_trap
+    #else
+        #define DEBUG_BREAK
+    #endif
 #endif
 
 // Define the rest of the defines to a default value

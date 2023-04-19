@@ -94,10 +94,10 @@ private:
     bool InitShadingImage();
 
     NOINLINE void FrustumCullingAndSortingInternal(
-        const FCamera* Camera,
+        const FCamera*               Camera,
         const TPair<uint32, uint32>& DrawCommands,
-        TArray<uint32>& OutDeferredDrawCommands,
-        TArray<uint32>& OutForwardDrawCommands);
+        TArray<uint32>&              OutDeferredDrawCommands,
+        TArray<uint32>&              OutForwardDrawCommands);
 
     TSharedPtr<FRenderTargetDebugWindow> TextureDebugger;
     TSharedPtr<FRendererInfoWindow>      InfoWindow;
@@ -143,9 +143,9 @@ private:
 
 inline void AddDebugTexture(
     const FRHIShaderResourceViewRef& ImageView,
-    const FRHITextureRef& Image,
-    EResourceAccess BeforeState,
-    EResourceAccess AfterState)
+    const FRHITextureRef&            Image,
+    EResourceAccess                  BeforeState,
+    EResourceAccess                  AfterState)
 {
     FRenderer::Get().GetTextureDebugger()->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
 }

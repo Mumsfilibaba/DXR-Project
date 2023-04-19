@@ -6,9 +6,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 typedef TSharedRef<struct FGenericEvent> FGenericEventRef;
 
-
-struct CORE_API FGenericEvent
-    : public FRefCounted
+struct CORE_API FGenericEvent : public FRefCounted
 {
     virtual ~FGenericEvent() = default;
 

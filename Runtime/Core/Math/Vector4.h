@@ -14,7 +14,8 @@ public:
         , y(0.0f)
         , z(0.0f)
         , w(0.0f)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with a corresponding value.
@@ -28,7 +29,8 @@ public:
         , y(InY)
         , z(InZ)
         , w(InW)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with an array.
@@ -39,7 +41,8 @@ public:
         , y(Arr[1])
         , z(Arr[2])
         , w(Arr[3])
-    { }
+    {
+    }
 
     /**
      * @brief        - Constructor initializing all components with a single value.
@@ -50,7 +53,8 @@ public:
         , y(Scalar)
         , z(Scalar)
         , w(Scalar)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor copying a 3-D vector (x, y, z) into the first components, setting w-component to zero
@@ -61,7 +65,8 @@ public:
         , y(XYZ.y)
         , z(XYZ.z)
         , w(0.0f)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor copying a 3-D vector (x, y, z) into the first components, setting w-component to a specific value
@@ -73,10 +78,11 @@ public:
         , y(XYZ.y)
         , z(XYZ.z)
         , w(InW)
-    { }
+    {
+    }
 
      /** @brief - Normalize this vector */
-    inline void Normalize() noexcept
+    void Normalize() noexcept
     {
 #if !USE_VECTOR_OP
         const float fLengthSquared = LengthSquared();
@@ -107,7 +113,7 @@ public:
      * @brief  - Returns a normalized version of this vector
      * @return - A copy of this vector normalized
      */
-    inline FVector4 GetNormalized() const noexcept
+    FORCEINLINE FVector4 GetNormalized() const noexcept
     {
         FVector4 Result(*this);
         Result.Normalize();
@@ -119,7 +125,7 @@ public:
      * @param Other - vector to compare against
      * @return      - True if equal, false if not
      */
-    inline bool IsEqual(const FVector4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    bool IsEqual(const FVector4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
 #if !USE_VECTOR_OP
         Epsilon = NMath::Abs(Epsilon);
@@ -241,7 +247,7 @@ public:
      * @param Other - The vector to perform cross product with
      * @return      - The cross product
      */
-    inline FVector4 CrossProduct(const FVector4& Other) const noexcept
+    FVector4 CrossProduct(const FVector4& Other) const noexcept
     {
 #if !USE_VECTOR_OP
         return FVector4((y * Other.z) - (z * Other.y)
@@ -267,7 +273,7 @@ public:
      * @param Other - The vector to project onto
      * @return      - The projected vector
      */
-    inline FVector4 ProjectOn(const FVector4& Other) const noexcept
+    FVector4 ProjectOn(const FVector4& Other) const noexcept
     {
 #if !USE_VECTOR_OP
         float AdotB = DotProduct(Other);
@@ -297,7 +303,7 @@ public:
      * @param Normal - Vector to reflect around
      * @return       - The reflected vector
      */
-    inline FVector4 Reflect(const FVector4& Normal) const noexcept
+    FVector4 Reflect(const FVector4& Normal) const noexcept
     {
 #if !USE_VECTOR_OP
         float VdotN = DotProduct(Normal);
@@ -330,7 +336,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE float* GetData() noexcept
+    FORCEINLINE float* Data() noexcept
     {
         return reinterpret_cast<float*>(this);
     }
@@ -339,7 +345,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE const float* GetData() const noexcept
+    FORCEINLINE const float* Data() const noexcept
     {
         return reinterpret_cast<const float*>(this);
     }
@@ -419,7 +425,7 @@ public:
         NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&First));
         NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&Second));
         NVectorOp::Float128 Temp3 = NVectorOp::Load(t);
-
+        
         NVectorOp::Float128 Ones  = NVectorOp::MakeOnes();
         
         NVectorOp::Float128 Temp4 = NVectorOp::Sub(Ones, Temp3);

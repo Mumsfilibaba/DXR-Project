@@ -12,7 +12,8 @@ public:
     FORCEINLINE FMatrix2() noexcept 
         : m00(0.0f), m01(0.0f)
         , m10(0.0f), m11(0.0f)
-    { }
+    {
+    }
 
     /**
      * @brief          - Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
@@ -21,7 +22,8 @@ public:
     FORCEINLINE explicit FMatrix2(float Diagonal) noexcept
         : m00(Diagonal), m01(0.0f)
         , m10(0.0f), m11(Diagonal)
-    { }
+    {
+    }
 
     /**
      * @brief      - Constructor initializing all values with vectors specifying each row
@@ -31,7 +33,8 @@ public:
     FORCEINLINE explicit FMatrix2(const FVector2& Row0, const FVector2& Row1) noexcept
         : m00(Row0.x), m01(Row0.y)
         , m10(Row1.x), m11(Row1.y)
-    { }
+    {
+    }
 
     /**
      * @brief      - Constructor initializing all values with corresponding value
@@ -43,7 +46,8 @@ public:
     FORCEINLINE explicit FMatrix2(float In00, float In01, float In10, float In11) noexcept
         : m00(In00), m01(In01)
         , m10(In10), m11(In11)
-    { }
+    {
+    }
 
     /**
      * @brief     - Constructor initializing all components with an array
@@ -52,7 +56,8 @@ public:
     FORCEINLINE explicit FMatrix2(const float* Arr) noexcept
         : m00(Arr[0]), m01(Arr[1])
         , m10(Arr[2]), m11(Arr[3])
-    { }
+    {
+    }
 
     /**
      * @brief  - Returns the transposed version of this matrix
@@ -159,7 +164,7 @@ public:
      * @brief  - Checks weather this matrix has any value that equals NaN
      * @return - True if the any value equals NaN, false if not
      */
-    inline bool HasNaN() const noexcept
+    bool HasNaN() const noexcept
     {
         for (int32 Index = 0; Index < 4; ++Index)
         {
@@ -176,7 +181,7 @@ public:
      * @brief  - Checks weather this matrix has any value that equals infinity
      * @return - True if the any value equals infinity, false if not
      */
-    inline bool HasInfinity() const noexcept
+    bool HasInfinity() const noexcept
     {
         for (int32 Index = 0; Index < 4; ++Index)
         {
@@ -203,7 +208,7 @@ public:
      * @param Other - matrix to compare against
      * @return      - True if equal, false if not
      */
-    inline bool IsEqual(const FMatrix2& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    bool IsEqual(const FMatrix2& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
 #if !USE_VECTOR_OP
 
@@ -271,7 +276,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE float* GetData() noexcept
+    FORCEINLINE float* Data() noexcept
     {
         return reinterpret_cast<float*>(this);
     }
@@ -280,7 +285,7 @@ public:
      * @brief  - Returns the data of this matrix as a pointer
      * @return - A pointer to the data
      */
-    FORCEINLINE const float* GetData() const noexcept
+    FORCEINLINE const float* Data() const noexcept
     {
         return reinterpret_cast<const float*>(this);
     }
@@ -591,7 +596,7 @@ public:
      * @brief  - Creates and returns a identity matrix
      * @return - A identity matrix
      */
-    inline static FMatrix2 Identity() noexcept
+    static FORCEINLINE FMatrix2 Identity() noexcept
     {
         return FMatrix2(1.0f);
     }
@@ -601,7 +606,7 @@ public:
      * @param Scale - Uniform scale that represents this matrix
      * @return      - A scale matrix
      */
-    inline static FMatrix2 Scale(float Scale) noexcept
+    static FORCEINLINE FMatrix2 Scale(float Scale) noexcept
     {
         return FMatrix2(Scale);
     }
@@ -612,7 +617,7 @@ public:
      * @param y - Scale for the y-axis
      * @return  - A scale matrix
      */
-    inline static FMatrix2 Scale(float x, float y) noexcept
+    static FORCEINLINE FMatrix2 Scale(float x, float y) noexcept
     {
         return FMatrix2(x, 0.0f, 0.0f, y);
     }
@@ -622,7 +627,7 @@ public:
      * @param VectorWithScale - A vector containing the scale for each axis in the x-, and y-components
      * @return                - A scale matrix
      */
-    inline static FMatrix2 Scale(const FVector2& VectorWithScale) noexcept
+    static FORCEINLINE FMatrix2 Scale(const FVector2& VectorWithScale) noexcept
     {
         return Scale(VectorWithScale.x, VectorWithScale.y);
     }
@@ -632,7 +637,7 @@ public:
      * @param Rotation - Rotation around in radians
      * @return         - A rotation matrix
      */
-    inline static FMatrix2 Rotation(float Rotation) noexcept
+    static FORCEINLINE FMatrix2 Rotation(float Rotation) noexcept
     {
         const float SinZ = NMath::Sin(Rotation);
         const float CosZ = NMath::Cos(Rotation);

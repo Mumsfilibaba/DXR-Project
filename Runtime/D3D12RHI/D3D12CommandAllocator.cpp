@@ -88,5 +88,5 @@ void FD3D12CommandAllocatorManager::ReleaseAllocator(FD3D12CommandAllocatorRef I
 
     InAllocator->SetSyncPoint(SyncPoint);
 
-    Allocators.Push(InAllocator);
+    Allocators.Add(InAllocator);
 }

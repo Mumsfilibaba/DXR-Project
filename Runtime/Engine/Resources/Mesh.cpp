@@ -6,8 +6,8 @@ bool FMesh::Init(const FMeshData& Data)
 {
     const bool bRTOn = RHISupportsRayTracing();
 
-    VertexCount = static_cast<uint32>(Data.Vertices.GetSize());
-    IndexCount  = static_cast<uint32>(Data.Indices.GetSize());
+    VertexCount = static_cast<uint32>(Data.Vertices.Size());
+    IndexCount  = static_cast<uint32>(Data.Indices.Size());
 
     const EBufferUsageFlags BufferFlags = bRTOn ? (EBufferUsageFlags::ShaderResource | EBufferUsageFlags::Default) : EBufferUsageFlags::Default;
 
@@ -16,7 +16,7 @@ bool FMesh::Init(const FMeshData& Data)
         sizeof(FVertex),
         BufferFlags | EBufferUsageFlags::VertexBuffer);
 
-    VertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, Data.Vertices.GetData());
+    VertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, Data.Vertices.Data());
     if (!VertexBuffer)
     {
         return false;
@@ -35,18 +35,18 @@ bool FMesh::Init(const FMeshData& Data)
     IndexFormat = ((IndexCount < TNumericLimits<uint16>::Max()) && !bRTOn) ? EIndexFormat::uint16 : EIndexFormat::uint32;
     if (IndexFormat == EIndexFormat::uint16)
     {
-        NewIndicies.Reserve(Data.Indices.GetSize());
+        NewIndicies.Reserve(Data.Indices.Size());
 
         for (uint32 Index : Data.Indices)
         {
             NewIndicies.Emplace(uint16(Index));
         }
 
-        InitialIndicies = NewIndicies.GetData();
+        InitialIndicies = NewIndicies.Data();
     }
     else
     {
-        InitialIndicies = Data.Indices.GetData();
+        InitialIndicies = Data.Indices.Data();
     }
 
     FRHIBufferDesc IBDesc(

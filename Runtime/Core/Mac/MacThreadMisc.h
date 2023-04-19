@@ -1,19 +1,15 @@
 #pragma once
 #include "MacRunLoop.h"
-
 #include "Core/Generic/GenericThreadMisc.h"
 
 #include <unistd.h>
 #include <pthread.h>
 #include <Foundation/Foundation.h>
 
-
-struct FMacThreadMisc 
-    : public FGenericThreadMisc
+struct FMacThreadMisc final : public FGenericThreadMisc
 {
-    static FGenericThread* CreateThread(FThreadInterface* InRunnable);
-
-    static FGenericEvent* CreateEvent(bool bManualReset);
+    static FGenericEvent*  CreateEvent(bool bManualReset);
+    static FGenericThread* CreateThread(FThreadInterface* InRunnable, bool bSuspended = true);
     
     static FORCEINLINE bool Initialize() 
     { 

@@ -1,6 +1,6 @@
 #include "Delegate_Test.h"
 
-#if RUN_DELEGATE_TEST
+#if RUN_TDELEGATE_TEST
 #include <iostream>
 
 #include <Core/Containers/Tuple.h>
@@ -127,14 +127,14 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Delegate_Test
+// TDelegate_Test
 
-void Delegate_Test()
+void TDelegate_Test()
 {
     std::cout << std::endl << "----Testing Tuple----" << std::endl << std::endl;
     TTuple<int32, float, double, std::string> Tuple(5, 0.9f, 5.0, "A string") ;
 
-    std::cout << "Size=" << Tuple.GetSize() << std::endl;
+    std::cout << "Size=" << Tuple.Size() << std::endl;
 
     std::cout << "NumElements=" << TTuple<int, float, double>::NumElements << std::endl;
 

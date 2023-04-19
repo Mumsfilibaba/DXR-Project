@@ -1,10 +1,8 @@
 #pragma once
 #include "Windows.h"
-
 #include "Core/Generic/GenericPlatformTime.h"
 
-struct FWindowsPlatformTime 
-    : public FGenericPlatformTime
+struct FWindowsPlatformTime final : public FGenericPlatformTime
 {
     static FORCEINLINE uint64 QueryPerformanceCounter()
     {

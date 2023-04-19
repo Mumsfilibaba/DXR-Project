@@ -70,12 +70,12 @@ bool TString_Test_Internal(const CHAR* Args)
         FString String0;
         TEST_CHECK_STRING(String0, "");
         TEST_CHECK(String0.GetLength()   == 0);
-        TEST_CHECK(String0.GetCapacity() == 0);
+        TEST_CHECK(String0.Capacity() == 0);
 
         FString String1 = "Hello String";
         TEST_CHECK_STRING(String1, "Hello String");
         TEST_CHECK(String1.GetLength()   == 12);
-        TEST_CHECK(String1.GetCapacity() == 13);
+        TEST_CHECK(String1.Capacity() == 13);
 
         FString String2 = FString(Args, 7);
         TEST_CHECK_STRING_N(String2, Args, 7);
@@ -135,13 +135,13 @@ bool TString_Test_Internal(const CHAR* Args)
         TEST_CHECK_STRING(String7, "NewString");
 
         String7.Reset(12);
-        TEST_CHECK(String7.GetSize()     == 12);
-        TEST_CHECK(String7.GetCapacity() == 13);
+        TEST_CHECK(String7.Size()     == 12);
+        TEST_CHECK(String7.Capacity() == 13);
         TEST_CHECK_STRING(String7, "");
 
         String7.Reset(6, 'c');
-        TEST_CHECK(String7.GetSize()     == 6);
-        TEST_CHECK(String7.GetCapacity() == 13);
+        TEST_CHECK(String7.Size()     == 6);
+        TEST_CHECK(String7.Capacity() == 13);
         TEST_CHECK_STRING(String7, "cccccc");
 
         FString SearchString = "0123MeSearch89Me89";
@@ -308,12 +308,12 @@ bool TString_Test_Internal(const CHAR* Args)
         FStringWide String0;
         TEST_CHECK_STRING(String0, L"");
         TEST_CHECK(String0.GetLength()   == 0);
-        TEST_CHECK(String0.GetCapacity() == 0);
+        TEST_CHECK(String0.Capacity() == 0);
 
         FStringWide String1 = L"Hello String";
         TEST_CHECK_STRING(String1, L"Hello String");
         TEST_CHECK(String1.GetLength()   == 12);
-        TEST_CHECK(String1.GetCapacity() == 13);
+        TEST_CHECK(String1.Capacity() == 13);
 
         FStringWide String2 = FStringWide(SomeWideStringInsteadOfArgs, 7);
         TEST_CHECK_STRING_N(String2, SomeWideStringInsteadOfArgs, 7);
@@ -373,13 +373,13 @@ bool TString_Test_Internal(const CHAR* Args)
         TEST_CHECK_STRING(String7, L"NewString");
 
         String7.Reset(12);
-        TEST_CHECK(String7.GetSize()     == 12);
-        TEST_CHECK(String7.GetCapacity() == 13);
+        TEST_CHECK(String7.Size()     == 12);
+        TEST_CHECK(String7.Capacity() == 13);
         TEST_CHECK_STRING(String7, L"");
 
         String7.Reset(6, L'c');
-        TEST_CHECK(String7.GetSize()     == 6);
-        TEST_CHECK(String7.GetCapacity() == 13);
+        TEST_CHECK(String7.Size()     == 6);
+        TEST_CHECK(String7.Capacity() == 13);
         TEST_CHECK_STRING(String7, L"cccccc");
 
         FStringWide SearchString = L"0123MeSearch89Me89";

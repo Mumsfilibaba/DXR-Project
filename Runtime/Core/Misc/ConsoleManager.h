@@ -450,17 +450,17 @@ class TAutoConsoleVariable
 
 public:
     TAutoConsoleVariable(
-        const CHAR* InName, 
-        const CHAR* InHelpString,
-        const T& DefaultValue, 
+        const CHAR*           InName, 
+        const CHAR*           InHelpString,
+        const T&              DefaultValue, 
         EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default);
 
     TAutoConsoleVariable(
-        const CHAR* InName, 
-        const CHAR* InHelpString,
-        const T& DefaultValue, 
+        const CHAR*                     InName, 
+        const CHAR*                     InHelpString,
+        const T&                        DefaultValue, 
         const FConsoleVariableDelegate& VariableChangedDelegate, 
-        EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        EConsoleVariableFlags           InFlags = EConsoleVariableFlags::Default)
         : TAutoConsoleVariable(InName, InHelpString, DefaultValue, InFlags)
     {
         AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);

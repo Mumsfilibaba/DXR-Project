@@ -32,7 +32,7 @@ public:
         auto TextureIndexPair = ResourceIndices.find(Resource);
         if (TextureIndexPair == ResourceIndices.end())
         {
-            int32 NewIndex = Resources.GetSize();
+            int32 NewIndex = Resources.Size();
             ResourceIndices[Resource] = NewIndex;
             Resources.Emplace(Resource);
 
@@ -49,9 +49,9 @@ public:
         return Resources[Index];
     }
 
-    uint32 GetSize() const
+    uint32 Size() const
     {
-        return Resources.GetSize();
+        return Resources.Size();
     }
 
 private:

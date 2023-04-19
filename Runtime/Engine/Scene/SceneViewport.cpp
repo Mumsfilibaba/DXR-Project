@@ -1,82 +1,82 @@
 #include "SceneViewport.h"
 
-FSceneViewport::FSceneViewport(const TWeakPtr<FViewport>& InViewport)
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+FSceneViewport::FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport)
     : IViewport()
     , Viewport(InViewport)
     , Scene(nullptr)
-{ }
+{
+}
 
 FSceneViewport::~FSceneViewport()
 {
     Scene = nullptr;
 }
 
-bool FSceneViewport::OnKeyDown(const FKeyEvent& KeyEvent)
+FResponse FSceneViewport::OnControllerButtonUp(const FControllerEvent& ControllerEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnKeyUp(const FKeyEvent& KeyEvent)
+FResponse FSceneViewport::OnControllerButtonDown(const FControllerEvent& ControllerEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnKeyChar(FKeyCharEvent KeyCharEvent)
+FResponse FSceneViewport::OnControllerButtonAnalog(const FControllerEvent& ControllerEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnMouseMove(const FMouseMovedEvent& MouseEvent)
+FResponse FSceneViewport::OnKeyDown(const FKeyEvent& KeyEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnMouseDown(const FMouseButtonEvent& MouseEvent)
+FResponse FSceneViewport::OnKeyUp(const FKeyEvent& KeyEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnMouseUp(const FMouseButtonEvent& MouseEvent)
+FResponse FSceneViewport::OnKeyChar(const FKeyEvent& KeyEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnMouseScroll(const FMouseScrolledEvent& MouseEvent)
+FResponse FSceneViewport::OnMouseMove(const FMouseEvent& MouseEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnMouseEntered()
+FResponse FSceneViewport::OnMouseButtonDown(const FMouseEvent& MouseEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnMouseLeft()
+FResponse FSceneViewport::OnMouseButtonUp(const FMouseEvent& MouseEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnWindowResized(const FWindowResizedEvent& InResizeEvent)
+FResponse FSceneViewport::OnMouseEntered(const FMouseEvent& MouseEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnWindowMove(const FWindowMovedEvent& InMovedEvent)
+FResponse FSceneViewport::OnMouseScroll(const FMouseEvent& MouseEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnWindowFocusGained()
+FResponse FSceneViewport::OnMouseLeft(const FMouseEvent& MouseEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnWindowFocusLost()
+FResponse FSceneViewport::OnMouseDoubleClick(const FMouseEvent& MouseEvent)
 {
-    return false;
+    return FResponse::Unhandled();
 }
 
-bool FSceneViewport::OnWindowClosed()
-{
-    return false;
-}
+ENABLE_UNREFERENCED_VARIABLE_WARNING

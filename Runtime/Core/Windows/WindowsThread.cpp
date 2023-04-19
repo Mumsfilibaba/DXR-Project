@@ -1,16 +1,27 @@
 #include "WindowsThread.h"
-
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Utilities/StringUtilities.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FWindowsThread
-
-FWindowsThread::FWindowsThread(FThreadInterface* InRunnable)
+FWindowsThread::FWindowsThread(FThreadInterface* InRunnable, bool bSuspended)
     : FGenericThread(InRunnable)
     , Thread(0)
     , hThreadID(0)
+    , bIsSuspended(bSuspended)
     , Name()
-{ }
+{
+    DWORD Flags = 0;
+    if (bIsSuspended)
+    {
+        Flags = CREATE_SUSPENDED;
+    }
+
+    Thread = CreateThread(nullptr, 0, FWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), Flags, &hThreadID);
+    if (!Thread)
+    {
+        LOG_ERROR("[FWindowsThread] Failed to create thread");
+        DEBUG_BREAK();
+    }
+}
 
 FWindowsThread::~FWindowsThread()
 {
@@ -22,23 +33,17 @@ FWindowsThread::~FWindowsThread()
 
 bool FWindowsThread::Start()
 {
-    Thread = CreateThread(
-        nullptr, 
-        0, 
-        FWindowsThread::ThreadRoutine, 
-        reinterpret_cast<void*>(this), 
-        0,
-        &hThreadID);
+    CHECK(bIsSuspended);
+    CHECK((hThreadID != 0) && (Thread != 0));
 
-    if (!Thread)
+    DWORD Result = ResumeThread(Thread);
+    if (Result == DWORD(-1))
     {
-        LOG_ERROR("[FWindowsThread] Failed to create thread");
+        LOG_ERROR("[FWindowsThread] Failed to Start thread");
         return false;
     }
-    else
-    {
-        return true;
-    }
+
+    return true;
 }
 
 void FWindowsThread::WaitForCompletion()

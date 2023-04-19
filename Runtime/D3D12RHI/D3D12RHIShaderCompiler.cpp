@@ -212,7 +212,7 @@ bool FD3D12ShaderCompiler::CompileShader(
     FStringWide WideEntrypoint = CharToWide(EntryPoint);
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
-    HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(ShaderSource.GetCString(), sizeof(CHAR) * static_cast<uint32>(ShaderSource.GetSize()), CP_UTF8, &SourceBlob);
+    HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(ShaderSource.GetCString(), sizeof(CHAR) * static_cast<uint32>(ShaderSource.Size()), CP_UTF8, &SourceBlob);
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
@@ -342,14 +342,14 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     TArray<FStringWide> StrBuff;
     if (Defines)
     {
-        StrBuff.Reserve(Defines->GetSize() * 2);
-        DxDefines.Reserve(Defines->GetSize());
+        StrBuff.Reserve(Defines->Size() * 2);
+        DxDefines.Reserve(Defines->Size());
 
         for (const FShaderDefine& Define : *Defines)
         {
             const FStringWide& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
             const FStringWide& WideValue = StrBuff.Emplace(CharToWide(Define.Value));
-            DxDefines.Push({ WideDefine.GetCString(), WideValue.GetCString() });
+            DxDefines.Add({ WideDefine.GetCString(), WideValue.GetCString() });
         }
     }
 
@@ -365,8 +365,8 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     HRESULT hResult = DxCompiler->Compile(
         SourceBlob, FilePath, Entrypoint,
         TargetProfile,
-        Args.GetData(), Args.GetSize(),
-        DxDefines.GetData(), DxDefines.GetSize(),
+        Args.Data(), Args.Size(),
+        DxDefines.Data(), DxDefines.Size(),
         DxIncludeHandler.Get(), &Result);
     if (FAILED(hResult))
     {
@@ -424,7 +424,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
 
     D3D12_INFO("[FD3D12ShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
 
-    FMemory::Memcpy(Code.GetData(), CompiledBlob->GetBufferPointer(), BlobSize);
+    FMemory::Memcpy(Code.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 
     if (ShaderStageIsRayTracing(ShaderStage))
     {

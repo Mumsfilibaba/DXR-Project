@@ -3,8 +3,7 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Generic/GenericLibrary.h"
 
-struct FWindowsLibrary final 
-    : public FGenericLibrary
+struct FWindowsLibrary final : public FGenericLibrary
 {
     static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
     {

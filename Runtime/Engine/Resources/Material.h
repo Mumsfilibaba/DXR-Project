@@ -99,7 +99,7 @@ public:
 
     FORCEINLINE uint32 GetNumShaderResourceViews() const
     {
-        return static_cast<uint32>(ShaderResourceViews.GetSize());
+        return static_cast<uint32>(ShaderResourceViews.Size());
     }
 
 public:

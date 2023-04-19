@@ -1,75 +1,85 @@
 #pragma once
 #include "Viewport.h"
+#include "Overlay.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Event.h"
 #include "Core/Math/IntVector2.h"
 #include "CoreApplication/Generic/GenericWindow.h"
 
-struct FWindowInitializer
+class APPLICATION_API FWindow : public FWidget
 {
-    EWindowMode WindowMode;
-    uint32      Width;
-    uint32      Height;
-};
+    DECLARE_WIDGET(FWindow, FWidget);
 
-class APPLICATION_API FWindow
-    : public FElement
-{
+public:
+    FINITIALIZER_START(FWindow)
+        FInitializer()
+            : Title("Window")
+            , Width(0)
+            , Height(0)
+            , WindowMode(EWindowMode::Windowed)
+        {
+        }
+
+        FINITIALIZER_ATTRIBUTE(FString, Title);
+        FINITIALIZER_ATTRIBUTE(uint32, Width);
+        FINITIALIZER_ATTRIBUTE(uint32, Height);
+        FINITIALIZER_ATTRIBUTE(EWindowMode, WindowMode);
+    FINITIALIZER_END();
+
 public:
     FWindow();
     virtual ~FWindow() = default;
 
-    bool Initialize(const FWindowInitializer& Initializer);
+    bool Initialize(const FInitializer& Initializer);
+
+    virtual void Paint(const FRectangle& AssignedBounds) override;
+
+    FOverlay::FScopedSlotInitilizer AddOverlaySlot();
+
+    void RemoveOverlayWidget(const TSharedPtr<FWidget>& InWidget);
 
     void ShowWindow(bool bMaximized);
+    
     void CloseWindow();
 
     void Minimize();
+    
     void Maximize();
+
     void Restore();
 
+public:
     DECLARE_EVENT(FOnWindowClosedEvent, FWindow);
     FOnWindowClosedEvent& GetWindowClosedEvent() { return OnWindowClosedEvent; }
 
     DECLARE_EVENT(FOnWindowResizedEvent, FWindow, const FWindowResizedEvent&);
     FOnWindowResizedEvent& GetWindowResizedEvent() { return OnWindowResizeEvent; }
 
-    DECLARE_EVENT(FOnWindowMovedEvent, FWindow, const FWindowResizedEvent&);
+    DECLARE_EVENT(FOnWindowMovedEvent, FWindow, const FWindowMovedEvent&);
     FOnWindowMovedEvent& GetWindowMovedEvent() { return OnWindowMovedEvent; }
 
-    virtual bool OnKeyDown(const FKeyEvent& KeyEvent) override;
-    virtual bool OnKeyUp(const FKeyEvent& KeyEvent) override;
-    virtual bool OnKeyChar(FKeyCharEvent KeyCharEvent) override;
+    FResponse OnWindowResized(const FWindowResizedEvent& ResizeEvent);
+    
+    FResponse OnWindowMoved(const FWindowMovedEvent& InMoveEvent);
+    
+    FResponse OnWindowClosed();
 
-    virtual bool OnMouseMove(const FMouseMovedEvent& MouseEvent) override;
-    virtual bool OnMouseDown(const FMouseButtonEvent& MouseEvent) override;
-    virtual bool OnMouseUp(const FMouseButtonEvent& MouseEvent) override;
-    virtual bool OnMouseScroll(const FMouseScrolledEvent& MouseEvent) override;
-    virtual bool OnMouseEntered() override;
-    virtual bool OnMouseLeft() override;
-
-    virtual bool OnWindowResized(const FWindowResizedEvent& InResizeEvent) override;
-    virtual bool OnWindowMoved(const FWindowMovedEvent& InMoveEvent) override;
-    virtual bool OnWindowFocusGained() override;
-    virtual bool OnWindowFocusLost() override;
-    virtual bool OnWindowClosed() override;
-
+public:
     bool IsActiveWindow() const 
     {
         return NativeWindow ? NativeWindow->IsActiveWindow() : false; 
     }
 
-    bool IsVisible()     const { return bIsVisible; }
-    bool IsIsMaximized() const { return bIsMaximized; }
-
-    void SetContent(const TSharedPtr<FElement>& InContent)
+    bool IsVisible() const 
     { 
-        Content = InContent; 
+        return bIsVisible; 
     }
 
-    TSharedPtr<FElement>       GetContent()       { return Content; };
-    TSharedPtr<const FElement> GetContent() const { return Content; };
+    bool IsIsMaximized() const 
+    { 
+        return bIsMaximized; 
+    }
 
     TSharedRef<FGenericWindow> GetNativeWindow() 
     {
@@ -92,8 +102,17 @@ public:
     }
 
     void SetExtent(const FIntVector2& InExtent);
-    FIntVector2 GetExtent() const;
     
+    uint32 GetWidth() const
+    {
+        return Width;
+    }
+    
+    uint32 GetHeight() const
+    {
+        return Height;
+    }
+
     void SetWindowMode(EWindowMode InWindowMode);
     
     EWindowMode GetWindowMode() const 
@@ -102,8 +121,8 @@ public:
     }
 
 private:
-    TSharedPtr<FElement>       Content;
     TSharedRef<FGenericWindow> NativeWindow;
+    TSharedPtr<FOverlay>       Overlay;
 
     FString     Title;
 

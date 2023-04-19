@@ -6,12 +6,10 @@
     #include <immintrin.h>
 #endif
 
-struct CORE_API FWindowsThreadMisc 
-    : public FGenericThreadMisc
+struct CORE_API FWindowsThreadMisc final : public FGenericThreadMisc
 {
-    static FGenericThread* CreateThread(FThreadInterface* InRunnable);
-    
-    static FGenericEvent* CreateEvent(bool bManualReset);
+    static FGenericEvent*  CreateEvent(bool bManualReset);
+    static FGenericThread* CreateThread(FThreadInterface* InRunnable, bool bSuspended = true);
 
     static FORCEINLINE uint32 GetNumProcessors()
     {

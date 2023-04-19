@@ -1,6 +1,5 @@
 #pragma once
 #include <iostream>
-#include <cassert>
 
 #include <Core/CoreTypes.h>
 #include <Core/CoreDefines.h>
@@ -26,11 +25,11 @@ FORCEINLINE void PrintString<WIDECHAR>(const WIDECHAR* String)
 #define MAKE_STRING(...) #__VA_ARGS__
 #define MAKE_VAR(...)     __VA_ARGS__
 
-#define TEST_CHECK(bCondition)                                                             \
+#define TEST_CHECK(bCondition)                                                        \
     if (!(bCondition))                                                                \
     {                                                                                 \
         std::cout << "[TEST FAILED] Condition='" << MAKE_STRING(bCondition) << "'\n"; \
-        assert(false);                                                                \
+        DEBUG_BREAK();                                                                \
         return false;                                                                 \
     }                                                                                 \
     else                                                                              \
@@ -38,11 +37,11 @@ FORCEINLINE void PrintString<WIDECHAR>(const WIDECHAR* String)
         std::cout << "[TEST SUCCEEDED]: '" << MAKE_STRING(bCondition) << "'\n";       \
     }
 
-#define TEST_CHECK_ARRAY(Array, ...)                                                                                                  \
+#define TEST_CHECK_ARRAY(Array, ...)                                                                                             \
     if (Array.IsEmpty())                                                                                                         \
     {                                                                                                                            \
         std::cout << "[TEST FAILED] '" << MAKE_STRING(Array) "' is empty\n";                                                     \
-        assert(false);                                                                                                           \
+        DEBUG_BREAK();                                                                                                           \
         return false;                                                                                                            \
     }                                                                                                                            \
     else                                                                                                                         \
@@ -52,10 +51,10 @@ FORCEINLINE void PrintString<WIDECHAR>(const WIDECHAR* String)
         int32 Index = 0;                                                                                                         \
         for (auto Element : InitList)                                                                                            \
         {                                                                                                                        \
-            if ((Index >= static_cast<int32>(Array.GetSize())) || (Array[Index] != Element))                                     \
+            if ((Index >= static_cast<int32>(Array.Size())) || (Array[Index] != Element))                                     \
             {                                                                                                                    \
                 std::cout << "[TEST FAILED] '" << MAKE_STRING(Array) << '[' << Index << ']' << " != " << Element[Index] << '\n'; \
-                assert(false);                                                                                                   \
+                DEBUG_BREAK();                                                                                                   \
                 return false;                                                                                                    \
             }                                                                                                                    \
                                                                                                                                  \
@@ -65,7 +64,7 @@ FORCEINLINE void PrintString<WIDECHAR>(const WIDECHAR* String)
         std::cout << "[TEST SUCCEEDED]: '" << MAKE_STRING(Array) << "' == " << MAKE_STRING(__VA_ARGS__) << '\n';                 \
     }
 
-#define TEST_CHECK_STRING_N(String, Value, NumChars)                                                         \
+#define TEST_CHECK_STRING_N(String, Value, NumChars)                                                    \
     {                                                                                                   \
         const bool bResult = String.IsEmpty() ?                                                         \
             (TCString<decltype(String)::CharType>::Strlen(Value) == 0) :                                \
@@ -78,7 +77,7 @@ FORCEINLINE void PrintString<WIDECHAR>(const WIDECHAR* String)
             std::cout << #String << "='";                                                               \
             PrintString<decltype(String)::CharType>(Value);                                             \
             std::cout << "'\n";                                                                         \
-            assert(false);                                                                              \
+            DEBUG_BREAK();                                                                              \
             return false;                                                                               \
         }                                                                                               \
         else                                                                                            \

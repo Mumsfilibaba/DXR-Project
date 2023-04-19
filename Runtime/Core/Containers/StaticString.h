@@ -11,10 +11,7 @@ public:
     using CharType = InCharType;
     using SizeType = int32;
 
-    static_assert(
-        TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value, 
-        "TStaticString only supports 'CHAR' and 'WIDECHAR'");
-    
+    static_assert(TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value, "TStaticString only supports 'CHAR' and 'WIDECHAR'");
     static_assert(NUM_CHARS > 0, "TStaticString does not support a zero element count");
 
     typedef TArrayIterator<TStaticString, CharType>                    IteratorType;
@@ -138,7 +135,7 @@ public:
      */
     FORCEINLINE void Append(CharType Char) noexcept
     {
-        CHECK((Length + 1) < GetCapacity());
+        CHECK((Length + 1) < Capacity());
         Characters[Length]   = Char;
         Characters[++Length] = TChar<CharType>::Null;
     }
@@ -170,7 +167,7 @@ public:
     FORCEINLINE void Append(const CharType* InString, SizeType InLength) noexcept
     {
         CHECK(InString != nullptr);
-        CHECK((Length + InLength) < GetCapacity());
+        CHECK((Length + InLength) < Capacity());
 
         const SizeType MinLength = NMath::Min<SizeType>(NUM_CHARS - Length, InLength);
         TCString<CharType>::Strncpy(Characters + Length, InString, MinLength);
@@ -1032,7 +1029,7 @@ public:
      * @brief      - Insert a new character at the end
      * @param Char - Character to insert at the end
      */
-    FORCEINLINE void Push(CharType Char) noexcept
+    FORCEINLINE void Add(CharType Char) noexcept
     {
         Append(Char);
     }
@@ -1085,32 +1082,10 @@ public:
     }
 
     /**
-     * @brief       - Retrieve a element at a certain index of the string
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
-     */
-    NODISCARD FORCEINLINE CharType& GetElementAt(SizeType Index) noexcept
-    {
-        CHECK(Index < GetLength());
-        return Characters[Index];
-    }
-
-    /**
-     * @brief       - Retrieve a element at a certain index of the string
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
-     */
-    NODISCARD FORCEINLINE const CharType& GetElementAt(SizeType Index) const noexcept
-    {
-        CHECK(Index < GetLength());
-        return Characters[Index];
-    }
-
-    /**
      * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD FORCEINLINE CharType* GetData() noexcept
+    NODISCARD FORCEINLINE CharType* Data() noexcept
     {
         return Characters;
     }
@@ -1119,7 +1094,7 @@ public:
      * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD FORCEINLINE const CharType* GetData() const noexcept
+    NODISCARD FORCEINLINE const CharType* Data() const noexcept
     {
         return Characters;
     }
@@ -1137,7 +1112,7 @@ public:
      * @brief  - Returns the size of the container
      * @return - The current size of the container
      */
-    NODISCARD FORCEINLINE SizeType GetSize() const noexcept
+    NODISCARD FORCEINLINE SizeType Size() const noexcept
     {
         return Length;
     }
@@ -1258,7 +1233,8 @@ public:
      */
     NODISCARD FORCEINLINE CharType& operator[](SizeType Index) noexcept
     {
-        return GetElementAt(Index);
+        CHECK(Index < GetLength());
+        return Characters[Index];
     }
 
     /**
@@ -1268,7 +1244,8 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& operator[](SizeType Index) const noexcept
     {
-        return GetElementAt(Index);
+        CHECK(Index < GetLength());
+        return Characters[Index];
     }
 
     /**
@@ -1450,7 +1427,7 @@ public:
      * @brief  - Retrieve the capacity of the container
      * @return - The capacity of the container
      */
-    NODISCARD CONSTEXPR SizeType GetCapacity() const noexcept
+    NODISCARD CONSTEXPR SizeType Capacity() const noexcept
     {
         return NUM_CHARS;
     }
@@ -1481,7 +1458,7 @@ public:
      */
     NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType(*this, GetSize());
+        return IteratorType(*this, Size());
     }
 
     /**
@@ -1499,7 +1476,7 @@ public:
      */
     NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType(*this, GetSize());
+        return ConstIteratorType(*this, Size());
     }
 
     /**
@@ -1508,7 +1485,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType(*this, GetSize());
+        return ReverseIteratorType(*this, Size());
     }
 
     /**
@@ -1526,7 +1503,7 @@ public:
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType(*this, GetSize());
+        return ReverseConstIteratorType(*this, Size());
     }
 
     /**
@@ -1549,7 +1526,7 @@ public:
 private:
     FORCEINLINE void CopyFrom(const CharType* InString, SizeType InLength) noexcept
     {
-        CHECK(InLength < GetCapacity());
+        CHECK(InLength < Capacity());
 
         TCString<CharType>::Strncpy(Characters, InString, InLength);
         Length = InLength;
@@ -1589,7 +1566,7 @@ NODISCARD inline FStaticStringWide<NUM_CHARS> CharToWide(const FStaticString<NUM
 {
     FStaticStringWide<NUM_CHARS> NewString;
     NewString.Resize(CharString.GetLength());
-    mbstowcs(NewString.GetData(), CharString.GetCString(), CharString.GetLength());
+    mbstowcs(NewString.Data(), CharString.GetCString(), CharString.GetLength());
     return NewString;
 }
 
@@ -1599,6 +1576,6 @@ NODISCARD inline FStaticString<NUM_CHARS> WideToChar(const FStaticStringWide<NUM
 {
     FStaticString<NUM_CHARS> NewString;
     NewString.Resize(WideString.GetLength());
-    wcstombs(NewString.GetData(), WideString.GetCString(), WideString.GetLength());
+    wcstombs(NewString.Data(), WideString.GetCString(), WideString.GetLength());
     return NewString;
 }

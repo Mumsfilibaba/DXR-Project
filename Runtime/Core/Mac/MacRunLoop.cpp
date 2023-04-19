@@ -47,7 +47,8 @@ struct FRunLoopTask
     FRunLoopTask(NSArray* InRunLoopModes, dispatch_block_t InBlock)
         : RunLoopModes([InRunLoopModes retain])
         , Block(Block_copy(InBlock))
-    { }
+    {
+    }
     
     ~FRunLoopTask()
     {

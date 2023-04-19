@@ -3,9 +3,7 @@
 
 #include <pthread.h>
 
-
-class FMacConditionVariable final 
-    : public FGenericConditionVariable
+class FMacConditionVariable final : public FGenericConditionVariable
 {
 public:
     typedef pthread_cond_t* PlatformHandle;

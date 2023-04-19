@@ -2,9 +2,7 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Generic/GenericCriticalSection.h"
 
-
-class FWindowsCriticalSection final 
-    : public FGenericCriticalSection
+class FWindowsCriticalSection final : public FGenericCriticalSection
 {
 public:
     typedef CRITICAL_SECTION* PlatformHandle;

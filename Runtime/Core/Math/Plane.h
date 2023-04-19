@@ -15,7 +15,8 @@ public:
         , y(1.0f)
         , z(0.0f)
         , w(0.0f)
-    { }
+    {
+    }
 
     /**
      * @brief       - Constructor that creates a plane from a Vector4
@@ -26,7 +27,8 @@ public:
         , y(Plane.y)
         , z(Plane.z)
         , w(Plane.w)
-    { }
+    {
+    }
 
     /**
      * @brief        - Constructor that creates a plane from a normal and offset
@@ -38,7 +40,8 @@ public:
         , y(Normal.y)
         , z(Normal.z)
         , w(InW)
-    { }
+    {
+    }
     
     /**
      * @brief     - Constructor that creates a plane from components of a Vector4
@@ -52,7 +55,8 @@ public:
         , y(InY)
         , z(InZ)
         , w(InW)
-    { }
+    {
+    }
 
     /**
      * @brief       - Compares, within a threshold Epsilon, this plane with another plane
@@ -127,7 +131,7 @@ public:
      * @brief  - Retrieve the data as an array
      * @return - A pointer to the data representing the plane
      */
-    FORCEINLINE float* GetData() noexcept
+    FORCEINLINE float* Data() noexcept
     {
         return reinterpret_cast<float*>(this);
     }
@@ -136,7 +140,7 @@ public:
      * @brief  - Retrieve the data as an array
      * @return - A pointer to the data representing the plane
      */
-    FORCEINLINE const float* GetData() const noexcept
+    FORCEINLINE const float* Data() const noexcept
     {
         return reinterpret_cast<const float*>(this);
     }

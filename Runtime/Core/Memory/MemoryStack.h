@@ -15,7 +15,7 @@ class CORE_API FMemoryStack
 {
     struct FMemoryHeader
     {
-        void* GetData()
+        void* Data()
         {
             return reinterpret_cast<uint8*>(this) + sizeof(FMemoryHeader);
         }
@@ -126,7 +126,7 @@ private:
             NewPage->Next = nullptr;
         }
 
-        StackStart = reinterpret_cast<uint8*>(NewPage->GetData());
+        StackStart = reinterpret_cast<uint8*>(NewPage->Data());
         StackEnd   = StackStart + PageSize;
         TopPage    = NewPage;
 

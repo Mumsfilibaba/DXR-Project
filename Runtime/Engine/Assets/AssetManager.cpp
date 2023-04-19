@@ -105,7 +105,7 @@ FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGe
     NewTexture->ReleaseData();
 
     // Insert the new texture
-    const auto Index = Textures.GetSize();
+    const auto Index = Textures.Size();
     Textures.Emplace(NewTexture);
     TextureMap.insert(std::make_pair(FinalPath, Index));
     return NewTexture;

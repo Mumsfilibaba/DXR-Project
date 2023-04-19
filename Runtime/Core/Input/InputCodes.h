@@ -145,11 +145,11 @@ enum EKey : uint8
 enum EMouseButton : uint8
 {
     MouseButton_Unknown = 0,
-    MouseButton_Left    = 1,
-    MouseButton_Right   = 2,
-    MouseButton_Middle  = 3,
-    MouseButton_Back    = 4,
-    MouseButton_Forward = 5,
+    MouseButton_Left,
+    MouseButton_Right,
+    MouseButton_Middle,
+    MouseButton_Back,
+    MouseButton_Forward,
 
     MouseButton_Last  = MouseButton_Back,
     MouseButton_Count = MouseButton_Last + 1
@@ -167,19 +167,42 @@ enum EModifierFlag
     ModifierFlag_NumLock  = FLAG(6),
 };
 
-
-CONSTEXPR const CHAR* ToString(EMouseButton Button)
+enum class EControllerButton
 {
-    switch (Button)
-    {
-    case MouseButton_Left:    return "LeftMouse";
-    case MouseButton_Right:   return "RightMouse";
-    case MouseButton_Middle:  return "MiddleMouse";
-    case MouseButton_Back:    return "Back";
-    case MouseButton_Forward: return "Forward";
-    default:                  return "Unknown";
-    }
-}
+    Unknown = 0,
+
+    DPadUp,
+    DPadDown,
+    DPadLeft,
+    DPadRight,
+
+    FaceUp,
+    FaceDown,
+    FaceLeft,
+    FaceRight,
+
+    RightTrigger,
+    LeftTrigger,
+
+    RightShoulder,
+    LeftShoulder,
+
+    Start,
+    Back,
+};
+
+enum class EControllerAnalog
+{
+    Unknown = 0,
+    
+    RightThumbX,
+    RightThumbY,
+    LeftThumbX,
+    LeftThumbY,
+
+    RightTrigger,
+    LeftTrigger,
+};
 
 CONSTEXPR const CHAR* ToString(EKey key)
 {
@@ -306,5 +329,59 @@ CONSTEXPR const CHAR* ToString(EKey key)
     case Key_PrintScreen:    return "PRINT_SCREEN";
     case Key_Pause:          return "PAUSE";
     default:                 return "UNKNOWN";
+    }
+}
+
+CONSTEXPR const CHAR* ToString(EMouseButton Button)
+{
+    switch (Button)
+    {
+    case MouseButton_Left:    return "LeftMouse";
+    case MouseButton_Right:   return "RightMouse";
+    case MouseButton_Middle:  return "MiddleMouse";
+    case MouseButton_Back:    return "Back";
+    case MouseButton_Forward: return "Forward";
+    default:                  return "Unknown";
+    }
+}
+
+CONSTEXPR const CHAR* ToString(EControllerButton Button)
+{
+    switch (Button)
+    {
+    case EControllerButton::DPadUp:        return "DPadUp";
+    case EControllerButton::DPadDown:      return "DPadDown";
+    case EControllerButton::DPadLeft:      return "DPadLeft";
+    case EControllerButton::DPadRight:     return "DPadRight";
+
+    case EControllerButton::FaceUp:        return "FaceUp";
+    case EControllerButton::FaceDown:      return "FaceDown";
+    case EControllerButton::FaceLeft:      return "FaceLeft";
+    case EControllerButton::FaceRight:     return "FaceRight";
+
+    case EControllerButton::RightTrigger:  return "RightTrigger";
+    case EControllerButton::LeftTrigger:   return "LeftTrigger";
+
+    case EControllerButton::RightShoulder: return "RightShoulder";
+    case EControllerButton::LeftShoulder:  return "LeftShoulder";
+
+    case EControllerButton::Start:         return "Start";
+    case EControllerButton::Back:          return "Back";
+    default:                               return "Unknown";
+    }
+}
+
+CONSTEXPR const CHAR* ToString(EControllerAnalog Button)
+{
+    switch (Button)
+    {
+    case EControllerAnalog::RightThumbX:  return "RightThumbX";
+    case EControllerAnalog::RightThumbY:  return "RightThumbY";
+    case EControllerAnalog::LeftThumbX:   return "LeftThumbX";
+    case EControllerAnalog::LeftThumbY:   return "LeftThumbY";
+
+    case EControllerAnalog::RightTrigger: return "RightTrigger";
+    case EControllerAnalog::LeftTrigger:  return "LeftTrigger";
+    default:                              return "Unknown";
     }
 }

@@ -1,5 +1,4 @@
 #include "MacEvent.h"
-
 #include "Core/Templates/NumericLimits.h"
 
 FMacEvent::FMacEvent()
@@ -9,7 +8,8 @@ FMacEvent::FMacEvent()
     , NumWaitingThreads(0)
     , Mutex()
     , Condition()
-{ }
+{
+}
 
 FMacEvent::~FMacEvent()
 {

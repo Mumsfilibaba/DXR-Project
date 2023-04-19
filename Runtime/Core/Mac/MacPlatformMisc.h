@@ -3,8 +3,7 @@
 
 #include <sys/sysctl.h>
 
-struct FMacPlatformMisc final 
-    : public FGenericPlatformMisc
+struct FMacPlatformMisc final : public FGenericPlatformMisc
 {
     static void OutputDebugString(const CHAR* Message);
 

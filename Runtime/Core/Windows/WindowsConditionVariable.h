@@ -1,14 +1,11 @@
 #pragma once
 #include "WindowsCriticalSection.h"
-
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Generic/GenericConditionVariable.h"
 #include "Core/Platform/PlatformMisc.h"
 
-
-class FWindowsConditionVariable final 
-    : public FGenericConditionVariable
+class FWindowsConditionVariable final : public FGenericConditionVariable
 {
 public:
     typedef CONDITION_VARIABLE* PlatformHandle;

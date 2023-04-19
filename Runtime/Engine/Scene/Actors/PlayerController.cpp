@@ -2,6 +2,68 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+FPlayerInput::FPlayerInput()
+    : Cursor(nullptr)
+    , KeyStates()
+    , MouseButtonStates()
+{
+}
+
+void FPlayerInput::Tick(FTimespan Delta)
+{
+}
+
+void FPlayerInput::ResetState()
+{
+}
+
+void FPlayerInput::OnControllerButtonUp(const FControllerEvent& ControllerEvent)
+{
+}
+
+void FPlayerInput::OnControllerButtonDown(const FControllerEvent& ControllerEvent)
+{
+}
+
+void FPlayerInput::OnControllerButtonAnalog(const FControllerEvent& ControllerEvent)
+{
+}
+
+void FPlayerInput::OnKeyUpEvent(const FKeyEvent& KeyEvent)
+{
+}
+
+void FPlayerInput::OnKeyDownEvent(const FKeyEvent& KeyEvent)
+{
+}
+
+void FPlayerInput::OnMouseButtonUpEvent(const FMouseEvent& MouseEvent)
+{
+}
+
+void FPlayerInput::OnMouseButtonDownEvent(const FMouseEvent& MouseEvent)
+{
+}
+
+void FPlayerInput::OnMouseMovedEvent(const FMouseEvent& MouseEvent)
+{
+}
+
+void FPlayerInput::OnMouseScrolledEvent(const FMouseEvent& MouseEvent)
+{
+}
+
+void FPlayerInput::SetCursorPosition(const FIntVector2& Postion)
+{
+}
+
+FIntVector2 FPlayerInput::GetCursorPosition() const
+{
+    return FIntVector2{ 0, 0 };
+}
+
+
+
 FPlayerController::FPlayerController(FScene* InSceneOwner)
     : FActor(InSceneOwner)
     , InputComponent(nullptr)
@@ -36,46 +98,6 @@ void FPlayerController::Tick(FTimespan DeltaTime)
 
     // Update the PlayerInput
     PlayerInput->Tick(DeltaTime);
-}
-
-
-FPlayerInput::FPlayerInput()
-    : Cursor(nullptr)
-    , KeyStates()
-    , MouseButtonStates()
-{ }
-
-void FPlayerInput::Tick(FTimespan Delta)
-{
-}
-
-void FPlayerInput::OnKeyEvent(const FKeyEvent& KeyEvent)
-{
-}
-
-void FPlayerInput::OnMouseButtonEvent(const FMouseButtonEvent& MouseButtonEvent)
-{
-}
-
-void FPlayerInput::OnMouseMovedEvent(const FMouseMovedEvent& MouseMovedEvent)
-{
-}
-
-void FPlayerInput::OnMouseScrolledEvent(const FMouseScrolledEvent& MouseScolledEvent)
-{
-}
-
-void FPlayerInput::SetCursorPosition(const FIntVector2& Postion)
-{
-}
-
-FIntVector2 FPlayerInput::GetCursorPosition() const
-{
-    return FIntVector2{ 0, 0 };
-}
-
-void FPlayerInput::ResetState()
-{
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

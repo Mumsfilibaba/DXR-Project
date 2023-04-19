@@ -37,12 +37,12 @@ struct FMeshData
 
     FORCEINLINE auto GetVertexCount() const
     {
-        return Vertices.GetSize();
+        return Vertices.Size();
     }
 
     FORCEINLINE auto GetIndexCount() const
     {
-        return Indices.GetSize();
+        return Indices.Size();
     }
 
     TArray<FVertex> Vertices;

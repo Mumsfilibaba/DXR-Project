@@ -2,11 +2,6 @@
 #include "WindowsEvent.h"
 #include "WindowsThreadMisc.h"
 
-FGenericThread* FWindowsThreadMisc::CreateThread(FThreadInterface* Runnable)
-{
-    return new FWindowsThread(Runnable);
-}
-
 FGenericEvent* FWindowsThreadMisc::CreateEvent(bool bManualReset)
 {
     FWindowsEventRef NewEvent = new FWindowsEvent();
@@ -16,4 +11,10 @@ FGenericEvent* FWindowsThreadMisc::CreateEvent(bool bManualReset)
     }
     
     return NewEvent.ReleaseOwnership();
+}
+
+FGenericThread* FWindowsThreadMisc::CreateThread(FThreadInterface* Runnable, bool bSuspended)
+{
+    FWindowsThread* NewThread = new FWindowsThread(Runnable, bSuspended);
+    return NewThread;
 }

@@ -1,8 +1,8 @@
 #include "WindowsFile.h"
 #include "WindowsPlatformMisc.h"
-
 #include "Core/Templates/NumericLimits.h"
 
+// TODO: Add to the build system
 #pragma comment(lib, "shlwapi.lib")
 
 FWindowsFileHandle::FWindowsFileHandle(HANDLE InFileHandle)
@@ -225,7 +225,7 @@ FString FWindowsFile::GetCurrentDirectory()
 
     FString Result;
     Result.Resize(Length);
-    Length = ::GetCurrentDirectoryA(Result.GetSize(), Result.GetData());
+    Length = ::GetCurrentDirectoryA(Result.Size(), Result.Data());
     if (!Length)
     {
         FString Error;

@@ -188,7 +188,7 @@ void FMetalCommandContext::SetBlendFactor(const FVector4& Color)
 
 void FMetalCommandContext::SetVertexBuffers(const TArrayView<FRHIVertexBuffer* const> InVertexBuffers, uint32 BufferSlot)
 {
-    for (int32 BufferIndex = 0; BufferIndex < InVertexBuffers.GetSize(); ++BufferIndex)
+    for (int32 BufferIndex = 0; BufferIndex < InVertexBuffers.Size(); ++BufferIndex)
     {
         const uint32 Index = BufferSlot + BufferIndex;
         
@@ -199,7 +199,7 @@ void FMetalCommandContext::SetVertexBuffers(const TArrayView<FRHIVertexBuffer* c
     
     CurrentVertexBufferRange = NSMakeRange(
         NMath::Min<uint32>(BufferSlot, CurrentVertexBufferRange.location), 
-        NMath::Max<uint32>(InVertexBuffers.GetSize(), CurrentVertexBufferRange.length));
+        NMath::Max<uint32>(InVertexBuffers.Size(), CurrentVertexBufferRange.length));
 }
 
 void FMetalCommandContext::SetIndexBuffer(FRHIIndexBuffer* IndexBuffer)
@@ -239,10 +239,10 @@ void FMetalCommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArr
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((ParameterIndex + InShaderResourceViews.GetSize()) < kMaxSRVs);
+    CHECK((ParameterIndex + InShaderResourceViews.Size()) < kMaxSRVs);
 
     const EShaderVisibility Visibility = MetalShader->GetVisbility();
-    for (int32 Index = 0; Index < InShaderResourceViews.GetSize(); ++Index)
+    for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
     {
         CurrentSRVs[Visibility][ParameterIndex + Index] = MakeSharedRef<FMetalShaderResourceView>(InShaderResourceViews[Index]);
     }
@@ -262,10 +262,10 @@ void FMetalCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TAr
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((ParameterIndex + InUnorderedAccessViews.GetSize()) < kMaxUAVs);
+    CHECK((ParameterIndex + InUnorderedAccessViews.Size()) < kMaxUAVs);
 
     const EShaderVisibility Visibility = MetalShader->GetVisbility();
-    for (int32 Index = 0; Index < InUnorderedAccessViews.GetSize(); ++Index)
+    for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
     {
         CurrentUAVs[Visibility][ParameterIndex + Index] = MakeSharedRef<FMetalUnorderedAccessView>(InUnorderedAccessViews[Index]);
     }
@@ -285,10 +285,10 @@ void FMetalCommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayVi
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((ParameterIndex + InConstantBuffers.GetSize()) < kMaxConstantBuffers);
+    CHECK((ParameterIndex + InConstantBuffers.Size()) < kMaxConstantBuffers);
         
     const EShaderVisibility Visibility = MetalShader->GetVisbility();
-    for (int32 Index = 0; Index < InConstantBuffers.GetSize(); ++Index)
+    for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
         CurrentConstantBuffers[Visibility][ParameterIndex + Index] = MakeSharedRef<FMetalConstantBuffer>(InConstantBuffers[Index]);
     }
@@ -308,17 +308,17 @@ void FMetalCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((ParameterIndex + InSamplerStates.GetSize()) < kMaxSamplerStates);
+    CHECK((ParameterIndex + InSamplerStates.Size()) < kMaxSamplerStates);
 
     const EShaderVisibility Visibility = MetalShader->GetVisbility();
-    for (int32 Index = 0; Index < InSamplerStates.GetSize(); ++Index)
+    for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
     {
         CurrentSamplerStates[Visibility][ParameterIndex + Index] = MakeSharedRef<FMetalSamplerState>(InSamplerStates[Index]);
     }
 
     /*CurrentSamplerStates[Visibility] = NSMakeRange(
         NMath::Min<uint32>(ParameterIndex, CurrentSamplerStateRange[Visibility].location),
-        NMath::Max<uint32>(InSamplerStates.GetSize(), CurrentSamplerStateRange[Visibility].length));*/
+        NMath::Max<uint32>(InSamplerStates.Size(), CurrentSamplerStateRange[Visibility].length));*/
 }
 
 void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
@@ -441,8 +441,8 @@ void FMetalCommandContext::PrepareForDraw()
     // Necessary to retrieve all states and the resource bindings
     if (CurrentGraphicsPipeline)
     {
-        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.GetData()
-                                  offsets:CurrentVertexOffsets.GetData()
+        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.Data()
+                                  offsets:CurrentVertexOffsets.Data()
                                 withRange:CurrentVertexBufferRange];
 
         FMetalDepthStencilState* DepthStencilState = CurrentGraphicsPipeline->GetMetalDepthStencilState();
@@ -459,8 +459,8 @@ void FMetalCommandContext::PrepareForDraw()
         // [GraphicsEncoder setRenderPipelineState:CurrentGraphicsPipeline->GetMTLPipelineState()];
         
         // Vertex-Buffers stage
-        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.GetData()
-                                  offsets:CurrentVertexOffsets.GetData()
+        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.Data()
+                                  offsets:CurrentVertexOffsets.Data()
                                 withRange:CurrentVertexBufferRange];
         
         /*

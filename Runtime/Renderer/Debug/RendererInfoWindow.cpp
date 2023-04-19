@@ -11,8 +11,10 @@ TAutoConsoleVariable<bool> GDrawRendererInfo(
     "Enables the drawing of the Renderer Info Window", 
     true);
 
-void FRendererInfoWindow::OnDraw()
+void FRendererInfoWindow::Paint(const FRectangle& AssignedBounds)
 {
+    UNREFERENCED_VARIABLE(AssignedBounds);
+
     if (GDrawRendererInfo.GetValue())
     {
         ImGuiIO& GuiIO = ImGui::GetIO();

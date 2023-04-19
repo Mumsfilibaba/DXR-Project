@@ -2,12 +2,13 @@
 #include "Core/Containers/Function.h"
 #include "Core/Generic/GenericThread.h"
 
-class CORE_API FWindowsThread final 
-    : public FGenericThread
+class CORE_API FWindowsThread final : public FGenericThread
 {
 public:
-    FWindowsThread(FThreadInterface* InRunnable);
+    FWindowsThread(FThreadInterface* InRunnable, bool bSuspended);
     ~FWindowsThread();
+
+    bool Initialize();
 
     virtual bool Start() override final;
 
@@ -15,7 +16,10 @@ public:
 
     virtual void* GetPlatformHandle() override final;
 
-    virtual FString GetName() const override final { return Name; }
+    virtual FString GetName() const override final
+    { 
+        return Name; 
+    }
     
     virtual void SetName(const FString& InName) override final;
 
@@ -24,5 +28,6 @@ private:
 
     HANDLE  Thread;
     DWORD   hThreadID;
+    bool    bIsSuspended;
     FString Name;
 };

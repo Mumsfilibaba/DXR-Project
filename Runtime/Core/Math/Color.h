@@ -14,7 +14,8 @@ struct FColor
         , G(0)
         , B(0)
         , A(0)
-    { }
+    {
+    }
 
     /**
      * @brief     - Initialize color with all channels
@@ -28,7 +29,8 @@ struct FColor
         , G(InG)
         , B(InB)
         , A(InA)
-    { }
+    {
+    }
 
     uint64 GetHash() const
     {
@@ -40,12 +42,12 @@ struct FColor
         return Hash;
     }
 
-    FORCEINLINE uint8* GetData()
+    FORCEINLINE uint8* Data()
     {
         return reinterpret_cast<uint8*>(this);
     }
 
-    FORCEINLINE const uint8* GetData() const
+    FORCEINLINE const uint8* Data() const
     {
         return reinterpret_cast<const uint8*>(this);
     }
@@ -86,7 +88,8 @@ struct FFloatColor16
         , G(0.0f)
         , B(0.0f)
         , A(0.0f)
-    { }
+    {
+    }
 
     /**
      * @brief     - Initialize color with all channels
@@ -112,12 +115,12 @@ struct FFloatColor16
         return Hash;
     }
 
-    FORCEINLINE uint16* GetData()
+    FORCEINLINE uint16* Data()
     {
         return reinterpret_cast<uint16*>(this);
     }
 
-    FORCEINLINE const uint16* GetData() const
+    FORCEINLINE const uint16* Data() const
     {
         return reinterpret_cast<const uint16*>(this);
     }
@@ -158,7 +161,8 @@ struct FFloatColor
         , G(0.0f)
         , B(0.0f)
         , A(0.0f)
-    { }
+    {
+    }
 
     /**
      * @brief     - Initialize color with all channels
@@ -172,7 +176,8 @@ struct FFloatColor
         , G(InG)
         , B(InB)
         , A(InA)
-    { }
+    {
+    }
 
     uint64 GetHash() const
     {
@@ -184,12 +189,12 @@ struct FFloatColor
         return Hash;
     }
 
-    FORCEINLINE float* GetData()
+    FORCEINLINE float* Data()
     {
         return reinterpret_cast<float*>(this);
     }
 
-    FORCEINLINE const float* GetData() const
+    FORCEINLINE const float* Data() const
     {
         return reinterpret_cast<const float*>(this);
     }

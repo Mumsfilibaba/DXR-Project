@@ -229,7 +229,7 @@ protected:
 
     FORCEINLINE uint32 GetLoadedModuleCountUnlocked()
     {
-        return static_cast<uint32>(Modules.GetSize());
+        return static_cast<uint32>(Modules.Size());
     }
 
     FModuleLoadedDelegate     ModuleLoadedDelegate;

@@ -5,9 +5,7 @@
 #if 1
 #include <set>
 
-template<
-    typename KeyType,
-    typename PredicateType = std::less<KeyType>>
+template<typename KeyType, typename PredicateType = std::less<KeyType>>
 using TSet = std::set<KeyType, PredicateType>;
 
 #else

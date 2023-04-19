@@ -1,8 +1,6 @@
 #pragma once
 #include "DelegateInstance.h"
-
 #include "Core/Containers/Allocators.h"
-
 
 class FDelegateBase
 {
@@ -173,7 +171,8 @@ protected:
     FORCEINLINE explicit FDelegateBase()
         : Storage()
         , Size(0)
-    { }
+    {
+    }
 
     FORCEINLINE void Release()
     {
@@ -189,7 +188,7 @@ protected:
         {
             int32 CurrentSize = Size;
             Storage.Realloc(CurrentSize, Other.Size);
-            Other.GetDelegate()->Clone(Storage.GetAllocation());
+            Other.GetDelegate()->Clone(Storage.Data());
 
             Size = Other.Size;
         }
@@ -209,12 +208,12 @@ protected:
 
     FORCEINLINE IDelegateInstance* GetDelegate() noexcept
     {
-        return reinterpret_cast<IDelegateInstance*>(Storage.GetAllocation());
+        return reinterpret_cast<IDelegateInstance*>(Storage.Data());
     }
 
     FORCEINLINE const IDelegateInstance* GetDelegate() const noexcept
     {
-        return reinterpret_cast<const IDelegateInstance*>(Storage.GetAllocation());
+        return reinterpret_cast<const IDelegateInstance*>(Storage.Data());
     }
 
     FORCEINLINE AllocatorType& GetStorage()

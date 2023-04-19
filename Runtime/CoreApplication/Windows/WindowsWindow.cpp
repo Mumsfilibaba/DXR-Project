@@ -281,7 +281,7 @@ void FWindowsWindow::GetTitle(FString& OutTitle)
         int32 Size = GetWindowTextLengthA(Window);
         OutTitle.Resize(Size);
 
-        GetWindowTextA(Window, OutTitle.GetData(), Size);
+        GetWindowTextA(Window, OutTitle.Data(), Size);
     }
 }
 

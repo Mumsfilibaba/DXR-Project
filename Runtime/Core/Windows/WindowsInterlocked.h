@@ -4,8 +4,7 @@
 
 #include <intrin.h>
 
-struct FWindowsInterlocked 
-    : public FGenericInterlocked
+struct FWindowsInterlocked final : public FGenericInterlocked
 {
     // See: https://docs.microsoft.com/en-us/cpp/intrinsics/interlockedexchangeadd-intrinsic-functions?view=msvc-160
     //      https://docs.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-interlockedincrement16

@@ -98,7 +98,7 @@ inline void DrawFloat3Control(const FString& Label, FVector3& OutValue, float Re
 
 FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
 {
-    return ImGui::ColorEdit3(Label, OutColor.GetData(), Flags);
+    return ImGui::ColorEdit3(Label, OutColor.Data(), Flags);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -109,21 +109,21 @@ inline void ImGui_PrintTime(float Nanoseconds)
     {
         ImGui::Text("0.0 s");
     }
-    else if (Nanoseconds < NTime::FromMicroseconds<float>(1.0f))
+    else if (Nanoseconds < TimeUtilities::FromMicroseconds<float>(1.0f))
     {
         ImGui::Text("%.4f ns", Nanoseconds);
     }
-    else if (Nanoseconds < NTime::FromMilliseconds<float>(1.0f))
+    else if (Nanoseconds < TimeUtilities::FromMilliseconds<float>(1.0f))
     {
-        ImGui::Text("%.4f qs", NTime::ToMicroseconds<float>(Nanoseconds));
+        ImGui::Text("%.4f qs", TimeUtilities::ToMicroseconds<float>(Nanoseconds));
     }
-    else if (Nanoseconds < NTime::FromSeconds<float>(1.0f))
+    else if (Nanoseconds < TimeUtilities::FromSeconds<float>(1.0f))
     {
-        ImGui::Text("%.4f ms", NTime::ToMilliseconds<float>(Nanoseconds));
+        ImGui::Text("%.4f ms", TimeUtilities::ToMilliseconds<float>(Nanoseconds));
     }
     else
     {
-        ImGui::Text("%.4f s", NTime::ToSeconds<float>(Nanoseconds));
+        ImGui::Text("%.4f s", TimeUtilities::ToSeconds<float>(Nanoseconds));
     }
 }
 
