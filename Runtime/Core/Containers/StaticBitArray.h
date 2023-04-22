@@ -475,8 +475,7 @@ public:
      * @param RHS - Right-hand side to bitwise AND with
      * @return    - Returns a BitArray with the result
      */
-    NODISCARD
-    friend CONSTEXPR TStaticBitArray operator&(const TStaticBitArray& LHS, const TStaticBitArray& RHS) noexcept
+    NODISCARD friend CONSTEXPR TStaticBitArray operator&(const TStaticBitArray& LHS, const TStaticBitArray& RHS) noexcept
     {
         TStaticBitArray NewArray(LHS);
         NewArray.BitwiseAnd(RHS);
@@ -489,8 +488,7 @@ public:
      * @param RHS - Right-hand side to bitwise OR with
      * @return    - Returns a BitArray with the result
      */
-    NODISCARD
-    friend CONSTEXPR TStaticBitArray operator|(const TStaticBitArray& LHS, const TStaticBitArray& RHS) noexcept
+    NODISCARD friend CONSTEXPR TStaticBitArray operator|(const TStaticBitArray& LHS, const TStaticBitArray& RHS) noexcept
     {
         TStaticBitArray NewArray(LHS);
         NewArray.BitwiseOr(RHS);
@@ -503,8 +501,7 @@ public:
      * @param RHS - Right-hand side to bitwise XOR with
      * @return    - Returns a BitArray with the result
      */
-    NODISCARD
-    friend CONSTEXPR TStaticBitArray operator^(const TStaticBitArray& LHS, const TStaticBitArray& RHS) noexcept
+    NODISCARD friend CONSTEXPR TStaticBitArray operator^(const TStaticBitArray& LHS, const TStaticBitArray& RHS) noexcept
     {
         TStaticBitArray NewArray(LHS);
         NewArray.BitwiseXor(RHS);

@@ -3,7 +3,7 @@
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ObjectHandling.h"
-#include "Core/Templates/ContiguousContainerHelper.h"
+#include "Core/Templates/ArrayContainerHelper.h"
 
 template<typename T, int32 NUM_ELEMENTS>
 struct TStaticArray
