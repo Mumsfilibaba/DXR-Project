@@ -3,7 +3,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FMacPlatformString : public FGenericPlatformString
+struct FMacPlatformString final : public FGenericPlatformString
 {
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CHAR
