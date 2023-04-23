@@ -9,20 +9,20 @@
 #include "Core/Templates/BitReference.h"
 #include "Core/Templates/ArrayContainerHelper.h"
 
-template<typename InStorageType = uint32, typename InAllocatorType = TDefaultArrayAllocator<InStorageType>>
+template<typename InIntegerType = uint32, typename InAllocatorType = TDefaultArrayAllocator<InIntegerType>>
 class TBitArray
 {
 public:
     using SizeType = uint32;
-    static_assert(TIsUnsigned<InStorageType>::Value, "BitArray must have an unsigned InStorageType");
+    static_assert(TIsUnsigned<InIntegerType>::Value, "BitArray must have an unsigned InIntegerType");
 
-    using BitReferenceType      = TBitReference<InStorageType>;
-    using ConstBitReferenceType = TBitReference<const InStorageType>;
+    using BitReferenceType      = TBitReference<InIntegerType>;
+    using ConstBitReferenceType = TBitReference<const InIntegerType>;
 
-    typedef TBitArrayIterator<TBitArray, InStorageType>                    IteratorType;
-    typedef TBitArrayIterator<const TBitArray, const InStorageType>        ConstIteratorType;
-    typedef TReverseBitArrayIterator<TBitArray, InStorageType>             ReverseIteratorType;
-    typedef TReverseBitArrayIterator<const TBitArray, const InStorageType> ReverseConstIteratorType;
+    typedef TBitArrayIterator<TBitArray, InIntegerType>                    IteratorType;
+    typedef TBitArrayIterator<const TBitArray, const InIntegerType>        ConstIteratorType;
+    typedef TReverseBitArrayIterator<TBitArray, InIntegerType>             ReverseIteratorType;
+    typedef TReverseBitArrayIterator<const TBitArray, const InIntegerType> ReverseConstIteratorType;
 
 public:
 
@@ -30,7 +30,7 @@ public:
      * @brief - Default constructor
      */
     FORCEINLINE TBitArray() noexcept
-        : Storage()
+        : Allocator()
         , NumBits(0)
         , NumElements(0)
     {
@@ -40,13 +40,13 @@ public:
      * @brief         - Constructor that sets the elements based on an integer
      * @param InValue - Integer containing bits to set to the BitArray
      */
-    FORCEINLINE explicit TBitArray(InStorageType InValue) noexcept
-        : Storage()
+    FORCEINLINE explicit TBitArray(InIntegerType InValue) noexcept
+        : Allocator()
         , NumBits(NumBitsPerInteger())
         , NumElements(0)
     {
         InitializeZeroed(NumBits);
-        InStorageType& Element = GetStorage(0);
+        InIntegerType& Element = GetInteger(0);
         Element = InValue;
     }
 
@@ -55,8 +55,8 @@ public:
      * @param InValues  - Integers containing bits to set to the BitArray
      * @param NumValues - Number of values in the input array
      */
-    NOINLINE explicit TBitArray(const InStorageType* InValues, SizeType NumValues) noexcept
-        : Storage()
+    NOINLINE explicit TBitArray(const InIntegerType* InValues, SizeType NumValues) noexcept
+        : Allocator()
         , NumBits(0)
         , NumElements(0)
     {
@@ -65,7 +65,7 @@ public:
 
         for (SizeType Index = 0; Index < NumValues; ++Index)
         {
-            InStorageType& Element = GetStorage(Index);
+            InIntegerType& Element = GetInteger(Index);
             Element = InValues[Index];
         }
     }
@@ -76,7 +76,7 @@ public:
      * @param NumBits - Number of bits to set
      */
     FORCEINLINE explicit TBitArray(SizeType InNumBits, bool bValue) noexcept
-        : Storage()
+        : Allocator()
         , NumBits(InNumBits)
         , NumElements(0)
     {
@@ -92,7 +92,7 @@ public:
      * @param InitList - Contains bools to indicate the sign of each bit
      */
     FORCEINLINE TBitArray(std::initializer_list<bool> InitList) noexcept
-        : Storage()
+        : Allocator()
         , NumBits(FArrayContainerHelper::Size(InitList))
         , NumElements(0)
     {
@@ -110,7 +110,7 @@ public:
      * @param Other - BitArray to copy from
      */
     FORCEINLINE TBitArray(const TBitArray& Other) noexcept
-        : Storage()
+        : Allocator()
         , NumBits(Other.NumBits)
         , NumElements(0)
     {
@@ -123,7 +123,7 @@ public:
      * @param Other - BitArray to move from
      */ 
     FORCEINLINE TBitArray(TBitArray&& Other) noexcept
-        : Storage()
+        : Allocator()
         , NumBits(Other.NumBits)
         , NumElements(Other.NumElements)
     {
@@ -142,18 +142,9 @@ public:
     /**
      * @brief - Resets the all the bits to zero
      */
-    FORCEINLINE void ResetWithZeros()
+    FORCEINLINE void Reset()
     {
-        FMemory::Memset(Data(), 0x00, CapacityInBytes());
-    }
-
-    /**
-    * @brief - Resets the all the bits to ones
-     */
-    FORCEINLINE void ResetWithOnes()
-    {
-        FMemory::Memset(Data(), 0xff, CapacityInBytes());
-        MaskOutLastStorageElement();
+        FMemory::Memset(Allocator.GetAllocation(), 0x00, CapacityInBytes());
     }
 
     /**
@@ -203,11 +194,11 @@ public:
     FORCEINLINE void FlipBit(SizeType BitPosition) noexcept
     {
         CHECK(BitPosition < NumBits);
-        const SizeType ElementIndex   = GetStorageIndexOfBit(BitPosition);
-        const SizeType IndexInElement = GetIndexOfBitInStorage(BitPosition);
+        const SizeType ElementIndex   = GetArrayIndexOfBit(BitPosition);
+        const SizeType IndexInElement = GetIndexOfBitInArray(BitPosition);
 
-        const InStorageType Mask = CreateMaskForBit(IndexInElement);
-        InStorageType& Element = GetStorage(ElementIndex);
+        const InIntegerType Mask = CreateMaskForBit(IndexInElement);
+        InIntegerType& Element = GetInteger(ElementIndex);
         Element ^= Mask;
     }
 
@@ -220,7 +211,7 @@ public:
         SizeType BitCount = 0;
         for (SizeType Index = 0; Index < NumElements; ++Index)
         {
-            const InStorageType Element = GetStorage(Index);
+            const InIntegerType Element = GetInteger(Index);
             BitCount += FBitHelper::CountAssignedBits(Element);
         }
 
@@ -254,7 +245,7 @@ public:
         SizeType Result = 0;
         for (int32 Index = int32(NumElements) - 1; Index >= 0; --Index)
         {
-            const auto Element = GetStorage(Index);
+            const auto Element = GetInteger(Index);
             if (Element)
             {
                 const auto BitIndex = FBitHelper::MostSignificant<SizeType>(Element);
@@ -275,7 +266,7 @@ public:
         SizeType Result = 0;
         for (SizeType Index = 0; Index < NumElements; ++Index)
         {
-            const auto Element = GetStorage(Index);
+            const auto Element = GetInteger(Index);
             if (Element)
             {
                 const auto BitIndex = FBitHelper::LeastSignificant<SizeType>(Element);
@@ -298,9 +289,9 @@ public:
         Reserve(NumBits + 1);
         BitshiftLeft_SimpleWithBitOffset(1, BitPosition);
 
-        const SizeType ElementIndex = GetStorageIndexOfBit(BitPosition);
-        InStorageType& Element = GetStorage(ElementIndex);
-        Element |= (InStorageType(bValue) << BitPosition);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitPosition);
+        InIntegerType& Element = GetInteger(ElementIndex);
+        Element |= (InIntegerType(bValue) << BitPosition);
         NumBits++;
     }
 
@@ -324,10 +315,10 @@ public:
         const SizeType MaxBits = Capacity();
         if (InNumBits >= MaxBits)
         {
-            const SizeType NewNumElements = GetRequiredStorageForBits(InNumBits);
-            Storage.Realloc(NumElements, NewNumElements);
+            const SizeType NewNumElements = GetNumIntegersRequiredForBits(InNumBits);
+            Allocator.Realloc(NumElements, NewNumElements);
 
-            InStorageType* Array = Storage.GetAllocation();
+            InIntegerType* Array = Allocator.GetAllocation();
             for (SizeType Index = NumElements; Index < NewNumElements; ++Index)
             {
                 Array[Index] = 0;
@@ -352,10 +343,10 @@ public:
      */
     FORCEINLINE void Shrink() noexcept
     {
-        const SizeType RequiredElements = GetRequiredStorageForBits(NumBits);
+        const SizeType RequiredElements = GetNumIntegersRequiredForBits(NumBits);
         if (RequiredElements >= NumElements)
         {
-            Storage.Realloc(NumElements, RequiredElements);
+            Allocator.Realloc(NumElements, RequiredElements);
             NumElements = RequiredElements;
         }
     }
@@ -369,8 +360,8 @@ public:
         const SizeType Count = NMath::Min<SizeType>(NumElements, Other.NumElements);
         for (SizeType Index = 0; Index < Count; Index++)
         {
-            InStorageType& Element = GetStorage(Index);
-            Element &= Other.GetStorage(Index);
+            InIntegerType& Element = GetInteger(Index);
+            Element &= Other.GetInteger(Index);
         }
     }
 
@@ -383,8 +374,8 @@ public:
         const SizeType Count = NMath::Min<SizeType>(NumElements, Other.NumElements);
         for (SizeType Index = 0; Index < Count; Index++)
         {
-            InStorageType& Element = GetStorage(Index);
-            Element |= Other.GetStorage(Index);
+            InIntegerType& Element = GetInteger(Index);
+            Element |= Other.GetInteger(Index);
         }
     }
 
@@ -397,8 +388,8 @@ public:
         const SizeType Count = NMath::Min<SizeType>(NumElements, Other.NumElements);
         for (SizeType Index = 0; Index < Count; Index++)
         {
-            InStorageType& Element = GetStorage(Index);
-            Element |= Other.GetStorage(Index);
+            InIntegerType& Element = GetInteger(Index);
+            Element |= Other.GetInteger(Index);
         }
     }
 
@@ -410,7 +401,7 @@ public:
     {
         for (SizeType Index = 0; Index < NumElements; Index++)
         {
-            InStorageType& Element = GetStorage(Index);
+            InIntegerType& Element = GetInteger(Index);
             Element = ~Element;
         }
     }
@@ -419,7 +410,7 @@ public:
      * @brief       - Perform a right BitShift
      * @param Steps - Number of steps to shift
      */
-    inline void BitshiftRight(SizeType Steps) noexcept
+    FORCEINLINE void BitshiftRight(SizeType Steps) noexcept
     {
         if (Steps && NumBits)
         {
@@ -431,7 +422,7 @@ public:
      * @brief       - Perform a left BitShift
      * @param Steps - Number of steps to shift
      */
-    inline void BitshiftLeft(SizeType Steps) noexcept
+    FORCEINLINE void BitshiftLeft(SizeType Steps) noexcept
     {
         if (Steps && NumBits)
         {
@@ -447,10 +438,10 @@ public:
     NODISCARD FORCEINLINE BitReferenceType GetBitReference(SizeType BitIndex) noexcept
     {
         CHECK(BitIndex < NumBits);
-        const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
         CHECK(ElementIndex < NumElements);
 
-        InStorageType& Element = GetStorage(ElementIndex);
+        InIntegerType& Element = GetInteger(ElementIndex);
         return BitReferenceType(Element, ~Element);
     }
 
@@ -462,10 +453,10 @@ public:
     NODISCARD FORCEINLINE ConstBitReferenceType GetBitReference(SizeType BitIndex) const noexcept
     {
         CHECK(BitIndex < NumBits);
-        const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
         CHECK(ElementIndex < NumElements);
 
-        const InStorageType& Element = GetStorage(ElementIndex);
+        const InIntegerType& Element = GetInteger(ElementIndex);
         return ConstBitReferenceType(Element, CreateMaskForBit(BitIndex));
     }
 
@@ -482,7 +473,7 @@ public:
      * @brief  - Retrieve the number of integers used to store the bits
      * @return - Returns the number of integers used to store the bits
      */
-    NODISCARD FORCEINLINE SizeType StorageSize() const noexcept
+    NODISCARD FORCEINLINE SizeType IntegerSize() const noexcept
     {
         return NumElements;
     }
@@ -502,25 +493,43 @@ public:
      */
     NODISCARD FORCEINLINE SizeType CapacityInBytes() const noexcept
     {
-        return NumElements * sizeof(InStorageType);
+        return NumElements * sizeof(InIntegerType);
     }
 
     /**
      * @brief  - Retrieve the data of the Array
      * @return - Returns a pointer to the stored data
      */
-    NODISCARD FORCEINLINE InStorageType* Data() noexcept
+    NODISCARD FORCEINLINE InIntegerType* Data() noexcept
     {
-        return Storage.GetAllocation();
+        return Allocator.GetAllocation();
     }
 
     /**
      * @brief  - Retrieve the data of the Array
      * @return - Returns a pointer to the stored data
      */
-    NODISCARD FORCEINLINE const InStorageType* Data() const noexcept
+    NODISCARD FORCEINLINE const InIntegerType* Data() const noexcept
     {
-        return Storage.GetAllocation();
+        return Allocator.GetAllocation();
+    }
+
+    /**
+     * @brief  - Retrieve the data of the Array
+     * @return - Returns a pointer to the stored data
+     */
+    NODISCARD FORCEINLINE InAllocatorType& GetAllocator() noexcept
+    {
+        return Allocator;
+    }
+
+    /**
+     * @brief  - Retrieve the data of the Array
+     * @return - Returns a pointer to the stored data
+     */
+    NODISCARD FORCEINLINE const InAllocatorType& GetAllocator() const noexcept
+    {
+        return Allocator;
     }
 
 public:
@@ -653,7 +662,7 @@ public:
      */
     FORCEINLINE TBitArray& operator=(TBitArray&& RHS) noexcept
     {
-        MoveFrom(Move(RHS));
+        MoveFrom(::Move(RHS));
         return *this;
     }
 
@@ -662,8 +671,8 @@ public:
      * @param RHS - Right-hand side to compare
      * @return    - Returns true if the BitArrays are equal
      */
-    template<typename OtherStorageType, typename OtherAllocatorType>
-    NODISCARD FORCEINLINE bool operator==(const TBitArray<OtherStorageType, OtherAllocatorType>& RHS) const noexcept
+    template<typename OtherIntegerType, typename OtherAllocatorType>
+    NODISCARD FORCEINLINE bool operator==(const TBitArray<OtherIntegerType, OtherAllocatorType>& RHS) const noexcept
     {
         if (NumBits != RHS.NumBits)
         {
@@ -672,7 +681,7 @@ public:
 
         for (SizeType Index = 0; Index < NumElements; ++Index)
         {
-            if (GetStorage(Index) != RHS.GetStorage(Index))
+            if (GetInteger(Index) != RHS.GetInteger(Index))
             {
                 return false;
             }
@@ -686,8 +695,8 @@ public:
      * @param RHS - Right-hand side to compare
      * @return    - Returns false if the BitArrays are equal
      */
-    template<typename OtherStorageType, typename OtherAllocatorType>
-    NODISCARD FORCEINLINE bool operator!=(const TBitArray<OtherStorageType, OtherAllocatorType>& RHS) const noexcept
+    template<typename OtherIntegerType, typename OtherAllocatorType>
+    NODISCARD FORCEINLINE bool operator!=(const TBitArray<OtherIntegerType, OtherAllocatorType>& RHS) const noexcept
     {
         return !(*this == RHS);
     }
@@ -739,72 +748,36 @@ public:
      * @brief  - Retrieve an iterator to the beginning of the array
      * @return - A iterator that points to the first element
      */
-    NODISCARD FORCEINLINE IteratorType StartIterator() noexcept
+    NODISCARD FORCEINLINE IteratorType Iterator() noexcept
     {
         return IteratorType(*this, 0);
-    }
-
-    /**
-     * @brief  - Retrieve an iterator to the end of the array
-     * @return - A iterator that points to the element past the end
-     */
-    NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
-    {
-        return IteratorType(*this, Size());
     }
 
     /**
      * @brief  - Retrieve an iterator to the beginning of the array
      * @return - A iterator that points to the first element
      */
-    NODISCARD FORCEINLINE ConstIteratorType StartIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const noexcept
     {
         return ConstIteratorType(*this, 0);
     }
 
     /**
-     * @brief  - Retrieve an iterator to the end of the array
-     * @return - A iterator that points to the element past the end
+     * @brief  - Retrieve an reverse-iterator to the end of the array
+     * @return - A reverse-iterator that points to the last element
      */
-    NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator() noexcept
     {
-        return ConstIteratorType(*this, Size());
+        return ReverseIteratorType(*this, NumBits);
     }
 
     /**
      * @brief  - Retrieve an reverse-iterator to the end of the array
      * @return - A reverse-iterator that points to the last element
      */
-    NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
+    NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseIterator() const noexcept
     {
-        return ReverseIteratorType(*this, Size());
-    }
-
-    /**
-     * @brief  - Retrieve an reverse-iterator to the start of the array
-     * @return - A reverse-iterator that points to the element before the first element
-     */
-    NODISCARD FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
-    {
-        return ReverseIteratorType(*this, 0);
-    }
-
-    /**
-     * @brief  - Retrieve an reverse-iterator to the end of the array
-     * @return - A reverse-iterator that points to the last element
-     */
-    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
-    {
-        return ReverseConstIteratorType(*this, Size());
-    }
-
-    /**
-     * @brief  - Retrieve an reverse-iterator to the start of the array
-     * @return - A reverse-iterator that points to the element before the first element
-     */
-    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
-    {
-        return ReverseConstIteratorType(*this, 0);
+        return ReverseConstIteratorType(*this, NumBits);
     }
 
 public: // STL Iterators
@@ -817,31 +790,31 @@ public: // STL Iterators
 public: 
     NODISCARD static CONSTEXPR SizeType NumBitsPerInteger() noexcept
     {
-        return sizeof(InStorageType) * 8;
+        return sizeof(InIntegerType) * 8;
     }
 
 private:
-    NODISCARD static CONSTEXPR SizeType GetStorageIndexOfBit(SizeType BitIndex) noexcept
+    NODISCARD static CONSTEXPR SizeType GetArrayIndexOfBit(SizeType BitIndex) noexcept
     {
         return (BitIndex / NumBitsPerInteger());
     }
 
-    NODISCARD static CONSTEXPR SizeType GetIndexOfBitInStorage(SizeType BitIndex) noexcept
+    NODISCARD static CONSTEXPR SizeType GetIndexOfBitInArray(SizeType BitIndex) noexcept
     {
         return (BitIndex % NumBitsPerInteger());
     }
 
-    NODISCARD static CONSTEXPR InStorageType CreateMaskForBit(SizeType BitIndex) noexcept
+    NODISCARD static CONSTEXPR InIntegerType CreateMaskForBit(SizeType BitIndex) noexcept
     {
-        return InStorageType(1) << GetIndexOfBitInStorage(BitIndex);
+        return InIntegerType(1) << GetIndexOfBitInArray(BitIndex);
     }
 
-    NODISCARD static CONSTEXPR InStorageType CreateMaskUpToBit(SizeType BitIndex) noexcept
+    NODISCARD static CONSTEXPR InIntegerType CreateMaskUpToBit(SizeType BitIndex) noexcept
     {
         return CreateMaskForBit(BitIndex) - 1;
     }
 
-    NODISCARD static CONSTEXPR SizeType GetRequiredStorageForBits(SizeType InNumBits) noexcept
+    NODISCARD static CONSTEXPR SizeType GetNumIntegersRequiredForBits(SizeType InNumBits) noexcept
     {
         return (InNumBits + (NumBitsPerInteger() - 1)) / NumBitsPerInteger();
     }
@@ -849,79 +822,79 @@ private:
 private:
     FORCEINLINE void InitializeZeroed(SizeType InNumBits) noexcept
     {
-        const SizeType NewNumElements = GetRequiredStorageForBits(InNumBits);
-        Storage.Realloc(NumElements, NewNumElements);
+        const SizeType NewNumElements = GetNumIntegersRequiredForBits(InNumBits);
+        Allocator.Realloc(NumElements, NewNumElements);
         NumElements = NewNumElements;
-        FMemory::Memzero(Storage.GetAllocation(), CapacityInBytes());
+        FMemory::Memzero(Allocator.GetAllocation(), CapacityInBytes());
     }
 
     FORCEINLINE void CopyFrom(const TBitArray& Other) noexcept
     {
-        FMemory::Memcpy(Storage.GetAllocation(), Other.Storage.GetAllocation(), Other.NumElements * sizeof(InStorageType));
+        FMemory::Memcpy(Allocator.GetAllocation(), Other.Allocator.GetAllocation(), Other.NumElements * sizeof(InIntegerType));
     }
 
     FORCEINLINE void MoveFrom(TBitArray&& Other) noexcept
     {
-        Storage.MoveFrom(Move(Other.Storage));
+        Allocator.MoveFrom(::Move(Other.Allocator));
         Other.NumBits     = 0;
         Other.NumElements = 0;
     }
 
     FORCEINLINE void AssignBitUnchecked(SizeType BitPosition, const bool bValue) noexcept
     {
-        const SizeType ElementIndex   = GetStorageIndexOfBit(BitPosition);
-        const SizeType IndexInElement = GetIndexOfBitInStorage(BitPosition);
+        const SizeType ElementIndex   = GetArrayIndexOfBit(BitPosition);
+        const SizeType IndexInElement = GetIndexOfBitInArray(BitPosition);
 
-        const InStorageType Mask  = CreateMaskForBit(IndexInElement);
-        const InStorageType Value = bValue ? Mask : InStorageType(0);
+        const InIntegerType Mask  = CreateMaskForBit(IndexInElement);
+        const InIntegerType Value = bValue ? Mask : InIntegerType(0);
 
-        InStorageType& Element = GetStorage(ElementIndex);
+        InIntegerType& Element = GetInteger(ElementIndex);
         Element |= Value;
     }
 
     FORCEINLINE void BitshiftRightUnchecked(SizeType Steps, SizeType StartBit = 0) noexcept
     {
-        const SizeType StartElementIndex = GetStorageIndexOfBit(StartBit);
-        InStorageType* Array = Storage.GetAllocation() + StartElementIndex;
+        const SizeType StartElementIndex = GetArrayIndexOfBit(StartBit);
+        InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
 
-        const SizeType RemainingElements = StorageSize() - StartElementIndex;
-        const SizeType RemainingBits     = Size() - StartBit;
+        const SizeType RemainingElements = IntegerSize() - StartElementIndex;
+        const SizeType RemainingBits     = NumBits - StartBit;
         if (Steps < RemainingBits)
         {
             // Mask value to ensure that we get zeros shifted in
-            const InStorageType StartValue  = *Array;
-            const InStorageType Mask        = CreateMaskUpToBit(StartBit);
-            const InStorageType InverseMask = ~Mask;
+            const InIntegerType StartValue  = *Array;
+            const InIntegerType Mask        = CreateMaskUpToBit(StartBit);
+            const InIntegerType InverseMask = ~Mask;
             *Array = (StartValue & InverseMask);
 
             const SizeType DiscardCount = Steps / NumBitsPerInteger();
             const SizeType RangeSize    = RemainingElements - DiscardCount;
 
-            FMemory::Memmove(Array, Array + DiscardCount, sizeof(InStorageType) * RangeSize);
-            FMemory::Memzero(Array + RangeSize, sizeof(InStorageType) * DiscardCount);
+            FMemory::Memmove(Array, Array + DiscardCount, sizeof(InIntegerType) * RangeSize);
+            FMemory::Memzero(Array + RangeSize, sizeof(InIntegerType) * DiscardCount);
 
             BitshiftRight_Simple(Steps, StartElementIndex, RangeSize);
 
-            const InStorageType CurrentValue = *Array;
+            const InIntegerType CurrentValue = *Array;
             *Array = (CurrentValue & InverseMask) | (StartValue & Mask);
         }
         else
         {
-            FMemory::Memzero(Array, RemainingElements * sizeof(InStorageType));
+            FMemory::Memzero(Array, RemainingElements * sizeof(InIntegerType));
         }
     }
 
     FORCEINLINE void BitshiftRight_Simple(SizeType Steps, SizeType StartElementIndex, SizeType ElementsToShift)
     {
-        InStorageType* Array = Storage.GetAllocation() + StartElementIndex + ElementsToShift;
+        InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex + ElementsToShift;
         const SizeType CurrShift = Steps % NumBitsPerInteger();
         const SizeType PrevShift = NumBitsPerInteger() - CurrShift;
 
-        InStorageType Previous = 0;
+        InIntegerType Previous = 0;
         while (ElementsToShift)
         {
-            const InStorageType Current = *(--Pointer);
-            *(Pointer) = (Current >> CurrShift) | (Previous << PrevShift);
+            const InIntegerType Current = *(--Array);
+            *(Array) = (Current >> CurrShift) | (Previous << PrevShift);
             Previous = Current;
             ElementsToShift--;
         }
@@ -929,64 +902,64 @@ private:
 
     FORCEINLINE void BitshiftRight_SimpleWithBitOffset(SizeType Steps, SizeType BitPosition)
     {
-        const SizeType StartElementIndex = GetStorageIndexOfBit(BitPosition);
+        const SizeType StartElementIndex = GetArrayIndexOfBit(BitPosition);
         const SizeType ElementsToShift = NumElements - StartElementIndex;
-        InStorageType* Array = Storage.GetAllocation() + StartElementIndex;
+        InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
 
         // Mask value to ensure that we get zeros shifted in
-        const InStorageType StartValue  = *Array;
-        const InStorageType Mask        = CreateMaskUpToBit(BitPosition);
-        const InStorageType InverseMask = ~Mask;
+        const InIntegerType StartValue  = *Array;
+        const InIntegerType Mask        = CreateMaskUpToBit(BitPosition);
+        const InIntegerType InverseMask = ~Mask;
         *Array = (StartValue & InverseMask);
 
         BitshiftRight_Simple(Steps, StartElementIndex, ElementsToShift);
 
-        const InStorageType CurrentValue = *Array;
+        const InIntegerType CurrentValue = *Array;
         *Array = (CurrentValue & InverseMask) | (StartValue & Mask);
     }
 
     FORCEINLINE void BitshiftLeftUnchecked(SizeType Steps, SizeType StartBit = 0) noexcept
     {
-        const SizeType StartElementIndex = GetStorageIndexOfBit(StartBit);
-        InStorageType* Array = Storage.GetAllocation() + StartElementIndex;
+        const SizeType StartElementIndex = GetArrayIndexOfBit(StartBit);
+        InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
 
-        const SizeType RemainingElements = StorageSize() - StartElementIndex;
-        const SizeType RemainingBits     = Size() - StartBit;
+        const SizeType RemainingElements = IntegerSize() - StartElementIndex;
+        const SizeType RemainingBits     = NumBits - StartBit;
         if (Steps < RemainingBits)
         {
             // Mask value to ensure that we get zeros shifted in
-            const InStorageType StartValue  = *Array;
-            const InStorageType Mask        = CreateMaskUpToBit(StartBit);
-            const InStorageType InverseMask = ~Mask;
+            const InIntegerType StartValue  = *Array;
+            const InIntegerType Mask        = CreateMaskUpToBit(StartBit);
+            const InIntegerType InverseMask = ~Mask;
             *Array = (StartValue & InverseMask);
 
             const SizeType DiscardCount = Steps / NumBitsPerInteger();
             const SizeType RangeSize    = RemainingElements - DiscardCount;
 
-            FMemory::Memmove(Array + DiscardCount, Array, sizeof(InStorageType) * RangeSize);
-            FMemory::Memzero(Array, sizeof(InStorageType) * DiscardCount);
+            FMemory::Memmove(Array + DiscardCount, Array, sizeof(InIntegerType) * RangeSize);
+            FMemory::Memzero(Array, sizeof(InIntegerType) * DiscardCount);
 
             BitshiftLeft_Simple(Steps, StartElementIndex + DiscardCount, RangeSize);
 
-            const InStorageType CurrentValue = *Array;
+            const InIntegerType CurrentValue = *Array;
             *Array = (CurrentValue & InverseMask) | (StartValue & Mask);
         }
         else
         {
-            FMemory::Memzero(Array, RemainingElements * sizeof(InStorageType));
+            FMemory::Memzero(Array, RemainingElements * sizeof(InIntegerType));
         }
     }
 
     FORCEINLINE void BitshiftLeft_Simple(SizeType Steps, SizeType StartElementIndex, SizeType ElementsToShift)
     {
-        InStorageType* Array = Storage.GetAllocation() + StartElementIndex;
+        InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
         const SizeType CurrShift = Steps % NumBitsPerInteger();
         const SizeType PrevShift = NumBitsPerInteger() - CurrShift;
 
-        InStorageType Previous = 0;
+        InIntegerType Previous = 0;
         while (ElementsToShift)
         {
-            const InStorageType Current = *Array;
+            const InIntegerType Current = *Array;
             *(Array++) = (Current << CurrShift) | (Previous >> PrevShift);
             Previous = Current;
             ElementsToShift--;
@@ -995,61 +968,61 @@ private:
 
     FORCEINLINE void BitshiftLeft_SimpleWithBitOffset(SizeType Steps, SizeType BitPosition)
     {
-        const SizeType StartElementIndex = GetStorageIndexOfBit(BitPosition);
+        const SizeType StartElementIndex = GetArrayIndexOfBit(BitPosition);
         const SizeType ElementsToShift   = NumElements - StartElementIndex;
-        InStorageType* Array = Storage.GetAllocation() + StartElementIndex;
+        InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
 
         // Mask value to ensure that we get zeros shifted in
-        const InStorageType StartValue  = *Array;
-        const InStorageType Mask        = CreateMaskUpToBit(BitPosition);
-        const InStorageType InverseMask = ~Mask;
+        const InIntegerType StartValue  = *Array;
+        const InIntegerType Mask        = CreateMaskUpToBit(BitPosition);
+        const InIntegerType InverseMask = ~Mask;
         *Array = (StartValue & InverseMask);
 
         BitshiftLeft_Simple(Steps, StartElementIndex, ElementsToShift);
 
-        const InStorageType CurrentValue = *Array;
+        const InIntegerType CurrentValue = *Array;
         *Array = (CurrentValue & InverseMask) | (StartValue & Mask);
     }
 
-    FORCEINLINE void MaskOutLastStorageElement()
+    FORCEINLINE void MaskOutLastInteger()
     {
         const SizeType LastValidBit     = NumBits ? (NumBits - 1) : 0;
-        const SizeType LastElementIndex = GetStorageIndexOfBit(LastValidBit);
-        const SizeType LastBitIndex     = GetIndexOfBitInStorage(LastValidBit);
+        const SizeType LastElementIndex = GetArrayIndexOfBit(LastValidBit);
+        const SizeType LastBitIndex     = GetIndexOfBitInArray(LastValidBit);
 
-        const InStorageType Mask = CreateMaskUpToBit(LastBitIndex) | CreateMaskForBit(LastBitIndex);
-        InStorageType& Element = GetStorage(LastElementIndex);
+        const InIntegerType Mask = CreateMaskUpToBit(LastBitIndex) | CreateMaskForBit(LastBitIndex);
+        InIntegerType& Element = GetInteger(LastElementIndex);
         Element &= Mask;
     }
 
-    NODISCARD FORCEINLINE InStorageType& GetStorageForBit(SizeType BitIndex) noexcept
+    NODISCARD FORCEINLINE InIntegerType& GetIntegerForBit(SizeType BitIndex) noexcept
     {
-        const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
-        return GetStorage(ElementIndex);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
+        return GetInteger(ElementIndex);
     }
 
-    NODISCARD FORCEINLINE const InStorageType& GetStorageForBit(SizeType BitIndex) const noexcept
+    NODISCARD FORCEINLINE const InIntegerType& GetIntegerForBit(SizeType BitIndex) const noexcept
     {
-        const SizeType ElementIndex = GetStorageIndexOfBit(BitIndex);
-        return GetStorage(ElementIndex);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
+        return GetInteger(ElementIndex);
     }
 
-    NODISCARD FORCEINLINE InStorageType& GetStorage(SizeType Index) noexcept
+    NODISCARD FORCEINLINE InIntegerType& GetInteger(SizeType Index) noexcept
     {
-        InStorageType* Array = Storage.GetAllocation();
+        InIntegerType* Array = Allocator.GetAllocation();
         return Array[Index];
     }
 
-    NODISCARD FORCEINLINE const InStorageType& GetStorage(SizeType Index) const noexcept
+    NODISCARD FORCEINLINE const InIntegerType& GetInteger(SizeType Index) const noexcept
     {
-        const InStorageType* Array = Storage.GetAllocation();
+        const InIntegerType* Array = Allocator.GetAllocation();
         return Array[Index];
     }
 
 private:
-    InAllocatorType Storage;
-    SizeType      NumBits     = 0;
-    SizeType      NumElements = 0;
+    InAllocatorType Allocator;
+    SizeType        NumBits;
+    SizeType        NumElements;
 };
 
 typedef TBitArray<uint8>  FBitArray8;

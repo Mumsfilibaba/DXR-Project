@@ -18,6 +18,7 @@
 #define ENABLE_STD_STRING_REALLOCATABLE (1)
 #define ENABLE_SHRINKTOFIT_BENCHMARK    (0)
 #define ENABLE_SORT_BENCHMARK           (1)
+#define ENABLE_STANDARD_BENCHMARK       (1)
 
 #if ENABLE_INLINE_ALLOCATOR
 template<typename T>
@@ -199,6 +200,7 @@ void PrintArr(const std::vector<T>& Arr, const std::string& Name = "")
 
 void TArray_Benchmark()
 {
+#if ENABLE_STANDARD_BENCHMARK
     // Performance
     std::cout << '\n' << "Benchmark (std::string)" << '\n';
 #if defined(DEBUG_BUILD)
@@ -808,6 +810,7 @@ void TArray_Benchmark()
         }
     }
 #endif
+#endif
 
 #if ENABLE_SORT_BENCHMARK
     {
@@ -818,10 +821,18 @@ void TArray_Benchmark()
     #endif
 
         const uint32 NumNumbers = 1'000'000;
-        std::cout << '\n' << "HeapSort/heap_sort (NumNumbers=" << NumNumbers << ", SortTestCount=" << SortTestCount << ")" << '\n';
 
         FRandom Random;
 
+        std::vector<int32> Numbers;
+        Numbers.reserve(NumNumbers);
+        for (uint32 n = 0; n < NumNumbers; n++)
+        {
+            Numbers.emplace_back(static_cast<int32>(Random.Rand()));
+        }
+
+#if 1
+        std::cout << '\n' << "HeapSort/std::heap_sort (NumNumbers=" << NumNumbers << ", SortTestCount=" << SortTestCount << ")" << '\n';
         {
             FClock Clock;
             for (uint32 i = 0; i < SortTestCount; ++i)
@@ -829,7 +840,7 @@ void TArray_Benchmark()
                 TArray<int32, TArrayAllocator<int32>> Heap;
                 for (uint32 n = 0; n < NumNumbers; n++)
                 {
-                    Heap.Emplace(static_cast<int32>(Random.Rand()));
+                    Heap.Emplace(Numbers[n]);
                 }
 
                 {
@@ -850,13 +861,57 @@ void TArray_Benchmark()
                 std::vector<int32> Heap;
                 for (uint32 n = 0; n < NumNumbers; n++)
                 {
-                    Heap.emplace_back(static_cast<int32>(Random.Rand()));
+                    Heap.emplace_back(Numbers[n]);
                 }
 
                 {
                     FScopedClock ScopedClock(Clock);
                     std::make_heap(Heap.begin(), Heap.end());
                     std::sort_heap(Heap.begin(), Heap.end());
+                }
+            }
+
+            const auto Duration = Clock.GetTotalDuration() / SortTestCount;
+            std::cout << "std::vector Sorting time: " << Duration << "ns" << '\n';
+            std::cout << "std::vector Sorting time: " << Duration / (1000 * 1000) << "ms" << '\n';
+        }
+#endif
+
+        std::cout << '\n' << "Sort/std::sort (NumNumbers=" << NumNumbers << ", SortTestCount=" << SortTestCount << ")" << '\n';
+        {
+            FClock Clock;
+            for (uint32 i = 0; i < SortTestCount; ++i)
+            {
+                TArray<int32, TArrayAllocator<int32>> Heap;
+                for (uint32 n = 0; n < NumNumbers; n++)
+                {
+                    Heap.Emplace(Numbers[n]);
+                }
+
+                {
+                    FScopedClock ScopedClock(Clock);
+                    Heap.Sort();
+                }
+            }
+
+            const auto Duration = Clock.GetTotalDuration() / SortTestCount;
+            std::cout << "TArray      Sorting time: " << Duration << "ns" << '\n';
+            std::cout << "TArray      Sorting time: " << Duration / (1000 * 1000) << "ms" << '\n';
+        }
+
+        {
+            FClock Clock;
+            for (uint32 i = 0; i < SortTestCount; ++i)
+            {
+                std::vector<int32> Heap;
+                for (uint32 n = 0; n < NumNumbers; n++)
+                {
+                    Heap.emplace_back(Numbers[n]);
+                }
+
+                {
+                    FScopedClock ScopedClock(Clock);
+                    std::sort(Heap.begin(), Heap.end());
                 }
             }
 
@@ -964,24 +1019,31 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         std::cout << '\n' << "Testing Resize" << '\n' << '\n';
 
-        TArray<std::string, TArrayAllocator<std::string>> Strings4;
+        TArray<std::string, TArrayAllocator<std::string>> Strings4 = 
+        {
+            "New String",
+            "New String",
+            "New String",
+            "New String",
+        };
 
-        Strings4.Resize(10, "New String");
+        Strings4.Resize(10);
+        TEST_CHECK(Strings4.Size() == 10);
         TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
             "New String",
             "New String",
             "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String"
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
         });
 
-        Strings3.Resize(4, "Hi, hi");
+        Strings3.Resize(4);
         TEST_CHECK(Strings3.Size()     == 4);
         TEST_CHECK(Strings3.Capacity() == 4);
         TEST_CHECK_ARRAY(Strings3,
@@ -989,10 +1051,10 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
             "Hello World",
             "TArray",
             "This is a longer teststring",
-            "Hi, hi"
+            ""
         });
 
-        Strings1.Resize(6, "Hello World");
+        Strings1.Resize(6);
         TEST_CHECK(Strings1.Size()     == 6);
         TEST_CHECK(Strings1.Capacity() == 6);
         TEST_CHECK_ARRAY(Strings1, 
@@ -1000,12 +1062,12 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
             "Test-String #1",
             "Test-String #2",
             "Test-String #3",
-            "Hello World",
-            "Hello World",
-            "Hello World"
+            "",
+            "",
+            ""
         });
 
-        Strings3.Resize(5, "No i am your father");
+        Strings3.Resize(5);
         TEST_CHECK(Strings3.Size()     == 5);
         TEST_CHECK(Strings3.Capacity() == 5);
         TEST_CHECK_ARRAY(Strings3,
@@ -1013,8 +1075,8 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
             "Hello World",
             "TArray",
             "This is a longer teststring",
-            "Hi, hi",
-            "No i am your father"
+            "",
+            ""
         });
 
         /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1022,29 +1084,31 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         std::cout << "Testing Shrinking Resize" << '\n' << '\n';
         
-        Strings4.Resize(2, "New String");
+        Strings4.Resize(2);
+        TEST_CHECK(Strings4.Size() == 2);
         TEST_CHECK_ARRAY(Strings4, { "New String", "New String" });
 
         std::cout << "Testing Growing Resize" << '\n' << '\n';
 
-        Strings4.Resize(15, "New String");
+        Strings4.Resize(15);
+        TEST_CHECK(Strings4.Size() == 15);
         TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
             "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String"
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
         });
 
         /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1059,19 +1123,19 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         {
             "New String",
             "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String",
-            "New String"
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
         });
 
         std::cout << "Shrinking" << '\n' << '\n';
@@ -1083,9 +1147,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         {
             "New String",
             "New String",
-            "New String",
-            "New String",
-            "New String"
+            "",
+            "",
+            ""
         });
 
         std::cout << "Growing" << '\n' << '\n';
@@ -1097,26 +1161,26 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         {
             "New String",
             "New String",
-            "New String",
-            "New String",
-            "New String"
+            "",
+            "",
+            ""
         });
 
         std::cout << "Resize" << '\n' << '\n';
 
-        Strings4.Resize(Strings4.Capacity() - 2, "This spot is reserved");
+        Strings4.Resize(Strings4.Capacity() - 2);
         TEST_CHECK(Strings4.Size()     == 8);
         TEST_CHECK(Strings4.Capacity() == 10);
         TEST_CHECK_ARRAY(Strings4,
         {
             "New String",
             "New String",
-            "New String",
-            "New String",
-            "New String",
-            "This spot is reserved",
-            "This spot is reserved",
-            "This spot is reserved"
+            "",
+            "",
+            ""
+            "",
+            "",
+            ""
         });
 
         /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1131,12 +1195,12 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         {
             "New String",
             "New String",
-            "New String",
-            "New String",
-            "New String",
-            "This spot is reserved",
-            "This spot is reserved",
-            "This spot is reserved"
+            "",
+            "",
+            ""
+            "",
+            "",
+            ""
         });
 
         /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1151,24 +1215,26 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         {
             "New String",
             "New String",
-            "New String",
-            "New String",
-            "New String",
-            "This spot is reserved",
-            "This spot is reserved",
-            "This spot is reserved"
+            "",
+            "",
+            ""
+            "",
+            "",
+            ""
         });
 
-        Strings1 = Move(Strings3);
+        Strings1 = ::Move(Strings3);
         TEST_CHECK(Strings1.Size()     == 5);
         TEST_CHECK(Strings1.Capacity() == 5);
+        TEST_CHECK(Strings3.Size()     == 0);
+        TEST_CHECK(Strings3.Capacity() == 0);
         TEST_CHECK_ARRAY(Strings1,
         {
             "Hello World",
             "TArray",
             "This is a longer teststring",
-            "Hi, hi",
-            "No i am your father"
+            "",
+            ""
         });
 
         Strings2 =
@@ -1934,13 +2000,13 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         });
 
         /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-        // RemoveRangeAt
+        // RemoveAt
 
-        std::cout << '\n' << "Testing RemoveRangeAt" << '\n' << '\n';
+        std::cout << '\n' << "Testing RemoveAt" << '\n' << '\n';
 
         std::cout << '\n' << "Range At front" << '\n' << '\n';
         
-        Strings2.RemoveRangeAt(0, 2);
+        Strings2.RemoveAt(0, 2);
         TEST_CHECK(Strings2.Size() == 34);
         TEST_CHECK_ARRAY(Strings2,
         {
@@ -1982,7 +2048,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         std::cout << '\n' << "Range At Arbitrary" << '\n' << '\n';
 
-        Strings2.RemoveRangeAt(4, 3);
+        Strings2.RemoveAt(4, 3);
         TEST_CHECK(Strings2.Size() == 31);
         TEST_CHECK_ARRAY(Strings2,
         {
@@ -2021,7 +2087,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         std::cout << '\n' << "Range At End" << '\n' << '\n';
         
-        Strings2.RemoveRangeAt(Strings2.Size() - 3, 3);
+        Strings2.RemoveAt(Strings2.Size() - 3, 3);
         TEST_CHECK(Strings2.Size() == 28);
         TEST_CHECK_ARRAY(Strings2,
         {
@@ -2070,19 +2136,16 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << "Before" << '\n' << '\n';
         PRINT_ARRAY(LoopStrings);
 
-        uint32 Index = 0;
-        for (TArray<std::string, TArrayAllocator<std::string>>::IteratorType It = LoopStrings.StartIterator(); It != LoopStrings.EndIterator();)
+        for (int32 Index = 0; Index < LoopStrings.Size();)
         {
             if (Index > 1)
             {
-                It = LoopStrings.RemoveAt(It);
+                LoopStrings.RemoveAt(Index);
             }
             else
             {
-                It++;
+                Index++;
             }
-
-            Index++;
         }
 
         std::cout << "After" << '\n' << '\n';
@@ -2094,7 +2157,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         PRINT_ARRAY(Strings0);
         PRINT_ARRAY(Strings2);
 
-        Strings0.Swap(Strings2);
+        ::Swap(Strings0, Strings2);
 
         std::cout << "After" << '\n' << '\n';
         PRINT_ARRAY(Strings0);
@@ -2104,13 +2167,13 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         std::cout << '\n' << "Testing Iterators" << '\n';
 
         std::cout << '\n' << "Iterators" << '\n' << '\n';
-        for (auto It = Strings2.StartIterator(); It != Strings2.EndIterator(); It++)
+        for (auto It = Strings2.Iterator(); !It.IsEnd(); It++)
         {
             std::cout << (*It) << '\n';
         }
 
         TArray<std::string, TArrayAllocator<std::string>> EmptyArray;
-        for (auto It = EmptyArray.StartIterator(); It != EmptyArray.EndIterator(); It++)
+        for (auto It = Strings2.Iterator(); !It.IsEnd(); It++)
         {
             std::cout << (*It) << '\n';
         }
@@ -2123,7 +2186,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         }
 
         std::cout << '\n' << "Reverse Iterators" << '\n' << '\n';
-        for (auto It = Strings2.ReverseStartIterator(); It != Strings2.ReverseEndIterator(); It++)
+        for (auto It = Strings2.ReverseIterator(); !It.IsEnd(); It++)
         {
             std::cout << (*It) << '\n';
         }
@@ -2140,7 +2203,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // PopBackRange
         std::cout << '\n' << "Testing PopBackRange" << '\n';
-        Strings2.PopRange(3);
+        Strings2.Pop(3);
         PRINT_ARRAY(Strings2);
 
         std::cout << '\n' << "Testing Equal operator" << '\n';
@@ -2211,9 +2274,9 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         PRINT_ARRAY(Vectors3);
         PRINT_ARRAY(Vectors1);
 
-        Vectors4.Resize(10, FVec3(-10.0, -10.0, -10.0));
+        Vectors4.Resize(10);
         Vectors3.Resize(0);
-        Vectors1.Resize(6, FVec3(-5.0, 10.0, -15.0));
+        Vectors1.Resize(6);
 
         std::cout << "After Resize" << '\n' << '\n';
         PRINT_ARRAY(Vectors4);
@@ -2221,10 +2284,10 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         PRINT_ARRAY(Vectors1);
 
         std::cout << "Testing Shrinking Resize" << '\n' << '\n';
-        Vectors4.Resize(2, FVec3(-15.0, -15.0, -15.0));
+        Vectors4.Resize(2);
         PRINT_ARRAY(Vectors4);
 
-        Vectors4.Resize(15, FVec3(23.0, 23.0, 23.0));
+        Vectors4.Resize(15);
         PRINT_ARRAY(Vectors4);
 
         // Reserve
@@ -2246,7 +2309,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         PRINT_ARRAY(Vectors4);
 
         std::cout << "Resize" << '\n' << '\n';
-        Vectors4.Resize(Vectors4.Capacity() - 2, FVec3(-1.0f, -1.0f, -1.0f));
+        Vectors4.Resize(Vectors4.Capacity() - 2);
         PRINT_ARRAY(Vectors4);
 
         // Shrink To Fit
@@ -2263,7 +2326,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         // Assignment
         std::cout << '\n' << "Testing Assignment" << '\n' << '\n';
 
-        Vectors3.Resize(3, FVec3(42.0, 42.0, 42.0));
+        Vectors3.Resize(3);
 
         std::cout << "Before Assignment" << '\n' << '\n';
         PRINT_ARRAY(Vectors0);
@@ -2386,15 +2449,15 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         PRINT_ARRAY(Vectors2);
 
         std::cout << "Range At front" << '\n' << '\n';
-        Vectors2.RemoveRangeAt(0, 2);
+        Vectors2.RemoveAt(0, 2);
         PRINT_ARRAY(Vectors2);
 
         std::cout << "Range At Arbitrary" << '\n' << '\n';
-        Vectors2.RemoveRangeAt(4, 3);
+        Vectors2.RemoveAt(4, 3);
         PRINT_ARRAY(Vectors2);
 
         std::cout << "Range At End" << '\n' << '\n';
-        Vectors2.RemoveRangeAt(Vectors2.Size() - 3, 3);
+        Vectors2.RemoveAt(Vectors2.Size() - 3, 3);
         PRINT_ARRAY(Vectors2);
 
         // Swap
@@ -2403,7 +2466,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
         PRINT_ARRAY(Vectors0);
         PRINT_ARRAY(Vectors2);
 
-        Vectors0.Swap(Vectors2);
+        ::Swap(Vectors0, Vectors2);
 
         std::cout << "After" << '\n' << '\n';
         PRINT_ARRAY(Vectors0);
@@ -2429,7 +2492,7 @@ bool TArray_Test(int32 Argc, const CHAR** Argv)
 
         // PopBackRange
         std::cout << '\n' << "Testing PopBackRange" << '\n';
-        Vectors0.PopRange(3);
+        Vectors0.Pop(3);
         PRINT_ARRAY(Vectors0);
 
         std::cout << '\n' << "Testing Equal operator" << '\n';

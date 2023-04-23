@@ -44,7 +44,7 @@ namespace SPSCTest
 // Multiple Producers, Single Consumer
 namespace MPSCTest
 {
-    TQueue<FString, EQueueType::MPSC> GQueue;
+    TQueue<FString, EQueueType::MPSC>* GQueue = nullptr;
     
     bool GIsRunning = true;
 
@@ -65,7 +65,7 @@ namespace MPSCTest
             for (int64 Index = 0; Index < NumItemsPerProducer; ++Index)
             {
                 const FString NewItem = TTypeToString<int64>::ToString(ThreadIndex + Index);
-                GQueue.Emplace(::Move(NewItem));
+                GQueue->Emplace(::Move(NewItem));
             }
 
             GIsRunning = false;
@@ -80,17 +80,17 @@ namespace MPSCTest
         int64 ThreadIndex;
     };
 
-    TArray<FString> GItems;
+    TArray<FString>* GItems = nullptr;
     struct FConsumerThread : public FThreadInterface
     {
         int32 Run()
         {
-            while (GIsRunning || !GQueue.IsEmpty())
+            while (GIsRunning || !GQueue->IsEmpty())
             {
                 FString NewItem;
-                if (GQueue.Dequeue(NewItem))
+                if (GQueue->Dequeue(NewItem))
                 {
-                    GItems.Add(::Move(NewItem));
+                    GItems->Add(::Move(NewItem));
                 }
             }
 
@@ -105,6 +105,10 @@ namespace MPSCTest
 
     bool Test()
     {
+        // Create the Queue and Array on the heap to avoid wrong reporting of memory leaks
+        GQueue = new TQueue<FString, EQueueType::MPSC>;
+        GItems = new TArray<FString>;
+
         TArray<TSharedRef<FGenericThread>> Producers;
         for (int32 i = 0; i < NumProducers; ++i)
         {
@@ -121,7 +125,7 @@ namespace MPSCTest
         }
         Consumer->WaitForCompletion();
 
-        TEST_CHECK(GItems.Size() == NumProducers * NumItemsPerProducer);
+        TEST_CHECK(GItems->Size() == NumProducers * NumItemsPerProducer);
 
         // Check so the array contains the elements from all producers
         for (int32 ProducerIndex = 0; ProducerIndex < NumProducers; ++ProducerIndex) 
@@ -129,12 +133,20 @@ namespace MPSCTest
             for (int32 Index = 0; Index < NumItemsPerProducer; ++Index)
             {
                 const FString Expected = TTypeToString<int64>::ToString(((ProducerIndex + 1) * ProducerOffset) + Index);
-                TEST_CHECK(GItems.Contains(Expected) == true);
+                TEST_CHECK(GItems->Contains(Expected) == true);
             }
         }
 
-        GQueue.Clear();
-        GQueue.Shrink();
+        GQueue->Clear();
+        GQueue->Shrink();
+
+        // Delete the Queue and Array
+        delete GQueue;
+        GQueue = nullptr;
+
+        delete GItems;
+        GItems = nullptr;
+
         SUCCESS();
     }
 }
@@ -145,7 +157,7 @@ namespace SPMCTest
     CONSTEXPR int64 NumItems     = 500;
     CONSTEXPR int64 NumConsumers = 6;
 
-    TQueue<FString, EQueueType::SPMC> GQueue;
+    TQueue<FString, EQueueType::SPMC>* GQueue = nullptr;
 
     bool GIsRunning = true;
     
@@ -157,7 +169,7 @@ namespace SPMCTest
             for (int64 Index = 0; Index < NumItems; ++Index)
             {
                 const FString NewItem = TTypeToString<int64>::ToString(Index);
-                GQueue.Enqueue(::Move(NewItem));
+                GQueue->Enqueue(::Move(NewItem));
             }
 
             GIsRunning = false;
@@ -174,10 +186,10 @@ namespace SPMCTest
     {
         int32 Run()
         {
-            while (GIsRunning || !GQueue.IsEmpty())
+            while (GIsRunning || !GQueue->IsEmpty())
             {
                 FString NewItem;
-                if (GQueue.Dequeue(NewItem))
+                if (GQueue->Dequeue(NewItem))
                 {
                     Items.Add(::Move(NewItem));
                 }
@@ -191,6 +203,9 @@ namespace SPMCTest
 
     bool Test()
     {
+        // Create the Queue on the heap to avoid wrong reporting of memory leaks
+        GQueue = new TQueue<FString, EQueueType::SPMC>;
+
         TSharedRef<FGenericThread> Producer = FPlatformThreadMisc::CreateThread(new FProducerThread, false);
         
         TArray<TUniquePtr<FConsumerThread>> ConsumerInterfaces;
@@ -220,8 +235,13 @@ namespace SPMCTest
             TEST_CHECK(TotalItems.Contains(Expected) == true);
         }
 
-        GQueue.Clear();
-        GQueue.Shrink();
+        GQueue->Clear();
+        GQueue->Shrink();
+
+        // Delete the queue
+        delete GQueue;
+        GQueue = nullptr;
+
         SUCCESS();
     }
 }

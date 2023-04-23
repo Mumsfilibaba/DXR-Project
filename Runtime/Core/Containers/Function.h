@@ -4,37 +4,34 @@
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/TypeTraits.h"
 
-namespace Internal
+namespace FunctionInternal
 {
     template<typename FunctionType, typename... PayloadTypes>
     class TBindPayload
     {
     public:
         FORCEINLINE TBindPayload(FunctionType InFunc, PayloadTypes&&... PayloadArgs) noexcept
-            : Payload(Forward<PayloadTypes>(PayloadArgs)...)
-            , Func(Move(InFunc))
+            : Payload(::Forward<PayloadTypes>(PayloadArgs)...)
+            , Func(::Move(InFunc))
         {
         }
 
         template<typename... ArgTypes>
         FORCEINLINE auto Execute(ArgTypes&&... Args) noexcept
         {
-            return Payload.ApplyBefore(Func, Forward<ArgTypes>(Args)...);
+            return Payload.ApplyBefore(Func, ::Forward<ArgTypes>(Args)...);
         }
 
         template<typename... ArgTypes>
         FORCEINLINE auto operator()(ArgTypes&&... Args) noexcept
         {
-            return Execute(Forward<ArgTypes>(Args)...);
+            return Execute(::Forward<ArgTypes>(Args)...);
         }
 
     private:
-         /** @brief - Arguments stored when calling bind and then applied to the function when invoked */
         TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
-
         FunctionType Func;
     };
-
 
     template<typename FunctionType>
     class TBindPayload<FunctionType>
@@ -62,13 +59,11 @@ namespace Internal
     };
 }
 
-
 template<typename FunctionType, typename... ArgTypes>
 NODISCARD FORCEINLINE auto Bind(FunctionType Function, ArgTypes&&... Args)
 {
-    return Internal::TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
+    return FunctionInternal::TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
 }
-
 
 template<typename InvokableType>
 class TFunction;
@@ -77,7 +72,10 @@ template<typename ReturnType, typename... ArgTypes>
 class TFunction<ReturnType(ArgTypes...)>
 {
     // TODO: Look into padding so we can use larger structs?
-    enum { InlineBytes = 24 };
+    enum 
+    { 
+        InlineBytes = 24 
+    };
 
     using AllocatorType = TInlineArrayAllocator<int8, InlineBytes>;
 
@@ -86,13 +84,12 @@ class TFunction<ReturnType(ArgTypes...)>
         virtual ~IFunctor() = default;
 
         virtual ReturnType Invoke(ArgTypes&&... Args) noexcept = 0;
-        virtual IFunctor*  Clone(void* Memory) const noexcept = 0;
+
+        virtual IFunctor* Clone(void* Memory) const noexcept = 0;
     };
 
-
     template<typename FunctorType>
-    class TGenericFunctor 
-        : public IFunctor
+    class TGenericFunctor : public IFunctor
     {
     public:
         FORCEINLINE TGenericFunctor(const FunctorType& InFunctor) noexcept
@@ -157,7 +154,7 @@ public:
         : Storage()
         , Size(0)
     {
-        ConstructFrom<FunctorType>(Forward<FunctorType>(Functor));
+        InitializeFrom<FunctorType>(::Forward<FunctorType>(Functor));
     }
 
     /**
@@ -179,7 +176,7 @@ public:
         : Storage()
         , Size(0)
     {
-        MoveFrom(Move(Other));
+        MoveFrom(::Move(Other));
     }
 
     /**
@@ -204,10 +201,10 @@ public:
      */
     FORCEINLINE void Swap(TFunction& Other) noexcept
     {
-        TFunction TempFunction;
-        TempFunction.MoveFrom(Move(*this));
-        MoveFrom(Move(Other));
-        Other.MoveFrom(Move(TempFunction));
+        TFunction TmpFunction;
+        TmpFunction.MoveFrom(::Move(*this));
+        MoveFrom(::Move(Other));
+        Other.MoveFrom(::Move(TmpFunction));
     }
 
     /**
@@ -218,7 +215,7 @@ public:
     FORCEINLINE typename TEnableIf<TIsInvokable<FunctorType, ArgTypes...>::Value>::Type Assign(FunctorType&& Functor) noexcept
     {
         Release();
-        ConstructFrom<FunctorType>(Forward<FunctorType>(Functor));
+        InitializeFrom<FunctorType>(::Forward<FunctorType>(Functor));
     }
 
     /**
@@ -239,7 +236,7 @@ public:
      */
     FORCEINLINE ReturnType operator()(ArgTypes&&... Args) noexcept
     {
-        return Invoke(Forward<ArgTypes>(Args)...);
+        return Invoke(::Forward<ArgTypes>(Args)...);
     }
 
 public:
@@ -294,7 +291,7 @@ private:
     }
 
     template<typename FunctorType>
-    FORCEINLINE typename TEnableIf<TIsInvokable<FunctorType, ArgTypes...>::Value>::Type ConstructFrom(FunctorType&& Functor) noexcept
+    FORCEINLINE typename TEnableIf<TIsInvokable<FunctorType, ArgTypes...>::Value>::Type InitializeFrom(FunctorType&& Functor) noexcept
     {
         Release();
 
@@ -312,7 +309,7 @@ private:
             int32 CurrentSize = Size;
             Storage.Realloc(CurrentSize, Other.Size);
 
-            Other.GetFunctor()->Clone(Storage.Data());
+            Other.GetFunctor()->Clone(Storage.GetAllocation());
 
             Size = Other.Size;
         }
@@ -332,12 +329,12 @@ private:
 
     NODISCARD FORCEINLINE IFunctor* GetFunctor() noexcept
     {
-        return reinterpret_cast<IFunctor*>(Storage.Data());
+        return reinterpret_cast<IFunctor*>(Storage.GetAllocation());
     }
 
     NODISCARD FORCEINLINE const IFunctor* GetFunctor() const noexcept
     {
-        return reinterpret_cast<const IFunctor*>(Storage.Data());
+        return reinterpret_cast<const IFunctor*>(Storage.GetAllocation());
     }
 
     AllocatorType Storage;

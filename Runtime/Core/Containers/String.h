@@ -1568,7 +1568,7 @@ public:
 
         TString NewString(CombinedLength);
 
-        CharType* TempData = NewString.CharData();
+        CharType* TempData = NewString.Data();
         TCString<CharType>::Strncpy(TempData, LHS.GetCString(), LHSLength);
         TCString<CharType>::Strncpy(TempData + LHSLength, RHS.GetCString(), RHSLength);
 
@@ -1584,7 +1584,7 @@ public:
 
         TString NewString(CombinedLength);
 
-        CharType* TempData = NewString.CharData();
+        CharType* TempData = NewString.Data();
         TCString<CharType>::Strncpy(TempData, LHS, LHSLength);
         TCString<CharType>::Strncpy(TempData + LHSLength, RHS.GetCString(), RHSLength);
 
@@ -1600,7 +1600,7 @@ public:
 
         TString NewString(CombinedLength);
 
-        CharType* TempData = NewString.CharData();
+        CharType* TempData = NewString.Data();
         TCString<CharType>::Strncpy(TempData, LHS.GetCString(), LHSLength);
         TCString<CharType>::Strncpy(TempData + LHSLength, RHS, RHSLength);
 

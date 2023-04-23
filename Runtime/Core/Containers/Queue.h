@@ -12,23 +12,14 @@ enum class EQueueType
     SPSC,
 };
 
-template<typename T, EQueueType QueueType = EQueueType::SPSC>
+template<typename ElementType, EQueueType QueueType = EQueueType::SPSC>
 class TQueue
 {
-public:
-    using ElementType = T;
-
 private:
     struct FNode
     {
-        FNode()
-            : NextNode(nullptr)
-            , Item()
-        {
-        }
-
-        FNode* volatile            NextNode;
-        TTypedStorage<ElementType> Item;
+        FNode* volatile                NextNode;
+        TTypeAlignedBytes<ElementType> Item;
     };
 
 public:
@@ -60,7 +51,7 @@ public:
 
             // Call the destructor of the node since these elements are "constructed"
             typedef ElementType ElementDestructType;
-            Node->Item->ElementDestructType::~ElementDestructType();
+            reinterpret_cast<ElementDestructType*>(Node->Item.Data)->~ElementDestructType();
 
             delete Node;
         }
@@ -98,7 +89,7 @@ public:
         }
 
         // Move the item and "reset" it
-        OutElement = ::Move(*NextNode->Item);
+        OutElement = ::Move(*reinterpret_cast<ElementType*>(NextNode->Item.Data));
         
         // Set the next node
         FNode* PreviousTail;
@@ -255,7 +246,7 @@ public:
             return false;
         }
 
-        OutItem = Tail->NextNode->Item;
+        OutItem = *reinterpret_cast<ElementType*>(Tail->NextNode->Item);
         return true;
     }
 
@@ -269,7 +260,7 @@ public:
             return nullptr;
         }
 
-        return ::AddressOf(Tail->NextNode->Item);
+        return reinterpret_cast<ElementType*>(Tail->NextNode->Item);
     }
 
     /**
@@ -282,7 +273,7 @@ public:
             return nullptr;
         }
 
-        return ::AddressOf(Tail->NextNode->Item);
+        return reinterpret_cast<const ElementType*>(Tail->NextNode->Item);
     }
 
 private:
@@ -305,14 +296,14 @@ private:
             // Reset the Node
             Result->NextNode = nullptr;
             // Construct the new Item
-            new(reinterpret_cast<void*>(Result->Item.GetStorage())) ElementType(::Forward<ArgTypes>(Args)...);
+            new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(::Forward<ArgTypes>(Args)...);
         }
         else
         {
             // Construct a new node
             Result = new FNode();
             // Construct the new Item
-            new(reinterpret_cast<void*>(Result->Item.GetStorage())) ElementType(::Forward<ArgTypes>(Args)...);
+            new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(::Forward<ArgTypes>(Args)...);
         }
 
         return Result;
@@ -322,7 +313,7 @@ private:
     {
         // Call the destructor of the node
         typedef ElementType ElementDestructType;
-        InNode->Item->ElementDestructType::~ElementDestructType();
+        reinterpret_cast<ElementDestructType*>(InNode->Item.Data)->~ElementDestructType();
         
         // Link up the new node
         InNode->NextNode = NodeList;

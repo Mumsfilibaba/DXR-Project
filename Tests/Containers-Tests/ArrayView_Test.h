@@ -2,5 +2,5 @@
 #include "Config.h"
 
 #if RUN_TARRAYVIEW_TEST
-void TArrayView_Test();
+bool TArrayView_Test();
 #endif

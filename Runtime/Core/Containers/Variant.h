@@ -12,7 +12,6 @@ class TVariant
     inline static CONSTEXPR TypeIndexType InvalidTypeIndex = -1;
     inline static CONSTEXPR TypeIndexType MaxTypeIndex     = sizeof... (Types);
 
-
     template<TypeIndexType CurrentIndex, typename WantedType, typename... OtherTypes>
     struct TVariantIndexHelper
     {
@@ -61,7 +60,7 @@ class TVariant
 
 
     template<typename T>
-    struct TVariantDestructor
+    struct TDestructor
     {
         static void Destruct(void* Memory) noexcept
         {
@@ -70,11 +69,11 @@ class TVariant
         }
     };
 
-    struct FVariantDestructorTable
+    struct FDestructorTable
     {
         static void Destruct(TypeIndexType Index, void* Memory) noexcept
         {
-            static CONSTEXPR void(*Table[])(void*) = { &TVariantDestructor<Types>::Destruct... };
+            static CONSTEXPR void(*Table[])(void*) = { &TDestructor<Types>::Destruct... };
 
             CHECK(Index < ARRAY_COUNT(Table));
             Table[Index](Memory);
@@ -83,7 +82,7 @@ class TVariant
 
 
     template<typename T>
-    struct TVariantCopyConstructor
+    struct TCopyConstructor
     {
         static void Copy(void* Memory, const void* Value) noexcept
         {
@@ -91,11 +90,11 @@ class TVariant
         }
     };
 
-    struct FVariantCopyConstructorTable
+    struct FCopyConstructorTable
     {
         static void Copy(TypeIndexType Index, void* Memory, const void* Value) noexcept
         {
-            static CONSTEXPR void(*Table[])(void*, void*) = { &TVariantCopyConstructor<Types>::Copy... };
+            static CONSTEXPR void(*Table[])(void*, void*) = { &TCopyConstructor<Types>::Copy... };
 
             CHECK(Index < ARRAY_COUNT(Table));
             Table[Index](Memory, Value);
@@ -104,7 +103,7 @@ class TVariant
 
 
     template<typename T>
-    struct TVariantMoveConstructor
+    struct TMoveConstructor
     {
         static void Move(void* Memory, void* Value) noexcept
         {
@@ -112,11 +111,11 @@ class TVariant
         }
     };
 
-    struct FVariantMoveConstructorTable
+    struct FMoveConstructorTable
     {
         static void Move(TypeIndexType Index, void* Memory, void* Value) noexcept
         {
-            static CONSTEXPR void(*Table[])(void*, void*) = { &TVariantMoveConstructor<Types>::Move... };
+            static CONSTEXPR void(*Table[])(void*, void*) = { &TMoveConstructor<Types>::Move... };
 
             CHECK(Index < ARRAY_COUNT(Table));
             Table[Index](Memory, Value);
@@ -125,7 +124,7 @@ class TVariant
 
 
     template<typename T>
-    struct TVariantComparators
+    struct TCompareFuncs
     {
         NODISCARD static bool IsEqual(const void* LHS, const void* RHS) noexcept
         {
@@ -138,11 +137,11 @@ class TVariant
         }
     };
 
-    struct FVariantComparatorTable
+    struct FCompareFuncTable
     {
         NODISCARD static bool IsEqual(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
         {
-            static CONSTEXPR bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsEqual... };
+            static CONSTEXPR bool(*Table[])(const void*, const void*) = { &TCompareFuncs<Types>::IsEqual... };
 
             CHECK(Index < ARRAY_COUNT(Table));
             return Table[Index](LHS, RHS);
@@ -150,7 +149,7 @@ class TVariant
 
         NODISCARD static bool IsLessThan(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
         {
-            static CONSTEXPR bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsLessThan... };
+            static CONSTEXPR bool(*Table[])(const void*, const void*) = { &TCompareFuncs<Types>::IsLessThan... };
 
             CHECK(Index < ARRAY_COUNT(Table));
             return Table[Index](LHS, RHS);
@@ -207,7 +206,7 @@ public:
         static_assert(TIsValidIndex<InIndex>::Value, "Specified index is not valid with this TVariant");
 
         typedef typename TVariantType<InIndex>::Type ConstructType;
-        Construct<ConstructType>(Forward<ArgTypes>(Args)...);
+        Construct<ConstructType>(::Forward<ArgTypes>(Args)...);
     }
 
     /**
@@ -257,7 +256,7 @@ public:
     {
         Reset();
         Construct<T>(Forward<ArgTypes>(Args)...);
-        return *Value.CastStorage<T>();
+        return *reinterpret_cast<T*>(Value.Data);
     }
 
     /**
@@ -277,7 +276,7 @@ public:
      */
     FORCEINLINE void Swap(TVariant& Other) noexcept
     {
-        TVariant TempVariant(Move(*this));
+        TVariant TempVariant(::Move(*this));
         
         TypeIndex = Other.TypeIndex;
         if (Other.TypeIndex != InvalidTypeIndex)
@@ -311,7 +310,7 @@ public:
     NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddLValueReference<typename TRemoveReference<T>::Type>::Type>::Type GetValue() noexcept
     {
         CHECK(IsValid() && IsType<T>());
-        return *Value.CastStorage<T>();
+        return *reinterpret_cast<T*>(Value.Data);
     }
 
     /**
@@ -322,7 +321,7 @@ public:
     NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddLValueReference<typename TAddConst<typename TRemoveReference<T>::Type>::Type>::Type>::Type GetValue() const noexcept
     {
         CHECK(IsValid() && IsType<T>());
-        return *Value.CastStorage<T>();
+        return *reinterpret_cast<const T*>(Value.Data);
     }
 
     /**
@@ -332,7 +331,7 @@ public:
     template<typename T>
     NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddPointer<typename TRemoveReference<T>::Type>::Type>::Type TryGetValue() noexcept
     {
-        return IsType<T>() ? Value.CastStorage<T>() : nullptr;
+        return IsType<T>() ? reinterpret_cast<T*>(Value.Data) : nullptr;
     }
 
     /**
@@ -342,7 +341,7 @@ public:
     template<typename T>
     NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddPointer<typename TAddConst<typename TRemoveReference<T>::Type>::Type>::Type>::Type TryGetValue() const noexcept
     {
-        return IsType<T>() ? Value.CastStorage<T>() : nullptr;
+        return IsType<T>() ? reinterpret_cast<const T*>(Value.Data) : nullptr;
     }
 
     /**
@@ -383,7 +382,7 @@ public:
      */
     FORCEINLINE TVariant& operator=(TVariant&& Other) noexcept
     {
-        TVariant(Move(Other)).Swap(*this);
+        TVariant(::Move(Other)).Swap(*this);
         return *this;
     }
 
@@ -491,37 +490,37 @@ private:
     template<typename T, typename... ArgTypes>
     FORCEINLINE void Construct(ArgTypes&&... Args) noexcept
     {
-        new(Value.GetStorage()) T(::Forward<ArgTypes>(Args)...);
+        new(reinterpret_cast<void*>(Value.Data)) T(::Forward<ArgTypes>(Args)...);
         TypeIndex = TVariantIndex<T>::Value;
     }
 
     FORCEINLINE void MoveFrom(TVariant& Other) noexcept
     {
-        FVariantMoveConstructorTable::Move(Other.TypeIndex, Value.GetStorage(), Other.Value.GetStorage());
+        FMoveConstructorTable::Move(Other.TypeIndex, reinterpret_cast<void*>(Value.Data), reinterpret_cast<void*>(Other.Value.Data));
     }
 
     FORCEINLINE void CopyFrom(const TVariant& Other) noexcept
     {
-        FVariantCopyConstructorTable::Copy(Other.TypeIndex, Value.GetStorage(), Other.Value.GetStorage());
+        FCopyConstructorTable::Copy(Other.TypeIndex, reinterpret_cast<void*>(Value.Data), reinterpret_cast<const void*>(Other.Value.Data));
     }
 
     FORCEINLINE void Destruct() noexcept
     {
-        FVariantDestructorTable::Destruct(TypeIndex, Value.GetStorage());
+        FDestructorTable::Destruct(TypeIndex, reinterpret_cast<void*>(Value.Data));
         TypeIndex = InvalidTypeIndex;
     }
 
     NODISCARD FORCEINLINE bool IsEqual(const TVariant& RHS) const noexcept
     {
-        return FVariantComparatorTable::IsEqual(TypeIndex, Value.GetStorage(), RHS.Value.GetStorage());
+        return FCompareFuncTable::IsEqual(TypeIndex, reinterpret_cast<const void*>(Value.Data), reinterpret_cast<const void*>(RHS.Value.Data));
     }
 
     NODISCARD FORCEINLINE bool IsLessThan(const TVariant& RHS) const noexcept
     {
-        return FVariantComparatorTable::IsLessThan(TypeIndex, Value.GetStorage(), RHS.Value.GetStorage());
+        return FCompareFuncTable::IsLessThan(TypeIndex, reinterpret_cast<const void*>(Value.Data), reinterpret_cast<const void*>(RHS.Value.Data));
     }
 
     // Storage that fit the largest element
-    TAlignedStorage<SizeInBytes, AlignmentInBytes> Value;
-    TypeIndexType                                  TypeIndex;
+    TAlignedBytes<SizeInBytes, AlignmentInBytes> Value;
+    TypeIndexType TypeIndex;
 };

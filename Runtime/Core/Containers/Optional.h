@@ -2,12 +2,10 @@
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Utility.h"
 
-template<typename T>
+template<typename ElementType>
 class TOptional
 {
 public:
-    using ElementType = T;
-
     template<typename OtherType>
     friend class TOptional;
 
@@ -39,7 +37,7 @@ public:
     {
         if (Other)
         {
-            Construct(*(Other.Value.GetStorage()));
+            Construct(*reinterpret_cast<ElementType*>(Other.Value.Data));
         }
     }
 
@@ -56,7 +54,7 @@ public:
     {
         if (Other)
         {
-            Construct(*(Other.Value.GetStorage()));
+            Construct(*reinterpret_cast<OtherType*>(Other.Value.Data));
         }
     }
 
@@ -70,7 +68,7 @@ public:
     {
         if (Other)
         {
-            Construct(::Move(*Other.Value.GetStorage()));
+            Construct(::Move(*reinterpret_cast<ElementType*>(Other.Value.Data)));
             Other.Reset();
         }
     }
@@ -88,7 +86,7 @@ public:
     {
         if (Other)
         {
-            Construct(::Move<ElementType>(*(Other.Value.GetStorage())));
+            Construct(::Move<ElementType>(*reinterpret_cast<OtherType*>(Other.Value.Data)));
             Other.Reset();
         }
     }
@@ -102,7 +100,7 @@ public:
         : Value()
         , bHasValue()
     {
-        Construct(Forward<ArgTypes>(Args)...);
+        Construct(::Forward<ArgTypes>(Args)...);
     }
 
     /**
@@ -131,8 +129,8 @@ public:
     FORCEINLINE ElementType& Emplace(ArgTypes&&... Args) noexcept
     {
         Reset();
-        Construct(Forward<ArgTypes>(Args)...);
-        return *Value.GetStorage();
+        Construct(::Forward<ArgTypes>(Args)...);
+        return *reinterpret_cast<ElementType*>(Value.Data);
     }
 
     /**
@@ -155,13 +153,13 @@ public:
         TOptional TempOptional(Move(*this));
         if (Other.HasValue())
         {
-            Construct(Move(Other.GetValue()));
+            Construct(::Move(Other.GetValue()));
             Other.Destruct();
         }
 
         if (TempOptional.HasValue())
         {
-            Other.Construct(Move(TempOptional.GetValue()));
+            Other.Construct(::Move(TempOptional.GetValue()));
             TempOptional.Destruct();
         }
     }
@@ -173,7 +171,7 @@ public:
     NODISCARD FORCEINLINE ElementType& GetValue() noexcept
     {
         CHECK(HasValue());
-        return *Value.GetStorage();
+        return *reinterpret_cast<ElementType*>(Value.Data);
     }
 
     /**
@@ -183,7 +181,7 @@ public:
     NODISCARD FORCEINLINE const ElementType& GetValue() const noexcept
     {
         CHECK(HasValue());
-        return *Value.GetStorage();
+        return *reinterpret_cast<const ElementType*>(Value.Data);
     }
 
     /**
@@ -192,7 +190,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType* TryGetValue() noexcept
     {
-        return HasValue() ? Value.GetStorage() : nullptr;
+        return HasValue() ? reinterpret_cast<ElementType*>(Value.Data) : nullptr;
     }
 
     /**
@@ -201,7 +199,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType* TryGetValue() const noexcept
     {
-        return HasValue() ? Value.GetStorage() : nullptr;
+        return HasValue() ? reinterpret_cast<ElementType*>(Value.Data) : nullptr;
     }
 
     /**
@@ -212,7 +210,7 @@ public:
     template<typename OtherType>
     NODISCARD FORCEINLINE const ElementType& GetValueOrDefault(const OtherType& Default) const noexcept
     {
-        return HasValue() ? *Value.GetStorage() : static_cast<const ElementType&>(Default);
+        return HasValue() ? *reinterpret_cast<const ElementType*>(Value.Data) : static_cast<const ElementType&>(Default);
     }
 
 public:
@@ -284,7 +282,7 @@ public:
      * @param Other - Instance to move-construct value from
      * @return      - Returns a reference to this instance
      */
-    template<typename OtherType = T>
+    template<typename OtherType = ElementType>
     FORCEINLINE typename TEnableIf<
             TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value,
             typename TAddLValueReference<TOptional>::Type
@@ -307,40 +305,40 @@ public:
      * @brief  - Retrieve a pointer to the stored value
      * @return - Returns a pointer to the stored value
      */
-    NODISCARD FORCEINLINE T* operator->() noexcept
+    NODISCARD FORCEINLINE ElementType* operator->() noexcept
     {
         CHECK(HasValue());
-        return Value.GetStorage();
+        return reinterpret_cast<ElementType*>(Value.Data);
     }
 
     /**
      * @brief  - Retrieve a pointer to the stored value
      * @return - Returns a pointer to the stored value
      */
-    NODISCARD FORCEINLINE const T* operator->() const noexcept
+    NODISCARD FORCEINLINE const ElementType* operator->() const noexcept
     {
         CHECK(HasValue());
-        return Value.GetStorage();
+        return reinterpret_cast<ElementType*>(Value.Data);
     }
 
     /**
      * @brief  - Retrieve a reference to the stored value
      * @return - Returns a reference to the stored value
      */
-    NODISCARD FORCEINLINE T& operator*() noexcept
+    NODISCARD FORCEINLINE ElementType& operator*() noexcept
     {
         CHECK(HasValue());
-        return *Value.GetStorage();
+        return *reinterpret_cast<ElementType*>(Value.Data);
     }
 
     /**
      * @brief  - Retrieve a pointer to the stored value
      * @return - Returns a pointer to the stored value
      */
-    NODISCARD FORCEINLINE const T& operator*() const noexcept
+    NODISCARD FORCEINLINE const ElementType& operator*() const noexcept
     {
         CHECK(HasValue());
-        return *Value.GetStorage();
+        return *reinterpret_cast<ElementType*>(Value.Data);
     }
 
 public:
@@ -445,27 +443,27 @@ private:
     template<typename... ArgTypes>
     FORCEINLINE void Construct(ArgTypes&&... Args) noexcept
     {
-        new(reinterpret_cast<void*>(Value.GetStorage())) ElementType(Forward<ArgTypes>(Args)...);
+        new(reinterpret_cast<void*>(Value.Data)) ElementType(Forward<ArgTypes>(Args)...);
         bHasValue = true;
     }
 
     FORCEINLINE void Destruct() noexcept
     {
         typedef ElementType ElementDestructType;
-        Value->ElementDestructType::~ElementDestructType();
+        reinterpret_cast<ElementDestructType*>(Value.Data)->~ElementDestructType();
         bHasValue = false;
     }
 
     NODISCARD FORCEINLINE bool IsEqual(const TOptional& RHS) const noexcept
     {
-        return (*Value.GetStorage()) == (*RHS.Value.GetStorage());
+        return (*reinterpret_cast<ElementType*>(Value.Data)) == (*reinterpret_cast<ElementType*>(RHS.Value.Data));
     }
 
     NODISCARD FORCEINLINE bool IsLessThan(const TOptional& RHS) const noexcept
     {
-        return (*Value.GetStorage()) < (*RHS.Value.GetStorage());
+        return (*reinterpret_cast<ElementType*>(Value.Data)) < (*reinterpret_cast<ElementType*>(RHS.Value.Data));
     }
 
-    TTypedStorage<ElementType> Value;
-    bool                       bHasValue;
+    TTypeAlignedBytes<ElementType> Value;
+    bool bHasValue;
 };

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?> 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <Type Name="TArray&lt;*,TDefaultArrayAllocator&lt;*&gt;&gt;">
-    <DisplayString>{{ Size={ArraySize} Capacity={ArrayCapacity} }}</DisplayString>
+    <DisplayString>{{ Size={ArraySize} Capacity={ArrayMax} }}</DisplayString>
     <Expand>
       <Item Name="[Size]">ArraySize</Item>
-      <Item Name="[Capacity]">ArrayCapacity</Item>
+      <Item Name="[Capacity]">ArrayMax</Item>
       <ArrayItems>
         <Size>ArraySize</Size>
         <ValuePointer>Allocator.Allocation</ValuePointer>
@@ -13,14 +13,14 @@
   </Type>
   
   <Type Name="TArray&lt;*, TInlineArrayAllocator&lt;*,*&gt;&gt;">
-    <DisplayString>{{ Size={ArraySize} Capacity={ArrayCapacity} }}</DisplayString>
+    <DisplayString>{{ Size={ArraySize} Capacity={ArrayMax} }}</DisplayString>
     <Expand>
       <Item Name="[Size]">ArraySize</Item>
-      <Item Name="[Capacity]">ArrayCapacity</Item>
+      <Item Name="[Capacity]">ArrayMax</Item>
       <ArrayItems>
         <Size>ArraySize</Size>
-        <ValuePointer Condition="ArrayCapacity &lt;= $T3">($T1*)Allocator.InlineAllocation.InlineAllocation</ValuePointer>
-        <ValuePointer Condition="ArrayCapacity &gt;  $T3">Allocator.DynamicAllocation.Allocation</ValuePointer>
+        <ValuePointer Condition="ArrayMax &lt;= $T3">($T1*)Allocator.InlineAllocation.InlineAllocation</ValuePointer>
+        <ValuePointer Condition="ArrayMax &gt;  $T3">Allocator.DynamicAllocation.Allocation</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
@@ -51,33 +51,33 @@
 
 
   <Type Name="TString&lt;char&gt;">
-    <DisplayString Condition="Data.ArrayCapacity &lt;= 16">{Data.Allocator.InlineAllocation.InlineAllocation,s}</DisplayString>
-    <DisplayString Condition="Data.ArrayCapacity &gt; 16">{Data.Allocator.DynamicAllocation.Allocation,s}</DisplayString>
-    <StringView Condition="Data.ArrayCapacity &lt;= 16">Data.Allocator.InlineAllocation.InlineAllocation,s</StringView>
-    <StringView Condition="Data.ArrayCapacity &gt; 16">Data.Allocator.DynamicAllocation.Allocation,s</StringView>
+    <DisplayString Condition="Data.ArrayMax &lt;= 16">{Data.Allocator.InlineAllocation.InlineAllocation,s}</DisplayString>
+    <DisplayString Condition="Data.ArrayMax &gt; 16">{Data.Allocator.DynamicAllocation.Allocation,s}</DisplayString>
+    <StringView Condition="Data.ArrayMax &lt;= 16">Data.Allocator.InlineAllocation.InlineAllocation,s</StringView>
+    <StringView Condition="Data.ArrayMax &gt; 16">Data.Allocator.DynamicAllocation.Allocation,s</StringView>
     <Expand>
       <Item Name="[Size]"     ExcludeView="simple">Data.ArraySize</Item>
-      <Item Name="[Capacity]" ExcludeView="simple">Data.ArrayCapacity</Item>
+      <Item Name="[Capacity]" ExcludeView="simple">Data.ArrayMax</Item>
       <ArrayItems>
         <Size>Data.ArraySize</Size>
-        <ValuePointer Condition="Data.ArrayCapacity &lt;= 16">(const char*)(&amp;Data.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
-        <ValuePointer Condition="Data.ArrayCapacity &gt; 16">Data.Allocator.DynamicAllocation.Allocation</ValuePointer>
+        <ValuePointer Condition="Data.ArrayMax &lt;= 16">(const char*)(&amp;Data.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
+        <ValuePointer Condition="Data.ArrayMax &gt; 16">Data.Allocator.DynamicAllocation.Allocation</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
 
   <Type Name="TString&lt;wchar_t&gt;">
-    <DisplayString Condition="Data.ArrayCapacity &lt;= 16">{Data.Allocator.InlineAllocation.InlineAllocation,su}</DisplayString>
-    <DisplayString Condition="Data.ArrayCapacity &gt; 16">{Data.Allocator.DynamicAllocation.Allocation,su}</DisplayString>
-    <StringView Condition="Data.ArrayCapacity &lt;= 16">Data.Allocator.InlineAllocation.InlineAllocation,su</StringView>
-    <StringView Condition="Data.ArrayCapacity &gt; 16">Data.Allocator.DynamicAllocation.Allocation,su</StringView>
+    <DisplayString Condition="Data.ArrayMax &lt;= 16">{Data.Allocator.InlineAllocation.InlineAllocation,su}</DisplayString>
+    <DisplayString Condition="Data.ArrayMax &gt; 16">{Data.Allocator.DynamicAllocation.Allocation,su}</DisplayString>
+    <StringView Condition="Data.ArrayMax &lt;= 16">Data.Allocator.InlineAllocation.InlineAllocation,su</StringView>
+    <StringView Condition="Data.ArrayMax &gt; 16">Data.Allocator.DynamicAllocation.Allocation,su</StringView>
     <Expand>
       <Item Name="[Size]"     ExcludeView="simple">Data.ArraySize</Item>
-      <Item Name="[Capacity]" ExcludeView="simple">Data.ArrayCapacity</Item>
+      <Item Name="[Capacity]" ExcludeView="simple">Data.ArrayMax</Item>
       <ArrayItems>
         <Size>Data.ArraySize</Size>
-        <ValuePointer Condition="Data.ArrayCapacity &lt;= 16">(const wchar_t*)(&amp;Data.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
-        <ValuePointer Condition="Data.ArrayCapacity &gt; 16">Data.Allocator.DynamicAllocation.Allocation</ValuePointer>
+        <ValuePointer Condition="Data.ArrayMax &lt;= 16">(const wchar_t*)(&amp;Data.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
+        <ValuePointer Condition="Data.ArrayMax &gt; 16">Data.Allocator.DynamicAllocation.Allocation</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>

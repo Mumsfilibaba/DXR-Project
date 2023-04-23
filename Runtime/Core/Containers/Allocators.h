@@ -5,12 +5,11 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-template<typename T>
+template<typename ElementType>
 class TArrayAllocatorInterface
 {
 public:
-    using ElementType = T;
-    using SizeType    = int32;
+    using SizeType = int32;
 
     TArrayAllocatorInterface() noexcept = default;
     ~TArrayAllocatorInterface()         = default;
@@ -53,12 +52,11 @@ public:
 };
 
 
-template<typename T>
+template<typename ElementType>
 class TDefaultArrayAllocator
 {
 public:
-    using ElementType = T;
-    using SizeType    = int32;
+    using SizeType = int32;
 
     FORCEINLINE TDefaultArrayAllocator() noexcept
         : Allocation(nullptr)
@@ -113,7 +111,7 @@ private:
 };
 
 
-template<typename T, int32 NumInlineElements>
+template<typename ElementType, int32 NumInlineElements>
 class TInlineArrayAllocator
 {
     template<typename ElementType, int32 NumElements>
@@ -122,14 +120,9 @@ class TInlineArrayAllocator
     public:
         using SizeType = int32;
 
-        NODISCARD CONSTEXPR ElementType* GetElements() noexcept
+        NODISCARD CONSTEXPR ElementType* GetElements() const noexcept
         {
             return reinterpret_cast<ElementType*>(InlineAllocation);
-        }
-
-        NODISCARD CONSTEXPR const ElementType* GetElements() const noexcept
-        {
-            return reinterpret_cast<const ElementType*>(InlineAllocation);
         }
 
         NODISCARD CONSTEXPR SizeType Size() const noexcept
@@ -138,12 +131,11 @@ class TInlineArrayAllocator
         }
 
     private:
-        TAlignedStorage<sizeof(ElementType), AlignmentOf<ElementType>> InlineAllocation[NumElements];
+        mutable TAlignedBytes<sizeof(ElementType), AlignmentOf<ElementType>> InlineAllocation[NumElements];
     };
 
 public:
-    using ElementType = T;
-    using SizeType    = int32;
+    using SizeType = int32;
 
     FORCEINLINE TInlineArrayAllocator() noexcept
         : InlineAllocation()
@@ -164,21 +156,21 @@ public:
             {
                 CHECK(CurrentCount <= NumInlineElements);
                 DynamicAllocation.Realloc(CurrentCount, NewElementCount);
-                ::RelocateElements<ElementType>(reinterpret_cast<void*>(DynamicAllocation.Data()), InlineAllocation.GetElements(), CurrentCount);
+                ::RelocateElements<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
             }
             else
             {
                 DynamicAllocation.Realloc(CurrentCount, NewElementCount);
             }
 
-            return DynamicAllocation.Data();
+            return DynamicAllocation.GetAllocation();
         }
         else
         {
             if (DynamicAllocation.HasAllocation())
             {
                 CurrentCount = (CurrentCount <= NumInlineElements) ? CurrentCount : NumInlineElements;
-                ::RelocateElements<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.Data(), CurrentCount);
+                ::RelocateElements<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.GetAllocation(), CurrentCount);
                 Free();
             }
 
@@ -209,7 +201,7 @@ public:
         }
 
         // This call Free's any potential dynamic allocation we own
-        DynamicAllocation.MoveFrom(Move(Other.DynamicAllocation));
+        DynamicAllocation.MoveFrom(::Move(Other.DynamicAllocation));
     }
 
     NODISCARD FORCEINLINE ElementType* GetAllocation() const noexcept

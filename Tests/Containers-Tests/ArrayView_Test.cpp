@@ -1,6 +1,7 @@
 #include "ArrayView_Test.h"
 
 #if RUN_TARRAYVIEW_TEST
+#include "TestUtils.h"
 
 #include <Core/CoreTypes.h>
 #include <Core/Containers/Array.h>
@@ -37,7 +38,7 @@ static void PrintArrayViewRangeBased(const TArrayView<T>& View)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TArrayView_Test
 
-void TArrayView_Test()
+bool TArrayView_Test()
 {
     std::cout << std::endl << "----------TArrayView----------" << std::endl << std::endl;
     std::cout << "Testing Constructors" << std::endl;
@@ -125,6 +126,7 @@ void TArrayView_Test()
     PrintArrayViewRangeBased(ArrView4);
 
     delete[] DynamicPtr;
+    SUCCESS();
 }
 
 #endif

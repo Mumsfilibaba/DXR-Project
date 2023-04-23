@@ -420,12 +420,12 @@ public: // Iterators
         return ReverseConstIteratorType(*this, ViewSize);
     }
 
-public:
+public: // STL Iterators
     NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
     NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return ConstIterator(); }
 
     NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, ViewSize); }
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return IteratorType(*this, ViewSize); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, ViewSize); }
 
 private:
     ElementType* View;

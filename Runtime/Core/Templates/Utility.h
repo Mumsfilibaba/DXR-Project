@@ -100,92 +100,14 @@ struct TMemberFunctionType<true, ClassType, ReturnType(ArgTypes...)>
 };
 
 
-template<int32 NumBytes, int32 Alignment>
-class TAlignedStorage
+template<int32 InSize, int32 InAlignment>
+struct TAlignedBytes
 {
-public:
-    TAlignedStorage()                       = default;
-    TAlignedStorage(const TAlignedStorage&) = default;
-    TAlignedStorage(TAlignedStorage&&)      = default;
-    ~TAlignedStorage()                      = default;
-
-    TAlignedStorage& operator=(const TAlignedStorage&) = default;
-    TAlignedStorage& operator=(TAlignedStorage&&)      = default;
-
-    FORCEINLINE void* GetStorage() noexcept
-    {
-        return Storage;
-    }
-
-    FORCEINLINE const void* GetStorage() const noexcept
-    {
-        return Storage;
-    }
-
-    template<typename T>
-    FORCEINLINE T* CastStorage() noexcept
-    {
-        return reinterpret_cast<T*>(GetStorage());
-    }
-
-    template<typename T>
-    FORCEINLINE const T* CastStorage() const noexcept
-    {
-        return reinterpret_cast<const T*>(GetStorage());
-    }
-
-private:
-    ALIGN_AS(Alignment) uint8 Storage[NumBytes];
+    ALIGN_AS(InAlignment) uint8 Data[InSize];
 };
-
 
 template<typename T>
-class TTypedStorage
-{
-public:
-    using StorageType = TAlignedStorage<sizeof(T), AlignmentOf<T>>;
-
-    TTypedStorage()                     = default;
-    TTypedStorage(const TTypedStorage&) = default;
-    TTypedStorage(TTypedStorage&&)      = default;
-    ~TTypedStorage()                    = default;
-
-    TTypedStorage& operator=(const TTypedStorage&) = default;
-    TTypedStorage& operator=(TTypedStorage&&)      = default;
-
-    FORCEINLINE T* GetStorage() noexcept
-    {
-        return Storage.template CastStorage<T>();
-    }
-
-    FORCEINLINE const T* GetStorage() const noexcept
-    {
-        return Storage.template CastStorage<T>();
-    }
-
-    FORCEINLINE T* operator->() noexcept
-    {
-        return GetStorage();
-    }
-
-    FORCEINLINE const T* operator->() const noexcept
-    {
-        return GetStorage();
-    }
-
-    FORCEINLINE T& operator*() noexcept
-    {
-        return *GetStorage();
-    }
-
-    FORCEINLINE const T& operator*() const noexcept
-    {
-        return *GetStorage();
-    }
-
-private:
-    StorageType Storage;
-};
+using TTypeAlignedBytes = TAlignedBytes<sizeof(T), AlignmentOf<T>>;
 
 
 struct FNonCopyable

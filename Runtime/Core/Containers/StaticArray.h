@@ -5,23 +5,34 @@
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/ArrayContainerHelper.h"
 
-template<typename T, int32 NUM_ELEMENTS>
+template<typename ElementType, int32 NUM_ELEMENTS>
 struct TStaticArray
 {
-    using ElementType = T;
-    using SizeType    = int32;
-
-    static_assert(NUM_ELEMENTS > 0          , "TStaticArray does not support a zero element count");
+    using SizeType = int32;
     static_assert(TIsSigned<SizeType>::Value, "TStaticArray only supports a SizeType that's signed");
+    static_assert(NUM_ELEMENTS > 0          , "TStaticArray does not support a zero element count");
 
     typedef TArrayIterator<TStaticArray, ElementType>                    IteratorType;
     typedef TArrayIterator<const TStaticArray, const ElementType>        ConstIteratorType;
     typedef TReverseArrayIterator<TStaticArray, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TStaticArray, const ElementType> ReverseConstIteratorType;
 
-    enum : SizeType { INVALID_INDEX = -1 };
+    enum : SizeType 
+    {
+        INVALID_INDEX = -1
+    };
 
 public:
+
+    /**
+     * @brief         - Checks that the pointer is a part of the array
+     * @param Address - Address to check.
+     * @return        - Returns true if the address belongs to the array
+     */
+    NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const noexcept
+    {
+        return (Address >= Elements) && (Address < (Elements + ArrayMax));
+    }
 
     /**
      * @brief  - Checks if an index is a valid index
@@ -74,7 +85,7 @@ public:
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        ::AssignElements(Elements, InputElement, Size());
+        ::AssignElements(Elements, InputElement, NUM_ELEMENTS);
     }
 
     /**
@@ -93,16 +104,16 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = Data();
-        const ElementType* RESTRICT EndAddress     = Data() + Size();
-        while (CurrentAddress != EndAddress)
+        const ElementType* RESTRICT Current = Elements;
+        const ElementType* RESTRICT End     = Elements + NUM_ELEMENTS;
+        while (Current != End)
         {
-            if (Element == *CurrentAddress)
+            if (Element == *Current)
             {
-                return static_cast<SizeType>(CurrentAddress - Data());
+                return static_cast<SizeType>(Current - Elements);
             }
 
-            ++CurrentAddress;
+            ++Current;
         }
 
         return INVALID_INDEX;
@@ -116,16 +127,16 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = Data();
-        const ElementType* RESTRICT EndAddress     = Data() + Size();
-        while (CurrentAddress != EndAddress)
+        const ElementType* RESTRICT Current = Elements;
+        const ElementType* RESTRICT End     = Elements + NUM_ELEMENTS;
+        while (Current != End)
         {
-            if (Predicate(*CurrentAddress))
+            if (Predicate(*Current))
             {
-                return static_cast<SizeType>(CurrentAddress - Data());
+                return static_cast<SizeType>(Current - Elements);
             }
 
-            ++CurrentAddress;
+            ++Current;
         }
 
         return INVALID_INDEX;
@@ -138,14 +149,14 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = Data() + Size();
-        const ElementType* RESTRICT EndAddress     = Data();
-        while (CurrentAddress != EndAddress)
+        const ElementType* RESTRICT Current = Elements + NUM_ELEMENTS;
+        const ElementType* RESTRICT End     = Elements;
+        while (Current != End)
         {
-            --CurrentAddress;
-            if (Element == *CurrentAddress)
+            --Current;
+            if (Element == *Current)
             {
-                return static_cast<SizeType>(CurrentAddress - Data());
+                return static_cast<SizeType>(Current - Elements);
             }
         }
 
@@ -160,14 +171,14 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT CurrentAddress = Data() + Size();
-        const ElementType* RESTRICT EndAddress     = Data();
-        while (CurrentAddress != EndAddress)
+        const ElementType* RESTRICT Current = Elements + NUM_ELEMENTS;
+        const ElementType* RESTRICT End     = Elements;
+        while (Current != End)
         {
-            --CurrentAddress;
-            if (Predicate(*CurrentAddress))
+            --Current;
+            if (Predicate(*Current))
             {
-                return static_cast<SizeType>(CurrentAddress - Data());
+                return static_cast<SizeType>(Current - Elements);
             }
         }
 
@@ -192,7 +203,7 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        return (FindWithPredicate(Forward<PredicateType>(Predicate)) != INVALID_INDEX);
+        return (FindWithPredicate(::Forward<PredicateType>(Predicate)) != INVALID_INDEX);
     }
 
     /**
@@ -202,12 +213,12 @@ public:
     template<class FunctorType>
     FORCEINLINE void Foreach(FunctorType&& Functor)
     {
-        ElementType* RESTRICT CurrentAddress = Data();
-        ElementType* RESTRICT EndAddress     = Data() + Size();
-        while (CurrentAddress != EndAddress)
+        ElementType* RESTRICT Current = Elements;
+        ElementType* RESTRICT End     = Elements + NUM_ELEMENTS;
+        while (Current != End)
         {
-            Functor(*CurrentAddress);
-            ++CurrentAddress;
+            Functor(*Current);
+            ++Current;
         }
     }
 
@@ -217,9 +228,9 @@ public:
      */
     FORCEINLINE void Swap(TStaticArray& Other) noexcept
     {
-        TStaticArray TempArray(Move(*this));
-        *this = Move(Other);
-        Other = Move(TempArray);
+        TStaticArray TempArray(::Move(*this));
+        *this = ::Move(Other);
+        Other = ::Move(TempArray);
     }
 
     /**
@@ -272,12 +283,12 @@ public:
     template<typename ArrayType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
     {
-        if (Size() != RHS.Size())
+        if (NUM_ELEMENTS != RHS.Size())
         {
             return false;
         }
 
-        return ::CompareElements<ElementType>(Data(), RHS.Data(), Size());
+        return ::CompareElements<ElementType>(Elements, RHS.Data(), NUM_ELEMENTS);
     }
 
     /**
@@ -317,7 +328,7 @@ public:
      */
     NODISCARD CONSTEXPR SizeType SizeInBytes() const noexcept
     {
-        return Size() * sizeof(ElementType);
+        return NUM_ELEMENTS * sizeof(ElementType);
     }
 
     /**
@@ -335,108 +346,67 @@ public:
      */
     NODISCARD CONSTEXPR SizeType CapacityInBytes() const noexcept
     {
-        return Capacity() * sizeof(ElementType);
+        return NUM_ELEMENTS * sizeof(ElementType);
     }
 
-public:
+public: // Iterators
 
     /**
      * @brief  - Retrieve an iterator to the beginning of the array
      * @return - A iterator that points to the first element
      */
-    NODISCARD FORCEINLINE IteratorType StartIterator() noexcept
+    NODISCARD FORCEINLINE IteratorType Iterator() noexcept
     {
         return IteratorType(*this, 0);
     }
 
     /**
-     * @brief  - Retrieve an iterator to the end of the array
-     * @return - A iterator that points to the element past the end
-     */
-    NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
-    {
-        return IteratorType(*this, Size());
-    }
-
-    /**
      * @brief  - Retrieve an iterator to the beginning of the array
      * @return - A iterator that points to the first element
      */
-    NODISCARD FORCEINLINE ConstIteratorType StartIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const noexcept
     {
         return ConstIteratorType(*this, 0);
     }
 
     /**
-     * @brief  - Retrieve an iterator to the end of the array
-     * @return - A iterator that points to the element past the end
+     * @brief  - Retrieve an reverse-iterator to the end of the array
+     * @return - A reverse-iterator that points to the last element
      */
-    NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator() noexcept
     {
-        return ConstIteratorType(*this, Size());
+        return ReverseIteratorType(*this, NUM_ELEMENTS);
     }
 
     /**
      * @brief  - Retrieve an reverse-iterator to the end of the array
      * @return - A reverse-iterator that points to the last element
      */
-    NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
+    NODISCARD  ReverseConstIteratorType ConstReverseIterator() const noexcept
     {
-        return ReverseIteratorType(*this, Size());
+        return ReverseConstIteratorType(*this, NUM_ELEMENTS);
     }
 
-    /**
-     * @brief  - Retrieve an reverse-iterator to the start of the array
-     * @return - A reverse-iterator that points to the element before the first element
-     */
-    NODISCARD FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
-    {
-        return ReverseIteratorType(*this, 0);
-    }
+public: // STL Iterators
+    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return ConstIterator(); }
 
-    /**
-     * @brief  - Retrieve an reverse-iterator to the end of the array
-     * @return - A reverse-iterator that points to the last element
-     */
-    NODISCARD  ReverseConstIteratorType ReverseStartIterator() const noexcept
-    {
-        return ReverseConstIteratorType(*this, Size());
-    }
-
-    /**
-     * @brief  - Retrieve an reverse-iterator to the start of the array
-     * @return - A reverse-iterator that points to the element before the first element
-     */
-    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
-    {
-        return ReverseConstIteratorType(*this, 0);
-    }
-
-public:
-
-    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
-
-    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return EndIterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return EndIterator(); }
+    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, NUM_ELEMENTS); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, NUM_ELEMENTS); }
 
 public:
     ElementType Elements[NUM_ELEMENTS];
 };
 
 
-template<
-    typename T,
-    int32 NUM_ELEMENTS>
-struct TIsTArrayType<TStaticArray<T, NUM_ELEMENTS>>
+template<typename ElementType, int32 NUM_ELEMENTS>
+struct TIsTArrayType<TStaticArray<ElementType, NUM_ELEMENTS>>
 {
     enum { Value = true };
 };
 
-template<
-    typename T,
-    int32 NUM_ELEMENTS>
-struct TIsContiguousContainer<TStaticArray<T, NUM_ELEMENTS>>
+template<typename ElementType, int32 NUM_ELEMENTS>
+struct TIsContiguousContainer<TStaticArray<ElementType, NUM_ELEMENTS>>
 {
     enum { Value = true };
 };

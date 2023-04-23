@@ -2,5 +2,5 @@
 #include "Config.h"
 
 #if RUN_TSTATICARRAY_TEST
-void TStaticArray_Test();
+bool TStaticArray_Test();
 #endif

@@ -6,6 +6,7 @@
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/Functional.h"
+#include "Core/Math/Random.h"
 
 template<typename ElementType, typename AllocatorType = TDefaultArrayAllocator<ElementType>>
 class TArray
@@ -258,7 +259,10 @@ public:
     {
         if (NewSize > ArraySize)
         {
-            EnsureCapacity(NewSize);
+            if (NewSize > ArrayMax)
+            {
+                ReserveUnchecked(NewSize);
+            }
 
             // NewSize is always larger than array-size...
             const SizeType NumElementsToConstruct = NewSize - ArraySize;
@@ -285,7 +289,11 @@ public:
     {
         if (NewSize > ArraySize)
         {
-            EnsureCapacity(NewSize);
+            if (NewSize > ArrayMax)
+            {
+                ReserveUnchecked(NewSize);
+            }
+
             ArraySize = NewSize;
         }
         else if (NewSize < ArraySize)
@@ -564,10 +572,10 @@ public:
      */
     FORCEINLINE bool Remove(const ElementType& Element) noexcept
     {
-        ElementType* TmpAllocation = Allocator.GetAllocation();
+        ElementType* Array = Allocator.GetAllocation();
         for (SizeType Index = 0; Index < ArraySize;)
         {
-            if (Element == TmpAllocation[Index])
+            if (Element == Array[Index])
             {
                 RemoveAt(Index);
             }
@@ -587,10 +595,10 @@ public:
     template<typename PredicateType>
     FORCEINLINE void RemoveAll(PredicateType&& Predicate) noexcept
     {
-        ElementType* TmpAllocation = Allocator.GetAllocation();
+        ElementType* Array = Allocator.GetAllocation();
         for (SizeType Index = 0; Index < ArraySize;)
         {
-            if (Predicate(TmpAllocation[Index]))
+            if (Predicate(Array[Index]))
             {
                 RemoveAt(Index);
             }
@@ -740,8 +748,8 @@ public:
     {
         CHECK(IsValidIndex(FirstIndex));
         CHECK(IsValidIndex(SecondIndex));
-        ElementType* TmpAllocation = Allocator.GetAllocation();
-        ::Swap(TmpAllocation[FirstIndex], TmpAllocation[SecondIndex])
+        ElementType* Array = Allocator.GetAllocation();
+        ::Swap(Array[FirstIndex], Array[SecondIndex])
     }
 
     /**
@@ -758,11 +766,11 @@ public:
     void Reverse()
     {
         const int32 HalfSize = ArraySize / 2;
-        const ElementType* TmpAllocation = Allocator.GetAllocation();
+        const ElementType* Array = Allocator.GetAllocation();
         for (SizeType Index = 0; Index < HalfSize; ++Index)
         {
             const int32 ReverseIndex = ArraySize - Index - 1;
-            ::Swap(TmpAllocation[Index], TmpAllocation[ReverseIndex]);
+            ::Swap(Array[Index], Array[ReverseIndex]);
         }
     }
 
@@ -793,8 +801,8 @@ public:
      */
     NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const noexcept
     {
-        const ElementType* TmpAllocation = Allocator.GetAllocation();
-        return (Address >= TmpAllocation) && (Address < (TmpAllocation + ArrayMax));
+        const ElementType* Array = Allocator.GetAllocation();
+        return (Address >= Array) && (Address < (Array + ArrayMax));
     }
 
     /**
@@ -1016,10 +1024,10 @@ public: // Heap Functions
     {
         Heapify();
 
-        const ElementType* TmpAllocation = Allocator.GetAllocation();
+        ElementType* Array = Allocator.GetAllocation();
         for (SizeType Index = ArraySize - 1; Index > 0; --Index)
         {
-            ::Swap<ElementType>(TmpAllocation[0], TmpAllocation[Index]);
+            ::Swap<ElementType>(Array[0], Array[Index]);
             Heapify(Index, 0);
         }
     }
@@ -1106,7 +1114,7 @@ public:
      * @param Other - Array to copy elements from
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, TAddReference<TArray>::Type>::Type operator+=(const ArrayType& Other) noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, typename TAddLValueReference<TArray>::Type>::Type operator+=(const ArrayType& Other) noexcept
     {
         Append(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other));
         return *this;
@@ -1161,11 +1169,11 @@ public: // Iterators
     }
 
 public: // STL Iterator
-    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
+    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return ConstIterator(); }
     
-    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return EndIterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return EndIterator(); }
+    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, ArraySize); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, ArraySize); }
 
 private:
     FORCEINLINE void CreateUnitialized(SizeType NumElements)
@@ -1265,25 +1273,25 @@ private:
         SizeType StartIndex = Index;
         SizeType Largest    = Index;
 
-        const ElementType* TmpAllocation = Allocator.GetAllocation();
+        ElementType* Array = Allocator.GetAllocation();
         while (true)
         {
             const SizeType Left  = LeftIndex(StartIndex);
             const SizeType Right = RightIndex(StartIndex);
 
-            if (Left < InSize && TmpAllocation[Left] > TmpAllocation[Largest])
+            if (Left < InSize && Array[Left] > Array[Largest])
             {
                 Largest = Left;
             }
 
-            if (Right < InSize && TmpAllocation[Right] > TmpAllocation[Largest])
+            if (Right < InSize && Array[Right] > Array[Largest])
             {
                 Largest = Right;
             }
 
             if (Largest != StartIndex)
             {
-                ::Swap<ElementType>(TmpAllocation[StartIndex], TmpAllocation[Largest]);
+                ::Swap<ElementType>(Array[StartIndex], Array[Largest]);
                 StartIndex = Largest;
             }
             else
@@ -1306,7 +1314,7 @@ private:
     // Calculate how much the array should grow, will always be at least one
     NODISCARD static FORCEINLINE SizeType CalculateGrowth(SizeType NumElements, SizeType CurrentCapacity) noexcept
     {
-        constexpr SizeType FirstAlloc = 4;
+        CONSTEXPR SizeType FirstAlloc = 4;
 
         SizeType NewSize;
         if (CurrentCapacity)
@@ -1328,22 +1336,21 @@ private:
     template<typename PredicateType>
     FORCEINLINE SizeType SortPartition(SizeType First, SizeType Last, PredicateType&& Predicate) noexcept
     {
-        const SizeType Pivot = Last;
-        SizeType Lowest = First - 1;
-
+        // Select a random pivot value
         ElementType* Array = Allocator.GetAllocation();
-        for (SizeType Current = First; Current <= Last; ++Current)
+        const SizeType Pivot = Last;
+        SizeType Index = First;
+        for (SizeType Current = First; Current < Last; ++Current)
         {
             if (Predicate(Array[Current], Array[Pivot]))
             {
-                Lowest++;
-                ::Swap(Array[Lowest], Array[Current]);
+                ::Swap(Array[Index], Array[Current]);
+                Index++;
             }
         }
 
-        const SizeType Result = Lowest + 1;
-        ::Swap(Array[Result], Array[Last]);
-        return Result;
+        ::Swap(Array[Index], Array[Pivot]);
+        return Index;
     }
 
     template<typename PredicateType>
@@ -1351,12 +1358,12 @@ private:
     {
         if (First >= Last)
         {
-            return 
+            return;
         }
 
         // Max number of elements to use for QuickSort, otherwise use InsertionSort
-        CONSTEXPR SizeType Threshold = 32;
-        if ((Last - First + 1) < Threshold)
+        CONSTEXPR SizeType Threshold = 24;
+        if ((Last - First + 1) >= Threshold)
         {
             const SizeType Pivot = SortPartition(First, Last, Predicate);
             SortInternal(First    , Pivot - 1, Predicate);
@@ -1367,11 +1374,10 @@ private:
             ElementType* Array = Allocator.GetAllocation();
             for (SizeType Current = First + 1; Current <= Last; ++Current) 
             {
-                const SizeType Key = Current;
-                SizeType Index = Current - 1;
-                while (Index > First && Predicate(Array[Index], Array[Key])) 
+                SizeType Index = Current;
+                while (Index > First && Predicate(Array[Index], Array[Index - 1]))
                 {
-                    ::Swap(Array[Index], Array[Key]);
+                    ::Swap(Array[Index], Array[Index - 1]);
                     Index--;
                 }
             }

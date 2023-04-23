@@ -4,9 +4,7 @@
 #include "Core/Templates/BitReference.h"
 
 // TODO: Put some functionality into a base-class
-template<
-    typename ArrayType,
-    typename ElementType>
+template<typename ArrayType, typename ElementType>
 class TArrayIterator
 {
     using ConstElementType = const typename TRemoveCV<ElementType>::Type;
@@ -232,9 +230,7 @@ private:
 };
 
 
-template<
-    typename ArrayType,
-    typename ElementType>
+template<typename ArrayType, typename ElementType>
 FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIterator<ArrayType, ElementType>::SizeType LHS, TArrayIterator<ArrayType, ElementType>& Other) noexcept
 {
     TArrayIterator NewIterator(Other);
@@ -242,9 +238,7 @@ FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIter
 }
 
 
-template<
-    typename ArrayType,
-    typename ElementType>
+template<typename ArrayType, typename ElementType>
 class TReverseArrayIterator
 {
     using ConstElementType = const typename TRemoveCV<ElementType>::Type;
@@ -254,18 +248,14 @@ public:
     using SizeType = typename ArrayType::SizeType;
 
     TReverseArrayIterator(const TReverseArrayIterator&) = default;
-    TReverseArrayIterator(TReverseArrayIterator&&) = default;
-    ~TReverseArrayIterator() = default;
+    TReverseArrayIterator(TReverseArrayIterator&&)      = default;
+    ~TReverseArrayIterator()                            = default;
 
     TReverseArrayIterator& operator=(const TReverseArrayIterator&) = default;
-    TReverseArrayIterator& operator=(TReverseArrayIterator&&) = default;
+    TReverseArrayIterator& operator=(TReverseArrayIterator&&)      = default;
 
-    static_assert(
-        TIsSigned<SizeType>::Value,
-        "TReverseArrayIterator wants a signed SizeType");
-    static_assert(
-        TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value,
-        "TReverseArrayIterator require ArrayType and ElementType to have the same constness");
+    static_assert(TIsSigned<SizeType>::Value, "TReverseArrayIterator wants a signed SizeType");
+    static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TReverseArrayIterator require ArrayType and ElementType to have the same constness");
 
     /**
      * @brief            - Create a new iterator
@@ -286,7 +276,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsFrom(const ArrayType& FromArray) const noexcept
     {
-        const ArrayType* FromPointer = AddressOf(FromArray);
+        const ArrayType* FromPointer = ::AddressOf(FromArray);
         return Array.AddressOf() == FromPointer;
     }
 
@@ -354,7 +344,6 @@ public:
     FORCEINLINE TReverseArrayIterator operator++() noexcept
     {
         Index--;
-
         CHECK(IsValid());
         return *this;
     }
@@ -476,12 +465,8 @@ private:
 };
 
 
-template<
-    typename ArrayType,
-    typename ElementType>
-NODISCARD FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(
-    typename TReverseArrayIterator<ArrayType, ElementType>::SizeType LHS,
-    TReverseArrayIterator<ArrayType, ElementType>& Other) noexcept
+template<typename ArrayType, typename ElementType>
+NODISCARD FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TReverseArrayIterator<ArrayType, ElementType>::SizeType LHS, TReverseArrayIterator<ArrayType, ElementType>& Other) noexcept
 {
     TReverseArrayIterator NewIterator(Other);
     return NewIterator += LHS;
@@ -596,11 +581,11 @@ public:
     using ConstBitReferenceType = TBitReference<ConstStorageType>;
 
     TBitArrayIterator(const TBitArrayIterator&) = default;
-    TBitArrayIterator(TBitArrayIterator&&) = default;
-    ~TBitArrayIterator() = default;
+    TBitArrayIterator(TBitArrayIterator&&)      = default;
+    ~TBitArrayIterator()                        = default;
 
     TBitArrayIterator& operator=(const TBitArrayIterator&) = default;
-    TBitArrayIterator& operator=(TBitArrayIterator&&) = default;
+    TBitArrayIterator& operator=(TBitArrayIterator&&)      = default;
 
     /**
      * @brief            - Constructor taking array and index of the iterator
@@ -610,7 +595,8 @@ public:
     FORCEINLINE explicit TBitArrayIterator(const BitArrayType& InBitArray, uint32 InIndex) noexcept
         : Index(InIndex)
         , BitArray(InBitArray)
-    { }
+    {
+    }
 
     /**
      * @brief           - Check if the iterator belongs to a certain array
@@ -757,10 +743,11 @@ public:
     using ConstBitReferenceType = TBitReference<ConstStorageType>;
 
     TReverseBitArrayIterator(const TReverseBitArrayIterator&) = default;
-    TReverseBitArrayIterator(TReverseBitArrayIterator&&) = default;
-    ~TReverseBitArrayIterator() = default;
+    TReverseBitArrayIterator(TReverseBitArrayIterator&&)      = default;
+    ~TReverseBitArrayIterator()                               = default;
+
     TReverseBitArrayIterator& operator=(const TReverseBitArrayIterator&) = default;
-    TReverseBitArrayIterator& operator=(TReverseBitArrayIterator&&) = default;
+    TReverseBitArrayIterator& operator=(TReverseBitArrayIterator&&)      = default;
 
     /**
      * @brief            - Constructor taking array and index of the iterator
@@ -770,7 +757,8 @@ public:
     FORCEINLINE explicit TReverseBitArrayIterator(const BitArrayType& InBitArray, uint32 InIndex) noexcept
         : Index(InIndex)
         , BitArray(InBitArray)
-    { }
+    {
+    }
 
     /**
      * @brief           - Check if the iterator belongs to a certain array
