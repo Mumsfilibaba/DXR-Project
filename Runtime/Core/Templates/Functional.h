@@ -43,11 +43,10 @@ namespace Internal
 template<typename FuncType, typename... ArgTypes>
 inline decltype(auto) Invoke(FuncType&& Func, ArgTypes&&... Args)
 {
-    return Internal::Invoke(Forward<FuncType>(Func), Forward<ArgTypes>(Args)...);
+    return Internal::Invoke(::Forward<FuncType>(Func), ::Forward<ArgTypes>(Args)...);
 }
 
 // TODO: InvokeR
-
 
 // TODO: This may need another check
 template<typename FuncType, typename... ArgTypes>

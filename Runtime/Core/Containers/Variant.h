@@ -191,7 +191,7 @@ public:
         , TypeIndex()
     {
         static_assert(TIsValidType<T>::Value, "This TVariant is not specified to hold the specified type");
-        Construct<T>(Forward<ArgTypes>(Args)...);
+        Construct<T>(::Forward<ArgTypes>(Args)...);
     }
 
     /**

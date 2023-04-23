@@ -2,5 +2,5 @@
 #include "Config.h"
 
 #if RUN_TFUNCTION_TEST
-void TFunction_Test();
+bool TFunction_Test();
 #endif
