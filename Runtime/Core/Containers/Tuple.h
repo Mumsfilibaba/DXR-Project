@@ -509,7 +509,7 @@ public:
     using Super::GetByIndex;
     using Super::Swap;
 
-    enum { NumElements = sizeof...(Types) };
+    inline static constexpr uint32 NumElements = sizeof...(Types);
 
     TTuple() = default;
     TTuple(TTuple&&) = default;
@@ -534,7 +534,7 @@ public:
      * @brief  - Retrieve the number of elements 
      * @return - Returns the number of elements for the tuples
      */
-    NODISCARD CONSTEXPR uint32 Size() const
+    NODISCARD constexpr uint32 Size() const
     {
         return NumElements;
     }

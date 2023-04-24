@@ -48,7 +48,10 @@ public:
      */
     FORCEINLINE void Unbind()
     {
-        Release();
+        if (IsBound())
+        {
+            GetDelegate()->~IDelegateInstance();
+        }
     }
 
     /**
@@ -172,14 +175,6 @@ protected:
         : Storage()
         , Size(0)
     {
-    }
-
-    FORCEINLINE void Release()
-    {
-        if (IsBound())
-        {
-            GetDelegate()->~IDelegateInstance();
-        }
     }
 
     FORCEINLINE void CopyFrom(const FDelegateBase& Other) noexcept

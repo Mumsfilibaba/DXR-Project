@@ -2,5 +2,5 @@
 #include "Config.h"
 
 #if RUN_TDELEGATE_TEST
-void TDelegate_Test();
+bool TDelegate_Test();
 #endif
