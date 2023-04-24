@@ -110,7 +110,7 @@ enum class EFormat : uint16
     BC7_UNorm_SRGB        = 91,
 };
 
-CONSTEXPR const CHAR* ToString(EFormat Format)
+constexpr const CHAR* ToString(EFormat Format)
 {
     switch (Format)
     {
@@ -213,7 +213,7 @@ CONSTEXPR const CHAR* ToString(EFormat Format)
 }
 
 
-CONSTEXPR uint32 GetByteStrideFromFormat(EFormat Format)
+constexpr uint32 GetByteStrideFromFormat(EFormat Format)
 {
     switch (Format)
     {
@@ -316,7 +316,7 @@ CONSTEXPR uint32 GetByteStrideFromFormat(EFormat Format)
     }
 }
 
-CONSTEXPR bool IsCompressed(EFormat Format)
+constexpr bool IsCompressed(EFormat Format)
 {
     return (ToUnderlying(Format) >= ToUnderlying(EFormat::BC1_Typeless));
 }
@@ -329,7 +329,7 @@ enum class EIndexFormat : uint8
     uint32  = 2,
 };
 
-CONSTEXPR const CHAR* ToString(EIndexFormat IndexFormat)
+constexpr const CHAR* ToString(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)
     {
@@ -339,7 +339,7 @@ CONSTEXPR const CHAR* ToString(EIndexFormat IndexFormat)
     }
 }
 
-CONSTEXPR EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
+constexpr EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
 {
     switch (StrideInBytes)
     {
@@ -349,7 +349,7 @@ CONSTEXPR EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
     }
 }
 
-CONSTEXPR uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
+constexpr uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)
     {
@@ -370,12 +370,12 @@ enum class ECubeFace
     NegZ = 5,
 };
 
-CONSTEXPR uint32 GetCubeFaceIndex(ECubeFace CubeFace)
+constexpr uint32 GetCubeFaceIndex(ECubeFace CubeFace)
 {
     return static_cast<uint32>(CubeFace);
 }
 
-CONSTEXPR ECubeFace GetCubeFaceFromIndex(uint32 Index)
+constexpr ECubeFace GetCubeFaceFromIndex(uint32 Index)
 {
     return (Index > GetCubeFaceIndex(ECubeFace::NegZ)) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
 }
@@ -394,7 +394,7 @@ enum class EComparisonFunc
     Always       = 8
 };
 
-CONSTEXPR const CHAR* ToString(EComparisonFunc ComparisonFunc)
+constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -420,7 +420,7 @@ enum class EPrimitiveTopologyType
     Patch     = 4
 };
 
-CONSTEXPR const CHAR* ToString(EPrimitiveTopologyType PrimitveTopologyType)
+constexpr const CHAR* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 {
     switch (PrimitveTopologyType)
     {
@@ -458,7 +458,7 @@ enum class EResourceAccess : uint8
 
 ENUM_CLASS_OPERATORS(EResourceAccess);
 
-CONSTEXPR const CHAR* ToString(EResourceAccess ResourceState)
+constexpr const CHAR* ToString(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
@@ -493,7 +493,7 @@ enum class EPrimitiveTopology
     TriangleStrip = 5,
 };
 
-CONSTEXPR const CHAR* ToString(EPrimitiveTopology ResourceState)
+constexpr const CHAR* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
@@ -519,7 +519,7 @@ enum class EShadingRate
     VRS_4x4 = 0xa,
 };
 
-CONSTEXPR const CHAR* ToString(EShadingRate ShadingRate)
+constexpr const CHAR* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
@@ -544,7 +544,7 @@ enum class EDescriptorType : uint32
     Sampler         = 4
 };
 
-CONSTEXPR const CHAR* ToString(EDescriptorType DescriptorType)
+constexpr const CHAR* ToString(EDescriptorType DescriptorType)
 {
     switch (DescriptorType)
     {
@@ -570,7 +570,7 @@ public:
     /**
      * @brief - Default Constructor
      */
-    CONSTEXPR FRHIDescriptorHandle()
+    constexpr FRHIDescriptorHandle()
         : Data(0)
     { }
 
@@ -579,7 +579,7 @@ public:
      * @param InType  - Type of descriptor
      * @param InIndex - Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
      */
-    CONSTEXPR FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
+    constexpr FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
         : Index(InIndex)
         , Type(InType)
     { }
@@ -587,7 +587,7 @@ public:
     /** 
      * @return - Returns true if the handle is valid
      */
-    CONSTEXPR bool IsValid() const
+    constexpr bool IsValid() const
     { 
         return (Type != EDescriptorType::Unknown) && (Index != InvalidHandle); 
     }
@@ -597,7 +597,7 @@ public:
      * @param Other - Other instance to compare with
      * @return      - Returns true if the handles are equal
      */
-    CONSTEXPR bool operator==(const FRHIDescriptorHandle& Other) const
+    constexpr bool operator==(const FRHIDescriptorHandle& Other) const
     {
         return (Data == Other.Data);
     }
@@ -607,7 +607,7 @@ public:
      * @param Other - Other instance to compare with
      * @return      - Returns false if the handles are equal
      */
-    CONSTEXPR bool operator!=(const FRHIDescriptorHandle& Other) const
+    constexpr bool operator!=(const FRHIDescriptorHandle& Other) const
     {
         return (Data != Other.Data);
     }
@@ -631,7 +631,7 @@ struct FDepthStencilValue
     /**
      * @brief - Default Constructor
      */
-    CONSTEXPR FDepthStencilValue()
+    constexpr FDepthStencilValue()
         : Depth(1.0f)
         , Stencil(0)
     { }
@@ -641,7 +641,7 @@ struct FDepthStencilValue
      * @param InDepth   - Depth-value
      * @param InStencil - Stencil-value
      */
-    CONSTEXPR FDepthStencilValue(float InDepth, uint8 InStencil)
+    constexpr FDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     { }
@@ -649,7 +649,7 @@ struct FDepthStencilValue
     /** 
      * @return - Returns and calculates the hash for this type
      */
-    CONSTEXPR uint64 GetHash() const
+    constexpr uint64 GetHash() const
     {
         uint64 Hash = Stencil;
         HashCombine(Hash, Depth);
@@ -661,7 +661,7 @@ struct FDepthStencilValue
      * @param Other - Other instance to compare with
      * @return      - Returns true if the instances are equal
      */
-    CONSTEXPR bool operator==(const FDepthStencilValue& Other) const
+    constexpr bool operator==(const FDepthStencilValue& Other) const
     {
         return (Depth == Other.Depth) && (Stencil && Other.Stencil);
     }
@@ -671,7 +671,7 @@ struct FDepthStencilValue
      * @param Other - Other instance to compare with
      * @return      - Returns false if the instances are equal
      */
-    CONSTEXPR bool operator!=(const FDepthStencilValue& Other) const
+    constexpr bool operator!=(const FDepthStencilValue& Other) const
     {
         return !(*this == Other);
     }

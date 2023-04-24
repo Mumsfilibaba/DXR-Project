@@ -504,7 +504,7 @@ enum class EBufferSRVFormat : uint32
     Uint32 = 1,
 };
 
-CONSTEXPR const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
+constexpr const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
 {
     switch (BufferSRVFormat)
     {
@@ -520,7 +520,7 @@ enum class EBufferUAVFormat : uint32
     Uint32 = 1,
 };
 
-CONSTEXPR const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
+constexpr const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
 {
     switch (BufferSRVFormat)
     {
@@ -537,7 +537,7 @@ enum class EAttachmentLoadAction : uint8
     Clear    = 2, // Clear data when RenderPass begin
 };
 
-CONSTEXPR const CHAR* ToString(EAttachmentLoadAction LoadAction)
+constexpr const CHAR* ToString(EAttachmentLoadAction LoadAction)
 {
     switch (LoadAction)
     {
@@ -555,7 +555,7 @@ enum class EAttachmentStoreAction : uint8
     Store    = 1, // Store the data after the RenderPass is finished
 };
 
-CONSTEXPR const CHAR* ToString(EAttachmentStoreAction StoreAction)
+constexpr const CHAR* ToString(EAttachmentStoreAction StoreAction)
 {
     switch (StoreAction)
     {
@@ -1094,7 +1094,7 @@ enum class ESamplerMode : uint8
     MirrorOnce = 5,
 };
 
-CONSTEXPR const CHAR* ToString(ESamplerMode SamplerMode)
+constexpr const CHAR* ToString(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
@@ -1131,7 +1131,7 @@ enum class ESamplerFilter : uint8
     Comparison_Anistrotopic                 = 18,
 };
 
-CONSTEXPR const CHAR* ToString(ESamplerFilter SamplerFilter)
+constexpr const CHAR* ToString(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
@@ -1407,7 +1407,7 @@ enum class EDepthWriteMask : uint8
     All  = 1
 };
 
-CONSTEXPR const CHAR* ToString(EDepthWriteMask DepthWriteMask)
+constexpr const CHAR* ToString(EDepthWriteMask DepthWriteMask)
 {
     switch (DepthWriteMask)
     {
@@ -1430,7 +1430,7 @@ enum class EStencilOp : uint8
     Decr    = 8
 };
 
-CONSTEXPR const CHAR* ToString(EStencilOp StencilOp)
+constexpr const CHAR* ToString(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
@@ -1588,7 +1588,7 @@ enum class ECullMode : uint8
     Back  = 3
 };
 
-CONSTEXPR const CHAR* ToString(ECullMode CullMode)
+constexpr const CHAR* ToString(ECullMode CullMode)
 {
     switch (CullMode)
     {
@@ -1606,7 +1606,7 @@ enum class EFillMode : uint8
     Solid     = 2
 };
 
-CONSTEXPR const CHAR* ToString(EFillMode FillMode)
+constexpr const CHAR* ToString(EFillMode FillMode)
 {
     switch (FillMode)
     {
@@ -1741,7 +1741,7 @@ enum class EBlendType : uint8
     InvSrc1Alpha   = 17
 };
 
-CONSTEXPR const CHAR* ToString(EBlendType  Blend)
+constexpr const CHAR* ToString(EBlendType  Blend)
 {
     switch (Blend)
     {
@@ -1776,7 +1776,7 @@ enum class EBlendOp : uint8
     Max         = 5
 };
 
-CONSTEXPR const CHAR* ToString(EBlendOp BlendOp)
+constexpr const CHAR* ToString(EBlendOp BlendOp)
 {
     switch (BlendOp)
     {
@@ -1810,7 +1810,7 @@ enum class ELogicOp : uint8
     OrInverted   = 15
 };
 
-CONSTEXPR const CHAR* ToString(ELogicOp LogicOp)
+constexpr const CHAR* ToString(ELogicOp LogicOp)
 {
     switch (LogicOp)
     {
@@ -1850,50 +1850,50 @@ ENUM_CLASS_OPERATORS(EColorWriteFlag);
 
 struct FRenderTargetWriteMask
 {
-    CONSTEXPR FRenderTargetWriteMask()
+    constexpr FRenderTargetWriteMask()
         : Mask(EColorWriteFlag::All)
     { }
 
-    CONSTEXPR FRenderTargetWriteMask(EColorWriteFlag InMask)
+    constexpr FRenderTargetWriteMask(EColorWriteFlag InMask)
         : Mask(InMask)
     { }
 
-    CONSTEXPR bool WriteNone() const
+    constexpr bool WriteNone() const
     {
         return (Mask == EColorWriteFlag::None);
     }
 
-    CONSTEXPR bool WriteRed() const
+    constexpr bool WriteRed() const
     {
         return ((Mask & EColorWriteFlag::Red) != EColorWriteFlag::None);
     }
 
-    CONSTEXPR bool WriteGreen() const
+    constexpr bool WriteGreen() const
     {
         return ((Mask & EColorWriteFlag::Green) != EColorWriteFlag::None);
     }
 
-    CONSTEXPR bool WriteBlue() const
+    constexpr bool WriteBlue() const
     {
         return ((Mask & EColorWriteFlag::Blue) != EColorWriteFlag::None);
     }
 
-    CONSTEXPR bool WriteAlpha() const
+    constexpr bool WriteAlpha() const
     {
         return ((Mask & EColorWriteFlag::Alpha) != EColorWriteFlag::None);
     }
 
-    CONSTEXPR bool WriteAll() const
+    constexpr bool WriteAll() const
     {
         return (Mask == EColorWriteFlag::All);
     }
 
-    CONSTEXPR bool operator==(FRenderTargetWriteMask Other) const
+    constexpr bool operator==(FRenderTargetWriteMask Other) const
     {
         return (Mask == Other.Mask);
     }
 
-    CONSTEXPR bool operator!=(FRenderTargetWriteMask Other) const
+    constexpr bool operator!=(FRenderTargetWriteMask Other) const
     {
         return (Mask != Other.Mask);
     }
@@ -2061,7 +2061,7 @@ enum class EVertexInputClass : uint8
     Instance = 1,
 };
 
-CONSTEXPR const CHAR* ToString(EVertexInputClass BlendOp)
+constexpr const CHAR* ToString(EVertexInputClass BlendOp)
 {
     switch (BlendOp)
     {
@@ -2175,7 +2175,7 @@ enum EIndexBufferStripCutValue : uint8
     IndexBufferStripCutValue_0xffffffff = 2
 };
 
-CONSTEXPR const CHAR* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
+constexpr const CHAR* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 {
     switch (IndexBufferStripCutValue)
     {

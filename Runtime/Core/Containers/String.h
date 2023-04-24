@@ -143,7 +143,7 @@ public:
         : Characters()
     {
         const CharType* RawString = nullptr;
-        if CONSTEXPR (TIsSame<CharType, CHAR>::Value)
+        if constexpr (TIsSame<CharType, CHAR>::Value)
         {
             RawString = reinterpret_cast<const CharType*>([InString cStringUsingEncoding:NSUTF8StringEncoding]);
         }
@@ -1342,7 +1342,7 @@ public:
      */
     NODISCARD FORCEINLINE NSString* GetNSString() const noexcept
     {
-        if CONSTEXPR (TIsSame<CharType, CHAR>::Value)
+        if constexpr (TIsSame<CharType, CHAR>::Value)
         {
             return [[[NSString alloc] initWithBytes:CharData.Data() length:GetLength() * sizeof(CharType) encoding:NSUTF8StringEncoding] autorelease];
         }

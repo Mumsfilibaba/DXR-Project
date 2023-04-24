@@ -4,7 +4,7 @@
 struct FBitHelper
 {
     template<typename IndexType, typename MaskType>
-    static CONSTEXPR IndexType LeastSignificant(MaskType Mask) noexcept
+    static constexpr IndexType LeastSignificant(MaskType Mask) noexcept
     {
         IndexType Result = 0;
         while (Mask)
@@ -22,7 +22,7 @@ struct FBitHelper
     }
 
     template<typename IndexType, typename MaskType>
-    static CONSTEXPR IndexType MostSignificant(MaskType Mask) noexcept
+    static constexpr IndexType MostSignificant(MaskType Mask) noexcept
     {
         IndexType Result = 0;
         while (Mask >>= 1)
@@ -36,7 +36,7 @@ struct FBitHelper
     template<typename StorageType>
     static typename TEnableIf<TIsUnsigned<StorageType>::Value, StorageType>::Type ReverseBits(StorageType Bits) noexcept
     {
-        CONSTEXPR StorageType NumBits = sizeof(StorageType) * 8;
+        constexpr StorageType NumBits = sizeof(StorageType) * 8;
 
         StorageType BitCount = NumBits - 1;
         StorageType NewBits  = Bits;
@@ -56,7 +56,7 @@ struct FBitHelper
 
     // TODO: Check if intrinsics are viable
     template<typename IntegerType>
-    static CONSTEXPR IntegerType CountAssignedBits(IntegerType Element)
+    static constexpr IntegerType CountAssignedBits(IntegerType Element)
     {
         IntegerType NumBits = 0;
         while (Element)

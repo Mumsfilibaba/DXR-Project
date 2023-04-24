@@ -73,7 +73,7 @@ enum class EConsoleVariableFlags : int32
 
 ENUM_CLASS_OPERATORS(EConsoleVariableFlags);
 
-CONSTEXPR const CHAR* SetByFlagToString(EConsoleVariableFlags Flag)
+constexpr const CHAR* SetByFlagToString(EConsoleVariableFlags Flag)
 {
     switch (Flag)
     {

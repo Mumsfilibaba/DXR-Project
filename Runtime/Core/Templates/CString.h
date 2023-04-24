@@ -13,7 +13,7 @@ struct TChar
     using PointerType      = typename TAddPointer<CHARTYPE>::Type;
     using ConstPointerType = const PointerType;
 
-    static CONSTEXPR CHARTYPE Null = 0;
+    static constexpr CHARTYPE Null = 0;
 
     NODISCARD static FORCEINLINE CHARTYPE ToUpper(CHARTYPE Char)
     {

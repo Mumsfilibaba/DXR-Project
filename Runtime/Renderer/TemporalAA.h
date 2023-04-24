@@ -7,7 +7,7 @@
 namespace HaltonPrivate
 {
     // Modified from this Source: https://pbr-book.org/3ed-2018/Sampling_and_Reconstruction/The_Halton_Sampler
-    CONSTEXPR float RadicalInverse2(uint32 Bits)
+    constexpr float RadicalInverse2(uint32 Bits)
     {
         Bits = (Bits << 16u) | (Bits >> 16u);
         Bits = ((Bits & 0x55555555u) << 1u) | ((Bits & 0xAAAAAAAAu) >> 1u);
@@ -18,7 +18,7 @@ namespace HaltonPrivate
     }
 
     // Modified from this Source: https://pbr-book.org/3ed-2018/Sampling_and_Reconstruction/The_Halton_Sampler
-    CONSTEXPR float RadicalInverse3(uint32 Sample)
+    constexpr float RadicalInverse3(uint32 Sample)
     {
         constexpr float OneMinusEpsilon = 0x1.fffffep-1;
 

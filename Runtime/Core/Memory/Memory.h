@@ -4,13 +4,13 @@
 struct CORE_API FMemory
 {
     template<typename T>
-    static CONSTEXPR T BytesToMegaBytes(T Bytes)
+    static constexpr T BytesToMegaBytes(T Bytes)
     {
         return Bytes / T(1024 * 1024);
     }
 
     template<typename T>
-    static CONSTEXPR T MegaBytesToBytes(T MegaBytes)
+    static constexpr T MegaBytesToBytes(T MegaBytes)
     {
         return MegaBytes * T(1024 * 1024);
     }

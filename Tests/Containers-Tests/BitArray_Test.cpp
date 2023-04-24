@@ -179,7 +179,7 @@ bool TBitArray_Test()
         TEST_CHECK(MakeStringFromBitArray(BitArray) == "0101");
     }
 
-    CONSTEXPR int32 BitCount = 18;
+    constexpr int32 BitCount = 18;
     {
         TBitArray<uint8> BitArray(BitCount, false);
         for (int32 Bit = 0; Bit < BitCount; ++Bit)
@@ -297,7 +297,7 @@ bool TStaticBitArray_Test()
     std::cout << '\n' << "----------TStaticBitArray----------" << '\n' << '\n';
 
     {
-        CONSTEXPR TStaticBitArray<11, uint8> BitArray;
+        constexpr TStaticBitArray<11, uint8> BitArray;
         static_assert(BitArray.Size()         == 11);
         static_assert(BitArray.Capacity()     == 16);
         static_assert(BitArray.IntegerSize()     == 2);
@@ -306,7 +306,7 @@ bool TStaticBitArray_Test()
     }
 
     {
-        CONSTEXPR TStaticBitArray<18, uint32> BitArray;
+        constexpr TStaticBitArray<18, uint32> BitArray;
         static_assert(BitArray.Size()         == 18);
         static_assert(BitArray.Capacity()     == 32);
         static_assert(BitArray.IntegerSize()     == 1);
@@ -315,7 +315,7 @@ bool TStaticBitArray_Test()
     }
 
     {
-        CONSTEXPR TStaticBitArray<9, uint8> BitArray(8, true);
+        constexpr TStaticBitArray<9, uint8> BitArray(8, true);
         static_assert(BitArray.Size()         == 9);
         static_assert(BitArray.Capacity()     == 16);
         static_assert(BitArray.IntegerSize()     == 2);
@@ -324,7 +324,7 @@ bool TStaticBitArray_Test()
     }
 
     {
-        CONSTEXPR TStaticBitArray<8, uint8> BitArray(uint8(0b01010101));
+        constexpr TStaticBitArray<8, uint8> BitArray(uint8(0b01010101));
         static_assert(BitArray.Size()         == 8);
         static_assert(BitArray.Capacity()     == 8);
         static_assert(BitArray.IntegerSize()     == 1);
@@ -333,29 +333,29 @@ bool TStaticBitArray_Test()
     }
 
     {
-        CONSTEXPR const uint8 Bits[] =
+        constexpr const uint8 Bits[] =
         {
             0b01010101,
             0b01010101,
         };
 
-        CONSTEXPR TStaticBitArray<14, uint8> BitArray(Bits, ARRAY_COUNT(Bits));
+        constexpr TStaticBitArray<14, uint8> BitArray(Bits, ARRAY_COUNT(Bits));
         static_assert(BitArray.Size() == 14);
         TEST_CHECK(MakeStringFromBitArray(BitArray) == "01010101010101");
     }
 
     {
-        CONSTEXPR TStaticBitArray<8> BitArray = { false, true, false, true };
+        constexpr TStaticBitArray<8> BitArray = { false, true, false, true };
         static_assert(BitArray.Size() == 8);
         TEST_CHECK(MakeStringFromBitArray(BitArray) == "00001010");
     }
 
     {
-        CONSTEXPR TStaticBitArray<9, uint8> BitArray0(9, true);
+        constexpr TStaticBitArray<9, uint8> BitArray0(9, true);
         static_assert(BitArray0.Size() == 9);
         TEST_CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
 
-        CONSTEXPR TStaticBitArray<9, uint8> BitArray1(BitArray0);
+        constexpr TStaticBitArray<9, uint8> BitArray1(BitArray0);
         static_assert(BitArray1.Size() == 9);
         TEST_CHECK(MakeStringFromBitArray(BitArray1) == "111111111");
         
@@ -363,11 +363,11 @@ bool TStaticBitArray_Test()
     }
 
     {
-        CONSTEXPR TStaticBitArray<9, uint8> BitArray0(9, true);
+        constexpr TStaticBitArray<9, uint8> BitArray0(9, true);
         static_assert(BitArray0.Size() == 9);
         TEST_CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
 
-        CONSTEXPR TStaticBitArray<9, uint8> BitArray1(Move(BitArray0));
+        constexpr TStaticBitArray<9, uint8> BitArray1(Move(BitArray0));
         static_assert(BitArray1.Size() == 9);
         
         TEST_CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
@@ -408,7 +408,7 @@ bool TStaticBitArray_Test()
         TEST_CHECK(LeastSignificantBit == 3);
     }
 
-    CONSTEXPR int32 BitCount = 18;
+    constexpr int32 BitCount = 18;
     {
         TStaticBitArray<BitCount, uint8> BitArray(BitCount, false);
         for (int32 Index = 0; Index < BitCount; ++Index)

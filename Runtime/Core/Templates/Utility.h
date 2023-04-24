@@ -2,7 +2,7 @@
 #include "TypeTraits.h"
 
 #define ENUM_CLASS_OPERATORS(EnumType)                                                                         \
-    CONSTEXPR EnumType operator|(EnumType LHS, EnumType RHS) noexcept                                          \
+    constexpr EnumType operator|(EnumType LHS, EnumType RHS) noexcept                                          \
     {                                                                                                          \
         return EnumType(((TUnderlyingType<EnumType>::Type)LHS) | ((TUnderlyingType<EnumType>::Type)RHS));      \
     }                                                                                                          \
@@ -12,7 +12,7 @@
         return (EnumType&)(((TUnderlyingType<EnumType>::Type&)LHS) |= ((TUnderlyingType<EnumType>::Type)RHS)); \
     }                                                                                                          \
                                                                                                                \
-    CONSTEXPR EnumType operator&(EnumType LHS, EnumType RHS) noexcept                                          \
+    constexpr EnumType operator&(EnumType LHS, EnumType RHS) noexcept                                          \
     {                                                                                                          \
         return EnumType(((TUnderlyingType<EnumType>::Type)LHS) & ((TUnderlyingType<EnumType>::Type)RHS));      \
     }                                                                                                          \
@@ -22,12 +22,12 @@
         return (EnumType&)(((TUnderlyingType<EnumType>::Type&)LHS) &= ((TUnderlyingType<EnumType>::Type)RHS)); \
     }                                                                                                          \
                                                                                                                \
-    CONSTEXPR EnumType operator~(EnumType LHS) noexcept                                                        \
+    constexpr EnumType operator~(EnumType LHS) noexcept                                                        \
     {                                                                                                          \
         return EnumType(~((TUnderlyingType<EnumType>::Type)LHS));                                              \
     }                                                                                                          \
                                                                                                                \
-    CONSTEXPR EnumType operator^(EnumType LHS, EnumType RHS) noexcept                                          \
+    constexpr EnumType operator^(EnumType LHS, EnumType RHS) noexcept                                          \
     {                                                                                                          \
         return EnumType(((TUnderlyingType<EnumType>::Type)LHS) ^ ((TUnderlyingType<EnumType>::Type)RHS));      \
     }                                                                                                          \
@@ -37,7 +37,7 @@
         return (EnumType&)(((TUnderlyingType<EnumType>::Type&)LHS) ^= ((TUnderlyingType<EnumType>::Type)RHS)); \
     }                                                                                                          \
                                                                                                                \
-    CONSTEXPR bool IsEnumFlagSet(EnumType EnumMask, EnumType EnumFlag) noexcept                                \
+    constexpr bool IsEnumFlagSet(EnumType EnumMask, EnumType EnumFlag) noexcept                                \
     {                                                                                                          \
         return (ToUnderlying((EnumMask) & (EnumFlag)) != 0);                                                   \
     }
@@ -202,7 +202,7 @@ namespace Internal
 
 
 template<typename NewType, typename ClassType>
-CONSTEXPR NewType* GetAsBytes(ClassType* Class) noexcept
+constexpr NewType* GetAsBytes(ClassType* Class) noexcept
 {
     return reinterpret_cast<NewType*>(Class);
 }
@@ -210,7 +210,7 @@ CONSTEXPR NewType* GetAsBytes(ClassType* Class) noexcept
 
 // Move an object by converting it into a r-value
 template<typename T>
-CONSTEXPR typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
+constexpr typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
 {
     return static_cast<typename TRemoveReference<T>::Type&&>(Value);
 }
@@ -218,14 +218,14 @@ CONSTEXPR typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
 
 // Forward an object by converting it into a r-value from an l-value
 template<typename T>
-CONSTEXPR T&& Forward(typename TRemoveReference<T>::Type& Value) noexcept
+constexpr T&& Forward(typename TRemoveReference<T>::Type& Value) noexcept
 {
     return static_cast<T&&>(Value);
 }
 
 // Forward an object by converting it into a r-value from an r-value
 template<typename T>
-CONSTEXPR T&& Forward(typename TRemoveReference<T>::Type&& Value) noexcept
+constexpr T&& Forward(typename TRemoveReference<T>::Type&& Value) noexcept
 {
     return static_cast<T&&>(Value);
 }
@@ -242,14 +242,14 @@ FORCEINLINE typename TEnableIf<TNot<TIsConst<T>>::Value>::Type Swap(T& LHS, T& R
 
 
 template<typename EnumType>
-CONSTEXPR typename TUnderlyingType<EnumType>::Type ToUnderlying(EnumType Value)
+constexpr typename TUnderlyingType<EnumType>::Type ToUnderlying(EnumType Value)
 {
     return static_cast<typename TUnderlyingType<EnumType>::Type>(Value);
 }
 
 
 template<typename T>
-CONSTEXPR typename TEnableIf<TIsPointer<T>::Value, uintptr>::Type ToInteger(T Pointer)
+constexpr typename TEnableIf<TIsPointer<T>::Value, uintptr>::Type ToInteger(T Pointer)
 {
     return reinterpret_cast<uintptr>(Pointer);
 }
@@ -277,13 +277,13 @@ inline void ExpandPacks(Packs&&...) { }
 
 
 template<typename EnumType>
-CONSTEXPR typename TEnableIf<TIsEnum<EnumType>::Value, EnumType>::Type EnumAdd(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept
+constexpr typename TEnableIf<TIsEnum<EnumType>::Value, EnumType>::Type EnumAdd(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept
 {
     return static_cast<EnumType>(ToUnderlying(Value) + Offset);
 }
 
 template<typename EnumType>
-CONSTEXPR typename TEnableIf<TIsEnum<EnumType>::Value, EnumType>::Type EnumSub(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept
+constexpr typename TEnableIf<TIsEnum<EnumType>::Value, EnumType>::Type EnumSub(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept
 {
     return static_cast<EnumType>(ToUnderlying(Value) - Offset);
 }

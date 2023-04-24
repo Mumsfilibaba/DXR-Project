@@ -345,7 +345,7 @@ void FGameConsoleWindow::Log(ELogSeverity Severity, const FString& Message)
 {
     SCOPED_LOCK(MessagesCS);
 
-    CONSTEXPR int32 MaxMessages = 100;
+    constexpr int32 MaxMessages = 100;
 
     // Insert in the beginning to get the correct order
     Messages.Add(MakePair<FString, ELogSeverity>(Message, Severity));

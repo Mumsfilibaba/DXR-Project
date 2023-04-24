@@ -642,7 +642,7 @@ public:
 private:
     FORCEINLINE void EnableSharedFromThis(ElementType* InPointer) noexcept
     {
-        if CONSTEXPR(TIsBaseOf<TEnableSharedFromThis<T>, T>::Value)
+        if constexpr(TIsBaseOf<TEnableSharedFromThis<T>, T>::Value)
         {
             typedef typename TRemoveCV<ElementType>::Type PureElementType;
             InPointer->WeakThisPointer = TSharedPtr<PureElementType>(*this, static_cast<PureElementType*>(InPointer));
@@ -1279,7 +1279,7 @@ NODISCARD FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Typ
 }
 
 template<typename ToType, typename FromType>
-CONSTEXPR bool IsSameArrayType()
+constexpr bool IsSameArrayType()
 {
     return (TIsArray<ToType>::Value == TIsArray<FromType>::Value);
 }

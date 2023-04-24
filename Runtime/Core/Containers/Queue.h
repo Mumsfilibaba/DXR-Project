@@ -73,7 +73,7 @@ public:
     FORCEINLINE bool Dequeue(ElementType& OutElement)
     {
         FNode* NextNode;
-        if CONSTEXPR(QueueType == EQueueType::SPMC)
+        if constexpr(QueueType == EQueueType::SPMC)
         {
             NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
@@ -93,7 +93,7 @@ public:
         
         // Set the next node
         FNode* PreviousTail;
-        if CONSTEXPR (QueueType == EQueueType::SPMC)
+        if constexpr (QueueType == EQueueType::SPMC)
         {
             PreviousTail = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
         }
@@ -114,7 +114,7 @@ public:
     FORCEINLINE bool Dequeue()
     {
         FNode* NextNode;
-        if CONSTEXPR(QueueType == EQueueType::SPMC)
+        if constexpr(QueueType == EQueueType::SPMC)
         {
             NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
@@ -130,7 +130,7 @@ public:
         }
         
         FNode* PreviousTail;
-        if CONSTEXPR (QueueType == EQueueType::SPMC)
+        if constexpr (QueueType == EQueueType::SPMC)
         {
             PreviousTail = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
         }
@@ -211,7 +211,7 @@ public:
         }
 
         FNode* PreviousHead;
-        if CONSTEXPR (QueueType == EQueueType::MPSC)
+        if constexpr (QueueType == EQueueType::MPSC)
         {
             PreviousHead = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), NewNode));
             FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&PreviousHead->NextNode), NewNode);

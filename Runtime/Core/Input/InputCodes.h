@@ -204,7 +204,7 @@ enum class EControllerAnalog
     LeftTrigger,
 };
 
-CONSTEXPR const CHAR* ToString(EKey key)
+constexpr const CHAR* ToString(EKey key)
 {
     switch (key)
     {
@@ -332,7 +332,7 @@ CONSTEXPR const CHAR* ToString(EKey key)
     }
 }
 
-CONSTEXPR const CHAR* ToString(EMouseButton Button)
+constexpr const CHAR* ToString(EMouseButton Button)
 {
     switch (Button)
     {
@@ -345,7 +345,7 @@ CONSTEXPR const CHAR* ToString(EMouseButton Button)
     }
 }
 
-CONSTEXPR const CHAR* ToString(EControllerButton Button)
+constexpr const CHAR* ToString(EControllerButton Button)
 {
     switch (Button)
     {
@@ -371,7 +371,7 @@ CONSTEXPR const CHAR* ToString(EControllerButton Button)
     }
 }
 
-CONSTEXPR const CHAR* ToString(EControllerAnalog Button)
+constexpr const CHAR* ToString(EControllerAnalog Button)
 {
     switch (Button)
     {

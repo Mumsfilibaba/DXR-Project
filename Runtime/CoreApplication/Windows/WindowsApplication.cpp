@@ -88,7 +88,7 @@ bool FWindowsApplication::RegisterWindowClass()
 
 bool FWindowsApplication::RegisterRawInputDevices(HWND Window)
 {
-    CONSTEXPR uint32 DeviceCount = 1;
+    constexpr uint32 DeviceCount = 1;
 
     RAWINPUTDEVICE Devices[DeviceCount];
     FMemory::Memzero(Devices, DeviceCount);

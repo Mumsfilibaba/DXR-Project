@@ -308,7 +308,7 @@ public:
      * @brief  - Retrieve the last index that can be used to retrieve an element from the array
      * @return - Returns a the index to the last element of the array
      */
-    NODISCARD CONSTEXPR SizeType LastElementIndex() const noexcept
+    NODISCARD constexpr SizeType LastElementIndex() const noexcept
     {
         return NUM_ELEMENTS - 1;
     }
@@ -317,7 +317,7 @@ public:
      * @brief  - Returns the size of the container
      * @return - The current size of the container
      */
-    NODISCARD CONSTEXPR SizeType Size() const noexcept
+    NODISCARD constexpr SizeType Size() const noexcept
     {
         return NUM_ELEMENTS;
     }
@@ -326,7 +326,7 @@ public:
      * @brief  - Returns the size of the container in bytes
      * @return - The current size of the container in bytes
      */
-    NODISCARD CONSTEXPR SizeType SizeInBytes() const noexcept
+    NODISCARD constexpr SizeType SizeInBytes() const noexcept
     {
         return NUM_ELEMENTS * sizeof(ElementType);
     }
@@ -335,7 +335,7 @@ public:
      * @brief  - Returns the capacity of the container
      * @return - The current capacity of the container
      */
-    NODISCARD CONSTEXPR SizeType Capacity() const noexcept
+    NODISCARD constexpr SizeType Capacity() const noexcept
     {
         return NUM_ELEMENTS;
     }
@@ -344,7 +344,7 @@ public:
      * @brief  - Returns the capacity of the container in bytes
      * @return - The current capacity of the container in bytes
      */
-    NODISCARD CONSTEXPR SizeType CapacityInBytes() const noexcept
+    NODISCARD constexpr SizeType CapacityInBytes() const noexcept
     {
         return NUM_ELEMENTS * sizeof(ElementType);
     }

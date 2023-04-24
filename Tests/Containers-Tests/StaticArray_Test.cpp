@@ -11,7 +11,7 @@ bool TStaticArray_Test()
 {
     std::cout << std::endl << "----------TStaticArray----------" << std::endl << std::endl;
 
-    CONSTEXPR uint32 Num = 16;
+    constexpr uint32 Num = 16;
     TStaticArray<int32, Num> Numbers;
     const TStaticArray<int32, Num>& ConstNumbers = Numbers;
 
@@ -47,7 +47,7 @@ bool TStaticArray_Test()
 
     std::cout << "Testing Range Based For-Loops" << std::endl;
 
-    CONSTEXPR uint32 Num2 = 6;
+    constexpr uint32 Num2 = 6;
     TStaticArray<uint32, Num2> Numbers1 = { 5, 6, 7 };
     TEST_CHECK(Numbers1[0] == 5);
     TEST_CHECK(Numbers1[1] == 6);

@@ -12,7 +12,7 @@
 
 #pragma warning(pop)
 
-CONSTEXPR EFormat ConvertFormat(tinyddsloader::DDSFile::DXGIFormat Format)
+constexpr EFormat ConvertFormat(tinyddsloader::DDSFile::DXGIFormat Format)
 {
     switch (Format)
     {

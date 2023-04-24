@@ -31,13 +31,13 @@ void FRenderTargetDebugWindow::Paint(const FRectangle& AssignedBounds)
         ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height));
 
-        CONSTEXPR ImGuiWindowFlags Flags =
+        constexpr ImGuiWindowFlags Flags =
             ImGuiWindowFlags_NoDecoration |
             ImGuiWindowFlags_AlwaysAutoResize |
             ImGuiWindowFlags_NoFocusOnAppearing |
             ImGuiWindowFlags_NoSavedSettings;
 
-        CONSTEXPR float MinImageSize = 96.0f;
+        constexpr float MinImageSize = 96.0f;
 
         bool bTempDrawTextureDebugger = GDrawTextureDebugger.GetValue();
         if (ImGui::Begin("RenderTarget Debugger", &bTempDrawTextureDebugger, Flags))

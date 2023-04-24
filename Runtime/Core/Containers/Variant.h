@@ -7,10 +7,10 @@ class TVariant
 {
     using TypeIndexType = int32;
 
-    inline static CONSTEXPR TypeIndexType SizeInBytes      = TMax<sizeof(Types)...>::Value;
-    inline static CONSTEXPR TypeIndexType AlignmentInBytes = TMax<alignof(Types)...>::Value;
-    inline static CONSTEXPR TypeIndexType InvalidTypeIndex = -1;
-    inline static CONSTEXPR TypeIndexType MaxTypeIndex     = sizeof... (Types);
+    inline static constexpr TypeIndexType SizeInBytes      = TMax<sizeof(Types)...>::Value;
+    inline static constexpr TypeIndexType AlignmentInBytes = TMax<alignof(Types)...>::Value;
+    inline static constexpr TypeIndexType InvalidTypeIndex = -1;
+    inline static constexpr TypeIndexType MaxTypeIndex     = sizeof... (Types);
 
     template<TypeIndexType CurrentIndex, typename WantedType, typename... OtherTypes>
     struct TVariantIndexHelper
@@ -73,7 +73,7 @@ class TVariant
     {
         static void Destruct(TypeIndexType Index, void* Memory) noexcept
         {
-            static CONSTEXPR void(*Table[])(void*) = { &TDestructor<Types>::Destruct... };
+            static constexpr void(*Table[])(void*) = { &TDestructor<Types>::Destruct... };
 
             CHECK(Index < ARRAY_COUNT(Table));
             Table[Index](Memory);
@@ -94,7 +94,7 @@ class TVariant
     {
         static void Copy(TypeIndexType Index, void* Memory, const void* Value) noexcept
         {
-            static CONSTEXPR void(*Table[])(void*, void*) = { &TCopyConstructor<Types>::Copy... };
+            static constexpr void(*Table[])(void*, void*) = { &TCopyConstructor<Types>::Copy... };
 
             CHECK(Index < ARRAY_COUNT(Table));
             Table[Index](Memory, Value);
@@ -115,7 +115,7 @@ class TVariant
     {
         static void Move(TypeIndexType Index, void* Memory, void* Value) noexcept
         {
-            static CONSTEXPR void(*Table[])(void*, void*) = { &TMoveConstructor<Types>::Move... };
+            static constexpr void(*Table[])(void*, void*) = { &TMoveConstructor<Types>::Move... };
 
             CHECK(Index < ARRAY_COUNT(Table));
             Table[Index](Memory, Value);
@@ -141,7 +141,7 @@ class TVariant
     {
         NODISCARD static bool IsEqual(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
         {
-            static CONSTEXPR bool(*Table[])(const void*, const void*) = { &TCompareFuncs<Types>::IsEqual... };
+            static constexpr bool(*Table[])(const void*, const void*) = { &TCompareFuncs<Types>::IsEqual... };
 
             CHECK(Index < ARRAY_COUNT(Table));
             return Table[Index](LHS, RHS);
@@ -149,7 +149,7 @@ class TVariant
 
         NODISCARD static bool IsLessThan(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
         {
-            static CONSTEXPR bool(*Table[])(const void*, const void*) = { &TCompareFuncs<Types>::IsLessThan... };
+            static constexpr bool(*Table[])(const void*, const void*) = { &TCompareFuncs<Types>::IsLessThan... };
 
             CHECK(Index < ARRAY_COUNT(Table));
             return Table[Index](LHS, RHS);

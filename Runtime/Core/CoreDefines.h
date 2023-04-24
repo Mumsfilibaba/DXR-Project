@@ -128,14 +128,6 @@
 #endif
 
 
-#define ENABLE_CONSTEXPR (1)
-#if ENABLE_CONSTEXPR
-    #define CONSTEXPR constexpr
-#else
-    #define CONSTEXPR
-#endif
-
-
 #define ENABLE_NODISCARD (1)
 #if ENABLE_NODISCARD
     #define NODISCARD [[nodiscard]]

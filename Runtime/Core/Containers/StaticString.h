@@ -1427,7 +1427,7 @@ public:
      * @brief  - Retrieve the capacity of the container
      * @return - The capacity of the container
      */
-    NODISCARD CONSTEXPR SizeType Capacity() const noexcept
+    NODISCARD constexpr SizeType Capacity() const noexcept
     {
         return NUM_CHARS;
     }
@@ -1436,7 +1436,7 @@ public:
      * @brief - Retrieve the capacity of the container in bytes
      * @return - The capacity of the container in bytes
      */
-    NODISCARD CONSTEXPR SizeType CapacityInBytes() const noexcept
+    NODISCARD constexpr SizeType CapacityInBytes() const noexcept
     {
         return NUM_CHARS * sizeof(CharType);
     }

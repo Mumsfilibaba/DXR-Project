@@ -167,7 +167,7 @@ void TSharedPtr_Test()
         PrintRefCount(VirtualPtr1);
     }
 
-    CONSTEXPR uint32 Num = 5;
+    constexpr uint32 Num = 5;
     std::cout << std::endl << "----Testing Operator[]----" << std::endl << std::endl;
     {
         TSharedPtr<uint32[]> ConstPtr3 = MakeShared<uint32[]>(5);

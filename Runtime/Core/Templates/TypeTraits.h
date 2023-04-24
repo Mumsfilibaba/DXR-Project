@@ -974,7 +974,7 @@ struct TAlignmentOf
 };
 
 template<typename T>
-inline CONSTEXPR int32 AlignmentOf = TAlignmentOf<T>::Value;
+inline constexpr int32 AlignmentOf = TAlignmentOf<T>::Value;
 
 // Determine if the type can be reallocated using realloc, that is the type does
 // not reference itself or have classes pointing directly to an element. This

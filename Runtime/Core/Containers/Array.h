@@ -901,7 +901,7 @@ public:
     /**
      * @return - Returns the stride of each element of the container
      */
-    NODISCARD CONSTEXPR SizeType Stride() const noexcept
+    NODISCARD constexpr SizeType Stride() const noexcept
     {
         return sizeof(ElementType);
     }
@@ -1223,7 +1223,7 @@ private:
 
     FORCEINLINE void ReserveUnchecked(const SizeType NewCapacity) noexcept
     {
-        if CONSTEXPR (TNot<TIsReallocatable<ElementType>>::Value)
+        if constexpr (TNot<TIsReallocatable<ElementType>>::Value)
         {
             if (ArrayMax)
             {
@@ -1314,7 +1314,7 @@ private:
     // Calculate how much the array should grow, will always be at least one
     NODISCARD static FORCEINLINE SizeType CalculateGrowth(SizeType NumElements, SizeType CurrentCapacity) noexcept
     {
-        CONSTEXPR SizeType FirstAlloc = 4;
+        constexpr SizeType FirstAlloc = 4;
 
         SizeType NewSize;
         if (CurrentCapacity)
@@ -1362,7 +1362,7 @@ private:
         }
 
         // Max number of elements to use for QuickSort, otherwise use InsertionSort
-        CONSTEXPR SizeType Threshold = 24;
+        constexpr SizeType Threshold = 24;
         if ((Last - First + 1) >= Threshold)
         {
             const SizeType Pivot = SortPartition(First, Last, Predicate);

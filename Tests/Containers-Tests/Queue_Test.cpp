@@ -48,9 +48,9 @@ namespace MPSCTest
     
     bool GIsRunning = true;
 
-    CONSTEXPR int64 NumItemsPerProducer = 500;
-    CONSTEXPR int64 ProducerOffset      = 1000;
-    CONSTEXPR int64 NumProducers        = 6;
+    constexpr int64 NumItemsPerProducer = 500;
+    constexpr int64 ProducerOffset      = 1000;
+    constexpr int64 NumProducers        = 6;
 
     struct FProducerThread : public FThreadInterface
     {
@@ -154,8 +154,8 @@ namespace MPSCTest
 // Single Producer, Multiple Consumers
 namespace SPMCTest
 {
-    CONSTEXPR int64 NumItems     = 500;
-    CONSTEXPR int64 NumConsumers = 6;
+    constexpr int64 NumItems     = 500;
+    constexpr int64 NumConsumers = 6;
 
     TQueue<FString, EQueueType::SPMC>* GQueue = nullptr;
 

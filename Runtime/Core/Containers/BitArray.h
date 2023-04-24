@@ -788,33 +788,33 @@ public: // STL Iterators
     NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return EndIterator(); }
 
 public: 
-    NODISCARD static CONSTEXPR SizeType NumBitsPerInteger() noexcept
+    NODISCARD static constexpr SizeType NumBitsPerInteger() noexcept
     {
         return sizeof(InIntegerType) * 8;
     }
 
 private:
-    NODISCARD static CONSTEXPR SizeType GetArrayIndexOfBit(SizeType BitIndex) noexcept
+    NODISCARD static constexpr SizeType GetArrayIndexOfBit(SizeType BitIndex) noexcept
     {
         return (BitIndex / NumBitsPerInteger());
     }
 
-    NODISCARD static CONSTEXPR SizeType GetIndexOfBitInArray(SizeType BitIndex) noexcept
+    NODISCARD static constexpr SizeType GetIndexOfBitInArray(SizeType BitIndex) noexcept
     {
         return (BitIndex % NumBitsPerInteger());
     }
 
-    NODISCARD static CONSTEXPR InIntegerType CreateMaskForBit(SizeType BitIndex) noexcept
+    NODISCARD static constexpr InIntegerType CreateMaskForBit(SizeType BitIndex) noexcept
     {
         return InIntegerType(1) << GetIndexOfBitInArray(BitIndex);
     }
 
-    NODISCARD static CONSTEXPR InIntegerType CreateMaskUpToBit(SizeType BitIndex) noexcept
+    NODISCARD static constexpr InIntegerType CreateMaskUpToBit(SizeType BitIndex) noexcept
     {
         return CreateMaskForBit(BitIndex) - 1;
     }
 
-    NODISCARD static CONSTEXPR SizeType GetNumIntegersRequiredForBits(SizeType InNumBits) noexcept
+    NODISCARD static constexpr SizeType GetNumIntegersRequiredForBits(SizeType InNumBits) noexcept
     {
         return (InNumBits + (NumBitsPerInteger() - 1)) / NumBitsPerInteger();
     }

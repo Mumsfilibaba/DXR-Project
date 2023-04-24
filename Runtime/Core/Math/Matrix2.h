@@ -107,8 +107,8 @@ public:
         NVectorOp::Float128 This = NVectorOp::LoadAligned(this);
         This = NVectorOp::Shuffle<3, 2, 1, 0>(This);
 
-        CONSTEXPR int32 Keep   = 0;
-        CONSTEXPR int32 Negate = (1 << 31);
+        constexpr int32 Keep   = 0;
+        constexpr int32 Negate = (1 << 31);
 
         NVectorOp::Int128 Mask = NVectorOp::Load(Keep, Negate, Negate, Keep);
         This = NVectorOp::Or(This, NVectorOp::CastIntToFloat(Mask));
@@ -140,8 +140,8 @@ public:
         NVectorOp::Float128 This = NVectorOp::LoadAligned(this);
         This = NVectorOp::Shuffle<3, 2, 1, 0>(This);
 
-        CONSTEXPR int32 Keep   = 0;
-        CONSTEXPR int32 Negate = (1 << 31);
+        constexpr int32 Keep   = 0;
+        constexpr int32 Negate = (1 << 31);
 
         NVectorOp::Int128 Mask = NVectorOp::Load(Keep, Negate, Negate, Keep);
         This = NVectorOp::Or(This, NVectorOp::CastIntToFloat(Mask));

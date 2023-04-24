@@ -82,7 +82,7 @@ enum : uint32
 };
 
 
-CONSTEXPR MTLLoadAction ConvertAttachmentLoadAction(EAttachmentLoadAction LoadAction)
+constexpr MTLLoadAction ConvertAttachmentLoadAction(EAttachmentLoadAction LoadAction)
 {
     switch(LoadAction)
     {
@@ -93,7 +93,7 @@ CONSTEXPR MTLLoadAction ConvertAttachmentLoadAction(EAttachmentLoadAction LoadAc
     }
 }
 
-CONSTEXPR MTLStoreAction ConvertAttachmentStoreAction(EAttachmentStoreAction StoreAction)
+constexpr MTLStoreAction ConvertAttachmentStoreAction(EAttachmentStoreAction StoreAction)
 {
     switch(StoreAction)
     {
@@ -134,7 +134,7 @@ inline MTLTextureType GetMTLTextureType(FRHITexture* Texture)
     }
 }
 
-CONSTEXPR MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
+constexpr MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
 {
     MTLTextureUsage Result = MTLTextureUsageUnknown;
     if ((Flag & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None)
@@ -157,7 +157,7 @@ CONSTEXPR MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
     return Result;
 }
 
-CONSTEXPR MTLPixelFormat ConvertFormat(EFormat Format)
+constexpr MTLPixelFormat ConvertFormat(EFormat Format)
 {
     switch (Format)
     {
@@ -234,7 +234,7 @@ CONSTEXPR MTLPixelFormat ConvertFormat(EFormat Format)
     }
 }
 
-CONSTEXPR MTLVertexFormat ConvertVertexFormat(EFormat Format)
+constexpr MTLVertexFormat ConvertVertexFormat(EFormat Format)
 {
     switch (Format)
     {
@@ -293,7 +293,7 @@ CONSTEXPR MTLVertexFormat ConvertVertexFormat(EFormat Format)
     }
 }
 
-CONSTEXPR MTLVertexStepFunction ConvertVertexInputClass(EVertexInputClass InputClass)
+constexpr MTLVertexStepFunction ConvertVertexInputClass(EVertexInputClass InputClass)
 {
     switch (InputClass)
     {
@@ -303,7 +303,7 @@ CONSTEXPR MTLVertexStepFunction ConvertVertexInputClass(EVertexInputClass InputC
     }
 }
 
-CONSTEXPR MTLCompareFunction ConvertCompareFunction(EComparisonFunc ComparisonFunc)
+constexpr MTLCompareFunction ConvertCompareFunction(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -319,7 +319,7 @@ CONSTEXPR MTLCompareFunction ConvertCompareFunction(EComparisonFunc ComparisonFu
     }
 }
 
-CONSTEXPR MTLStencilOperation ConvertStencilOp(EStencilOp StencilOp)
+constexpr MTLStencilOperation ConvertStencilOp(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
@@ -335,7 +335,7 @@ CONSTEXPR MTLStencilOperation ConvertStencilOp(EStencilOp StencilOp)
     }
 }
 
-CONSTEXPR MTLPrimitiveType ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
+constexpr MTLPrimitiveType ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
 {
     switch (PrimitiveTopology)
     {
@@ -348,7 +348,7 @@ CONSTEXPR MTLPrimitiveType ConvertPrimitiveTopology(EPrimitiveTopology Primitive
     }
 }
 
-CONSTEXPR MTLTriangleFillMode ConvertFillMode(EFillMode FillMode)
+constexpr MTLTriangleFillMode ConvertFillMode(EFillMode FillMode)
 {
     switch (FillMode)
     {

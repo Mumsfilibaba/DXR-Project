@@ -120,12 +120,12 @@ class TInlineArrayAllocator
     public:
         using SizeType = int32;
 
-        NODISCARD CONSTEXPR ElementType* GetElements() const noexcept
+        NODISCARD constexpr ElementType* GetElements() const noexcept
         {
             return reinterpret_cast<ElementType*>(InlineAllocation);
         }
 
-        NODISCARD CONSTEXPR SizeType Size() const noexcept
+        NODISCARD constexpr SizeType Size() const noexcept
         {
             return sizeof(InlineAllocation);
         }

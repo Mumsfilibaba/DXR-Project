@@ -5,7 +5,7 @@
 
 class FRandom 
 {
-    static CONSTEXPR uint64 Multipler = 0x2545F4914F6CDD1D;
+    static constexpr uint64 Multipler = 0x2545F4914F6CDD1D;
 
 public:
     FRandom() 

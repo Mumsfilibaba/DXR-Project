@@ -50,7 +50,7 @@ enum class EShaderStage : uint8
     RayCallable     = 14,
 };
 
-CONSTEXPR const CHAR* ToString(EShaderStage ShaderStage)
+constexpr const CHAR* ToString(EShaderStage ShaderStage)
 {
     switch(ShaderStage)
     {
@@ -241,18 +241,18 @@ protected:
 };
 
 
-CONSTEXPR bool ShaderStageIsGraphics(EShaderStage ShaderStage)
+constexpr bool ShaderStageIsGraphics(EShaderStage ShaderStage)
 {
     return ((ShaderStage >= EShaderStage::Vertex) && (ShaderStage < EShaderStage::Compute)) ? true : false;
 }
 
 /** @brief - Determine if the Compute Pipeline is used (DXR uses the compute pipeline for RootSignatures) */
-CONSTEXPR bool ShaderStageIsCompute(EShaderStage ShaderStage)
+constexpr bool ShaderStageIsCompute(EShaderStage ShaderStage)
 {
     return (ShaderStage >= EShaderStage::Compute) ? true : false;
 }
 
-CONSTEXPR bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
+constexpr bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
 {
     return (ShaderStage >= EShaderStage::RayGen) ? true : false;
 }

@@ -24,11 +24,11 @@ static void CreateMalloc()
     if (!GMalloc)
     {
         GMalloc = new FMallocANSI();
-        if CONSTEXPR(USE_DEBUG_MALLOC)
+        if constexpr(USE_DEBUG_MALLOC)
         {
             GMalloc = new FMallocLeakTracker(GMalloc);
         }
-        else if CONSTEXPR(TRACK_MALLOC_CALLSTACK)
+        else if constexpr(TRACK_MALLOC_CALLSTACK)
         {
             GMalloc = new FMallocStackTraceTracker(GMalloc);
         }

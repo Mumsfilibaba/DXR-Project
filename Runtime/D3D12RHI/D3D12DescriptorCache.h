@@ -12,8 +12,8 @@ template <typename ViewType, D3D12_DESCRIPTOR_HEAP_TYPE HeapType, uint32 kDescri
 class TD3D12ViewCache
 {
 public:
-    static CONSTEXPR D3D12_DESCRIPTOR_HEAP_TYPE GetDescriptorHeapType() { return HeapType; }
-    static CONSTEXPR uint32                     GetDescriptorTableSize() { return kDescriptorTableSize; }
+    static constexpr D3D12_DESCRIPTOR_HEAP_TYPE GetDescriptorHeapType() { return HeapType; }
+    static constexpr uint32                     GetDescriptorTableSize() { return kDescriptorTableSize; }
 
 public:
     TD3D12ViewCache()
@@ -104,22 +104,22 @@ using FD3D12SamplerStateCache        = TD3D12ViewCache<FD3D12SamplerState       
 
 struct FD3D12PipelineStageMask
 {
-    static CONSTEXPR FD3D12PipelineStageMask ComputeMask()
+    static constexpr FD3D12PipelineStageMask ComputeMask()
     {
         return FD3D12PipelineStageMask(1, 0, 0, 0, 0, 0);
     }
 
-    static CONSTEXPR FD3D12PipelineStageMask BasicGraphicsMask()
+    static constexpr FD3D12PipelineStageMask BasicGraphicsMask()
     {
         return FD3D12PipelineStageMask(0, 1, 0, 0, 0, 1);
     }
 
-    static CONSTEXPR FD3D12PipelineStageMask FullGraphicsMask()
+    static constexpr FD3D12PipelineStageMask FullGraphicsMask()
     {
         return FD3D12PipelineStageMask(0, 1, 1, 1, 1, 1);
     }
 
-    CONSTEXPR FD3D12PipelineStageMask()
+    constexpr FD3D12PipelineStageMask()
         : ComputeStage(0)
         , VertexStage(0)
         , HullStage(0)
@@ -128,7 +128,7 @@ struct FD3D12PipelineStageMask
         , PixelStage(0)
     { }
 
-    CONSTEXPR FD3D12PipelineStageMask(
+    constexpr FD3D12PipelineStageMask(
         uint8 InComputeStage,
         uint8 InVertexStage,
         uint8 InHullStage,
@@ -143,13 +143,13 @@ struct FD3D12PipelineStageMask
         , PixelStage(InPixelStage)
     { }
 
-    CONSTEXPR bool CheckShaderVisibility(EShaderVisibility ShaderVisibility) const
+    constexpr bool CheckShaderVisibility(EShaderVisibility ShaderVisibility) const
     {
         const uint8 Flag = (1 << ShaderVisibility);
         return (*GetAsBytes<const uint8>(this)) & Flag;
     }
 
-    CONSTEXPR bool operator==(FD3D12PipelineStageMask RHS) const
+    constexpr bool operator==(FD3D12PipelineStageMask RHS) const
     {
         return 
             (ComputeStage  == RHS.ComputeStage)  &&
@@ -160,7 +160,7 @@ struct FD3D12PipelineStageMask
             (PixelStage    == RHS.PixelStage);
     }
 
-    CONSTEXPR bool operator!=(FD3D12PipelineStageMask RHS) const
+    constexpr bool operator!=(FD3D12PipelineStageMask RHS) const
     {
         return !(*this == RHS);
     }
