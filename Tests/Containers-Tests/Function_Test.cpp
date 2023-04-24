@@ -163,25 +163,33 @@ bool TFunction_Test()
         LambdaFunc(20);
 
         A a1;
-        TFunction<bool(int32)> LambdaMemberFunc = [&](int32 Input) -> bool
         {
-            std::cout << "--Lambda Begin--" << std::endl;
-            a1.Func(Input);
-            a1.Func2(Input);
-            std::cout << "--Lambda End--";
-            return true;
-        };
-        LambdaMemberFunc(20);
+            TFunction<bool(int32)> LambdaMemberFunc = [&](int32 Input) -> bool
+            {
+                std::cout << "--Lambda Begin--" << std::endl;
+                a1.Func(Input);
+                a1.Func2(Input);
+                std::cout << "--Lambda End--";
+                return true;
+            };
+            LambdaMemberFunc(20);
+        }
 
         std::cout << std::endl << "-------Test copy constructor-------" << std::endl << std::endl;
 
-        TFunction<bool(int32)> CopyFunc(MemberFunc);
-        CopyFunc(30);
+        {
+            TFunction<bool(int32)> CopyFunc(MemberFunc);
+            CopyFunc(30);
+        }
+
         MemberFunc(40);
 
         std::cout << std::endl << "-------Test Move constructor-------" << std::endl << std::endl;
-        TFunction<bool(int32)> MoveFunc(Move(LambdaFunc));
-        MoveFunc(50);
+        {
+            TFunction<bool(int32)> MoveFunc(::Move(LambdaFunc));
+            MoveFunc(50);
+        }
+
         if (LambdaFunc)
         {
             LambdaFunc(60);
@@ -203,15 +211,19 @@ bool TFunction_Test()
         std::cout << std::endl << "-------Test IsValid-------" << std::endl << std::endl;
         std::cout << "NormalFunc=" << std::boolalpha << NormalFunc.IsValid() << std::endl;
 
-        TFunction<void(int)> EmptyFunc;
-        std::cout << "EmptyFunc=" << std::boolalpha << EmptyFunc.IsValid() << std::endl;
+        {
+            TFunction<void(int)> EmptyFunc;
+            std::cout << "EmptyFunc=" << std::boolalpha << EmptyFunc.IsValid() << std::endl;
+        }
 
         std::cout << std::endl << "-------Test Bind-------" << std::endl << std::endl;
         int32 Num0 = 50;
         int32 Num1 = 100;
 
-        TFunction<int(int, int)> Payload = Bind(TupleFunc, Num0, Num1);
-        Payload(150, 200);
+        {
+            TFunction<int(int, int)> Payload = Bind(TupleFunc, Num0, Num1);
+            Payload(150, 200);
+        }
 
         auto Payload2 = Bind(Func, 42);
         Payload2();
