@@ -740,7 +740,7 @@ public:
     }
 
     /**
-     * @brief             - Swap two elements with eachother
+     * @brief             - Swap two elements with each other
      * @param FirstIndex  - Index to the first element to Swap
      * @param SecondIndex - Index to the second element to Swap
      */
@@ -749,7 +749,7 @@ public:
         CHECK(IsValidIndex(FirstIndex));
         CHECK(IsValidIndex(SecondIndex));
         ElementType* Array = Allocator.GetAllocation();
-        ::Swap(Array[FirstIndex], Array[SecondIndex])
+        ::Swap(Array[FirstIndex], Array[SecondIndex]);
     }
 
     /**
@@ -775,7 +775,7 @@ public:
     }
 
     /**
-     * @brief - Sort the array using the quicksort algorithm, assumes that the ElementType has the '<' operator
+     * @brief - Sort the array using the quick-sort algorithm, assumes that the ElementType has the '<' operator
      */
     FORCEINLINE void Sort()
     {
@@ -786,7 +786,7 @@ public:
     }
 
     /**
-     * @brief - Sort the array using the quicksort algorithm, assumes that the ElementType has the '<' operator
+     * @brief - Sort the array using the quick-sort algorithm, assumes that the ElementType has the '<' operator
      */
     template<typename PredicateType>
     FORCEINLINE void SortWithPredicate(PredicateType&& Predicate)

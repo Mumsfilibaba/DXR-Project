@@ -240,7 +240,7 @@ bool TFunction_Test()
 #endif
 
     // TFunctionRef
-#define TEST_TFUNCTIONREF
+#ifdef TEST_TFUNCTIONREF
     {
         std::cout << std::endl << "----------TFunctionRef---------" << std::endl << std::endl;
         std::cout << "Testing constructors" << std::endl;

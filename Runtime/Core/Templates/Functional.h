@@ -56,17 +56,17 @@ private:
     template<typename Fn, typename = void, typename... Args>
     struct TIsInvokableHelper
     {
-        enum { Value = false };
+        inline static constexpr bool Value = false;
     };
 
     template<typename Fn, typename... Args>
     struct TIsInvokableHelper<Fn, typename TVoid<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...)) >::Type, Args...>
     {
-        enum { Value = true };
+        inline static constexpr bool Value = true;
     };
 
 public:
-    enum { Value = TIsInvokableHelper<FuncType, void, ArgTypes...>::Value };
+    inline static constexpr bool Value = TIsInvokableHelper<FuncType, void, ArgTypes...>::Value;
 };
 
 template<typename FuncType, typename ReturnType, typename... ArgTypes>
@@ -76,15 +76,15 @@ private:
     template<typename Fn, typename Ret, typename = void, typename... Args>
     struct TIsInvokableRHelper
     {
-        enum { Value = false };
+        inline static constexpr bool Value = false;
     };
 
     template<typename Fn, typename Ret, typename... Args>
     struct TIsInvokableRHelper<Fn, Ret, typename TVoid<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...))>::Type, Args...>
     {
-        enum { Value = TIsConvertible<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...)), Ret>::Value };
+        inline static constexpr bool Value = TIsConvertible<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...)), Ret>::Value;
     };
 
 public:
-    enum { Value = TIsInvokableRHelper<FuncType, ReturnType, void, ArgTypes...>::Value };
+    inline static constexpr bool Value = TIsInvokableRHelper<FuncType, ReturnType, void, ArgTypes...>::Value;
 };

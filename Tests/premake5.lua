@@ -3,7 +3,7 @@ workspace "EngineTests"
     architecture 	"x64"
     warnings 		"extra"
 	language 		"C++"
-	cppdialect 		"C++17"
+	cppdialect 		"C++20"
 	systemversion 	"latest"
 	characterset 	"Ascii"
 	flags 
@@ -33,7 +33,7 @@ workspace "EngineTests"
 		"../Runtime/",
 	}
 
-
+	-- Defines
 	defines
 	{
 		"MONOLITHIC_BUILD=(1)",

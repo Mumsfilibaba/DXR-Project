@@ -25,7 +25,7 @@ struct TIdentity
 template<bool bInValue>
 struct TValue
 {
-    enum { Value = bInValue };
+    inline static constexpr bool Value = bInValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -34,7 +34,7 @@ struct TValue
 template<typename T>
 struct TNot
 {
-    enum { Value = !T::Value };
+    inline static constexpr bool Value = !T::Value;
 };
 
 
@@ -44,13 +44,13 @@ struct TAnd;
 template<typename T, typename... ArgsType>
 struct TAnd<T, ArgsType...>
 {
-    enum { Value = (T::Value && TAnd<ArgsType...>::Value) };
+    inline static constexpr bool Value = (T::Value && TAnd<ArgsType...>::Value);
 };
 
 template<typename T>
 struct TAnd<T>
 {
-    enum { Value = T::Value };
+    inline static constexpr bool Value = T::Value;
 };
 
 
@@ -60,45 +60,45 @@ struct TOr;
 template<typename T, typename... ArgsType>
 struct TOr<T, ArgsType...>
 {
-    enum { Value = (T::Value || TOr<ArgsType...>::Value) };
+    inline static constexpr bool Value = (T::Value || TOr<ArgsType...>::Value);
 };
 
 template<typename T>
 struct TOr<T>
 {
-    enum { Value = T::Value };
+    inline static constexpr bool Value = T::Value;
 };
 
 
-template<int32 Arg0, int32... RestArgs>
+template<int64 Arg0, int64... RestArgs>
 struct TMin;
 
-template<int32 Arg0>
+template<int64 Arg0>
 struct TMin<Arg0>
 {
-    enum { Value = Arg0 };
+    inline static constexpr int64 Value = Arg0;
 };
 
-template<int32 Arg0, int32 Arg1, int32... RestArgs>
+template<int64 Arg0, int64 Arg1, int64... RestArgs>
 struct TMin<Arg0, Arg1, RestArgs...>
 {
-    enum { Value = (Arg0 <= Arg1) ? TMin<Arg0, RestArgs...>::Value : TMin<Arg1, RestArgs...>::Value };
+    inline static constexpr int64 Value = (Arg0 <= Arg1) ? TMin<Arg0, RestArgs...>::Value : TMin<Arg1, RestArgs...>::Value;
 };
 
 
-template<int32 Arg0, int32... RestArgs>
+template<int64 Arg0, int64... RestArgs>
 struct TMax;
 
-template<int32 Arg0>
+template<int64 Arg0>
 struct TMax<Arg0>
 {
-    enum { Value = Arg0 };
+    inline static constexpr int64 Value = Arg0;
 };
 
-template<int32 Arg0, int32 Arg1, int32... RestArgs>
+template<int64 Arg0, int64 Arg1, int64... RestArgs>
 struct TMax<Arg0, Arg1, RestArgs...>
 {
-    enum { Value = (Arg0 >= Arg1) ? TMax<Arg0, RestArgs...>::Value : TMax<Arg1, RestArgs...>::Value };
+    inline static constexpr int64 Value = (Arg0 >= Arg1) ? TMax<Arg0, RestArgs...>::Value : TMax<Arg1, RestArgs...>::Value;
 };
 
 
@@ -320,101 +320,101 @@ struct TEnableIf<true, T>
 template<typename T>
 struct TIsEmpty
 {
-    enum { Value = __is_empty(T) };
+    inline static constexpr bool Value = __is_empty(T);
 };
 
 
 template<typename T>
 struct TIsEnum
 {
-    enum { Value = __is_enum(T) };
+    inline static constexpr bool Value = __is_enum(T);
 };
 
 
 template<typename T>
 struct TIsUnion
 {
-    enum { Value = __is_union(T) };
+    inline static constexpr bool Value = __is_union(T);
 };
 
 
 template<typename T>
 struct TIsFinal
 {
-    enum { Value = __is_final(T) };
+    inline static constexpr bool Value = __is_final(T);
 };
 
 
 template<typename T>
 struct TIsPOD
 {
-    enum { Value = __is_pod(T) };
+    inline static constexpr bool Value = __is_pod(T);
 };
 
 
 template<typename T>
 struct TIsPolymorphic
 {
-    enum { Value = __is_polymorphic(T) };
+    inline static constexpr bool Value = __is_polymorphic(T);
 };
 
 
 template<typename T, typename FromType>
 struct TIsAssignable
 {
-    enum { Value = __is_assignable(T, FromType) };
+    inline static constexpr bool Value = __is_assignable(T, FromType);
 };
 
 
 template<typename BaseType, typename DerivedType>
 struct TIsBaseOf
 {
-    enum { Value = __is_base_of(BaseType, DerivedType) };
+    inline static constexpr bool Value = __is_base_of(BaseType, DerivedType);
 };
 
 
 template<typename T, typename... ArgTypes>
 struct TIsConstructible
 {
-    enum { Value = __is_constructible(T, ArgTypes...) };
+    inline static constexpr bool Value = __is_constructible(T, ArgTypes...);
 };
 
 
 template<typename FromType, typename ToType>
 struct TIsConvertible
 {
-    enum { Value = __is_convertible_to(FromType, ToType) };
+    inline static constexpr bool Value = __is_convertible_to(FromType, ToType);
 };
 
 template<typename FromType, typename ToType>
 struct TIsPointerConvertible
 {
-    enum { Value = TIsConvertible<TAddPointer<FromType>::Type, TAddPointer<ToType>::Type>::Value };
+    inline static constexpr bool Value = TIsConvertible<TAddPointer<FromType>::Type, TAddPointer<ToType>::Type>::Value;
 };
 
 
 template<typename T>
 struct TIsTriviallyCopyable
 {
-    enum { Value = __is_trivially_copyable(T) };
+    inline static constexpr bool Value = __is_trivially_copyable(T);
 };
 
 template<typename T, typename... ArgTypes>
 struct TIsTriviallyConstructable
 {
-    enum { Value = __is_trivially_constructible(T, ArgTypes...) };
+    inline static constexpr bool Value = __is_trivially_constructible(T, ArgTypes...);
 };
 
 template<typename T>
 struct TIsTriviallyDestructable
 {
-    enum { Value = __is_trivially_destructible(T) };
+    inline static constexpr bool Value = __is_trivially_destructible(T);
 };
 
 template<typename T>
 struct TIsTrivial
 {
-    enum { Value = TAnd<TIsTriviallyConstructable<T>, TIsTriviallyCopyable<T>, TIsTriviallyDestructable<T>>::Value };
+    inline static constexpr bool Value = TAnd<TIsTriviallyConstructable<T>, TIsTriviallyCopyable<T>, TIsTriviallyDestructable<T>>::Value;
 };
 
 
@@ -428,65 +428,103 @@ struct TUnderlyingType
 template<typename T>
 struct TIsConst
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
 
 template<typename T>
 struct TIsConst<const T>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 
 template<typename T>
 struct TIsVolatile
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
 
 template<typename T>
 struct TIsVolatile<volatile T>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 
 template<typename T>
 struct TIsCopyConstructable
 {
-    enum { Value = TIsConstructible<T, typename TAddLValueReference<const T>::Type>::Value };
+    inline static constexpr bool Value = TIsConstructible<T, typename TAddLValueReference<const T>::Type>::Value;
 };
 
 template<typename T>
 struct TIsCopyAssignable
 {
-    enum { Value = TIsAssignable<T, typename TAddLValueReference<const T>::Type>::Value };
+    inline static constexpr bool Value = TIsAssignable<T, typename TAddLValueReference<const T>::Type>::Value;
 };
 
 
 template<typename T>
 struct TIsMoveConstructable
 {
-    enum { Value = TIsConstructible<T, typename TAddRValueReference<T>::Type>::Value };
+    inline static constexpr bool Value = TIsConstructible<T, typename TAddRValueReference<T>::Type>::Value;
 };
 
 template<typename T>
 struct TIsMoveAssignable
 {
-    enum { Value = TIsAssignable<T, typename TAddRValueReference<T>::Type>::Value };
+    inline static constexpr bool Value = TIsAssignable<T, typename TAddRValueReference<T>::Type>::Value;
 };
 
 
 template<typename T>
 struct TIsPointer
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
 
 template<typename T>
 struct TIsPointer<T*>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
+};
+
+
+template <typename T>
+struct TIsMemberPointer
+{
+    inline static constexpr bool Value = false;
+};
+
+template <typename T, typename U>
+struct TIsMemberPointer<T U::*>
+{
+    inline static constexpr bool Value = true;
+};
+
+template <typename T>
+struct TIsMemberPointer<const T>
+{
+    inline static constexpr bool Value = TIsMemberPointer<T>::Value;
+};
+
+template <typename T>
+struct TIsMemberPointer<volatile T>
+{
+    inline static constexpr bool Value = TIsMemberPointer<T>::Value;
+};
+
+template <typename T>
+struct TIsMemberPointer<const volatile T>
+{
+    inline static constexpr bool Value = TIsMemberPointer<T>::Value;
+};
+
+
+template<typename T>
+struct TIsNullable
+{
+    inline static constexpr bool Value = TOr<TIsPointer<T>, TIsMemberPointer<T>>::Value;
 };
 
 
@@ -505,308 +543,274 @@ struct TMemberPointerTraits<U T::*>
 template<typename T>
 struct TIsLValueReference
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
 
 template<typename T>
 struct TIsLValueReference<T&>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<typename T>
 struct TIsRValueReference
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
 
 template<typename T>
 struct TIsRValueReference<T&&>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<typename T>
 struct TIsReference
 {
-    enum { Value = TOr<TIsLValueReference<T>, TIsRValueReference<T>>::Value };
+    inline static constexpr bool Value = TOr<TIsLValueReference<T>, TIsRValueReference<T>>::Value;
 };
 
 
 template<typename T, typename U>
 struct TIsSame
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
 
 template<typename T>
 struct TIsSame<T, T>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<typename T, typename U>
 struct TIsNotSame
 {
-    enum { Value = TNot<TIsSame<T, U>>::Value };
+    inline static constexpr bool Value = TNot<TIsSame<T, U>>::Value;
 };
 
 
 template<typename T>
 struct TIsNullptr
 {
-    enum { Value = TIsSame<nullptr_type, typename TRemoveCV<T>::Type>::Value };
+    inline static constexpr bool Value = TIsSame<nullptr_type, typename TRemoveCV<T>::Type>::Value;
 };
 
 
 template<typename T>
 struct TIsVoid
 {
-    enum { Value = TIsSame<void, typename TRemoveCV<T>::Type>::Value };
+    inline static constexpr bool Value = TIsSame<void, typename TRemoveCV<T>::Type>::Value;
 };
 
 
 template<typename T>
 struct TIsArray
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
 
 template<typename T>
 struct TIsArray<T[]>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<typename T, const int32 N>
 struct TIsArray<T[N]>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 
 template<typename T>
 struct TIsBoundedArray
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
 
 template<typename T, const int32 N>
 struct TIsBoundedArray<T[N]>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 
 template<typename T>
 struct TIsUnboundedArray
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
 
 template<typename T>
 struct TIsUnboundedArray<T[]>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 
 template<typename T>
 struct TIsInteger
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
 
 template<>
 struct TIsInteger<bool>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<CHAR>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<signed char>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<unsigned char>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<WIDECHAR>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<char16_t>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<char32_t>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<short>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<unsigned short>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<int>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<unsigned int>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<long>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<unsigned long>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<long long>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<>
 struct TIsInteger<unsigned long long>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template <typename T>
 struct TIsInteger<const T>
 {
-    enum { Value = TIsInteger<T>::Value };
+    inline static constexpr bool Value = TIsInteger<T>::Value;
 };
 
 template <typename T>
 struct TIsInteger<volatile T>
 {
-    enum { Value = TIsInteger<T>::Value };
+    inline static constexpr bool Value = TIsInteger<T>::Value;
 };
 
 template <typename T>
 struct TIsInteger<const volatile T>
 {
-    enum { Value = TIsInteger<T>::Value };
-};
-
-
-template <typename T>
-struct TIsMemberPointer
-{
-    enum { Value = false };
-};
-
-template <typename T, typename U>
-struct TIsMemberPointer<T U::*>
-{
-    enum { Value = true };
-};
-
-template <typename T>
-struct TIsMemberPointer<const T>
-{
-    enum { Value = TIsMemberPointer<T>::Value };
-};
-
-template <typename T>
-struct TIsMemberPointer<volatile T>
-{
-    enum { Value = TIsMemberPointer<T>::Value };
-};
-
-template <typename T>
-struct TIsMemberPointer<const volatile T>
-{
-    enum { Value = TIsMemberPointer<T>::Value };
+    inline static constexpr bool Value = TIsInteger<T>::Value;
 };
 
 
 template<typename T>
 struct TIsFloatingPoint
 {
-    enum
-    {
-        Value = (TOr<
-                     TIsSame<float      , typename TRemoveCV<T>::Type>,
-                     TIsSame<double     , typename TRemoveCV<T>::Type>, 
-                     TIsSame<long double, typename TRemoveCV<T>::Type>
-                    >::Value)
-    };
+    inline static constexpr bool Value = (TOr<
+        TIsSame<float      , typename TRemoveCV<T>::Type>,
+        TIsSame<double     , typename TRemoveCV<T>::Type>,
+        TIsSame<long double, typename TRemoveCV<T>::Type>
+    >::Value);
 };
 
 template <typename T>
 struct TIsFloatingPoint<const T>
 {
-    enum { Value = TIsFloatingPoint<T>::Value };
+    inline static constexpr bool Value = TIsFloatingPoint<T>::Value;
 };
 
 template <typename T>
 struct TIsFloatingPoint<volatile T>
 {
-    enum { Value = TIsFloatingPoint<T>::Value };
+    inline static constexpr bool Value = TIsFloatingPoint<T>::Value;
 };
 
 template <typename T>
 struct TIsFloatingPoint<const volatile T>
 {
-    enum { Value = TIsFloatingPoint<T>::Value };
+    inline static constexpr bool Value = TIsFloatingPoint<T>::Value;
 };
 
 
 template<typename T>
 struct TIsIntegerNotBool
 {
-    enum { Value = TAnd<TIsInteger<T>, TIsNotSame<T, bool>>::Value };
+    inline static constexpr bool Value = TAnd<TIsInteger<T>, TIsNotSame<T, bool>>::Value;
 };
 
 
 template<typename T>
 struct TIsArithmetic
 {
-    enum { Value = TOr<TIsInteger<T>, TIsFloatingPoint<T>>::Value };
+    inline static constexpr bool Value = TOr<TIsInteger<T>, TIsFloatingPoint<T>>::Value;
 };
 
 
 template<typename T>
 struct TIsScalar
 {
-    enum { Value = TOr<TIsArithmetic<T>, TIsEnum<T>, TIsPointer<T>, TIsMemberPointer<T>, TIsNullptr<T>>::Value };
+    inline static constexpr bool Value = TOr<TIsArithmetic<T>, TIsEnum<T>, TIsPointer<T>, TIsMemberPointer<T>, TIsNullptr<T>>::Value;
 };
 
 
@@ -818,17 +822,17 @@ private:
     template<typename U, bool = TIsArithmetic<U>::Value>
     struct TIsSignedImpl
     {
-        enum { Value = U(-1) < U(0) };
+        inline static constexpr bool Value = (U(-1) < U(0));
     };
 
     template<typename U>
     struct TIsSignedImpl<U, false>
     {
-        enum { Value = false };
+        inline static constexpr bool Value = false;
     };
 
 public:
-    enum { Value = TIsSignedImpl<T>::Value };
+    inline static constexpr bool Value = TIsSignedImpl<T>::Value;
 };
 
 template<typename T>
@@ -839,60 +843,60 @@ private:
     template<typename U, bool = TIsArithmetic<U>::Value>
     struct TIsUnsignedImpl
     {
-        enum { Value = U(0) < U(-1) };
+        inline static constexpr bool Value = (U(0) < U(-1));
     };
 
     template<typename U>
     struct TIsUnsignedImpl<U, false>
     {
-        enum { Value = false };
+        inline static constexpr bool Value = false;
     };
 
 public:
-    enum { Value = TIsUnsignedImpl<T>::Value };
+    inline static constexpr bool Value = TIsUnsignedImpl<T>::Value;
 };
 
 
 template<typename T>
 struct TIsContiguousContainer
 {
-    enum { Value = TIsBoundedArray<T>::Value };
+    inline static constexpr bool Value = TIsBoundedArray<T>::Value;
 };
 
 template<typename T> 
 struct TIsContiguousContainer<T&>
 {
-    enum { Value = TIsContiguousContainer<T>::Value };
+    inline static constexpr bool Value = TIsContiguousContainer<T>::Value;
 };
 
 template<typename T> 
 struct TIsContiguousContainer<T&&>
 {
-    enum { Value = TIsContiguousContainer<T>::Value };
+    inline static constexpr bool Value = TIsContiguousContainer<T>::Value;
 };
 
 template<typename T> 
 struct TIsContiguousContainer<const T>
 {
-    enum { Value = TIsContiguousContainer<T>::Value };
+    inline static constexpr bool Value = TIsContiguousContainer<T>::Value;
 };
 
 template<typename T> 
 struct TIsContiguousContainer<volatile T>
 {
-    enum { Value = TIsContiguousContainer<T>::Value };
+    inline static constexpr bool Value = TIsContiguousContainer<T>::Value;
 };
 
 template<typename T> 
 struct TIsContiguousContainer<const volatile T>
 {
-    enum { Value = TIsContiguousContainer<T>::Value };
+    inline static constexpr bool Value = TIsContiguousContainer<T>::Value;
 };
 
 template<typename T>
 struct TIsContiguousContainer<std::initializer_list<T>>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 
@@ -909,14 +913,14 @@ private:
     static int16 Test(...);
 
 public:
-    enum { Value = (!(TIsUnion<T>::Value) && (sizeof(Test<T>(0)) == 1)) };
+    inline static constexpr bool Value = !TIsUnion<T>::Value && (sizeof(Test<T>(0)) == 1);
 };
 
 
 template<typename T>
 struct TIsObject
 {
-    enum { Value = TOr<TIsScalar<T>, TIsArray<T>, TIsUnion<T>, TIsClass<T>>::Value };
+    inline static constexpr bool Value = TOr<TIsScalar<T>, TIsArray<T>, TIsUnion<T>, TIsClass<T>>::Value;
 };
 
 
@@ -929,7 +933,7 @@ template<typename T>
 struct TIsFunction
 {
     // NOTE: Functions and references cannot be const 
-    enum { Value = (!TIsConst<const T>::Value) && (!TIsReference<T>::Value) };
+    inline static constexpr bool Value = !TIsConst<const T>::Value && !TIsReference<T>::Value;
 };
 
 #if PLATFORM_COMPILER_MSVC
@@ -939,13 +943,13 @@ struct TIsFunction
 template<typename T>
 struct TIsFundamental
 {
-    enum { Value = TOr<TIsArithmetic<T>, TIsVoid<T>, TIsNullptr<T>>::Value };
+    inline static constexpr bool Value = TOr<TIsArithmetic<T>, TIsVoid<T>, TIsNullptr<T>>::Value;
 };
 
 template<typename T>
 struct TIsCompound
 {
-    enum { Value = !TIsFundamental<T>::Value };
+    inline static constexpr bool Value = !TIsFundamental<T>::Value;
 };
 
 
@@ -970,7 +974,7 @@ public:
 template<typename T>
 struct TAlignmentOf
 {
-    enum { Value = alignof(T) };
+    inline static constexpr uint64 Value = alignof(T);
 };
 
 template<typename T>
@@ -980,17 +984,17 @@ inline constexpr int32 AlignmentOf = TAlignmentOf<T>::Value;
 // not reference itself or have classes pointing directly to an element. This
 // also means that objects can be memmove:ed without issues.
 
-#define MARK_AS_REALLOCATABLE(Type) \
-    template<>                      \
-    struct TIsReallocatable<Type>   \
-    {                               \
-        enum { Value = true };      \
+#define MARK_AS_REALLOCATABLE(Type)                \
+    template<>                                     \
+    struct TIsReallocatable<Type>                  \
+    {                                              \
+        inline static constexpr bool Value = true; \
     }
 
 template<typename T>
 struct TIsReallocatable
 {
-    enum { Value = TIsTrivial<T>::Value };
+    inline static constexpr bool Value = TIsTrivial<T>::Value;
 };
 
 
@@ -998,7 +1002,7 @@ struct TIsReallocatable
 template<typename T>
 struct TIsTArrayType
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
 
 
@@ -1006,5 +1010,5 @@ struct TIsTArrayType
 template<typename T>
 struct TIsTStringType
 {
-    enum { Value = false };
+    inline static constexpr bool Value = false;
 };
