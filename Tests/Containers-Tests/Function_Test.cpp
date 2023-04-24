@@ -187,9 +187,9 @@ bool TFunction_Test()
             LambdaFunc(60);
         }
 
-        std::cout << std::endl << "-------Test Assign-------" << std::endl << std::endl;
-        NormalFunc.Assign(Func2);
-        MemberFunc.Assign(Bind(&A::Func2, &a));
+        std::cout << std::endl << "-------Test Bind-------" << std::endl << std::endl;
+        NormalFunc.Bind(Func2);
+        MemberFunc.Bind(Bind(&A::Func2, &a));
 
         NormalFunc(70);
         MemberFunc(80);
@@ -240,6 +240,7 @@ bool TFunction_Test()
 #endif
 
     // TFunctionRef
+#define TEST_TFUNCTIONREF
     {
         std::cout << std::endl << "----------TFunctionRef---------" << std::endl << std::endl;
         std::cout << "Testing constructors" << std::endl;
@@ -255,7 +256,93 @@ bool TFunction_Test()
 
         TFunctionRef<bool(int32)> FunctorFunc = Fun;
         FunctorFunc(15);
+
+        int64 x = 50;
+        int64 y = 150;
+        int64 z = 250;
+        TFunctionRef<bool(int32)> LambdaFunc = [=](int32 Input) -> bool
+        {
+            std::cout << "Lambda (x=" << x << ", y=" << y << ", z=" << z << ") =" << Input << std::endl;
+            return true;
+        };
+        LambdaFunc(20);
+
+        A a1;
+        TFunctionRef<bool(int32)> LambdaMemberFunc = [&](int32 Input) -> bool
+        {
+            std::cout << "--Lambda Begin--" << std::endl;
+            a1.Func(Input);
+            a1.Func2(Input);
+            std::cout << "--Lambda End--";
+            return true;
+        };
+        LambdaMemberFunc(20);
+
+        std::cout << std::endl << "-------Test copy constructor-------" << std::endl << std::endl;
+
+        TFunctionRef<bool(int32)> CopyFunc(MemberFunc);
+        CopyFunc(30);
+        MemberFunc(40);
+
+        std::cout << std::endl << "-------Test Move constructor-------" << std::endl << std::endl;
+        TFunctionRef<bool(int32)> MoveFunc(Move(LambdaFunc));
+        MoveFunc(50);
+        if (LambdaFunc)
+        {
+            LambdaFunc(60);
+        }
+
+        std::cout << std::endl << "-------Test Bind-------" << std::endl << std::endl;
+        NormalFunc.Bind(Func2);
+        MemberFunc.Bind(Bind(&A::Func2, &a));
+
+        NormalFunc(70);
+        MemberFunc(80);
+
+        std::cout << std::endl << "-------Test Swap-------" << std::endl << std::endl;
+        NormalFunc.Swap(MemberFunc);
+
+        NormalFunc(90);
+        MemberFunc(100);
+
+        std::cout << std::endl << "-------Test IsValid-------" << std::endl << std::endl;
+        std::cout << "NormalFunc=" << std::boolalpha << NormalFunc.IsValid() << std::endl;
+
+        TFunctionRef<void(int)> EmptyFunc;
+        std::cout << "EmptyFunc=" << std::boolalpha << EmptyFunc.IsValid() << std::endl;
+
+        std::cout << std::endl << "-------Test Bind-------" << std::endl << std::endl;
+        int32 Num0 = 50;
+        int32 Num1 = 100;
+
+        TFunctionRef<int(int, int)> Payload = Bind(TupleFunc, Num0, Num1);
+        Payload(150, 200);
+
+        auto Payload2 = Bind(Func, 42);
+        Payload2();
+
+        // Lambda
+        auto Lambda = [=](int32 Num) -> int32
+        {
+            std::cout << "Lambda (x=" << x << ", y=" << y << ", z=" << z << ") =" << Num << std::endl;
+            return Num + 1;
+        };
+
+        auto Payload3 = Bind(Lambda, 42);
+        Payload3();
+
+        auto Payload4 = Bind(&FSecond::Func, &Second, 42);
+        Payload4();
+
+        Invoke(&FSecond::Func, &Second, 42);
+
+        auto Payload5 = Bind(Func);
+        Payload5(42);
+
+        auto Payload6 = Bind(&FSecond::Func);
+        Payload6(&Second, 42);
     }
+#endif
 
     SUCCESS();
 }
