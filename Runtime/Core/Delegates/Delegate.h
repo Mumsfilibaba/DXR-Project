@@ -12,8 +12,7 @@ template<typename InvokableType>
 class TDelegate;
 
 template<typename ReturnType, typename... ArgTypes>
-class TDelegate<ReturnType(ArgTypes...)> 
-    : public FDelegateBase
+class TDelegate<ReturnType(ArgTypes...)> : public FDelegateBase
 {
     using Super = FDelegateBase;
 
@@ -38,7 +37,6 @@ public:
     using Super::GetHandle;
 
 private:
-    using Super::Release;
     using Super::CopyFrom;
     using Super::GetDelegate;
     using Super::GetStorage;
@@ -251,7 +249,7 @@ private:
     template<typename DelegateType, typename... ConstructorArgs>
     FORCEINLINE void Bind(ConstructorArgs&&... Args)
     {
-        Release();
+        Unbind();
         void* Memory = AllocateStorage(sizeof(DelegateType));
         new (Memory) DelegateType(::Forward<ConstructorArgs>(Args)...);
     }

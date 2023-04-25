@@ -183,8 +183,7 @@ protected:
         {
             int32 CurrentSize = Size;
             Storage.Realloc(CurrentSize, Other.Size);
-            Other.GetDelegate()->Clone(Storage.Data());
-
+            Other.GetDelegate()->Clone(Storage.GetAllocation());
             Size = Other.Size;
         }
         else
@@ -203,12 +202,12 @@ protected:
 
     FORCEINLINE IDelegateInstance* GetDelegate() noexcept
     {
-        return reinterpret_cast<IDelegateInstance*>(Storage.Data());
+        return reinterpret_cast<IDelegateInstance*>(Storage.GetAllocation());
     }
 
     FORCEINLINE const IDelegateInstance* GetDelegate() const noexcept
     {
-        return reinterpret_cast<const IDelegateInstance*>(Storage.Data());
+        return reinterpret_cast<const IDelegateInstance*>(Storage.GetAllocation());
     }
 
     FORCEINLINE AllocatorType& GetStorage()

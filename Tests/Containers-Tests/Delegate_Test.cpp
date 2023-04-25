@@ -137,7 +137,9 @@ bool TDelegate_Test()
     TTuple<int32, float, double, std::string> Tuple(5, 0.9f, 5.0, "A string");
 
     TEST_CHECK(Tuple.Size() == 4);
-    TEST_CHECK(TTuple<int, float, double>::NumElements == 3);
+
+    auto Check = TTuple<int, float, double>::NumElements;
+    TEST_CHECK(Check == 3);
 
     TEST_CHECK(Tuple.GetByIndex<0>() == 5);
     TEST_CHECK(Tuple.GetByIndex<1>() == 0.9f);
@@ -226,7 +228,7 @@ bool TDelegate_Test()
 
         // Static
         Delegate.BindStatic(StaticFunc);
-        TEST_CHECK(Delegate.GetBoundObject() != nullptr);
+        TEST_CHECK(Delegate.GetBoundObject() == nullptr);
         TEST_CHECK(Delegate.IsBound()        == true);
         TEST_CHECK(Delegate.Execute(32)      == 33);
 
@@ -394,6 +396,8 @@ bool TDelegate_Test()
         FEventDispacher EventDispacher;
         EventDispacher.Func();
     }
+
+    SUCCESS();
 }
 
 #endif

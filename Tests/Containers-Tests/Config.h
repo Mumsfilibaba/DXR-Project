@@ -15,9 +15,8 @@
 #define RUN_TOPIONAL_TEST        (0)
 #define RUN_TVARIANT_TEST        (0)
 #define RUN_TQUEUE_TEST          (0)
-#define RUN_TFUNCTION_TEST       (1)
-
-#define RUN_TDELEGATE_TEST       (0)
+#define RUN_TFUNCTION_TEST       (0)
+#define RUN_TDELEGATE_TEST       (1)
 
 #define RUN_TSHAREDPTR_TEST      (0)
 #define RUN_TSTRING_TEST         (0)

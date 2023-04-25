@@ -2,7 +2,7 @@
 #include "Core/CoreDefines.h"
 #include "Core/CoreTypes.h"
 
-template<typename OtherFirstType, typename OtherSecondType>
+template<typename FirstType, typename SecondType>
 struct TPair
 {
     TPair()             = default;

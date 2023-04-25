@@ -58,7 +58,7 @@ public:
      */
     FORCEINLINE void Swap(FMulticastDelegateBase& Other) noexcept
     {
-        Delegates.Swap(Other.Delegates);
+        ::Swap(Delegates, Other.Delegates);
     }
 
     /**
@@ -70,17 +70,17 @@ public:
     {
         if (Handle.IsValid())
         {
-            for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
+            for (int32 Index = 0; Index < Delegates.Size(); ++Index)
             {
-                if (Handle == It->GetHandle())
+                if (Handle == Delegates[Index].GetHandle())
                 {
                     if (IsLocked())
                     {
-                        It->Unbind();
+                        Delegates[Index].Unbind();
                     }
                     else
                     {
-                        Delegates.RemoveAt(It);
+                        Delegates.RemoveAt(Index);
                     }
 
                     return true;
@@ -155,9 +155,9 @@ public:
     {
         if (Object)
         {
-            for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
+            for (int32 Index = 0; Index < Delegates.Size(); ++Index)
             {
-                const void* BoundObject = It->GetBoundObject();
+                const void* BoundObject = Delegates[Index].GetBoundObject();
                 if (BoundObject != nullptr && BoundObject != Object)
                 {
                     return true;
@@ -214,21 +214,21 @@ protected:
             return NewHandle;
         }
 
-        for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
+        for (int32 Index = 0; Index < Delegates.Size(); ++Index)
         {
-            FDelegateHandle Handle = It->GetHandle();
+            FDelegateHandle Handle = Delegates[Index].GetHandle();
             if (NewHandle == Handle)
             {
                 return Handle;
             }
         }
 
-        for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
+        for (int32 Index = 0; Index < Delegates.Size(); ++Index)
         {
-            FDelegateHandle Handle = It->GetHandle();
+            FDelegateHandle Handle = Delegates[Index].GetHandle();
             if (!NewHandle.IsValid())
             {
-                *It = NewDelegate;
+                Delegates[Index] = NewDelegate;
                 return Handle;
             }
         }
@@ -273,7 +273,7 @@ protected:
             int32 NumEmptyElements = Delegates.LastElementIndex() - Next;
             if (NumEmptyElements > 0)
             {
-                Delegates.PopRange(NumEmptyElements);
+                Delegates.Pop(NumEmptyElements);
             }
         }
     }
