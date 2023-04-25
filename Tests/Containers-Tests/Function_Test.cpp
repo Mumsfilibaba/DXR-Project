@@ -152,16 +152,6 @@ bool TFunction_Test()
         TFunction<bool(int32)> FunctorFunc = Fun;
         FunctorFunc(15);
 
-        int64 x = 50;
-        int64 y = 150;
-        int64 z = 250;
-        TFunction<bool(int32)> LambdaFunc = [=](int32 Input) -> bool
-        {
-            std::cout << "Lambda (x=" << x << ", y=" << y << ", z=" << z << ") =" << Input << std::endl;
-            return true;
-        };
-        LambdaFunc(20);
-
         A a1;
         {
             TFunction<bool(int32)> LambdaMemberFunc = [&](int32 Input) -> bool
@@ -186,14 +176,31 @@ bool TFunction_Test()
 
         std::cout << std::endl << "-------Test Move constructor-------" << std::endl << std::endl;
         {
+
+            int64 x = 50;
+            int64 y = 150;
+            int64 z = 250;
+            int64 w = 350;
+            const auto TestLambda = [=](int32 Input) -> bool
+            {
+                std::cout << "Lambda (x=" << x << ", y=" << y << ", z=" << z << "w=" << w << ") = " << Input << std::endl;
+                return true;
+            };
+
+            constexpr auto size = sizeof(TestLambda);
+
+            TFunction<bool(int32)> LambdaFunc = TestLambda;
+            LambdaFunc(20);
+
             TFunction<bool(int32)> MoveFunc(::Move(LambdaFunc));
             MoveFunc(50);
+
+            if (LambdaFunc)
+            {
+                LambdaFunc(60);
+            }
         }
 
-        if (LambdaFunc)
-        {
-            LambdaFunc(60);
-        }
 
         std::cout << std::endl << "-------Test Bind-------" << std::endl << std::endl;
         NormalFunc.Bind(Func2);
@@ -229,9 +236,12 @@ bool TFunction_Test()
         Payload2();
 
         // Lambda
+        int64 x2 = 50;
+        int64 y2 = 150;
+        int64 z2 = 250;
         auto Lambda = [=](int32 Num) -> int32
         {
-            std::cout << "Lambda (x=" << x << ", y=" << y << ", z=" << z << ") =" << Num << std::endl;
+            std::cout << "Lambda (x=" << x2 << ", y=" << y2 << ", z=" << z2 << ") =" << Num << std::endl;
             return Num + 1;
         };
 
@@ -252,7 +262,7 @@ bool TFunction_Test()
 #endif
 
     // TFunctionRef
-#ifdef TEST_TFUNCTIONREF
+#if TEST_TFUNCTIONREF
     {
         std::cout << std::endl << "----------TFunctionRef---------" << std::endl << std::endl;
         std::cout << "Testing constructors" << std::endl;
