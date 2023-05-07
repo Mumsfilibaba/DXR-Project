@@ -159,7 +159,7 @@ public:
 
     static FORCEINLINE CHARTYPE* Strnset(CHARTYPE* Dst, CHARTYPE Char, TSIZE InLength) noexcept
     {
-        return reinterpret_cast<CHARTYPE*>(::AssignElementsAndReturn(Dst, Char, InLength));
+        return reinterpret_cast<CHARTYPE*>(::AssignObjectsAndReturn(Dst, Char, InLength));
     }
 
 public:

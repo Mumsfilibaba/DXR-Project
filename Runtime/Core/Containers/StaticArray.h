@@ -31,7 +31,7 @@ public:
      */
     NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const noexcept
     {
-        return (Address >= Elements) && (Address < (Elements + ArrayMax));
+        return (Address >= Elements) && (Address < (Elements + NUM_ELEMENTS));
     }
 
     /**
@@ -85,7 +85,7 @@ public:
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        ::AssignElements(Elements, InputElement, NUM_ELEMENTS);
+        ::AssignObjects(Elements, InputElement, NUM_ELEMENTS);
     }
 
     /**
@@ -288,7 +288,7 @@ public:
             return false;
         }
 
-        return ::CompareElements<ElementType>(Elements, RHS.Data(), NUM_ELEMENTS);
+        return ::CompareObjects<ElementType>(Elements, RHS.Data(), NUM_ELEMENTS);
     }
 
     /**
@@ -402,11 +402,11 @@ public:
 template<typename ElementType, int32 NUM_ELEMENTS>
 struct TIsTArrayType<TStaticArray<ElementType, NUM_ELEMENTS>>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<typename ElementType, int32 NUM_ELEMENTS>
 struct TIsContiguousContainer<TStaticArray<ElementType, NUM_ELEMENTS>>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };

@@ -292,8 +292,7 @@ public:
      * @param Functor - Functor to store
      */
     template<typename FunctorType>
-    FORCEINLINE TFunction(FunctorType&& Functor) noexcept
-             requires(TAnd<TIsInvokable<FunctorType, ParamTypes...>, TNot<TIsSame<TFunction, typename TDecay<FunctorType>::Type>>>::Value)
+    FORCEINLINE TFunction(FunctorType&& Functor) noexcept requires(TAnd<TIsInvokable<FunctorType, ParamTypes...>, TNot<TIsSame<TFunction, typename TDecay<FunctorType>::Type>>>::Value)
         : FunctorCaller(nullptr)
         , Storage()
     {

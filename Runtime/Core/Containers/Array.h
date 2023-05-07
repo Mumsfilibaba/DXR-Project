@@ -91,10 +91,8 @@ public:
      * @brief       - Copy-constructor from another type of array
      * @param Other - Array to copy from
      */
-    template<
-        typename ArrayType,
-        typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
-    FORCEINLINE explicit TArray(const ArrayType& Other) noexcept
+    template<typename ArrayType>
+    FORCEINLINE explicit TArray(const ArrayType& Other) noexcept requires(TIsTArrayType<ArrayType>::Value)
         : Allocator()
         , ArraySize(0)
         , ArrayMax(0)
@@ -142,7 +140,7 @@ public:
     {
         if (ArraySize)
         {
-            ::DestroyElements<ElementType>(Allocator.GetAllocation(), ArraySize);
+            ::DestroyObjects<ElementType>(Allocator.GetAllocation(), ArraySize);
             ArraySize = 0;
         }
 
@@ -159,7 +157,7 @@ public:
      */
     void Reset(SizeType InSize = 0) noexcept
     {
-        ::DestroyElements<ElementType>(Allocator.GetAllocation(), ArraySize);
+        ::DestroyObjects<ElementType>(Allocator.GetAllocation(), ArraySize);
         if (InSize)
         {
             InitializeEmpty(InSize);
@@ -177,7 +175,7 @@ public:
      */
     void Reset(SizeType NewSize, const ElementType& Element) noexcept
     {
-        ::DestroyElements<ElementType>(Allocator.GetAllocation(), ArraySize);
+        ::DestroyObjects<ElementType>(Allocator.GetAllocation(), ArraySize);
         if (NewSize)
         {
             Initialize(NewSize, Element);
@@ -202,7 +200,7 @@ public:
 
         if (Elements != Allocator.GetAllocation())
         {
-            ::DestroyElements<ElementType>(Allocator.GetAllocation(), ArraySize);
+            ::DestroyObjects<ElementType>(Allocator.GetAllocation(), ArraySize);
             if (NumElements)
             {
                 InitializeByCopy(Elements, NumElements, 0);
@@ -219,7 +217,7 @@ public:
      * @param InputArray - Array to copy-construct from
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Reset(const ArrayType& InputArray) noexcept
+    FORCEINLINE void Reset(const ArrayType& InputArray) noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
         Reset(FArrayContainerHelper::Data(InputArray), FArrayContainerHelper::Size(InputArray));
     }
@@ -248,7 +246,7 @@ public:
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        ::AssignElements(Allocator.GetAllocation(), InputElement, ArraySize);
+        ::AssignObjects(Allocator.GetAllocation(), InputElement, ArraySize);
     }
 
     /**
@@ -270,7 +268,7 @@ public:
             CHECK(NumElementsToConstruct > 0);
 
             ElementType* LastElementPtr = Allocator.GetAllocation() + ArraySize;
-            ::DefaultConstructElements<ElementType>(LastElementPtr, NumElementsToConstruct);
+            ::DefaultConstructObjects<ElementType>(LastElementPtr, NumElementsToConstruct);
             ArraySize = NewSize;
         }
         else if (NewSize < ArraySize)
@@ -314,7 +312,7 @@ public:
         {
             if (NewCapacity < ArraySize)
             {
-                ::DestroyElements<ElementType>(Allocator.GetAllocation() + NewCapacity, ArraySize - NewCapacity);
+                ::DestroyObjects<ElementType>(Allocator.GetAllocation() + NewCapacity, ArraySize - NewCapacity);
                 ArraySize = NewCapacity;
             }
 
@@ -443,7 +441,7 @@ public:
         CHECK(Elements != nullptr);
 
         InsertUninitializedUnchecked(Position, InNumElements);
-        ::CopyConstructElements<ElementType>(Allocator.GetAllocation() + Position, Elements, InNumElements);
+        ::CopyConstructObjects<ElementType>(Allocator.GetAllocation() + Position, Elements, InNumElements);
         ArraySize += InNumElements;
     }
 
@@ -463,7 +461,7 @@ public:
       * @param InArray  - Array to copy elements from
       */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Insert(SizeType Position, const ArrayType& InArray) noexcept
+    FORCEINLINE void Insert(SizeType Position, const ArrayType& InArray) noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
         Insert(Position, FArrayContainerHelper::Data(InArray), FArrayContainerHelper::Size(InArray));
     }
@@ -491,7 +489,7 @@ public:
         {
             CHECK(InElements != nullptr);
             EnsureCapacity(ArraySize + NumElements);
-            ::CopyConstructElements<ElementType>(Allocator.GetAllocation() + ArraySize, InElements, NumElements);
+            ::CopyConstructObjects<ElementType>(Allocator.GetAllocation() + ArraySize, InElements, NumElements);
             ArraySize += NumElements;
         }
     }
@@ -501,7 +499,7 @@ public:
      * @param Other - Array to copy elements from
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Append(const ArrayType& Other) noexcept
+    FORCEINLINE void Append(const ArrayType& Other) noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
         Append(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other));
     }
@@ -534,7 +532,7 @@ public:
     {
         CHECK(!IsEmpty());
         const SizeType NewArraySize = ArraySize - NumElements;
-        ::DestroyElements<ElementType>(Allocator.GetAllocation() + NewArraySize, NumElements);
+        ::DestroyObjects<ElementType>(Allocator.GetAllocation() + NewArraySize, NumElements);
         ArraySize = NewArraySize;
     }
 
@@ -550,8 +548,8 @@ public:
         if (NumElements)
         {
             ElementType* TmpPositionData = Allocator.GetAllocation() + Position;
-            ::DestroyElements<ElementType>(TmpPositionData, NumElements);
-            ::RelocateElements<ElementType>(TmpPositionData, TmpPositionData + NumElements, ArraySize - (Position + NumElements));
+            ::DestroyObjects<ElementType>(TmpPositionData, NumElements);
+            ::RelocateObjects<ElementType>(TmpPositionData, TmpPositionData + NumElements, ArraySize - (Position + NumElements));
             ArraySize -= NumElements;
         }
     }
@@ -1073,9 +1071,9 @@ public:
      * @return      - Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& Other) const noexcept
+    NODISCARD FORCEINLINE bool operator==(const ArrayType& Other) const noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
-        return (ArraySize == Other.ArraySize) ? ::CompareElements<ElementType>(Allocator.GetAllocation(), FArrayContainerHelper::Data(Other), ArraySize) : (false);
+        return (ArraySize == Other.ArraySize) ? ::CompareObjects<ElementType>(Allocator.GetAllocation(), FArrayContainerHelper::Data(Other), ArraySize) : (false);
     }
 
     /**
@@ -1084,7 +1082,7 @@ public:
      * @return      - Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& Other) const noexcept
+    NODISCARD FORCEINLINE bool operator!=(const ArrayType& Other) const noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
         return !(*this == Other);
     }
@@ -1114,7 +1112,7 @@ public:
      * @param Other - Array to copy elements from
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, typename TAddLValueReference<TArray>::Type>::Type operator+=(const ArrayType& Other) noexcept
+    FORCEINLINE TArray& operator+=(const ArrayType& Other) noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
         Append(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other));
         return *this;
@@ -1190,20 +1188,20 @@ private:
     FORCEINLINE void InitializeEmpty(SizeType NumElements)
     {
         CreateUnitialized(NumElements);
-        ::DefaultConstructElements<ElementType>(Allocator.GetAllocation(), NumElements);
+        ::DefaultConstructObjects<ElementType>(Allocator.GetAllocation(), NumElements);
     }
 
     FORCEINLINE void Initialize(SizeType NumElements, const ElementType& Element)
     {
         CreateUnitialized(NumElements);
-        ::ConstructElementsFrom<ElementType>(Allocator.GetAllocation(), NumElements, Element);
+        ::ConstructObjectsFrom<ElementType>(Allocator.GetAllocation(), NumElements, Element);
     }
 
     FORCEINLINE void InitializeByCopy(const ElementType* Elements, SizeType NumElements, SizeType ExtraCapacity)
     {
         const SizeType NewSize = NumElements + ExtraCapacity;
         CreateUnitialized(NewSize);
-        ::CopyConstructElements<ElementType>(Allocator.GetAllocation(), Elements, NumElements);
+        ::CopyConstructObjects<ElementType>(Allocator.GetAllocation(), Elements, NumElements);
     }
 
     FORCEINLINE void InitializeByMove(TArray&& FromArray)
@@ -1211,7 +1209,7 @@ private:
         if (FromArray.Data() != Allocator.GetAllocation())
         {
             // Since the memory remains the same we should not need to use move-assignment or constructor. However, still need to call destructors
-            ::DestroyElements<ElementType>(Allocator.GetAllocation(), ArraySize);
+            ::DestroyObjects<ElementType>(Allocator.GetAllocation(), ArraySize);
             Allocator.MoveFrom(::Move(FromArray.Allocator));
 
             ArraySize           = FromArray.ArraySize;
@@ -1233,7 +1231,7 @@ private:
                 NewAllocator.Realloc(ArrayMax, NewCapacity);
                 if (ArraySize)
                 {
-                    ::RelocateElements<ElementType>(NewAllocator.GetAllocation(), Allocator.GetAllocation(), ArraySize);
+                    ::RelocateObjects<ElementType>(NewAllocator.GetAllocation(), Allocator.GetAllocation(), ArraySize);
                 }
 
                 Allocator.MoveFrom(::Move(NewAllocator));
@@ -1255,7 +1253,7 @@ private:
     {
         EnsureCapacity(ArraySize + InNumElements);
         ElementType* const CurrentAddress = Allocator.GetAllocation() + Position;
-        ::RelocateElements<ElementType>(CurrentAddress + InNumElements, CurrentAddress, ArraySize - Position);
+        ::RelocateObjects<ElementType>(CurrentAddress + InNumElements, CurrentAddress, ArraySize - Position);
     }
 
     FORCEINLINE void EnsureCapacity(SizeType RequiredCapacity) noexcept
@@ -1393,11 +1391,11 @@ private:
 template<typename T, typename AllocatorType>
 struct TIsTArrayType<TArray<T, AllocatorType>>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<typename T, typename AllocatorType>
 struct TIsContiguousContainer<TArray<T, AllocatorType>>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };

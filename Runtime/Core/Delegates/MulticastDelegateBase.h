@@ -99,10 +99,9 @@ public:
     FORCEINLINE bool UnbindIfBound(const void* Object) noexcept
     {
         bool bResult = false;
-
         if (Object)
         {
-            for (int32 Index = 0; Index < Delegates.Size(); Index++)
+            for (int32 Index = 0; Index < Delegates.Size(); ++Index)
             {
                 FDelegateBase& Delegate = Delegates[Index];
 
@@ -115,9 +114,10 @@ public:
                     }
                     else
                     {
-                        int32 LastIndex = Delegates.LastElementIndex();
+                        const int32 LastIndex = Delegates.LastElementIndex();
                         ::Swap(Delegate, Delegates[LastIndex]);
                         Delegates.Pop();
+                        --Index;
                     }
 
                     bResult = true;

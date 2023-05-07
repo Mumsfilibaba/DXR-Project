@@ -117,15 +117,16 @@ static void TupleFunc(int32 Num0, int32 Num1, int32 Num2, int32 Num3)
 // FEventDispacher
 
 DECLARE_EVENT(FSomeEvent, FEventDispacher, int32);
-FSomeEvent GSomeEvent;
 
 class FEventDispacher
 {
 public:
     void Func()
     {
-        GSomeEvent.Broadcast(42);
+        SomeEvent.Broadcast(42);
     }
+    
+    FSomeEvent SomeEvent;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -391,9 +392,8 @@ bool TDelegate_Test()
         DECLARE_MULTICAST_DELEGATE(FSomeMulticastDelegate, int32);
         FSomeMulticastDelegate SomeMulticastDelegate;
 
-        GSomeEvent.AddStatic(StaticFunc2);
-
         FEventDispacher EventDispacher;
+        EventDispacher.SomeEvent.AddStatic(StaticFunc2);
         EventDispacher.Func();
     }
 

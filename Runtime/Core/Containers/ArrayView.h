@@ -39,9 +39,8 @@ public:
      */
     template<
         typename ContainerType,
-        typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type,
-        typename = typename TEnableIf<TIsContiguousContainer<PureContainerType>::Value>::Type>
-    FORCEINLINE TArrayView(ContainerType&& Container) noexcept
+        typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type>
+    FORCEINLINE TArrayView(ContainerType&& Container) noexcept requires(TIsContiguousContainer<PureContainerType>::Value)
         : View(FArrayContainerHelper::Data(::Forward<ContainerType>(Container)))
         , ViewSize(static_cast<SizeType>(FArrayContainerHelper::Size(::Forward<ContainerType>(Container))))
     {
@@ -259,14 +258,14 @@ public:
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        ::AssignElements(View, InputElement, ViewSize);
+        ::AssignObjects(View, InputElement, ViewSize);
     }
 
     /**
      * @brief - Sets the array to zero
      */
     template<typename U = ElementType>
-    FORCEINLINE typename TEnableIf<TIsTrivial<U>::Value>::Type Memzero()
+    FORCEINLINE void Memzero() requires(TIsTrivial<U>::Value)
     {
         FMemory::Memzero(View, SizeInBytes());
     }
@@ -327,14 +326,14 @@ public:
      * @return    - Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
+    NODISCARD FORCEINLINE bool operator==(const ArrayType& RHS) const noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
         if (ViewSize != RHS.ViewSize)
         {
             return false;
         }
 
-        return ::CompareElements<ElementType>(View, FArrayContainerHelper::Data(RHS), ViewSize);
+        return ::CompareObjects<ElementType>(View, FArrayContainerHelper::Data(RHS), ViewSize);
     }
 
     /**
@@ -343,7 +342,7 @@ public:
      * @return    - Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
+    NODISCARD FORCEINLINE bool operator!=(const ArrayType& RHS) const noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
         return !(*this == RHS);
     }
@@ -436,21 +435,20 @@ private:
 template<typename T>
 struct TIsTArrayType<TArrayView<T>>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 template<typename T>
 struct TIsContiguousContainer<TArrayView<T>>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 
 template<
     typename ContainerType,
-    typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type,
-    typename = typename TEnableIf<TIsContiguousContainer<PureContainerType>::Value>::Type>
-auto MakeArrayView(ContainerType&& Container)
+    typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type>
+auto MakeArrayView(ContainerType&& Container) requires(TIsContiguousContainer<PureContainerType>::Value)
 {
     using ElementType = typename TRemovePointer<decltype(FArrayContainerHelper::Data(::DeclVal<PureContainerType>()))>::Type;
     return TArrayView<ElementType>(::Forward<ContainerType>(Container));

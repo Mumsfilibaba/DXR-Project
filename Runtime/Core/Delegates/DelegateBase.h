@@ -51,6 +51,8 @@ public:
         if (IsBound())
         {
             GetDelegate()->~IDelegateInstance();
+            Size = 0;
+            Storage.Free();
         }
     }
 

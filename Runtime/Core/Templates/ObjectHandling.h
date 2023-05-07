@@ -5,85 +5,104 @@
 #include "Core/Core.h"
 #include "Core/Memory/Memory.h"
 
-template<typename ElementType, typename SizeType>
-FORCEINLINE void DefaultConstructElements(void* StartAddress, SizeType Count) noexcept
+#if !BUILD_PRODUCTION
+#define MEMZERO_TRIVIAL_OBJECTS (1)
+#else
+#define MEMZERO_TRIVIAL_OBJECTS (0)
+#endif
+
+template<typename ObjectType, typename SizeType>
+FORCEINLINE void DefaultConstructObjects(void* StartAddress, SizeType Count) noexcept
 {
-    if constexpr (TIsTrivial<ElementType>::Value)
+    if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        FMemory::Memzero(StartAddress, sizeof(ElementType) * Count);
+    #if MEMZERO_TRIVIAL_OBJECTS
+        FMemory::Memzero(StartAddress, sizeof(ObjectType) * Count);
+    #endif
     }
     else
     {
-        ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
+        ObjectType* CurrentObject = reinterpret_cast<ObjectType*>(StartAddress);
         while (Count)
         {
-            new(CurrentElement) ElementType();
-            ++CurrentElement;
+            new(CurrentObject) ObjectType();
+            ++CurrentObject;
             --Count;
         }
     }
 }
 
 
-template<typename ElementType>
-FORCEINLINE void DefaultConstructElement(void* Address) noexcept
+template<typename ObjectType>
+FORCEINLINE void DefaultConstructObject(void* Address) noexcept
 {
-    DefaultConstructElements<ElementType>(Address, 1);
-}
-
-template<typename ElementType, typename SizeType>
-FORCEINLINE void ConstructElementsFrom(void* RESTRICT StartAddress, SizeType Count, const ElementType& Element) noexcept
-{
-    if constexpr(TIsTrivial<ElementType>::Value && sizeof(ElementType) == sizeof(uint8))
+    if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        FMemory::Memset(StartAddress, static_cast<uint8>(Element), sizeof(ElementType) * Count);
+    #if MEMZERO_TRIVIAL_OBJECTS
+        FMemory::Memzero(Address, sizeof(ObjectType));
+    #endif
     }
     else
     {
-        ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
+        new(Address) ObjectType();
+    }
+}
+
+template<typename ObjectType, typename SizeType>
+FORCEINLINE void ConstructObjectsFrom(void* RESTRICT StartAddress, SizeType Count, const ObjectType& Object) noexcept
+{
+    constexpr bool bObjectFitInByte = sizeof(ObjectType) == sizeof(uint8);
+    if constexpr(TIsTrivial<ObjectType>::Value && bObjectFitInByte)
+    {
+        FMemory::Memset(StartAddress, static_cast<uint8>(Object), sizeof(ObjectType) * Count);
+    }
+    else
+    {
+        ObjectType* CurrentObject = reinterpret_cast<ObjectType*>(StartAddress);
         while (Count)
         {
-            new(CurrentElement) ElementType(Element);
-            ++CurrentElement;
+            new(CurrentObject) ObjectType(Object);
+            ++CurrentObject;
             --Count;
         }
     }
 }
 
-template<typename ElementType, typename SizeType>
-FORCEINLINE void ConstructElementsFrom(void* RESTRICT StartAddress, SizeType Count, ElementType&& Element) noexcept
+template<typename ObjectType, typename SizeType>
+FORCEINLINE void ConstructObjectsFrom(void* RESTRICT StartAddress, SizeType Count, ObjectType&& Object) noexcept
 {
-    if constexpr(TIsTrivial<ElementType>::Value && sizeof(ElementType) == sizeof(uint8))
+    constexpr bool bObjectFitInByte = sizeof(ObjectType) == sizeof(uint8);
+    if constexpr(TIsTrivial<ObjectType>::Value && bObjectFitInByte)
     {
-        FMemory::Memset(StartAddress, static_cast<uint8>(Forward<ElementType>(Element)), sizeof(ElementType) * Count);
+        FMemory::Memset(StartAddress, static_cast<uint8>(::Forward<ObjectType>(Object)), sizeof(ObjectType) * Count);
     }
     else
     {
-        ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
+        ObjectType* CurrentObject = reinterpret_cast<ObjectType*>(StartAddress);
         while (Count)
         {
-            new(CurrentElement) ElementType(Forward<ElementType>(Element));
-            ++CurrentElement;
+            new(CurrentObject) ObjectType(::Forward<ObjectType>(Object));
+            ++CurrentObject;
             --Count;
         }
     }
 }
 
 
-template<typename ElementType, typename SizeType>
-FORCEINLINE void CopyConstructElements(void* RESTRICT StartAddress, const ElementType* RESTRICT Source, SizeType Count) noexcept
+template<typename ObjectType, typename SizeType>
+FORCEINLINE void CopyConstructObjects(void* RESTRICT StartAddress, const ObjectType* RESTRICT Source, SizeType Count) noexcept
 {
-    if constexpr (TIsTrivial<ElementType>::Value)
+    if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        FMemory::Memcpy(StartAddress, Source, sizeof(ElementType) * Count);
+        FMemory::Memcpy(StartAddress, Source, sizeof(ObjectType) * Count);
     }
     else
     {
-        ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
+        ObjectType* CurrentObject = reinterpret_cast<ObjectType*>(StartAddress);
         while (Count)
         {
-            new(CurrentElement) ElementType(*Source);
-            ++CurrentElement;
+            new(CurrentObject) ObjectType(*Source);
+            ++CurrentObject;
             ++Source;
             --Count;
         }
@@ -91,19 +110,26 @@ FORCEINLINE void CopyConstructElements(void* RESTRICT StartAddress, const Elemen
 }
 
 
-template<typename ElementType>
-FORCEINLINE void CopyConstructElement(void* const RESTRICT Address, const ElementType* RESTRICT Source) noexcept
+template<typename ObjectType>
+FORCEINLINE void CopyConstructObject(void* const RESTRICT Address, const ObjectType* RESTRICT Source) noexcept
 {
-    CopyConstructElements<ElementType>(Address, Source, 1);
+    if constexpr (TIsTrivial<ObjectType>::Value)
+    {
+        FMemory::Memcpy(Address, Source, sizeof(ObjectType));
+    }
+    else
+    {
+        new(Address) ObjectType(*Source);
+    }
 }
 
 
-template<typename ElementType, typename SizeType>
-FORCEINLINE void CopyAssignElements(ElementType* RESTRICT Destination, const ElementType* RESTRICT Source, SizeType Count) noexcept
+template<typename ObjectType, typename SizeType>
+FORCEINLINE void CopyAssignObjects(ObjectType* RESTRICT Destination, const ObjectType* RESTRICT Source, SizeType Count) noexcept
 {
-    if constexpr (TIsTrivial<ElementType>::Value)
+    if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        FMemory::Memcpy(Destination, Source, sizeof(ElementType) * Count);
+        FMemory::Memcpy(Destination, Source, sizeof(ObjectType) * Count);
     }
     else
     {
@@ -118,27 +144,34 @@ FORCEINLINE void CopyAssignElements(ElementType* RESTRICT Destination, const Ele
 }
 
 
-template<typename ElementType>
-FORCEINLINE void CopyAssignElement(ElementType* RESTRICT Destination, const ElementType* RESTRICT Source) noexcept
+template<typename ObjectType>
+FORCEINLINE void CopyAssignObject(ObjectType* RESTRICT Destination, const ObjectType* RESTRICT Source) noexcept
 {
-    CopyAssignElements<ElementType>(Destination, Source, 1);
-}
-
-
-template<typename ElementType, typename SizeType>
-FORCEINLINE void MoveConstructElements(void* StartAddress, const ElementType* Source, SizeType Count) noexcept
-{
-    if constexpr (TIsReallocatable<ElementType>::Value)
+    if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        FMemory::Memexchange(StartAddress, Source, sizeof(ElementType) * Count);
+        FMemory::Memcpy(Destination, Source, sizeof(ObjectType));
     }
     else
     {
-        ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
+        *Destination = *Source;
+    }
+}
+
+
+template<typename ObjectType, typename SizeType>
+FORCEINLINE void MoveConstructObjects(void* StartAddress, const ObjectType* Source, SizeType Count) noexcept
+{
+    if constexpr (TIsReallocatable<ObjectType>::Value)
+    {
+        FMemory::Memexchange(StartAddress, Source, sizeof(ObjectType) * Count);
+    }
+    else
+    {
+        ObjectType* CurrentObject = reinterpret_cast<ObjectType*>(StartAddress);
         while (Count)
         {
-            new(CurrentElement) ElementType(Move(*Source));
-            ++CurrentElement;
+            new(CurrentObject) ObjectType(::Move(*Source));
+            ++CurrentObject;
             ++Source;
             --Count;
         }
@@ -146,25 +179,32 @@ FORCEINLINE void MoveConstructElements(void* StartAddress, const ElementType* So
 }
 
 
-template<typename ElementType>
-FORCEINLINE void MoveConstructElement(void* StartAddress, const ElementType* Source) noexcept
+template<typename ObjectType>
+FORCEINLINE void MoveConstructObject(void* Address, const ObjectType* Source) noexcept
 {
-    MoveConstructElements<ElementType>(StartAddress, Source, 1);
+    if constexpr (TIsReallocatable<ObjectType>::Value)
+    {
+        FMemory::Memexchange(Address, Source, sizeof(ObjectType));
+    }
+    else
+    {
+        new(Address) ObjectType(::Move(*Source));
+    }
 }
 
 
-template<typename ElementType, typename SizeType>
-FORCEINLINE void MoveAssignElements(ElementType* Destination, const ElementType* Source, SizeType Count) noexcept
+template<typename ObjectType, typename SizeType>
+FORCEINLINE void MoveAssignObjects(ObjectType* Destination, const ObjectType* Source, SizeType Count) noexcept
 {
-    if constexpr(TIsReallocatable<ElementType>::Value)
+    if constexpr(TIsReallocatable<ObjectType>::Value)
     {
-        FMemory::Memexchange(Destination, Source, sizeof(ElementType) * Count);
+        FMemory::Memexchange(Destination, Source, sizeof(ObjectType) * Count);
     }
     else
     {
         while (Count)
         {
-            *Destination = Move(*Source);
+            *Destination = ::Move(*Source);
             ++Destination;
             ++Source;
             --Count;
@@ -173,22 +213,29 @@ FORCEINLINE void MoveAssignElements(ElementType* Destination, const ElementType*
 }
 
 
-template<typename ElementType>
-FORCEINLINE void MoveAssignElement(ElementType* Destination, const ElementType* Source) noexcept
+template<typename ObjectType>
+FORCEINLINE void MoveAssignObject(ObjectType* Destination, const ObjectType* Source) noexcept
 {
-    MoveAssignElements<ElementType>(Destination, Source, 1);
+    if constexpr(TIsReallocatable<ObjectType>::Value)
+    {
+        FMemory::Memexchange(Destination, Source, sizeof(ObjectType));
+    }
+    else
+    {
+        *Destination = ::Move(*Source);
+    }
 }
 
 
-template<typename ElementType, typename SizeType>
-FORCEINLINE void DestroyElements(ElementType* StartObject, SizeType Count) noexcept
+template<typename ObjectType, typename SizeType>
+FORCEINLINE void DestroyObjects(ObjectType* StartObject, SizeType Count) noexcept
 {
-    if constexpr (TNot<TIsTrivial<ElementType>>::Value)
+    if constexpr (TNot<TIsTrivial<ObjectType>>::Value)
     {
         while (Count)
         {
-            typedef ElementType ElementTypeDestructorType;
-            StartObject->~ElementTypeDestructorType();
+            typedef ObjectType ObjectDestructorType;
+            StartObject->~ObjectDestructorType();
             ++StartObject;
             --Count;
         }
@@ -196,40 +243,44 @@ FORCEINLINE void DestroyElements(ElementType* StartObject, SizeType Count) noexc
 }
 
 
-template<typename ElementType>
-FORCEINLINE void DestroyElement(ElementType* Object) noexcept
+template<typename ObjectType>
+FORCEINLINE void DestroyObject(ObjectType* Object) noexcept
 {
-    DestroyElements<ElementType>(Object, 1);
+    if constexpr (TNot<TIsTrivial<ObjectType>>::Value)
+    {
+        typedef ObjectType ObjectDestructorType;
+        Object->~ObjectDestructorType();
+    }
 }
 
 
-template<typename ElementType, typename SizeType>
-FORCEINLINE void RelocateElements(void* StartAddress, ElementType* Source, SizeType Count) noexcept
+template<typename ObjectType, typename SizeType>
+FORCEINLINE void RelocateObjects(void* StartAddress, ObjectType* Source, SizeType Count) noexcept
 {
-    static_assert(TIsReallocatable<ElementType>::Value || TIsMoveConstructable<ElementType>::Value || TIsCopyConstructable<ElementType>::Value, "ElementType cannot be relocated");
+    static_assert(TIsReallocatable<ObjectType>::Value || TIsMoveConstructable<ObjectType>::Value || TIsCopyConstructable<ObjectType>::Value, "ObjectType cannot be relocated");
 
-    if constexpr (TIsReallocatable<ElementType>::Value)
+    if constexpr (TIsReallocatable<ObjectType>::Value)
     {
-        FMemory::Memmove(StartAddress, Source, sizeof(ElementType) * Count);
+        FMemory::Memmove(StartAddress, Source, sizeof(ObjectType) * Count);
     }
     else
     {
-        typedef ElementType ElementTypeDestructorType;
-        if constexpr (TIsMoveConstructable<ElementType>::Value)
+        typedef ObjectType ObjectDestructorType;
+        if constexpr (TIsMoveConstructable<ObjectType>::Value)
         {
             // Ensures that the function works for overlapping ranges
-            ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
-            if ((Source < CurrentElement) && (CurrentElement < Source + Count))
+            ObjectType* CurrentObject = reinterpret_cast<ObjectType*>(StartAddress);
+            if ((Source < CurrentObject) && (CurrentObject < Source + Count))
             {
-                CurrentElement += Count;
-                Source         += Count;
+                CurrentObject += Count;
+                Source        += Count;
 
                 while (Count)
                 {
                     --Source;
-                    --CurrentElement;
-                    new(CurrentElement) ElementType(Move(*Source));
-                    Source->~ElementTypeDestructorType();
+                    --CurrentObject;
+                    new(CurrentObject) ObjectType(::Move(*Source));
+                    Source->~ObjectDestructorType();
                     --Count;
                 }
             }
@@ -237,9 +288,9 @@ FORCEINLINE void RelocateElements(void* StartAddress, ElementType* Source, SizeT
             {
                 while (Count)
                 {
-                    new(CurrentElement) ElementType(Move(*Source));
-                    Source->~ElementTypeDestructorType();
-                    ++CurrentElement;
+                    new(CurrentObject) ObjectType(::Move(*Source));
+                    Source->~ObjectDestructorType();
+                    ++CurrentObject;
                     ++Source;
                     --Count;
                 }
@@ -248,18 +299,18 @@ FORCEINLINE void RelocateElements(void* StartAddress, ElementType* Source, SizeT
         else
         {
             // Ensures that the function works for overlapping ranges
-            ElementType* CurrentElement = reinterpret_cast<ElementType*>(StartAddress);
-            if ((Source < CurrentElement) && (CurrentElement < Source + Count))
+            ObjectType* CurrentObject = reinterpret_cast<ObjectType*>(StartAddress);
+            if ((Source < CurrentObject) && (CurrentObject < Source + Count))
             {
-                CurrentElement += Count;
-                Source         += Count;
+                CurrentObject += Count;
+                Source        += Count;
 
                 while (Count)
                 {
-                    --CurrentElement;
+                    --CurrentObject;
                     --Source;
-                    new(CurrentElement) ElementType(*Source);
-                    Source->~ElementTypeDestructorType();
+                    new(CurrentObject) ObjectType(*Source);
+                    Source->~ObjectDestructorType();
                     --Count;
                 }
             }
@@ -267,9 +318,9 @@ FORCEINLINE void RelocateElements(void* StartAddress, ElementType* Source, SizeT
             {
                 while (Count)
                 {
-                    new(CurrentElement) ElementType(*Source);
-                    Source->~ElementTypeDestructorType();
-                    ++CurrentElement;
+                    new(CurrentObject) ObjectType(*Source);
+                    Source->~ObjectDestructorType();
+                    ++CurrentObject;
                     ++Source;
                     --Count;
                 }
@@ -279,12 +330,12 @@ FORCEINLINE void RelocateElements(void* StartAddress, ElementType* Source, SizeT
 }
 
 
-template<typename ElementType, typename SizeType>
-FORCEINLINE bool CompareElements(const ElementType* LHS, const ElementType* RHS, SizeType Count) noexcept
+template<typename ObjectType, typename SizeType>
+FORCEINLINE bool CompareObjects(const ObjectType* LHS, const ObjectType* RHS, SizeType Count) noexcept
 {
-    if constexpr (TIsTrivial<ElementType>::Value)
+    if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        return FMemory::Memcmp(LHS, RHS, Count * sizeof(ElementType));
+        return FMemory::Memcmp(LHS, RHS, sizeof(ObjectType) * Count);
     }
     else
     {
@@ -303,12 +354,13 @@ FORCEINLINE bool CompareElements(const ElementType* LHS, const ElementType* RHS,
 }
 
 
-template<typename ElementType, typename SizeType>
-FORCEINLINE void AssignElements(ElementType* RESTRICT Dst, const ElementType& Element, SizeType Count) noexcept
+template<typename ObjectType, typename SizeType>
+FORCEINLINE void AssignObjects(ObjectType* RESTRICT Dst, const ObjectType& Element, SizeType Count) noexcept
 {
-    if constexpr (TIsTrivial<ElementType>::Value && sizeof(ElementType) == sizeof(uint8))
+    constexpr bool bObjectFitInByte = sizeof(ObjectType) == sizeof(uint8);
+    if constexpr (TIsTrivial<ObjectType>::Value && bObjectFitInByte)
     {
-        FMemory::Memset(Dst, static_cast<uint8>(Element), sizeof(ElementType) * Count);
+        FMemory::Memset(Dst, static_cast<uint8>(Element), sizeof(ObjectType) * Count);
     }
     else
     {
@@ -322,12 +374,13 @@ FORCEINLINE void AssignElements(ElementType* RESTRICT Dst, const ElementType& El
 }
 
 
-template<typename ElementType, typename SizeType>
-FORCEINLINE ElementType* AssignElementsAndReturn(ElementType* RESTRICT Dst, const ElementType& Element, SizeType Count) noexcept
+template<typename ObjectType, typename SizeType>
+FORCEINLINE ObjectType* AssignObjectsAndReturn(ObjectType* RESTRICT Dst, const ObjectType& Element, SizeType Count) noexcept
 {
-    if constexpr(TIsTrivial<ElementType>::Value && sizeof(ElementType) == sizeof(uint8))
+    constexpr bool bObjectFitInByte = sizeof(ObjectType) == sizeof(uint8);
+    if constexpr(TIsTrivial<ObjectType>::Value && bObjectFitInByte)
     {
-        return reinterpret_cast<ElementType*>(FMemory::Memset(Dst, static_cast<uint8>(Element), sizeof(ElementType) * Count));
+        return reinterpret_cast<ObjectType*>(FMemory::Memset(Dst, static_cast<uint8>(Element), sizeof(ObjectType) * Count));
     }
     else
     {

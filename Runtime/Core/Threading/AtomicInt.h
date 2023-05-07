@@ -134,6 +134,17 @@ public:
     }
 
     /**
+     * @brief         - Exchanges the integer to a new value and return the original value
+     * @param InValue - Value to exchange
+     * @return        - Returns true if the exchange was successful
+     */
+    FORCEINLINE T CompareExchange(T InValue, T Comparand) noexcept
+    {
+        T Result = FPlatformInterlocked::InterlockedCompareExchange(&Value, InValue, Comparand);
+        return Value == InValue;
+    }
+
+    /**
      * @brief         - Stores a new integer atomically and makes sure that all prior accesses has completed
      * @param InValue - New value to store
      */

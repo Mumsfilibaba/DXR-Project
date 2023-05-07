@@ -12,7 +12,7 @@ std::string MakeStringFromBitArray(const BitArrayType& BitArray)
     std::string NewString;
     NewString.reserve(BitArray.Size());
 
-    for (BitArrayType::SizeType Index = 0; Index < BitArray.Size(); ++Index)
+    for (int32 Index = 0; Index < BitArray.Size(); ++Index)
     {
         const bool bValue = (BitArray[Index] == true);
         NewString.push_back(bValue ? '1' : '0');

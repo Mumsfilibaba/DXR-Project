@@ -13,7 +13,7 @@ template<typename InIntegerType = uint32, typename InAllocatorType = TDefaultArr
 class TBitArray
 {
 public:
-    using SizeType = uint32;
+    using SizeType = int32;
     static_assert(TIsUnsigned<InIntegerType>::Value, "BitArray must have an unsigned InIntegerType");
 
     using BitReferenceType      = TBitReference<InIntegerType>;
@@ -781,11 +781,11 @@ public:
     }
 
 public: // STL Iterators
-    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
+    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return ConstIterator(); }
 
-    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return EndIterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return EndIterator(); }
+    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, NumBits); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, NumBits); }
 
 public: 
     NODISCARD static constexpr SizeType NumBitsPerInteger() noexcept

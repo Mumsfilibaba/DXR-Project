@@ -1,6 +1,8 @@
 #include "SharedPtr_Test.h"
 
 #if RUN_TSHAREDPTR_TEST
+#include "TestUtils.h"
+
 #include <Core/Containers/SharedPtr.h>
 #include <Core/Containers/SharedRef.h>
 #include <Core/Containers/UniquePtr.h>
@@ -81,13 +83,28 @@ private:
 };
 
 
-void TSharedPtr_Test()
+bool TSharedPtr_Test()
 {
     {
         TSharedRef<FRefCountedTest> Test;
+        TEST_CHECK(Test.Get() == nullptr);
+        
         TSharedRef<FRefCountedTest> Test0 = new FRefCountedTest();
+        TEST_CHECK(Test0 != nullptr);
+        TEST_CHECK(Test0->GetRefCount() == 1);
+
         TSharedRef<FRefCountedTest> Test1 = Test0;
+        TEST_CHECK(Test1 != nullptr);
+        TEST_CHECK(Test1->GetRefCount() == 2);
+
         TSharedRef<FRefCountedTest> Test2 = Test0;
+        TEST_CHECK(Test2 != nullptr);
+        TEST_CHECK(Test2->GetRefCount() == 3);
+
+        TSharedRef<FRefCountedTest> Test3 = ::Move(Test2);
+        TEST_CHECK(Test2 == nullptr);
+        TEST_CHECK(Test3 != nullptr);
+        TEST_CHECK(Test3->GetRefCount() == 3);
     }
 
     // TSharedPtr
@@ -98,7 +115,11 @@ void TSharedPtr_Test()
     // Test nullptr
     std::cout << std::endl << "----Testing Constructors----" << std::endl << std::endl;
     TSharedPtr<uint32> Null;
-    TWeakPtr<uint32>   NullWeak;
+    TEST_CHECK(Null == nullptr);
+
+    TWeakPtr<uint32> NullWeak;
+    TEST_CHECK(Null == nullptr);
+
     Null = Ptr0; // Takes ownership of Ptr0
 
     {
@@ -340,6 +361,8 @@ void TSharedPtr_Test()
 
         TSharedPtr<FSharedClass> SharedInstance2 = SharedInstance1;
     }
+
+    SUCCESS();
 }
 
 #endif

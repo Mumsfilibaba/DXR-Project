@@ -133,7 +133,7 @@ struct FVec3
 template<>
 struct TIsReallocatable<std::string>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 #endif
 

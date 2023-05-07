@@ -2,5 +2,5 @@
 #include "Config.h"
 
 #if RUN_TSHAREDPTR_TEST
-void TSharedPtr_Test();
+bool TSharedPtr_Test();
 #endif

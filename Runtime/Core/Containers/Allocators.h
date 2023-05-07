@@ -156,7 +156,7 @@ public:
             {
                 CHECK(CurrentCount <= NumInlineElements);
                 DynamicAllocation.Realloc(CurrentCount, NewElementCount);
-                ::RelocateElements<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
+                ::RelocateObjects<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
             }
             else
             {
@@ -170,7 +170,7 @@ public:
             if (DynamicAllocation.HasAllocation())
             {
                 CurrentCount = (CurrentCount <= NumInlineElements) ? CurrentCount : NumInlineElements;
-                ::RelocateElements<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.GetAllocation(), CurrentCount);
+                ::RelocateObjects<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.GetAllocation(), CurrentCount);
                 Free();
             }
 
@@ -196,7 +196,7 @@ public:
 
         if (!Other.DynamicAllocation.HasAllocation())
         {
-            ::RelocateElements<ElementType>(InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements);
+            ::RelocateObjects<ElementType>(InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements);
             FMemory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.Size());
         }
 

@@ -1557,9 +1557,8 @@ using FStaticStringWide = TStaticString<WIDECHAR, NUM_CHARS>;
 template<typename CharType, int32 NUM_CHARS>
 struct TIsTStringType<TStaticString<CharType, NUM_CHARS>>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
-
 
 template<int32 NUM_CHARS>
 NODISCARD inline FStaticStringWide<NUM_CHARS> CharToWide(const FStaticString<NUM_CHARS>& CharString) noexcept

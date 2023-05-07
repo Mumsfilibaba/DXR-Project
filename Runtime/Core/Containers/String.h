@@ -1837,13 +1837,13 @@ using FStringWide = TString<WIDECHAR>;
 //template<typename CharType>
 //struct TIsReallocatable<TString<CharType>>
 //{
-//    enum { Value = true };
+//    inline static constexpr bool Value = true;
 //};
 
 template<typename CharType>
 struct TIsTStringType<TString<CharType>>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };
 
 NODISCARD inline FStringWide CharToWide(const FStringView& CharString) noexcept

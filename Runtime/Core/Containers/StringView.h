@@ -1123,5 +1123,5 @@ inline bool operator>=(const TStringView<CharType>& LHS, const TStringView<CharT
 template<typename CharType>
 struct TIsTStringType<TStringView<CharType>>
 {
-    enum { Value = true };
+    inline static constexpr bool Value = true;
 };

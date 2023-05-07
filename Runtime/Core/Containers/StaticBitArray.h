@@ -254,7 +254,7 @@ public:
     {
         for (SizeType Index = 0; Index < Capacity(); Index++)
         {
-            Integers[Index] = ~Element;
+            Integers[Index] = ~Integers[Index];
         }
     }
 
@@ -292,7 +292,7 @@ public:
         CHECK(BitIndex < NUM_BITS);
         const SizeType ElementIndex = GetIntegersIndexOfBit(BitIndex);
         CHECK(ElementIndex < Capacity());
-        return BitReferenceType(Integers[ElementIndex], ~Element);
+        return BitReferenceType(Integers[ElementIndex], ~Integers[ElementIndex]);
     }
 
     /**
