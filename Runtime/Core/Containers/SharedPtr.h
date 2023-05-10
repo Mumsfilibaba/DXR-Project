@@ -841,90 +841,6 @@ private:
     SharedPointerInternal::TSharedReferencer<InObjectType, InThreadAccess> ReferenceCounter;
 };
 
-template<typename T, typename U>
-NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, U* RHS) noexcept
-{
-    return (LHS.Get() == RHS);
-}
-
-template<typename T, typename U>
-NODISCARD FORCEINLINE bool operator==(T* LHS, const TSharedPtr<U>& RHS) noexcept
-{
-    return (LHS == RHS.Get());
-}
-
-template<typename T, typename U>
-NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, U* RHS) noexcept
-{
-    return (LHS.Get() != RHS);
-}
-
-template<typename T, typename U>
-NODISCARD FORCEINLINE bool operator!=(T* LHS, const TSharedPtr<U>& RHS) noexcept
-{
-    return (LHS != RHS.Get());
-}
-
-template<typename T, typename U>
-NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
-{
-    return (LHS.Get() == RHS.Get());
-}
-
-template<typename T, typename U>
-NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
-{
-    return (LHS.Get() != RHS.Get());
-}
-
-template<typename T>
-NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, nullptr_type) noexcept
-{
-    return (LHS.Get() == nullptr);
-}
-
-template<typename T>
-NODISCARD FORCEINLINE bool operator==(nullptr_type, const TSharedPtr<T>& RHS) noexcept
-{
-    return (nullptr == RHS.Get());
-}
-
-template<typename T>
-NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, nullptr_type) noexcept
-{
-    return (LHS.Get() != nullptr);
-}
-
-template<typename T>
-NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TSharedPtr<T>& RHS) noexcept
-{
-    return (nullptr != RHS.Get());
-}
-
-template<typename T, typename U>
-NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
-{
-    return (LHS.Get() == RHS.Get());
-}
-
-template<typename T, typename U>
-NODISCARD FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
-{
-    return (LHS.Get() == RHS.Get());
-}
-
-template<typename T, typename U>
-NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
-{
-    return (LHS.Get() != RHS.Get());
-}
-
-template<typename T, typename U>
-NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
-{
-    return (LHS.Get() != RHS.Get());
-}
-
 
 template<typename InObjectType, EThreadAccess InThreadAccess = EThreadAccess::Safe>
 class TWeakPtr
@@ -1320,6 +1236,91 @@ private:
 
 
 template<typename T, typename U>
+NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, U* RHS) noexcept
+{
+    return (LHS.Get() == RHS);
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE bool operator==(T* LHS, const TSharedPtr<U>& RHS) noexcept
+{
+    return (LHS == RHS.Get());
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, U* RHS) noexcept
+{
+    return (LHS.Get() != RHS);
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE bool operator!=(T* LHS, const TSharedPtr<U>& RHS) noexcept
+{
+    return (LHS != RHS.Get());
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+{
+    return (LHS.Get() == RHS.Get());
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+{
+    return (LHS.Get() != RHS.Get());
+}
+
+template<typename T>
+NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, nullptr_type) noexcept
+{
+    return (LHS.Get() == nullptr);
+}
+
+template<typename T>
+NODISCARD FORCEINLINE bool operator==(nullptr_type, const TSharedPtr<T>& RHS) noexcept
+{
+    return (nullptr == RHS.Get());
+}
+
+template<typename T>
+NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, nullptr_type) noexcept
+{
+    return (LHS.Get() != nullptr);
+}
+
+template<typename T>
+NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TSharedPtr<T>& RHS) noexcept
+{
+    return (nullptr != RHS.Get());
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+{
+    return (LHS.Get() == RHS.Get());
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+{
+    return (LHS.Get() == RHS.Get());
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+{
+    return (LHS.Get() != RHS.Get());
+}
+
+template<typename T, typename U>
+NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+{
+    return (LHS.Get() != RHS.Get());
+}
+
+
+template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
@@ -1428,105 +1429,96 @@ NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U
 }
 
 
-template<typename T>
-NODISCARD FORCEINLINE TSharedPtr<T> MakeSharedPtr(T* InPointer) noexcept
+template<typename ObjectType, EThreadAccess ThreadAccess = EThreadAccess::Safe>
+NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeSharedPtr(ObjectType* InPointer) noexcept
 {
-    return TSharedPtr<T>(InPointer);
+    return TSharedPtr<ObjectType>(InPointer);
 }
 
-template<typename T, typename... ArgTypes>
-NODISCARD FORCEINLINE typename TEnableIf<TNot<TIsArray<T>>::Value, TSharedPtr<T>>::Type MakeShared(ArgTypes&&... Args) noexcept
+template<typename ObjectType, EThreadAccess ThreadAccess = EThreadAccess::Safe, typename... ArgTypes>
+NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeShared(ArgTypes&&... Args) noexcept requires(TNot<TIsArray<ObjectType>>::Value)
 {
-    typedef typename TRemoveExtent<T>::Type Type;
-
-    Type* RefCountedPtr = new Type(::Forward<ArgTypes>(Args)...);
-    return TSharedPtr<T>(RefCountedPtr);
+    auto* NewReferenceCount = new TMonolithicReferenceCounter<ObjectType, ThreadAccess>(::Forward<ArgTypes>(Args)...);
+    return TSharedPtr<ObjectType>(NewReferenceCount);
 }
 
-template<typename T>
-NODISCARD FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShared(uint32 Size) noexcept
+template<typename ObjectType, EThreadAccess ThreadAccess = EThreadAccess::Safe>
+NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeShared() noexcept requires(TIsBoundedArray<ObjectType>::Value)
 {
-    typedef typename TRemoveExtent<T>::Type Type;
+    auto* NewReferenceCount = new TMonolithicReferenceCounter<ObjectType, ThreadAccess>();
+    return TSharedPtr<ObjectType>(NewObject);
+}
 
-    Type* RefCountedPtr = new Type[Size];
-    return TSharedPtr<T>(RefCountedPtr);
+template<typename ObjectType, EThreadAccess ThreadAccess = EThreadAccess::Safe>
+NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeShared(uint32 Size) noexcept requires(TIsUnboundedArray<ObjectType>::Value)
+{
+    // Create a dynamic array and store inside the
+    typedef typename TRemoveExtent<ObjectType>::Type Type;
+    Type* NewObject = new Type[Size];
+    return TSharedPtr<ObjectType>(NewObject);
 }
 
 
 template<typename ToType, typename FromType>
-constexpr bool IsSameArrayType()
-{
-    return (TIsArray<ToType>::Value == TIsArray<FromType>::Value);
-}
-
-template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type StaticCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE TSharedPtr<ToType> StaticCastSharedPtr(const TSharedPtr<FromType>& Object) noexcept requires(TIsArray<ToType>::Value == TIsArray<FromType>::Value)
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
-
-    Type* RawPointer = static_cast<Type*>(Pointer.Get());
-    return TSharedPtr<ToType>(Pointer, RawPointer);
+    Type* NewObject = static_cast<Type*>(Object.Get());
+    return TSharedPtr<ToType>(Object, NewObject);
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type StaticCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE TSharedPtr<ToType> StaticCastSharedPtr(TSharedPtr<FromType>&& Object) noexcept requires(TIsArray<ToType>::Value == TIsArray<FromType>::Value)
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
-
-    Type* RawPointer = static_cast<Type*>(Pointer.Get());
-    return TSharedPtr<ToType>(::Move(Pointer), RawPointer);
+    Type* NewObject = static_cast<Type*>(Object.Get());
+    return TSharedPtr<ToType>(::Move(Object), NewObject);
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type ConstCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE TSharedPtr<ToType> ConstCastSharedPtr(const TSharedPtr<FromType>& Object) noexcept requires(TIsArray<ToType>::Value == TIsArray<FromType>::Value)
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
-
-    Type* RawPointer = const_cast<Type*>(Pointer.Get());
-    return TSharedPtr<ToType>(Pointer, RawPointer);
+    Type* NewObject = const_cast<Type*>(Object.Get());
+    return TSharedPtr<ToType>(Object, NewObject);
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type ConstCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE TSharedPtr<ToType> ConstCastSharedPtr(TSharedPtr<FromType>&& Object) noexcept requires(TIsArray<ToType>::Value == TIsArray<FromType>::Value)
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
-
-    Type* RawPointer = const_cast<Type*>(Pointer.Get());
-    return TSharedPtr<ToType>(::Move(Pointer), RawPointer);
+    Type* NewObject = const_cast<Type*>(Object.Get());
+    return TSharedPtr<ToType>(::Move(Object), NewObject);
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type ReinterpretCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE TSharedPtr<ToType> ReinterpretCastSharedPtr(const TSharedPtr<FromType>& Object) noexcept requires(TIsArray<ToType>::Value == TIsArray<FromType>::Value)
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
-
-    Type* RawPointer = reinterpret_cast<Type*>(Pointer.Get());
-    return TSharedPtr<ToType>(Pointer, RawPointer);
+    Type* NewObject = reinterpret_cast<Type*>(Object.Get());
+    return TSharedPtr<ToType>(Object, NewObject);
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type ReinterpretCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE TSharedPtr<ToType> ReinterpretCastSharedPtr(TSharedPtr<FromType>&& Object) noexcept requires(TIsArray<ToType>::Value == TIsArray<FromType>::Value)
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
-
-    Type* RawPointer = reinterpret_cast<Type*>(Pointer.Get());
-    return TSharedPtr<ToType>(::Move(Pointer), RawPointer);
+    Type* NewObject = reinterpret_cast<Type*>(Object.Get());
+    return TSharedPtr<ToType>(::Move(Object), NewObject);
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type DynamicCastSharedPtr(const TSharedPtr<FromType>& Pointer) noexcept
+NODISCARD FORCEINLINE TSharedPtr<ToType> DynamicCastSharedPtr(const TSharedPtr<FromType>& Object) noexcept requires(TIsArray<ToType>::Value == TIsArray<FromType>::Value)
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
-
-    Type* RawPointer = dynamic_cast<Type*>(Pointer.Get());
-    return TSharedPtr<ToType>(Pointer, RawPointer);
+    Type* NewObject = dynamic_cast<Type*>(Object.Get());
+    return TSharedPtr<ToType>(Object, NewObject);
 }
 
 template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE typename TEnableIf<IsSameArrayType<ToType, FromType>(), TSharedPtr<ToType>>::Type DynamicCastSharedPtr(TSharedPtr<FromType>&& Pointer) noexcept
+NODISCARD FORCEINLINE TSharedPtr<ToType> DynamicCastSharedPtr(TSharedPtr<FromType>&& Object) noexcept requires(TIsArray<ToType>::Value == TIsArray<FromType>::Value)
 {
     typedef typename TRemoveExtent<ToType>::Type Type;
-
-    Type* RawPointer = dynamic_cast<Type*>(Pointer.Get());
-    return TSharedPtr<ToType>(::Move(Pointer), RawPointer);
+    Type* NewObject = dynamic_cast<Type*>(Object.Get());
+    return TSharedPtr<ToType>(::Move(Object), NewObject);
 }
