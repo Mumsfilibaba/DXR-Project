@@ -13,8 +13,7 @@ enum class EConsoleColor : uint8
     White  = 3
 };
 
-struct CORE_API FOutputDeviceConsole
-    : public IOutputDevice
+struct CORE_API FOutputDeviceConsole : public IOutputDevice
 {
     FOutputDeviceConsole()          = default;
     virtual ~FOutputDeviceConsole() = default;

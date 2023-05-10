@@ -254,23 +254,23 @@ namespace SharedPointerInternal
 
 
     template<EThreadAccess InThreadAccess>
-    class TSharedReference
+    class FSharedReference
     {
     public:
         template<EThreadAccess ThreadAccess>
-        class TWeakReferenceCounter;
+        class FWeakReference;
 
-        TSharedReferenceCounter()
+        FSharedReference()
             : ReferenceCounter(nullptr)
         {
         }
 
-        TSharedReferenceCounter(FReferenceCounter<InThreadAccess>* InReferenceCounter)
+        FSharedReference(FReferenceCounter<InThreadAccess>* InReferenceCounter)
             : ReferenceCounter(InReferenceCounter)
         {
         }
 
-        TSharedReferenceCounter(const TSharedReferenceCounter& Other)
+        FSharedReference(const FSharedReference& Other)
             : ReferenceCounter(Other.ReferenceCounter)
         {
             if (ReferenceCounter)
@@ -279,13 +279,13 @@ namespace SharedPointerInternal
             }
         }
 
-        TSharedReferenceCounter(TSharedReferenceCounter&& Other)
+        FSharedReference(FSharedReference&& Other)
             : ReferenceCounter(Other.ReferenceCounter)
         {
             Other.ReferenceCounter = nullptr;
         }
 
-        TSharedReferenceCounter(const TWeakReferenceCounter<InThreadAccess>& Other)
+        FSharedReference(const FWeakReference<InThreadAccess>& Other)
             : ReferenceCounter(Other.ReferenceCounter)
         {
             if (ReferenceCounter)
@@ -297,7 +297,7 @@ namespace SharedPointerInternal
             }
         }
 
-        TSharedReferenceCounter(TWeakReferenceCounter<InThreadAccess>&& Other)
+        FSharedReference(FWeakReference<InThreadAccess>&& Other)
             : ReferenceCounter(Other.ReferenceCounter)
         {
             if (ReferenceCounter)
@@ -312,7 +312,7 @@ namespace SharedPointerInternal
             }
         }
 
-        ~TSharedReferenceCounter()
+        ~FSharedReference()
         {
             if (ReferenceCounter)
             {
@@ -325,7 +325,7 @@ namespace SharedPointerInternal
             return ReferenceCounter;
         }
 
-        TSharedReferenceCounter& operator=(const TSharedReferenceCounter& Other) noexcept
+        FSharedReference& operator=(const FSharedReference& Other) noexcept
         {
             auto NewCounter = Other.ReferenceCounter;
             auto OldCounter = ReferenceCounter;
@@ -348,7 +348,7 @@ namespace SharedPointerInternal
             return *this;
         }
 
-        TSharedReferenceCounter& operator=(TSharedReferenceCounter&& Other) noexcept
+        FSharedReference& operator=(FSharedReference&& Other) noexcept
         {
             auto NewCounter = Other.ReferenceCounter;
             auto OldCounter = ReferenceCounter;
@@ -374,8 +374,112 @@ namespace SharedPointerInternal
 
 
     template<EThreadAccess ThreadAccess>
-    class TWeakReferenceCounter
+    class FWeakReference
     {
+    public:
+        FWeakReference()
+            : ReferenceCounter(nullptr)
+        {
+        }
+
+        FWeakReference(FReferenceCounter<InThreadAccess>* InReferenceCounter)
+            : ReferenceCounter(InReferenceCounter)
+        {
+        }
+
+        FWeakReference(const FWeakReference& Other)
+            : ReferenceCounter(Other.ReferenceCounter)
+        {
+            if (ReferenceCounter)
+            {
+                ReferenceCounter->AddWeakReference();
+            }
+        }
+
+        FWeakReference(FWeakReference&& Other)
+            : ReferenceCounter(Other.ReferenceCounter)
+        {
+            Other.ReferenceCounter = nullptr;
+        }
+
+        FWeakReference(const FSharedReference<InThreadAccess>& Other)
+            : ReferenceCounter(Other.ReferenceCounter)
+        {
+            if (ReferenceCounter)
+            {
+                ReferenceCounter->AddWeakReference();
+            }
+        }
+
+        FWeakReference(FSharedReference<InThreadAccess>&& Other)
+            : ReferenceCounter(Other.ReferenceCounter)
+        {
+            if (ReferenceCounter)
+            {
+                ReferenceCounter->AddWeakReference();
+                Other.ReferenceCounter->ReleaseStrongReference();
+                Other.ReferenceCounter = nullptr;
+            }
+        }
+
+        ~FWeakReference()
+        {
+            if (ReferenceCounter)
+            {
+                ReferenceCounter->ReleaseWeakReference();
+            }
+        }
+
+        FORCEINLINE FReferenceCounter<InThreadAccess>* GetCounter()
+        {
+            return ReferenceCounter;
+        }
+
+        FWeakReference& operator=(const FWeakReference& Other) noexcept
+        {
+            auto NewCounter = Other.ReferenceCounter;
+            auto OldCounter = ReferenceCounter;
+
+            // Ensure that we don't assign the same counter again
+            if (OldCounter != NewCounter)
+            {
+                ReferenceCounter = NewCounter;
+                if (NewCounter)
+                {
+                    NewCounter->AddWeakReference();
+                }
+
+                if (OldCounter)
+                {
+                    OldCounter->ReleaseWeakReference();
+                }
+            }
+
+            return *this;
+        }
+
+        FWeakReference& operator=(FWeakReference&& Other) noexcept
+        {
+            auto NewCounter = Other.ReferenceCounter;
+            auto OldCounter = ReferenceCounter;
+
+            // Ensure that we don't assign the same counter again
+            if (OldCounter != NewCounter)
+            {
+                ReferenceCounter = NewCounter;
+                Other.ReferenceCounter = nullptr;
+                
+                if (OldCounter)
+                {
+                    OldCounter->ReleaseWeakReference();
+                }
+            }
+
+            return *this;
+        }
+
+    private:
+        FReferenceCounter<InThreadAccess>* ReferenceCounter;
     };
 }
 
@@ -398,7 +502,8 @@ public:
      * @brief - Default constructor 
      */
     FORCEINLINE TSharedPtr() noexcept
-        : Referencer()
+        : ObjectPointer(nullptr)
+        , ReferenceCounter()
     {
     }
 
@@ -406,7 +511,8 @@ public:
      * @brief - Constructor setting both counter and pointer to nullptr 
      */
     FORCEINLINE TSharedPtr(nullptr_type) noexcept
-        : Referencer()
+        : ObjectPointer(nullptr)
+        , ReferenceCounter()
     {
     }
 
@@ -415,7 +521,8 @@ public:
      * @param InObject - Pointer to store in the SharedPtr
      */
     FORCEINLINE explicit TSharedPtr(ObjectType* InObject) noexcept
-        : Referencer(InObject)
+        : ObjectPointer(InObject)
+        , ReferenceCounter(new SharedPointerInternal::TDeleterReferenceCounter<ObjectType>(InObject))
     {
         EnableSharedFromThis(InObject);
     }
@@ -425,8 +532,9 @@ public:
      * @param InObject - Pointer to store in the SharedPtr
      */
     template<typename OtherType>
-    FORCEINLINE explicit TSharedPtr(typename TRemoveExtent<OtherType>::Type* InObject) noexcept requires(TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ObjectType>::Value)
-        : Referencer(InObject)
+    FORCEINLINE explicit TSharedPtr(OtherType* InObject) noexcept requires(TIsPointerConvertible<PureOtherType, ObjectType>::Value)
+        : ObjectPointer(InObject)
+        , ReferenceCounter(new SharedPointerInternal::TDeleterReferenceCounter<ObjectType>(InObject))
     {
         EnableSharedFromThis(InObject);
     }
@@ -436,7 +544,8 @@ public:
      * @param Other - SharedPtr to copy
      */
     FORCEINLINE TSharedPtr(const TSharedPtr& Other) noexcept
-        : Referencer(Other)
+        : ObjectPointer(Other.ObjectPointer)
+        , ReferenceCounter(Other.ReferenceCounter)
     {
     }
 
@@ -445,8 +554,9 @@ public:
      * @param Other - SharedPtr to copy
      */
     template<typename OtherType>
-    FORCEINLINE TSharedPtr(const TSharedPtr<OtherType, ThreadAccess>& Other) noexcept requires(TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ObjectType>::Value)
-        : Referencer(static_cast<ObjectType*>(Other.Get()), Other.GetCounter())
+    FORCEINLINE TSharedPtr(const TSharedPtr<OtherType, ThreadAccess>& Other) noexcept requires(TIsPointerConvertible<OtherType, ObjectType>::Value)
+        : ObjectPointer(Other.ObjectPointer)
+        , ReferenceCounter(Other.ReferenceCounter)
     {
     }
 
@@ -455,8 +565,10 @@ public:
      * @param Other - SharedPtr to move
      */
     FORCEINLINE TSharedPtr(TSharedPtr&& Other) noexcept
-        : Referencer(::Move(Other.Referencer))
-    { 
+        : ObjectPointer(Other.ObjectPointer)
+        , ReferenceCounter(::Move(Other.ReferenceCounter))
+    {
+        Other.ObjectPointer = nullptr;
     }
 
     /**
@@ -464,9 +576,11 @@ public:
      * @param Other - SharedPtr to move
      */
     template<typename OtherType>
-    FORCEINLINE TSharedPtr(TSharedPtr<OtherType, ThreadAccess>&& Other) noexcept requires(TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ObjectType>::Value)
-        : Referencer(::Move(Other.Referencer))
+    FORCEINLINE TSharedPtr(TSharedPtr<OtherType, ThreadAccess>&& Other) noexcept requires(TIsPointerConvertible<OtherType, ObjectType>::Value)
+        : ObjectPointer(Other.ObjectPointer)
+        , ReferenceCounter(::Move(Other.ReferenceCounter))
     {
+        Other.ObjectPointer = nullptr;
     }
 
     /**
@@ -476,31 +590,33 @@ public:
      */
     template<typename OtherType>
     FORCEINLINE explicit TSharedPtr(const TSharedPtr<OtherType, ThreadAccess>& Other, ObjectType* InObject) noexcept
-        : Referencer(InObject, Other.GetCounter())
+        : ObjectPointer(InObject)
+        , ReferenceCounter(Other.ReferenceCounter)
     {
     }
 
     /**
-     * @brief           - Move constructor that move the counter, but the pointer is taken from the raw-pointer to enable casting
-     * @param Other     - Container to take the counter from
+     * @brief          - Move constructor that move the counter, but the pointer is taken from the raw-pointer to enable casting
+     * @param Other    - Container to take the counter from
      * @param InObject - Pointer to store in the SharedPtr
      */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE explicit TSharedPtr(TSharedPtr<OtherType, OtherDeleterType>&& Other, ObjectType* InObject) noexcept
-        : Referencer(InObject, Other.GetCounter())
+    template<typename OtherType>
+    FORCEINLINE explicit TSharedPtr(TSharedPtr<OtherType>&& Other, ObjectType* InObject) noexcept
+        : ObjectPointer(InObject)
+        , ReferenceCounter(::Move(Other.ReferenceCounter))
     {
-        Storage.Reset();
+        Other.ObjectPointer = nullptr;
     }
 
     /**
      * @brief       - Constructor that creates a SharedPtr from a WeakPtr 
      * @param Other - WeakPtr to take counter and pointer from
      */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE explicit TSharedPtr(const TWeakPtr<OtherType, OtherDeleterType>& Other) noexcept requires(TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ObjectType>::Value)
-        : Referencer()
+    template<typename OtherType>
+    FORCEINLINE explicit TSharedPtr(const TWeakPtr<OtherType>& Other) noexcept requires(TIsPointerConvertible<OtherType>::Type, ObjectType>::Value)
+        : ObjectPointer(InObject)
+        , ReferenceCounter(Other.ReferenceCounter)
     {
-        Storage.InitStrong(static_cast<ObjectType*>(Other.Get()), Other.GetCounter());
     }
 
     /**
@@ -509,9 +625,10 @@ public:
      */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE TSharedPtr(TUniquePtr<OtherType, OtherDeleterType>&& Other) noexcept requires(TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ObjectType>::Value)
-        : Referencer(static_cast<ObjectType*>(Other.Release()))
+        : ObjectPointer(static_cast<ObjectType*>(Other.Release()))
+        , ReferenceCounter(new SharedPointerInternal::TDeleterReferenceCounter<OtherType, OtherDeleterType, ThreadAccess>(static_cast<ObjectType*>(Other.Release())))
     {
-        EnableSharedFromThis(Referencer.GetPointer());
+        EnableSharedFromThis(ObjectPointer);
     }
 
     /**
@@ -528,10 +645,9 @@ public:
      */
     FORCEINLINE void Reset(ObjectType* NewPointer = nullptr) noexcept
     {
-        if (Storage.GetPointer() != NewPointer)
+        if (ObjectPointer != NewPointer)
         {
-            Storage.ReleaseStrong();
-            Storage.InitStrong(NewPointer, nullptr);
+            ReferenceCounter = ::Move(FSharedReference<ThreadAccess>(new SharedPointerInternal::TDeleterReferenceCounter<OtherType, ThreadAccess>(NewPointer)));
         }
     }
 
@@ -540,7 +656,7 @@ public:
      * @param NewPointer - New pointer to store
      */
     template<typename OtherType>
-    FORCEINLINE void Reset(typename TRemoveExtent<OtherType>::Type* NewPointer = nullptr) noexcept requires(TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ObjectType>::Value)
+    FORCEINLINE void Reset(OtherType* NewPointer = nullptr) noexcept requires(TIsPointerConvertible<OtherType, ObjectType>::Value)
     {
         Reset(static_cast<ObjectType*>(NewPointer));
     }
@@ -551,9 +667,13 @@ public:
      */
     FORCEINLINE void Swap(TSharedPtr& Other) noexcept
     {
-        PointerStorage Temp = ::Move(Storage);
-        Storage       = ::Move(Other.Storage);
-        Other.Storage = ::Move(Temp);
+        ObjectType* OldObjectPointer = ObjectPointer;
+        ObjectPointer = Other.ObjectPointer;
+        Other.ObjectPointer = OldObjectPointer;
+        
+        FSharedReference<ThreadAccess> OldReferenceCounter = ::Move(ReferenceCounter);
+        ReferenceCounter = ::Move(Other.ReferenceCounter);
+        Other.ReferenceCounter = ::Move(OldReferenceCounter);
     }
 
     /**
@@ -562,7 +682,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsUnique() const noexcept
     {
-        return (Storage.GetStrongRefCount() == 1);
+        return ReferenceCounter.IsUnique();
     }
 
     /**
@@ -571,7 +691,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (Storage.GetPointer() != nullptr);
+        return (ObjectPointer != nullptr);
     }
 
     /**
@@ -580,34 +700,25 @@ public:
      */
     NODISCARD FORCEINLINE ObjectType* Get() const noexcept
     {
-        return Storage.GetPointer();
-    }
-
-    /**
-     * @brief  - Return the address of the raw pointer
-     * @return - Returns the address of the stored pointer
-     */
-    NODISCARD FORCEINLINE ObjectType* const* GetAddressOf() const noexcept
-    {
-        return Storage.GetAddressOfPointer();
+        return ObjectPointer;
     }
 
     /**
      * @brief  - Returns the number of strong references 
      * @return - The number of strong references
      */
-    NODISCARD FORCEINLINE CounterType GetStrongRefCount() const noexcept
+    NODISCARD FORCEINLINE auto GetStrongReferenceCount() const noexcept
     {
-        return Storage.GetStrongRefCount();
+        return ReferenceCounter.GetStrongReferenceCount();
     }
 
     /**
      * @brief  - Returns the number of weak references
      * @return - The number of weak references
      */
-    NODISCARD FORCEINLINE CounterType GetWeakRefCount() const noexcept
+    NODISCARD FORCEINLINE auto GetWeakReferenceCount() const noexcept
     {
-        return Storage.GetWeakRefCount();
+        return ReferenceCounter.GetWeakReferenceCount();
     }
 
 public:
@@ -618,7 +729,7 @@ public:
      */
     NODISCARD FORCEINLINE ObjectType* operator->() const noexcept
     {
-        return Storage.GetPointer();
+        return ObjectPointer;
     }
 
     /**
@@ -627,16 +738,7 @@ public:
      */
     NODISCARD FORCEINLINE ObjectType& operator*() const noexcept
     {
-        return *Storage.GetPointer();
-    }
-
-    /**
-     * @brief  - Return the address of the raw pointer
-     * @return - Returns the address of the stored pointer
-     */
-    NODISCARD FORCEINLINE ObjectType* const* operator&() const noexcept
-    {
-        return Storage.GetAddressOfPointer();
+        return *ObjectPointer;
     }
 
      /** 
@@ -646,8 +748,7 @@ public:
     NODISCARD FORCEINLINE ObjectType& operator[](SizeType Index) const noexcept requires(TIsUnboundedArray<InObjectType>::Value)
     {
         CHECK(IsValid());
-        auto* Pointer = Storage.GetPointer();
-        return Pointer[Index];
+        return ObjectPointer[Index];
     }
 
     /**
@@ -686,8 +787,8 @@ public:
      * @param Other - SharedPtr to copy
      * @return      - A reference to this instance
      */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE TSharedPtr& operator=(const TSharedPtr<OtherType, OtherDeleterType>& Other) noexcept requires(TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ObjectType>::Value)
+    template<typename OtherType>
+    FORCEINLINE TSharedPtr& operator=(const TSharedPtr<OtherType>& Other) noexcept requires(TIsPointerConvertible<OtherType, ObjectType>::Value)
     {
         TSharedPtr(Other).Swap(*this);
         return *this;
@@ -698,21 +799,21 @@ public:
      * @param Other - SharedPtr to move
      * @return      - A reference to this instance
      */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE TSharedPtr& operator=(TSharedPtr<OtherType, OtherDeleterType>&& Other) noexcept requires(TIsPointerConvertible<typename TRemoveExtent<OtherType>::Type, ObjectType>::Value)
+    template<typename OtherType>
+    FORCEINLINE TSharedPtr& operator=(TSharedPtr<OtherType>&& Other) noexcept requires(TIsPointerConvertible<OtherType, ObjectType>::Value)
     {
         TSharedPtr(::Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief       - Assignment operator that takes a raw-pointer
-     * @param Other - Raw pointer to store
-     * @return      - A reference to this instance
+     * @brief            - Assignment operator that takes a raw-pointer
+     * @param NewPointer - Raw pointer to store
+     * @return           - A reference to this instance
      */
-    FORCEINLINE TSharedPtr& operator=(ObjectType* Other) noexcept
+    FORCEINLINE TSharedPtr& operator=(ObjectType* NewPointer) noexcept
     {
-        TSharedPtr(Other).Swap(*this);
+        TSharedPtr(NewPointer).Swap(*this);
         return *this;
     }
 
@@ -736,12 +837,8 @@ private:
         }
     }
 
-    NODISCARD FORCEINLINE SharedPointerInternal::FSharedRefCounter* GetCounter() const noexcept
-    {
-        return Storage.GetCounter();
-    }
-
-    SharedPointerInternal::TSharedReferencer<InObjectType, InThreadAccess> Referencer;
+    ObjectType* ObjectPointer;
+    SharedPointerInternal::TSharedReferencer<InObjectType, InThreadAccess> ReferenceCounter;
 };
 
 template<typename T, typename U>

@@ -9,8 +9,7 @@
     #pragma warning(disable : 4251) // Class '...' needs to have DLL-interface to be used by clients of class '...'
 #endif
 
-class COREAPPLICATION_API FWindowsOutputDeviceConsole final 
-    : public FOutputDeviceConsole
+class COREAPPLICATION_API FWindowsOutputDeviceConsole final : public FOutputDeviceConsole
 {
 public:
     FWindowsOutputDeviceConsole();
@@ -31,11 +30,9 @@ public:
     virtual void SetTextColor(EConsoleColor Color) override final;
 
 private:
-    FString          Title;
-    
+    FString          Title; 
     HANDLE           ConsoleHandle;
     FCriticalSection ConsoleHandleCS;
-
 };
 
 #if defined(PLATFORM_COMPILER_MSVC)
