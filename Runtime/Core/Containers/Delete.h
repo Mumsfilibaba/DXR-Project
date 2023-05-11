@@ -44,7 +44,6 @@ struct TDefaultDelete
     }
 };
 
-
 template<typename InElementType>
 struct TDefaultDelete<InElementType[]>
 {

@@ -148,53 +148,47 @@ struct TIntegerSequence
 
     typedef T Type;
  
-    enum { Size = sizeof...(Sequence) };
+    inline static constexpr auto Value = sizeof...(Sequence);
 };
 
 
-namespace Internal
+namespace IntegerSequenceInternal
 {
     template <typename T, unsigned N>
     struct TMakeIntegerSequenceImpl;
 }
 
 template<typename T, T N>
-using TMakeIntegerSequence = typename Internal::TMakeIntegerSequenceImpl<T, N>::Type;
+using TMakeIntegerSequence = typename IntegerSequenceInternal::TMakeIntegerSequenceImpl<T, N>::Type;
 
-namespace Internal
+namespace IntegerSequenceInternal
 {
     template<uint32 N, typename FirstSequence, typename SecondSequence>
-    struct TSequenceHelper;
+    struct TIntegerSequenceHelper;
 
     template<uint32 N, typename T, T... First, T... Second>
-    struct TSequenceHelper<N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> 
-        : TIntegerSequence<T, First..., (T(N + Second))...>
+    struct TIntegerSequenceHelper<N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> : TIntegerSequence<T, First..., (T(N + Second))...>
     {
         using Type = TIntegerSequence<T, First..., (T(N + Second))...>;
     };
     
-
     template<uint32 N, typename FirstSequence, typename SecondSequence>
-    using TSequenceHelperType = typename TSequenceHelper<N, FirstSequence, SecondSequence>::Type;
-
+    using TIntegerSequenceHelperType = typename TIntegerSequenceHelper<N, FirstSequence, SecondSequence>::Type;
 
     template<typename T, uint32 N>
-    struct TMakeIntegerSequenceImpl 
-        : TSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>
+    struct TMakeIntegerSequenceImpl : TIntegerSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>
     {
-        using Type = TSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>;
+        using Type = TIntegerSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>;
     };
 
     template<typename T>
-    struct TMakeIntegerSequenceImpl<T, 1> 
-        : TIntegerSequence<T, T(0)>
+    struct TMakeIntegerSequenceImpl<T, 1> : TIntegerSequence<T, T(0)>
     {
         using Type = TIntegerSequence<T, T(0)>;
     };
 
     template<typename T>
-    struct TMakeIntegerSequenceImpl<T, 0> 
-        : TIntegerSequence<T>
+    struct TMakeIntegerSequenceImpl<T, 0> : TIntegerSequence<T>
     {
         using Type = TIntegerSequence<T>;
     };
@@ -235,9 +229,9 @@ constexpr T&& Forward(typename TRemoveReference<T>::Type&& Value) noexcept
 template<typename T>
 FORCEINLINE typename TEnableIf<TNot<TIsConst<T>>::Value>::Type Swap(T& LHS, T& RHS) noexcept
 {
-    T TempElement = Move(LHS);
-    LHS = Move(RHS);
-    RHS = Move(TempElement);
+    T TempElement = ::Move(LHS);
+    LHS = ::Move(RHS);
+    RHS = ::Move(TempElement);
 }
 
 
@@ -249,20 +243,20 @@ constexpr typename TUnderlyingType<EnumType>::Type ToUnderlying(EnumType Value)
 
 
 template<typename T>
-constexpr typename TEnableIf<TIsPointer<T>::Value, uintptr>::Type ToInteger(T Pointer)
+constexpr uintptr ToInteger(T Pointer) requires(TIsPointer<T>::Value)
 {
     return reinterpret_cast<uintptr>(Pointer);
 }
 
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsObject<T>::Value, T*>::Type AddressOf(T& Object) noexcept
+FORCEINLINE T* AddressOf(T& Object) noexcept requires(TIsObject<T>::Value)
 {
     return reinterpret_cast<T*>(&const_cast<CHAR&>(reinterpret_cast<const volatile CHAR&>(Object)));
 }
 
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsObject<T>::Value, T*>::Type AddressOf(T& Object) noexcept
+FORCEINLINE T* AddressOf(T& Object) noexcept requires(TNot<TIsObject<T>>::Value)
 {
     return &Object;
 }
@@ -277,13 +271,13 @@ inline void ExpandPacks(Packs&&...) { }
 
 
 template<typename EnumType>
-constexpr typename TEnableIf<TIsEnum<EnumType>::Value, EnumType>::Type EnumAdd(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept
+constexpr EnumType EnumAdd(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept requires(TIsEnum<EnumType>::Value)
 {
-    return static_cast<EnumType>(ToUnderlying(Value) + Offset);
+    return static_cast<EnumType>(::ToUnderlying(Value) + Offset);
 }
 
 template<typename EnumType>
-constexpr typename TEnableIf<TIsEnum<EnumType>::Value, EnumType>::Type EnumSub(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept
+constexpr EnumType EnumSub(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept requires(TIsEnum<EnumType>::Value)
 {
-    return static_cast<EnumType>(ToUnderlying(Value) - Offset);
+    return static_cast<EnumType>(::ToUnderlying(Value) - Offset);
 }

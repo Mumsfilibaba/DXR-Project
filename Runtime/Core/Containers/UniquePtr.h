@@ -151,6 +151,22 @@ public:
         return (Object != nullptr);
     }
 
+    /**
+     * @return - Returns this as a reference as a DeleterType
+     */
+    NODISCARD FORCEINLINE DeleterType& GetDeleter()
+    {
+        return static_cast<DeleterType&>(*this);
+    }
+
+    /**
+     * @return - Returns this as a reference as a DeleterType
+     */
+    NODISCARD FORCEINLINE const DeleterType& GetDeleter() const
+    {
+        return static_cast<const DeleterType&>(*this);
+    }
+
 public:
 
     /**
@@ -385,6 +401,22 @@ public:
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
         return (Object != nullptr);
+    }
+    
+    /**
+     * @return - Returns this as a reference as a DeleterType
+     */
+    NODISCARD FORCEINLINE DeleterType& GetDeleter()
+    {
+        return static_cast<DeleterType&>(*this);
+    }
+
+    /**
+     * @return - Returns this as a reference as a DeleterType
+     */
+    NODISCARD FORCEINLINE const DeleterType& GetDeleter() const
+    {
+        return static_cast<const DeleterType&>(*this);
     }
 
 public:

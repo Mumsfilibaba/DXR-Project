@@ -818,7 +818,6 @@ template<typename T>
 struct TIsSigned
 {
 private:
-
     template<typename U, bool = TIsArithmetic<U>::Value>
     struct TIsSignedImpl
     {
@@ -839,7 +838,6 @@ template<typename T>
 struct TIsUnsigned
 {
 private:
-
     template<typename U, bool = TIsArithmetic<U>::Value>
     struct TIsUnsignedImpl
     {
@@ -926,7 +924,7 @@ struct TIsObject
 
 #if PLATFORM_COMPILER_MSVC
     #pragma warning(push)
-    #pragma warning(disable : 4180)
+    #pragma warning(disable : 4180) //C4180 - A qualifier, such as const, is applied to a function type defined by typedef
 #endif
 
 template<typename T>
