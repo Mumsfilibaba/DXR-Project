@@ -43,6 +43,17 @@ public:
     }
 
     /**
+     * @brief           - Constructor that takes a raw pointer
+     * @param InPointer - Raw pointer to store
+     * @param Deleter   - Deleter
+     */
+    FORCEINLINE explicit TUniquePtr(ElementType* InPointer, DeleterType&& Deleter) noexcept
+        : Super(::Move(Deleter))
+        , Object(InPointer)
+    {
+    }
+
+    /**
      * @brief       - Move-constructor
      * @param Other - UniquePtr to move from
      */
@@ -59,7 +70,7 @@ public:
      */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE TUniquePtr(TUniquePtr<OtherType, OtherDeleterType>&& Other) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
-        : Super(::Move(Other))
+        : Super(::Move(Other.GetDeleter()))
         , Object(Other.Object)
     {
         Other.Object = nullptr;
@@ -91,16 +102,6 @@ public:
     FORCEINLINE void Reset(ElementType* NewPointer = nullptr) noexcept
     {
         TUniquePtr(NewPointer).Swap(*this);
-    }
-
-    /**
-     * @brief            - Resets the container by setting the pointer to a new value of a convertible type and releases the old one
-     * @param NewPointer - New pointer to store
-     */
-    template<typename OtherType>
-    FORCEINLINE void Reset(OtherType* NewPointer) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
-    {
-        Reset(static_cast<ElementType*>(NewPointer));
     }
 
     /**
@@ -305,6 +306,17 @@ public:
     }
 
     /**
+     * @brief           - Constructor that takes a raw pointer
+     * @param InPointer - Raw pointer to store
+     * @param Deleter   - Deleter
+     */
+    FORCEINLINE explicit TUniquePtr(ElementType* InPointer, DeleterType&& Deleter) noexcept
+        : Super(::Move(Deleter))
+        , Object(InPointer)
+    {
+    }
+
+    /**
      * @brief       - Move-constructor
      * @param Other - UniquePtr to move from
      */
@@ -321,7 +333,7 @@ public:
      */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE TUniquePtr(TUniquePtr<OtherType[], OtherDeleterType>&& Other) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
-        : Super(::Move(Other))
+        : Super(::Move(Other.GetDeleter()))
         , Object(Other.Object)
     {
         Other.Object = nullptr;
@@ -353,16 +365,6 @@ public:
     FORCEINLINE void Reset(ElementType* NewPointer = nullptr) noexcept
     {
         TUniquePtr(NewPointer).Swap(*this);
-    }
-
-    /**
-     * @brief            - Resets the container by setting the pointer to a new value of a convertible type and releases the old one
-     * @param NewPointer - New pointer to store
-     */
-    template<typename OtherType>
-    FORCEINLINE void Reset(OtherType* NewPointer) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
-    {
-        Reset(static_cast<ElementType*>(NewPointer));
     }
 
     /**

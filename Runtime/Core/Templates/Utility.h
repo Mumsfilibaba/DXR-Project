@@ -148,7 +148,7 @@ struct TIntegerSequence
 
     typedef T Type;
  
-    inline static constexpr auto Value = sizeof...(Sequence);
+    inline static constexpr auto Size = sizeof...(Sequence);
 };
 
 

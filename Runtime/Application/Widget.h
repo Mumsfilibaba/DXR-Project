@@ -21,7 +21,7 @@ struct FWidgetInitializerBase
     FINITIALIZER_ATTRIBUTE(EVisibility, Visibility);
 };
 
-class APPLICATION_API FWidget : public TEnableSharedFromThis<FWidget>
+class APPLICATION_API FWidget : public TSharedFromThis<FWidget>
 {
 public:
     FWidget();

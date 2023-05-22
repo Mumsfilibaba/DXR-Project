@@ -480,7 +480,7 @@ int main()
 
     /* Integer Sequence */
     TIntegerSequence Sequence = TMakeIntegerSequence<uint32, 5>();
-    Sequence.Size;
+    static_assert(Sequence.Size == 5);
 
     return 0;
 }

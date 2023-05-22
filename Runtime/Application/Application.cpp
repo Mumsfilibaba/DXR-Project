@@ -123,7 +123,7 @@ public:
 
     private:
         FFilteredWidgets& Widgets;
-        bool               bIsProcessed;
+        bool              bIsProcessed;
     };
 
 public:
@@ -145,7 +145,7 @@ TSharedPtr<FGenericApplication>  FWindowedApplication::PlatformApplication = nul
 
 bool FWindowedApplication::Create()
 {
-    PlatformApplication = MakeSharedPtr(FPlatformApplicationMisc::CreateApplication());
+    PlatformApplication = TSharedPtr(FPlatformApplicationMisc::CreateApplication());
     if (!PlatformApplication)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create FPlatformApplication");
