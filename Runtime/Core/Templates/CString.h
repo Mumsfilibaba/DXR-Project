@@ -1,7 +1,6 @@
 #pragma once
 #include "TypeTraits.h"
 #include "ObjectHandling.h"
-
 #include "Core/Memory/Memory.h"
 #include "Core/Platform/PlatformString.h"
 
@@ -12,8 +11,6 @@ struct TChar
 
     using PointerType      = typename TAddPointer<CHARTYPE>::Type;
     using ConstPointerType = const PointerType;
-
-    static constexpr CHARTYPE Null = 0;
 
     NODISCARD static FORCEINLINE CHARTYPE ToUpper(CHARTYPE Char)
     {
@@ -63,11 +60,6 @@ struct TChar
     NODISCARD static FORCEINLINE bool IsHexDigit(CHARTYPE Char)
     {
         return FPlatformString::IsHexDigit(Char);
-    }
-
-    NODISCARD static FORCEINLINE bool IsZero(CHARTYPE Char) 
-    { 
-        return (Char == Null); 
     }
 };
 

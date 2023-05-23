@@ -88,7 +88,7 @@ FORCEINLINE void PrintString<WIDECHAR>(const WIDECHAR* String)
         }                                                                                               \
     }
 
-#define TEST_CHECK_STRING(String, Value) TEST_CHECK_STRING_N(String, Value, String.GetLength())
+#define TEST_CHECK_STRING(String, Value) TEST_CHECK_STRING_N(String, Value, String.Length())
 
 #define SUCCESS()                       \
     std::cout << "[TESTS SUCCEEDED]\n"; \

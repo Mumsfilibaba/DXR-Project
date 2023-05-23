@@ -18,16 +18,16 @@ public:
     using CharType = InCharType;
     using SizeType = int32;
     
-    static_assert(
-        TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value,
-        "TStringView only supports 'CHAR' and 'WIDECHAR'");
-    
+    static_assert(TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value, "TStringView only supports 'CHAR' and 'WIDECHAR'");
     static_assert(TIsSigned<SizeType>::Value, "TStringView only supports a SizeType that's signed");
 
     typedef TArrayIterator<const TStringView, const CharType>        ConstIteratorType;
     typedef TReverseArrayIterator<const TStringView, const CharType> ReverseConstIteratorType;
 
-    enum : SizeType { INVALID_INDEX = SizeType(-1) };
+    enum : SizeType 
+    { 
+        INVALID_INDEX = SizeType(-1) 
+    };
 
 public:
     
@@ -54,8 +54,9 @@ public:
      * @brief          - Create a view from a raw string with a fixed length
      * @param InString - String to view
      * @param InLength - Length of the string to view
+     * @param Offset   - Offset into the string
      */
-    FORCEINLINE explicit TStringView(const CharType* InString, SizeType InLength) noexcept
+    FORCEINLINE explicit TStringView(const CharType* InString, SizeType InLength, SizeType Offset) noexcept
         : ViewStart(InString)
         , ViewEnd(InString + InLength)
     {
@@ -65,12 +66,10 @@ public:
      * @brief          - Create a view from a string-type 
      * @param InString - String to view
      */
-    template<
-        typename StringType,
-        typename = typename TEnableIf<TIsTStringType<StringType>::Value>::Type>
-    FORCEINLINE explicit TStringView(const StringType& InString) noexcept
+    template<typename StringType>
+    FORCEINLINE explicit TStringView(const StringType& InString) noexcept requires(TIsTStringType<StringType>::Value)
         : ViewStart(InString.GetCString())
-        , ViewEnd(InString.GetCString() + InString.GetLength())
+        , ViewEnd(InString.GetCString() + InString.Length())
     {
     }
 
@@ -114,9 +113,9 @@ public:
     FORCEINLINE void CopyToBuffer(CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const noexcept
     {
         CHECK(Buffer != nullptr);
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        const SizeType CopySize = NMath::Min(BufferSize, GetLength() - Position);
+        const SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
         TCString<CharType>::Strncpy(Buffer, ViewStart + Position, CopySize);
     }
 
@@ -219,7 +218,7 @@ public:
      */
     FORCEINLINE void ShrinkLeftInline(int32 Num = 1) noexcept
     {
-		const auto CurrentLength = GetLength();
+		const auto CurrentLength = Length();
 		if (CurrentLength <= Num)
         {
             ViewStart = ViewEnd;
@@ -248,7 +247,7 @@ public:
      */
     FORCEINLINE void ShrinkRightInline(int32 Num = 1) noexcept
     {
-        const auto CurrentLength = GetLength();
+        const auto CurrentLength = Length();
         if (CurrentLength <= Num)
         {
             ViewEnd = ViewStart;
@@ -267,7 +266,7 @@ public:
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type Compare(const StringType& InString) const noexcept
     {
-        return Compare(InString.GetCString(), InString.GetLength());
+        return Compare(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -288,7 +287,7 @@ public:
      */
     NODISCARD FORCEINLINE int32 Compare(const CharType* InString, SizeType InLength) const noexcept
     {
-        const SizeType Length = GetLength();
+        const SizeType Length = Length();
         if (Length != InLength)
         {
             return -1;
@@ -321,7 +320,7 @@ public:
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type CompareNoCase(const StringType& InString) const noexcept
     {
-        return CompareNoCase(InString.GetCString(), InString.GetLength());
+        return CompareNoCase(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -342,7 +341,7 @@ public:
      */
     NODISCARD FORCEINLINE int32 CompareNoCase(const CharType* InString, SizeType InLength) const noexcept
     {
-        const SizeType Length = GetLength();
+        const SizeType Length = Length();
         if (Length != InLength)
         {
             return -1;
@@ -387,7 +386,7 @@ public:
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type Find(const StringType& InString, SizeType Position = 0) const noexcept
     {
-        return Find(InString, InString.GetLength(), Position);
+        return Find(InString, InString.Length(), Position);
     }
 
     /**
@@ -399,9 +398,9 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        if ((InLength == 0) || (GetLength() == 0))
+        if ((InLength == 0) || (Length() == 0))
         {
             return 0;
         }
@@ -446,9 +445,9 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindChar(CharType Char, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        const SizeType Length = GetLength();
+        const SizeType Length = Length();
         if (Length == 0)
         {
             return 0;
@@ -479,9 +478,9 @@ public:
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        const SizeType Length = GetLength();
+        const SizeType Length = Length();
         if (Length == 0)
         {
             return 0;
@@ -511,9 +510,9 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        SizeType Length = GetLength();
+        SizeType Length = Length();
         if (Length == 0)
         {
             return 0;
@@ -564,7 +563,7 @@ public:
     template<typename StringType>
     NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindLast(const StringType& InString, SizeType Position = 0) const noexcept
     {
-        return FindLast(InString, InString.GetLength(), Position);
+        return FindLast(InString, InString.Length(), Position);
     }
 
     /**
@@ -578,9 +577,9 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        SizeType Length = GetLength();
+        SizeType Length = Length();
         if ((InLength == 0) || (Length == 0))
         {
             return Length;
@@ -631,9 +630,9 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLastChar(CharType Char, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        const SizeType Length = GetLength();
+        const SizeType Length = Length();
         if (Length == 0)
         {
             return 0;
@@ -663,9 +662,9 @@ public:
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        const SizeType Length = GetLength();
+        const SizeType Length = Length();
         if (Length == 0)
         {
             return 0;
@@ -765,7 +764,7 @@ public:
             return false;
         }
 
-        const SizeType Length = GetLength();
+        const SizeType Length = Length();
         const SizeType SuffixLenght = TCString<CharType>::Strlen(InString);
         if (SuffixLenght > Length)
         {
@@ -788,7 +787,7 @@ public:
             return false;
         }
 
-        const SizeType Length = GetLength();
+        const SizeType Length = Length();
         const SizeType SuffixLenght = TCString<CharType>::Strlen(InString);
         if (SuffixLenght > Length)
         {
@@ -805,7 +804,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsEmpty() const noexcept
     {
-        return (GetLength() == 0);
+        return (Length() == 0);
     }
 
     /**
@@ -844,7 +843,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType LastElementIndex() const noexcept
     {
-        const SizeType Length = GetLength();
+        const SizeType Length = Length();
         return (Length > 0) ? (Length - 1) : 0;
     }
 
@@ -854,14 +853,14 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Size() const noexcept
     {
-        return GetLength();
+        return Length();
     }
 
     /**
      * @brief  - Returns the length of the view
      * @return - The current length of the view
      */
-    NODISCARD FORCEINLINE SizeType GetLength() const noexcept
+    NODISCARD FORCEINLINE SizeType Length() const noexcept
     {
         return static_cast<SizeType>(static_cast<intptr>(ViewEnd - ViewStart));
     }
@@ -901,7 +900,7 @@ public:
      */
     NODISCARD FORCEINLINE TStringView SubStringView(SizeType Offset, SizeType Count) const noexcept
     {
-        CHECK((Count < GetLength()) && (Offset + Count <= GetLength()));
+        CHECK((Count < Length()) && (Offset + Count <= Length()));
         return TStringView(Data() + Offset, Count);
     }
 
@@ -914,7 +913,7 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& operator[](SizeType Index) const noexcept
     {
-        CHECK(Index < GetLength());
+        CHECK(Index < Length());
         return *(ViewStart + Index);
     }
 
@@ -940,48 +939,50 @@ public:
         return *this;
     }
 
-public:
+public: // Iterators
 
     /**
      * @brief  - Retrieve an iterator to the beginning of the array
      * @return - A iterator that points to the first element
      */
-    NODISCARD FORCEINLINE ConstIteratorType StartIterator() const noexcept
+    NODISCARD FORCEINLINE IteratorType Iterator() noexcept
     {
-        return ConstIteratorType(*this, 0);
+        return IteratorType(*this, 0);
     }
 
     /**
-     * @brief  - Retrieve an iterator to the end of the array
-     * @return - A iterator that points to the element past the end
+     * @brief  - Retrieve an iterator to the beginning of the array
+     * @return - A iterator that points to the first element
      */
-    NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const noexcept
     {
-        return ConstIteratorType(*this, Size());
+        return ConstIteratorType(*this, 0);
     }
 
     /**
      * @brief  - Retrieve an reverse-iterator to the end of the array
      * @return - A reverse-iterator that points to the last element
      */
-    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator() noexcept
+    {
+        return ReverseIteratorType(*this, Size());
+    }
+
+    /**
+     * @brief  - Retrieve an reverse-iterator to the end of the array
+     * @return - A reverse-iterator that points to the last element
+     */
+    NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseterator() const noexcept
     {
         return ReverseConstIteratorType(*this, Size());
     }
 
-    /**
-     * @brief  - Retrieve an reverse-iterator to the start of the array
-     * @return - A reverse-iterator that points to the element before the first element
-     */
-    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
-    {
-        return ReverseConstIteratorType(*this, 0);
-    }
-
-public:
-
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType end()   const noexcept { return EndIterator(); }
+public: // STL Iterator
+    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return ConstIterator(); }
+    
+    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, ArraySize); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, ArraySize); }
 
 private:
     const CharType* ViewStart = nullptr;

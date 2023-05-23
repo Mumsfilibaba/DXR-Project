@@ -143,7 +143,7 @@ bool TestVector4()
     // Length
     FVector4 LengthVector(2.0f, 2.0f, 2.0f, 2.0f);
 
-    float Length = LengthVector.GetLength();
+    float Length = LengthVector.Length();
     if (Length != 4.0f)
     {
         TEST_FAILED();

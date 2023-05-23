@@ -21,7 +21,7 @@ public:
     FORCEINLINE void SetName(const FString& Name)
     {
         CHECK(Fence != nullptr);
-        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.GetLength(), Name.GetCString());
+        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.GetCString());
     }
 
 private:

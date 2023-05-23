@@ -5,18 +5,14 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FArrayContainerHelper
 {
-    template<
-        typename ContainerType,
-        typename = typename TEnableIf<TIsContiguousContainer<ContainerType>::Value>::Type>
-    static constexpr decltype(auto) Data(ContainerType&& Container)
+    template<typename ContainerType>
+    static constexpr decltype(auto) Data(ContainerType&& Container) requires(TIsContiguousContainer<ContainerType>::Value)
     {
         return Container.Data();
     }
 
-    template<
-        typename ContainerType,
-        typename = typename TEnableIf<TIsContiguousContainer<ContainerType>::Value>::Type>
-    static constexpr decltype(auto) Size(ContainerType&& Container)
+    template<typename ContainerType>
+    static constexpr decltype(auto) Size(ContainerType&& Container) requires(TIsContiguousContainer<ContainerType>::Value)
     {
         return Container.Size();
     }

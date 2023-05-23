@@ -362,7 +362,7 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
 {
     if (bUpdateCursorPosition)
     {
-        Data->CursorPos = int32(PopupSelectedText.GetLength());
+        Data->CursorPos = int32(PopupSelectedText.Length());
         PopupSelectedText.Clear();
         bUpdateCursorPosition = false;
     }

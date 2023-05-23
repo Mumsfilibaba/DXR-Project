@@ -2,6 +2,7 @@
 #include "Array.h"
 #include "StringView.h"
 #include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/ArrayContainerHelper.h"
 
 #if defined(__OBJC__)
     #include <Foundation/Foundation.h>
@@ -31,10 +32,7 @@ public:
     using SizeType    = int32;
     using StorageType = TArray<CharType, TStringAllocator<CharType>>;
 
-    static_assert(
-        TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value,
-        "TString only supports 'CHAR' and 'WIDECHAR'");
-    
+    static_assert(TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value, "TString only supports 'CHAR' and 'WIDECHAR'");
     static_assert(TIsSigned<SizeType>::Value, "TString only supports a SizeType that's signed");
 
     typedef TArrayIterator<TString, CharType>                    IteratorType;
@@ -42,7 +40,10 @@ public:
     typedef TReverseArrayIterator<TString, CharType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TString, const CharType> ReverseConstIteratorType;
     
-    enum : SizeType { INVALID_INDEX = SizeType(-1) };
+    enum : SizeType 
+    { 
+        INVALID_INDEX = SizeType(-1) 
+    };
 
 public:
     
@@ -79,7 +80,7 @@ public:
     {
         if (InString)
         {
-            CopyFrom(InString, TCString<CharType>::Strlen(InString));
+            InitializeByCopy(InString, TCString<CharType>::Strlen(InString));
         }
     }
 
@@ -89,7 +90,8 @@ public:
      */
     FORCEINLINE explicit TString(SizeType InLength) noexcept
         : CharData(InLength + 1)
-    { }
+    {
+    }
 
     /**
      * @brief          - Create a string from a specified length raw array
@@ -101,7 +103,7 @@ public:
     {
         if (InString)
         {
-            CopyFrom(InString, InLength);
+            InitializeByCopy(InString, InLength);
         }
     }
 
@@ -109,13 +111,11 @@ public:
      * @brief          - Create a static string from another string-type
      * @param InString - String to copy from
      */
-    template<
-        typename StringType,
-        typename = typename TEnableIf<TIsTStringType<StringType>::Value>::Type>
-    FORCEINLINE explicit TString(const StringType& InString) noexcept
+    template<typename StringType>
+    FORCEINLINE explicit TString(const StringType& InString) noexcept requires(TIsTStringType<StringType>::Value)
         : CharData()
     {
-        CopyFrom(InString.GetCString(), InString.GetLength());
+        InitializeByCopy(InString.GetCString(), InString.Length());
     }
 
     /**
@@ -125,7 +125,7 @@ public:
     FORCEINLINE TString(const TString& Other) noexcept
         : CharData()
     {
-        CopyFrom(Other.GetCString(), Other.GetLength());
+        InitializeByCopy(Other.GetCString(), Other.Length());
     }
 
     /**
@@ -133,78 +133,55 @@ public:
      * @param Other - Other string to move from
      */
     FORCEINLINE TString(TString&& Other) noexcept
-        : CharData()
+        : CharData(::Move(Other.CharData))
     {
-        MoveFrom(::Forward<TString>(Other));
     }
 
 #if defined(__OBJC__)
     FORCEINLINE TString(NSString* InString) noexcept
-        : Characters()
+        : CharData()
     {
-        const CharType* RawString = nullptr;
+        const CharType* TmpString = nullptr;
         if constexpr (TIsSame<CharType, CHAR>::Value)
         {
-            RawString = reinterpret_cast<const CharType*>([InString cStringUsingEncoding:NSUTF8StringEncoding]);
+            TmpString = reinterpret_cast<const CharType*>([InString cStringUsingEncoding:NSUTF8StringEncoding]);
         }
         else
         {
-            RawString = reinterpret_cast<const CharType*>([InString cStringUsingEncoding:NSUTF32LittleEndianStringEncoding]);
+            TmpString = reinterpret_cast<const CharType*>([InString cStringUsingEncoding:NSUTF32LittleEndianStringEncoding]);
         }
         
-        CopyFrom(RawString, InString.length);
+        InitializeByCopy(TmpString, InString.length);
     }
 #endif
 
     /**
      * @brief - Clears the string
      */
-    FORCEINLINE void Clear(bool bFreeMemory = false) noexcept
+    FORCEINLINE void Clear(bool bRemoveSlack = false) noexcept
     {
-        if (bFreeMemory)
+        if (bRemoveSlack)
         {
             CharData.Clear(true);
         }
         else if (!CharData.IsEmpty())
         {
             CharData.Reset(1);
-            CharData[0] = TChar<CharType>::Null;
+            CharData[0] = 0;
         }
     }
     
     /**
-     * @brief - Resets the container, but does not deallocate the memory. Takes an optional parameter to
-     *     default construct a new amount of elements.
-     * 
+     * @brief           - Resets the container, but does not deallocate the memory. Takes an optional parameter to default construct a new amount of elements.
      * @param NewLength - Number of elements to construct
      */
     FORCEINLINE void Reset(SizeType NewLength = 0) noexcept
     {
-        const SizeType NewSizeWithZero = (NewLength > 0) ? (NewLength + 1) : 0;
+        const SizeType NewSizeWithZero = (NewLength) ? (NewLength + 1) : 0;
         CharData.Reset(NewSizeWithZero);
-
-        if (CharType* TempData = CharData.Data())
+        if (NewSizeWithZero)
         {
-            TempData[0] = TChar<CharType>::Null;
-        }
-    }
-
-    /**
-     * @brief - Resets the container, but does not deallocate the memory. Takes an optional parameter to
-     *     default construct a new amount of elements from a single element.
-     * 
-     * @param NewLength  - Number of elements to construct
-     * @param CharToFill - Character to fill the new String with
-     */
-    FORCEINLINE void Reset(SizeType NewLength, const CharType CharToFill) noexcept
-    {
-        const SizeType NewSizeWithZero = (NewLength > 0) ? (NewLength + 1) : 0;
-        CharData.Reset(NewSizeWithZero);
-
-        if (CharType* TempData = CharData.Data())
-        {
-            TCString<CharType>::Strnset(TempData, CharToFill, NewLength);
-            TempData[NewLength] = TChar<CharType>::Null;
+            TempData[0] = 0;
         }
     }
 
@@ -217,35 +194,23 @@ public:
     {
         CHECK(InLength == 0 || (InString && InLength > 0));
 
-        const SizeType NewSizeWithZero = (InLength > 0) ? (InLength + 1) : 0;
+        const SizeType NewSizeWithZero = (InLength) ? (InLength + 1) : 0;
         CharData.Reset(NewSizeWithZero);
-
-        if (CharType* TempData = CharData.Data())
+        if (NewSizeWithZero)
         {
-            TCString<CharType>::Strncpy(TempData, InString, InLength);
-            TempData[InLength] = TChar<CharType>::Null;
+            TCString<CharType>::Strncpy(CharData.Data(), InString, InLength);
+            CharData[InLength] = 0;
         }
     }
 
     /**
-     * @brief - Resets the container, but does not deallocate the memory. Creates a new array from
-     *     another array which can be of another type of array.
-     * 
+     * @brief            - Resets the container, but does not deallocate the memory. Creates a new array from another array which can be of another type of array.
      * @param InputArray - Array to copy-construct from
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Reset(const ArrayType& InputArray) noexcept
+    FORCEINLINE void Reset(const ArrayType& InputArray) noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
-        Reset(InputArray.Data(), InputArray.Size());
-    }
-
-    /**
-     * @brief            - Resets the container by moving elements from another string to this one.
-     * @param InputArray - Array to copy-construct elements from
-     */
-    FORCEINLINE void Reset(TString&& InputArray) noexcept
-    {
-        MoveFrom(::Forward<TString>(InputArray));
+        Reset(FArrayContainerHelper::Data(InputArray), FArrayContainerHelper::Size(InputArray));
     }
 
     /**
@@ -254,17 +219,14 @@ public:
      */
     FORCEINLINE void Append(CharType Char) noexcept
     {
-        const auto PreviousLength  = GetLength();
-        const auto NewSizeWithZero = PreviousLength + 2;
-        CharData.Resize(NewSizeWithZero);
-
-        CharType* TempData = CharData.Data();
-        TempData[PreviousLength]     = Char;
-        TempData[PreviousLength + 1] = TChar<CharType>::Null;
+        const SizeType PreviousLength = Length();
+        CharData.AppendUninitialized(1);
+        CharData[PreviousLength]     = Char;
+        CharData[PreviousLength + 1] = 0;
     }
 
     /**
-     * @brief          - Appends a raw-string to this string
+     * @brief          - Appends a cstring to this string
      * @param InString - String to append
      */
     FORCEINLINE void Append(const CharType* InString) noexcept
@@ -277,13 +239,13 @@ public:
      * @param InString - String to append
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Append(const StringType& InString) noexcept
+    FORCEINLINE void Append(const StringType& InString) noexcept requires(TIsTStringType<StringType>::Value)
     {
-        Append(InString.GetCString(), InString.GetLength());
+        Append(InString.GetCString(), InString.Length());
     }
 
     /**
-     * @brief          - Appends a raw-string to this string with a fixed length
+     * @brief          - Appends a cstring to this string with a fixed length
      * @param InString - String to append
      * @param InLength - Length of the string
      */
@@ -291,13 +253,11 @@ public:
     {
         CHECK(InLength == 0 || (InString && InLength > 0));
 
-        const auto PreviousLength  = GetLength();
-        const auto NewSizeWithZero = PreviousLength + InLength + 1;
-        CharData.Resize(NewSizeWithZero);
-
-        CharType* TempData = CharData.Data() + PreviousLength;
-        TCString<CharType>::Strncpy(TempData, InString, InLength);
-        TempData[InLength] = TChar<CharType>::Null;
+        const auto OldLength = Length();
+        const auto NewLength = OldLength + InLength;
+        CharData.AppendUninitialized(InLength);
+        TCString<CharType>::Strncpy(CharData.Data() + OldLength, InString, InLength);
+        CharData[NewLength] = 0;
     }
 
     /**
@@ -306,29 +266,11 @@ public:
      */
     FORCEINLINE void Resize(SizeType NewLength) noexcept
     {
-        const auto NewSizeWithZero = (NewLength > 0) ? (NewLength + 1) : 0;
+        const auto NewSizeWithZero = (NewLength) ? (NewLength + 1) : 0;
         CharData.Resize(NewSizeWithZero);
-
-        if (CharType* TempData = CharData.Data())
+        if (NewSizeWithZero)
         {
-            TempData[NewLength] = TChar<CharType>::Null;
-        }
-    }
-
-    /**
-     * @brief             - Resize the string and fill the new elements with a specified character
-     * @param NewLength   - New length of the string
-     * @param FillElement - Element to fill the string with
-     */
-    FORCEINLINE void Resize(SizeType NewLength, CharType FillElement) noexcept
-    {
-        const auto NewSizeWithZero = (NewLength > 0) ? (NewLength + 1) : 0;
-        CharData.Pop();
-        CharData.Resize(NewSizeWithZero, FillElement);
-
-        if (CharType* TempData = CharData.Data())
-        {
-            TempData[NewLength] = TChar<CharType>::Null;
+            CharData[NewLength] = 0;
         }
     }
 
@@ -349,10 +291,9 @@ public:
      */
     FORCEINLINE void CopyToBuffer(CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const noexcept
     {
-        CHECK(Position < GetLength() || Position == 0);
+        CHECK(Position < Length() || Position == 0);
         CHECK(Buffer && BufferSize > 0);
-
-        const SizeType CopySize = NMath::Min(BufferSize, GetLength() - Position);
+        const SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
         TCString<CharType>::Strncpy(Buffer, CharData.Data() + Position, CopySize);
     }
 
@@ -382,15 +323,13 @@ public:
             WrittenChars  = TCString<CharType>::Snprintf(WrittenString, BufferSize, InFormat, ::Forward<ArgTypes>(Args)...);
         }
 
-        const int32 WrittenLength = TCString<CharType>::Strlen(WrittenString);
-        CharData.Reset(WrittenString, WrittenLength);
-
+        CharData.Reset(WrittenString, TCString<CharType>::Strlen(WrittenString));
         if (DynamicBuffer)
         {
             FMemory::Free(DynamicBuffer);
         }
 
-        CharData.Emplace(TChar<CharType>::Null);
+        CharData.Emplace(0);
     }
 
     /**
@@ -419,15 +358,15 @@ public:
             WrittenChars  = TCString<CharType>::Snprintf(WrittenString, BufferSize, InFormat, ::Forward<ArgTypes>(Args)...);
         }
 
-        CharData.Pop();
-        CharData.Append(WrittenString, WrittenChars);
+        const auto OldSize = Length();
+        CharType.Resize(OldSize + WrittenChars + 1);
+        TCString<CharType>::Strncpy(CharType.Data() + OldSize, WrittenString, WrittenChars);
+        CharType[NewSize] = 0;
 
         if (DynamicBuffer)
         {
             FMemory::Free(DynamicBuffer);
         }
-
-        CharData.Emplace(TChar<CharType>::Null);
     }
 
     /**
@@ -435,12 +374,9 @@ public:
      */
     FORCEINLINE void ToLowerInline() noexcept
     {
-        CharType* RESTRICT Start = CharData.Data();
-        CharType* RESTRICT End   = Start + CharData.Size();
-        while (Start != End)
+        for (CharType* RESTRICT Start = CharData.Data(); *RESTRICT End = Start + CharData.Size(); Start != End; ++Start)
         {
             *Start = TChar<CharType>::ToLower(*Start);
-            ++Start;
         }
     }
 
@@ -460,12 +396,9 @@ public:
      */
     FORCEINLINE void ToUpperInline() noexcept
     {
-        CharType* RESTRICT Start = CharData.Data();
-        CharType* RESTRICT End   = Start + CharData.Size();
-        while (Start != End)
+        for (CharType* RESTRICT Start = CharData.Data(); *RESTRICT End = Start + CharData.Size(); Start != End; ++Start)
         {
             *Start = TChar<CharType>::ToUpper(*Start);
-            ++Start;
         }
     }
 
@@ -516,16 +449,12 @@ public:
      */
     FORCEINLINE void TrimStartInline() noexcept
     {
-        const CharType* RESTRICT Start = CharData.Data();
-        const CharType* RESTRICT End   = CharData.Data() + GetLength();
-        while (Start != End)
+        for (const CharType* RESTRICT Start = CharData.Data(); *RESTRICT End = Start + Length(); Start != End && *Start; ++Start)
         {
-            if (!TChar<CharType>::IsSpace(*Start) && !TChar<CharType>::IsZero(*Start))
+            if (!TChar<CharType>::IsSpace(*Start))
             {
                 break;
             }
-
-            ++Start;
         }
 
         const SizeType Count = static_cast<SizeType>(Start - CharData.Data());
@@ -551,13 +480,10 @@ public:
      */
     FORCEINLINE void TrimEndInline() noexcept
     {
-        const CharType* RESTRICT Start   = CharData.Data() + GetLength();
-        const CharType* RESTRICT Current = Start;
-        const CharType* RESTRICT End     = CharData.Data();
-        while (Current != End)
+        for (const CharType* RESTRICT Start = CharData.Data() + Length(); *RESTRICT Current = Start; *RESTRICT End = CharData.Data(); Current != End && *Current)
         {
             --Current;
-            if (!TChar<CharType>::IsSpace(*Current) && !TChar<CharType>::IsZero(*Current))
+            if (!TChar<CharType>::IsSpace(*Current))
             {
                 break;
             }
@@ -568,7 +494,7 @@ public:
         if (Count > 1)
         {
             CharData.PopRange(Count);
-            CharData.Emplace(TChar<CharType>::Null);
+            CharData.Emplace(0);
         }
     }
 
@@ -588,13 +514,10 @@ public:
      */
     FORCEINLINE void ReverseInline() noexcept
     {
-        CharType* RESTRICT Start = CharData.Data();
-        CharType* RESTRICT End   = Start + GetLength();
-        while (Start < End)
+        for (CharType* RESTRICT Start = CharData.Data(); *RESTRICT End = Start + Length(); Start < End; ++Start)
         {
             --End;
             ::Swap<CharType>(*Start, *End);
-            ++Start;
         }
     }
 
@@ -605,16 +528,13 @@ public:
      * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
     template<typename StringType>
-    NODISCARD FORCEINLINE typename TEnableIf<
-            TIsTStringType<StringType>::Value,
-            SizeType
-        >::Type Compare(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
+    NODISCARD FORCEINLINE SizeType Compare(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept requires(TIsTStringType<StringType>::Value)
     {
-        return Compare(InString.GetCString(), InString.GetLength(), CaseType);
+        return Compare(InString.GetCString(), InString.Length(), CaseType);
     }
 
     /**
-     * @brief          - Compares this string with a raw-string
+     * @brief          - Compares this string with a cstring
      * @param InString - String to compare with
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
      * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -632,7 +552,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a raw-string of a fixed length
+     * @brief          - Compares this string with a cstring of a fixed length
      * @param InString - String to compare with
      * @param InLength - Length of the string to compare
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
@@ -640,7 +560,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Compare(const CharType* InString, SizeType InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
     {
-        const SizeType MinLength = NMath::Min(GetLength(), InLength);
+        const SizeType MinLength = NMath::Min(Length(), InLength);
         if (CaseType == EStringCaseType::NoCase)
         {
             return static_cast<SizeType>(TCString<CharType>::Strnicmp(CharData.Data(), InString, MinLength));
@@ -658,16 +578,13 @@ public:
      * @return         - Returns true if the strings are equal
      */
     template<typename StringType>
-    NODISCARD FORCEINLINE typename TEnableIf<
-            TIsTStringType<StringType>::Value,
-            SizeType
-        >::Type Equals(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
+    NODISCARD FORCEINLINE SizeType Equals(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept requires(TIsTStringType<StringType>::Value)
     {
-        return Equals(InString.GetCString(), InString.GetLength(), CaseType);
+        return Equals(InString.GetCString(), InString.Length(), CaseType);
     }
 
     /**
-     * @brief          - Compares this string with a raw-string
+     * @brief          - Compares this string with a cstring
      * @param InString - String to compare with
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
      * @return         - Returns true if the strings are equal
@@ -678,7 +595,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a raw-string of a fixed length
+     * @brief          - Compares this string with a cstring of a fixed length
      * @param InString - String to compare with
      * @param InLength - Length of the string to compare
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
@@ -686,19 +603,19 @@ public:
      */
     NODISCARD FORCEINLINE bool Equals(const CharType* InString, SizeType InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
     {
-        const auto Length = GetLength();
-        if (Length != InLength)
+        const auto CurrentLength = Length();
+        if (CurrentLength != InLength)
         {
             return false;
         }
 
         if (CaseType == EStringCaseType::CaseSensitive)
         {
-            return (TCString<CharType>::Strncmp(CharData.Data(), InString, Length) == 0);
+            return (TCString<CharType>::Strncmp(CharData.Data(), InString, CurrentLength) == 0);
         }
         else if (CaseType == EStringCaseType::NoCase)
         {
-            return (TCString<CharType>::Strnicmp(CharData.Data(), InString, Length) == 0);
+            return (TCString<CharType>::Strnicmp(CharData.Data(), InString, CurrentLength) == 0);
         }
         else
         {
@@ -714,16 +631,17 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
         if (InString == nullptr)
         {
             return INVALID_INDEX;
         }
 
-        if (GetLength() != 0)
+        const auto CurrentLength = Length(); 
+        if (CurrentLength)
         {
-            const CharType* RESTRICT Start  = GetCString() + Position;
+            const CharType* RESTRICT Start  = CharData.Data() + Position;
             const CharType* RESTRICT Result = TCString<CharType>::Strstr(Start, InString);
             if (!Result)
             {
@@ -747,9 +665,9 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        if ((InLength == 0) || (GetLength() == 0))
+        if ((InLength == 0) || (Length() == 0))
         {
             return 0;
         }
@@ -759,16 +677,13 @@ public:
             return INVALID_INDEX;
         }
 
-        const CharType* RESTRICT Current   = GetCString() + Position;
-        const CharType* RESTRICT End       = GetCString() + GetLength();
-        const CharType* RESTRICT SearchEnd = InString + InLength;
-        while (Current != End)
+        for (const CharType* RESTRICT SearchEnd = InString + InLength; *RESTRICT Current = CharData.Data() + Position; *RESTRICT End = CharData.Data() + Length(); Current != End; ++Current)
         {
             const CharType* RESTRICT SearchString = InString;
             const CharType* RESTRICT TmpCurrent   = Current;
             while (true)
             {
-                if (TChar<CharType>::IsZero(*SearchString) || (SearchString == SearchEnd))
+                if ((*SearchString == 0) || (SearchString == SearchEnd))
                 {
                     return static_cast<SizeType>(static_cast<intptr>(Current - GetCString()));
                 }
@@ -780,8 +695,6 @@ public:
                 ++TmpCurrent;
                 ++SearchString;
             }
-
-            ++Current;
         }
 
         return INVALID_INDEX;
@@ -794,7 +707,7 @@ public:
      * @return         - Returns the position of the first character in the search-string
      */
     template<typename StringType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type Find(const StringType& InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType Find(const StringType& InString, SizeType Position = 0) const noexcept requires(TIsTStringType<StringType>::Value)
     {
         return Find(InString.GetCString(), Position);
     }
@@ -807,25 +720,20 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindChar(CharType Char, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        const SizeType Length = GetLength();
-        if (Length == 0)
+        const SizeType CurrentLength = Length();
+        if (CurrentLength == 0)
         {
             return 0;
         }
 
-        const CharType* RESTRICT Start   = GetCString() + Position;
-        const CharType* RESTRICT Current = Start;
-        const CharType* RESTRICT End     = GetCString() + Length;
-        while (Current != End)
+        for (const CharType* RESTRICT Start = GetCString() + Position; *RESTRICT Current = Start; *RESTRICT End = GetCString() + CurrentLength; Current != End; ++Current)
         {
             if (Char == *Current)
             {
                 return static_cast<SizeType>(Current - Start);
             }
-
-            ++Current;
         }
 
         return INVALID_INDEX;
@@ -840,25 +748,20 @@ public:
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        const SizeType ThisLength = GetLength();
-        if (ThisLength == 0)
+        const SizeType CurrentLength = Length();
+        if (CurrentLength == 0)
         {
             return 0;
         }
 
-        const CharType* RESTRICT Start   = GetCString() + Position;
-        const CharType* RESTRICT Current = Start;
-        const CharType* RESTRICT End     = GetCString() + ThisLength;
-        while (Current != End)
+        for (const CharType* RESTRICT Start = GetCString() + Position; *RESTRICT Current = Start; *RESTRICT End = GetCString() + CurrentLength; Current != End; ++Current)
         {
             if (Predicate(*Current))
             {
                 return static_cast<SizeType>(Current - Start);
             }
-
-            ++Current;
         }
 
         return INVALID_INDEX;
@@ -872,40 +775,39 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
         CHECK(InString != nullptr);
 
-        const SizeType ThisLength = GetLength();
-        if (ThisLength == 0)
+        const SizeType CurrentLength = Length();
+        if (CurrentLength == 0)
         {
             return 0;
         }
 
-        if (InString != nullptr)
+        if (!Position)
         {
-            const CharType* RESTRICT End     = GetCString();
-            const CharType* RESTRICT Start   = (Position == 0) ? (End + ThisLength) : (End + Position);
-            const CharType* RESTRICT Current = Start;
-            while (Current != End)
+            Position = CurrentLength;
+        }
+
+        for (const CharType* RESTRICT End = GetCString(); *RESTRICT Start = End + Position; *RESTRICT Current = Start; Current != End; ++Current)
+        {
+            Current--;
+
+            const CharType* RESTRICT SearchString = InString;
+            const CharType* RESTRICT TmpCurrent   = Current;
+            while (true)
             {
-                Current--;
-
-                const CharType* RESTRICT SearchString = InString;
-                const CharType* RESTRICT TmpCurrent   = Current;
-                while (true)
+                if ((*SearchString == 0))
                 {
-                    if (TChar<CharType>::IsZero(*SearchString))
-                    {
-                        return static_cast<SizeType>(static_cast<intptr>(Current - End));
-                    }
-                    else if (*TmpCurrent != *SearchString)
-                    {
-                        break;
-                    }
-
-                    ++TmpCurrent;
-                    ++SearchString;
+                    return static_cast<SizeType>(static_cast<intptr>(Current - End));
                 }
+                else if (*TmpCurrent != *SearchString)
+                {
+                    break;
+                }
+
+                ++TmpCurrent;
+                ++SearchString;
             }
         }
 
@@ -919,9 +821,9 @@ public:
      * @return         - Returns the position of the first character in the search-string
      */
     template<typename StringType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindLast(const StringType& InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType FindLast(const StringType& InString, SizeType Position = 0) const noexcept requires(TIsTStringType<StringType>::Value)
     {
-        return FindLast(InString, InString.GetLength(), Position);
+        return FindLast(InString, InString.Length(), Position);
     }
 
     /**
@@ -935,41 +837,39 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
         CHECK(InString != nullptr);
 
-        const SizeType ThisLength = GetLength();
-        if (ThisLength == 0)
+        const SizeType CurrentLength = Length();
+        if (CurrentLength == 0)
         {
             return 0;
         }
 
-        if (InString != nullptr)
+        if (!Position)
         {
-            const CharType* RESTRICT SearchEnd = InString + InLength;
-            const CharType* RESTRICT End       = GetCString();
-            const CharType* RESTRICT Start     = (Position == 0) ? (End + ThisLength) : (End + Position);
-            const CharType* RESTRICT Current   = Start;
-            while (Current != End)
+            Position = CurrentLength;
+        }
+
+        for (const CharType* RESTRICT SearchEnd = InString + InLength; *RESTRICT End = GetCString(); *RESTRICT Start = End + Position; *RESTRICT Current = Start; Current != End;)
+        {
+            Current--;
+
+            const CharType* RESTRICT SearchString = InString;
+            const CharType* RESTRICT TmpCurrent   = Current;
+            while (true)
             {
-                Current--;
-
-                const CharType* RESTRICT SearchString = InString;
-                const CharType* RESTRICT TmpCurrent   = Current;
-                while (true)
+                if ((*SearchString == 0) || (SearchString == SearchEnd))
                 {
-                    if (TChar<CharType>::IsZero(*SearchString) || (SearchString == SearchEnd))
-                    {
-                        return static_cast<SizeType>(static_cast<intptr>(Current - End));
-                    }
-                    else if (*TmpCurrent != *SearchString)
-                    {
-                        break;
-                    }
-
-                    ++TmpCurrent;
-                    ++SearchString;
+                    return static_cast<SizeType>(static_cast<intptr>(Current - End));
                 }
+                else if (*TmpCurrent != *SearchString)
+                {
+                    break;
+                }
+
+                ++TmpCurrent;
+                ++SearchString;
             }
         }
 
@@ -984,18 +884,20 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLastChar(CharType Char, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        const SizeType Length = GetLength();
+        const SizeType Length = Length();
         if (Length == 0)
         {
             return 0;
         }
 
-        const CharType* RESTRICT End     = GetCString();
-        const CharType* RESTRICT Start   = (Position == 0) ? (End + Length) : (End + Position);
-        const CharType* RESTRICT Current = Start;
-        while (Current != End)
+        if (!Position)
+        {
+            Position = Length;
+        }
+
+        for (const CharType* RESTRICT End = GetCString(); *RESTRICT Start = End + Position; *RESTRICT Current = Start; Current != End;)
         {
             --Current;
             if (Char == *Current)
@@ -1016,18 +918,20 @@ public:
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
     {
-        CHECK((Position < GetLength()) || (Position == 0));
+        CHECK((Position < Length()) || (Position == 0));
 
-        const SizeType ThisLength = GetLength();
-        if (ThisLength == 0)
+        const SizeType CurrentLength = Length();
+        if (CurrentLength == 0)
         {
             return 0;
         }
 
-        const CharType* RESTRICT End     = GetCString();
-        const CharType* RESTRICT Start   = (Position == 0) ? (End + ThisLength) : (End + Position);
-        const CharType* RESTRICT Current = Start;
-        while (Current != End)
+        if (!Position)
+        {
+            Position = Length;
+        }
+
+        for (const CharType* RESTRICT End = GetCString(); *RESTRICT Start = End + Position; *RESTRICT Current = Start; Current != End;)
         {
             --Current;
             if (Predicate(*Current))
@@ -1047,7 +951,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Contains(const CharType* InString, SizeType InOffset = 0) const noexcept
     {
-        return (Find(InString, TCString<CharType>::Strlen(InString), InOffset) != INVALID_INDEX);
+        return Find(InString, TCString<CharType>::Strlen(InString), InOffset) != INVALID_INDEX;
     }
 
     /**
@@ -1057,9 +961,9 @@ public:
      * @return         - Returns true if the string is found
      */
     template<typename StringType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Contains(const StringType& InString, SizeType InOffset = 0) const noexcept
+    NODISCARD FORCEINLINE bool Contains(const StringType& InString, SizeType InOffset = 0) const noexcept requires(TIsTStringType<StringType>::Value)
     {
-        return (Find(InString, InOffset) != INVALID_INDEX);
+        return Find(InString, InOffset) != INVALID_INDEX;
     }
 
     /**
@@ -1070,7 +974,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Contains(const CharType* InString, SizeType InLength, SizeType InOffset = 0) const noexcept
     {
-        return (Find(InString, InLength, InOffset) != INVALID_INDEX);
+        return Find(InString, InLength, InOffset) != INVALID_INDEX;
     }
 
     /**
@@ -1081,7 +985,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Contains(CharType Char, SizeType InOffset = 0) const noexcept
     {
-        return (FindChar(Char, InOffset) != INVALID_INDEX);
+        return FindChar(Char, InOffset) != INVALID_INDEX;
     }
 
     /**
@@ -1113,20 +1017,20 @@ public:
      */
     NODISCARD FORCEINLINE bool EndsWith(const CharType* InString) const noexcept
     {
-        if (!InString || TChar<CharType>::IsZero(*InString))
+        if (!InString || (*InString != 0))
         {
             return false;
         }
 
-        const SizeType Length       = GetLength();
-        const SizeType SuffixLenght = TCString<CharType>::Strlen(InString);
-        if (SuffixLenght > Length)
+        const SizeType CurrentLength = Length();
+        const SizeType SuffixLength  = TCString<CharType>::Strlen(InString);
+        if (SuffixLength > CurrentLength)
         {
             return false;
         }
 
-        const CharType* TempData = CharData.Data() + (Length - SuffixLenght);
-        return (TCString<CharType>::Strcmp(TempData, InString) == 0);
+        const CharType* TempData = CharData.Data() + (CurrentLength - SuffixLength);
+        return TCString<CharType>::Strcmp(TempData, InString) == 0;
     }
 
     /**
@@ -1136,19 +1040,19 @@ public:
      */
     NODISCARD FORCEINLINE bool EndsWithNoCase(const CharType* InString) const noexcept
     {
-        if (!InString || TChar<CharType>::IsZero(*InString))
+        if (!InString || (*InString != 0))
         {
             return false;
         }
 
-        const SizeType Length       = GetLength();
-        const SizeType SuffixLength = TCString<CharType>::Strlen(InString);
-        if (SuffixLength > Length)
+        const SizeType CurrentLength = Length();
+        const SizeType SuffixLength  = TCString<CharType>::Strlen(InString);
+        if (SuffixLength > CurrentLength)
         {
             return false;
         }
 
-        const CharType* TempData = CharData.Data() + (Length - SuffixLength);
+        const CharType* TempData = CharData.Data() + (CurrentLength - SuffixLength);
         return (TCString<CharType>::Stricmp(TempData, InString) == 0);
     }
 
@@ -1159,7 +1063,7 @@ public:
      */
     FORCEINLINE void Remove(SizeType Position, SizeType Count) noexcept
     {
-        CHECK(Position < GetLength() && (Position + Count <= GetLength()));
+        CHECK(Position < Length() && (Position + Count <= Length()));
         CharData.RemoveRangeAt(Position, Count);
     }
 
@@ -1179,9 +1083,9 @@ public:
      * @param Position - Position to start the insertion at
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Insert(const StringType& InString, SizeType Position) noexcept
+    FORCEINLINE void Insert(const StringType& InString, SizeType Position) noexcept requires(TIsTStringType<StringType>::Value)
     {
-        Insert(InString.GetCString(), InString.GetLength(), Position);
+        Insert(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -1192,7 +1096,7 @@ public:
      */
     FORCEINLINE void Insert(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
-        CHECK(Position <= GetLength());
+        CHECK(Position <= Length());
         CharData.Insert(Position, InString, InLength);
     }
 
@@ -1203,7 +1107,7 @@ public:
      */
     FORCEINLINE void Insert(CharType Char, SizeType Position) noexcept
     {
-        CHECK(Position <= GetLength());
+        CHECK(Position <= Length());
         CharData.Insert(Position, Char);
     }
 
@@ -1223,9 +1127,9 @@ public:
      * @param Position - Position to start the replacing at
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Replace(const StringType& InString, SizeType Position) noexcept
+    FORCEINLINE void Replace(const StringType& InString, SizeType Position) noexcept requires(TIsTStringType<StringType>::Value)
     {
-        Replace(InString.GetCString(), InString.GetLength(), Position);
+        Replace(InString.GetCString(), InString.Length(), Position);
     }
 
     /**
@@ -1236,7 +1140,7 @@ public:
      */
     FORCEINLINE void Replace(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
-        CHECK(Position < GetLength() && (Position + InLength < GetLength()));
+        CHECK(Position < Length() && (Position + InLength < Length()));
         TCString<CharType>::Strncpy(CharData.Data() + Position, InString, InLength);
     }
 
@@ -1247,7 +1151,7 @@ public:
      */
     FORCEINLINE void Replace(CharType Char, SizeType Position = 0) noexcept
     {
-        CHECK((Position < GetLength()));
+        CHECK((Position < Length()));
         CharData[Position] = Char;
     }
 
@@ -1265,11 +1169,11 @@ public:
      */
     FORCEINLINE void Pop() noexcept
     {
-        const SizeType Length = GetLength();
+        const SizeType Length = Length();
         if (Length)
         {
             CharData.Pop();
-            CharData[Length] = TChar<CharType>::Null;
+            CharData[Length] = 0;
         }
     }
 
@@ -1279,9 +1183,9 @@ public:
      */
     FORCEINLINE void Swap(TString& Other)
     {
-        TString TempString(::Move(*this));
-        MoveFrom(::Move(Other));
-        Other.MoveFrom(::Move(TempString));
+        TArray<CharType> TempData(::Move(CharData));
+        CharData = ::Move(Other.CharData);
+        Other.CharData = ::Move(TempData);
     }
 
     /**
@@ -1292,20 +1196,8 @@ public:
      */
     NODISCARD FORCEINLINE TString SubString(SizeType Offset, SizeType Count) const noexcept
     {
-        CHECK((Offset < GetLength()) && (Offset + Count < GetLength()));
+        CHECK((Offset < Length()) && (Offset + Count < Length()));
         return TString(CharData.Data() + Offset, Count);
-    }
-
-     /**
-      * @brief               - Create a StringView of this string
-      * @param Position      - Position to start the sub-string at
-      * @param NumCharacters - Number of characters in the sub-string
-      * @return              - Returns a sub-string view
-      */
-    NODISCARD FORCEINLINE TStringView<CharType> SubStringView(SizeType Offset, SizeType Count) const noexcept
-    {
-        CHECK((Offset < GetLength()) && (Offset + Count < GetLength()));
-        return TStringView<CharType>(CharData.Data() + Offset, Count);
     }
 
     /**
@@ -1344,11 +1236,11 @@ public:
     {
         if constexpr (TIsSame<CharType, CHAR>::Value)
         {
-            return [[[NSString alloc] initWithBytes:CharData.Data() length:GetLength() * sizeof(CharType) encoding:NSUTF8StringEncoding] autorelease];
+            return [[[NSString alloc] initWithBytes:CharData.Data() length:Length() * sizeof(CharType) encoding:NSUTF8StringEncoding] autorelease];
         }
         else
         {
-            return [[[NSString alloc] initWithBytes:CharData.Data() length:GetLength() * sizeof(CharType) encoding:NSUTF32LittleEndianStringEncoding] autorelease];
+            return [[[NSString alloc] initWithBytes:CharData.Data() length:Length() * sizeof(CharType) encoding:NSUTF32LittleEndianStringEncoding] autorelease];
         }
     }
 #endif
@@ -1376,7 +1268,7 @@ public:
      * @brief  - Returns the length of the string
      * @return - The current length of the string
      */
-    NODISCARD FORCEINLINE SizeType GetLength() const noexcept
+    NODISCARD FORCEINLINE SizeType Length() const noexcept
     {
         return Size();
     }
@@ -1405,7 +1297,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return GetLength() * sizeof(CharType);
+        return Length() * sizeof(CharType);
     }
 
     /**
@@ -1442,8 +1334,8 @@ public:
      */
     NODISCARD FORCEINLINE CharType& LastElement() noexcept
     {
-        const SizeType TmpLastIndex = LastElementIndex();
-        return CharData[TmpLastIndex];
+        const SizeType TempLastIndex = LastElementIndex();
+        return CharData[TempLastIndex];
     }
 
     /**
@@ -1452,8 +1344,8 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& LastElement() const noexcept
     {
-        const SizeType TmpLastIndex = LastElementIndex();
-        return CharData[TmpLastIndex];
+        const SizeType TempLastIndex = LastElementIndex();
+        return CharData[TempLastIndex];
     }
 
 public:
@@ -1470,7 +1362,7 @@ public:
     }
 
     /**
-     * @brief       - Appends a raw-string to this string
+     * @brief       - Appends a cstring to this string
      * @param Other - String to append
      * @return      - Returns a reference to this instance
      */
@@ -1486,7 +1378,7 @@ public:
      * @return      - Returns a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddLValueReference<TString>::Type>::Type operator+=(const StringType& Other) noexcept
+    FORCEINLINE TString& operator+=(const StringType& Other) noexcept requires(TIsTStringType<StringType>::Value)
     {
         Append<StringType>(Other);
         return *this;
@@ -1499,7 +1391,7 @@ public:
      */
     NODISCARD FORCEINLINE CharType& operator[](SizeType Index) noexcept
     {
-        CHECK(Index < GetLength());
+        CHECK(Index < Length());
         return CharData[Index];
     }
 
@@ -1510,7 +1402,7 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& operator[](SizeType Index) const noexcept
     {
-        CHECK(Index < GetLength());
+        CHECK(Index < Length());
         return CharData[Index];
     }
 
@@ -1542,7 +1434,7 @@ public:
      * @return      - Return a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddLValueReference<TString>::Type>::Type operator=(const StringType& Other) noexcept
+    FORCEINLINE TString& operator=(const StringType& Other) noexcept requires(TIsTStringType<StringType>::Value)
     {
         TString<StringType>(Other).Swap(*this);
         return *this;
@@ -1562,79 +1454,64 @@ public:
 public:
     NODISCARD friend FORCEINLINE TString operator+(const TString& LHS, const TString& RHS) noexcept
     {
-        const auto LHSLength = LHS.GetLength();
-        const auto RHSLength = RHS.GetLength();
+        const auto LHSLength = LHS.Length();
+        const auto RHSLength = RHS.Length();
         const auto CombinedLength = LHSLength + RHSLength;
 
         TString NewString(CombinedLength);
-
-        CharType* TempData = NewString.Data();
-        TCString<CharType>::Strncpy(TempData, LHS.GetCString(), LHSLength);
-        TCString<CharType>::Strncpy(TempData + LHSLength, RHS.GetCString(), RHSLength);
-
-        TempData[CombinedLength] = TChar<CharType>::Null;
+        TCString<CharType>::Strncpy(NewString.Data(), LHS.GetCString(), LHSLength);
+        TCString<CharType>::Strncpy(NewString.Data() + LHSLength, RHS.GetCString(), RHSLength);
+        NewString.CharData[CombinedLength] = 0;
         return NewString;
     }
 
     NODISCARD friend FORCEINLINE TString operator+(const CharType* LHS, const TString& RHS) noexcept
     {
         const auto LHSLength = TCString<CharType>::Strlen(LHS);
-        const auto RHSLength = RHS.GetLength();
+        const auto RHSLength = RHS.Length();
         const auto CombinedLength = LHSLength + RHSLength;
 
         TString NewString(CombinedLength);
-
-        CharType* TempData = NewString.Data();
-        TCString<CharType>::Strncpy(TempData, LHS, LHSLength);
-        TCString<CharType>::Strncpy(TempData + LHSLength, RHS.GetCString(), RHSLength);
-
-        TempData[CombinedLength] = TChar<CharType>::Null;
+        TCString<CharType>::Strncpy(NewString.Data(), LHS, LHSLength);
+        TCString<CharType>::Strncpy(NewString.Data() + LHSLength, RHS.GetCString(), RHSLength);
+        NewString.CharData[CombinedLength] = 0;
         return NewString;
     }
 
     NODISCARD friend FORCEINLINE TString operator+(const TString& LHS, const CharType* RHS) noexcept
     {
-        const auto LHSLength = LHS.GetLength();
+        const auto LHSLength = LHS.Length();
         const auto RHSLength = TCString<CharType>::Strlen(RHS);
         const auto CombinedLength = LHSLength + RHSLength;
 
         TString NewString(CombinedLength);
-
-        CharType* TempData = NewString.Data();
-        TCString<CharType>::Strncpy(TempData, LHS.GetCString(), LHSLength);
-        TCString<CharType>::Strncpy(TempData + LHSLength, RHS, RHSLength);
-
-        TempData[CombinedLength] = TChar<CharType>::Null;
+        TCString<CharType>::Strncpy(NewString.Data(), LHS.GetCString(), LHSLength);
+        TCString<CharType>::Strncpy(NewString.Data() + LHSLength, RHS, RHSLength);
+        NewString.CharData[CombinedLength] = 0;
         return NewString;
     }
 
     NODISCARD friend FORCEINLINE TString operator+(CharType LHS, const TString& RHS) noexcept
     {
-        const auto RHSLength      = RHS.GetLength();
+        const auto RHSLength      = RHS.Length();
         const auto CombinedLength = RHSLength + 1;
 
         TString NewString(CombinedLength);
-
-        CharType* TempData = NewString.CharData();
-        TempData[0] = LHS;
-
-        TCString<CharType>::Strncpy(TempData + 1, RHS.GetCString(), RHSLength);
-        TempData[CombinedLength] = TChar<CharType>::Null;
+        NewString.CharData[0] = LHS;
+        TCString<CharType>::Strncpy(NewString.Data() + 1, RHS.GetCString(), RHSLength);
+        NewString.CharData[CombinedLength] = 0;
         return NewString;
     }
 
     NODISCARD friend FORCEINLINE TString operator+(const TString& LHS, CharType RHS) noexcept
     {
-        const auto LHSLength      = LHS.GetLength();
+        const auto LHSLength      = LHS.Length();
         const auto CombinedLength = LHSLength + 1;
 
         TString NewString(CombinedLength);
-
-        CharType* TempData = NewString.CharData();
-
-        TCString<CharType>::Strncpy(TempData, LHS.GetCString(), LHSLength);
-        TempData[LHSLength]      = RHS;
-        TempData[CombinedLength] = TChar<CharType>::Null;
+        TCString<CharType>::Strncpy(NewString.Data(), LHS.GetCString(), LHSLength);
+        NewString.CharData[LHSLength]      = RHS;
+        NewString.CharData[CombinedLength] = 0;
         return NewString;
     }
     
@@ -1728,101 +1605,60 @@ public:
         return (LHS.Compare(RHS) >= 0);
     }
 
-public:
+public: // Iterators
 
     /**
-      * @brief  - Retrieve an iterator to the beginning of the array
-      * @return - A iterator that points to the first element
-      */
-    NODISCARD FORCEINLINE IteratorType StartIterator() noexcept
+     * @brief  - Retrieve an iterator to the beginning of the array
+     * @return - A iterator that points to the first element
+     */
+    NODISCARD FORCEINLINE IteratorType Iterator() noexcept
     {
         return IteratorType(*this, 0);
     }
 
     /**
-     * @brief   - Retrieve an iterator to the end of the array
-     * @return  - A iterator that points to the element past the end
+     * @brief  - Retrieve an iterator to the beginning of the array
+     * @return - A iterator that points to the first element
      */
-    NODISCARD FORCEINLINE IteratorType EndIterator() noexcept
-    {
-        return IteratorType(*this, Size());
-    }
-
-    /**
-     * @brief   - Retrieve an iterator to the beginning of the array
-     * @return  - A iterator that points to the first element
-     */
-    NODISCARD FORCEINLINE ConstIteratorType StartIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const noexcept
     {
         return ConstIteratorType(*this, 0);
-    }
-
-    /**
-     * @brief   - Retrieve an iterator to the end of the array
-     * @return  - A iterator that points to the element past the end
-     */
-    NODISCARD FORCEINLINE ConstIteratorType EndIterator() const noexcept
-    {
-        return ConstIteratorType(*this, Size());
-    }
-
-    /**
-     * @brief   - Retrieve an reverse-iterator to the end of the array
-     * @return  - A reverse-iterator that points to the last element
-     */
-    NODISCARD FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
-    {
-        return ReverseIteratorType(*this, Size());
-    }
-
-    /**
-     * @brief  - Retrieve an reverse-iterator to the start of the array
-     * @return - A reverse-iterator that points to the element before the first element
-     */
-    NODISCARD FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
-    {
-        return ReverseIteratorType(*this, 0);
     }
 
     /**
      * @brief  - Retrieve an reverse-iterator to the end of the array
      * @return - A reverse-iterator that points to the last element
      */
-    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator() noexcept
+    {
+        return ReverseIteratorType(*this, Size());
+    }
+
+    /**
+     * @brief  - Retrieve an reverse-iterator to the end of the array
+     * @return - A reverse-iterator that points to the last element
+     */
+    NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseterator() const noexcept
     {
         return ReverseConstIteratorType(*this, Size());
     }
 
-    /**
-     * @brief  - Retrieve an reverse-iterator to the start of the array
-     * @return - A reverse-iterator that points to the element before the first element
-     */
-    NODISCARD FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
-    {
-        return ReverseConstIteratorType(*this, 0);
-    }
-
-public:
-    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return StartIterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return StartIterator(); }
-
-    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return EndIterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return EndIterator(); }
+public: // STL Iterator
+    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return ConstIterator(); }
+    
+    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, ArraySize); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, ArraySize); }
 
 private:
-    FORCEINLINE void CopyFrom(const CharType* InString, SizeType InLength) noexcept
+    FORCEINLINE void InitializeByCopy(const CharType* InString, SizeType InLength) noexcept
     {
-        const SizeType NewSizeWithZero = (InLength > 0) ? (InLength + 1) : 0;
-        CharData.Reset(NewSizeWithZero);
-
-        CharType* TempData = CharData.Data();
-        TCString<CharType>::Strncpy(TempData, InString, InLength);
-        TempData[InLength] = TChar<CharType>::Null;
-    }
-
-    FORCEINLINE void MoveFrom(TString&& Other) noexcept
-    {
-        CharData = ::Move(Other.CharData);
+        if (InLegnth)
+        {
+            CharData.Reset(InLength + 1);
+            TCString<CharType>::Strncpy(CharData.Data(), InString, InLength);
+            CharData[InLength] = 0;
+        }
     }
 
     StorageType CharData;
@@ -1849,32 +1685,32 @@ struct TIsTStringType<TString<CharType>>
 NODISCARD inline FStringWide CharToWide(const FStringView& CharString) noexcept
 {
     FStringWide NewString;
-    NewString.Resize(CharString.GetLength());
-    mbstowcs(NewString.Data(), CharString.GetCString(), CharString.GetLength());
+    NewString.Resize(CharString.Length());
+    mbstowcs(NewString.Data(), CharString.GetCString(), CharString.Length());
     return NewString;
 }
 
 NODISCARD inline FStringWide CharToWide(const FString& CharString) noexcept
 {
     FStringWide NewString;
-    NewString.Resize(CharString.GetLength());
-    mbstowcs(NewString.Data(), CharString.GetCString(), CharString.GetLength());
+    NewString.Resize(CharString.Length());
+    mbstowcs(NewString.Data(), CharString.GetCString(), CharString.Length());
     return NewString;
 }
 
 NODISCARD inline FString WideToChar(const FStringViewWide& WideString) noexcept
 {
     FString NewString;
-    NewString.Resize(WideString.GetLength());
-    wcstombs(NewString.Data(), WideString.GetCString(), WideString.GetLength());
+    NewString.Resize(WideString.Length());
+    wcstombs(NewString.Data(), WideString.GetCString(), WideString.Length());
     return NewString;
 }
 
 NODISCARD inline FString WideToChar(const FStringWide& WideString) noexcept
 {
     FString NewString;
-    NewString.Resize(WideString.GetLength());
-    wcstombs(NewString.Data(), WideString.GetCString(), WideString.GetLength());
+    NewString.Resize(WideString.Length());
+    wcstombs(NewString.Data(), WideString.GetCString(), WideString.Length());
     return NewString;
 }
 
@@ -1888,7 +1724,7 @@ struct TStringHasher
         // TODO: Investigate how good is this for wide chars
 
         const auto* Key    = String.GetCString();
-        const int32 Length = String.GetLength();
+        const int32 Length = String.Length();
 
         int32  Index = 0;
         uint64 Hash  = 0;
@@ -1909,7 +1745,6 @@ struct TStringHasher
 
 using FStringHasher     = TStringHasher<CHAR>;
 using FStringHasherWide = TStringHasher<WIDECHAR>;
-
 
 template<typename T>
 struct TTypeToString

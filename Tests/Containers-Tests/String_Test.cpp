@@ -12,7 +12,7 @@
 #define PrintStringView(Str)                       \
     {                                              \
         std::cout << #Str << "= ";                 \
-        for ( int32 i = 0; i < Str.GetLength(); i++ ) \
+        for ( int32 i = 0; i < Str.Length(); i++ ) \
         {                                          \
             std::cout << Str[i];                   \
         }                                          \
@@ -25,7 +25,7 @@
 #define PrintWideStringView(Str)                   \
     {                                              \
         std::wcout << #Str << "= ";                \
-        for ( int32 i = 0; i < Str.GetLength(); i++ ) \
+        for ( int32 i = 0; i < Str.Length(); i++ ) \
         {                                          \
             std::wcout << Str[i];                  \
         }                                          \
@@ -69,12 +69,12 @@ bool TString_Test_Internal(const CHAR* Args)
 
         FString String0;
         TEST_CHECK_STRING(String0, "");
-        TEST_CHECK(String0.GetLength()   == 0);
+        TEST_CHECK(String0.Length()   == 0);
         TEST_CHECK(String0.Capacity() == 0);
 
         FString String1 = "Hello String";
         TEST_CHECK_STRING(String1, "Hello String");
-        TEST_CHECK(String1.GetLength()   == 12);
+        TEST_CHECK(String1.Length()   == 12);
         TEST_CHECK(String1.Capacity() == 13);
 
         FString String2 = FString(Args, 7);
@@ -289,7 +289,7 @@ bool TString_Test_Internal(const CHAR* Args)
             std::cout << C << std::endl;
         }
 
-        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
+        for (int32 Index = 0; Index < TestString.Length(); Index++)
         {
             std::cout << Index << '=' << TestString[Index] << std::endl;
         }
@@ -307,12 +307,12 @@ bool TString_Test_Internal(const CHAR* Args)
 
         FStringWide String0;
         TEST_CHECK_STRING(String0, L"");
-        TEST_CHECK(String0.GetLength()   == 0);
+        TEST_CHECK(String0.Length()   == 0);
         TEST_CHECK(String0.Capacity() == 0);
 
         FStringWide String1 = L"Hello String";
         TEST_CHECK_STRING(String1, L"Hello String");
-        TEST_CHECK(String1.GetLength()   == 12);
+        TEST_CHECK(String1.Length()   == 12);
         TEST_CHECK(String1.Capacity() == 13);
 
         FStringWide String2 = FStringWide(SomeWideStringInsteadOfArgs, 7);
@@ -526,7 +526,7 @@ bool TString_Test_Internal(const CHAR* Args)
             std::wcout << C << std::endl;
         }
 
-        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
+        for (int32 Index = 0; Index < TestString.Length(); Index++)
         {
             std::wcout << Index << L'=' << TestString[Index] << std::endl;
         }
@@ -750,7 +750,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
             std::cout << C << std::endl;
         }
 
-        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
+        for (int32 Index = 0; Index < TestString.Length(); Index++)
         {
             std::cout << Index << L'=' << TestString[Index] << std::endl;
         }
@@ -969,7 +969,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
             std::cout << C << std::endl;
         }
 
-        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
+        for (int32 Index = 0; Index < TestString.Length(); Index++)
         {
             std::cout << Index << '=' << TestString[Index] << std::endl;
         }
@@ -1109,7 +1109,7 @@ bool TStringView_Test_Internal(const CHAR* Args)
             std::cout << C << std::endl;
         }
 
-        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
+        for (int32 Index = 0; Index < TestString.Length(); Index++)
         {
             std::cout << Index << '=' << TestString[Index] << std::endl;
         }
@@ -1234,7 +1234,7 @@ bool TStringView_Test_Internal(const CHAR* Args)
             std::wcout << C << std::endl;
         }
 
-        for (int32 Index = 0; Index < TestString.GetLength(); Index++)
+        for (int32 Index = 0; Index < TestString.Length(); Index++)
         {
             std::wcout << Index << L'=' << TestString[Index] << std::endl;
         }

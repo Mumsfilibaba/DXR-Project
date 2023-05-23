@@ -96,7 +96,7 @@ public:
     {
         FVector3 Normal = GetNormal();
 
-        const float ReciprocalLength = 1.0f / Normal.GetLength();
+        const float ReciprocalLength = 1.0f / Normal.Length();
         x *= ReciprocalLength;
         y *= ReciprocalLength;
         z *= ReciprocalLength;

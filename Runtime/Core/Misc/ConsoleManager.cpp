@@ -615,8 +615,8 @@ void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TP
     {
         const FString& ObjectName = Object.first;
 
-        int32 Length = CandidateName.GetLength();
-        if (Length <= ObjectName.GetLength())
+        int32 Length = CandidateName.Length();
+        if (Length <= ObjectName.Length())
         {
             const CHAR* Command = ObjectName.GetCString();
             const CHAR* WordIt  = CandidateName.GetCString();
@@ -675,7 +675,7 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
 
         Pos++;
 
-        const FString Value(Command.GetCString() + Pos, Command.GetLength() - Pos);
+        const FString Value(Command.GetCString() + Pos, Command.Length() - Pos);
         if (TTryParseType<int64>::TryParse(Value))
         {
             VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);

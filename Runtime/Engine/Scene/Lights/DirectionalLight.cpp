@@ -103,7 +103,7 @@ void FDirectionalLight::Tick(FCamera& Camera)
         float Radius = 0.0f;
         for (int32 Index = 0; Index < 8; ++Index)
         {
-            const float Distance = (FrustumCorners[Index] - FrustumCenter).GetLength();
+            const float Distance = (FrustumCorners[Index] - FrustumCenter).Length();
             Radius = NMath::Max(Radius, Distance);
         }
 

@@ -633,7 +633,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
 
     // Start by adding the entrypoint to the shader, which is needed when we create native shader objects
     const FString Comment = "// " + Entrypoint + "\n\n";
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.Data()), Comment.GetLength() * sizeof(const CHAR));
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.Data()), Comment.Length() * sizeof(const CHAR));
 
     const uint32 SourceLength = FCString::Strlen(MSLSource);
     NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const CHAR));
