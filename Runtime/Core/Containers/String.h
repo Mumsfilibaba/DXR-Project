@@ -12,16 +12,15 @@
 #define STRING_FORMAT_BUFFER_SIZE   (512)
 
 #if STRING_USE_INLINE_ALLOCATOR 
-#define STRING_ALLOCATOR_INLINE_ELEMENTS (16)
+    // Use a small static buffer for small strings
+    #define STRING_ALLOCATOR_INLINE_ELEMENTS (16)
 
-// Use a small static buffer for small strings
-template<typename CharType>
-using TStringAllocator = TInlineArrayAllocator<CharType, STRING_ALLOCATOR_INLINE_ELEMENTS>;
+    template<typename CharType>
+    using TStringAllocator = TInlineArrayAllocator<CharType, STRING_ALLOCATOR_INLINE_ELEMENTS>;
 #else
-
-// No preallocated bytes for strings
-template<typename CharType>
-using TStringAllocator = TDefaultArrayAllocator<CharType>;
+    // No preallocated bytes for strings
+    template<typename CharType>
+    using TStringAllocator = TDefaultArrayAllocator<CharType>;
 #endif
 
 template<typename InCharType>
@@ -181,7 +180,7 @@ public:
         CharData.Reset(NewSizeWithZero);
         if (NewSizeWithZero)
         {
-            TempData[0] = 0;
+            CharData[0] = 0;
         }
     }
 
@@ -359,9 +358,10 @@ public:
         }
 
         const auto OldSize = Length();
-        CharType.Resize(OldSize + WrittenChars + 1);
-        TCString<CharType>::Strncpy(CharType.Data() + OldSize, WrittenString, WrittenChars);
-        CharType[NewSize] = 0;
+        const auto NewSize = OldSize ? WrittenChars + 1 : WrittenChars;
+        CharData.AppendUninitialized(NewSize);
+        TCString<CharType>::Strncpy(CharData.Data() + OldSize, WrittenString, WrittenChars);
+        CharData[OldSize + WrittenChars] = 0;
 
         if (DynamicBuffer)
         {
@@ -374,7 +374,7 @@ public:
      */
     FORCEINLINE void ToLowerInline() noexcept
     {
-        for (CharType* RESTRICT Start = CharData.Data(); *RESTRICT End = Start + CharData.Size(); Start != End; ++Start)
+        for (CharType* RESTRICT Start = CharData.Data(), *RESTRICT End = Start + CharData.Size(); Start != End; ++Start)
         {
             *Start = TChar<CharType>::ToLower(*Start);
         }
@@ -396,7 +396,7 @@ public:
      */
     FORCEINLINE void ToUpperInline() noexcept
     {
-        for (CharType* RESTRICT Start = CharData.Data(); *RESTRICT End = Start + CharData.Size(); Start != End; ++Start)
+        for (CharType* RESTRICT Start = CharData.Data(), *RESTRICT End = Start + CharData.Size(); Start != End; ++Start)
         {
             *Start = TChar<CharType>::ToUpper(*Start);
         }
@@ -449,18 +449,19 @@ public:
      */
     FORCEINLINE void TrimStartInline() noexcept
     {
-        for (const CharType* RESTRICT Start = CharData.Data(); *RESTRICT End = Start + Length(); Start != End && *Start; ++Start)
+        const CharType* RESTRICT Current = CharData.Data();
+        for (const CharType* RESTRICT End = Current + Length(); Current != End && *Current; ++Current)
         {
-            if (!TChar<CharType>::IsSpace(*Start))
+            if (!TChar<CharType>::IsSpace(*Current))
             {
                 break;
             }
         }
 
-        const SizeType Count = static_cast<SizeType>(Start - CharData.Data());
+        const SizeType Count = static_cast<SizeType>(Current - CharData.Data());
         if (Count > 0)
         {
-            CharData.RemoveRangeAt(0, Count);
+            CharData.RemoveAt(0, Count);
         }
     }
 
@@ -480,21 +481,27 @@ public:
      */
     FORCEINLINE void TrimEndInline() noexcept
     {
-        for (const CharType* RESTRICT Start = CharData.Data() + Length(); *RESTRICT Current = Start; *RESTRICT End = CharData.Data(); Current != End && *Current)
+        SizeType StringLength = Length();
+        while (StringLength > 0 && TChar<CharType>::IsSpace(CharData[StringLength]) && CharData[StringLength] != 0)
+        {
+            StringLength--;
+        }
+
+        const CharType* RESTRICT Start   = CharData.Data() + Length();
+        const CharType* RESTRICT Current = Start;
+        for (const CharType *RESTRICT End = CharData.Data(); Current != End;)
         {
             --Current;
-            if (!TChar<CharType>::IsSpace(*Current))
+            if (!)
             {
                 break;
             }
         }
-
-        // NOT comparing with zero since smallest count is one (Since decrement is done before break)
-        const SizeType Count = static_cast<SizeType>(Start - Current);
-        if (Count > 1)
+        
+        if (const SizeType Count = static_cast<SizeType>(static_cast<intptr>(Start - Current)))
         {
-            CharData.PopRange(Count);
-            CharData.Emplace(0);
+            CharData.Pop(Count);
+            *Current = 0;
         }
     }
 
@@ -514,7 +521,7 @@ public:
      */
     FORCEINLINE void ReverseInline() noexcept
     {
-        for (CharType* RESTRICT Start = CharData.Data(); *RESTRICT End = Start + Length(); Start < End; ++Start)
+        for (CharType* RESTRICT Start = CharData.Data(), *RESTRICT End = Start + Length(); Start < End; ++Start)
         {
             --End;
             ::Swap<CharType>(*Start, *End);
@@ -667,7 +674,7 @@ public:
     {
         CHECK((Position < Length()) || (Position == 0));
 
-        if ((InLength == 0) || (Length() == 0))
+        if (InLength == 0 || Length() == 0)
         {
             return 0;
         }
@@ -677,22 +684,22 @@ public:
             return INVALID_INDEX;
         }
 
-        for (const CharType* RESTRICT SearchEnd = InString + InLength; *RESTRICT Current = CharData.Data() + Position; *RESTRICT End = CharData.Data() + Length(); Current != End; ++Current)
+        for (const CharType* RESTRICT SearchEnd = InString + InLength, *RESTRICT Current = CharData.Data() + Position, *RESTRICT End = CharData.Data() + Length(); Current != End; ++Current)
         {
-            const CharType* RESTRICT SearchString = InString;
-            const CharType* RESTRICT TmpCurrent   = Current;
+            const CharType* RESTRICT SearchString  = InString;
+            const CharType* RESTRICT SearchCurrent = Current;
             while (true)
             {
                 if ((*SearchString == 0) || (SearchString == SearchEnd))
                 {
-                    return static_cast<SizeType>(static_cast<intptr>(Current - GetCString()));
+                    return static_cast<SizeType>(static_cast<intptr>(Current - CharData.Data()));
                 }
-                else if (*TmpCurrent != *SearchString)
+                else if (*SearchCurrent != *SearchString)
                 {
                     break;
                 }
 
-                ++TmpCurrent;
+                ++SearchCurrent;
                 ++SearchString;
             }
         }
@@ -728,7 +735,7 @@ public:
             return 0;
         }
 
-        for (const CharType* RESTRICT Start = GetCString() + Position; *RESTRICT Current = Start; *RESTRICT End = GetCString() + CurrentLength; Current != End; ++Current)
+        for (const CharType* RESTRICT Start = GetCString() + Position, *RESTRICT Current = Start, *RESTRICT End = GetCString() + CurrentLength; Current != End; ++Current)
         {
             if (Char == *Current)
             {
@@ -756,7 +763,7 @@ public:
             return 0;
         }
 
-        for (const CharType* RESTRICT Start = GetCString() + Position; *RESTRICT Current = Start; *RESTRICT End = GetCString() + CurrentLength; Current != End; ++Current)
+        for (const CharType* RESTRICT Start = GetCString() + Position, *RESTRICT Current = Start, *RESTRICT End = GetCString() + CurrentLength; Current != End; ++Current)
         {
             if (Predicate(*Current))
             {
@@ -789,24 +796,24 @@ public:
             Position = CurrentLength;
         }
 
-        for (const CharType* RESTRICT End = GetCString(); *RESTRICT Start = End + Position; *RESTRICT Current = Start; Current != End; ++Current)
+        for (const CharType* RESTRICT End = GetCString(), *RESTRICT Start = End + Position, *RESTRICT Current = Start; Current != End; ++Current)
         {
             Current--;
 
             const CharType* RESTRICT SearchString = InString;
-            const CharType* RESTRICT TmpCurrent   = Current;
+            const CharType* RESTRICT TempCurrent   = Current;
             while (true)
             {
                 if ((*SearchString == 0))
                 {
                     return static_cast<SizeType>(static_cast<intptr>(Current - End));
                 }
-                else if (*TmpCurrent != *SearchString)
+                else if (*TempCurrent != *SearchString)
                 {
                     break;
                 }
 
-                ++TmpCurrent;
+                ++TempCurrent;
                 ++SearchString;
             }
         }
@@ -827,9 +834,7 @@ public:
     }
 
     /**
-     * @brief - Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
-     *     Position is the end, instead of the start as with normal Find.
-     * 
+     * @brief          - Find the position of the first occurrence of the start of the search-string. Searches the string in reverse. Position is the end, instead of the start as with normal Find.
      * @param InString - String to search
      * @param InString - Length of the search-string
      * @param Position - Position to start search at
@@ -851,24 +856,24 @@ public:
             Position = CurrentLength;
         }
 
-        for (const CharType* RESTRICT SearchEnd = InString + InLength; *RESTRICT End = GetCString(); *RESTRICT Start = End + Position; *RESTRICT Current = Start; Current != End;)
+        for (const CharType* RESTRICT SearchEnd = InString + InLength, *RESTRICT End = GetCString(), *RESTRICT Start = End + Position, *RESTRICT Current = Start; Current != End;)
         {
             Current--;
 
             const CharType* RESTRICT SearchString = InString;
-            const CharType* RESTRICT TmpCurrent   = Current;
+            const CharType* RESTRICT TempCurrent   = Current;
             while (true)
             {
                 if ((*SearchString == 0) || (SearchString == SearchEnd))
                 {
                     return static_cast<SizeType>(static_cast<intptr>(Current - End));
                 }
-                else if (*TmpCurrent != *SearchString)
+                else if (*TempCurrent != *SearchString)
                 {
                     break;
                 }
 
-                ++TmpCurrent;
+                ++TempCurrent;
                 ++SearchString;
             }
         }
@@ -886,18 +891,18 @@ public:
     {
         CHECK((Position < Length()) || (Position == 0));
 
-        const SizeType Length = Length();
-        if (Length == 0)
+        const SizeType CurrentLength = Length();
+        if (CurrentLength == 0)
         {
             return 0;
         }
 
         if (!Position)
         {
-            Position = Length;
+            Position = CurrentLength;
         }
 
-        for (const CharType* RESTRICT End = GetCString(); *RESTRICT Start = End + Position; *RESTRICT Current = Start; Current != End;)
+        for (const CharType* RESTRICT End = GetCString(), *RESTRICT Start = End + Position, *RESTRICT Current = Start; Current != End;)
         {
             --Current;
             if (Char == *Current)
@@ -931,7 +936,7 @@ public:
             Position = Length;
         }
 
-        for (const CharType* RESTRICT End = GetCString(); *RESTRICT Start = End + Position; *RESTRICT Current = Start; Current != End;)
+        for (const CharType* RESTRICT End = GetCString(), *RESTRICT Start = End + Position, *RESTRICT Current = Start; Current != End;)
         {
             --Current;
             if (Predicate(*Current))
@@ -1053,7 +1058,7 @@ public:
         }
 
         const CharType* TempData = CharData.Data() + (CurrentLength - SuffixLength);
-        return (TCString<CharType>::Stricmp(TempData, InString) == 0);
+        return TCString<CharType>::Stricmp(TempData, InString) == 0;
     }
 
     /**
@@ -1064,7 +1069,7 @@ public:
     FORCEINLINE void Remove(SizeType Position, SizeType Count) noexcept
     {
         CHECK(Position < Length() && (Position + Count <= Length()));
-        CharData.RemoveRangeAt(Position, Count);
+        CharData.RemoveAt(Position, Count);
     }
 
     /**
@@ -1169,11 +1174,11 @@ public:
      */
     FORCEINLINE void Pop() noexcept
     {
-        const SizeType Length = Length();
-        if (Length)
+        const SizeType CurrentLength = Length();
+        if (CurrentLength)
         {
             CharData.Pop();
-            CharData[Length] = 0;
+            CharData[CurrentLength] = 0;
         }
     }
 
@@ -1183,7 +1188,7 @@ public:
      */
     FORCEINLINE void Swap(TString& Other)
     {
-        TArray<CharType> TempData(::Move(CharData));
+        TArray<CharType, TStringAllocator<CharType>> TempData(::Move(CharData));
         CharData = ::Move(Other.CharData);
         Other.CharData = ::Move(TempData);
     }
@@ -1251,17 +1256,17 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Size() const noexcept
     {
-        const SizeType Size = CharData.Size();
-        return (Size > 0) ? (Size - 1) : 0;
+        const SizeType CurrentSize = CharData.Size();
+        return (CurrentSize > 0) ? (CurrentSize - 1) : 0;
     }
 
     /**
-     * @brief  - Retrieve the last index that can be used to retrieve an element from the array
-     * @return - Returns a the index to the last element of the array
+     * @brief  - Returns the size of the container in bytes
+     * @return - The current size of the container in bytes
      */
-    NODISCARD FORCEINLINE SizeType LastElementIndex() const noexcept
+    NODISCARD FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return Size();
+        return Length() * sizeof(CharType);
     }
 
     /**
@@ -1292,15 +1297,6 @@ public:
     }
 
     /**
-     * @brief  - Returns the size of the container in bytes
-     * @return - The current size of the container in bytes
-     */
-    NODISCARD FORCEINLINE SizeType SizeInBytes() const noexcept
-    {
-        return Length() * sizeof(CharType);
-    }
-
-    /**
      * @brief  - Check if the container contains any elements
      * @return - Returns true if the array is empty or false if it contains elements
      */
@@ -1308,6 +1304,15 @@ public:
     {
         // Returns true if there only is one element due to null-terminator
         return (CharData.Size() <= 1);
+    }
+
+    /**
+     * @brief  - Retrieve the last index that can be used to retrieve an element from the array
+     * @return - Returns a the index to the last element of the array
+     */
+    NODISCARD FORCEINLINE SizeType LastElementIndex() const noexcept
+    {
+        return Size();
     }
 
     /**
@@ -1647,13 +1652,13 @@ public: // STL Iterator
     NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
     NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return ConstIterator(); }
     
-    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, ArraySize); }
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, ArraySize); }
+    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, Length()); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, Length()); }
 
 private:
     FORCEINLINE void InitializeByCopy(const CharType* InString, SizeType InLength) noexcept
     {
-        if (InLegnth)
+        if (InLength)
         {
             CharData.Reset(InLength + 1);
             TCString<CharType>::Strncpy(CharData.Data(), InString, InLength);
@@ -1686,7 +1691,7 @@ NODISCARD inline FStringWide CharToWide(const FStringView& CharString) noexcept
 {
     FStringWide NewString;
     NewString.Resize(CharString.Length());
-    mbstowcs(NewString.Data(), CharString.GetCString(), CharString.Length());
+    FPlatformString::Mbstowcs(NewString.Data(), CharString.GetCString(), CharString.Length());
     return NewString;
 }
 
@@ -1694,7 +1699,7 @@ NODISCARD inline FStringWide CharToWide(const FString& CharString) noexcept
 {
     FStringWide NewString;
     NewString.Resize(CharString.Length());
-    mbstowcs(NewString.Data(), CharString.GetCString(), CharString.Length());
+    FPlatformString::Mbstowcs(NewString.Data(), CharString.GetCString(), CharString.Length());
     return NewString;
 }
 
@@ -1702,7 +1707,7 @@ NODISCARD inline FString WideToChar(const FStringViewWide& WideString) noexcept
 {
     FString NewString;
     NewString.Resize(WideString.Length());
-    wcstombs(NewString.Data(), WideString.GetCString(), WideString.Length());
+    FPlatformString::Wcstombs(NewString.Data(), WideString.GetCString(), WideString.Length());
     return NewString;
 }
 
@@ -1710,7 +1715,7 @@ NODISCARD inline FString WideToChar(const FStringWide& WideString) noexcept
 {
     FString NewString;
     NewString.Resize(WideString.Length());
-    wcstombs(NewString.Data(), WideString.GetCString(), WideString.Length());
+    FPlatformString::Wcstombs(NewString.Data(), WideString.GetCString(), WideString.Length());
     return NewString;
 }
 
@@ -1948,10 +1953,10 @@ FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const FStringWide& Stri
     WIDECHAR* End;
     const WIDECHAR* Start = String.GetCString();
     OutElement = FCStringWide::Strtoui(Start, &End, 10);
-	if (End != Start)
-	{
-		return true;
-	}
+    if (End != Start)
+    {
+        return true;
+    }
 
     return false;
 }
@@ -1962,10 +1967,10 @@ FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const FStringWide& Stri
     WIDECHAR* End;
     const WIDECHAR* Start = String.GetCString();
     OutElement = FCStringWide::Strtoui64(Start, &End, 10);
-	if (End != Start)
-	{
-		return true;
-	}
+    if (End != Start)
+    {
+        return true;
+    }
 
     return false;
 }
@@ -1974,8 +1979,8 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<float>::FromString(const FStringWide& String, float& OutElement)
 {
     WIDECHAR* End;
-	const WIDECHAR* Start = String.GetCString();
-	OutElement = FCStringWide::Strtof(Start, &End);
+    const WIDECHAR* Start = String.GetCString();
+    OutElement = FCStringWide::Strtof(Start, &End);
     if (End != Start)
     {
         return true;
@@ -2033,18 +2038,18 @@ struct TTryParseType
 template<>
 FORCEINLINE bool TTryParseType<int32>::TryParse(const FString& InString)
 {
-	CHAR* End;
-	const CHAR* Start = InString.GetCString();
-	FCString::Strtoi(Start, &End, 10);
-	return (End != Start);
+    CHAR* End;
+    const CHAR* Start = InString.GetCString();
+    FCString::Strtoi(Start, &End, 10);
+    return (End != Start);
 }
 
 template<>
 FORCEINLINE bool TTryParseType<uint32>::TryParse(const FString& InString)
 {
-	CHAR* End;
-	const CHAR* Start = InString.GetCString();
-	FCString::Strtoui(Start, &End, 10);
+    CHAR* End;
+    const CHAR* Start = InString.GetCString();
+    FCString::Strtoui(Start, &End, 10);
     return (End != Start);
 }
 
@@ -2060,9 +2065,9 @@ FORCEINLINE bool TTryParseType<int64>::TryParse(const FString& InString)
 template<>
 FORCEINLINE bool TTryParseType<uint64>::TryParse(const FString& InString)
 {
-	CHAR* End;
-	const CHAR* Start = InString.GetCString();
-	FCString::Strtoui64(Start, &End, 10);
+    CHAR* End;
+    const CHAR* Start = InString.GetCString();
+    FCString::Strtoui64(Start, &End, 10);
     return (End != Start);
 }
 
@@ -2078,16 +2083,16 @@ FORCEINLINE bool TTryParseType<float>::TryParse(const FString& InString)
 template<>
 FORCEINLINE bool TTryParseType<double>::TryParse(const FString& InString)
 {
-	CHAR* End;
-	const CHAR* Start = InString.GetCString();
-	FCString::Strtof(Start, &End);
+    CHAR* End;
+    const CHAR* Start = InString.GetCString();
+    FCString::Strtof(Start, &End);
     return (End != Start);
 }
 
 template<>
 FORCEINLINE bool TTryParseType<bool>::TryParse(const FString& InString)
 {
-	const CHAR* Start = InString.GetCString();
+    const CHAR* Start = InString.GetCString();
     if (FCString::Stricmp(Start, "true") == 0)
     {
         return true;
@@ -2098,6 +2103,6 @@ FORCEINLINE bool TTryParseType<bool>::TryParse(const FString& InString)
     }
 
     CHAR* End;
-	FCString::Strtoi64(Start, &End, 10);
+    FCString::Strtoi64(Start, &End, 10);
     return (End != Start);
 }

@@ -20,11 +20,11 @@
     }
 
 #define PrintWideString(Str) \
-    { std::wcout << #Str << "= " << Str.GetCString() << std::endl; }
+    { std::wcout << #Str << L"= " << Str.GetCString() << std::endl; }
 
 #define PrintWideStringView(Str)                   \
     {                                              \
-        std::wcout << #Str << "= ";                \
+        std::wcout << #Str << L"= ";               \
         for ( int32 i = 0; i < Str.Length(); i++ ) \
         {                                          \
             std::wcout << Str[i];                  \
@@ -139,11 +139,6 @@ bool TString_Test_Internal(const CHAR* Args)
         TEST_CHECK(String7.Capacity() == 13);
         TEST_CHECK_STRING(String7, "");
 
-        String7.Reset(6, 'c');
-        TEST_CHECK(String7.Size()     == 6);
-        TEST_CHECK(String7.Capacity() == 13);
-        TEST_CHECK_STRING(String7, "cccccc");
-
         FString SearchString = "0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, "0123MeSearch89Me89");
         TEST_CHECK(SearchString.Find("Me")                 == 4);
@@ -209,12 +204,6 @@ bool TString_Test_Internal(const CHAR* Args)
         TEST_CHECK(CompareString0.Compare(CompareString1)                          != 0);
         TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
-        CompareString1.Resize(20, 'A');
-        TEST_CHECK_STRING(CompareString1, "compareAAAAAAAAAAAAA");
-
-        CompareString1.Resize(16, 'A');
-        TEST_CHECK_STRING(CompareString1, "compareAAAAAAAAA");
-
         CompareString1.Resize(7);
         TEST_CHECK_STRING(CompareString1, "compare");
 
@@ -224,13 +213,10 @@ bool TString_Test_Internal(const CHAR* Args)
         CompareString1.Resize(7);
         TEST_CHECK_STRING(CompareString1, "compare");
 
-        CompareString1.Resize(20, 'A');
-        TEST_CHECK_STRING(CompareString1, "compareAAAAAAAAAAAAA");
-
         CHAR Buffer[6];
         Buffer[5] = 0;
-        CompareString1.CopyToBuffer(Buffer, 5, 3);
-        TEST_CHECK(FCString::Strcmp(Buffer, "pareA") == 0);
+        CompareString1.CopyToBuffer(Buffer, 5, 2);
+        TEST_CHECK(FCString::Strcmp(Buffer, "mpare") == 0);
 
         CompareString0.Insert("lower", 4);
         TEST_CHECK_STRING(CompareString0, "COMPlowerARE");
@@ -377,11 +363,6 @@ bool TString_Test_Internal(const CHAR* Args)
         TEST_CHECK(String7.Capacity() == 13);
         TEST_CHECK_STRING(String7, L"");
 
-        String7.Reset(6, L'c');
-        TEST_CHECK(String7.Size()     == 6);
-        TEST_CHECK(String7.Capacity() == 13);
-        TEST_CHECK_STRING(String7, L"cccccc");
-
         FStringWide SearchString = L"0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, L"0123MeSearch89Me89");
         TEST_CHECK(SearchString.Find(L"Me")                 == 4);
@@ -447,12 +428,6 @@ bool TString_Test_Internal(const CHAR* Args)
         TEST_CHECK(CompareString0.Compare(CompareString1)                          != 0);
         TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
-        CompareString1.Resize(20, L'A');
-        TEST_CHECK_STRING(CompareString1, L"compareAAAAAAAAAAAAA");
-
-        CompareString1.Resize(16, L'A');
-        TEST_CHECK_STRING(CompareString1, L"compareAAAAAAAAA");
-
         CompareString1.Resize(7);
         TEST_CHECK_STRING(CompareString1, L"compare");
 
@@ -462,13 +437,10 @@ bool TString_Test_Internal(const CHAR* Args)
         CompareString1.Resize(7);
         TEST_CHECK_STRING(CompareString1, L"compare");
 
-        CompareString1.Resize(20, L'A');
-        TEST_CHECK_STRING(CompareString1, L"compareAAAAAAAAAAAAA");
-
         WIDECHAR Buffer[6];
         Buffer[5] = 0;
-        CompareString1.CopyToBuffer(Buffer, 5, 3);
-        TEST_CHECK(FCStringWide::Strcmp(Buffer, L"pareA") == 0);
+        CompareString1.CopyToBuffer(Buffer, 5, 2);
+        TEST_CHECK(FCStringWide::Strcmp(Buffer, L"mpare") == 0);
 
         CompareString0.Insert(L"lower", 4);
         TEST_CHECK_STRING(CompareString0, L"COMPlowerARE");
@@ -671,12 +643,6 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         TEST_CHECK(CompareString0.Compare(CompareString1)       != 0);
         TEST_CHECK(CompareString0.CompareNoCase(CompareString1) == 0);
 
-        CompareString1.Resize(20, 'A');
-        TEST_CHECK_STRING(CompareString1, "compareAAAAAAAAAAAAA");
-
-        CompareString1.Resize(16, 'A');
-        TEST_CHECK_STRING(CompareString1, "compareAAAAAAAAA");
-
         CompareString1.Resize(7);
         TEST_CHECK_STRING(CompareString1, "compare");
 
@@ -686,13 +652,10 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         CompareString1.Resize(7);
         TEST_CHECK_STRING(CompareString1, "compare");
 
-        CompareString1.Resize(20, 'A');
-        TEST_CHECK_STRING(CompareString1, "compareAAAAAAAAAAAAA");
-
         CHAR Buffer[6];
         Buffer[5] = 0;
-        CompareString1.CopyToBuffer(Buffer, 5, 3);
-        TEST_CHECK(FCString::Strcmp(Buffer, "pareA") == 0);
+        CompareString1.CopyToBuffer(Buffer, 5, 2);
+        TEST_CHECK(FCString::Strcmp(Buffer, "mpare") == 0);
 
         CompareString0.Insert("lower", 4);
         TEST_CHECK_STRING(CompareString0, "COMPlowerARE");
@@ -752,7 +715,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
 
         for (int32 Index = 0; Index < TestString.Length(); Index++)
         {
-            std::cout << Index << L'=' << TestString[Index] << std::endl;
+            std::cout << Index << '=' << TestString[Index] << std::endl;
         }
 
         FStaticStringWide<64> WideCompareString = CharToWide(CombinedString);
@@ -890,12 +853,6 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         TEST_CHECK(CompareString0.Compare(CompareString1)       != 0);
         TEST_CHECK(CompareString0.CompareNoCase(CompareString1) == 0);
 
-        CompareString1.Resize(20, L'A');
-        TEST_CHECK_STRING(CompareString1, L"compareAAAAAAAAAAAAA");
-
-        CompareString1.Resize(16, L'A');
-        TEST_CHECK_STRING(CompareString1, L"compareAAAAAAAAA");
-
         CompareString1.Resize(7);
         TEST_CHECK_STRING(CompareString1, L"compare");
 
@@ -905,13 +862,10 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         CompareString1.Resize(7);
         TEST_CHECK_STRING(CompareString1, L"compare");
 
-        CompareString1.Resize(20, L'A');
-        TEST_CHECK_STRING(CompareString1, L"compareAAAAAAAAAAAAA");
-
         WIDECHAR Buffer[6];
         Buffer[5] = 0;
-        CompareString1.CopyToBuffer(Buffer, 5, 3);
-        TEST_CHECK(FCStringWide::Strcmp(Buffer, L"pareA") == 0);
+        CompareString1.CopyToBuffer(Buffer, 5, 2);
+        TEST_CHECK(FCStringWide::Strcmp(Buffer, L"mpare") == 0);
 
         CompareString0.Insert(L"lower", 4);
         TEST_CHECK_STRING(CompareString0, L"COMPlowerARE");
@@ -966,12 +920,12 @@ bool TStaticString_Test_Internal(const CHAR* Args)
 
         for (WIDECHAR C : TestString)
         {
-            std::cout << C << std::endl;
+            std::wcout << C << std::endl;
         }
 
         for (int32 Index = 0; Index < TestString.Length(); Index++)
         {
-            std::cout << Index << '=' << TestString[Index] << std::endl;
+            std::wcout << Index << L'=' << TestString[Index] << std::endl;
         }
 
         FStaticString<64> WideCompareString = WideToChar(CombinedString);
@@ -996,7 +950,7 @@ bool TStringView_Test_Internal(const CHAR* Args)
         TEST_CHECK_STRING(StringView0, "");
         FStringView StringView1 = LongString;
         TEST_CHECK_STRING(StringView1, "This is a long string");
-        FStringView StringView2 = FStringView(LongString + 5, 4);
+        FStringView StringView2 = FStringView(LongString, 4, 5);
         TEST_CHECK_STRING(StringView2, "is a");
 
         CHAR Buffer[6] = { };
@@ -1124,7 +1078,7 @@ bool TStringView_Test_Internal(const CHAR* Args)
         TEST_CHECK_STRING(StringView0, L"");
         FStringViewWide StringView1 = LongString;
         TEST_CHECK_STRING(StringView1, L"This is a long string");
-        FStringViewWide StringView2 = FStringViewWide(LongString + 5, 4);
+        FStringViewWide StringView2 = FStringViewWide(LongString, 4, 5);
         TEST_CHECK_STRING(StringView2, L"is a");
 
         WIDECHAR Buffer[6] = { };
@@ -1148,7 +1102,7 @@ bool TStringView_Test_Internal(const CHAR* Args)
         TEST_CHECK(StringView5.CompareNoCase(StringView6) == 0);
 
         StringView6.Clear();
-        PrintStringView(StringView6);
+        PrintWideStringView(StringView6);
 
         FStringViewWide SearchString = L"0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, L"0123MeSearch89Me89");

@@ -10,6 +10,16 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FGenericPlatformString
 {
+    static FORCEINLINE TSIZE Mbstowcs(WIDECHAR* Dest, const CHAR* Src, uint64 Max)
+    {
+        return ::mbstowcs(Dest, Src, Max);
+    }
+
+    static FORCEINLINE TSIZE Wcstombs(CHAR* Dest, const WIDECHAR* Src, uint64 Max)
+    {
+        return ::wcstombs(Dest, Src, Max);
+    }
+
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CHAR
 
