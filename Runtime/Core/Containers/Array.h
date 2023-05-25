@@ -367,7 +367,7 @@ public:
         }
 
         Emplace(Element);
-        return (ArraySize - 1);
+        return ArraySize - 1;
     }
 
     /**
@@ -384,7 +384,7 @@ public:
         }
 
         Emplace(::Forward<ElementType>(Element));
-        return (ArraySize - 1);
+        return ArraySize - 1;
     }
 
     /**
@@ -547,9 +547,9 @@ public:
 
         if (NumElements)
         {
-            ElementType* TmpPositionData = Allocator.GetAllocation() + Position;
-            ::DestroyObjects<ElementType>(TmpPositionData, NumElements);
-            ::RelocateObjects<ElementType>(TmpPositionData, TmpPositionData + NumElements, ArraySize - (Position + NumElements));
+            ElementType* TempPositionData = Allocator.GetAllocation() + Position;
+            ::DestroyObjects<ElementType>(TempPositionData, NumElements);
+            ::RelocateObjects<ElementType>(TempPositionData, TempPositionData + NumElements, ArraySize - (Position + NumElements));
             ArraySize -= NumElements;
         }
     }
@@ -614,17 +614,12 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT Start   = Allocator.GetAllocation();
-        const ElementType* RESTRICT Current = Start;
-        const ElementType* RESTRICT End     = Start + ArraySize;
-        while (Current != End)
+        for (const ElementType* RESTRICT Start = Allocator.GetAllocation(), *RESTRICT Current = Start, *RESTRICT End = Start + ArraySize; Current != End; ++Current)
         {
             if (Element == *Current)
             {
                 return static_cast<SizeType>(Current - Start);
             }
-
-            ++Current;
         }
 
         return INVALID_INDEX;
@@ -638,17 +633,12 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT Start   = Allocator.GetAllocation();
-        const ElementType* RESTRICT Current = Start;
-        const ElementType* RESTRICT End     = Start + ArraySize;
-        while (Current != End)
+        for (const ElementType* RESTRICT Start = Allocator.GetAllocation(), *RESTRICT Current = Start, *RESTRICT End = Start + ArraySize; Current != End; ++Current)
         {
             if (Predicate(*Current))
             {
                 return static_cast<SizeType>(Current - Start);
             }
-
-            ++Current;
         }
 
         return INVALID_INDEX;
@@ -661,10 +651,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT Start   = Allocator.GetAllocation();
-        const ElementType* RESTRICT Current = Start + ArraySize;
-        const ElementType* RESTRICT End     = Start;
-        while (Current != End)
+        for (const ElementType* RESTRICT Start = Allocator.GetAllocation(), *RESTRICT Current = Start + ArraySize, *RESTRICT End = Start; Current != End;)
         {
             --Current;
             if (Element == *Current)
@@ -684,10 +671,7 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT Start   = Allocator.GetAllocation();
-        const ElementType* RESTRICT Current = Start + ArraySize;
-        const ElementType* RESTRICT End     = Start;
-        while (Current != End)
+        for (const ElementType* RESTRICT Start = Allocator.GetAllocation(), *RESTRICT Current = Start + ArraySize, *RESTRICT End = Start; Current != End;)
         {
             --Current;
             if (Predicate(*Current))
@@ -706,7 +690,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const noexcept
     {
-        return (Find(Element) != INVALID_INDEX);
+        return Find(Element) != INVALID_INDEX;
     }
 
     /**
@@ -717,7 +701,7 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        return (FindWithPredicate(::Forward<PredicateType>(Predicate)) != INVALID_INDEX);
+        return FindWithPredicate(::Forward<PredicateType>(Predicate)) != INVALID_INDEX;
     }
 
     /**
@@ -727,13 +711,9 @@ public:
     template<class LambdaType>
     FORCEINLINE void Foreach(LambdaType&& Lambda)
     {
-        const ElementType* RESTRICT Start   = Allocator.GetAllocation();
-        const ElementType* RESTRICT Current = Start;
-        const ElementType* RESTRICT End     = Start + ArraySize;
-        while (Current != End)
+        for (const ElementType* RESTRICT Current = Allocator.GetAllocation(), *RESTRICT End = Current + ArraySize; Current != End; ++Current)
         {
             Lambda(*Current);
-            ++Current;
         }
     }
 
@@ -763,11 +743,11 @@ public:
      */
     void Reverse()
     {
-        const int32 HalfSize = ArraySize / 2;
+        const SizeType HalfSize = ArraySize / 2;
         const ElementType* Array = Allocator.GetAllocation();
         for (SizeType Index = 0; Index < HalfSize; ++Index)
         {
-            const int32 ReverseIndex = ArraySize - Index - 1;
+            const SizeType ReverseIndex = ArraySize - Index - 1;
             ::Swap(Array[Index], Array[ReverseIndex]);
         }
     }
@@ -800,7 +780,7 @@ public:
     NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const noexcept
     {
         const ElementType* Array = Allocator.GetAllocation();
-        return (Address >= Array) && (Address < (Array + ArrayMax));
+        return Address >= Array && Address < (Array + ArrayMax);
     }
 
     /**
@@ -828,7 +808,8 @@ public:
     NODISCARD FORCEINLINE ElementType& FirstElement() noexcept
     {
         CHECK(!IsEmpty());
-        return Allocator.GetAllocation()[0];
+        ElementType* Array = Allocator.GetAllocation();
+        return Array[0];
     }
 
     /**
@@ -838,7 +819,8 @@ public:
     NODISCARD FORCEINLINE const ElementType& FirstElement() const noexcept
     {
         CHECK(!IsEmpty());
-        return Allocator.GetAllocation()[0];
+        const ElementType* Array = Allocator.GetAllocation();
+        return Array[0];
     }
 
     /**
@@ -848,7 +830,8 @@ public:
     NODISCARD FORCEINLINE ElementType& LastElement() noexcept
     {
         CHECK(!IsEmpty());
-        return Allocator.GetAllocation()[LastElementIndex()];
+        ElementType* Array = Allocator.GetAllocation();
+        return Array[LastElementIndex()];
     }
 
     /**
@@ -858,7 +841,8 @@ public:
     NODISCARD FORCEINLINE const ElementType& LastElement() const noexcept
     {
         CHECK(!IsEmpty());
-        return Allocator.GetAllocation()[LastElementIndex()];
+        const ElementType* Array = Allocator.GetAllocation();
+        return Array[LastElementIndex()];
     }
 
     /**
@@ -885,7 +869,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType LastElementIndex() const noexcept
     {
-        return (ArraySize > 0) ? (ArraySize - 1) : 0;
+        return ArraySize ? ArraySize - 1 : 0;
     }
 
     /**
@@ -964,7 +948,8 @@ public: // Heap Functions
      */
     NODISCARD FORCEINLINE ElementType& HeapTop() noexcept
     {
-        return Allocator.GetAllocation()[0];
+        const ElementType* Array = Allocator.GetAllocation();
+        return Array[0];
     }
 
     /**
@@ -973,7 +958,8 @@ public: // Heap Functions
      */
     NODISCARD FORCEINLINE const ElementType& HeapTop() const noexcept
     {
-        return Allocator.GetAllocation()[0];
+        const ElementType* Array = Allocator.GetAllocation();
+        return Array[0];
     }
 
     /**
@@ -1094,7 +1080,8 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) noexcept
     {
-        return Allocator.GetAllocation()[Index];
+        ElementType* Array = Allocator.GetAllocation();
+        return Array[Index];
     }
 
     /**
@@ -1104,7 +1091,8 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
     {
-        return Allocator.GetAllocation()[Index];
+        const ElementType* Array = Allocator.GetAllocation();
+        return Array[Index];
     }
 
     /**

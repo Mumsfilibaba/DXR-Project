@@ -309,7 +309,7 @@ public:
 		const CharType* RESTRICT Current = CharData;
 		for (const CharType* RESTRICT End = Current + StringLength; Current != End && *Current; ++Current)
 		{
-			if (!TChar<CharType>::IsSpace(*Current))
+			if (!TChar<CharType>::IsWhitespace(*Current))
 			{
 				break;
 			}
@@ -343,7 +343,7 @@ public:
 		{
 			--Current;
 
-			if (TChar<CharType>::IsSpace(*Current) || Current == 0)
+			if (TChar<CharType>::IsWhitespace(*Current) || Current == 0)
 			{
 				StringLength--;
 			}

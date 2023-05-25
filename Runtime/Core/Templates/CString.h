@@ -22,9 +22,9 @@ struct TChar
         return FPlatformString::ToLower(Char);
     }
 
-    NODISCARD static FORCEINLINE bool IsSpace(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsWhitespace(CHARTYPE Char)
     {
-        return FPlatformString::IsSpace(Char);
+        return FPlatformString::IsWhitespace(Char);
     }
     
     NODISCARD static FORCEINLINE bool IsUpper(CHARTYPE Char)

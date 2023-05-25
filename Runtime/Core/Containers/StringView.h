@@ -158,7 +158,7 @@ public:
         const CharType* RESTRICT Current = ViewStart;
         for (; Current != ViewEnd && *Current; ++Current)
         {
-            if (!TChar<CharType>::IsSpace(*Current))
+            if (!TChar<CharType>::IsWhitespace(*Current))
             {
                 break;
             }
@@ -187,7 +187,7 @@ public:
         for (; Current != ViewStart && *Current;)
         {
             --Current;
-            if (!TChar<CharType>::IsSpace(*Current))
+            if (!TChar<CharType>::IsWhitespace(*Current))
             {
                 break;
             }

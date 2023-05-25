@@ -33,7 +33,7 @@ struct FGenericPlatformString
         return static_cast<CHAR>(::tolower(Char));
     }
 
-    NODISCARD static FORCEINLINE bool IsSpace(CHAR Char)
+    NODISCARD static FORCEINLINE bool IsWhitespace(CHAR Char)
     {
         return static_cast<bool>(::isspace(Char));
     }
@@ -215,7 +215,7 @@ struct FGenericPlatformString
         return static_cast<WIDECHAR>(::towlower(Char));
     }
 
-    NODISCARD static FORCEINLINE bool IsSpace(WIDECHAR Char)
+    NODISCARD static FORCEINLINE bool IsWhitespace(WIDECHAR Char)
     {
         return static_cast<bool>(::iswspace(Char));
     }
