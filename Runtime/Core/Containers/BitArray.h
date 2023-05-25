@@ -26,15 +26,8 @@ public:
 
 public:
 
-    /**
-     * @brief - Default constructor
-     */
-    FORCEINLINE TBitArray() noexcept
-        : Allocator()
-        , NumBits(0)
-        , NumElements(0)
-    {
-    }
+    /** @brief - Default constructor */
+    TBitArray() noexcept = default;
 
     /**
      * @brief         - Constructor that sets the elements based on an integer
@@ -57,10 +50,9 @@ public:
      */
     NOINLINE explicit TBitArray(const InIntegerType* InValues, SizeType NumValues) noexcept
         : Allocator()
-        , NumBits(0)
+        , NumBits(NumValues * NumBitsPerInteger())
         , NumElements(0)
     {
-        NumBits = NumValues * NumBitsPerInteger();
         InitializeZeroed(NumBits);
 
         for (SizeType Index = 0; Index < NumValues; ++Index)
@@ -127,7 +119,7 @@ public:
         , NumBits(Other.NumBits)
         , NumElements(Other.NumElements)
     {
-        MoveFrom(Move(Other));
+        MoveFrom(::Move(Other));
     }
 
     /**
@@ -162,7 +154,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsEmpty() const noexcept
     {
-        return (NumBits == 0);
+        return NumBits == 0;
     }
 
     /**
@@ -1021,8 +1013,8 @@ private:
 
 private:
     InAllocatorType Allocator;
-    SizeType        NumBits;
-    SizeType        NumElements;
+    SizeType NumBits{0};
+    SizeType NumElements{0};
 };
 
 typedef TBitArray<uint8>  FBitArray8;

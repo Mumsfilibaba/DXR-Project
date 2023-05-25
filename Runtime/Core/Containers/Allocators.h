@@ -12,7 +12,7 @@ public:
     using SizeType = int32;
 
     TArrayAllocatorInterface() noexcept = default;
-    ~TArrayAllocatorInterface()         = default;
+    ~TArrayAllocatorInterface() = default;
 
     /**
      * @brief              - Reallocates the allocation
@@ -58,15 +58,7 @@ class TDefaultArrayAllocator
 public:
     using SizeType = int32;
 
-    FORCEINLINE TDefaultArrayAllocator() noexcept
-        : Allocation(nullptr)
-    {
-    }
-
-    FORCEINLINE ~TDefaultArrayAllocator()
-    {
-        Free();
-    }
+    TDefaultArrayAllocator() noexcept = default;
 
     FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) noexcept
     {
@@ -107,7 +99,7 @@ public:
     }
 
 private:
-    ElementType* Allocation;
+    ElementType* Allocation = nullptr;
 };
 
 
@@ -137,11 +129,7 @@ class TInlineArrayAllocator
 public:
     using SizeType = int32;
 
-    FORCEINLINE TInlineArrayAllocator() noexcept
-        : InlineAllocation()
-        , DynamicAllocation()
-    {
-    }
+    TInlineArrayAllocator() noexcept = default;
 
     FORCEINLINE ~TInlineArrayAllocator()
     {

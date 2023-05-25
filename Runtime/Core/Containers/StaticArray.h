@@ -104,16 +104,12 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT Current = Elements;
-        const ElementType* RESTRICT End     = Elements + NUM_ELEMENTS;
-        while (Current != End)
+        for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start, *RESTRICT End = Start + NUM_ELEMENTS; Current != End; ++Current)
         {
             if (Element == *Current)
             {
-                return static_cast<SizeType>(Current - Elements);
+                return static_cast<SizeType>(Current - Start);
             }
-
-            ++Current;
         }
 
         return INVALID_INDEX;
@@ -127,16 +123,12 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT Current = Elements;
-        const ElementType* RESTRICT End     = Elements + NUM_ELEMENTS;
-        while (Current != End)
+        for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start, *RESTRICT End = Start + NUM_ELEMENTS; Current != End; ++Current)
         {
             if (Predicate(*Current))
             {
-                return static_cast<SizeType>(Current - Elements);
+                return static_cast<SizeType>(Current - Start);
             }
-
-            ++Current;
         }
 
         return INVALID_INDEX;
@@ -149,14 +141,12 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT Current = Elements + NUM_ELEMENTS;
-        const ElementType* RESTRICT End     = Elements;
-        while (Current != End)
+        for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start + NUM_ELEMENTS, *RESTRICT End = Start; Current != End;)
         {
             --Current;
             if (Element == *Current)
             {
-                return static_cast<SizeType>(Current - Elements);
+                return static_cast<SizeType>(Current - Start);
             }
         }
 
@@ -171,14 +161,12 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT Current = Elements + NUM_ELEMENTS;
-        const ElementType* RESTRICT End     = Elements;
-        while (Current != End)
+        for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start + NUM_ELEMENTS, *RESTRICT End = Start; Current != End;)
         {
             --Current;
             if (Predicate(*Current))
             {
-                return static_cast<SizeType>(Current - Elements);
+                return static_cast<SizeType>(Current - Start);
             }
         }
 
@@ -192,7 +180,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const noexcept
     {
-        return (Find(Element) != INVALID_INDEX);
+        return Find(Element) != INVALID_INDEX;
     }
 
     /**
@@ -203,34 +191,33 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        return (FindWithPredicate(::Forward<PredicateType>(Predicate)) != INVALID_INDEX);
+        return FindWithPredicate(::Forward<PredicateType>(Predicate)) != INVALID_INDEX;
     }
 
     /**
      * @brief         - Perform some function on each element in the array
      * @param Functor - Callable that takes one element and perform some operation on it
      */
-    template<class FunctorType>
-    FORCEINLINE void Foreach(FunctorType&& Functor)
+    template<class LambdaType>
+    FORCEINLINE void Foreach(LambdaType&& Lambda)
     {
-        ElementType* RESTRICT Current = Elements;
-        ElementType* RESTRICT End     = Elements + NUM_ELEMENTS;
-        while (Current != End)
+        for (const ElementType* RESTRICT Current = Elements, *RESTRICT End = Current + NUM_ELEMENTS; Current != End; ++Current)
         {
-            Functor(*Current);
-            ++Current;
+            Lambda(*Current);
         }
     }
 
     /**
-     * @brief       - Swap the contents of this array with another
-     * @param Other - The other array to swap with
+     * @brief             - Swap two elements with each other
+     * @param FirstIndex  - Index to the first element to Swap
+     * @param SecondIndex - Index to the second element to Swap
      */
-    FORCEINLINE void Swap(TStaticArray& Other) noexcept
+    FORCEINLINE void Swap(SizeType FirstIndex, SizeType SecondIndex) noexcept
     {
-        TStaticArray TempArray(::Move(*this));
-        *this = ::Move(Other);
-        Other = ::Move(TempArray);
+        CHECK(IsValidIndex(FirstIndex));
+        CHECK(IsValidIndex(SecondIndex));
+        ElementType* Array = Allocator.GetAllocation();
+        ::Swap(Array[FirstIndex], Array[SecondIndex]);
     }
 
     /**
@@ -276,30 +263,25 @@ public:
     }
 
     /**
-     * @brief     - Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
-     * @param RHS - Array to compare with
-     * @return    - Returns true if all elements are equal to each other
+     * @brief       - Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
+     * @param Other - Array to compare with
+     * @return      - Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
+    NODISCARD FORCEINLINE bool operator==(const ArrayType& Other) const noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
-        if (NUM_ELEMENTS != RHS.Size())
-        {
-            return false;
-        }
-
-        return ::CompareObjects<ElementType>(Elements, RHS.Data(), NUM_ELEMENTS);
+        return (ArraySize == FArrayContainerHelper::Size(Other)) ? ::CompareObjects<ElementType>(Allocator.GetAllocation(), FArrayContainerHelper::Data(Other), ArraySize) : (false);
     }
 
     /**
-     * @brief     - Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
-     * @param RHS - Array to compare with
-     * @return    - Returns true if all elements are NOT equal to each other
+     * @brief       - Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
+     * @param Other - Array to compare with
+     * @return      - Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
+    NODISCARD FORCEINLINE bool operator!=(const ArrayType& Other) const noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
-        return !(*this == RHS);
+        return !(*this == Other);
     }
 
 public:

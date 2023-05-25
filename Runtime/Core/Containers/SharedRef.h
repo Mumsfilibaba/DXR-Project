@@ -10,13 +10,8 @@ public:
     template<typename OtherType>
     friend class TSharedRef;
 
-    /**
-     * @brief -  Default constructor that set the pointer to nullptr
-     */
-    FORCEINLINE TSharedRef() noexcept
-        : Object(nullptr)
-    {
-    }
+    /** @brief -  Default constructor that set the pointer to nullptr */
+    TSharedRef() noexcept = default
 
     /**
      * @brief       - Copy-constructor
@@ -350,7 +345,7 @@ private:
         }
     }
 
-    ElementType* Object = nullptr;
+    ElementType* Object{nullptr};
 };
 
 

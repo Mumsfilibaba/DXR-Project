@@ -49,9 +49,10 @@ struct TPair
      */
     template<typename OtherFirstType, typename OtherSecondType>
     FORCEINLINE explicit TPair(TPair<OtherFirstType, OtherSecondType>&& Other)
-        : First(Move(Other.First))
-        , Second(Move(Other.Second))
-    { }
+        : First(::Move(Other.First))
+        , Second(::Move(Other.Second))
+    {
+    }
 
     /**
      * @brief       - Swap this pair with another
@@ -96,7 +97,7 @@ public:
      */
     FORCEINLINE TPair& operator=(TPair&& Other) noexcept
     {
-        TPair(Move(Other)).Swap(*this);
+        TPair(::Move(Other)).Swap(*this);
         return *this;
     }
 
@@ -108,8 +109,8 @@ public:
     template<typename OtherFirstType, typename OtherSecondType>
     FORCEINLINE TPair& operator=(TPair<OtherFirstType, OtherSecondType>&& Other) noexcept
     {
-        First  = Move(Other.First);
-        Second = Move(Other.Second);
+        First  = ::Move(Other.First);
+        Second = ::Move(Other.Second);
         return *this;
     }
 
@@ -163,5 +164,5 @@ NODISCARD inline TPair<FirstType, SecondType> MakePair(const FirstType& First, c
 template<typename FirstType, typename SecondType>
 NODISCARD inline TPair<FirstType, SecondType> MakePair(FirstType&& First, SecondType&& Second) noexcept
 {
-    return TPair<FirstType, SecondType>(Forward<FirstType>(First), Forward<SecondType>(Second));
+    return TPair<FirstType, SecondType>(::Forward<FirstType>(First), ::Forward<SecondType>(Second));
 }

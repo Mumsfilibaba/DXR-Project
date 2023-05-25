@@ -30,9 +30,7 @@ public:
      * @brief - Constructor
      */
     FORCEINLINE TQueue()
-        : Head(nullptr)
-        , Tail(nullptr)
-        , NodeList(nullptr)
+        : NodeList(nullptr)
     {
         // Create a Node here to more easily handle edge-cases
         Head = new FNode();
@@ -320,7 +318,7 @@ private:
         NodeList = InNode;
     }
 
-    FNode* volatile Head;
-    FNode* volatile Tail;
-    FNode* volatile NodeList;
+    FNode* volatile Head{nullptr};
+    FNode* volatile Tail{nullptr};
+    FNode* volatile NodeList{nullptr};
 };

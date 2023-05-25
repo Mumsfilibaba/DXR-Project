@@ -28,7 +28,8 @@ public:
         : PriorityQueues(0)
         , NumElements(0)
         , LowestPopulatedPriorityIndex(0)
-    { }
+    {
+    }
 
     /**
      * @brief          - Enqueue a new element in the queue

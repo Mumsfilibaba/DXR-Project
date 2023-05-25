@@ -14,14 +14,8 @@ public:
     TUniquePtr(const TUniquePtr& Other)                     = delete;
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
-    /**
-     * @brief - Default constructor
-     */
-    FORCEINLINE TUniquePtr() noexcept
-        : Super()
-        , Object(nullptr)
-    {
-    }
+    /** @brief - Default constructor */
+    TUniquePtr() noexcept = default;
 
     /**
      * @brief - Construct from nullptr
@@ -259,7 +253,7 @@ private:
         }
     }
 
-    ElementType* Object;
+    ElementType* Object{nullptr};
 };
 
 
@@ -277,14 +271,8 @@ public:
     TUniquePtr(const TUniquePtr& Other)                     = delete;
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
-    /**
-     * @brief - Default constructor
-     */
-    FORCEINLINE TUniquePtr() noexcept
-        : Super()
-        , Object(nullptr)
-    {
-    }
+    /** @brief - Default constructor */
+    TUniquePtr() noexcept = default;
 
     /**
      * @brief - Construct from nullptr
@@ -506,68 +494,68 @@ private:
         }
     }
 
-    ElementType* Object;
+    ElementType* Object{nullptr};
 };
 
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator==(const TUniquePtr<ElementType>& LHS, U* RHS) noexcept
 {
-    return (LHS.Get() == RHS);
+    return LHS.Get() == RHS;
 }
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator==(ElementType* LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (LHS == RHS.Get());
+    return LHS == RHS.Get();
 }
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<ElementType>& LHS, U* RHS) noexcept
 {
-    return (LHS.Get() != RHS);
+    return LHS.Get() != RHS;
 }
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator!=(ElementType* LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (LHS != RHS.Get());
+    return LHS != RHS.Get();
 }
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator==(const TUniquePtr<ElementType>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return LHS.Get() == RHS.Get();
 }
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<ElementType>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return LHS.Get() != RHS.Get();
 }
 
 template<typename ElementType>
 NODISCARD FORCEINLINE bool operator==(const TUniquePtr<ElementType>& LHS, nullptr_type) noexcept
 {
-    return (LHS.Get() == nullptr);
+    return LHS.Get() == nullptr;
 }
 
 template<typename ElementType>
 NODISCARD FORCEINLINE bool operator==(nullptr_type, const TUniquePtr<ElementType>& RHS) noexcept
 {
-    return (nullptr == RHS.Get());
+    return nullptr == RHS.Get();
 }
 
 template<typename ElementType>
 NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<ElementType>& LHS, nullptr_type) noexcept
 {
-    return (LHS.Get() != nullptr);
+    return LHS.Get() != nullptr;
 }
 
 template<typename ElementType>
 NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TUniquePtr<ElementType>& RHS) noexcept
 {
-    return (nullptr != RHS.Get());
+    return nullptr != RHS.Get();
 }
 
 

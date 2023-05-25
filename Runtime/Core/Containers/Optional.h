@@ -9,14 +9,8 @@ public:
     template<typename OtherType>
     friend class TOptional;
 
-    /**
-     * @brief - Default constructor
-     */
-    FORCEINLINE TOptional() noexcept
-        : Value()
-        , bHasValue(false)
-    {
-    }
+    /** @brief - Default constructor */
+    TOptional() noexcept = default;
 
     /**
      * @brief - Construct from nullptr
@@ -45,10 +39,8 @@ public:
      * @brief       - Copy-constructor that takes another type
      * @param Other - Optional to copy from
      */
-    template<
-        typename OtherType,
-        typename = typename TEnableIf<TIsConstructible<ElementType, const OtherType&>::Value>::Type>
-    FORCEINLINE TOptional(const TOptional<OtherType>& Other)
+    template<typename OtherType>
+    FORCEINLINE TOptional(const TOptional<OtherType>& Other) requires(TIsConstructible<ElementType, const typename TRemoveReference<OtherType>::Type&>::Value)
         : Value()
         , bHasValue(false)
     {
@@ -77,10 +69,8 @@ public:
      * @brief       - Move-constructor taking another type
      * @param Other - Optional to move from
      */
-    template<
-        typename OtherType,
-        typename = typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value>::Type>
-    FORCEINLINE TOptional(TOptional<OtherType>&& Other) noexcept
+    template<typename OtherType>
+    FORCEINLINE TOptional(TOptional<OtherType>&& Other) noexcept requires(TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value)
         : Value()
         , bHasValue(false)
     {
@@ -242,10 +232,8 @@ public:
      * @return      - Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<
-            TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value,
-            typename TAddLValueReference<TOptional>::Type
-        >::Type operator=(const TOptional<OtherType>& Other) noexcept
+    FORCEINLINE TOptional& operator=(const TOptional<OtherType>& Other) noexcept 
+        requires(TIsConstructible<ElementType, typename TAddLValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value)
     {
         TOptional(Other).Swap(*this);
         return *this;
@@ -258,7 +246,7 @@ public:
      */
     FORCEINLINE TOptional& operator=(TOptional&& Other) noexcept
     {
-        TOptional(Other).Swap(*this);
+        TOptional(::Move(Other)).Swap(*this);
         return *this;
     }
 
@@ -268,12 +256,10 @@ public:
      * @return      - Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<
-            TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value,
-            typename TAddLValueReference<TOptional>::Type
-        >::Type operator=(TOptional<OtherType>&& Other) noexcept
+    FORCEINLINE TOptional& operator=(TOptional<OtherType>&& Other) noexcept
+        requires(TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value)
     {
-        TOptional(Other).Swap(*this);
+        TOptional(::Move(Other)).Swap(*this);
         return *this;
     }
 
@@ -283,12 +269,10 @@ public:
      * @return      - Returns a reference to this instance
      */
     template<typename OtherType = ElementType>
-    FORCEINLINE typename TEnableIf<
-            TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value,
-            typename TAddLValueReference<TOptional>::Type
-        >::Type operator=(OtherType&& Other) noexcept
+    FORCEINLINE TOptional& operator=(OtherType&& Other) noexcept
+        requires(TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value)
     {
-        TOptional(Other).Swap(*this);
+        TOptional(::Move(Other)).Swap(*this);
         return *this;
     }
 
@@ -465,5 +449,5 @@ private:
     }
 
     TTypeAlignedBytes<ElementType> Value;
-    bool bHasValue;
+    bool bHasValue{false};
 };

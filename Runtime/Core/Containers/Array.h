@@ -27,24 +27,14 @@ public:
 
 public:
 
-    /**
-     * @brief - Default constructor
-     */
-    FORCEINLINE TArray() noexcept
-        : Allocator()
-        , ArraySize(0)
-        , ArrayMax(0)
-    {
-    }
+    /** @brief - Default constructor */
+    TArray() noexcept = default;
 
     /** 
      * @brief        - Constructor that default creates a certain number of elements 
      * @param InSize - Number of elements to construct
      */
     FORCEINLINE explicit TArray(SizeType InSize) noexcept
-        : Allocator()
-        , ArraySize(0)
-        , ArrayMax(0)
     {
         InitializeEmpty(InSize);
     }
@@ -55,9 +45,6 @@ public:
      * @param Element - Element to copy into all positions of the array
      */
     FORCEINLINE TArray(SizeType InSize, const ElementType& Element) noexcept
-        : Allocator()
-        , ArraySize(0)
-        , ArrayMax(0)
     {
         Initialize(InSize, Element);
     }
@@ -68,9 +55,6 @@ public:
      * @param InNumElements - Number of elements in 'InputArray', which also is the resulting size of the constructed array
      */
     FORCEINLINE TArray(const ElementType* InElements, SizeType InNumElements) noexcept
-        : Allocator()
-        , ArraySize(0)
-        , ArrayMax(0)
     {
         InitializeByCopy(InElements, InNumElements, 0);
     }
@@ -80,11 +64,18 @@ public:
      * @param Other - Array to copy from
      */
     FORCEINLINE TArray(const TArray& Other) noexcept
-        : Allocator()
-        , ArraySize(0)
-        , ArrayMax(0)
     {
         InitializeByCopy(Other.Data(), Other.Size(), 0);
+    }
+
+    /** 
+     * @brief         - Copy-constructor
+     * @param Other   - Array to copy from
+     * @param InSlack - Extra number of elements to allocate space for
+     */
+    FORCEINLINE TArray(const TArray& Other, SizeType InSlack) noexcept
+    {
+        InitializeByCopy(Other.Data(), Other.Size(), InSlack);
     }
 
     /**
@@ -93,9 +84,6 @@ public:
      */
     template<typename ArrayType>
     FORCEINLINE explicit TArray(const ArrayType& Other) noexcept requires(TIsTArrayType<ArrayType>::Value)
-        : Allocator()
-        , ArraySize(0)
-        , ArrayMax(0)
     {
         InitializeByCopy(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other), 0);
     }
@@ -105,9 +93,6 @@ public:
      * @param Other - Array to move elements from
      */
     FORCEINLINE TArray(TArray&& Other) noexcept
-        : Allocator()
-        , ArraySize(0)
-        , ArrayMax(0)
     {
         InitializeByMove(::Forward<TArray>(Other));
     }
@@ -117,9 +102,6 @@ public:
      * @param InitList - Initializer list containing all elements to construct the array from
      */
     FORCEINLINE TArray(std::initializer_list<ElementType> InitList) noexcept
-        : Allocator()
-        , ArraySize(0)
-        , ArrayMax(0)
     {
         InitializeByCopy(FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList), 0);
     }
@@ -1059,7 +1041,7 @@ public:
     template<typename ArrayType>
     NODISCARD FORCEINLINE bool operator==(const ArrayType& Other) const noexcept requires(TIsTArrayType<ArrayType>::Value)
     {
-        return (ArraySize == Other.ArraySize) ? ::CompareObjects<ElementType>(Allocator.GetAllocation(), FArrayContainerHelper::Data(Other), ArraySize) : (false);
+        return (ArraySize == FArrayContainerHelper::Size(Other)) ? ::CompareObjects<ElementType>(Allocator.GetAllocation(), FArrayContainerHelper::Data(Other), ArraySize) : (false);
     }
 
     /**
@@ -1114,6 +1096,14 @@ public:
     {
         Append(FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList));
         return *this;
+    }
+
+public:
+    NODISCARD friend FORCEINLINE TArray operator+(const TArray& LHS, const TArray& RHS) noexcept
+    {
+        TArray NewArray(LHS, RHS.Size());
+        NewArray.Append(RHS);
+        return NewArray;
     }
 
 public: // Iterators
@@ -1372,8 +1362,8 @@ private:
 
 private:
     AllocatorType Allocator;
-    SizeType      ArraySize;
-    SizeType      ArrayMax;
+    SizeType ArraySize{0};
+    SizeType ArrayMax{0};
 };
 
 template<typename T, typename AllocatorType>

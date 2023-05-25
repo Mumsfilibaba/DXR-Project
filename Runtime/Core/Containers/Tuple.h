@@ -22,10 +22,8 @@ namespace TupleInternal
         TTupleLeaf& operator=(TTupleLeaf&&) = default;
         TTupleLeaf& operator=(const TTupleLeaf&) = default;
 
-        template<
-            typename... ArgTypes,
-            typename = typename TEnableIf<TAnd<TValue<(sizeof... (ArgTypes)) != 0>, TIsConstructible<ValueType, typename TDecay<ArgTypes>::Type...>>::Value>::Type>
-        FORCEINLINE explicit TTupleLeaf(ArgTypes&&... Args) noexcept
+        template<typename... ArgTypes>
+        FORCEINLINE explicit TTupleLeaf(ArgTypes&&... Args) noexcept requires(TAnd<TValue<(sizeof... (ArgTypes)) != 0>, TIsConstructible<ValueType, typename TDecay<ArgTypes>::Type...>>::Value)
             : Value(Forward<ArgTypes>(Args)...)
         {
         }
@@ -69,10 +67,8 @@ namespace TupleInternal
         {
         }
 
-        template<
-            typename...ArgTypes,
-            typename = typename TEnableIf<TIsConstructible<ValueType, ArgTypes&&...>::Value>::Type>
-        FORCEINLINE explicit TTupleLeaf(ArgTypes&&... Args) noexcept
+        template<typename...ArgTypes>
+        FORCEINLINE explicit TTupleLeaf(ArgTypes&&... Args) noexcept requires(TIsConstructible<ValueType, ArgTypes&&...>::Value)
             : Value(Forward<ArgTypes>(Args)...)
         {
         }

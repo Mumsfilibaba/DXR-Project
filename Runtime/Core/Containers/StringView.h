@@ -14,15 +14,18 @@ enum class EStringCaseType
 template<typename InCharType>
 class TStringView
 {
+    using FCStringType = TCString<InCharType>;
+    using FCharType    = TChar<InCharType>;
+
 public:
-    using CharType = InCharType;
+    using CHARTYPE = InCharType;
     using SizeType = int32;
     
-    static_assert(TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value, "TStringView only supports 'CHAR' and 'WIDECHAR'");
+    static_assert(TIsSame<CHARTYPE, CHAR>::Value || TIsSame<CHARTYPE, WIDECHAR>::Value, "TStringView only supports 'CHAR' and 'WIDECHAR'");
     static_assert(TIsSigned<SizeType>::Value, "TStringView only supports a SizeType that's signed");
 
-    typedef TArrayIterator<const TStringView, const CharType>        ConstIteratorType;
-    typedef TReverseArrayIterator<const TStringView, const CharType> ReverseConstIteratorType;
+    typedef TArrayIterator<const TStringView, const CHARTYPE>        ConstIteratorType;
+    typedef TReverseArrayIterator<const TStringView, const CHARTYPE> ReverseConstIteratorType;
 
     enum : SizeType 
     { 
@@ -31,22 +34,16 @@ public:
 
 public:
     
-    /**
-     * @brief - Default constructor
-     */
-    FORCEINLINE TStringView() noexcept
-        : ViewStart(nullptr)
-        , ViewEnd(nullptr)
-    {
-    }
+    /** @brief - Default constructor */
+    TStringView() noexcept = default;
 
     /**
      * @brief          - Create a view from a raw string
      * @param InString - String to view
      */
-    FORCEINLINE TStringView(const CharType* InString) noexcept
+    FORCEINLINE TStringView(const CHARTYPE* InString) noexcept
         : ViewStart(InString)
-        , ViewEnd(InString + TCString<CharType>::Strlen(InString))
+        , ViewEnd(InString + FCStringType::Strlen(InString))
     {
     }
 
@@ -56,7 +53,7 @@ public:
      * @param InLength - Length of the string to view
      * @param Offset   - Offset into the string
      */
-    FORCEINLINE explicit TStringView(const CharType* InString, SizeType InLength, SizeType Offset = 0) noexcept
+    FORCEINLINE explicit TStringView(const CHARTYPE* InString, SizeType InLength, SizeType Offset = 0) noexcept
         : ViewStart(InString + Offset)
         , ViewEnd(ViewStart + InLength)
     {
@@ -110,13 +107,14 @@ public:
      * @param BufferSize - Size of the buffer to fill
      * @param Position   - Offset to start copy from
      */
-    FORCEINLINE void CopyToBuffer(CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const noexcept
+    FORCEINLINE void CopyToBuffer(CHARTYPE* Buffer, SizeType BufferSize, SizeType Position = INVALID_INDEX) const noexcept
     {
         CHECK(Buffer != nullptr);
-        CHECK((Position < Length()) || (Position == 0));
-        const SizeType CurrentLen = Length();
-        const SizeType CopySize   = NMath::Min(BufferSize, CurrentLen - Position);
-        TCString<CharType>::Strncpy(Buffer, ViewStart + Position, CopySize);
+        if (Buffer && BufferSize > 0)
+        {
+            const SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
+            FCStringType::Strncpy(Buffer, ViewStart + Position, CopySize);
+        }
     }
 
     /**
@@ -155,10 +153,10 @@ public:
      */
     FORCEINLINE void TrimStartInline() noexcept
     {
-        const CharType* RESTRICT Current = ViewStart;
+        const CHARTYPE* RESTRICT Current = ViewStart;
         for (; Current != ViewEnd && *Current; ++Current)
         {
-            if (!TChar<CharType>::IsWhitespace(*Current))
+            if (!TChar<CHARTYPE>::IsWhitespace(*Current))
             {
                 break;
             }
@@ -183,11 +181,11 @@ public:
      */
     FORCEINLINE void TrimEndInline() noexcept
     {
-        const CharType* RESTRICT Current = ViewEnd;
+        const CHARTYPE* RESTRICT Current = ViewEnd;
         for (; Current != ViewStart && *Current;)
         {
             --Current;
-            if (!TChar<CharType>::IsWhitespace(*Current))
+            if (!TChar<CHARTYPE>::IsWhitespace(*Current))
             {
                 break;
             }
@@ -214,7 +212,7 @@ public:
      */
     FORCEINLINE void ShrinkLeftInline(int32 Num = 1) noexcept
     {
-        const CharType CurrentLength = Length();
+        const CHARTYPE CurrentLength = Length();
         if (CurrentLength <= Num)
         {
             ViewStart = ViewEnd;
@@ -243,7 +241,7 @@ public:
      */
     FORCEINLINE void ShrinkRightInline(int32 Num = 1) noexcept
     {
-        const CharType CurrentLength = Length();
+        const CHARTYPE CurrentLength = Length();
         if (CurrentLength <= Num)
         {
             ViewEnd = ViewStart;
@@ -257,142 +255,115 @@ public:
     /**
      * @brief          - Compares this string to another string-type
      * @param InString - String to compare with
+     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
      * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
     template<typename StringType>
-    NODISCARD FORCEINLINE int32 Compare(const StringType& InString) const noexcept requires(TIsTStringType<StringType>::Value)
+    NODISCARD FORCEINLINE SizeType Compare(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept requires(TIsTStringType<StringType>::Value)
     {
-        return Compare(InString.GetCString(), InString.Length());
+        return Compare(InString.Data(), InString.Length(), CaseType);
     }
 
     /**
-     * @brief          - Compares this string with a raw-string
+     * @brief          - Compares this string with a cstring
      * @param InString - String to compare with
+     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
      * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
-    NODISCARD FORCEINLINE int32 Compare(const CharType* InString) const noexcept
+    NODISCARD FORCEINLINE SizeType Compare(const CHARTYPE* InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
     {
-        return Compare(InString, TCString<CharType>::Strlen(InString));
+        if (CaseType == EStringCaseType::NoCase)
+        {
+            return static_cast<SizeType>(FCStringType::Stricmp(ViewStart, InString));
+        }
+        else
+        {
+            return static_cast<SizeType>(FCStringType::Strcmp(ViewStart, InString));
+        }
     }
 
     /**
-     * @brief          - Compares this string with a raw-string of a fixed length
+     * @brief          - Compares this string with a cstring of a fixed length
      * @param InString - String to compare with
      * @param InLength - Length of the string to compare
+     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
      * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
-    NODISCARD FORCEINLINE int32 Compare(const CharType* InString, SizeType InLength) const noexcept
+    NODISCARD FORCEINLINE SizeType Compare(const CHARTYPE* InString, SizeType InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
+    {
+        const SizeType MinLength = NMath::Min(Length(), InLength);
+        if (CaseType == EStringCaseType::NoCase)
+        {
+            return static_cast<SizeType>(FCStringType::Strnicmp(ViewStart, InString, MinLength));
+        }
+        else
+        {
+            return static_cast<SizeType>(FCStringType::Strncmp(ViewStart, InString, MinLength));
+        }
+    }
+
+    /**
+     * @brief          - Compares this string to another string-type
+     * @param InString - String to compare with
+     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
+     * @return         - Returns true if the strings are equal
+     */
+    template<typename StringType>
+    NODISCARD FORCEINLINE SizeType Equals(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept requires(TIsTStringType<StringType>::Value)
+    {
+        return Equals(InString.Data(), InString.Length(), CaseType);
+    }
+
+    /**
+     * @brief          - Compares this string with a cstring
+     * @param InString - String to compare with
+     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
+     * @return         - Returns true if the strings are equal
+     */
+    NODISCARD FORCEINLINE SizeType Equals(const CHARTYPE* InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
+    {
+        return Equals(InString, FCStringType::Strlen(InString), CaseType);
+    }
+
+    /**
+     * @brief          - Compares this string with a cstring of a fixed length
+     * @param InString - String to compare with
+     * @param InLength - Length of the string to compare
+     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
+     * @return         - Returns true if the strings are equal
+     */
+    NODISCARD FORCEINLINE bool Equals(const CHARTYPE* InString, SizeType InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
     {
         const SizeType CurrentLength = Length();
         if (CurrentLength != InLength)
         {
-            return -1;
+            return false;
         }
-        else if (CurrentLength == 0)
+
+        if (CaseType == EStringCaseType::CaseSensitive)
         {
-            return 0;
+            return FCStringType::Strncmp(ViewStart, InString, CurrentLength) == 0;
         }
-
-        for (const CharType* RESTRICT Current = ViewStart; Current != ViewEnd; ++Current)
+        else if (CaseType == EStringCaseType::NoCase)
         {
-            if (*Current != *InString)
-            {
-                return *Current - *InString;
-            }
-
-            InString++;
+            return FCStringType::Strnicmp(ViewStart, InString, CurrentLength) == 0;
         }
-
-        return 0;
+        else
+        {
+            return false;
+        }
     }
 
     /**
-     * @brief          - Compares this string to another string-type without taking casing into account.
-     * @param InString - String to compare with
-     * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
+     * @brief          - Find the position of the first occurrence of the start of the search-string
+     * @param InString - String to search
+     * @param Position - Position to start search at
+     * @return         - Returns the position of the first character in the search-string
      */
-    template<typename StringType>
-    NODISCARD FORCEINLINE int32 CompareNoCase(const StringType& InString) const noexcept requires(TIsTStringType<StringType>::Value)
-    {
-        return CompareNoCase(InString.GetCString(), InString.Length());
-    }
-
-    /**
-     * @brief          - Compares this string with a raw-string without taking casing into account.
-     * @param InString - String to compare with
-     * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
-     */
-    NODISCARD FORCEINLINE int32 CompareNoCase(const CharType* InString) const noexcept
-    {
-        return CompareNoCase(InString, TCString<CharType>::Strlen(InString));
-    }
-
-    /**
-     * @brief          - Compares this string with a raw-string without taking casing into account.
-     * @param InString - String to compare with
-     * @param InLength - Length of the string to compare
-     * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
-     */
-    NODISCARD FORCEINLINE int32 CompareNoCase(const CharType* InString, SizeType InLength) const noexcept
+    NODISCARD FORCEINLINE SizeType Find(const CHARTYPE* InString, SizeType Position = INVALID_INDEX) const noexcept
     {
         const SizeType CurrentLength = Length();
-        if (CurrentLength != InLength)
-        {
-            return -1;
-        }
-        else if (CurrentLength == 0)
-        {
-            return 0;
-        }
-
-        for (const CharType* RESTRICT Current = ViewStart; Current != ViewEnd; ++Current)
-        {
-            if (TChar<CharType>::ToLower(*Current) != TChar<CharType>::ToLower(*InString))
-            {
-                return *Current - *InString;
-            }
-
-            InString++;
-        }
-
-        return 0;
-    }
-
-    /**
-     * @brief          - Find the position of the first occurrence of the start of the search-string
-     * @param InString - String to search
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
-     */
-    NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
-    {
-        return Find(InString, TCString<CharType>::Strlen(InString), Position);
-    }
-
-    /**
-     * @brief          - Find the position of the first occurrence of the start of the search-string
-     * @param InString - String to search
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
-     */
-    template<typename StringType>
-    NODISCARD FORCEINLINE SizeType Find(const StringType& InString, SizeType Position = 0) const noexcept requires(TIsTStringType<StringType>::Value)
-    {
-        return Find(InString.Data(), InString.Length(), Position);
-    }
-
-    /**
-     * @brief          - Find the position of the first occurrence of the start of the search-string
-     * @param InString - String to search
-     * @param InString - Length of the search-string
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
-     */
-    NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
-    {
-        CHECK((Position < Length()) || (Position == 0));
-
-        if (InLength == 0 || Length() == 0)
+        if (!CurrentLength)
         {
             return 0;
         }
@@ -402,27 +373,43 @@ public:
             return INVALID_INDEX;
         }
 
-        for (const CharType* RESTRICT SearchEnd = InString + InLength, *RESTRICT Current = GetCString() + Position; Current != ViewEnd; ++Current)
+        SizeType Index = 0;
+        if (Position == INVALID_INDEX && CurrentLength > 0)
         {
-            const CharType* RESTRICT SearchString = InString;
-            const CharType* RESTRICT TempCurrent  = Current;
-            while (true)
+            Index += NMath::Clamp(0, CurrentLength - 1, Position);
+        }
+
+        const SizeType SearchLength = FCStringType::Strlen(InString);
+        for (SizeType Index = Position; Index < CurrentLength; Index++)
+        {
+            SizeType SearchIndex = 0;
+            for (; SearchIndex < InLength; ++SearchIndex)
             {
-                if (*SearchString == 0 || SearchString == SearchEnd)
-                {
-                    return static_cast<SizeType>(static_cast<intptr>(Current - GetCString()));
-                }
-                else if (*TempCurrent != *SearchString)
+                if (ViewStart[Index + SearchIndex] != InString[SearchIndex])
                 {
                     break;
                 }
+            }
 
-                ++TempCurrent;
-                ++SearchString;
+            if (SearchIndex == SearchLength)
+            {
+                return Index;
             }
         }
 
         return INVALID_INDEX;
+    }
+
+    /**
+     * @brief          - Find the position of the first occurrence of the start of the search-string
+     * @param InString - String to search
+     * @param Position - Position to start search at
+     * @return         - Returns the position of the first character in the search-string
+     */
+    template<typename StringType>
+    NODISCARD FORCEINLINE SizeType Find(const StringType& InString, SizeType Position = INVALID_INDEX) const noexcept requires(TIsTStringType<StringType>::Value)
+    {
+        return Find(InString.Data(), Position);
     }
 
     /**
@@ -431,21 +418,25 @@ public:
      * @param Position - Position to start search at
      * @return         - Returns the position of the first occurrence of the CHAR
      */
-    NODISCARD FORCEINLINE SizeType FindChar(CharType Char, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType FindChar(CHARTYPE Char, SizeType Position = INVALID_INDEX) const noexcept
     {
-        CHECK((Position < Length()) || (Position == 0));
-
         const SizeType CurrentLength = Length();
-        if (CurrentLength == 0)
+        if (!CurrentLength)
         {
             return 0;
         }
 
-        for (const CharType* RESTRICT Start = GetCString() + Position, *RESTRICT Current = Start, *RESTRICT End = GetCString() + CurrentLength; Current != End; ++Current)
+        const CHARTYPE* RESTRICT Current = ViewStart;
+        if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            if (Char == *Current)
+            Current += NMath::Clamp(0, CurrentLength - 1, Position);
+        }
+
+        for (const CHARTYPE *RESTRICT End = ViewStart + CurrentLength; Current != End; ++Current)
+        {
+            if (*Current == Char)
             {
-                return static_cast<SizeType>(Current - Start);
+                return static_cast<SizeType>(static_cast<intptr>(Current - ViewStart));
             }
         }
 
@@ -459,21 +450,25 @@ public:
      * @return          - Returns the position of the first occurrence of the CHAR
      */
     template<typename PredicateType>
-    NODISCARD FORCEINLINE SizeType FindCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType FindCharWithPredicate(PredicateType&& Predicate, SizeType Position = INVALID_INDEX) const noexcept
     {
-        CHECK((Position < Length()) || (Position == 0));
-
         const SizeType CurrentLength = Length();
-        if (CurrentLength == 0)
+        if (!CurrentLength)
         {
             return 0;
         }
 
-        for (const CharType* RESTRICT Start = GetCString() + Position, *RESTRICT Current = Start, *RESTRICT End = GetCString() + CurrentLength; Current != End; ++Current)
+        const CHARTYPE* RESTRICT Current = ViewStart;
+        if (Position != INVALID_INDEX && CurrentLength > 0)
+        {
+            Current += NMath::Clamp(0, CurrentLength - 1, Position);
+        }
+
+        for (const CHARTYPE *RESTRICT End = ViewStart + CurrentLength; Current != End; ++Current)
         {
             if (Predicate(*Current))
             {
-                return static_cast<SizeType>(Current - Start);
+                return static_cast<SizeType>(static_cast<intptr>(Current - ViewStart));
             }
         }
 
@@ -486,41 +481,39 @@ public:
      * @param Position - Position to start search at
      * @return         - Returns the position of the first character in the search-string
      */
-    NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType FindLast(const CHARTYPE* InString, SizeType Position = INVALID_INDEX) const noexcept
     {
-        CHECK((Position < Length()) || (Position == 0));
-        CHECK(InString != nullptr);
-
         const SizeType CurrentLength = Length();
-        if (CurrentLength == 0)
+        if (!CurrentLength)
         {
             return 0;
         }
 
-        if (!Position)
+        if (InString == nullptr)
+        {
+            return INVALID_INDEX;
+        }
+
+        if (Position == INVALID_INDEX && Position > CurrentLength)
         {
             Position = CurrentLength;
         }
 
-        for (const CharType* RESTRICT End = GetCString(), *RESTRICT Start = End + Position, *RESTRICT Current = Start; Current != End; ++Current)
+        const SizeType SearchLength = FCStringType::Strlen(InString);
+        for (SizeType Index = Position - SearchLength; Index >= 0; Index++)
         {
-            Current--;
-
-            const CharType* RESTRICT SearchString = InString;
-            const CharType* RESTRICT TempCurrent  = Current;
-            while (true)
+            SizeType SearchIndex = 0;
+            for (; SearchIndex < InLength; ++SearchIndex)
             {
-                if ((*SearchString == 0))
-                {
-                    return static_cast<SizeType>(static_cast<intptr>(Current - End));
-                }
-                else if (*TempCurrent != *SearchString)
+                if (ViewStart[Index + SearchIndex] != InString[SearchIndex])
                 {
                     break;
                 }
+            }
 
-                ++TempCurrent;
-                ++SearchString;
+            if (SearchIndex == SearchLength)
+            {
+                return Index;
             }
         }
 
@@ -534,59 +527,9 @@ public:
      * @return         - Returns the position of the first character in the search-string
      */
     template<typename StringType>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindLast(const StringType& InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType FindLast(const StringType& InString, SizeType Position = INVALID_INDEX) const noexcept requires(TIsTStringType<StringType>::Value)
     {
-        return FindLast(InString, InString.Length(), Position);
-    }
-
-    /**
-     * @brief - Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
-     *     Position is the end, instead of the start as with normal Find.
-     * 
-     * @param InString - String to search
-     * @param InString - Length of the search-string
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
-     */
-    NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
-    {
-        CHECK((Position < Length()) || (Position == 0));
-        CHECK(InString != nullptr);
-
-        const SizeType CurrentLength = Length();
-        if (CurrentLength == 0)
-        {
-            return 0;
-        }
-
-        if (!Position)
-        {
-            Position = CurrentLength;
-        }
-
-        for (const CharType* RESTRICT SearchEnd = InString + InLength, *RESTRICT End = GetCString(), *RESTRICT Start = End + Position, *RESTRICT Current = Start; Current != End;)
-        {
-            Current--;
-
-            const CharType* RESTRICT SearchString = InString;
-            const CharType* RESTRICT TempCurrent  = Current;
-            while (true)
-            {
-                if ((*SearchString == 0) || (SearchString == SearchEnd))
-                {
-                    return static_cast<SizeType>(static_cast<intptr>(Current - End));
-                }
-                else if (*TempCurrent != *SearchString)
-                {
-                    break;
-                }
-
-                ++TempCurrent;
-                ++SearchString;
-            }
-        }
-
-        return INVALID_INDEX;
+        return FindLast(InString.Data(), Position);
     }
 
     /**
@@ -595,22 +538,21 @@ public:
      * @param Position - Position to start search at
      * @return         - Returns the position of the first occurrence of the CHAR
      */
-    NODISCARD FORCEINLINE SizeType FindLastChar(CharType Char, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType FindLastChar(CHARTYPE Char, SizeType Position = INVALID_INDEX) const noexcept
     {
-        CHECK((Position < Length()) || (Position == 0));
-
         const SizeType CurrentLength = Length();
-        if (CurrentLength == 0)
+        if (!CurrentLength)
         {
             return 0;
         }
 
-        if (!Position)
+        const CHARTYPE* RESTRICT Current = ViewStart;
+        if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Position = CurrentLength;
+            Current += NMath::Clamp(0, CurrentLength - 1, Position);
         }
 
-        for (const CharType* RESTRICT End = GetCString(), *RESTRICT Start = End + Position, *RESTRICT Current = Start; Current != End;)
+        for (const CHARTYPE* RESTRICT End = ViewStart; Current != End;)
         {
             --Current;
             if (Char == *Current)
@@ -629,22 +571,21 @@ public:
      * @return          - Returns the position of the first occurrence of the CHAR
      */
     template<typename PredicateType>
-    NODISCARD FORCEINLINE SizeType FindLastCharWithPredicate(PredicateType&& Predicate, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE SizeType FindLastCharWithPredicate(PredicateType&& Predicate, SizeType Position = INVALID_INDEX) const noexcept
     {
-        CHECK((Position < Length()) || (Position == 0));
-
         const SizeType CurrentLength = Length();
-        if (CurrentLength == 0)
+        if (!CurrentLength)
         {
             return 0;
         }
 
-        if (!Position)
+        const CHARTYPE* RESTRICT Current = ViewStart;
+        if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Position = Length;
+            Current += NMath::Clamp(0, CurrentLength - 1, Position);
         }
 
-        for (const CharType* RESTRICT End = GetCString(), *RESTRICT Start = End + Position, *RESTRICT Current = Start; Current != End;)
+        for (const CHARTYPE* RESTRICT End = ViewStart; Current != End;)
         {
             --Current;
             if (Predicate(*Current))
@@ -662,9 +603,9 @@ public:
      * @param Position - Position to start to search at
      * @return         - Returns true if the string is found
      */
-    NODISCARD FORCEINLINE bool Contains(const CharType* InString, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE bool Contains(const CHARTYPE* InString, SizeType Position = INVALID_INDEX) const noexcept
     {
-        return Find(InString, TCString<CharType>::Strlen(InString), Position) != INVALID_INDEX;
+        return Find(InString, FCStringType::Strlen(InString), Position) != INVALID_INDEX;
     }
 
     /**
@@ -674,20 +615,9 @@ public:
      * @return         - Returns true if the string is found
      */
     template<typename StringType>
-    NODISCARD FORCEINLINE bool Contains(const StringType& InString, SizeType Position = 0) const noexcept requires(TIsTStringType<StringType>::Value)
+    NODISCARD FORCEINLINE bool Contains(const StringType& InString, SizeType Position = INVALID_INDEX) const noexcept requires(TIsTStringType<StringType>::Value)
     {
         return Find(InString, Position) != INVALID_INDEX;
-    }
-
-    /**
-     * @brief          - Check if the search-string exists within the view
-     * @param InString - String to search for
-     * @param Position - Position to start to search at
-     * @return         - Returns true if the string is found
-     */
-    NODISCARD FORCEINLINE bool Contains(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
-    {
-        return Find(InString, InLength, Position) != INVALID_INDEX;
     }
 
     /**
@@ -696,77 +626,69 @@ public:
      * @param Position - Position to start to search at
      * @return         - Returns true if the string is found
      */
-    NODISCARD FORCEINLINE bool Contains(CharType Char, SizeType Position = 0) const noexcept
+    NODISCARD FORCEINLINE bool Contains(CHARTYPE Char, SizeType Position = INVALID_INDEX) const noexcept
     {
         return FindChar(Char, Position) != INVALID_INDEX;
     }
 
     /**
-     * @brief          - Check if string begins with a string
-     * @param InString - String to test for
-     * @return         - Returns true if the string begins with InString
+     * @brief            - Check if string begins with a string
+     * @param InString   - String to test for
+     * @param SearchType - Type of search to perform, case-sensitive or not
+     * @return           - Returns true if the string begins with InString
      */
-    NODISCARD FORCEINLINE bool StartsWith(const CharType* InString) const noexcept
+    NODISCARD FORCEINLINE bool StartsWith(const CHARTYPE* InString, EStringCaseType SearchType = EStringCaseType::CaseSensitive) const noexcept
     {
-        const SizeType SuffixLength = TCString<CharType>::Strlen(InString);
-        return (SuffixLength > 0) && !TCString<CharType>::Strncmp(GetCString(), InString, SuffixLength);
+        if (!InString)
+        {
+            return false;
+        }
+
+        const SizeType SuffixLength = FCStringType::Strlen(InString);
+        if (SuffixLength > 0)
+        {
+            if (SearchType == EStringCaseType::CaseSensitive)
+            {
+                return FCStringType::Strncmp(ViewStart, InString, SuffixLength) == 0;
+            }
+            else if (SearchType == EStringCaseType::NoCase)
+            {
+                return FCStringType::Strnicmp(ViewStart, InString, SuffixLength) == 0;
+            }
+        }
+
+        return false;
     }
 
     /**
-     * @brief          - Check if string begins with a string
-     * @param InString - String to test for
-     * @return         - Returns true if the string begins with InString
+     * @brief            - Check if string end with a string
+     * @param InString   - String to test for
+     * @param SearchType - Type of search to perform, case-sensitive or not
+     * @return           - Returns true if the string ends with InString
      */
-    NODISCARD FORCEINLINE bool StartsWithNoCase(const CharType* InString) const noexcept
+    NODISCARD FORCEINLINE bool EndsWith(const CHARTYPE* InString, EStringCaseType SearchType = EStringCaseType::CaseSensitive) const noexcept
     {
-        const SizeType SuffixLength = TCString<CharType>::Strlen(InString);
-        return (SuffixLength > 0) && !TCString<CharType>::Strnicmp(GetCString(), InString, SuffixLength);
-    }
-
-    /**
-     * @brief          - Check if string end with a string
-     * @param InString - String to test for
-     * @return         - Returns true if the string ends with InString
-     */
-    NODISCARD FORCEINLINE bool EndsWith(const CharType* InString) const noexcept
-    {
-        if (!InString || (*InString != 0))
+        if (!InString)
         {
             return false;
         }
 
         const SizeType CurrentLength = Length();
-        const SizeType SuffixLength = TCString<CharType>::Strlen(InString);
-        if (SuffixLength > CurrentLength)
+        const SizeType SuffixLength  = FCStringType::Strlen(InString);
+        if (SuffixLength > 0 && CurrentLength > SuffixLength)
         {
-            return false;
+            const CHARTYPE* StringData = ViewStart + (CurrentLength - SuffixLength);
+            if (SearchType == EStringCaseType::CaseSensitive)
+            {
+                return FCStringType::Strncmp(ViewStart, InString, SuffixLength) == 0;
+            }
+            else if (SearchType == EStringCaseType::NoCase)
+            {
+                return FCStringType::Strnicmp(ViewStart, InString, SuffixLength) == 0;
+            }
         }
 
-        const CharType* TempData = ViewStart + (CurrentLength - SuffixLength);
-        return TCString<CharType>::Strcmp(TempData, InString) == 0;
-    }
-
-    /**
-     * @brief          - Check if string end with a string without taking casing into account
-     * @param InString - String to test for
-     * @return         - Returns true if the string ends with InString
-     */
-    NODISCARD FORCEINLINE bool EndsWithNoCase(const CharType* InString) const noexcept
-    {
-        if (!InString || *InString == 0)
-        {
-            return false;
-        }
-
-		const SizeType CurrentLength = Length();
-		const SizeType SuffixLength = TCString<CharType>::Strlen(InString);
-		if (SuffixLength > CurrentLength)
-		{
-			return false;
-		}
-
-		const CharType* TempData = ViewStart + (CurrentLength - SuffixLength);
-		return TCString<CharType>::Stricmp(TempData, InString) == 0;
+        return false;
     }
 
     /**
@@ -775,8 +697,8 @@ public:
      */
     FORCEINLINE void Swap(TStringView& Other) noexcept
     {
-        ::Swap<const CharType*>(ViewStart, Other.ViewStart);
-        ::Swap<const CharType*>(ViewEnd, Other.ViewEnd);
+        ::Swap<const CHARTYPE*>(ViewStart, Other.ViewStart);
+        ::Swap<const CHARTYPE*>(ViewEnd, Other.ViewEnd);
     }
 
     /**
@@ -795,7 +717,7 @@ public:
      * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD FORCEINLINE const CharType* Data() const noexcept
+    NODISCARD FORCEINLINE const CHARTYPE* Data() const noexcept
     {
         return ViewStart;
     }
@@ -804,9 +726,9 @@ public:
      * @brief  - Retrieve a null-terminated string
      * @return - Returns a pointer containing a null-terminated string
      */
-    NODISCARD FORCEINLINE const CharType* GetCString() const noexcept
+    NODISCARD FORCEINLINE const CHARTYPE* GetCString() const noexcept
     {
-        return (ViewStart == nullptr) ? TCString<CharType>::Empty() : ViewStart;
+        return (ViewStart == nullptr) ? FCStringType::Empty() : ViewStart;
     }
 
     /**
@@ -824,7 +746,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return Size() * sizeof(CharType);
+        return Size() * sizeof(CHARTYPE);
     }
 
     /**
@@ -859,20 +781,20 @@ public:
      * @brief  - Retrieve the first element of the view
      * @return - Returns a reference to the first element of the view
      */
-    NODISCARD FORCEINLINE const CharType& FirstElement() const noexcept
+    NODISCARD FORCEINLINE const CHARTYPE& FirstElement() const noexcept
     {
         CHECK(!IsEmpty());
-        return *ViewStart;
+        return ViewStart[0];
     }
 
     /**
      * @brief  - Retrieve the last element of the array
      * @return - Returns a reference to the last element of the view
      */
-    NODISCARD FORCEINLINE const CharType& LastElement() const noexcept
+    NODISCARD FORCEINLINE const CHARTYPE& LastElement() const noexcept
     {
         CHECK(!IsEmpty());
-        return *(ViewStart + LastElementIndex());
+        return ViewStart[LastElementIndex()];
     }
 
 public:
@@ -882,10 +804,10 @@ public:
      * @param Index - Index of the element to retrieve
      * @return      - A reference to the element at the index
      */
-    NODISCARD FORCEINLINE const CharType& operator[](SizeType Index) const noexcept
+    NODISCARD FORCEINLINE const CHARTYPE& operator[](SizeType Index) const noexcept
     {
         CHECK(Index < Length());
-        return *(ViewStart + Index);
+        return ViewStart[Index];
     }
 
     /**
@@ -935,8 +857,8 @@ public: // STL Iterator
     NODISCARD FORCEINLINE ConstIteratorType end()   const noexcept { return ConstIteratorType(*this, Size()); }
 
 private:
-    const CharType* ViewStart = nullptr;
-    const CharType* ViewEnd   = nullptr;
+    const CHARTYPE* ViewStart{ nullptr };
+    const CHARTYPE* ViewEnd{ nullptr };
 };
 
 
@@ -944,135 +866,117 @@ using FStringView     = TStringView<CHAR>;
 using FStringViewWide = TStringView<WIDECHAR>;
 
 
-template<typename CharType>
-NODISCARD
-inline bool operator==(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator==(const TStringView<CHARTYPE>& LHS, const CHARTYPE* RHS) noexcept
 {
-    return (LHS.Compare(RHS) == 0);
+    return LHS.Compare(RHS) == 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator==(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator==(const CHARTYPE* LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
-    return (RHS.Compare(LHS) == 0);
+    return RHS.Compare(LHS) == 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator==(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator==(const TStringView<CHARTYPE>& LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
-    return (LHS.Compare(RHS) == 0);
+    return LHS.Compare(RHS) == 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator!=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator!=(const TStringView<CHARTYPE>& LHS, const CHARTYPE* RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator!=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator!=(const CHARTYPE* LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator!=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator!=(const TStringView<CHARTYPE>& LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator<(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator<(const TStringView<CHARTYPE>& LHS, const CHARTYPE* RHS) noexcept
 {
-    return (LHS.Compare(RHS) < 0);
+    return LHS.Compare(RHS) < 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator<(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator<(const CHARTYPE* LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
-    return (RHS.Compare(LHS) < 0);
+    return RHS.Compare(LHS) < 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator<(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator<(const TStringView<CHARTYPE>& LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
-    return (LHS.Compare(RHS) < 0);
+    return LHS.Compare(RHS) < 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator<=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator<=(const TStringView<CHARTYPE>& LHS, const CHARTYPE* RHS) noexcept
 {
-    return (LHS.Compare(RHS) <= 0);
+    return LHS.Compare(RHS) <= 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator<=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator<=(const CHARTYPE* LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
-    return (RHS.Compare(LHS) <= 0);
+    return RHS.Compare(LHS) <= 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator<=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator<=(const TStringView<CHARTYPE>& LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
-    return (LHS.Compare(RHS) <= 0);
+    return LHS.Compare(RHS) <= 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator>(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator>(const TStringView<CHARTYPE>& LHS, const CHARTYPE* RHS) noexcept
 {
-    return (LHS.Compare(RHS) > 0);
+    return LHS.Compare(RHS) > 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator>(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator>(const CHARTYPE* LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
-    return (RHS.Compare(LHS) > 0);
+    return RHS.Compare(LHS) > 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator>(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator>(const TStringView<CHARTYPE>& LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
-    return (LHS.Compare(RHS) > 0);
+    return LHS.Compare(RHS) > 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator>=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator>=(const TStringView<CHARTYPE>& LHS, const CHARTYPE* RHS) noexcept
 {
-    return (LHS.Compare(RHS) >= 0);
+    return LHS.Compare(RHS) >= 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator>=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator>=(const CHARTYPE* LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
-    return (RHS.Compare(LHS) >= 0);
+    return RHS.Compare(LHS) >= 0;
 }
 
-template<typename CharType>
-NODISCARD
-inline bool operator>=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
+template<typename CHARTYPE>
+NODISCARD inline bool operator>=(const TStringView<CHARTYPE>& LHS, const TStringView<CHARTYPE>& RHS) noexcept
 {
-    return (LHS.Compare(RHS) >= 0);
+    return LHS.Compare(RHS) >= 0;
 }
 
 
-template<typename CharType>
-struct TIsTStringType<TStringView<CharType>>
+template<typename CHARTYPE>
+struct TIsTStringType<TStringView<CHARTYPE>>
 {
     inline static constexpr bool Value = true;
 };

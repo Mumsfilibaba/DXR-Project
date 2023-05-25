@@ -24,14 +24,8 @@ public:
 
 public:
 
-    /**
-     * @brief - Default construct an empty view 
-     */
-    FORCEINLINE TArrayView() noexcept
-        : View(nullptr)
-        , ViewSize(0)
-    {
-    }
+    /** @brief - Default construct an empty view */
+    TArrayView() noexcept = default;
 
     /**
      * @brief           - Construct a view from an array of ArrayType
@@ -93,7 +87,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsEmpty() const noexcept
     {
-        return (ViewSize == 0);
+        return ViewSize == 0;
     }
 
     /**
@@ -102,7 +96,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& FirstElement() const noexcept
     {
-        CHECK(IsEmpty());
+        CHECK(!IsEmpty());
         return View[0];
     }
 
@@ -112,7 +106,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& LastElement() const noexcept
     {
-        CHECK(IsEmpty());
+        CHECK(!IsEmpty());
         return View[ViewSize - 1];
     }
 
@@ -123,16 +117,12 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT Current = View;
-        const ElementType* RESTRICT End     = View + ViewSize;
-        while (Current != End)
+        for (const ElementType* RESTRICT Start = View, *RESTRICT Current = Start, *RESTRICT End = Start + ViewSize; Current != End; ++Current)
         {
             if (Element == *Current)
             {
-                return static_cast<SizeType>(Current - View);
+                return static_cast<SizeType>(Current - Start);
             }
-
-            ++Current;
         }
 
         return INVALID_INDEX;
@@ -146,16 +136,12 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT Current = View;
-        const ElementType* RESTRICT End     = View + ViewSize;
-        while (Current != End)
+        for (const ElementType* RESTRICT Start = View, *RESTRICT Current = Start, *RESTRICT End = Start + ViewSize; Current != End; ++Current)
         {
             if (Predicate(*Current))
             {
-                return static_cast<SizeType>(Current - View);
+                return static_cast<SizeType>(Current - Start);
             }
-
-            ++Current;
         }
 
         return INVALID_INDEX;
@@ -168,14 +154,12 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
     {
-        const ElementType* RESTRICT Current = View + ViewSize;
-        const ElementType* RESTRICT End     = View;
-        while (Current != End)
+        for (const ElementType* RESTRICT Current = View + ViewSize, *RESTRICT End = Start; Current != End;)
         {
             --Current;
             if (Element == *Current)
             {
-                return static_cast<SizeType>(Current - View);
+                return static_cast<SizeType>(Current - End);
             }
         }
 
@@ -190,14 +174,12 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        const ElementType* RESTRICT Current = View + ViewSize;
-        const ElementType* RESTRICT End     = View;
-        while (Current != End)
+        for (const ElementType* RESTRICT Current = View + ViewSize, *RESTRICT End = Start; Current != End;)
         {
             --Current;
             if (Predicate(*Current))
             {
-                return static_cast<SizeType>(Current - View);
+                return static_cast<SizeType>(Current - End);
             }
         }
 
@@ -211,7 +193,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const noexcept
     {
-        return (Find(Element) != INVALID_INDEX);
+        return Find(Element) != INVALID_INDEX;
     }
 
     /**
@@ -222,7 +204,7 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        return (FindWithPredicate(::Forward<PredicateType>(Predicate)) != INVALID_INDEX);
+        return FindWithPredicate(::Forward<PredicateType>(Predicate)) != INVALID_INDEX;
     }
 
     /**
@@ -232,12 +214,9 @@ public:
     template<class FunctorType>
     FORCEINLINE void Foreach(FunctorType&& Functor) const
     {
-        ElementType* RESTRICT Current = View;
-        ElementType* RESTRICT End     = View + ViewSize;
-        while (Current != End)
+        for (const ElementType* RESTRICT Current = View, *RESTRICT End = Current + ViewSize; Current != End; ++Current)
         {
-            Functor(*Current);
-            ++Current;
+            Lambda(*Current);
         }
     }
 
@@ -314,7 +293,7 @@ public:
      */
     NODISCARD FORCEINLINE TArrayView SubView(SizeType Offset, SizeType NumElements) const noexcept
     {
-        CHECK((NumElements < ViewSize) && (Offset + NumElements < ViewSize));
+        CHECK(NumElements < ViewSize && (Offset + NumElements) < ViewSize);
         return TArrayView(View + Offset, NumElements);
     }
 
@@ -427,8 +406,8 @@ public: // STL Iterators
     NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, ViewSize); }
 
 private:
-    ElementType* View;
-    SizeType     ViewSize;
+    ElementType* View{nullptr};
+    SizeType     ViewSize{0};
 };
 
 

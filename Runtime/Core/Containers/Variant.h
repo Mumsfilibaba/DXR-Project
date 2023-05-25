@@ -252,7 +252,7 @@ public:
      * @return     - Returns a reference to the newly created element
      */
     template<typename T, typename... ArgTypes>
-    FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddLValueReference<typename TRemoveReference<T>::Type>::Type>::Type Emplace(ArgTypes&&... Args) noexcept
+    FORCEINLINE T& Emplace(ArgTypes&&... Args) noexcept requires(TIsValidType<T>::Value)
     {
         Reset();
         Construct<T>(Forward<ArgTypes>(Args)...);
@@ -297,7 +297,7 @@ public:
      * @return - Returns true if the templated type is the currently held value
      */
     template<typename T>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, bool>::Type IsType() const noexcept
+    NODISCARD FORCEINLINE bool IsType() const noexcept requires(TIsValidType<T>::Value)
     {
         return (TypeIndex == TVariantIndex<T>::Value);
     }
@@ -307,7 +307,7 @@ public:
      * @return - Returns a reference to the currently held value
      */
     template<typename T>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddLValueReference<typename TRemoveReference<T>::Type>::Type>::Type GetValue() noexcept
+    NODISCARD FORCEINLINE T& GetValue() noexcept requires(TIsValidType<T>::Value)
     {
         CHECK(IsValid() && IsType<T>());
         return *reinterpret_cast<T*>(Value.Data);
@@ -318,7 +318,7 @@ public:
      * @return - Returns a reference to the currently held value
      */
     template<typename T>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddLValueReference<typename TAddConst<typename TRemoveReference<T>::Type>::Type>::Type>::Type GetValue() const noexcept
+    NODISCARD FORCEINLINE const T& GetValue() const noexcept requires(TIsValidType<T>::Value)
     {
         CHECK(IsValid() && IsType<T>());
         return *reinterpret_cast<const T*>(Value.Data);
@@ -329,7 +329,7 @@ public:
      * @return - Returns a pointer to the currently stored value or nullptr if not correct type
      */
     template<typename T>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddPointer<typename TRemoveReference<T>::Type>::Type>::Type TryGetValue() noexcept
+    NODISCARD FORCEINLINE T* TryGetValue() noexcept requires(TIsValidType<T>::Value)
     {
         return IsType<T>() ? reinterpret_cast<T*>(Value.Data) : nullptr;
     }
@@ -339,7 +339,7 @@ public:
      * @return - Returns a pointer to the currently stored value or nullptr if not correct type
      */
     template<typename T>
-    NODISCARD FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TAddPointer<typename TAddConst<typename TRemoveReference<T>::Type>::Type>::Type>::Type TryGetValue() const noexcept
+    NODISCARD FORCEINLINE const T* TryGetValue() const noexcept requires(TIsValidType<T>::Value)
     {
         return IsType<T>() ? reinterpret_cast<const T*>(Value.Data) : nullptr;
     }

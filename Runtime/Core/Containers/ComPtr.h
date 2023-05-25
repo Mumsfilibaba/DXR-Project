@@ -10,13 +10,8 @@ public:
     template<typename OtherType>
     friend class TComPtr;
 
-    /**
-     * @brief - Default constructor that set the pointer to nullptr 
-     */
-    FORCEINLINE TComPtr() noexcept
-        : Ptr(nullptr)
-    {
-    }
+    /** @brief - Default constructor that set the pointer to nullptr */
+    TComPtr() noexcept = default;
 
     /**
      * @brief       - Copy-constructor 
@@ -32,10 +27,8 @@ public:
      * @brief       - Copy-constructor that copies from a ComPtr of a convertible type
      * @param Other - ComPtr to copy from
      */
-    template<
-        typename OtherType,
-        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
-    FORCEINLINE TComPtr(const TComPtr<OtherType>& Other) noexcept
+    template<typename OtherType>
+    FORCEINLINE TComPtr(const TComPtr<OtherType>& Other) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
         : Ptr(Other.Ptr)
     {
         AddRef();
@@ -55,10 +48,8 @@ public:
      * @brief       - Move-constructor that moves from a ComPtr of a convertible type
      * @param Other - ComPtr to move from
      */
-    template<
-        typename OtherType,
-        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
-    FORCEINLINE TComPtr(TComPtr<OtherType>&& Other) noexcept
+    template<typename OtherType>
+    FORCEINLINE TComPtr(TComPtr<OtherType>&& Other) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
         : Ptr(Other.Ptr)
     {
         Other.Ptr = nullptr;
@@ -70,18 +61,18 @@ public:
      */
     FORCEINLINE TComPtr(ElementType* InPointer) noexcept
         : Ptr(InPointer)
-    { }
+    {
+    }
 
     /**
      * @brief           - Construct a ComPtr from a raw pointer of a convertible type. The container takes ownership.
      * @param InPointer - Pointer to reference
      */
-    template<
-        typename OtherType,
-        typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
-    FORCEINLINE TComPtr(OtherType* InPointer) noexcept
+    template<typename OtherType>
+    FORCEINLINE TComPtr(OtherType* InPointer) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
         : Ptr(InPointer)
-    { }
+    {
+    }
 
     /**
      * @brief - Default destructor
@@ -105,7 +96,7 @@ public:
      * @param NewPtr - New pointer to reference
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset(OtherType* NewPtr) noexcept
+    FORCEINLINE void Reset(OtherType* NewPtr) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
     {
         Reset(static_cast<ElementType*>(NewPtr));
     }
@@ -116,7 +107,9 @@ public:
      */
     FORCEINLINE void Swap(TComPtr& Other)
     {
-        ::Swap(Ptr, Other.Ptr);
+        ElementType* Temp = Ptr;
+        Ptr = Other.Ptr;
+        Other.Ptr = Temp; 
     }
 
     /**
@@ -304,7 +297,7 @@ public:
      * @return      - A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(const TComPtr<OtherType>& Other) noexcept
+    FORCEINLINE TComPtr& operator=(const TComPtr<OtherType>& Other) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
     {
         TComPtr(Other).Swap(*this);
         return *this;
@@ -327,7 +320,7 @@ public:
      * @return      - A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(TComPtr<OtherType>&& Other) noexcept
+    FORCEINLINE TComPtr& operator=(TComPtr<OtherType>&& Other) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
     {
         TComPtr(Other).Swap(*this);
         return *this;
@@ -350,7 +343,7 @@ public:
      * @return      - A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(OtherType* Other) noexcept
+    FORCEINLINE TComPtr& operator=(OtherType* Other) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
     {
         TComPtr(Other).Swap(*this);
         return *this;
@@ -376,7 +369,7 @@ private:
         }
     }
 
-    ElementType* Ptr;
+    ElementType* Ptr{nullptr};
 };
 
 

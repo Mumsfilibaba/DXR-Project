@@ -16,11 +16,7 @@ using TDoubleLinkedList = std::list<T>;
 template<typename T>
 struct TLinkedListNode
 {
-    FORCEINLINE TLinkedListNode() noexcept
-        : Next(nullptr)
-        , Item()
-    {
-    }
+    TLinkedListNode() noexcept = default;
 
     template<typename... ArgTypes>
     FORCEINLINE TLinkedListNode(ArgTypes&&... Args) noexcept
@@ -29,19 +25,14 @@ struct TLinkedListNode
     {
     }
 
-    TLinkedListNode* Next;
+    TLinkedListNode* Next{nullptr};
     T Item;
 };
 
 template<typename T>
 struct TDoubleLinkedListNode
 {
-    FORCEINLINE TDoubleLinkedListNode() noexcept
-        : Next(nullptr)
-        , Previous(nullptr)
-        , Item()
-    {
-    }
+    TDoubleLinkedListNode() noexcept = default;
 
     template<typename... ArgTypes>
     FORCEINLINE TDoubleLinkedListNode(ArgTypes&&... Args) noexcept
@@ -50,8 +41,8 @@ struct TDoubleLinkedListNode
     {
     }
 
-    TDoubleLinkedListNode* Next;
-    TDoubleLinkedListNode* Previous;
+    TDoubleLinkedListNode* Next{nullptr};
+    TDoubleLinkedListNode* Previous{nullptr};
     T Item;
 };
 
