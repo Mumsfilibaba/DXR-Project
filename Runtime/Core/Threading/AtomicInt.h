@@ -11,19 +11,14 @@ public:
 
     static_assert(TIsSigned<T>::Value, "AtomicInt only supports signed types");
 
-    /**
-     * @brief - Default constructor
-     */
-    FORCEINLINE TAtomicInt() noexcept
-        : Value(0)
-    { }
+    /** @brief - Default constructor */
+    TAtomicInt() noexcept = default;
 
     /**
      * @brief       - Copy-constructor
      * @param Other - Instance to copy
      */
     FORCEINLINE TAtomicInt(const TAtomicInt& Other)
-        : Value(0)
     {
         T TempInteger = Other.Load();
         Store(TempInteger);
@@ -35,7 +30,8 @@ public:
      */
     FORCEINLINE TAtomicInt(T InValue) noexcept
         : Value(InValue)
-    { }
+    {
+    }
 
     /**
      * @brief  - Atomically increments the integer
@@ -278,7 +274,7 @@ public:
     }
 
 private:
-    mutable volatile T Value;
+    mutable volatile T Value{0};
 };
 
 typedef TAtomicInt<int8>  FAtomicInt8;

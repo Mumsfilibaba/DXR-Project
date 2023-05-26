@@ -151,7 +151,6 @@ bool TSharedPtr_Test()
     {
         TSharedPtr<uint32[]> Integers = MakeShared<uint32[32]>();
         TEST_REF_COUNT(Integers, 1, 1);
-
         TSharedPtr<FDerived[]> DerivedPtr0 = MakeShared<FDerived[]>(5);
         TEST_REF_COUNT(DerivedPtr0, 1, 1);
         TSharedPtr<FBase[]> BasePtr1 = DerivedPtr0;
@@ -162,7 +161,9 @@ bool TSharedPtr_Test()
         TEST_REF_COUNT(DerivedPtr1, 3, 1);
         TSharedPtr<FDerived[]> DerivedPtr2 = StaticCastSharedPtr<FDerived[]>(::Move(BasePtr1));
         TEST_REF_COUNT(DerivedPtr2, 3, 1);
+    }
 
+    {
         std::cout << std::endl << "----Testing ConstCast----" << std::endl << std::endl;
         TSharedPtr<const uint32> ConstPtr0 = MakeShared<const uint32>(5);
         TEST_CHECK(*ConstPtr0 == 5);

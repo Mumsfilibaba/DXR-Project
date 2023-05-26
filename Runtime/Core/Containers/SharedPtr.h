@@ -93,7 +93,7 @@ namespace SharedPointerInternal
             // NOTE: Ensure that this function is not called when the reference count is zero
             CHECK(GetWeakReferenceCount() > 0);
 
-            const ReferenceCountType WeakReferenceCount = WeakReferences--;
+            const ReferenceCountType WeakReferenceCount = --WeakReferences;
             if (WeakReferenceCount == 0)
             {
                 // NOTE: Destroy this object when the reference count reaches zero, this means that there are no weak nor any strong references
@@ -108,7 +108,7 @@ namespace SharedPointerInternal
             // NOTE: Ensure that this function is not called when the reference count is zero
             CHECK(GetStrongReferenceCount() > 0);
 
-            const ReferenceCountType StrongReferenceCount = StrongReferences--;
+            const ReferenceCountType StrongReferenceCount = --StrongReferences;
             if (StrongReferenceCount == 0)
             {
                 DestroyObject();
@@ -504,7 +504,7 @@ namespace SharedPointerInternal
     };
 
     template<EThreadAccess ThreadAccess, typename ObjectType>
-    FORCEINLINE auto CreateReferenceHandler(ObjectType* NewObject)
+    FORCEINLINE auto CreateReferenceHandler(typename TRemoveExtent<ObjectType>::Type* NewObject)
     {
         return new TPointerReferenceHandler<ObjectType, TDefaultDelete<ObjectType>, ThreadAccess>(NewObject, TDefaultDelete<ObjectType>());
     }
@@ -558,14 +558,8 @@ public:
 
     static inline constexpr EThreadAccess ThreadAccess = InThreadAccess;
 
-    /**
-     * @brief - Default constructor 
-     */
-    FORCEINLINE TSharedPtr() noexcept
-        : Object(nullptr)
-        , ReferenceHandler()
-    {
-    }
+    /** @brief - Default constructor */
+    TSharedPtr() noexcept = default;
 
     /**
      * @brief - Constructor setting both counter and pointer to nullptr 
@@ -582,7 +576,7 @@ public:
      */
     FORCEINLINE explicit TSharedPtr(ObjectType* InObject) noexcept
         : Object(InObject)
-        , ReferenceHandler(SharedPointerInternal::CreateReferenceHandler<ThreadAccess>(InObject))
+        , ReferenceHandler(SharedPointerInternal::CreateReferenceHandler<ThreadAccess, InObjectType>(InObject))
     {
         EnableSharedFromThis(InObject);
     }
@@ -899,7 +893,7 @@ private:
         }
     }
 
-    ObjectType* Object;
+    ObjectType* Object{nullptr};
     SharedPointerInternal::FSharedReference<ThreadAccess> ReferenceHandler;
 };
 
@@ -919,15 +913,9 @@ public:
 
     static inline constexpr EThreadAccess ThreadAccess = InThreadAccess;
 
-    /**
-     * @brief - Default constructor 
-     */
-    FORCEINLINE TWeakPtr() noexcept
-        : Object(nullptr)
-        , ReferenceHandler()
-    {
-    }
-
+    /** @brief - Default constructor */
+    TWeakPtr() noexcept = default;
+    
     /**
      * @brief - Constructor taking a nullptr
      */
@@ -1213,7 +1201,7 @@ public:
     }
 
 private:
-    ObjectType* Object;
+    ObjectType* Object{nullptr};
     SharedPointerInternal::FWeakReference<ThreadAccess> ReferenceHandler;
 };
 
