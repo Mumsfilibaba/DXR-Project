@@ -518,10 +518,8 @@ public:
      * @brief      - Constructor
      * @param Args - Arguments for each type
      */
-    template<
-        typename... ArgTypes,
-        typename = typename TEnableIf<(NumElements > 0)>::Type>
-    FORCEINLINE explicit TTuple(ArgTypes&&... Args)
+    template<typename... ArgTypes>
+    FORCEINLINE explicit TTuple(ArgTypes&&... Args) requires(NumElements > 0)
         : Super(Forward<ArgTypes>(Args)...)
     {
     }
