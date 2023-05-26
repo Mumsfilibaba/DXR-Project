@@ -37,7 +37,7 @@ namespace HaltonPrivate
             Sample = Next;
         }
 
-        return NMath::Min<float>(float(ReversedDigits) * InvBaseN, OneMinusEpsilon);
+        return FMath::Min<float>(float(ReversedDigits) * InvBaseN, OneMinusEpsilon);
     }
 
     inline FVector2 Hammersley2(uint32 Sample, uint32 N)

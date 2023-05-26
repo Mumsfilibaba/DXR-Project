@@ -14,24 +14,23 @@
     #error No platform defined
 #endif
 
-namespace NMath
+struct FMath
 {
-    constexpr const double kPI            = 3.1415926535898;
-    constexpr const double kE             = 2.7182818284590;
-    constexpr const double kHalfPI        = kPI / 2.0f;
-    constexpr const double kTwoPI         = kPI * 2.0;
-    constexpr const double kOneDegree     = kPI / 180.0f;
+    inline static constexpr const double kPI            = 3.1415926535898;
+    inline static constexpr const double kE             = 2.7182818284590;
+    inline static constexpr const double kHalfPI        = kPI / 2.0f;
+    inline static constexpr const double kTwoPI         = kPI * 2.0;
+    inline static constexpr const double kOneDegree     = kPI / 180.0f;
 
-    constexpr const float kPI_f           = 3.141592653f;
-    constexpr const float kE_f            = 2.718281828f;
-    constexpr const float kHalfPI_f       = kPI_f / 2.0f;
-    constexpr const float kTwoPI_f        = 2.0f * kPI_f;
-    constexpr const float kOneDegree_f    = kPI_f / 180.0f;
+    inline static constexpr const float kPI_f           = 3.141592653f;
+    inline static constexpr const float kE_f            = 2.718281828f;
+    inline static constexpr const float kHalfPI_f       = kPI_f / 2.0f;
+    inline static constexpr const float kTwoPI_f        = 2.0f * kPI_f;
+    inline static constexpr const float kOneDegree_f    = kPI_f / 180.0f;
 
-    constexpr const float kIsEqualEpsilon = 0.0005f;
+    inline static constexpr const float kIsEqualEpsilon = 0.0005f;
 
-
-    FORCEINLINE float VECTORCALL Sqrt(float Value)
+    static FORCEINLINE float VECTORCALL Sqrt(float Value)
     {
 #if PLATFORM_ARCHITECTURE_X86_X64
         return _mm_cvtss_f32(_mm_sqrt_ss(_mm_load_ss(&Value)));
@@ -41,136 +40,134 @@ namespace NMath
     }
 
     template<typename T>
-    constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type DivideByMultiple(T Value, uint32 Alignment)
+    static constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type DivideByMultiple(T Value, uint32 Alignment)
     {
         return static_cast<T>((Value + Alignment - 1) / Alignment);
     }
 
     template<typename T>
-    constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignUp(T Value, T Alignment)
+    static constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignUp(T Value, T Alignment)
     {
         const T Mask = Alignment - 1;
         return ((Value + Mask) & (~Mask));
     }
 
     template<typename T>
-    constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignDown(T Value, T Alignment)
+    static constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignDown(T Value, T Alignment)
     {
         const T Mask = Alignment - 1;
         return ((Value) & (~Mask));
     }
 
     template<typename T>
-    constexpr typename TEnableIf<TIsFloatingPoint<T>::Value, T>::Type Lerp(T First, T Second, T Factor)
+    static constexpr typename TEnableIf<TIsFloatingPoint<T>::Value, T>::Type Lerp(T First, T Second, T Factor)
     {
         return (-Factor * Second) + ((First * Factor) + Second);
     }
 
     template<typename T>
-    constexpr T Min(T a, T b)
+    static constexpr T Min(T a, T b)
     {
         return (a <= b) ? a : b;
     }
 
     template<typename T>
-    constexpr T Max(T a, T b)
+    static constexpr T Max(T a, T b)
     {
         return (a >= b) ? a : b;
     }
 
     template<typename T>
-    constexpr T Clamp(T InMin, T InMax, T x)
+    static constexpr T Clamp(T InMin, T InMax, T x)
     {
         return Min(InMax, Max(InMin, x));
     }
 
     template<typename T>
-    FORCEINLINE T Abs(T a)
+    static FORCEINLINE T Abs(T a)
     {
         return std::abs(a);
-        // return (a > T( 0 )) ? ((a * a) / a) : T( 0 ); // TODO: Causes crash?
     }
 
     template<typename T>
-    FORCEINLINE T Round(T a)
+    static FORCEINLINE T Round(T a)
     {
         return static_cast<T>(std::roundf(static_cast<float>(a)));
-        // return (a > T( 0 )) ? ((a * a) / a) : T( 0 ); // TODO: Causes crash?
     }
 
     template<typename T>
-    constexpr T ToRadians(T Degrees)
+    static constexpr T ToRadians(T Degrees)
     {
         return static_cast<T>(static_cast<float>(Degrees) * (kPI_f / 180.0f));
     }
 
     template<typename T>
-    constexpr T ToDegrees(T Radians)
+    static constexpr T ToDegrees(T Radians)
     {
         return static_cast<T>(static_cast<float>(Radians) * (180.0f / kPI_f));
     }
 
     template<typename T>
-    FORCEINLINE T Log2(T Value)
+    static FORCEINLINE T Log2(T Value)
     {
         return static_cast<T>(std::log2(static_cast<double>(Value)));
     }
 
     template<typename T>
-    FORCEINLINE T Asin(T Value)
+    static FORCEINLINE T Asin(T Value)
     {
         return static_cast<T>(std::asinf(static_cast<float>(Value)));
     }
 
     template<typename T>
-    FORCEINLINE T Atan2(T y, T x)
+    static FORCEINLINE T Atan2(T y, T x)
     {
         return static_cast<T>(std::atan2f(static_cast<float>(y), static_cast<float>(x)));
     }
 
     template<typename T>
-    FORCEINLINE T Sin(T Value)
+    static FORCEINLINE T Sin(T Value)
     {
         return static_cast<T>(std::sinf(static_cast<float>(Value)));
     }
 
     template<typename T>
-    FORCEINLINE T Cos(T Value)
+    static FORCEINLINE T Cos(T Value)
     {
         return static_cast<T>(std::cosf(static_cast<float>(Value)));
     }
 
     template<typename T>
-    FORCEINLINE T Tan(T Value)
+    static FORCEINLINE T Tan(T Value)
     {
         return static_cast<T>(std::tanf(static_cast<float>(Value)));
     }
 
     template<typename T>
-    FORCEINLINE T Ceil(T Value)
+    static FORCEINLINE T Ceil(T Value)
     {
         return static_cast<T>(std::ceilf(static_cast<float>(Value)));
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsNaN(T Float)
+    static FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsNaN(T Float)
     {
         return isnan(Float);
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsInfinity(T Float)
+    static FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsInfinity(T Float)
     {
         return isinf(Float);
     }
 
-    constexpr uint32 BytesToNum32BitConstants(uint32 Bytes)
+    static constexpr uint32 BytesToNum32BitConstants(uint32 Bytes)
     {
         return Bytes / 4;
     }
 
     template<const uint32 kBits>
-    constexpr uint32 MaxNum()
+    static constexpr uint32 MaxNum()
     {
         return ((1 << kBits) - 1);
     }

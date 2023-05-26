@@ -112,7 +112,7 @@ public:
         CHECK(Buffer != nullptr);
         if (Buffer && BufferSize > 0)
         {
-            const SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
+            const SizeType CopySize = FMath::Min(BufferSize, Length() - Position);
             FCStringType::Strncpy(Buffer, ViewStart + Position, CopySize);
         }
     }
@@ -291,7 +291,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Compare(const CHARTYPE* InString, SizeType InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
     {
-        const SizeType MinLength = NMath::Min(Length(), InLength);
+        const SizeType MinLength = FMath::Min(Length(), InLength);
         if (CaseType == EStringCaseType::NoCase)
         {
             return static_cast<SizeType>(FCStringType::Strnicmp(ViewStart, InString, MinLength));
@@ -376,7 +376,7 @@ public:
         SizeType Index = 0;
         if (Position == INVALID_INDEX && CurrentLength > 0)
         {
-            Index += NMath::Clamp(0, CurrentLength - 1, Position);
+            Index += FMath::Clamp(0, CurrentLength - 1, Position);
         }
 
         const SizeType SearchLength = FCStringType::Strlen(InString);
@@ -429,7 +429,7 @@ public:
         const CHARTYPE* RESTRICT Current = ViewStart;
         if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Current += NMath::Clamp(0, CurrentLength - 1, Position);
+            Current += FMath::Clamp(0, CurrentLength - 1, Position);
         }
 
         for (const CHARTYPE *RESTRICT End = ViewStart + CurrentLength; Current != End; ++Current)
@@ -461,7 +461,7 @@ public:
         const CHARTYPE* RESTRICT Current = ViewStart;
         if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Current += NMath::Clamp(0, CurrentLength - 1, Position);
+            Current += FMath::Clamp(0, CurrentLength - 1, Position);
         }
 
         for (const CHARTYPE *RESTRICT End = ViewStart + CurrentLength; Current != End; ++Current)

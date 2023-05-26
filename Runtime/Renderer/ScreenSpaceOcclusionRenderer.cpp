@@ -193,8 +193,8 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
     CommandList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, 9);
 
     constexpr uint32 ThreadCount = 16;
-    const uint32 DispatchWidth   = NMath::DivideByMultiple<uint32>(Width, ThreadCount);
-    const uint32 DispatchHeight  = NMath::DivideByMultiple<uint32>(Height, ThreadCount);
+    const uint32 DispatchWidth   = FMath::DivideByMultiple<uint32>(Width, ThreadCount);
+    const uint32 DispatchHeight  = FMath::DivideByMultiple<uint32>(Height, ThreadCount);
 
     // Actual SSAO tracing
     {

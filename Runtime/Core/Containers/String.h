@@ -305,7 +305,7 @@ public:
         CHECK(Position < Length() || Position == 0);
         if (Buffer && BufferSize > 0)
         {
-            const SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
+            const SizeType CopySize = FMath::Min(BufferSize, Length() - Position);
             FCStringType::Strncpy(Buffer, CharData.Data() + Position, CopySize);
         }
     }
@@ -570,7 +570,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Compare(const CHARTYPE* InString, SizeType InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
     {
-        const SizeType MinLength = NMath::Min(Length(), InLength);
+        const SizeType MinLength = FMath::Min(Length(), InLength);
         if (CaseType == EStringCaseType::NoCase)
         {
             return static_cast<SizeType>(FCStringType::Strnicmp(CharData.Data(), InString, MinLength));
@@ -655,7 +655,7 @@ public:
         SizeType Index = 0;
         if (Position == INVALID_INDEX && CurrentLength > 0)
         {
-            Index += NMath::Clamp(0, CurrentLength - 1, Position);
+            Index += FMath::Clamp(0, CurrentLength - 1, Position);
         }
 
         const CHARTYPE* RESTRICT Result = FCStringType::Strstr(CharData.Data() + Index, InString);
@@ -698,7 +698,7 @@ public:
         const CHARTYPE* RESTRICT Current = CharData.Data();
         if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Current += NMath::Clamp(0, CurrentLength - 1, Position);
+            Current += FMath::Clamp(0, CurrentLength - 1, Position);
         }
 
         for (const CHARTYPE* RESTRICT End = CharData.Data() + CurrentLength; Current != End; ++Current)
@@ -730,7 +730,7 @@ public:
         const CHARTYPE* RESTRICT Current = CharData.Data();
         if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Current += NMath::Clamp(0, CurrentLength - 1, Position);
+            Current += FMath::Clamp(0, CurrentLength - 1, Position);
         }
 
         for (const CHARTYPE *RESTRICT End = CharData.Data() + CurrentLength; Current != End; ++Current)

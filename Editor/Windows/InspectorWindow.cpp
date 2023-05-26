@@ -56,11 +56,11 @@ void CInspectorWindow::DrawSceneInfo()
 
                     // Rotation
                     FVector3 Rotation = Actor->GetTransform().GetRotation();
-                    Rotation = NMath::ToDegrees( Rotation );
+                    Rotation = FMath::ToDegrees( Rotation );
 
                     DrawFloat3Control( "Rotation", Rotation, 0.0f, 100.0f, 1.0f );
 
-                    Rotation = NMath::ToRadians( Rotation );
+                    Rotation = FMath::ToRadians( Rotation );
 
                     Actor->GetTransform().SetRotation( Rotation );
 
@@ -322,11 +322,11 @@ void CInspectorWindow::DrawSceneInfo()
                     if ( ImGui::TreeNode( "Transform" ) )
                     {
                         FVector3 Rotation = CurrentDirectionalLight->GetRotation();
-                        Rotation = NMath::ToDegrees( Rotation );
+                        Rotation = FMath::ToDegrees( Rotation );
 
                         DrawFloat3Control( "Rotation", Rotation, 0.0f, ColumnWidth, 1.0f );
 
-                        Rotation = NMath::ToDegrees( Rotation );
+                        Rotation = FMath::ToDegrees( Rotation );
 
                         CurrentDirectionalLight->SetRotation( Rotation );
 
@@ -465,7 +465,7 @@ void CInspectorWindow::Tick()
 {
     const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
     const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
-    const float Width = NMath::Max( WindowWidth * 0.3f, 400.0f );
+    const float Width = FMath::Max( WindowWidth * 0.3f, 400.0f );
     const float Height = WindowHeight * 0.7f;
 
     ImGui::PushStyleColor( ImGuiCol_ResizeGrip, 0 );

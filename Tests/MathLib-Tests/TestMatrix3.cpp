@@ -80,7 +80,7 @@ bool TestMatrix3()
     XMFLOAT3X3 Float3x3Matrix;
 
     // Roll Pitch Yaw
-    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
+    for (double Angle = -FMath::kTwoPI; Angle < FMath::kTwoPI; Angle += FMath::kOneDegree)
     {
         FMatrix3 RollPitchYaw = FMatrix3::RotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
         XMMATRIX XmRollPitchYaw = XMMatrixRotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
@@ -94,7 +94,7 @@ bool TestMatrix3()
     }
 
     // RotationX
-    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
+    for (double Angle = -FMath::kTwoPI; Angle < FMath::kTwoPI; Angle += FMath::kOneDegree)
     {
         FMatrix3 Rotation = FMatrix3::RotationX((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationX((float)Angle);
@@ -108,7 +108,7 @@ bool TestMatrix3()
     }
 
     // RotationY
-    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
+    for (double Angle = -FMath::kTwoPI; Angle < FMath::kTwoPI; Angle += FMath::kOneDegree)
     {
         FMatrix3 Rotation = FMatrix3::RotationY((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationY((float)Angle);
@@ -121,7 +121,7 @@ bool TestMatrix3()
     }
 
     // RotationZ
-    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
+    for (double Angle = -FMath::kTwoPI; Angle < FMath::kTwoPI; Angle += FMath::kOneDegree)
     {
         FMatrix3 Rotation = FMatrix3::RotationZ((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationZ((float)Angle);
@@ -134,12 +134,12 @@ bool TestMatrix3()
     }
 
     // Multiplication
-    FMatrix3 Mat0 = FMatrix3::RotationX(NMath::kHalfPI_f);
-    FMatrix3 Mat1 = FMatrix3::RotationY(NMath::kHalfPI_f);
+    FMatrix3 Mat0 = FMatrix3::RotationX(FMath::kHalfPI_f);
+    FMatrix3 Mat1 = FMatrix3::RotationY(FMath::kHalfPI_f);
     FMatrix3 Mult = Mat0 * Mat1;
 
-    XMMATRIX XmMat0 = XMMatrixRotationX(NMath::kHalfPI_f);
-    XMMATRIX XmMat1 = XMMatrixRotationY(NMath::kHalfPI_f);
+    XMMATRIX XmMat0 = XMMatrixRotationX(FMath::kHalfPI_f);
+    XMMATRIX XmMat1 = XMMatrixRotationY(FMath::kHalfPI_f);
     XMMATRIX XmMult = XMMatrixMultiply(XmMat0, XmMat1);
     XMStoreFloat3x3(&Float3x3Matrix, XmMult);
 
@@ -241,11 +241,11 @@ bool TestMatrix3()
     }
 
     // Multiply a vector
-    FMatrix3 Rot = FMatrix3::RotationX(NMath::kHalfPI_f);
+    FMatrix3 Rot = FMatrix3::RotationX(FMath::kHalfPI_f);
     FVector3 TranslatedVector = Rot * FVector3(1.0f, 1.0f, 1.0f);
 
     XMVECTOR XmTranslatedVector = XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f);
-    XMMATRIX XmRot = XMMatrixRotationX(NMath::kHalfPI_f);
+    XMMATRIX XmRot = XMMatrixRotationX(FMath::kHalfPI_f);
     XmTranslatedVector = XMVector3Transform(XmTranslatedVector, XmRot);
 
     XMFLOAT3 XmFloat3;

@@ -58,13 +58,13 @@ void FRenderTargetDebugWindow::Paint(const FRectangle& AssignedBounds)
                     float ImageHeight = 0.0f;
                     if (TexWidth > TexHeight)
                     {
-                        ImageWidth  = NMath::Max(MinImageSize, NMath::Min(TexWidth, float(Width)));
-                        ImageHeight = NMath::Max(MinImageSize, ImageWidth * AspectRatio);
+                        ImageWidth  = FMath::Max(MinImageSize, FMath::Min(TexWidth, float(Width)));
+                        ImageHeight = FMath::Max(MinImageSize, ImageWidth * AspectRatio);
                     }
                     else
                     {
-                        ImageHeight = NMath::Max(MinImageSize, NMath::Min(TexHeight, float(Height)));
-                        ImageWidth  = NMath::Max(MinImageSize, ImageHeight * InvAspectRatio);
+                        ImageHeight = FMath::Max(MinImageSize, FMath::Min(TexHeight, float(Height)));
+                        ImageWidth  = FMath::Max(MinImageSize, ImageHeight * InvAspectRatio);
                     }
 
                     {

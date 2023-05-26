@@ -437,7 +437,7 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
         TArray<uint32>& WriteDeferredMeshCommands = WriteableDeferredMeshCommands.Emplace();
         TArray<uint32>& WriteForwardMeshCommands  = WriteableForwardMeshCommands.Emplace();
         
-        const int32 NumCommands = NMath::Min<int32>(RemainingCommands, NumCommandsPerThread);
+        const int32 NumCommands = FMath::Min<int32>(RemainingCommands, NumCommandsPerThread);
         RemainingCommands -= NumCommands;
 
         // Allocate ArrayView for reading

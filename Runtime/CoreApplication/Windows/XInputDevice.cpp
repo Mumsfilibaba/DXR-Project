@@ -26,7 +26,7 @@ namespace XInputPrivate
         float                                                NormalizedValue,
         int16                                                DeadZone)
     {
-        if ((CurrentValue != NewValue) || (int16(NMath::Abs(NewValue)) > DeadZone))
+        if ((CurrentValue != NewValue) || (int16(FMath::Abs(NewValue)) > DeadZone))
         {
             MessageHandler->OnControllerAnalog(AnalogSource, ControllerIndex, NormalizedValue);
         }

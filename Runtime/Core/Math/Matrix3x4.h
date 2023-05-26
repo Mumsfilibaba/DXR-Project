@@ -47,14 +47,14 @@ public:
      * @param Other - matrix to compare against
      * @return      - True if equal, false if not
      */
-    bool IsEqual(const FMatrix3x4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    bool IsEqual(const FMatrix3x4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
-        Epsilon = NMath::Abs(Epsilon);
+        Epsilon = FMath::Abs(Epsilon);
 
         for (int i = 0; i < 12; i++)
         {
             const float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
-            if (NMath::Abs(Diff) > Epsilon)
+            if (FMath::Abs(Diff) > Epsilon)
             {
                 return false;
             }

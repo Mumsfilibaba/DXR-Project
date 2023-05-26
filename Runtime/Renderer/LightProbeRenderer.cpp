@@ -104,8 +104,8 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, const FL
 
     {
         const FIntVector3 ThreadCount = IrradianceGenShader->GetThreadGroupXYZ();
-        const uint32 ThreadWidth  = NMath::DivideByMultiple(IrradianceMapSize, ThreadCount.x);
-        const uint32 ThreadHeight = NMath::DivideByMultiple(IrradianceMapSize, ThreadCount.y);
+        const uint32 ThreadWidth  = FMath::DivideByMultiple(IrradianceMapSize, ThreadCount.x);
+        const uint32 ThreadHeight = FMath::DivideByMultiple(IrradianceMapSize, ThreadCount.y);
         CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
     }
 
@@ -136,14 +136,14 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, const FL
 
         {
             const FIntVector3 ThreadCount = SpecularIrradianceGenShader->GetThreadGroupXYZ();
-            const uint32 ThreadWidth  = NMath::DivideByMultiple(Width, ThreadCount.x);
-            const uint32 ThreadHeight = NMath::DivideByMultiple(Width, ThreadCount.y);
+            const uint32 ThreadWidth  = FMath::DivideByMultiple(Width, ThreadCount.x);
+            const uint32 ThreadHeight = FMath::DivideByMultiple(Width, ThreadCount.y);
             CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
         }
 
         CmdList.UnorderedAccessTextureBarrier(Skylight.SpecularIrradianceMap.Get());
 
-        Width = NMath::Max<uint32>(Width / 2, 1U);
+        Width = FMath::Max<uint32>(Width / 2, 1U);
         Roughness += RoughnessDelta;
     }
 
@@ -188,7 +188,7 @@ bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
         return false;
     }
 
-    const uint16 SpecularIrradianceMiplevels = NMath::Max<uint16>(NMath::Log2(LightSetup.SpecularIrradianceSize), 1u);
+    const uint16 SpecularIrradianceMiplevels = FMath::Max<uint16>(FMath::Log2(LightSetup.SpecularIrradianceSize), 1u);
     LightProbeDesc.Extent       = FIntVector3(LightSetup.SpecularIrradianceSize, LightSetup.SpecularIrradianceSize, 0);
     LightProbeDesc.NumMipLevels = uint8(SpecularIrradianceMiplevels);
 

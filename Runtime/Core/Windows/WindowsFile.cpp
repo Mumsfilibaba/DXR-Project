@@ -62,7 +62,7 @@ int32 FWindowsFileHandle::Read(uint8* Dst, uint32 BytesToRead)
     int32 TotalRead = 0;
     while(BytesToRead)
     {
-        const uint32 LocalBytesToRead = NMath::Min<uint32>(BytesToRead, TNumericLimits<uint32>::Max());
+        const uint32 LocalBytesToRead = FMath::Min<uint32>(BytesToRead, TNumericLimits<uint32>::Max());
 
         DWORD NumRead = 0;
         if (!ReadFile(FileHandle, Dst, LocalBytesToRead, &NumRead, nullptr))

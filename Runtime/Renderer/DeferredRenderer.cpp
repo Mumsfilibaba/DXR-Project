@@ -309,8 +309,8 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         CommandList.SetUnorderedAccessView(CShader.Get(), StagingUAV, 0);
 
         constexpr uint32 ThreadCount = 16;
-        const uint32 DispatchWidth  = NMath::DivideByMultiple(LUTSize, ThreadCount);
-        const uint32 DispatchHeight = NMath::DivideByMultiple(LUTSize, ThreadCount);
+        const uint32 DispatchWidth  = FMath::DivideByMultiple(LUTSize, ThreadCount);
+        const uint32 DispatchHeight = FMath::DivideByMultiple(LUTSize, ThreadCount);
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
         CommandList.UnorderedAccessTextureBarrier(StagingTexture.Get());
@@ -617,7 +617,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         CommandList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 0);
         CommandList.SetUnorderedAccessView(ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
-        CommandList.Set32BitShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, NMath::BytesToNum32BitConstants(sizeof(ReductionConstants)));
+        CommandList.Set32BitShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, FMath::BytesToNum32BitConstants(sizeof(ReductionConstants)));
 
         uint32 ThreadsX = FrameResources.ReducedDepthBuffer[0]->GetWidth();
         uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();
@@ -638,8 +638,8 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         CommandList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
         CommandList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetUnorderedAccessView(), 0);
 
-        ThreadsX = NMath::DivideByMultiple(ThreadsX, 16);
-        ThreadsY = NMath::DivideByMultiple(ThreadsY, 16);
+        ThreadsX = FMath::DivideByMultiple(ThreadsX, 16);
+        ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
         CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
         CommandList.TransitionTexture(
@@ -654,8 +654,8 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         CommandList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetShaderResourceView(), 0);
         CommandList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
-        ThreadsX = NMath::DivideByMultiple(ThreadsX, 16);
-        ThreadsY = NMath::DivideByMultiple(ThreadsY, 16);
+        ThreadsX = FMath::DivideByMultiple(ThreadsX, 16);
+        ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
         CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
         CommandList.TransitionTexture(
@@ -832,8 +832,8 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
     CommandList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
 
     const FIntVector3 ThreadsXYZ = LightPassShader->GetThreadGroupXYZ();
-    const uint32 WorkGroupWidth  = NMath::DivideByMultiple<uint32>(Settings.ScreenWidth, ThreadsXYZ.x);
-    const uint32 WorkGroupHeight = NMath::DivideByMultiple<uint32>(Settings.ScreenHeight, ThreadsXYZ.y);
+    const uint32 WorkGroupWidth  = FMath::DivideByMultiple<uint32>(Settings.ScreenWidth, ThreadsXYZ.x);
+    const uint32 WorkGroupHeight = FMath::DivideByMultiple<uint32>(Settings.ScreenHeight, ThreadsXYZ.y);
     CommandList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End LightPass");
@@ -959,8 +959,8 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
 
     constexpr uint32 Alignment = 16;
 
-    const uint32 ReducedWidth  = NMath::DivideByMultiple(Width, Alignment);
-    const uint32 ReducedHeight = NMath::DivideByMultiple(Height, Alignment);
+    const uint32 ReducedWidth  = FMath::DivideByMultiple(Width, Alignment);
+    const uint32 ReducedHeight = FMath::DivideByMultiple(Height, Alignment);
 
     TextureDesc.Format     = EFormat::R32G32_Float;
     TextureDesc.Extent.x   = uint16(ReducedWidth);

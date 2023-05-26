@@ -136,7 +136,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
 
             constexpr float MinLuma = 0.005f;
             const float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
-            const float Radius = NMath::Sqrt(Dot / MinLuma);
+            const float Radius = FMath::Sqrt(Dot / MinLuma);
 
             FVector3 Position = CurrentLight->GetPosition();
             FVector4 PosRad   = FVector4(Position, Radius);

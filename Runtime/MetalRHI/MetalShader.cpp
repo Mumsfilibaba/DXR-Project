@@ -20,7 +20,7 @@ FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVi
         CHECK(Library != nil);
         
         // Retrieve the entrypoint
-        const auto Length = NMath::Max(SourceString.FindChar('\n') - 3, 0);
+        const auto Length = FMath::Max(SourceString.FindChar('\n') - 3, 0);
         NSString* EntryPoint = FString(SourceString.GetCString() + 3, Length).GetNSString();
         FunctionName = [EntryPoint retain];
         

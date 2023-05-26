@@ -51,7 +51,7 @@ public:
         const float fLengthSquared = LengthSquared();
         if (fLengthSquared != 0.0f)
         {
-            const float fRecipLength = 1.0f / NMath::Sqrt(fLengthSquared);
+            const float fRecipLength = 1.0f / FMath::Sqrt(fLengthSquared);
             x = x * fRecipLength;
             y = y * fRecipLength;
         }
@@ -73,14 +73,14 @@ public:
      * @param Other - vector to compare against
      * @return      - True if equal, false if not
      */
-    inline bool IsEqual(const FVector2& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    inline bool IsEqual(const FVector2& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
-        Epsilon = NMath::Abs(Epsilon);
+        Epsilon = FMath::Abs(Epsilon);
 
         for (int32 Index = 0; Index < 2; ++Index)
         {
             float Diff = reinterpret_cast<const float*>(this)[Index] - reinterpret_cast<const float*>(&Other)[Index];
-            if (NMath::Abs(Diff) > Epsilon)
+            if (FMath::Abs(Diff) > Epsilon)
             {
                 return false;
             }
@@ -95,8 +95,8 @@ public:
      */
     FORCEINLINE bool IsUnitVector() const noexcept
     {
-        const float fLengthSquared = NMath::Abs(1.0f - LengthSquared());
-        return (fLengthSquared < NMath::kIsEqualEpsilon);
+        const float fLengthSquared = FMath::Abs(1.0f - LengthSquared());
+        return (fLengthSquared < FMath::kIsEqualEpsilon);
     }
 
     /**
@@ -107,7 +107,7 @@ public:
     {
         for (int32 Index = 0; Index < 2; ++Index)
         {
-            if (NMath::IsNaN(reinterpret_cast<const float*>(this)[Index]))
+            if (FMath::IsNaN(reinterpret_cast<const float*>(this)[Index]))
             {
                 return true;
             }
@@ -124,7 +124,7 @@ public:
     {
         for (int32 Index = 0; Index < 2; ++Index)
         {
-            if (NMath::IsInfinity(reinterpret_cast<const float*>(this)[Index]))
+            if (FMath::IsInfinity(reinterpret_cast<const float*>(this)[Index]))
             {
                 return true;
             }
@@ -149,7 +149,7 @@ public:
     FORCEINLINE float Length() const noexcept
     {
         const float fLengthSquared = LengthSquared();
-        return NMath::Sqrt(fLengthSquared);
+        return FMath::Sqrt(fLengthSquared);
     }
 
     /**
@@ -211,7 +211,7 @@ public:
      */
     friend FORCEINLINE FVector2 Min(const FVector2& First, const FVector2& Second) noexcept
     {
-        return FVector2(NMath::Min(First.x, Second.x), NMath::Min(First.y, Second.y));
+        return FVector2(FMath::Min(First.x, Second.x), FMath::Min(First.y, Second.y));
     }
 
     /**
@@ -222,7 +222,7 @@ public:
      */
     friend FORCEINLINE FVector2 Max(const FVector2& First, const FVector2& Second) noexcept
     {
-        return FVector2(NMath::Max(First.x, Second.x), NMath::Max(First.y, Second.y));
+        return FVector2(FMath::Max(First.x, Second.x), FMath::Max(First.y, Second.y));
     }
 
     /**
@@ -246,7 +246,7 @@ public:
      */
     friend FORCEINLINE FVector2 Clamp(const FVector2& Min, const FVector2& Max, const FVector2& Value) noexcept
     {
-        return FVector2(NMath::Min(NMath::Max(Value.x, Min.x), Max.x), NMath::Min(NMath::Max(Value.y, Min.y), Max.y));
+        return FVector2(FMath::Min(FMath::Max(Value.x, Min.x), Max.x), FMath::Min(FMath::Max(Value.y, Min.y), Max.y));
     }
 
     /**
@@ -256,7 +256,7 @@ public:
      */
     friend FORCEINLINE FVector2 Saturate(const FVector2& Value) noexcept
     {
-        return FVector2(NMath::Min(NMath::Max(Value.x, 0.0f), 1.0f), NMath::Min(NMath::Max(Value.y, 0.0f), 1.0f));
+        return FVector2(FMath::Min(FMath::Max(Value.x, 0.0f), 1.0f), FMath::Min(FMath::Max(Value.y, 0.0f), 1.0f));
     }
 
 public:
@@ -495,17 +495,14 @@ public:
 
 MARK_AS_REALLOCATABLE(FVector2);
 
-namespace NMath
+template<>
+FORCEINLINE FVector2 FMath::ToDegrees<FVector2>(FVector2 Radians)
 {
-    template<>
-    FORCEINLINE FVector2 ToDegrees(FVector2 Radians)
-    {
-        return FVector2(ToDegrees(Radians.x), ToDegrees(Radians.y));
-    }
+    return FVector2(ToDegrees(Radians.x), ToDegrees(Radians.y));
+}
 
-    template<>
-    FORCEINLINE FVector2 ToRadians(FVector2 Degrees)
-    {
-        return FVector2(ToRadians(Degrees.x), ToRadians(Degrees.y));
-    }
+template<>
+FORCEINLINE FVector2 FMath::ToRadians<FVector2>(FVector2 Degrees)
+{
+    return FVector2(ToRadians(Degrees.x), ToRadians(Degrees.y));
 }

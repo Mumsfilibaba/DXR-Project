@@ -150,7 +150,7 @@ public:
     {
         if (InString && InLength > 0)
         {
-            const SizeType MinLength = NMath::Min<SizeType>((NUM_CHARS - 1) - StringLength, InLength);
+            const SizeType MinLength = FMath::Min<SizeType>((NUM_CHARS - 1) - StringLength, InLength);
             FCStringType::Strncpy(CharData + StringLength, InString, MinLength);
             StringLength = StringLength + MinLength;
             CharData[StringLength] = 0;
@@ -163,7 +163,7 @@ public:
      */
     FORCEINLINE void Resize(SizeType NewLength) noexcept
     {
-        const SizeType MinLength = NMath::Min<SizeType>(NUM_CHARS - 1, NewLength);
+        const SizeType MinLength = FMath::Min<SizeType>(NUM_CHARS - 1, NewLength);
         StringLength = NewLength;
         CharData[StringLength] = 0;
     }
@@ -179,7 +179,7 @@ public:
         CHECK(Position < StringLength || Position == 0);
         if (Buffer && BufferSize > 0)
         {
-            const SizeType CopySize = NMath::Min(BufferSize, StringLength - Position);
+            const SizeType CopySize = FMath::Min(BufferSize, StringLength - Position);
             FCStringType::Strncpy(Buffer, CharData + Position, CopySize);
         }
     }
@@ -304,7 +304,7 @@ public:
 
         if (Index)
         {
-            StringLength = NMath::Clamp<SizeType>(0, NUM_CHARS - 1, StringLength - Index);
+            StringLength = FMath::Clamp<SizeType>(0, NUM_CHARS - 1, StringLength - Index);
             FCStringType::Strnmove(CharData, CharData + Index, StringLength);
         }
     }
@@ -406,7 +406,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Compare(const CHARTYPE* InString, SizeType InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
     {
-        const SizeType MinLength = NMath::Min(Length(), InLength);
+        const SizeType MinLength = FMath::Min(Length(), InLength);
         if (CaseType == EStringCaseType::NoCase)
         {
             return static_cast<SizeType>(FCStringType::Strnicmp(CharData, InString, MinLength));
@@ -489,7 +489,7 @@ public:
         SizeType Index = 0;
         if (Position == INVALID_INDEX && StringLength > 0)
         {
-            Index += NMath::Clamp(0, StringLength - 1, Position);
+            Index += FMath::Clamp(0, StringLength - 1, Position);
         }
 
         const CHARTYPE* RESTRICT Result = FCStringType::Strstr(CharData + Index, InString);
@@ -531,7 +531,7 @@ public:
         const CHARTYPE* RESTRICT Current = CharData;
         if (Position != INVALID_INDEX && StringLength > 0)
         {
-            Current += NMath::Clamp(0, StringLength - 1, Position);
+            Current += FMath::Clamp(0, StringLength - 1, Position);
         }
 
         for (const CHARTYPE* RESTRICT End = CharData + StringLength; Current != End; ++Current)
@@ -562,7 +562,7 @@ public:
         const CHARTYPE* RESTRICT Current = CharData;
         if (Position != INVALID_INDEX && StringLength > 0)
         {
-            Current += NMath::Clamp(0, StringLength - 1, Position);
+            Current += FMath::Clamp(0, StringLength - 1, Position);
         }
 
         for (const CHARTYPE *RESTRICT End = CharData + StringLength; Current != End; ++Current)

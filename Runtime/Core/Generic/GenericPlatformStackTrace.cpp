@@ -4,7 +4,7 @@ int32 FGenericPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 Ma
 {
     uint64 StaticStackTrace[MAX_STACK_DEPTH];
     
-    MaxDepth = NMath::Min<int32>(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);
+    MaxDepth = FMath::Min<int32>(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);
     
     const int32 Depth = FPlatformStackTrace::CaptureStackTrace(StaticStackTrace, MaxDepth);
 

@@ -96,7 +96,7 @@ bool FD3D12RayTracingGeometry::Build(
         }
     }
 
-    uint64 RequiredSize = NMath::Max(PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes);
+    uint64 RequiredSize = FMath::Max(PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes);
     CurrentSize = ScratchBuffer ? ScratchBuffer->GetWidth() : 0;
     if (CurrentSize < RequiredSize)
     {
@@ -230,7 +230,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         }
     }
 
-    uint64 RequiredSize = NMath::Max(PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes);
+    uint64 RequiredSize = FMath::Max(PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes);
     CurrentSize = ScratchBuffer ? ScratchBuffer->GetWidth() : 0;
     if (CurrentSize < RequiredSize)
     {

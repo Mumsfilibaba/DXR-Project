@@ -95,8 +95,8 @@ void FTemporalAA::Render(FRHICommandList& CommandList, FFrameResources& FrameRes
     CommandList.SetSamplerState(TemporalAAShader.Get(), LinearSampler.Get(), 0);
 
     const FIntVector3 ThreadGroupXYZ = TemporalAAShader->GetThreadGroupXYZ();
-    const uint32 ThreadsX = NMath::DivideByMultiple(CurrentBuffer->GetWidth(), ThreadGroupXYZ.x);
-    const uint32 ThreadsY = NMath::DivideByMultiple(CurrentBuffer->GetHeight(), ThreadGroupXYZ.y);
+    const uint32 ThreadsX = FMath::DivideByMultiple(CurrentBuffer->GetWidth(), ThreadGroupXYZ.x);
+    const uint32 ThreadsY = FMath::DivideByMultiple(CurrentBuffer->GetHeight(), ThreadGroupXYZ.y);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTexture(

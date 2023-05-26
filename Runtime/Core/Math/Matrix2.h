@@ -168,7 +168,7 @@ public:
     {
         for (int32 Index = 0; Index < 4; ++Index)
         {
-            if (NMath::IsNaN(reinterpret_cast<const float*>(this)[Index]))
+            if (FMath::IsNaN(reinterpret_cast<const float*>(this)[Index]))
             {
                 return true;
             }
@@ -185,7 +185,7 @@ public:
     {
         for (int32 Index = 0; Index < 4; ++Index)
         {
-            if (NMath::IsInfinity(reinterpret_cast<const float*>(this)[Index]))
+            if (FMath::IsInfinity(reinterpret_cast<const float*>(this)[Index]))
             {
                 return true;
             }
@@ -208,16 +208,16 @@ public:
      * @param Other - matrix to compare against
      * @return      - True if equal, false if not
      */
-    bool IsEqual(const FMatrix2& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    bool IsEqual(const FMatrix2& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
 #if !USE_VECTOR_OP
 
-        Epsilon = NMath::Abs(Epsilon);
+        Epsilon = FMath::Abs(Epsilon);
 
         for (int32 i = 0; i < 4; i++)
         {
             float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
-            if (NMath::Abs(Diff) > Epsilon)
+            if (FMath::Abs(Diff) > Epsilon)
             {
                 return false;
             }
@@ -639,8 +639,8 @@ public:
      */
     static FORCEINLINE FMatrix2 Rotation(float Rotation) noexcept
     {
-        const float SinZ = NMath::Sin(Rotation);
-        const float CosZ = NMath::Cos(Rotation);
+        const float SinZ = FMath::Sin(Rotation);
+        const float CosZ = FMath::Cos(Rotation);
 
         return FMatrix2(CosZ, SinZ, -SinZ, CosZ);
     }

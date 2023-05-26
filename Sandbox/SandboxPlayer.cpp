@@ -20,20 +20,20 @@ void FSandboxPlayerController::Tick(FTimespan DeltaTime)
     FPlayerInput* InputState = GetPlayerInput();
     if (InputState->IsKeyDown(EKey::Key_Right))
     {
-        Camera->Rotate(0.0f, NMath::ToRadians(RotationSpeed * Delta), 0.0f);
+        Camera->Rotate(0.0f, FMath::ToRadians(RotationSpeed * Delta), 0.0f);
     }
     else if (InputState->IsKeyDown(EKey::Key_Left))
     {
-        Camera->Rotate(0.0f, NMath::ToRadians(-RotationSpeed * Delta), 0.0f);
+        Camera->Rotate(0.0f, FMath::ToRadians(-RotationSpeed * Delta), 0.0f);
     }
 
     if (InputState->IsKeyDown(EKey::Key_Up))
     {
-        Camera->Rotate(NMath::ToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
+        Camera->Rotate(FMath::ToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
     }
     else if (InputState->IsKeyDown(EKey::Key_Down))
     {
-        Camera->Rotate(NMath::ToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
+        Camera->Rotate(FMath::ToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
     }
 
     float Acceleration = 15.0f;

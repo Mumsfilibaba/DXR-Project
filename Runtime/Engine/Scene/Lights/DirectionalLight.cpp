@@ -28,7 +28,7 @@ FDirectionalLight::FDirectionalLight()
     {
         if (SunLight && SunLight->IsVariableFloat())
         {
-            const float NewSize = NMath::Clamp(0.0f, 1.0f, SunLight->GetFloat());
+            const float NewSize = FMath::Clamp(0.0f, 1.0f, SunLight->GetFloat());
             this->Size = NewSize;
         }
     }));
@@ -37,7 +37,7 @@ FDirectionalLight::FDirectionalLight()
     {
         if (CascadeSplitLambda && CascadeSplitLambda->IsVariableFloat())
         {
-            const float NewLambda = NMath::Clamp(0.0f, 1.0f, CascadeSplitLambda->GetFloat());
+            const float NewLambda = FMath::Clamp(0.0f, 1.0f, CascadeSplitLambda->GetFloat());
             this->CascadeSplitLambda = NewLambda;
         }
     }));
@@ -104,10 +104,10 @@ void FDirectionalLight::Tick(FCamera& Camera)
         for (int32 Index = 0; Index < 8; ++Index)
         {
             const float Distance = (FrustumCorners[Index] - FrustumCenter).Length();
-            Radius = NMath::Max(Radius, Distance);
+            Radius = FMath::Max(Radius, Distance);
         }
 
-        Radius = NMath::Ceil(Radius * 16.0f) / 16.0f;
+        Radius = FMath::Ceil(Radius * 16.0f) / 16.0f;
 
         FVector3 MaxExtents = FVector3(Radius);
         FVector3 MinExtents = -MaxExtents;

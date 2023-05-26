@@ -63,15 +63,15 @@ public:
      * @param Other - plane to compare against
      * @return      - True if equal, false if not
      */
-    inline bool IsEqual(const FPlane& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    inline bool IsEqual(const FPlane& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
 #if !USE_VECTOR_OP
-        Epsilon = NMath::Abs(Epsilon);
+        Epsilon = FMath::Abs(Epsilon);
 
         for (int32 Index = 0; Index < 4; ++Index)
         {
             float Diff = reinterpret_cast<const float*>(this)[Index] - reinterpret_cast<const float*>(&Other)[Index];
-            if (NMath::Abs(Diff) > Epsilon)
+            if (FMath::Abs(Diff) > Epsilon)
             {
                 return false;
             }

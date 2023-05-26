@@ -54,7 +54,7 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
     int64 BytesRead   = 0;
     while (BytesToRead)
     {
-        const int64 Size = NMath::Min<int64>(MaxReadSize, BytesToRead);
+        const int64 Size = FMath::Min<int64>(MaxReadSize, BytesToRead);
         const int64 Read = ::read(FileHandle, Dst, Size);
         if (Read >= 0)
         {
@@ -96,7 +96,7 @@ int32 FMacFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
     int64 BytesWritten = 0;
     while (BytesToWrite)
     {
-        const int64 Size    = NMath::Min<int64>(kMaxReadWriteSize, BytesToWrite);
+        const int64 Size    = FMath::Min<int64>(kMaxReadWriteSize, BytesToWrite);
         const int64 Written = ::write(FileHandle, Src, Size);
         BytesWritten += Written;
 

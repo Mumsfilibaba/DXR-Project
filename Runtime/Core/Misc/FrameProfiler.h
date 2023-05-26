@@ -37,10 +37,10 @@ struct FProfileSample
     {
         Samples[CurrentSample] = NewSample;
 
-        Min = NMath::Min(NewSample, Min);
-        Max = NMath::Max(NewSample, Max);
+        Min = FMath::Min(NewSample, Min);
+        Max = FMath::Max(NewSample, Max);
 
-        SampleCount = NMath::Min<int32>(Samples.Size(), SampleCount + 1);
+        SampleCount = FMath::Min<int32>(Samples.Size(), SampleCount + 1);
 
         CurrentSample++;
         if (CurrentSample >= int32(Samples.Size()))

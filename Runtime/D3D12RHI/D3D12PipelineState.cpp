@@ -185,7 +185,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateDesc
             uint32 Index = DxShader->GetShaderVisibility();
             ResourceCounts.ResourceCounts[Index]                   = DxShader->GetResourceCount();
             ResourceCounts.ResourceCounts[Index].Num32BitConstants = 0;
-            Num32BitConstants = NMath::Max<uint32>(Num32BitConstants,ResourceCounts.ResourceCounts[Index].Num32BitConstants);
+            Num32BitConstants = FMath::Max<uint32>(Num32BitConstants,ResourceCounts.ResourceCounts[Index].Num32BitConstants);
         }
 
         ResourceCounts.ResourceCounts[ShaderVisibility_All].Num32BitConstants = Num32BitConstants;

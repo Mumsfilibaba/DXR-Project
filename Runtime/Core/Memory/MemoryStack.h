@@ -55,15 +55,15 @@ public:
         CHECK(Size      > 0);
         CHECK(Alignment > 0);
 
-        const int32 AlignedSize = NMath::AlignUp(Size, Alignment);
+        const int32 AlignedSize = FMath::AlignUp(Size, Alignment);
         
-        uint8* AlignedAddress = (uint8*)NMath::AlignUp<uintptr>((uintptr)StackStart, Alignment);
+        uint8* AlignedAddress = (uint8*)FMath::AlignUp<uintptr>((uintptr)StackStart, Alignment);
         uint8* NewStart       = AlignedAddress + AlignedSize;
         if (NewStart >= StackEnd)
         {
             // In case the new chunk needs to be aligned, pass the alignment as well as the size
             AllocateNewChunk(AlignedSize + Alignment);
-            AlignedAddress = (uint8*)NMath::AlignUp<uintptr>((uintptr)StackStart, Alignment);
+            AlignedAddress = (uint8*)FMath::AlignUp<uintptr>((uintptr)StackStart, Alignment);
             NewStart       = AlignedAddress + AlignedSize;
         }
 
@@ -111,7 +111,7 @@ public:
 private:
     void* AllocateNewChunk(int32 MinSize)
     {
-        const int32 PageSize  = NMath::Max(MEMORY_STACK_PAGE_SIZE, MinSize);
+        const int32 PageSize  = FMath::Max(MEMORY_STACK_PAGE_SIZE, MinSize);
         const int32 AllocSize = PageSize + sizeof(FMemoryHeader);
         
         FMemoryHeader* NewPage = reinterpret_cast<FMemoryHeader*>(FMemory::Malloc(AllocSize));

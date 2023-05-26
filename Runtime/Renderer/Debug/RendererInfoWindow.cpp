@@ -25,7 +25,7 @@ void FRendererInfoWindow::Paint(const FRectangle& AssignedBounds)
         const FString AdapterName = RHIGetAdapterName();
         const ImVec2 TextSize   = ImGui::CalcTextSize(AdapterName.GetCString());
         const float ColumnWidth = 105.0f * Scale;
-	    const float Width  = NMath::Max(TextSize.x + ColumnWidth + 15.0f * Scale, 300.0f * Scale);
+	    const float Width  = FMath::Max(TextSize.x + ColumnWidth + 15.0f * Scale, 300.0f * Scale);
 	    const float Height = WindowHeight * 0.8f;
 
         ImGui::SetNextWindowPos(ImVec2(float(WindowWidth), 10.0f * Scale), ImGuiCond_Always, ImVec2(1.0f, 0.0f));

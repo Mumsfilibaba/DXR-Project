@@ -70,7 +70,7 @@ public:
      */
     friend FORCEINLINE FInt16Vector3 Min(const FInt16Vector3& LHS, const FInt16Vector3& RHS) noexcept
     {
-        return FInt16Vector3(NMath::Min(LHS.x, RHS.x), NMath::Min(LHS.y, RHS.y), NMath::Min(LHS.z, RHS.z));
+        return FInt16Vector3(FMath::Min(LHS.x, RHS.x), FMath::Min(LHS.y, RHS.y), FMath::Min(LHS.z, RHS.z));
     }
 
     /**
@@ -81,7 +81,7 @@ public:
      */
     friend FORCEINLINE FInt16Vector3 Max(const FInt16Vector3& LHS, const FInt16Vector3& RHS) noexcept
     {
-        return FInt16Vector3(NMath::Max(LHS.x, RHS.x), NMath::Max(LHS.y, RHS.y), NMath::Max(LHS.z, RHS.z));
+        return FInt16Vector3(FMath::Max(LHS.x, RHS.x), FMath::Max(LHS.y, RHS.y), FMath::Max(LHS.z, RHS.z));
     }
 
 public:
@@ -381,7 +381,7 @@ public:
      */
     friend FORCEINLINE FIntVector3 Min(const FIntVector3& LHS, const FIntVector3& RHS) noexcept
     {
-        return FIntVector3(NMath::Min(LHS.x, RHS.x), NMath::Min(LHS.y, RHS.y), NMath::Min(LHS.z, RHS.z));
+        return FIntVector3(FMath::Min(LHS.x, RHS.x), FMath::Min(LHS.y, RHS.y), FMath::Min(LHS.z, RHS.z));
     }
 
     /**
@@ -392,7 +392,7 @@ public:
      */
     friend FORCEINLINE FIntVector3 Max(const FIntVector3& LHS, const FIntVector3& RHS) noexcept
     {
-        return FIntVector3(NMath::Max(LHS.x, RHS.x), NMath::Max(LHS.y, RHS.y), NMath::Max(LHS.z, RHS.z));
+        return FIntVector3(FMath::Max(LHS.x, RHS.x), FMath::Max(LHS.y, RHS.y), FMath::Max(LHS.z, RHS.z));
     }
 
 public:

@@ -202,7 +202,7 @@ TArray<FStackTraceEntry> FWindowsPlatformStackTrace::GetStack(int32 MaxDepth, in
     FMemory::Memzero(StackTrace);
 
     // Ensure that static buffer does not overflow
-    MaxDepth = NMath::Min(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);
+    MaxDepth = FMath::Min(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);
 
     const int32 Depth = CaptureStackTrace(StackTrace, MaxDepth);
     for (int32 CurrentDepth = IgnoreCount; CurrentDepth < Depth; CurrentDepth++)

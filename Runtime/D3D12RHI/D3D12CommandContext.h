@@ -406,7 +406,7 @@ public:
     FORCEINLINE uint32 GetCurrentBachIndex() const
     {
         CHECK(int32(NextCmdBatch) < CmdBatches.Size());
-        return NMath::Max<int32>(int32(NextCmdBatch) - 1, 0);
+        return FMath::Max<int32>(int32(NextCmdBatch) - 1, 0);
     }
 
     FORCEINLINE void UnorderedAccessBarrier(FD3D12Resource* Resource)

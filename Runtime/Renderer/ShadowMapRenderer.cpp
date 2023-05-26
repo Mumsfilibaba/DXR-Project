@@ -828,8 +828,8 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
         CommandList.SetSamplerState(CurrentShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 0);
 
         const FIntVector3 ThreadGroupXYZ = CurrentShader->GetThreadGroupXYZ();
-        const uint32 ThreadsX = NMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetWidth(), ThreadGroupXYZ.x);
-        const uint32 ThreadsY = NMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y);
+        const uint32 ThreadsX = FMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetWidth(), ThreadGroupXYZ.x);
+        const uint32 ThreadsY = FMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y);
         CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
         CommandList.TransitionTexture(

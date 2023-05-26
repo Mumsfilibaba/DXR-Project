@@ -92,7 +92,7 @@ public:
      * @brief - Sets the array to zero
      */
     template<typename U = ElementType>
-    FORCEINLINE typename TEnableIf<TIsTrivial<U>::Value>::Type Memzero()
+    FORCEINLINE void Memzero() requires(TIsTrivial<U>::Value)
     {
         FMemory::Memzero(Elements, SizeInBytes());
     }

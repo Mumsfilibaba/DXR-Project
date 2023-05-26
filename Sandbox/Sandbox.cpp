@@ -136,7 +136,7 @@ bool FSandbox::Init()
 
         std::default_random_engine            Generator;
 
-        std::uniform_real_distribution<float> Random0(0.0f, NMath::kTwoPI_f);
+        std::uniform_real_distribution<float> Random0(0.0f, FMath::kTwoPI_f);
         std::uniform_real_distribution<float> Random1(0.05f, 1.0);
         std::uniform_real_distribution<float> Random2(0.05f, 0.7);
         std::uniform_real_distribution<float> Random3(0.5f, 1.0);
@@ -148,10 +148,10 @@ bool FSandbox::Init()
             const float Alpha  = Random0(Generator);
             const float Theta  = Random0(Generator);
 
-            const float CosAlpha = NMath::Cos(Alpha);
-            const float SinAlpha = NMath::Sin(Alpha);
-            const float CosTheta = NMath::Cos(Theta);
-            const float SinTheta = NMath::Sin(Theta);
+            const float CosAlpha = FMath::Cos(Alpha);
+            const float SinAlpha = FMath::Sin(Alpha);
+            const float CosTheta = FMath::Cos(Theta);
+            const float SinTheta = FMath::Sin(Theta);
 
             const float PositionX = Radius * CosAlpha * SinTheta;
             const float PositionY = Radius * SinAlpha * SinTheta;
@@ -229,7 +229,7 @@ bool FSandbox::Init()
     NewActor = CurrentScene->CreateActor();
 
     NewActor->SetName("Plane");
-    NewActor->GetTransform().SetRotation(NMath::kHalfPI_f, 0.0f, 0.0f);
+    NewActor->GetTransform().SetRotation(FMath::kHalfPI_f, 0.0f, 0.0f);
     NewActor->GetTransform().SetUniformScale(50.0f);
     NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
@@ -405,9 +405,9 @@ bool FSandbox::Init()
     Light4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
     Light4->SetIntensity(10.0f);
 #if LOAD_SUN_TEMPLE
-    Light4->SetRotation(FVector3(NMath::ToRadians(35.0f), NMath::ToRadians(-55.0f), 0.0f));
+    Light4->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(-55.0f), 0.0f));
 #else
-    Light4->SetRotation(FVector3(NMath::ToRadians(35.0f), NMath::ToRadians(135.0f), 0.0f));
+    Light4->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
 #endif
     Light4->SetCascadeSplitLambda(0.9f);
     CurrentScene->AddLight(Light4);

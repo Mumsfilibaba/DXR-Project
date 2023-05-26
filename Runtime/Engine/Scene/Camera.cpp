@@ -28,7 +28,7 @@ void FCamera::Move(float x, float y, float z)
 void FCamera::Rotate(float Pitch, float Yaw, float Roll)
 {
     Rotation.x += Pitch;
-    Rotation.x  = NMath::Max<float>(NMath::ToRadians(-89.0f), NMath::Min<float>(NMath::ToRadians(89.0f), Rotation.x));
+    Rotation.x  = FMath::Max<float>(FMath::ToRadians(-89.0f), FMath::Min<float>(FMath::ToRadians(89.0f), Rotation.x));
 
     Rotation.y += Yaw;
     Rotation.z += Roll;
@@ -50,7 +50,7 @@ void FCamera::Rotate(float Pitch, float Yaw, float Roll)
 
 void FCamera::UpdateMatrices()
 {
-    FOV    = NMath::ToRadians(80.0f);
+    FOV    = FMath::ToRadians(80.0f);
     Width  = 1920.0f;
     Height = 1080.0f;
 

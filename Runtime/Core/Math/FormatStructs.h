@@ -30,9 +30,9 @@ struct FR10G10B10A2
         FVector3 Vector(InR, InG, InB);
         Vector.Normalize();
 
-        R = uint32(NMath::Round(Vector.x * float(NMath::MaxNum<10>())));
-        G = uint32(NMath::Round(Vector.y * float(NMath::MaxNum<10>())));
-        B = uint32(NMath::Round(Vector.z * float(NMath::MaxNum<10>())));
+        R = uint32(FMath::Round(Vector.x * float(FMath::MaxNum<10>())));
+        G = uint32(FMath::Round(Vector.y * float(FMath::MaxNum<10>())));
+        B = uint32(FMath::Round(Vector.z * float(FMath::MaxNum<10>())));
     }
 
     uint32 EncodeAsInteger() const 

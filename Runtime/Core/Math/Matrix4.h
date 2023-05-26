@@ -537,7 +537,7 @@ public:
     {
         for (int32 i = 0; i < 16; i++)
         {
-            if (NMath::IsNaN(reinterpret_cast<const float*>(this)[i]))
+            if (FMath::IsNaN(reinterpret_cast<const float*>(this)[i]))
             {
                 return true;
             }
@@ -554,7 +554,7 @@ public:
     {
         for (int32 i = 0; i < 16; i++)
         {
-            if (NMath::IsInfinity(reinterpret_cast<const float*>(this)[i]))
+            if (FMath::IsInfinity(reinterpret_cast<const float*>(this)[i]))
             {
                 return true;
             }
@@ -577,15 +577,15 @@ public:
      * @param Other - matrix to compare against
      * @return      - True if equal, false if not
      */
-    inline bool IsEqual(const FMatrix4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    inline bool IsEqual(const FMatrix4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
 #if !USE_VECTOR_OP
-        Epsilon = NMath::Abs(Epsilon);
+        Epsilon = FMath::Abs(Epsilon);
 
         for (int32 i = 0; i < 16; i++)
         {
             float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
-            if (NMath::Abs(Diff) > Epsilon)
+            if (FMath::Abs(Diff) > Epsilon)
             {
                 return false;
             }
@@ -1239,12 +1239,12 @@ public:
      */
     static FORCEINLINE FMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
     {
-        const float SinP = NMath::Sin(Pitch);
-        const float SinY = NMath::Sin(Yaw);
-        const float SinR = NMath::Sin(Roll);
-        const float CosP = NMath::Cos(Pitch);
-        const float CosY = NMath::Cos(Yaw);
-        const float CosR = NMath::Cos(Roll);
+        const float SinP = FMath::Sin(Pitch);
+        const float SinY = FMath::Sin(Yaw);
+        const float SinR = FMath::Sin(Roll);
+        const float CosP = FMath::Cos(Pitch);
+        const float CosY = FMath::Cos(Yaw);
+        const float CosR = FMath::Cos(Roll);
 
         const float SinRSinP = SinR * SinP;
         const float CosRSinP = CosR * SinP;
@@ -1273,8 +1273,8 @@ public:
      */
     static FORCEINLINE FMatrix4 RotationX(float x) noexcept
     {
-        const float SinX = NMath::Sin(x);
-        const float CosX = NMath::Cos(x);
+        const float SinX = FMath::Sin(x);
+        const float CosX = FMath::Cos(x);
 
         return FMatrix4(
             1.0f,  0.0f, 0.0f, 0.0f,
@@ -1290,8 +1290,8 @@ public:
      */
     static FORCEINLINE FMatrix4 RotationY(float y) noexcept
     {
-        const float SinY = NMath::Sin(y);
-        const float CosY = NMath::Cos(y);
+        const float SinY = FMath::Sin(y);
+        const float CosY = FMath::Cos(y);
 
         return FMatrix4(
             CosY, 0.0f, -SinY, 0.0f,
@@ -1307,8 +1307,8 @@ public:
      */
     static FORCEINLINE FMatrix4 RotationZ(float z) noexcept
     {
-        const float SinZ = NMath::Sin(z);
-        const float CosZ = NMath::Cos(z);
+        const float SinZ = FMath::Sin(z);
+        const float CosZ = FMath::Cos(z);
 
         return FMatrix4(
              CosZ, SinZ, 0.0f, 0.0f,
@@ -1367,12 +1367,12 @@ public:
      */
     static FORCEINLINE FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
     {
-        if ((Fov < NMath::kOneDegree_f) || (Fov > (NMath::kPI_f - NMath::kOneDegree_f)))
+        if ((Fov < FMath::kOneDegree_f) || (Fov > (FMath::kPI_f - FMath::kOneDegree_f)))
         {
             return FMatrix4();
         }
 
-        const float ScaleY = (1.0f / NMath::Tan(Fov * 0.5f));
+        const float ScaleY = (1.0f / FMath::Tan(Fov * 0.5f));
         const float ScaleX = (ScaleY / AspectRatio);
         const float Range  = (FarZ / (FarZ - NearZ));
 

@@ -125,7 +125,7 @@ bool TestMatrix4()
     // Perspective Projection
     float Width = 1920.0f;
     float Height = 1080.0f;
-    float FOV = NMath::kPI_f / 2.0f;
+    float FOV = FMath::kPI_f / 2.0f;
     float Near = 0.01f;
     float Far = 100.0f;
 
@@ -294,7 +294,7 @@ bool TestMatrix4()
     }
 
     // Roll Pitch Yaw
-    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
+    for (double Angle = -FMath::kTwoPI; Angle < FMath::kTwoPI; Angle += FMath::kOneDegree)
     {
         FMatrix4 RollPitchYaw = FMatrix4::RotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
         XMMATRIX XmRollPitchYaw = XMMatrixRotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
@@ -307,7 +307,7 @@ bool TestMatrix4()
     }
 
     // RotationX
-    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
+    for (double Angle = -FMath::kTwoPI; Angle < FMath::kTwoPI; Angle += FMath::kOneDegree)
     {
         FMatrix4 Rotation = FMatrix4::RotationX((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationX((float)Angle);
@@ -320,7 +320,7 @@ bool TestMatrix4()
     }
 
     // RotationY
-    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
+    for (double Angle = -FMath::kTwoPI; Angle < FMath::kTwoPI; Angle += FMath::kOneDegree)
     {
         FMatrix4 Rotation = FMatrix4::RotationY((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationY((float)Angle);
@@ -333,7 +333,7 @@ bool TestMatrix4()
     }
 
     // RotationZ
-    for (double Angle = -NMath::kTwoPI; Angle < NMath::kTwoPI; Angle += NMath::kOneDegree)
+    for (double Angle = -FMath::kTwoPI; Angle < FMath::kTwoPI; Angle += FMath::kOneDegree)
     {
         FMatrix4 Rotation = FMatrix4::RotationZ((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationZ((float)Angle);

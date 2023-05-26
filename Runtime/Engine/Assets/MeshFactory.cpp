@@ -135,7 +135,7 @@ FMeshData FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
     FMeshData Sphere;
     Sphere.Vertices.Resize(12);
 
-    const float t = (1.0f + NMath::Sqrt(5.0f)) / 2.0f;
+    const float t = (1.0f + FMath::Sqrt(5.0f)) / 2.0f;
     Sphere.Vertices[0].Position  = FVector3(-1.0f,  t   ,  0.0f);
     Sphere.Vertices[1].Position  = FVector3( 1.0f,  t   ,  0.0f);
     Sphere.Vertices[2].Position  = FVector3(-1.0f, -t   ,  0.0f);
@@ -191,8 +191,8 @@ FMeshData FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
         Sphere.Vertices[i].Position = Position * Radius;
 
         // Calculate UVs
-        Sphere.Vertices[i].TexCoord.y = (NMath::Asin(Sphere.Vertices[i].Position.y) / NMath::kPI_f) + 0.5f;
-        Sphere.Vertices[i].TexCoord.x = (NMath::Atan2(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + NMath::kPI_f) / (2.0f * NMath::kPI_f);
+        Sphere.Vertices[i].TexCoord.y = (FMath::Asin(Sphere.Vertices[i].Position.y) / FMath::kPI_f) + 0.5f;
+        Sphere.Vertices[i].TexCoord.x = (FMath::Atan2(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + FMath::kPI_f) / (2.0f * FMath::kPI_f);
     }
 
     Sphere.Indices.Shrink();
@@ -236,8 +236,8 @@ FMeshData FMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noe
     for (size_t i = 0; i < sides; i++)
     {
         // BOTTOM CAP VERTICES
-        float x = NMath::Cos((pi<float>() / 2.0f) + (angle * i));
-        float z = NMath::Sin((pi<float>() / 2.0f) + (angle * i));
+        float x = FMath::Cos((pi<float>() / 2.0f) + (angle * i));
+        float z = FMath::Sin((pi<float>() / 2.0f) + (angle * i));
 
         XMFLOAT3 pos = normalize(XMFLOAT3(x, 0.0f, z));
         data.Vertices[i + 1].Position = (pos * radius);
@@ -423,8 +423,8 @@ FMeshData FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height)
     for (size_t i = 0; i < sides; i++)
     {
         // TOP CAP VERTICES
-        float x = NMath::Cos((pi<float>() / 2.0f) + (angle * i));
-        float z = NMath::Sin((pi<float>() / 2.0f) + (angle * i));
+        float x = FMath::Cos((pi<float>() / 2.0f) + (angle * i));
+        float z = FMath::Sin((pi<float>() / 2.0f) + (angle * i));
         XMFLOAT3 pos = normalize(XMFLOAT3(x, 0.0f, z));
         data.Vertices[i + 1].Position = (pos * radius) + XMFLOAT3(0.0f, halfHeight, 0.0f);
         data.Vertices[i + 1].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);

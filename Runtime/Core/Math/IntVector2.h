@@ -65,7 +65,7 @@ public:
      */
     friend FORCEINLINE FInt16Vector2 Min(const FInt16Vector2& LHS, const FInt16Vector2& RHS) noexcept
     {
-        return FInt16Vector2(NMath::Min(LHS.x, RHS.x), NMath::Min(LHS.y, RHS.y));
+        return FInt16Vector2(FMath::Min(LHS.x, RHS.x), FMath::Min(LHS.y, RHS.y));
     }
 
     /**
@@ -76,7 +76,7 @@ public:
      */
     friend FORCEINLINE FInt16Vector2 Max(const FInt16Vector2& LHS, const FInt16Vector2& RHS) noexcept
     {
-        return FInt16Vector2(NMath::Max(LHS.x, RHS.x), NMath::Max(LHS.y, RHS.y));
+        return FInt16Vector2(FMath::Max(LHS.x, RHS.x), FMath::Max(LHS.y, RHS.y));
     }
 
 public:
@@ -368,7 +368,7 @@ public:
      */
     friend FORCEINLINE FIntVector2 Min(const FIntVector2& LHS, const FIntVector2& RHS) noexcept
     {
-        return FIntVector2(NMath::Min(LHS.x, RHS.x), NMath::Min(LHS.y, RHS.y));
+        return FIntVector2(FMath::Min(LHS.x, RHS.x), FMath::Min(LHS.y, RHS.y));
     }
 
     /**
@@ -379,7 +379,7 @@ public:
      */
     friend FORCEINLINE FIntVector2 Max(const FIntVector2& LHS, const FIntVector2& RHS) noexcept
     {
-        return FIntVector2(NMath::Max(LHS.x, RHS.x), NMath::Max(LHS.y, RHS.y));
+        return FIntVector2(FMath::Max(LHS.x, RHS.x), FMath::Max(LHS.y, RHS.y));
     }
 
 public:

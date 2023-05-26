@@ -54,7 +54,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
 
     const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     
-    const uint32 NumMips = GenerateMips ? NMath::Max<uint32>(NMath::Log2(NMath::Max(Width, Height)), 1u) : 1;
+    const uint32 NumMips = GenerateMips ? FMath::Max<uint32>(FMath::Log2(FMath::Max(Width, Height)), 1u) : 1;
     CHECK(NumMips != 0);
 
     const uint32 Stride   = GetByteStrideFromFormat(Format);
@@ -98,7 +98,7 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
 
     const bool bGenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
 
-    const uint32 NumMips = (bGenerateNumMips) ? NMath::Max<uint32>(NMath::Log2(CubeMapSize), 1u) : 1u;
+    const uint32 NumMips = (bGenerateNumMips) ? FMath::Max<uint32>(FMath::Log2(CubeMapSize), 1u) : 1u;
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTextureCube(
         Format,
@@ -152,8 +152,8 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
         CommandList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
 
         constexpr uint32 LocalWorkGroupCount = 16;
-        const uint32 ThreadsX = NMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
-        const uint32 ThreadsY = NMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
+        const uint32 ThreadsX = FMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
+        const uint32 ThreadsY = FMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
         CommandList.Dispatch(ThreadsX, ThreadsY, 6);
 
         CommandList.TransitionTexture(PanoramaSource, EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);

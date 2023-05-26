@@ -56,7 +56,7 @@ bool FMeshImporter::LoadMesh(const FString& Filename, FSceneData& OutScene, EMes
 
         if (FFBXLoader::LoadFile(Filename, OutScene, FBXFlags))
         {
-            const auto Count = NMath::Max<int32>(Filename.Size() - 4, 0);
+            const auto Count = FMath::Max<int32>(Filename.Size() - 4, 0);
 
             FString NewFileName = Filename.SubString(0, Count);
             NewFileName += ".dxrmesh";
@@ -68,7 +68,7 @@ bool FMeshImporter::LoadMesh(const FString& Filename, FSceneData& OutScene, EMes
         const bool bReverseHandedness = ((Flags & EMeshImportFlags::Default) == EMeshImportFlags::None);
         if (FOBJLoader::LoadFile(Filename, OutScene, bReverseHandedness))
         {
-            const auto Count = NMath::Max<int32>(Filename.Size() - 4, 0);
+            const auto Count = FMath::Max<int32>(Filename.Size() - 4, 0);
 
             FString NewFileName = Filename.SubString(0, Count);
             NewFileName += ".dxrmesh";

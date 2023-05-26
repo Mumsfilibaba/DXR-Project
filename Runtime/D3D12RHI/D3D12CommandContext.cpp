@@ -173,8 +173,8 @@ FD3D12UploadAllocation FD3D12GPUResourceUploader::Allocate(uint64 InSizeInBytes,
     // 1 Mega-Byte
     constexpr uint32 EXTRA_BYTES_ALLOCATED = 1024 * 1024;
 
-    const uint64 AlignedSize   = NMath::AlignUp<uint64>(InSizeInBytes, Alignment);
-    const uint64 AlignedOffset = NMath::AlignUp<uint64>(OffsetInBytes, Alignment);
+    const uint64 AlignedSize   = FMath::AlignUp<uint64>(InSizeInBytes, Alignment);
+    const uint64 AlignedOffset = FMath::AlignUp<uint64>(OffsetInBytes, Alignment);
     
     const uint64 NeededSize = AlignedOffset + AlignedSize;
     if (NeededSize > SizeInBytes)
@@ -718,7 +718,7 @@ void FD3D12CommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> 
         State.SetVertexBuffer(D3D12VertexBuffer, BufferSlot + Index);
     }
 
-    State.Graphics.VBCache.NumVertexBuffers = NMath::Max(State.Graphics.VBCache.NumVertexBuffers, BufferSlot + InVertexBuffers.Size());
+    State.Graphics.VBCache.NumVertexBuffers = FMath::Max(State.Graphics.VBCache.NumVertexBuffers, BufferSlot + InVertexBuffers.Size());
 }
 
 void FD3D12CommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
@@ -940,7 +940,7 @@ void FD3D12CommandContext::UpdateTexture2D(
         &RowPitch,
         &RequiredSize);
 
-    const uint64 AlignedSize = NMath::AlignUp<uint64>(RequiredSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+    const uint64 AlignedSize = FMath::AlignUp<uint64>(RequiredSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 
     FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(
         AlignedSize,
@@ -1326,7 +1326,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     }
 
     const uint32 MipLevelsPerDispatch     = 4;
-    const uint32 UavDescriptorHandleCount = NMath::AlignUp<uint32>(Desc.MipLevels, MipLevelsPerDispatch);
+    const uint32 UavDescriptorHandleCount = FMath::AlignUp<uint32>(Desc.MipLevels, MipLevelsPerDispatch);
     const uint32 NumDispatches            = UavDescriptorHandleCount / MipLevelsPerDispatch;
 
     FD3D12OnlineDescriptorManager* ResourceDescriptors = CmdBatch->GetResourceDescriptorManager();
@@ -1417,7 +1417,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     for (uint32 i = 0; i < NumDispatches; i++)
     {
         ConstantData.TexelSize    = FVector2(1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight));
-        ConstantData.NumMipLevels = NMath::Min<uint32>(4, RemainingMiplevels);
+        ConstantData.NumMipLevels = FMath::Min<uint32>(4, RemainingMiplevels);
 
         CommandList->SetComputeRoot32BitConstants(&ConstantData, 4, 0, 0);
         CommandList->SetComputeRootDescriptorTable(SrvHandle_GPU, 1);
@@ -1429,8 +1429,8 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
 
         constexpr uint32 ThreadCount = 8;
 
-        const uint32 ThreadsX = NMath::DivideByMultiple(DstWidth, ThreadCount);
-        const uint32 ThreadsY = NMath::DivideByMultiple(DstHeight, ThreadCount);
+        const uint32 ThreadsX = FMath::DivideByMultiple(DstWidth, ThreadCount);
+        const uint32 ThreadsY = FMath::DivideByMultiple(DstHeight, ThreadCount);
         CommandList->Dispatch(ThreadsX, ThreadsY, ThreadsZ);
 
         UnorderedAccessBarrier(StagingTexture.Get());
