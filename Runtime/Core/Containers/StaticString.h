@@ -123,7 +123,7 @@ public:
     }
 
     /**
-     * @brief          - Appends a cstring to this string
+     * @brief          - Appends a c-string to this string
      * @param InString - String to append
      */
     FORCEINLINE void Append(const CHARTYPE* InString) noexcept
@@ -142,7 +142,7 @@ public:
     }
 
     /**
-     * @brief          - Appends a cstring to this string with a fixed length
+     * @brief          - Appends a c-string to this string with a fixed length
      * @param InString - String to append
      * @param InLength - Length of the string
      */
@@ -304,7 +304,7 @@ public:
 
         if (Index)
         {
-            StringLength = NMath::Max<SizeType>(StringLength - Index, NUM_CHARS);
+            StringLength = NMath::Clamp<SizeType>(0, NUM_CHARS - 1, StringLength - Index);
             FCStringType::Strnmove(CharData, CharData + Index, StringLength);
         }
     }
@@ -325,7 +325,7 @@ public:
      */
     FORCEINLINE void TrimEndInline() noexcept
     {
-        while (StringLength > 0 && FCharType::IsWhitespace(CharData[StringLength]))
+        while (StringLength > 0 && FCharType::IsWhitespace(CharData[StringLength - 1]))
         {
             StringLength--;
         }
@@ -349,13 +349,14 @@ public:
      */
     FORCEINLINE void ReverseInline() noexcept
     {
-        for (CHARTYPE* RESTRICT Start = CharData.Data(), *RESTRICT End = Start + StringLength; Start < End; ++Start)
-        {
-            --End;
-            const CHARTYPE TempChar = *Start;
-            *End   = *Start;
-            *Start = TempChar;
-        }
+		const SizeType HalfLength = StringLength / 2;
+		for (SizeType Index = 0; Index < HalfLength; ++Index)
+		{
+			const SizeType ReverseIndex = StringLength - Index - 1;
+            const CHARTYPE TempChar = CharData[Index];
+            CharData[Index] = CharData[ReverseIndex];
+            CharData[ReverseIndex] = TempChar;
+		}
     }
 
     /**
@@ -381,7 +382,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring
+     * @brief          - Compares this string with a c-string
      * @param InString - String to compare with
      * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
      */
@@ -398,7 +399,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring of a fixed length
+     * @brief          - Compares this string with a c-string of a fixed length
      * @param InString - String to compare with
      * @param InLength - Length of the string to compare
      * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -429,7 +430,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring
+     * @brief          - Compares this string with a c-string
      * @param InString - String to compare with
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
      * @return         - Returns true if the strings are equal
@@ -440,7 +441,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring of a fixed length
+     * @brief          - Compares this string with a c-string of a fixed length
      * @param InString - String to compare with
      * @param InLength - Length of the string to compare
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
@@ -459,7 +460,7 @@ public:
         }
         else if (CaseType == EStringCaseType::NoCase)
         {
-            return FCStringType::Strnicmp(CharData, InString, StringLength == 0;
+            return FCStringType::Strnicmp(CharData, InString, StringLength) == 0;
         }
         else
         {
@@ -475,7 +476,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const CHARTYPE* InString, SizeType Position = INVALID_INDEX) const noexcept
     {
-        if (InLength == 0 || !StringLength)
+        if (!StringLength)
         {
             return 0;
         }
@@ -500,8 +501,6 @@ public:
         {
             return static_cast<SizeType>(static_cast<intptr>(Result - CharData));
         }
-
-        return 0;
     }
 
     /**
@@ -529,17 +528,17 @@ public:
             return 0;
         }
 
-        const CHARTYPE* RESTRICT Current = CharData.Data();
+        const CHARTYPE* RESTRICT Current = CharData;
         if (Position != INVALID_INDEX && StringLength > 0)
         {
             Current += NMath::Clamp(0, StringLength - 1, Position);
         }
 
-        for (const CHARTYPE* RESTRICT End = CharData.Data() + StringLength; Current != End; ++Current)
+        for (const CHARTYPE* RESTRICT End = CharData + StringLength; Current != End; ++Current)
         {
-            if (CharData[Index] == Char)
+            if (*Current == Char)
             {
-                return static_cast<SizeType>(static_cast<intptr>(Current - CharData.Data()));
+                return static_cast<SizeType>(static_cast<intptr>(Current - CharData));
             }
         }
 
@@ -560,17 +559,17 @@ public:
             return 0;
         }
 
-        const CHARTYPE* RESTRICT Current = CharData.Data();
+        const CHARTYPE* RESTRICT Current = CharData;
         if (Position != INVALID_INDEX && StringLength > 0)
         {
             Current += NMath::Clamp(0, StringLength - 1, Position);
         }
 
-        for (const CHARTYPE *RESTRICT End = CharData.Data() + StringLength; Current != End; ++Current)
+        for (const CHARTYPE *RESTRICT End = CharData + StringLength; Current != End; ++Current)
         {
             if (Predicate(*Current))
             {
-                return static_cast<SizeType>(static_cast<intptr>(Current - CharData.Data()));
+                return static_cast<SizeType>(static_cast<intptr>(Current - CharData));
             }
         }
 
@@ -595,16 +594,16 @@ public:
             return INVALID_INDEX;
         }
 
-        if (Position == INVALID_INDEX && Position > StringLength)
+        if (Position == INVALID_INDEX || Position > StringLength)
         {
             Position = StringLength;
         }
 
         const SizeType SearchLength = FCStringType::Strlen(InString);
-        for (SizeType Index = Position - SearchLength; Index >= 0; Index++)
+        for (SizeType Index = Position - SearchLength; Index >= 0; Index--)
         {
             SizeType SearchIndex = 0;
-            for (; SearchIndex < InLength; ++SearchIndex)
+            for (; SearchIndex < SearchLength; ++SearchIndex)
             {
                 if (CharData[Index + SearchIndex] != InString[SearchIndex])
                 {
@@ -646,13 +645,13 @@ public:
             return 0;
         }
 
-        const CHARTYPE* RESTRICT Current = CharData.Data();
-        if (Position != INVALID_INDEX && StringLength > 0)
-        {
-            Current += NMath::Clamp(0, StringLength - 1, Position);
-        }
+        const CHARTYPE* RESTRICT Current = CharData;
+		if (Position == INVALID_INDEX || Position > StringLength)
+		{
+			Current += StringLength;
+		}
 
-        for (const CHARTYPE* RESTRICT End = CharData.Data(); Current != End;)
+        for (const CHARTYPE* RESTRICT End = CharData; Current != End;)
         {
             --Current;
             if (Char == *Current)
@@ -678,13 +677,13 @@ public:
             return 0;
         }
 
-        const CHARTYPE* RESTRICT Current = CharData.Data();
-        if (Position != INVALID_INDEX && StringLength > 0)
-        {
-            Current += NMath::Clamp(0, StringLength - 1, Position);
-        }
+        const CHARTYPE* RESTRICT Current = CharData;
+		if (Position == INVALID_INDEX || Position > StringLength)
+		{
+			Current += StringLength;
+		}
 
-        for (const CHARTYPE* RESTRICT End = CharData.Data(); Current != End;)
+        for (const CHARTYPE* RESTRICT End = CharData; Current != End;)
         {
             --Current;
             if (Predicate(*Current))
@@ -776,11 +775,11 @@ public:
             const CHARTYPE* StringData = CharData + (StringLength - SuffixLength);
             if (SearchType == EStringCaseType::CaseSensitive)
             {
-                return FCStringType::Strncmp(CharData, InString, SuffixLength) == 0;
+                return FCStringType::Strncmp(StringData, InString, SuffixLength) == 0;
             }
             else if (SearchType == EStringCaseType::NoCase)
             {
-                return FCStringType::Strnicmp(CharData, InString, SuffixLength) == 0;
+                return FCStringType::Strnicmp(StringData, InString, SuffixLength) == 0;
             }
         }
 

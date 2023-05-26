@@ -70,7 +70,7 @@ bool TStaticArray_Test()
         std::cout << Number << std::endl;
     }
 
-    Numbers1.Swap(Numbers2);
+    ::Swap(Numbers1, Numbers2);
 
     TEST_CHECK(Numbers1.LastElementIndex() == ((Num2 > 0) ? (Num2 - 1) : 0));
     TEST_CHECK(Numbers1.Size()             == Num2);

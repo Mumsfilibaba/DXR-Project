@@ -15,25 +15,25 @@ class TVariant
     template<TypeIndexType CurrentIndex, typename WantedType, typename... OtherTypes>
     struct TVariantIndexHelper
     {
-        enum { Value = InvalidTypeIndex };
+        inline static constexpr TypeIndexType Value = InvalidTypeIndex;
     };
 
     template<TypeIndexType CurrentIndex, typename WantedType, typename ElementType, typename... OtherTypes>
     struct TVariantIndexHelper<CurrentIndex, WantedType, ElementType, OtherTypes...> 
     {
-        enum { Value = TVariantIndexHelper<CurrentIndex + 1, WantedType, OtherTypes...>::Value };
+        inline static constexpr TypeIndexType Value = TVariantIndexHelper<CurrentIndex + 1, WantedType, OtherTypes...>::Value;
     };
 
     template<TypeIndexType CurrentIndex, typename WantedType, typename... OtherTypes>
     struct TVariantIndexHelper<CurrentIndex, WantedType, WantedType, OtherTypes...>
     {
-        enum { Value = CurrentIndex };
+        inline static constexpr TypeIndexType Value = CurrentIndex;
     };
 
     template<typename WantedType>
     struct TVariantIndex
     {
-        enum { Value = TVariantIndexHelper<0, WantedType, Types...>::Value };
+        inline static constexpr TypeIndexType Value = TVariantIndexHelper<0, WantedType, Types...>::Value;
     };
 
 
@@ -160,14 +160,14 @@ class TVariant
     template<typename T>
     struct TIsValidType
     {
-        enum { Value = (TVariantIndex<T>::Value != InvalidTypeIndex) ? true : false };
+        inline static constexpr bool Value = (TVariantIndex<T>::Value != InvalidTypeIndex) ? true : false;
     };
 
 
     template<TypeIndexType Index>
     struct TIsValidIndex
     {
-        enum { Value = (Index < MaxTypeIndex) ? true : false };
+        inline static constexpr bool Value = (TVariantIndex<T>::Value != InvalidTypeIndex) ? true : false;
     };
 
 public:
@@ -187,8 +187,6 @@ public:
      */
     template<typename T, typename... ArgTypes>
     FORCEINLINE explicit TVariant(TInPlaceType<T>, ArgTypes&&... Args)
-        : Value()
-        , TypeIndex()
     {
         static_assert(TIsValidType<T>::Value, "This TVariant is not specified to hold the specified type");
         Construct<T>(::Forward<ArgTypes>(Args)...);
@@ -200,11 +198,8 @@ public:
      */
     template<TypeIndexType InIndex, typename... ArgTypes>
     FORCEINLINE explicit TVariant(TInPlaceIndex<InIndex>, ArgTypes&&... Args)
-        : Value()
-        , TypeIndex()
     {
         static_assert(TIsValidIndex<InIndex>::Value, "Specified index is not valid with this TVariant");
-
         typedef typename TVariantType<InIndex>::Type ConstructType;
         Construct<ConstructType>(::Forward<ArgTypes>(Args)...);
     }
@@ -214,8 +209,7 @@ public:
      * @param Other - Variant to copy from
      */
     FORCEINLINE TVariant(const TVariant& Other) noexcept
-        : Value()
-        , TypeIndex(Other.TypeIndex)
+        : TypeIndex(Other.TypeIndex)
     {
         if (Other.IsValid())
         {
@@ -228,8 +222,7 @@ public:
      * @param Other - Variant to move from
      */
     FORCEINLINE TVariant(TVariant&& Other) noexcept
-        : Value()
-        , TypeIndex(Other.TypeIndex)
+        : TypeIndex(Other.TypeIndex)
     {
         if (Other.IsValid())
         {
@@ -255,7 +248,7 @@ public:
     FORCEINLINE T& Emplace(ArgTypes&&... Args) noexcept requires(TIsValidType<T>::Value)
     {
         Reset();
-        Construct<T>(Forward<ArgTypes>(Args)...);
+        Construct<T>(::Forward<ArgTypes>(Args)...);
         return *reinterpret_cast<T*>(Value.Data);
     }
 
@@ -299,7 +292,7 @@ public:
     template<typename T>
     NODISCARD FORCEINLINE bool IsType() const noexcept requires(TIsValidType<T>::Value)
     {
-        return (TypeIndex == TVariantIndex<T>::Value);
+        return TypeIndex == TVariantIndex<T>::Value;
     }
 
     /**
@@ -359,7 +352,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (TypeIndex != InvalidTypeIndex);
+        return TypeIndex != InvalidTypeIndex;
     }
 
 public:

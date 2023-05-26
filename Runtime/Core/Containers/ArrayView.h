@@ -117,11 +117,11 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
     {
-        for (const ElementType* RESTRICT Start = View, *RESTRICT Current = Start, *RESTRICT End = Start + ViewSize; Current != End; ++Current)
+        for (const ElementType* RESTRICT Current = View, *RESTRICT End = View + ViewSize; Current != End; ++Current)
         {
             if (Element == *Current)
             {
-                return static_cast<SizeType>(Current - Start);
+                return static_cast<SizeType>(Current - View);
             }
         }
 
@@ -136,11 +136,11 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        for (const ElementType* RESTRICT Start = View, *RESTRICT Current = Start, *RESTRICT End = Start + ViewSize; Current != End; ++Current)
+        for (const ElementType* RESTRICT Current = View, *RESTRICT End = View + ViewSize; Current != End; ++Current)
         {
             if (Predicate(*Current))
             {
-                return static_cast<SizeType>(Current - Start);
+                return static_cast<SizeType>(Current - View);
             }
         }
 
@@ -154,7 +154,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
     {
-        for (const ElementType* RESTRICT Current = View + ViewSize, *RESTRICT End = Start; Current != End;)
+        for (const ElementType* RESTRICT Current = View + ViewSize, *RESTRICT End = View; Current != End;)
         {
             --Current;
             if (Element == *Current)
@@ -174,7 +174,7 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
     {
-        for (const ElementType* RESTRICT Current = View + ViewSize, *RESTRICT End = Start; Current != End;)
+        for (const ElementType* RESTRICT Current = View + ViewSize, *RESTRICT End = View; Current != End;)
         {
             --Current;
             if (Predicate(*Current))

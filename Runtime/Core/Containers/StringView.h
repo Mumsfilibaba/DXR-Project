@@ -154,7 +154,7 @@ public:
     FORCEINLINE void TrimStartInline() noexcept
     {
         const CHARTYPE* RESTRICT Current = ViewStart;
-        for (; Current != ViewEnd && *Current; ++Current)
+        for (; Current != ViewEnd; ++Current)
         {
             if (!TChar<CHARTYPE>::IsWhitespace(*Current))
             {
@@ -182,10 +182,10 @@ public:
     FORCEINLINE void TrimEndInline() noexcept
     {
         const CHARTYPE* RESTRICT Current = ViewEnd;
-        for (; Current != ViewStart && *Current;)
+        for (; Current > ViewStart; --Current)
         {
-            --Current;
-            if (!TChar<CHARTYPE>::IsWhitespace(*Current))
+            const CHARTYPE* RESTRICT CurrentChar = Current - 1;
+            if (!TChar<CHARTYPE>::IsWhitespace(*CurrentChar))
             {
                 break;
             }
@@ -265,7 +265,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring
+     * @brief          - Compares this string with a c-string
      * @param InString - String to compare with
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
      * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -283,7 +283,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring of a fixed length
+     * @brief          - Compares this string with a c-string of a fixed length
      * @param InString - String to compare with
      * @param InLength - Length of the string to compare
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
@@ -315,7 +315,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring
+     * @brief          - Compares this string with a c-string
      * @param InString - String to compare with
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
      * @return         - Returns true if the strings are equal
@@ -326,7 +326,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring of a fixed length
+     * @brief          - Compares this string with a c-string of a fixed length
      * @param InString - String to compare with
      * @param InLength - Length of the string to compare
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
@@ -380,10 +380,10 @@ public:
         }
 
         const SizeType SearchLength = FCStringType::Strlen(InString);
-        for (SizeType Index = Position; Index < CurrentLength; Index++)
+        for (; Index < CurrentLength; Index++)
         {
             SizeType SearchIndex = 0;
-            for (; SearchIndex < InLength; ++SearchIndex)
+            for (; SearchIndex < SearchLength; ++SearchIndex)
             {
                 if (ViewStart[Index + SearchIndex] != InString[SearchIndex])
                 {
@@ -494,16 +494,16 @@ public:
             return INVALID_INDEX;
         }
 
-        if (Position == INVALID_INDEX && Position > CurrentLength)
+        if (Position == INVALID_INDEX || Position > CurrentLength)
         {
             Position = CurrentLength;
         }
 
         const SizeType SearchLength = FCStringType::Strlen(InString);
-        for (SizeType Index = Position - SearchLength; Index >= 0; Index++)
+        for (SizeType Index = Position - SearchLength; Index >= 0; Index--)
         {
             SizeType SearchIndex = 0;
-            for (; SearchIndex < InLength; ++SearchIndex)
+            for (; SearchIndex < SearchLength; ++SearchIndex)
             {
                 if (ViewStart[Index + SearchIndex] != InString[SearchIndex])
                 {
@@ -547,10 +547,10 @@ public:
         }
 
         const CHARTYPE* RESTRICT Current = ViewStart;
-        if (Position != INVALID_INDEX && CurrentLength > 0)
-        {
-            Current += NMath::Clamp(0, CurrentLength - 1, Position);
-        }
+		if (Position == INVALID_INDEX || Position > CurrentLength)
+		{
+			Current += CurrentLength;
+		}
 
         for (const CHARTYPE* RESTRICT End = ViewStart; Current != End;)
         {
@@ -580,10 +580,10 @@ public:
         }
 
         const CHARTYPE* RESTRICT Current = ViewStart;
-        if (Position != INVALID_INDEX && CurrentLength > 0)
-        {
-            Current += NMath::Clamp(0, CurrentLength - 1, Position);
-        }
+		if (Position == INVALID_INDEX || Position > CurrentLength)
+		{
+			Current += CurrentLength;
+		}
 
         for (const CHARTYPE* RESTRICT End = ViewStart; Current != End;)
         {
@@ -605,7 +605,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Contains(const CHARTYPE* InString, SizeType Position = INVALID_INDEX) const noexcept
     {
-        return Find(InString, FCStringType::Strlen(InString), Position) != INVALID_INDEX;
+        return Find(InString, Position) != INVALID_INDEX;
     }
 
     /**
@@ -680,11 +680,11 @@ public:
             const CHARTYPE* StringData = ViewStart + (CurrentLength - SuffixLength);
             if (SearchType == EStringCaseType::CaseSensitive)
             {
-                return FCStringType::Strncmp(ViewStart, InString, SuffixLength) == 0;
+                return FCStringType::Strncmp(StringData, InString, SuffixLength) == 0;
             }
             else if (SearchType == EStringCaseType::NoCase)
             {
-                return FCStringType::Strnicmp(ViewStart, InString, SuffixLength) == 0;
+                return FCStringType::Strnicmp(StringData, InString, SuffixLength) == 0;
             }
         }
 

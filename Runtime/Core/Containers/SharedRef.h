@@ -11,7 +11,7 @@ public:
     friend class TSharedRef;
 
     /** @brief -  Default constructor that set the pointer to nullptr */
-    TSharedRef() noexcept = default
+    TSharedRef() noexcept = default;
 
     /**
      * @brief       - Copy-constructor

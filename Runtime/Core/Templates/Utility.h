@@ -227,7 +227,7 @@ constexpr T&& Forward(typename TRemoveReference<T>::Type&& Value) noexcept
 
 // Swap Elements
 template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsConst<T>>::Value>::Type Swap(T& LHS, T& RHS) noexcept
+constexpr void Swap(T& LHS, T& RHS) noexcept requires(TNot<TIsConst<T>>::Value)
 {
     T TempElement = ::Move(LHS);
     LHS = ::Move(RHS);

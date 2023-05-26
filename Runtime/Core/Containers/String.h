@@ -69,7 +69,7 @@ public:
     TString() noexcept = default;
 
     /**
-     * @brief          - Create a string from a cstring
+     * @brief          - Create a string from a c-string
      * @param InString - String to copy
      */
     FORCEINLINE TString(const CHARTYPE* InString) noexcept
@@ -78,7 +78,7 @@ public:
     }
 
     /**
-     * @brief          - Create a string from a cstring
+     * @brief          - Create a string from a c-string
      * @param InSlack  - Extra number of characters to allocate
      * @param InString - String to copy
      */
@@ -97,7 +97,7 @@ public:
     }
 
     /**
-     * @brief          - Create a string from a specified length cstring
+     * @brief          - Create a string from a specified length c-string
      * @param InString - String to copy
      * @param InLength - Length of the string to copy
      */
@@ -183,7 +183,7 @@ public:
      */
     FORCEINLINE void Reset(SizeType NewLength = 0) noexcept
     {
-        const SizeType NewSizeWithZero = (NewLength) ? (NewLength + 1) : 0;
+        const SizeType NewSizeWithZero = NewLength ? (NewLength + 1) : 0;
         CharData.Reset(NewSizeWithZero);
         if (NewSizeWithZero)
         {
@@ -225,14 +225,16 @@ public:
      */
     FORCEINLINE void Append(CHARTYPE Char) noexcept
     {
-        const SizeType PreviousLength = Length();
-        CharData.AppendUninitialized(1);
-        CharData[PreviousLength]     = Char;
-        CharData[PreviousLength + 1] = 0;
+		// Need to take into account that there is a possibility that the only current character is null
+        const SizeType NumUninitialized = CharData.IsEmpty() ? 2 : 1;
+		const SizeType OldLength = Length();
+        CharData.AppendUninitialized(NumUninitialized);
+        CharData[OldLength]     = Char;
+        CharData[OldLength + 1] = 0;
     }
 
     /**
-     * @brief          - Appends a cstring to this string
+     * @brief          - Appends a c-string to this string
      * @param InString - String to append
      */
     FORCEINLINE void Append(const CHARTYPE* InString) noexcept
@@ -251,7 +253,7 @@ public:
     }
 
     /**
-     * @brief          - Appends a cstring to this string with a fixed length
+     * @brief          - Appends a c-string to this string with a fixed length
      * @param InString - String to append
      * @param InLength - Length of the string
      */
@@ -259,8 +261,11 @@ public:
     {
         if (InString && InLength > 0)
         {
-            CharData.AppendUninitialized(InLength);
-            FCStringType::Strncpy(CharData.Data() + Length(), InString, InLength);
+            // Need to take into account that there is a possibility that the only current character is null
+            const SizeType NumUninitialized = CharData.IsEmpty() ? InLength + 1: InLength;
+            const SizeType OldLength = Length();
+            CharData.AppendUninitialized(NumUninitialized);
+            FCStringType::Strncpy(CharData.Data() + OldLength, InString, InLength);
             CharData[Length()] = 0;
         }
     }
@@ -370,7 +375,7 @@ public:
 
         const SizeType WrittenLength = FCStringType::Strlen(WrittenString);
         const SizeType OldSize       = Length();
-        const SizeType NewSize       = OldSize ? WrittenLength + 1 : WrittenLength;
+        const SizeType NewSize       = (OldSize > 0) ? WrittenLength : WrittenLength + 1;
         CharData.AppendUninitialized(NewSize);
 
         FCStringType::Strncpy(CharData.Data() + OldSize, WrittenString, WrittenLength);
@@ -489,7 +494,7 @@ public:
     {
         const SizeType OldLength = Length();
         SizeType NewLength = OldLength;
-        while (NewLength > 0 && FCharType::IsWhitespace(CharData[NewLength]))
+        while (NewLength > 0 && FCharType::IsWhitespace(CharData[NewLength - 1]))
         {
             NewLength--;
         }
@@ -513,13 +518,17 @@ public:
      */
     FORCEINLINE void ReverseInline() noexcept
     {
-        for (CHARTYPE* RESTRICT Start = CharData.Data(), *RESTRICT End = Start + Length(); Start < End; ++Start)
-        {
-            --End;
-            const CHARTYPE TempChar = *Start;
-            *End   = *Start;
-            *Start = TempChar;
-        }
+        const SizeType CurrentLength = Length();
+		const SizeType HalfLength = CurrentLength / 2;
+
+        CHARTYPE* StringData = CharData.Data();
+		for (SizeType Index = 0; Index < HalfLength; ++Index)
+		{
+			const SizeType ReverseIndex = CurrentLength - Index - 1;
+			const CHARTYPE TempChar = StringData[Index];
+            StringData[Index] = StringData[ReverseIndex];
+            StringData[ReverseIndex] = TempChar;
+		}
     }
 
     /**
@@ -535,7 +544,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring
+     * @brief          - Compares this string with a c-string
      * @param InString - String to compare with
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
      * @return         - Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -553,7 +562,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring of a fixed length
+     * @brief          - Compares this string with a c-string of a fixed length
      * @param InString - String to compare with
      * @param InLength - Length of the string to compare
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
@@ -585,7 +594,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring
+     * @brief          - Compares this string with a c-string
      * @param InString - String to compare with
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
      * @return         - Returns true if the strings are equal
@@ -596,7 +605,7 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a cstring of a fixed length
+     * @brief          - Compares this string with a c-string of a fixed length
      * @param InString - String to compare with
      * @param InLength - Length of the string to compare
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
@@ -633,7 +642,7 @@ public:
     NODISCARD FORCEINLINE SizeType Find(const CHARTYPE* InString, SizeType Position = INVALID_INDEX) const noexcept
     {
         const SizeType CurrentLength = Length();
-        if (InLength == 0 || !CurrentLength)
+        if (!CurrentLength)
         {
             return 0;
         }
@@ -658,8 +667,6 @@ public:
         {
             return static_cast<SizeType>(static_cast<intptr>(Result - CharData.Data()));
         }
-
-        return 0;
     }
 
     /**
@@ -756,16 +763,16 @@ public:
             return INVALID_INDEX;
         }
 
-        if (Position == INVALID_INDEX && Position > CurrentLength)
+        if (Position == INVALID_INDEX || Position > CurrentLength)
         {
             Position = CurrentLength;
         }
 
         const SizeType SearchLength = FCStringType::Strlen(InString);
-        for (SizeType Index = Position - SearchLength; Index >= 0; Index++)
+        for (SizeType Index = Position - SearchLength; Index >= 0; Index--)
         {
             SizeType SearchIndex = 0;
-            for (; SearchIndex < InLength; ++SearchIndex)
+            for (; SearchIndex < SearchLength; ++SearchIndex)
             {
                 if (CharData[Index + SearchIndex] != InString[SearchIndex])
                 {
@@ -809,10 +816,10 @@ public:
         }
 
         const CHARTYPE* RESTRICT Current = CharData.Data();
-        if (Position != INVALID_INDEX && CurrentLength > 0)
-        {
-            Current += NMath::Clamp(0, CurrentLength - 1, Position);
-        }
+		if (Position == INVALID_INDEX || Position > CurrentLength)
+		{
+            Current += CurrentLength;
+		}
 
         for (const CHARTYPE* RESTRICT End = CharData.Data(); Current != End;)
         {
@@ -842,10 +849,10 @@ public:
         }
 
         const CHARTYPE* RESTRICT Current = CharData.Data();
-        if (Position != INVALID_INDEX && CurrentLength > 0)
-        {
-            Current += NMath::Clamp(0, CurrentLength - 1, Position);
-        }
+		if (Position == INVALID_INDEX || Position > CurrentLength)
+		{
+			Current += CurrentLength;
+		}
 
         for (const CHARTYPE* RESTRICT End = CharData.Data(); Current != End;)
         {
@@ -942,11 +949,11 @@ public:
             const CHARTYPE* StringData = CharData.Data() + (CurrentLength - SuffixLength);
             if (SearchType == EStringCaseType::CaseSensitive)
             {
-                return FCStringType::Strncmp(CharData.Data(), InString, SuffixLength) == 0;
+                return FCStringType::Strncmp(StringData, InString, SuffixLength) == 0;
             }
             else if (SearchType == EStringCaseType::NoCase)
             {
-                return FCStringType::Strnicmp(CharData.Data(), InString, SuffixLength) == 0;
+                return FCStringType::Strnicmp(StringData, InString, SuffixLength) == 0;
             }
         }
 
@@ -1259,7 +1266,7 @@ public:
     }
 
     /**
-     * @brief       - Appends a cstring to this string
+     * @brief       - Appends a c-string to this string
      * @param Other - String to append
      * @return      - Returns a reference to this instance
      */
@@ -1378,7 +1385,7 @@ public:
         TString NewString(NewLength);
         
         // Copy the Char and String directly to avoid overhead
-        const CHARTYPE* StringData = NewString.Data();
+        CHARTYPE* StringData = NewString.Data();
         StringData[0] = LHS;
         FCStringType::Strncpy(StringData + 1, RHS.Data(), RHS.Length());
         StringData[NewLength] = 0;
@@ -1542,7 +1549,7 @@ private:
     {
         if (InString && InLength)
         {
-            CharData.Reserve(InLength + InSlack + 1)
+            CharData.Reserve(InLength + InSlack + 1);
             CharData.AppendUninitialized(InLength + 1);
             FCStringType::Strncpy(CharData.Data(), InString, InLength);
             CharData[InLength] = 0;

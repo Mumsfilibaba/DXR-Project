@@ -79,14 +79,24 @@ bool TString_Test_Internal(const CHAR* Args)
 
         FString String2 = FString(Args, 7);
         TEST_CHECK_STRING_N(String2, Args, 7);
+		TEST_CHECK(String2.Length()   == 7);
+		TEST_CHECK(String2.Capacity() == 8);
 
         FString String3 = FString(StringView);
         TEST_CHECK_STRING(String3, "Hello FStringView");
+		TEST_CHECK(String3.Length() == 17);
+		TEST_CHECK(String3.Capacity() == 18);
+
         FString String4 = String1;
         TEST_CHECK_STRING(String4, "Hello String");
-        FString String5 = Move(String2);
+		TEST_CHECK(String4.Length()   == 12);
+		TEST_CHECK(String4.Capacity() == 13);
+        
+        FString String5 = ::Move(String2);
         TEST_CHECK_STRING(String2, "");
         TEST_CHECK_STRING_N(String5, Args, 7);
+		TEST_CHECK(String5.Length()   == 7);
+		TEST_CHECK(String5.Capacity() == 8);
 
         String0.Append("Appended String");
         TEST_CHECK_STRING(String0, "Appended String");
@@ -137,18 +147,18 @@ bool TString_Test_Internal(const CHAR* Args)
         String7.Reset(12);
         TEST_CHECK(String7.Size()     == 12);
         TEST_CHECK(String7.Capacity() == 13);
-        TEST_CHECK_STRING(String7, "");
+        TEST_CHECK(TCString<CHAR>::Strcmp(String7.GetCString(), "") == 0);
 
         FString SearchString = "0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, "0123MeSearch89Me89");
-        TEST_CHECK(SearchString.Find("Me")                 == 4);
-        TEST_CHECK(SearchString.FindChar('M')              == 4);
-        TEST_CHECK(SearchString.Contains("Me")             == true);
-        TEST_CHECK(SearchString.Contains('M')              == true);
-        TEST_CHECK(SearchString.StartsWith("0123Me")       == true);
-        TEST_CHECK(SearchString.StartsWithNoCase("0123ME") == true);
-        TEST_CHECK(SearchString.EndsWith("Me89")           == true);
-        TEST_CHECK(SearchString.EndsWithNoCase("ME89")     == true);
+        TEST_CHECK(SearchString.Find("Me")                                    == 4);
+        TEST_CHECK(SearchString.FindChar('M')                                 == 4);
+        TEST_CHECK(SearchString.Contains("Me")                                == true);
+        TEST_CHECK(SearchString.Contains('M')                                 == true);
+        TEST_CHECK(SearchString.StartsWith("0123Me")                          == true);
+        TEST_CHECK(SearchString.StartsWith("0123ME", EStringCaseType::NoCase) == true);
+        TEST_CHECK(SearchString.EndsWith("Me89")                              == true);
+        TEST_CHECK(SearchString.EndsWith("ME89", EStringCaseType::NoCase)     == true);
         
         TEST_CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
         {
@@ -205,13 +215,13 @@ bool TString_Test_Internal(const CHAR* Args)
         TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK_STRING(CompareString1, "compare");
+        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CompareString1.Resize(20);
-        TEST_CHECK_STRING(CompareString1, "compare");
+        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK_STRING(CompareString1, "compare");
+        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CHAR Buffer[6];
         Buffer[5] = 0;
@@ -361,18 +371,18 @@ bool TString_Test_Internal(const CHAR* Args)
         String7.Reset(12);
         TEST_CHECK(String7.Size()     == 12);
         TEST_CHECK(String7.Capacity() == 13);
-        TEST_CHECK_STRING(String7, L"");
+        TEST_CHECK(TCString<WIDECHAR>::Strncmp(String7.GetCString(), L"", 0) == 0);
 
         FStringWide SearchString = L"0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, L"0123MeSearch89Me89");
-        TEST_CHECK(SearchString.Find(L"Me")                 == 4);
-        TEST_CHECK(SearchString.FindChar(L'M')              == 4);
-        TEST_CHECK(SearchString.Contains(L"Me")             == true);
-        TEST_CHECK(SearchString.Contains(L'M')              == true);
-        TEST_CHECK(SearchString.StartsWith(L"0123Me")       == true);
-        TEST_CHECK(SearchString.StartsWithNoCase(L"0123ME") == true);
-        TEST_CHECK(SearchString.EndsWith(L"Me89")           == true);
-        TEST_CHECK(SearchString.EndsWithNoCase(L"ME89")     == true);
+        TEST_CHECK(SearchString.Find(L"Me")                                    == 4);
+        TEST_CHECK(SearchString.FindChar(L'M')                                 == 4);
+        TEST_CHECK(SearchString.Contains(L"Me")                                == true);
+        TEST_CHECK(SearchString.Contains(L'M')                                 == true);
+        TEST_CHECK(SearchString.StartsWith(L"0123Me")                          == true);
+        TEST_CHECK(SearchString.StartsWith(L"0123ME", EStringCaseType::NoCase) == true);
+        TEST_CHECK(SearchString.EndsWith(L"Me89")                              == true);
+        TEST_CHECK(SearchString.EndsWith(L"ME89", EStringCaseType::NoCase)     == true);
 
         TEST_CHECK(SearchString.FindCharWithPredicate([](WIDECHAR Char) -> bool
         {
@@ -429,13 +439,13 @@ bool TString_Test_Internal(const CHAR* Args)
         TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK_STRING(CompareString1, L"compare");
+        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         CompareString1.Resize(20);
-        TEST_CHECK_STRING(CompareString1, L"compare");
+        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK_STRING(CompareString1, L"compare");
+        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         WIDECHAR Buffer[6];
         Buffer[5] = 0;
@@ -557,17 +567,18 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         FStaticString<64> UpperStaticString6 = StaticString6.ToUpper();
         TEST_CHECK_STRING(UpperStaticString6, "FORMATTED STRING=0.0040_FORMATTED STRING=0.0077");
 
-        StaticString6.Clear();
+        StaticString6.Reset();
         TEST_CHECK_STRING(StaticString6, "");
 
         StaticString6.Append("    Trimmable String    ");
         TEST_CHECK_STRING(StaticString6, "    Trimmable String    ");
 
         FStaticString<64> TrimmedStaticString6 = StaticString6.Trim();
+        TEST_CHECK_STRING(TrimmedStaticString6, "Trimmable String");
         TrimmedStaticString6.Append('*');
         TEST_CHECK_STRING(TrimmedStaticString6, "Trimmable String*");
 
-        StaticString6.Clear();
+        StaticString6.Reset();
         TEST_CHECK_STRING(StaticString6, "");
 
         StaticString6.Append("123456789");
@@ -579,14 +590,14 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         FStaticString<64> SearchString = "0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, "0123MeSearch89Me89");
 
-        TEST_CHECK(SearchString.Find("Me")                 == 4);
-        TEST_CHECK(SearchString.FindChar('M')                 == 4);
-        TEST_CHECK(SearchString.Contains("Me")             == true);
-        TEST_CHECK(SearchString.Contains('M')                 == true);
-        TEST_CHECK(SearchString.StartsWith("0123Me")       == true);
-        TEST_CHECK(SearchString.StartsWithNoCase("0123ME") == true);
-        TEST_CHECK(SearchString.EndsWith("Me89")           == true);
-        TEST_CHECK(SearchString.EndsWithNoCase("ME89")     == true);
+        TEST_CHECK(SearchString.Find("Me")                                    == 4);
+        TEST_CHECK(SearchString.FindChar('M')                                 == 4);
+        TEST_CHECK(SearchString.Contains("Me")                                == true);
+        TEST_CHECK(SearchString.Contains('M')                                 == true);
+        TEST_CHECK(SearchString.StartsWith("0123Me")                          == true);
+        TEST_CHECK(SearchString.StartsWith("0123ME", EStringCaseType::NoCase) == true);
+        TEST_CHECK(SearchString.EndsWith("Me89")                              == true);
+        TEST_CHECK(SearchString.EndsWith("ME89", EStringCaseType::NoCase)     == true);
 
         TEST_CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
         {
@@ -640,17 +651,17 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         FStaticString<64> CompareString1 = "compare";
         TEST_CHECK_STRING(CompareString1, "compare");
 
-        TEST_CHECK(CompareString0.Compare(CompareString1)       != 0);
-        TEST_CHECK(CompareString0.CompareNoCase(CompareString1) == 0);
+        TEST_CHECK(CompareString0.Compare(CompareString1)                          != 0);
+        TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK_STRING(CompareString1, "compare");
+        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CompareString1.Resize(20);
-        TEST_CHECK_STRING(CompareString1, "compare");
+        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK_STRING(CompareString1, "compare");
+        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CHAR Buffer[6];
         Buffer[5] = 0;
@@ -767,7 +778,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         FStaticStringWide<64> UpperStaticString6 = StaticString6.ToUpper();
         TEST_CHECK_STRING(UpperStaticString6, L"FORMATTED STRING=0.0040_FORMATTED STRING=0.0077");
 
-        StaticString6.Clear();
+        StaticString6.Reset();
         TEST_CHECK_STRING(StaticString6, L"");
 
         StaticString6.Append(L"    Trimmable String    ");
@@ -777,7 +788,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         TrimmedStaticString6.Append(L'*');
         TEST_CHECK_STRING(TrimmedStaticString6, L"Trimmable String*");
 
-        StaticString6.Clear();
+        StaticString6.Reset();
         TEST_CHECK_STRING(StaticString6, L"");
 
         StaticString6.Append(L"123456789");
@@ -789,14 +800,14 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         FStaticStringWide<64> SearchString = L"0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, L"0123MeSearch89Me89");
 
-        TEST_CHECK(SearchString.Find(L"Me")                 == 4);
-        TEST_CHECK(SearchString.FindChar(L'M')              == 4);
-        TEST_CHECK(SearchString.Contains(L"Me")             == true);
-        TEST_CHECK(SearchString.Contains(L'M')              == true);
-        TEST_CHECK(SearchString.StartsWith(L"0123Me")       == true);
-        TEST_CHECK(SearchString.StartsWithNoCase(L"0123ME") == true);
-        TEST_CHECK(SearchString.EndsWith(L"Me89")           == true);
-        TEST_CHECK(SearchString.EndsWithNoCase(L"ME89")     == true);
+        TEST_CHECK(SearchString.Find(L"Me")                                    == 4);
+        TEST_CHECK(SearchString.FindChar(L'M')                                 == 4);
+        TEST_CHECK(SearchString.Contains(L"Me")                                == true);
+        TEST_CHECK(SearchString.Contains(L'M')                                 == true);
+        TEST_CHECK(SearchString.StartsWith(L"0123Me")                          == true);
+        TEST_CHECK(SearchString.StartsWith(L"0123ME", EStringCaseType::NoCase) == true);
+        TEST_CHECK(SearchString.EndsWith(L"Me89")                              == true);
+        TEST_CHECK(SearchString.EndsWith(L"ME89", EStringCaseType::NoCase)     == true);
 
         TEST_CHECK(SearchString.FindCharWithPredicate([](WIDECHAR Char) -> bool
         {
@@ -850,17 +861,17 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         FStaticStringWide<64> CompareString1 = L"compare";
         TEST_CHECK_STRING(CompareString1, L"compare");
 
-        TEST_CHECK(CompareString0.Compare(CompareString1)       != 0);
-        TEST_CHECK(CompareString0.CompareNoCase(CompareString1) == 0);
+        TEST_CHECK(CompareString0.Compare(CompareString1)                          != 0);
+        TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK_STRING(CompareString1, L"compare");
+        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         CompareString1.Resize(20);
-        TEST_CHECK_STRING(CompareString1, L"compare");
+        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK_STRING(CompareString1, L"compare");
+        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         WIDECHAR Buffer[6];
         Buffer[5] = 0;
@@ -970,11 +981,8 @@ bool TStringView_Test_Internal(const CHAR* Args)
         FStringView StringView6 = FStringView("comparePostfix", 7);
         TEST_CHECK_STRING(StringView6, "compare");
 
-        std::cout << "Compare="       << StringView5.Compare(StringView6)       << std::endl;
-        std::cout << "CompareNoCase=" << StringView5.CompareNoCase(StringView6) << std::endl;
-
-        TEST_CHECK(StringView5.Compare(StringView6)       != 0);
-        TEST_CHECK(StringView5.CompareNoCase(StringView6) == 0);
+        TEST_CHECK(StringView5.Compare(StringView6)                          != 0);
+        TEST_CHECK(StringView5.Compare(StringView6, EStringCaseType::NoCase) == 0);
 
         StringView6.Clear();
         PrintStringView(StringView6);
@@ -982,14 +990,14 @@ bool TStringView_Test_Internal(const CHAR* Args)
         FStringView SearchString = "0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, "0123MeSearch89Me89");
 
-        TEST_CHECK(SearchString.Find("Me")                 == 4);
-        TEST_CHECK(SearchString.FindChar('M')              == 4);
-        TEST_CHECK(SearchString.Contains("Me")             == true);
-        TEST_CHECK(SearchString.Contains('M')              == true);
-        TEST_CHECK(SearchString.StartsWith("0123Me")       == true);
-        TEST_CHECK(SearchString.StartsWithNoCase("0123ME") == true);
-        TEST_CHECK(SearchString.EndsWith("Me89")           == true);
-        TEST_CHECK(SearchString.EndsWithNoCase("ME89")     == true);
+        TEST_CHECK(SearchString.Find("Me")                                    == 4);
+        TEST_CHECK(SearchString.FindChar('M')                                 == 4);
+        TEST_CHECK(SearchString.Contains("Me")                                == true);
+        TEST_CHECK(SearchString.Contains('M')                                 == true);
+        TEST_CHECK(SearchString.StartsWith("0123Me")                          == true);
+        TEST_CHECK(SearchString.StartsWith("0123ME", EStringCaseType::NoCase) == true);
+        TEST_CHECK(SearchString.EndsWith("Me89")                              == true);
+        TEST_CHECK(SearchString.EndsWith("ME89", EStringCaseType::NoCase)     == true);
 
         TEST_CHECK(SearchString.FindCharWithPredicate([](CHAR Char) -> bool
         {
@@ -1098,8 +1106,8 @@ bool TStringView_Test_Internal(const CHAR* Args)
         FStringViewWide StringView6 = FStringViewWide(L"comparePostfix", 7);
         TEST_CHECK_STRING(StringView6, L"compare");
 
-        TEST_CHECK(StringView5.Compare(StringView6)       != 0);
-        TEST_CHECK(StringView5.CompareNoCase(StringView6) == 0);
+        TEST_CHECK(StringView5.Compare(StringView6)                          != 0);
+        TEST_CHECK(StringView5.Compare(StringView6, EStringCaseType::NoCase) == 0);
 
         StringView6.Clear();
         PrintWideStringView(StringView6);
@@ -1107,14 +1115,14 @@ bool TStringView_Test_Internal(const CHAR* Args)
         FStringViewWide SearchString = L"0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, L"0123MeSearch89Me89");
 
-        TEST_CHECK(SearchString.Find(L"Me")                 == 4);
-        TEST_CHECK(SearchString.FindChar(L'M')              == 4);
-        TEST_CHECK(SearchString.Contains(L"Me")             == true);
-        TEST_CHECK(SearchString.Contains(L'M')              == true);
-        TEST_CHECK(SearchString.StartsWith(L"0123Me")       == true);
-        TEST_CHECK(SearchString.StartsWithNoCase(L"0123ME") == true);
-        TEST_CHECK(SearchString.EndsWith(L"Me89")           == true);
-        TEST_CHECK(SearchString.EndsWithNoCase(L"ME89")     == true);
+        TEST_CHECK(SearchString.Find(L"Me")                                    == 4);
+        TEST_CHECK(SearchString.FindChar(L'M')                                 == 4);
+        TEST_CHECK(SearchString.Contains(L"Me")                                == true);
+        TEST_CHECK(SearchString.Contains(L'M')                                 == true);
+        TEST_CHECK(SearchString.StartsWith(L"0123Me")                          == true);
+        TEST_CHECK(SearchString.StartsWith(L"0123ME", EStringCaseType::NoCase) == true);
+        TEST_CHECK(SearchString.EndsWith(L"Me89")                              == true);
+        TEST_CHECK(SearchString.EndsWith(L"ME89", EStringCaseType::NoCase)     == true);
 
         TEST_CHECK(SearchString.FindCharWithPredicate([](WIDECHAR Char) -> bool
         {

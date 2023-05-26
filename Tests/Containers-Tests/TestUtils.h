@@ -64,31 +64,30 @@ FORCEINLINE void PrintString<WIDECHAR>(const WIDECHAR* String)
         std::cout << "[TEST SUCCEEDED]: '" << MAKE_STRING(Array) << "' == " << MAKE_STRING(__VA_ARGS__) << '\n';                 \
     }
 
-#define TEST_CHECK_STRING_N(String, Value, NumChars)                                                    \
-    {                                                                                                   \
-        const bool bResult = String.IsEmpty() ?                                                         \
-            (TCString<decltype(String)::CharType>::Strlen(Value) == 0) :                                \
-            (TCString<decltype(String)::CharType>::Strncmp(String.GetCString(), Value, NumChars) == 0); \
-        if (!bResult)                                                                                   \
-        {                                                                                               \
-            std::cout << "[TEST FAILED] Condition=" << #String << "='";                                 \
-            PrintString<decltype(String)::CharType>(String.GetCString());                               \
-            std::cout << "'\n";                                                                         \
-            std::cout << #String << "='";                                                               \
-            PrintString<decltype(String)::CharType>(Value);                                             \
-            std::cout << "'\n";                                                                         \
-            DEBUG_BREAK();                                                                              \
-            return false;                                                                               \
-        }                                                                                               \
-        else                                                                                            \
-        {                                                                                               \
-            std::cout << "[TEST SUCCEEDED]: " << #String << "='";                                       \
-            PrintString<decltype(String)::CharType>(String.GetCString());                               \
-            std::cout << "'\n";                                                                         \
-        }                                                                                               \
+#define TEST_CHECK_STRING_N(String, Value, NumChars)                                                  \
+    {                                                                                                 \
+        const bool bResult = (String.Length() == NumChars) &&                                         \
+            TCString<decltype(String)::CHARTYPE>::Strncmp(String.GetCString(), Value, NumChars) == 0; \
+        if (!bResult)                                                                                 \
+        {                                                                                             \
+            std::cout << "[TEST FAILED] Condition=" << #String << "='";                               \
+            PrintString<decltype(String)::CHARTYPE>(String.GetCString());                             \
+            std::cout << "'\n";                                                                       \
+            std::cout << #String << "='";                                                             \
+            PrintString<decltype(String)::CHARTYPE>(Value);                                           \
+            std::cout << "'\n";                                                                       \
+            DEBUG_BREAK();                                                                            \
+            return false;                                                                             \
+        }                                                                                             \
+        else                                                                                          \
+        {                                                                                             \
+            std::cout << "[TEST SUCCEEDED]: " << #String << "='";                                     \
+            PrintString<decltype(String)::CHARTYPE>(String.GetCString());                             \
+            std::cout << "'\n";                                                                       \
+        }                                                                                             \
     }
 
-#define TEST_CHECK_STRING(String, Value) TEST_CHECK_STRING_N(String, Value, String.Length())
+#define TEST_CHECK_STRING(String, Value) TEST_CHECK_STRING_N(String, Value, TCString<decltype(String)::CHARTYPE>::Strlen(Value))
 
 #define SUCCESS()                       \
     std::cout << "[TESTS SUCCEEDED]\n"; \
