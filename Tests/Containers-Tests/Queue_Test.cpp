@@ -138,7 +138,6 @@ namespace MPSCTest
         }
 
         GQueue->Clear();
-        GQueue->Shrink();
 
         // Delete the Queue and Array
         delete GQueue;
@@ -236,7 +235,6 @@ namespace SPMCTest
         }
 
         GQueue->Clear();
-        GQueue->Shrink();
 
         // Delete the queue
         delete GQueue;
@@ -253,7 +251,7 @@ namespace UnusedPopulatedQueue
         TQueue<FString, EQueueType::SPSC> Queue;
         for (int64 Index = 0; Index < 50; ++Index)
         {
-            const FString Item = "Some long string that is longer than the small string optimazation" + TTypeToString<int64>::ToString(Index);
+            const FString Item = "Some long string that is longer than the small string optimization" + TTypeToString<int64>::ToString(Index);
             Queue.Enqueue(::Move(Item));
         }
     }

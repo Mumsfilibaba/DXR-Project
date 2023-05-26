@@ -30,7 +30,6 @@ public:
      * @brief - Constructor
      */
     FORCEINLINE TQueue()
-        : NodeList(nullptr)
     {
         // Create a Node here to more easily handle edge-cases
         Head = new FNode();
@@ -51,14 +50,6 @@ public:
             typedef ElementType ElementDestructType;
             reinterpret_cast<ElementDestructType*>(Node->Item.Data)->~ElementDestructType();
 
-            delete Node;
-        }
-
-        while (NodeList != nullptr)
-        {
-            FNode* Node = NodeList;
-            NodeList = NodeList->NextNode;
-            // These Elements are "deleted" (destructor called) when the node is returned
             delete Node;
         }
     }
@@ -101,7 +92,7 @@ public:
             Tail = NextNode;
         }
 
-        ReturnNode(PreviousTail);
+        delete PreviousTail;
         return true;
     }
 
@@ -138,7 +129,7 @@ public:
             Tail = NextNode;
         }
 
-        ReturnNode(PreviousTail);
+        delete PreviousTail;
         return true;
     }
 
@@ -148,30 +139,6 @@ public:
     FORCEINLINE void Clear()
     {
         while (Dequeue());
-    }
-
-    /**
-     * @brief - Deletes the "slack" nodes
-     */
-    FORCEINLINE void Shrink()
-    {
-        FNode* CurrentNode;
-        if constexpr (QueueType == EQueueType::MPSC)
-        {
-            CurrentNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&NodeList), nullptr));
-        }
-        else
-        {
-            CurrentNode = NodeList;
-            NodeList    = nullptr;
-        }
-
-        while (CurrentNode != nullptr)
-        {
-            FNode* Node = CurrentNode;
-            CurrentNode = CurrentNode->NextNode;
-            delete Node;
-        }
     }
 
     /**
@@ -202,7 +169,7 @@ public:
     template<typename... ArgTypes>
     FORCEINLINE bool Emplace(ArgTypes&&... Args) noexcept
     {
-        FNode* NewNode = GetOrCreateNode(::Forward<ArgTypes>(Args)...);
+        FNode* NewNode = CreateNode(::Forward<ArgTypes>(Args)...);
         if (NewNode == nullptr)
         {
             return false;
@@ -276,49 +243,14 @@ public:
 
 private:
     template<typename... ArgTypes>
-    FORCEINLINE FNode* GetOrCreateNode(ArgTypes&&... Args)
+    FORCEINLINE FNode* CreateNode(ArgTypes&&... Args)
     {
-        FNode* Result;
-        if constexpr (QueueType == EQueueType::MPSC)
-        {
-            Result = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&NodeList), nullptr));
-        }
-        else
-        {
-            Result = NodeList;
-        }
-
-        if (Result)
-        {
-            NodeList = Result->NextNode;
-            // Reset the Node
-            Result->NextNode = nullptr;
-            // Construct the new Item
-            new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(::Forward<ArgTypes>(Args)...);
-        }
-        else
-        {
-            // Construct a new node
-            Result = new FNode();
-            // Construct the new Item
-            new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(::Forward<ArgTypes>(Args)...);
-        }
-
+        // Construct the new Item
+        FNode* Result = new FNode();
+        new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(::Forward<ArgTypes>(Args)...);
         return Result;
-    }
-
-    FORCEINLINE void ReturnNode(FNode* InNode)
-    {
-        // Call the destructor of the node
-        typedef ElementType ElementDestructType;
-        reinterpret_cast<ElementDestructType*>(InNode->Item.Data)->~ElementDestructType();
-        
-        // Link up the new node
-        InNode->NextNode = NodeList;
-        NodeList = InNode;
     }
 
     FNode* volatile Head{nullptr};
     FNode* volatile Tail{nullptr};
-    FNode* volatile NodeList{nullptr};
 };

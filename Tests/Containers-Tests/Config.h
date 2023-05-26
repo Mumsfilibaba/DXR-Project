@@ -14,7 +14,7 @@
 #define RUN_TSTATICBITARRAY_TEST (1)
 #define RUN_TOPIONAL_TEST        (1)
 #define RUN_TVARIANT_TEST        (1)
-#define RUN_TQUEUE_TEST          (0)
+#define RUN_TQUEUE_TEST          (1)
 #define RUN_TFUNCTION_TEST       (1)
 #define RUN_TDELEGATE_TEST       (1)
 #define RUN_TSHAREDPTR_TEST      (1)
