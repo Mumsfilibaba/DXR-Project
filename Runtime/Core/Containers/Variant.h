@@ -166,8 +166,8 @@ class TVariant
 
     template<TypeIndexType Index>
     struct TIsValidIndex
-    {
-        inline static constexpr bool Value = (TVariantIndex<T>::Value != InvalidTypeIndex) ? true : false;
+	{
+        inline static constexpr bool Value = (Index < MaxTypeIndex) ? true : false;
     };
 
 public:

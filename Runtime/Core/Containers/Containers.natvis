@@ -51,58 +51,58 @@
 
 
   <Type Name="TString&lt;char&gt;">
-    <DisplayString Condition="Data.ArrayMax &lt;= 16">{Data.Allocator.InlineAllocation.InlineAllocation,s}</DisplayString>
-    <DisplayString Condition="Data.ArrayMax &gt; 16">{Data.Allocator.DynamicAllocation.Allocation,s}</DisplayString>
-    <StringView Condition="Data.ArrayMax &lt;= 16">Data.Allocator.InlineAllocation.InlineAllocation,s</StringView>
-    <StringView Condition="Data.ArrayMax &gt; 16">Data.Allocator.DynamicAllocation.Allocation,s</StringView>
+    <DisplayString Condition="CharData.ArrayMax &lt;= 16">{CharData.Allocator.InlineAllocation.InlineAllocation,s}</DisplayString>
+    <DisplayString Condition="CharData.ArrayMax &gt; 16">{CharData.Allocator.DynamicAllocation.Allocation,s}</DisplayString>
+    <StringView Condition="CharData.ArrayMax &lt;= 16">CharData.Allocator.InlineAllocation.InlineAllocation,s</StringView>
+    <StringView Condition="CharData.ArrayMax &gt; 16">CharData.Allocator.DynamicAllocation.Allocation,s</StringView>
     <Expand>
-      <Item Name="[Size]"     ExcludeView="simple">Data.ArraySize</Item>
-      <Item Name="[Capacity]" ExcludeView="simple">Data.ArrayMax</Item>
+      <Item Name="[Size]"     ExcludeView="simple">CharData.ArraySize</Item>
+      <Item Name="[Capacity]" ExcludeView="simple">CharData.ArrayMax</Item>
       <ArrayItems>
-        <Size>Data.ArraySize</Size>
-        <ValuePointer Condition="Data.ArrayMax &lt;= 16">(const char*)(&amp;Data.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
-        <ValuePointer Condition="Data.ArrayMax &gt; 16">Data.Allocator.DynamicAllocation.Allocation</ValuePointer>
+        <Size>CharData.ArraySize</Size>
+        <ValuePointer Condition="CharData.ArrayMax &lt;= 16">(const char*)(&amp;CharData.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
+        <ValuePointer Condition="CharData.ArrayMax &gt; 16">CharData.Allocator.DynamicAllocation.Allocation</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
 
   <Type Name="TString&lt;wchar_t&gt;">
-    <DisplayString Condition="Data.ArrayMax &lt;= 16">{Data.Allocator.InlineAllocation.InlineAllocation,su}</DisplayString>
-    <DisplayString Condition="Data.ArrayMax &gt; 16">{Data.Allocator.DynamicAllocation.Allocation,su}</DisplayString>
-    <StringView Condition="Data.ArrayMax &lt;= 16">Data.Allocator.InlineAllocation.InlineAllocation,su</StringView>
-    <StringView Condition="Data.ArrayMax &gt; 16">Data.Allocator.DynamicAllocation.Allocation,su</StringView>
+    <DisplayString Condition="CharData.ArrayMax &lt;= 16">{CharData.Allocator.InlineAllocation.InlineAllocation,su}</DisplayString>
+    <DisplayString Condition="CharData.ArrayMax &gt; 16">{CharData.Allocator.DynamicAllocation.Allocation,su}</DisplayString>
+    <StringView Condition="CharData.ArrayMax &lt;= 16">CharData.Allocator.InlineAllocation.InlineAllocation,su</StringView>
+    <StringView Condition="CharData.ArrayMax &gt; 16">CharData.Allocator.DynamicAllocation.Allocation,su</StringView>
     <Expand>
-      <Item Name="[Size]"     ExcludeView="simple">Data.ArraySize</Item>
-      <Item Name="[Capacity]" ExcludeView="simple">Data.ArrayMax</Item>
+      <Item Name="[Size]"     ExcludeView="simple">CharData.ArraySize</Item>
+      <Item Name="[Capacity]" ExcludeView="simple">CharData.ArrayMax</Item>
       <ArrayItems>
-        <Size>Data.ArraySize</Size>
-        <ValuePointer Condition="Data.ArrayMax &lt;= 16">(const wchar_t*)(&amp;Data.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
-        <ValuePointer Condition="Data.ArrayMax &gt; 16">Data.Allocator.DynamicAllocation.Allocation</ValuePointer>
+        <Size>CharData.ArraySize</Size>
+        <ValuePointer Condition="CharData.ArrayMax &lt;= 16">(const wchar_t*)(&amp;CharData.Allocator.InlineAllocation.InlineAllocation)</ValuePointer>
+        <ValuePointer Condition="CharData.ArrayMax &gt; 16">CharData.Allocator.DynamicAllocation.Allocation</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
 
 
   <Type Name="TStaticString&lt;char,*&gt;">
-    <DisplayString>{Characters,s}</DisplayString>
-    <StringView>Characters,s</StringView>
+    <DisplayString>{CharData,s}</DisplayString>
+    <StringView>CharData,s</StringView>
     <Expand>
-      <Item Name="[Size]" ExcludeView="simple">$T1</Item>
+      <Item Name="[Size]" ExcludeView="simple">StringLength</Item>
       <ArrayItems>
-        <Size>$T1</Size>
-        <ValuePointer>Characters</ValuePointer>
+        <Size>StringLength</Size>
+        <ValuePointer>CharData</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
 
   <Type Name="TStaticString&lt;wchar_t,*&gt;">
-    <DisplayString>{Characters,su}</DisplayString>
-    <StringView>Characters,su</StringView>
+    <DisplayString>{CharData,su}</DisplayString>
+    <StringView>CharData,su</StringView>
     <Expand>
-      <Item Name="[Size]" ExcludeView="simple">$T1</Item>
+      <Item Name="[Size]" ExcludeView="simple">StringLength</Item>
       <ArrayItems>
-        <Size>$T1</Size>
-        <ValuePointer>Characters</ValuePointer>
+        <Size>StringLength</Size>
+        <ValuePointer>CharData</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>

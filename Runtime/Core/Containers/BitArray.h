@@ -127,6 +127,7 @@ public:
      */
     FORCEINLINE ~TBitArray()
     {
+        Allocator.Free();
         NumBits     = 0;
         NumElements = 0;
     }
@@ -136,7 +137,7 @@ public:
      */
     FORCEINLINE void Reset()
     {
-        FMemory::Memset(Allocator.GetAllocation(), 0x00, CapacityInBytes());
+        FMemory::Memset(Allocator.GetAllocation(), 0x0, CapacityInBytes());
     }
 
     /**
@@ -216,7 +217,7 @@ public:
      */
     NODISCARD FORCEINLINE bool HasAnyBitSet() const noexcept
     {
-        return (CountAssignedBits() != 0);
+        return CountAssignedBits() != 0;
     }
 
     /**
@@ -225,7 +226,7 @@ public:
      */
     NODISCARD FORCEINLINE bool HasNoBitSet() const noexcept
     {
-        return (CountAssignedBits() == 0);
+        return CountAssignedBits() == 0;
     }
 
     /**

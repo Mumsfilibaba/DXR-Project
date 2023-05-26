@@ -187,8 +187,6 @@ bool TFunction_Test()
                 return true;
             };
 
-            constexpr auto size = sizeof(TestLambda);
-
             TFunction<bool(int32)> LambdaFunc = TestLambda;
             LambdaFunc(20);
 
