@@ -366,7 +366,7 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
     }
 
     // Remove all carriage returns if there are any (Easier to process)
-    FileContents.RemoveAll('\r');
+    FileContents.Remove('\r');
 
     // Get a config file, if the file already exists the values will be overwritten
     FConfigFile*    ConfigFile = AddConfigFile(Filename);

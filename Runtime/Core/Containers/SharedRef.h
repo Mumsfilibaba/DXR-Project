@@ -10,8 +10,8 @@ public:
     template<typename OtherType>
     friend class TSharedRef;
 
-    /** @brief -  Default constructor that set the pointer to nullptr */
-    TSharedRef() noexcept = default;
+    /** @brief - Default constructor that set the pointer to nullptr */
+    TSharedRef() = default;
 
     /**
      * @brief       - Copy-constructor
@@ -28,7 +28,7 @@ public:
      * @param Other - SharedRef to copy from
      */
     template<typename OtherType>
-    FORCEINLINE TSharedRef(const TSharedRef<OtherType>& Other) noexcept requires(TIsConvertible<TAddPointer<OtherType>::Type, TAddPointer<ElementType>::Type>::Value)
+    FORCEINLINE TSharedRef(const TSharedRef<OtherType>& Other) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
         : Object(Other.Object)
     {
         AddRef();

@@ -166,7 +166,7 @@ public:
 
         // Get the filesize and add an extra character for the null-terminator
         const int64 FileSize = File->Size();
-        OutText.Resize(static_cast<int32>(FileSize) + 1, '\0');
+        OutText.Resize(static_cast<int32>(FileSize) + 1);
 
         const int32 ReadBytes = File->Read(reinterpret_cast<uint8*>(OutText.Data()), static_cast<uint32>(FileSize));
         if (ReadBytes <= 0)
@@ -175,6 +175,7 @@ public:
             return false;
         }
 
+        OutText[ReadBytes] = 0;
         return true;
     }
 

@@ -66,7 +66,7 @@ public:
 public:
     
     /** @brief - Default constructor */
-    TString() noexcept = default;
+    TString() = default;
 
     /**
      * @brief          - Create a string from a c-string
@@ -1571,6 +1571,12 @@ using FStringWide = TString<WIDECHAR>;
 
 template<typename CHARTYPE>
 struct TIsTStringType<TString<CHARTYPE>>
+{
+    inline static constexpr bool Value = true;
+};
+
+template<typename CHARTYPE>
+struct TIsContiguousContainer<TString<CHARTYPE>>
 {
     inline static constexpr bool Value = true;
 };

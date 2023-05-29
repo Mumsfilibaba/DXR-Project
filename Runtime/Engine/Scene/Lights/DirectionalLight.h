@@ -4,8 +4,7 @@
 
 #define NUM_SHADOW_CASCADES (4)
 
-class ENGINE_API FDirectionalLight 
-    : public FLight
+class ENGINE_API FDirectionalLight : public FLight
 {
     FOBJECT_BODY(FDirectionalLight, FLight);
 
@@ -65,7 +64,7 @@ public:
         return CascadeSplitLambda;
     }
 
-    FORCEINLINE float Size() const
+    FORCEINLINE float GetSize() const
     {
         return Size;
     }

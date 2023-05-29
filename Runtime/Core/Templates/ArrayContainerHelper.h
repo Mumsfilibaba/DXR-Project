@@ -17,6 +17,18 @@ struct FArrayContainerHelper
         return Container.Size();
     }
 
+    template<typename ContainerType>
+    static constexpr decltype(auto) Data(const ContainerType& Container) requires(TIsContiguousContainer<ContainerType>::Value)
+    {
+        return Container.Data();
+    }
+
+    template<typename ContainerType>
+    static constexpr decltype(auto) Size(const ContainerType& Container) requires(TIsContiguousContainer<ContainerType>::Value)
+    {
+        return Container.Size();
+    }
+
     template <typename T, TSIZE N> 
     static constexpr T* Data(T(&Container)[N]) 
     { 

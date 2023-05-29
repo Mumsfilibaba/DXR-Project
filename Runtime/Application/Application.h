@@ -58,7 +58,7 @@ public:
     static FWindowedApplication& Get() 
     {
         CHECK(IsInitialized());
-        return CurrentApplication.Dereference(); 
+        return *CurrentApplication; 
     }
 
     bool InitializeRenderer();

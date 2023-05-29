@@ -5,10 +5,7 @@
 
 class FWindowsApplication;
 
-typedef TSharedRef<class FWindowsWindow> FWindowsWindowRef;
-
-class COREAPPLICATION_API FWindowsWindow final 
-    : public FGenericWindow
+class COREAPPLICATION_API FWindowsWindow final : public FGenericWindow
 {
 public:
     FWindowsWindow(FWindowsApplication* InApplication);
@@ -19,11 +16,11 @@ public:
 public:
     virtual bool Initialize(
         const FString& Title,
-        uint32 InWidth,
-        uint32 InHeight,
-        int32 x,
-        int32 y,
-        FWindowStyle Style) override final;
+        uint32         InWidth,
+        uint32         InHeight,
+        int32          x,
+        int32          y,
+        FWindowStyle   Style) override final;
 
     virtual void Show(bool bMaximized) override final;
 
@@ -59,7 +56,10 @@ public:
 
     virtual void SetPlatformHandle(void* InPlatformHandle) override final;
 
-    virtual void* GetPlatformHandle() const override final { return reinterpret_cast<void*>(Window); }
+    virtual void* GetPlatformHandle() const override final 
+    { 
+        return reinterpret_cast<void*>(Window);
+    }
 
     FORCEINLINE HWND GetWindowHandle() const 
     { 

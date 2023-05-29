@@ -646,7 +646,7 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
     History.Emplace(Command);
     if (History.Size() > HistoryLength)
     {
-        History.RemoveAt(History.StartIterator());
+        History.RemoveAt(0);
     }
 
     int32 Pos = Command.FindChar(' ');

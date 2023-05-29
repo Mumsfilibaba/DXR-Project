@@ -28,7 +28,7 @@ public:
 public:
 
     /** @brief - Default constructor */
-    TArray() noexcept = default;
+    TArray() = default;
 
     /** 
      * @brief        - Constructor that default creates a certain number of elements 
@@ -726,7 +726,7 @@ public:
     void Reverse()
     {
         const SizeType HalfSize = ArraySize / 2;
-        const ElementType* Array = Allocator.GetAllocation();
+        ElementType* Array = Allocator.GetAllocation();
         for (SizeType Index = 0; Index < HalfSize; ++Index)
         {
             const SizeType ReverseIndex = ArraySize - Index - 1;

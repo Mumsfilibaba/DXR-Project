@@ -25,7 +25,7 @@ public:
 public:
 
     /** @brief - Default construct an empty view */
-    TArrayView() noexcept = default;
+    TArrayView() = default;
 
     /**
      * @brief           - Construct a view from an array of ArrayType

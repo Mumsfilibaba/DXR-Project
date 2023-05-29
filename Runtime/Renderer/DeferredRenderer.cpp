@@ -48,7 +48,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             { "ENABLE_NORMAL_MAPPING",   "(1)" },
         };
 
-        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines.CreateView());
+        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, MakeArrayView(Defines));
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -62,7 +62,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
+        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, MakeArrayView(Defines));
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -370,7 +370,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             FShaderDefine("DRAW_TILE_DEBUG", "(1)")
         };
 
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, MakeArrayView(Defines));
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -404,7 +404,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             FShaderDefine("DRAW_CASCADE_DEBUG", "(1)")
         };
 
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, MakeArrayView(Defines));
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();

@@ -208,9 +208,9 @@ void FFrameProfilerWindow::DrawWindow()
         return;
     }
 
-    const auto ViewportSize = MainViewport->Size();
+    const auto ViewportSize = MainViewport->GetSize();
 
-    const float Width  = FMath::Max(ViewportSize.x * 0.6f, 400.0f);
+    const float Width  = FMath::Max<float>(ViewportSize.x * 0.6f, 400.0f);
     const float Height = ViewportSize.y * 0.75f;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);

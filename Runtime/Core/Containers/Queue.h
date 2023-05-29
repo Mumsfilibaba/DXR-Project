@@ -211,7 +211,7 @@ public:
             return false;
         }
 
-        OutItem = *reinterpret_cast<ElementType*>(Tail->NextNode->Item);
+        OutItem = *reinterpret_cast<ElementType*>(&Tail->NextNode->Item);
         return true;
     }
 
@@ -225,7 +225,7 @@ public:
             return nullptr;
         }
 
-        return reinterpret_cast<ElementType*>(Tail->NextNode->Item);
+        return reinterpret_cast<ElementType*>(&Tail->NextNode->Item);
     }
 
     /**
@@ -238,7 +238,7 @@ public:
             return nullptr;
         }
 
-        return reinterpret_cast<const ElementType*>(Tail->NextNode->Item);
+        return reinterpret_cast<const ElementType*>(&Tail->NextNode->Item);
     }
 
 private:

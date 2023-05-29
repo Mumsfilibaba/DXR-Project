@@ -11,7 +11,7 @@ class TArrayAllocatorInterface
 public:
     using SizeType = int32;
 
-    TArrayAllocatorInterface() noexcept = default;
+    TArrayAllocatorInterface() = default;
     ~TArrayAllocatorInterface() = default;
 
     /**
@@ -58,7 +58,7 @@ class TDefaultArrayAllocator
 public:
     using SizeType = int32;
 
-    TDefaultArrayAllocator() noexcept = default;
+    TDefaultArrayAllocator() = default;
 
     FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) noexcept
     {
@@ -129,7 +129,7 @@ class TInlineArrayAllocator
 public:
     using SizeType = int32;
 
-    TInlineArrayAllocator() noexcept = default;
+    TInlineArrayAllocator() = default;
 
     FORCEINLINE ~TInlineArrayAllocator()
     {

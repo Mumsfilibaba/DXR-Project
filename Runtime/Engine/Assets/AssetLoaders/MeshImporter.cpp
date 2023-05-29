@@ -12,7 +12,8 @@ FMeshImporter* FMeshImporter::GInstance = nullptr;
 
 FMeshImporter::FMeshImporter()
     : Cache()
-{ }
+{
+}
 
 bool FMeshImporter::Initialize()
 {
@@ -46,7 +47,7 @@ bool FMeshImporter::LoadMesh(const FString& Filename, FSceneData& OutScene, EMes
         UpdateCacheFile();
     }
 
-    if (Filename.EndsWithNoCase(".fbx"))
+    if (Filename.EndsWith(".fbx", EStringCaseType::NoCase))
     {
         EFBXFlags FBXFlags = EFBXFlags::None;
         if ((Flags & EMeshImportFlags::ApplyScaleFactor) != EMeshImportFlags::None)
@@ -63,7 +64,7 @@ bool FMeshImporter::LoadMesh(const FString& Filename, FSceneData& OutScene, EMes
             return AddCacheEntry(Filename, NewFileName, OutScene);
         }
     }
-    else if (Filename.EndsWithNoCase(".obj"))
+    else if (Filename.EndsWith(".obj", EStringCaseType::NoCase))
     {
         const bool bReverseHandedness = ((Flags & EMeshImportFlags::Default) == EMeshImportFlags::None);
         if (FOBJLoader::LoadFile(Filename, OutScene, bReverseHandedness))

@@ -35,7 +35,7 @@ public:
 public:
     
     /** @brief - Default constructor */
-    TStringView() noexcept = default;
+    TStringView() = default;
 
     /**
      * @brief          - Create a view from a raw string
@@ -857,8 +857,8 @@ public: // STL Iterator
     NODISCARD FORCEINLINE ConstIteratorType end()   const noexcept { return ConstIteratorType(*this, Size()); }
 
 private:
-    const CHARTYPE* ViewStart{ nullptr };
-    const CHARTYPE* ViewEnd{ nullptr };
+    const CHARTYPE* ViewStart{nullptr};
+    const CHARTYPE* ViewEnd{nullptr};
 };
 
 
@@ -977,6 +977,12 @@ NODISCARD inline bool operator>=(const TStringView<CHARTYPE>& LHS, const TString
 
 template<typename CHARTYPE>
 struct TIsTStringType<TStringView<CHARTYPE>>
+{
+    inline static constexpr bool Value = true;
+};
+
+template<typename CHARTYPE>
+struct TIsContiguousContainer<TStringView<CHARTYPE>>
 {
     inline static constexpr bool Value = true;
 };

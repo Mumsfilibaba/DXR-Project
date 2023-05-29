@@ -175,12 +175,12 @@ FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
 bool FTextureImporterBase::MatchExtenstion(const FStringView& FileName)
 {
     return 
-        FileName.EndsWithNoCase(".jpeg") ||
-        FileName.EndsWithNoCase(".jpg") ||
-        FileName.EndsWithNoCase(".png") ||
-        FileName.EndsWithNoCase(".bmp") ||
-        FileName.EndsWithNoCase(".psd") ||
-        FileName.EndsWithNoCase(".gif") ||
-        FileName.EndsWithNoCase(".tga") ||
-        FileName.EndsWithNoCase(".hdr");
+        FileName.EndsWith(".jpeg", EStringCaseType::NoCase) ||
+        FileName.EndsWith(".jpg", EStringCaseType::NoCase) ||
+        FileName.EndsWith(".png", EStringCaseType::NoCase) ||
+        FileName.EndsWith(".bmp", EStringCaseType::NoCase) ||
+        FileName.EndsWith(".psd", EStringCaseType::NoCase) ||
+        FileName.EndsWith(".gif", EStringCaseType::NoCase) ||
+        FileName.EndsWith(".tga", EStringCaseType::NoCase) ||
+        FileName.EndsWith(".hdr", EStringCaseType::NoCase);
 }

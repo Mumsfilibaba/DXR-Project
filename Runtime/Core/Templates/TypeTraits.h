@@ -768,9 +768,7 @@ template<typename T>
 struct TIsFloatingPoint
 {
     inline static constexpr bool Value = (TOr<
-        TIsSame<float      , typename TRemoveCV<T>::Type>,
-        TIsSame<double     , typename TRemoveCV<T>::Type>,
-        TIsSame<long double, typename TRemoveCV<T>::Type>
+        TIsSame<float, typename TRemoveCV<T>::Type>, TIsSame<double, typename TRemoveCV<T>::Type>, TIsSame<long double, typename TRemoveCV<T>::Type>
     >::Value);
 };
 
@@ -852,6 +850,21 @@ private:
 
 public:
     inline static constexpr bool Value = TIsUnsignedImpl<T>::Value;
+};
+
+
+// Checks if the type is a TArray-type(TArray, TArrayView, TStaticArray)
+template<typename T>
+struct TIsTArrayType
+{
+    inline static constexpr bool Value = false;
+};
+
+// Determine if this type is a string-type(TStaticString, TString, or TStringView)
+template<typename T>
+struct TIsTStringType
+{
+    inline static constexpr bool Value = false;
 };
 
 
@@ -993,20 +1006,4 @@ template<typename T>
 struct TIsReallocatable
 {
     inline static constexpr bool Value = TIsTrivial<T>::Value;
-};
-
-
-// Checks if the type is a TArray-type(TArray, TArrayView, TStaticArray)
-template<typename T>
-struct TIsTArrayType
-{
-    inline static constexpr bool Value = false;
-};
-
-
-// Determine if this type is a string-type(TStaticString, TString, or TStringView)
-template<typename T>
-struct TIsTStringType
-{
-    inline static constexpr bool Value = false;
 };

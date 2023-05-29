@@ -79,7 +79,6 @@ namespace FunctionInternal
         }
     };
 
-
     struct IFunctionContainer
     {
         virtual ~IFunctionContainer() = default;
@@ -93,7 +92,6 @@ namespace FunctionInternal
         // Destroys the functor
         virtual void Destroy() noexcept = 0;
     };
-
 
     template<typename FunctorType>
     struct TFunctionContainer : public IFunctionContainer
@@ -231,7 +229,7 @@ namespace FunctionInternal
             Other.HeapAllocation = nullptr;
         }
 
-        void* HeapAllocation;
+        void* HeapAllocation{nullptr};
         TAlignedBytes<TFUNCTION_NUM_INLINE_BYTES, TFUNCTION_INLINE_ALIGNMENT> InlineAllocation;
     };
 
@@ -269,14 +267,8 @@ class TFunction<ReturnType(ParamTypes...)>
 {
 public:
 
-    /**
-     * @brief - Default constructor 
-     */
-    FORCEINLINE TFunction() noexcept
-        : FunctorCaller(nullptr)
-        , Storage()
-    {
-    }
+    /** @brief - Default constructor */
+    TFunction() = default;
 
     /** 
      * @brief - Create from nullptr. Same as default constructor. 
@@ -455,7 +447,7 @@ private:
         Other.FunctorCaller = nullptr;
     }
 
-    ReturnType(*FunctorCaller)(void* Functor, ParamTypes&...);
+    ReturnType(*FunctorCaller)(void* Functor, ParamTypes&...){nullptr};
     FunctionInternal::FFunctionStorage Storage;
 };
 
@@ -468,14 +460,8 @@ class TFunctionRef<ReturnType(ParamTypes...)>
 {
 public:
 
-    /**
-     * @brief - Default constructor
-     */
-    FORCEINLINE TFunctionRef() noexcept
-        : FunctorCaller(nullptr)
-        , Functor(nullptr)
-    {
-    }
+    /** @brief - Default constructor */
+    TFunctionRef() = default;
 
     /**
      * @brief - Create from nullptr. Same as default constructor.
@@ -645,6 +631,6 @@ private:
         Other.Reset();
     }
 
-    ReturnType(*FunctorCaller)(void* Functor, ParamTypes&...);
-    void* Functor = nullptr;
+    ReturnType(*FunctorCaller)(void* Functor, ParamTypes&...){nullptr};
+    void* Functor{nullptr};
 };

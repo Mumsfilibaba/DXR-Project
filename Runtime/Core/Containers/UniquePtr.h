@@ -15,7 +15,7 @@ public:
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
     /** @brief - Default constructor */
-    TUniquePtr() noexcept = default;
+    TUniquePtr() = default;
 
     /**
      * @brief - Construct from nullptr
@@ -272,7 +272,7 @@ public:
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
     /** @brief - Default constructor */
-    TUniquePtr() noexcept = default;
+    TUniquePtr() = default;
 
     /**
      * @brief - Construct from nullptr

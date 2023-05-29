@@ -27,7 +27,7 @@ public:
 public:
 
     /** @brief - Default constructor */
-    TBitArray() noexcept = default;
+    TBitArray() = default;
 
     /**
      * @brief         - Constructor that sets the elements based on an integer

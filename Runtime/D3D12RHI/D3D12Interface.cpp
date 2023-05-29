@@ -25,13 +25,12 @@ TAutoConsoleVariable<bool> CVarEnablePix(
     false);
 
 
+FD3D12Interface* FD3D12Interface::GD3D12Interface = nullptr;
+
 FRHIInterface* FD3D12InterfaceModule::CreateInterface()
 {
     return new FD3D12Interface();
 }
-
-
-FD3D12Interface* FD3D12Interface::GD3D12Interface = nullptr;
 
 FD3D12Interface::FD3D12Interface()
     : FRHIInterface(ERHIInstanceType::D3D12)
@@ -246,20 +245,13 @@ FRHIRayTracingGeometry* FD3D12Interface::RHICreateRayTracingGeometry(const FRHIR
     TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = new FD3D12RayTracingGeometry(GetDevice(), InDesc);
     
     DirectContext->StartContext();
-
-    if (!D3D12Geometry->Build(
-        *DirectContext,
-        D3D12VertexBuffer,
-        InDesc.NumVertices,
-        D3D12IndexBuffer,
-        InDesc.NumIndices,
-        InDesc.IndexFormat,
-        false))
+    
+    if (!D3D12Geometry->Build(*DirectContext, D3D12VertexBuffer, InDesc.NumVertices, D3D12IndexBuffer, InDesc.NumIndices, InDesc.IndexFormat, false))
     {
         DEBUG_BREAK();
         D3D12Geometry.Reset();
     }
-    
+
     DirectContext->FinishContext();
 
     return D3D12Geometry.ReleaseOwnership();
@@ -271,7 +263,7 @@ FRHIRayTracingScene* FD3D12Interface::RHICreateRayTracingScene(const FRHIRayTrac
 
     DirectContext->StartContext();
 
-    if (!D3D12Scene->Build(*DirectContext, InDesc.Instances.CreateView(), false))
+    if (!D3D12Scene->Build(*DirectContext, TArrayView<const FRHIRayTracingGeometryInstance>(InDesc.Instances), false))
     {
         DEBUG_BREAK();
         D3D12Scene.Reset();
@@ -724,10 +716,7 @@ FRHIRasterizerState* FD3D12Interface::RHICreateRasterizerState(const FRHIRasteri
     Desc.ForcedSampleCount     = InDesc.ForcedSampleCount;
     Desc.FrontCounterClockwise = InDesc.bFrontCounterClockwise;
     Desc.MultisampleEnable     = InDesc.bMultisampleEnable;
-    Desc.ConservativeRaster    = 
-        (InDesc.bEnableConservativeRaster) ? 
-        D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : 
-        D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+    Desc.ConservativeRaster    = InDesc.bEnableConservativeRaster ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
     return new FD3D12RasterizerState(GetDevice(), Desc);
 }
