@@ -10,7 +10,7 @@ static void InitContext()
 {
     if (FWindowedApplication::IsInitialized())
     {
-        ImGuiContext* NewImGuiContext = reinterpret_cast<ImGuiContext*>(FWindowedApplication::Get().GetContext());
+        ImGuiContext* NewImGuiContext     = reinterpret_cast<ImGuiContext*>(FWindowedApplication::Get().GetContext());
         ImGuiContext* CurrentImGuiContext = ImGui::GetCurrentContext();
         if (NewImGuiContext != CurrentImGuiContext)
         {

@@ -1206,7 +1206,7 @@ bool FRenderer::InitAA()
     };
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines.CreateView());
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, MakeArrayView(Defines));
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
