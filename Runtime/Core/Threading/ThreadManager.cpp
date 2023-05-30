@@ -5,7 +5,8 @@
 FThreadManager::FThreadManager()
     : Threads(0)
     , MainThread(nullptr)
-{ }
+{
+}
 
 FThreadManager::~FThreadManager()
 {

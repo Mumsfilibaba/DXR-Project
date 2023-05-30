@@ -65,7 +65,8 @@ class CORE_API FModuleManager
             : Name(InName)
             , Interface(InInterface)
             , Handle(nullptr)
-        { }
+        {
+        }
 
         FString           Name;
         FModuleInterface* Interface;
@@ -237,7 +238,6 @@ protected:
     typedef TPair<FString, FInitializeStaticModuleDelegate> FStaticModulePair;
     TArray<FStaticModulePair> StaticModuleDelegates;
     FCriticalSection          StaticModuleDelegatesCS;
-
     TArray<FModuleData>       Modules;
     FCriticalSection          ModulesCS;
 };

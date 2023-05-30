@@ -10,7 +10,8 @@ class FScopedAutoreleasePool
 public:
     FORCEINLINE FScopedAutoreleasePool()
         : Pool([NSAutoreleasePool new])
-    { }
+    {
+    }
 
     FORCEINLINE ~FScopedAutoreleasePool()
     {

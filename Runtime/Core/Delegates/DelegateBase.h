@@ -66,7 +66,6 @@ public:
         TempStorage.MoveFrom(Move(Storage));
         Storage.MoveFrom(Move(Other.Storage));
         Other.Storage.MoveFrom(Move(TempStorage));
-
         ::Swap<int32>(Size, Other.Size);
     }
 

@@ -17,7 +17,8 @@ FAsyncWorkThread::FAsyncWorkThread()
     , Thread(nullptr)
     , WorkEvent(nullptr)
     , bIsRunning(false)
-{ }
+{
+}
 
 bool FAsyncWorkThread::Create(const CHAR* InThreadName)
 {
@@ -123,7 +124,8 @@ FAsyncThreadPool::FAsyncThreadPool()
     , TaskQueue()
     , TaskQueueCS()
     , bIsRunning(false)
-{ }
+{
+}
 
 FAsyncThreadPool::~FAsyncThreadPool()
 {

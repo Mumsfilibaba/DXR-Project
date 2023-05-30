@@ -10,8 +10,7 @@
 #define MEMORY_STACK_PAGE_SIZE   int32(64 * 1024)
 #define MEMORY_STACK_ZERO_MEMORY (1)
 
-class CORE_API FMemoryStack
-    : FNonCopyable
+class CORE_API FMemoryStack : FNonCopyable
 {
     struct FMemoryHeader
     {
@@ -26,11 +25,7 @@ class CORE_API FMemoryStack
 
 public:
 
-    FORCEINLINE FMemoryStack() noexcept
-        : TopPage(nullptr)
-        , StackStart(nullptr)
-        , StackEnd(nullptr)
-    { }
+    FMemoryStack() = default;
 
     FORCEINLINE explicit FMemoryStack(int32 Size) noexcept
         : TopPage(nullptr)
@@ -151,7 +146,7 @@ private:
         StackEnd   = StackStart;
     }
 
-    FMemoryHeader* TopPage;
-    uint8*         StackStart;
-    uint8*         StackEnd;
+    FMemoryHeader* TopPage{nullptr};
+    uint8*         StackStart{nullptr};
+    uint8*         StackEnd{nullptr};
 };

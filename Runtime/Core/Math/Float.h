@@ -178,7 +178,8 @@ struct FFloat16
 
     FORCEINLINE FFloat16(const FFloat16& Other)
         : Encoded(Other.Encoded)
-    { }
+    {
+    }
 
     FORCEINLINE void SetFloat(float Float32)
     {

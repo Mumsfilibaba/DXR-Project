@@ -25,14 +25,16 @@ public:
      */
     FORCEINLINE FDelegateHandle()
         : Handle(InvalidHandle)
-    { }
+    {
+    }
 
     /**
      * @brief - Construct a new delegate handle which generates a new ID
      */
     FORCEINLINE explicit FDelegateHandle(EGenerateID)
         : Handle(GenerateID())
-    { }
+    {
+    }
 
     /**
      * @brief  - Checks if the handle is equal to nullptr
@@ -40,7 +42,7 @@ public:
      */
     FORCEINLINE bool IsValid() const
     {
-        return (Handle != InvalidHandle);
+        return Handle != InvalidHandle;
     }
 
     /** @brief - Sets the internal handle to an invalid one */
@@ -74,7 +76,7 @@ public:
      */
     FORCEINLINE bool operator==(FDelegateHandle Other) const
     {
-        return (Handle == Other.Handle);
+        return Handle == Other.Handle;
     }
 
     /**

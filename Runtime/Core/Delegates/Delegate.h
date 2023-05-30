@@ -142,7 +142,8 @@ public:
      */
     FORCEINLINE explicit TDelegate()
         : Super()
-    { }
+    {
+    }
 
     /**
      * @brief          - Bind a function to the delegate

@@ -9,12 +9,14 @@
 FConfigSection::FConfigSection()
     : Name()
     , Values()
-{ }
+{
+}
 
 FConfigSection::FConfigSection(const CHAR* InName)
     : Name(InName)
     , Values()
-{ }
+{
+}
 
 bool FConfigSection::AddValue(const CHAR* NewKey, const CHAR* NewValue)
 {
@@ -315,7 +317,8 @@ FConfig* FConfig::GInstance = nullptr;
 
 FConfig::FConfig()
     : ConfigFiles()
-{ }
+{
+}
 
 bool FConfig::Initialize()
 {

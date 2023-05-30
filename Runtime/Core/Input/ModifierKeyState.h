@@ -7,7 +7,8 @@ struct FModifierKeyState
 
     FORCEINLINE FModifierKeyState(uint8 InModifierMask)
         : ModifierMask(InModifierMask)
-    { }
+    {
+    }
 
     union
     {

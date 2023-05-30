@@ -8,8 +8,7 @@
 
 struct IAsyncTask;
 
-class FAsyncWorkThread
-    : public FThreadInterface
+class FAsyncWorkThread : public  FThreadInterface
 {
 public:
     FAsyncWorkThread();

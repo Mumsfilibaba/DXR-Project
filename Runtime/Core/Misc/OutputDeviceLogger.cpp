@@ -3,7 +3,8 @@
 FOutputDeviceLogger::FOutputDeviceLogger()
     : OutputDevices()
     , OutputDevicesCS()
-{ }
+{
+}
 
 FOutputDeviceLogger::~FOutputDeviceLogger()
 {

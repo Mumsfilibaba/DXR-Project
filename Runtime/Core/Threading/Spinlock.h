@@ -21,7 +21,8 @@ public:
     /** @brief - Default constructor */
     FORCEINLINE FSpinLock() noexcept
         : State(State_Unlocked)
-    { }
+    {
+    }
 
     /** @brief - Lock SpinLock for other threads */
     FORCEINLINE void Lock() noexcept

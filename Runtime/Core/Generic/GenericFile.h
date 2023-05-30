@@ -44,11 +44,13 @@ class FFileHandleRef
 public:
     FORCEINLINE FFileHandleRef()
         : Handle(nullptr)
-    { }
+    {
+    }
 
     FORCEINLINE FFileHandleRef(IFileHandle* InHandle)
         : Handle(InHandle)
-    { }
+    {
+    }
     
     FORCEINLINE FFileHandleRef(FFileHandleRef&& Other)
         : Handle(Other.Handle)

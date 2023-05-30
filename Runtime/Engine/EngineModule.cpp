@@ -29,8 +29,9 @@ bool FEngineModule::Load()
     {
         InitContext();
 
-        NCoreDelegates::PostApplicationCreateDelegate.Unbind(PostApplicationCreateHandle);
+        FDelegateHandle Handle      = PostApplicationCreateHandle;
         PostApplicationCreateHandle = FDelegateHandle();
+        NCoreDelegates::PostApplicationCreateDelegate.Unbind(Handle);
     });
 
     return true;

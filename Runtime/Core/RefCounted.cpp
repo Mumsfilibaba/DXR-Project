@@ -2,7 +2,8 @@
 
 FRefCounted::FRefCounted()
     : NumRefs(1)
-{ }
+{
+}
 
 FRefCounted::~FRefCounted()
 {

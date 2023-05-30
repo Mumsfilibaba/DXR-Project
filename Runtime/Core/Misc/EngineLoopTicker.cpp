@@ -2,7 +2,8 @@
 
 FEngineLoopTicker::FEngineLoopTicker()
     : TickDelegates()
-{ }
+{
+}
 
 FEngineLoopTicker& FEngineLoopTicker::Get()
 {

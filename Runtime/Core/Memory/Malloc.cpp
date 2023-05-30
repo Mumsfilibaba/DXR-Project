@@ -36,7 +36,8 @@ FMallocLeakTracker::FMallocLeakTracker(FMalloc* InBaseMalloc)
     , AllocationsCS()
     , BaseMalloc(InBaseMalloc)
     , bTrackingEnabled(true)
-{ }
+{
+}
 
 FMallocLeakTracker::~FMallocLeakTracker()
 {
@@ -144,7 +145,8 @@ FMallocStackTraceTracker::FMallocStackTraceTracker(FMalloc* InBaseMalloc)
     , AllocationsCS()
     , BaseMalloc(InBaseMalloc)
     , bTrackingEnabled(true)
-{ }
+{
+}
 
 FMallocStackTraceTracker::~FMallocStackTraceTracker()
 {
