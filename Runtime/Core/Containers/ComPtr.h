@@ -11,7 +11,7 @@ public:
     friend class TComPtr;
 
     /** @brief - Default constructor that set the pointer to nullptr */
-    TComPtr() noexcept = default;
+    TComPtr() = default;
 
     /**
      * @brief       - Copy-constructor 

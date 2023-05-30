@@ -4,7 +4,8 @@
 FAsyncTaskBase::FAsyncTaskBase()
     : TaskCompleteEvent(nullptr)
     , NumInvokations(0)
-{ }
+{
+}
 
 FAsyncTaskBase::~FAsyncTaskBase()
 {

@@ -172,12 +172,12 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     if (!Resources.RTScene)
     {
-        FRHIRayTracingSceneDesc SceneInitializer(Resources.RTGeometryInstances.CreateView(), EAccelerationStructureBuildFlags::None);
+        FRHIRayTracingSceneDesc SceneInitializer(MakeArrayView(Resources.RTGeometryInstances), EAccelerationStructureBuildFlags::None);
         Resources.RTScene = RHICreateRayTracingScene(SceneInitializer);
     }
     else
     {
-        CommandList.BuildRayTracingScene(Resources.RTScene.Get(), TArrayView(Resources.RTGeometryInstances.CreateView()), false);
+        CommandList.BuildRayTracingScene(Resources.RTScene.Get(), TArrayView<const FRHIRayTracingGeometryInstance>(Resources.RTGeometryInstances), false);
     }
 
     Resources.GlobalResources.Reset();

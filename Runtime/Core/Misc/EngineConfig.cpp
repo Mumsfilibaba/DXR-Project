@@ -9,12 +9,14 @@
 FConfigSection::FConfigSection()
     : Name()
     , Values()
-{ }
+{
+}
 
 FConfigSection::FConfigSection(const CHAR* InName)
     : Name(InName)
     , Values()
-{ }
+{
+}
 
 bool FConfigSection::AddValue(const CHAR* NewKey, const CHAR* NewValue)
 {
@@ -315,7 +317,8 @@ FConfig* FConfig::GInstance = nullptr;
 
 FConfig::FConfig()
     : ConfigFiles()
-{ }
+{
+}
 
 bool FConfig::Initialize()
 {
@@ -366,7 +369,7 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
     }
 
     // Remove all carriage returns if there are any (Easier to process)
-    FileContents.RemoveAll('\r');
+    FileContents.Remove('\r');
 
     // Get a config file, if the file already exists the values will be overwritten
     FConfigFile*    ConfigFile = AddConfigFile(Filename);

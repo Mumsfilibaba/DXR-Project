@@ -10,7 +10,7 @@ static void InitContext()
 {
     if (FWindowedApplication::IsInitialized())
     {
-        ImGuiContext* NewImGuiContext = reinterpret_cast<ImGuiContext*>(FWindowedApplication::Get().GetContext());
+        ImGuiContext* NewImGuiContext     = reinterpret_cast<ImGuiContext*>(FWindowedApplication::Get().GetContext());
         ImGuiContext* CurrentImGuiContext = ImGui::GetCurrentContext();
         if (NewImGuiContext != CurrentImGuiContext)
         {
@@ -29,8 +29,9 @@ bool FEngineModule::Load()
     {
         InitContext();
 
-        NCoreDelegates::PostApplicationCreateDelegate.Unbind(PostApplicationCreateHandle);
+        FDelegateHandle Handle      = PostApplicationCreateHandle;
         PostApplicationCreateHandle = FDelegateHandle();
+        NCoreDelegates::PostApplicationCreateDelegate.Unbind(Handle);
     });
 
     return true;

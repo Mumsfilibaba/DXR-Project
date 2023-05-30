@@ -21,7 +21,7 @@
 #include "Core/Containers/StaticString.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Templates/TypeTraits.h"
-#include "Core/Templates/ContiguousContainerHelper.h"
+#include "Core/Templates/ArrayContainerHelper.h"
 #include "Core/Templates/Functional.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/ObjectHandling.h"

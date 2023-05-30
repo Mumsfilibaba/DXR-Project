@@ -9,7 +9,8 @@ struct FKeyState
         , PreviousState(0)
         , RepeatCount(0)
         , TimePressed(0.0f)
-    { }
+    {
+    }
 
     /** @brief - The key for this key-state */
     const EKey KeyCode;
@@ -34,7 +35,8 @@ struct FMouseButtonState
         , IsDown(0)
         , PreviousState(0)
         , TimePressed(0.0f)
-    { }
+    {
+    }
 
     /** @brief - The button associated with this button-state */
     const EMouseButton Button;

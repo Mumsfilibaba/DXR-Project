@@ -8,12 +8,14 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FStackTraceEntry
 {
-    enum { MaxNameLength = 512 };
+    enum 
+    { 
+        MaxNameLength = 512 
+    };
 
     CHAR FunctionName[MaxNameLength];
     CHAR Filename[MaxNameLength];
     CHAR ModuleName[MaxNameLength];
-
     uint32 Line;
 };
 

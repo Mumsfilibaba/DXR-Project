@@ -82,7 +82,7 @@ public:
     virtual FMonitorDesc GetMonitorDescFromWindow(const TSharedRef<FGenericWindow>& Window) const override final;
 
 public:
-    FWindowsWindowRef GetWindowsWindowFromHWND(HWND Window) const;
+    TSharedRef<FWindowsWindow> GetWindowsWindowFromHWND(HWND Window) const;
 
     void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
@@ -91,7 +91,7 @@ public:
 
     bool IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener) const;
 
-    void CloseWindow(const FWindowsWindowRef& Window); 
+    void CloseWindow(const TSharedRef<FWindowsWindow>& Window); 
 
     HINSTANCE GetInstance() const 
     { 
@@ -114,10 +114,10 @@ private:
     TArray<FWindowsMessage>   Messages;
     FCriticalSection          MessagesCS;
 
-    TArray<FWindowsWindowRef> Windows;
+    TArray<TSharedRef<FWindowsWindow>> Windows;
     mutable FCriticalSection  WindowsCS;
 
-    TArray<FWindowsWindowRef> ClosedWindows;
+    TArray<TSharedRef<FWindowsWindow>> ClosedWindows;
     FCriticalSection          ClosedWindowsCS;
 
     HICON     Icon;

@@ -18,8 +18,7 @@ struct IAsyncTask
 };
 
 
-class CORE_API FAsyncTaskBase
-    : public IAsyncTask
+class CORE_API FAsyncTaskBase : public IAsyncTask
 {
 public:
     FAsyncTaskBase();
@@ -112,15 +111,15 @@ struct FNonAbanbonableTask
 
 
 template<typename TaskType>
-class TAsyncTask
-    : public FAsyncTaskBase
+class TAsyncTask : public FAsyncTaskBase
 {
 public:
     template<typename... ArgTypes>
     TAsyncTask(ArgTypes&&... Args)
         : FAsyncTaskBase()
         , Task(Forward<ArgTypes>(Args)...)
-    { }
+    {
+    }
 
 private:
     virtual void Execute() override final
@@ -144,14 +143,14 @@ private:
 
 
 template<typename LambdaType>
-class TAsyncLambdaTask
-    : public FAsyncTaskBase
+class TAsyncLambdaTask : public FAsyncTaskBase
 {
 public:
     TAsyncLambdaTask(LambdaType&& InLambda)
         : FAsyncTaskBase()
         , Lambda(Forward<LambdaType>(InLambda))
-    { }
+    {
+    }
 
 private:
     virtual void Execute() override final
@@ -169,13 +168,13 @@ private:
 
 
 template<typename TaskType>
-class TAutoAsyncTask
-    : public IAsyncTask
+class TAutoAsyncTask : public IAsyncTask
 {
 public:
     TAutoAsyncTask(TaskType&& InTask)
         : Task(::Forward<TaskType>(InTask))
-    { }
+    {
+    }
 
     virtual void DoAsyncWork() override final
     {
@@ -223,13 +222,13 @@ private:
 
 
 template<typename LambdaType>
-class TAsyncLambda
-    : public FNonAbanbonableTask
+class TAsyncLambda : public FNonAbanbonableTask
 {
 public:
     FORCEINLINE TAsyncLambda(LambdaType&& InLambda)
         : Lambda(::Forward<LambdaType>(InLambda))
-    { }
+    {
+    }
 
     void DoWork()
     {

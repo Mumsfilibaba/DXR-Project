@@ -13,7 +13,8 @@ class FTimespan
 public:
     FORCEINLINE FTimespan(uint64 InTimespanNS = 0)
         : TimespanNS(InTimespanNS)
-    { }
+    {
+    }
 
     FORCEINLINE double AsSeconds() const
     {

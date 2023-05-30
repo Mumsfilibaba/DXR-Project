@@ -34,8 +34,7 @@ struct IConsoleObject
 };
 
 
-struct IConsoleCommand
-    : public IConsoleObject
+struct IConsoleCommand : public IConsoleObject
 {
     // TODO: Add parameters to console commands
 
@@ -89,8 +88,7 @@ constexpr const CHAR* SetByFlagToString(EConsoleVariableFlags Flag)
 template<typename T>
 class TConsoleVariableData;
 
-struct IConsoleVariable
-    : public IConsoleObject
+struct IConsoleVariable : public IConsoleObject
 {
     /**
      * @brief         - Set the variable with an int
@@ -210,7 +208,7 @@ struct IConsoleVariable
 
 class CORE_API FConsoleManager
 {
-    FConsoleManager()  = default;
+    FConsoleManager() = default;
     ~FConsoleManager();
 
 public:
@@ -383,13 +381,13 @@ private:
 };
 
 
-class FAutoConsoleCommand
-    : public FAutoConsoleObject
+class FAutoConsoleCommand : public FAutoConsoleObject
 {
 public:
     FAutoConsoleCommand(const CHAR* InName, const CHAR* InHelpString, const FConsoleCommandDelegate& Delegate)
         : FAutoConsoleObject(FConsoleManager::Get().RegisterCommand(InName, InHelpString, Delegate))
-    { }
+    {
+    }
 
     FORCEINLINE IConsoleCommand& operator*()
     {
@@ -419,7 +417,8 @@ class TConsoleVariableData
 public:
     FORCEINLINE explicit TConsoleVariableData(const T& DefaultValue)
         : Data(DefaultValue)
-    { }
+    {
+    }
 
     FORCEINLINE T GetValue() const
     {

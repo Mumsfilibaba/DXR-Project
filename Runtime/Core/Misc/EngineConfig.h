@@ -18,12 +18,14 @@ struct FConfigValue
     explicit FConfigValue(FString&& InString)
         : SavedValue(InString)
         , CurrentValue(::Move(InString))
-    { }
+    {
+    }
 
     explicit FConfigValue(const FString& InString)
         : SavedValue(InString)
         , CurrentValue(InString)
-    { }
+    {
+    }
 
      /** @brief - Restores the value to the value currently in the save file */
     FORCEINLINE void Restore() { CurrentValue = SavedValue; }
@@ -92,7 +94,8 @@ struct CORE_API FConfigFile
     FConfigFile()
         : Filename()
         , Sections()
-    { }
+    {
+    }
 
     /** @brief - Looks up a section and returns nullptr when not found */
     FConfigSection* FindSection(const CHAR* SectionName);

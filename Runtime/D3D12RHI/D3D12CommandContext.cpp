@@ -24,19 +24,19 @@ void FD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource
     if (BeforeState != AfterState)
     {
         // Make sure we are not already have transition for this resource
-        for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType It = Barriers.StartIterator(); It != Barriers.EndIterator(); It++)
+        for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType Iterator = Barriers.Iterator(); !Iterator.IsEnd(); Iterator++)
         {
-            if ((*It).Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
+            if (Iterator->Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
             {
-                if ((*It).Transition.pResource == Resource)
+                if (Iterator->Transition.pResource == Resource)
                 {
-                    if ((*It).Transition.StateBefore == AfterState)
+                    if (Iterator->Transition.StateBefore == AfterState)
                     {
-                        It = Barriers.RemoveAt(It);
+                        Barriers.RemoveAt(Iterator.GetIndex());
                     }
                     else
                     {
-                        (*It).Transition.StateAfter = AfterState;
+                        Iterator->Transition.StateAfter = AfterState;
                     }
 
                     return;
@@ -53,7 +53,6 @@ void FD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource
         Barrier.Transition.StateAfter  = AfterState;
         Barrier.Transition.StateBefore = BeforeState;
         Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
         Barriers.Emplace(Barrier);
     }
 }
@@ -63,13 +62,13 @@ void FD3D12ResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Res
     CHECK(Resource != nullptr);
 
     // Make sure we are not already have UAV barrier for this resource
-    for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType It = Barriers.StartIterator(); It != Barriers.EndIterator(); It++)
+    for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType Iterator = Barriers.Iterator(); !Iterator.IsEnd(); Iterator++)
     {
-        if ((*It).Type == D3D12_RESOURCE_BARRIER_TYPE_UAV)
+        if (Iterator->Type == D3D12_RESOURCE_BARRIER_TYPE_UAV)
         {
-            if ((*It).UAV.pResource == Resource)
+            if (Iterator->UAV.pResource == Resource)
             {
-                It = Barriers.RemoveAt(It);
+                Barriers.RemoveAt(Iterator.GetIndex());
                 return;
             }
         }
@@ -80,7 +79,6 @@ void FD3D12ResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Res
 
     Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
     Barrier.UAV.pResource = Resource;
-
     Barriers.Emplace(Barrier);
 }
 
@@ -92,7 +90,8 @@ FD3D12GPUResourceUploader::FD3D12GPUResourceUploader(FD3D12Device* InDevice)
     , OffsetInBytes(0)
     , Resource(nullptr)
     , GarbageResources()
-{ }
+{
+}
 
 bool FD3D12GPUResourceUploader::Reserve(uint64 InSizeInBytes)
 {
@@ -198,25 +197,18 @@ FD3D12CommandBatch::FD3D12CommandBatch(FD3D12Device* InDevice)
     , OnlineResourceDescriptorHeap(nullptr)
     , OnlineSamplerDescriptorHeap(nullptr)
     , Resources()
-{ }
+{
+}
 
 bool FD3D12CommandBatch::Initialize(uint32 Index)
 {
     const uint32 ResourceCount = 100000;
     const uint32 SamplerCount  = 500;
 
-    OnlineResourceDescriptorHeap = new FD3D12OnlineDescriptorManager(
-        Device,
-        Device->GetGlobalResourceHeap(),
-        Index * ResourceCount, ResourceCount);
-    
+    OnlineResourceDescriptorHeap = new FD3D12OnlineDescriptorManager(Device, Device->GetGlobalResourceHeap(), Index * ResourceCount, ResourceCount);
     CHECK(OnlineResourceDescriptorHeap != nullptr);
 
-    OnlineSamplerDescriptorHeap = new FD3D12OnlineDescriptorManager(
-        Device,
-        Device->GetGlobalSamplerHeap(),
-        Index * SamplerCount, SamplerCount);
-    
+    OnlineSamplerDescriptorHeap = new FD3D12OnlineDescriptorManager(Device, Device->GetGlobalSamplerHeap(), Index * SamplerCount, SamplerCount);
     CHECK(OnlineResourceDescriptorHeap != nullptr);
 
     GpuResourceUploader.Reserve(1024);
@@ -230,7 +222,8 @@ FD3D12CommandContextState::FD3D12CommandContextState(FD3D12Device* InDevice)
     , bIsReady(false)
     , bIsCapturing(false)
     , bIsRenderPassActive(false)
-{ }
+{
+}
 
 bool FD3D12CommandContextState::Initialize()
 {
@@ -390,7 +383,7 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
         FMemory::Memzero(&VertexBufferView);
 
         VertexBufferView.BufferLocation = NewResource->GetGPUVirtualAddress();
-        VertexBufferView.SizeInBytes    = static_cast<uint32>(VertexBuffer->Size());
+        VertexBufferView.SizeInBytes    = static_cast<uint32>(VertexBuffer->GetSize());
         VertexBufferView.StrideInBytes  = VertexBuffer->GetStride();
 
         Graphics.VBCache.VBViews[Slot]     = VertexBufferView;
@@ -420,7 +413,7 @@ void FD3D12CommandContextState::SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_F
 
         IndexBufferView.Format         = IndexFormat;
         IndexBufferView.BufferLocation = NewResource->GetGPUVirtualAddress();
-        IndexBufferView.SizeInBytes    = static_cast<uint32>(IndexBuffer->Size());
+        IndexBufferView.SizeInBytes    = static_cast<uint32>(IndexBuffer->GetSize());
 
         Graphics.IBCache.IBView     = IndexBufferView;
         Graphics.IBCache.IBResource = NewResource;
@@ -451,7 +444,8 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
     , NextCmdBatch(0)
     , CmdBatches()
     , CmdBatch(nullptr)
-{ }
+{
+}
 
 FD3D12CommandContext::~FD3D12CommandContext()
 {
@@ -1151,17 +1145,17 @@ void FD3D12CommandContext::BuildRayTracingScene(FRHIRayTracingScene* RayTracingS
 }
 
 void FD3D12CommandContext::SetRayTracingBindings(
-    FRHIRayTracingScene* RayTracingScene,
-    FRHIRayTracingPipelineState* PipelineState,
+    FRHIRayTracingScene*              RayTracingScene,
+    FRHIRayTracingPipelineState*      PipelineState,
     const FRayTracingShaderResources* GlobalResource,
     const FRayTracingShaderResources* RayGenLocalResources,
     const FRayTracingShaderResources* MissLocalResources,
     const FRayTracingShaderResources* HitGroupResources,
-    uint32 NumHitGroupResources)
+    uint32                            NumHitGroupResources)
 {
-    FD3D12RayTracingScene*         D3D12Scene         = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
+    FD3D12RayTracingScene* D3D12Scene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
+    D3D12_ERROR_COND(D3D12Scene != nullptr, "RayTracingScene cannot be nullptr");
     FD3D12RayTracingPipelineState* D3D12PipelineState = static_cast<FD3D12RayTracingPipelineState*>(PipelineState);
-    D3D12_ERROR_COND(D3D12Scene         != nullptr, "RayTracingScene cannot be nullptr");
     D3D12_ERROR_COND(D3D12PipelineState != nullptr, "PipelineState cannot be nullptr");
 
     uint32 NumDescriptorsNeeded = 0;
@@ -1335,10 +1329,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     const uint32 StartDescriptorHandleIndex = ResourceDescriptors->AllocateHandles(UavDescriptorHandleCount + 1);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE SrvHandle_CPU = ResourceDescriptors->GetCPUDescriptorHandleAt(StartDescriptorHandleIndex);
-    GetDevice()->GetD3D12Device()->CreateShaderResourceView(
-        D3D12Texture->GetD3D12Resource()->GetD3D12Resource(), 
-        &SrvDesc, 
-        SrvHandle_CPU);
+    GetDevice()->GetD3D12Device()->CreateShaderResourceView(D3D12Texture->GetD3D12Resource()->GetD3D12Resource(), &SrvDesc, SrvHandle_CPU);
 
     const uint32 UavStartDescriptorHandleIndex = StartDescriptorHandleIndex + 1;
     for (uint32 i = 0; i < Desc.MipLevels; i++)
@@ -1353,11 +1344,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
         }
 
         const D3D12_CPU_DESCRIPTOR_HANDLE UavHandle_CPU = ResourceDescriptors->GetCPUDescriptorHandleAt(UavStartDescriptorHandleIndex + i);
-        GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(
-            StagingTexture->GetD3D12Resource(), 
-            nullptr, 
-            &UavDesc, 
-            UavHandle_CPU);
+        GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(StagingTexture->GetD3D12Resource(), nullptr, &UavDesc, UavHandle_CPU);
     }
 
     for (uint32 i = Desc.MipLevels; i < UavDescriptorHandleCount; i++)
@@ -1388,10 +1375,7 @@ void FD3D12CommandContext::GenerateMips(FRHITexture* Texture)
     
     FlushResourceBarriers();
 
-    FD3D12ComputePipelineStateRef PipelineState = bIsTextureCube ? 
-        FD3D12Interface::GetRHI()->GetGenerateMipsPipelineTexureCube() : 
-        FD3D12Interface::GetRHI()->GetGenerateMipsPipelineTexure2D();
-
+    FD3D12ComputePipelineStateRef PipelineState = bIsTextureCube ? FD3D12Interface::GetRHI()->GetGenerateMipsPipelineTexureCube() : FD3D12Interface::GetRHI()->GetGenerateMipsPipelineTexure2D();
     CommandList->SetPipelineState(PipelineState->GetD3D12PipelineState());
     CommandList->SetComputeRootSignature(PipelineState->GetRootSignature());
 
@@ -1690,8 +1674,7 @@ void FD3D12CommandContext::FinishCommandList()
         return;
     }
     
-    FD3D12Device*             D3D12Device = GetDevice();
-    FD3D12CommandListManager* CommandListManager = D3D12Device->GetCommandListManager(QueueType);
+    FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
     CommandListManager->ExecuteCommandList(CommandList, false);
 
     CommandAllocatorManager.ReleaseAllocator(CommandAllocator);

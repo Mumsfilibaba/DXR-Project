@@ -287,7 +287,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShad
     }
 
     // Create a single string for printing all the shader arguments
-    const FString ArgumentsString = CreateArgString(CompileArgs.CreateView());
+    const FString ArgumentsString = CreateArgString(MakeArrayView(CompileArgs));
     
     // Convert defines
     TArray<FStringWide> StrBuff;
@@ -459,7 +459,7 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FR
     }
 
     // Create a single string for printing all the shader arguments
-    const FString ArgumentsString = CreateArgString(CompileArgs.CreateView());
+    const FString ArgumentsString = CreateArgString(MakeArrayView(CompileArgs));
 
     // Convert defines
     TArray<FStringWide>   StrBuff;
@@ -640,7 +640,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
 
     spvc_context_destroy(Context);
 
-    OutByteCode.Swap(NewShader);
+    OutByteCode = ::Move(NewShader);
     return true;
 }
 

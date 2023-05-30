@@ -6,13 +6,14 @@
 FD3D12DescriptorHeap::FD3D12DescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
     : FD3D12DeviceChild(InDevice)
     , Heap(nullptr)
-    , CPUStart({ 0 })
-    , GPUStart({ 0 })
+    , CPUStart{0}
+    , GPUStart{0}
     , DescriptorHandleIncrementSize(0)
     , Type(InType)
     , NumDescriptors(InNumDescriptors)
     , Flags(InFlags)
-{ }
+{
+}
 
 bool FD3D12DescriptorHeap::Initialize()
 {
@@ -41,7 +42,6 @@ bool FD3D12DescriptorHeap::Initialize()
     }
 
     DescriptorHandleIncrementSize = GetDevice()->GetD3D12Device()->GetDescriptorHandleIncrementSize(Desc.Type);
-
     return true;
 }
 
@@ -51,7 +51,8 @@ FD3D12OfflineDescriptorHeap::FD3D12OfflineDescriptorHeap(FD3D12Device* InDevice,
     , Heaps()
     , Name()
     , Type(InType)
-{ }
+{
+}
 
 bool FD3D12OfflineDescriptorHeap::Initialize()
 {
@@ -178,7 +179,8 @@ FD3D12OnlineDescriptorHeap::FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, u
     , Heap(nullptr)
     , DescriptorCount(InDescriptorCount)
     , Type(InType)
-{ }
+{
+}
 
 bool FD3D12OnlineDescriptorHeap::Initialize()
 {
@@ -254,7 +256,7 @@ void FD3D12OnlineDescriptorHeap::Reset()
     }
     else
     {
-        HeapPool.Swap(DiscardedHeaps);
+        ::Swap(HeapPool, DiscardedHeaps);
     }
 
     CurrentHandle = 0;
@@ -279,9 +281,7 @@ FD3D12OnlineDescriptorManager::FD3D12OnlineDescriptorManager(FD3D12Device* InDev
     , CurrentHandle(0)
 {
     CHECK(DescriptorHeap != nullptr);
-
     DescriptorSize = DescriptorHeap->GetDescriptorHandleIncrementSize();
-
     CPUStartHandle = FD3D12CPUDescriptorHandle(DescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DescriptorStartOffset, DescriptorSize);
     GPUStartHandle = FD3D12GPUDescriptorHandle(DescriptorHeap->GetGPUDescriptorHandleForHeapStart(), DescriptorStartOffset, DescriptorSize);
 }

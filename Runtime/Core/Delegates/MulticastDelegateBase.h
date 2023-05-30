@@ -21,7 +21,7 @@ public:
      * @param Other - Other delegate to move
      */
     FORCEINLINE FMulticastDelegateBase(FMulticastDelegateBase&& Other) noexcept
-        : Delegates(Move(Other.Delegates))
+        : Delegates(::Move(Other.Delegates))
         , LockVariable(Other.LockVariable)
     {
     }
@@ -195,7 +195,7 @@ public:
      */
     FORCEINLINE FMulticastDelegateBase& operator=(FMulticastDelegateBase&& Other) noexcept
     {
-        MoveFrom(Forward<FMulticastDelegateBase>(Other));
+        MoveFrom(::Forward<FMulticastDelegateBase>(Other));
         return *this;
     }
 
@@ -247,7 +247,7 @@ protected:
 
     FORCEINLINE void MoveFrom(FMulticastDelegateBase&& Other) noexcept
     {
-        Delegates = Move(Other.Delegates);
+        Delegates = ::Move(Other.Delegates);
         LockVariable = Other.LockVariable;
         Other.LockVariable = 0;
     }

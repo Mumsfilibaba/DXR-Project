@@ -61,8 +61,7 @@ struct FRunLoopTask
 };
 
 
-class FRunLoopSourceContext
-    : public FRefCounted
+class FRunLoopSourceContext : public  FRefCounted
 {
 public:
     FRunLoopSourceContext(CFRunLoopRef InRunLoop)

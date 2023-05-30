@@ -6,17 +6,9 @@
 
 struct FColor
 {
-    /**
-     * @brief - Default constructor (Initialize components to zero)
-     */
-    FORCEINLINE FColor()
-        : R(0)
-        , G(0)
-        , B(0)
-        , A(0)
-    {
-    }
-
+    /** @brief - Default constructor */
+    FColor() = default;
+    
     /**
      * @brief     - Initialize color with all channels
      * @param InR - Red channel
@@ -63,16 +55,16 @@ struct FColor
     }
 
     /** @brief - Red channel */
-    uint8 R;
+    uint8 R{0};
 
     /** @brief - Green channel */
-    uint8 G;
+    uint8 G{0};
 
     /** @brief - Blue channel */
-    uint8 B;
+    uint8 B{0};
 
     /** @brief - Alpha channel */
-    uint8 A;
+    uint8 A{0};
 };
 
 MARK_AS_REALLOCATABLE(FColor);
@@ -81,7 +73,7 @@ MARK_AS_REALLOCATABLE(FColor);
 struct FFloatColor16
 {
     /**
-     * @brief - Default constructor (Initialize components to zero)
+     * @brief - Default constructor
      */
     FORCEINLINE FFloatColor16()
         : R(0.0f)
@@ -103,7 +95,8 @@ struct FFloatColor16
         , G(InG)
         , B(InB)
         , A(InA)
-    { }
+    {
+    }
 
     uint64 GetHash() const
     {
@@ -153,16 +146,8 @@ MARK_AS_REALLOCATABLE(FFloatColor16);
 
 struct FFloatColor
 {
-    /**
-     * @brief - Default constructor (Initialize components to zero)
-     */
-    FORCEINLINE FFloatColor()
-        : R(0.0f)
-        , G(0.0f)
-        , B(0.0f)
-        , A(0.0f)
-    {
-    }
+    /** @brief - Default constructor */
+    FFloatColor() = default;
 
     /**
      * @brief     - Initialize color with all channels
@@ -210,16 +195,16 @@ struct FFloatColor
     }
 
     /** @brief - Red channel */
-    float R;
+    float R{0.0f};
     
     /** @brief - Green channel */
-    float G;
+    float G{0.0f};
     
     /** @brief - Blue channel */
-    float B;
+    float B{0.0f};
     
     /** @brief - Alpha channel */
-    float A;
+    float A{0.0f};
 };
 
 MARK_AS_REALLOCATABLE(FFloatColor);

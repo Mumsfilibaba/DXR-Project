@@ -10,7 +10,7 @@ public:
     friend class TOptional;
 
     /** @brief - Default constructor */
-    TOptional() noexcept = default;
+    TOptional() = default;
 
     /**
      * @brief - Construct from nullptr

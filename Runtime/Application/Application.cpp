@@ -145,7 +145,7 @@ TSharedPtr<FGenericApplication>  FWindowedApplication::PlatformApplication = nul
 
 bool FWindowedApplication::Create()
 {
-    PlatformApplication = TSharedPtr(FPlatformApplicationMisc::CreateApplication());
+    PlatformApplication = TSharedPtr<FGenericApplication>(FPlatformApplicationMisc::CreateApplication());
     if (!PlatformApplication)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create FPlatformApplication");

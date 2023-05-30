@@ -23,14 +23,14 @@ TAutoConsoleVariable<FString> GEcho(
     }));
 
 
-class FConsoleCommand 
-    : public IConsoleCommand
+class FConsoleCommand  : public IConsoleCommand
 {
 public:
     FConsoleCommand(const FConsoleCommandDelegate& Delegate, const CHAR* InHelpString)
         : ExecuteDelegate(Delegate)
         , HelpString(InHelpString)
-    { }
+    {
+    }
 
     virtual ~FConsoleCommand() = default;
 
@@ -50,8 +50,7 @@ private:
 };
 
 
-class FConsoleVariableBase 
-    : public IConsoleVariable
+class FConsoleVariableBase  : public IConsoleVariable
 {
 public:
     FConsoleVariableBase(EConsoleVariableFlags InFlags, const CHAR* InHelpString)
@@ -59,7 +58,8 @@ public:
         , Flags((InFlags & ~EConsoleVariableFlags::SetByMask) | EConsoleVariableFlags::SetByConstructor)
         , ChangedDelegate()
         , HelpString(InHelpString)
-    { }
+    {
+    }
 
     virtual ~FConsoleVariableBase() = default;
 
@@ -139,8 +139,7 @@ typedef TConsoleVariable<bool>    FConsoleVariableBool;
 typedef TConsoleVariable<FString> FConsoleVariableString;
 
 template<typename T>
-class TConsoleVariable 
-    : public FConsoleVariableBase
+class TConsoleVariable  : public FConsoleVariableBase
 {
     using FConsoleVariableBase::OnChanged;
 
@@ -148,7 +147,8 @@ public:
     explicit TConsoleVariable(const T& InDefaultValue, EConsoleVariableFlags InFlags, const CHAR* InHelpString)
         : FConsoleVariableBase(InFlags, InHelpString)
         , Data(InDefaultValue)
-    { }
+    {
+    }
 
     virtual TConsoleVariableData<int32>*   GetIntData()    override final { return nullptr; }
     virtual TConsoleVariableData<float>*   GetFloatData()  override final { return nullptr; }
@@ -646,7 +646,7 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
     History.Emplace(Command);
     if (History.Size() > HistoryLength)
     {
-        History.RemoveAt(History.StartIterator());
+        History.RemoveAt(0);
     }
 
     int32 Pos = Command.FindChar(' ');

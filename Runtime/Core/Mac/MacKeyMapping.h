@@ -5,7 +5,10 @@
 
 class CORE_API FMacKeyMapping final : public FGenericKeyMapping
 {
-    enum { kNumKeys = 256 };
+    enum 
+    { 
+        kNumKeys = 256
+    };
 
 public:
     static void Initialize();
@@ -43,8 +46,8 @@ public:
     }
 
 private:
-    static TStaticArray<EKey        , kNumKeys>                        KeyCodeFromScanCodeTable;
-    static TStaticArray<uint16      , kNumKeys>                        ScanCodeFromKeyCodeTable;
+    static TStaticArray<EKey, kNumKeys>                                KeyCodeFromScanCodeTable;
+    static TStaticArray<uint16, kNumKeys>                              ScanCodeFromKeyCodeTable;
     static TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> ButtonFromButtonIndex;
-    static TStaticArray<uint8       , EMouseButton::MouseButton_Count> ButtonIndexFromButton;
+    static TStaticArray<uint8, EMouseButton::MouseButton_Count>        ButtonIndexFromButton;
 };

@@ -22,7 +22,7 @@ void FRenderTargetDebugWindow::Paint(const FRectangle& AssignedBounds)
             return;
         }
 
-        const auto ViewportSize = MainViewport->Size();
+        const FIntVector2 ViewportSize = MainViewport->GetSize();
         const float Width  = float(ViewportSize.x);
         const float Height = float(ViewportSize.y);
 

@@ -66,7 +66,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     Defines.Emplace("HORIZONTAL_PASS", "1");
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, MakeArrayView(Defines));
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -101,7 +101,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     Defines.Emplace("VERTICAL_PASS", "1");
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines.CreateView());
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, MakeArrayView(Defines));
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();

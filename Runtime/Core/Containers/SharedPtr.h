@@ -259,10 +259,7 @@ namespace SharedPointerInternal
     public:
         friend class FWeakReference<InThreadAccess>;
 
-        FSharedReference()
-            : ReferenceHandler(nullptr)
-        {
-        }
+        FSharedReference() = default;
 
         FSharedReference(FReferenceHandler<InThreadAccess>* InReferenceCounter)
             : ReferenceHandler(InReferenceCounter)
@@ -378,7 +375,7 @@ namespace SharedPointerInternal
         }
 
     private:
-        FReferenceHandler<InThreadAccess>* ReferenceHandler;
+        FReferenceHandler<InThreadAccess>* ReferenceHandler{nullptr};
     };
 
 
@@ -388,10 +385,7 @@ namespace SharedPointerInternal
     public:
         friend class FSharedReference<InThreadAccess>;
 
-        FWeakReference()
-            : ReferenceHandler(nullptr)
-        {
-        }
+        FWeakReference() = default;
 
         FWeakReference(FReferenceHandler<InThreadAccess>* InReferenceCounter)
             : ReferenceHandler(InReferenceCounter)
@@ -500,7 +494,7 @@ namespace SharedPointerInternal
         }
 
     private:
-        FReferenceHandler<InThreadAccess>* ReferenceHandler;
+        FReferenceHandler<InThreadAccess>* ReferenceHandler{nullptr};
     };
 
     template<EThreadAccess ThreadAccess, typename ObjectType>
@@ -559,7 +553,7 @@ public:
     static inline constexpr EThreadAccess ThreadAccess = InThreadAccess;
 
     /** @brief - Default constructor */
-    TSharedPtr() noexcept = default;
+    TSharedPtr() = default;
 
     /**
      * @brief - Constructor setting both counter and pointer to nullptr 
@@ -914,7 +908,7 @@ public:
     static inline constexpr EThreadAccess ThreadAccess = InThreadAccess;
 
     /** @brief - Default constructor */
-    TWeakPtr() noexcept = default;
+    TWeakPtr() = default;
     
     /**
      * @brief - Constructor taking a nullptr
