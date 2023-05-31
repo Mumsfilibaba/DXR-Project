@@ -3,8 +3,7 @@
 #include "Core/Windows/Windows.h"
 #include "CoreApplication/Generic/GenericApplicationMisc.h"
 
-struct COREAPPLICATION_API FWindowsApplicationMisc final 
-    : public FGenericApplicationMisc
+struct COREAPPLICATION_API FWindowsApplicationMisc final : public FGenericApplicationMisc
 {
     static class FGenericApplication* CreateApplication();
 

@@ -26,41 +26,49 @@ enum class EWindowMode : uint8
     Fullscreen = 3,
 };
 
+
 struct FWindowStyle
 {
-    FWindowStyle() = default;
+    static FWindowStyle Default()
+    {
+        return FWindowStyle(EWindowStyleFlag::Titled | EWindowStyleFlag::Maximizable | EWindowStyleFlag::Minimizable | EWindowStyleFlag::Resizeable | EWindowStyleFlag::Closable);
+    }
 
-    FORCEINLINE FWindowStyle(EWindowStyleFlag InStyle)
+    constexpr FWindowStyle() = default;
+
+    constexpr FWindowStyle(EWindowStyleFlag InStyle)
         : Style(InStyle)
-    { }
+    {
+    }
 
-    FORCEINLINE bool IsTitled() const
+    constexpr bool IsTitled() const
     {
         return (Style & EWindowStyleFlag::Titled) != EWindowStyleFlag::None;
     }
 
-    FORCEINLINE bool IsClosable() const
+    constexpr bool IsClosable() const
     {
         return (Style & EWindowStyleFlag::Closable) != EWindowStyleFlag::None;
     }
 
-    FORCEINLINE bool IsMinimizable() const
+    constexpr bool IsMinimizable() const
     {
         return (Style & EWindowStyleFlag::Minimizable) != EWindowStyleFlag::None;
     }
 
-    FORCEINLINE bool IsMaximizable() const
+    constexpr bool IsMaximizable() const
     {
         return (Style & EWindowStyleFlag::Maximizable) != EWindowStyleFlag::None;
     }
 
-    FORCEINLINE bool IsResizeable() const
+    constexpr bool IsResizeable() const
     {
         return (Style & EWindowStyleFlag::Resizeable) != EWindowStyleFlag::None;
     }
 
     EWindowStyleFlag Style = EWindowStyleFlag::None;
 };
+
 
 struct FWindowShape
 {
@@ -70,13 +78,15 @@ struct FWindowShape
         : Width(InWidth)
         , Height(InHeight)
         , Position({ 0, 0 })
-    { }
+    {
+    }
 
     FORCEINLINE FWindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
         : Width(InWidth)
         , Height(InHeight)
         , Position({ x, y })
-    { }
+    {
+    }
 
     uint32 Width  = 0;
     uint32 Height = 0;
@@ -86,6 +96,7 @@ struct FWindowShape
         int32 y = 0;
     } Position;
 };
+
 
 class FGenericWindow : public FRefCounted
 {

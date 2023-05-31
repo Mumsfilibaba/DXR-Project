@@ -7,6 +7,8 @@ FSandboxPlayerController::FSandboxPlayerController(FScene* InScene)
     , Camera(nullptr)
 {
     Camera = new FCamera();
+    Camera->Move(0.0f, 10.0f, -2.0f);
+
     GetScene()->AddCamera(Camera);
 }
 

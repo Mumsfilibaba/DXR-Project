@@ -28,7 +28,7 @@ void FCamera::Move(float x, float y, float z)
 void FCamera::Rotate(float Pitch, float Yaw, float Roll)
 {
     Rotation.x += Pitch;
-    Rotation.x  = FMath::Max<float>(FMath::ToRadians(-89.0f), FMath::Min<float>(FMath::ToRadians(89.0f), Rotation.x));
+    Rotation.x  = FMath::Clamp<float>(FMath::ToRadians(-89.0f), FMath::ToRadians(89.0f), Rotation.x);
 
     Rotation.y += Yaw;
     Rotation.z += Roll;
@@ -40,7 +40,6 @@ void FCamera::Rotate(float Pitch, float Yaw, float Roll)
     Forward.Normalize();
 
     FVector3 TempUp(0.0f, 1.0f, 0.0f);
-    
     Right = Forward.CrossProduct(TempUp);
     Right.Normalize();
     

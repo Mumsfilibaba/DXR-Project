@@ -3,8 +3,7 @@
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Misc/OutputDeviceConsole.h"
 
-class COREAPPLICATION_API FMacOutputDeviceConsole final 
-    : public FOutputDeviceConsole
+class COREAPPLICATION_API FMacOutputDeviceConsole final : public FOutputDeviceConsole
 {
 public:
     FMacOutputDeviceConsole();

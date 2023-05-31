@@ -12,6 +12,14 @@
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Threading/AtomicInt.h"
 
+#define RHI_INITIALIZER_ATTRIBUTE(Type, Name) \
+    Type Name;                                \
+    auto& Set##Name(Type In##Name)            \
+    {                                         \
+        Name = In##Name;                      \
+        return *this;                         \
+    }
+
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FRHIShader;
@@ -1275,6 +1283,12 @@ struct FRHIViewportDesc
     {
     }
 
+    RHI_INITIALIZER_ATTRIBUTE(void*, WindowHandle);
+    RHI_INITIALIZER_ATTRIBUTE(EFormat, ColorFormat);
+    RHI_INITIALIZER_ATTRIBUTE(EFormat, DepthFormat);
+    RHI_INITIALIZER_ATTRIBUTE(uint16, Width);
+    RHI_INITIALIZER_ATTRIBUTE(uint16, Height);
+
     bool operator==(const FRHIViewportDesc& Other) const
     {
         return WindowHandle == Other.WindowHandle
@@ -1288,12 +1302,6 @@ struct FRHIViewportDesc
     {
         return !(*this == Other);
     }
-
-    void*   WindowHandle;
-    EFormat ColorFormat;
-    EFormat DepthFormat;
-    uint16  Width;
-    uint16  Height;
 };
 
 

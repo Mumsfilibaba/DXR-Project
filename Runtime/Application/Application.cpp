@@ -131,10 +131,12 @@ public:
     static FResponse Dispatch(FWindowedApplication* Application, PolicyType Policy, const EventType& Event, PedicateType&& Predicate)
     {
         FResponse Response = FResponse::Unhandled();
+        
         for (; !Response.IsEventHandled() && Policy.ShouldProcess(); Policy.Next())
         {
             Response = Predicate(Application, Policy.GetWidget(), Event);
         }
+
         return Response;
     }
 };
@@ -385,18 +387,13 @@ void FWindowedApplication::Tick(FTimespan DeltaTime)
         SetCursorPos(FIntVector2{ static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y) });
     }
 
-    TWeakPtr<FWindow> Window;// = MainViewport ? MainViewport->GetParentWindow() : nullptr;
-    if (Window)
+    if (MainViewport)
     {
-        UIState.DisplaySize = ImVec2{ float(Window->GetWidth()), float(Window->GetHeight()) };
+        UIState.DisplaySize = ImVec2{ float(MainViewport->GetWidth()), float(MainViewport->GetHeight()) };
 
-        TSharedRef<FGenericWindow> NativeWindow = Window->GetNativeWindow();
-        if (NativeWindow)
-        {
-            const FMonitorDesc MonitorDesc  = PlatformApplication->GetMonitorDescFromWindow(NativeWindow);
-            UIState.DisplayFramebufferScale = ImVec2{ MonitorDesc.DisplayScaling, MonitorDesc.DisplayScaling };
-            UIState.FontGlobalScale         = MonitorDesc.DisplayScaling;
-        }
+		const FMonitorDesc MonitorDesc = PlatformApplication->GetMonitorDescFromWindow(MainViewport);
+		UIState.DisplayFramebufferScale = ImVec2{ MonitorDesc.DisplayScaling, MonitorDesc.DisplayScaling };
+		UIState.FontGlobalScale = MonitorDesc.DisplayScaling;
     }
 
     const FIntVector2 Position = GetCursorPos();
@@ -444,6 +441,8 @@ void FWindowedApplication::Tick(FTimespan DeltaTime)
         //{
         //    Window->Tick();
         //});
+
+        ImGui::ShowDemoWindow();
 
         Renderer->EndFrame();
     }
@@ -1022,6 +1021,21 @@ bool FWindowedApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& InWi
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
 
+TSharedRef<FGenericWindow> FWindowedApplication::CreateWindow(const FWindowInitializer& WindowInitializer)
+{
+    TSharedRef<FGenericWindow> Window = PlatformApplication->CreateWindow();
+    if (Window)
+    {
+        if (Window->Initialize(WindowInitializer.Title, WindowInitializer.Width, WindowInitializer.Height, WindowInitializer.Position.x, WindowInitializer.Position.y, WindowInitializer.Style))
+        {
+            AllWindows.Emplace(Window);
+            return Window;
+        }
+    }
+
+    return nullptr;
+}
+
 void FWindowedApplication::SetCursor(ECursor InCursor)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
@@ -1132,27 +1146,11 @@ void FWindowedApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& I
     }
 }
 
-void FWindowedApplication::RegisterMainViewport(const TSharedPtr<FViewportWidget>& NewMainViewport)
+void FWindowedApplication::RegisterMainViewport(const TSharedRef<FGenericWindow>& NewMainViewport)
 {
     if (MainViewport != NewMainViewport)
     {
         MainViewport = NewMainViewport;
-
-        // TODO: What to do with multiple Viewports
-        ImGuiIO& InterfaceState = ImGui::GetIO();
-        if (MainViewport)
-        {
-            TWeakPtr<FWindow> ParentWindow;// = MainViewport->GetParentWindow();
-            if (ParentWindow)
-            {
-                TSharedRef<FGenericWindow> NativeWindow = ParentWindow->GetNativeWindow();
-                InterfaceState.ImeWindowHandle = NativeWindow->GetPlatformHandle();
-            }
-        }
-        else
-        {
-            InterfaceState.ImeWindowHandle = nullptr;
-        }
     }
 }
 

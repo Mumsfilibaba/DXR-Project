@@ -37,12 +37,12 @@ FORCEINLINE bool EngineLoadCoreModules()
 
 FORCEINLINE bool EnginePreInit()
 {
-    return GEngineLoop.PreInit();
+    return GEngineLoop.PreInitialize();
 }
 
 FORCEINLINE bool EngineInit()
 {
-    return GEngineLoop.Init();
+    return GEngineLoop.Initialize();
 }
 
 FORCEINLINE void EngineTick()

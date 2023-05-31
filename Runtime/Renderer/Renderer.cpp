@@ -136,13 +136,13 @@ FRenderer::~FRenderer()
 
     if (GEngine && GEngine->MainWindow)
     {
-        GEngine->MainWindow->RemoveOverlayWidget(TextureDebugger);
+        // GEngine->MainWindow->RemoveOverlayWidget(TextureDebugger);
         TextureDebugger.Reset();
 
-        GEngine->MainWindow->RemoveOverlayWidget(InfoWindow);
+        // GEngine->MainWindow->RemoveOverlayWidget(InfoWindow);
         InfoWindow.Reset();
 
-        GEngine->MainWindow->RemoveOverlayWidget(InfoWindow);
+        // GEngine->MainWindow->RemoveOverlayWidget(InfoWindow);
         GPUProfilerWindow.Reset();
     }
 }
@@ -177,15 +177,15 @@ FRenderer& FRenderer::Get()
 
 bool FRenderer::Create()
 {
-    //if (!GEngine->MainViewport || !GEngine->MainViewport->CreateRHI())
-    //{
-    //    DEBUG_BREAK();
-    //    return false;
-    //}
-    //else
-    //{
-    //    Resources.MainViewport = GEngine->MainViewport->GetRHI();
-    //}
+    if (!GEngine->MainViewport)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        Resources.MainViewport = GEngine->MainViewport;
+    }
 
     FRHIBufferDesc CBDesc(sizeof(FCameraBuffer), sizeof(FCameraBuffer), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
     Resources.CameraBuffer = RHICreateBuffer(CBDesc, EResourceAccess::Common, nullptr);
@@ -314,17 +314,17 @@ bool FRenderer::Create()
     GRHICommandExecutor.ExecuteCommandList(CommandList);
 
     // Register EventFunc
-    GEngine->MainWindow->GetWindowResizedEvent().AddRaw(this, &FRenderer::OnWindowResize);
+    //GEngine->MainWindow->GetWindowResizedEvent().AddRaw(this, &FRenderer::OnWindowResize);
 
-    // Register Windows
-    TextureDebugger = NewWidget(FRenderTargetDebugWindow);
-    GEngine->MainWindow->AddOverlaySlot().AttachWidget(TextureDebugger);
+    //// Register Windows
+    TextureDebugger = MakeShared<FRenderTargetDebugWindow>();
+    //GEngine->MainWindow->AddOverlaySlot().AttachWidget(TextureDebugger);
 
-    InfoWindow = NewWidget(FRendererInfoWindow);
-    GEngine->MainWindow->AddOverlaySlot().AttachWidget(InfoWindow);
+    //InfoWindow = NewWidget(FRendererInfoWindow);
+    //GEngine->MainWindow->AddOverlaySlot().AttachWidget(InfoWindow);
 
-    GPUProfilerWindow = NewWidget(FGPUProfilerWindow);
-    GEngine->MainWindow->AddOverlaySlot().AttachWidget(GPUProfilerWindow);
+    //GPUProfilerWindow = NewWidget(FGPUProfilerWindow);
+    //GEngine->MainWindow->AddOverlaySlot().AttachWidget(GPUProfilerWindow);
     return true;
 }
 

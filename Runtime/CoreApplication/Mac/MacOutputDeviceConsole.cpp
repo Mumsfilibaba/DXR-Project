@@ -13,7 +13,8 @@ FMacOutputDeviceConsole::FMacOutputDeviceConsole()
     , TextView(nullptr)
     , ScrollView(nullptr)
     , ConsoleColor(nullptr)
-{ }
+{
+}
 
 FMacOutputDeviceConsole::~FMacOutputDeviceConsole()
 {

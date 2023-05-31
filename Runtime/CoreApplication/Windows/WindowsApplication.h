@@ -11,20 +11,15 @@
 
 struct FWindowsMessage
 {
-    FORCEINLINE FWindowsMessage(
-        HWND InWindow,
-        uint32 InMessage,
-        WPARAM InwParam,
-        LPARAM InlParam,
-        int32 InMouseDeltaX,
-        int32 InMouseDeltaY)
+    FORCEINLINE FWindowsMessage(HWND InWindow, uint32 InMessage, WPARAM InwParam, LPARAM InlParam, int32 InMouseDeltaX, int32 InMouseDeltaY)
         : Window(InWindow)
         , Message(InMessage)
         , wParam(InwParam)
         , lParam(InlParam)
         , MouseDeltaX(InMouseDeltaX)
         , MouseDeltaY(InMouseDeltaY)
-    { }
+    {
+    }
 
     // Standard Window Message
     HWND   Window;
@@ -47,7 +42,6 @@ struct IWindowsMessageListener
     */
     virtual LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam) = 0;
 };
-
 
 class COREAPPLICATION_API FWindowsApplication final : public FGenericApplication
 {
@@ -86,7 +80,8 @@ public:
 
     void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
-    void AddWindowsMessageListener   (const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener);
+    void AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener);
+
     void RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener);
 
     bool IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener) const;
@@ -111,14 +106,14 @@ private:
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
 private:
-    TArray<FWindowsMessage>   Messages;
-    FCriticalSection          MessagesCS;
+    TArray<FWindowsMessage> Messages;
+    FCriticalSection        MessagesCS;
 
     TArray<TSharedRef<FWindowsWindow>> Windows;
-    mutable FCriticalSection  WindowsCS;
+    mutable FCriticalSection WindowsCS;
 
     TArray<TSharedRef<FWindowsWindow>> ClosedWindows;
-    FCriticalSection          ClosedWindowsCS;
+    FCriticalSection ClosedWindowsCS;
 
     HICON     Icon;
     HINSTANCE InstanceHandle;
@@ -127,7 +122,7 @@ private:
     FXInputDevice XInputDevice;
 
     TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
-    mutable FCriticalSection                    WindowsMessageListenersCS;
+    mutable FCriticalSection WindowsMessageListenersCS;
 };
 
 extern FWindowsApplication* WindowsApplication;

@@ -21,7 +21,8 @@ struct FDeferredMacEvent
         , Size()
         , Position()
         , Character(uint32(-1))
-    { }
+    {
+    }
 
     FORCEINLINE FDeferredMacEvent(const FDeferredMacEvent& Other)
         : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nil)
@@ -30,7 +31,8 @@ struct FDeferredMacEvent
         , Size(Other.Size)
         , Position(Other.Position)
         , Character(Other.Character)
-    { }
+    {
+    }
 
     FORCEINLINE ~FDeferredMacEvent()
     {
@@ -53,8 +55,7 @@ struct FDeferredMacEvent
 };
 
 
-class COREAPPLICATION_API FMacApplication final
-    : public FGenericApplication
+class COREAPPLICATION_API FMacApplication final : public FGenericApplication
 {
     FMacApplication();
     ~FMacApplication();
@@ -83,13 +84,13 @@ private:
     void ProcessDeferredEvent(const FDeferredMacEvent& Notification);
 
     TArray<TSharedRef<FMacWindow>> Windows;
-    mutable FCriticalSection       WindowsCS;
+    mutable FCriticalSection WindowsCS;
     
     TArray<TSharedRef<FMacWindow>> ClosedWindows;
-    FCriticalSection               ClosedWindowsCS;
+    FCriticalSection ClosedWindowsCS;
 
     TArray<FDeferredMacEvent>      DeferredEvents;
-    FCriticalSection               DeferredEventsCS;
+    FCriticalSection DeferredEventsCS;
 };
 
 extern FMacApplication* MacApplication;

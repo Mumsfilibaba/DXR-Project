@@ -3,7 +3,8 @@
 
 FWindowsOutputDeviceConsole::FWindowsOutputDeviceConsole()
     : ConsoleHandle(0)
-{ }
+{
+}
 
 FWindowsOutputDeviceConsole::~FWindowsOutputDeviceConsole()
 {

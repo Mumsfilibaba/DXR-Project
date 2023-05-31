@@ -3,11 +3,9 @@
 
 #include <AppKit/AppKit.h>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct COREAPPLICATION_API FMacApplicationMisc final
-    : public FGenericApplicationMisc
+struct COREAPPLICATION_API FMacApplicationMisc final : public FGenericApplicationMisc
 {
     static class FGenericApplication* CreateApplication();
 
@@ -25,4 +23,4 @@ struct COREAPPLICATION_API FMacApplicationMisc final
     static FModifierKeyState GetModifierKeyState();
 };
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING

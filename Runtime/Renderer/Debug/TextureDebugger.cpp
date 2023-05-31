@@ -10,10 +10,8 @@ TAutoConsoleVariable<bool> GDrawTextureDebugger(
     "Enables the Debug RenderTarget-viewer",
     false);
 
-void FRenderTargetDebugWindow::Paint(const FRectangle& AssignedBounds)
+void FRenderTargetDebugWindow::Paint()
 {
-    UNREFERENCED_PARAMETER(AssignedBounds);
-
     if (GDrawTextureDebugger.GetValue())
     {
         const TSharedPtr<FViewportWidget> MainViewport;// = FApplication::Get().GetMainViewport();

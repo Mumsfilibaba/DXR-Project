@@ -7,8 +7,7 @@
 
 class FMacApplication;
 
-class COREAPPLICATION_API FMacWindow final 
-    : public FGenericWindow
+class COREAPPLICATION_API FMacWindow final : public FGenericWindow
 {
 public:
     FMacWindow(FMacApplication* InApplication);
@@ -16,11 +15,11 @@ public:
 
     virtual bool Initialize(
         const FString& InTitle,
-        uint32 InWidth,
-        uint32 InHeight,
-        int32 x,
-        int32 y,
-        FWindowStyle Style) override final;
+        uint32         InWidth,
+        uint32         InHeight,
+        int32          x,
+        int32          y,
+        FWindowStyle   Style) override final;
 
     virtual void Show(bool bMaximized) override final;
 
@@ -52,14 +51,23 @@ public:
 
     virtual void  SetPlatformHandle(void* InPlatformHandle) override final;
     
-    virtual void* GetPlatformHandle() const override final { return reinterpret_cast<void*>(WindowHandle); }
+    virtual void* GetPlatformHandle() const override final 
+    { 
+        return reinterpret_cast<void*>(WindowHandle); 
+    }
 
 public:
-    FCocoaWindow* GetWindowHandle() const { return WindowHandle; }
+    FCocoaWindow* GetWindowHandle() const 
+    { 
+        return WindowHandle; 
+    }
 
-    FMacApplication* GetApplication() const { return Application; }
+    FMacApplication* GetApplication() const 
+    { 
+        return Application;
+    }
     
 private:
-    FMacApplication* Application;
-    FCocoaWindow*    WindowHandle;
+    FMacApplication* Application{nullptr};
+    FCocoaWindow*    WindowHandle{nullptr};
 };

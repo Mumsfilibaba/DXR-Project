@@ -35,12 +35,11 @@ private:
 
 class CORE_API FAsyncThreadPool
 {
-private:
     FAsyncThreadPool();
     ~FAsyncThreadPool();
 
 public:
-    static bool Initialize(int32 NumThreads);
+    static bool Initialize(int32 NumThreads = 0);
     static void Release();
 
     static bool IsMultithreaded();

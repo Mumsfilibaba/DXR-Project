@@ -1,30 +1,23 @@
 #pragma once
-#include "IEngineLoop.h"
 #include "Core/Time/Stopwatch.h"
 
 struct FOutputDeviceConsole;
 
-class FEngineLoop 
-    : public IEngineLoop
+class FEngineLoop
 {
 public:
     FEngineLoop();
     ~FEngineLoop();
 
-     /** @brief - Loads all the core modules */
-    virtual bool LoadCoreModules() override final;
+    bool LoadCoreModules();
 
-     /** @brief - Creates the application and load modules */
-    virtual bool PreInit() override final;
+    bool PreInitialize();
 
-     /** @brief - Initializes and starts up the engine */
-    virtual bool Init() override final;
+    bool Initialize();
 
-     /** @brief - Ticks the engine */
-    virtual void Tick() override final;
+    void Tick();
 
-     /** @brief - Releases the engine */
-    virtual bool Release() override final;
+    bool Release();
 
 private:
     FStopwatch            FrameTimer;

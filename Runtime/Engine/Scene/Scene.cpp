@@ -7,7 +7,8 @@
 
 FScene::FScene()
     : Actors()
-{ }
+{
+}
 
 FScene::~FScene()
 {

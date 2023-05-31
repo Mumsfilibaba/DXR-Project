@@ -9,7 +9,8 @@ FMacWindow::FMacWindow(FMacApplication* InApplication)
     : FGenericWindow()
     , Application(InApplication)
     , WindowHandle(nullptr)
-{ }
+{
+}
 
 FMacWindow::~FMacWindow()
 {

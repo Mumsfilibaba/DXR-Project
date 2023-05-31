@@ -35,11 +35,8 @@ bool FSandbox::Init()
     }
 
     // Initialize Scene
-    MAYBE_UNUSED
-    FActor* NewActor = nullptr;
-    
-    MAYBE_UNUSED
-    FMeshComponent* NewComponent = nullptr;
+    MAYBE_UNUSED FActor* NewActor = nullptr;
+    MAYBE_UNUSED FMeshComponent* NewComponent = nullptr;
 
     // Store the Engine's scene pointer 
     FScene* CurrentScene = GEngine->Scene;

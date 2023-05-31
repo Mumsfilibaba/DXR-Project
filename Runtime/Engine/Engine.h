@@ -36,10 +36,10 @@ struct ENGINE_API FEngine
     virtual void Exit();
 
     /** @brief - The main Window */
-    TSharedPtr<FWindow> MainWindow; 
+    TSharedRef<FGenericWindow> MainWindow; 
 
     /** @brief - The main viewport */
-    TSharedPtr<FSceneViewport> MainViewport;
+    TSharedRef<FRHIViewport> MainViewport;
 
     /** @brief - The current scene */
     FScene* Scene;

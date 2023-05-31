@@ -4,20 +4,14 @@
 #include "Application/Widget.h"
 #include "RHI/RHIResources.h"
 
-class FRenderTargetDebugWindow : public FWidget
+class FRenderTargetDebugWindow
 {
-    DECLARE_WIDGET(FRenderTargetDebugWindow, FWidget);
-
 public:
-    FINITIALIZER_START(FRenderTargetDebugWindow)
-    FINITIALIZER_END();
-    
-    void Initialize(const FInitializer& Initializer)
-    {
-    }
+
+    FRenderTargetDebugWindow() = default;
     
     /** @brief - Update the panel, for ImGui this is where the ImGui-Commands should be called */
-    virtual void Paint(const FRectangle& AssignedBounds) override final;
+    void Paint();
 
      /** @brief - Add image for debug drawing */
     void AddTextureForDebugging(

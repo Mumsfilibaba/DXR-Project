@@ -34,7 +34,7 @@ bool FAsyncWorkThread::Create(const CHAR* InThreadName)
     if (!WorkEvent)
     {
         LOG_ERROR("[FAsyncWorkThread] Failed to Create Event");
-        this->Stop();
+        Stop();
         return false;
     }
 
@@ -142,7 +142,7 @@ bool FAsyncThreadPool::Initialize(int32 NumThreads)
 
         if (!CVarEnableAsyncWork.GetValue())
         {
-            NumThreads = 0;
+            NumThreads = -1;
         }
 
         if (GInstance->CreateWorkers(NumThreads))
@@ -256,8 +256,13 @@ IAsyncTask* FAsyncThreadPool::ReturnThreadOrRetrieveNextTask(FAsyncWorkThread* I
 
 bool FAsyncThreadPool::CreateWorkers(int32 NumWorkers)
 {
+    if (!NumWorkers)
+    {
+        NumWorkers = static_cast<int32>(FPlatformThreadMisc::GetNumProcessors());
+    }
+
     bool bResult = true;
-    for (int32 Index = 0; (Index < NumWorkers) && bResult; ++Index)
+    for (int32 Index = 0; Index < NumWorkers && bResult; ++Index)
     {
         const FString Name = FString::CreateFormatted("Async Worker[%d]", Index);
 

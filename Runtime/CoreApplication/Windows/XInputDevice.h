@@ -17,13 +17,10 @@
 
 struct FXInputButtonState
 {
-    FXInputButtonState()
-        : ButtonState{ 0 }
-    {
-    }
+    FXInputButtonState() = default;
 
     FXInputButtonState(uint16 InButtonState)
-        : ButtonState{ InButtonState }
+        : ButtonState{InButtonState}
     {
     }
 
@@ -43,7 +40,7 @@ struct FXInputButtonState
         return *this;
     }
 
-    uint16 ButtonState;
+    uint16 ButtonState{0};
 };
 
 struct FXInputControllerState

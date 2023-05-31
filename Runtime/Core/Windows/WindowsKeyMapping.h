@@ -6,7 +6,10 @@
 
 class CORE_API FWindowsKeyMapping final : public FGenericKeyMapping
 {
-    enum { kNumKeys = 512 };
+    enum 
+    { 
+        kNumKeys = 512 
+    };
 
 public:
     static void Initialize();

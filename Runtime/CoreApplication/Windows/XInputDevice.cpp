@@ -35,9 +35,9 @@ namespace XInputPrivate
 
 FXInputDevice::FXInputDevice()
     : FInputDevice()
-    , Frequency{ 0 }
-    , LastConnectionPollTimeStamp{ 0 }
-    , LastPollTimeStamp{ 0 }
+    , Frequency{0}
+    , LastConnectionPollTimeStamp{0}
+    , LastPollTimeStamp{0}
 {
     FMemory::Memzero(ControllerState, sizeof(FXInputControllerState) * MAX_CONTROLLERS);
     Frequency = FPlatformTime::QueryPerformanceFrequency();

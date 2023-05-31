@@ -17,7 +17,8 @@ FWindowsWindow::FWindowsWindow(FWindowsApplication* InApplication)
     , StoredPlacement()
     , Style(0)
     , StyleEx(0)
-{ }
+{
+}
 
 FWindowsWindow::~FWindowsWindow()
 {

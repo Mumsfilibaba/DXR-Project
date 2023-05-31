@@ -25,17 +25,16 @@
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Launch);
 
-
 FEngineLoop::FEngineLoop()
     : FrameTimer()
     , ConsoleWindow(nullptr)
-{ }
+{
+}
 
 FEngineLoop::~FEngineLoop()
 { 
     ConsoleWindow = nullptr;
 }
-
 
 bool FEngineLoop::LoadCoreModules()
 {
@@ -101,7 +100,7 @@ bool FEngineLoop::LoadCoreModules()
 }
 
 
-bool FEngineLoop::PreInit()
+bool FEngineLoop::PreInitialize()
 {
     // Create the console window
     ConsoleWindow = FPlatformApplicationMisc::CreateOutputDeviceConsole();
@@ -166,8 +165,7 @@ bool FEngineLoop::PreInit()
     NCoreDelegates::PostApplicationCreateDelegate.Broadcast();
 
     // Initialize the Async-worker threads
-    const auto NumProcessors = FPlatformThreadMisc::GetNumProcessors();
-    if (!FAsyncThreadPool::Initialize(NumProcessors))
+    if (!FAsyncThreadPool::Initialize())
     {
         return false;
     }
@@ -209,7 +207,7 @@ bool FEngineLoop::PreInit()
 }
 
 
-bool FEngineLoop::Init()
+bool FEngineLoop::Initialize()
 {
     NCoreDelegates::PreEngineInitDelegate.Broadcast();
 

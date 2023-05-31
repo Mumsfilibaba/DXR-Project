@@ -2,13 +2,13 @@
 #include "Core/Containers/SharedPtr.h"
 #include "CoreApplication/Generic/GenericCursor.h"
 
-class COREAPPLICATION_API FMacCursor final 
-    : public FGenericCursor
+class COREAPPLICATION_API FMacCursor final : public FGenericCursor
 {
 public:
     FMacCursor()
         : FGenericCursor()
-    { }
+    {
+    }
 
     virtual void SetCursor(ECursor Cursor) override final;
 

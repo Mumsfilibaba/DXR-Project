@@ -2,8 +2,7 @@
 #include <Engine/Scene/Camera.h>
 #include <Engine/Scene/Actors/PlayerController.h>
 
-class SANDBOX_API FSandboxPlayerController
-    : public FPlayerController
+class SANDBOX_API FSandboxPlayerController : public FPlayerController
 {
     FOBJECT_BODY(FSandboxPlayerController, FPlayerController);
 

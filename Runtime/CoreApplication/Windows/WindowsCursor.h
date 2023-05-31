@@ -2,13 +2,13 @@
 #include "Core/Containers/SharedPtr.h"
 #include "CoreApplication/Generic/GenericCursor.h"
 
-class COREAPPLICATION_API FWindowsCursor final 
-    : public FGenericCursor
+class COREAPPLICATION_API FWindowsCursor final : public FGenericCursor
 {
 public:
     FWindowsCursor()
         : FGenericCursor()
-    { }
+    {
+    }
 
     virtual ~FWindowsCursor() = default;
 

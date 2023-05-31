@@ -16,7 +16,8 @@ public:
     FGenericApplication(const TSharedPtr<ICursor>& InCursor)
         : Cursor(InCursor)
         , MessageHandler(nullptr)
-    { }
+    {
+    }
 
     virtual ~FGenericApplication() = default;
 

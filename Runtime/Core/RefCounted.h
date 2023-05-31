@@ -2,7 +2,7 @@
 #include "IRefCounted.h"
 #include "Core/Threading/AtomicInt.h"
 
-class CORE_API FRefCounted  : public IRefCounted
+class CORE_API FRefCounted : public IRefCounted
 {
 protected:
     FRefCounted();
