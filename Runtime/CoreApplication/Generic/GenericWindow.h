@@ -144,7 +144,7 @@ public:
         FWindowStyle    Style,
         FGenericWindow* InParentWindow = nullptr) { return true; }
 
-    virtual void Show(bool bMaximized) { }
+    virtual void Show(bool bFocusOnActivate = true) { }
 
     virtual void Minimize() { }
 
@@ -158,7 +158,7 @@ public:
 
     virtual bool IsActiveWindow() const { return false; }
     
-    virtual void MoveTo(int32 x, int32 y) { }
+    virtual void SetWindowPos(int32 x, int32 y) { }
     
     virtual bool IsValid() const { return false; }
 

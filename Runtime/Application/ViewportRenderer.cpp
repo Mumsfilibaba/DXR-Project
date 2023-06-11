@@ -416,14 +416,14 @@ void FViewportRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* Dra
     }
 
     FViewportBuffers& Buffers = ViewportBuffers[Viewport];
-    if (!Buffers.VertexBuffer || Buffers.VertexCount < DrawData->TotalVtxCount)
+    if (!Buffers.VertexBuffer || DrawData->TotalVtxCount > Buffers.VertexCount)
     {
         if (Buffers.VertexBuffer)
         {
             CmdList.DestroyResource(Buffers.VertexBuffer.ReleaseOwnership());
         }
 
-        const uint32 NewVertexCount = DrawData->TotalVtxCount + 5000;
+        const uint32 NewVertexCount = DrawData->TotalVtxCount + 50000;
         FRHIBufferDesc VBDesc(sizeof(ImDrawVert) * NewVertexCount, sizeof(ImDrawVert), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
 
         TSharedRef<FRHIBuffer> NewVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
@@ -439,14 +439,14 @@ void FViewportRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* Dra
         }
     }
 
-    if (Buffers.IndexBuffer == nullptr || Buffers.IndexCount < DrawData->TotalIdxCount)
+    if (Buffers.IndexBuffer == nullptr || DrawData->TotalIdxCount > Buffers.IndexCount)
     {
         if (Buffers.IndexBuffer)
         {
             CmdList.DestroyResource(Buffers.IndexBuffer.ReleaseOwnership());
         }
 
-        const uint32 NewIndexCount = DrawData->TotalIdxCount + 10000;
+        const uint32 NewIndexCount = DrawData->TotalIdxCount + 100000;
         FRHIBufferDesc IBDesc(sizeof(ImDrawIdx) * NewIndexCount, sizeof(ImDrawIdx), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
 
         TSharedRef<FRHIBuffer> NewIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, nullptr);
@@ -472,8 +472,8 @@ void FViewportRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* Dra
     for (int32 Index = 0; Index < DrawData->CmdListsCount; ++Index)
     {
         const ImDrawList* DrawCmdList = DrawData->CmdLists[Index];
-        CmdList.UpdateBuffer(Buffers.VertexBuffer.Get(), FBufferRegion(VertexOffset, DrawCmdList->VtxBuffer.Size * sizeof(ImDrawVert)), DrawCmdList->VtxBuffer.Data);
-        CmdList.UpdateBuffer(Buffers.IndexBuffer.Get(), FBufferRegion(IndexOffset, DrawCmdList->IdxBuffer.Size * sizeof(ImDrawIdx)), DrawCmdList->IdxBuffer.Data);
+        CmdList.UpdateBuffer(Buffers.VertexBuffer.Get(), FBufferRegion(VertexOffset * sizeof(ImDrawVert), DrawCmdList->VtxBuffer.Size * sizeof(ImDrawVert)), DrawCmdList->VtxBuffer.Data);
+        CmdList.UpdateBuffer(Buffers.IndexBuffer.Get(), FBufferRegion(IndexOffset * sizeof(ImDrawIdx), DrawCmdList->IdxBuffer.Size * sizeof(ImDrawIdx)), DrawCmdList->IdxBuffer.Data);
         
         VertexOffset += DrawCmdList->VtxBuffer.Size;
         IndexOffset  += DrawCmdList->IdxBuffer.Size;

@@ -20,7 +20,8 @@
 
 #define LOAD_SPONZA         (0)
 #define LOAD_BISTRO         (0)
-#define LOAD_SUN_TEMPLE     (1)
+#define LOAD_SUN_TEMPLE     (0)
+#define LOAD_EMERALD_SQUARE (0)
 
 #define ENABLE_LIGHT_TEST   (0)
 #define ENABLE_MANY_SPHERES (0)
@@ -68,7 +69,7 @@ bool FSandbox::Init()
         {
             Material.bAlphaDiffuseCombined = true;
         }
-#else
+#elif LOAD_EMERALD_SQUARE
         FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
         {
@@ -328,8 +329,7 @@ bool FSandbox::Init()
     CurrentScene->AddActor(Player);
 
     // Add PointLight- Source
-    MAYBE_UNUSED
-    const float Intensity = 50.0f;
+    MAYBE_UNUSED const float Intensity = 50.0f;
 
 #if LOAD_SPONZA
     FPointLight* Light0 = new FPointLight();

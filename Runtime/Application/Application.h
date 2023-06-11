@@ -217,6 +217,11 @@ public:
         return Renderer.Get();
     }
 
+    bool IsTrackingMouse() const
+    {
+        return bIsTrackingMouse;
+    }
+
 protected:
     TUniquePtr<FViewportRenderer> Renderer;
     struct ImGuiContext* Context{nullptr};

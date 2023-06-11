@@ -47,7 +47,7 @@ public:
         FWindowStyle    Style,
         FGenericWindow* InParentWindow) override final;
 
-    virtual void Show(bool bMaximized) override final;
+    virtual void Show(bool bFocusOnActivate) override final;
 
     virtual void Minimize() override final;
 
@@ -75,7 +75,7 @@ public:
     
     virtual void GetTitle(FString& OutTitle) const override final;
 
-    virtual void MoveTo(int32 x, int32 y) override final;
+    virtual void SetWindowPos(int32 x, int32 y) override final;
 
     virtual void SetWindowOpacity(float Alpha) override final;
 
