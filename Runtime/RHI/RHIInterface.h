@@ -71,19 +71,17 @@ inline const CHAR* ToString(ERHIShadingRateTier Tier)
 
 struct FRHIShadingRateSupport
 {
-    FRHIShadingRateSupport()
-        : Tier(ERHIShadingRateTier::NotSupported)
-        , ShadingRateImageTileSize(0)
-    { }
+    FRHIShadingRateSupport() = default;
 
     FRHIShadingRateSupport(ERHIShadingRateTier InTier, uint8 InShadingRateImageTileSize)
         : Tier(InTier)
         , ShadingRateImageTileSize(InShadingRateImageTileSize)
-    { }
+    {
+    }
 
     bool operator==(const FRHIShadingRateSupport& RHS) const
     {
-        return (Tier == RHS.Tier) && (ShadingRateImageTileSize == RHS.ShadingRateImageTileSize);
+        return Tier == RHS.Tier && ShadingRateImageTileSize == RHS.ShadingRateImageTileSize;
     }
 
     bool operator!=(const FRHIShadingRateSupport& RHS) const
@@ -91,8 +89,8 @@ struct FRHIShadingRateSupport
         return !(*this == RHS);
     }
 
-    ERHIShadingRateTier Tier;
-    uint8               ShadingRateImageTileSize;
+    ERHIShadingRateTier Tier{ERHIShadingRateTier::NotSupported};
+    uint8               ShadingRateImageTileSize{0};
 };
 
 
@@ -116,19 +114,17 @@ inline const CHAR* ToString(ERHIRayTracingTier Tier)
 
 struct FRHIRayTracingSupport
 {
-    FRHIRayTracingSupport()
-        : Tier(ERHIRayTracingTier::NotSupported)
-        , MaxRecursionDepth(0)
-    { }
+    FRHIRayTracingSupport() = default;
 
     FRHIRayTracingSupport(ERHIRayTracingTier InTier, uint8 InMaxRecursionDepth)
         : Tier(InTier)
         , MaxRecursionDepth(InMaxRecursionDepth)
-    { }
+    {
+    }
 
     bool operator==(const FRHIRayTracingSupport& RHS) const
     {
-        return (Tier == RHS.Tier) && (MaxRecursionDepth == RHS.MaxRecursionDepth);
+        return Tier == RHS.Tier && MaxRecursionDepth == RHS.MaxRecursionDepth;
     }
 
     bool operator!=(const FRHIRayTracingSupport& RHS) const
@@ -136,8 +132,8 @@ struct FRHIRayTracingSupport
         return !(*this == RHS);
     }
 
-    ERHIRayTracingTier Tier;
-    uint8              MaxRecursionDepth;
+    ERHIRayTracingTier Tier{ERHIRayTracingTier::NotSupported};
+    uint8              MaxRecursionDepth{0};
 };
 
 
@@ -159,7 +155,8 @@ class RHI_API FRHIInterface
 protected:
     FRHIInterface(ERHIInstanceType InRHIType)
         : RHIType(InRHIType)
-    { }
+    {
+    }
 
 public:
 
@@ -457,8 +454,8 @@ FORCEINLINE FRHIInterface* GetRHIInterface()
 }
 
 FORCEINLINE FRHITexture* RHICreateTexture(
-    const FRHITextureDesc& InDesc,
-    EResourceAccess InInitialState = EResourceAccess::Common,
+    const FRHITextureDesc& InDesc, 
+    EResourceAccess        InInitialState = EResourceAccess::Common,
     const IRHITextureData* InInitialData = nullptr)
 {
     return GetRHIInterface()->RHICreateTexture(InDesc, InInitialState, InInitialData);
@@ -466,8 +463,8 @@ FORCEINLINE FRHITexture* RHICreateTexture(
 
 FORCEINLINE FRHIBuffer* RHICreateBuffer(
     const FRHIBufferDesc& Desc,
-    EResourceAccess InitialAccess = EResourceAccess::Common,
-    const void* InitialData = nullptr)
+    EResourceAccess       InitialAccess = EResourceAccess::Common,
+    const void*           InitialData = nullptr)
 {
     return GetRHIInterface()->RHICreateBuffer(Desc, InitialAccess, InitialData);
 }

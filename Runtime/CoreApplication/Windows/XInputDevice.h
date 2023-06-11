@@ -64,17 +64,23 @@ class FXInputDevice : public FInputDevice
 {
 public:
     FXInputDevice();
-    ~FXInputDevice();
+    ~FXInputDevice() = default;
 
-    virtual void PollDeviceState() override final;
+    virtual void UpdateDeviceState() override final;
 
-    void PollForNewConnections();
-    void PollConnectedDevices();
+    virtual bool IsDeviceConnected() const override final;
+
+    void CheckForNewConnections();
+
+    void UpdateConnectedDevices();
 
 private:
     void ProcessInputState(const XINPUT_STATE& State, uint32 ControllerIndex);
+    
     void ProcessButtonDown(FGenericApplicationMessageHandler* MessageHandler, uint32 ControllerIndex, uint16 CurrentButtonState, uint16 NewButtonState);
-    void ProcessButtonUp  (FGenericApplicationMessageHandler* MessageHandler, uint32 ControllerIndex, uint16 CurrentButtonState, uint16 NewButtonState);
+    
+    void ProcessButtonUp(FGenericApplicationMessageHandler* MessageHandler, uint32 ControllerIndex, uint16 CurrentButtonState, uint16 NewButtonState);
+    
     void ProcessThumbstick(FGenericApplicationMessageHandler* MessageHandler, uint32 ControllerIndex, EControllerAnalog AnalogSource, uint16 ThumbStickValue);
 
     FXInputControllerState ControllerState[MAX_CONTROLLERS];

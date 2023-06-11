@@ -1,5 +1,4 @@
 #pragma once
-
 #ifndef NOMINMAX
     #define NOMINMAX
 #endif
@@ -12,92 +11,48 @@
 #include <windowsx.h>
 #include <sdkddkver.h>
 #include <shlwapi.h>
+#include <Dbt.h>
 
 // TODO: Wrap in define for Win 8.1 and above
 #include <shellscalingapi.h>
 
-#ifdef CreateWindow
-    #undef CreateWindow
-#endif
+// NOTE: Undefine these as we have functions with these names 
+#undef CreateWindow
+#undef CreateFile
+#undef CreateThread
+#undef CreateEvent
 
-#ifdef CreateFile
-    #undef CreateFile
-#endif
+#undef InterlockedAdd
+#undef InterlockedSub
+#undef InterlockedAnd
+#undef InterlockedOr
+#undef InterlockedXor
+#undef InterlockedIncrement
+#undef InterlockedDecrement
+#undef InterlockedCompareExchange
+#undef InterlockedExchange
 
-#ifdef CreateThread
-    #undef CreateThread
-#endif
+#undef MessageBox
 
-#ifdef CreateEvent
-    #undef CreateEvent
-#endif
+#undef OutputDebugString
+#undef OutputDebugFormat
 
-#ifdef InterlockedAdd
-    #undef InterlockedAdd
-#endif
+#undef MemoryBarrier
 
-#ifdef InterlockedSub
-    #undef InterlockedSub
-#endif
+#undef GetClassName
+#undef GetModuleHandle
+#undef GetCurrentDirectory
 
-#ifdef InterlockedAnd
-    #undef InterlockedAnd
-#endif
+#undef IsMinimized
+#undef IsMaximized
 
-#ifdef InterlockedOr
-    #undef InterlockedOr
-#endif
-
-#ifdef InterlockedXor
-    #undef InterlockedXor
-#endif
-
-#ifdef InterlockedIncrement
-    #undef InterlockedIncrement
-#endif
-
-#ifdef InterlockedDecrement
-    #undef InterlockedDecrement
-#endif
-
-#ifdef InterlockedCompareExchange
-    #undef InterlockedCompareExchange
-#endif
-
-#ifdef InterlockedExchange
-    #undef InterlockedExchange
-#endif
-
-#ifdef MessageBox
-    #undef MessageBox
-#endif
-
-#ifdef OutputDebugString
-     #undef OutputDebugString
-#endif
-
-#ifdef OutputDebugFormat
-     #undef OutputDebugFormat
-#endif
-
-#ifdef MemoryBarrier
-    #undef MemoryBarrier
-#endif
-
-#ifdef GetClassName
-    #undef GetClassName
-#endif
-
-#ifdef GetModuleHandle
-    #undef GetModuleHandle
-#endif
-
-#ifdef GetCurrentDirectory
-    #undef GetCurrentDirectory
-#endif
-
+// Windows version define
 #ifdef NTDDI_VISTA
     #define PLATFORM_WINDOWS_VISTA (1)
+#endif
+
+#ifdef NTDDI_WIN10
+    #define PLATFORM_WINDOWS_10 (1)
 #endif
 
 #ifdef NTDDI_WIN10_RS1

@@ -79,12 +79,10 @@ bool FEngine::CreateMainViewport()
         return false;
     }
 
-    TSharedRef<FRHIViewport> Viewport = RHICreateViewport(
-        FRHIViewportDesc()
-        .SetWindowHandle(MainWindow->GetPlatformHandle())
+    TSharedPtr<FViewport> Viewport = FWindowedApplication::Get().CreateViewport(FViewportInitializer()
+        .SetWindow(MainWindow.Get())
         .SetWidth(2560)
-        .SetHeight(1440)
-        .SetColorFormat(EFormat::R8G8B8A8_Unorm));
+        .SetHeight(1440));
     
     if (!Viewport)
     {
@@ -98,23 +96,7 @@ bool FEngine::CreateMainViewport()
     // Now we show the window
     MainWindow->Show(false);
 
-    //TSharedPtr<FViewportWidget> Viewport = NewWidget(FViewportWidget)
-    //    .SetWidth(1920)
-    //    .SetHeight(1080)
-    //    .SetViewportInterface(nullptr);
-    //if (Viewport && Viewport->CreateRHI())
-    //{
-    //    MainWindow->SetContent(Viewport);
-    //}
-    //else
-    //{
-    //    return false;
-    //}
-
-    //TSharedPtr<FSceneViewport> SceneViewport = MakeShared<FSceneViewport>(TWeakPtr(Viewport));
-    //Viewport->SetViewportInterface(SceneViewport);
-
-    FWindowedApplication::Get().RegisterMainViewport(MainWindow);
+    FWindowedApplication::Get().RegisterMainViewport(MainViewport);
     return true;
 }
 

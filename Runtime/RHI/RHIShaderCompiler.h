@@ -35,12 +35,14 @@ struct FShaderDefine
     FShaderDefine(const FString& InDefine)
         : Define(InDefine)
         , Value()
-    { }
+    {
+    }
 
     FShaderDefine(const FString& InDefine, const FString& InValue)
         : Define(InDefine)
         , Value(InValue)
-    { }
+    {
+    }
 
     FString Define;
     FString Value;
@@ -56,7 +58,8 @@ struct FRHIShaderCompileInfo
         , bOptimize(true)
         , Defines()
         , EntryPoint()
-    { }
+    {
+    }
     
     FRHIShaderCompileInfo(
         const FString&  InEntryPoint,
@@ -81,11 +84,8 @@ struct FRHIShaderCompileInfo
     EShaderModel              ShaderModel;
     EShaderStage              ShaderStage;
     EShaderOutputLanguage     OutputLanguage;
-    
     bool                      bOptimize;
-
     TArrayView<FShaderDefine> Defines;
-
     FString                   EntryPoint;
 };
 
@@ -120,7 +120,6 @@ private:
 private:
     void*                 DXCLib;
     DxcCreateInstanceProc DxcCreateInstanceFunc;
-
     FString               AssetPath;
 
     static FRHIShaderCompiler* GInstance;

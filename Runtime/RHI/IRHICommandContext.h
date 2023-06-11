@@ -276,12 +276,12 @@ struct IRHICommandContext
      */ 
     virtual void BuildRayTracingGeometry(
         FRHIRayTracingGeometry* RayTracingGeometry,
-        FRHIBuffer* VertexBuffer,
-        uint32 NumVertices,
-        FRHIBuffer* IndexBuffer,
-        uint32 NumIndices,
-        EIndexFormat IndexFormat,
-        bool bUpdate) = 0;
+        FRHIBuffer*             VertexBuffer,
+        uint32                  NumVertices,
+        FRHIBuffer*             IndexBuffer,
+        uint32                  NumIndices,
+        EIndexFormat            IndexFormat,
+        bool                    bUpdate) = 0;
     
     /**
      * @brief           - Builds the Top-Level Acceleration-Structure for ray tracing
@@ -293,13 +293,13 @@ struct IRHICommandContext
 
      /** @brief - Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
     virtual void SetRayTracingBindings(
-        FRHIRayTracingScene* RayTracingScene,
-        FRHIRayTracingPipelineState* PipelineState,
+        FRHIRayTracingScene*              RayTracingScene,
+        FRHIRayTracingPipelineState*      PipelineState,
         const FRayTracingShaderResources* GlobalResource,
         const FRayTracingShaderResources* RayGenLocalResources,
         const FRayTracingShaderResources* MissLocalResources,
         const FRayTracingShaderResources* HitGroupResources,
-        uint32 NumHitGroupResources) = 0;
+        uint32                            NumHitGroupResources) = 0;
 
     /**
      * @brief         - Generate MipLevels for a texture. Works with Texture2D and TextureCubes.

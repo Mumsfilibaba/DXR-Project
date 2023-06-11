@@ -20,7 +20,8 @@ FRHIThread::FRHIThread()
     , WaitCS()
     , WaitCondition()
     , bIsRunning(false)
-{ }
+{
+}
 
 bool FRHIThread::Startup()
 {
@@ -160,7 +161,8 @@ void FRHIThread::WaitForOutstandingTasks()
 FRHICommandListExecutor::FRHICommandListExecutor()
     : Statistics()
     , CommandContext(nullptr)
-{ }
+{
+}
 
 bool FRHICommandListExecutor::Initialize()
 {

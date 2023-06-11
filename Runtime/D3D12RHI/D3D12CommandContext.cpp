@@ -895,7 +895,6 @@ void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
     {
         FD3D12Buffer* D3D12Destination = GetD3D12Buffer(Dst);
         UpdateBuffer(D3D12Destination->GetD3D12Resource(), BufferRegion, SrcData);
-
         CmdBatch->AddInUseResource(Dst);
     }
 }

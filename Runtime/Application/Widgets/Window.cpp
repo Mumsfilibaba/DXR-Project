@@ -93,7 +93,7 @@ void FWindow::CloseWindow()
 {
     if (NativeWindow)
     {
-        NativeWindow->Close();
+        NativeWindow->Destroy();
     }
 
     bIsVisible = false;

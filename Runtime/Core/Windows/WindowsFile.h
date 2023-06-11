@@ -2,6 +2,9 @@
 #include "Windows.h"
 #include "Core/Generic/GenericFile.h"
 
+// TODO: Add to the build system
+#pragma comment(lib, "shlwapi.lib")
+
 class CORE_API FWindowsFileHandle : public IFileHandle
 {
 public:

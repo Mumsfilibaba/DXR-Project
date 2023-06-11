@@ -8,15 +8,15 @@
 
 struct CORE_API FWindowsThreadMisc final : public FGenericThreadMisc
 {
-    static FGenericEvent*  CreateEvent(bool bManualReset);
+    static FGenericEvent* CreateEvent(bool bManualReset);
+    
     static FGenericThread* CreateThread(FThreadInterface* InRunnable, bool bSuspended = true);
 
     static FORCEINLINE uint32 GetNumProcessors()
     {
         SYSTEM_INFO SystemInfo;
         FMemory::Memzero(&SystemInfo);
-
-        GetSystemInfo(&SystemInfo);
+        ::GetSystemInfo(&SystemInfo);
         return static_cast<uint32>(SystemInfo.dwNumberOfProcessors);
     }
 
@@ -30,6 +30,11 @@ struct CORE_API FWindowsThreadMisc final : public FGenericThreadMisc
     {
         DWORD Milliseconds = static_cast<DWORD>(Time.AsMilliseconds());
         ::Sleep(Milliseconds);
+    }
+
+    static FORCEINLINE void Yeild()
+    {
+        ::SwitchToThread();
     }
 
     static FORCEINLINE void Pause() 

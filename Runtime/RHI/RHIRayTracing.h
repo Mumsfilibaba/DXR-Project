@@ -54,17 +54,15 @@ ENUM_CLASS_OPERATORS(ERayTracingInstanceFlags);
 
 struct FRHIRayTracingGeometryInstance
 {
-    FRHIRayTracingGeometryInstance()
-        : Geometry(nullptr)
-        , InstanceIndex(0)
-        , HitGroupIndex(0)
-        , Flags(ERayTracingInstanceFlags::None)
-        , Mask(0xff)
-        , Transform()
-    {
-    }
+    FRHIRayTracingGeometryInstance() = default;
 
-    FRHIRayTracingGeometryInstance(FRHIRayTracingGeometry* InGeometry, uint32 InInstanceIndex, uint32 InHitGroupIndex, ERayTracingInstanceFlags InFlags, uint32 InMask, const FMatrix3x4& InTransform)
+    FRHIRayTracingGeometryInstance(
+        FRHIRayTracingGeometry*  InGeometry,
+        uint32                   InInstanceIndex,
+        uint32                   InHitGroupIndex,
+        ERayTracingInstanceFlags InFlags,
+        uint32                   InMask,
+        const FMatrix3x4&        InTransform)
         : Geometry(InGeometry)
         , InstanceIndex(InInstanceIndex)
         , HitGroupIndex(InHitGroupIndex)
@@ -76,12 +74,12 @@ struct FRHIRayTracingGeometryInstance
 
     bool operator==(const FRHIRayTracingGeometryInstance& RHS) const
     {
-        return (Geometry      == RHS.Geometry)
-            && (InstanceIndex == RHS.InstanceIndex)
-            && (HitGroupIndex == RHS.HitGroupIndex)
-            && (Flags         == RHS.Flags)
-            && (Mask          == RHS.Mask)
-            && (Transform     == RHS.Transform);
+        return Geometry      == RHS.Geometry
+            && InstanceIndex == RHS.InstanceIndex
+            && HitGroupIndex == RHS.HitGroupIndex
+            && Flags         == RHS.Flags
+            && Mask          == RHS.Mask
+            && Transform     == RHS.Transform;
     }
 
     bool operator!=(const FRHIRayTracingGeometryInstance& RHS) const
@@ -89,35 +87,32 @@ struct FRHIRayTracingGeometryInstance
         return !(*this == RHS);
     }
 
-    FRHIRayTracingGeometry*  Geometry;
-    uint32                   InstanceIndex;
-    uint32                   HitGroupIndex;
-    ERayTracingInstanceFlags Flags;
-    uint32                   Mask;
+    FRHIRayTracingGeometry*  Geometry{nullptr};
+    uint32                   InstanceIndex{0};
+    uint32                   HitGroupIndex{0};
+    ERayTracingInstanceFlags Flags{ERayTracingInstanceFlags::None};
+    uint32                   Mask{0xff};
     FMatrix3x4               Transform;
 };
 
 
 struct FRHIAccelerationStructureInitializer
 {
-    FRHIAccelerationStructureInitializer()
-        : Flags(EAccelerationStructureBuildFlags::None)
-    {
-    }
+    FRHIAccelerationStructureInitializer() = default;
 
     FRHIAccelerationStructureInitializer(EAccelerationStructureBuildFlags InFlags)
         : Flags(InFlags)
     {
     }
 
-    bool AllowUpdate() const { return (Flags & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None; }
+    bool AllowUpdate() const { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate); }
 
-    bool PreferFastTrace() const { return (Flags & EAccelerationStructureBuildFlags::PreferFastTrace) != EAccelerationStructureBuildFlags::None; }
-    bool PreferFastBuild() const { return (Flags & EAccelerationStructureBuildFlags::PreferFastBuild) != EAccelerationStructureBuildFlags::None; }
+    bool PreferFastTrace() const { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastTrace); }
+    bool PreferFastBuild() const { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastBuild); }
 
     bool operator==(const FRHIAccelerationStructureInitializer& RHS) const
     {
-        return (Flags == RHS.Flags);
+        return Flags == RHS.Flags;
     }
 
     bool operator!=(const FRHIAccelerationStructureInitializer& RHS) const
@@ -125,7 +120,7 @@ struct FRHIAccelerationStructureInitializer
         return !(*this == RHS);
     }
 
-    EAccelerationStructureBuildFlags Flags;
+    EAccelerationStructureBuildFlags Flags{ EAccelerationStructureBuildFlags::None };
 };
 
 
@@ -141,7 +136,13 @@ struct FRHIRayTracingGeometryDesc : public FRHIAccelerationStructureInitializer
     {
     }
 
-    FRHIRayTracingGeometryDesc(FRHIBuffer* InVertexBuffer, uint32 InNumVerticies, FRHIBuffer* InIndexBuffer, uint32 InNumIndices, EIndexFormat InIndexFormat, EAccelerationStructureBuildFlags InFlags)
+    FRHIRayTracingGeometryDesc(
+        FRHIBuffer*                      InVertexBuffer,
+        uint32                           InNumVerticies,
+        FRHIBuffer*                      InIndexBuffer,
+        uint32                           InNumIndices,
+        EIndexFormat                     InIndexFormat,
+        EAccelerationStructureBuildFlags InFlags)
         : FRHIAccelerationStructureInitializer(InFlags)
         , VertexBuffer(InVertexBuffer)
         , NumVertices(InNumVerticies)
@@ -154,11 +155,11 @@ struct FRHIRayTracingGeometryDesc : public FRHIAccelerationStructureInitializer
     bool operator==(const FRHIRayTracingGeometryDesc& RHS) const
     {
         return FRHIAccelerationStructureInitializer::operator==(RHS)
-            && (VertexBuffer == RHS.VertexBuffer) 
-            && (NumVertices  == RHS.NumVertices)
-            && (IndexBuffer  == RHS.IndexBuffer)
-            && (NumIndices   == RHS.NumIndices)
-            && (IndexFormat  == RHS.IndexFormat);
+            && VertexBuffer == RHS.VertexBuffer 
+            && NumVertices  == RHS.NumVertices
+            && IndexBuffer  == RHS.IndexBuffer
+            && NumIndices   == RHS.NumIndices
+            && IndexFormat  == RHS.IndexFormat;
     }
 
     bool operator!=(const FRHIRayTracingGeometryDesc& RHS) const
@@ -166,21 +167,17 @@ struct FRHIRayTracingGeometryDesc : public FRHIAccelerationStructureInitializer
         return !(*this == RHS);
     }
 
-    FRHIBuffer*  VertexBuffer;
-    uint32       NumVertices;
-    FRHIBuffer*  IndexBuffer;
-    uint32       NumIndices;
-    EIndexFormat IndexFormat;
+    FRHIBuffer*  VertexBuffer{nullptr};
+    uint32       NumVertices{0};
+    FRHIBuffer*  IndexBuffer{nullptr};
+    uint32       NumIndices{0};
+    EIndexFormat IndexFormat{EIndexFormat::Unknown};
 };
 
 
 struct FRHIRayTracingSceneDesc : public FRHIAccelerationStructureInitializer
 {
-    FRHIRayTracingSceneDesc()
-        : FRHIAccelerationStructureInitializer()
-        , Instances()
-    {
-    }
+    FRHIRayTracingSceneDesc() = default;
 
     FRHIRayTracingSceneDesc(const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances, EAccelerationStructureBuildFlags InFlags)
         : FRHIAccelerationStructureInitializer(InFlags)
@@ -190,7 +187,7 @@ struct FRHIRayTracingSceneDesc : public FRHIAccelerationStructureInitializer
 
     bool operator==(const FRHIRayTracingSceneDesc& RHS) const
     {
-        return FRHIAccelerationStructureInitializer::operator==(RHS) && (Instances == RHS.Instances);
+        return FRHIAccelerationStructureInitializer::operator==(RHS) && Instances == RHS.Instances;
     }
 
     bool operator!=(const FRHIRayTracingSceneDesc& RHS) const
@@ -211,18 +208,25 @@ protected:
     {
     }
 
+    virtual ~FRHIAccelerationStructure() = default;
+
 public:
-    virtual class FRHIRayTracingScene*    GetRayTracingScene()    { return nullptr; }
+    virtual class FRHIRayTracingScene* GetRayTracingScene() { return nullptr; }
+
     virtual class FRHIRayTracingGeometry* GetRayTracingGeometry() { return nullptr; }
 
-    virtual void* GetRHIBaseBVHBuffer()             { return nullptr; }
+    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
+
     virtual void* GetRHIBaseAccelerationStructure() { return nullptr; }
 
     virtual FString GetName() const { return ""; }
 
     virtual void SetName(const FString& InName) { }
 
-    EAccelerationStructureBuildFlags GetFlags() const { return Flags; }
+    FORCEINLINE EAccelerationStructureBuildFlags GetFlags() const 
+    {
+        return Flags;
+    }
 
 protected:
     EAccelerationStructureBuildFlags Flags;
@@ -237,6 +241,8 @@ protected:
     {
     }
 
+    virtual ~FRHIRayTracingGeometry() = default;
+
 public:
     virtual class FRHIRayTracingGeometry* GetRayTracingGeometry() override final { return this; }
 };
@@ -249,6 +255,8 @@ protected:
         : FRHIAccelerationStructure(Initializer)
     {
     }
+
+    virtual ~FRHIRayTracingScene() = default;
 
 public:
     virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }

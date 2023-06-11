@@ -8,6 +8,7 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Application/Core/Events.h"
 #include "Application/Widgets/Window.h"
+#include "Application/Application.h"
 #include "RHI/RHIResources.h"
 
 struct ENGINE_API FEngine
@@ -39,7 +40,7 @@ struct ENGINE_API FEngine
     TSharedRef<FGenericWindow> MainWindow; 
 
     /** @brief - The main viewport */
-    TSharedRef<FRHIViewport> MainViewport;
+    TSharedPtr<FViewport> MainViewport;
 
     /** @brief - The current scene */
     FScene* Scene;

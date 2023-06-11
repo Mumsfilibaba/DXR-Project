@@ -161,7 +161,8 @@ FD3D12Adapter::FD3D12Adapter()
     , Factory6(nullptr)
 #endif
     , Adapter(nullptr)
-{ }
+{
+}
 
 bool FD3D12Adapter::Initialize()
 {
@@ -242,15 +243,15 @@ bool FD3D12Adapter::Initialize()
         {
             if (CVarEnablePIX->GetBool())
             {
-				TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
-				if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
-				{
-					DXGraphicsAnalysis = TempGraphicsAnalysis;
-				}
-				else
-				{
-					D3D12_INFO("[FD3D12Adapter]: PIX is not connected to the application");
-				}
+                TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
+                if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
+                {
+                    DXGraphicsAnalysis = TempGraphicsAnalysis;
+                }
+                else
+                {
+                    D3D12_INFO("[FD3D12Adapter]: PIX is not connected to the application");
+                }
             }
         }
     }
@@ -270,11 +271,7 @@ bool FD3D12Adapter::Initialize()
         }
         else
         {
-            HRESULT hResult = Factory5->CheckFeatureSupport(
-                DXGI_FEATURE_PRESENT_ALLOW_TEARING,
-                &bAllowTearing, 
-                sizeof(bAllowTearing));
-
+            HRESULT hResult = Factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &bAllowTearing, sizeof(bAllowTearing));
             if (SUCCEEDED(hResult))
             {
                 if (bAllowTearing)
@@ -457,7 +454,8 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , ComputeCommandListManager(this, ED3D12CommandQueueType::Compute)
     , CopyCommandAllocatorManager(this, ED3D12CommandQueueType::Copy)
     , DeferredDeletionQueue(this)
-{ }
+{
+}
 
 FD3D12Device::~FD3D12Device()
 {

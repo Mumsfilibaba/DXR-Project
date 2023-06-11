@@ -73,171 +73,207 @@ constexpr const CHAR* ToString(EShaderStage ShaderStage)
 }
 
 
-class FRHIShader 
-    : public FRHIResource
+class FRHIShader : public FRHIResource
 {
 protected:
     explicit FRHIShader(EShaderStage InShaderStage)
         : ShaderStage(InShaderStage)
-    { }
+    {
+    }
+
+    virtual ~FRHIShader() = default;
 
 public:
     virtual void* GetRHIBaseResource() { return nullptr; }
-    virtual void* GetRHIBaseShader()   { return nullptr; }
+
+    virtual void* GetRHIBaseShader() { return nullptr; }
     
-    EShaderStage GetShaderStage() const { return ShaderStage; }
+    EShaderStage GetShaderStage() const
+    { 
+        return ShaderStage;
+    }
 
 private:
     EShaderStage ShaderStage;
 };
 
-class FRHIComputeShader
-    : public FRHIShader
+class FRHIComputeShader : public FRHIShader
 {
 protected:
     FRHIComputeShader()
         : FRHIShader(EShaderStage::Compute)
-    { }
+    {
+    }
+
+    virtual ~FRHIComputeShader() = default;
 
 public:
-
-    /** @return - Returns a vector with the number of threads in each dimension */
     virtual FIntVector3 GetThreadGroupXYZ() const = 0;
 };
 
-class FRHIGraphicsShader 
-    : public FRHIShader
+class FRHIGraphicsShader : public FRHIShader
 {
 protected:
     explicit FRHIGraphicsShader(EShaderStage InShaderStage)
         : FRHIShader(InShaderStage)
-    { }
+    {
+    }
+
+    virtual ~FRHIGraphicsShader() = default;
 };
 
-class FRHIVertexShader 
-    : public FRHIGraphicsShader
+class FRHIVertexShader : public FRHIGraphicsShader
 {
 protected:
     FRHIVertexShader()
         : FRHIGraphicsShader(EShaderStage::Vertex)
-    { }
+    {
+    }
+
+    virtual ~FRHIVertexShader() = default;
 };
 
-class FRHIHullShader 
-    : public FRHIGraphicsShader
+class FRHIHullShader : public FRHIGraphicsShader
 {
 protected:
     FRHIHullShader()
         : FRHIGraphicsShader(EShaderStage::Hull)
-    { }
+    {
+    }
+
+    virtual ~FRHIHullShader() = default;
 };
 
-class FRHIDomainShader 
-    : public FRHIGraphicsShader
+class FRHIDomainShader : public FRHIGraphicsShader
 {
 protected:
     FRHIDomainShader()
         : FRHIGraphicsShader(EShaderStage::Domain)
-    { }
+    {
+    }
+
+    virtual ~FRHIDomainShader() = default;
 };
 
-class FRHIGeometryShader 
-    : public FRHIGraphicsShader
+class FRHIGeometryShader : public FRHIGraphicsShader
 {
 protected:
     FRHIGeometryShader()
         : FRHIGraphicsShader(EShaderStage::Geometry)
-    { }
+    {
+    }
+
+    virtual ~FRHIGeometryShader() = default;
 };
 
-class FRHIMeshShader 
-    : public FRHIGraphicsShader
+class FRHIMeshShader : public FRHIGraphicsShader
 {
 protected:
     FRHIMeshShader()
         : FRHIGraphicsShader(EShaderStage::Mesh)
-    { }
+    {
+    }
+
+    virtual ~FRHIMeshShader() = default;
 };
 
-class FRHIAmplificationShader 
-    : public FRHIGraphicsShader
+class FRHIAmplificationShader : public FRHIGraphicsShader
 {
 protected:
     FRHIAmplificationShader()
         : FRHIGraphicsShader(EShaderStage::Amplification)
-    { }
+    {
+    }
+
+    virtual ~FRHIAmplificationShader() = default;
 };
 
-class FRHIPixelShader 
-    : public FRHIGraphicsShader
+class FRHIPixelShader : public FRHIGraphicsShader
 {
 protected:
     FRHIPixelShader()
         : FRHIGraphicsShader(EShaderStage::Pixel)
-    { }
+    {
+    }
+
+    virtual ~FRHIPixelShader() = default;
 };
 
-class FRHIRayTracingShader 
-    : public FRHIShader
+class FRHIRayTracingShader : public FRHIShader
 {
 protected:
     explicit FRHIRayTracingShader(EShaderStage InShaderStage)
         : FRHIShader(InShaderStage)
-    { }
+    {
+    }
+
+    virtual ~FRHIRayTracingShader() = default;
 };
 
-class FRHIRayGenShader 
-    : public FRHIRayTracingShader
+class FRHIRayGenShader : public FRHIRayTracingShader
 {
 protected:
     FRHIRayGenShader()
         : FRHIRayTracingShader(EShaderStage::RayGen)
-    { }
+    {
+    }
+
+    virtual ~FRHIRayGenShader() = default;
 };
 
-class FRHIRayAnyHitShader 
-    : public FRHIRayTracingShader
+class FRHIRayAnyHitShader : public FRHIRayTracingShader
 {
 protected:
     FRHIRayAnyHitShader()
         : FRHIRayTracingShader(EShaderStage::RayAnyHit)
-    { }
+    {
+    }
+
+    virtual ~FRHIRayAnyHitShader() = default;
 };
 
-class FRHIRayClosestHitShader
-    : public FRHIRayTracingShader
+class FRHIRayClosestHitShader : public FRHIRayTracingShader
 {
 protected:
     FRHIRayClosestHitShader()
         : FRHIRayTracingShader(EShaderStage::RayClosestHit)
-    { }
+    {
+    }
+
+    virtual ~FRHIRayClosestHitShader() = default;
 };
 
-class FRHIRayMissShader 
-    : public FRHIRayTracingShader
+class FRHIRayMissShader : public FRHIRayTracingShader
 {
 protected:
     FRHIRayMissShader()
         : FRHIRayTracingShader(EShaderStage::RayMiss)
-    { }
+    {
+    }
+
+    virtual ~FRHIRayMissShader() = default;
 };
 
-class FRHIRayIntersectionShader 
-    : public FRHIRayTracingShader
+class FRHIRayIntersectionShader : public FRHIRayTracingShader
 {
 protected:
     FRHIRayIntersectionShader()
         : FRHIRayTracingShader(EShaderStage::RayIntersection)
-    { }
+    {
+    }
+
+    virtual ~FRHIRayIntersectionShader() = default;
 };
 
-class FRHIRayCallableShader
-    : public FRHIRayTracingShader
+class FRHIRayCallableShader : public FRHIRayTracingShader
 {
 protected:
     FRHIRayCallableShader()
         : FRHIRayTracingShader(EShaderStage::RayCallable)
-    { }
+    {
+    }
+
+    virtual ~FRHIRayCallableShader() = default;
 };
 
 

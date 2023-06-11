@@ -4,16 +4,20 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Templates/TypeTraits.h"
 
+#undef IsMinimized
+
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-enum class EWindowStyleFlag : uint32
+enum class EWindowStyleFlag : uint16
 {
-    None        = 0x0,
-    Titled      = FLAG(1),
-    Closable    = FLAG(2),
-    Minimizable = FLAG(3),
-    Maximizable = FLAG(4),
-    Resizeable  = FLAG(5),
+    None          = 0,
+    Titled        = FLAG(1),
+    Closable      = FLAG(2),
+    Minimizable   = FLAG(3),
+    Maximizable   = FLAG(4),
+    Resizeable    = FLAG(5),
+    NoTaskBarIcon = FLAG(6),
+    TopMost       = FLAG(7)
 };
 
 ENUM_CLASS_OPERATORS(EWindowStyleFlag);
@@ -66,9 +70,28 @@ struct FWindowStyle
         return (Style & EWindowStyleFlag::Resizeable) != EWindowStyleFlag::None;
     }
 
+    constexpr bool HasTaskBarIcon() const
+    {
+        return (Style & EWindowStyleFlag::NoTaskBarIcon) == EWindowStyleFlag::None;
+    }
+
+    constexpr bool IsTopMost() const
+    {
+        return (Style & EWindowStyleFlag::TopMost) != EWindowStyleFlag::None;
+    }
+
+    constexpr bool operator==(FWindowStyle Other) const
+    {
+        return Style == Other.Style;
+    }
+
+    constexpr bool operator!=(FWindowStyle Other) const
+    {
+        return Style != Other.Style;
+    }
+
     EWindowStyleFlag Style = EWindowStyleFlag::None;
 };
-
 
 struct FWindowShape
 {
@@ -88,6 +111,16 @@ struct FWindowShape
     {
     }
 
+    bool operator==(FWindowShape Other) const
+    {
+        return Width == Other.Width && Height == Other.Height && Position.x == Other.Position.x && Position.y == Other.Position.y;
+    }
+
+    bool operator!=(FWindowShape Other) const
+    {
+        return !(*this == Other);
+    }
+
     uint32 Width  = 0;
     uint32 Height = 0;
     struct
@@ -97,7 +130,6 @@ struct FWindowShape
     } Position;
 };
 
-
 class FGenericWindow : public FRefCounted
 {
 public:
@@ -105,11 +137,12 @@ public:
 
     virtual bool Initialize(
         const FString& Title,
-        uint32         InWidth,
-        uint32         InHeight,
-        int32          x,
-        int32          y,
-        FWindowStyle   Style) { return true; }
+        uint32          InWidth,
+        uint32          InHeight,
+        int32           x,
+        int32           y,
+        FWindowStyle    Style,
+        FGenericWindow* InParentWindow = nullptr) { return true; }
 
     virtual void Show(bool bMaximized) { }
 
@@ -117,7 +150,7 @@ public:
 
     virtual void Maximize() { }
 
-    virtual void Close() { }
+    virtual void Destroy() { }
 
     virtual void Restore() { }
 
@@ -125,13 +158,23 @@ public:
 
     virtual bool IsActiveWindow() const { return false; }
     
+    virtual void MoveTo(int32 x, int32 y) { }
+    
     virtual bool IsValid() const { return false; }
+
+    virtual bool IsMinimized() const { return false; }
+
+    virtual bool IsMaximized() const { return false; }
+
+    virtual bool IsChildWindow(const TSharedRef<FGenericWindow>& ParentWindow) const { return false; }
+
+    virtual void SetWindowFocus() { }
 
     virtual void SetTitle(const FString& Title) { }
     
-    virtual void GetTitle(FString& OutTitle) { }
+    virtual void GetTitle(FString& OutTitle) const { }
 
-    virtual void MoveTo(int32 x, int32 y) { }
+    virtual void SetWindowOpacity(float Alpha) { }
 
     virtual void SetWindowShape(const FWindowShape& Shape, bool bMove) { }
 
@@ -139,15 +182,22 @@ public:
 
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const { }
 
+    virtual float GetWindowDpiScale() const { return 0.0f; }
+
     virtual uint32 GetWidth() const { return 0; }
 
     virtual uint32 GetHeight() const { return 0; }
 
-    virtual void  SetPlatformHandle(void* InPlatformHandle) { }
+    virtual void SetPlatformHandle(void* InPlatformHandle) { }
     
     virtual void* GetPlatformHandle() const { return nullptr; }
 
-    FWindowStyle GetStyle() const { return StyleParams; }
+    virtual void SetStyle(FWindowStyle Style) { }
+
+    FWindowStyle GetStyle() const 
+    { 
+        return StyleParams;
+    }
 
 protected:
     FWindowStyle StyleParams;

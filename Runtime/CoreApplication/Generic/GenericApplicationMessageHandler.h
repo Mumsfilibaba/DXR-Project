@@ -109,6 +109,11 @@ struct FGenericApplicationMessageHandler
     {
         return false;
     }
+
+    virtual bool OnMonitorChange()
+    {
+        return false;
+    }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

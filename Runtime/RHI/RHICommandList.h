@@ -31,7 +31,8 @@ struct FRHICommandStatistics
         : NumDrawCalls(0)
         , NumDispatchCalls(0)
         , NumCommands(0)
-    { }
+    {
+    }
 
     FORCEINLINE void Reset()
     {
@@ -367,12 +368,7 @@ public:
         EmplaceCommand<FRHICommandUpdateBuffer>(Dst, BufferRegion, SrcData);
     }
 
-    FORCEINLINE void UpdateTexture2D(
-        FRHITexture*            Dst,
-        const FTextureRegion2D& TextureRegion,
-        uint32                  MipLevel,
-        const void*             InSrcData,
-        uint32                  InSrcRowPitch) noexcept
+    FORCEINLINE void UpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* InSrcData, uint32 InSrcRowPitch) noexcept
     {
         const uint32 SizeInBytes = InSrcRowPitch * TextureRegion.Height;
         
@@ -425,9 +421,9 @@ public:
     }
 
     FORCEINLINE void BuildRayTracingScene(
-        FRHIRayTracingScene* Scene,
+        FRHIRayTracingScene*                                   Scene,
         const TArrayView<const FRHIRayTracingGeometryInstance> Instances,
-        bool bUpdate) noexcept
+        bool                                                   bUpdate) noexcept
     {
         CHECK(!bUpdate || (bUpdate && Scene && IsEnumFlagSet(Scene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
         EmplaceCommand<FRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);
@@ -443,14 +439,7 @@ public:
         const FRayTracingShaderResources* HitGroupResources,
         uint32                            NumHitGroupResources) noexcept
     {
-        EmplaceCommand<FRHICommandSetRayTracingBindings>(
-            RayTracingScene, 
-            PipelineState,
-            GlobalResource,
-            RayGenLocalResources,
-            MissLocalResources,
-            HitGroupResources,
-            NumHitGroupResources);
+        EmplaceCommand<FRHICommandSetRayTracingBindings>(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
 
     FORCEINLINE void GenerateMips(FRHITexture* Texture) noexcept
@@ -518,21 +507,10 @@ public:
         Statistics.NumDrawCalls++;
     }
      
-    FORCEINLINE void DrawIndexedInstanced(
-        uint32 IndexCountPerInstance,
-        uint32 InstanceCount,
-        uint32 StartIndexLocation,
-        uint32 BaseVertexLocation,
-        uint32 StartInstanceLocation) noexcept
+    FORCEINLINE void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) noexcept
     {
         CHECK((IndexCountPerInstance > 0) && (InstanceCount > 0));
-        EmplaceCommand<FRHICommandDrawIndexedInstanced>(
-            IndexCountPerInstance,
-            InstanceCount,
-            StartIndexLocation,
-            BaseVertexLocation,
-            StartInstanceLocation);
-
+        EmplaceCommand<FRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
         Statistics.NumDrawCalls++;
     }
 

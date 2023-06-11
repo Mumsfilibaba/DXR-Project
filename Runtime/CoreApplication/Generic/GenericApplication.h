@@ -43,6 +43,8 @@ public:
     
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
 
+    virtual TSharedRef<FGenericWindow> GetForegroundWindow() const { return nullptr; }
+
     virtual FMonitorDesc GetMonitorDescFromWindow(const TSharedRef<FGenericWindow>& Window) const { return FMonitorDesc{}; }
 
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)

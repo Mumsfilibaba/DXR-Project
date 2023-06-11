@@ -19,7 +19,7 @@ struct FModifierKeyState
             uint8 bIsAltDown      : 1;
             uint8 bIsShiftDown    : 1;
             uint8 bIsCapsLockDown : 1;
-            uint8 bIsSuperKeyDown : 1;
+            uint8 bIsSuperDown : 1;
             uint8 bIsNumPadDown   : 1;
         };
 

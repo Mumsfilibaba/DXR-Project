@@ -73,6 +73,8 @@ public:
     
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
 
+    virtual TSharedRef<FGenericWindow> GetForegroundWindow() const override final;
+
     virtual FMonitorDesc GetMonitorDescFromWindow(const TSharedRef<FGenericWindow>& Window) const override final;
 
 public:
@@ -97,15 +99,23 @@ private:
     static LRESULT StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
     bool RegisterWindowClass();
+    
     bool RegisterRawInputDevices(HWND Window);
+
     bool UnregisterRawInputDevices();
 
     LRESULT ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
-    LRESULT MessageProc    (HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
+    
+    LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
 private:
+    HICON         Icon;
+    HINSTANCE     InstanceHandle;
+    bool          bIsTrackingMouse;
+    FXInputDevice XInputDevice;
+
     TArray<FWindowsMessage> Messages;
     FCriticalSection        MessagesCS;
 
@@ -114,12 +124,6 @@ private:
 
     TArray<TSharedRef<FWindowsWindow>> ClosedWindows;
     FCriticalSection ClosedWindowsCS;
-
-    HICON     Icon;
-    HINSTANCE InstanceHandle;
-    bool      bIsTrackingMouse;
-
-    FXInputDevice XInputDevice;
 
     TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
     mutable FCriticalSection WindowsMessageListenersCS;

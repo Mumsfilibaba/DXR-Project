@@ -134,14 +134,19 @@ struct FRHIBufferDesc
     {
     }
 
-    bool IsDefault()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Default); }
-    bool IsDynamic()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Dynamic); }
+    bool IsDefault() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Default); }
+
+    bool IsDynamic() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Dynamic); }
+    
     bool IsReadBack() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ReadBack); }
     
     bool IsConstantBuffer() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ConstantBuffer); }
+    
     bool IsShaderResource() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ShaderResource); }
-    bool IsVertexBuffer()   const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::VertexBuffer); }
-    bool IsIndexBuffer()    const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::IndexBuffer); }
+    
+    bool IsVertexBuffer() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::VertexBuffer); }
+    
+    bool IsIndexBuffer() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::IndexBuffer); }
     
     bool IsUnorderedAccess() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::UnorderedAccess); }
 
@@ -160,7 +165,6 @@ struct FRHIBufferDesc
     EBufferUsageFlags UsageFlags;
 };
 
-
 class FRHIBuffer : public FRHIResource
 {
 protected:
@@ -170,34 +174,38 @@ protected:
     {
     }
 
-public:
+    virtual ~FRHIBuffer() = default;
 
-    /** @return - Returns a pointer to the RHI implementation of RHIBuffer */
+public:
     virtual void* GetRHIBaseBuffer() { return nullptr; }
 
-    /** @return - Returns the native resource-handle */
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    /** @return - Returns a ConstantBuffer Bindless-handle */
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-    /** @brief - Set the name of the PipelineState */
     virtual void SetName(const FString& InName) { }
 
-    /** @return - Returns the name of the PipelineState */
     virtual FString GetName() const { return ""; }
     
-    /** @return - Returns the size of the buffer */
-    FORCEINLINE uint64 GetSize() const { return Desc.Size; }
+    FORCEINLINE uint64 GetSize() const
+    {
+        return Desc.Size;
+    }
     
-    /** @return - Returns the stride of each element in the buffer */
-    FORCEINLINE uint32 GetStride() const { return Desc.Stride; }
+    FORCEINLINE uint32 GetStride() const
+    {
+        return Desc.Stride;
+    }
 
-    /** @return - Returns the flags of the buffer */
-    FORCEINLINE EBufferUsageFlags GetFlags() const { return Desc.UsageFlags; }
+    FORCEINLINE EBufferUsageFlags GetFlags() const
+    {
+        return Desc.UsageFlags;
+    }
 
-    /** @return - Returns the description used to create the buffer */
-    FORCEINLINE const FRHIBufferDesc& GetDesc() const { return Desc; }
+    FORCEINLINE const FRHIBufferDesc& GetDesc() const
+    {
+        return Desc;
+    }
 
 protected:
     FRHIBufferDesc Desc;
@@ -250,7 +258,7 @@ struct FRHITextureDesc
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        FRHITextureDesc NewTextureDesc(
+        return FRHITextureDesc(
             ETextureDimension::Texture2D,
             InFormat,
             FIntVector3(InWidth, InHeight, 0),
@@ -259,8 +267,6 @@ struct FRHITextureDesc
             InNumSamples,
             InUsageFlags,
             InClearValue);
-
-        return NewTextureDesc;
     }
 
     static FRHITextureDesc CreateTexture2DArray(
@@ -273,7 +279,7 @@ struct FRHITextureDesc
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        FRHITextureDesc NewTextureDesc(
+        return FRHITextureDesc(
             ETextureDimension::Texture2DArray,
             InFormat,
             FIntVector3(InWidth, InHeight, 0),
@@ -282,8 +288,6 @@ struct FRHITextureDesc
             InNumSamples,
             InUsageFlags,
             InClearValue);
-
-        return NewTextureDesc;
     }
 
     static FRHITextureDesc CreateTextureCube(
@@ -294,7 +298,7 @@ struct FRHITextureDesc
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        FRHITextureDesc NewTextureDesc(
+        return FRHITextureDesc(
             ETextureDimension::TextureCube,
             InFormat,
             FIntVector3(InExtent, InExtent, 0),
@@ -303,8 +307,6 @@ struct FRHITextureDesc
             InNumSamples,
             InUsageFlags,
             InClearValue);
-
-        return NewTextureDesc;
     }
 
     static FRHITextureDesc CreateTextureCubeArray(
@@ -316,7 +318,7 @@ struct FRHITextureDesc
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        FRHITextureDesc NewTextureDesc(
+        return FRHITextureDesc(
             ETextureDimension::TextureCubeArray,
             InFormat,
             FIntVector3(InExtent, InExtent, 0),
@@ -325,8 +327,6 @@ struct FRHITextureDesc
             InNumSamples,
             InUsageFlags,
             InClearValue);
-
-        return NewTextureDesc;
     }
 
     static FRHITextureDesc CreateTexture3D(
@@ -339,7 +339,7 @@ struct FRHITextureDesc
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        FRHITextureDesc NewTextureDesc(
+        return FRHITextureDesc(
             ETextureDimension::Texture3D,
             InFormat,
             FIntVector3(InWidth, InHeight, InDepth),
@@ -348,8 +348,6 @@ struct FRHITextureDesc
             InNumSamples,
             InUsageFlags,
             InClearValue);
-
-        return NewTextureDesc;
     }
 
     FRHITextureDesc()
@@ -384,19 +382,27 @@ struct FRHITextureDesc
     {
     }
 
-    bool IsTexture2D()        const { return (Dimension == ETextureDimension::Texture2D); }
-    bool IsTexture2DArray()   const { return (Dimension == ETextureDimension::Texture2DArray); }
-    bool IsTextureCube()      const { return (Dimension == ETextureDimension::TextureCube); }
+    bool IsTexture2D() const { return (Dimension == ETextureDimension::Texture2D); }
+    
+    bool IsTexture2DArray() const { return (Dimension == ETextureDimension::Texture2DArray); }
+    
+    bool IsTextureCube() const { return (Dimension == ETextureDimension::TextureCube); }
+    
     bool IsTextureCubeArray() const { return (Dimension == ETextureDimension::TextureCubeArray); }
-    bool IsTexture3D()        const { return (Dimension == ETextureDimension::Texture3D); }
+    
+    bool IsTexture3D() const { return (Dimension == ETextureDimension::Texture3D); }
 
-    bool IsShaderResource()  const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShaderResource); }
+    bool IsShaderResource() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShaderResource); }
+    
     bool IsUnorderedAccess() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::UnorderedAccess); }
-    bool IsRenderTarget()    const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::RenderTarget); }
-    bool IsDepthStencil()    const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::DepthStencil); }
-    bool IsPresentable()     const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::Presentable); }
+    
+    bool IsRenderTarget() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::RenderTarget); }
+    
+    bool IsDepthStencil() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::DepthStencil); }
+    
+    bool IsPresentable() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::Presentable); }
 
-    bool IsMultisampled()    const { return (NumSamples > 1); }
+    bool IsMultisampled() const { return (NumSamples > 1); }
 
     bool operator==(const FRHITextureDesc& Other) const
     {
@@ -418,12 +424,10 @@ struct FRHITextureDesc
     ETextureDimension  Dimension;
     EFormat            Format;
     ETextureUsageFlags UsageFlags;
-
     FIntVector3        Extent;
     uint32             NumArraySlices;
     uint32             NumMipLevels;
     uint32             NumSamples;
-
     FClearValue        ClearValue;
 };
 
@@ -437,64 +441,80 @@ protected:
     {
     }
 
-public:
+    virtual ~FRHITexture() = default;
 
-    /** @return - Returns a pointer to the RHI implementation of RHITexture */
+public:
     virtual void* GetRHIBaseTexture() { return nullptr; }
 
-    /** @return - Returns the native resource-handle */
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    /** @return - Returns the default ShaderResourceView */
     virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
 
-    /** @return - Returns the default UnorderedAccessView */
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
-    /** @return - Returns a Bindless-handle to the default ShaderResourceView */
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
 
-    /** @return - Returns a Bindless-handle to the default UnorderedAccessView */
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
-    
-    /** @return - Returns the dimension of the texture */
-    FORCEINLINE ETextureDimension GetDimension() const { return Desc.Dimension; }
-    
-    /** @return - Returns the format of the texture */
-    FORCEINLINE EFormat GetFormat() const { return Desc.Format; }
 
-    /** @return - Returns the flags of the texture */
-    FORCEINLINE ETextureUsageFlags GetFlags() const { return Desc.UsageFlags; }
-    
-    /** @return - Returns the extent */
-    FORCEINLINE const FIntVector3& GetExtent() const { return Desc.Extent; }
-    
-    /** @return - Returns the width */
-    FORCEINLINE uint32 GetWidth() const { return Desc.Extent.x; }
-    
-    /** @return - Returns the height */
-    FORCEINLINE uint32 GetHeight() const { return Desc.Extent.y; }
-
-    /** @return - Returns the depth */
-    FORCEINLINE uint32 GetDepth()  const { return Desc.Extent.z; }
-
-    /** @return - Returns the number of array-slices */
-    FORCEINLINE uint32 GetNumArraySlices() const { return Desc.NumArraySlices; }
-    
-    /** @return - Returns the number or MipLevels */
-    FORCEINLINE uint32 GetNumMipLevels() const { return Desc.NumMipLevels; }
-    
-    /** @return - Returns the number of samples */
-    FORCEINLINE uint32 GetNumSamples() const { return Desc.NumSamples; }
-    
-    /** @return - Returns the description of the texture */
-    FORCEINLINE const FRHITextureDesc& GetDesc() const { return Desc; }
-
-    /** @brief - Set the name of the PipelineState */
     virtual void SetName(const FString& InName) { }
 
-    /** @return - Returns the name of the PipelineState */
     virtual FString GetName() const { return ""; }
+
+    FORCEINLINE ETextureDimension GetDimension() const
+    {
+        return Desc.Dimension;
+    }
+    
+    FORCEINLINE EFormat GetFormat() const
+    {
+        return Desc.Format;
+    }
+
+    FORCEINLINE ETextureUsageFlags GetFlags() const
+    {
+        return Desc.UsageFlags;
+    }
+    
+    FORCEINLINE const FIntVector3& GetExtent() const
+    {
+        return Desc.Extent;
+    }
+    
+    FORCEINLINE uint32 GetWidth() const
+    {
+        return Desc.Extent.x;
+    }
+    
+    FORCEINLINE uint32 GetHeight() const
+    {
+        return Desc.Extent.y;
+    }
+
+    FORCEINLINE uint32 GetDepth() const
+    {
+        return Desc.Extent.z;
+    }
+
+    FORCEINLINE uint32 GetNumArraySlices() const
+    {
+        return Desc.NumArraySlices;
+    }
+    
+    FORCEINLINE uint32 GetNumMipLevels() const
+    {
+        return Desc.NumMipLevels;
+    }
+    
+    FORCEINLINE uint32 GetNumSamples() const
+    {
+        return Desc.NumSamples;
+    }
+    
+    FORCEINLINE const FRHITextureDesc& GetDesc() const
+    {
+        return Desc;
+    }
+
 
 protected:
     FRHITextureDesc Desc;
@@ -802,8 +822,13 @@ protected:
     {
     }
 
+    virtual ~FRHIResourceView() = default;
+
 public:
-    FRHIResource* GetResource() const { return Resource; }
+    FORCEINLINE FRHIResource* GetResource() const
+    {
+        return Resource;
+    }
 
 protected:
     FRHIResource* Resource;
@@ -818,6 +843,8 @@ protected:
     {
     }
 
+    virtual ~FRHIShaderResourceView() = default;
+
 public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
@@ -830,6 +857,8 @@ protected:
         : FRHIResourceView(InResource)
     {
     }
+
+    virtual ~FRHIUnorderedAccessView() = default;
 
 public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
@@ -1033,6 +1062,15 @@ struct FRHIRenderPassDesc
         , RenderTargets()
     {
     }
+
+	FRHIRenderPassDesc(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets)
+		: ShadingRateTexture(nullptr)
+		, DepthStencilView()
+		, StaticShadingRate(EShadingRate::VRS_1x1)
+		, NumRenderTargets(InNumRenderTargets)
+		, RenderTargets(InRenderTargets)
+	{
+	}
 
     FRHIRenderPassDesc(
         const FRenderTargetViews& InRenderTargets,
@@ -1253,6 +1291,8 @@ protected:
     {
     }
 
+    virtual ~FRHISamplerState() = default;
+
 public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
@@ -1314,26 +1354,37 @@ protected:
     {
     }
 
+    virtual ~FRHIViewport() = default;
+
 public:
     virtual bool Resize(uint32 InWidth, uint32 InHeight) { return true; }
 
-    /** @return - Returns the Texture representing the BackBuffer */
     virtual FRHITexture* GetBackBuffer() const { return nullptr; };
 
-    /** @return - Returns the ColorFormat */
-    FORCEINLINE EFormat GetColorFormat() const { return Desc.ColorFormat; }
-    
-    /** @return - Returns the DepthFormat */
-    FORCEINLINE EFormat GetDepthFormat() const { return Desc.DepthFormat; }
+    FORCEINLINE EFormat GetColorFormat() const
+    {
+        return Desc.ColorFormat;
+    }
 
-    /** @return - Returns the width */
-    FORCEINLINE uint32 GetWidth() const { return Desc.Width;  }
-    
-    /** @return - Returns the Height */
-    FORCEINLINE uint32 GetHeight() const { return Desc.Height; }
+    FORCEINLINE EFormat GetDepthFormat() const
+    {
+        return Desc.DepthFormat;
+    }
 
-    /** @return - Returns the Description */
-    FORCEINLINE const FRHIViewportDesc& GetDesc() const { return Desc; }
+    FORCEINLINE uint32 GetWidth() const
+    {
+        return Desc.Width;
+    }
+
+    FORCEINLINE uint32 GetHeight() const
+    {
+        return Desc.Height;
+    }
+
+    FORCEINLINE const FRHIViewportDesc& GetDesc() const
+    {
+        return Desc;
+    }
 
 protected:
     FRHIViewportDesc Desc;
@@ -1349,21 +1400,12 @@ struct FRHITimestamp
 class FRHITimestampQuery : public FRHIResource
 {
 protected:
-    FRHITimestampQuery() = default;
+	FRHITimestampQuery()          = default;
+	virtual ~FRHITimestampQuery() = default;
 
 public:
-
-    /**
-     * @brief          - Retrieve a certain timestamp 
-     * @param OutQuery - Structure to store the timestamp in
-     * @param Index    - Index of the query to retrieve 
-     */
     virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const = 0;
 
-    /**
-     * @brief  - Get the frequency of the queue that the query where used on 
-     * @return - Returns the frequency of the query
-     */
     virtual uint64 GetFrequency() const = 0;
 };
 
@@ -1834,22 +1876,22 @@ struct FRenderTargetWriteMask
 
     constexpr bool WriteRed() const
     {
-        return (Mask & EColorWriteFlag::Red) != EColorWriteFlag::None;
+        return IsEnumFlagSet(Mask, EColorWriteFlag::Red);
     }
 
     constexpr bool WriteGreen() const
     {
-        return (Mask & EColorWriteFlag::Green) != EColorWriteFlag::None;
+        return IsEnumFlagSet(Mask, EColorWriteFlag::Green);
     }
 
     constexpr bool WriteBlue() const
     {
-        return (Mask & EColorWriteFlag::Blue) != EColorWriteFlag::None;
+        return IsEnumFlagSet(Mask, EColorWriteFlag::Blue);
     }
 
     constexpr bool WriteAlpha() const
     {
-        return (Mask & EColorWriteFlag::Alpha) != EColorWriteFlag::None;
+        return IsEnumFlagSet(Mask, EColorWriteFlag::Alpha);
     }
 
     constexpr bool WriteAll() const
@@ -2014,7 +2056,7 @@ protected:
     virtual ~FRHIBlendState() = default;
 
 public:
-    virtual FRHIBlendStateDesc GetDesc() const = 0; 
+    virtual FRHIBlendStateDesc GetDesc() const = 0;
 };
 
 
@@ -2128,8 +2170,8 @@ struct FRHIVertexInputLayoutDesc
 class FRHIVertexInputLayout : public FRHIResource
 {
 protected:
-    FRHIVertexInputLayout()  = default;
-    ~FRHIVertexInputLayout() = default;
+    FRHIVertexInputLayout()          = default;
+    virtual ~FRHIVertexInputLayout() = default;
 };
 
 
@@ -2155,15 +2197,12 @@ constexpr const CHAR* ToString(EIndexBufferStripCutValue IndexBufferStripCutValu
 class FRHIPipelineState : public FRHIResource
 {
 protected:
-    FRHIPipelineState()  = default;
-    ~FRHIPipelineState() = default;
+    FRHIPipelineState()          = default;
+    virtual ~FRHIPipelineState() = default;
 
 public:
-
-    /** @brief - Set the name of the PipelineState */
     virtual void SetName(const FString& InName) { }
 
-    /** @return - Returns the name of the PipelineState */
     virtual FString GetName() const { return ""; }
 };
 
@@ -2328,8 +2367,8 @@ struct FRHIComputePipelineStateDesc
 class FRHIComputePipelineState : public FRHIPipelineState
 {
 protected:
-    FRHIComputePipelineState()  = default;
-    ~FRHIComputePipelineState() = default;
+    FRHIComputePipelineState()          = default;
+    virtual ~FRHIComputePipelineState() = default;
 };
 
 
@@ -2420,8 +2459,8 @@ struct FRHIRayTracingPipelineStateDesc
 class FRHIRayTracingPipelineState : public FRHIPipelineState
 {
 protected:
-    FRHIRayTracingPipelineState()  = default;
-    ~FRHIRayTracingPipelineState() = default;
+    FRHIRayTracingPipelineState()          = default;
+    virtual ~FRHIRayTracingPipelineState() = default;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

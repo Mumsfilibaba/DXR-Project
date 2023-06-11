@@ -135,6 +135,7 @@ public:
         , ScrollDelta(0.0f)
         , Button(MouseButton_Unknown)
         , bIsVerticalScrollDelta(false)
+        , bIsDown(false)
     {
     }
 
@@ -144,15 +145,17 @@ public:
         , ScrollDelta(0.0f)
         , Button(MouseButton_Unknown)
         , bIsVerticalScrollDelta(false)
+        , bIsDown(false)
     {
     }
 
-    FMouseEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& ModifierKeys, EMouseButton InButton)
+    FMouseEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& ModifierKeys, EMouseButton InButton, bool bInIsDown)
         : FInputEvent(ModifierKeys)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
         , Button(InButton)
         , bIsVerticalScrollDelta(false)
+        , bIsDown(bInIsDown)
     {
     }
 
@@ -162,6 +165,7 @@ public:
         , ScrollDelta(InScrollDelta)
         , Button(MouseButton_Unknown)
         , bIsVerticalScrollDelta(bInIsVerticalScrollDelta)
+        , bIsDown(false)
     {
     }
 
@@ -267,9 +271,10 @@ public:
     {
     }
 
-    FControllerEvent(EControllerButton InButton, uint32 InControllerIndex)
+    FControllerEvent(EControllerButton InButton, bool bInIsButtonDown, uint32 InControllerIndex)
         : FInputEvent()
         , Button(InButton)
+        , bIsButtonDown(bInIsButtonDown)
         , ControllerIndex(ControllerIndex)
         , AnalogSource(EControllerAnalog::Unknown)
         , AnalogValue(0.0f)
@@ -279,6 +284,7 @@ public:
     FControllerEvent(EControllerAnalog InAnalogSource, float InAnalogValue, uint32 InControllerIndex)
         : FInputEvent()
         , Button(EControllerButton::Unknown)
+        , bIsButtonDown(false)
         , ControllerIndex(InControllerIndex)
         , AnalogSource(InAnalogSource)
         , AnalogValue(InAnalogValue)
@@ -305,8 +311,14 @@ public:
         return AnalogValue;
     }
 
+    bool IsButtonDown() const
+    {
+        return bIsButtonDown;
+    }
+
 private:
     EControllerButton Button;
+    bool              bIsButtonDown;
     EControllerAnalog AnalogSource;
     float             AnalogValue;
     uint32            ControllerIndex;

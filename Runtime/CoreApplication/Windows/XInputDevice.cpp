@@ -5,19 +5,19 @@
 
 namespace XInputPrivate
 {
-    float NormalizeThumbStick(int16 ThumbValue)
+    FORCEINLINE static float NormalizeThumbStick(int16 ThumbValue)
     {
         const float ThumbMaxValue = (ThumbValue <= 0) ? 32768.0f : 32767.0f;
         return static_cast<float>(ThumbValue) / ThumbMaxValue;
     }
 
-    float NormalizeTrigger(uint8 TriggerValue)
+    FORCEINLINE static float NormalizeTrigger(uint8 TriggerValue)
     {
         constexpr float TriggerMaxValue = 255.0f;
         return static_cast<float>(TriggerValue) / TriggerMaxValue;
     }
 
-    void DispatchAnalogMessage(
+    FORCEINLINE static void DispatchAnalogMessage(
         const TSharedPtr<FGenericApplicationMessageHandler>& MessageHandler,
         EControllerAnalog                                    AnalogSource,
         uint32                                               ControllerIndex,
@@ -26,7 +26,7 @@ namespace XInputPrivate
         float                                                NormalizedValue,
         int16                                                DeadZone)
     {
-        if ((CurrentValue != NewValue) || (int16(FMath::Abs(NewValue)) > DeadZone))
+        if (CurrentValue != NewValue || static_cast<int16>(FMath::Abs(NewValue)) > DeadZone)
         {
             MessageHandler->OnControllerAnalog(AnalogSource, ControllerIndex, NormalizedValue);
         }
@@ -43,39 +43,36 @@ FXInputDevice::FXInputDevice()
     Frequency = FPlatformTime::QueryPerformanceFrequency();
 }
 
-FXInputDevice::~FXInputDevice()
-{
-}
-
-void FXInputDevice::PollDeviceState()
+void FXInputDevice::UpdateDeviceState()
 {
     constexpr int64 MicrosecondsDiff = 1'000'000;
     const int64 CurrentTimeStamp = FPlatformTime::QueryPerformanceCounter();
 
-    int64 ElapsedTime = (CurrentTimeStamp - LastConnectionPollTimeStamp) * MicrosecondsDiff;
-    ElapsedTime = ElapsedTime / Frequency;
-
-    // Check every second
-    bool bDidCheckConnection = false;
-    if (ElapsedTime > 1000000)
-    {
-        PollForNewConnections();
-        LastConnectionPollTimeStamp = CurrentTimeStamp;
-        bDidCheckConnection = true;
-    }
-
-    ElapsedTime = (CurrentTimeStamp - LastPollTimeStamp) * MicrosecondsDiff;
+    int64 ElapsedTime = (CurrentTimeStamp - LastPollTimeStamp) * MicrosecondsDiff;
     ElapsedTime = ElapsedTime / Frequency;
 
     // Check the known devices every millisecond
     if (ElapsedTime > 1000)
     {
-        PollConnectedDevices();
+        UpdateConnectedDevices();
         LastPollTimeStamp = CurrentTimeStamp;
     }
 }
 
-void FXInputDevice::PollForNewConnections()
+bool FXInputDevice::IsDeviceConnected() const
+{
+    for (int32 UserIndex = 0; UserIndex < MAX_CONTROLLERS; UserIndex++)
+    {
+        if (ControllerState[UserIndex].bConnected)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void FXInputDevice::CheckForNewConnections()
 {
     DWORD Result = ERROR_DEVICE_NOT_CONNECTED;
     for (DWORD UserIndex = 0; UserIndex < MAX_CONTROLLERS; UserIndex++)
@@ -95,7 +92,7 @@ void FXInputDevice::PollForNewConnections()
     }
 }
 
-void FXInputDevice::PollConnectedDevices()
+void FXInputDevice::UpdateConnectedDevices()
 {
     DWORD Result = ERROR_DEVICE_NOT_CONNECTED;
     for (DWORD ControllerIndex = 0; ControllerIndex < MAX_CONTROLLERS; ControllerIndex++)

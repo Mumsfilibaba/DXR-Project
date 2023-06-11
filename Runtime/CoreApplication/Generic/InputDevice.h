@@ -12,7 +12,9 @@ public:
 
     virtual ~FInputDevice() = default;
 
-    virtual void PollDeviceState() = 0;
+    virtual void UpdateDeviceState() = 0;
+
+    virtual bool IsDeviceConnected() const = 0;
 
     void SetMessageHandler(TSharedPtr<FGenericApplicationMessageHandler> InMessageHandler)
     {

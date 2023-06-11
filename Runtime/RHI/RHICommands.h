@@ -8,9 +8,7 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Containers/ArrayView.h"
 
-#define DECLARE_RHICOMMAND(RHICommandName) \
-struct RHICommandName final                \
-    : public TRHICommand<RHICommandName>
+#define DECLARE_RHICOMMAND(RHICommandName) struct RHICommandName final : public TRHICommand<RHICommandName>
 
 class FRHICommandList;
 
@@ -24,10 +22,9 @@ struct FRHICommand
 };
 
 template<typename CommandType>
-struct TRHICommand 
-    : public FRHICommand
+struct TRHICommand : public FRHICommand
 {
-    TRHICommand()  = default;
+    TRHICommand() = default;
     ~TRHICommand() = default;
 
     virtual void ExecuteAndRelease(IRHICommandContext& CommandContext) override final
@@ -43,7 +40,8 @@ struct TRHICommandExecuteLambda : public TRHICommand<TRHICommandExecuteLambda<La
 {
     FORCEINLINE TRHICommandExecuteLambda(LambdaType InLambda)
         : Lambda(InLambda)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext&)
     {
@@ -57,7 +55,8 @@ DECLARE_RHICOMMAND(FRHICommandExecuteCommandList)
 {
     FORCEINLINE FRHICommandExecuteCommandList(FRHICommandList* InCommandList)
         : CommandList(InCommandList)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext);
 
@@ -69,7 +68,8 @@ DECLARE_RHICOMMAND(FRHICommandBeginTimeStamp)
     FORCEINLINE FRHICommandBeginTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -85,7 +85,8 @@ DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
     FORCEINLINE FRHICommandEndTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -156,7 +157,8 @@ DECLARE_RHICOMMAND(FRHICommandBeginRenderPass)
 {
     FRHICommandBeginRenderPass(const FRHIRenderPassDesc& InRenderPassDesc)
         : RenderPassDesc(InRenderPassDesc)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -180,7 +182,8 @@ DECLARE_RHICOMMAND(FRHICommandSetViewport)
 {
     FORCEINLINE FRHICommandSetViewport(const FRHIViewportRegion& InViewportRegion)
         : ViewportRegion(InViewportRegion)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -194,7 +197,8 @@ DECLARE_RHICOMMAND(FRHICommandSetScissorRect)
 {
     FORCEINLINE FRHICommandSetScissorRect(const FRHIScissorRegion& InScissorRegion)
         : ScissorRegion(InScissorRegion)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -208,7 +212,8 @@ DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
 {
     FORCEINLINE FRHICommandSetBlendFactor(const FVector4& InColor)
         : Color(InColor)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -267,7 +272,8 @@ DECLARE_RHICOMMAND(FRHICommandSetPrimitiveTopology)
 {
     FORCEINLINE FRHICommandSetPrimitiveTopology(EPrimitiveTopology InPrimitiveTopologyType)
         : PrimitiveTopologyType(InPrimitiveTopologyType)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -281,7 +287,8 @@ DECLARE_RHICOMMAND(FRHICommandSetGraphicsPipelineState)
 {
     FORCEINLINE FRHICommandSetGraphicsPipelineState(FRHIGraphicsPipelineState* InPipelineState)
         : PipelineState(InPipelineState)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -295,7 +302,8 @@ DECLARE_RHICOMMAND(FRHICommandSetComputePipelineState)
 {
     FORCEINLINE FRHICommandSetComputePipelineState(FRHIComputePipelineState* InPipelineState)
         : PipelineState(InPipelineState)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -331,7 +339,8 @@ DECLARE_RHICOMMAND(FRHICommandSetShaderResourceView)
         : Shader(InShader)
         , ShaderResourceView(InShaderResourceView)
         , ParameterIndex(InParameterIndex)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -349,7 +358,8 @@ DECLARE_RHICOMMAND(FRHICommandSetShaderResourceViews)
         : Shader(InShader)
         , ShaderResourceViews(InShaderResourceViews)
         , StartParameterIndex(InStartParameterIndex)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -367,7 +377,8 @@ DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessView)
         : Shader(InShader)
         , UnorderedAccessView(InUnorderedAccessView)
         , ParameterIndex(InParameterIndex)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -385,7 +396,8 @@ DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessViews)
         : Shader(InShader)
         , UnorderedAccessViews(InUnorderedAccessViews)
         , StartParameterIndex(InStartParameterIndex)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -452,7 +464,8 @@ DECLARE_RHICOMMAND(FRHICommandSetSamplerState)
         : Shader(InShader)
         , SamplerState(InSamplerState)
         , ParameterIndex(InParameterIndex)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -470,7 +483,8 @@ DECLARE_RHICOMMAND(FRHICommandSetSamplerStates)
         : Shader(InShader)
         , SamplerStates(InSamplerStates)
         , StartParameterIndex(InStartParameterIndex)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -488,7 +502,8 @@ DECLARE_RHICOMMAND(FRHICommandUpdateBuffer)
         : Dst(InDst)
         , SrcData(InSrcData)
         , BufferRegion(InBufferRegion)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -513,7 +528,8 @@ DECLARE_RHICOMMAND(FRHICommandUpdateTexture2D)
         , MipLevel(InMipLevel)
         , SrcData(InSrcData)
         , SrcRowPitch(InSrcRowPitch)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -532,7 +548,8 @@ DECLARE_RHICOMMAND(FRHICommandResolveTexture)
     FORCEINLINE FRHICommandResolveTexture(FRHITexture* InDst, FRHITexture* InSrc)
         : Dst(InDst)
         , Src(InSrc)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -549,7 +566,8 @@ DECLARE_RHICOMMAND(FRHICommandCopyBuffer)
         : Dst(InDst)
         , Src(InSrc)
         , CopyBufferInfo(InCopyBufferInfo)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -566,7 +584,8 @@ DECLARE_RHICOMMAND(FRHICommandCopyTexture)
     FORCEINLINE FRHICommandCopyTexture(FRHITexture* InDestination, FRHITexture* InSource)
         : Destination(InDestination)
         , Source(InSource)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -583,7 +602,8 @@ DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
         : Dst(InDst)
         , Src(InSrc)
         , CopyInfo(InCopyInfo)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -599,7 +619,8 @@ DECLARE_RHICOMMAND(FRHICommandDestroyResource)
 {
     FORCEINLINE FRHICommandDestroyResource(IRefCounted* InResource)
         : Resource(MakeSharedRef<IRefCounted>(InResource))
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -613,7 +634,8 @@ DECLARE_RHICOMMAND(FRHICommandDiscardContents)
 {
     FORCEINLINE FRHICommandDiscardContents(FRHITexture* InTexture)
         : Texture(InTexture)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -675,7 +697,8 @@ DECLARE_RHICOMMAND(FRHICommandBuildRayTracingScene)
         : Scene(InScene)
         , Instances(InInstances)
         , bUpdate(bInUpdate)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -704,7 +727,8 @@ DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
         , MissLocalResources(InMissLocalResources)
         , HitGroupResources(InHitGroupResources)
         , NumHitGroupResources(InNumHitGroupResources)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -731,7 +755,8 @@ DECLARE_RHICOMMAND(FRHICommandGenerateMips)
 {
     FORCEINLINE FRHICommandGenerateMips(FRHITexture* InTexture)
         : Texture(InTexture)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -747,7 +772,8 @@ DECLARE_RHICOMMAND(FRHICommandTransitionTexture)
         : Texture(InTexture)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -765,7 +791,8 @@ DECLARE_RHICOMMAND(FRHICommandTransitionBuffer)
         : Buffer(InBuffer)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -781,7 +808,8 @@ DECLARE_RHICOMMAND(FRHICommandUnorderedAccessTextureBarrier)
 {
     FORCEINLINE FRHICommandUnorderedAccessTextureBarrier(FRHITexture* InTexture)
         : Texture(InTexture)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -795,7 +823,8 @@ DECLARE_RHICOMMAND(FRHICommandUnorderedAccessBufferBarrier)
 {
     FORCEINLINE FRHICommandUnorderedAccessBufferBarrier(FRHIBuffer* InBuffer)
         : Buffer(InBuffer)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -810,7 +839,8 @@ DECLARE_RHICOMMAND(FRHICommandDraw)
     FORCEINLINE FRHICommandDraw(uint32 InVertexCount, uint32 InStartVertexLocation)
         : VertexCount(InVertexCount)
         , StartVertexLocation(InStartVertexLocation)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -827,7 +857,8 @@ DECLARE_RHICOMMAND(FRHICommandDrawIndexed)
         : IndexCount(InIndexCount)
         , StartIndexLocation(InStartIndexLocation)
         , BaseVertexLocation(InBaseVertexLocation)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -846,7 +877,8 @@ DECLARE_RHICOMMAND(FRHICommandDrawInstanced)
         , InstanceCount(InInstanceCount)
         , StartVertexLocation(InStartVertexLocation)
         , StartInstanceLocation(InStartInstanceLocation)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -872,7 +904,8 @@ DECLARE_RHICOMMAND(FRHICommandDrawIndexedInstanced)
         , StartIndexLocation(InStartIndexLocation)
         , BaseVertexLocation(InBaseVertexLocation)
         , StartInstanceLocation(InStartInstanceLocation)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -892,7 +925,8 @@ DECLARE_RHICOMMAND(FRHICommandDispatch)
         : ThreadGroupCountX(InThreadGroupCountX)
         , ThreadGroupCountY(InThreadGroupCountY)
         , ThreadGroupCountZ(InThreadGroupCountZ)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -917,7 +951,8 @@ DECLARE_RHICOMMAND(FRHICommandDispatchRays)
         , Width(InWidth)
         , Height(InHeight)
         , Depth(InDepth)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -935,7 +970,8 @@ DECLARE_RHICOMMAND(FRHICommandInsertMarker)
 {
     FORCEINLINE FRHICommandInsertMarker(const FStringView& InMarker)
         : Marker(InMarker)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -990,7 +1026,8 @@ DECLARE_RHICOMMAND(FRHICommandPresentViewport)
     FORCEINLINE FRHICommandPresentViewport(FRHIViewport* InViewport, bool bInVerticalSync)
         : Viewport(InViewport)
         , bVerticalSync(bInVerticalSync)
-    { }
+    {
+    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {

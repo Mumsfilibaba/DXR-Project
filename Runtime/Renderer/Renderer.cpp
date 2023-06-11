@@ -184,7 +184,7 @@ bool FRenderer::Create()
     }
     else
     {
-        Resources.MainViewport = GEngine->MainViewport;
+        Resources.MainViewport = MakeSharedRef<FRHIViewport>(GEngine->MainViewport->GetRHIViewport());
     }
 
     FRHIBufferDesc CBDesc(sizeof(FCameraBuffer), sizeof(FCameraBuffer), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
@@ -989,28 +989,17 @@ void FRenderer::Tick(const FScene& Scene)
 #if 0
         if (RHISupportsVariableRateShading())
         {
-            MainCmdList.SetShadingRate(EShadingRate::VRS_1x1);
-            MainCmdList.SetShadingRateImage(nullptr);
+            CommandList.SetShadingRate(EShadingRate::VRS_1x1);
+            CommandList.SetShadingRateImage(nullptr);
         }
 #endif
 
-        FRHIRenderPassDesc RenderPass;
-        RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
-        RenderPass.NumRenderTargets = 1;
-
-        CommandList.BeginRenderPass(RenderPass);
-        
         FWindowedApplication::Get().DrawWindows(CommandList);
-        
-        CommandList.EndRenderPass();
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End UI Render");
 
-    CommandList.TransitionTexture(
-        Resources.BackBuffer, 
-        EResourceAccess::RenderTarget, 
-        EResourceAccess::Present);
+    CommandList.TransitionTexture(Resources.BackBuffer, EResourceAccess::RenderTarget, EResourceAccess::Present);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--END FRAME--");
 

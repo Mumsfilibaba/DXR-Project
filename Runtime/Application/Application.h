@@ -42,14 +42,6 @@ struct FPriorityInputHandler
 };
 
 
-#define INITIALIZER_ATTRIBUTE(Type, Name) \
-    Type Name;                            \
-    auto& Set##Name(Type In##Name)        \
-    {                                     \
-        Name = In##Name;                  \
-        return *this;                     \
-    }
-
 struct FWindowInitializer
 {
     FWindowInitializer()
@@ -58,6 +50,7 @@ struct FWindowInitializer
         , Height(720)
         , Position(0, 0)
         , Style(FWindowStyle::Default())
+        , ParentWindow(nullptr)
     {
     }
 
@@ -66,6 +59,7 @@ struct FWindowInitializer
     INITIALIZER_ATTRIBUTE(uint32, Height);
     INITIALIZER_ATTRIBUTE(FIntVector2, Position);
     INITIALIZER_ATTRIBUTE(FWindowStyle, Style);
+    INITIALIZER_ATTRIBUTE(FGenericWindow*, ParentWindow);
 };
 
 class APPLICATION_API FWindowedApplication : public FGenericApplicationMessageHandler
@@ -75,6 +69,7 @@ public:
     virtual ~FWindowedApplication();
 
     static bool Create();
+    
     static void Destroy();
 
     static bool IsInitialized()
@@ -89,6 +84,7 @@ public:
     }
 
     bool InitializeRenderer();
+    
     void ReleaseRenderer();
 
     void Tick(FTimespan DeltaTime);
@@ -96,29 +92,46 @@ public:
     void PollInputDevices();
   
 public: // FGenericApplicationMessageHandler Interface
-    virtual bool OnControllerButtonUp(EControllerButton Button, uint32 ControllerIndex)   override final;
+    virtual bool OnControllerButtonUp(EControllerButton Button, uint32 ControllerIndex) override final;
+    
     virtual bool OnControllerButtonDown(EControllerButton Button, uint32 ControllerIndex) override final;
+    
     virtual bool OnControllerAnalog(EControllerAnalog AnalogSource, uint32 ControllerIndex, float AnalogValue) override final;
 
-    virtual bool OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState)                   override final;
+    virtual bool OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState) override final;
+    
     virtual bool OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState) override final;
+    
     virtual bool OnKeyChar(uint32 Character) override final;
 
     virtual bool OnMouseButtonUp(EMouseButton Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
+    
     virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButton Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
+    
     virtual bool OnMouseMove(int32 x, int32 y) override final;
+    
     virtual bool OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, int32 y) override final;
 
     virtual bool OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height) override final;
-    virtual bool OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 x, int32 y)            override final;
-    virtual bool OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window)    override final;
-    virtual bool OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window)  override final;
-    virtual bool OnWindowMouseLeft(const TSharedRef<FGenericWindow>& Window)    override final;
+    
+    virtual bool OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 x, int32 y) override final;
+    
+    virtual bool OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window) override final;
+    
+    virtual bool OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window) override final;
+    
+    virtual bool OnWindowMouseLeft(const TSharedRef<FGenericWindow>& Window) override final;
+    
     virtual bool OnWindowMouseEntered(const TSharedRef<FGenericWindow>& Window) override final;
-    virtual bool OnWindowClosed(const TSharedRef<FGenericWindow>& Window)       override final;
+    
+    virtual bool OnWindowClosed(const TSharedRef<FGenericWindow>& Window) override final;
+
+    virtual bool OnMonitorChange() override final;
 
 public:
-    TSharedRef<FGenericWindow> CreateWindow(const FWindowInitializer& WindowInitializer);
+    TSharedRef<FGenericWindow> CreateWindow(const FWindowInitializer& Initializer);
+
+    TSharedPtr<FViewport> CreateViewport(const FViewportInitializer& Initializer);
 
     void SetCursor(ECursor Cursor);
 
@@ -130,25 +143,28 @@ public:
 
     bool IsCursorVisibile() const;
 
+    bool IsGamePadConnected() const;
 
     bool EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindow>& Window);
 
-    void SetCapture(const TSharedPtr<FWindow>& CaptureWindow);
+    void SetCapture(const TSharedRef<FGenericWindow>& CaptureWindow);
 
-    void SetActiveWindow(const TSharedPtr<FWindow>& ActiveWindow);
+    void SetActiveWindow(const TSharedRef<FGenericWindow>& ActiveWindow);
 
     TSharedPtr<FWindow> GetActiveWindow() const;
     
     TSharedPtr<FWindow> GetWindowUnderCursor() const;
 
-    TSharedPtr<FWindow> GetCapture() const;
+    TSharedRef<FGenericWindow> GetCapture() const;
 
     void AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority);
+    
     void RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler);
 
-    void RegisterMainViewport(const TSharedRef<FGenericWindow>& NewMainViewport);
+    void RegisterMainViewport(const TSharedPtr<FViewport>& InViewport);
 
     void AddWindow(const TSharedPtr<FWindow>& Window);
+
     void RemoveWindow(const TSharedPtr<FWindow>& Window);
 
     void DrawWindows(class FRHICommandList& InCommandList);
@@ -161,10 +177,15 @@ public:
 
     void OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication);
 
-    TSharedRef<FGenericWindow> GetMainViewport() const
+    TSharedPtr<FViewport> GetMainViewport() const
     { 
         return MainViewport; 
     }
+
+    TSharedRef<FGenericWindow> GetMainWindow () const
+	{
+		return MainWindow;
+	}
 
     TSharedPtr<FGenericApplication> GetPlatformApplication()
     {
@@ -174,6 +195,11 @@ public:
     TSharedPtr<ICursor> GetCursor() const
     {
         return PlatformApplication->Cursor;
+    }
+
+    FInputDevice* GetInputDeviceInterface() const
+    {
+        return PlatformApplication->GetInputDeviceInterface();
     }
 
     bool SupportsHighPrecisionMouse() const 
@@ -186,21 +212,33 @@ public:
         return Context; 
     }
 
+    FViewportRenderer* GetRenderer() const
+    {
+        return Renderer.Get();
+    }
+
 protected:
     TUniquePtr<FViewportRenderer> Renderer;
-    struct ImGuiContext* Context  = nullptr;
+    struct ImGuiContext* Context{nullptr};
 
-    TSharedRef<FGenericWindow> MainViewport;
+    bool bIsTrackingMouse;
 
+    TArray<FPriorityInputHandler>      InputHandlers;
     TArray<TSharedRef<FGenericWindow>> AllWindows;
-    TArray<TSharedPtr<FWindow>>   Windows;
-    TArray<TSharedPtr<FWidget>>   TrackedWidgets;
-    TArray<FPriorityInputHandler> InputHandlers;
+    TArray<TSharedPtr<FViewport>>      Viewports;
 
-    FFilteredWidgets FocusPath;
+    TSharedPtr<FViewport>      MainViewport;
+    TSharedRef<FGenericWindow> MainWindow;
+    TSharedRef<FGenericWindow> FocusWindow;
 
     TSet<EKey>         PressedKeys;
     TSet<EMouseButton> PressedMouseButtons;
+
+    /* TODO: Remove */
+    TArray<TSharedPtr<FWindow>> Windows;
+    TArray<TSharedPtr<FWidget>> TrackedWidgets;
+    FFilteredWidgets            FocusPath;
+    /* TODO: Remove */
 
 private:
     static TSharedPtr<FWindowedApplication> CurrentApplication;

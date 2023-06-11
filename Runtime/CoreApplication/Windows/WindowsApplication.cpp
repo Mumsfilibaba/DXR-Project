@@ -43,12 +43,14 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     const bool bResult = RegisterWindowClass();
     CHECK(bResult == true);
 
-#if PLATFORM_WINDOWS_VISTA
     if (CVarIsProcessDPIAware.GetValue())
     {
+#if PLATFORM_WINDOWS_10
+        SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+#elif PLATFORM_WINDOWS_VISTA
         SetProcessDPIAware();
-    }
 #endif
+    }
 
     FWindowsKeyMapping::Initialize();
  }
@@ -177,21 +179,16 @@ void FWindowsApplication::Tick(float)
 
         for (const TSharedRef<FWindowsWindow>& Window : ClosedWindows)
         {
-            HWND WindowHandle = Window->GetWindowHandle();
             MessageHandler->OnWindowClosed(Window);
-            DestroyWindow(WindowHandle);
         }
 
         ClosedWindows.Clear();
     }
-
-    // Poll InputDevices
-    PollInputDevices();
 }
 
 void FWindowsApplication::PollInputDevices()
 {
-    XInputDevice.PollDeviceState();
+    XInputDevice.UpdateDeviceState();
 }
 
 FInputDevice* FWindowsApplication::GetInputDeviceInterface()
@@ -217,12 +214,12 @@ void FWindowsApplication::SetCapture(const TSharedRef<FGenericWindow>& Window)
     TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
     if (WindowsWindow && WindowsWindow->IsValid())
     {
-        HWND hCapture = WindowsWindow->GetWindowHandle();
-        ::SetCapture(hCapture);
+        HWND CaptureWindow = WindowsWindow->GetWindowHandle();
+        ::SetCapture(CaptureWindow);
     }
     else
     {
-        ReleaseCapture();
+        ::ReleaseCapture();
     }
 }
 
@@ -231,23 +228,27 @@ void FWindowsApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Wind
     TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
     if (WindowsWindow && WindowsWindow->IsValid())
     {
-        HWND hActiveWindow = WindowsWindow->GetWindowHandle();
-        ::SetActiveWindow(hActiveWindow);
+        HWND ActiveWindow = WindowsWindow->GetWindowHandle();
+        ::SetActiveWindow(ActiveWindow);
     }
 }
 
 TSharedRef<FGenericWindow> FWindowsApplication::GetCapture() const
 {
-    // TODO: Should we add a reference here
     HWND CaptureWindow = ::GetCapture();
     return GetWindowsWindowFromHWND(CaptureWindow);
 }
 
 TSharedRef<FGenericWindow> FWindowsApplication::GetActiveWindow() const
 {
-    // TODO: Should we add a reference here
     HWND ActiveWindow = ::GetActiveWindow();
     return GetWindowsWindowFromHWND(ActiveWindow);
+}
+
+TSharedRef<FGenericWindow> FWindowsApplication::GetForegroundWindow() const
+{
+    HWND ForegroundWindow = ::GetForegroundWindow();
+    return GetWindowsWindowFromHWND(ForegroundWindow);
 }
 
 FMonitorDesc FWindowsApplication::GetMonitorDescFromWindow(const TSharedRef<FGenericWindow>& Window) const
@@ -333,6 +334,8 @@ bool FWindowsApplication::IsWindowsMessageListener(const TSharedPtr<IWindowsMess
 
 void FWindowsApplication::CloseWindow(const TSharedRef<FWindowsWindow>& Window)
 {
+    CHECK(Window != nullptr);
+
     {
         TScopedLock Lock(ClosedWindowsCS);
         ClosedWindows.Emplace(Window);
@@ -401,8 +404,8 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             if (MessageWindow)
             {
-				const uint16 x = LOWORD(lParam);
-				const uint16 y = HIWORD(lParam);
+                const uint16 x = LOWORD(lParam);
+                const uint16 y = HIWORD(lParam);
                 MessageHandler->OnWindowMoved(MessageWindow, x, y);
             }
 
@@ -590,6 +593,23 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
             break;
         }
 
+        case WM_DEVICECHANGE:
+        {
+            if (static_cast<UINT>(wParam) == DBT_DEVNODES_CHANGED)
+            {
+                XInputDevice.CheckForNewConnections();
+            }
+
+            break;
+        }
+
+        case WM_DISPLAYCHANGE:
+        {
+            // TODO: Update monitors
+            MessageHandler->OnMonitorChange();
+            break;
+        }
+
         default:
         {
             // Nothing for now
@@ -622,6 +642,7 @@ LRESULT FWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
         }
 
         case WM_CLOSE:
+        case WM_DESTROY:
         {
             TSharedRef<FWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
             CloseWindow(MessageWindow);
@@ -654,6 +675,8 @@ LRESULT FWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
         case WM_XBUTTONUP:
         case WM_MOUSEWHEEL:
         case WM_MOUSEHWHEEL:
+        case WM_DEVICECHANGE:
+        case WM_DISPLAYCHANGE:
         {
             StoreMessage(Window, Message, wParam, lParam, 0, 0);
             return ResultFromListeners;

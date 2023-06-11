@@ -5,21 +5,453 @@
 
 #include <imgui.h>
 
+#pragma optimize("", off)
+#pragma comment(lib, "Shcore.lib")
+
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
 
-static uint32 GetMouseButtonIndex(EMouseButton Button)
+static uint32 ImGui_GetMouseButtonIndex(EMouseButton Button)
 {
     switch (Button)
     {
-        case MouseButton_Left:    return 0;
-        case MouseButton_Right:   return 1;
-        case MouseButton_Middle:  return 2;
+        case MouseButton_Left:    return ImGuiMouseButton_Left;
+        case MouseButton_Right:   return ImGuiMouseButton_Right;
+        case MouseButton_Middle:  return ImGuiMouseButton_Middle;
         case MouseButton_Back:    return 3;
         case MouseButton_Forward: return 4;
-        default:                  return static_cast<uint32>(-1);
+        default:                  return ImGuiKey_None;
     }
 }
 
+static ImGuiKey ImGui_KeyToImGuiKey(EKey Key)
+{
+    switch (Key)
+    {
+    case Key_Tab:            return ImGuiKey_Tab;
+    case Key_Left:           return ImGuiKey_LeftArrow;
+    case Key_Right:          return ImGuiKey_RightArrow;
+    case Key_Up:             return ImGuiKey_UpArrow;
+    case Key_Down:           return ImGuiKey_DownArrow;
+    case Key_PageUp:         return ImGuiKey_PageUp;
+    case Key_PageDown:       return ImGuiKey_PageDown;
+    case Key_Home:           return ImGuiKey_Home;
+    case Key_End:            return ImGuiKey_End;
+    case Key_Insert:         return ImGuiKey_Insert;
+    case Key_Delete:         return ImGuiKey_Delete;
+    case Key_Backspace:      return ImGuiKey_Backspace;
+    case Key_Space:          return ImGuiKey_Space;
+    case Key_Enter:          return ImGuiKey_Enter;
+    case Key_Escape:         return ImGuiKey_Escape;
+    case Key_Apostrophe:     return ImGuiKey_Apostrophe;
+    case Key_Comma:          return ImGuiKey_Comma;
+    case Key_Minus:          return ImGuiKey_Minus;
+    case Key_Period:         return ImGuiKey_Period;
+    case Key_Slash:          return ImGuiKey_Slash;
+    case Key_Semicolon:      return ImGuiKey_Semicolon;
+    case Key_Equal:          return ImGuiKey_Equal;
+    case Key_LeftBracket:    return ImGuiKey_LeftBracket;
+    case Key_Backslash:      return ImGuiKey_Backslash;
+    case Key_RightBracket:   return ImGuiKey_RightBracket;
+    case Key_GraveAccent:    return ImGuiKey_GraveAccent;
+    case Key_CapsLock:       return ImGuiKey_CapsLock;
+    case Key_ScrollLock:     return ImGuiKey_ScrollLock;
+    case Key_NumLock:        return ImGuiKey_NumLock;
+    case Key_PrintScreen:    return ImGuiKey_PrintScreen;
+    case Key_Pause:          return ImGuiKey_Pause;
+    case Key_Keypad0:        return ImGuiKey_Keypad0;
+    case Key_Keypad1:        return ImGuiKey_Keypad1;
+    case Key_Keypad2:        return ImGuiKey_Keypad2;
+    case Key_Keypad3:        return ImGuiKey_Keypad3;
+    case Key_Keypad4:        return ImGuiKey_Keypad4;
+    case Key_Keypad5:        return ImGuiKey_Keypad5;
+    case Key_Keypad6:        return ImGuiKey_Keypad6;
+    case Key_Keypad7:        return ImGuiKey_Keypad7;
+    case Key_Keypad8:        return ImGuiKey_Keypad8;
+    case Key_Keypad9:        return ImGuiKey_Keypad9;
+    case Key_KeypadDecimal:  return ImGuiKey_KeypadDecimal;
+    case Key_KeypadDivide:   return ImGuiKey_KeypadDivide;
+    case Key_KeypadMultiply: return ImGuiKey_KeypadMultiply;
+    case Key_KeypadSubtract: return ImGuiKey_KeypadSubtract;
+    case Key_KeypadAdd:      return ImGuiKey_KeypadAdd;
+    case Key_KeypadEnter:    return ImGuiKey_KeypadEnter;
+    case Key_LeftShift:      return ImGuiKey_LeftShift;
+    case Key_LeftControl:    return ImGuiKey_LeftCtrl;
+    case Key_LeftAlt:        return ImGuiKey_LeftAlt;
+    case Key_LeftSuper:      return ImGuiKey_LeftSuper;
+    case Key_RightShift:     return ImGuiKey_RightShift;
+    case Key_RightControl:   return ImGuiKey_RightCtrl;
+    case Key_RightAlt:       return ImGuiKey_RightAlt;
+    case Key_RightSuper:     return ImGuiKey_RightSuper;
+    case Key_Menu:           return ImGuiKey_Menu;
+    case Key_0:              return ImGuiKey_0;
+    case Key_1:              return ImGuiKey_1;
+    case Key_2:              return ImGuiKey_2;
+    case Key_3:              return ImGuiKey_3;
+    case Key_4:              return ImGuiKey_4;
+    case Key_5:              return ImGuiKey_5;
+    case Key_6:              return ImGuiKey_6;
+    case Key_7:              return ImGuiKey_7;
+    case Key_8:              return ImGuiKey_8;
+    case Key_9:              return ImGuiKey_9;
+    case Key_A:              return ImGuiKey_A;
+    case Key_B:              return ImGuiKey_B;
+    case Key_C:              return ImGuiKey_C;
+    case Key_D:              return ImGuiKey_D;
+    case Key_E:              return ImGuiKey_E;
+    case Key_F:              return ImGuiKey_F;
+    case Key_G:              return ImGuiKey_G;
+    case Key_H:              return ImGuiKey_H;
+    case Key_I:              return ImGuiKey_I;
+    case Key_J:              return ImGuiKey_J;
+    case Key_K:              return ImGuiKey_K;
+    case Key_L:              return ImGuiKey_L;
+    case Key_M:              return ImGuiKey_M;
+    case Key_N:              return ImGuiKey_N;
+    case Key_O:              return ImGuiKey_O;
+    case Key_P:              return ImGuiKey_P;
+    case Key_Q:              return ImGuiKey_Q;
+    case Key_R:              return ImGuiKey_R;
+    case Key_S:              return ImGuiKey_S;
+    case Key_T:              return ImGuiKey_T;
+    case Key_U:              return ImGuiKey_U;
+    case Key_V:              return ImGuiKey_V;
+    case Key_W:              return ImGuiKey_W;
+    case Key_X:              return ImGuiKey_X;
+    case Key_Y:              return ImGuiKey_Y;
+    case Key_Z:              return ImGuiKey_Z;
+    case Key_F1:             return ImGuiKey_F1;
+    case Key_F2:             return ImGuiKey_F2;
+    case Key_F3:             return ImGuiKey_F3;
+    case Key_F4:             return ImGuiKey_F4;
+    case Key_F5:             return ImGuiKey_F5;
+    case Key_F6:             return ImGuiKey_F6;
+    case Key_F7:             return ImGuiKey_F7;
+    case Key_F8:             return ImGuiKey_F8;
+    case Key_F9:             return ImGuiKey_F9;
+    case Key_F10:            return ImGuiKey_F10;
+    case Key_F11:            return ImGuiKey_F11;
+    case Key_F12:            return ImGuiKey_F12;
+    default:                 return ImGuiKey_None;
+    }
+}
+
+static ImGuiKey ImGui_GetGamepadButton(EControllerButton Button)
+{
+    switch (Button)
+    {
+    case EControllerButton::Start:         return ImGuiKey_GamepadStart;
+    case EControllerButton::Back:          return ImGuiKey_GamepadBack;
+    case EControllerButton::DPadUp:        return ImGuiKey_GamepadDpadUp;
+    case EControllerButton::DPadDown:      return ImGuiKey_GamepadDpadDown;
+    case EControllerButton::DPadLeft:      return ImGuiKey_GamepadDpadLeft;
+    case EControllerButton::DPadRight:     return ImGuiKey_GamepadDpadRight;
+    case EControllerButton::FaceUp:        return ImGuiKey_GamepadFaceUp;
+    case EControllerButton::FaceDown:      return ImGuiKey_GamepadFaceDown;
+    case EControllerButton::FaceLeft:      return ImGuiKey_GamepadFaceLeft;
+    case EControllerButton::FaceRight:     return ImGuiKey_GamepadFaceRight;
+    case EControllerButton::RightTrigger:  return ImGuiKey_GamepadR3;
+    case EControllerButton::LeftTrigger:   return ImGuiKey_GamepadL3;
+    case EControllerButton::RightShoulder: return ImGuiKey_GamepadR3;
+    case EControllerButton::LeftShoulder:  return ImGuiKey_GamepadL3;
+    default:                               return ImGuiKey_None;
+    }
+}
+
+static ImGuiKey ImGui_GetGamepadAnalog(EControllerAnalog Analog, bool bIsNegative)
+{
+    switch (Analog)
+    {
+    case EControllerAnalog::RightThumbX:  return bIsNegative ? ImGuiKey_GamepadRStickDown : ImGuiKey_GamepadRStickUp;
+    case EControllerAnalog::RightThumbY:  return bIsNegative ? ImGuiKey_GamepadRStickLeft : ImGuiKey_GamepadRStickRight;
+    case EControllerAnalog::LeftThumbX:   return bIsNegative ? ImGuiKey_GamepadLStickDown : ImGuiKey_GamepadLStickUp;
+    case EControllerAnalog::LeftThumbY:   return bIsNegative ? ImGuiKey_GamepadLStickLeft : ImGuiKey_GamepadLStickRight;
+    case EControllerAnalog::RightTrigger: return ImGuiKey_GamepadR2;
+    case EControllerAnalog::LeftTrigger:  return ImGuiKey_GamepadL2;
+    default:                              return ImGuiKey_None;
+    }
+}
+
+float ImGui_ImplWin32_GetDpiScaleForMonitor(HMONITOR Monitor)
+{
+    UINT DpiX = 96;
+    UINT DpiY = 96;
+    GetDpiForMonitor(Monitor, MDT_EFFECTIVE_DPI, &DpiX, &DpiY);
+    IM_ASSERT(DpiX == DpiY); // Please contact me if you hit this assert!
+    return DpiX / 96.0f;
+}
+
+static BOOL CALLBACK ImGui_ImplWin32_UpdateMonitors_EnumFunc(HMONITOR Monitor, HDC, LPRECT, LPARAM)
+{
+    MONITORINFO MonitorInfo = {};
+    MonitorInfo.cbSize = sizeof(MONITORINFO);
+    if (!::GetMonitorInfo(Monitor, &MonitorInfo))
+    {
+        return TRUE;
+    }
+
+    ImGuiPlatformMonitor ImGuiMonitor;
+    ImGuiMonitor.MainPos  = ImVec2(static_cast<float>(MonitorInfo.rcMonitor.left), static_cast<float>(MonitorInfo.rcMonitor.top));
+    ImGuiMonitor.MainSize = ImVec2(static_cast<float>(MonitorInfo.rcMonitor.right - MonitorInfo.rcMonitor.left), static_cast<float>(MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top));
+    ImGuiMonitor.WorkPos  = ImVec2(static_cast<float>(MonitorInfo.rcWork.left), static_cast<float>(MonitorInfo.rcWork.top));
+    ImGuiMonitor.WorkSize = ImVec2(static_cast<float>(MonitorInfo.rcWork.right - MonitorInfo.rcWork.left), static_cast<float>(MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top));
+    ImGuiMonitor.DpiScale = ImGui_ImplWin32_GetDpiScaleForMonitor(Monitor);
+    
+    ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
+    if (MonitorInfo.dwFlags & MONITORINFOF_PRIMARY)
+    {
+        PlatformState.Monitors.push_front(ImGuiMonitor);
+    }
+    else
+    {
+        PlatformState.Monitors.push_back(ImGuiMonitor);
+    }
+    
+    return TRUE;
+}
+
+static void ImGui_ImplWin32_UpdateMonitors()
+{
+    ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
+    PlatformState.Monitors.resize(0);
+    ::EnumDisplayMonitors(nullptr, nullptr, ImGui_ImplWin32_UpdateMonitors_EnumFunc, 0);
+}
+
+static FWindowStyle ImGui_ImplWin32_GetWin32StyleFromViewportFlags(ImGuiViewportFlags Flags)
+{
+    EWindowStyleFlag WindowStyleFlags = EWindowStyleFlag::None;
+    if ((Flags & ImGuiViewportFlags_NoDecoration) == 0)
+    {
+        WindowStyleFlags = 
+            EWindowStyleFlag::Titled | 
+            EWindowStyleFlag::Minimizable | 
+            EWindowStyleFlag::Maximizable | 
+            EWindowStyleFlag::Resizeable | 
+            EWindowStyleFlag::Closable;
+    }
+
+    if (Flags & ImGuiViewportFlags_NoTaskBarIcon)
+    {
+        WindowStyleFlags |= EWindowStyleFlag::NoTaskBarIcon;
+    }
+
+    if (Flags & ImGuiViewportFlags_TopMost)
+    {
+        WindowStyleFlags |= EWindowStyleFlag::NoTaskBarIcon;
+    }
+
+    return FWindowStyle(WindowStyleFlags);
+}
+
+static void ImGui_ImplWin32_CreateWindow(ImGuiViewport* Viewport)
+{
+    const FWindowStyle WindowStyle = ImGui_ImplWin32_GetWin32StyleFromViewportFlags(Viewport->Flags);
+
+    FGenericWindow* ParentWindow = nullptr;
+    if (Viewport->ParentViewportId != 0)
+    {
+        if (ImGuiViewport* ParentViewport = ImGui::FindViewportByID(Viewport->ParentViewportId))
+        {
+            ParentWindow = reinterpret_cast<FGenericWindow*>(ParentViewport->PlatformHandle);
+        }
+    }
+
+    TSharedRef<FGenericWindow> Window = FWindowedApplication::Get().CreateWindow(
+        FWindowInitializer()
+        .SetTitle("Untitled")
+        .SetWidth(static_cast<uint32>(Viewport->Size.x))
+        .SetHeight(static_cast<uint32>(Viewport->Size.y))
+        .SetPosition(FIntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y)))
+        .SetStyle(WindowStyle)
+        .SetParentWindow(ParentWindow));
+
+    if (Window)
+    {
+        Viewport->PlatformHandle   = Viewport->PlatformHandleRaw = Window->GetPlatformHandle();
+        Viewport->PlatformUserData = reinterpret_cast<void*>(Window.ReleaseOwnership());
+        Viewport->PlatformRequestResize = false;
+    }
+}
+
+static void ImGui_ImplWin32_DestroyWindow(ImGuiViewport* Viewport)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        if (Window == FWindowedApplication::Get().GetCapture())
+        {
+            // Transfer capture so if we started dragging from a window that later disappears, we'll still receive the MOUSEUP event.
+            FWindowedApplication::Get().SetCapture(FWindowedApplication::Get().GetMainWindow());
+        }
+
+        Window->Destroy();
+    }
+
+    Viewport->PlatformUserData = Viewport->PlatformHandle = nullptr;
+}
+
+static void ImGui_ImplWin32_ShowWindow(ImGuiViewport* Viewport)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        // TODO: Implement no focus
+        if (Viewport->Flags & ImGuiViewportFlags_NoFocusOnAppearing)
+        {
+            Window->Show(false);
+        }
+        else
+        {
+            Window->Show(false);
+        }
+    }
+}
+
+static void ImGui_ImplWin32_UpdateWindow(ImGuiViewport* Viewport)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        const FWindowStyle WindowStyle = ImGui_ImplWin32_GetWin32StyleFromViewportFlags(Viewport->Flags);
+        if (WindowStyle != Window->GetStyle())
+        {
+            Window->SetStyle(WindowStyle);
+
+            const FWindowShape WindowShape(
+                static_cast<uint32>(Viewport->Size.x),
+                static_cast<uint32>(Viewport->Size.y),
+                static_cast<int32>(Viewport->Pos.x),
+                static_cast<int32>(Viewport->Pos.y));
+            Window->SetWindowShape(WindowShape, false);
+
+            if (WindowStyle.IsTopMost())
+            {
+                Window->SetWindowFocus();
+            }
+
+            Viewport->PlatformRequestMove = Viewport->PlatformRequestResize = true;
+        }
+    }
+}
+
+static ImVec2 ImGui_ImplWin32_GetWindowPos(ImGuiViewport* Viewport)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        FWindowShape WindowShape;
+        Window->GetWindowShape(WindowShape);
+        return ImVec2(static_cast<float>(WindowShape.Position.x), static_cast<float>(WindowShape.Position.y));
+    }
+
+    return ImVec2(0.0f, 0.0f);
+}
+
+static void ImGui_ImplWin32_SetWindowPos(ImGuiViewport* Viewport, ImVec2 Position)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        Window->MoveTo(static_cast<int32>(Position.x), static_cast<int32>(Position.y));
+    }
+}
+
+static ImVec2 ImGui_ImplWin32_GetWindowSize(ImGuiViewport* Viewport)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        FWindowShape WindowShape;
+        Window->GetWindowShape(WindowShape);
+        return ImVec2(static_cast<float>(WindowShape.Width), static_cast<float>(WindowShape.Height));
+    }
+
+    return ImVec2(0.0f, 0.0f);
+}
+
+static void ImGui_ImplWin32_SetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        const FWindowShape WindowShape(static_cast<uint32>(Size.x), static_cast<uint32>(Size.y));
+        Window->SetWindowShape(WindowShape, false);
+    }
+}
+
+static void ImGui_ImplWin32_SetWindowFocus(ImGuiViewport* Viewport)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        Window->SetWindowFocus();
+    }
+}
+
+static bool ImGui_ImplWin32_GetWindowFocus(ImGuiViewport* Viewport)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        return Window->IsActiveWindow();
+    }
+
+    return false;
+}
+
+static bool ImGui_ImplWin32_GetWindowMinimized(ImGuiViewport* Viewport)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        return Window->IsMinimized();
+    }
+
+    return false;
+}
+
+static void ImGui_ImplWin32_SetWindowTitle(ImGuiViewport* Viewport, const char* Title)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        return Window->SetTitle(Title);
+    }
+}
+
+static void ImGui_ImplWin32_SetWindowAlpha(ImGuiViewport* Viewport, float Alpha)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        return Window->SetWindowOpacity(Alpha);
+    }
+}
+
+static float ImGui_ImplWin32_GetWindowDpiScale(ImGuiViewport* Viewport)
+{
+    if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
+    {
+        return Window->GetWindowDpiScale();
+    }
+
+    return 1.0f;
+}
+
+static void ImGui_ImplWin32_OnChangedViewport(ImGuiViewport* Viewport)
+{
+    UNREFERENCED_VARIABLE(Viewport);
+}
+
+static void ImGui_ImplWin32_InitPlatformInterface()
+{
+    ImGui_ImplWin32_UpdateMonitors();
+
+    // Register platform interface (will be coupled with a renderer interface)
+    ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
+    PlatformState.Platform_CreateWindow       = ImGui_ImplWin32_CreateWindow;
+    PlatformState.Platform_DestroyWindow      = ImGui_ImplWin32_DestroyWindow;
+    PlatformState.Platform_ShowWindow         = ImGui_ImplWin32_ShowWindow;
+    PlatformState.Platform_SetWindowPos       = ImGui_ImplWin32_SetWindowPos;
+    PlatformState.Platform_GetWindowPos       = ImGui_ImplWin32_GetWindowPos;
+    PlatformState.Platform_SetWindowSize      = ImGui_ImplWin32_SetWindowSize;
+    PlatformState.Platform_GetWindowSize      = ImGui_ImplWin32_GetWindowSize;
+    PlatformState.Platform_SetWindowFocus     = ImGui_ImplWin32_SetWindowFocus;
+    PlatformState.Platform_GetWindowFocus     = ImGui_ImplWin32_GetWindowFocus;
+    PlatformState.Platform_GetWindowMinimized = ImGui_ImplWin32_GetWindowMinimized;
+    PlatformState.Platform_SetWindowTitle     = ImGui_ImplWin32_SetWindowTitle;
+    PlatformState.Platform_SetWindowAlpha     = ImGui_ImplWin32_SetWindowAlpha;
+    PlatformState.Platform_UpdateWindow       = ImGui_ImplWin32_UpdateWindow;
+    PlatformState.Platform_GetWindowDpiScale  = ImGui_ImplWin32_GetWindowDpiScale;
+    PlatformState.Platform_OnChangedViewport  = ImGui_ImplWin32_OnChangedViewport;
+}
 
 struct FEventDispatcher
 {
@@ -183,44 +615,36 @@ FWindowedApplication::FWindowedApplication()
     , Windows()
     , InputHandlers()
     , Context(nullptr)
+    , bIsTrackingMouse(false)
 {
     IMGUI_CHECKVERSION();
     Context = ImGui::CreateContext();
     CHECK(Context != nullptr);
 
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
-    UIState.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
+    UIState.BackendPlatformName = "DXR-Engine";
+
+    // Application Flags
+    UIState.BackendFlags |= ImGuiBackendFlags_HasGamepad;              // Platform supports gamepad and currently has one connected.
+    UIState.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values
+    UIState.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests
+    UIState.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;    // We can create multi-viewports on the Platform side
+    UIState.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can call io.AddMouseViewportEvent() with correct data
+    // Renderer Flags
     UIState.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
-    // TODO: Not name it windows? 
-    UIState.BackendPlatformName = "Windows";
+    UIState.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;    // We can call io.AddMouseViewportEvent() with correct data
 
-    // Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
-    UIState.KeyMap[ImGuiKey_Tab]         = EKey::Key_Tab;
-    UIState.KeyMap[ImGuiKey_LeftArrow]   = EKey::Key_Left;
-    UIState.KeyMap[ImGuiKey_RightArrow]  = EKey::Key_Right;
-    UIState.KeyMap[ImGuiKey_UpArrow]     = EKey::Key_Up;
-    UIState.KeyMap[ImGuiKey_DownArrow]   = EKey::Key_Down;
-    UIState.KeyMap[ImGuiKey_PageUp]      = EKey::Key_PageUp;
-    UIState.KeyMap[ImGuiKey_PageDown]    = EKey::Key_PageDown;
-    UIState.KeyMap[ImGuiKey_Home]        = EKey::Key_Home;
-    UIState.KeyMap[ImGuiKey_End]         = EKey::Key_End;
-    UIState.KeyMap[ImGuiKey_Insert]      = EKey::Key_Insert;
-    UIState.KeyMap[ImGuiKey_Delete]      = EKey::Key_Delete;
-    UIState.KeyMap[ImGuiKey_Backspace]   = EKey::Key_Backspace;
-    UIState.KeyMap[ImGuiKey_Space]       = EKey::Key_Space;
-    UIState.KeyMap[ImGuiKey_Enter]       = EKey::Key_Enter;
-    UIState.KeyMap[ImGuiKey_Escape]      = EKey::Key_Escape;
-    UIState.KeyMap[ImGuiKey_KeyPadEnter] = EKey::Key_KeypadEnter;
-    UIState.KeyMap[ImGuiKey_A]           = EKey::Key_A;
-    UIState.KeyMap[ImGuiKey_C]           = EKey::Key_C;
-    UIState.KeyMap[ImGuiKey_V]           = EKey::Key_V;
-    UIState.KeyMap[ImGuiKey_X]           = EKey::Key_X;
-    UIState.KeyMap[ImGuiKey_Y]           = EKey::Key_Y;
-    UIState.KeyMap[ImGuiKey_Z]           = EKey::Key_Z;
+    UIState.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    UIState.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
+    // Setup the style
     ImGuiStyle& Style = ImGui::GetStyle();
     ImGui::StyleColorsDark();
+
+    if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
+    {
+        Viewport->PlatformWindowCreated = false;
+    }
 
     // Padding
     Style.FramePadding = ImVec2(6.0f, 4.0f);
@@ -379,33 +803,58 @@ void FWindowedApplication::ReleaseRenderer()
 
 void FWindowedApplication::Tick(FTimespan DeltaTime)
 {
+    // Update platform
+    const float Delta = static_cast<float>(DeltaTime.AsMilliseconds());
+    PlatformApplication->Tick(Delta);
+
+    // TODO: Investigate if this is a problem
+    if (!MainWindow)
+    {
+        return;
+    }
+
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.DeltaTime = static_cast<float>(DeltaTime.AsSeconds());
+    UIState.DeltaTime   = static_cast<float>(DeltaTime.AsSeconds());
+    UIState.DisplaySize = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
     
-    if (UIState.WantSetMousePos)
+    // Retrieve the current active window
+    TSharedRef<FGenericWindow> ForegroundWindow = PlatformApplication->GetForegroundWindow();
+    
+    // Update Mouse
+    ImGuiViewport* ForegroundViewport = nullptr;
+    if (ForegroundWindow)
     {
-        SetCursorPos(FIntVector2{ static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y) });
+        ForegroundViewport = ImGui::FindViewportByPlatformHandle(ForegroundWindow->GetPlatformHandle());
     }
 
-    if (MainViewport)
+    const bool bIsAppFocused = ForegroundWindow && (ForegroundWindow == MainWindow || MainWindow->IsChildWindow(ForegroundWindow) || ForegroundViewport);
+    if (bIsAppFocused)
     {
-        UIState.DisplaySize = ImVec2{ float(MainViewport->GetWidth()), float(MainViewport->GetHeight()) };
-
-		const FMonitorDesc MonitorDesc = PlatformApplication->GetMonitorDescFromWindow(MainViewport);
-		UIState.DisplayFramebufferScale = ImVec2{ MonitorDesc.DisplayScaling, MonitorDesc.DisplayScaling };
-		UIState.FontGlobalScale = MonitorDesc.DisplayScaling;
+        if (UIState.WantSetMousePos)
+        {
+            SetCursorPos(FIntVector2(static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y)));
+        }
+        else if (!UIState.WantSetMousePos && !bIsTrackingMouse)
+        {
+            const FIntVector2 CursorPos = GetCursorPos();
+            UIState.AddMousePosEvent(CursorPos.x, CursorPos.y);
+        }
     }
 
-    const FIntVector2 Position = GetCursorPos();
-    UIState.MousePos = ImVec2(static_cast<float>(Position.x), static_cast<float>(Position.y));
+    ImGuiID MouseViewportID = 0;
+    if (TSharedRef<FGenericWindow> WindowUnderCursor = PlatformApplication->GetWindowUnderCursor())
+    {
+        if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(WindowUnderCursor->GetPlatformHandle()))
+        {
+            MouseViewportID = Viewport->ID;
+        }
+    }
 
-    const FModifierKeyState KeyState = FPlatformApplicationMisc::GetModifierKeyState();
-    UIState.KeyCtrl  = KeyState.bIsCtrlDown;
-    UIState.KeyShift = KeyState.bIsShiftDown;
-    UIState.KeyAlt   = KeyState.bIsAltDown;
-    UIState.KeySuper = KeyState.bIsSuperKeyDown;
+    UIState.AddMouseViewportEvent(MouseViewportID);
 
-    if (!(UIState.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange))
+
+    const bool bNoMouseCursorChange = (UIState.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) != 0;
+    if (!bNoMouseCursorChange)
     {
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
         if (ImguiCursor == ImGuiMouseCursor_None || UIState.MouseDrawCursor)
@@ -432,27 +881,71 @@ void FWindowedApplication::Tick(FTimespan DeltaTime)
         }
     }
 
-    // Update all the UI windows
-    if (Renderer)
-    {
-        Renderer->BeginFrame();
-
-        //Windows.Foreach([](TSharedRef<FWidget>& Window)
-        //{
-        //    Window->Tick();
-        //});
-
-        ImGui::ShowDemoWindow();
-
-        Renderer->EndFrame();
-    }
-
-    // Update platform
-    const float Delta = static_cast<float>(DeltaTime.AsMilliseconds());
-    PlatformApplication->Tick(Delta);
-
     // Poll input devices
     PollInputDevices();
+
+    UIState.BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
+    if (IsGamePadConnected())
+    {
+        UIState.BackendFlags |= ImGuiBackendFlags_HasGamepad;
+    }
+
+    // Update all the UI windows
+    ImGui::NewFrame();
+
+    //Windows.Foreach([](TSharedRef<FWidget>& Window)
+    //{
+    //    Window->Tick();
+    //});
+
+    static bool ShowDemoWindow    = true;
+    static bool ShowAnotherWindow = false;
+    static ImVec4 ClearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    if (ShowDemoWindow)
+    {
+        ImGui::ShowDemoWindow();
+    }
+
+    {
+        static float SliderValue = 0.0f;
+        static int   Counter     = 0;
+
+        ImGui::Begin("Hello, world!");
+
+        ImGui::Text("This is some useful text.");
+        ImGui::Checkbox("Demo Window", &ShowDemoWindow);
+        ImGui::Checkbox("Another Window", &ShowAnotherWindow);
+
+        ImGui::SliderFloat("float", &SliderValue, 0.0f, 1.0f);
+        ImGui::ColorEdit3("clear color", (float*)&ClearColor);
+
+        if (ImGui::Button("Button")) 
+        {
+            Counter++;
+        }
+
+        ImGui::SameLine();
+        ImGui::Text("counter = %d", Counter);
+
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::End();
+    }
+
+    if (ShowAnotherWindow)
+    {
+        ImGui::Begin("Another Window", &ShowAnotherWindow);
+        ImGui::Text("Hello from another window!");
+            
+        if (ImGui::Button("Close Me"))
+        {
+            ShowAnotherWindow = false;
+        }
+
+        ImGui::End();
+    }
+
+    ImGui::EndFrame();
 }
 
 void FWindowedApplication::PollInputDevices()
@@ -463,7 +956,7 @@ void FWindowedApplication::PollInputDevices()
 bool FWindowedApplication::OnControllerButtonUp(EControllerButton Button, uint32 ControllerIndex)
 {
     // Create the event
-    const FControllerEvent ControllerEvent(Button, ControllerIndex);
+    const FControllerEvent ControllerEvent(Button, false, ControllerIndex);
 
     // Let the InputHandlers handle the event first
     for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
@@ -473,6 +966,13 @@ bool FWindowedApplication::OnControllerButtonUp(EControllerButton Button, uint32
         {
             return true;
         }
+    }
+
+    ImGuiIO& UIState = ImGui::GetIO();
+    const ImGuiKey GamepadButton = ImGui_GetGamepadButton(ControllerEvent.GetButton());
+    if (GamepadButton != ImGuiKey_None)
+    {
+        UIState.AddKeyEvent(GamepadButton, ControllerEvent.IsButtonDown());
     }
 
     DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -491,7 +991,7 @@ bool FWindowedApplication::OnControllerButtonUp(EControllerButton Button, uint32
 bool FWindowedApplication::OnControllerButtonDown(EControllerButton Button, uint32 ControllerIndex)
 {
     // Create the event
-    const FControllerEvent ControllerEvent(Button, ControllerIndex);
+    const FControllerEvent ControllerEvent(Button, true, ControllerIndex);
 
     // Let the InputHandlers handle the event first
     for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
@@ -501,6 +1001,13 @@ bool FWindowedApplication::OnControllerButtonDown(EControllerButton Button, uint
         {
             return true;
         }
+    }
+
+    ImGuiIO& UIState = ImGui::GetIO();
+    const ImGuiKey GamepadButton = ImGui_GetGamepadButton(ControllerEvent.GetButton());
+    if (GamepadButton != ImGuiKey_None)
+    {
+        UIState.AddKeyEvent(GamepadButton, ControllerEvent.IsButtonDown());
     }
 
     DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -529,6 +1036,16 @@ bool FWindowedApplication::OnControllerAnalog(EControllerAnalog AnalogSource, ui
         {
             return true;
         }
+    }
+
+    ImGuiIO& UIState = ImGui::GetIO();
+
+    const bool bIsNegative = ControllerEvent.GetAnalogValue() < 0.0f;
+    const ImGuiKey GamepadButton = ImGui_GetGamepadAnalog(ControllerEvent.GetAnalogSource(), bIsNegative);
+    if (GamepadButton != ImGuiKey_None)
+    {
+        const float Normalized = FMath::Abs<float>(ControllerEvent.GetAnalogValue());
+        UIState.AddKeyAnalogEvent(GamepadButton, Normalized > 0.10f, Normalized);
     }
 
     DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -567,7 +1084,18 @@ bool FWindowedApplication::OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyStat
 
     // Update the UI-State
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.KeysDown[KeyEvent.GetKey()] = KeyEvent.IsDown();
+
+    const FModifierKeyState ModifierKeyState = FPlatformApplicationMisc::GetModifierKeyState();
+    UIState.AddKeyEvent(ImGuiMod_Ctrl , ModifierKeyState.bIsCtrlDown  == 1);
+    UIState.AddKeyEvent(ImGuiMod_Shift, ModifierKeyState.bIsShiftDown == 1);
+    UIState.AddKeyEvent(ImGuiMod_Alt  , ModifierKeyState.bIsAltDown   == 1);
+    UIState.AddKeyEvent(ImGuiMod_Super, ModifierKeyState.bIsSuperDown == 1);
+
+    const ImGuiKey Key = ImGui_KeyToImGuiKey(KeyEvent.GetKey());
+    if (Key != ImGuiKey_None)
+    {
+        UIState.AddKeyEvent(Key, KeyEvent.IsDown());
+    }
 
     if (UIState.WantCaptureKeyboard)
     {
@@ -616,7 +1144,18 @@ bool FWindowedApplication::OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyS
 
     // Update the UI-State
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.KeysDown[KeyEvent.GetKey()] = KeyEvent.IsDown();
+
+    const FModifierKeyState ModifierKeyState = FPlatformApplicationMisc::GetModifierKeyState();
+    UIState.AddKeyEvent(ImGuiMod_Ctrl , ModifierKeyState.bIsCtrlDown  == 1);
+    UIState.AddKeyEvent(ImGuiMod_Shift, ModifierKeyState.bIsShiftDown == 1);
+    UIState.AddKeyEvent(ImGuiMod_Alt  , ModifierKeyState.bIsAltDown   == 1);
+    UIState.AddKeyEvent(ImGuiMod_Super, ModifierKeyState.bIsSuperDown == 1);
+
+    const ImGuiKey Key = ImGui_KeyToImGuiKey(KeyEvent.GetKey());
+    if (Key != ImGuiKey_None)
+    {
+        UIState.AddKeyEvent(Key, KeyEvent.IsDown());
+    }
 
     if (UIState.WantCaptureKeyboard)
     {
@@ -720,6 +1259,10 @@ bool FWindowedApplication::OnMouseMove(int32 x, int32 y)
         }
     }
 
+    // Update ImGui mouse
+    ImGuiIO& UIState = ImGui::GetIO();
+    UIState.AddMousePosEvent(static_cast<float>(x), static_cast<float>(y));
+
     // If the tracked widgets contain the widget, send the events that the mouse entered the widgets
     FResponse Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(Children), MouseEvent,
         [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
@@ -749,10 +1292,10 @@ bool FWindowedApplication::OnMouseMove(int32 x, int32 y)
 bool FWindowedApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyState ModiferKeyState, int32 x, int32 y)
 {
     // Remove the mouse capture if there is a capture
-    PlatformApplication->SetCapture(nullptr);
+    SetCapture(nullptr);
 
     // Create the event
-    const FMouseEvent MouseEvent(FIntVector2{ x, y }, ModiferKeyState, Button);
+    const FMouseEvent MouseEvent(FIntVector2{ x, y }, ModiferKeyState, Button, false);
     
     // Let the InputHandlers handle the event first
     FResponse Response = FResponse::Unhandled();
@@ -769,8 +1312,8 @@ bool FWindowedApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyStat
     // Update the UI-State
     ImGuiIO& UIState = ImGui::GetIO();
 
-    const uint32 ButtonIndex = GetMouseButtonIndex(MouseEvent.GetButton());
-    UIState.MouseDown[ButtonIndex] = MouseEvent.IsDown();
+    const uint32 ButtonIndex = ImGui_GetMouseButtonIndex(MouseEvent.GetButton());
+    UIState.AddMouseButtonEvent(ButtonIndex, MouseEvent.IsDown());
 
     if (UIState.WantCaptureMouse)
     {
@@ -821,10 +1364,10 @@ bool FWindowedApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyStat
 bool FWindowedApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButton Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
 {
     // Set the mouse capture when the mouse is pressed
-    PlatformApplication->SetCapture(Window);
+    SetCapture(Window);
 
     // Create the event
-    const FMouseEvent MouseEvent(FIntVector2{ x, y }, ModierKeyState, Button);
+    const FMouseEvent MouseEvent(FIntVector2{ x, y }, ModierKeyState, Button, true);
 
     // Let the InputHandlers handle the event first
     FResponse Response = FResponse::Unhandled();
@@ -841,8 +1384,8 @@ bool FWindowedApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& W
     // Update the UI-State
     ImGuiIO& UIState = ImGui::GetIO();
 
-    const uint32 ButtonIndex = GetMouseButtonIndex(MouseEvent.GetButton());
-    UIState.MouseDown[ButtonIndex] = MouseEvent.IsDown();
+    const uint32 ButtonIndex = ImGui_GetMouseButtonIndex(MouseEvent.GetButton());
+    UIState.AddMouseButtonEvent(ButtonIndex, MouseEvent.IsDown());
 
     if (UIState.WantCaptureMouse)
     {
@@ -851,6 +1394,9 @@ bool FWindowedApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& W
 
     // Remove the Key
     PressedMouseButtons.insert(Button);
+
+    // Store the window we focus on
+    FocusWindow = PlatformApplication->GetActiveWindow();
 
     // If the event is handled, abort the process
     if (Response.IsEventHandled())
@@ -885,7 +1431,7 @@ bool FWindowedApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& W
 bool FWindowedApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, int32 y)
 {
     // Create the event
-    const FMouseEvent MouseEvent(FIntVector2{ x, y }, FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
+    const FMouseEvent MouseEvent(FIntVector2(x, y), FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
 
     // Let the InputHandlers handle the event first
     FResponse Response = FResponse::Unhandled();
@@ -903,11 +1449,11 @@ bool FWindowedApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int
     ImGuiIO& UIState = ImGui::GetIO();
     if (MouseEvent.IsVerticalScrollDelta())
     {
-        UIState.MouseWheel += MouseEvent.GetScrollDelta();
+        UIState.AddMouseWheelEvent(0.0f, MouseEvent.GetScrollDelta());
     }
     else
     {
-        UIState.MouseWheelH += MouseEvent.GetScrollDelta();
+        UIState.AddMouseWheelEvent(MouseEvent.GetScrollDelta(), 0.0f);
     }
 
     if (Response.IsEventHandled())
@@ -935,6 +1481,11 @@ bool FWindowedApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int
 
 bool FWindowedApplication::OnWindowResized(const TSharedRef<FGenericWindow>& InWindow, uint32 Width, uint32 Height)
 {
+    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(InWindow->GetPlatformHandle()))
+    {
+        Viewport->PlatformRequestResize = true;
+    }
+
     TSharedPtr<FWindow> Window = FindWindowFromNativeWindow(InWindow);
     if (Window)
     {
@@ -951,6 +1502,11 @@ bool FWindowedApplication::OnWindowResized(const TSharedRef<FGenericWindow>& InW
 
 bool FWindowedApplication::OnWindowMoved(const TSharedRef<FGenericWindow>& InWindow, int32 x, int32 y)
 {
+    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(InWindow->GetPlatformHandle()))
+    {
+        Viewport->PlatformRequestMove = true;
+    }
+
     TSharedPtr<FWindow> Window = FindWindowFromNativeWindow(InWindow);
     if (Window)
     {
@@ -971,65 +1527,92 @@ bool FWindowedApplication::OnWindowFocusLost(const TSharedRef<FGenericWindow>& I
 {
     // The state needs to be reset when the window loses focus
     ImGuiIO& UIState = ImGui::GetIO();
-    FMemory::Memzero(UIState.KeysDown, sizeof(UIState.KeysDown));
+    UIState.AddFocusEvent(false);
     return true;
 }
 
 bool FWindowedApplication::OnWindowFocusGained(const TSharedRef<FGenericWindow>& InWindow)
 {
-    return false;
+    ImGuiIO& UIState = ImGui::GetIO();
+    UIState.AddFocusEvent(true);
+    return true;
 }
 
 bool FWindowedApplication::OnWindowMouseLeft(const TSharedRef<FGenericWindow>& InWindow)
 {
-    //TSharedPtr<FWindow> Window = FindWindowFromNativeWindow(InWindow);
-    //if (Window)
-    //{
-    //    Window->OnMouseLeft();
-    //}
-    
-    return false;
+    ImGuiIO& UIState = ImGui::GetIO();
+    UIState.AddMousePosEvent(-TNumericLimits<float>::Max(), -TNumericLimits<float>::Max());
+    return true;
 }
 
 bool FWindowedApplication::OnWindowMouseEntered(const TSharedRef<FGenericWindow>& InWindow)
 {
-    //TSharedPtr<FWindow> Window = FindWindowFromNativeWindow(InWindow);
-    //if (Window)
-    //{
-    //    Window->OnMouseEntered();
-    //}
-
     return false;
 }
 
 bool FWindowedApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& InWindow)
 {
-    TSharedPtr<FWindow> Window = FindWindowFromNativeWindow(InWindow);
-    if (Window)
+    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(InWindow->GetPlatformHandle()))
     {
-        Window->OnWindowClosed();
+        Viewport->PlatformRequestClose = true;
+    }
 
-        TSharedPtr<FViewportWidget> Viewport;// = Window->GetViewport();
-        if (Viewport == MainViewport)
+    if (FGenericWindow* Window = MainViewport->GetWindow())
+    {
+        if (Window == InWindow)
         {
             FPlatformApplicationMisc::RequestExit(0);
+            MainViewport = nullptr;
         }
     }
 
+    // Remove the viewport
+    for (int32 Index = 0; Index < Viewports.Size(); Index++)
+    {
+        if (Viewports[Index]->GetWindow() == InWindow)
+        {
+            Viewports.RemoveAt(Index);
+            break;
+        }
+    }
+
+    // Remove the window
+    AllWindows.Remove(InWindow);
     return true;
+}
+
+bool FWindowedApplication::OnMonitorChange()
+{
+    ImGui_ImplWin32_UpdateMonitors();
+    return false;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
 
-TSharedRef<FGenericWindow> FWindowedApplication::CreateWindow(const FWindowInitializer& WindowInitializer)
+TSharedRef<FGenericWindow> FWindowedApplication::CreateWindow(const FWindowInitializer& Initializer)
 {
     TSharedRef<FGenericWindow> Window = PlatformApplication->CreateWindow();
     if (Window)
     {
-        if (Window->Initialize(WindowInitializer.Title, WindowInitializer.Width, WindowInitializer.Height, WindowInitializer.Position.x, WindowInitializer.Position.y, WindowInitializer.Style))
+        if (Window->Initialize(Initializer.Title, Initializer.Width, Initializer.Height, Initializer.Position.x, Initializer.Position.y, Initializer.Style, Initializer.ParentWindow))
         {
-            AllWindows.Emplace(Window);
+            AllWindows.Add(Window);
             return Window;
+        }
+    }
+
+    return nullptr;
+}
+
+TSharedPtr<FViewport> FWindowedApplication::CreateViewport(const FViewportInitializer& Initializer)
+{
+    TSharedPtr<FViewport> Viewport = MakeShared<FViewport>();
+    if (Viewport)
+    {
+        if (Viewport->InitializeRHI(Initializer))
+        {
+            Viewports.Add(Viewport);
+            return Viewport;
         }
     }
 
@@ -1038,32 +1621,56 @@ TSharedRef<FGenericWindow> FWindowedApplication::CreateWindow(const FWindowIniti
 
 void FWindowedApplication::SetCursor(ECursor InCursor)
 {
-    TSharedPtr<ICursor> Cursor = GetCursor();
-    Cursor->SetCursor(InCursor);
+    if (TSharedPtr<ICursor> Cursor = GetCursor())
+    {
+        Cursor->SetCursor(InCursor);
+    }
 }
 
 void FWindowedApplication::SetCursorPos(const FIntVector2& Position)
 {
-    TSharedPtr<ICursor> Cursor = GetCursor();
-    Cursor->SetPosition(Position.x, Position.y);
+    if (TSharedPtr<ICursor> Cursor = GetCursor())
+    {
+        Cursor->SetPosition(Position.x, Position.y);
+    }
 }
 
 FIntVector2 FWindowedApplication::GetCursorPos() const
 {
-    TSharedPtr<ICursor> Cursor = GetCursor();
-    return Cursor->GetPosition();
+    if (TSharedPtr<ICursor> Cursor = GetCursor())
+    {
+        return Cursor->GetPosition();
+    }
+
+    return FIntVector2();
 }
 
 void FWindowedApplication::ShowCursor(bool bIsVisible)
 {
-    TSharedPtr<ICursor> Cursor = GetCursor();
-    Cursor->SetVisibility(bIsVisible);
+    if (TSharedPtr<ICursor> Cursor = GetCursor())
+    {
+        Cursor->SetVisibility(bIsVisible);
+    }
 }
 
 bool FWindowedApplication::IsCursorVisibile() const
 {
-    TSharedPtr<ICursor> Cursor = GetCursor();
-    return Cursor->IsVisible();
+    if (TSharedPtr<ICursor> Cursor = GetCursor())
+    {
+        return Cursor->IsVisible();
+    }
+
+    return false;
+}
+
+bool FWindowedApplication::IsGamePadConnected() const
+{
+    if (FInputDevice* InputDevice = GetInputDeviceInterface())
+    {
+        return InputDevice->IsDeviceConnected();
+    }
+
+    return false;
 }
 
 bool FWindowedApplication::EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindow>& Window) 
@@ -1077,21 +1684,24 @@ bool FWindowedApplication::EnableHighPrecisionMouseForWindow(const TSharedPtr<FW
     return false;
 }
 
-void FWindowedApplication::SetCapture(const TSharedPtr<FWindow>& CaptureWindow)
+void FWindowedApplication::SetCapture(const TSharedRef<FGenericWindow>& CaptureWindow)
 {
+    PlatformApplication->SetCapture(CaptureWindow);
     if (CaptureWindow)
     {
-        TSharedRef<FGenericWindow> NativeWindow = CaptureWindow->GetNativeWindow();
-        PlatformApplication->SetCapture(NativeWindow);
+        bIsTrackingMouse = true;
+    }
+    else
+    {
+        bIsTrackingMouse = false;
     }
 }
 
-void FWindowedApplication::SetActiveWindow(const TSharedPtr<FWindow>& ActiveWindow)
+void FWindowedApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& ActiveWindow)
 {
     if (ActiveWindow)
     {
-        TSharedRef<FGenericWindow> NativeWindow = ActiveWindow->GetNativeWindow();
-        PlatformApplication->SetActiveWindow(NativeWindow);
+        PlatformApplication->SetActiveWindow(ActiveWindow);
     }
 }
 
@@ -1107,10 +1717,9 @@ TSharedPtr<FWindow> FWindowedApplication::GetWindowUnderCursor() const
     return FindWindowFromNativeWindow(NativeWindow);
 }
 
-TSharedPtr<FWindow> FWindowedApplication::GetCapture() const
+TSharedRef<FGenericWindow> FWindowedApplication::GetCapture() const
 { 
-    TSharedRef<FGenericWindow> NativeWindow = PlatformApplication->GetCapture();
-    return FindWindowFromNativeWindow(NativeWindow);
+    return PlatformApplication->GetCapture();
 }
 
 void FWindowedApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 NewPriority)
@@ -1141,16 +1750,33 @@ void FWindowedApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& I
         if (Handler.InputHandler == InputHandler)
         {
             InputHandlers.RemoveAt(Index);
-            break;
+            return;
         }
     }
 }
 
-void FWindowedApplication::RegisterMainViewport(const TSharedRef<FGenericWindow>& NewMainViewport)
+void FWindowedApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InViewport)
 {
-    if (MainViewport != NewMainViewport)
+    if (MainViewport != InViewport)
     {
-        MainViewport = NewMainViewport;
+        MainViewport = InViewport;
+        MainWindow   = MakeSharedRef<FGenericWindow>(MainViewport->GetWindow());
+
+        if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
+        {
+            if (MainWindow)
+            {
+                Viewport->PlatformWindowCreated = true;
+                Viewport->PlatformHandle   = Viewport->PlatformHandleRaw = MainWindow->GetPlatformHandle();
+                Viewport->RendererUserData = InViewport.Get();
+            }
+        }
+        
+        ImGuiIO& UIState = ImGui::GetIO();
+        if (UIState.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            ImGui_ImplWin32_InitPlatformInterface();
+        }
     }
 }
 
