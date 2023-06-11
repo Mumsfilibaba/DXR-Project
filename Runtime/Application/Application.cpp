@@ -6,7 +6,6 @@
 
 #include <imgui.h>
 
-#pragma optimize("", off)
 #pragma comment(lib, "Shcore.lib")
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
@@ -184,8 +183,6 @@ float ImGui_ImplWin32_GetDpiScaleForMonitor(HMONITOR Monitor)
 
 static BOOL CALLBACK ImGui_ImplWin32_UpdateMonitors_EnumFunc(HMONITOR Monitor, HDC, LPRECT, LPARAM)
 {
-    LOG_INFO("ImGui_ImplWin32_UpdateMonitors_EnumFunc");
-
     MONITORINFO MonitorInfo = {};
     MonitorInfo.cbSize = sizeof(MONITORINFO);
     if (!::GetMonitorInfo(Monitor, &MonitorInfo))
@@ -245,8 +242,6 @@ static void ImGui_ImplWin32_CreateWindow(ImGuiViewport* Viewport)
 {
     const FWindowStyle WindowStyle = ImGui_ImplWin32_GetWin32StyleFromViewportFlags(Viewport->Flags);
 
-    LOG_INFO("ImGui_ImplWin32_CreateWindow");
-
     FGenericWindow* ParentWindow = nullptr;
     if (Viewport->ParentViewportId != 0)
     {
@@ -276,14 +271,10 @@ static void ImGui_ImplWin32_DestroyWindow(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
-        LOG_INFO("ImGui_ImplWin32_DestroyWindow");
-
         if (Window == FWindowedApplication::Get().GetCapture())
         {
             // Transfer capture so if we started dragging from a window that later disappears, we'll still receive the MOUSEUP event.
             FWindowedApplication::Get().SetCapture(FWindowedApplication::Get().GetMainWindow());
-
-            LOG_INFO("ImGui_ImplWin32_DestroyWindow Reset Capture");
         }
 
         Window->Destroy();
@@ -298,31 +289,13 @@ static void ImGui_ImplWin32_ShowWindow(ImGuiViewport* Viewport)
     {
         if (Viewport->Flags & ImGuiViewportFlags_NoFocusOnAppearing)
         {
-            LOG_INFO("ImGui_ImplWin32_DestroyWindow ImGuiViewportFlags_NoFocusOnAppearing");
             Window->Show(false);
         }
         else
         {
-            LOG_INFO("ImGui_ImplWin32_DestroyWindow");
             Window->Show();
         }
     }
-}
-
-static void ImGui_ImplWin32_GetWin32StyleFromViewportFlags_2(ImGuiViewportFlags flags, DWORD* out_style, DWORD* out_ex_style)
-{
-    if (flags & ImGuiViewportFlags_NoDecoration)
-        *out_style = WS_POPUP;
-    else
-        *out_style = WS_OVERLAPPEDWINDOW;
-
-    if (flags & ImGuiViewportFlags_NoTaskBarIcon)
-        *out_ex_style = WS_EX_TOOLWINDOW;
-    else
-        *out_ex_style = WS_EX_APPWINDOW;
-
-    if (flags & ImGuiViewportFlags_TopMost)
-        *out_ex_style |= WS_EX_TOPMOST;
 }
 
 static void ImGui_ImplWin32_UpdateWindow(ImGuiViewport* Viewport)
@@ -332,8 +305,6 @@ static void ImGui_ImplWin32_UpdateWindow(ImGuiViewport* Viewport)
         const FWindowStyle WindowStyle = ImGui_ImplWin32_GetWin32StyleFromViewportFlags(Viewport->Flags);
         if (WindowStyle != Window->GetStyle())
         {
-            LOG_INFO("ImGui_ImplWin32_UpdateWindow");
-
             Window->SetStyle(WindowStyle);
 
             const FWindowShape WindowShape(static_cast<uint32>(Viewport->Size.x), static_cast<uint32>(Viewport->Size.y), static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
@@ -346,37 +317,6 @@ static void ImGui_ImplWin32_UpdateWindow(ImGuiViewport* Viewport)
 
             Viewport->PlatformRequestMove = Viewport->PlatformRequestResize = true;
         }
-
-        //HWND  Hwnd = (HWND)Window->GetPlatformHandle();
-        //DWORD DwStyle   = ::GetWindowLong(Hwnd, GWL_STYLE);
-        //DWORD DwExStyle = ::GetWindowLong(Hwnd, GWL_EXSTYLE);
-
-        //DWORD new_style;
-        //DWORD new_ex_style;
-        //ImGui_ImplWin32_GetWin32StyleFromViewportFlags_2(Viewport->Flags, &new_style, &new_ex_style);
-
-        //// Only reapply the flags that have been changed from our point of view (as other flags are being modified by Windows)
-        //if (DwStyle != new_style || DwExStyle != new_ex_style)
-        //{
-        //    // (Optional) Update TopMost state if it changed _after_ creation
-        //    bool top_most_changed = (DwExStyle & WS_EX_TOPMOST) != (new_ex_style & WS_EX_TOPMOST);
-        //    
-        //    HWND insert_after = top_most_changed ? ((Viewport->Flags & ImGuiViewportFlags_TopMost) ? HWND_TOPMOST : HWND_NOTOPMOST) : 0;
-        //    UINT swp_flag     = top_most_changed ? 0 : SWP_NOZORDER;
-
-        //    // Apply flags and position (since it is affected by flags)
-        //    DwStyle   = new_style;
-        //    DwExStyle = new_ex_style;
-        //    ::SetWindowLong(Hwnd, GWL_STYLE, DwStyle);
-        //    ::SetWindowLong(Hwnd, GWL_EXSTYLE, DwExStyle);
-
-        //    RECT rect = { (LONG)Viewport->Pos.x, (LONG)Viewport->Pos.y, (LONG)(Viewport->Pos.x + Viewport->Size.x), (LONG)(Viewport->Pos.y + Viewport->Size.y) };
-        //    ::AdjustWindowRectEx(&rect, DwStyle, FALSE, DwExStyle); // Client to Screen
-        //    ::SetWindowPos(Hwnd, insert_after, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, swp_flag | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-        //    ::ShowWindow(Hwnd, SW_SHOWNA); // This is necessary when we alter the style
-
-        //    Viewport->PlatformRequestMove = Viewport->PlatformRequestResize = true;
-        //}
     }
 }
 
@@ -388,7 +328,6 @@ static ImVec2 ImGui_ImplWin32_GetWindowPos(ImGuiViewport* Viewport)
         Window->GetWindowShape(WindowShape);
 
         const ImVec2 Result = ImVec2(static_cast<float>(WindowShape.Position.x), static_cast<float>(WindowShape.Position.y));
-        LOG_INFO("ImGui_ImplWin32_GetWindowPos (%.4f, %.4f)", Result.x, Result.y);
         return Result;
     }
 
@@ -399,7 +338,6 @@ static void ImGui_ImplWin32_SetWindowPos(ImGuiViewport* Viewport, ImVec2 Positio
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
-        LOG_INFO("ImGui_ImplWin32_SetWindowPos (%.4f, %.4f)", Position.x, Position.y);
         Window->SetWindowPos(static_cast<int32>(Position.x), static_cast<int32>(Position.y));
     }
 }
@@ -412,7 +350,6 @@ static ImVec2 ImGui_ImplWin32_GetWindowSize(ImGuiViewport* Viewport)
         Window->GetWindowShape(WindowShape);
 
         const ImVec2 Result = ImVec2(static_cast<float>(WindowShape.Width), static_cast<float>(WindowShape.Height));
-        LOG_INFO("ImGui_ImplWin32_GetWindowSize (%.4f, %.4f)", Result.x, Result.y);
         return Result;
     }
 
@@ -425,8 +362,6 @@ static void ImGui_ImplWin32_SetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
     {
         const FWindowShape WindowShape(static_cast<uint32>(Size.x), static_cast<uint32>(Size.y));
         Window->SetWindowShape(WindowShape, false);
-
-        LOG_INFO("ImGui_ImplWin32_SetWindowSize (%.4f, %.4f)", Size.x, Size.y);
     }
 }
 
@@ -434,7 +369,6 @@ static void ImGui_ImplWin32_SetWindowFocus(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
-        LOG_INFO("ImGui_ImplWin32_SetWindowFocus");
         Window->SetWindowFocus();
     }
 }
@@ -443,7 +377,6 @@ static bool ImGui_ImplWin32_GetWindowFocus(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
-        LOG_INFO("ImGui_ImplWin32_GetWindowFocus");
         return Window->IsActiveWindow();
     }
 
@@ -454,7 +387,6 @@ static bool ImGui_ImplWin32_GetWindowMinimized(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
-        LOG_INFO("ImGui_ImplWin32_GetWindowMinimized");
         return Window->IsMinimized();
     }
 
@@ -465,7 +397,6 @@ static void ImGui_ImplWin32_SetWindowTitle(ImGuiViewport* Viewport, const char* 
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
-        LOG_INFO("ImGui_ImplWin32_SetWindowTitle (%s)", Title);
         return Window->SetTitle(Title);
     }
 }
@@ -474,7 +405,6 @@ static void ImGui_ImplWin32_SetWindowAlpha(ImGuiViewport* Viewport, float Alpha)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
-        LOG_INFO("ImGui_ImplWin32_SetWindowAlpha (%.4f)", Alpha);
         return Window->SetWindowOpacity(Alpha);
     }
 }
@@ -483,7 +413,6 @@ static float ImGui_ImplWin32_GetWindowDpiScale(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
-        LOG_INFO("ImGui_ImplWin32_GetWindowDpiScale");
         return Window->GetWindowDpiScale();
     }
 
@@ -707,136 +636,136 @@ FWindowedApplication::FWindowedApplication()
     PlatformState.Platform_OnChangedViewport  = ImGui_ImplWin32_OnChangedViewport;
 
     // Setup the style
-    //ImGuiStyle& Style = ImGui::GetStyle();
+    ImGuiStyle& Style = ImGui::GetStyle();
     ImGui::StyleColorsDark();
 
-    //// Padding
-    //Style.FramePadding = ImVec2(6.0f, 4.0f);
+    // Padding
+    Style.FramePadding = ImVec2(6.0f, 4.0f);
 
-    //// Use AA for lines etc.
-    //Style.AntiAliasedLines = true;
-    //Style.AntiAliasedFill  = true;
+    // Use AA for lines etc.
+    Style.AntiAliasedLines = true;
+    Style.AntiAliasedFill  = true;
 
-    //// Size
-    //Style.WindowBorderSize = 0.0f;
-    //Style.FrameBorderSize  = 1.0f;
-    //Style.ChildBorderSize  = 1.0f;
-    //Style.PopupBorderSize  = 1.0f;
-    //Style.ScrollbarSize    = 10.0f;
-    //Style.GrabMinSize      = 20.0f;
+    // Size
+    Style.WindowBorderSize = 0.0f;
+    Style.FrameBorderSize  = 1.0f;
+    Style.ChildBorderSize  = 1.0f;
+    Style.PopupBorderSize  = 1.0f;
+    Style.ScrollbarSize    = 10.0f;
+    Style.GrabMinSize      = 20.0f;
 
-    //// Rounding
-    //Style.WindowRounding    = 4.0f;
-    //Style.FrameRounding     = 4.0f;
-    //Style.PopupRounding     = 4.0f;
-    //Style.GrabRounding      = 4.0f;
-    //Style.TabRounding       = 4.0f;
-    //Style.ScrollbarRounding = 6.0f;
+    // Rounding
+    Style.WindowRounding    = 4.0f;
+    Style.FrameRounding     = 4.0f;
+    Style.PopupRounding     = 4.0f;
+    Style.GrabRounding      = 4.0f;
+    Style.TabRounding       = 4.0f;
+    Style.ScrollbarRounding = 6.0f;
 
-    //Style.Colors[ImGuiCol_WindowBg].x = 0.075f;
-    //Style.Colors[ImGuiCol_WindowBg].y = 0.075f;
-    //Style.Colors[ImGuiCol_WindowBg].z = 0.075f;
-    //Style.Colors[ImGuiCol_WindowBg].w = 0.925f;
+    Style.Colors[ImGuiCol_WindowBg].x = 0.075f;
+    Style.Colors[ImGuiCol_WindowBg].y = 0.075f;
+    Style.Colors[ImGuiCol_WindowBg].z = 0.075f;
+    Style.Colors[ImGuiCol_WindowBg].w = 0.925f;
 
-    //Style.Colors[ImGuiCol_Text].x = 0.95f;
-    //Style.Colors[ImGuiCol_Text].y = 0.95f;
-    //Style.Colors[ImGuiCol_Text].z = 0.95f;
-    //Style.Colors[ImGuiCol_Text].w = 1.0f;
+    Style.Colors[ImGuiCol_Text].x = 0.95f;
+    Style.Colors[ImGuiCol_Text].y = 0.95f;
+    Style.Colors[ImGuiCol_Text].z = 0.95f;
+    Style.Colors[ImGuiCol_Text].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_PlotHistogram].x = 0.9f;
-    //Style.Colors[ImGuiCol_PlotHistogram].y = 0.9f;
-    //Style.Colors[ImGuiCol_PlotHistogram].z = 0.9f;
-    //Style.Colors[ImGuiCol_PlotHistogram].w = 1.0f;
+    Style.Colors[ImGuiCol_PlotHistogram].x = 0.9f;
+    Style.Colors[ImGuiCol_PlotHistogram].y = 0.9f;
+    Style.Colors[ImGuiCol_PlotHistogram].z = 0.9f;
+    Style.Colors[ImGuiCol_PlotHistogram].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_PlotHistogramHovered].x = 0.75f;
-    //Style.Colors[ImGuiCol_PlotHistogramHovered].y = 0.75f;
-    //Style.Colors[ImGuiCol_PlotHistogramHovered].z = 0.75f;
-    //Style.Colors[ImGuiCol_PlotHistogramHovered].w = 1.0f;
+    Style.Colors[ImGuiCol_PlotHistogramHovered].x = 0.75f;
+    Style.Colors[ImGuiCol_PlotHistogramHovered].y = 0.75f;
+    Style.Colors[ImGuiCol_PlotHistogramHovered].z = 0.75f;
+    Style.Colors[ImGuiCol_PlotHistogramHovered].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_TitleBg].x = 0.025f;
-    //Style.Colors[ImGuiCol_TitleBg].y = 0.025f;
-    //Style.Colors[ImGuiCol_TitleBg].z = 0.025f;
-    //Style.Colors[ImGuiCol_TitleBg].w = 1.0f;
+    Style.Colors[ImGuiCol_TitleBg].x = 0.025f;
+    Style.Colors[ImGuiCol_TitleBg].y = 0.025f;
+    Style.Colors[ImGuiCol_TitleBg].z = 0.025f;
+    Style.Colors[ImGuiCol_TitleBg].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_TitleBgActive].x = 0.15f;
-    //Style.Colors[ImGuiCol_TitleBgActive].y = 0.15f;
-    //Style.Colors[ImGuiCol_TitleBgActive].z = 0.15f;
-    //Style.Colors[ImGuiCol_TitleBgActive].w = 1.0f;
+    Style.Colors[ImGuiCol_TitleBgActive].x = 0.15f;
+    Style.Colors[ImGuiCol_TitleBgActive].y = 0.15f;
+    Style.Colors[ImGuiCol_TitleBgActive].z = 0.15f;
+    Style.Colors[ImGuiCol_TitleBgActive].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_FrameBg].x = 0.1f;
-    //Style.Colors[ImGuiCol_FrameBg].y = 0.1f;
-    //Style.Colors[ImGuiCol_FrameBg].z = 0.1f;
-    //Style.Colors[ImGuiCol_FrameBg].w = 1.0f;
+    Style.Colors[ImGuiCol_FrameBg].x = 0.1f;
+    Style.Colors[ImGuiCol_FrameBg].y = 0.1f;
+    Style.Colors[ImGuiCol_FrameBg].z = 0.1f;
+    Style.Colors[ImGuiCol_FrameBg].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_FrameBgHovered].x = 0.2f;
-    //Style.Colors[ImGuiCol_FrameBgHovered].y = 0.2f;
-    //Style.Colors[ImGuiCol_FrameBgHovered].z = 0.2f;
-    //Style.Colors[ImGuiCol_FrameBgHovered].w = 1.0f;
+    Style.Colors[ImGuiCol_FrameBgHovered].x = 0.2f;
+    Style.Colors[ImGuiCol_FrameBgHovered].y = 0.2f;
+    Style.Colors[ImGuiCol_FrameBgHovered].z = 0.2f;
+    Style.Colors[ImGuiCol_FrameBgHovered].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_FrameBgActive].x = 0.15f;
-    //Style.Colors[ImGuiCol_FrameBgActive].y = 0.15f;
-    //Style.Colors[ImGuiCol_FrameBgActive].z = 0.15f;
-    //Style.Colors[ImGuiCol_FrameBgActive].w = 1.0f;
+    Style.Colors[ImGuiCol_FrameBgActive].x = 0.15f;
+    Style.Colors[ImGuiCol_FrameBgActive].y = 0.15f;
+    Style.Colors[ImGuiCol_FrameBgActive].z = 0.15f;
+    Style.Colors[ImGuiCol_FrameBgActive].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_Button].x = 0.4f;
-    //Style.Colors[ImGuiCol_Button].y = 0.4f;
-    //Style.Colors[ImGuiCol_Button].z = 0.4f;
-    //Style.Colors[ImGuiCol_Button].w = 1.0f;
+    Style.Colors[ImGuiCol_Button].x = 0.4f;
+    Style.Colors[ImGuiCol_Button].y = 0.4f;
+    Style.Colors[ImGuiCol_Button].z = 0.4f;
+    Style.Colors[ImGuiCol_Button].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_ButtonHovered].x = 0.3f;
-    //Style.Colors[ImGuiCol_ButtonHovered].y = 0.3f;
-    //Style.Colors[ImGuiCol_ButtonHovered].z = 0.3f;
-    //Style.Colors[ImGuiCol_ButtonHovered].w = 1.0f;
+    Style.Colors[ImGuiCol_ButtonHovered].x = 0.3f;
+    Style.Colors[ImGuiCol_ButtonHovered].y = 0.3f;
+    Style.Colors[ImGuiCol_ButtonHovered].z = 0.3f;
+    Style.Colors[ImGuiCol_ButtonHovered].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_ButtonActive].x = 0.25f;
-    //Style.Colors[ImGuiCol_ButtonActive].y = 0.25f;
-    //Style.Colors[ImGuiCol_ButtonActive].z = 0.25f;
-    //Style.Colors[ImGuiCol_ButtonActive].w = 1.0f;
+    Style.Colors[ImGuiCol_ButtonActive].x = 0.25f;
+    Style.Colors[ImGuiCol_ButtonActive].y = 0.25f;
+    Style.Colors[ImGuiCol_ButtonActive].z = 0.25f;
+    Style.Colors[ImGuiCol_ButtonActive].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_CheckMark].x = 0.15f;
-    //Style.Colors[ImGuiCol_CheckMark].y = 0.15f;
-    //Style.Colors[ImGuiCol_CheckMark].z = 0.15f;
-    //Style.Colors[ImGuiCol_CheckMark].w = 1.0f;
+    Style.Colors[ImGuiCol_CheckMark].x = 0.15f;
+    Style.Colors[ImGuiCol_CheckMark].y = 0.15f;
+    Style.Colors[ImGuiCol_CheckMark].z = 0.15f;
+    Style.Colors[ImGuiCol_CheckMark].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_SliderGrab].x = 0.15f;
-    //Style.Colors[ImGuiCol_SliderGrab].y = 0.15f;
-    //Style.Colors[ImGuiCol_SliderGrab].z = 0.15f;
-    //Style.Colors[ImGuiCol_SliderGrab].w = 1.0f;
+    Style.Colors[ImGuiCol_SliderGrab].x = 0.15f;
+    Style.Colors[ImGuiCol_SliderGrab].y = 0.15f;
+    Style.Colors[ImGuiCol_SliderGrab].z = 0.15f;
+    Style.Colors[ImGuiCol_SliderGrab].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_SliderGrabActive].x = 0.16f;
-    //Style.Colors[ImGuiCol_SliderGrabActive].y = 0.16f;
-    //Style.Colors[ImGuiCol_SliderGrabActive].z = 0.16f;
-    //Style.Colors[ImGuiCol_SliderGrabActive].w = 1.0f;
+    Style.Colors[ImGuiCol_SliderGrabActive].x = 0.16f;
+    Style.Colors[ImGuiCol_SliderGrabActive].y = 0.16f;
+    Style.Colors[ImGuiCol_SliderGrabActive].z = 0.16f;
+    Style.Colors[ImGuiCol_SliderGrabActive].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_ResizeGrip].x = 0.25f;
-    //Style.Colors[ImGuiCol_ResizeGrip].y = 0.25f;
-    //Style.Colors[ImGuiCol_ResizeGrip].z = 0.25f;
-    //Style.Colors[ImGuiCol_ResizeGrip].w = 1.0f;
+    Style.Colors[ImGuiCol_ResizeGrip].x = 0.25f;
+    Style.Colors[ImGuiCol_ResizeGrip].y = 0.25f;
+    Style.Colors[ImGuiCol_ResizeGrip].z = 0.25f;
+    Style.Colors[ImGuiCol_ResizeGrip].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_ResizeGripHovered].x = 0.35f;
-    //Style.Colors[ImGuiCol_ResizeGripHovered].y = 0.35f;
-    //Style.Colors[ImGuiCol_ResizeGripHovered].z = 0.35f;
-    //Style.Colors[ImGuiCol_ResizeGripHovered].w = 1.0f;
+    Style.Colors[ImGuiCol_ResizeGripHovered].x = 0.35f;
+    Style.Colors[ImGuiCol_ResizeGripHovered].y = 0.35f;
+    Style.Colors[ImGuiCol_ResizeGripHovered].z = 0.35f;
+    Style.Colors[ImGuiCol_ResizeGripHovered].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_ResizeGripActive].x = 0.5f;
-    //Style.Colors[ImGuiCol_ResizeGripActive].y = 0.5f;
-    //Style.Colors[ImGuiCol_ResizeGripActive].z = 0.5f;
-    //Style.Colors[ImGuiCol_ResizeGripActive].w = 1.0f;
+    Style.Colors[ImGuiCol_ResizeGripActive].x = 0.5f;
+    Style.Colors[ImGuiCol_ResizeGripActive].y = 0.5f;
+    Style.Colors[ImGuiCol_ResizeGripActive].z = 0.5f;
+    Style.Colors[ImGuiCol_ResizeGripActive].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_Tab].x = 0.55f;
-    //Style.Colors[ImGuiCol_Tab].y = 0.55f;
-    //Style.Colors[ImGuiCol_Tab].z = 0.55f;
-    //Style.Colors[ImGuiCol_Tab].w = 1.0f;
+    Style.Colors[ImGuiCol_Tab].x = 0.55f;
+    Style.Colors[ImGuiCol_Tab].y = 0.55f;
+    Style.Colors[ImGuiCol_Tab].z = 0.55f;
+    Style.Colors[ImGuiCol_Tab].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_TabHovered].x = 0.4f;
-    //Style.Colors[ImGuiCol_TabHovered].y = 0.4f;
-    //Style.Colors[ImGuiCol_TabHovered].z = 0.4f;
-    //Style.Colors[ImGuiCol_TabHovered].w = 1.0f;
+    Style.Colors[ImGuiCol_TabHovered].x = 0.4f;
+    Style.Colors[ImGuiCol_TabHovered].y = 0.4f;
+    Style.Colors[ImGuiCol_TabHovered].z = 0.4f;
+    Style.Colors[ImGuiCol_TabHovered].w = 1.0f;
 
-    //Style.Colors[ImGuiCol_TabActive].x = 0.25f;
-    //Style.Colors[ImGuiCol_TabActive].y = 0.25f;
-    //Style.Colors[ImGuiCol_TabActive].z = 0.25f;
-    //Style.Colors[ImGuiCol_TabActive].w = 1.0f;
+    Style.Colors[ImGuiCol_TabActive].x = 0.25f;
+    Style.Colors[ImGuiCol_TabActive].y = 0.25f;
+    Style.Colors[ImGuiCol_TabActive].z = 0.25f;
+    Style.Colors[ImGuiCol_TabActive].w = 1.0f;
 }
 
 FWindowedApplication::~FWindowedApplication()
@@ -881,7 +810,7 @@ void FWindowedApplication::Tick(FTimespan DeltaTime)
     UIState.DeltaTime   = static_cast<float>(DeltaTime.AsSeconds());
     UIState.DisplaySize = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
 
-    // Set the framebufferscale
+    // Set the FrameBuffer-Scale
     const float FramebufferScale = MainWindow->GetWindowDpiScale();
     UIState.FontGlobalScale         = FramebufferScale;
     UIState.DisplayFramebufferScale = ImVec2(FramebufferScale, FramebufferScale);
@@ -1831,12 +1760,18 @@ void FWindowedApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InV
         MainViewport = InViewport;
         MainWindow   = MakeSharedRef<FGenericWindow>(MainViewport->GetWindow());
 
-        if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
+        if (MainWindow)
         {
-            if (MainWindow)
+            if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
             {
+                // Viewport is now created, make sure we get the initial information of the window
                 Viewport->PlatformWindowCreated = true;
+                Viewport->PlatformRequestMove   = true;
+                Viewport->PlatformRequestResize = true;
+
+                // Set native handles
                 Viewport->PlatformHandle   = Viewport->PlatformHandleRaw = MainWindow->GetPlatformHandle();
+                Viewport->PlatformUserData = MainWindow.Get();
                 Viewport->RendererUserData = InViewport.Get();
             }
         }

@@ -67,7 +67,7 @@ public:
 
     virtual bool IsMaximized() const override final;
 
-    virtual bool IsChildWindow(const TSharedRef<FGenericWindow>& ParentWindow) const override final;
+    virtual bool IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) const override final;
 
     virtual void SetWindowFocus() override final;
 

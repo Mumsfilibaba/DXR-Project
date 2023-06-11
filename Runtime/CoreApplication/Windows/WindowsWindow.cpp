@@ -284,12 +284,12 @@ bool FWindowsWindow::IsMaximized() const
     return false;
 }
 
-bool FWindowsWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ParentWindow) const
+bool FWindowsWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) const
 {
-    TSharedRef<FWindowsWindow> WindowsParent = StaticCastSharedRef<FWindowsWindow>(ParentWindow);
-    if (WindowsParent)
+    TSharedRef<FWindowsWindow> WindowsChild = StaticCastSharedRef<FWindowsWindow>(ChildWindow);
+    if (WindowsChild)
     {
-        return ::IsChild(WindowsParent->GetWindowHandle(), Window) == TRUE;
+        return ::IsChild(Window, WindowsChild->GetWindowHandle()) == TRUE;
     }
 
     return false;
