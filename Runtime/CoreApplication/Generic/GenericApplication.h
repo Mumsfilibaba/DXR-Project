@@ -5,10 +5,75 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FMonitorDesc
+struct FMonitorInfo
 {
-    float DisplayScaling = 1.0f;
+    FMonitorInfo()
+        : DisplayDPI(0)
+        , DisplayScaling(1.0f)
+        , bIsPrimary(false)
+    {
+    }
+
+    bool operator==(const FMonitorInfo& Other) const
+    {
+        return DeviceName     == Other.DeviceName
+            && MainPosition   == Other.MainPosition
+            && MainSize       == Other.MainSize
+            && WorkPosition   == Other.WorkPosition
+            && WorkSize       == Other.WorkSize
+            && DisplayDPI     == Other.DisplayDPI
+            && DisplayScaling == Other.DisplayScaling
+            && bIsPrimary     == Other.bIsPrimary;
+    }
+
+    bool operator!=(const FMonitorInfo& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    FString     DeviceName;
+
+    FIntVector2 MainPosition;
+    FIntVector2 MainSize;
+    
+    FIntVector2 WorkPosition;
+    FIntVector2 WorkSize;
+    
+    int32 DisplayDPI;
+    int32 DisplayScaleFactor;
+
+    float DisplayScaling;
+
+    bool  bIsPrimary;
 };
+
+struct FDisplayInfo
+{
+    FDisplayInfo()
+        : PrimaryDisplayWidth(0)
+        , PrimaryDisplayHeight(0)
+        , MonitorInfos()
+    {
+    }
+
+    bool operator==(const FDisplayInfo& Other) const
+    {
+        return PrimaryDisplayWidth  == Other.PrimaryDisplayWidth
+            && PrimaryDisplayHeight == Other.PrimaryDisplayHeight
+            && MonitorInfos         == Other.MonitorInfos;
+    }
+
+    bool operator!=(const FDisplayInfo& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    int32 PrimaryDisplayWidth;
+    int32 PrimaryDisplayHeight;
+
+    TArray<FMonitorInfo> MonitorInfos;
+};
+
 
 class COREAPPLICATION_API FGenericApplication
 {
@@ -45,7 +110,7 @@ public:
 
     virtual TSharedRef<FGenericWindow> GetForegroundWindow() const { return nullptr; }
 
-    virtual FMonitorDesc GetMonitorDescFromWindow(const TSharedRef<FGenericWindow>& Window) const { return FMonitorDesc{}; }
+    virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const { }
 
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
     { 

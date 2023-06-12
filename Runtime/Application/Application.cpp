@@ -171,53 +171,7 @@ static ImGuiKey ImGui_GetGamepadAnalog(EControllerAnalog Analog, bool bIsNegativ
     }
 }
 
-
-float ImGui_ImplWin32_GetDpiScaleForMonitor(HMONITOR Monitor)
-{
-    UINT DpiX = 96;
-    UINT DpiY = 96;
-    GetDpiForMonitor(Monitor, MDT_EFFECTIVE_DPI, &DpiX, &DpiY);
-    IM_ASSERT(DpiX == DpiY); // Please contact me if you hit this assert!
-    return DpiX / 96.0f;
-}
-
-static BOOL CALLBACK ImGui_ImplWin32_UpdateMonitors_EnumFunc(HMONITOR Monitor, HDC, LPRECT, LPARAM)
-{
-    MONITORINFO MonitorInfo = {};
-    MonitorInfo.cbSize = sizeof(MONITORINFO);
-    if (!::GetMonitorInfo(Monitor, &MonitorInfo))
-    {
-        return TRUE;
-    }
-
-    ImGuiPlatformMonitor ImGuiMonitor;
-    ImGuiMonitor.MainPos  = ImVec2(static_cast<float>(MonitorInfo.rcMonitor.left), static_cast<float>(MonitorInfo.rcMonitor.top));
-    ImGuiMonitor.MainSize = ImVec2(static_cast<float>(MonitorInfo.rcMonitor.right - MonitorInfo.rcMonitor.left), static_cast<float>(MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top));
-    ImGuiMonitor.WorkPos  = ImVec2(static_cast<float>(MonitorInfo.rcWork.left), static_cast<float>(MonitorInfo.rcWork.top));
-    ImGuiMonitor.WorkSize = ImVec2(static_cast<float>(MonitorInfo.rcWork.right - MonitorInfo.rcWork.left), static_cast<float>(MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top));
-    ImGuiMonitor.DpiScale = ImGui_ImplWin32_GetDpiScaleForMonitor(Monitor);
-    
-    ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
-    if (MonitorInfo.dwFlags & MONITORINFOF_PRIMARY)
-    {
-        PlatformState.Monitors.push_front(ImGuiMonitor);
-    }
-    else
-    {
-        PlatformState.Monitors.push_back(ImGuiMonitor);
-    }
-    
-    return TRUE;
-}
-
-static void ImGui_ImplWin32_UpdateMonitors()
-{
-    ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
-    PlatformState.Monitors.resize(0);
-    ::EnumDisplayMonitors(nullptr, nullptr, ImGui_ImplWin32_UpdateMonitors_EnumFunc, 0);
-}
-
-static FWindowStyle ImGui_ImplWin32_GetWin32StyleFromViewportFlags(ImGuiViewportFlags Flags)
+static FWindowStyle ImGuiGetWindowStyleFromViewportFlags(ImGuiViewportFlags Flags)
 {
     EWindowStyleFlag WindowStyleFlags = EWindowStyleFlag::None;
     if ((Flags & ImGuiViewportFlags_NoDecoration) == 0)
@@ -238,9 +192,9 @@ static FWindowStyle ImGui_ImplWin32_GetWin32StyleFromViewportFlags(ImGuiViewport
     return FWindowStyle(WindowStyleFlags);
 }
 
-static void ImGui_ImplWin32_CreateWindow(ImGuiViewport* Viewport)
+static void ImGuiCreateWindow(ImGuiViewport* Viewport)
 {
-    const FWindowStyle WindowStyle = ImGui_ImplWin32_GetWin32StyleFromViewportFlags(Viewport->Flags);
+    const FWindowStyle WindowStyle = ImGuiGetWindowStyleFromViewportFlags(Viewport->Flags);
 
     FGenericWindow* ParentWindow = nullptr;
     if (Viewport->ParentViewportId != 0)
@@ -267,7 +221,7 @@ static void ImGui_ImplWin32_CreateWindow(ImGuiViewport* Viewport)
     }
 }
 
-static void ImGui_ImplWin32_DestroyWindow(ImGuiViewport* Viewport)
+static void ImGuiDestroyWindow(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -283,7 +237,7 @@ static void ImGui_ImplWin32_DestroyWindow(ImGuiViewport* Viewport)
     Viewport->PlatformUserData = Viewport->PlatformHandle = nullptr;
 }
 
-static void ImGui_ImplWin32_ShowWindow(ImGuiViewport* Viewport)
+static void ImGuiShowWindow(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -298,11 +252,11 @@ static void ImGui_ImplWin32_ShowWindow(ImGuiViewport* Viewport)
     }
 }
 
-static void ImGui_ImplWin32_UpdateWindow(ImGuiViewport* Viewport)
+static void ImGuiUpdateWindow(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
-        const FWindowStyle WindowStyle = ImGui_ImplWin32_GetWin32StyleFromViewportFlags(Viewport->Flags);
+        const FWindowStyle WindowStyle = ImGuiGetWindowStyleFromViewportFlags(Viewport->Flags);
         if (WindowStyle != Window->GetStyle())
         {
             Window->SetStyle(WindowStyle);
@@ -320,7 +274,7 @@ static void ImGui_ImplWin32_UpdateWindow(ImGuiViewport* Viewport)
     }
 }
 
-static ImVec2 ImGui_ImplWin32_GetWindowPos(ImGuiViewport* Viewport)
+static ImVec2 ImGuiGetWindowPos(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -334,7 +288,7 @@ static ImVec2 ImGui_ImplWin32_GetWindowPos(ImGuiViewport* Viewport)
     return ImVec2(0.0f, 0.0f);
 }
 
-static void ImGui_ImplWin32_SetWindowPos(ImGuiViewport* Viewport, ImVec2 Position)
+static void ImGuiSetWindowPos(ImGuiViewport* Viewport, ImVec2 Position)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -342,7 +296,7 @@ static void ImGui_ImplWin32_SetWindowPos(ImGuiViewport* Viewport, ImVec2 Positio
     }
 }
 
-static ImVec2 ImGui_ImplWin32_GetWindowSize(ImGuiViewport* Viewport)
+static ImVec2 ImGuiGetWindowSize(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -356,7 +310,7 @@ static ImVec2 ImGui_ImplWin32_GetWindowSize(ImGuiViewport* Viewport)
     return ImVec2(0.0f, 0.0f);
 }
 
-static void ImGui_ImplWin32_SetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
+static void ImGuiSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -365,7 +319,7 @@ static void ImGui_ImplWin32_SetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
     }
 }
 
-static void ImGui_ImplWin32_SetWindowFocus(ImGuiViewport* Viewport)
+static void ImGuiSetWindowFocus(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -373,7 +327,7 @@ static void ImGui_ImplWin32_SetWindowFocus(ImGuiViewport* Viewport)
     }
 }
 
-static bool ImGui_ImplWin32_GetWindowFocus(ImGuiViewport* Viewport)
+static bool ImGuiGetWindowFocus(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -383,7 +337,7 @@ static bool ImGui_ImplWin32_GetWindowFocus(ImGuiViewport* Viewport)
     return false;
 }
 
-static bool ImGui_ImplWin32_GetWindowMinimized(ImGuiViewport* Viewport)
+static bool ImGuiGetWindowMinimized(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -393,7 +347,7 @@ static bool ImGui_ImplWin32_GetWindowMinimized(ImGuiViewport* Viewport)
     return false;
 }
 
-static void ImGui_ImplWin32_SetWindowTitle(ImGuiViewport* Viewport, const char* Title)
+static void ImGuiSetWindowTitle(ImGuiViewport* Viewport, const char* Title)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -401,7 +355,7 @@ static void ImGui_ImplWin32_SetWindowTitle(ImGuiViewport* Viewport, const char* 
     }
 }
 
-static void ImGui_ImplWin32_SetWindowAlpha(ImGuiViewport* Viewport, float Alpha)
+static void ImGuiSetWindowAlpha(ImGuiViewport* Viewport, float Alpha)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -409,7 +363,7 @@ static void ImGui_ImplWin32_SetWindowAlpha(ImGuiViewport* Viewport, float Alpha)
     }
 }
 
-static float ImGui_ImplWin32_GetWindowDpiScale(ImGuiViewport* Viewport)
+static float ImGuiGetWindowDpiScale(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
@@ -419,7 +373,7 @@ static float ImGui_ImplWin32_GetWindowDpiScale(ImGuiViewport* Viewport)
     return 1.0f;
 }
 
-static void ImGui_ImplWin32_OnChangedViewport(ImGuiViewport*)
+static void ImGuiOnChangedViewport(ImGuiViewport*)
 {
 }
 
@@ -458,7 +412,7 @@ public:
 
     private:
         FFilteredWidgets& Widgets;
-        int32              Index;
+        int32             Index;
     };
 
     class FLeafFirstPolicy
@@ -492,7 +446,7 @@ public:
 
     private:
         FFilteredWidgets& Widgets;
-        int32              Index;
+        int32             Index;
     };
 
     class FDirectPolicy
@@ -559,9 +513,6 @@ bool FWindowedApplication::Create()
 
     CurrentApplication = MakeShared<FWindowedApplication>();
     PlatformApplication->SetMessageHandler(CurrentApplication);
-    
-    FInputDevice* InputDevice = PlatformApplication->GetInputDeviceInterface();
-    InputDevice->SetMessageHandler(CurrentApplication);
     return true;
 }
 
@@ -605,6 +556,7 @@ FWindowedApplication::FWindowedApplication()
     UIState.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests
     UIState.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;    // We can create multi-viewports on the Platform side
     UIState.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can call io.AddMouseViewportEvent() with correct data
+    
     // Renderer Flags
     UIState.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
     UIState.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;    // We can call io.AddMouseViewportEvent() with correct data
@@ -614,26 +566,26 @@ FWindowedApplication::FWindowedApplication()
         Viewport->PlatformWindowCreated = false;
     }
 
-    // Init monitors
-    ImGui_ImplWin32_UpdateMonitors();
+    // Init monitor information
+    UpdateMonitorInfo();
 
     // Register platform interface (will be coupled with a renderer interface)
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
-    PlatformState.Platform_CreateWindow       = ImGui_ImplWin32_CreateWindow;
-    PlatformState.Platform_DestroyWindow      = ImGui_ImplWin32_DestroyWindow;
-    PlatformState.Platform_ShowWindow         = ImGui_ImplWin32_ShowWindow;
-    PlatformState.Platform_SetWindowPos       = ImGui_ImplWin32_SetWindowPos;
-    PlatformState.Platform_GetWindowPos       = ImGui_ImplWin32_GetWindowPos;
-    PlatformState.Platform_SetWindowSize      = ImGui_ImplWin32_SetWindowSize;
-    PlatformState.Platform_GetWindowSize      = ImGui_ImplWin32_GetWindowSize;
-    PlatformState.Platform_SetWindowFocus     = ImGui_ImplWin32_SetWindowFocus;
-    PlatformState.Platform_GetWindowFocus     = ImGui_ImplWin32_GetWindowFocus;
-    PlatformState.Platform_GetWindowMinimized = ImGui_ImplWin32_GetWindowMinimized;
-    PlatformState.Platform_SetWindowTitle     = ImGui_ImplWin32_SetWindowTitle;
-    PlatformState.Platform_SetWindowAlpha     = ImGui_ImplWin32_SetWindowAlpha;
-    PlatformState.Platform_UpdateWindow       = ImGui_ImplWin32_UpdateWindow;
-    PlatformState.Platform_GetWindowDpiScale  = ImGui_ImplWin32_GetWindowDpiScale;
-    PlatformState.Platform_OnChangedViewport  = ImGui_ImplWin32_OnChangedViewport;
+    PlatformState.Platform_CreateWindow       = ImGuiCreateWindow;
+    PlatformState.Platform_DestroyWindow      = ImGuiDestroyWindow;
+    PlatformState.Platform_ShowWindow         = ImGuiShowWindow;
+    PlatformState.Platform_SetWindowPos       = ImGuiSetWindowPos;
+    PlatformState.Platform_GetWindowPos       = ImGuiGetWindowPos;
+    PlatformState.Platform_SetWindowSize      = ImGuiSetWindowSize;
+    PlatformState.Platform_GetWindowSize      = ImGuiGetWindowSize;
+    PlatformState.Platform_SetWindowFocus     = ImGuiSetWindowFocus;
+    PlatformState.Platform_GetWindowFocus     = ImGuiGetWindowFocus;
+    PlatformState.Platform_GetWindowMinimized = ImGuiGetWindowMinimized;
+    PlatformState.Platform_SetWindowTitle     = ImGuiSetWindowTitle;
+    PlatformState.Platform_SetWindowAlpha     = ImGuiSetWindowAlpha;
+    PlatformState.Platform_UpdateWindow       = ImGuiUpdateWindow;
+    PlatformState.Platform_GetWindowDpiScale  = ImGuiGetWindowDpiScale;
+    PlatformState.Platform_OnChangedViewport  = ImGuiOnChangedViewport;
 
     // Setup the style
     ImGuiStyle& Style = ImGui::GetStyle();
@@ -808,12 +760,12 @@ void FWindowedApplication::Tick(FTimespan DeltaTime)
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.DeltaTime   = static_cast<float>(DeltaTime.AsSeconds());
+    
+    // Setup the display size of the Main-Window
     UIState.DisplaySize = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
-
-    // Set the FrameBuffer-Scale
-    const float FramebufferScale = MainWindow->GetWindowDpiScale();
-    UIState.FontGlobalScale         = FramebufferScale;
-    UIState.DisplayFramebufferScale = ImVec2(FramebufferScale, FramebufferScale);
+    // Setup the display scale from the Main-Window
+    const float WindowDpiScale = MainWindow->GetWindowDpiScale();
+    UIState.DisplayFramebufferScale = ImVec2(WindowDpiScale, WindowDpiScale);
 
     // Retrieve the current active window
     TSharedRef<FGenericWindow> ForegroundWindow = PlatformApplication->GetForegroundWindow();
@@ -949,6 +901,31 @@ void FWindowedApplication::Tick(FTimespan DeltaTime)
 void FWindowedApplication::PollInputDevices()
 {
     PlatformApplication->PollInputDevices();
+}
+
+void FWindowedApplication::UpdateMonitorInfo()
+{
+    PlatformApplication->GetDisplayInfo(DisplayInfo);
+
+    for (FMonitorInfo& MonitorInfo : DisplayInfo.MonitorInfos)
+    {
+        ImGuiPlatformMonitor ImGuiMonitor;
+        ImGuiMonitor.MainPos  = ImVec2(static_cast<float>(MonitorInfo.MainPosition.x), static_cast<float>(MonitorInfo.MainPosition.y));
+        ImGuiMonitor.MainSize = ImVec2(static_cast<float>(MonitorInfo.MainSize.x), static_cast<float>(MonitorInfo.MainSize.y));
+        ImGuiMonitor.WorkPos  = ImVec2(static_cast<float>(MonitorInfo.WorkPosition.x), static_cast<float>(MonitorInfo.WorkPosition.y));
+        ImGuiMonitor.WorkSize = ImVec2(static_cast<float>(MonitorInfo.WorkSize.x), static_cast<float>(MonitorInfo.WorkSize.y));
+        ImGuiMonitor.DpiScale = MonitorInfo.DisplayScaling;
+
+        ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
+        if (MonitorInfo.bIsPrimary)
+        {
+            PlatformState.Monitors.push_front(ImGuiMonitor);
+        }
+        else
+        {
+            PlatformState.Monitors.push_back(ImGuiMonitor);
+        }
+    }
 }
 
 bool FWindowedApplication::OnControllerButtonUp(EControllerButton Button, uint32 ControllerIndex)
@@ -1581,8 +1558,8 @@ bool FWindowedApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& InWi
 
 bool FWindowedApplication::OnMonitorChange()
 {
-    ImGui_ImplWin32_UpdateMonitors();
-    return false;
+    UpdateMonitorInfo();
+    return true;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

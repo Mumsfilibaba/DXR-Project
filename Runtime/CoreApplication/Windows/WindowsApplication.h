@@ -75,7 +75,9 @@ public:
 
     virtual TSharedRef<FGenericWindow> GetForegroundWindow() const override final;
 
-    virtual FMonitorDesc GetMonitorDescFromWindow(const TSharedRef<FGenericWindow>& Window) const override final;
+    virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
+
+    virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
 
 public:
     TSharedRef<FWindowsWindow> GetWindowsWindowFromHWND(HWND Window) const;
@@ -98,6 +100,8 @@ public:
 private:
     static LRESULT StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
+    static BOOL EnumerateMonitorsProc(HMONITOR Monitor, HDC DeviceContext, LPRECT ClipRect, LPARAM Data);
+
     bool RegisterWindowClass();
     
     bool RegisterRawInputDevices(HWND Window);
@@ -113,11 +117,15 @@ private:
 private:
     HICON         Icon;
     HINSTANCE     InstanceHandle;
+    
+    mutable FDisplayInfo DisplayInfo;
+    FXInputDevice        XInputDevice;
+    
     bool          bIsTrackingMouse;
-    FXInputDevice XInputDevice;
+    mutable bool  bHasDisplayInfoChanged;
 
     TArray<FWindowsMessage> Messages;
-    FCriticalSection        MessagesCS;
+    FCriticalSection MessagesCS;
 
     TArray<TSharedRef<FWindowsWindow>> Windows;
     mutable FCriticalSection WindowsCS;

@@ -25,7 +25,7 @@ FWindowsApplication* FWindowsApplication::CreateWindowsApplication()
     HINSTANCE TempInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0));
 
     // TODO: Load icon resource here
-    HICON Icon = LoadIcon(NULL, IDI_APPLICATION);
+    HICON Icon = ::LoadIcon(NULL, IDI_APPLICATION);
     WindowsApplication = new FWindowsApplication(TempInstanceHandle, Icon);
     return WindowsApplication;
 }
@@ -37,6 +37,7 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     , MessagesCS()
     , WindowsMessageListeners()
     , bIsTrackingMouse(false)
+    , bHasDisplayInfoChanged(true)
     , InstanceHandle(InInstanceHandle)
     , Icon(InIcon)
 {
@@ -46,9 +47,9 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     if (CVarIsProcessDPIAware.GetValue())
     {
 #if PLATFORM_WINDOWS_10
-        SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        ::SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 #elif PLATFORM_WINDOWS_VISTA
-        SetProcessDPIAware();
+        ::SetProcessDPIAware();
 #endif
     }
 
@@ -74,11 +75,11 @@ bool FWindowsApplication::RegisterWindowClass()
     WindowClass.hInstance     = InstanceHandle;
     WindowClass.hIcon         = Icon;
     WindowClass.lpszClassName = FWindowsWindow::GetClassName();
-    WindowClass.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
-    WindowClass.hCursor       = LoadCursor(nullptr, IDC_ARROW);
+    WindowClass.hbrBackground = static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
+    WindowClass.hCursor       = ::LoadCursor(nullptr, IDC_ARROW);
     WindowClass.lpfnWndProc   = FWindowsApplication::StaticMessageProc;
 
-    ATOM ClassAtom = RegisterClass(&WindowClass);
+    ATOM ClassAtom = ::RegisterClass(&WindowClass);
     if (ClassAtom == 0)
     {
         LOG_ERROR("[FWindowsApplication]: FAILED to register WindowClass\n");
@@ -101,7 +102,7 @@ bool FWindowsApplication::RegisterRawInputDevices(HWND Window)
     Devices[0].usUsage     = 0x02;
     Devices[0].usUsagePage = 0x01;
 
-    const auto bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
+    const BOOL bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
     if (!bResult)
     {
         LOG_ERROR("[FWindowsApplication] Failed to register Raw Input devices");
@@ -127,7 +128,7 @@ bool FWindowsApplication::UnregisterRawInputDevices()
     Devices[0].usUsage     = 0x02;
     Devices[0].usUsagePage = 0x01;
 
-    const auto bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
+    const BOOL bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
     if (!bResult)
     {
         LOG_ERROR("[FWindowsApplication] Failed to unregister Raw Input devices");
@@ -251,45 +252,36 @@ TSharedRef<FGenericWindow> FWindowsApplication::GetForegroundWindow() const
     return GetWindowsWindowFromHWND(ForegroundWindow);
 }
 
-FMonitorDesc FWindowsApplication::GetMonitorDescFromWindow(const TSharedRef<FGenericWindow>& Window) const
+void FWindowsApplication::GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const
 {
-    TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
-    if (WindowsWindow)
+    if (bHasDisplayInfoChanged)
     {
-        HWND hWindow = WindowsWindow->GetWindowHandle();
-
-        HMONITOR hMonitor = ::MonitorFromWindow(hWindow, MONITOR_DEFAULTTOPRIMARY);
-        if (hMonitor != 0)
-        {
-            FMonitorDesc MonitorDesc;
-
-            DEVICE_SCALE_FACTOR ScalingFactor;
-            HRESULT hr = ::GetScaleFactorForMonitor(hMonitor, &ScalingFactor);
-            if (SUCCEEDED(hr))
-            {
-                // NOTE: Convert into a value in the form 1.75 for example
-                MonitorDesc.DisplayScaling = static_cast<float>(ScalingFactor) / 100.0f;
-            }
-
-            return MonitorDesc;
-        }
+        ::EnumDisplayMonitors(nullptr, nullptr, FWindowsApplication::EnumerateMonitorsProc, reinterpret_cast<LPARAM>(this));
+        DisplayInfo.MonitorInfos.Shrink();
+        bHasDisplayInfoChanged = false;
     }
 
-    return FMonitorDesc{ 1.0f };
+    OutDisplayInfo = DisplayInfo;
+}
+
+void FWindowsApplication::SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
+{
+    FGenericApplication::SetMessageHandler(InMessageHandler);
+    XInputDevice.SetMessageHandler(InMessageHandler);
 }
 
 TSharedRef<FGenericWindow> FWindowsApplication::GetWindowUnderCursor() const
 {
     POINT CursorPos;
-    GetCursorPos(&CursorPos);
+    ::GetCursorPos(&CursorPos);
 
-    HWND Handle = WindowFromPoint(CursorPos);
+    HWND Handle = ::WindowFromPoint(CursorPos);
     return GetWindowsWindowFromHWND(Handle);
 }
 
 TSharedRef<FWindowsWindow> FWindowsApplication::GetWindowsWindowFromHWND(HWND InWindow) const
 {
-    if (IsWindow(InWindow))
+    if (::IsWindow(InWindow))
     {
         TScopedLock Lock(WindowsCS);
 
@@ -349,7 +341,52 @@ void FWindowsApplication::CloseWindow(const TSharedRef<FWindowsWindow>& Window)
 
 LRESULT FWindowsApplication::StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-    return WindowsApplication ? WindowsApplication->MessageProc(Window, Message, wParam, lParam) : DefWindowProc(Window, Message, wParam, lParam);
+    return WindowsApplication ? WindowsApplication->MessageProc(Window, Message, wParam, lParam) : ::DefWindowProc(Window, Message, wParam, lParam);
+}
+
+BOOL FWindowsApplication::EnumerateMonitorsProc(HMONITOR Monitor, HDC, LPRECT, LPARAM Data)
+{
+    FWindowsApplication* InWindowsApplication = reinterpret_cast<FWindowsApplication*>(Data);
+    CHECK(InWindowsApplication != nullptr);
+
+    MONITORINFOEX MonitorInfo;
+
+    FMemory::Memzero(&MonitorInfo);
+    MonitorInfo.cbSize = sizeof(MONITORINFOEX);
+
+    BOOL Result = ::GetMonitorInfoA(Monitor, &MonitorInfo);
+    if (!Result)
+    {
+        return TRUE;
+    }
+
+    UINT DpiX = 96;
+    UINT DpiY = 96;
+    ::GetDpiForMonitor(Monitor, MDT_EFFECTIVE_DPI, &DpiX, &DpiY);
+    CHECK(DpiX == DpiY);
+
+    DEVICE_SCALE_FACTOR ScalingFactor;
+    ::GetScaleFactorForMonitor(Monitor, &ScalingFactor);
+
+    FMonitorInfo NewMonitorInfo;
+    NewMonitorInfo.DeviceName         = FString(MonitorInfo.szDevice);
+    NewMonitorInfo.MainPosition       = FIntVector2(MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top);
+    NewMonitorInfo.MainSize           = FIntVector2(MonitorInfo.rcMonitor.right - MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top);
+    NewMonitorInfo.WorkPosition       = FIntVector2(MonitorInfo.rcWork.left, MonitorInfo.rcWork.top);
+    NewMonitorInfo.WorkSize           = FIntVector2(MonitorInfo.rcWork.right - MonitorInfo.rcWork.left, MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top);
+    NewMonitorInfo.bIsPrimary         = (MonitorInfo.dwFlags & MONITORINFOF_PRIMARY) != 0;
+    NewMonitorInfo.DisplayDPI         = DpiX;
+    NewMonitorInfo.DisplayScaleFactor = static_cast<int32>(ScalingFactor);
+    NewMonitorInfo.DisplayScaling     = static_cast<float>(DpiX) / 96.0f;
+
+    if (NewMonitorInfo.bIsPrimary)
+    {
+        InWindowsApplication->DisplayInfo.PrimaryDisplayWidth  = NewMonitorInfo.MainSize.x;
+        InWindowsApplication->DisplayInfo.PrimaryDisplayHeight = NewMonitorInfo.MainSize.y;
+    }
+
+    InWindowsApplication->DisplayInfo.MonitorInfos.Add(NewMonitorInfo);
+    return TRUE;
 }
 
 void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY)
@@ -426,7 +463,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WINDOWS_SCAN_CODE_MASK);
             const EKey Key = FWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
-            const bool bIsRepeat = !!(lParam & WINDOWS_KEY_REPEAT_MASK);
+            const bool bIsRepeat = (lParam & WINDOWS_KEY_REPEAT_MASK) != 0;
             MessageHandler->OnKeyDown(Key, bIsRepeat, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
@@ -452,7 +489,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 TrackEvent.cbSize    = sizeof(TRACKMOUSEEVENT);
                 TrackEvent.dwFlags   = TME_LEAVE;
                 TrackEvent.hwndTrack = Window;
-                TrackMouseEvent(&TrackEvent);
+                ::TrackMouseEvent(&TrackEvent);
 
                 MessageHandler->OnWindowMouseEntered(MessageWindow);
 
@@ -501,7 +538,6 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
             const int32 x = GET_X_LPARAM(lParam);
             const int32 y = GET_Y_LPARAM(lParam);
-
             MessageHandler->OnMouseButtonDown(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState(), x, y);
             break;
         }
@@ -538,7 +574,6 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
             const int32 x = GET_X_LPARAM(lParam);
             const int32 y = GET_Y_LPARAM(lParam);
-
             MessageHandler->OnMouseButtonDoubleClick(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState(), x, y);
             break;
         }
@@ -575,7 +610,6 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
             const int32 x = GET_X_LPARAM(lParam);
             const int32 y = GET_Y_LPARAM(lParam);
-
             MessageHandler->OnMouseButtonUp(Button, FPlatformApplicationMisc::GetModifierKeyState(), x, y);
             break;
         }
@@ -605,7 +639,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
         case WM_DISPLAYCHANGE:
         {
-            // TODO: Update monitors
+            bHasDisplayInfoChanged = true;
             MessageHandler->OnMonitorChange();
             break;
         }
@@ -683,7 +717,7 @@ LRESULT FWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
         }
     }
 
-    return DefWindowProc(Window, Message, wParam, lParam);
+    return ::DefWindowProc(Window, Message, wParam, lParam);
 }
 
 void FWindowsApplication::StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY)
@@ -695,11 +729,10 @@ void FWindowsApplication::StoreMessage(HWND Window, UINT Message, WPARAM wParam,
 LRESULT FWindowsApplication::ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     UINT Size = 0;
-    GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, NULL, &Size, sizeof(RAWINPUTHEADER));
+    ::GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, NULL, &Size, sizeof(RAWINPUTHEADER));
 
-    // TODO: Measure performance impact
     TUniquePtr<uint8[]> Buffer = MakeUnique<uint8[]>(Size);
-    if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER)) != Size)
+    if (::GetRawInputData((HRAWINPUT)lParam, RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER)) != Size)
     {
         LOG_ERROR("[FWindowsApplication] GetRawInputData did not return correct size");
         return 0;
@@ -720,6 +753,6 @@ LRESULT FWindowsApplication::ProcessRawInput(HWND Window, UINT Message, WPARAM w
     }
     else
     {
-        return DefRawInputProc(&RawInput, 1, sizeof(RAWINPUTHEADER));
+        return ::DefRawInputProc(&RawInput, 1, sizeof(RAWINPUTHEADER));
     }
 }

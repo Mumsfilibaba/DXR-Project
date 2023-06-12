@@ -90,6 +90,8 @@ public:
     void Tick(FTimespan DeltaTime);
     
     void PollInputDevices();
+
+    void UpdateMonitorInfo();
   
 public: // FGenericApplicationMessageHandler Interface
     virtual bool OnControllerButtonUp(EControllerButton Button, uint32 ControllerIndex) override final;
@@ -183,9 +185,9 @@ public:
     }
 
     TSharedRef<FGenericWindow> GetMainWindow () const
-	{
-		return MainWindow;
-	}
+    {
+        return MainWindow;
+    }
 
     TSharedPtr<FGenericApplication> GetPlatformApplication()
     {
@@ -226,6 +228,7 @@ protected:
     TUniquePtr<FViewportRenderer> Renderer;
     struct ImGuiContext* Context{nullptr};
 
+    FDisplayInfo DisplayInfo;
     bool bIsTrackingMouse;
 
     TArray<FPriorityInputHandler>      InputHandlers;
