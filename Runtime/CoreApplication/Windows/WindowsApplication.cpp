@@ -660,7 +660,6 @@ LRESULT FWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
         LRESULT TempResult = NativeMessageListener->MessageProc(Window, Message, wParam, lParam);
         if (TempResult)
         {
-            // TODO: Maybe some more checking?
             ResultFromListeners = TempResult;
         }
     }
@@ -673,10 +672,25 @@ LRESULT FWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
         }
 
         case WM_CLOSE:
+        {
+            // TODO: This does not currently feel like the best way of handling closing of windows
+            TSharedRef<FWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
+            if (MessageWindow)
+            {
+                MessageWindow->Destroy();
+            }
+
+            return ResultFromListeners;
+        }
+
         case WM_DESTROY:
         {
             TSharedRef<FWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
-            CloseWindow(MessageWindow);
+            if (MessageWindow)
+            {
+                CloseWindow(MessageWindow);
+            }
+
             return ResultFromListeners;
         }
 

@@ -15,10 +15,10 @@ FGameConsoleWindow::FGameConsoleWindow()
         OutputDeviceManager->AddOutputDevice(this);
     }
 
-    if (FWindowedApplication::IsInitialized())
+    if (FApplication::IsInitialized())
     {
         InputHandler->HandleKeyEventDelegate.BindRaw(this, &FGameConsoleWindow::HandleKeyPressedEvent);
-        FWindowedApplication::Get().AddInputHandler(InputHandler, uint32(-1));
+        FApplication::Get().AddInputHandler(InputHandler, uint32(-1));
     }
 
     TextBuffer.Fill(0);
@@ -31,9 +31,9 @@ FGameConsoleWindow::~FGameConsoleWindow()
         OutputDeviceManager->RemoveOutputDevice(this);
     }
 
-    if (FWindowedApplication::IsInitialized())
+    if (FApplication::IsInitialized())
     {
-        FWindowedApplication::Get().RemoveInputHandler(InputHandler);
+        FApplication::Get().RemoveInputHandler(InputHandler);
     }
 }
 

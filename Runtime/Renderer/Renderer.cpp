@@ -994,7 +994,7 @@ void FRenderer::Tick(const FScene& Scene)
         }
 #endif
 
-        FWindowedApplication::Get().DrawWindows(CommandList);
+        FApplication::Get().DrawWindows(CommandList);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End UI Render");

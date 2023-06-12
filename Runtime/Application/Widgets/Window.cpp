@@ -15,7 +15,7 @@ FWindow::FWindow()
 
 bool FWindow::Initialize(const FInitializer& Initializer)
 {
-    TSharedPtr<FGenericApplication> PlatfromApplication = FWindowedApplication::Get().GetPlatformApplication();
+    TSharedPtr<FGenericApplication> PlatfromApplication = FApplication::Get().GetPlatformApplication();
     if (!PlatfromApplication)
     {
         LOG_ERROR("[FWindow]: PlatformApplication is not initialized");

@@ -156,7 +156,7 @@ bool FEngineLoop::PreInitialize()
         return false;
     }
 
-    if (!FWindowedApplication::Create())
+    if (!FApplication::Create())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return false;
@@ -245,9 +245,9 @@ bool FEngineLoop::Initialize()
     }
 
     // Prepare Application for Rendering
-    if (FWindowedApplication::IsInitialized())
+    if (FApplication::IsInitialized())
     {
-        if (!FWindowedApplication::Get().InitializeRenderer())
+        if (!FApplication::Get().InitializeRenderer())
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to initialize RHI layer for the Application");
             return false;
@@ -272,7 +272,7 @@ void FEngineLoop::Tick()
     FrameTimer.Tick();
 
     // Poll inputs and handle events from the system
-    FWindowedApplication::Get().Tick(FrameTimer.GetDeltaTime());
+    FApplication::Get().Tick(FrameTimer.GetDeltaTime());
 
     // Tick all systems that have hooked into the EngineLoop::Tick
     FEngineLoopTicker::Get().Tick(FrameTimer.GetDeltaTime());
@@ -305,9 +305,9 @@ bool FEngineLoop::Release()
     FRenderer::Release();
 
     // Release the Application. Protect against failed initialization where the global pointer was never initialized
-    if (FWindowedApplication::IsInitialized())
+    if (FApplication::IsInitialized())
     {
-        FWindowedApplication::Get().ReleaseRenderer();
+        FApplication::Get().ReleaseRenderer();
     }
 
     // Release the Engine. Protect against failed initialization where the global pointer was never initialized
@@ -331,7 +331,7 @@ bool FEngineLoop::Release()
     // Shutdown the Async-task system
     FAsyncThreadPool::Release();
 
-    FWindowedApplication::Destroy();
+    FApplication::Destroy();
 
     FThreadManager::Release();
 

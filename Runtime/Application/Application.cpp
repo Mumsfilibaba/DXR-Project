@@ -203,7 +203,7 @@ static void ImGuiCreateWindow(ImGuiViewport* Viewport)
         }
     }
 
-    TSharedRef<FGenericWindow> Window = FWindowedApplication::Get().CreateWindow(FWindowInitializer()
+    TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(FWindowInitializer()
         .SetTitle("Window")
         .SetWidth(static_cast<uint32>(Viewport->Size.x))
         .SetHeight(static_cast<uint32>(Viewport->Size.y))
@@ -223,10 +223,10 @@ static void ImGuiDestroyWindow(ImGuiViewport* Viewport)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {
-        if (Window == FWindowedApplication::Get().GetCapture())
+        if (Window == FApplication::Get().GetCapture())
         {
             // Transfer capture so if we started dragging from a window that later disappears, we'll still receive the MOUSEUP event.
-            FWindowedApplication::Get().SetCapture(FWindowedApplication::Get().GetMainWindow());
+            FApplication::Get().SetCapture(FApplication::Get().GetMainWindow());
         }
 
         Window->Destroy();
@@ -483,7 +483,7 @@ public:
 
 public:
     template<typename PolicyType, typename EventType, typename PedicateType>
-    static FResponse Dispatch(FWindowedApplication* Application, PolicyType Policy, const EventType& Event, PedicateType&& Predicate)
+    static FResponse Dispatch(FApplication* Application, PolicyType Policy, const EventType& Event, PedicateType&& Predicate)
     {
         FResponse Response = FResponse::Unhandled();
         
@@ -497,10 +497,10 @@ public:
 };
 
 
-TSharedPtr<FWindowedApplication> FWindowedApplication::CurrentApplication  = nullptr;
-TSharedPtr<FGenericApplication>  FWindowedApplication::PlatformApplication = nullptr;
+TSharedPtr<FApplication> FApplication::CurrentApplication  = nullptr;
+TSharedPtr<FGenericApplication>  FApplication::PlatformApplication = nullptr;
 
-bool FWindowedApplication::Create()
+bool FApplication::Create()
 {
     PlatformApplication = TSharedPtr<FGenericApplication>(FPlatformApplicationMisc::CreateApplication());
     if (!PlatformApplication)
@@ -509,12 +509,12 @@ bool FWindowedApplication::Create()
         return false;
     }
 
-    CurrentApplication = MakeShared<FWindowedApplication>();
+    CurrentApplication = MakeShared<FApplication>();
     PlatformApplication->SetMessageHandler(CurrentApplication);
     return true;
 }
 
-void FWindowedApplication::Destroy()
+void FApplication::Destroy()
 {
     if (CurrentApplication)
     {
@@ -529,7 +529,7 @@ void FWindowedApplication::Destroy()
     }
 }
 
-FWindowedApplication::FWindowedApplication()
+FApplication::FApplication()
     : MainViewport(nullptr)
     , Renderer(nullptr)
     , Windows()
@@ -718,7 +718,7 @@ FWindowedApplication::FWindowedApplication()
     Style.Colors[ImGuiCol_TabActive].w = 1.0f;
 }
 
-FWindowedApplication::~FWindowedApplication()
+FApplication::~FApplication()
 {
     if (Context)
     {
@@ -727,7 +727,7 @@ FWindowedApplication::~FWindowedApplication()
     }
 }
 
-bool FWindowedApplication::InitializeRenderer()
+bool FApplication::InitializeRenderer()
 {
     Renderer = MakeUnique<FViewportRenderer>();
     if (!Renderer->Initialize())
@@ -739,12 +739,12 @@ bool FWindowedApplication::InitializeRenderer()
     return true; 
 }
 
-void FWindowedApplication::ReleaseRenderer()
+void FApplication::ReleaseRenderer()
 {
     Renderer.Reset();
 }
 
-void FWindowedApplication::Tick(FTimespan DeltaTime)
+void FApplication::Tick(FTimespan DeltaTime)
 {
     // Update platform
     const float Delta = static_cast<float>(DeltaTime.AsMilliseconds());
@@ -763,6 +763,7 @@ void FWindowedApplication::Tick(FTimespan DeltaTime)
     UIState.DisplaySize = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
     // Setup the display scale from the Main-Window
     const float WindowDpiScale = MainWindow->GetWindowDpiScale();
+    UIState.FontGlobalScale         = WindowDpiScale;
     UIState.DisplayFramebufferScale = ImVec2(WindowDpiScale, WindowDpiScale);
 
     // Retrieve the current active window
@@ -785,7 +786,7 @@ void FWindowedApplication::Tick(FTimespan DeltaTime)
         else if (!UIState.WantSetMousePos && !bIsTrackingMouse)
         {
             const FIntVector2 CursorPos = GetCursorPos();
-            UIState.AddMousePosEvent(CursorPos.x, CursorPos.y);
+            UIState.AddMousePosEvent(static_cast<float>(CursorPos.x), static_cast<float>(CursorPos.y));
         }
     }
 
@@ -896,12 +897,12 @@ void FWindowedApplication::Tick(FTimespan DeltaTime)
     ImGui::EndFrame();
 }
 
-void FWindowedApplication::PollInputDevices()
+void FApplication::PollInputDevices()
 {
     PlatformApplication->PollInputDevices();
 }
 
-void FWindowedApplication::UpdateMonitorInfo()
+void FApplication::UpdateMonitorInfo()
 {
     PlatformApplication->GetDisplayInfo(DisplayInfo);
 
@@ -926,7 +927,7 @@ void FWindowedApplication::UpdateMonitorInfo()
     }
 }
 
-bool FWindowedApplication::OnControllerButtonUp(EControllerButton Button, uint32 ControllerIndex)
+bool FApplication::OnControllerButtonUp(EControllerButton Button, uint32 ControllerIndex)
 {
     // Create the event
     const FControllerEvent ControllerEvent(Button, false, ControllerIndex);
@@ -952,7 +953,7 @@ bool FWindowedApplication::OnControllerButtonUp(EControllerButton Button, uint32
 
     // Dispatch the events to the widgets in-focus
     FResponse Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), ControllerEvent,
-        [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FControllerEvent& ControllerEvent)
+        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FControllerEvent& ControllerEvent)
         {
             return Widget->OnControllerButtonUp(ControllerEvent);
         });
@@ -961,7 +962,7 @@ bool FWindowedApplication::OnControllerButtonUp(EControllerButton Button, uint32
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnControllerButtonDown(EControllerButton Button, uint32 ControllerIndex)
+bool FApplication::OnControllerButtonDown(EControllerButton Button, uint32 ControllerIndex)
 {
     // Create the event
     const FControllerEvent ControllerEvent(Button, true, ControllerIndex);
@@ -987,7 +988,7 @@ bool FWindowedApplication::OnControllerButtonDown(EControllerButton Button, uint
 
     // Dispatch the events to the widgets in-focus
     FResponse Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), ControllerEvent,
-        [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FControllerEvent& ControllerEvent)
+        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FControllerEvent& ControllerEvent)
         {
             return Widget->OnControllerButtonDown(ControllerEvent);
         });
@@ -996,7 +997,7 @@ bool FWindowedApplication::OnControllerButtonDown(EControllerButton Button, uint
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnControllerAnalog(EControllerAnalog AnalogSource, uint32 ControllerIndex, float AnalogValue)
+bool FApplication::OnControllerAnalog(EControllerAnalog AnalogSource, uint32 ControllerIndex, float AnalogValue)
 {
     // Create the event
     const FControllerEvent ControllerEvent(AnalogSource, AnalogValue, ControllerIndex);
@@ -1025,7 +1026,7 @@ bool FWindowedApplication::OnControllerAnalog(EControllerAnalog AnalogSource, ui
 
     // Dispatch the events to the widgets in-focus
     FResponse Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), ControllerEvent,
-        [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FControllerEvent& ControllerEvent)
+        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FControllerEvent& ControllerEvent)
         {
             return Widget->OnControllerButtonAnalog(ControllerEvent);
         });
@@ -1034,7 +1035,7 @@ bool FWindowedApplication::OnControllerAnalog(EControllerAnalog AnalogSource, ui
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState)
+bool FApplication::OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState)
 {
     FResponse Response = FResponse::Unhandled();
 
@@ -1085,7 +1086,7 @@ bool FWindowedApplication::OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyStat
 
     // Dispatch the events to the widgets in-focus
     Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), KeyEvent, 
-        [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FKeyEvent& KeyEvent)
+        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FKeyEvent& KeyEvent)
         {
             return Widget->OnKeyUp(KeyEvent);
         });
@@ -1094,7 +1095,7 @@ bool FWindowedApplication::OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyStat
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
+bool FApplication::OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
 {
     FResponse Response = FResponse::Unhandled();
 
@@ -1145,7 +1146,7 @@ bool FWindowedApplication::OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyS
 
     // Dispatch the events to the widgets in-focus
     Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), KeyEvent, 
-        [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FKeyEvent& KeyEvent)
+        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FKeyEvent& KeyEvent)
         {
             return Widget->OnKeyDown(KeyEvent);
         });
@@ -1154,7 +1155,7 @@ bool FWindowedApplication::OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyS
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnKeyChar(uint32 Character)
+bool FApplication::OnKeyChar(uint32 Character)
 {
     FResponse Response = FResponse::Unhandled();
 
@@ -1186,7 +1187,7 @@ bool FWindowedApplication::OnKeyChar(uint32 Character)
 
     // Dispatch the events to the widgets in-focus
     Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), KeyEvent, 
-        [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FKeyEvent& KeyEvent)
+        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FKeyEvent& KeyEvent)
         {
             return Widget->OnKeyChar(KeyEvent);
         });
@@ -1195,7 +1196,7 @@ bool FWindowedApplication::OnKeyChar(uint32 Character)
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnMouseMove(int32 x, int32 y)
+bool FApplication::OnMouseMove(int32 x, int32 y)
 {
     // Create the event
     const FMouseEvent MouseEvent(FIntVector2{ x, y }, FPlatformApplicationMisc::GetModifierKeyState());
@@ -1238,7 +1239,7 @@ bool FWindowedApplication::OnMouseMove(int32 x, int32 y)
 
     // If the tracked widgets contain the widget, send the events that the mouse entered the widgets
     FResponse Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(Children), MouseEvent,
-        [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
+        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
         {
             if (!Application->TrackedWidgets.Contains(Widget))
             {
@@ -1253,7 +1254,7 @@ bool FWindowedApplication::OnMouseMove(int32 x, int32 y)
 
     // Dispatch the MouseEvent to the widgets under the cursor
     Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(Children), MouseEvent,
-        [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& KeyEvent)
+        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& KeyEvent)
         {
             return Widget->OnMouseMove(KeyEvent);
         });
@@ -1262,7 +1263,7 @@ bool FWindowedApplication::OnMouseMove(int32 x, int32 y)
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyState ModiferKeyState, int32 x, int32 y)
+bool FApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyState ModiferKeyState, int32 x, int32 y)
 {
     // Remove the mouse capture if there is a capture
     SetCapture(nullptr);
@@ -1325,7 +1326,7 @@ bool FWindowedApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyStat
 
     // Dispatch the MouseEvent to the widgets under the cursor
     Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(Children), MouseEvent,
-        [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
+        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
         {
             return Widget->OnMouseButtonUp(MouseEvent);
         });
@@ -1334,7 +1335,7 @@ bool FWindowedApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyStat
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButton Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButton Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
 {
     // Set the mouse capture when the mouse is pressed
     SetCapture(Window);
@@ -1383,7 +1384,7 @@ bool FWindowedApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& W
 
     // Dispatch the MouseEvent to the widgets under the cursor
     Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(Children), MouseEvent,
-        [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
+        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
         {
             const FResponse Response = Widget->OnMouseButtonDown(MouseEvent);
             if (Response.IsEventHandled())
@@ -1401,7 +1402,7 @@ bool FWindowedApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& W
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, int32 y)
+bool FApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, int32 y)
 {
     // Create the event
     const FMouseEvent MouseEvent(FIntVector2(x, y), FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
@@ -1442,7 +1443,7 @@ bool FWindowedApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int
 
     // Dispatch the MouseEvent to the widgets under the cursor
     Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(Children), MouseEvent,
-        [](FWindowedApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
+        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
         {
             // TODO: return Widget->OnMouseScrolled(MouseEvent);
             return FResponse::Unhandled();
@@ -1452,7 +1453,7 @@ bool FWindowedApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnWindowResized(const TSharedRef<FGenericWindow>& InWindow, uint32 Width, uint32 Height)
+bool FApplication::OnWindowResized(const TSharedRef<FGenericWindow>& InWindow, uint32 Width, uint32 Height)
 {
     if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(InWindow->GetPlatformHandle()))
     {
@@ -1473,7 +1474,7 @@ bool FWindowedApplication::OnWindowResized(const TSharedRef<FGenericWindow>& InW
     return false;
 }
 
-bool FWindowedApplication::OnWindowMoved(const TSharedRef<FGenericWindow>& InWindow, int32 x, int32 y)
+bool FApplication::OnWindowMoved(const TSharedRef<FGenericWindow>& InWindow, int32 x, int32 y)
 {
     if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(InWindow->GetPlatformHandle()))
     {
@@ -1496,7 +1497,7 @@ bool FWindowedApplication::OnWindowMoved(const TSharedRef<FGenericWindow>& InWin
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-bool FWindowedApplication::OnWindowFocusLost(const TSharedRef<FGenericWindow>& InWindow)
+bool FApplication::OnWindowFocusLost(const TSharedRef<FGenericWindow>& InWindow)
 {
     // The state needs to be reset when the window loses focus
     ImGuiIO& UIState = ImGui::GetIO();
@@ -1504,26 +1505,26 @@ bool FWindowedApplication::OnWindowFocusLost(const TSharedRef<FGenericWindow>& I
     return true;
 }
 
-bool FWindowedApplication::OnWindowFocusGained(const TSharedRef<FGenericWindow>& InWindow)
+bool FApplication::OnWindowFocusGained(const TSharedRef<FGenericWindow>& InWindow)
 {
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.AddFocusEvent(true);
     return true;
 }
 
-bool FWindowedApplication::OnWindowMouseLeft(const TSharedRef<FGenericWindow>& InWindow)
+bool FApplication::OnWindowMouseLeft(const TSharedRef<FGenericWindow>& InWindow)
 {
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.AddMousePosEvent(-TNumericLimits<float>::Max(), -TNumericLimits<float>::Max());
     return true;
 }
 
-bool FWindowedApplication::OnWindowMouseEntered(const TSharedRef<FGenericWindow>& InWindow)
+bool FApplication::OnWindowMouseEntered(const TSharedRef<FGenericWindow>& InWindow)
 {
     return false;
 }
 
-bool FWindowedApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& InWindow)
+bool FApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& InWindow)
 {
     if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(InWindow->GetPlatformHandle()))
     {
@@ -1534,7 +1535,7 @@ bool FWindowedApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& InWi
     {
         if (Window == InWindow)
         {
-            FPlatformApplicationMisc::RequestExit(0);
+            RequestEngineExit("Normal Exit");
             MainViewport = nullptr;
         }
     }
@@ -1554,7 +1555,7 @@ bool FWindowedApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& InWi
     return true;
 }
 
-bool FWindowedApplication::OnMonitorChange()
+bool FApplication::OnMonitorChange()
 {
     UpdateMonitorInfo();
     return true;
@@ -1562,7 +1563,7 @@ bool FWindowedApplication::OnMonitorChange()
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
 
-TSharedRef<FGenericWindow> FWindowedApplication::CreateWindow(const FWindowInitializer& Initializer)
+TSharedRef<FGenericWindow> FApplication::CreateWindow(const FWindowInitializer& Initializer)
 {
     TSharedRef<FGenericWindow> Window = PlatformApplication->CreateWindow();
     if (Window)
@@ -1577,7 +1578,7 @@ TSharedRef<FGenericWindow> FWindowedApplication::CreateWindow(const FWindowIniti
     return nullptr;
 }
 
-TSharedPtr<FViewport> FWindowedApplication::CreateViewport(const FViewportInitializer& Initializer)
+TSharedPtr<FViewport> FApplication::CreateViewport(const FViewportInitializer& Initializer)
 {
     TSharedPtr<FViewport> Viewport = MakeShared<FViewport>();
     if (Viewport)
@@ -1592,7 +1593,7 @@ TSharedPtr<FViewport> FWindowedApplication::CreateViewport(const FViewportInitia
     return nullptr;
 }
 
-void FWindowedApplication::SetCursor(ECursor InCursor)
+void FApplication::SetCursor(ECursor InCursor)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
@@ -1600,7 +1601,7 @@ void FWindowedApplication::SetCursor(ECursor InCursor)
     }
 }
 
-void FWindowedApplication::SetCursorPos(const FIntVector2& Position)
+void FApplication::SetCursorPos(const FIntVector2& Position)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
@@ -1608,7 +1609,7 @@ void FWindowedApplication::SetCursorPos(const FIntVector2& Position)
     }
 }
 
-FIntVector2 FWindowedApplication::GetCursorPos() const
+FIntVector2 FApplication::GetCursorPos() const
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
@@ -1618,7 +1619,7 @@ FIntVector2 FWindowedApplication::GetCursorPos() const
     return FIntVector2();
 }
 
-void FWindowedApplication::ShowCursor(bool bIsVisible)
+void FApplication::ShowCursor(bool bIsVisible)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
@@ -1626,7 +1627,7 @@ void FWindowedApplication::ShowCursor(bool bIsVisible)
     }
 }
 
-bool FWindowedApplication::IsCursorVisibile() const
+bool FApplication::IsCursorVisibile() const
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
@@ -1636,7 +1637,7 @@ bool FWindowedApplication::IsCursorVisibile() const
     return false;
 }
 
-bool FWindowedApplication::IsGamePadConnected() const
+bool FApplication::IsGamePadConnected() const
 {
     if (FInputDevice* InputDevice = GetInputDeviceInterface())
     {
@@ -1646,7 +1647,7 @@ bool FWindowedApplication::IsGamePadConnected() const
     return false;
 }
 
-bool FWindowedApplication::EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindow>& Window) 
+bool FApplication::EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindow>& Window) 
 { 
     if (Window)
     {
@@ -1657,7 +1658,7 @@ bool FWindowedApplication::EnableHighPrecisionMouseForWindow(const TSharedPtr<FW
     return false;
 }
 
-void FWindowedApplication::SetCapture(const TSharedRef<FGenericWindow>& CaptureWindow)
+void FApplication::SetCapture(const TSharedRef<FGenericWindow>& CaptureWindow)
 {
     PlatformApplication->SetCapture(CaptureWindow);
     if (CaptureWindow && !PressedMouseButtons.empty())
@@ -1670,7 +1671,7 @@ void FWindowedApplication::SetCapture(const TSharedRef<FGenericWindow>& CaptureW
     }
 }
 
-void FWindowedApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& ActiveWindow)
+void FApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& ActiveWindow)
 {
     if (ActiveWindow)
     {
@@ -1678,24 +1679,24 @@ void FWindowedApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Act
     }
 }
 
-TSharedPtr<FWindow> FWindowedApplication::GetActiveWindow() const 
+TSharedPtr<FWindow> FApplication::GetActiveWindow() const 
 { 
     TSharedRef<FGenericWindow> NativeWindow = PlatformApplication->GetActiveWindow();
     return FindWindowFromNativeWindow(NativeWindow);
 }
 
-TSharedPtr<FWindow> FWindowedApplication::GetWindowUnderCursor() const
+TSharedPtr<FWindow> FApplication::GetWindowUnderCursor() const
 { 
     TSharedRef<FGenericWindow> NativeWindow = PlatformApplication->GetActiveWindow();
     return FindWindowFromNativeWindow(NativeWindow);
 }
 
-TSharedRef<FGenericWindow> FWindowedApplication::GetCapture() const
+TSharedRef<FGenericWindow> FApplication::GetCapture() const
 { 
     return PlatformApplication->GetCapture();
 }
 
-void FWindowedApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 NewPriority)
+void FApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 NewPriority)
 {
     FPriorityInputHandler NewPair(NewInputHandler, NewPriority);
     if (!InputHandlers.Contains(NewPair))
@@ -1715,7 +1716,7 @@ void FWindowedApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewI
     }
 }
 
-void FWindowedApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler)
+void FApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler)
 {
     for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
     {
@@ -1728,7 +1729,7 @@ void FWindowedApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& I
     }
 }
 
-void FWindowedApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InViewport)
+void FApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InViewport)
 {
     if (MainViewport != InViewport)
     {
@@ -1753,7 +1754,7 @@ void FWindowedApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InV
     }
 }
 
-void FWindowedApplication::AddWindow(const TSharedPtr<FWindow>& NewWindow)
+void FApplication::AddWindow(const TSharedPtr<FWindow>& NewWindow)
 {
     if (NewWindow && !Windows.Contains(NewWindow))
     {
@@ -1761,7 +1762,7 @@ void FWindowedApplication::AddWindow(const TSharedPtr<FWindow>& NewWindow)
     }
 }
 
-void FWindowedApplication::RemoveWindow(const TSharedPtr<FWindow>& Window)
+void FApplication::RemoveWindow(const TSharedPtr<FWindow>& Window)
 {
     if (Window)
     {
@@ -1769,7 +1770,7 @@ void FWindowedApplication::RemoveWindow(const TSharedPtr<FWindow>& Window)
     }
 }
 
-void FWindowedApplication::DrawWindows(FRHICommandList& CommandList)
+void FApplication::DrawWindows(FRHICommandList& CommandList)
 {
     // NOTE: Renderer is not forced to be valid
     if (Renderer)
@@ -1778,7 +1779,7 @@ void FWindowedApplication::DrawWindows(FRHICommandList& CommandList)
     }
 }
 
-TSharedPtr<FWindow> FWindowedApplication::FindWindowFromNativeWindow(const TSharedRef<FGenericWindow>& NativeWindow) const
+TSharedPtr<FWindow> FApplication::FindWindowFromNativeWindow(const TSharedRef<FGenericWindow>& NativeWindow) const
 {
     if (NativeWindow)
     {
@@ -1794,12 +1795,12 @@ TSharedPtr<FWindow> FWindowedApplication::FindWindowFromNativeWindow(const TShar
     return nullptr;
 }
 
-TSharedPtr<FWindow> FWindowedApplication::FindWindowUnderCursor()
+TSharedPtr<FWindow> FApplication::FindWindowUnderCursor()
 {
     return FindWindowFromNativeWindow(PlatformApplication->GetWindowUnderCursor());
 }
 
-void FWindowedApplication::FindWidgetsUnderCursor(FIntVector2 CursorPos, FFilteredWidgets& OutWidgets)
+void FApplication::FindWidgetsUnderCursor(FIntVector2 CursorPos, FFilteredWidgets& OutWidgets)
 {
     if (TSharedPtr<FWindow> Window = FindWindowUnderCursor())
     {
@@ -1807,7 +1808,7 @@ void FWindowedApplication::FindWidgetsUnderCursor(FIntVector2 CursorPos, FFilter
     }
 }
 
-void FWindowedApplication::OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
+void FApplication::OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
 {
     // Set a MessageHandler to avoid any potential nullptr access
     PlatformApplication->SetMessageHandler(MakeShared<FGenericApplicationMessageHandler>());

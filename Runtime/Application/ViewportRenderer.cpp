@@ -49,7 +49,7 @@ static void ImGuiCreateWindow(ImGuiViewport* InViewport)
 {
     if (TSharedRef<FGenericWindow> Window = MakeSharedRef<FGenericWindow>(reinterpret_cast<FGenericWindow*>(InViewport->PlatformUserData)))
     {
-        TSharedPtr<FViewport> Viewport = FWindowedApplication::Get().CreateViewport(FViewportInitializer()
+        TSharedPtr<FViewport> Viewport = FApplication::Get().CreateViewport(FViewportInitializer()
             .SetWindow(Window.Get())
             .SetWidth(static_cast<int32>(InViewport->Size.x))
             .SetHeight(static_cast<int32>(InViewport->Size.y)));
@@ -96,9 +96,9 @@ static void ImGuiRenderWindow(ImGuiViewport* Viewport, void* CmdList)
         return;
     }
 
-    if (FWindowedApplication::IsInitialized())
+    if (FApplication::IsInitialized())
     {
-        if (FViewportRenderer* Renderer = FWindowedApplication::Get().GetRenderer())
+        if (FViewportRenderer* Renderer = FApplication::Get().GetRenderer())
         {
             const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;
             Renderer->RenderViewport(*RHICmdList, Viewport->DrawData, ViewportData, bClear);
@@ -345,7 +345,7 @@ bool FViewportRenderer::Initialize()
 
 void FViewportRenderer::Render(FRHICommandList& CmdList)
 {
-    TSharedPtr<FViewport> Viewport = FWindowedApplication::Get().GetMainViewport();
+    TSharedPtr<FViewport> Viewport = FApplication::Get().GetMainViewport();
     if (!Viewport)
     {
         return;

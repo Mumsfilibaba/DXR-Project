@@ -60,11 +60,11 @@ struct FWindowInitializer
     INITIALIZER_ATTRIBUTE(FGenericWindow*, ParentWindow);
 };
 
-class APPLICATION_API FWindowedApplication : public FGenericApplicationMessageHandler
+class APPLICATION_API FApplication : public FGenericApplicationMessageHandler
 {
 public:
-    FWindowedApplication();
-    virtual ~FWindowedApplication();
+    FApplication();
+    virtual ~FApplication();
 
     static bool Create();
     
@@ -75,7 +75,7 @@ public:
         return CurrentApplication.IsValid();
     }
 
-    static FWindowedApplication& Get() 
+    static FApplication& Get() 
     {
         CHECK(IsInitialized());
         return *CurrentApplication; 
@@ -247,6 +247,6 @@ protected:
     /* TODO: Remove */
 
 private:
-    static TSharedPtr<FWindowedApplication> CurrentApplication;
-    static TSharedPtr<FGenericApplication>  PlatformApplication;
+    static TSharedPtr<FApplication>        CurrentApplication;
+    static TSharedPtr<FGenericApplication> PlatformApplication;
 };
