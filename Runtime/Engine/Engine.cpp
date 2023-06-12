@@ -56,8 +56,7 @@ static FAutoConsoleCommand GToggleFullscreen(
 void FEngine::CreateMainWindow()
 {
     // TODO: This should be loaded from a config file
-    TSharedRef<FGenericWindow> Window = FWindowedApplication::Get().CreateWindow(
-        FWindowInitializer()
+    TSharedRef<FGenericWindow> Window = FWindowedApplication::Get().CreateWindow(FWindowInitializer()
         .SetTitle("Sandbox")
         .SetWidth(2560)
         .SetHeight(1440));
@@ -94,7 +93,7 @@ bool FEngine::CreateMainViewport()
     MainViewport = Viewport;
 
     // Now we show the window
-    MainWindow->Show(false);
+    MainWindow->Show();
 
     FWindowedApplication::Get().RegisterMainViewport(MainViewport);
     return true;

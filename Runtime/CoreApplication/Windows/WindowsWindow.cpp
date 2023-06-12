@@ -81,14 +81,7 @@ bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 I
     const FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InStyle);
 
     // Calculate real window size, since the width and height describe the client- area
-    RECT ClientRect =
-    {
-        0,
-        0,
-        static_cast<LONG>(InWidth),
-        static_cast<LONG>(InHeight)
-    };
-
+    RECT ClientRect = { 0, 0, static_cast<LONG>(InWidth), static_cast<LONG>(InHeight) };
 #if PLATFORM_WINDOWS_10_ANNIVERSARY
     ::AdjustWindowRectExForDpi(&ClientRect, NewStyle.Style, false, NewStyle.StyleEx, USER_DEFAULT_SCREEN_DPI);
 #else
@@ -151,7 +144,7 @@ bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 I
 
         ::UpdateWindow(Window);
 
-        FWindowShape NewWindowShape(RealWidth, RealHeight, PositionX, PositionY);
+        FWindowShape NewWindowShape(InWidth, InHeight, PositionX, PositionY);
         SetWindowShape(NewWindowShape, true);
         return true;
     }
