@@ -128,7 +128,7 @@ function FTargetBuildRules(InName)
 
                 Executeble.AddModuleDependencies(self.ModuleDependencies)
 
-                if BuildWithXcode() then
+                if IsPlatformMac() then
                     Executeble.AddFrameWorks(
                     {
                         "AppKit",

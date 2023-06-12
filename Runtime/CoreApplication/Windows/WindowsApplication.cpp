@@ -5,9 +5,6 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-// TODO: Add all these to the buildsystem
-#pragma comment(lib, "Shcore.lib")
-
 #define WINDOWS_SCAN_CODE_MASK   (0x01ff)
 #define WINDOWS_KEY_REPEAT_MASK  (0x40000000)
 #define WINDOWS_BACK_BUTTON_MASK (0x0001)

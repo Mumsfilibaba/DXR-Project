@@ -10,11 +10,16 @@ CoreApplicationModule.AddModuleDependencies(
 })
 
 -- TODO: Ensure that frameworks gets propagated up with dependencies
-if BuildWithXcode() then
+if IsPlatformMac() then
     CoreApplicationModule.AddFrameWorks( 
     {
         "Cocoa",
         "AppKit",
+    })
+elseif IsPlatformWindows() then
+    CoreApplicationModule.AddLinkLibraries(
+    {
+        "Shcore.lib"
     })
 end
 

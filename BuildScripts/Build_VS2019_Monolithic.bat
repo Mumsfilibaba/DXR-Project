@@ -1,2 +1,2 @@
-premake5.exe vs2019 --file=../build.lua --monolithic
+premake5.exe vs2019 --file=../build.lua --platform=Win32 --monolithic
 pause

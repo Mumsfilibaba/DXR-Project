@@ -13,7 +13,8 @@ public:
     FWindowResizedEvent(uint32 InWidth, uint32 InHeight)
         : Width(InWidth)
         , Height(InHeight)
-    { }
+    {
+    }
 
     uint32 GetWidth() const
     {
@@ -35,7 +36,8 @@ class FWindowMovedEvent
 public:
     FWindowMovedEvent(FIntVector2 InPosition)
         : Position(InPosition)
-    { }
+    {
+    }
 
     const FIntVector2& GetPosition() const
     {

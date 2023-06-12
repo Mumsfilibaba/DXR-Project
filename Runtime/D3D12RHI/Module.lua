@@ -3,7 +3,7 @@ include "../../BuildScripts/Scripts/Build_Module.lua"
 ---------------------------------------------------------------------------------------------------
 -- D3D12RHI Module
 
-if not BuildWithXcode() then
+if IsPlatformWindows() then
     local D3D12RHI = FModuleBuildRules("D3D12RHI")
     D3D12RHI.bRuntimeLinking = true
     

@@ -31,7 +31,7 @@ EngineModule.AddLinkLibraries(
 })
 
 -- TODO: Ensure that frameworks gets propagated up with dependencies
-if BuildWithXcode() then
+if IsPlatformMac() then
     EngineModule.AddFrameWorks( 
     {
         "AppKit",

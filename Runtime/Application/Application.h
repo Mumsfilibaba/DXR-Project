@@ -1,8 +1,6 @@
 #pragma once
 #include "InputHandler.h"
-#include "Widgets/Viewport.h"
-#include "Widgets/Window.h"
-#include "ViewportRenderer.h"
+#include "ImGuiModule.h"
 #include "Core/Core.h"
 #include "Core/Containers/Set.h"
 #include "Core/Containers/SharedPtr.h"

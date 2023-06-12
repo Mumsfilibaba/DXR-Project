@@ -19,12 +19,12 @@ SandboxProject.AddModuleDependencies(
     "Project",
 })
 
-if BuildWithXcode() then
+if IsPlatformMac() then
     SandboxProject.AddModuleDependencies(
     { 
         "MetalRHI"
     })
-else
+elseif IsPlatformWindows() then
     SandboxProject.AddModuleDependencies(
     { 
         "D3D12RHI"

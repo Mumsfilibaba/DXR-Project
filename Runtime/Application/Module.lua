@@ -25,7 +25,7 @@ ApplicationModule.AddLinkLibraries(
 })
 
 -- TODO: Ensure that frameworks gets propagated up with dependencies
-if BuildWithXcode() then
+if IsPlatformMac() then
     ApplicationModule.AddFrameWorks( 
     {
         "AppKit",

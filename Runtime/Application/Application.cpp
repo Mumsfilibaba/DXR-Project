@@ -6,8 +6,6 @@
 
 #include <imgui.h>
 
-#pragma comment(lib, "Shcore.lib")
-
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
 
 static uint32 ImGui_GetMouseButtonIndex(EMouseButton Button)
@@ -1747,9 +1745,9 @@ void FWindowedApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InV
                 Viewport->PlatformRequestResize = true;
 
                 // Set native handles
-                Viewport->PlatformHandle   = Viewport->PlatformHandleRaw = MainWindow->GetPlatformHandle();
                 Viewport->PlatformUserData = MainWindow.Get();
                 Viewport->RendererUserData = InViewport.Get();
+                Viewport->PlatformHandle   = Viewport->PlatformHandleRaw = MainWindow->GetPlatformHandle();
             }
         }
     }

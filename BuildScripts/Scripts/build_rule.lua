@@ -448,7 +448,7 @@ function FBuildRules(InName)
         end
 
         -- Add link options
-        if not BuildWithXcode() then
+        if BuildWithVisualStudio() then
             for Index = 1, #LinkModules do
                 LinkOptions[#LinkOptions + 1] = "/INCLUDE:LinkModule_" .. LinkModules[Index]
             end

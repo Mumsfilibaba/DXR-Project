@@ -1,2 +1,2 @@
-premake5.exe vs2022 --file=../build.lua
+premake5.exe vs2022 --file=../build.lua --platform=Win32
 pause

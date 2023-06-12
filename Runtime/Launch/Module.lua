@@ -19,7 +19,7 @@ LaunchModule.AddModuleDependencies(
 })
 
 -- TODO: Ensure that frameworks gets propagated up with dependencies
-if BuildWithXcode() then
+if IsPlatformMac() then
     LaunchModule.AddFrameWorks( 
     {
         "Cocoa",

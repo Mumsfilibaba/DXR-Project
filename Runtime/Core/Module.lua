@@ -7,7 +7,7 @@ local CoreModule = FModuleBuildRules("Core")
 CoreModule.bUsePrecompiledHeaders = true
 
 -- TODO: Ensure that frameworks gets propagated up with dependencies
-if BuildWithXcode() then
+if IsPlatformMac() then
     CoreModule.AddFrameWorks( 
     {
         "AppKit",

@@ -5,6 +5,15 @@ newoption
     description = "Links all modules as static libraries instead of DLLs"
 }
 
+newoption
+{
+    trigger     = "platform",
+    value       = "CurrentPlatform",
+    description = "Specify the platform to use",
+    allowed     = { { "Win32" }, { "macOS" } },
+    default     = "Win32"
+ }
+
 -- Check if the module should be built monolithicly
 function IsMonolithic()
     if GbIsMonolithic == nil then
@@ -23,12 +32,22 @@ function SetIsMonlithic(bIsMonolithic)
     end
 end
 
+-- Check if the current platform to build for is Win32
+function IsPlatformWindows()
+    return _OPTIONS["platform"] == "Win32" 
+end
+
+-- Check if the current platform to build for is MacOS
+function IsPlatformMac()
+    return _OPTIONS["platform"] == "macOS" 
+end
+
 -- Check the action being used
 function BuildWithXcode()
     return _ACTION == "xcode4"
 end
 
-function BuildWithVS()
+function BuildWithVisualStudio()
     return 
         _ACTION == "vs2022" or 
         _ACTION == "vs2019" or 

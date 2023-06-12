@@ -3,7 +3,7 @@ include "../../BuildScripts/Scripts/Build_Module.lua"
 ---------------------------------------------------------------------------------------------------
 -- MetalRHI Module
 
-if BuildWithXcode() then
+if IsPlatformMac() then
     local MetalRHI = FModuleBuildRules("MetalRHI")
     MetalRHI.bRuntimeLinking = true
     
