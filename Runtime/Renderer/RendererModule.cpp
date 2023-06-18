@@ -8,9 +8,9 @@ IMPLEMENT_ENGINE_MODULE(FRendererModule, Renderer);
 
 static void InitContext()
 {
-    if (FApplication::IsInitialized())
+    if (FImGui::IsInitialized())
     {
-        ImGuiContext* NewImGuiContext = reinterpret_cast<ImGuiContext*>(FApplication::Get().GetContext());
+        ImGuiContext* NewImGuiContext     = FImGui::GetContext();
         ImGuiContext* CurrentImGuiContext = ImGui::GetCurrentContext();
         if (NewImGuiContext != CurrentImGuiContext)
         {

@@ -145,17 +145,19 @@ public:
 
     bool IsGamePadConnected() const;
 
-    bool EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindow>& Window);
+    bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window);
 
     void SetCapture(const TSharedRef<FGenericWindow>& CaptureWindow);
 
     void SetActiveWindow(const TSharedRef<FGenericWindow>& ActiveWindow);
 
-    TSharedPtr<FWindow> GetActiveWindow() const;
+    TSharedRef<FGenericWindow> GetActiveWindow() const;
     
-    TSharedPtr<FWindow> GetWindowUnderCursor() const;
+    TSharedRef<FGenericWindow> GetWindowUnderCursor() const;
 
     TSharedRef<FGenericWindow> GetCapture() const;
+
+    TSharedRef<FGenericWindow> GetForegroundWindow() const;
 
     void AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority);
     
@@ -163,17 +165,7 @@ public:
 
     void RegisterMainViewport(const TSharedPtr<FViewport>& InViewport);
 
-    void AddWindow(const TSharedPtr<FWindow>& Window);
-
-    void RemoveWindow(const TSharedPtr<FWindow>& Window);
-
     void DrawWindows(class FRHICommandList& InCommandList);
-
-    TSharedPtr<FWindow> FindWindowFromNativeWindow(const TSharedRef<FGenericWindow>& NativeWindow) const;
-
-    TSharedPtr<FWindow> FindWindowUnderCursor();
-    
-    void FindWidgetsUnderCursor(FIntVector2 CursorPos, FFilteredWidgets& OutWidgets);
 
     void OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication);
 
@@ -207,11 +199,6 @@ public:
         return PlatformApplication->SupportsHighPrecisionMouse(); 
     }
 
-    void* GetContext() const 
-    { 
-        return Context; 
-    }
-
     FViewportRenderer* GetRenderer() const
     {
         return Renderer.Get();
@@ -224,7 +211,6 @@ public:
 
 protected:
     TUniquePtr<FViewportRenderer> Renderer;
-    struct ImGuiContext* Context{nullptr};
 
     FDisplayInfo DisplayInfo;
     bool bIsTrackingMouse;
@@ -241,9 +227,7 @@ protected:
     TSet<EMouseButton> PressedMouseButtons;
 
     /* TODO: Remove */
-    TArray<TSharedPtr<FWindow>> Windows;
-    TArray<TSharedPtr<FWidget>> TrackedWidgets;
-    FFilteredWidgets            FocusPath;
+    FFilteredWidgets FocusPath;
     /* TODO: Remove */
 
 private:
