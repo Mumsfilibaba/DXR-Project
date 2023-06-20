@@ -18,7 +18,7 @@ FGameConsoleWindow::FGameConsoleWindow()
     if (FApplication::IsInitialized())
     {
         InputHandler->HandleKeyEventDelegate.BindRaw(this, &FGameConsoleWindow::HandleKeyPressedEvent);
-        FApplication::Get().AddInputHandler(InputHandler, uint32(-1));
+        FApplication::Get().AddInputPreProcessor(InputHandler, uint32(-1));
     }
 
     TextBuffer.Fill(0);

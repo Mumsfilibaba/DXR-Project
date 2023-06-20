@@ -1,7 +1,5 @@
 #pragma once 
 #include "Windows.h"
-#include "WindowsWindow.h"
-#include "WindowsCursor.h"
 #include "XInputDevice.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/Array.h"
@@ -42,6 +40,9 @@ struct IWindowsMessageListener
     */
     virtual LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam) = 0;
 };
+
+class FGenericWindow;
+class FWindowsWindow;
 
 class COREAPPLICATION_API FWindowsApplication final : public FGenericApplication
 {
@@ -90,7 +91,7 @@ public:
 
     bool IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener) const;
 
-    void CloseWindow(const TSharedRef<FWindowsWindow>& Window); 
+    void CloseWindow(const TSharedRef<FWindowsWindow>& Window);
 
     HINSTANCE GetInstance() const 
     { 
@@ -115,8 +116,8 @@ private:
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
 private:
-    HICON         Icon;
-    HINSTANCE     InstanceHandle;
+    HICON     Icon;
+    HINSTANCE InstanceHandle;
     
     mutable FDisplayInfo DisplayInfo;
     FXInputDevice        XInputDevice;

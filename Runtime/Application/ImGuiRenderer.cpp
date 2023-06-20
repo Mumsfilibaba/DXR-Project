@@ -1,4 +1,4 @@
-#include "ViewportRenderer.h"
+#include "ImGuiRenderer.h"
 #include "Application.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -16,34 +16,6 @@ struct FVertexConstantBuffer
 {
     float ViewProjectionMatrix[4][4];
 };
-
-bool FViewport::InitializeRHI(const FViewportInitializer& Initializer)
-{
-    TSharedRef<FRHIViewport> NewViewport = RHICreateViewport(FRHIViewportDesc()
-        .SetWindowHandle(Initializer.Window->GetPlatformHandle())
-        .SetWidth(Initializer.Width)
-        .SetHeight(Initializer.Height)
-        .SetColorFormat(EFormat::R8G8B8A8_Unorm));
-
-    if (NewViewport)
-    {
-        RHIViewport = NewViewport;
-        Window = MakeSharedRef<FGenericWindow>(Initializer.Window);
-    }
-    else
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    return true;
-}
-
-void FViewport::ReleaseRHI()
-{
-    RHIViewport.Reset();
-}
-
 
 static void ImGuiCreateWindow(ImGuiViewport* InViewport)
 {
@@ -98,7 +70,7 @@ static void ImGuiRenderWindow(ImGuiViewport* Viewport, void* CmdList)
 
     if (FApplication::IsInitialized())
     {
-        if (FViewportRenderer* Renderer = FApplication::Get().GetRenderer())
+        if (FImGuiRenderer* Renderer = FApplication::Get().GetRenderer())
         {
             const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;
             Renderer->RenderViewport(*RHICmdList, Viewport->DrawData, ViewportData, bClear);
@@ -124,7 +96,7 @@ static void ImGuiSwapBuffers(ImGuiViewport* Viewport, void* CmdList)
 }
 
 
-bool FViewportRenderer::Initialize()
+bool FImGuiRenderer::Initialize()
 {
     // Start by initializing the functions for handling Viewports
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
@@ -343,7 +315,7 @@ bool FViewportRenderer::Initialize()
     return true;
 }
 
-void FViewportRenderer::Render(FRHICommandList& CmdList)
+void FImGuiRenderer::Render(FRHICommandList& CmdList)
 {
     TSharedPtr<FViewport> Viewport = FApplication::Get().GetMainViewport();
     if (!Viewport)
@@ -386,7 +358,7 @@ void FViewportRenderer::Render(FRHICommandList& CmdList)
     RenderedImages.Clear();
 }
 
-void FViewportRenderer::RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FViewport* InViewport, bool bClear)
+void FImGuiRenderer::RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FViewport* InViewport, bool bClear)
 {
     FRHITexture* BackBuffer = InViewport->GetRHIViewport()->GetBackBuffer();
     CmdList.TransitionTexture(BackBuffer, EResourceAccess::Present, EResourceAccess::RenderTarget);
@@ -400,7 +372,7 @@ void FViewportRenderer::RenderViewport(FRHICommandList& CmdList, ImDrawData* Dra
     CmdList.TransitionTexture(BackBuffer, EResourceAccess::RenderTarget, EResourceAccess::Present);
 }
 
-void FViewportRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawData)
+void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawData)
 {
     // Avoid rendering when minimized
     if (DrawData->DisplaySize.x <= 0.0f || DrawData->DisplaySize.y <= 0.0f)
@@ -586,7 +558,7 @@ void FViewportRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* Dra
     }
 }
 
-void FViewportRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* DrawData, FViewportBuffers& Buffers)
+void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* DrawData, FViewportBuffers& Buffers)
 {
     // Setup Orthographic Projection matrix into our Constant-Buffer
     // The visible ImGui space lies from DrawData->DisplayPos (top left) to DrawData->DisplayPos+DrawData->DisplaySize (bottom right).

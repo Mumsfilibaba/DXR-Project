@@ -1,6 +1,5 @@
 #include "Application.h"
 #include "ImGuiModule.h"
-#include "Core/Modules/ModuleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -113,6 +112,22 @@ public:
     };
 
 public:
+    template<typename EventType, typename PedicateType>
+    static FResponse PreProcess(const EventType& Event, PedicateType&& Predicate)
+    {
+        FResponse Response = FResponse::Unhandled();
+
+        for (; !Response.IsEventHandled(); Policy.Next())
+        {
+            if (Predicate(Event))
+            {
+                Response = FResponse::Handled();
+            }
+        }
+
+        return Response;
+    }
+
     template<typename PolicyType, typename EventType, typename PedicateType>
     static FResponse Dispatch(FApplication* Application, PolicyType Policy, const EventType& Event, PedicateType&& Predicate)
     {
@@ -164,7 +179,7 @@ FApplication::FApplication()
     : Renderer(nullptr)
     , DisplayInfo()
     , bIsTrackingMouse(false)
-    , InputHandlers()
+    , InputPreProcessors()
     , AllWindows()
     , Viewports()
     , MainViewport(nullptr)
@@ -196,7 +211,7 @@ FApplication::~FApplication()
 
 bool FApplication::InitializeRenderer()
 {
-    Renderer = MakeUnique<FViewportRenderer>();
+    Renderer = MakeUnique<FImGuiRenderer>();
     if (!Renderer->Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ViewportRenderer ");
@@ -400,11 +415,11 @@ bool FApplication::OnControllerButtonUp(EControllerButton Button, uint32 Control
     // Create the event
     const FControllerEvent ControllerEvent(Button, false, ControllerIndex);
 
-    // Let the InputHandlers handle the event first
+    // Let the InputPreProcessors handle the event first
     FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
     {
-        const FPriorityInputHandler& Handler = InputHandlers[Index];
+        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
         if (Handler.InputHandler->OnControllerButtonUpEvent(ControllerEvent))
         {
             Response = FResponse::Handled();
@@ -442,11 +457,11 @@ bool FApplication::OnControllerButtonDown(EControllerButton Button, uint32 Contr
     // Create the event
     const FControllerEvent ControllerEvent(Button, true, ControllerIndex);
 
-    // Let the InputHandlers handle the event first
+    // Let the InputPreProcessors handle the event first
     FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
     {
-        const FPriorityInputHandler& Handler = InputHandlers[Index];
+        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
         if (Handler.InputHandler->OnControllerButtonDownEvent(ControllerEvent))
         {
             Response = FResponse::Handled();
@@ -484,11 +499,11 @@ bool FApplication::OnControllerAnalog(EControllerAnalog AnalogSource, uint32 Con
     // Create the event
     const FControllerEvent ControllerEvent(AnalogSource, AnalogValue, ControllerIndex);
 
-    // Let the InputHandlers handle the event first
+    // Let the InputPreProcessors handle the event first
     FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
     {
-        const FPriorityInputHandler& Handler = InputHandlers[Index];
+        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
         if (Handler.InputHandler->OnControllerAnalogEvent(ControllerEvent))
         {
             Response = FResponse::Handled();
@@ -526,11 +541,11 @@ bool FApplication::OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState)
     // Create the event
     const FKeyEvent KeyEvent(ModierKeyState, KeyCode, false, false);
 
-    // Let the InputHandlers handle the event first
+    // Let the InputPreProcessors handle the event first
     FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
     {
-        const FPriorityInputHandler& Handler = InputHandlers[Index];
+        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
         if (Handler.InputHandler->OnKeyDownEvent(KeyEvent))
         {
             Response = FResponse::Handled();
@@ -565,11 +580,11 @@ bool FApplication::OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyState Mod
     // Create the event
     const FKeyEvent KeyEvent(ModierKeyState, KeyCode, bIsRepeat, true);
     
-    // Let the InputHandlers handle the event first
+    // Let the InputPreProcessors handle the event first
     FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
     {
-        const FPriorityInputHandler& Handler = InputHandlers[Index];
+        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
         if (Handler.InputHandler->OnKeyDownEvent(KeyEvent))
         {
             Response = FResponse::Handled();
@@ -611,11 +626,11 @@ bool FApplication::OnKeyChar(uint32 Character)
     // Create the event
     const FKeyEvent KeyEvent(FPlatformApplicationMisc::GetModifierKeyState(), Key_Unknown, Character, false, true);
     
-    // Let the InputHandlers handle the event first
+    // Let the InputPreProcessors handle the event first
     FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
     {
-        const FPriorityInputHandler& Handler = InputHandlers[Index];
+        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
         if (Handler.InputHandler->OnKeyCharEvent(KeyEvent))
         {
             Response = FResponse::Handled();
@@ -654,11 +669,11 @@ bool FApplication::OnMouseMove(int32 x, int32 y)
     // Create the event
     const FMouseEvent MouseEvent(FIntVector2(x, y), FPlatformApplicationMisc::GetModifierKeyState());
     
-    // Let the InputHandlers handle the event first
+    // Let the InputPreProcessors handle the event first
     FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
     {
-        const FPriorityInputHandler& Handler = InputHandlers[Index];
+        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
         if (Handler.InputHandler->OnMouseMove(MouseEvent))
         {
             Response = FResponse::Handled();
@@ -700,11 +715,11 @@ bool FApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyState Modife
     // Create the event
     const FMouseEvent MouseEvent(FIntVector2(x, y), ModiferKeyState, Button, false);
     
-    // Let the InputHandlers handle the event first
+    // Let the InputPreProcessors handle the event first
     FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
     {
-        const FPriorityInputHandler& Handler = InputHandlers[Index];
+        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
         if (Handler.InputHandler->OnMouseButtonUpEvent(MouseEvent))
         {
             Response = FResponse::Handled();
@@ -743,11 +758,11 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, E
     // Create the event
     const FMouseEvent MouseEvent(FIntVector2(x, y), ModierKeyState, Button, true);
 
-    // Let the InputHandlers handle the event first
+    // Let the InputPreProcessors handle the event first
     FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
     {
-        const FPriorityInputHandler& Handler = InputHandlers[Index];
+        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
         if (Handler.InputHandler->OnMouseButtonDownEvent(MouseEvent))
         {
             Response = FResponse::Handled();
@@ -786,11 +801,11 @@ bool FApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, in
     // Create the event
     const FMouseEvent MouseEvent(FIntVector2(x, y), FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
 
-    // Let the InputHandlers handle the event first
+    // Let the InputPreProcessors handle the event first
     FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
     {
-        const FPriorityInputHandler& Handler = InputHandlers[Index];
+        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
         if (Handler.InputHandler->OnMouseScrolled(MouseEvent))
         {
             Response = FResponse::Handled();
@@ -1051,37 +1066,47 @@ TSharedRef<FGenericWindow> FApplication::GetForegroundWindow() const
 	return PlatformApplication->GetForegroundWindow();
 }
 
-void FApplication::AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 NewPriority)
+void FApplication::AddInputPreProcessor(const TSharedPtr<FInputPreProcessor>& NewInputHandler, uint32 NewPriority)
 {
-    FPriorityInputHandler NewPair(NewInputHandler, NewPriority);
-    if (!InputHandlers.Contains(NewPair))
+    FInputPreProcessorAndPriority NewPair(NewInputHandler, NewPriority);
+    if (!InputPreProcessors.Contains(NewPair))
     {
-        for (int32 Index = 0; Index < InputHandlers.Size(); )
+        for (int32 Index = 0; Index < InputPreProcessors.Size(); )
         {
-            const FPriorityInputHandler& Handler = InputHandlers[Index];
+            const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
             if (NewPriority <= Handler.Priority)
             {
                 Index++;
-                InputHandlers.Insert(Index, NewPair);
+                InputPreProcessors.Insert(Index, NewPair);
                 return;
             }
         }
 
-        InputHandlers.Add(NewPair);
+        InputPreProcessors.Add(NewPair);
     }
 }
 
-void FApplication::RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler)
+void FApplication::RemoveInputHandler(const TSharedPtr<FInputPreProcessor>& InputHandler)
 {
-    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
+    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
     {
-        const FPriorityInputHandler Handler = InputHandlers[Index];
+        const FInputPreProcessorAndPriority Handler = InputPreProcessors[Index];
         if (Handler.InputHandler == InputHandler)
         {
-            InputHandlers.RemoveAt(Index);
+            InputPreProcessors.RemoveAt(Index);
             return;
         }
     }
+}
+
+void FApplication::AddEventHandler(const TSharedPtr<FApplicationEventHandler>& EventHandler)
+{
+    EventHandler.AddUnique(EventHandler);
+}
+    
+void FApplication::RemoveEventHandler(const TSharedPtr<FApplicationEventHandler>& EventHandler)
+{
+    EventHandler.Remove(EventHandler);
 }
 
 void FApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InViewport)
@@ -1093,18 +1118,7 @@ void FApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InViewport)
 
         if (MainWindow)
         {
-            if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
-            {
-                // Viewport is now created, make sure we get the initial information of the window
-                Viewport->PlatformWindowCreated = true;
-                Viewport->PlatformRequestMove   = true;
-                Viewport->PlatformRequestResize = true;
-
-                // Set native handles
-                Viewport->PlatformUserData = MainWindow.Get();
-                Viewport->RendererUserData = InViewport.Get();
-                Viewport->PlatformHandle   = Viewport->PlatformHandleRaw = MainWindow->GetPlatformHandle();
-            }
+            FImGui::SetupMainViewport(InViewport);
         }
     }
 }

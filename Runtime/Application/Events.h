@@ -1,53 +1,9 @@
 #pragma once
+#include "Core/Core.h"
 #include "Core/Input/ModifierKeyState.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
-#include "Application/Core/Core.h"
-
-class FWindow;
-
-class FWindowResizedEvent
-{
-public:
-    FWindowResizedEvent(uint32 InWidth, uint32 InHeight)
-        : Width(InWidth)
-        , Height(InHeight)
-    {
-    }
-
-    uint32 GetWidth() const
-    {
-        return Width;
-    }
-
-    uint32 GetHeight() const
-    {
-        return Height;
-    }
-
-private:
-    uint32 Width;
-    uint32 Height;
-};
-
-class FWindowMovedEvent
-{
-public:
-    FWindowMovedEvent(FIntVector2 InPosition)
-        : Position(InPosition)
-    {
-    }
-
-    const FIntVector2& GetPosition() const
-    {
-        return Position;
-    }
-
-private:
-    FIntVector2 Position;
-};
-
 
 class APPLICATION_API FResponse
 {
@@ -324,4 +280,58 @@ private:
     EControllerAnalog AnalogSource;
     float             AnalogValue;
     uint32            ControllerIndex;
+};
+
+class FWindowEvent
+{
+public:
+    FWindowEvent()
+        : Window(nullptr)
+        , Width(0)
+        , Height(0)
+        , Position()
+    {
+    }
+
+    FWindowEvent(const TSharedRef<FGenericWindow>& InWindow, const FIntVector2& InPosition)
+        : Window(InWindow)
+        , Width(0)
+        , Height(0)
+        , Position(InPosition)
+    {
+    }
+
+    FWindowEvent(const TSharedRef<FGenericWindow>& InWindow, int32 InWidth, int32 InHeight)
+        : Window(InWindow)
+        , Width(InWidth)
+        , Height(InHeight)
+        , Position()
+    {
+    }
+
+    TSharedRef<FGenericWindow> GetWindow() const
+    {
+        return Window;
+    }
+
+    int32 GetWidth() const
+    {
+        return Width;
+    }
+
+    int32 GetHeight() const
+    {
+        return Height;
+    }
+
+    FIntVector2 GetPosition() const
+    {
+        return Position;
+    }
+
+private:
+    TSharedRef<FGenericWindow> Window;
+    FIntVector2 Position;
+    int32       Width;
+    int32       Height;
 };

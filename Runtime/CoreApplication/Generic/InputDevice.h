@@ -1,6 +1,7 @@
 #pragma once
-#include "GenericApplicationMessageHandler.h"
 #include "Core/Containers/SharedPtr.h"
+
+class FGenericApplicationMessageHandler;
 
 class FInputDevice
 {
@@ -16,7 +17,7 @@ public:
 
     virtual bool IsDeviceConnected() const = 0;
 
-    void SetMessageHandler(TSharedPtr<FGenericApplicationMessageHandler> InMessageHandler)
+    void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
     {
         MessageHandler = InMessageHandler;
     }

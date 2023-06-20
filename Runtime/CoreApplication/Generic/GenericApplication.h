@@ -1,6 +1,4 @@
 #pragma once
-#include "InputDevice.h"
-#include "ICursor.h"
 #include "Core/Containers/SharedRef.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -74,6 +72,10 @@ struct FDisplayInfo
     TArray<FMonitorInfo> MonitorInfos;
 };
 
+class ICursor;
+class FInputDevice;
+class FGenericWindow;
+class FGenericApplicationMessageHandler;
 
 class COREAPPLICATION_API FGenericApplication
 {

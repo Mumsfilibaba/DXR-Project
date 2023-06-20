@@ -7,8 +7,8 @@ struct FDrawableTexture
 
     FDrawableTexture(
         const FRHITextureRef& InImage,
-        EResourceAccess InBefore,
-        EResourceAccess InAfter)
+        EResourceAccess       InBefore,
+        EResourceAccess       InAfter)
         : View(MakeSharedRef<FRHIShaderResourceView>(InImage ? InImage->GetShaderResourceView() : nullptr))
         , Texture(InImage)
         , BeforeState(InBefore)
@@ -17,9 +17,9 @@ struct FDrawableTexture
 
     FDrawableTexture(
         const FRHIShaderResourceViewRef& InImageView,
-        const FRHITextureRef& InImage,
-        EResourceAccess InBefore,
-        EResourceAccess InAfter)
+        const FRHITextureRef&            InImage,
+        EResourceAccess                  InBefore,
+        EResourceAccess                  InAfter)
         : View(InImageView)
         , Texture(InImage)
         , BeforeState(InBefore)

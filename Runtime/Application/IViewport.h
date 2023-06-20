@@ -3,7 +3,7 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Application/Core/Events.h"
 
-class FViewportWidget;
+class FViewport;
 
 struct IViewport
 {
@@ -25,8 +25,8 @@ struct IViewport
     virtual FResponse OnMouseLeft       (const FMouseEvent& MouseEvent) = 0;
     virtual FResponse OnMouseDoubleClick(const FMouseEvent& MouseEvent) = 0;
 
-    virtual void SetViewportWidget(const TSharedPtr<FViewportWidget>& InViewport) = 0;
+    virtual void SetViewport(const TSharedPtr<FViewport>& InViewport) = 0;
 
-    virtual TSharedPtr<FViewportWidget>       GetViewportWidget()       = 0;
-    virtual TSharedPtr<const FViewportWidget> GetViewportWidget() const = 0;
+    virtual TSharedPtr<FViewport>       GetViewport()       = 0;
+    virtual TSharedPtr<const FViewport> GetViewport() const = 0;
 };

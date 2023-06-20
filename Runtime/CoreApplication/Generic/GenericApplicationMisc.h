@@ -13,7 +13,8 @@ struct FOutputDeviceConsole;
 
 struct COREAPPLICATION_API FGenericApplicationMisc
 {
-    static FGenericApplication*  CreateApplication();
+    static FGenericApplication* CreateApplication();
+
     static FOutputDeviceConsole* CreateOutputDeviceConsole() { return nullptr; }
 
     static FORCEINLINE void MessageBox(const FString& Title, const FString& Message) { }

@@ -1,10 +1,11 @@
 #pragma once
-#include "GenericWindow.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Input/ModifierKeyState.h"
 #include "Core/Containers/SharedRef.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+class FGenericWindow;
 
 struct FGenericApplicationMessageHandler
 {
@@ -101,11 +102,6 @@ struct FGenericApplicationMessageHandler
     }
 
     virtual bool OnWindowClosed(const TSharedRef<FGenericWindow>& Window)
-    {
-        return false;
-    }
-
-    virtual bool OnApplicationExit(int32 ExitCode)
     {
         return false;
     }

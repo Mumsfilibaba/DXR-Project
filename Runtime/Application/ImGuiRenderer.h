@@ -11,58 +11,6 @@
 struct ImDrawData;
 class FRHICommandList;
 
-#define INITIALIZER_ATTRIBUTE(Type, Name) \
-    Type Name;                            \
-    auto& Set##Name(Type In##Name)        \
-    {                                     \
-        Name = In##Name;                  \
-        return *this;                     \
-    }
-
-struct FViewportInitializer
-{
-    FViewportInitializer()
-        : Window(nullptr)
-        , Width(0)
-        , Height(0)
-    {
-    }
-
-    INITIALIZER_ATTRIBUTE(FGenericWindow*, Window);
-
-    INITIALIZER_ATTRIBUTE(int32, Width);
-    INITIALIZER_ATTRIBUTE(int32, Height);
-};
-
-class FViewport
-{
-public:
-    FViewport()
-        : RHIViewport(nullptr)
-        , Window(nullptr)
-    {
-    }
-
-    ~FViewport() = default;
-
-    bool InitializeRHI(const FViewportInitializer& Initializer);
-    void ReleaseRHI();
-
-    FRHIViewport* GetRHIViewport() const
-    {
-        return RHIViewport.Get();
-    }
-
-    FGenericWindow* GetWindow() const
-    {
-        return Window.Get();
-    }
-
-private:
-    TSharedRef<FRHIViewport>   RHIViewport;
-    TSharedRef<FGenericWindow> Window;
-};
-
 struct FViewportBuffers
 {
     FViewportBuffers()
@@ -80,7 +28,7 @@ struct FViewportBuffers
 	int32 IndexCount;
 };
 
-class APPLICATION_API FViewportRenderer
+class APPLICATION_API FImGuiRenderer
 {
 public:
     bool Initialize();

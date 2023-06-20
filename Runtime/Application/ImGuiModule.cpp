@@ -559,6 +559,35 @@ void FImGui::InitializeStyle()
     Style.Colors[ImGuiCol_TabActive].w = 1.0f;
 }
 
+void FImGui::SetupMainViewport(FViewport* InViewport)
+{
+    if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
+    {
+        if (InViewport)
+        {
+            // Viewport is now created, make sure we get the initial information of the window
+            Viewport->PlatformWindowCreated = true;
+            Viewport->PlatformRequestMove   = true;
+            Viewport->PlatformRequestResize = true;
+
+            // Set native handles
+            FGenericWindow* MainWindow = InViewport.GetWindow().Get();
+            Viewport->PlatformUserData = MainWindow;
+            Viewport->RendererUserData = InViewport.GetRHIViewport().Get();
+            Viewport->PlatformHandle   = Viewport->PlatformHandleRaw = MainWindow->GetPlatformHandle();
+        }
+        else
+        {
+            Viewport->PlatformWindowCreated = false;
+            Viewport->PlatformRequestMove   = false;
+            Viewport->PlatformRequestResize = false;
+            Viewport->PlatformUserData      = nullptr;
+            Viewport->RendererUserData      = nullptr;
+            Viewport->PlatformHandle        = Viewport->PlatformHandleRaw = nullptr;
+        }
+    }
+}
+
 FResponse FImGui::OnGamepadButtonEvent(EControllerButton Button, bool bIsDown)
 {
     const ImGuiKey GamepadButton = ImGui_GetGamepadButton(Button);

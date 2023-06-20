@@ -1,7 +1,6 @@
 #pragma once
-#include "InputHandler.h"
+#include "ApplicationEventHandler.h"
 #include "ImGuiModule.h"
-#include "Core/Core.h"
 #include "Core/Containers/Set.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/SharedRef.h"
@@ -9,36 +8,38 @@
 #include "Core/Containers/Pair.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Math/IntVector2.h"
-#include "CoreApplication/Generic/GenericApplication.h"
+#include "CoreApplication/Platform/PlatformApplication.h"
 
-struct FPriorityInputHandler
+class FGenericWindow;
+class FGenericApplication;
+
+struct FInputPreProcessorAndPriority
 {
-    FPriorityInputHandler()
+    FInputPreProcessorAndPriority()
         : InputHandler(nullptr)
         , Priority(-1)
     {
     }
 
-    FPriorityInputHandler(const TSharedPtr<FInputHandler>& InInputHandler, uint32 InPriority)
+    FInputPreProcessorAndPriority(const TSharedPtr<FInputPreProcessor>& InInputHandler, uint32 InPriority)
         : InputHandler(InInputHandler)
         , Priority(InPriority)
     {
     }
 
-    bool operator==(const FPriorityInputHandler& Other) const
+    bool operator==(const FInputPreProcessorAndPriority& Other) const
     {
-        return (InputHandler == Other.InputHandler) && (Priority == Other.Priority);
+        return InputHandler == Other.InputHandler && Priority == Other.Priority;
     }
 
-    bool operator!=(const FPriorityInputHandler& Other) const
+    bool operator!=(const FInputPreProcessorAndPriority& Other) const
     {
         return !(*this == Other);
     }
 
-    TSharedPtr<FInputHandler> InputHandler;
-    uint32                    Priority;
+    TSharedPtr<FInputPreProcessor> InputHandler;
+    uint32                         Priority;
 };
-
 
 struct FWindowInitializer
 {
@@ -131,8 +132,6 @@ public: // FGenericApplicationMessageHandler Interface
 public:
     TSharedRef<FGenericWindow> CreateWindow(const FWindowInitializer& Initializer);
 
-    TSharedPtr<FViewport> CreateViewport(const FViewportInitializer& Initializer);
-
     void SetCursor(ECursor Cursor);
 
     void SetCursorPos(const FIntVector2& Position);
@@ -159,9 +158,13 @@ public:
 
     TSharedRef<FGenericWindow> GetForegroundWindow() const;
 
-    void AddInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler, uint32 Priority);
+    void AddInputPreProcessor(const TSharedPtr<FInputPreProcessor>& InputPreProcessor, uint32 Priority);
     
-    void RemoveInputHandler(const TSharedPtr<FInputHandler>& InputHandler);
+    void RemoveInputHandler(const TSharedPtr<FInputPreProcessor>& InputPreProcessor);
+
+    void AddEventHandler(const TSharedPtr<FApplicationEventHandler>& EventHandler);
+    
+    void RemoveEventHandler(const TSharedPtr<FApplicationEventHandler>& EventHandler);
 
     void RegisterMainViewport(const TSharedPtr<FViewport>& InViewport);
 
@@ -199,7 +202,7 @@ public:
         return PlatformApplication->SupportsHighPrecisionMouse(); 
     }
 
-    FViewportRenderer* GetRenderer() const
+    FImGuiRenderer* GetRenderer() const
     {
         return Renderer.Get();
     }
@@ -210,14 +213,16 @@ public:
     }
 
 protected:
-    TUniquePtr<FViewportRenderer> Renderer;
+    TUniquePtr<FImGuiRenderer> Renderer;
 
     FDisplayInfo DisplayInfo;
-    bool bIsTrackingMouse;
+    bool         bIsTrackingMouse;
 
-    TArray<FPriorityInputHandler>      InputHandlers;
     TArray<TSharedRef<FGenericWindow>> AllWindows;
     TArray<TSharedPtr<FViewport>>      Viewports;
+
+    TArray<FApplicationEventHandler>      EventHandlers; 
+    TArray<FInputPreProcessorAndPriority> InputPreProcessors;
 
     TSharedPtr<FViewport>      MainViewport;
     TSharedRef<FGenericWindow> MainWindow;
@@ -225,10 +230,6 @@ protected:
 
     TSet<EKey>         PressedKeys;
     TSet<EMouseButton> PressedMouseButtons;
-
-    /* TODO: Remove */
-    FFilteredWidgets FocusPath;
-    /* TODO: Remove */
 
 private:
     static TSharedPtr<FApplication>        CurrentApplication;

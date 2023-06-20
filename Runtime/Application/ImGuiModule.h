@@ -1,7 +1,6 @@
 #pragma once
-#include "ViewportRenderer.h"
-#include "Widgets/Viewport.h"
-#include "Widgets/Window.h"
+#include "ImGuiRenderer.h"
+#include "Viewport.h"
 
 #include <imgui.h>
 
@@ -23,6 +22,8 @@ public:
     }
 
     static void InitializeStyle();
+
+    static void SetupMainViewport(FViewport* InViewport);
 
     static FResponse OnGamepadButtonEvent(EControllerButton Button, bool bIsDown);
 

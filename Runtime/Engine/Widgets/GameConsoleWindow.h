@@ -9,12 +9,12 @@
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Application/Widget.h"
-#include "Application/InputHandler.h"
+#include "Application/ApplicationEventHandler.h"
 #include "Application/Core/Events.h"
 
 #include <imgui.h>
 
-struct FConsoleInputHandler final : public FInputHandler
+struct FConsoleInputHandler final : public FInputPreProcessor
 {
     DECLARE_DELEGATE(FHandleKeyEventDelegate, const FKeyEvent&);
     FHandleKeyEventDelegate HandleKeyEventDelegate;
