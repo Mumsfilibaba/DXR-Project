@@ -193,11 +193,12 @@ static void ImGuiCreateWindow(ImGuiViewport* Viewport)
     {
         if (ImGuiViewport* ParentViewport = ImGui::FindViewportByID(Viewport->ParentViewportId))
         {
-            ParentWindow = reinterpret_cast<FGenericWindow*>(ParentViewport->PlatformHandle);
+            ParentWindow = reinterpret_cast<FGenericWindow*>(ParentViewport->PlatformUserData);
         }
     }
 
-    TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(FWindowInitializer()
+    TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(
+        FGenericWindowInitializer()
         .SetTitle("Window")
         .SetWidth(static_cast<uint32>(Viewport->Size.x))
         .SetHeight(static_cast<uint32>(Viewport->Size.y))
@@ -571,10 +572,13 @@ void FImGui::SetupMainViewport(FViewport* InViewport)
             Viewport->PlatformRequestResize = true;
 
             // Set native handles
-            FGenericWindow* MainWindow = InViewport.GetWindow().Get();
-            Viewport->PlatformUserData = MainWindow;
-            Viewport->RendererUserData = InViewport.GetRHIViewport().Get();
-            Viewport->PlatformHandle   = Viewport->PlatformHandleRaw = MainWindow->GetPlatformHandle();
+            TSharedRef<FGenericWindow> MainWindow = InViewport->GetWindow();
+            Viewport->PlatformUserData = MainWindow.Get();
+            Viewport->PlatformHandle = Viewport->PlatformHandleRaw = MainWindow->GetPlatformHandle();
+
+            FViewportData* ViewportData = new FViewportData();
+            ViewportData->Viewport = InViewport->GetRHIViewport();
+            Viewport->RendererUserData = ViewportData;
         }
         else
         {
@@ -676,6 +680,54 @@ FResponse FImGui::OnMouseScrollEvent(float ScrollDelta, bool bVertical)
     else
     {
         UIState.AddMouseWheelEvent(ScrollDelta, 0.0f);
+    }
+
+    return FResponse::Unhandled();
+}
+
+FResponse FImGui::OnWindowResize(void* PlatformHandle)
+{
+    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(PlatformHandle))
+    {
+        Viewport->PlatformRequestResize = true;
+    }
+
+    return FResponse::Unhandled();
+}
+
+FResponse FImGui::OnWindowMoved(void* PlatformHandle) 
+{
+    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(PlatformHandle))
+    {
+        Viewport->PlatformRequestMove = true;
+    }
+
+    return FResponse::Unhandled();
+}
+
+FResponse FImGui::OnFocusLost()
+{
+    ImGui::GetIO().AddFocusEvent(false);
+    return FResponse::Unhandled();
+}
+
+FResponse FImGui::OnFocusGained()
+{
+    ImGui::GetIO().AddFocusEvent(true);
+    return FResponse::Unhandled();
+}
+
+FResponse FImGui::OnMouseLeft()
+{
+    ImGui::GetIO().AddMousePosEvent(-TNumericLimits<float>::Max(), -TNumericLimits<float>::Max());
+    return FResponse::Unhandled();
+}
+
+FResponse FImGui::OnWindowClose(void* PlatformHandle)
+{
+    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(PlatformHandle))
+    {
+        Viewport->PlatformRequestClose = true;
     }
 
     return FResponse::Unhandled();

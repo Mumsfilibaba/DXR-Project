@@ -37,18 +37,15 @@ FGameConsoleWindow::~FGameConsoleWindow()
     }
 }
 
-void FGameConsoleWindow::Paint(const FRectangle& AssignedBounds)
+void FGameConsoleWindow::Paint()
 {
-    UNREFERENCED_VARIABLE(AssignedBounds);
-
     if (!bIsActive)
     {
         return;
     }
 
-    ImGuiIO& GuiIO = ImGui::GetIO();
-    const float Scale  = GuiIO.DisplayFramebufferScale.y;
-    const float Width  = float(GuiIO.DisplaySize.x);
+    const float Scale  = FImGui::GetDisplayFramebufferScale().x;
+    const float Width  = FImGui::GetDisplaySize().x;
     const float Height = 256.0f * Scale;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);

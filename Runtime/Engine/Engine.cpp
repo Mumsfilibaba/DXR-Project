@@ -3,7 +3,6 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Project/ProjectManager.h"
-#include "Application/Widgets/Window.h"
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Engine/Assets/AssetManager.h"
@@ -56,7 +55,8 @@ static FAutoConsoleCommand GToggleFullscreen(
 void FEngine::CreateMainWindow()
 {
     // TODO: This should be loaded from a config file
-    TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(FWindowInitializer()
+    TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(
+        FGenericWindowInitializer()
         .SetTitle("Sandbox")
         .SetWidth(2560)
         .SetHeight(1440));
@@ -78,12 +78,18 @@ bool FEngine::CreateMainViewport()
         return false;
     }
 
-    TSharedPtr<FViewport> Viewport = FApplication::Get().CreateViewport(FViewportInitializer()
+    TSharedPtr<FViewport> Viewport = MakeShared<FViewport>();
+    if (!Viewport)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    
+    if (!Viewport->InitializeRHI(
+        FViewportInitializer()
         .SetWindow(MainWindow.Get())
         .SetWidth(2560)
-        .SetHeight(1440));
-    
-    if (!Viewport)
+        .SetHeight(1440)))
     {
         DEBUG_BREAK();
         return false;
@@ -180,10 +186,10 @@ bool FEngine::Init()
     Scene = new FScene();
 
     /* Create windows */
-    TSharedPtr<FFrameProfilerWindow> ProfilerWindow = NewWidget(FFrameProfilerWindow);
+    //TSharedPtr<FFrameProfilerWindow> ProfilerWindow = NewWidget(FFrameProfilerWindow);
     //MainWindow->AddOverlaySlot().AttachWidget(ProfilerWindow);
 
-    TSharedPtr<FGameConsoleWindow> ConsoleWindow = NewWidget(FGameConsoleWindow);
+    //TSharedPtr<FGameConsoleWindow> ConsoleWindow = NewWidget(FGameConsoleWindow);
     //MainWindow->AddOverlaySlot().AttachWidget(ConsoleWindow);
     return true;
 }

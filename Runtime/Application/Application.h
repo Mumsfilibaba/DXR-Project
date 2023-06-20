@@ -2,16 +2,15 @@
 #include "ApplicationEventHandler.h"
 #include "ImGuiModule.h"
 #include "Core/Containers/Set.h"
-#include "Core/Containers/SharedPtr.h"
-#include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Math/IntVector2.h"
+#include "CoreApplication/Generic/ICursor.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
+#include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
-class FGenericWindow;
-class FGenericApplication;
+using FApplicationEventHandlerRef = TSharedPtr<FApplicationEventHandler>;
 
 struct FInputPreProcessorAndPriority
 {
@@ -41,29 +40,11 @@ struct FInputPreProcessorAndPriority
     uint32                         Priority;
 };
 
-struct FWindowInitializer
-{
-    FWindowInitializer()
-        : Title()
-        , Width(1280)
-        , Height(720)
-        , Position(0, 0)
-        , Style(FWindowStyle::Default())
-        , ParentWindow(nullptr)
-    {
-    }
 
-    INITIALIZER_ATTRIBUTE(FString, Title);
-    INITIALIZER_ATTRIBUTE(uint32, Width);
-    INITIALIZER_ATTRIBUTE(uint32, Height);
-    INITIALIZER_ATTRIBUTE(FIntVector2, Position);
-    INITIALIZER_ATTRIBUTE(FWindowStyle, Style);
-    INITIALIZER_ATTRIBUTE(FGenericWindow*, ParentWindow);
-};
-
-class APPLICATION_API FApplication : public FGenericApplicationMessageHandler
+class APPLICATION_API FApplication : public FGenericApplicationMessageHandler, public TSharedFromThis<FApplication>
 {
 public:
+
     FApplication();
     virtual ~FApplication();
 
@@ -130,7 +111,7 @@ public: // FGenericApplicationMessageHandler Interface
     virtual bool OnMonitorChange() override final;
 
 public:
-    TSharedRef<FGenericWindow> CreateWindow(const FWindowInitializer& Initializer);
+    TSharedRef<FGenericWindow> CreateWindow(const FGenericWindowInitializer& Initializer);
 
     void SetCursor(ECursor Cursor);
 
@@ -162,9 +143,9 @@ public:
     
     void RemoveInputHandler(const TSharedPtr<FInputPreProcessor>& InputPreProcessor);
 
-    void AddEventHandler(const TSharedPtr<FApplicationEventHandler>& EventHandler);
+    void AddEventHandler(const FApplicationEventHandlerRef& EventHandler);
     
-    void RemoveEventHandler(const TSharedPtr<FApplicationEventHandler>& EventHandler);
+    void RemoveEventHandler(const FApplicationEventHandlerRef& EventHandler);
 
     void RegisterMainViewport(const TSharedPtr<FViewport>& InViewport);
 
@@ -177,7 +158,7 @@ public:
         return MainViewport; 
     }
 
-    TSharedRef<FGenericWindow> GetMainWindow () const
+    TSharedRef<FGenericWindow> GetMainWindow() const
     {
         return MainWindow;
     }
@@ -207,26 +188,18 @@ public:
         return Renderer.Get();
     }
 
-    bool IsTrackingMouse() const
-    {
-        return bIsTrackingMouse;
-    }
-
 protected:
-    TUniquePtr<FImGuiRenderer> Renderer;
-
-    FDisplayInfo DisplayInfo;
-    bool         bIsTrackingMouse;
-
-    TArray<TSharedRef<FGenericWindow>> AllWindows;
-    TArray<TSharedPtr<FViewport>>      Viewports;
-
-    TArray<FApplicationEventHandler>      EventHandlers; 
+    TArray<FApplicationEventHandlerRef>   EventHandlers; 
     TArray<FInputPreProcessorAndPriority> InputPreProcessors;
+    TArray<TSharedRef<FGenericWindow>>    AllWindows;
 
+    TUniquePtr<FImGuiRenderer> Renderer;
     TSharedPtr<FViewport>      MainViewport;
     TSharedRef<FGenericWindow> MainWindow;
     TSharedRef<FGenericWindow> FocusWindow;
+
+    FDisplayInfo DisplayInfo;
+    bool         bIsTrackingMouse;
 
     TSet<EKey>         PressedKeys;
     TSet<EMouseButton> PressedMouseButtons;

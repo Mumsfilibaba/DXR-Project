@@ -39,6 +39,28 @@ public:
 
     static FResponse OnMouseScrollEvent(float ScrollDelta, bool bVertical);
 
+    static FResponse OnWindowResize(void* PlatformHandle);
+
+    static FResponse OnWindowMoved(void* PlatformHandle);
+
+    static FResponse OnFocusLost();
+
+    static FResponse OnFocusGained();
+
+    static FResponse OnMouseLeft();
+
+    static FResponse OnWindowClose(void* PlatformHandle);
+
+    static FORCEINLINE ImVec2 GetDisplaySize()
+    {
+        return ImGui::GetIO().DisplaySize;
+    }
+
+    static FORCEINLINE ImVec2 GetDisplayFramebufferScale()
+    {
+        return ImGui::GetIO().DisplayFramebufferScale;
+    }
+
 private:
     static ImGuiContext* Context;
 };

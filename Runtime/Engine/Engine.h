@@ -6,8 +6,7 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Delegates/Event.h"
 #include "Core/Containers/SharedPtr.h"
-#include "Application/Core/Events.h"
-#include "Application/Widgets/Window.h"
+#include "Application/Events.h"
 #include "Application/Application.h"
 #include "RHI/RHIResources.h"
 

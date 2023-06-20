@@ -4,17 +4,8 @@
 
 class FFrameProfilerWindow : public FWidget
 {
-    DECLARE_WIDGET(FFrameProfilerWindow, FWidget);
-
 public:
-    FINITIALIZER_START(FFrameProfilerWindow)
-    FINITIALIZER_END();
-
-    void Initialize(const FInitializer& Initializer)
-    {
-    }
-
-    virtual void Paint(const FRectangle& AssignedBounds) override final;
+    virtual void Paint() override final;
 
      /** @brief - Draw a simple FPS counter */
     void DrawFPS();

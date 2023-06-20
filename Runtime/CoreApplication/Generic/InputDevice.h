@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/SharedPtr.h"
 
-class FGenericApplicationMessageHandler;
+struct FGenericApplicationMessageHandler;
 
 class FInputDevice
 {

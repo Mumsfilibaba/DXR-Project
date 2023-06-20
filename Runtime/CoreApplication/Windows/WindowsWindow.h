@@ -38,14 +38,7 @@ public:
     static const CHAR* GetClassName();
 
 public:
-    virtual bool Initialize(
-        const FString&  Title,
-        uint32          InWidth,
-        uint32          InHeight,
-        int32           x,
-        int32           y,
-        FWindowStyle    Style,
-        FGenericWindow* InParentWindow) override final;
+    virtual bool Initialize(const FGenericWindowInitializer& InInitializer) override final;
 
     virtual void Show(bool bFocusOnActivate) override final;
 

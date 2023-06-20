@@ -184,7 +184,7 @@ bool FRenderer::Create()
     }
     else
     {
-        Resources.MainViewport = MakeSharedRef<FRHIViewport>(GEngine->MainViewport->GetRHIViewport());
+        Resources.MainViewport = GEngine->MainViewport->GetRHIViewport();
     }
 
     FRHIBufferDesc CBDesc(sizeof(FCameraBuffer), sizeof(FCameraBuffer), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
@@ -1020,7 +1020,7 @@ void FRenderer::Tick(const FScene& Scene)
     }
 }
 
-void FRenderer::OnWindowResize(const FWindowResizedEvent& Event)
+void FRenderer::OnWindowResize(const FWindowEvent& Event)
 {
     const uint32 Width  = Event.GetWidth();
     const uint32 Height = Event.GetHeight();

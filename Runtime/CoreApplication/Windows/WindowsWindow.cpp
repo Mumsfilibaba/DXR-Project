@@ -76,34 +76,34 @@ FWindowsWindow::~FWindowsWindow()
     Destroy();
 }
 
-bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle InStyle, FGenericWindow* InParentWindow)
+bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 {
-    const FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InStyle);
+    const FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InInitializer.Style);
 
     // Calculate real window size, since the width and height describe the client- area
-    RECT ClientRect = { 0, 0, static_cast<LONG>(InWidth), static_cast<LONG>(InHeight) };
+    RECT ClientRect = { 0, 0, static_cast<LONG>(InInitializer.Width), static_cast<LONG>(InInitializer.Height) };
 #if PLATFORM_WINDOWS_10_ANNIVERSARY
     ::AdjustWindowRectExForDpi(&ClientRect, NewStyle.Style, false, NewStyle.StyleEx, USER_DEFAULT_SCREEN_DPI);
 #else
     ::AdjustWindowRectEx(&ClientRect, NewStyle.Style, false, NewStyle.StyleEx);
 #endif
 
-    int32 PositionX  = x;
-    int32 PositionY  = y;
+    int32 PositionX  = InInitializer.Position.x;
+    int32 PositionY  = InInitializer.Position.y;
     int32 RealWidth  = ClientRect.right - ClientRect.left;
     int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
     HWND ParentWindow = nullptr;
-    if (ParentWindow)
+    if (InInitializer.ParentWindow)
     {
-        ParentWindow = reinterpret_cast<HWND>(InParentWindow->GetPlatformHandle());
+        ParentWindow = reinterpret_cast<HWND>(InInitializer.ParentWindow->GetPlatformHandle());
     }
 
     HINSTANCE Instance = Application->GetInstance();
     Window = ::CreateWindowEx(
         NewStyle.StyleEx,
         FWindowsWindow::GetClassName(),
-        InTitle.GetCString(),
+        InInitializer.Title.GetCString(),
         NewStyle.Style,
         PositionX,
         PositionY,
@@ -123,13 +123,13 @@ bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 I
         // If the window has a sys-menu we check if the close-button should be active
         if (NewStyle.Style & WS_SYSMENU)
         {
-            if (!(InStyle.IsClosable()))
+            if (!(InInitializer.Style.IsClosable()))
             {
                 ::EnableMenuItem(::GetSystemMenu(Window, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
             }
         }
 
-        StyleParams = InStyle;
+        StyleParams = InInitializer.Style;
         Style       = NewStyle;
 
         SetLastError(0);
@@ -144,7 +144,7 @@ bool FWindowsWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 I
 
         ::UpdateWindow(Window);
 
-        FWindowShape NewWindowShape(InWidth, InHeight, PositionX, PositionY);
+        FWindowShape NewWindowShape(InInitializer.Width, InInitializer.Height, PositionX, PositionY);
         SetWindowShape(NewWindowShape, true);
         return true;
     }

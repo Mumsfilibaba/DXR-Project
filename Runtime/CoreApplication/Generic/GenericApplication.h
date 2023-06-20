@@ -1,7 +1,14 @@
 #pragma once
+#include "GenericWindow.h"
+#include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/SharedPtr.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+struct ICursor;
+struct FGenericApplicationMessageHandler;
+class FInputDevice;
 
 struct FMonitorInfo
 {
@@ -37,12 +44,12 @@ struct FMonitorInfo
     FIntVector2 WorkPosition;
     FIntVector2 WorkSize;
     
-    int32 DisplayDPI;
-    int32 DisplayScaleFactor;
+    int32       DisplayDPI;
+    int32       DisplayScaleFactor;
 
-    float DisplayScaling;
+    float       DisplayScaling;
 
-    bool  bIsPrimary;
+    bool        bIsPrimary;
 };
 
 struct FDisplayInfo
@@ -71,11 +78,6 @@ struct FDisplayInfo
 
     TArray<FMonitorInfo> MonitorInfos;
 };
-
-class ICursor;
-class FInputDevice;
-class FGenericWindow;
-class FGenericApplicationMessageHandler;
 
 class COREAPPLICATION_API FGenericApplication
 {

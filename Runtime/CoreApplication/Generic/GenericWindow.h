@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/RefCounted.h"
+#include "Core/Math/IntVector2.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Templates/TypeTraits.h"
@@ -7,6 +8,8 @@
 #undef IsMinimized
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+class FGenericWindow;
 
 enum class EWindowStyleFlag : uint16
 {
@@ -22,6 +25,7 @@ enum class EWindowStyleFlag : uint16
 
 ENUM_CLASS_OPERATORS(EWindowStyleFlag);
 
+// TODO: Change to use WindowMode instead of specifying styles separately
 enum class EWindowMode : uint8
 {
     None       = 0,
@@ -29,7 +33,6 @@ enum class EWindowMode : uint8
     Borderless = 2,
     Fullscreen = 3,
 };
-
 
 struct FWindowStyle
 {
@@ -97,14 +100,14 @@ struct FWindowShape
 {
     FWindowShape() = default;
 
-    FORCEINLINE FWindowShape(uint32 InWidth, uint32 InHeight)
+    FWindowShape(uint32 InWidth, uint32 InHeight)
         : Width(InWidth)
         , Height(InHeight)
         , Position({ 0, 0 })
     {
     }
 
-    FORCEINLINE FWindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
+    FWindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
         : Width(InWidth)
         , Height(InHeight)
         , Position({ x, y })
@@ -130,19 +133,84 @@ struct FWindowShape
     } Position;
 };
 
+struct FGenericWindowInitializer
+{
+    FGenericWindowInitializer()
+        : Title()
+        , Width(1280)
+        , Height(720)
+        , Position(0, 0)
+        , Style(FWindowStyle::Default())
+        , ParentWindow(nullptr)
+    {
+    }
+
+    FGenericWindowInitializer& SetTitle(const FString& InTitle)
+    {
+        Title = InTitle;
+        return *this;
+    }
+
+    FGenericWindowInitializer& SetWidth(uint32 InWidth)
+    {
+        Width = InWidth;
+        return *this;
+    }
+
+    FGenericWindowInitializer& SetHeight(uint32 InHeight)
+    {
+        Height = InHeight;
+        return *this;
+    }
+
+    FGenericWindowInitializer& SetPosition(const FIntVector2& InPosition)
+    {
+        Position = InPosition;
+        return *this;
+    }
+
+    FGenericWindowInitializer& SetStyle(FWindowStyle InStyle)
+    {
+        Style = InStyle;
+        return *this;
+    }
+
+    FGenericWindowInitializer& SetParentWindow(FGenericWindow* InParentWindow)
+    {
+        ParentWindow = InParentWindow;
+        return *this;
+    }
+    
+    bool operator==(const FGenericWindowInitializer& Other) const
+    {
+        return Title        == Other.Title 
+            && Width        == Other.Width 
+            && Height       == Other.Height 
+            && Position     == Other.Position 
+            && Style        == Other.Style
+            && ParentWindow == Other.ParentWindow;
+    }
+
+    bool operator!=(const FGenericWindowInitializer& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    FString         Title;
+    uint32          Width;
+    uint32          Height;
+    FIntVector2     Position;
+    FWindowStyle    Style;
+    FGenericWindow* ParentWindow;
+};
+
+
 class FGenericWindow : public FRefCounted
 {
 public:
     virtual ~FGenericWindow() = default;
 
-    virtual bool Initialize(
-        const FString& Title,
-        uint32          InWidth,
-        uint32          InHeight,
-        int32           x,
-        int32           y,
-        FWindowStyle    Style,
-        FGenericWindow* InParentWindow = nullptr) { return true; }
+    virtual bool Initialize(const FGenericWindowInitializer& InInitializer) { return true; }
 
     virtual void Show(bool bFocusOnActivate = true) { }
 

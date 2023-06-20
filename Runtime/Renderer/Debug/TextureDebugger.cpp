@@ -14,15 +14,9 @@ void FRenderTargetDebugWindow::Paint()
 {
     if (GDrawTextureDebugger.GetValue())
     {
-        const TSharedPtr<FViewportWidget> MainViewport;// = FApplication::Get().GetMainViewport();
-        if (!MainViewport)
-        {
-            return;
-        }
-
-        const FIntVector2 ViewportSize = MainViewport->GetSize();
-        const float Width  = float(ViewportSize.x);
-        const float Height = float(ViewportSize.y);
+        const ImVec2 DisplaySize = FImGui::GetDisplaySize();
+        const float Width  = DisplaySize.x;
+		const float Height = DisplaySize.y;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 

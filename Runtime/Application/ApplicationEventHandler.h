@@ -12,7 +12,7 @@ struct FInputPreProcessor
      * @param ControllerEvent - Data for the controller event
      * @return                - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnControllerButtonDownEvent(const FControllerEvent& ControllerEvent)
+    virtual bool OnControllerButtonDown(const FControllerEvent& ControllerEvent)
     {
         return false;
     }
@@ -22,7 +22,7 @@ struct FInputPreProcessor
      * @param ControllerEvent - Data for the controller event
      * @return                - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnControllerButtonUpEvent(const FControllerEvent& ControllerEvent)
+    virtual bool OnControllerButtonUp(const FControllerEvent& ControllerEvent)
     {
         return false;
     }
@@ -32,7 +32,7 @@ struct FInputPreProcessor
      * @param ControllerEvent - Data for the controller event
      * @return                - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnControllerAnalogEvent(const FControllerEvent& ControllerEvent)
+    virtual bool OnControllerAnalog(const FControllerEvent& ControllerEvent)
     {
         return false;
     }
@@ -42,7 +42,7 @@ struct FInputPreProcessor
      * @param KeyEvent - Data for the key event
      * @return         - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnKeyDownEvent(const FKeyEvent& KeyEvent)
+    virtual bool OnKeyDown(const FKeyEvent& KeyEvent)
     {
         return false;
     }
@@ -52,7 +52,7 @@ struct FInputPreProcessor
      * @param KeyEvent - Data for the key event
      * @return         - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnKeyUpEvent(const FKeyEvent& KeyEvent)
+    virtual bool OnKeyUp(const FKeyEvent& KeyEvent)
     {
         return false;
     }
@@ -62,7 +62,7 @@ struct FInputPreProcessor
      * @param KeyTypedEvent - Data for the key-typed event
      * @return              - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnKeyCharEvent(const FKeyEvent& KeyTypedEvent)
+    virtual bool OnKeyChar(const FKeyEvent& KeyTypedEvent)
     {
         return false;
     }
@@ -82,7 +82,7 @@ struct FInputPreProcessor
      * @param MouseEvent - Data for the mouse event
      * @return           - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnMouseButtonDownEvent(const FMouseEvent& MouseEvent)
+    virtual bool OnMouseButtonDown(const FMouseEvent& MouseEvent)
     {
         return false;
     }
@@ -92,7 +92,7 @@ struct FInputPreProcessor
      * @param MouseEvent - Data for the mouse event
      * @return           - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnMouseButtonUpEvent(const FMouseEvent& MouseEvent)
+    virtual bool OnMouseButtonUp(const FMouseEvent& MouseEvent)
     {
         return false;
     }
@@ -127,6 +127,16 @@ struct FApplicationEventHandler
      * @param ControllerEvent - Data for the controller event
      * @return                - Returns a structure with response information from the event
      */
+    virtual FResponse OnControllerAnalog(const FControllerEvent& ControllerEvent)
+    {
+        return FResponse::Unhandled();
+    }
+
+    /**
+     * @brief                 - Handle ControllerEvent event
+     * @param ControllerEvent - Data for the controller event
+     * @return                - Returns a structure with response information from the event
+     */
     virtual FResponse OnControllerButtonDown(const FControllerEvent& ControllerEvent)
     {
         return FResponse::Unhandled();
@@ -138,16 +148,6 @@ struct FApplicationEventHandler
      * @return                - Returns a structure with response information from the event
      */
     virtual FResponse OnControllerButtonUp(const FControllerEvent& ControllerEvent)
-    {
-        return FResponse::Unhandled();
-    }
-
-    /**
-     * @brief                 - Handle ControllerEvent event
-     * @param ControllerEvent - Data for the controller event
-     * @return                - Returns a structure with response information from the event
-     */
-    virtual FResponse OnControllerAnalog(const FControllerEvent& ControllerEvent)
     {
         return FResponse::Unhandled();
     }
@@ -217,7 +217,7 @@ struct FApplicationEventHandler
      * @param MouseEvent - Data for the mouse event
      * @return           - Returns a structure with response information from the event
      */
-    virtual FResponse OnMouseScrolled(const FMouseEvent& MouseEvent)
+    virtual FResponse OnMouseScroll(const FMouseEvent& MouseEvent)
     {
         return FResponse::Unhandled();
     }
@@ -277,7 +277,7 @@ struct FApplicationEventHandler
      * @param WindowEvent - Data for the window event
      * @return            - Returns a structure with response information from the event
      */
-    virtual FResponse OnWindowMouseLeft(const FWindowEvent& WindowEvent)
+    virtual FResponse OnMouseLeft(const FWindowEvent& WindowEvent)
     {
         return FResponse::Unhandled();
     }
@@ -287,7 +287,7 @@ struct FApplicationEventHandler
      * @param WindowEvent - Data for the window event
      * @return            - Returns a structure with response information from the event
      */
-    virtual FResponse OnWindowMouseEntered(const FWindowEvent& WindowEvent)
+    virtual FResponse OnMouseEntered(const FWindowEvent& WindowEvent)
     {
         return FResponse::Unhandled();
     }
@@ -302,6 +302,5 @@ struct FApplicationEventHandler
         return FResponse::Unhandled();
     }
 };
-
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

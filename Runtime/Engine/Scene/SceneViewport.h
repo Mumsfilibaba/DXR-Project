@@ -1,17 +1,17 @@
 #pragma once
 #include "Scene.h"
-#include "Application/Widgets/Viewport.h"
+#include "Application/Viewport.h"
 #include "Core/Containers/SharedPtr.h"
 
 class ENGINE_API FSceneViewport : public IViewport
 {
 public:
-    FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport);
+    FSceneViewport(const TWeakPtr<FViewport>& InViewport);
     ~FSceneViewport();
 
-    virtual FResponse OnControllerButtonUp    (const FControllerEvent& ControllerEvent) override;
-    virtual FResponse OnControllerButtonDown  (const FControllerEvent& ControllerEvent) override;
-    virtual FResponse OnControllerButtonAnalog(const FControllerEvent& ControllerEvent) override;
+    virtual FResponse OnControllerAnalog    (const FControllerEvent& ControllerEvent) override;
+    virtual FResponse OnControllerButtonDown(const FControllerEvent& ControllerEvent) override;
+    virtual FResponse OnControllerButtonUp  (const FControllerEvent& ControllerEvent) override;
 
     virtual FResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
     virtual FResponse OnKeyUp  (const FKeyEvent& KeyEvent) override;
@@ -20,24 +20,27 @@ public:
     virtual FResponse OnMouseMove       (const FMouseEvent& MouseEvent) override;
     virtual FResponse OnMouseButtonDown (const FMouseEvent& MouseEvent) override;
     virtual FResponse OnMouseButtonUp   (const FMouseEvent& MouseEvent) override;
-    virtual FResponse OnMouseEntered    (const FMouseEvent& MouseEvent) override;
     virtual FResponse OnMouseScroll     (const FMouseEvent& MouseEvent) override;
-    virtual FResponse OnMouseLeft       (const FMouseEvent& MouseEvent) override;
     virtual FResponse OnMouseDoubleClick(const FMouseEvent& MouseEvent) override;
 
-    virtual void SetViewportWidget(const TSharedPtr<FViewportWidget>& InViewport) override
+	virtual FResponse OnFocusLost   (const FWindowEvent& WindowEvent) override;
+	virtual FResponse OnFocusGained (const FWindowEvent& WindowEvent) override;
+	virtual FResponse OnMouseLeft   (const FWindowEvent& WindowEvent) override;
+	virtual FResponse OnMouseEntered(const FWindowEvent& WindowEvent) override;
+
+    virtual void SetViewport(const TSharedPtr<FViewport>& InViewport) override
     {
         Viewport = InViewport;
     }
 
-    virtual TSharedPtr<FViewportWidget> GetViewportWidget()
+    virtual TSharedPtr<FViewport> GetViewport() override
     { 
         return Viewport.IsValid() ? Viewport.ToSharedPtr() : nullptr;
     }
 
-    virtual TSharedPtr<const FViewportWidget> GetViewportWidget() const
+    virtual TSharedPtr<const FViewport> GetViewport() const override
     {
-        return Viewport.IsValid() ? TSharedPtr<const FViewportWidget>(Viewport) : nullptr;
+        return Viewport.IsValid() ? TSharedPtr<const FViewport>(Viewport) : nullptr;
     }
 
     void SetScene(FScene* InScene) 
@@ -51,6 +54,6 @@ public:
     }
 
 private:
-    TWeakPtr<FViewportWidget> Viewport;
-    FScene*                   Scene;
+    TWeakPtr<FViewport> Viewport;
+    FScene*             Scene;
 };

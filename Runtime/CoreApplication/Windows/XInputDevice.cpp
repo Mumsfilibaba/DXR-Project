@@ -2,6 +2,7 @@
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Platform/PlatformTime.h"
+#include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
 namespace XInputPrivate
 {

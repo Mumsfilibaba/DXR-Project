@@ -4,9 +4,15 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
+#include "CoreApplication/Generic/GenericWindow.h"
 
-class APPLICATION_API FResponse
+class FResponse
 {
+    FResponse(bool bInIsHandled)
+        : bIsHandled(bInIsHandled)
+    {
+    }
+
 public:
     static FResponse Handled()
     {
@@ -18,47 +24,13 @@ public:
         return FResponse(false);
     }
 
-public:
-    FResponse(bool bInIsHandled)
-        : bIsHandled(bInIsHandled)
-        , bCaptureMouse(false)
-        , bReleaseCapture(false)
-    {
-    }
-
     bool IsEventHandled() const
     {
         return bIsHandled;
     }
 
-    bool ShouldCaptureMouse() const
-    {
-        return bReleaseCapture;
-    }
-
-    bool ShouldReleaseMouse() const
-    {
-        return bReleaseCapture;
-    }
-
-    FResponse& CaptureMouse()
-    {
-        bCaptureMouse   = true;
-        bReleaseCapture = false;
-        return *this;
-    }
-
-    FResponse& ReleaseMouse()
-    {
-        bCaptureMouse   = false;
-        bReleaseCapture = true;
-        return *this;
-    }
-
 private:
-    uint32 bIsHandled      : 1;
-    uint32 bCaptureMouse   : 1;
-    uint32 bReleaseCapture : 1;
+    uint32 bIsHandled : 1;
 };
 
 
@@ -83,6 +55,7 @@ public:
 private:
     FModifierKeyState ModifierKeys;
 };
+
 
 class FMouseEvent : public FInputEvent
 {
@@ -160,6 +133,7 @@ private:
     bool         bIsDown : 1;
 };
 
+
 class FKeyEvent : public FInputEvent
 {
 public:
@@ -216,6 +190,7 @@ private:
     bool bIsRepeat : 1;
     bool bIsDown   : 1;
 };
+
 
 class FControllerEvent : public FInputEvent
 {
@@ -287,6 +262,14 @@ class FWindowEvent
 public:
     FWindowEvent()
         : Window(nullptr)
+        , Width(0)
+        , Height(0)
+        , Position()
+    {
+    }
+
+    FWindowEvent(const TSharedRef<FGenericWindow>& InWindow)
+        : Window(InWindow)
         , Width(0)
         , Height(0)
         , Position()

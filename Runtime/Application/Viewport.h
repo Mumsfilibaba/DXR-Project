@@ -3,9 +3,9 @@
 #include "ApplicationEventHandler.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/SharedPtr.h"
+#include "RHI/RHIResources.h"
 
 class FGenericWindow;
-class FRHIViewport;
 
 struct FViewportInitializer
 {
@@ -49,7 +49,7 @@ struct FViewportInitializer
     int32           Height;
 };
 
-class FViewport : public FApplicationEventHandler, public TSharedFromThis<FViewport>
+class APPLICATION_API FViewport : public FApplicationEventHandler, public TSharedFromThis<FViewport>
 {
 public:
     FViewport();
@@ -58,9 +58,9 @@ public:
     bool InitializeRHI(const FViewportInitializer& Initializer);
     void ReleaseRHI();
 
-    virtual FResponse OnControllerButtonUp    (const FControllerEvent& ControllerEvent) override final;
-    virtual FResponse OnControllerButtonDown  (const FControllerEvent& ControllerEvent) override final;
-    virtual FResponse OnControllerButtonAnalog(const FControllerEvent& ControllerEvent) override final;
+    virtual FResponse OnControllerAnalog    (const FControllerEvent& ControllerEvent) override final;
+    virtual FResponse OnControllerButtonDown(const FControllerEvent& ControllerEvent) override final;
+    virtual FResponse OnControllerButtonUp  (const FControllerEvent& ControllerEvent) override final;
 
     virtual FResponse OnKeyDown(const FKeyEvent& KeyEvent) override final;
     virtual FResponse OnKeyUp  (const FKeyEvent& KeyEvent) override final;
@@ -69,14 +69,17 @@ public:
     virtual FResponse OnMouseMove       (const FMouseEvent& MouseEvent) override final;
     virtual FResponse OnMouseButtonDown (const FMouseEvent& MouseEvent) override final;
     virtual FResponse OnMouseButtonUp   (const FMouseEvent& MouseEvent) override final;
-    virtual FResponse OnMouseEntered    (const FMouseEvent& MouseEvent) override final;
-    virtual FResponse OnMouseLeft       (const FMouseEvent& MouseEvent) override final;
+    virtual FResponse OnMouseScroll     (const FMouseEvent& MouseEvent) override final;
     virtual FResponse OnMouseDoubleClick(const FMouseEvent& MouseEvent) override final;
 
-    virtual FResponse OnWindowResized(const FWindowEvent& WindowEvent) override final;
-    virtual FResponse OnWindowClosed (const FWindowEvent& WindowEvent) override final;
+	virtual FResponse OnWindowResized    (const FWindowEvent& WindowEvent) override final;
+    virtual FResponse OnWindowFocusLost  (const FWindowEvent& WindowEvent) override final;
+    virtual FResponse OnWindowFocusGained(const FWindowEvent& WindowEvent) override final;
+    virtual FResponse OnMouseLeft        (const FWindowEvent& WindowEvent) override final;
+    virtual FResponse OnMouseEntered     (const FWindowEvent& WindowEvent) override final;
+	virtual FResponse OnWindowClosed     (const FWindowEvent& WindowEvent) override final;
 
-    TSharedRef<FRHIViewport> GetRHIViewport() const
+    FRHIViewportRef GetRHIViewport() const
     {
         return RHIViewport;
     }
@@ -102,7 +105,7 @@ public:
     }
 
 private:
-    TSharedRef<FRHIViewport>   RHIViewport;
+    FRHIViewportRef            RHIViewport;
     TSharedRef<FGenericWindow> Window;
     TSharedPtr<IViewport>      ViewportInterface;
 };

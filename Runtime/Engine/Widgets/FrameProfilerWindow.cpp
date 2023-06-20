@@ -14,10 +14,8 @@ TAutoConsoleVariable<bool> GDrawFrameProfiler(
     "Enables the FrameProfiler and displays the profiler window",
     false);
 
-void FFrameProfilerWindow::Paint(const FRectangle& AssignedBounds)
+void FFrameProfilerWindow::Paint()
 {
-    UNREFERENCED_VARIABLE(AssignedBounds);
-
     if (GDrawFps.GetValue())
     {
         DrawFPS();
@@ -202,22 +200,15 @@ void FFrameProfilerWindow::DrawCPUData(float Width)
 void FFrameProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    const TSharedPtr<FViewportWidget> MainViewport;// = FApplication::Get().GetMainViewport();
-    if (!MainViewport)
-    {
-        return;
-    }
-
-    const auto ViewportSize = MainViewport->GetSize();
-
-    const float Width  = FMath::Max<float>(ViewportSize.x * 0.6f, 400.0f);
-    const float Height = ViewportSize.y * 0.75f;
+    const ImVec2 DisplaySize = FImGui::GetDisplaySize();
+    const float Width  = FMath::Max<float>(DisplaySize.x * 0.6f, 400.0f);
+    const float Height = DisplaySize.y * 0.75f;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-    ImGui::SetNextWindowPos(ImVec2(float(ViewportSize.x) * 0.5f, float(ViewportSize.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+    ImGui::SetNextWindowPos(ImVec2(float(DisplaySize.x) * 0.5f, float(DisplaySize.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
     const ImGuiWindowFlags Flags =

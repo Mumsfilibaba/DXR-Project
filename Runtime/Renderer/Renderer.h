@@ -86,7 +86,7 @@ public:
     }
 
 private:
-    void OnWindowResize(const FWindowResizedEvent& Event);
+    void OnWindowResize(const FWindowEvent& Event);
 
     bool Create();
     

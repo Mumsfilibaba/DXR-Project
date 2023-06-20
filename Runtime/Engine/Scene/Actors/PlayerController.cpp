@@ -17,15 +17,15 @@ void FPlayerInput::ResetState()
 {
 }
 
+void FPlayerInput::OnControllerAnalog(const FControllerEvent& ControllerEvent)
+{
+}
+
 void FPlayerInput::OnControllerButtonUp(const FControllerEvent& ControllerEvent)
 {
 }
 
 void FPlayerInput::OnControllerButtonDown(const FControllerEvent& ControllerEvent)
-{
-}
-
-void FPlayerInput::OnControllerButtonAnalog(const FControllerEvent& ControllerEvent)
 {
 }
 
@@ -62,16 +62,12 @@ FIntVector2 FPlayerInput::GetCursorPosition() const
     return FIntVector2{ 0, 0 };
 }
 
-
-
 FPlayerController::FPlayerController(FScene* InSceneOwner)
     : FActor(InSceneOwner)
     , InputComponent(nullptr)
     , PlayerInput(nullptr)
 {
     FOBJECT_INIT();
-
-    // Create a PlayerInput state object
     PlayerInput = new FPlayerInput();
 }
 

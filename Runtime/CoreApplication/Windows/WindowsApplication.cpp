@@ -1,9 +1,12 @@
 #include "WindowsApplication.h"
+#include "WindowsCursor.h"
+#include "WindowsWindow.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Windows/WindowsKeyMapping.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Windows/WindowsKeyMapping.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
 #define WINDOWS_SCAN_CODE_MASK   (0x01ff)
 #define WINDOWS_KEY_REPEAT_MASK  (0x40000000)

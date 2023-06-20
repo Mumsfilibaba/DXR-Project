@@ -11,21 +11,24 @@
 struct ImDrawData;
 class FRHICommandList;
 
-struct FViewportBuffers
+struct FViewportData
 {
-    FViewportBuffers()
+    FViewportData()
         : VertexBuffer(nullptr)
-        , VertexCount(0)
         , IndexBuffer(nullptr)
+        , VertexCount(0)
         , IndexCount(0)
+        , Viewport(nullptr)
     {
     }
 
-    TSharedRef<FRHIBuffer> VertexBuffer;
-    TSharedRef<FRHIBuffer> IndexBuffer;
+    FRHIBufferRef VertexBuffer;
+    FRHIBufferRef IndexBuffer;
 
-	int32 VertexCount;
-	int32 IndexCount;
+    int32 VertexCount;
+    int32 IndexCount;
+
+    FRHIViewportRef Viewport;
 };
 
 class APPLICATION_API FImGuiRenderer
@@ -35,16 +38,14 @@ public:
 
     void Render(FRHICommandList& CmdList);
 
-    void RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FViewport* InViewport, bool bClear);
+    void RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FViewportData& ViewportData, bool bClear);
 
 public:
     void RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawData);
 
-    void SetupRenderState(FRHICommandList& CmdList, ImDrawData* DrawData, FViewportBuffers& Buffers);
+    void SetupRenderState(FRHICommandList& CmdList, ImDrawData* DrawData, FViewportData& ViewportData);
     
-    TArray<FDrawableTexture*> RenderedImages;
-
-    TMap<FViewport*, FViewportBuffers> ViewportBuffers;
+    TArray<FDrawableTexture*>    RenderedImages;
 
     FRHITextureRef               FontTexture;
     

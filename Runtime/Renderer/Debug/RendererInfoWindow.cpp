@@ -11,16 +11,14 @@ TAutoConsoleVariable<bool> GDrawRendererInfo(
     "Enables the drawing of the Renderer Info Window", 
     true);
 
-void FRendererInfoWindow::Paint(const FRectangle& AssignedBounds)
+void FRendererInfoWindow::Paint()
 {
-    UNREFERENCED_VARIABLE(AssignedBounds);
-
     if (GDrawRendererInfo.GetValue())
     {
-        ImGuiIO& GuiIO = ImGui::GetIO();
-        const float WindowWidth  = GuiIO.DisplaySize.x;
-        const float WindowHeight = GuiIO.DisplaySize.y;
-        const float Scale        = GuiIO.DisplayFramebufferScale.x;
+        const ImVec2 DisplaySize = FImGui::GetDisplaySize();
+        const float WindowWidth  = DisplaySize.x;
+        const float WindowHeight = DisplaySize.y;
+        const float Scale        = FImGui::GetDisplayFramebufferScale().x;
 
         const FString AdapterName = RHIGetAdapterName();
         const ImVec2 TextSize   = ImGui::CalcTextSize(AdapterName.GetCString());

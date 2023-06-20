@@ -10,7 +10,6 @@
 #include "Core/Platform/CriticalSection.h"
 #include "Application/Widget.h"
 #include "Application/ApplicationEventHandler.h"
-#include "Application/Core/Events.h"
 
 #include <imgui.h>
 
@@ -22,13 +21,13 @@ struct FConsoleInputHandler final : public FInputPreProcessor
     FConsoleInputHandler() = default;
     ~FConsoleInputHandler() = default;
 
-    virtual bool OnKeyUpEvent(const FKeyEvent& KeyEvent) override final
+    virtual bool OnKeyUp(const FKeyEvent& KeyEvent) override final
     {
         HandleKeyEventDelegate.Execute(KeyEvent);
         return bConsoleToggled;
     }
 
-    virtual bool OnKeyDownEvent(const FKeyEvent& KeyEvent) override final
+    virtual bool OnKeyDown(const FKeyEvent& KeyEvent) override final
     {
         HandleKeyEventDelegate.Execute(KeyEvent);
         return bConsoleToggled;
@@ -39,21 +38,11 @@ struct FConsoleInputHandler final : public FInputPreProcessor
 
 class FGameConsoleWindow final : public FWidget, public IOutputDevice
 {
-    DECLARE_WIDGET(FGameConsoleWindow, FWidget);
-
-public:
-    FINITIALIZER_START(FGameConsoleWindow)
-    FINITIALIZER_END();
-
 public:
     FGameConsoleWindow();
     ~FGameConsoleWindow();
 
-    void Initialize(const FInitializer& Initializer)
-    {
-    }
-
-    virtual void Paint(const FRectangle& AssignedBounds) override final;
+    virtual void Paint() override final;
 
     virtual void Log(const FString& Message) override final;
     virtual void Log(ELogSeverity Severity, const FString& Message) override final;

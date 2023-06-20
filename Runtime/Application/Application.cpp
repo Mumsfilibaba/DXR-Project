@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "ImGuiModule.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -8,19 +9,18 @@ IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
 
 struct FEventDispatcher
 {
-public:
-    class FLeafLastPolicy
+    class FLowPriorityFirstPolicy
     {
     public:
-        FLeafLastPolicy(FFilteredWidgets& InWidgets)
-            : Widgets(InWidgets)
-            , Index(static_cast<uint32>(InWidgets.LastIndex()))
+        FLowPriorityFirstPolicy(TArray<FApplicationEventHandlerRef>& InEventHandlers)
+            : EventHandlers(InEventHandlers)
+            , Index(static_cast<int32>(InEventHandlers.LastElementIndex()))
         {
         }
 
         bool ShouldProcess() const
         {
-            return (Index > 0) && (Widgets.NumChildren() > 0);
+            return (Index > 0) && (EventHandlers.Size() > 0);
         }
 
         void Next()
@@ -28,33 +28,34 @@ public:
             Index--;
         }
         
-        TSharedPtr<FWidget>& GetWidget()
+        FApplicationEventHandlerRef& GetEventHandler()
         {
-            return Widgets[Index];
+            return EventHandlers[Index];
         }
 
-        const TSharedPtr<FWidget>& GetWidget() const
+        const FApplicationEventHandlerRef& GetEventHandler() const
         {
-            return Widgets[Index];
+            return EventHandlers[Index];
         }
 
     private:
-        FFilteredWidgets& Widgets;
-        int32             Index;
+        TArray<FApplicationEventHandlerRef>& EventHandlers;
+        int32 Index;
     };
 
-    class FLeafFirstPolicy
+
+    class FHighPriorityFirstPolicy
     {
     public:
-        FLeafFirstPolicy(FFilteredWidgets& InWidgets)
-            : Widgets(InWidgets)
+        FHighPriorityFirstPolicy(TArray<FApplicationEventHandlerRef>& InEventHandlers)
+            : EventHandlers(InEventHandlers)
             , Index(0)
         {
         }
 
         bool ShouldProcess() const
         {
-            return (Index < static_cast<int32>(Widgets.NumChildren()));
+            return Index < static_cast<int32>(EventHandlers.Size());
         }
 
         void Next()
@@ -62,26 +63,27 @@ public:
             Index++;
         }
 
-        TSharedPtr<FWidget>& GetWidget()
+        FApplicationEventHandlerRef& GetEventHandler()
         {
-            return Widgets[Index];
+            return EventHandlers[Index];
         }
 
-        const TSharedPtr<FWidget>& GetWidget() const
+        const FApplicationEventHandlerRef& GetEventHandler() const
         {
-            return Widgets[Index];
+            return EventHandlers[Index];
         }
 
     private:
-        FFilteredWidgets& Widgets;
-        int32             Index;
+        TArray<FApplicationEventHandlerRef>& EventHandlers;
+        int32 Index;
     };
+
 
     class FDirectPolicy
     {
     public:
-        FDirectPolicy(FFilteredWidgets& InWidgets)
-            : Widgets(InWidgets)
+        FDirectPolicy(TArray<FApplicationEventHandlerRef>& InEventHandlers)
+            : EventHandlers(InEventHandlers)
             , bIsProcessed(false)
         {
         }
@@ -96,30 +98,64 @@ public:
             bIsProcessed = true;
         }
 
-        TSharedPtr<FWidget>& GetWidget()
+        FApplicationEventHandlerRef& GetEventHandler()
         {
-            return Widgets[0];
+            return EventHandlers[0];
         }
 
-        const TSharedPtr<FWidget>& GetWidget() const
+        const FApplicationEventHandlerRef& GetEventHandler() const
         {
-            return Widgets[0];
+            return EventHandlers[0];
         }
 
     private:
-        FFilteredWidgets& Widgets;
-        bool              bIsProcessed;
+        TArray<FApplicationEventHandlerRef>& EventHandlers;
+        bool bIsProcessed;
     };
 
-public:
-    template<typename EventType, typename PedicateType>
-    static FResponse PreProcess(const EventType& Event, PedicateType&& Predicate)
+
+    class FPreProcessPolicy
+    {
+    public:
+        FPreProcessPolicy(TArray<FInputPreProcessorAndPriority>& InEventHandlers)
+            : EventHandlers(InEventHandlers)
+            , Index(0)
+        {
+        }
+
+        bool ShouldProcess() const
+        {
+            return Index < static_cast<int32>(EventHandlers.Size());
+        }
+
+        void Next()
+        {
+            Index++;
+        }
+
+        FInputPreProcessorAndPriority& GetEventHandler()
+        {
+            return EventHandlers[Index];
+        }
+
+        const FInputPreProcessorAndPriority& GetEventHandler() const
+        {
+            return EventHandlers[Index];
+        }
+
+    private:
+        TArray<FInputPreProcessorAndPriority>& EventHandlers;
+        int32 Index;
+    };
+
+
+    template<typename PolicyType, typename EventType, typename PedicateType>
+    static FResponse PreProcess(PolicyType Policy, const EventType& Event, PedicateType&& Predicate)
     {
         FResponse Response = FResponse::Unhandled();
-
-        for (; !Response.IsEventHandled(); Policy.Next())
+        for (; !Response.IsEventHandled() && Policy.ShouldProcess(); Policy.Next())
         {
-            if (Predicate(Event))
+            if (Predicate(Policy.GetEventHandler(), Event))
             {
                 Response = FResponse::Handled();
             }
@@ -128,14 +164,14 @@ public:
         return Response;
     }
 
+
     template<typename PolicyType, typename EventType, typename PedicateType>
-    static FResponse Dispatch(FApplication* Application, PolicyType Policy, const EventType& Event, PedicateType&& Predicate)
+    static FResponse Dispatch(PolicyType Policy, const EventType& Event, PedicateType&& Predicate)
     {
         FResponse Response = FResponse::Unhandled();
-        
         for (; !Response.IsEventHandled() && Policy.ShouldProcess(); Policy.Next())
         {
-            Response = Predicate(Application, Policy.GetWidget(), Event);
+            Response = Predicate(Policy.GetEventHandler(), Event);
         }
 
         return Response;
@@ -181,7 +217,6 @@ FApplication::FApplication()
     , bIsTrackingMouse(false)
     , InputPreProcessors()
     , AllWindows()
-    , Viewports()
     , MainViewport(nullptr)
     , MainWindow(nullptr)
     , FocusWindow(nullptr)
@@ -218,7 +253,7 @@ bool FApplication::InitializeRenderer()
         return false;
     }
 
-    return true; 
+    return true;
 }
 
 void FApplication::ReleaseRenderer()
@@ -416,16 +451,11 @@ bool FApplication::OnControllerButtonUp(EControllerButton Button, uint32 Control
     const FControllerEvent ControllerEvent(Button, false, ControllerIndex);
 
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
-    {
-        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
-        if (Handler.InputHandler->OnControllerButtonUpEvent(ControllerEvent))
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FControllerEvent& ControllerEvent)
         {
-            Response = FResponse::Handled();
-            break;
-        }
-    }
+            return PreProcessor.InputHandler->OnControllerButtonUp(ControllerEvent);
+        });
 
     if (Response.IsEventHandled())
     {
@@ -439,16 +469,13 @@ bool FApplication::OnControllerButtonUp(EControllerButton Button, uint32 Control
         return true;
     }
 
-    DISABLE_UNREFERENCED_VARIABLE_WARNING
-
     // Dispatch the events to the widgets in-focus
-    Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), ControllerEvent,
-        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FControllerEvent& ControllerEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), ControllerEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FControllerEvent& ControllerEvent)
         {
-            return Widget->OnControllerButtonUp(ControllerEvent);
+            return EventHandler->OnControllerButtonUp(ControllerEvent);
         });
 
-    ENABLE_UNREFERENCED_VARIABLE_WARNING
     return Response.IsEventHandled();
 }
 
@@ -458,16 +485,11 @@ bool FApplication::OnControllerButtonDown(EControllerButton Button, uint32 Contr
     const FControllerEvent ControllerEvent(Button, true, ControllerIndex);
 
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
-    {
-        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
-        if (Handler.InputHandler->OnControllerButtonDownEvent(ControllerEvent))
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FControllerEvent& ControllerEvent)
         {
-            Response = FResponse::Handled();
-            break;
-        }
-    }
+            return PreProcessor.InputHandler->OnControllerButtonDown(ControllerEvent);
+        });
 
     if (Response.IsEventHandled())
     {
@@ -481,16 +503,13 @@ bool FApplication::OnControllerButtonDown(EControllerButton Button, uint32 Contr
         return true;
     }
 
-    DISABLE_UNREFERENCED_VARIABLE_WARNING
-
     // Dispatch the events to the widgets in-focus
-    Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), ControllerEvent,
-        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FControllerEvent& ControllerEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), ControllerEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FControllerEvent& ControllerEvent)
         {
-            return Widget->OnControllerButtonDown(ControllerEvent);
+            return EventHandler->OnControllerButtonDown(ControllerEvent);
         });
 
-    ENABLE_UNREFERENCED_VARIABLE_WARNING
     return Response.IsEventHandled();
 }
 
@@ -500,16 +519,11 @@ bool FApplication::OnControllerAnalog(EControllerAnalog AnalogSource, uint32 Con
     const FControllerEvent ControllerEvent(AnalogSource, AnalogValue, ControllerIndex);
 
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
-    {
-        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
-        if (Handler.InputHandler->OnControllerAnalogEvent(ControllerEvent))
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FControllerEvent& ControllerEvent)
         {
-            Response = FResponse::Handled();
-            break;
-        }
-    }
+            return PreProcessor.InputHandler->OnControllerAnalog(ControllerEvent);
+        });
 
     if (Response.IsEventHandled())
     {
@@ -523,16 +537,13 @@ bool FApplication::OnControllerAnalog(EControllerAnalog AnalogSource, uint32 Con
         return true;
     }
 
-    DISABLE_UNREFERENCED_VARIABLE_WARNING
-
     // Dispatch the events to the widgets in-focus
-    Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), ControllerEvent,
-        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FControllerEvent& ControllerEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), ControllerEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FControllerEvent& ControllerEvent)
         {
-            return Widget->OnControllerButtonAnalog(ControllerEvent);
+            return EventHandler->OnControllerAnalog(ControllerEvent);
         });
 
-    ENABLE_UNREFERENCED_VARIABLE_WARNING
     return Response.IsEventHandled();
 }
 
@@ -542,16 +553,11 @@ bool FApplication::OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState)
     const FKeyEvent KeyEvent(ModierKeyState, KeyCode, false, false);
 
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
-    {
-        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
-        if (Handler.InputHandler->OnKeyDownEvent(KeyEvent))
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), KeyEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FKeyEvent& KeyEvent)
         {
-            Response = FResponse::Handled();
-            break;
-        }
-    }
+            return PreProcessor.InputHandler->OnKeyUp(KeyEvent);
+        });
 
     // Remove the Key
     PressedKeys.erase(KeyCode);
@@ -562,16 +568,13 @@ bool FApplication::OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState)
         return true;
     }
 
-    DISABLE_UNREFERENCED_VARIABLE_WARNING
-
     // Dispatch the events to the widgets in-focus
-    Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), KeyEvent, 
-        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FKeyEvent& KeyEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), KeyEvent, 
+        [](const FApplicationEventHandlerRef& EventHandler, const FKeyEvent& KeyEvent)
         {
-            return Widget->OnKeyUp(KeyEvent);
+            return EventHandler->OnKeyUp(KeyEvent);
         });
 
-    ENABLE_UNREFERENCED_VARIABLE_WARNING
     return Response.IsEventHandled();
 }
 
@@ -581,16 +584,11 @@ bool FApplication::OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyState Mod
     const FKeyEvent KeyEvent(ModierKeyState, KeyCode, bIsRepeat, true);
     
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
-    {
-        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
-        if (Handler.InputHandler->OnKeyDownEvent(KeyEvent))
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), KeyEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FKeyEvent& KeyEvent)
         {
-            Response = FResponse::Handled();
-            break;
-        }
-    }
+            return PreProcessor.InputHandler->OnKeyDown(KeyEvent);
+        });
 
     // Add the Key among the pressed keys
     PressedKeys.insert(KeyCode);
@@ -608,16 +606,13 @@ bool FApplication::OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyState Mod
         return true;
     }
 
-    DISABLE_UNREFERENCED_VARIABLE_WARNING
-
     // Dispatch the events to the widgets in-focus
-    Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), KeyEvent, 
-        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FKeyEvent& KeyEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), KeyEvent, 
+        [](const FApplicationEventHandlerRef& EventHandler, const FKeyEvent& KeyEvent)
         {
-            return Widget->OnKeyDown(KeyEvent);
+            return EventHandler->OnKeyDown(KeyEvent);
         });
 
-    ENABLE_UNREFERENCED_VARIABLE_WARNING
     return Response.IsEventHandled();
 }
 
@@ -627,16 +622,11 @@ bool FApplication::OnKeyChar(uint32 Character)
     const FKeyEvent KeyEvent(FPlatformApplicationMisc::GetModifierKeyState(), Key_Unknown, Character, false, true);
     
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
-    {
-        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
-        if (Handler.InputHandler->OnKeyCharEvent(KeyEvent))
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), KeyEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FKeyEvent& KeyEvent)
         {
-            Response = FResponse::Handled();
-            break;
-        }
-    }
+            return PreProcessor.InputHandler->OnKeyChar(KeyEvent);
+        });
 
     // If the event is handled, abort the process
     if (Response.IsEventHandled())
@@ -651,16 +641,13 @@ bool FApplication::OnKeyChar(uint32 Character)
         return true;
     }
 
-    DISABLE_UNREFERENCED_VARIABLE_WARNING
-
     // Dispatch the events to the widgets in-focus
-    Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), KeyEvent, 
-        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FKeyEvent& KeyEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), KeyEvent, 
+        [](const FApplicationEventHandlerRef& EventHandler, const FKeyEvent& KeyEvent)
         {
-            return Widget->OnKeyChar(KeyEvent);
+            return EventHandler->OnKeyChar(KeyEvent);
         });
 
-    ENABLE_UNREFERENCED_VARIABLE_WARNING
     return Response.IsEventHandled();
 }
 
@@ -670,16 +657,11 @@ bool FApplication::OnMouseMove(int32 x, int32 y)
     const FMouseEvent MouseEvent(FIntVector2(x, y), FPlatformApplicationMisc::GetModifierKeyState());
     
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
-    {
-        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
-        if (Handler.InputHandler->OnMouseMove(MouseEvent))
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), MouseEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FMouseEvent& MouseEvent)
         {
-            Response = FResponse::Handled();
-            break;
-        }
-    }
+            return PreProcessor.InputHandler->OnMouseMove(MouseEvent);
+        });
 
     // If the event is handled, abort the process
     if (Response.IsEventHandled())
@@ -694,16 +676,13 @@ bool FApplication::OnMouseMove(int32 x, int32 y)
         return true;
     }
 
-    DISABLE_UNREFERENCED_VARIABLE_WARNING
-
     // Dispatch the MouseEvent to the widgets under the cursor
-    Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), MouseEvent,
-        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& KeyEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), MouseEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FMouseEvent& KeyEvent)
         {
-            return Widget->OnMouseMove(KeyEvent);
+            return EventHandler->OnMouseMove(KeyEvent);
         });
 
-    ENABLE_UNREFERENCED_VARIABLE_WARNING
     return Response.IsEventHandled();
 }
 
@@ -716,16 +695,11 @@ bool FApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyState Modife
     const FMouseEvent MouseEvent(FIntVector2(x, y), ModiferKeyState, Button, false);
     
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
-    {
-        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
-        if (Handler.InputHandler->OnMouseButtonUpEvent(MouseEvent))
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), MouseEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FMouseEvent& MouseEvent)
         {
-            Response = FResponse::Handled();
-            break;
-        }
-    }
+            return PreProcessor.InputHandler->OnMouseButtonUp(MouseEvent);
+        });
     
     // Remove the Key
     PressedMouseButtons.erase(Button);
@@ -737,16 +711,13 @@ bool FApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyState Modife
         return true;
     }
 
-    DISABLE_UNREFERENCED_VARIABLE_WARNING
-
     // Dispatch the MouseEvent to the widgets under the cursor
-    Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), MouseEvent,
-        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), MouseEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FMouseEvent& MouseEvent)
         {
-            return Widget->OnMouseButtonUp(MouseEvent);
+            return EventHandler->OnMouseButtonUp(MouseEvent);
         });
 
-    ENABLE_UNREFERENCED_VARIABLE_WARNING
     return Response.IsEventHandled();
 }
 
@@ -759,16 +730,11 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, E
     const FMouseEvent MouseEvent(FIntVector2(x, y), ModierKeyState, Button, true);
 
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
-    {
-        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
-        if (Handler.InputHandler->OnMouseButtonDownEvent(MouseEvent))
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), MouseEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FMouseEvent& MouseEvent)
         {
-            Response = FResponse::Handled();
-            break;
-        }
-    }
+            return PreProcessor.InputHandler->OnMouseButtonDown(MouseEvent);
+        });
 
     if (Response.IsEventHandled())
     {
@@ -787,10 +753,10 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, E
     }
 
     // Dispatch the MouseEvent to the widgets under the cursor
-    Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), MouseEvent,
-        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), MouseEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FMouseEvent& MouseEvent)
         {
-            return Widget->OnMouseButtonDown(MouseEvent);
+            return EventHandler->OnMouseButtonDown(MouseEvent);
         });
 
     return Response.IsEventHandled();
@@ -802,16 +768,11 @@ bool FApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, in
     const FMouseEvent MouseEvent(FIntVector2(x, y), FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
 
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FResponse::Unhandled();
-    for (int32 Index = 0; Index < InputPreProcessors.Size(); Index++)
-    {
-        const FInputPreProcessorAndPriority& Handler = InputPreProcessors[Index];
-        if (Handler.InputHandler->OnMouseScrolled(MouseEvent))
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), MouseEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FMouseEvent& MouseEvent)
         {
-            Response = FResponse::Handled();
-            break;
-        }
-    }
+            return PreProcessor.InputHandler->OnMouseScrolled(MouseEvent);
+        });
 
     if (Response.IsEventHandled())
     {
@@ -825,77 +786,117 @@ bool FApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, in
         return true;
     }
 
-    DISABLE_UNREFERENCED_VARIABLE_WARNING
-
     // Dispatch the MouseEvent to the widgets under the cursor
-    Response = FEventDispatcher::Dispatch(this, FEventDispatcher::FLeafFirstPolicy(FocusPath), MouseEvent,
-        [](FApplication* Application, const TSharedPtr<FWidget>& Widget, const FMouseEvent& MouseEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), MouseEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FMouseEvent& MouseEvent)
         {
-            // TODO: return Widget->OnMouseScrolled(MouseEvent);
-            return FResponse::Unhandled();
+            return EventHandler->OnMouseScroll(MouseEvent);
         });
 
-    ENABLE_UNREFERENCED_VARIABLE_WARNING
     return Response.IsEventHandled();
 }
 
 bool FApplication::OnWindowResized(const TSharedRef<FGenericWindow>& InWindow, uint32 Width, uint32 Height)
 {
-    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(InWindow->GetPlatformHandle()))
-    {
-        Viewport->PlatformRequestResize = true;
-    }
+    const FWindowEvent WindowEvent(InWindow, Width, Height);
 
-    return false;
+    FImGui::OnWindowResize(InWindow->GetPlatformHandle());
+
+    FResponse Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), WindowEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FWindowEvent& WindowEvent)
+        {
+            return EventHandler->OnWindowResized(WindowEvent);
+        });
+
+    return Response.IsEventHandled();
 }
 
 bool FApplication::OnWindowMoved(const TSharedRef<FGenericWindow>& InWindow, int32 x, int32 y)
 {
-    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(InWindow->GetPlatformHandle()))
-    {
-        Viewport->PlatformRequestMove = true;
-    }
+    const FWindowEvent WindowEvent(InWindow, FIntVector2(x, y));
 
-    return false;
+    FImGui::OnWindowMoved(InWindow->GetPlatformHandle());
+
+    FResponse Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), WindowEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FWindowEvent& WindowEvent)
+        {
+            return EventHandler->OnWindowMoved(WindowEvent);
+        });
+
+    return Response.IsEventHandled();
 }
-
-DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 bool FApplication::OnWindowFocusLost(const TSharedRef<FGenericWindow>& InWindow)
 {
-    // The state needs to be reset when the window loses focus
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddFocusEvent(false);
-    return true;
+    const FWindowEvent WindowEvent(InWindow);
+
+    FImGui::OnFocusLost();
+
+    FResponse Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), WindowEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FWindowEvent& WindowEvent)
+        {
+            return EventHandler->OnWindowFocusLost(WindowEvent);
+        });
+
+    return Response.IsEventHandled();
 }
 
 bool FApplication::OnWindowFocusGained(const TSharedRef<FGenericWindow>& InWindow)
 {
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddFocusEvent(true);
-    return true;
+    const FWindowEvent WindowEvent(InWindow);
+
+    FImGui::OnFocusGained();
+
+    FResponse Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), WindowEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FWindowEvent& WindowEvent)
+        {
+            return EventHandler->OnWindowFocusGained(WindowEvent);
+        });
+
+    return Response.IsEventHandled();
 }
 
 bool FApplication::OnWindowMouseLeft(const TSharedRef<FGenericWindow>& InWindow)
 {
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddMousePosEvent(-TNumericLimits<float>::Max(), -TNumericLimits<float>::Max());
-    return true;
+    const FWindowEvent WindowEvent(InWindow);
+
+    FImGui::OnMouseLeft();
+
+    FResponse Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), WindowEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FWindowEvent& WindowEvent)
+        {
+            return EventHandler->OnMouseLeft(WindowEvent);
+        });
+
+    return Response.IsEventHandled();
 }
 
 bool FApplication::OnWindowMouseEntered(const TSharedRef<FGenericWindow>& InWindow)
 {
-    return false;
+    const FWindowEvent WindowEvent(InWindow);
+
+    FResponse Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), WindowEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FWindowEvent& WindowEvent)
+        {
+            return EventHandler->OnMouseEntered(WindowEvent);
+        });
+
+    return Response.IsEventHandled();
 }
 
 bool FApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& InWindow)
 {
-    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(InWindow->GetPlatformHandle()))
-    {
-        Viewport->PlatformRequestClose = true;
-    }
+    const FWindowEvent WindowEvent(InWindow);
 
-    if (FGenericWindow* Window = MainViewport->GetWindow())
+    FImGui::OnWindowClose(InWindow->GetPlatformHandle());
+
+    FResponse Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), WindowEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FWindowEvent& WindowEvent)
+        {
+            return EventHandler->OnWindowClosed(WindowEvent);
+        });
+
+    if (TSharedRef<FGenericWindow> Window = MainViewport->GetWindow())
     {
         if (Window == InWindow)
         {
@@ -904,19 +905,9 @@ bool FApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& InWindow)
         }
     }
 
-    // Remove the viewport
-    for (int32 Index = 0; Index < Viewports.Size(); Index++)
-    {
-        if (Viewports[Index]->GetWindow() == InWindow)
-        {
-            Viewports.RemoveAt(Index);
-            break;
-        }
-    }
-
     // Remove the window
     AllWindows.Remove(InWindow);
-    return true;
+    return Response.IsEventHandled();
 }
 
 bool FApplication::OnMonitorChange()
@@ -925,32 +916,14 @@ bool FApplication::OnMonitorChange()
     return true;
 }
 
-ENABLE_UNREFERENCED_VARIABLE_WARNING
-
-TSharedRef<FGenericWindow> FApplication::CreateWindow(const FWindowInitializer& Initializer)
+TSharedRef<FGenericWindow> FApplication::CreateWindow(const FGenericWindowInitializer& Initializer)
 {
-    TSharedRef<FGenericWindow> Window = PlatformApplication->CreateWindow();
-    if (Window)
+    if (TSharedRef<FGenericWindow> Window = PlatformApplication->CreateWindow())
     {
-        if (Window->Initialize(Initializer.Title, Initializer.Width, Initializer.Height, Initializer.Position.x, Initializer.Position.y, Initializer.Style, Initializer.ParentWindow))
+        if (Window->Initialize(Initializer))
         {
             AllWindows.Add(Window);
             return Window;
-        }
-    }
-
-    return nullptr;
-}
-
-TSharedPtr<FViewport> FApplication::CreateViewport(const FViewportInitializer& Initializer)
-{
-    TSharedPtr<FViewport> Viewport = MakeShared<FViewport>();
-    if (Viewport)
-    {
-        if (Viewport->InitializeRHI(Initializer))
-        {
-            Viewports.Add(Viewport);
-            return Viewport;
         }
     }
 
@@ -1024,6 +997,7 @@ bool FApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWi
 void FApplication::SetCapture(const TSharedRef<FGenericWindow>& CaptureWindow)
 {
     PlatformApplication->SetCapture(CaptureWindow);
+
     if (CaptureWindow && !PressedMouseButtons.empty())
     {
         bIsTrackingMouse = true;
@@ -1062,8 +1036,8 @@ TSharedRef<FGenericWindow> FApplication::GetCapture() const
 
 TSharedRef<FGenericWindow> FApplication::GetForegroundWindow() const
 {
-	CHECK(PlatformApplication != nullptr);
-	return PlatformApplication->GetForegroundWindow();
+    CHECK(PlatformApplication != nullptr);
+    return PlatformApplication->GetForegroundWindow();
 }
 
 void FApplication::AddInputPreProcessor(const TSharedPtr<FInputPreProcessor>& NewInputHandler, uint32 NewPriority)
@@ -1099,26 +1073,32 @@ void FApplication::RemoveInputHandler(const TSharedPtr<FInputPreProcessor>& Inpu
     }
 }
 
-void FApplication::AddEventHandler(const TSharedPtr<FApplicationEventHandler>& EventHandler)
+void FApplication::AddEventHandler(const FApplicationEventHandlerRef& EventHandler)
 {
-    EventHandler.AddUnique(EventHandler);
+    EventHandlers.AddUnique(EventHandler);
 }
-    
-void FApplication::RemoveEventHandler(const TSharedPtr<FApplicationEventHandler>& EventHandler)
+
+void FApplication::RemoveEventHandler(const FApplicationEventHandlerRef& EventHandler)
 {
-    EventHandler.Remove(EventHandler);
+    EventHandlers.Remove(EventHandler);
 }
 
 void FApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InViewport)
 {
     if (MainViewport != InViewport)
     {
-        MainViewport = InViewport;
-        MainWindow   = MakeSharedRef<FGenericWindow>(MainViewport->GetWindow());
+        if (MainViewport)
+        {
+            RemoveEventHandler(MainViewport);
+        }
 
+        MainViewport = InViewport;
+        AddEventHandler(InViewport);
+
+        MainWindow = MainViewport->GetWindow();
         if (MainWindow)
         {
-            FImGui::SetupMainViewport(InViewport);
+            FImGui::SetupMainViewport(InViewport.Get());
         }
     }
 }

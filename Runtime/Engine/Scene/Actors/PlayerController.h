@@ -1,10 +1,10 @@
 #pragma once
 #include "Actor.h"
+#include "Application/Events.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Input/InputStates.h"
 #include "CoreApplication/Generic/ICursor.h"
-#include "Application/Core/Events.h"
 #include "Engine/Scene/Components/InputComponent.h"
 
 class ENGINE_API FPlayerInput
@@ -17,9 +17,9 @@ public:
 
     void ResetState();
 
-    virtual void OnControllerButtonUp    (const FControllerEvent& ControllerEvent);
-    virtual void OnControllerButtonDown  (const FControllerEvent& ControllerEvent);
-    virtual void OnControllerButtonAnalog(const FControllerEvent& ControllerEvent);
+    virtual void OnControllerAnalog    (const FControllerEvent& ControllerEvent);
+    virtual void OnControllerButtonDown(const FControllerEvent& ControllerEvent);
+    virtual void OnControllerButtonUp  (const FControllerEvent& ControllerEvent);
 
     virtual void OnKeyUpEvent  (const FKeyEvent& KeyEvent);
     virtual void OnKeyDownEvent(const FKeyEvent& KeyEvent);
@@ -110,8 +110,7 @@ private:
 };
 
 
-class ENGINE_API FPlayerController
-    : public FActor
+class ENGINE_API FPlayerController : public FActor
 {
     FOBJECT_BODY(FPlayerController, FActor);
 
@@ -123,8 +122,15 @@ public:
 
     virtual void Tick(FTimespan DeltaTime) override;
 
-    FInputComponent* GetInputComponent() const { return InputComponent; }
-    FPlayerInput*    GetPlayerInput()    const { return PlayerInput; }
+    FInputComponent* GetInputComponent() const
+    {
+        return InputComponent;
+    }
+
+    FPlayerInput* GetPlayerInput() const
+    {
+        return PlayerInput;
+    }
 
 protected:
     FInputComponent* InputComponent;
