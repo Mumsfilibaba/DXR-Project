@@ -208,7 +208,7 @@ protected:
     FDisplayInfo DisplayInfo;
     bool         bIsTrackingMouse;
 
-    TSet<EKeyName>         PressedKeys;
+    TSet<EKeyName::Type>   PressedKeys;
     TSet<EMouseButtonName> PressedMouseButtons;
 
 private:

@@ -572,7 +572,7 @@ bool FApplication::OnKeyDown(EKeyName::Type KeyCode, bool bIsRepeat, FModifierKe
 bool FApplication::OnKeyChar(uint32 Character)
 {
     // Create the event
-    const FKeyEvent KeyEvent(FPlatformApplicationMisc::GetModifierKeyState(), Key_Unknown, Character, false, true);
+    const FKeyEvent KeyEvent(FPlatformApplicationMisc::GetModifierKeyState(), EKeyName::Unknown, Character, false, true);
     
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), KeyEvent,
