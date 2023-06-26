@@ -113,22 +113,42 @@ FResponse FViewport::OnWindowResized(const FWindowEvent& WindowEvent)
 
 FResponse FViewport::OnWindowFocusLost(const FWindowEvent& WindowEvent)
 {
-    return ViewportInterface ? ViewportInterface->OnFocusLost(WindowEvent) : FResponse::Unhandled();
+    if (WindowEvent.GetWindow() == Window)
+    {
+        return ViewportInterface ? ViewportInterface->OnFocusLost() : FResponse::Unhandled();
+    }
+
+    return FResponse::Unhandled();
 }
 
 FResponse FViewport::OnWindowFocusGained(const FWindowEvent& WindowEvent)
 {
-    return ViewportInterface ? ViewportInterface->OnFocusGained(WindowEvent) : FResponse::Unhandled();
+    if (WindowEvent.GetWindow() == Window)
+    {
+        return ViewportInterface ? ViewportInterface->OnFocusGained() : FResponse::Unhandled();
+    }
+
+    return FResponse::Unhandled();
 }
 
 FResponse FViewport::OnMouseLeft(const FWindowEvent& WindowEvent)
 {
-    return ViewportInterface ? ViewportInterface->OnMouseLeft(WindowEvent) : FResponse::Unhandled();
+    if (WindowEvent.GetWindow() == Window)
+    {
+        return ViewportInterface ? ViewportInterface->OnMouseLeft() : FResponse::Unhandled();
+    }
+
+    return FResponse::Unhandled();
 }
 
 FResponse FViewport::OnMouseEntered(const FWindowEvent& WindowEvent)
 {
-    return ViewportInterface ? ViewportInterface->OnMouseEntered(WindowEvent) : FResponse::Unhandled();
+    if (WindowEvent.GetWindow() == Window)
+    {
+        return ViewportInterface ? ViewportInterface->OnMouseEntered() : FResponse::Unhandled();
+    }
+
+    return FResponse::Unhandled();
 }
 
 FResponse FViewport::OnWindowClosed(const FWindowEvent& WindowEvent)

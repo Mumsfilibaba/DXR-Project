@@ -23,10 +23,10 @@ struct IViewport
     virtual FResponse OnMouseScroll     (const FMouseEvent& MouseEvent) = 0;
     virtual FResponse OnMouseDoubleClick(const FMouseEvent& MouseEvent) = 0;
 
-	virtual FResponse OnFocusLost   (const FWindowEvent& WindowEvent) = 0;
-	virtual FResponse OnFocusGained (const FWindowEvent& WindowEvent) = 0;
-	virtual FResponse OnMouseLeft   (const FWindowEvent& WindowEvent) = 0;
-	virtual FResponse OnMouseEntered(const FWindowEvent& WindowEvent) = 0;
+	virtual FResponse OnFocusLost()    = 0;
+	virtual FResponse OnFocusGained()  = 0;
+	virtual FResponse OnMouseLeft()    = 0;
+	virtual FResponse OnMouseEntered() = 0;
 
     virtual void SetViewport(const TSharedPtr<FViewport>& InViewport) = 0;
 

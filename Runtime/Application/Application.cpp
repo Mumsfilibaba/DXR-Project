@@ -213,13 +213,15 @@ void FApplication::Destroy()
 
 FApplication::FApplication()
     : Renderer(nullptr)
-    , DisplayInfo()
-    , bIsTrackingMouse(false)
-    , InputPreProcessors()
-    , AllWindows()
     , MainViewport(nullptr)
     , MainWindow(nullptr)
     , FocusWindow(nullptr)
+    , EventHandlers()
+    , Widgets()
+    , InputPreProcessors()
+    , AllWindows()
+    , DisplayInfo()
+    , bIsTrackingMouse(false)
     , PressedKeys()
     , PressedMouseButtons()
 {
@@ -238,12 +240,6 @@ FApplication::FApplication()
     FImGui::InitializeStyle();
 }
 
-FApplication::~FApplication()
-{
-    // Tear down ImGui
-    FImGui::DestroyContext();
-}
-
 bool FApplication::InitializeRenderer()
 {
     Renderer = MakeUnique<FImGuiRenderer>();
@@ -258,7 +254,11 @@ bool FApplication::InitializeRenderer()
 
 void FApplication::ReleaseRenderer()
 {
+    // Ensure the renderer gets destroyed
     Renderer.Reset();
+
+    // Tear down ImGui
+    FImGui::DestroyContext();
 }
 
 void FApplication::Tick(FTimespan DeltaTime)
@@ -360,57 +360,10 @@ void FApplication::Tick(FTimespan DeltaTime)
     // Update all the UI windows
     ImGui::NewFrame();
 
-    //Windows.Foreach([](TSharedRef<FWidget>& Window)
-    //{
-    //    Window->Tick();
-    //});
-
-    static bool ShowDemoWindow    = true;
-    static bool ShowAnotherWindow = false;
-    static ImVec4 ClearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-    if (ShowDemoWindow)
+    Widgets.Foreach([](FWidgetRef& Widget)
     {
-        ImGui::ShowDemoWindow();
-    }
-
-    {
-        static float SliderValue = 0.0f;
-        static int32 Counter     = 0;
-
-        ImGui::Begin("Hello, world!");
-
-        ImGui::Text("This is some useful text.");
-        ImGui::Checkbox("Demo Window", &ShowDemoWindow);
-        ImGui::Checkbox("Another Window", &ShowAnotherWindow);
-
-        ImGui::SliderFloat("float", &SliderValue, 0.0f, 1.0f);
-        ImGui::ColorEdit3("clear color", (float*)&ClearColor);
-
-        if (ImGui::Button("Button"))
-        {
-            Counter++;
-        }
-
-        ImGui::SameLine();
-        ImGui::Text("counter = %d", Counter);
-
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::End();
-    }
-
-    if (ShowAnotherWindow)
-    {
-        ImGui::Begin("Another Window", &ShowAnotherWindow);
-        ImGui::Text("Hello from another window!");
-
-        if (ImGui::Button("Close Me"))
-        {
-            ShowAnotherWindow = false;
-        }
-
-        ImGui::End();
-    }
+        Widget->Paint();
+    });
 
     ImGui::EndFrame();
 }
@@ -445,10 +398,10 @@ void FApplication::UpdateMonitorInfo()
     }
 }
 
-bool FApplication::OnControllerButtonUp(EControllerButton Button, uint32 ControllerIndex)
+bool FApplication::OnControllerButtonUp(EGamepadButtonName Button, uint32 ControllerIndex)
 {
     // Create the event
-    const FControllerEvent ControllerEvent(Button, false, ControllerIndex);
+    const FControllerEvent ControllerEvent(Button, ControllerIndex, false, false);
 
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,
@@ -479,10 +432,10 @@ bool FApplication::OnControllerButtonUp(EControllerButton Button, uint32 Control
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnControllerButtonDown(EControllerButton Button, uint32 ControllerIndex)
+bool FApplication::OnControllerButtonDown(EGamepadButtonName Button, uint32 ControllerIndex, bool bIsRepeat)
 {
     // Create the event
-    const FControllerEvent ControllerEvent(Button, true, ControllerIndex);
+    const FControllerEvent ControllerEvent(Button, ControllerIndex, true, bIsRepeat);
 
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,
@@ -513,10 +466,10 @@ bool FApplication::OnControllerButtonDown(EControllerButton Button, uint32 Contr
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnControllerAnalog(EControllerAnalog AnalogSource, uint32 ControllerIndex, float AnalogValue)
+bool FApplication::OnControllerAnalog(EAnalogSourceName AnalogSource, uint32 ControllerIndex, float AnalogValue)
 {
     // Create the event
-    const FControllerEvent ControllerEvent(AnalogSource, AnalogValue, ControllerIndex);
+    const FControllerEvent ControllerEvent(AnalogSource, ControllerIndex, AnalogValue);
 
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,
@@ -547,7 +500,7 @@ bool FApplication::OnControllerAnalog(EControllerAnalog AnalogSource, uint32 Con
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState)
+bool FApplication::OnKeyUp(EKeyName::Type KeyCode, FModifierKeyState ModierKeyState)
 {
     // Create the event
     const FKeyEvent KeyEvent(ModierKeyState, KeyCode, false, false);
@@ -578,7 +531,7 @@ bool FApplication::OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState)
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
+bool FApplication::OnKeyDown(EKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
 {
     // Create the event
     const FKeyEvent KeyEvent(ModierKeyState, KeyCode, bIsRepeat, true);
@@ -686,7 +639,7 @@ bool FApplication::OnMouseMove(int32 x, int32 y)
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyState ModiferKeyState, int32 x, int32 y)
+bool FApplication::OnMouseButtonUp(EMouseButtonName Button, FModifierKeyState ModiferKeyState, int32 x, int32 y)
 {
     // Remove the mouse capture if there is a capture
     SetCapture(nullptr);
@@ -721,7 +674,7 @@ bool FApplication::OnMouseButtonUp(EMouseButton Button, FModifierKeyState Modife
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButton Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
 {
     // Set the mouse capture when the mouse is pressed
     SetCapture(Window);
@@ -901,7 +854,9 @@ bool FApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& InWindow)
         if (Window == InWindow)
         {
             RequestEngineExit("Normal Exit");
-            MainViewport = nullptr;
+
+            // TODO: This feels inconsistent, should this be done from engineloop? 
+            RegisterMainViewport(nullptr);
         }
     }
 
@@ -1083,6 +1038,16 @@ void FApplication::RemoveEventHandler(const FApplicationEventHandlerRef& EventHa
     EventHandlers.Remove(EventHandler);
 }
 
+void FApplication::AddWidget(const FWidgetRef& Widget)
+{
+    Widgets.AddUnique(Widget);
+}
+
+void FApplication::RemoveWidget(const FWidgetRef& Widget)
+{
+    Widgets.Remove(Widget);
+}
+
 void FApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InViewport)
 {
     if (MainViewport != InViewport)
@@ -1093,13 +1058,17 @@ void FApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InViewport)
         }
 
         MainViewport = InViewport;
-        AddEventHandler(InViewport);
-
-        MainWindow = MainViewport->GetWindow();
-        if (MainWindow)
+        if (MainViewport)
         {
-            FImGui::SetupMainViewport(InViewport.Get());
+            AddEventHandler(MainViewport);
+            MainWindow = MainViewport->GetWindow();
         }
+        else
+        {
+            MainWindow = nullptr;
+        }
+
+        FImGui::SetupMainViewport(InViewport.Get());
     }
 }
 

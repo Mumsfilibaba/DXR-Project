@@ -10,10 +10,13 @@
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
+using FWidgetRef                  = TSharedPtr<FWidget>;
 using FApplicationEventHandlerRef = TSharedPtr<FApplicationEventHandler>;
 
 struct FInputPreProcessorAndPriority
 {
+    static constexpr uint32 MaxPriority = uint32(-1);
+
     FInputPreProcessorAndPriority()
         : InputHandler(nullptr)
         , Priority(-1)
@@ -44,9 +47,8 @@ struct FInputPreProcessorAndPriority
 class APPLICATION_API FApplication : public FGenericApplicationMessageHandler, public TSharedFromThis<FApplication>
 {
 public:
-
     FApplication();
-    virtual ~FApplication();
+    virtual ~FApplication() = default;
 
     static bool Create();
     
@@ -74,21 +76,21 @@ public:
     void UpdateMonitorInfo();
   
 public: // FGenericApplicationMessageHandler Interface
-    virtual bool OnControllerButtonUp(EControllerButton Button, uint32 ControllerIndex) override final;
+    virtual bool OnControllerButtonUp(EGamepadButtonName Button, uint32 ControllerIndex) override final;
     
-    virtual bool OnControllerButtonDown(EControllerButton Button, uint32 ControllerIndex) override final;
+    virtual bool OnControllerButtonDown(EGamepadButtonName Button, uint32 ControllerIndex, bool bIsRepeat) override final;
     
-    virtual bool OnControllerAnalog(EControllerAnalog AnalogSource, uint32 ControllerIndex, float AnalogValue) override final;
+    virtual bool OnControllerAnalog(EAnalogSourceName AnalogSource, uint32 ControllerIndex, float AnalogValue) override final;
 
-    virtual bool OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState) override final;
+    virtual bool OnKeyUp(EKeyName::Type KeyCode, FModifierKeyState ModierKeyState) override final;
     
-    virtual bool OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState) override final;
+    virtual bool OnKeyDown(EKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState) override final;
     
     virtual bool OnKeyChar(uint32 Character) override final;
 
-    virtual bool OnMouseButtonUp(EMouseButton Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
+    virtual bool OnMouseButtonUp(EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
     
-    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButton Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
+    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
     
     virtual bool OnMouseMove(int32 x, int32 y) override final;
     
@@ -147,6 +149,10 @@ public:
     
     void RemoveEventHandler(const FApplicationEventHandlerRef& EventHandler);
 
+    void AddWidget(const FWidgetRef& Widget);
+
+    void RemoveWidget(const FWidgetRef& Widget);
+
     void RegisterMainViewport(const TSharedPtr<FViewport>& InViewport);
 
     void DrawWindows(class FRHICommandList& InCommandList);
@@ -189,20 +195,21 @@ public:
     }
 
 protected:
-    TArray<FApplicationEventHandlerRef>   EventHandlers; 
-    TArray<FInputPreProcessorAndPriority> InputPreProcessors;
-    TArray<TSharedRef<FGenericWindow>>    AllWindows;
-
     TUniquePtr<FImGuiRenderer> Renderer;
     TSharedPtr<FViewport>      MainViewport;
     TSharedRef<FGenericWindow> MainWindow;
     TSharedRef<FGenericWindow> FocusWindow;
 
+    TArray<FApplicationEventHandlerRef>   EventHandlers; 
+    TArray<FWidgetRef>                    Widgets;
+    TArray<FInputPreProcessorAndPriority> InputPreProcessors;
+    TArray<TSharedRef<FGenericWindow>>    AllWindows;
+
     FDisplayInfo DisplayInfo;
     bool         bIsTrackingMouse;
 
-    TSet<EKey>         PressedKeys;
-    TSet<EMouseButton> PressedMouseButtons;
+    TSet<EKeyName>         PressedKeys;
+    TSet<EMouseButtonName> PressedMouseButtons;
 
 private:
     static TSharedPtr<FApplication>        CurrentApplication;

@@ -10,70 +10,44 @@
     #pragma comment(lib,"xinput9_1_0.lib")
 #endif
 
-#define GAMEPAD_LEFT_THUMB_DEADZONE  (XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
-#define GAMEPAD_RIGHT_THUMB_DEADZONE (XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE)
-#define GAMEPAD_TRIGGER_THRESHOLD    (XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
-
-#define MAX_CONTROLLERS (XUSER_MAX_COUNT)
+#define NUM_BUTTONS (15)
 
 struct FXInputButtonState
 {
-    FXInputButtonState() = default;
-
-    FXInputButtonState(uint16 InButtonState)
-        : ButtonState{InButtonState}
-    {
-    }
-
-    bool IsButtonDown(uint16 Mask) const
-    {
-        return (ButtonState & Mask) != 0;
-    }
-
-    bool IsButtonUp(uint16 Mask) const
-    {
-        return !IsButtonDown(Mask);
-    }
-
-    FXInputButtonState& operator=(uint16 InButtonState)
-    {
-        ButtonState = InButtonState;
-        return *this;
-    }
-
-    uint16 ButtonState{0};
+    // Button is either pressed or released (1 or 0)
+    uint8 bState      : 1;
+    uint8 RepeatCount : 7;
 };
 
 struct FXInputControllerState
 {
-    uint32 LastPacketNumber;
-    
-    FXInputButtonState Buttons;
-    
-    bool   bConnected;
-    uint8  LeftTrigger;
-    uint8  RightTrigger;
+    int16 LeftThumbX;
+    int16 LeftThumbY;
 
-    int16  LeftThumbX;
-    int16  LeftThumbY;
-    
-    int16  RightThumbX;
-    int16  RightThumbY;
+    int16 RightThumbX;
+    int16 RightThumbY;
+
+    uint8 LeftTrigger;
+    uint8 RightTrigger;
+    bool  bConnected;
+
+    FXInputButtonState Buttons[NUM_BUTTONS];
 };
 
 class FXInputDevice : public FInputDevice
 {
 public:
     FXInputDevice();
-    ~FXInputDevice() = default;
+    virtual ~FXInputDevice() = default;
 
     virtual void UpdateDeviceState() override final;
 
-    virtual bool IsDeviceConnected() const override final;
+    virtual bool IsDeviceConnected() const override final
+    {
+        return bIsDeviceConnected;
+    }
 
-    void CheckForNewConnections();
-
-    void UpdateConnectedDevices();
+    void CheckForNewDevices();
 
 private:
     void ProcessInputState(const XINPUT_STATE& State, uint32 ControllerIndex);
@@ -82,11 +56,8 @@ private:
     
     void ProcessButtonUp(FGenericApplicationMessageHandler* MessageHandler, uint32 ControllerIndex, uint16 CurrentButtonState, uint16 NewButtonState);
     
-    void ProcessThumbstick(FGenericApplicationMessageHandler* MessageHandler, uint32 ControllerIndex, EControllerAnalog AnalogSource, uint16 ThumbStickValue);
+    void ProcessThumbstick(FGenericApplicationMessageHandler* MessageHandler, uint32 ControllerIndex, EAnalogSourceName AnalogSource, uint16 ThumbStickValue);
 
-    FXInputControllerState ControllerState[MAX_CONTROLLERS];
-
-    int64 LastPollTimeStamp;
-    int64 LastConnectionPollTimeStamp;
-    int64 Frequency;
+    FXInputControllerState ControllerState[XUSER_MAX_COUNT];
+    bool bIsDeviceConnected;
 };

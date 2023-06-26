@@ -2,7 +2,7 @@
 #include "Application/Widget.h"
 #include "Core/Misc/FrameProfiler.h"
 
-class FFrameProfilerWindow : public FWidget
+class FFrameProfilerWidget : public FWidget
 {
 public:
     virtual void Paint() override final;

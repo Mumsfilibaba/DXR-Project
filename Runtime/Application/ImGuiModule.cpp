@@ -2,7 +2,7 @@
 #include "Application.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-static uint32 ImGui_GetMouseButtonIndex(EMouseButton Button)
+static uint32 ImGui_GetMouseButtonIndex(EMouseButtonName Button)
 {
     switch (Button)
     {
@@ -15,7 +15,7 @@ static uint32 ImGui_GetMouseButtonIndex(EMouseButton Button)
     }
 }
 
-static ImGuiKey ImGui_KeyToImGuiKey(EKey Key)
+static ImGuiKey ImGui_KeyToImGuiKey(EKeyName::Type Key)
 {
     switch (Key)
     {
@@ -127,38 +127,38 @@ static ImGuiKey ImGui_KeyToImGuiKey(EKey Key)
     }
 }
 
-static ImGuiKey ImGui_GetGamepadButton(EControllerButton Button)
+static ImGuiKey ImGui_GetGamepadButton(EGamepadButtonName Button)
 {
     switch (Button)
     {
-    case EControllerButton::Start:         return ImGuiKey_GamepadStart;
-    case EControllerButton::Back:          return ImGuiKey_GamepadBack;
-    case EControllerButton::DPadUp:        return ImGuiKey_GamepadDpadUp;
-    case EControllerButton::DPadDown:      return ImGuiKey_GamepadDpadDown;
-    case EControllerButton::DPadLeft:      return ImGuiKey_GamepadDpadLeft;
-    case EControllerButton::DPadRight:     return ImGuiKey_GamepadDpadRight;
-    case EControllerButton::FaceUp:        return ImGuiKey_GamepadFaceUp;
-    case EControllerButton::FaceDown:      return ImGuiKey_GamepadFaceDown;
-    case EControllerButton::FaceLeft:      return ImGuiKey_GamepadFaceLeft;
-    case EControllerButton::FaceRight:     return ImGuiKey_GamepadFaceRight;
-    case EControllerButton::RightTrigger:  return ImGuiKey_GamepadR3;
-    case EControllerButton::LeftTrigger:   return ImGuiKey_GamepadL3;
-    case EControllerButton::RightShoulder: return ImGuiKey_GamepadR3;
-    case EControllerButton::LeftShoulder:  return ImGuiKey_GamepadL3;
+    case EGamepadButtonName::Start:         return ImGuiKey_GamepadStart;
+    case EGamepadButtonName::Back:          return ImGuiKey_GamepadBack;
+    case EGamepadButtonName::DPadUp:        return ImGuiKey_GamepadDpadUp;
+    case EGamepadButtonName::DPadDown:      return ImGuiKey_GamepadDpadDown;
+    case EGamepadButtonName::DPadLeft:      return ImGuiKey_GamepadDpadLeft;
+    case EGamepadButtonName::DPadRight:     return ImGuiKey_GamepadDpadRight;
+    case EGamepadButtonName::FaceUp:        return ImGuiKey_GamepadFaceUp;
+    case EGamepadButtonName::FaceDown:      return ImGuiKey_GamepadFaceDown;
+    case EGamepadButtonName::FaceLeft:      return ImGuiKey_GamepadFaceLeft;
+    case EGamepadButtonName::FaceRight:     return ImGuiKey_GamepadFaceRight;
+    case EGamepadButtonName::RightTrigger:  return ImGuiKey_GamepadR3;
+    case EGamepadButtonName::LeftTrigger:   return ImGuiKey_GamepadL3;
+    case EGamepadButtonName::RightShoulder: return ImGuiKey_GamepadR3;
+    case EGamepadButtonName::LeftShoulder:  return ImGuiKey_GamepadL3;
     default:                               return ImGuiKey_None;
     }
 }
 
-static ImGuiKey ImGui_GetGamepadAnalog(EControllerAnalog Analog, bool bIsNegative)
+static ImGuiKey ImGui_GetGamepadAnalog(EAnalogSourceName Analog, bool bIsNegative)
 {
     switch (Analog)
     {
-    case EControllerAnalog::RightThumbX:  return bIsNegative ? ImGuiKey_GamepadRStickDown : ImGuiKey_GamepadRStickUp;
-    case EControllerAnalog::RightThumbY:  return bIsNegative ? ImGuiKey_GamepadRStickLeft : ImGuiKey_GamepadRStickRight;
-    case EControllerAnalog::LeftThumbX:   return bIsNegative ? ImGuiKey_GamepadLStickDown : ImGuiKey_GamepadLStickUp;
-    case EControllerAnalog::LeftThumbY:   return bIsNegative ? ImGuiKey_GamepadLStickLeft : ImGuiKey_GamepadLStickRight;
-    case EControllerAnalog::RightTrigger: return ImGuiKey_GamepadR2;
-    case EControllerAnalog::LeftTrigger:  return ImGuiKey_GamepadL2;
+    case EAnalogSourceName::RightThumbX:  return bIsNegative ? ImGuiKey_GamepadRStickDown : ImGuiKey_GamepadRStickUp;
+    case EAnalogSourceName::RightThumbY:  return bIsNegative ? ImGuiKey_GamepadRStickLeft : ImGuiKey_GamepadRStickRight;
+    case EAnalogSourceName::LeftThumbX:   return bIsNegative ? ImGuiKey_GamepadLStickDown : ImGuiKey_GamepadLStickUp;
+    case EAnalogSourceName::LeftThumbY:   return bIsNegative ? ImGuiKey_GamepadLStickLeft : ImGuiKey_GamepadLStickRight;
+    case EAnalogSourceName::RightTrigger: return ImGuiKey_GamepadR2;
+    case EAnalogSourceName::LeftTrigger:  return ImGuiKey_GamepadL2;
     default:                              return ImGuiKey_None;
     }
 }
@@ -592,7 +592,7 @@ void FImGui::SetupMainViewport(FViewport* InViewport)
     }
 }
 
-FResponse FImGui::OnGamepadButtonEvent(EControllerButton Button, bool bIsDown)
+FResponse FImGui::OnGamepadButtonEvent(EGamepadButtonName Button, bool bIsDown)
 {
     const ImGuiKey GamepadButton = ImGui_GetGamepadButton(Button);
     if (GamepadButton != ImGuiKey_None)
@@ -603,7 +603,7 @@ FResponse FImGui::OnGamepadButtonEvent(EControllerButton Button, bool bIsDown)
     return FResponse::Unhandled();
 }
 
-FResponse FImGui::OnGamepadAnalogEvent(EControllerAnalog AnalogSource, float Analog)
+FResponse FImGui::OnGamepadAnalogEvent(EAnalogSourceName AnalogSource, float Analog)
 {
     const bool bIsNegative = Analog < 0.0f;
 
@@ -617,7 +617,7 @@ FResponse FImGui::OnGamepadAnalogEvent(EControllerAnalog AnalogSource, float Ana
     return FResponse::Unhandled();
 }
 
-FResponse FImGui::OnKeyEvent(EKey InKey, bool bIsDown)
+FResponse FImGui::OnKeyEvent(EKeyName::Type InKey, bool bIsDown)
 {
     // Update the UI-State
     ImGuiIO& UIState = ImGui::GetIO();
@@ -654,7 +654,7 @@ FResponse FImGui::OnMouseMoveEvent(int32 x, int32 y)
     return FResponse::Unhandled();
 }
 
-FResponse FImGui::OnMouseButtonEvent(EMouseButton Button, bool bIsDown)
+FResponse FImGui::OnMouseButtonEvent(EMouseButtonName Button, bool bIsDown)
 {
     ImGuiIO& UIState = ImGui::GetIO();
 

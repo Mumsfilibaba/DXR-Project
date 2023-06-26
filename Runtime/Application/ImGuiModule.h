@@ -25,17 +25,17 @@ public:
 
     static void SetupMainViewport(FViewport* InViewport);
 
-    static FResponse OnGamepadButtonEvent(EControllerButton Button, bool bIsDown);
+    static FResponse OnGamepadButtonEvent(EGamepadButtonName Button, bool bIsDown);
 
-    static FResponse OnGamepadAnalogEvent(EControllerAnalog AnalogSource, float Analog);
+    static FResponse OnGamepadAnalogEvent(EAnalogSourceName AnalogSource, float Analog);
 
-    static FResponse OnKeyEvent(EKey Key, bool bIsDown);
+    static FResponse OnKeyEvent(EKeyName::Type Key, bool bIsDown);
 
     static FResponse OnKeyCharEvent(uint32 Character);
 
     static FResponse OnMouseMoveEvent(int32 x, int32 y);
 
-    static FResponse OnMouseButtonEvent(EMouseButton ButtonIndex, bool bIsDown);
+    static FResponse OnMouseButtonEvent(EMouseButtonName ButtonIndex, bool bIsDown);
 
     static FResponse OnMouseScrollEvent(float ScrollDelta, bool bVertical);
 
@@ -59,6 +59,28 @@ public:
     static FORCEINLINE ImVec2 GetDisplayFramebufferScale()
     {
         return ImGui::GetIO().DisplayFramebufferScale;
+    }
+
+    static FORCEINLINE ImVec2 GetMainViewportPos()
+    {
+        ImVec2 Position = ImVec2(0.0f, 0.0f);
+        if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
+        {
+            Position = Viewport->WorkPos;
+        }
+
+        return Position;
+    }
+
+    static FORCEINLINE ImVec2 GetMainViewportSize()
+    {
+        ImVec2 Size = ImVec2(0.0f, 0.0f);
+        if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
+        {
+            Size = Viewport->WorkSize;
+        }
+
+        return Size;
     }
 
 private:

@@ -41,9 +41,6 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     , InstanceHandle(InInstanceHandle)
     , Icon(InIcon)
 {
-    const bool bResult = RegisterWindowClass();
-    CHECK(bResult == true);
-
     if (CVarIsProcessDPIAware.GetValue())
     {
 #if PLATFORM_WINDOWS_10
@@ -53,7 +50,14 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
 #endif
     }
 
+    const bool bResult = RegisterWindowClass();
+    CHECK(bResult == true);
+
+    // Init the key mapping Win32 KeyCodes -> EKeyName
     FWindowsKeyMapping::Initialize();
+
+    // Run a check for connected devices
+    XInputDevice.CheckForNewDevices();
  }
 
 FWindowsApplication::~FWindowsApplication()
@@ -453,7 +457,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_KEYUP:
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WINDOWS_SCAN_CODE_MASK);
-            const EKey Key = FWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
+            const EKeyName::Type Key = FWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
             MessageHandler->OnKeyUp(Key, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
@@ -462,7 +466,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_KEYDOWN:
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WINDOWS_SCAN_CODE_MASK);
-            const EKey Key = FWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
+            const EKeyName::Type Key = FWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
             const bool bIsRepeat = (lParam & WINDOWS_KEY_REPEAT_MASK) != 0;
             MessageHandler->OnKeyDown(Key, bIsRepeat, FPlatformApplicationMisc::GetModifierKeyState());
             break;
@@ -511,28 +515,28 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_RBUTTONDOWN:
         case WM_XBUTTONDOWN:
         {
-            EMouseButton Button = EMouseButton::MouseButton_Unknown;
+            EMouseButtonName Button = EMouseButtonName::MouseButton_Unknown;
             if (Message == WM_LBUTTONDOWN)
             {
-                Button = EMouseButton::MouseButton_Left;
+                Button = EMouseButtonName::MouseButton_Left;
             }
             else if (Message == WM_MBUTTONDOWN)
             {
-                Button = EMouseButton::MouseButton_Middle;
+                Button = EMouseButtonName::MouseButton_Middle;
             }
             else if (Message == WM_RBUTTONDOWN)
             {
-                Button = EMouseButton::MouseButton_Right;
+                Button = EMouseButtonName::MouseButton_Right;
             }
             else if (Message == WM_XBUTTONDOWN)
             {
                 if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
                 {
-                    Button = EMouseButton::MouseButton_Back;
+                    Button = EMouseButtonName::MouseButton_Back;
                 }
                 else
                 {
-                    Button = EMouseButton::MouseButton_Forward;
+                    Button = EMouseButtonName::MouseButton_Forward;
                 }
             }
 
@@ -547,28 +551,28 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_RBUTTONDBLCLK:
         case WM_XBUTTONDBLCLK:
         {
-            EMouseButton Button = EMouseButton::MouseButton_Unknown;
+            EMouseButtonName Button = EMouseButtonName::MouseButton_Unknown;
             if (Message == WM_LBUTTONDBLCLK)
             {
-                Button = EMouseButton::MouseButton_Left;
+                Button = EMouseButtonName::MouseButton_Left;
             }
             else if (Message == WM_MBUTTONDBLCLK)
             {
-                Button = EMouseButton::MouseButton_Middle;
+                Button = EMouseButtonName::MouseButton_Middle;
             }
             else if (Message == WM_RBUTTONDBLCLK)
             {
-                Button = EMouseButton::MouseButton_Right;
+                Button = EMouseButtonName::MouseButton_Right;
             }
             else if (Message == WM_XBUTTONDBLCLK)
             {
                 if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
                 {
-                    Button = EMouseButton::MouseButton_Back;
+                    Button = EMouseButtonName::MouseButton_Back;
                 }
                 else
                 {
-                    Button = EMouseButton::MouseButton_Forward;
+                    Button = EMouseButtonName::MouseButton_Forward;
                 }
             }
 
@@ -583,28 +587,28 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_RBUTTONUP:
         case WM_XBUTTONUP:
         {
-            EMouseButton Button = EMouseButton::MouseButton_Unknown;
+            EMouseButtonName Button = EMouseButtonName::MouseButton_Unknown;
             if (Message == WM_LBUTTONUP)
             {
-                Button = EMouseButton::MouseButton_Left;
+                Button = EMouseButtonName::MouseButton_Left;
             }
             else if (Message == WM_MBUTTONUP)
             {
-                Button = EMouseButton::MouseButton_Middle;
+                Button = EMouseButtonName::MouseButton_Middle;
             }
             else if (Message == WM_RBUTTONUP)
             {
-                Button = EMouseButton::MouseButton_Right;
+                Button = EMouseButtonName::MouseButton_Right;
             }
             else if (Message == WM_XBUTTONUP)
             {
                 if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
                 {
-                    Button = EMouseButton::MouseButton_Back;
+                    Button = EMouseButtonName::MouseButton_Back;
                 }
                 else
                 {
-                    Button = EMouseButton::MouseButton_Forward;
+                    Button = EMouseButtonName::MouseButton_Forward;
                 }
             }
 
@@ -631,7 +635,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             if (static_cast<UINT>(wParam) == DBT_DEVNODES_CHANGED)
             {
-                XInputDevice.CheckForNewConnections();
+                XInputDevice.CheckForNewDevices();
             }
 
             break;
@@ -743,10 +747,10 @@ void FWindowsApplication::StoreMessage(HWND Window, UINT Message, WPARAM wParam,
 LRESULT FWindowsApplication::ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     UINT Size = 0;
-    ::GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, NULL, &Size, sizeof(RAWINPUTHEADER));
+    ::GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, 0, &Size, sizeof(RAWINPUTHEADER));
 
     TUniquePtr<uint8[]> Buffer = MakeUnique<uint8[]>(Size);
-    if (::GetRawInputData((HRAWINPUT)lParam, RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER)) != Size)
+    if (::GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER)) != Size)
     {
         LOG_ERROR("[FWindowsApplication] GetRawInputData did not return correct size");
         return 0;

@@ -5,49 +5,34 @@
 
 class CORE_API FMacKeyMapping final : public FGenericKeyMapping
 {
-    enum 
-    { 
-        kNumKeys = 256
-    };
+    inline static constexpr uint32 NumKeys = 256;
 
 public:
     static void Initialize();
     
-    static FORCEINLINE EKey GetKeyCodeFromScanCode(uint32 ScanCode)
+    static FORCEINLINE EKeyName::Type GetKeyCodeFromScanCode(uint32 ScanCode)
     {
         return KeyCodeFromScanCodeTable[ScanCode];
     }
 
-    static FORCEINLINE uint32 GetScanCodeFromKeyCode(EKey KeyCode)
+    static FORCEINLINE uint32 GetScanCodeFromKeyCode(EKeyName::Type KeyCode)
     {
         return static_cast<uint32>(ScanCodeFromKeyCodeTable[KeyCode]);
     }
 
-public:
-
-    /**
-     * @brief             - Retrieve the mousebutton-code from mousebutton-index
-     * @param ButtonIndex - Mousebutton-index for mousebutton-code
-     * @return            - Returns a engine mousebutton-code representing the buttonindex
-     */
-    static FORCEINLINE EMouseButton GetButtonFromIndex(uint32 ButtonIndex)
+    static FORCEINLINE EMouseButtonName GetButtonFromIndex(uint32 ButtonIndex)
     {
         return ButtonFromButtonIndex[ButtonIndex];
     }
 
-    /**
-     * @brief        - Retrieve the mousebutton-code from mousebutton-index
-     * @param Button - Mousebutton-code for mousebutton index
-     * @return       - Returns a mousebutton-index representing the mousebutton-code
-     */
-    static FORCEINLINE uint32 GetButtonFromIndex(EMouseButton Button)
+    static FORCEINLINE uint32 GetButtonFromIndex(EMouseButtonName Button)
     {
         return static_cast<uint32>(ButtonIndexFromButton[Button]);
     }
 
 private:
-    static TStaticArray<EKey, kNumKeys>                                KeyCodeFromScanCodeTable;
-    static TStaticArray<uint16, kNumKeys>                              ScanCodeFromKeyCodeTable;
-    static TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> ButtonFromButtonIndex;
-    static TStaticArray<uint8, EMouseButton::MouseButton_Count>        ButtonIndexFromButton;
+    static TStaticArray<EKeyName, NumKeys>                                 KeyCodeFromScanCodeTable;
+    static TStaticArray<uint16, NumKeys>                               ScanCodeFromKeyCodeTable;
+    static TStaticArray<EMouseButtonName, EMouseButtonName::MouseButton_Count> ButtonFromButtonIndex;
+    static TStaticArray<uint8, EMouseButtonName::MouseButton_Count>        ButtonIndexFromButton;
 };

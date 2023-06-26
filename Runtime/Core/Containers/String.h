@@ -56,7 +56,7 @@ public:
      * @return         - Returns the formatted string based on the format string
      */
     template<typename... ArgTypes>
-    NODISCARD static FORCEINLINE TString CreateFormatted(const CHARTYPE* InFormat, ArgTypes&&... Args) noexcept
+    NODISCARD static FORCEINLINE TString CreateFormatted(const CHARTYPE* InFormat, ArgTypes... Args) noexcept
     {
         TString NewString;
         NewString.Format(InFormat, ::Forward<ArgTypes>(Args)...);

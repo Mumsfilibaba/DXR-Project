@@ -6,25 +6,22 @@
 
 class CORE_API FWindowsKeyMapping final : public FGenericKeyMapping
 {
-    enum 
-    { 
-        kNumKeys = 512 
-    };
+    inline static constexpr uint32 NumKeys = 512;
 
 public:
     static void Initialize();
 
-    static FORCEINLINE EKey GetKeyCodeFromScanCode(uint32 ScanCode)
+    static FORCEINLINE EKeyName::Type GetKeyCodeFromScanCode(uint32 ScanCode)
     {
         return KeyCodeFromScanCodeTable[ScanCode];
     }
 
-    static FORCEINLINE uint32 GetScanCodeFromKeyCode(EKey KeyCode)
+    static FORCEINLINE uint32 GetScanCodeFromKeyCode(EKeyName::Type KeyCode)
     {
         return static_cast<uint32>(ScanCodeFromKeyCodeTable[KeyCode]);
     }
 
 private:
-    static TStaticArray<EKey  , kNumKeys> KeyCodeFromScanCodeTable;
-    static TStaticArray<uint16, kNumKeys> ScanCodeFromKeyCodeTable;
+    static TStaticArray<EKeyName::Type  , NumKeys> KeyCodeFromScanCodeTable;
+    static TStaticArray<uint16, NumKeys> ScanCodeFromKeyCodeTable;
 };

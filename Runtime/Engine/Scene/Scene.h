@@ -80,18 +80,16 @@ public:
         TArray<ComponentType> Components;
         for (FActor* Actor : Actors)
         {
-            ComponentType* Component = Actor->GetComponentOfType<ComponentType>();
-            if (Component)
+            if (ComponentType* Component = Actor->GetComponentOfType<ComponentType>())
             {
                 Components.Emplace(*Component);
             }
         }
 
-        return Move(Components);
+        return ::Move(Components);
     }
 
     /**
-     * @brief  - Retrieve all actors of the scene
      * @return - Returns a reference to an array of all actors in the scene
      */
     FORCEINLINE const TArray<FActor*>& GetActors() const
@@ -100,7 +98,27 @@ public:
     }
 
     /**
-     * @brief  - Retrieve all lights in the scene
+     * @return - Returns a reference to an array of all actors in the scene
+     */
+    FORCEINLINE const TArray<FPlayerController*>& GetPlayerControllers() const
+    {
+        return PlayerControllers;
+    }
+
+    /**
+     * @return - Returns a pointer to the first PlayerController in the scene
+     */
+    FORCEINLINE FPlayerController* GetFirstPlayerController() const
+    {
+        if (!PlayerControllers.IsEmpty())
+        {
+            return PlayerControllers.FirstElement();
+        }
+
+        return nullptr;
+    }
+
+    /**
      * @return - Returns a reference to an array of all lights in the scene
      */
     FORCEINLINE const TArray<FLight*>& GetLights() const
@@ -109,7 +127,6 @@ public:
     }
 
     /**
-     * @brief  - Retrieve all light-probes in the scene
      * @return - Returns a reference to an array of all light-probes in the scene
      */
     FORCEINLINE const TArray<FLightProbe*>& GetLightProbes() const
@@ -118,7 +135,6 @@ public:
     }
 
     /**
-     * @brief  - Retrieve all MeshDrawCommands of the scene
      * @return - Returns a reference to an array of all MeshDrawCommands in the scene
      */
     FORCEINLINE const TArray<FMeshDrawCommand>& GetMeshDrawCommands() const
@@ -127,7 +143,6 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the camera of the scene
      * @return - Returns a pointer to the camera of the scene
      */
     FORCEINLINE FCamera* GetCamera() const

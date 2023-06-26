@@ -11,27 +11,27 @@ struct FGenericApplicationMessageHandler
 {
     virtual ~FGenericApplicationMessageHandler() = default;
 
-    virtual bool OnControllerButtonUp(EControllerButton Button, uint32 ControllerIndex)
+    virtual bool OnControllerButtonUp(EGamepadButtonName Button, uint32 ControllerIndex)
     {
         return false;
     }
 
-    virtual bool OnControllerButtonDown(EControllerButton Button, uint32 ControllerIndex)
+    virtual bool OnControllerButtonDown(EGamepadButtonName Button, uint32 ControllerIndex, bool bIsRepeat)
     {
         return false;
     }
 
-    virtual bool OnControllerAnalog(EControllerAnalog AnalogSource, uint32 ControllerIndex, float AnalogValue)
+    virtual bool OnControllerAnalog(EAnalogSourceName AnalogSource, uint32 ControllerIndex, float AnalogValue)
     {
         return false;
     }
 
-    virtual bool OnKeyUp(EKey KeyCode, FModifierKeyState ModierKeyState)
+    virtual bool OnKeyUp(EKeyName::Type KeyCode, FModifierKeyState ModierKeyState)
     {
         return false;
     }
 
-    virtual bool OnKeyDown(EKey KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
+    virtual bool OnKeyDown(EKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
     {
         return false;
     }
@@ -46,17 +46,17 @@ struct FGenericApplicationMessageHandler
         return false;
     }
 
-    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButton Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
     {
         return false;
     }
 
-    virtual bool OnMouseButtonDoubleClick(const TSharedRef<FGenericWindow>& Window, EMouseButton Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    virtual bool OnMouseButtonDoubleClick(const TSharedRef<FGenericWindow>& Window, EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
     {
         return false;
     }
 
-    virtual bool OnMouseButtonUp(EMouseButton Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    virtual bool OnMouseButtonUp(EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
     {
         return false;
     }

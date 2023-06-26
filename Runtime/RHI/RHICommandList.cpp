@@ -1,9 +1,7 @@
 #include "RHICommandList.h"
-
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
-
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 RHI_API FRHICommandListExecutor GRHICommandExecutor;

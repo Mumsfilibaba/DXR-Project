@@ -1,7 +1,5 @@
 #include "SceneViewport.h"
 
-DISABLE_UNREFERENCED_VARIABLE_WARNING
-
 FSceneViewport::FSceneViewport(const TWeakPtr<FViewport>& InViewport)
     : IViewport()
     , Viewport(InViewport)
@@ -11,82 +9,126 @@ FSceneViewport::FSceneViewport(const TWeakPtr<FViewport>& InViewport)
 
 FSceneViewport::~FSceneViewport()
 {
-    Scene = nullptr;
+    Viewport = nullptr;
+    Scene    = nullptr;
 }
 
 FResponse FSceneViewport::OnControllerAnalog(const FControllerEvent& ControllerEvent)
 {
-    return FResponse::Unhandled();
-}
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->OnControllerEvent(ControllerEvent);
+        return FResponse::Handled();
+    }
 
-FResponse FSceneViewport::OnControllerButtonUp(const FControllerEvent& ControllerEvent)
-{
     return FResponse::Unhandled();
 }
 
 FResponse FSceneViewport::OnControllerButtonDown(const FControllerEvent& ControllerEvent)
 {
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->OnControllerEvent(ControllerEvent);
+        return FResponse::Handled();
+    }
+
+    return FResponse::Unhandled();
+}
+
+FResponse FSceneViewport::OnControllerButtonUp(const FControllerEvent& ControllerEvent)
+{
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->OnControllerEvent(ControllerEvent);
+        return FResponse::Handled();
+    }
+
     return FResponse::Unhandled();
 }
 
 FResponse FSceneViewport::OnKeyDown(const FKeyEvent& KeyEvent)
 {
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent);
+        return FResponse::Handled();
+    }
+
     return FResponse::Unhandled();
 }
 
 FResponse FSceneViewport::OnKeyUp(const FKeyEvent& KeyEvent)
 {
-    return FResponse::Unhandled();
-}
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent);
+        return FResponse::Handled();
+    }
 
-FResponse FSceneViewport::OnKeyChar(const FKeyEvent& KeyEvent)
-{
     return FResponse::Unhandled();
 }
 
 FResponse FSceneViewport::OnMouseMove(const FMouseEvent& MouseEvent)
 {
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->OnMouseEvent(MouseEvent);
+        return FResponse::Handled();
+    }
+
     return FResponse::Unhandled();
 }
 
 FResponse FSceneViewport::OnMouseButtonDown(const FMouseEvent& MouseEvent)
 {
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->OnMouseEvent(MouseEvent);
+        return FResponse::Handled();
+    }
+
     return FResponse::Unhandled();
 }
 
 FResponse FSceneViewport::OnMouseButtonUp(const FMouseEvent& MouseEvent)
 {
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->OnMouseEvent(MouseEvent);
+        return FResponse::Handled();
+    }
+
     return FResponse::Unhandled();
 }
 
 FResponse FSceneViewport::OnMouseScroll(const FMouseEvent& MouseEvent)
 {
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->OnMouseEvent(MouseEvent);
+        return FResponse::Handled();
+    }
+
     return FResponse::Unhandled();
 }
 
 FResponse FSceneViewport::OnMouseDoubleClick(const FMouseEvent& MouseEvent)
 {
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->OnMouseEvent(MouseEvent);
+        return FResponse::Handled();
+    }
+
     return FResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnFocusLost(const FWindowEvent& WindowEvent)
+FResponse FSceneViewport::OnFocusLost()
 {
-	return FResponse::Unhandled();
-}
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->ResetStates();
+    }
 
-FResponse FSceneViewport::OnFocusGained(const FWindowEvent& WindowEvent)
-{
-	return FResponse::Unhandled();
-}
-
-FResponse FSceneViewport::OnMouseEntered(const FWindowEvent& WindowEvent)
-{
     return FResponse::Unhandled();
 }
-
-FResponse FSceneViewport::OnMouseLeft(const FWindowEvent& WindowEvent)
-{
-    return FResponse::Unhandled();
-}
-
-ENABLE_UNREFERENCED_VARIABLE_WARNING

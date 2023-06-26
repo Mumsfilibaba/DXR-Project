@@ -36,11 +36,11 @@ struct FConsoleInputHandler final : public FInputPreProcessor
     bool bConsoleToggled = false;
 };
 
-class FGameConsoleWindow final : public FWidget, public IOutputDevice
+class FConsoleWidget final : public FWidget, public IOutputDevice
 {
 public:
-    FGameConsoleWindow();
-    ~FGameConsoleWindow();
+    FConsoleWidget();
+    ~FConsoleWidget();
 
     virtual void Paint() override final;
 

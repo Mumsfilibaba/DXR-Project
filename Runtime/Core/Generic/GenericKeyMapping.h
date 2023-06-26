@@ -13,14 +13,14 @@ struct FGenericKeyMapping
      * @param Scan - Code - Scan-Code to convert into a engine key-code
      * @return     - Returns a engine key-code
      */
-    static FORCEINLINE EKey GetKeyCodeFromScanCode(uint32 ScanCode) { return EKey::Key_Unknown; }
+    static FORCEINLINE EKeyName::Type GetKeyCodeFromScanCode(uint32 ScanCode) { return EKeyName::Unknown; }
 
     /**
      * @brief     - Retrieve the scan-code from the key-code
      * @param Key - Code - Engine key-code to convert into a scan-code
      * @return    - Returns a scan-code representing the engine key-code
      */
-    static FORCEINLINE uint32 GetScanCodeFromKeyCode(EKey KeyCode) { return 0; }
+    static FORCEINLINE uint32 GetScanCodeFromKeyCode(EKeyName::Type KeyCode) { return 0; }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

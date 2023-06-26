@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 
+// TODO: Add CVar for these
 #if DEBUG_BUILD
     #define USE_DEBUG_MALLOC (0)
 #else
@@ -13,7 +14,9 @@
 
 #if DEBUG_BUILD
     #define TRACK_MALLOC_CALLSTACK (1)
-#else
+#elif RELEASE_BUILD
+    #define TRACK_MALLOC_CALLSTACK (0)
+#elif PRODUCTION_BUILD
     #define TRACK_MALLOC_CALLSTACK (0)
 #endif
 

@@ -1,148 +1,291 @@
 #pragma once
 #include "Core/Core.h"
 
-enum EKey : uint8
+enum EModifierFlag : uint8
 {
-    Key_Unknown        = 0,
-
-    // Numbers
-    Key_0              = 7,
-    Key_1              = 8,
-    Key_2              = 9,
-    Key_3              = 10,
-    Key_4              = 11,
-    Key_5              = 12,
-    Key_6              = 13,
-    Key_7              = 14,
-    Key_8              = 15,
-    Key_9              = 16,
-
-    // Letters
-    Key_A              = 19,
-    Key_B              = 20,
-    Key_C              = 21,
-    Key_D              = 22,
-    Key_E              = 23,
-    Key_F              = 24,
-    Key_G              = 25,
-    Key_H              = 26,
-    Key_I              = 27,
-    Key_J              = 28,
-    Key_K              = 29,
-    Key_L              = 30,
-    Key_M              = 31,
-    Key_N              = 32,
-    Key_O              = 33,
-    Key_P              = 34,
-    Key_Q              = 35,
-    Key_R              = 36,
-    Key_S              = 37,
-    Key_T              = 38,
-    Key_U              = 39,
-    Key_V              = 40,
-    Key_W              = 41,
-    Key_X              = 42,
-    Key_Y              = 43,
-    Key_Z              = 44,
-
-    // Function Keys
-    Key_F1             = 70,
-    Key_F2             = 71,
-    Key_F3             = 72,
-    Key_F4             = 73,
-    Key_F5             = 74,
-    Key_F6             = 75,
-    Key_F7             = 76,
-    Key_F8             = 77,
-    Key_F9             = 78,
-    Key_F10            = 79,
-    Key_F11            = 80,
-    Key_F12            = 81,
-    Key_F13            = 82,
-    Key_F14            = 83,
-    Key_F15            = 84,
-    Key_F16            = 85,
-    Key_F17            = 86,
-    Key_F18            = 87,
-    Key_F19            = 88,
-    Key_F20            = 89,
-    Key_F21            = 90,
-    Key_F22            = 91,
-    Key_F23            = 92,
-    Key_F24            = 93,
-    Key_F25            = 94,
-
-    // Keypad
-    Key_Keypad0        = 95,
-    Key_Keypad1        = 96,
-    Key_Keypad2        = 97,
-    Key_Keypad3        = 98,
-    Key_Keypad4        = 99,
-    Key_Keypad5        = 100,
-    Key_Keypad6        = 101,
-    Key_Keypad7        = 102,
-    Key_Keypad8        = 103,
-    Key_Keypad9        = 104,
-    Key_KeypadDecimal  = 105,
-    Key_KeypadDivide   = 106,
-    Key_KeypadMultiply = 107,
-    Key_KeypadSubtract = 108,
-    Key_KeypadAdd      = 109,
-    Key_KeypadEnter    = 110,
-    Key_KeypadEqual    = 111,
-
-    // Ctrl, Shift, Alt, Etc.
-    Key_LeftShift      = 112,
-    Key_LeftControl    = 113,
-    Key_LeftAlt        = 114,
-    Key_LeftSuper      = 115,
-    Key_RightShift     = 116,
-    Key_RightControl   = 117,
-    Key_RightAlt       = 118,
-    Key_RightSuper     = 119,
-    Key_Menu           = 120,
-
-    // Other
-    Key_Space          = 1,
-    Key_Apostrophe     = 2,  /* ' */
-    Key_Comma          = 3,  /* , */
-    Key_Minus          = 4,  /* - */
-    Key_Period         = 5,  /* . */
-    Key_Slash          = 6,  /* / */
-    Key_Semicolon      = 17, /* ; */
-    Key_Equal          = 18, /* = */
-    Key_LeftBracket    = 45, /* [ */
-    Key_Backslash      = 46, /* \ */
-    Key_RightBracket   = 47, /* ] */
-    Key_GraveAccent    = 48, /* ` */
-    Key_World1         = 49, /* Other */
-    Key_World2         = 50, /* Other */
-    Key_Escape         = 51,
-    Key_Enter          = 52,
-    Key_Tab            = 53,
-    Key_Backspace      = 54,
-    Key_Insert         = 55,
-    Key_Delete         = 56,
-    Key_Right          = 57,
-    Key_Left           = 58,
-    Key_Down           = 59,
-    Key_Up             = 60,
-    Key_PageUp         = 61,
-    Key_PageDown       = 62,
-    Key_Home           = 63,
-    Key_End            = 64,
-    Key_CapsLock       = 65,
-    Key_ScrollLock     = 66,
-    Key_NumLock        = 67,
-    Key_PrintScreen    = 68,
-    Key_Pause          = 69,
-
-    Key_Last  = Key_Menu,
-    Key_Count = Key_Last + 1
+    ModifierFlag_None     = 0,
+    ModifierFlag_Ctrl     = FLAG(1),
+    ModifierFlag_Alt      = FLAG(2),
+    ModifierFlag_Shift    = FLAG(3),
+    ModifierFlag_CapsLock = FLAG(4),
+    ModifierFlag_Super    = FLAG(5),
+    ModifierFlag_NumLock  = FLAG(6),
 };
 
 
-enum EMouseButton : uint8
+namespace EKeyName
+{
+    enum Type : uint8
+    {
+        Unknown            = 0,
+
+        // Numbers
+        Zero               = 7,
+        One                = 8,
+        Two                = 9,
+        Three              = 10,
+        Four               = 11,
+        Five               = 12,
+        Six                = 13,
+        Seven              = 14,
+        Eight              = 15,
+        Nine               = 16,
+
+        // Letters
+        A                  = 19,
+        B                  = 20,
+        C                  = 21,
+        D                  = 22,
+        E                  = 23,
+        F                  = 24,
+        G                  = 25,
+        H                  = 26,
+        I                  = 27,
+        J                  = 28,
+        K                  = 29,
+        L                  = 30,
+        M                  = 31,
+        N                  = 32,
+        O                  = 33,
+        P                  = 34,
+        Q                  = 35,
+        R                  = 36,
+        S                  = 37,
+        T                  = 38,
+        U                  = 39,
+        V                  = 40,
+        W                  = 41,
+        X                  = 42,
+        Y                  = 43,
+        Z                  = 44,
+
+        // Function Keys
+        F1                 = 70,
+        F2                 = 71,
+        F3                 = 72,
+        F4                 = 73,
+        F5                 = 74,
+        F6                 = 75,
+        F7                 = 76,
+        F8                 = 77,
+        F9                 = 78,
+        F10                = 79,
+        F11                = 80,
+        F12                = 81,
+        F13                = 82,
+        F14                = 83,
+        F15                = 84,
+        F16                = 85,
+        F17                = 86,
+        F18                = 87,
+        F19                = 88,
+        F20                = 89,
+        F21                = 90,
+        F22                = 91,
+        F23                = 92,
+        F24                = 93,
+        F25                = 94,
+
+        // Keypad
+        KeypadZero         = 95,
+        KeypadOne          = 96,
+        KeypadTwo          = 97,
+        KeypadThree        = 98,
+        KeypadFour         = 99,
+        KeypadFive         = 100,
+        KeypadSix          = 101,
+        KeypadSeven        = 102,
+        KeypadEight        = 103,
+        KeypadNine         = 104,
+        KeypadDecimal      = 105,
+        KeypadDivide       = 106,
+        KeypadMultiply     = 107,
+        KeypadSubtract     = 108,
+        KeypadAdd          = 109,
+        KeypadEnter        = 110,
+        KeypadEqual        = 111,
+
+        // Ctrl, Shift, Alt, Etc.
+        LeftShift          = 112,
+        LeftControl        = 113,
+        LeftAlt            = 114,
+        LeftSuper          = 115,
+        RightShift         = 116,
+        RightControl       = 117,
+        RightAlt           = 118,
+        RightSuper         = 119,
+        Menu               = 120,
+
+        // Other
+        Space              = 1,
+        Apostrophe         = 2,  /* ' */
+        Comma              = 3,  /* , */
+        Minus              = 4,  /* - */
+        Period             = 5,  /* . */
+        Slash              = 6,  /* / */
+        Semicolon          = 17, /* ; */
+        Equal              = 18, /* = */
+        LeftBracket        = 45, /* [ */
+        Backslash          = 46, /* \ */
+        RightBracket       = 47, /* ] */
+        GraveAccent        = 48, /* ` */
+        World1             = 49, /* Other */
+        World2             = 50, /* Other */
+        Escape             = 51,
+        Enter              = 52,
+        Tab                = 53,
+        Backspace          = 54,
+        Insert             = 55,
+        Delete             = 56,
+        Right              = 57,
+        Left               = 58,
+        Down               = 59,
+        Up                 = 60,
+        PageUp             = 61,
+        PageDown           = 62,
+        Home               = 63,
+        End                = 64,
+        CapsLock           = 65,
+        ScrollLock         = 66,
+        NumLock            = 67,
+        PrintScreen        = 68,
+        Pause              = 69,
+
+        Last  = Menu,
+        Count = Last + 1
+    };
+} 
+
+constexpr const CHAR* ToString(EKeyName::Type key)
+{
+    switch (key)
+    {
+    case EKeyName::Zero:           return "0";
+    case EKeyName::One:            return "1";
+    case EKeyName::Two:            return "2";
+    case EKeyName::Three:          return "3";
+    case EKeyName::Four:           return "4";
+    case EKeyName::Five:           return "5";
+    case EKeyName::Six:            return "6";
+    case EKeyName::Seven:          return "7";
+    case EKeyName::Eight:          return "8";
+    case EKeyName::Nine:           return "9";
+    case EKeyName::A:              return "A";
+    case EKeyName::B:              return "B";
+    case EKeyName::C:              return "C";
+    case EKeyName::D:              return "D";
+    case EKeyName::E:              return "E";
+    case EKeyName::F:              return "F";
+    case EKeyName::G:              return "G";
+    case EKeyName::H:              return "H";
+    case EKeyName::I:              return "I";
+    case EKeyName::J:              return "J";
+    case EKeyName::K:              return "K";
+    case EKeyName::L:              return "L";
+    case EKeyName::M:              return "M";
+    case EKeyName::N:              return "N";
+    case EKeyName::O:              return "O";
+    case EKeyName::P:              return "P";
+    case EKeyName::Q:              return "Q";
+    case EKeyName::R:              return "R";
+    case EKeyName::S:              return "S";
+    case EKeyName::T:              return "T";
+    case EKeyName::U:              return "U";
+    case EKeyName::V:              return "V";
+    case EKeyName::W:              return "W";
+    case EKeyName::X:              return "X";
+    case EKeyName::Y:              return "Y";
+    case EKeyName::Z:              return "Z";
+    case EKeyName::F1:             return "F1";
+    case EKeyName::F2:             return "F2";
+    case EKeyName::F3:             return "F3";
+    case EKeyName::F4:             return "F4";
+    case EKeyName::F5:             return "F5";
+    case EKeyName::F6:             return "F6";
+    case EKeyName::F7:             return "F7";
+    case EKeyName::F8:             return "F8";
+    case EKeyName::F9:             return "F9";
+    case EKeyName::F10:            return "F10";
+    case EKeyName::F11:            return "F11";
+    case EKeyName::F12:            return "F12";
+    case EKeyName::F13:            return "F13";
+    case EKeyName::F14:            return "F14";
+    case EKeyName::F15:            return "F15";
+    case EKeyName::F16:            return "F16";
+    case EKeyName::F17:            return "F17";
+    case EKeyName::F18:            return "F18";
+    case EKeyName::F19:            return "F19";
+    case EKeyName::F20:            return "F20";
+    case EKeyName::F21:            return "F21";
+    case EKeyName::F22:            return "F22";
+    case EKeyName::F23:            return "F23";
+    case EKeyName::F24:            return "F24";
+    case EKeyName::F25:            return "F25";
+    case EKeyName::KeypadZero:     return "KEYPAD_0";
+    case EKeyName::KeypadOne:      return "KEYPAD_1";
+    case EKeyName::KeypadTwo:      return "KEYPAD_2";
+    case EKeyName::KeypadThree:    return "KEYPAD_3";
+    case EKeyName::KeypadFour:     return "KEYPAD_4";
+    case EKeyName::KeypadFive:     return "KEYPAD_5";
+    case EKeyName::KeypadSix:      return "KEYPAD_6";
+    case EKeyName::KeypadSeven:    return "KEYPAD_7";
+    case EKeyName::KeypadEight:    return "KEYPAD_8";
+    case EKeyName::KeypadNine:     return "KEYPAD_9";
+    case EKeyName::KeypadDecimal:  return "KEYPAD_DECIMAL";
+    case EKeyName::KeypadDivide:   return "KEYPAD_DIVIDE";
+    case EKeyName::KeypadMultiply: return "KEYPAD_MULTIPLY";
+    case EKeyName::KeypadSubtract: return "KEYPAD_SUBTRACT";
+    case EKeyName::KeypadAdd:      return "KEYPAD_ADD";
+    case EKeyName::KeypadEnter:    return "KEYPAD_ENTER";
+    case EKeyName::KeypadEqual:    return "KEYPAD_EQUAL";
+    case EKeyName::LeftShift:      return "LEFT_SHIFT";
+    case EKeyName::LeftControl:    return "LEFT_CONTROL";
+    case EKeyName::LeftAlt:        return "LEFT_ALT";
+    case EKeyName::LeftSuper:      return "LEFT_SUPER";
+    case EKeyName::RightShift:     return "RIGHT_SHIFT";
+    case EKeyName::RightControl:   return "RIGHT_CONTROL";
+    case EKeyName::RightAlt:       return "RIGHT_ALT";
+    case EKeyName::RightSuper:     return "RIGHT_SUPER";
+    case EKeyName::Menu:           return "MENU";
+    case EKeyName::Space:          return "SPACE";
+    case EKeyName::Apostrophe:     return "APOSTROPHE";
+    case EKeyName::Comma:          return "COMMA";
+    case EKeyName::Minus:          return "MINUS";
+    case EKeyName::Period:         return "PERIOD";
+    case EKeyName::Slash:          return "SLASH";
+    case EKeyName::Semicolon:      return "SEMICOLON";
+    case EKeyName::Equal:          return "EQUAL";
+    case EKeyName::LeftBracket:    return "LEFT_BRACKET";
+    case EKeyName::Backslash:      return "BACKSLASH";
+    case EKeyName::RightBracket:   return "RIGHT_BRACKET";
+    case EKeyName::GraveAccent:    return "GRAVE_ACCENT";
+    case EKeyName::World1:         return "WORLD_1";
+    case EKeyName::World2:         return "WORLD_2";
+    case EKeyName::Escape:         return "ESCAPE";
+    case EKeyName::Enter:          return "ENTER";
+    case EKeyName::Tab:            return "TAB";
+    case EKeyName::Backspace:      return "BACKSPACE";
+    case EKeyName::Insert:         return "INSERT";
+    case EKeyName::Delete:         return "DELETE";
+    case EKeyName::Right:          return "RIGHT";
+    case EKeyName::Left:           return "LEFT";
+    case EKeyName::Down:           return "DOWN";
+    case EKeyName::Up:             return "UP";
+    case EKeyName::PageUp:         return "PAGE_UP";
+    case EKeyName::PageDown:       return "PAGE_DOWN";
+    case EKeyName::Home:           return "HOME";
+    case EKeyName::End:            return "END";
+    case EKeyName::CapsLock:       return "CAPS_LOCK";
+    case EKeyName::ScrollLock:     return "SCROLL_LOCK";
+    case EKeyName::NumLock:        return "NUM_LOCK";
+    case EKeyName::PrintScreen:    return "PRINT_SCREEN";
+    case EKeyName::Pause:          return "PAUSE";
+    default:                       return "UNKNOWN";
+    }
+}
+
+
+enum EMouseButtonName : uint8
 {
     MouseButton_Unknown = 0,
     MouseButton_Left,
@@ -155,19 +298,21 @@ enum EMouseButton : uint8
     MouseButton_Count = MouseButton_Last + 1
 };
 
-
-enum EModifierFlag
+constexpr const CHAR* ToString(EMouseButtonName Button)
 {
-    ModifierFlag_None     = 0,
-    ModifierFlag_Ctrl     = FLAG(1),
-    ModifierFlag_Alt      = FLAG(2),
-    ModifierFlag_Shift    = FLAG(3),
-    ModifierFlag_CapsLock = FLAG(4),
-    ModifierFlag_Super    = FLAG(5),
-    ModifierFlag_NumLock  = FLAG(6),
-};
+    switch (Button)
+    {
+    case MouseButton_Left:    return "LeftMouse";
+    case MouseButton_Right:   return "RightMouse";
+    case MouseButton_Middle:  return "MiddleMouse";
+    case MouseButton_Back:    return "Back";
+    case MouseButton_Forward: return "Forward";
+    default:                  return "Unknown";
+    }
+}
 
-enum class EControllerButton
+
+enum class EGamepadButtonName : uint8
 {
     Unknown = 0,
 
@@ -191,7 +336,34 @@ enum class EControllerButton
     Back,
 };
 
-enum class EControllerAnalog
+constexpr const CHAR* ToString(EGamepadButtonName Button)
+{
+    switch (Button)
+    {
+    case EGamepadButtonName::DPadUp:        return "DPadUp";
+    case EGamepadButtonName::DPadDown:      return "DPadDown";
+    case EGamepadButtonName::DPadLeft:      return "DPadLeft";
+    case EGamepadButtonName::DPadRight:     return "DPadRight";
+
+    case EGamepadButtonName::FaceUp:        return "FaceUp";
+    case EGamepadButtonName::FaceDown:      return "FaceDown";
+    case EGamepadButtonName::FaceLeft:      return "FaceLeft";
+    case EGamepadButtonName::FaceRight:     return "FaceRight";
+
+    case EGamepadButtonName::RightTrigger:  return "RightTrigger";
+    case EGamepadButtonName::LeftTrigger:   return "LeftTrigger";
+
+    case EGamepadButtonName::RightShoulder: return "RightShoulder";
+    case EGamepadButtonName::LeftShoulder:  return "LeftShoulder";
+
+    case EGamepadButtonName::Start:         return "Start";
+    case EGamepadButtonName::Back:          return "Back";
+    default:                                return "Unknown";
+    }
+}
+
+
+enum class EAnalogSourceName : uint8
 {
     Unknown = 0,
     
@@ -204,184 +376,17 @@ enum class EControllerAnalog
     LeftTrigger,
 };
 
-constexpr const CHAR* ToString(EKey key)
+constexpr const CHAR* ToString(EAnalogSourceName AnalogSourceName)
 {
-    switch (key)
+    switch (AnalogSourceName)
     {
-    case Key_0:              return "0";
-    case Key_1:              return "1";
-    case Key_2:              return "2";
-    case Key_3:              return "3";
-    case Key_4:              return "4";
-    case Key_5:              return "5";
-    case Key_6:              return "6";
-    case Key_7:              return "7";
-    case Key_8:              return "8";
-    case Key_9:              return "9";
-    case Key_A:              return "A";
-    case Key_B:              return "B";
-    case Key_C:              return "C";
-    case Key_D:              return "D";
-    case Key_E:              return "E";
-    case Key_F:              return "F";
-    case Key_G:              return "G";
-    case Key_H:              return "H";
-    case Key_I:              return "I";
-    case Key_J:              return "J";
-    case Key_K:              return "K";
-    case Key_L:              return "L";
-    case Key_M:              return "M";
-    case Key_N:              return "N";
-    case Key_O:              return "O";
-    case Key_P:              return "P";
-    case Key_Q:              return "Q";
-    case Key_R:              return "R";
-    case Key_S:              return "S";
-    case Key_T:              return "T";
-    case Key_U:              return "U";
-    case Key_V:              return "V";
-    case Key_W:              return "W";
-    case Key_X:              return "X";
-    case Key_Y:              return "Y";
-    case Key_Z:              return "Z";
-    case Key_F1:             return "F1";
-    case Key_F2:             return "F2";
-    case Key_F3:             return "F3";
-    case Key_F4:             return "F4";
-    case Key_F5:             return "F5";
-    case Key_F6:             return "F6";
-    case Key_F7:             return "F7";
-    case Key_F8:             return "F8";
-    case Key_F9:             return "F9";
-    case Key_F10:            return "F10";
-    case Key_F11:            return "F11";
-    case Key_F12:            return "F12";
-    case Key_F13:            return "F13";
-    case Key_F14:            return "F14";
-    case Key_F15:            return "F15";
-    case Key_F16:            return "F16";
-    case Key_F17:            return "F17";
-    case Key_F18:            return "F18";
-    case Key_F19:            return "F19";
-    case Key_F20:            return "F20";
-    case Key_F21:            return "F21";
-    case Key_F22:            return "F22";
-    case Key_F23:            return "F23";
-    case Key_F24:            return "F24";
-    case Key_F25:            return "F25";
-    case Key_Keypad0:        return "KEYPAD_0";
-    case Key_Keypad1:        return "KEYPAD_1";
-    case Key_Keypad2:        return "KEYPAD_2";
-    case Key_Keypad3:        return "KEYPAD_3";
-    case Key_Keypad4:        return "KEYPAD_4";
-    case Key_Keypad5:        return "KEYPAD_5";
-    case Key_Keypad6:        return "KEYPAD_6";
-    case Key_Keypad7:        return "KEYPAD_7";
-    case Key_Keypad8:        return "KEYPAD_8";
-    case Key_Keypad9:        return "KEYPAD_9";
-    case Key_KeypadDecimal:  return "KEYPAD_DECIMAL";
-    case Key_KeypadDivide:   return "KEYPAD_DIVIDE";
-    case Key_KeypadMultiply: return "KEYPAD_MULTIPLY";
-    case Key_KeypadSubtract: return "KEYPAD_SUBTRACT";
-    case Key_KeypadAdd:      return "KEYPAD_ADD";
-    case Key_KeypadEnter:    return "KEYPAD_ENTER";
-    case Key_KeypadEqual:    return "KEYPAD_EQUAL";
-    case Key_LeftShift:      return "LEFT_SHIFT";
-    case Key_LeftControl:    return "LEFT_CONTROL";
-    case Key_LeftAlt:        return "LEFT_ALT";
-    case Key_LeftSuper:      return "LEFT_SUPER";
-    case Key_RightShift:     return "RIGHT_SHIFT";
-    case Key_RightControl:   return "RIGHT_CONTROL";
-    case Key_RightAlt:       return "RIGHT_ALT";
-    case Key_RightSuper:     return "RIGHT_SUPER";
-    case Key_Menu:           return "MENU";
-    case Key_Space:          return "SPACE";
-    case Key_Apostrophe:     return "APOSTROPHE";
-    case Key_Comma:          return "COMMA";
-    case Key_Minus:          return "MINUS";
-    case Key_Period:         return "PERIOD";
-    case Key_Slash:          return "SLASH";
-    case Key_Semicolon:      return "SEMICOLON";
-    case Key_Equal:          return "EQUAL";
-    case Key_LeftBracket:    return "LEFT_BRACKET";
-    case Key_Backslash:      return "BACKSLASH";
-    case Key_RightBracket:   return "RIGHT_BRACKET";
-    case Key_GraveAccent:    return "GRAVE_ACCENT";
-    case Key_World1:         return "WORLD_1";
-    case Key_World2:         return "WORLD_2";
-    case Key_Escape:         return "ESCAPE";
-    case Key_Enter:          return "ENTER";
-    case Key_Tab:            return "TAB";
-    case Key_Backspace:      return "BACKSPACE";
-    case Key_Insert:         return "INSERT";
-    case Key_Delete:         return "DELETE";
-    case Key_Right:          return "RIGHT";
-    case Key_Left:           return "LEFT";
-    case Key_Down:           return "DOWN";
-    case Key_Up:             return "UP";
-    case Key_PageUp:         return "PAGE_UP";
-    case Key_PageDown:       return "PAGE_DOWN";
-    case Key_Home:           return "HOME";
-    case Key_End:            return "END";
-    case Key_CapsLock:       return "CAPS_LOCK";
-    case Key_ScrollLock:     return "SCROLL_LOCK";
-    case Key_NumLock:        return "NUM_LOCK";
-    case Key_PrintScreen:    return "PRINT_SCREEN";
-    case Key_Pause:          return "PAUSE";
-    default:                 return "UNKNOWN";
-    }
-}
+    case EAnalogSourceName::RightThumbX:  return "RightThumbX";
+    case EAnalogSourceName::RightThumbY:  return "RightThumbY";
+    case EAnalogSourceName::LeftThumbX:   return "LeftThumbX";
+    case EAnalogSourceName::LeftThumbY:   return "LeftThumbY";
 
-constexpr const CHAR* ToString(EMouseButton Button)
-{
-    switch (Button)
-    {
-    case MouseButton_Left:    return "LeftMouse";
-    case MouseButton_Right:   return "RightMouse";
-    case MouseButton_Middle:  return "MiddleMouse";
-    case MouseButton_Back:    return "Back";
-    case MouseButton_Forward: return "Forward";
-    default:                  return "Unknown";
-    }
-}
-
-constexpr const CHAR* ToString(EControllerButton Button)
-{
-    switch (Button)
-    {
-    case EControllerButton::DPadUp:        return "DPadUp";
-    case EControllerButton::DPadDown:      return "DPadDown";
-    case EControllerButton::DPadLeft:      return "DPadLeft";
-    case EControllerButton::DPadRight:     return "DPadRight";
-
-    case EControllerButton::FaceUp:        return "FaceUp";
-    case EControllerButton::FaceDown:      return "FaceDown";
-    case EControllerButton::FaceLeft:      return "FaceLeft";
-    case EControllerButton::FaceRight:     return "FaceRight";
-
-    case EControllerButton::RightTrigger:  return "RightTrigger";
-    case EControllerButton::LeftTrigger:   return "LeftTrigger";
-
-    case EControllerButton::RightShoulder: return "RightShoulder";
-    case EControllerButton::LeftShoulder:  return "LeftShoulder";
-
-    case EControllerButton::Start:         return "Start";
-    case EControllerButton::Back:          return "Back";
-    default:                               return "Unknown";
-    }
-}
-
-constexpr const CHAR* ToString(EControllerAnalog Button)
-{
-    switch (Button)
-    {
-    case EControllerAnalog::RightThumbX:  return "RightThumbX";
-    case EControllerAnalog::RightThumbY:  return "RightThumbY";
-    case EControllerAnalog::LeftThumbX:   return "LeftThumbX";
-    case EControllerAnalog::LeftThumbY:   return "LeftThumbY";
-
-    case EControllerAnalog::RightTrigger: return "RightTrigger";
-    case EControllerAnalog::LeftTrigger:  return "LeftTrigger";
+    case EAnalogSourceName::RightTrigger: return "RightTrigger";
+    case EAnalogSourceName::LeftTrigger:  return "LeftTrigger";
     default:                              return "Unknown";
     }
 }

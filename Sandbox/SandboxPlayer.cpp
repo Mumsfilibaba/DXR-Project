@@ -1,6 +1,7 @@
 #include "SandboxPlayer.h"
 #include <Engine/Scene/Camera.h>
 #include <Engine/Scene/Scene.h>
+#include <Core/Misc/OutputDeviceLogger.h>
 
 FSandboxPlayerController::FSandboxPlayerController(FScene* InScene)
     : FPlayerController(InScene)
@@ -16,58 +17,82 @@ void FSandboxPlayerController::Tick(FTimespan DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    const float Delta = static_cast<float>(DeltaTime.AsSeconds());
+    const float Delta         = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
+    const float Deadzone      = 0.01f;
 
     FPlayerInput* InputState = GetPlayerInput();
-    if (InputState->IsKeyDown(EKey::Key_Right))
+    
+    const FAnalogAxisState RightThumbX = InputState->GetAnalogState(EAnalogSourceName::RightThumbX);
+    const FAnalogAxisState RightThumbY = InputState->GetAnalogState(EAnalogSourceName::RightThumbY);
+    
+    if (FMath::Abs(RightThumbX.Value) > Deadzone)
+    {
+        Camera->Rotate(0.0f, FMath::ToRadians(RightThumbX.Value * RotationSpeed * Delta), 0.0f);
+    }
+    else if (InputState->IsKeyDown(EKeyName::Right))
     {
         Camera->Rotate(0.0f, FMath::ToRadians(RotationSpeed * Delta), 0.0f);
     }
-    else if (InputState->IsKeyDown(EKey::Key_Left))
+    else if (InputState->IsKeyDown(EKeyName::Left))
     {
         Camera->Rotate(0.0f, FMath::ToRadians(-RotationSpeed * Delta), 0.0f);
     }
 
-    if (InputState->IsKeyDown(EKey::Key_Up))
+    if (FMath::Abs(RightThumbY.Value) > Deadzone)
+    {
+        Camera->Rotate(FMath::ToRadians(-RightThumbY.Value * RotationSpeed * Delta), 0.0f, 0.0f);
+    }
+    else if (InputState->IsKeyDown(EKeyName::Up))
     {
         Camera->Rotate(FMath::ToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
     }
-    else if (InputState->IsKeyDown(EKey::Key_Down))
+    else if (InputState->IsKeyDown(EKeyName::Down))
     {
         Camera->Rotate(FMath::ToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
     }
 
     float Acceleration = 15.0f;
-    if (InputState->IsKeyDown(EKey::Key_LeftShift))
+    if (InputState->IsKeyDown(EKeyName::LeftShift) || InputState->IsButtonDown(EGamepadButtonName::LeftTrigger))
     {
         Acceleration = Acceleration * 3;
     }
 
+    const FAnalogAxisState LeftThumbX = InputState->GetAnalogState(EAnalogSourceName::LeftThumbX);
+    const FAnalogAxisState LeftThumbY = InputState->GetAnalogState(EAnalogSourceName::LeftThumbY);
+
     FVector3 CameraAcceleration;
-    if (InputState->IsKeyDown(EKey::Key_W))
+    if (FMath::Abs(LeftThumbY.Value) > Deadzone)
+    {
+        CameraAcceleration.z = Acceleration * LeftThumbY.Value;
+    }
+    else if (InputState->IsKeyDown(EKeyName::W))
     {
         CameraAcceleration.z = Acceleration;
     }
-    else if (InputState->IsKeyDown(EKey::Key_S))
+    else if (InputState->IsKeyDown(EKeyName::S))
     {
         CameraAcceleration.z = -Acceleration;
     }
 
-    if (InputState->IsKeyDown(EKey::Key_A))
+    if (FMath::Abs(LeftThumbX.Value) > Deadzone)
+    {
+        CameraAcceleration.x = Acceleration * -LeftThumbX.Value;
+    }
+    else if (InputState->IsKeyDown(EKeyName::A))
     {
         CameraAcceleration.x = Acceleration;
     }
-    else if (InputState->IsKeyDown(EKey::Key_D))
+    else if (InputState->IsKeyDown(EKeyName::D))
     {
         CameraAcceleration.x = -Acceleration;
     }
 
-    if (InputState->IsKeyDown(EKey::Key_Q))
+    if (InputState->IsKeyDown(EKeyName::Q))
     {
         CameraAcceleration.y = Acceleration;
     }
-    else if (InputState->IsKeyDown(EKey::Key_E))
+    else if (InputState->IsKeyDown(EKeyName::E))
     {
         CameraAcceleration.y = -Acceleration;
     }

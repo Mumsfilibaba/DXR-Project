@@ -2,8 +2,9 @@
 #include "Actor.h"
 #include "Application/Events.h"
 #include "Core/Math/IntVector2.h"
-#include "Core/Containers/SharedPtr.h"
 #include "Core/Input/InputStates.h"
+#include "Core/Containers/SharedPtr.h"
+#include "Core/Containers/Set.h"
 #include "CoreApplication/Generic/ICursor.h"
 #include "Engine/Scene/Components/InputComponent.h"
 
@@ -11,102 +12,106 @@ class ENGINE_API FPlayerInput
 {
 public:
     FPlayerInput();
-    ~FPlayerInput() = default;
+    virtual ~FPlayerInput() = default;
 
     void Tick(FTimespan Delta);
 
-    void ResetState();
-
-    virtual void OnControllerAnalog    (const FControllerEvent& ControllerEvent);
-    virtual void OnControllerButtonDown(const FControllerEvent& ControllerEvent);
-    virtual void OnControllerButtonUp  (const FControllerEvent& ControllerEvent);
-
-    virtual void OnKeyUpEvent  (const FKeyEvent& KeyEvent);
-    virtual void OnKeyDownEvent(const FKeyEvent& KeyEvent);
-
-    virtual void OnMouseButtonUpEvent  (const FMouseEvent& MouseEvent);
-    virtual void OnMouseButtonDownEvent(const FMouseEvent& MouseEvent);
-    virtual void OnMouseMovedEvent     (const FMouseEvent& MouseEvent);
-    virtual void OnMouseScrolledEvent  (const FMouseEvent& MouseEvent);
-
     virtual void SetCursorPosition(const FIntVector2& Postion);
-    
+
     virtual FIntVector2 GetCursorPosition() const;
 
-public:
-    FKeyState GetKeyState(EKey KeyCode) const
+    virtual void OnControllerEvent(const FControllerEvent& ControllerEvent);
+    
+    virtual void OnKeyEvent(const FKeyEvent& KeyEvent);
+    
+    virtual void OnMouseEvent(const FMouseEvent& MouseEvent);
+
+    FKeyState              GetKeyState(EKeyName::Type Key) const;
+
+    FMouseButtonState      GetMouseButtonState(EMouseButtonName Button) const;
+    
+    FControllerButtonState GetControllerButtonState(EGamepadButtonName Button) const;
+    
+    FAnalogAxisState       GetAnalogState(EAnalogSourceName AnalogSource) const;
+
+    void ResetStates();
+
+
+    bool IsKeyDown(EKeyName::Type Key) const
     {
-        const int32 Index = GetKeyStateIndexFromKeyCode(KeyCode);
-        return (Index < 0) ? FKeyState(KeyCode) : KeyStates[Index];
+        const FKeyState KeyState = GetKeyState(Key);
+        return !!KeyState.bIsDown;
     }
 
-    FMouseButtonState GetMouseButtonState(EMouseButton Button) const
+    bool IsKeyUp(EKeyName::Type Key) const
     {
-        const int32 Index = GetMouseButtonStateIndexFromMouseButton(Button);
-        return (Index < 0) ? FMouseButtonState(Button) : MouseButtonStates[Index];
+        const FKeyState KeyState = GetKeyState(Key);
+        return !KeyState.bIsDown;
     }
 
-    bool IsKeyDown(EKey KeyCode) const
+    bool IsKeyPressed(EKeyName::Type Key) const
     {
-        const FKeyState KeyState = GetKeyState(KeyCode);
-        return !!KeyState.IsDown;
+        const FKeyState KeyState = GetKeyState(Key);
+        return !!KeyState.bIsDown && !KeyState.bPreviousState;
     }
 
-    bool IsKeyUp(EKey KeyCode) const
-    {
-        const FKeyState KeyState = GetKeyState(KeyCode);
-        return !KeyState.IsDown;
-    }
 
-    bool IsKeyPressed(EKey KeyCode) const
-    {
-        const FKeyState KeyState = GetKeyState(KeyCode);
-        return KeyState.IsDown && !KeyState.PreviousState;
-    }
-
-    bool IsButtonDown(EMouseButton Button) const
-    {
-        const FMouseButtonState ButtonState = GetMouseButtonState(Button);
-        return !!ButtonState.IsDown;
-    }
-
-    bool IsButtonUp(EMouseButton Button) const
-    {
-        const FMouseButtonState ButtonState = GetMouseButtonState(Button);
-        return !ButtonState.IsDown;
-    }
-
-    bool IsButtonPressed(EMouseButton Button) const
+    bool IsButtonDown(EMouseButtonName Button) const
     {
         const FMouseButtonState ButtonState = GetMouseButtonState(Button);
-        return ButtonState.IsDown && !ButtonState.PreviousState;
+        return !!ButtonState.bIsDown;
     }
 
-    TSharedPtr<ICursor> GetCursorInterface() const { return Cursor; }
+    bool IsButtonUp(EMouseButtonName Button) const
+    {
+        const FMouseButtonState ButtonState = GetMouseButtonState(Button);
+        return !ButtonState.bIsDown;
+    }
+
+    bool IsButtonPressed(EMouseButtonName Button) const
+    {
+        const FMouseButtonState ButtonState = GetMouseButtonState(Button);
+        return !!ButtonState.bIsDown && !ButtonState.bPreviousState;
+    }
+
+
+    bool IsButtonDown(EGamepadButtonName Button) const
+    {
+        const FControllerButtonState ButtonState = GetControllerButtonState(Button);
+        return !!ButtonState.bIsDown;
+    }
+
+    bool IsButtonUp(EGamepadButtonName Button) const
+    {
+        const FControllerButtonState ButtonState = GetControllerButtonState(Button);
+        return !ButtonState.bIsDown;
+    }
+
+    bool IsButtonPressed(EGamepadButtonName Button) const
+    {
+        const FControllerButtonState ButtonState = GetControllerButtonState(Button);
+        return !!ButtonState.bIsDown && !ButtonState.bPreviousState;
+    }
+
+
+    TSharedPtr<ICursor> GetCursorInterface() const 
+    { 
+        return CursorInterface;
+    }
 
 private:
-    FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const
-    {
-        FKeyState TmpState(KeyCode);
-        return KeyStates.FindWithPredicate([&](const FKeyState& KeyState)
-        {
-            return (TmpState.KeyCode == KeyState.KeyCode);
-        });
-    }
+    void ClearEvents();
 
-    FORCEINLINE int32 GetMouseButtonStateIndexFromMouseButton(EMouseButton Button) const
-    {
-        FMouseButtonState TmpState(Button);
-        return MouseButtonStates.FindWithPredicate([&](const FMouseButtonState& MouseState) -> bool
-        {
-            return (TmpState.Button == MouseState.Button);
-        });
-    }
+    TArray<FKeyState>              KeyStates;
+    TArray<FMouseButtonState>      MouseButtonStates;
+    TArray<FControllerButtonState> ControllerButtonStates;
+    TArray<FAnalogAxisState>       AnalogAxisStates;
 
-    TSharedPtr<ICursor>       Cursor;
+    TArray<FKeyEvent>         KeyEvents;
+    TArray<FMouseEvent>       MouseEvents;
+    TArray<FControllerEvent>  ControllerEvents;
 
-    TArray<FKeyState>         KeyStates;
-    TArray<FMouseButtonState> MouseButtonStates;
+    TSharedPtr<ICursor>       CursorInterface;
 };
 
 

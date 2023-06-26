@@ -1,4 +1,4 @@
-#include "FrameProfilerWindow.h"
+#include "FrameProfilerWidget.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Time/Stopwatch.h"
 #include "Application/WidgetUtilities.h"
@@ -14,7 +14,7 @@ TAutoConsoleVariable<bool> GDrawFrameProfiler(
     "Enables the FrameProfiler and displays the profiler window",
     false);
 
-void FFrameProfilerWindow::Paint()
+void FFrameProfilerWidget::Paint()
 {
     if (GDrawFps.GetValue())
     {
@@ -27,14 +27,15 @@ void FFrameProfilerWindow::Paint()
     }
 }
 
-void FFrameProfilerWindow::DrawFPS()
+void FFrameProfilerWidget::DrawFPS()
 {
-    ImGuiIO& GuiIO = ImGui::GetIO();
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(5.0f, 5.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
 
-    ImGui::SetNextWindowPos(ImVec2(GuiIO.DisplaySize.x, 0.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+    const ImVec2 Size     = FImGui::GetMainViewportSize();
+    const ImVec2 Position = FImGui::GetMainViewportPos();
+    ImGui::SetNextWindowPos(ImVec2(Position.x + Size.x, Position.y), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
 
     const ImGuiWindowFlags Flags =
         ImGuiWindowFlags_NoDecoration |
@@ -56,7 +57,7 @@ void FFrameProfilerWindow::DrawFPS()
     ImGui::PopStyleVar();
 }
 
-void FFrameProfilerWindow::DrawCPUData(float Width)
+void FFrameProfilerWidget::DrawCPUData(float Width)
 {
     const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
     if (ImGui::BeginTable("Frame Statistics", 1, TableFlags))
@@ -197,18 +198,19 @@ void FFrameProfilerWindow::DrawCPUData(float Width)
     }
 }
 
-void FFrameProfilerWindow::DrawWindow()
+void FFrameProfilerWidget::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    const ImVec2 DisplaySize = FImGui::GetDisplaySize();
-    const float Width  = FMath::Max<float>(DisplaySize.x * 0.6f, 400.0f);
-    const float Height = DisplaySize.y * 0.75f;
+	const ImVec2 Size     = FImGui::GetMainViewportSize();
+	const ImVec2 Position = FImGui::GetMainViewportPos();
+    const float Width  = FMath::Max<float>(Size.x * 0.6f, 400.0f);
+    const float Height = Size.y * 0.75f;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-    ImGui::SetNextWindowPos(ImVec2(float(DisplaySize.x) * 0.5f, float(DisplaySize.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+    ImGui::SetNextWindowPos(ImVec2(Position.x + (Size.x * 0.5f), Position.y + (Size.y * 0.175f)), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
     const ImGuiWindowFlags Flags =

@@ -2,81 +2,75 @@
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Platform/PlatformTime.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
-namespace XInputPrivate
+TAutoConsoleVariable<int32> CVarXInputButtonRepeatDelay(
+    "XInput.ButtonRepeatDelay",
+    "Number of repeated messages that gets ignored before sending repeat events",
+    60,
+    EConsoleVariableFlags::Default);
+
+FORCEINLINE static float NormalizeThumbStick(int16 ThumbValue)
 {
-    FORCEINLINE static float NormalizeThumbStick(int16 ThumbValue)
-    {
-        const float ThumbMaxValue = (ThumbValue <= 0) ? 32768.0f : 32767.0f;
-        return static_cast<float>(ThumbValue) / ThumbMaxValue;
-    }
+    const float ThumbMaxValue = (ThumbValue <= 0) ? 32768.0f : 32767.0f;
+    return static_cast<float>(ThumbValue) / ThumbMaxValue;
+}
 
-    FORCEINLINE static float NormalizeTrigger(uint8 TriggerValue)
-    {
-        constexpr float TriggerMaxValue = 255.0f;
-        return static_cast<float>(TriggerValue) / TriggerMaxValue;
-    }
-
-    FORCEINLINE static void DispatchAnalogMessage(
-        const TSharedPtr<FGenericApplicationMessageHandler>& MessageHandler,
-        EControllerAnalog                                    AnalogSource,
-        uint32                                               ControllerIndex,
-        int16                                                CurrentValue,
-        int16                                                NewValue,
-        float                                                NormalizedValue,
-        int16                                                DeadZone)
-    {
-        if (CurrentValue != NewValue || static_cast<int16>(FMath::Abs(NewValue)) > DeadZone)
-        {
-            MessageHandler->OnControllerAnalog(AnalogSource, ControllerIndex, NormalizedValue);
-        }
-    }
+FORCEINLINE static float NormalizeTrigger(uint8 TriggerValue)
+{
+    constexpr float TriggerMaxValue = 255.0f;
+    return static_cast<float>(TriggerValue) / TriggerMaxValue;
 }
 
 FXInputDevice::FXInputDevice()
     : FInputDevice()
-    , Frequency{0}
-    , LastConnectionPollTimeStamp{0}
-    , LastPollTimeStamp{0}
+    , bIsDeviceConnected(false)
 {
-    FMemory::Memzero(ControllerState, sizeof(FXInputControllerState) * MAX_CONTROLLERS);
-    Frequency = FPlatformTime::QueryPerformanceFrequency();
+    FMemory::Memzero(ControllerState, sizeof(FXInputControllerState) * XUSER_MAX_COUNT);
 }
 
 void FXInputDevice::UpdateDeviceState()
 {
-    constexpr int64 MicrosecondsDiff = 1'000'000;
-    const int64 CurrentTimeStamp = FPlatformTime::QueryPerformanceCounter();
+    bool bFoundDevice = false;
 
-    int64 ElapsedTime = (CurrentTimeStamp - LastPollTimeStamp) * MicrosecondsDiff;
-    ElapsedTime = ElapsedTime / Frequency;
-
-    // Check the known devices every millisecond
-    if (ElapsedTime > 1000)
+    // Update the state for all the controllers that are connected
+    DWORD Result = ERROR_DEVICE_NOT_CONNECTED;
+    for (DWORD ControllerIndex = 0; ControllerIndex < XUSER_MAX_COUNT; ControllerIndex++)
     {
-        UpdateConnectedDevices();
-        LastPollTimeStamp = CurrentTimeStamp;
-    }
-}
-
-bool FXInputDevice::IsDeviceConnected() const
-{
-    for (int32 UserIndex = 0; UserIndex < MAX_CONTROLLERS; UserIndex++)
-    {
-        if (ControllerState[UserIndex].bConnected)
+        FXInputControllerState& CurrentState = ControllerState[ControllerIndex];
+        if (!CurrentState.bConnected)
         {
-            return true;
+            continue;
+        }
+
+        XINPUT_STATE State;
+        FMemory::Memzero(&State, sizeof(XINPUT_STATE));
+
+        Result = XInputGetState(ControllerIndex, &State);
+        if (Result == ERROR_SUCCESS)
+        {
+            ProcessInputState(State, ControllerIndex);
+            bFoundDevice = true;
+        }
+        else
+        {
+            ControllerState[ControllerIndex].bConnected = false;
         }
     }
 
-    return false;
+    // Update the current device state
+    bIsDeviceConnected = bFoundDevice;
 }
 
-void FXInputDevice::CheckForNewConnections()
+void FXInputDevice::CheckForNewDevices()
 {
+    bool bFoundDevice = false;
+
+    // Check if there is any controller connected
     DWORD Result = ERROR_DEVICE_NOT_CONNECTED;
-    for (DWORD UserIndex = 0; UserIndex < MAX_CONTROLLERS; UserIndex++)
+    for (DWORD UserIndex = 0; UserIndex < XUSER_MAX_COUNT; UserIndex++)
     {
         XINPUT_STATE State;
         FMemory::Memzero(&State, sizeof(XINPUT_STATE));
@@ -85,41 +79,16 @@ void FXInputDevice::CheckForNewConnections()
         if (Result == ERROR_SUCCESS)
         {
             ControllerState[UserIndex].bConnected = true;
+            bFoundDevice = true;
         }
         else
         {
             ControllerState[UserIndex].bConnected = false;
         }
     }
-}
 
-void FXInputDevice::UpdateConnectedDevices()
-{
-    DWORD Result = ERROR_DEVICE_NOT_CONNECTED;
-    for (DWORD ControllerIndex = 0; ControllerIndex < MAX_CONTROLLERS; ControllerIndex++)
-    {
-        FXInputControllerState& CurrentState = ControllerState[ControllerIndex];
-        if (CurrentState.bConnected)
-        {
-            XINPUT_STATE State;
-            FMemory::Memzero(&State, sizeof(XINPUT_STATE));
-
-            Result = XInputGetState(ControllerIndex, &State);
-            if (Result == ERROR_SUCCESS)
-            {
-                // Check if the state of the controller has changed, if it has then process it
-                if (CurrentState.LastPacketNumber != State.dwPacketNumber)
-                {
-                    ProcessInputState(State, ControllerIndex);
-                    CurrentState.LastPacketNumber = State.dwPacketNumber;
-                }
-            }
-            else
-            {
-                ControllerState[ControllerIndex].bConnected = false;
-            }
-        }
-    }
+    // Update the current device state
+    bIsDeviceConnected = bFoundDevice;
 }
 
 void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 ControllerIndex)
@@ -129,137 +98,97 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 Controll
     FXInputControllerState& CurrentState = ControllerState[ControllerIndex];
     if (TSharedPtr<FGenericApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler())
     {
-        const uint16 CurrentButtonState = CurrentState.Buttons.ButtonState;
-        const uint16 NewButtonState = Gamepad.wButtons;
-        const uint16 ButtonStateMask = ~(CurrentButtonState & NewButtonState);
+        // MaxButtonRepeatDelay is based on the number of bits available to the RepeatCount
+        constexpr int32 MaxButtonRepeatDelay = (1 << 7) - 1;
+        
+        // Clamp the repeat delay (TODO: Add support for clamping inside of CVars)
+        const int32 RepeatDelay    = FMath::Clamp(0, MaxButtonRepeatDelay, CVarXInputButtonRepeatDelay.GetValue());
+        const int32 GamePadButtons = Gamepad.wButtons;
 
-        FXInputButtonState DownButtonState = (NewButtonState & ButtonStateMask);
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_DPAD_UP))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::DPadUp, ControllerIndex);
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_DPAD_DOWN))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::DPadDown, ControllerIndex);
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_DPAD_LEFT))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::DPadLeft, ControllerIndex);
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_DPAD_RIGHT))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::DPadRight, ControllerIndex);
+        const auto IsButtonDown = [GamePadButtons](int32 ButtonMask) -> bool
+        {
+            return (GamePadButtons & ButtonMask) != 0;
+        };
+        
+        // Store the current states
+        bool bCurrentStates[NUM_BUTTONS];
+        FMemory::Memzero(bCurrentStates, sizeof(bCurrentStates));
 
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_A))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::FaceDown, ControllerIndex);
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_B))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::FaceRight, ControllerIndex);
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_Y))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::FaceUp, ControllerIndex);
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_X))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::FaceLeft, ControllerIndex);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::DPadUp)]        = IsButtonDown(XINPUT_GAMEPAD_DPAD_UP);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::DPadDown)]      = IsButtonDown(XINPUT_GAMEPAD_DPAD_DOWN);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::DPadLeft)]      = IsButtonDown(XINPUT_GAMEPAD_DPAD_LEFT);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::DPadRight)]     = IsButtonDown(XINPUT_GAMEPAD_DPAD_RIGHT);
 
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_RIGHT_THUMB))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::RightTrigger, ControllerIndex);
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_LEFT_THUMB))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::LeftTrigger, ControllerIndex);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::FaceUp)]        = IsButtonDown(XINPUT_GAMEPAD_Y);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::FaceDown)]      = IsButtonDown(XINPUT_GAMEPAD_A);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::FaceLeft)]      = IsButtonDown(XINPUT_GAMEPAD_X);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::FaceRight)]     = IsButtonDown(XINPUT_GAMEPAD_B);
 
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_RIGHT_SHOULDER))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::RightShoulder, ControllerIndex);
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_LEFT_SHOULDER))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::LeftShoulder, ControllerIndex);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::RightTrigger)]  = IsButtonDown(XINPUT_GAMEPAD_RIGHT_THUMB);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::LeftTrigger)]   = IsButtonDown(XINPUT_GAMEPAD_LEFT_THUMB);
 
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_START))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::Start, ControllerIndex);
-        if (DownButtonState.IsButtonDown(XINPUT_GAMEPAD_BACK))
-            CurrentMessageHandler->OnControllerButtonDown(EControllerButton::Back, ControllerIndex);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::RightShoulder)] = IsButtonDown(XINPUT_GAMEPAD_RIGHT_SHOULDER);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::LeftShoulder)]  = IsButtonDown(XINPUT_GAMEPAD_LEFT_SHOULDER);
 
-        // Button up state must be "reversed" since bit that is set means down
-        FXInputButtonState UpButtonState = ~(CurrentButtonState & (~NewButtonState));
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_DPAD_UP))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::DPadUp, ControllerIndex);
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_DPAD_DOWN))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::DPadDown, ControllerIndex);
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_DPAD_LEFT))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::DPadLeft, ControllerIndex);
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_DPAD_RIGHT))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::DPadRight, ControllerIndex);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::Start)]         = IsButtonDown(XINPUT_GAMEPAD_START);
+        bCurrentStates[ToUnderlying(EGamepadButtonName::Back)]          = IsButtonDown(XINPUT_GAMEPAD_BACK);
 
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_A))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::FaceDown, ControllerIndex);
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_B))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::FaceRight, ControllerIndex);
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_Y))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::FaceUp, ControllerIndex);
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_X))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::FaceLeft, ControllerIndex);
+        for (int32 ButtonIndex = 1; ButtonIndex < NUM_BUTTONS; ButtonIndex++)
+        {
+            FXInputButtonState& ButtonState = CurrentState.Buttons[ButtonIndex];
+            if (bCurrentStates[ButtonIndex])
+            {
+                // If the button already is down, this is a repeat event
+                if (ButtonState.bState)
+                {
+                    ButtonState.RepeatCount++;
 
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_RIGHT_THUMB))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::RightTrigger, ControllerIndex);
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_LEFT_THUMB))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::LeftTrigger, ControllerIndex);
+                    // Only send repeat events after some time
+                    if (ButtonState.RepeatCount >= RepeatDelay)
+                    {
+                        CurrentMessageHandler->OnControllerButtonDown(static_cast<EGamepadButtonName>(ButtonIndex), ControllerIndex, true);
+                        ButtonState.RepeatCount = RepeatDelay;
+                    }
+                }
+                else
+                {
+                    CurrentMessageHandler->OnControllerButtonDown(static_cast<EGamepadButtonName>(ButtonIndex), ControllerIndex, false);
+                    ButtonState.RepeatCount = 1;
+                }
+            }
+            else if (ButtonState.bState)
+            {
+                CurrentMessageHandler->OnControllerButtonUp(static_cast<EGamepadButtonName>(ButtonIndex), ControllerIndex);
+                ButtonState.RepeatCount = 0;
+            }
 
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_RIGHT_SHOULDER))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::RightShoulder, ControllerIndex);
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_LEFT_SHOULDER))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::LeftShoulder, ControllerIndex);
+            ButtonState.bState = bCurrentStates[ButtonIndex] ? 1 : 0;
+        }
 
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_START))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::Start, ControllerIndex);
-        if (UpButtonState.IsButtonUp(XINPUT_GAMEPAD_BACK))
-            CurrentMessageHandler->OnControllerButtonUp(EControllerButton::Back, ControllerIndex);
+        // Handle Analog States
+        const auto DispatchAnalogMessage = [CurrentMessageHandler](EAnalogSourceName AnalogSource, uint32 ControllerIndex, int16 CurrentValue, int16 NewValue, float NormalizedValue, int16 DeadZone)
+        {
+            if (CurrentValue != NewValue || FMath::Abs(NewValue) > DeadZone)
+            {
+                CurrentMessageHandler->OnControllerAnalog(AnalogSource, ControllerIndex, NormalizedValue);
+            }
+        };
 
         // Right Trigger
-        XInputPrivate::DispatchAnalogMessage(
-            CurrentMessageHandler,
-            EControllerAnalog::RightTrigger,
-            ControllerIndex,
-            CurrentState.RightTrigger,
-            Gamepad.bRightTrigger,
-            XInputPrivate::NormalizeTrigger(Gamepad.bRightTrigger),
-            GAMEPAD_TRIGGER_THRESHOLD);
+        DispatchAnalogMessage(EAnalogSourceName::RightTrigger, ControllerIndex, CurrentState.RightTrigger, Gamepad.bRightTrigger, NormalizeTrigger(Gamepad.bRightTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
 
         // Left Trigger
-        XInputPrivate::DispatchAnalogMessage(
-            CurrentMessageHandler,
-            EControllerAnalog::LeftTrigger,
-            ControllerIndex,
-            CurrentState.LeftTrigger,
-            Gamepad.bLeftTrigger,
-            XInputPrivate::NormalizeTrigger(Gamepad.bLeftTrigger),
-            GAMEPAD_TRIGGER_THRESHOLD);
+        DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, ControllerIndex, CurrentState.LeftTrigger, Gamepad.bLeftTrigger, NormalizeTrigger(Gamepad.bLeftTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
 
         // Right Thumb
-        XInputPrivate::DispatchAnalogMessage(
-            CurrentMessageHandler,
-            EControllerAnalog::RightThumbX,
-            ControllerIndex,
-            CurrentState.RightThumbX,
-            Gamepad.sThumbRX,
-            XInputPrivate::NormalizeThumbStick(Gamepad.sThumbRX),
-            GAMEPAD_RIGHT_THUMB_DEADZONE);
-        XInputPrivate::DispatchAnalogMessage(
-            CurrentMessageHandler,
-            EControllerAnalog::RightThumbY,
-            ControllerIndex,
-            CurrentState.RightThumbY,
-            Gamepad.sThumbRY,
-            XInputPrivate::NormalizeThumbStick(Gamepad.sThumbRY),
-            GAMEPAD_RIGHT_THUMB_DEADZONE);
+        DispatchAnalogMessage(EAnalogSourceName::RightThumbX, ControllerIndex, CurrentState.RightThumbX, Gamepad.sThumbRX, NormalizeThumbStick(Gamepad.sThumbRX), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+        DispatchAnalogMessage(EAnalogSourceName::RightThumbY, ControllerIndex, CurrentState.RightThumbY, Gamepad.sThumbRY, NormalizeThumbStick(Gamepad.sThumbRY), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
 
         // Left Thumb
-        XInputPrivate::DispatchAnalogMessage(
-            CurrentMessageHandler,
-            EControllerAnalog::LeftThumbX,
-            ControllerIndex,
-            CurrentState.LeftThumbX,
-            Gamepad.sThumbLX,
-            XInputPrivate::NormalizeThumbStick(Gamepad.sThumbLX),
-            GAMEPAD_LEFT_THUMB_DEADZONE);
-        XInputPrivate::DispatchAnalogMessage(
-            CurrentMessageHandler,
-            EControllerAnalog::LeftThumbY,
-            ControllerIndex,
-            CurrentState.LeftThumbY,
-            Gamepad.sThumbLY,
-            XInputPrivate::NormalizeThumbStick(Gamepad.sThumbLY),
-            GAMEPAD_LEFT_THUMB_DEADZONE);
+        DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, ControllerIndex, CurrentState.LeftThumbX, Gamepad.sThumbLX, NormalizeThumbStick(Gamepad.sThumbLX), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+        DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, ControllerIndex, CurrentState.LeftThumbY, Gamepad.sThumbLY, NormalizeThumbStick(Gamepad.sThumbLY), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
     }
 
-    CurrentState.Buttons      = Gamepad.wButtons;
     CurrentState.RightThumbX  = Gamepad.sThumbRX;
     CurrentState.RightThumbY  = Gamepad.sThumbRY;
     CurrentState.LeftThumbX   = Gamepad.sThumbLX;

@@ -41,6 +41,15 @@ struct ENGINE_API FEngine
     /** @brief - The main viewport */
     TSharedPtr<FViewport> MainViewport;
 
+    /** @brief - SceneViewport */
+    TSharedPtr<FSceneViewport> SceneViewport;
+
+    /** @brief - In-game Console Widget */
+    TSharedPtr<class FConsoleWidget> ConsoleWidget;
+
+    /** @brief - Profiler Widget */
+    TSharedPtr<class FFrameProfilerWidget> ProfilerWidget;
+
     /** @brief - The current scene */
     FScene* Scene;
 

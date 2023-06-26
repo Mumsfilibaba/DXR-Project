@@ -15,7 +15,8 @@ public:
 
     virtual FResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
     virtual FResponse OnKeyUp  (const FKeyEvent& KeyEvent) override;
-    virtual FResponse OnKeyChar(const FKeyEvent& KeyEvent) override;
+    
+    virtual FResponse OnKeyChar(const FKeyEvent&) override { return FResponse::Unhandled(); }
 
     virtual FResponse OnMouseMove       (const FMouseEvent& MouseEvent) override;
     virtual FResponse OnMouseButtonDown (const FMouseEvent& MouseEvent) override;
@@ -23,10 +24,10 @@ public:
     virtual FResponse OnMouseScroll     (const FMouseEvent& MouseEvent) override;
     virtual FResponse OnMouseDoubleClick(const FMouseEvent& MouseEvent) override;
 
-	virtual FResponse OnFocusLost   (const FWindowEvent& WindowEvent) override;
-	virtual FResponse OnFocusGained (const FWindowEvent& WindowEvent) override;
-	virtual FResponse OnMouseLeft   (const FWindowEvent& WindowEvent) override;
-	virtual FResponse OnMouseEntered(const FWindowEvent& WindowEvent) override;
+    virtual FResponse OnFocusLost()    override;
+    virtual FResponse OnFocusGained()  override { return FResponse::Unhandled(); }
+    virtual FResponse OnMouseLeft()    override { return FResponse::Unhandled(); }
+    virtual FResponse OnMouseEntered() override { return FResponse::Unhandled(); }
 
     virtual void SetViewport(const TSharedPtr<FViewport>& InViewport) override
     {
@@ -51,6 +52,16 @@ public:
     FScene* GetScene() const 
     {
         return Scene; 
+    }
+
+    FPlayerController* GetFirstPlayerController()
+    {
+        if (Scene)
+        {
+            return Scene->GetFirstPlayerController();
+        }
+
+        return nullptr;
     }
 
 private:

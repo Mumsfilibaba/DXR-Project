@@ -8,8 +8,8 @@
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetLoaders/MeshImporter.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Widgets/GameConsoleWindow.h"
-#include "Engine/Widgets/FrameProfilerWindow.h"
+#include "Engine/Widgets/ConsoleWidget.h"
+#include "Engine/Widgets/FrameProfilerWidget.h"
 #include "RHI/RHIInterface.h"
 #include "RendererCore/TextureFactory.h"
 
@@ -105,6 +105,60 @@ bool FEngine::CreateMainViewport()
     return true;
 }
 
+struct FDemoWidget final : public FWidget
+{
+    virtual void Paint() override final
+    {
+        static bool ShowDemoWindow = true;
+
+        if (ShowDemoWindow)
+        {
+            ImGui::ShowDemoWindow();
+        }
+
+        static ImVec4 ClearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+        static bool ShowAnotherWindow = false;
+        
+        {
+            static float SliderValue = 0.0f;
+            static int32 Counter     = 0;
+
+            ImGui::Begin("Hello, world!");
+
+            ImGui::Text("This is some useful text.");
+            ImGui::Checkbox("Demo Window", &ShowDemoWindow);
+            ImGui::Checkbox("Another Window", &ShowAnotherWindow);
+
+            ImGui::SliderFloat("float", &SliderValue, 0.0f, 1.0f);
+            ImGui::ColorEdit3("clear color", (float*)&ClearColor);
+
+            if (ImGui::Button("Button"))
+            {
+                Counter++;
+            }
+
+            ImGui::SameLine();
+            ImGui::Text("counter = %d", Counter);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
+
+        if (ShowAnotherWindow)
+        {
+            ImGui::Begin("Another Window", &ShowAnotherWindow);
+            ImGui::Text("Hello from another window!");
+
+            if (ImGui::Button("Close Me"))
+            {
+                ShowAnotherWindow = false;
+            }
+
+            ImGui::End();
+        }
+    }
+};
+
 bool FEngine::Init()
 {
     CreateMainWindow();
@@ -113,6 +167,10 @@ bool FEngine::Init()
     {
         return false;
     }
+
+    // Demo Window
+    FWidgetRef DemoWindow = MakeShared<FDemoWidget>();
+    FApplication::Get().AddWidget(DemoWindow);
 
     if (!FAssetManager::Initialize())
     {
@@ -182,21 +240,34 @@ bool FEngine::Init()
     BaseMaterial->AlphaMask    = GEngine->BaseTexture;
     BaseMaterial->Initialize();
 
-    /* Create the start scene */
+    // Create a new scene
     Scene = new FScene();
 
-    /* Create windows */
-    //TSharedPtr<FFrameProfilerWindow> ProfilerWindow = NewWidget(FFrameProfilerWindow);
-    //MainWindow->AddOverlaySlot().AttachWidget(ProfilerWindow);
+    // Create a SceneViewport
+    SceneViewport = MakeShared<FSceneViewport>(MainViewport);
+    SceneViewport->SetScene(Scene);
+    MainViewport->SetViewportInterface(SceneViewport);
 
-    //TSharedPtr<FGameConsoleWindow> ConsoleWindow = NewWidget(FGameConsoleWindow);
-    //MainWindow->AddOverlaySlot().AttachWidget(ConsoleWindow);
+    /* Create Widgets */
+    ProfilerWidget = MakeShared<FFrameProfilerWidget>();
+    FApplication::Get().AddWidget(ProfilerWidget);
+
+    ConsoleWidget = MakeShared<FConsoleWidget>();
+    FApplication::Get().AddWidget(ConsoleWidget);
     return true;
 }
 
 bool FEngine::Start()
 {
-    Scene->Start();
+    if (Scene)
+    {
+        Scene->Start();
+    }
+    else
+    {
+        DEBUG_BREAK();
+    }
+
     return true;
 }
 
@@ -212,12 +283,20 @@ void FEngine::Tick(FTimespan DeltaTime)
 
 void FEngine::Release()
 {
+    if (Scene)
+    {
+        SceneViewport->SetScene(nullptr);
+        delete Scene;
+    }
+
     FAssetManager::Release();
 
     FMeshImporter::Release();
+
+    MainViewport->ReleaseRHI();
 }
 
 void FEngine::Exit()
 {
-    FPlatformApplicationMisc::RequestExit(0);
+    RequestEngineExit("Normal Exit");
 }

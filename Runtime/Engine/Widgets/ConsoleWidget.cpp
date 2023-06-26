@@ -1,32 +1,32 @@
-#include "GameConsoleWindow.h"
+#include "ConsoleWidget.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Application/Application.h"
 
-FGameConsoleWindow::FGameConsoleWindow()
+FConsoleWidget::FConsoleWidget()
     : FWidget()
     , IOutputDevice()
     , InputHandler(MakeShared<FConsoleInputHandler>())
 {
-	if (auto OutputDeviceManager = FOutputDeviceLogger::Get())
-	{
+    if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
+    {
         OutputDeviceManager->AddOutputDevice(this);
     }
 
     if (FApplication::IsInitialized())
     {
-        InputHandler->HandleKeyEventDelegate.BindRaw(this, &FGameConsoleWindow::HandleKeyPressedEvent);
-        FApplication::Get().AddInputPreProcessor(InputHandler, uint32(-1));
+        InputHandler->HandleKeyEventDelegate.BindRaw(this, &FConsoleWidget::HandleKeyPressedEvent);
+        FApplication::Get().AddInputPreProcessor(InputHandler, FInputPreProcessorAndPriority::MaxPriority);
     }
 
     TextBuffer.Fill(0);
 }
 
-FGameConsoleWindow::~FGameConsoleWindow()
+FConsoleWidget::~FConsoleWidget()
 {
-    if (auto OutputDeviceManager = FOutputDeviceLogger::Get())
+    if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
     {
         OutputDeviceManager->RemoveOutputDevice(this);
     }
@@ -37,7 +37,7 @@ FGameConsoleWindow::~FGameConsoleWindow()
     }
 }
 
-void FGameConsoleWindow::Paint()
+void FConsoleWidget::Paint()
 {
     if (!bIsActive)
     {
@@ -45,14 +45,15 @@ void FGameConsoleWindow::Paint()
     }
 
     const float Scale  = FImGui::GetDisplayFramebufferScale().x;
-    const float Width  = FImGui::GetDisplaySize().x;
+    const float Width  = FImGui::GetMainViewportSize().x;
     const float Height = 256.0f * Scale;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always, ImVec2(0.0f, 0.0f));
+    const ImVec2 Position = FImGui::GetMainViewportPos();
+    ImGui::SetNextWindowPos(Position, ImGuiCond_Always, ImVec2(0.0f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, 0.0f), ImGuiCond_Always);
 
     const ImGuiWindowFlags StyleFlags =
@@ -276,7 +277,7 @@ void FGameConsoleWindow::Paint()
         // Prepare callback for ImGui
         auto Callback = [](ImGuiInputTextCallbackData* Data) -> int32
         {
-            FGameConsoleWindow* This = reinterpret_cast<FGameConsoleWindow*>(Data->UserData);
+            FConsoleWidget* This = reinterpret_cast<FConsoleWidget*>(Data->UserData);
             return This->TextCallback(Data);
         };
 
@@ -333,12 +334,12 @@ void FGameConsoleWindow::Paint()
     ImGui::PopStyleVar();
 }
 
-void FGameConsoleWindow::Log(const FString& Message)
+void FConsoleWidget::Log(const FString& Message)
 {
     Log(ELogSeverity::Info, Message);
 }
 
-void FGameConsoleWindow::Log(ELogSeverity Severity, const FString& Message)
+void FConsoleWidget::Log(ELogSeverity Severity, const FString& Message)
 {
     SCOPED_LOCK(MessagesCS);
 
@@ -355,7 +356,7 @@ void FGameConsoleWindow::Log(ELogSeverity Severity, const FString& Message)
     bScrollDown = true;
 }
 
-int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
+int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* Data)
 {
     if (bUpdateCursorPosition)
     {
@@ -520,14 +521,14 @@ int32 FGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
     return 0;
 }
 
-void FGameConsoleWindow::HandleKeyPressedEvent(const FKeyEvent& Event)
+void FConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
 {
     CHECK(InputHandler.IsValid());
     InputHandler->bConsoleToggled = false;
 
     if (Event.IsDown())
     {
-        if (!Event.IsRepeat() && Event.GetKey() == EKey::Key_GraveAccent)
+        if (!Event.IsRepeat() && Event.GetKey() == EKeyName::GraveAccent)
         {
             bIsActive = !bIsActive;
             InputHandler->bConsoleToggled = true;

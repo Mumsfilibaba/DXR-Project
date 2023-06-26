@@ -1,12 +1,13 @@
 #pragma once
+#include "Core/Utilities/HashUtilities.h"
 
 // TODO: Custom set implementation
 
 #if 1
-#include <set>
+#include <unordered_set>
 
-template<typename KeyType, typename PredicateType = std::less<KeyType>>
-using TSet = std::set<KeyType, PredicateType>;
+template<typename T, typename HashType = THash<T>>
+using TSet = std::unordered_set<T, HashType>;
 
 #else
 #include "Iterator.h"

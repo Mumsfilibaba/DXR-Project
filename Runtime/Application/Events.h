@@ -80,7 +80,7 @@ public:
     {
     }
 
-    FMouseEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& ModifierKeys, EMouseButton InButton, bool bInIsDown)
+    FMouseEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& ModifierKeys, EMouseButtonName InButton, bool bInIsDown)
         : FInputEvent(ModifierKeys)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
@@ -105,7 +105,7 @@ public:
         return CursorPosition;
     }
 
-    EMouseButton GetButton() const
+    EMouseButtonName GetButton() const
     {
         return Button;
     }
@@ -128,7 +128,7 @@ public:
 private:
     FIntVector2  CursorPosition;
     float        ScrollDelta;
-    EMouseButton Button;
+    EMouseButtonName Button;
     bool         bIsVerticalScrollDelta : 1;
     bool         bIsDown : 1;
 };
@@ -139,13 +139,13 @@ class FKeyEvent : public FInputEvent
 public:
     FKeyEvent()
         : FInputEvent()
-        , Key(Key_Unknown)
+        , Key(EKeyName::Unknown)
         , Character(0)
         , bIsRepeat(false)
     {
     }
 
-    FKeyEvent(const FModifierKeyState& ModifierKeys, EKey InKey, bool bInIsRepeat, bool bInIsDown)
+    FKeyEvent(const FModifierKeyState& ModifierKeys, EKeyName::Type InKey, bool bInIsRepeat, bool bInIsDown)
         : FInputEvent(ModifierKeys)
         , Key(InKey)
         , Character(0)
@@ -154,7 +154,7 @@ public:
     {
     }
 
-    FKeyEvent(const FModifierKeyState& ModifierKeys, EKey InKey, uint32 InCharacter, bool bInIsRepeat, bool bInIsDown)
+    FKeyEvent(const FModifierKeyState& ModifierKeys, EKeyName::Type InKey, uint32 InCharacter, bool bInIsRepeat, bool bInIsDown)
         : FInputEvent(ModifierKeys)
         , Key(InKey)
         , Character(InCharacter)
@@ -163,7 +163,7 @@ public:
     {
     }
 
-    EKey GetKey() const
+    EKeyName::Type GetKey() const
     {
         return Key;
     }
@@ -185,7 +185,7 @@ public:
 
 private:
     uint32 Character;
-    EKey   Key;
+    EKeyName::Type   Key;
 
     bool bIsRepeat : 1;
     bool bIsDown   : 1;
@@ -197,39 +197,58 @@ class FControllerEvent : public FInputEvent
 public:
     FControllerEvent()
         : FInputEvent()
-        , Button(EControllerButton::Unknown)
+        , Button(EGamepadButtonName::Unknown)
+        , bIsButtonDown(false)
+        , bIsRepeat(false)
         , ControllerIndex(0)
-        , AnalogSource(EControllerAnalog::Unknown)
+        , AnalogSource(EAnalogSourceName::Unknown)
         , AnalogValue(0.0f)
     {
     }
 
-    FControllerEvent(EControllerButton InButton, bool bInIsButtonDown, uint32 InControllerIndex)
+    FControllerEvent(EGamepadButtonName InButton, uint32 InControllerIndex, bool bInIsButtonDown, bool bInIsRepeat)
         : FInputEvent()
         , Button(InButton)
         , bIsButtonDown(bInIsButtonDown)
+        , bIsRepeat(bInIsRepeat)
         , ControllerIndex(ControllerIndex)
-        , AnalogSource(EControllerAnalog::Unknown)
+        , AnalogSource(EAnalogSourceName::Unknown)
         , AnalogValue(0.0f)
     {
     }
 
-    FControllerEvent(EControllerAnalog InAnalogSource, float InAnalogValue, uint32 InControllerIndex)
+    FControllerEvent(EAnalogSourceName InAnalogSource, uint32 InControllerIndex, float InAnalogValue)
         : FInputEvent()
-        , Button(EControllerButton::Unknown)
+        , Button(EGamepadButtonName::Unknown)
         , bIsButtonDown(false)
+        , bIsRepeat(false)
         , ControllerIndex(InControllerIndex)
         , AnalogSource(InAnalogSource)
         , AnalogValue(InAnalogValue)
     {
     }
 
-    EControllerButton GetButton() const
+    bool IsButtonDown() const
+    {
+        return bIsButtonDown;
+    }
+
+    bool IsRepeat() const
+    {
+        return bIsRepeat;
+    }
+
+    bool HasAnalogValue() const
+    {
+        return AnalogSource != EAnalogSourceName::Unknown;
+    }
+
+    EGamepadButtonName GetButton() const
     {
         return Button;
     }
 
-    EControllerAnalog GetAnalogSource() const
+    EAnalogSourceName GetAnalogSource() const
     {
         return AnalogSource;
     }
@@ -244,15 +263,11 @@ public:
         return AnalogValue;
     }
 
-    bool IsButtonDown() const
-    {
-        return bIsButtonDown;
-    }
-
 private:
-    EControllerButton Button;
+    EGamepadButtonName Button;
     bool              bIsButtonDown;
-    EControllerAnalog AnalogSource;
+    bool              bIsRepeat;
+    EAnalogSourceName AnalogSource;
     float             AnalogValue;
     uint32            ControllerIndex;
 };

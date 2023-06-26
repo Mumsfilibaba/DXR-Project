@@ -691,7 +691,20 @@ public:
      * @param Lambda - Callable that takes one element and perform some operation on it
      */
     template<class LambdaType>
-    FORCEINLINE void Foreach(LambdaType&& Lambda)
+    FORCEINLINE void Foreach(LambdaType&& Lambda) noexcept
+    {
+        for (ElementType* RESTRICT Current = Allocator.GetAllocation(), *RESTRICT End = Current + ArraySize; Current != End; ++Current)
+        {
+            Lambda(*Current);
+        }
+    }
+
+    /**
+     * @brief        - Perform some function on each element in the array
+     * @param Lambda - Callable that takes one element and perform some operation on it
+     */
+    template<class LambdaType>
+    FORCEINLINE void Foreach(LambdaType&& Lambda) const noexcept
     {
         for (const ElementType* RESTRICT Current = Allocator.GetAllocation(), *RESTRICT End = Current + ArraySize; Current != End; ++Current)
         {
