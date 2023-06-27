@@ -150,89 +150,14 @@ FRHISamplerState* FMetalInterface::RHICreateSamplerState(const FRHISamplerStateI
     return new FMetalSamplerState();
 }
 
-FRHIVertexBuffer* FMetalInterface::RHICreateBuffer(const FRHIVertexBufferInitializer& Initializer)
+FRHIBuffer* FMetalInterface::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData)
 {
-    return CreateBuffer<FMetalVertexBuffer>(Initializer);
-}
-
-FRHIIndexBuffer* FMetalInterface::RHICreateBuffer(const FRHIIndexBufferInitializer& Initializer)
-{
-    return CreateBuffer<FMetalIndexBuffer>(Initializer);
-}
-
-FRHIGenericBuffer* FMetalInterface::RHICreateBuffer(const FRHIGenericBufferInitializer& Initializer)
-{
-    return CreateBuffer<FMetalGenericBuffer>(Initializer);
-}
-
-FRHIConstantBuffer* FMetalInterface::RHICreateBuffer(const FRHIConstantBufferInitializer& Initializer)
-{
-    return CreateBuffer<FMetalConstantBuffer, FRHIConstantBufferInitializer, kConstantBufferAlignment>(Initializer);
-}
-
-template<typename MetalBufferType, typename InitializerType, const uint32 BufferAlignment>
-MetalBufferType* FMetalInterface::CreateBuffer(const InitializerType& Initializer)
-{
-    SCOPED_AUTORELEASE_POOL();
-    
-    TSharedRef<MetalBufferType> NewBuffer = new MetalBufferType(GetDeviceContext(), Initializer);
-    
-    MTLResourceOptions ResourceOptions = MTLResourceHazardTrackingModeDefault;
-    if (Initializer.IsDynamic())
-    {
-        ResourceOptions |= MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache;
-    }
-    else
-    {
-        ResourceOptions |= MTLResourceStorageModePrivate | MTLResourceCPUCacheModeWriteCombined;
-    }
-    
-    const auto BufferLength = FMath::AlignUp(NewBuffer->Size(), BufferAlignment);
-    
-    id<MTLDevice> Device       = GetDeviceContext()->GetMTLDevice();
-    id<MTLBuffer> NewMTLBuffer = [Device newBufferWithLength:BufferLength options:ResourceOptions];
-    if (!NewMTLBuffer)
+    TSharedRef<FMetalBuffer> NewBuffer = new FMetalBuffer(GetDeviceContext(), InDesc);
+    if (!NewBuffer->Initialize(InInitialState, InInitialData))
     {
         return nullptr;
     }
-    
-    NewBuffer->SetMTLBuffer(NewMTLBuffer);
-    
-    FRHIBufferDataInitializer* InitialData = Initializer.InitialData;
-    if (InitialData)
-    {
-        if (Initializer.IsDynamic())
-        {
-            FMemory::Memcpy(NewMTLBuffer.contents, InitialData->BufferData, InitialData->Size);
-        }
-        else
-        {
-            @autoreleasepool
-            {
-                id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:InitialData->Size options:MTLResourceOptionCPUCacheModeDefault];
-                FMemory::Memcpy(StagingBuffer.contents, InitialData->BufferData, InitialData->Size);
-                
-                id<MTLCommandQueue>       CommandQueue  = GetDeviceContext()->GetMTLCommandQueue();
-                id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
-                id<MTLBlitCommandEncoder> CopyEncoder   = [CommandBuffer blitCommandEncoder];
-                
-                [CopyEncoder copyFromBuffer:StagingBuffer
-                               sourceOffset:0
-                                   toBuffer:NewMTLBuffer
-                          destinationOffset:0
-                                       size:InitialData->Size];
-                
-                [CopyEncoder endEncoding];
 
-                // TODO: we do not want to wait here
-                [CommandBuffer commit];
-                [CommandBuffer waitUntilCompleted];
-            
-                [StagingBuffer release];
-            }
-        }
-    }
-    
     return NewBuffer.ReleaseOwnership();
 }
 

@@ -7,8 +7,6 @@ class FD3D12Device;
 class FD3D12DeviceChild
 {
 public:
-    FD3D12DeviceChild() = delete;
-
     FD3D12DeviceChild(FD3D12Device* InDevice)
         : Device(InDevice)
     {

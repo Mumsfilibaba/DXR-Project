@@ -1,16 +1,16 @@
 #pragma once
-#include "D3D12Core.h"
+#include "MetalCore.h"
 #include "Core/Threading/AtomicInt.h"
 
-class D3D12RHI_API FD3D12RefCounted
+class FMetalRefCounted
 {
 protected:
-    FD3D12RefCounted()
+    FMetalRefCounted()
         : StrongReferences(1)
     {
     }
 
-    virtual ~FD3D12RefCounted()
+    virtual ~FMetalRefCounted()
     {
         CHECK(StrongReferences.Load() == 0);
     }

@@ -1,20 +1,14 @@
 #pragma once
 #include "MetalViews.h"
-
 #include "RHI/RHIResources.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalViewport;
 
-typedef TSharedRef<class FMetalTexture>          FMetalTextureRef;
-typedef TSharedRef<class FMetalTexture2D>        FMetalTexture2DRef;
-typedef TSharedRef<class FMetalTexture2DArray>   FMetalTexture2DArrayRef;
-typedef TSharedRef<class FMetalTextureCube>      FMetalTextureCubeRef;
-typedef TSharedRef<class FMetalTextureCubeArray> FMetalTextureCubeArrayRef;
-typedef TSharedRef<class FMetalTexture3D>        FMetalTexture3DRef;
+typedef TSharedRef<class FMetalTexture> FMetalTextureRef;
 
-class FMetalTexture : public FMetalObject
+class FMetalTexture : public FMetalObject, public FRHITexture
 {
 public:
     explicit FMetalTexture(FMetalDeviceContext* InDeviceContext);

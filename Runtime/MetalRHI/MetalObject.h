@@ -12,9 +12,15 @@ public:
         CHECK(DeviceContext != nullptr);
     }
 
-    ~FMetalObject() = default;
+    virtual ~FMetalObject()
+    {
+        DeviceContext = nullptr;
+    }
 
-    FORCEINLINE FMetalDeviceContext* GetDeviceContext() const { return DeviceContext; }
+    FORCEINLINE FMetalDeviceContext* GetDeviceContext() const
+    {
+        return DeviceContext;
+    }
 
 private:
     FMetalDeviceContext* DeviceContext;

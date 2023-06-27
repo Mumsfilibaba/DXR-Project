@@ -1,23 +1,33 @@
 #pragma once
 #include "MetalObject.h"
-
+#include "MetalRefCounted.h"
 #include "RHI/RHIResources.h"
 
-DISABLE_UNREFERENCED_VARIABLE_WARNING
+typedef TSharedRef<class FMetalBuffer> FMetalBufferRef;
 
-class FMetalBuffer : public FMetalObject
+class FMetalBuffer : public FRHIBuffer, public FMetalObject, public FMetalRefCounted
 {
 public:
-    FMetalBuffer(FMetalDeviceContext* DeviceContext)
-        : FMetalObject(DeviceContext)
-        , Buffer(nil)
-    {
-    }
+    FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferDesc& InDesc);
+    ~FMetalBuffer();
+
+    bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
+
+    virtual int32 AddRef() override final { return FMetalRefCounted::AddRef(); }
     
-    ~FMetalBuffer()
-    {
-        NSSafeRelease(Buffer);
-    }
+    virtual int32 Release() override final { return FMetalRefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
+
+    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
+    
+    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
+    
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+
+    virtual void SetName(const FString& InName) override final;
+
+    virtual FString GetName() const override final;
     
     FORCEINLINE id<MTLBuffer> GetMTLBuffer() const 
     { 
@@ -33,116 +43,7 @@ private:
     id<MTLBuffer> Buffer;
 };
 
-
-class FMetalVertexBuffer : public FMetalBuffer, public FRHIVertexBuffer
-{
-public:
-    FMetalVertexBuffer(FMetalDeviceContext* DeviceContext, const FRHIVertexBufferInitializer& Initializer)
-        : FMetalBuffer(DeviceContext)
-        , FRHIVertexBuffer(Initializer)
-    {
-    }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
-    virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
-    
-    virtual void SetName(const FString& InName) override final
-    {
-        @autoreleasepool
-        {
-            id<MTLBuffer> BufferHandle = GetMTLBuffer();
-            if (BufferHandle)
-            {
-                BufferHandle.label = InName.GetNSString();
-            }
-        }
-    }
-};
-
-
-class FMetalIndexBuffer : public FMetalBuffer, public FRHIIndexBuffer
-{
-public:
-    FMetalIndexBuffer(FMetalDeviceContext* DeviceContext, const FRHIIndexBufferInitializer& Initializer)
-        : FMetalBuffer(DeviceContext)
-        , FRHIIndexBuffer(Initializer)
-    {
-    }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
-    virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
-    
-    virtual void SetName(const FString& InName) override final
-    {
-        @autoreleasepool
-        {
-            id<MTLBuffer> BufferHandle = GetMTLBuffer();
-            if (BufferHandle)
-            {
-                BufferHandle.label = InName.GetNSString();
-            }
-        }
-    }
-};
-
-
-class FMetalConstantBuffer : public FMetalBuffer, public FRHIConstantBuffer
-{
-public:
-    FMetalConstantBuffer(FMetalDeviceContext* DeviceContext, const FRHIConstantBufferInitializer& Initializer)
-        : FMetalBuffer(DeviceContext)
-        , FRHIConstantBuffer(Initializer)
-    {
-    }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
-    virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
-    
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
-
-    virtual void SetName(const FString& InName) override final
-    {
-        @autoreleasepool
-        {
-            id<MTLBuffer> BufferHandle = GetMTLBuffer();
-            if (BufferHandle)
-            {
-                BufferHandle.label = InName.GetNSString();
-            }
-        }
-    }
-};
-
-
-class FMetalGenericBuffer : public FMetalBuffer, public FRHIGenericBuffer
-{
-public:
-    FMetalGenericBuffer(FMetalDeviceContext* DeviceContext, const FRHIGenericBufferInitializer& Initializer)
-        : FMetalBuffer(DeviceContext)
-        , FRHIGenericBuffer(Initializer)
-    {
-    }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
-    virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
-    
-    virtual void SetName(const FString& InName) override final
-    {
-        @autoreleasepool
-        {
-            id<MTLBuffer> BufferHandle = GetMTLBuffer();
-            if (BufferHandle)
-            {
-                BufferHandle.label = InName.GetNSString();
-            }
-        }
-    }
-};
-
-
 inline FMetalBuffer* GetMetalBuffer(FRHIBuffer* Buffer)
 {
     return Buffer ? reinterpret_cast<FMetalBuffer*>(Buffer->GetRHIBaseBuffer()) : nullptr;
 }
-
-ENABLE_UNREFERENCED_VARIABLE_WARNING

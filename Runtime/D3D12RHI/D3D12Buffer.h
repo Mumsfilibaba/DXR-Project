@@ -6,10 +6,7 @@
 
 typedef TSharedRef<class FD3D12Buffer> FD3D12BufferRef;
 
-class FD3D12Buffer 
-    : public FRHIBuffer
-    , public FD3D12DeviceChild
-    , public FD3D12RefCounted
+class FD3D12Buffer : public FRHIBuffer, public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
     FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferDesc& InDesc);
@@ -17,22 +14,33 @@ public:
 
     bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
 
-    virtual int32 AddRef()            override final { return FD3D12RefCounted::AddRef(); }
-    virtual int32 Release()           override final { return FD3D12RefCounted::Release(); }
+    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
+    
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
-    virtual void* GetRHIBaseBuffer()         override final { return reinterpret_cast<void*>(static_cast<FD3D12Buffer*>(this)); }
+    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<FD3D12Buffer*>(this)); }
+    
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
     
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    FD3D12ConstantBufferView* GetConstantBufferView() const { return View.Get(); }
-
     virtual void SetName(const FString& InName) override final;
+
     virtual FString GetName() const override final;
 
     void SetResource(FD3D12Resource* InResource);
-    FD3D12Resource* GetD3D12Resource() const { return Resource.Get(); }
+    
+    FD3D12ConstantBufferView* GetConstantBufferView() const
+    {
+        return View.Get();
+    }
+
+    FD3D12Resource* GetD3D12Resource() const 
+    {
+        return Resource.Get();
+    }
 
 private:
     bool CreateCBV();
