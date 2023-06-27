@@ -285,29 +285,32 @@ constexpr const CHAR* ToString(EKeyName::Type key)
 }
 
 
-enum EMouseButtonName : uint8
+namespace EMouseButtonName
 {
-    MouseButton_Unknown = 0,
-    MouseButton_Left,
-    MouseButton_Right,
-    MouseButton_Middle,
-    MouseButton_Back,
-    MouseButton_Forward,
+    enum Type : uint8
+    {
+        Unknown = 0,
+        Left,
+        Right,
+        Middle,
+        Thumb1,
+        Thumb2,
 
-    MouseButton_Last  = MouseButton_Back,
-    MouseButton_Count = MouseButton_Last + 1
-};
+        Last  = Thumb2,
+        Count = Last + 1
+    };
+} 
 
-constexpr const CHAR* ToString(EMouseButtonName Button)
+constexpr const CHAR* ToString(EMouseButtonName::Type Button)
 {
     switch (Button)
     {
-    case MouseButton_Left:    return "LeftMouse";
-    case MouseButton_Right:   return "RightMouse";
-    case MouseButton_Middle:  return "MiddleMouse";
-    case MouseButton_Back:    return "Back";
-    case MouseButton_Forward: return "Forward";
-    default:                  return "Unknown";
+    case EMouseButtonName::Left:   return "Left";
+    case EMouseButtonName::Right:  return "Right";
+    case EMouseButtonName::Middle: return "Middle";
+    case EMouseButtonName::Thumb1: return "Thumb1";
+    case EMouseButtonName::Thumb2: return "Thumb2";
+    default:                       return "Unknown";
     }
 }
 

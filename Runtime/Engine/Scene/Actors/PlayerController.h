@@ -28,7 +28,7 @@ public:
 
     FKeyState              GetKeyState(EKeyName::Type Key) const;
 
-    FMouseButtonState      GetMouseButtonState(EMouseButtonName Button) const;
+    FMouseButtonState      GetMouseButtonState(EMouseButtonName::Type Button) const;
     
     FControllerButtonState GetControllerButtonState(EGamepadButtonName Button) const;
     
@@ -56,19 +56,19 @@ public:
     }
 
 
-    bool IsButtonDown(EMouseButtonName Button) const
+    bool IsButtonDown(EMouseButtonName::Type Button) const
     {
         const FMouseButtonState ButtonState = GetMouseButtonState(Button);
         return !!ButtonState.bIsDown;
     }
 
-    bool IsButtonUp(EMouseButtonName Button) const
+    bool IsButtonUp(EMouseButtonName::Type Button) const
     {
         const FMouseButtonState ButtonState = GetMouseButtonState(Button);
         return !ButtonState.bIsDown;
     }
 
-    bool IsButtonPressed(EMouseButtonName Button) const
+    bool IsButtonPressed(EMouseButtonName::Type Button) const
     {
         const FMouseButtonState ButtonState = GetMouseButtonState(Button);
         return !!ButtonState.bIsDown && !ButtonState.bPreviousState;

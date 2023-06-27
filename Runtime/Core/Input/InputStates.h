@@ -33,7 +33,7 @@ struct FKeyState
 
 struct FMouseButtonState
 {
-    FMouseButtonState(EMouseButtonName InButton)
+    FMouseButtonState(EMouseButtonName::Type InButton)
         : Button(InButton)
         , bIsDown(0)
         , bPreviousState(0)
@@ -42,7 +42,7 @@ struct FMouseButtonState
     }
 
     /** @brief - The button associated with this button-state */
-    const EMouseButtonName Button;
+    const EMouseButtonName::Type Button;
     
     /** @brief - Indicates if the current state of the button is down */
     uint32 bIsDown : 1;

@@ -46,17 +46,17 @@ struct FGenericApplicationMessageHandler
         return false;
     }
 
-    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
     {
         return false;
     }
 
-    virtual bool OnMouseButtonDoubleClick(const TSharedRef<FGenericWindow>& Window, EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    virtual bool OnMouseButtonDoubleClick(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
     {
         return false;
     }
 
-    virtual bool OnMouseButtonUp(EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
     {
         return false;
     }

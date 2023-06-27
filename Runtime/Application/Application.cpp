@@ -639,7 +639,7 @@ bool FApplication::OnMouseMove(int32 x, int32 y)
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnMouseButtonUp(EMouseButtonName Button, FModifierKeyState ModiferKeyState, int32 x, int32 y)
+bool FApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModiferKeyState, int32 x, int32 y)
 {
     // Remove the mouse capture if there is a capture
     SetCapture(nullptr);
@@ -674,7 +674,7 @@ bool FApplication::OnMouseButtonUp(EMouseButtonName Button, FModifierKeyState Mo
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
 {
     // Set the mouse capture when the mouse is pressed
     SetCapture(Window);

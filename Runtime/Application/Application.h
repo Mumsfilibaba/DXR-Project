@@ -88,9 +88,9 @@ public: // FGenericApplicationMessageHandler Interface
     
     virtual bool OnKeyChar(uint32 Character) override final;
 
-    virtual bool OnMouseButtonUp(EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
+    virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
     
-    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
+    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
     
     virtual bool OnMouseMove(int32 x, int32 y) override final;
     
@@ -208,8 +208,8 @@ protected:
     FDisplayInfo DisplayInfo;
     bool         bIsTrackingMouse;
 
-    TSet<EKeyName::Type>   PressedKeys;
-    TSet<EMouseButtonName> PressedMouseButtons;
+    TSet<EKeyName::Type>         PressedKeys;
+    TSet<EMouseButtonName::Type> PressedMouseButtons;
 
 private:
     static TSharedPtr<FApplication>        CurrentApplication;
