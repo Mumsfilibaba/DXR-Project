@@ -2,16 +2,17 @@
 #include "Application.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-static uint32 ImGui_GetMouseButtonIndex(EMouseButtonName Button)
+// TODO: Turn this into lookup tables
+static uint32 ImGui_GetMouseButtonIndex(EMouseButtonName::Type Button)
 {
     switch (Button)
     {
-    case MouseButton_Left:    return ImGuiMouseButton_Left;
-    case MouseButton_Right:   return ImGuiMouseButton_Right;
-    case MouseButton_Middle:  return ImGuiMouseButton_Middle;
-    case MouseButton_Back:    return 3;
-    case MouseButton_Forward: return 4;
-    default:                  return ImGuiKey_None;
+    case EMouseButtonName::Left:   return ImGuiMouseButton_Left;
+    case EMouseButtonName::Right:  return ImGuiMouseButton_Right;
+    case EMouseButtonName::Middle: return ImGuiMouseButton_Middle;
+    case EMouseButtonName::Thumb1: return 3;
+    case EMouseButtonName::Thumb2: return 4;
+    default:                       return ImGuiKey_None;
     }
 }
 
@@ -123,7 +124,7 @@ static ImGuiKey ImGui_KeyToImGuiKey(EKeyName::Type Key)
     case EKeyName::F10:            return ImGuiKey_F10;
     case EKeyName::F11:            return ImGuiKey_F11;
     case EKeyName::F12:            return ImGuiKey_F12;
-    default:                 return ImGuiKey_None;
+    default:                       return ImGuiKey_None;
     }
 }
 
@@ -654,7 +655,7 @@ FResponse FImGui::OnMouseMoveEvent(int32 x, int32 y)
     return FResponse::Unhandled();
 }
 
-FResponse FImGui::OnMouseButtonEvent(EMouseButtonName Button, bool bIsDown)
+FResponse FImGui::OnMouseButtonEvent(EMouseButtonName::Type Button, bool bIsDown)
 {
     ImGuiIO& UIState = ImGui::GetIO();
 

@@ -515,28 +515,28 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_RBUTTONDOWN:
         case WM_XBUTTONDOWN:
         {
-            EMouseButtonName Button = EMouseButtonName::MouseButton_Unknown;
+            EMouseButtonName::Type Button = EMouseButtonName::Unknown;
             if (Message == WM_LBUTTONDOWN)
             {
-                Button = EMouseButtonName::MouseButton_Left;
+                Button = EMouseButtonName::Left;
             }
             else if (Message == WM_MBUTTONDOWN)
             {
-                Button = EMouseButtonName::MouseButton_Middle;
+                Button = EMouseButtonName::Middle;
             }
             else if (Message == WM_RBUTTONDOWN)
             {
-                Button = EMouseButtonName::MouseButton_Right;
+                Button = EMouseButtonName::Right;
             }
             else if (Message == WM_XBUTTONDOWN)
             {
                 if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
                 {
-                    Button = EMouseButtonName::MouseButton_Back;
+                    Button = EMouseButtonName::Thumb1;
                 }
                 else
                 {
-                    Button = EMouseButtonName::MouseButton_Forward;
+                    Button = EMouseButtonName::Thumb2;
                 }
             }
 
@@ -551,28 +551,28 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_RBUTTONDBLCLK:
         case WM_XBUTTONDBLCLK:
         {
-            EMouseButtonName Button = EMouseButtonName::MouseButton_Unknown;
+            EMouseButtonName::Type Button = EMouseButtonName::Unknown;
             if (Message == WM_LBUTTONDBLCLK)
             {
-                Button = EMouseButtonName::MouseButton_Left;
+                Button = EMouseButtonName::Left;
             }
             else if (Message == WM_MBUTTONDBLCLK)
             {
-                Button = EMouseButtonName::MouseButton_Middle;
+                Button = EMouseButtonName::Middle;
             }
             else if (Message == WM_RBUTTONDBLCLK)
             {
-                Button = EMouseButtonName::MouseButton_Right;
+                Button = EMouseButtonName::Right;
             }
             else if (Message == WM_XBUTTONDBLCLK)
             {
                 if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
                 {
-                    Button = EMouseButtonName::MouseButton_Back;
+                    Button = EMouseButtonName::Thumb1;
                 }
                 else
                 {
-                    Button = EMouseButtonName::MouseButton_Forward;
+                    Button = EMouseButtonName::Thumb2;
                 }
             }
 
@@ -587,28 +587,28 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_RBUTTONUP:
         case WM_XBUTTONUP:
         {
-            EMouseButtonName Button = EMouseButtonName::MouseButton_Unknown;
+            EMouseButtonName::Type Button = EMouseButtonName::Unknown;
             if (Message == WM_LBUTTONUP)
             {
-                Button = EMouseButtonName::MouseButton_Left;
+                Button = EMouseButtonName::Left;
             }
             else if (Message == WM_MBUTTONUP)
             {
-                Button = EMouseButtonName::MouseButton_Middle;
+                Button = EMouseButtonName::Middle;
             }
             else if (Message == WM_RBUTTONUP)
             {
-                Button = EMouseButtonName::MouseButton_Right;
+                Button = EMouseButtonName::Right;
             }
             else if (Message == WM_XBUTTONUP)
             {
                 if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
                 {
-                    Button = EMouseButtonName::MouseButton_Back;
+                    Button = EMouseButtonName::Thumb1;
                 }
                 else
                 {
-                    Button = EMouseButtonName::MouseButton_Forward;
+                    Button = EMouseButtonName::Thumb2;
                 }
             }
 

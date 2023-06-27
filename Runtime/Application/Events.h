@@ -64,7 +64,7 @@ public:
         : FInputEvent()
         , CursorPosition()
         , ScrollDelta(0.0f)
-        , Button(MouseButton_Unknown)
+        , Button(EMouseButtonName::Unknown)
         , bIsVerticalScrollDelta(false)
         , bIsDown(false)
     {
@@ -74,13 +74,13 @@ public:
         : FInputEvent(ModifierKeys)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
-        , Button(MouseButton_Unknown)
+        , Button(EMouseButtonName::Unknown)
         , bIsVerticalScrollDelta(false)
         , bIsDown(false)
     {
     }
 
-    FMouseEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& ModifierKeys, EMouseButtonName InButton, bool bInIsDown)
+    FMouseEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& ModifierKeys, EMouseButtonName::Type InButton, bool bInIsDown)
         : FInputEvent(ModifierKeys)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
@@ -94,7 +94,7 @@ public:
         : FInputEvent(ModifierKeys)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(InScrollDelta)
-        , Button(MouseButton_Unknown)
+        , Button(EMouseButtonName::Unknown)
         , bIsVerticalScrollDelta(bInIsVerticalScrollDelta)
         , bIsDown(false)
     {
@@ -105,7 +105,7 @@ public:
         return CursorPosition;
     }
 
-    EMouseButtonName GetButton() const
+    EMouseButtonName::Type GetButton() const
     {
         return Button;
     }
@@ -128,7 +128,7 @@ public:
 private:
     FIntVector2  CursorPosition;
     float        ScrollDelta;
-    EMouseButtonName Button;
+    EMouseButtonName::Type Button;
     bool         bIsVerticalScrollDelta : 1;
     bool         bIsDown : 1;
 };

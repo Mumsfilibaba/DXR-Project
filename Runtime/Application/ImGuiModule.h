@@ -35,7 +35,7 @@ public:
 
     static FResponse OnMouseMoveEvent(int32 x, int32 y);
 
-    static FResponse OnMouseButtonEvent(EMouseButtonName ButtonIndex, bool bIsDown);
+    static FResponse OnMouseButtonEvent(EMouseButtonName::Type ButtonIndex, bool bIsDown);
 
     static FResponse OnMouseScrollEvent(float ScrollDelta, bool bVertical);
 

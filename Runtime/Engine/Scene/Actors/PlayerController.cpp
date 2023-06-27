@@ -243,7 +243,7 @@ FKeyState FPlayerInput::GetKeyState(EKeyName::Type Key) const
     return FKeyState(Key);
 }
 
-FMouseButtonState FPlayerInput::GetMouseButtonState(EMouseButtonName Button) const
+FMouseButtonState FPlayerInput::GetMouseButtonState(EMouseButtonName::Type Button) const
 {
     const int32 Index = MouseButtonStates.FindWithPredicate([=](const FMouseButtonState& MouseButtonState)
     {
