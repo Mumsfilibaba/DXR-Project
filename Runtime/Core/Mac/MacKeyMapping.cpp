@@ -1,10 +1,10 @@
 #if PLATFORM_MACOS
 #include "MacKeyMapping.h"
 
-TStaticArray<EKeyName, FMacKeyMapping::NumKeys>                FMacKeyMapping::KeyCodeFromScanCodeTable;
-TStaticArray<uint16, FMacKeyMapping::NumKeys>              FMacKeyMapping::ScanCodeFromKeyCodeTable;
-TStaticArray<EMouseButtonName, EMouseButtonName::MouseButton_Count> FMacKeyMapping::ButtonFromButtonIndex;
-TStaticArray<uint8, EMouseButtonName::MouseButton_Count>        FMacKeyMapping::ButtonIndexFromButton;
+TStaticArray<EKeyName::Type, FMacKeyMapping::NumKeys>         FMacKeyMapping::KeyCodeFromScanCodeTable;
+TStaticArray<uint16, FMacKeyMapping::NumKeys>                 FMacKeyMapping::ScanCodeFromKeyCodeTable;
+TStaticArray<EMouseButtonName::Type, EMouseButtonName::Count> FMacKeyMapping::ButtonFromButtonIndex;
+TStaticArray<uint8, EMouseButtonName::Count>                  FMacKeyMapping::ButtonIndexFromButton;
 
 void FMacKeyMapping::Initialize()
 {
@@ -123,7 +123,7 @@ void FMacKeyMapping::Initialize()
     KeyCodeFromScanCodeTable[0x2C] = EKeyName::Slash;
     KeyCodeFromScanCodeTable[0x0A] = EKeyName::World1;
 
-    for (uint16 Index = 0; Index < kNumKeys; ++Index)
+    for (uint16 Index = 0; Index < NumKeys; ++Index)
     {
         if (KeyCodeFromScanCodeTable[Index] != EKeyName::Unknown)
         {
@@ -134,13 +134,13 @@ void FMacKeyMapping::Initialize()
     ButtonFromButtonIndex.Memzero();
     ButtonIndexFromButton.Memzero();
 
-    ButtonFromButtonIndex[0] = EMouseButtonName::MouseButton_Left;
-    ButtonFromButtonIndex[1] = EMouseButtonName::MouseButton_Right;
-    ButtonFromButtonIndex[2] = EMouseButtonName::MouseButton_Middle;
+    ButtonFromButtonIndex[0] = EMouseButtonName::Left;
+    ButtonFromButtonIndex[1] = EMouseButtonName::Right;
+    ButtonFromButtonIndex[2] = EMouseButtonName::Middle;
 
-    for (uint8 Index = 0; Index < EMouseButtonName::MouseButton_Count; ++Index)
+    for (uint8 Index = 0; Index < EMouseButtonName::Count; ++Index)
     {
-        if (ButtonFromButtonIndex[Index] != EMouseButtonName::MouseButton_Unknown)
+        if (ButtonFromButtonIndex[Index] != EMouseButtonName::Unknown)
         {
             ButtonIndexFromButton[ButtonFromButtonIndex[Index]] = Index;
         }

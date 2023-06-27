@@ -82,7 +82,7 @@ void FMacCursor::SetPosition(int32 x, int32 y) const
 FIntVector2 FMacCursor::GetPosition() const
 {
     NSPoint CursorPosition = [NSEvent mouseLocation];
-    return FIntVector2{ CursorPosition.x, CursorPosition.y };
+    return FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
 }
 
 void FMacCursor::SetVisibility(bool bVisible)

@@ -5,8 +5,7 @@
 #include "MetalViewport.h"
 #include "MetalPipelineState.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 FMetalCommandContext::FMetalCommandContext(FMetalDeviceContext* InDeviceContext)
     : FMetalObject(InDeviceContext)

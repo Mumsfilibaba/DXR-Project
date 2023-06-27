@@ -106,8 +106,8 @@ private:
 template<typename ElementType, int32 NumInlineElements>
 class TInlineArrayAllocator
 {
-    template<typename ElementType, int32 NumElements>
-    class TInlineStorage
+    template<int32 NumElements>
+    class FInlineStorage
     {
     public:
         using SizeType = int32;
@@ -208,8 +208,8 @@ public:
     }
 
 private:
-    TInlineStorage<ElementType, NumInlineElements> InlineAllocation;
-    TDefaultArrayAllocator<ElementType>            DynamicAllocation;
+    FInlineStorage<NumInlineElements>   InlineAllocation;
+    TDefaultArrayAllocator<ElementType> DynamicAllocation;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

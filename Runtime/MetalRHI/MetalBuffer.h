@@ -3,18 +3,16 @@
 
 #include "RHI/RHIResources.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalBuffer 
-    : public FMetalObject
+class FMetalBuffer : public FMetalObject
 {
 public:
-    
     FMetalBuffer(FMetalDeviceContext* DeviceContext)
         : FMetalObject(DeviceContext)
         , Buffer(nil)
-    { }
+    {
+    }
     
     ~FMetalBuffer()
     {
@@ -36,16 +34,14 @@ private:
 };
 
 
-class FMetalVertexBuffer 
-    : public FMetalBuffer
-    , public FRHIVertexBuffer
+class FMetalVertexBuffer : public FMetalBuffer, public FRHIVertexBuffer
 {
 public:
-
     FMetalVertexBuffer(FMetalDeviceContext* DeviceContext, const FRHIVertexBufferInitializer& Initializer)
         : FMetalBuffer(DeviceContext)
         , FRHIVertexBuffer(Initializer)
-    { }
+    {
+    }
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
@@ -64,16 +60,14 @@ public:
 };
 
 
-class FMetalIndexBuffer 
-    : public FMetalBuffer
-    , public FRHIIndexBuffer
+class FMetalIndexBuffer : public FMetalBuffer, public FRHIIndexBuffer
 {
 public:
-    
     FMetalIndexBuffer(FMetalDeviceContext* DeviceContext, const FRHIIndexBufferInitializer& Initializer)
         : FMetalBuffer(DeviceContext)
         , FRHIIndexBuffer(Initializer)
-    { }
+    {
+    }
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
@@ -92,16 +86,14 @@ public:
 };
 
 
-class FMetalConstantBuffer 
-    : public FMetalBuffer
-    , public FRHIConstantBuffer
+class FMetalConstantBuffer : public FMetalBuffer, public FRHIConstantBuffer
 {
 public:
-    
     FMetalConstantBuffer(FMetalDeviceContext* DeviceContext, const FRHIConstantBufferInitializer& Initializer)
         : FMetalBuffer(DeviceContext)
         , FRHIConstantBuffer(Initializer)
-    { }
+    {
+    }
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
@@ -122,16 +114,14 @@ public:
 };
 
 
-class FMetalGenericBuffer 
-    : public FMetalBuffer
-    , public FRHIGenericBuffer
+class FMetalGenericBuffer : public FMetalBuffer, public FRHIGenericBuffer
 {
 public:
-    
     FMetalGenericBuffer(FMetalDeviceContext* DeviceContext, const FRHIGenericBufferInitializer& Initializer)
         : FMetalBuffer(DeviceContext)
         , FRHIGenericBuffer(Initializer)
-    { }
+    {
+    }
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
     virtual void* GetRHIBaseBuffer()   override final       { return reinterpret_cast<void*>(static_cast<FMetalBuffer*>(this)); }
@@ -155,4 +145,4 @@ inline FMetalBuffer* GetMetalBuffer(FRHIBuffer* Buffer)
     return Buffer ? reinterpret_cast<FMetalBuffer*>(Buffer->GetRHIBaseBuffer()) : nullptr;
 }
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -1,17 +1,36 @@
 #include "MetalInterface.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+IMPLEMENT_ENGINE_MODULE(FMetalInterfaceModule, MetalRHI);
+
+FRHIInterface* FMetalInterfaceModule::CreateInterface()
+{
+    return new FMetalInterface();
+}
+
+
+FMetalInterface* FMetalInterface::GMetalInterface = nullptr;
 
 FMetalInterface::FMetalInterface()
     : FRHIInterface(ERHIInstanceType::Metal)
     , CommandContext()
-{ }
+{
+    if (!GMetalInterface)
+    {
+        GMetalInterface = this;
+    }
+}
 
 FMetalInterface::~FMetalInterface()
 {
     SAFE_DELETE(CommandContext);
     SAFE_DELETE(DeviceContext);
+
+    if (GMetalInterface == this)
+    {
+        GMetalInterface = nullptr;
+    }
 }
 
 bool FMetalInterface::Initialize()
@@ -35,40 +54,14 @@ bool FMetalInterface::Initialize()
     return true;
 }
 
-FRHITexture* FMetalInterface::RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)
-{
-    return CreateTexture<FMetalTexture2D>(Initializer);
-}
-
-FRHITexture* FMetalInterface::RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)
-{
-    return CreateTexture<FMetalTexture2DArray>(Initializer);
-}
-
-FRHITextureCube* FMetalInterface::RHICreateTextureCube(const FRHITextureCubeInitializer& Initializer)
-{
-    return CreateTexture<FMetalTextureCube>(Initializer);
-}
-
-FRHITextureCubeArray* FMetalInterface::RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer)
-{
-    return CreateTexture<FMetalTextureCubeArray>(Initializer);
-}
-
-FRHITexture3D* FMetalInterface::RHICreateTexture3D(const FRHITexture3DInitializer& Initializer)
-{
-    return CreateTexture<FMetalTexture3D>(Initializer);
-}
-
-template<typename MetalTextureType, typename InitializerType>
-MetalTextureType* FMetalInterface::CreateTexture(const InitializerType& Initializer)
+FRHITexture* FMetalInterface::RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
     SCOPED_AUTORELEASE_POOL();
     
-    TSharedRef<MetalTextureType> NewMetalTexture = new MetalTextureType(GetDeviceContext(), Initializer);
+    TSharedRef<FMetalTexture> NewMetalTexture = new FMetalTexture(GetDeviceContext(), Initializer);
 
     MTLTextureDescriptor* TextureDescriptor = [[MTLTextureDescriptor new] autorelease];
-    TextureDescriptor.textureType               = GetMTLTextureType(NewMetalTexture.Get());
+    TextureDescriptor.textureType               = GetMTLTextureType(Initializer.Dimension, Initializer.IsMultisampled());
     TextureDescriptor.pixelFormat               = ConvertFormat(Initializer.Format);
     TextureDescriptor.usage                     = ConvertTextureFlags(Initializer.UsageFlags);
     TextureDescriptor.allowGPUOptimizedContents = NO;
@@ -78,7 +71,7 @@ MetalTextureType* FMetalInterface::CreateTexture(const InitializerType& Initiali
     TextureDescriptor.width  = Extent.x;
     TextureDescriptor.height = Extent.y;
     
-    if constexpr (TIsSame<MetalTextureType, FMetalTexture3D>::Value)
+    if (Initializer.IsTexture3D())
     {
         TextureDescriptor.depth       = Extent.z;
         TextureDescriptor.arrayLength = 1;
@@ -96,7 +89,9 @@ MetalTextureType* FMetalInterface::CreateTexture(const InitializerType& Initiali
     TextureDescriptor.storageMode        = MTLStorageModePrivate;
     TextureDescriptor.hazardTrackingMode = MTLHazardTrackingModeDefault;
     
-    id<MTLDevice>  Device = GetDeviceContext()->GetMTLDevice();
+    id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
+    CHECK(Device != nil);
+
     id<MTLTexture> NewTexture = [Device newTextureWithDescriptor:TextureDescriptor];
     if (!NewTexture)
     {
@@ -106,9 +101,7 @@ MetalTextureType* FMetalInterface::CreateTexture(const InitializerType& Initiali
     NewMetalTexture->SetDrawableTexture(NewTexture);
     
     // TODO: Fix upload for other resources than Texture2D
-    constexpr bool bIsTexture2D = TIsSame<MetalTextureType, FMetalTexture2D>::Value;
-    
-    if constexpr (bIsTexture2D)
+    if (Initializer.IsTexture2D())
     {
         FRHITextureDataInitializer* InitialData = Initializer.InitialData;
         if (InitialData)
@@ -417,4 +410,4 @@ bool FMetalInterface::RHIQueryUAVFormatSupport(EFormat Format) const
     return true;
 }
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING

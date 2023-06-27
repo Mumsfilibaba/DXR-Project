@@ -208,11 +208,11 @@ public:
     }
 
     /**
-     * @brief         - Perform some function on each element in the array
-     * @param Functor - Callable that takes one element and perform some operation on it
+     * @brief        - Perform some function on each element in the array
+     * @param Lambda - Callable that takes one element and perform some operation on it
      */
-    template<class FunctorType>
-    FORCEINLINE void Foreach(FunctorType&& Functor) const
+    template<class LambdaType>
+    FORCEINLINE void Foreach(LambdaType&& Lambda) const
     {
         for (const ElementType* RESTRICT Current = View, *RESTRICT End = Current + ViewSize; Current != End; ++Current)
         {

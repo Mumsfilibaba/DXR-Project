@@ -3,8 +3,8 @@
 #include "MacCursor.h"
 #include "CocoaWindow.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Input/Platform/PlatformKeyMapping.h"
 #include "Core/Mac/MacRunLoop.h"
+#include "Core/Platform/PlatformKeyMapping.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -111,7 +111,7 @@ void FMacApplication::Tick(float)
     {
         TScopedLock Lock(DeferredEventsCS);
         
-        ProcessableEvents.Swap(DeferredEvents);
+        ::Swap(ProcessableEvents, DeferredEvents);
         DeferredEvents.Clear();
     }
     
@@ -126,7 +126,7 @@ void FMacApplication::Tick(float)
         
         for (const TSharedRef<FMacWindow>& Window : ClosedWindows)
         {
-            MessageHandler->HandleWindowClosed(Window);
+            MessageHandler->OnWindowClosed(Window);
         }
         
         ClosedWindows.Clear();
@@ -263,27 +263,27 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
         
         if (NotificationName == NSWindowDidMoveNotification)
         {
-            MessageHandler->HandleWindowMoved(Window, int16(Event.Position.x), int16(Event.Position.y));
+            MessageHandler->OnWindowMoved(Window, int16(Event.Position.x), int16(Event.Position.y));
         }
         else if (NotificationName == NSWindowDidResizeNotification)
         {
-            MessageHandler->HandleWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height));
+            MessageHandler->OnWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height));
         }
         else if (NotificationName == NSWindowDidMiniaturizeNotification)
         {
-            MessageHandler->HandleWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height));
+            MessageHandler->OnWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height));
         }
         else if (NotificationName == NSWindowDidDeminiaturizeNotification)
         {
-            MessageHandler->HandleWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height));
+            MessageHandler->OnWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height));
         }
         else if (NotificationName == NSWindowDidBecomeMainNotification)
         {
-            MessageHandler->HandleWindowFocusChanged(Window, true);
+            MessageHandler->OnWindowFocusChanged(Window, true);
         }
         else if (NotificationName == NSWindowDidResignMainNotification)
         {
-            MessageHandler->HandleWindowFocusChanged(Window, false);
+            MessageHandler->OnWindowFocusChanged(Window, false);
         }
     }
     else if (Event.Event)
@@ -295,13 +295,13 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
         {
             case NSEventTypeKeyUp:
             {
-                MessageHandler->HandleKeyReleased(FPlatformKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode), FPlatformApplicationMisc::GetModifierKeyState());
+                MessageHandler->OnKeyReleased(FPlatformKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode), FPlatformApplicationMisc::GetModifierKeyState());
                 break;
             }
                
             case NSEventTypeKeyDown:
             {
-                MessageHandler->HandleKeyPressed(FPlatformKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode), CurrentEvent.ARepeat, FPlatformApplicationMisc::GetModifierKeyState());
+                MessageHandler->OnKeyPressed(FPlatformKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode), CurrentEvent.ARepeat, FPlatformApplicationMisc::GetModifierKeyState());
                 break;
             }
 
@@ -309,7 +309,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
             case NSEventTypeRightMouseUp:
             case NSEventTypeOtherMouseUp:
             {
-                MessageHandler->HandleMouseReleased(FPlatformKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber)), FPlatformApplicationMisc::GetModifierKeyState());
+                MessageHandler->OnMouseReleased(FPlatformKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber)), FPlatformApplicationMisc::GetModifierKeyState());
                 break;
             }
 
@@ -317,7 +317,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
             case NSEventTypeRightMouseDown:
             case NSEventTypeOtherMouseDown:
             {
-                MessageHandler->HandleMousePressed(FPlatformKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber)), FPlatformApplicationMisc::GetModifierKeyState());
+                MessageHandler->OnMousePressed(FPlatformKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber)), FPlatformApplicationMisc::GetModifierKeyState());
                 break;
             }
 
@@ -329,13 +329,13 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
                 NSWindow* EventWindow = CurrentEvent.window;
                 if (EventWindow)
                 {
-                    const NSPoint MousePosition    = CurrentEvent.locationInWindow;
-                    const NSRect  ContentRect     = EventWindow.contentView.frame;
+                    const NSPoint MousePosition = CurrentEvent.locationInWindow;
+                    const NSRect  ContentRect   = EventWindow.contentView.frame;
                     
                     const int32 x = int32(MousePosition.x);
                     const int32 y = int32(ContentRect.size.height - MousePosition.y);
                     
-                    MessageHandler->HandleMouseMove(x, y);
+                    MessageHandler->OnMouseMove(x, y);
                     break;
                 }
             }
@@ -351,7 +351,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
                     ScrollDeltaY *= 0.1;
                 }
                     
-                MessageHandler->HandleMouseScrolled(int32(ScrollDeltaX), int32(ScrollDeltaY));
+                MessageHandler->OnMouseScrolled(int32(ScrollDeltaX), int32(ScrollDeltaY));
                 break;
             }
                 
@@ -360,7 +360,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
                 TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(CurrentEvent.window);
                 if (Window)
                 {
-                    MessageHandler->HandleWindowMouseEntered(Window);
+                    MessageHandler->OnWindowMouseEntered(Window);
                 }
 
                 break;
@@ -371,7 +371,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
                 TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(CurrentEvent.window);
                 if (Window)
                 {
-                    MessageHandler->HandleWindowMouseLeft(Window);
+                    MessageHandler->OnWindowMouseLeft(Window);
                 }
 
                 break;
@@ -385,6 +385,6 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
     }
     else if (Event.Character != uint32(-1))
     {
-        MessageHandler->HandleKeyChar(Event.Character);
+        MessageHandler->OnKeyChar(Event.Character);
     }
 }

@@ -6,12 +6,9 @@
 
 #include "Core/Utilities/StringUtilities.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalInputLayoutState 
-    : public FRHIVertexInputLayout
-    , public FMetalObject
+class FMetalInputLayoutState : public FRHIVertexInputLayout, public FMetalObject
 {
 public:
     FMetalInputLayoutState(FMetalDeviceContext* DeviceContext, const FRHIVertexInputLayoutDesc& Initializer)
@@ -41,9 +38,7 @@ private:
     MTLVertexDescriptor* VertexDescriptor;
 };
 
-class FMetalDepthStencilState 
-    : public FRHIDepthStencilState
-    , public FMetalObject
+class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalObject
 {
 public:
     FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateDesc& Initializer)
@@ -99,16 +94,15 @@ private:
 };
 
 
-class FMetalRasterizerState 
-    : public FRHIRasterizerState
-    , public FMetalObject
+class FMetalRasterizerState : public FRHIRasterizerState, public FMetalObject
 {
 public:
     FMetalRasterizerState(FMetalDeviceContext* DeviceContext, const FRHIRasterizerStateDesc& Initializer)
         : FMetalObject(DeviceContext)
         , FillMode(ConvertFillMode(Initializer.FillMode))
         , FrontFaceWinding(Initializer.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
-    { }
+    {
+    }
 
     ~FMetalRasterizerState() = default;
 
@@ -124,8 +118,7 @@ private:
 };
 
 
-class FMetalBlendState 
-    : public FRHIBlendState
+class FMetalBlendState : public FRHIBlendState
 {
 public:
     FMetalBlendState()  = default;
@@ -139,15 +132,14 @@ struct FMetalResourceBinding
     
     FMetalResourceBinding(uint8 InBinding)
         : Binding(InBinding)
-    { }
+    {
+    }
 
     uint8 Binding = 0;
 };
 
 
-class FMetalGraphicsPipelineState 
-    : public FRHIGraphicsPipelineState
-    , public FMetalObject
+class FMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public FMetalObject
 {
 public:
     FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateDesc& Initializer)
@@ -282,7 +274,8 @@ public:
         NSSafeRelease(PipelineState);
     }
 
-    virtual void SetName(const FString& InName) override final { }
+    virtual void SetName(const FString& InName) override final {
+}
 
     virtual FString GetName() const override final { return ""; }
     
@@ -314,29 +307,29 @@ private:
 };
 
 
-class FMetalComputePipelineState 
-    : public FRHIComputePipelineState
+class FMetalComputePipelineState : public FRHIComputePipelineState
 {
 public:
     FMetalComputePipelineState()  = default;
     ~FMetalComputePipelineState() = default;
 
-    virtual void SetName(const FString& InName) override final { }
+    virtual void SetName(const FString& InName) override final {
+}
 
     virtual FString GetName() const override final { return ""; }
 };
 
 
-class FMetalRayTracingPipelineState 
-    : public FRHIRayTracingPipelineState
+class FMetalRayTracingPipelineState : public FRHIRayTracingPipelineState
 {
 public:
     FMetalRayTracingPipelineState()  = default;
     ~FMetalRayTracingPipelineState() = default;
 
-    virtual void SetName(const FString& InName) override final { }
+    virtual void SetName(const FString& InName) override final {
+}
 
     virtual FString GetName() const override final { return ""; }
 };
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING

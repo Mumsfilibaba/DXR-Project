@@ -49,7 +49,7 @@ public:
      * @param Other - SharedRef to move from
      */
     template<typename OtherType>
-    FORCEINLINE TSharedRef(TSharedRef<OtherType>&& Other) noexcept requires(TIsConvertible<TAddPointer<OtherType>::Type, TAddPointer<ElementType>::Type>::Value)
+    FORCEINLINE TSharedRef(TSharedRef<OtherType>&& Other) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
         : Object(Other.Object)
     {
         Other.Object = nullptr;
@@ -69,7 +69,7 @@ public:
      * @param InPointer - Pointer to reference
      */
     template<typename OtherType>
-    FORCEINLINE TSharedRef(OtherType* InPtr) noexcept requires(TIsConvertible<TAddPointer<OtherType>::Type, TAddPointer<ElementType>::Type>::Value)
+    FORCEINLINE TSharedRef(OtherType* InPtr) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
         : Object(InPtr)
     {
     }
@@ -96,7 +96,7 @@ public:
      * @param NewPtr - New pointer to reference
      */
     template<typename OtherType>
-    FORCEINLINE void Reset(OtherType* NewPtr) noexcept requires(TIsConvertible<TAddPointer<OtherType>::Type, TAddPointer<ElementType>::Type>::Value)
+    FORCEINLINE void Reset(OtherType* NewPtr) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
     {
         Reset(static_cast<ElementType*>(NewPtr));
     }
@@ -167,7 +167,7 @@ public:
      * @return - A pointer of the casted type
      */
     template<typename CastType>
-    NODISCARD FORCEINLINE CastType* GetAs() const noexcept requires(TIsConvertible<TAddPointer<CastType>::Type, TAddPointer<ElementType>::Type>::Value)
+    NODISCARD FORCEINLINE CastType* GetAs() const noexcept requires(TIsConvertible<typename TAddPointer<CastType>::Type, typename TAddPointer<ElementType>::Type>::Value)
     {
         return static_cast<CastType*>(Object);
     }
@@ -273,7 +273,7 @@ public:
      * @return      - A reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE TSharedRef& operator=(const TSharedRef<OtherType>& Other) noexcept requires(TIsConvertible<TAddPointer<OtherType>::Type, TAddPointer<ElementType>::Type>::Value)
+    FORCEINLINE TSharedRef& operator=(const TSharedRef<OtherType>& Other) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
     {
         TSharedRef(Other).Swap(*this);
         return *this;
@@ -296,7 +296,7 @@ public:
      * @return      - A reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE TSharedRef& operator=(TSharedRef<OtherType>&& Other) noexcept requires(TIsConvertible<TAddPointer<OtherType>::Type, TAddPointer<ElementType>::Type>::Value)
+    FORCEINLINE TSharedRef& operator=(TSharedRef<OtherType>&& Other) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
     {
         TSharedRef(::Move(Other)).Swap(*this);
         return *this;
@@ -319,7 +319,7 @@ public:
      * @return      - A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE TSharedRef& operator=(OtherType* Other) noexcept requires(TIsConvertible<TAddPointer<OtherType>::Type, TAddPointer<ElementType>::Type>::Value)
+    FORCEINLINE TSharedRef& operator=(OtherType* Other) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
     {
         TSharedRef(Other).Swap(*this);
         return *this;

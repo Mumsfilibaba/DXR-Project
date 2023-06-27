@@ -8,20 +8,23 @@ class FMetalDeviceContext
 private:
     friend class FMetalInterface;
     
-    FMetalDeviceContext(FMetalInterface* InCoreInterface, id<MTLDevice> InDevice);
+    FMetalDeviceContext(id<MTLDevice> InDevice);
     ~FMetalDeviceContext();
 
 public:
-    static FMetalDeviceContext* CreateContext(FMetalInterface* InCoreInterface);
+    static FMetalDeviceContext* CreateContext();
     
-    FORCEINLINE id<MTLDevice>       GetMTLDevice()       const { return Device; }
-    FORCEINLINE id<MTLCommandQueue> GetMTLCommandQueue() const { return CommandQueue; }
+    id<MTLDevice> GetMTLDevice() const
+    {
+        return Device;
+    }
 
-    FORCEINLINE FMetalInterface*    GetMetalInterface() const { return CoreInterface; }
-    
+    id<MTLCommandQueue> GetMTLCommandQueue() const
+    {
+        return CommandQueue;
+    }
+
 private:
-    FMetalInterface* CoreInterface;
-
-    id<MTLDevice>        Device;
-    id<MTLCommandQueue>  CommandQueue;
+    id<MTLDevice>       Device;
+    id<MTLCommandQueue> CommandQueue;
 };

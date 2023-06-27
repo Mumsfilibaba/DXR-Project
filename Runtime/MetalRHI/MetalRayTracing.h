@@ -3,16 +3,15 @@
 
 #include "RHI/RHIRayTracing.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalRayTracingGeometry 
-    : public FRHIRayTracingGeometry
+class FMetalRayTracingGeometry : public FRHIRayTracingGeometry
 {
 public:
     FMetalRayTracingGeometry(const FRHIRayTracingGeometryDesc& Initializer)
         : FRHIRayTracingGeometry(Initializer)
-    { }
+    {
+    }
 
     ~FMetalRayTracingGeometry() = default;
 
@@ -21,14 +20,14 @@ public:
 };
 
 
-class FMetalRayTracingScene 
-    : public FRHIRayTracingScene
+class FMetalRayTracingScene : public FRHIRayTracingScene
 {
 public:
     FMetalRayTracingScene(FMetalDeviceContext* InDeviceContext, const FRHIRayTracingSceneDesc& Initializer)
         : FRHIRayTracingScene(Initializer)
         , View(new FMetalShaderResourceView(InDeviceContext, this))
-    { }
+    {
+    }
 
     ~FMetalRayTracingScene() = default;
 
@@ -42,4 +41,4 @@ private:
     TSharedRef<FMetalShaderResourceView> View;
 };
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING

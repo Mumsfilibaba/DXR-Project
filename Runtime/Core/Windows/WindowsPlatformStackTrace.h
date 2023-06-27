@@ -4,16 +4,16 @@
 
 struct CORE_API FWindowsPlatformStackTrace final : public FGenericPlatformStackTrace
 {
+    using FGenericPlatformStackTrace::GetStack;
     using FGenericPlatformStackTrace::CaptureStackTrace;
 
     static bool InitializeSymbols();
+
     static void ReleaseSymbols();
 
     static int32 CaptureStackTrace(uint64* StackTrace, int32 MaxDepth);
 
     static void GetStackTraceEntryFromAddress(uint64 Address, FStackTraceEntry& OutStackTraceEntry);
-
-    static TArray<FStackTraceEntry> GetStack(int32 MaxDepth = 128, int32 IgnoreCount = 0);
 
     static FORCEINLINE FString GetSymbolPath()
     {

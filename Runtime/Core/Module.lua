@@ -12,6 +12,11 @@ if IsPlatformMac() then
     {
         "AppKit",
     })
+elseif IsPlatformWindows() then
+    CoreApplicationModule.AddLinkLibraries(
+    {
+        "Dbghelp.lib"
+    })
 end
 
 CoreModule.Generate()

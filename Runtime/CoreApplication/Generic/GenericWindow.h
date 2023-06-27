@@ -92,6 +92,16 @@ struct FWindowStyle
     {
         return Style != Other.Style;
     }
+    
+    constexpr bool operator==(EWindowStyleFlag Other) const
+    {
+        return Style == Other;
+    }
+
+    constexpr bool operator!=(EWindowStyleFlag Other) const
+    {
+        return Style != Other;
+    }
 
     EWindowStyleFlag Style = EWindowStyleFlag::None;
 };

@@ -1,18 +1,16 @@
 #pragma once
 #include "MetalObject.h"
+#include "RHI/RHIResources.h"
 
-#include "RHI/RHIResourceViews.h"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
-class FMetalView 
-    : public FMetalObject
+class FMetalView : public FMetalObject
 {
 public:
     explicit FMetalView(FMetalDeviceContext* InDeviceContext)
         : FMetalObject(InDeviceContext)
-    { }
+    {
+    }
 
     id<MTLTexture> GetMTLTexture() const { return TextureView; }
     
@@ -22,31 +20,29 @@ private:
 };
 
 
-class FMetalShaderResourceView 
-    : public FRHIShaderResourceView
-    , public FMetalView
+class FMetalShaderResourceView : public FRHIShaderResourceView, public FMetalView
 {
 public:
     explicit FMetalShaderResourceView(FMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
         : FRHIShaderResourceView(InResource)
         , FMetalView(InDeviceContext)
-    { }
+    {
+    }
 
     ~FMetalShaderResourceView() = default;
 };
 
 
-class FMetalUnorderedAccessView 
-    : public FRHIUnorderedAccessView
-    , public FMetalView
+class FMetalUnorderedAccessView : public FRHIUnorderedAccessView, public FMetalView
 {
 public:
     explicit FMetalUnorderedAccessView(FMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
         : FRHIUnorderedAccessView(InResource)
         , FMetalView(InDeviceContext)
-    { }
+    {
+    }
 
     ~FMetalUnorderedAccessView() = default;
 };
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING

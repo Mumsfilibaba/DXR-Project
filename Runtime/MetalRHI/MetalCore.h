@@ -1,10 +1,8 @@
 #pragma once
 #include "Core/Mac/Mac.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Debug/Debug.h"
-#include "RHI/RHITexture.h"
-#include "RHI/RHIResourceViews.h"
-#include "RHI/RHIPipelineState.h"
+#include "Core/Misc/Debug.h"
+#include "RHI/RHIResources.h"
 
 #include <Metal/Metal.h>
 #include <QuartzCore/QuartzCore.h>
@@ -103,53 +101,40 @@ constexpr MTLStoreAction ConvertAttachmentStoreAction(EAttachmentStoreAction Sto
     }
 }
 
-inline MTLTextureType GetMTLTextureType(FRHITexture* Texture)
+constexpr MTLTextureType GetMTLTextureType(ETextureDimension TextureDimension, bool bIsMultisampled)
 {
-    CHECK(Texture != nullptr);
-    
-    if (FRHITexture* Texture2D = Texture->GetTexture2D())
+    switch(TextureDimension)
     {
-        return Texture2D->IsMultiSampled() ? MTLTextureType2DMultisample : MTLTextureType2D;
-    }
-    else if (FRHITexture* Texture2DArray = Texture->GetTexture2DArray())
-    {
-        return Texture2DArray->IsMultiSampled() ? MTLTextureType2DMultisampleArray : MTLTextureType2DArray;
-    }
-    else if (FRHITextureCube* TextureCube = Texture->GetTextureCube())
-    {
-        return MTLTextureTypeCube;
-    }
-    else if (FRHITextureCubeArray* TextureCubeArray = Texture->GetTextureCubeArray())
-    {
-        return MTLTextureTypeCubeArray;
-    }
-    else if (FRHITexture3D* Texture3D = Texture->GetTexture3D())
-    {
-        return MTLTextureType3D;
-    }
-    else
-    {
-        CHECK(false);
-        return MTLTextureType(-1);
+        case ETextureDimension::Texture2D:        return bIsMultisampled ? MTLTextureType2DMultisample      : MTLTextureType2D;
+        case ETextureDimension::Texture2DArray:   return bIsMultisampled ? MTLTextureType2DMultisampleArray : MTLTextureType2DArray;
+        case ETextureDimension::TextureCube:      return MTLTextureTypeCube;
+        case ETextureDimension::TextureCubeArray: return MTLTextureTypeCube;
+        case ETextureDimension::Texture3D:        return MTLTextureType3D;
+
+        default:
+        {
+            CHECK(false);
+            return MTLTextureType(-1);
+        }
     }
 }
 
 constexpr MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
 {
     MTLTextureUsage Result = MTLTextureUsageUnknown;
-    if ((Flag & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None)
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::UnorderedAccess))
     {
         Result |= MTLTextureUsageShaderWrite;
     }
-    if ((Flag & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None)
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::UnorderedAccess))
     {
         Result |= MTLTextureUsageRenderTarget;
     }
-    if ((Flag & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None)
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::DepthStencil))
     {
         Result |= MTLTextureUsageRenderTarget;
     }
-    if ((Flag & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None)
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::ShaderResource))
     {
         Result |= MTLTextureUsageShaderRead;
     }

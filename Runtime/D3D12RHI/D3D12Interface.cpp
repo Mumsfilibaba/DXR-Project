@@ -25,12 +25,13 @@ TAutoConsoleVariable<bool> CVarEnablePix(
     false);
 
 
-FD3D12Interface* FD3D12Interface::GD3D12Interface = nullptr;
-
 FRHIInterface* FD3D12InterfaceModule::CreateInterface()
 {
     return new FD3D12Interface();
 }
+
+
+FD3D12Interface* FD3D12Interface::GD3D12Interface = nullptr;
 
 FD3D12Interface::FD3D12Interface()
     : FRHIInterface(ERHIInstanceType::D3D12)

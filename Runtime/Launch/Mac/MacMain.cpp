@@ -37,7 +37,8 @@ static int32 GEngineMainResult = 0;
     SCOPED_AUTORELEASE_POOL();
     
     // Run the main loop
-    GEngineMainResult = GenericMain();
+    // TODO: Check how we can send the commanline here
+    GEngineMainResult = GenericMain(nullptr, 0);
 }
 
 @end

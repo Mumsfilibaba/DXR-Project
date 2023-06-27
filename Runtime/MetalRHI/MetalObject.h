@@ -6,7 +6,6 @@ class FMetalDeviceContext;
 class FMetalObject
 {
 public:
-
     FMetalObject(FMetalDeviceContext* InDeviceContext)
         : DeviceContext(InDeviceContext)
     {

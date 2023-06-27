@@ -6,7 +6,8 @@ FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext)
     , Texture(nil)
     , Viewport(nullptr)
     , ShaderResourceView(nullptr)
-{ }
+{
+}
     
 FMetalTexture::~FMetalTexture()
 {

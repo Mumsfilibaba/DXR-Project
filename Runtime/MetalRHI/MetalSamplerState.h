@@ -1,11 +1,9 @@
 #pragma once
 #include "RHI/RHIResources.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalSamplerState 
-    : public FRHISamplerState
+class FMetalSamplerState : public FRHISamplerState
 {
 public:
     FMetalSamplerState()  = default;
@@ -19,4 +17,4 @@ private:
     id<MTLSamplerState> SamplerState = nil;
 };
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING

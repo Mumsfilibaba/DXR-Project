@@ -45,7 +45,7 @@ function FBuildRules(InName)
         bEnableIntrinsics = true,
 
         -- @brief - Architecture to compile for
-        Architecture = "x64",
+        Architecture = "x86_64",
         
         -- @brief - Warning level to compile with
         Warnings = "extra",

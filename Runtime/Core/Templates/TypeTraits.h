@@ -389,7 +389,7 @@ struct TIsConvertible
 template<typename FromType, typename ToType>
 struct TIsPointerConvertible
 {
-    inline static constexpr bool Value = TIsConvertible<TAddPointer<FromType>::Type, TAddPointer<ToType>::Type>::Value;
+    inline static constexpr bool Value = TIsConvertible<typename TAddPointer<FromType>::Type, typename TAddPointer<ToType>::Type>::Value;
 };
 
 

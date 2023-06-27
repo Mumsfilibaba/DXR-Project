@@ -8,18 +8,17 @@
 
 #include "Core/Containers/SharedRef.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalDeviceContext;
 
 class FMetalCopyCommandContext final
 {
 public:
-
     FMetalCopyCommandContext()
         : CopyEncoder(nil)
-    { }
+    {
+    }
     
     void StartContext(id<MTLCommandBuffer> CommandBuffer)
     {
@@ -53,9 +52,7 @@ private:
 };
 
 
-class FMetalCommandContext final 
-    : public FMetalObject
-    , public IRHICommandContext
+class FMetalCommandContext final : public FMetalObject, public IRHICommandContext
 {
 private:
 
@@ -157,8 +154,10 @@ public:
     virtual void InsertMarker(const FStringView& Message) override final;
 
     // NOTE: Only supported in D3D12RHI for now
-    virtual void BeginExternalCapture() override final { }
-    virtual void EndExternalCapture()   override final { }
+    virtual void BeginExternalCapture() override final {
+}
+    virtual void EndExternalCapture()   override final {
+}
 
     virtual void* GetRHIBaseCommandList() override final { return reinterpret_cast<void*>(CommandBuffer); }
     
@@ -203,4 +202,4 @@ private:
     
 };
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING

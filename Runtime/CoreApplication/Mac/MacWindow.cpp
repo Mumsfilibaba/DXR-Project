@@ -21,21 +21,21 @@ FMacWindow::~FMacWindow()
     }, NSDefaultRunLoopMode, true);
 }
 
-bool FMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, FWindowStyle InStyle)
+bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 {
     NSUInteger WindowStyle = 0;
-    if (InStyle.Style)
+    if (InInitializer.Style != EWindowStyleFlag::None)
     {
         WindowStyle = NSWindowStyleMaskTitled | NSWindowStyleMaskFullSizeContentView;
-        if (InStyle.IsClosable())
+        if (InInitializer.Style.IsClosable())
         {
             WindowStyle |= NSWindowStyleMaskClosable;
         }
-        if (InStyle.IsResizeable())
+        if (InInitializer.Style.IsResizeable())
         {
             WindowStyle |= NSWindowStyleMaskResizable;
         }
-        if (InStyle.IsMinimizable())
+        if (InInitializer.Style.IsMinimizable())
         {
             WindowStyle |= NSWindowStyleMaskMiniaturizable;
         }
@@ -50,7 +50,7 @@ bool FMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHei
     {
         SCOPED_AUTORELEASE_POOL();
         
-        const NSRect WindowRect = NSMakeRect(CGFloat(x), CGFloat(y), CGFloat(InWidth), CGFloat(InHeight));
+        const NSRect WindowRect = NSMakeRect(CGFloat(InInitializer.Position.x), CGFloat(InInitializer.Position.y), CGFloat(InInitializer.Width), CGFloat(InInitializer.Height));
         WindowHandle = [[FCocoaWindow alloc] initWithContentRect: WindowRect styleMask: WindowStyle backing: NSBackingStoreBuffered defer: NO];
         if (!WindowHandle)
         {
@@ -61,9 +61,9 @@ bool FMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHei
         const int32 WindowLevel = NSNormalWindowLevel;
         WindowHandle.level = WindowLevel;
         
-        if (InStyle.IsTitled())
+        if (InInitializer.Style.IsTitled())
         {
-            WindowHandle.title = InTitle.GetNSString();
+            WindowHandle.title = InInitializer.Title.GetNSString();
         }
         
         // Set a default background
@@ -77,17 +77,17 @@ bool FMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHei
         [WindowHandle setDelegate:WindowHandle];
         [WindowHandle setBackgroundColor:BackGroundColor];
         
-        if (!InStyle.IsMinimizable())
+        if (!InInitializer.Style.IsMinimizable())
         {
             [[WindowHandle standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
         }
-        if (!InStyle.IsMaximizable())
+        if (!InInitializer.Style.IsMaximizable())
         {
             [[WindowHandle standardWindowButton:NSWindowZoomButton] setEnabled:NO];
         }
         
         NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
-        if (InStyle.IsResizeable())
+        if (InInitializer.Style.IsResizeable())
         {
             Behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
         }
@@ -98,10 +98,10 @@ bool FMacWindow::Initialize(const FString& InTitle, uint32 InWidth, uint32 InHei
         
         WindowHandle.collectionBehavior = Behavior;
         
-        [NSApp addWindowsItem:WindowHandle title:InTitle.GetNSString() filename:NO];
+        [NSApp addWindowsItem:WindowHandle title:InInitializer.Title.GetNSString() filename:NO];
         
         // Set styleflags
-        StyleParams = InStyle;
+        StyleParams = InInitializer.Style;
 
         bResult = true;
     }, NSDefaultRunLoopMode, true);
@@ -124,46 +124,37 @@ void FMacWindow::Show(bool bMaximized)
     }, NSDefaultRunLoopMode, true);
 }
 
-void FMacWindow::Close()
+void FMacWindow::Destroy()
 {
-    if (StyleParams.IsClosable())
+    ExecuteOnMainThread(^
     {
-        ExecuteOnMainThread(^
-        {
-            [WindowHandle performClose:WindowHandle];
-            FPlatformApplicationMisc::PumpMessages(true);
-        }, NSDefaultRunLoopMode, true);
-    }
+        [WindowHandle performClose:WindowHandle];
+        FPlatformApplicationMisc::PumpMessages(true);
+    }, NSDefaultRunLoopMode, true);
 }
 
 void FMacWindow::Minimize()
 {
-    if (StyleParams.IsMinimizable())
+    ExecuteOnMainThread(^
     {
-        ExecuteOnMainThread(^
-        {
-            [WindowHandle miniaturize:WindowHandle];
-            FPlatformApplicationMisc::PumpMessages(true);
-        }, NSDefaultRunLoopMode, true);
-    }
+        [WindowHandle miniaturize:WindowHandle];
+        FPlatformApplicationMisc::PumpMessages(true);
+    }, NSDefaultRunLoopMode, true);
 }
 
 void FMacWindow::Maximize()
 {
-    if (StyleParams.IsMaximizable())
+    ExecuteOnMainThread(^
     {
-        ExecuteOnMainThread(^
+        if (WindowHandle.miniaturized)
         {
-            if (WindowHandle.miniaturized)
-            {
-                [WindowHandle deminiaturize:WindowHandle];
-            }
+            [WindowHandle deminiaturize:WindowHandle];
+        }
 
-            [WindowHandle zoom:WindowHandle];
+        [WindowHandle zoom:WindowHandle];
 
-            FPlatformApplicationMisc::PumpMessages(true);
-        }, NSDefaultRunLoopMode, true);
-    }
+        FPlatformApplicationMisc::PumpMessages(true);
+    }, NSDefaultRunLoopMode, true);
 }
 
 bool FMacWindow::IsActiveWindow() const
@@ -216,14 +207,14 @@ void FMacWindow::SetTitle(const FString& InTitle)
     }
 }
 
-void FMacWindow::GetTitle(FString& OutTitle)
+void FMacWindow::GetTitle(FString& OutTitle) const
 {
     if (StyleParams.IsTitled())
     {
         SCOPED_AUTORELEASE_POOL();
         
         NSString* Title = WindowHandle.title;
-        OutTitle.Reset(Title.UTF8String, Title.length);
+        OutTitle = FString(Title);
     }
 }
 

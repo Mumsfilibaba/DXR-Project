@@ -1,9 +1,7 @@
 #include "WindowsPlatformStackTrace.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
-// TODO: This should probablu be included in the buildsystem
 #include <dbghelp.h>
-#pragma comment(lib, "Dbghelp.lib")
 
 static bool GSymbolsInitialized = false;
 
@@ -88,17 +86,7 @@ int32 FWindowsPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 Ma
     bool bStackWalkSucceeded = true;
     while (bStackWalkSucceeded && (CurrentDepth < MaxDepth))
     {
-        bStackWalkSucceeded = !!::StackWalk64(
-            MachineType,
-            ProcessHandle,
-            ThreadHandle,
-            &StackFrame64,
-            &Context,
-            nullptr,
-            ::SymFunctionTableAccess64,
-            ::SymGetModuleBase64,
-            nullptr);
-
+        bStackWalkSucceeded = ::StackWalk64(MachineType, ProcessHandle, ThreadHandle, &StackFrame64, &Context, nullptr, ::SymFunctionTableAccess64, ::SymGetModuleBase64, nullptr);
         if (!bStackWalkSucceeded)
         {
             break;
@@ -143,7 +131,9 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
     if (::SymFromAddr(ProcessHandle, Address, nullptr, Symbol))
     {
         int32 Offset = 0;
-        while (Symbol->Name[Offset] < 32 || Symbol->Name[Offset] > 127)
+
+        // NOTE: Allowed characters in the Ascii-table
+        while (Symbol->Name[Offset] < ' ' || Symbol->Name[Offset] > 127)
         {
             Offset++;
         }
@@ -185,32 +175,4 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
     {
         LastError = ::GetLastError();
     }
-}
-
-TArray<FStackTraceEntry> FWindowsPlatformStackTrace::GetStack(int32 MaxDepth, int32 IgnoreCount)
-{
-    TArray<FStackTraceEntry> Stack;
-    if (!InitializeSymbols())
-    {
-        return Stack;
-    }
-
-    // Skip the 2 first (CaptureCallstack functions)
-    IgnoreCount += 2;
-
-    uint64 StackTrace[MAX_STACK_DEPTH];
-    FMemory::Memzero(StackTrace);
-
-    // Ensure that static buffer does not overflow
-    MaxDepth = FMath::Min(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);
-
-    const int32 Depth = CaptureStackTrace(StackTrace, MaxDepth);
-    for (int32 CurrentDepth = IgnoreCount; CurrentDepth < Depth; CurrentDepth++)
-    {
-        FStackTraceEntry& NewEntry = Stack.Emplace();
-        GetStackTraceEntryFromAddress(StackTrace[CurrentDepth], NewEntry);
-    }
-
-    ReleaseSymbols();
-    return Stack;
 }

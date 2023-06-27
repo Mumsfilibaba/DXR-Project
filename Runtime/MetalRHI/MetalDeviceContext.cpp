@@ -1,9 +1,7 @@
 #include "MetalDeviceContext.h"
 
-
-FMetalDeviceContext::FMetalDeviceContext(FMetalInterface* InCoreInterface, id<MTLDevice> InDevice)
-    : CoreInterface(InCoreInterface)
-    , Device(InDevice)
+FMetalDeviceContext::FMetalDeviceContext(id<MTLDevice> InDevice)
+    : Device(InDevice)
     , CommandQueue([InDevice newCommandQueue])
 {
     CHECK(CommandQueue != nullptr);
@@ -15,11 +13,9 @@ FMetalDeviceContext::~FMetalDeviceContext()
     NSSafeRelease(CommandQueue);
 }
 
-FMetalDeviceContext* FMetalDeviceContext::CreateContext(FMetalInterface* InCoreInterface)
+FMetalDeviceContext* FMetalDeviceContext::CreateContext()
 {
     SCOPED_AUTORELEASE_POOL();
-    
-    METAL_ERROR_COND(InCoreInterface != nullptr);
     
     NSArray<id<MTLDevice>>* AvailableDevices = MTLCopyAllDevices();
         
@@ -45,5 +41,5 @@ FMetalDeviceContext* FMetalDeviceContext::CreateContext(FMetalInterface* InCoreI
     METAL_INFO("bSupportRayTracing=%s, bSupportRayTracingFromRender=%s", bSupportRayTracing ? "true" : "false", bSupportRayTracingFromRender ? "true" : "false");
     
     NSRelease(AvailableDevices);
-    return new FMetalDeviceContext(InCoreInterface, SelectedDevice);
+    return new FMetalDeviceContext(SelectedDevice);
 }

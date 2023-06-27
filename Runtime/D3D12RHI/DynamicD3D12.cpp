@@ -20,15 +20,15 @@ PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER FDynamicD3D12::D3D12Creat
 
 PFN_SetMarkerOnCommandList                             FDynamicD3D12::SetMarkerOnCommandList                        = nullptr;
 
-#define D3D12_LOAD_FUNCTION(Function, LibraryHandle)                                                 \
-    do                                                                                               \
-    {                                                                                                \
+#define D3D12_LOAD_FUNCTION(Function, LibraryHandle)                                                  \
+    do                                                                                                \
+    {                                                                                                 \
         Function = FPlatformLibrary::LoadSymbolAddress<decltype(Function)>(#Function, LibraryHandle); \
-        if (!Function)                                                                               \
-        {                                                                                            \
-            D3D12_ERROR("Failed to load '%s'", #Function);                                           \
-            return false;                                                                            \
-        }                                                                                            \
+        if (!Function)                                                                                \
+        {                                                                                             \
+            D3D12_ERROR("Failed to load '%s'", #Function);                                            \
+            return false;                                                                             \
+        }                                                                                             \
     } while(false)
 
 

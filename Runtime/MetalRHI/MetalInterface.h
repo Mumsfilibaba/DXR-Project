@@ -13,88 +13,142 @@
 
 #include "RHI/RHIInterface.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalInterface final
-    : public FRHIInterface
+struct FMetalInterfaceModule final : public FRHIInterfaceModule
+{
+    virtual class FRHIInterface* CreateInterface() override final;
+};
+
+class FMetalInterface final : public FRHIInterface
 {
 public:
     FMetalInterface();
     ~FMetalInterface();
 
+    static FMetalInterface* GetRHI() 
+    {
+        CHECK(GMetalInterface != nullptr);
+        return GMetalInterface; 
+    }
+
     virtual bool Initialize() override final;
 
-    virtual FRHITexture*               RHICreateTexture2D(const FRHITexture2DInitializer& Initializer)               override final;
-    virtual FRHITexture*          RHICreateTexture2DArray(const FRHITexture2DArrayInitializer& Initializer)     override final;
-    virtual FRHITextureCube*             RHICreateTextureCube(const FRHITextureCubeInitializer& Initializer)           override final;
-    virtual FRHITextureCubeArray*        RHICreateTextureCubeArray(const FRHITextureCubeArrayInitializer& Initializer) override final;
-    virtual FRHITexture3D*               RHICreateTexture3D(const FRHITexture3DInitializer& Initializer)               override final;
-
-    virtual FRHISamplerState*            RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer) override final;
-
-    virtual FRHIVertexBuffer*            RHICreateBuffer(const FRHIVertexBufferInitializer& Initializer)     override final;
-    virtual FRHIIndexBuffer*             RHICreateBuffer(const FRHIIndexBufferInitializer& Initializer)       override final;
-    virtual FRHIGenericBuffer*           RHICreateBuffer(const FRHIGenericBufferInitializer& Initializer)   override final;
-    virtual FRHIConstantBuffer*          RHICreateBuffer(const FRHIConstantBufferInitializer& Initializer) override final;
-
-    virtual FRHIRayTracingScene*         RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& Initializer)       override final;
-    virtual FRHIRayTracingGeometry*      RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& Initializer) override final;
-
-    virtual FRHIShaderResourceView*      RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer) override final;
-    virtual FRHIShaderResourceView*      RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer)  override final;
-
-    virtual FRHIUnorderedAccessView*     RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer) override final;
-    virtual FRHIUnorderedAccessView*     RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer)  override final;
-
-    virtual FRHIComputeShader*           RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final;
-
-    virtual FRHIVertexShader*            RHICreateVertexShader(const TArray<uint8>& ShaderCode)        override final;
-    virtual FRHIHullShader*              RHICreateHullShader(const TArray<uint8>& ShaderCode)          override final;
-    virtual FRHIDomainShader*            RHICreateDomainShader(const TArray<uint8>& ShaderCode)        override final;
-    virtual FRHIGeometryShader*          RHICreateGeometryShader(const TArray<uint8>& ShaderCode)      override final;
-    virtual FRHIMeshShader*              RHICreateMeshShader(const TArray<uint8>& ShaderCode)          override final;
-    virtual FRHIAmplificationShader*     RHICreateAmplificationShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIPixelShader*             RHICreatePixelShader(const TArray<uint8>& ShaderCode)         override final;
-
-    virtual FRHIRayGenShader*            RHICreateRayGenShader(const TArray<uint8>& ShaderCode)        override final;
-    virtual FRHIRayAnyHitShader*         RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode)     override final;
-    virtual FRHIRayClosestHitShader*     RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIRayMissShader*           RHICreateRayMissShader(const TArray<uint8>& ShaderCode)       override final;
+    virtual FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
     
-    virtual FRHIDepthStencilState*       RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& Initializer) override final;
-    virtual FRHIRasterizerState*         RHICreateRasterizerState(const FRHIRasterizerStateDesc& Initializer)     override final;
-    virtual FRHIBlendState*              RHICreateBlendState(const FRHIBlendStateDesc& Initializer)               override final;
-    virtual FRHIVertexInputLayout*       RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& Initializer) override final;
+    virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) override final;
 
-    virtual FRHIGraphicsPipelineState*   RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& Initializer)     override final;
-    virtual FRHIComputePipelineState*    RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& Initializer)       override final;
-    virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Initializer) override final;
+    virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& InDesc) override final;
+    
+    virtual FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) override final;
 
-    virtual FRHITimestampQuery*          RHICreateTimestampQuery() override final;
+    virtual FRHITimestampQuery* RHICreateTimestampQuery() override final;
+    
+    virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final;
 
-    virtual FRHIViewport*                RHICreateViewport(const FRHIViewportInitializer& Initializer) override final;
+    virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) override final;
 
-    virtual IRHICommandContext*          RHIGetDefaultCommandContext() override final;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) override final;
+    
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc)  override final;
 
-    virtual FString GetAdapterDescription() const override final;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc) override final;
 
-    virtual void RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport)   const override final;
-    virtual void RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const override final;
-    virtual bool RHIQueryUAVFormatSupport(EFormat Format)                    const override final;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc)  override final;
+
+    virtual FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final;
+
+    virtual FRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode)   override final;
+    
+    virtual FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode)     override final;
+    
+    virtual FRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode)   override final;
+    
+    virtual FRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode) override final;
+    
+    virtual FRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode)    override final;
+    
+    virtual FRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode) override final;
+
+    virtual FRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode) override final;
+
+    virtual FRHIRayGenShader* RHICreateRayGenShader(const TArray<uint8>& ShaderCode) override final;
+
+    virtual FRHIRayAnyHitShader* RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final;
+    
+    virtual FRHIRayClosestHitShader* RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
+    
+    virtual FRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode) override final;
+
+    virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) override final;
+    
+    virtual FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) override final;
+    
+    virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& InDesc) override final;
+    
+    virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& InDesc) override final;
+
+    virtual FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) override final;
+
+    virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) override final;
+    
+    virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final;
+
+    virtual IRHICommandContext* RHIObtainCommandContext() override final { return DirectContext; }
+
+    virtual void RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const override final;
+    
+    virtual void RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const override final;
+    
+    virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
+
+    virtual FString RHIGetAdapterDescription() const override final 
+    {
+        // TODO: Finish
+        return FString(); 
+    }
+
+    virtual void* RHIGetAdapter() override final 
+    {
+        // TODO: Finish
+        return nullptr;
+    }
+
+    virtual void* RHIGetDevice() override final
+    {
+        CHECK(DeviceContext != nullptr);
+        return reinterpret_cast<void*>(DeviceContext->GetMTLDevice());
+    }
+
+    virtual void* RHIGetDirectCommandQueue() override final
+    {
+        CHECK(DeviceContext != nullptr);
+        return reinterpret_cast<void*>(DeviceContext->GetMTLCommandQueue());
+    }
+
+    virtual void* RHIGetComputeCommandQueue() override final
+    {
+        // TODO: Finish
+        return nullptr;
+    }
+
+    virtual void* RHIGetCopyCommandQueue() override final
+    {
+        // TODO: Finish
+        return nullptr;
+    }
 
 public:
-    FMetalDeviceContext* GetDeviceContext() const { return DeviceContext; }
+    FMetalDeviceContext* GetDeviceContext() const
+    {
+        return DeviceContext;
+    }
     
 private:
-    template<typename MetalTextureType, typename InitializerType>
-    MetalTextureType* CreateTexture(const InitializerType& Initializer);
-    
-    template<typename MetalBufferType, typename InitializerType, const uint32 BufferAlignment = kBufferAlignment>
-    MetalBufferType* CreateBuffer(const InitializerType& Initializer);
-    
     FMetalDeviceContext*  DeviceContext;
     FMetalCommandContext* CommandContext;
+
+    static FMetalInterface* GMetalInterface;
 };
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING

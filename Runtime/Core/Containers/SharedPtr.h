@@ -1,5 +1,6 @@
 #pragma once
 #include "UniquePtr.h"
+#include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Threading/AtomicInt.h"
 
@@ -27,7 +28,7 @@ namespace SharedPointerInternal
     {
     public:
         typedef int32 ReferenceCountType;
-        typedef TConditional<ThreadAccess == EThreadAccess::Safe, FAtomicInt32, int32>::Type ReferenceType;
+        typedef typename TConditional<ThreadAccess == EThreadAccess::Safe, FAtomicInt32, int32>::Type ReferenceType;
 
         FReferenceHandler(const FReferenceHandler&) = delete;
         FReferenceHandler(FReferenceHandler&&)      = delete;
@@ -544,10 +545,10 @@ public:
     using SizeType   = int32;
     using ObjectType = typename TRemoveExtent<InObjectType>::Type;
 
-    template<typename OtherObjectType, EThreadAccess InThreadAccess>
+    template<typename OtherObjectType, EThreadAccess OtherThreadAccess>
     friend class TWeakPtr;
 
-    template<typename OtherObjectType, EThreadAccess InThreadAccess>
+    template<typename OtherObjectType, EThreadAccess OtherThreadAccess>
     friend class TSharedPtr;
 
     static inline constexpr EThreadAccess ThreadAccess = InThreadAccess;
@@ -880,7 +881,7 @@ public:
 private:
     FORCEINLINE void EnableSharedFromThis(ObjectType* InPointer) noexcept
     {
-        if constexpr(TIsBaseOf<TSharedFromThis<ObjectType>, ObjectType>::Value)
+        if constexpr(TIsBaseOf<TSharedFromThis<ObjectType, ThreadAccess>, ObjectType>::Value)
         {
             typedef typename TRemoveCV<ObjectType>::Type PureElementType;
             InPointer->WeakThisPointer = TSharedPtr<PureElementType>(*this, static_cast<PureElementType*>(InPointer));

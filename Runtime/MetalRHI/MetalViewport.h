@@ -12,16 +12,13 @@
 #include "CoreApplication/Mac/CocoaWindow.h"
 #include "CoreApplication/Mac/CocoaWindowView.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 @interface FMetalWindowView : FCocoaWindowView
 @end
 
 
-class FMetalViewport 
-    : public FMetalObject
-    , public FRHIViewport
+class FMetalViewport : public FMetalObject, public FRHIViewport
 {
 public:
     FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer);
@@ -57,4 +54,4 @@ private:
     FMacEventRef        MainThreadEvent;
 };
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -1,11 +1,9 @@
 #pragma once
 #include "RHI/RHITimestampQuery.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalTimestampQuery 
-    : public FRHITimestampQuery
+class FMetalTimestampQuery : public FRHITimestampQuery
 {
 public:
     FMetalTimestampQuery()  = default;
@@ -22,4 +20,4 @@ public:
     }
 };
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING

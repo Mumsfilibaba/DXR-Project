@@ -3,8 +3,7 @@
 
 #include "RHI/RHIResources.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalViewport;
 
@@ -15,8 +14,7 @@ typedef TSharedRef<class FMetalTextureCube>      FMetalTextureCubeRef;
 typedef TSharedRef<class FMetalTextureCubeArray> FMetalTextureCubeArrayRef;
 typedef TSharedRef<class FMetalTexture3D>        FMetalTexture3DRef;
 
-class FMetalTexture 
-    : public FMetalObject
+class FMetalTexture : public FMetalObject
 {
 public:
     explicit FMetalTexture(FMetalDeviceContext* InDeviceContext);
@@ -47,16 +45,15 @@ protected:
     TSharedRef<FMetalShaderResourceView> ShaderResourceView;
 };
 
-class FMetalTexture2D 
-    : public FMetalTexture
-    , public FRHITexture
+class FMetalTexture2D : public FMetalTexture, public FRHITexture
 {
 public:
     FMetalTexture2D(FMetalDeviceContext* InDeviceContext, const FRHITexture2DInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
         , FRHITexture(Initializer)
         , UnorderedAccessView(new FMetalUnorderedAccessView(InDeviceContext, this))
-    { }
+    {
+    }
 
     FMetalUnorderedAccessView* GetMetalUnorderedAccessView() const { return UnorderedAccessView.Get(); }
 
@@ -85,15 +82,14 @@ private:
 };
 
 
-class FMetalTexture2DArray 
-    : public FMetalTexture
-    , public FRHITexture
+class FMetalTexture2DArray : public FMetalTexture, public FRHITexture
 {
 public:
     FMetalTexture2DArray(FMetalDeviceContext* InDeviceContext, const FRHITexture2DArrayInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
         , FRHITexture(Initializer)
-    { }
+    {
+    }
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
@@ -115,15 +111,14 @@ public:
 };
 
 
-class FMetalTextureCube 
-    : public FMetalTexture
-    , public FRHITextureCube
+class FMetalTextureCube : public FMetalTexture, public FRHITextureCube
 {
 public:
     FMetalTextureCube(FMetalDeviceContext* InDeviceContext, const FRHITextureCubeInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
         , FRHITextureCube(Initializer)
-    { }
+    {
+    }
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
@@ -145,15 +140,14 @@ public:
 };
 
 
-class FMetalTextureCubeArray 
-    : public FMetalTexture
-    , public FRHITextureCubeArray
+class FMetalTextureCubeArray : public FMetalTexture, public FRHITextureCubeArray
 {
 public:
     FMetalTextureCubeArray(FMetalDeviceContext* InDeviceContext, const FRHITextureCubeArrayInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
         , FRHITextureCubeArray(Initializer)
-    { }
+    {
+    }
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
@@ -175,15 +169,14 @@ public:
 };
 
 
-class FMetalTexture3D 
-    : public FMetalTexture
-    , public FRHITexture3D
+class FMetalTexture3D : public FMetalTexture, public FRHITexture3D
 {
 public:
     FMetalTexture3D(FMetalDeviceContext* InDeviceContext, const FRHITexture3DInitializer& Initializer)
         : FMetalTexture(InDeviceContext)
         , FRHITexture3D(Initializer)
-    { }
+    {
+    }
 
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
     virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
@@ -210,4 +203,4 @@ FORCEINLINE FMetalTexture* GetMetalTexture(FRHITexture* Texture)
     return Texture ? reinterpret_cast<FMetalTexture*>(Texture->GetRHIBaseTexture()) : nullptr;
 }
 
-#pragma clang diagnostic pop
+ENABLE_UNREFERENCED_VARIABLE_WARNING
