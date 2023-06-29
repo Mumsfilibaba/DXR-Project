@@ -146,7 +146,7 @@ public:
             if (Task && [Task->RunLoopModes containsObject:(NSString*)InRunLoopMode])
             {
                 Task->Block();
-                Tasks.Pop();
+                Tasks.Dequeue();
                 NumTasks--;
                 bDone = false;
                 break;
@@ -216,7 +216,7 @@ private:
     CFRunLoopRef           RunLoop;
     CFMutableDictionaryRef SourceAndModeDictionary;
     
-    TQueue<FRunLoopTask*, EQueueType::Lockfree> Tasks;
+    TQueue<FRunLoopTask*, EQueueType::MPSC> Tasks;
     FAtomicInt32 NumTasks;
 };
 

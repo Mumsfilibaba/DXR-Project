@@ -6,7 +6,11 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 class FMetalSamplerState : public FRHISamplerState
 {
 public:
-    FMetalSamplerState()  = default;
+    FMetalSamplerState(const FRHISamplerStateDesc& InDesc)
+        : FRHISamplerState(InDesc)
+    {
+    }
+    
     ~FMetalSamplerState() = default;
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }

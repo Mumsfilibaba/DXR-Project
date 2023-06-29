@@ -1,6 +1,8 @@
 #include "MetalBuffer.h"
 #include "MetalDeviceContext.h"
 
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
 FMetalBuffer::FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferDesc& InDesc)
     : FRHIBuffer(InDesc)
     , FMetalObject(DeviceContext)
@@ -31,22 +33,24 @@ bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
     const uint64 Alignment   = Desc.IsConstantBuffer() ? kConstantBufferAlignment : kBufferAlignment;
     const uint64 AlignedSize = FMath::AlignUp(Desc.Size, Alignment);
     
-    id<MTLDevice> Device       = GetDeviceContext()->GetMTLDevice();
-    id<MTLBuffer> NewMTLBuffer = [Device newBufferWithLength:AlignedSize options:ResourceOptions];
-    if (!NewMTLBuffer)
+    id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
+    CHECK(Device != nil);
+    
+    id<MTLBuffer> NewBuffer = [Device newBufferWithLength:AlignedSize options:ResourceOptions];
+    if (!NewBuffer)
     {
         return false;
     }
     
     // Set the buffer handle
-    SetMTLBuffer(NewMTLBuffer);
+    SetMTLBuffer(NewBuffer);
     
     // Upload the data
     if (InInitialData)
     {
         if (Desc.IsDynamic())
         {
-            FMemory::Memcpy(NewMTLBuffer.contents, InInitialData, Desc.Size);
+            FMemory::Memcpy(NewBuffer.contents, InInitialData, Desc.Size);
         }
         else
         {
@@ -61,7 +65,7 @@ bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
                 
                 [CopyEncoder copyFromBuffer:StagingBuffer
                                sourceOffset:0
-                                   toBuffer:NewMTLBuffer
+                                   toBuffer:NewBuffer
                           destinationOffset:0
                                        size:Desc.Size];
                 
@@ -106,3 +110,5 @@ FString FMetalBuffer::GetName() const
     
     return Result;
 }
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING

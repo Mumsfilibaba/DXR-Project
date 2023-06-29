@@ -3,6 +3,8 @@
 #include "MetalRefCounted.h"
 #include "RHI/RHIResources.h"
 
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
 typedef TSharedRef<class FMetalBuffer> FMetalBufferRef;
 
 class FMetalBuffer : public FRHIBuffer, public FMetalObject, public FMetalRefCounted
@@ -47,3 +49,5 @@ inline FMetalBuffer* GetMetalBuffer(FRHIBuffer* Buffer)
 {
     return Buffer ? reinterpret_cast<FMetalBuffer*>(Buffer->GetRHIBaseBuffer()) : nullptr;
 }
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING

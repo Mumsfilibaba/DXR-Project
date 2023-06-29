@@ -26,9 +26,9 @@
 @end
 
 
-FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer)
+FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportDesc& Desc)
     : FMetalObject(InDeviceContext)
-    , FRHIViewport(Initializer)
+    , FRHIViewport(Desc)
     , BackBuffer(nullptr)
     , MetalView(nullptr)
     , Drawable(nil)
@@ -37,11 +37,11 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
     {
         SCOPED_AUTORELEASE_POOL();
         
-        FCocoaWindow* WindowHandle = (FCocoaWindow*)(Initializer.WindowHandle);
+        FCocoaWindow* WindowHandle = (FCocoaWindow*)(Desc.WindowHandle);
         
         NSRect Frame;
-        Frame.size.width  = Initializer.Width;
-        Frame.size.height = Initializer.Height;
+        Frame.size.width  = Desc.Width;
+        Frame.size.height = Desc.Height;
         Frame.origin.x    = 0;
         Frame.origin.y    = 0;
         
@@ -77,8 +77,15 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
     MainThreadEvent = static_cast<FMacEvent*>(FMacThreadMisc::CreateEvent(false));
 
     // Create BackBuffer
-    FRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
-    BackBuffer = new FMetalTexture2D(InDeviceContext, BackBufferInitializer);   
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(
+        GetColorFormat(),
+        Desc.Width,
+        Desc.Height,
+        1,
+        1,
+        ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
+    
+    BackBuffer = new FMetalTexture(InDeviceContext, BackBufferDesc);
     BackBuffer->SetViewport(this);
 }
 
@@ -95,7 +102,7 @@ bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     SCOPED_AUTORELEASE_POOL();
     
-    if ((Width != InWidth) || (Height != InHeight))
+    if (Desc.Width != InWidth || Desc.Height != InHeight)
     {
         ExecuteOnMainThread(^
         {
@@ -103,8 +110,8 @@ bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
             MetalLayer.drawableSize = CGSizeMake(InWidth, InHeight);
         }, NSDefaultRunLoopMode, true);
         
-        Width  = uint16(InWidth);
-        Height = uint16(InHeight);
+        Desc.Width  = uint16(InWidth);
+        Desc.Height = uint16(InHeight);
     }
     
     return true;

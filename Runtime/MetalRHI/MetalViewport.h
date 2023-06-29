@@ -1,14 +1,10 @@
 #pragma once
 #include "MetalDeviceContext.h"
 #include "MetalTexture.h"
-
-#include "RHI/RHIViewport.h"
-
 #include "Core/Containers/ArrayView.h"
 #include "Core/Mac/MacEvent.h"
 #include "Core/Mac/MacRunLoop.h"
 #include "Core/Platform/PlatformThreadMisc.h"
-
 #include "CoreApplication/Mac/CocoaWindow.h"
 #include "CoreApplication/Mac/CocoaWindowView.h"
 
@@ -17,11 +13,10 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 @interface FMetalWindowView : FCocoaWindowView
 @end
 
-
-class FMetalViewport : public FMetalObject, public FRHIViewport
+class FMetalViewport : public FRHIViewport, public FMetalObject
 {
 public:
-    FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInitializer& Initializer);
+    FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportDesc& Desc);
     ~FMetalViewport();
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
@@ -31,11 +26,10 @@ public:
     // TODO: This needs to be a command for Vulkan and Metal since we can be using the texture and present will change the resource
     bool Present(bool bVerticalSync);
 
-public:
-    
     /** @return - Returns the current drawable, will release it during next call to present */
     id<CAMetalDrawable> GetDrawable();
-    id<MTLTexture>      GetDrawableTexture();
+    
+    id<MTLTexture> GetDrawableTexture();
     
     CAMetalLayer* GetMetalLayer() const
     {
@@ -43,14 +37,15 @@ public:
         return MetalView ? (CAMetalLayer*)MetalView.layer : nil;
     }
 
-    FMetalWindowView* GetMetalView() const { return MetalView; }
+    FMetalWindowView* GetMetalView() const
+    {
+        return MetalView;
+    }
     
 private:
-    TSharedRef<FMetalTexture2D> BackBuffer;
-    
+    FMetalTextureRef    BackBuffer;
     FMetalWindowView*   MetalView;
     id<CAMetalDrawable> Drawable;
-    
     FMacEventRef        MainThreadEvent;
 };
 

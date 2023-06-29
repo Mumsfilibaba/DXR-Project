@@ -3,41 +3,41 @@
 #include "D3D12ResourceViews.h"
 #include "RHI/RHIResources.h"
 
-#ifdef PLATFORM_COMPILER_MSVC
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FD3D12Viewport;
 
 typedef TSharedRef<class FD3D12Texture>           FD3D12TextureRef;
 typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 
-class FD3D12Texture 
-    : public FD3D12DeviceChild
-    , public FD3D12RefCounted
-    , public FRHITexture
+class FD3D12Texture : public FRHITexture, public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
     FD3D12Texture(FD3D12Device* InDevice, const FRHITextureDesc& InDesc);
-    ~FD3D12Texture();
+    virtual ~FD3D12Texture() = default;
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
-    virtual int32 AddRef()            override final { return FD3D12RefCounted::AddRef(); }
-    virtual int32 Release()           override final { return FD3D12RefCounted::Release(); }
+    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
+    
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
-    virtual void* GetRHIBaseTexture()        override final { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
+    
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
+    
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
 
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
+    
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const FString& InName) override final;
+    
     virtual FString GetName() const override final;
 
     FD3D12RenderTargetView* GetOrCreateRTV(const FRHIRenderTargetView& RenderTargetView);
@@ -46,9 +46,15 @@ public:
     void DestroyRTVs() { RenderTargetViews.Clear(); }
     void DestroyDSVs() { DepthStencilViews.Clear(); }
 
-    FD3D12Resource* GetD3D12Resource() const { return Resource.Get(); }
+    FD3D12Resource* GetD3D12Resource() const 
+    { 
+        return Resource.Get(); 
+    }
 
-    DXGI_FORMAT GetDXGIFormat() const { return Resource ? Resource->GetDesc().Format : DXGI_FORMAT_UNKNOWN; }
+    DXGI_FORMAT GetDXGIFormat() const 
+    { 
+        return Resource ? Resource->GetDesc().Format : DXGI_FORMAT_UNKNOWN; 
+    }
 
     void SetShaderResourceView(FD3D12ShaderResourceView* InShaderResourceView)
     { 
@@ -77,19 +83,26 @@ protected:
 };
 
 
-class FD3D12BackBufferTexture 
-    : public FD3D12Texture
+class FD3D12BackBufferTexture : public FD3D12Texture
 {
 public:
     FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureDesc& InDesc)
         : FD3D12Texture(InDevice, InDesc)
         , Viewport(InViewport)
-    { }
+    {
+    }
 
     FD3D12Texture* GetCurrentBackBufferTexture();
 
-    FD3D12Viewport* GetViewport() const { return Viewport; }
-    void SetViewport(FD3D12Viewport* InViewport) { Viewport = InViewport; }
+    FD3D12Viewport* GetViewport() const
+    { 
+        return Viewport;
+    }
+
+    void SetViewport(FD3D12Viewport* InViewport)
+    {
+        Viewport = InViewport;
+    }
 
 private:
     FD3D12Viewport* Viewport;
@@ -122,6 +135,4 @@ FORCEINLINE FD3D12Resource* GetD3D12Resource(FRHITexture* Texture)
     return Texture ? reinterpret_cast<FD3D12Resource*>(Texture->GetRHIBaseResource()) : nullptr;
 }
 
-#ifdef PLATFORM_COMPILER_MSVC
-    #pragma warning(pop)
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

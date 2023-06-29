@@ -1,5 +1,7 @@
 #pragma once
 #include "MetalViews.h"
+#include "MetalObject.h"
+#include "MetalRefCounted.h"
 #include "RHI/RHIResources.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -8,14 +10,38 @@ class FMetalViewport;
 
 typedef TSharedRef<class FMetalTexture> FMetalTextureRef;
 
-class FMetalTexture : public FMetalObject, public FRHITexture
+class FMetalTexture : public FRHITexture, public FMetalObject, public FMetalRefCounted
 {
 public:
-    explicit FMetalTexture(FMetalDeviceContext* InDeviceContext);
-    ~FMetalTexture();
+    FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureDesc& InDesc);
+    virtual ~FMetalTexture();
+
+    bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
+
+    virtual int32 AddRef() override final { return FMetalRefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FMetalRefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
+
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
+    
+    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
+
+    virtual FRHIShaderResourceView* GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
+    
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
+
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
+    
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
+
+    virtual void SetName(const FString& InName) override final;
+    
+    virtual FString GetName() const override final;
 
     id<MTLTexture> GetMTLTexture() const;
-    
+
     void SetDrawableTexture(id<MTLTexture> InTexture) 
     { 
         NSSafeRelease(Texture);
@@ -38,159 +64,6 @@ protected:
 
     TSharedRef<FMetalShaderResourceView> ShaderResourceView;
 };
-
-class FMetalTexture2D : public FMetalTexture, public FRHITexture
-{
-public:
-    FMetalTexture2D(FMetalDeviceContext* InDeviceContext, const FRHITexture2DInitializer& Initializer)
-        : FMetalTexture(InDeviceContext)
-        , FRHITexture(Initializer)
-        , UnorderedAccessView(new FMetalUnorderedAccessView(InDeviceContext, this))
-    {
-    }
-
-    FMetalUnorderedAccessView* GetMetalUnorderedAccessView() const { return UnorderedAccessView.Get(); }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
-    virtual void* GetRHIBaseTexture()  override final { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
-
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
-    virtual FRHIDescriptorHandle    GetBindlessSRVHandle()  const override final { return FRHIDescriptorHandle(); }
-
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override { return GetMetalUnorderedAccessView(); }
-    
-    virtual void SetName(const FString& InName) override final
-    {
-        @autoreleasepool
-        {
-            id<MTLTexture> TextureHandle = GetMTLTexture();
-            if (TextureHandle)
-            {
-                TextureHandle.label = InName.GetNSString();
-            }
-        }
-    }
-
-private:
-    TSharedRef<FMetalUnorderedAccessView> UnorderedAccessView;
-};
-
-
-class FMetalTexture2DArray : public FMetalTexture, public FRHITexture
-{
-public:
-    FMetalTexture2DArray(FMetalDeviceContext* InDeviceContext, const FRHITexture2DArrayInitializer& Initializer)
-        : FMetalTexture(InDeviceContext)
-        , FRHITexture(Initializer)
-    {
-    }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
-    virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
-
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
-    virtual FRHIDescriptorHandle    GetBindlessSRVHandle()  const override final { return FRHIDescriptorHandle(); }
-    
-    virtual void SetName(const FString& InName) override final
-    {
-        @autoreleasepool
-        {
-            id<MTLTexture> TextureHandle = GetMTLTexture();
-            if (TextureHandle)
-            {
-                TextureHandle.label = InName.GetNSString();
-            }
-        }
-    }
-};
-
-
-class FMetalTextureCube : public FMetalTexture, public FRHITextureCube
-{
-public:
-    FMetalTextureCube(FMetalDeviceContext* InDeviceContext, const FRHITextureCubeInitializer& Initializer)
-        : FMetalTexture(InDeviceContext)
-        , FRHITextureCube(Initializer)
-    {
-    }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
-    virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
-
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
-    virtual FRHIDescriptorHandle    GetBindlessSRVHandle()  const override final { return FRHIDescriptorHandle(); }
-    
-    virtual void SetName(const FString& InName) override final
-    {
-        @autoreleasepool
-        {
-            id<MTLTexture> TextureHandle = GetMTLTexture();
-            if (TextureHandle)
-            {
-                TextureHandle.label = InName.GetNSString();
-            }
-        }
-    }
-};
-
-
-class FMetalTextureCubeArray : public FMetalTexture, public FRHITextureCubeArray
-{
-public:
-    FMetalTextureCubeArray(FMetalDeviceContext* InDeviceContext, const FRHITextureCubeArrayInitializer& Initializer)
-        : FMetalTexture(InDeviceContext)
-        , FRHITextureCubeArray(Initializer)
-    {
-    }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
-    virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
-
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
-    virtual FRHIDescriptorHandle    GetBindlessSRVHandle()  const override final { return FRHIDescriptorHandle(); }
-    
-    virtual void SetName(const FString& InName) override final
-    {
-        @autoreleasepool
-        {
-            id<MTLTexture> TextureHandle = GetMTLTexture();
-            if (TextureHandle)
-            {
-                TextureHandle.label = InName.GetNSString();
-            }
-        }
-    }
-};
-
-
-class FMetalTexture3D : public FMetalTexture, public FRHITexture3D
-{
-public:
-    FMetalTexture3D(FMetalDeviceContext* InDeviceContext, const FRHITexture3DInitializer& Initializer)
-        : FMetalTexture(InDeviceContext)
-        , FRHITexture3D(Initializer)
-    {
-    }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
-    virtual void* GetRHIBaseTexture()  override final       { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
-
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return GetMetalShaderResourceView(); }
-    virtual FRHIDescriptorHandle    GetBindlessSRVHandle()  const override final { return FRHIDescriptorHandle(); }
-    
-    virtual void SetName(const FString& InName) override final
-    {
-        @autoreleasepool
-        {
-            id<MTLTexture> TextureHandle = GetMTLTexture();
-            if (TextureHandle)
-            {
-                TextureHandle.label = InName.GetNSString();
-            }
-        }
-    }
-};
-
 
 FORCEINLINE FMetalTexture* GetMetalTexture(FRHITexture* Texture)
 {

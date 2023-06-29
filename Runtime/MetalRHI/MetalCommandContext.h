@@ -78,7 +78,7 @@ public:
     
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
 
-    virtual void BeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer) override final;
+    virtual void BeginRenderPass(const FRHIRenderPassDesc& RenderPassDesc) override final;
     
     virtual void EndRenderPass() override final;
 
@@ -188,7 +188,7 @@ public:
 
     virtual void* GetRHIBaseCommandList() override final
     {
-        return reinterpret_cast<void*>(&CommandList);
+        return nullptr;
     }
     
 private:

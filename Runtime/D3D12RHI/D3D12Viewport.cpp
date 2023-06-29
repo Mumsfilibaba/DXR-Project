@@ -114,7 +114,7 @@ bool FD3D12Viewport::Initialize()
             SwapChainWaitableObject = SwapChain->GetFrameLatencyWaitableObject();
         }
 
-        SwapChain->SetMaximumFrameLatency(5);
+        SwapChain->SetMaximumFrameLatency(NumSwapChainBuffers);
     }
     else
     {

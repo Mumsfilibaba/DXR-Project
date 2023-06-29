@@ -49,12 +49,12 @@ extern "C"
     /* Utility functions */
 
     typedef Boolean (*PFN_CSIsNull)(CSTypeRef CS);
-    typedef void (*PFN_CSRelease)(CSTypeRef CS);
+    typedef void    (*PFN_CSRelease)(CSTypeRef CS);
 
     /* Symbolicator functions */
 
     typedef CSSymbolicatorRef (*PFN_CSSymbolicatorCreateWithPid)(pid_t pid);
-    typedef CSSourceInfoRef (*PFN_CSSymbolicatorGetSourceInfoWithAddressAtTime)(CSSymbolicatorRef Symbolicator, vm_address_t Address, uint64_t Time);
+    typedef CSSourceInfoRef   (*PFN_CSSymbolicatorGetSourceInfoWithAddressAtTime)(CSSymbolicatorRef Symbolicator, vm_address_t Address, uint64_t Time);
     
     /* Symbol functions */
 
@@ -63,9 +63,10 @@ extern "C"
 
     /* Source functions */
 
-    typedef const char* (*PFN_CSSourceInfoGetPath)(CSSourceInfoRef Info);
-    typedef int (*PFN_CSSourceInfoGetLineNumber)(CSSourceInfoRef Info);
-    typedef CSSymbolRef (*PFN_CSSourceInfoGetSymbol)(CSSourceInfoRef Info);
+    typedef const char*      (*PFN_CSSourceInfoGetPath)(CSSourceInfoRef Info);
+    typedef int              (*PFN_CSSourceInfoGetLineNumber)(CSSourceInfoRef Info);
+    typedef CSSymbolRef      (*PFN_CSSourceInfoGetSymbol)(CSSourceInfoRef Info);
+    typedef CSSymbolOwnerRef (*PFN_CSSourceInfoGetSymbolOwner)(CSSourceInfoRef Info);
 }
 
 // Keeps track if the symbolification helpers has been initialized
@@ -86,6 +87,7 @@ static PFN_CSSymbolOwnerGetName                         CSSymbolOwnerGetName    
 static PFN_CSSourceInfoGetPath                          CSSourceInfoGetPath                          = nullptr;
 static PFN_CSSourceInfoGetLineNumber                    CSSourceInfoGetLineNumber                    = nullptr;
 static PFN_CSSourceInfoGetSymbol                        CSSourceInfoGetSymbol                        = nullptr;
+static PFN_CSSourceInfoGetSymbolOwner                   CSSourceInfoGetSymbolOwner                   = nullptr;
 
 bool FMacPlatformStackTrace::InitializeSymbols()
 {
@@ -106,6 +108,7 @@ bool FMacPlatformStackTrace::InitializeSymbols()
             LOAD_FUNCTION(CSSourceInfoGetPath, GCoreSymbolicationLibrary);
             LOAD_FUNCTION(CSSourceInfoGetLineNumber, GCoreSymbolicationLibrary);
             LOAD_FUNCTION(CSSourceInfoGetSymbol, GCoreSymbolicationLibrary);
+            LOAD_FUNCTION(CSSourceInfoGetSymbolOwner, GCoreSymbolicationLibrary);
         }
     }
 
@@ -128,6 +131,7 @@ void FMacPlatformStackTrace::ReleaseSymbols()
         CSSourceInfoGetPath                          = nullptr;
         CSSourceInfoGetLineNumber                    = nullptr;
         CSSourceInfoGetSymbol                        = nullptr;
+        CSSourceInfoGetSymbolOwner                   = nullptr;
 
         FPlatformLibrary::FreeDynamicLib(GCoreSymbolicationLibrary);
         GCoreSymbolicationLibrary = nullptr;

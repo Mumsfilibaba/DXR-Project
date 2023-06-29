@@ -3,19 +3,15 @@
 #include "D3D12Interface.h"
 
 FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureDesc& InDesc)
-    : FD3D12DeviceChild(InDevice)
+    : FRHITexture(InDesc)
+    , FD3D12DeviceChild(InDevice)
     , FD3D12RefCounted()
-    , FRHITexture(InDesc)
     , Resource(nullptr)
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
     , RenderTargetViews()
     , DepthStencilViews()
-{ }
-
-FD3D12Texture::~FD3D12Texture()
 {
-    // NOTE: Empty for now
 }
 
 bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
@@ -450,7 +446,6 @@ FString FD3D12Texture::GetName() const
 
     return "";
 }
-
 
 FD3D12Texture* FD3D12BackBufferTexture::GetCurrentBackBufferTexture()
 {

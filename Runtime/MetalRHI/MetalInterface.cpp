@@ -35,7 +35,7 @@ FMetalInterface::~FMetalInterface()
 
 bool FMetalInterface::Initialize()
 {
-    DeviceContext = FMetalDeviceContext::CreateContext(this);
+    DeviceContext = FMetalDeviceContext::CreateContext();
     if (!DeviceContext)
     {
         METAL_ERROR("Failed to create DeviceContext");
@@ -56,98 +56,18 @@ bool FMetalInterface::Initialize()
 
 FRHITexture* FMetalInterface::RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-    SCOPED_AUTORELEASE_POOL();
-    
-    TSharedRef<FMetalTexture> NewMetalTexture = new FMetalTexture(GetDeviceContext(), Initializer);
-
-    MTLTextureDescriptor* TextureDescriptor = [[MTLTextureDescriptor new] autorelease];
-    TextureDescriptor.textureType               = GetMTLTextureType(Initializer.Dimension, Initializer.IsMultisampled());
-    TextureDescriptor.pixelFormat               = ConvertFormat(Initializer.Format);
-    TextureDescriptor.usage                     = ConvertTextureFlags(Initializer.UsageFlags);
-    TextureDescriptor.allowGPUOptimizedContents = NO;
-    TextureDescriptor.swizzle                   = MTLTextureSwizzleChannelsMake(MTLTextureSwizzleRed, MTLTextureSwizzleGreen, MTLTextureSwizzleBlue, MTLTextureSwizzleAlpha);
-    
-    const FIntVector3 Extent = NewMetalTexture->GetExtent();
-    TextureDescriptor.width  = Extent.x;
-    TextureDescriptor.height = Extent.y;
-    
-    if (Initializer.IsTexture3D())
-    {
-        TextureDescriptor.depth       = Extent.z;
-        TextureDescriptor.arrayLength = 1;
-    }
-    else
-    {
-        TextureDescriptor.depth       = 1;
-        TextureDescriptor.arrayLength = Extent.z;
-    }
-    
-    TextureDescriptor.mipmapLevelCount   = Initializer.NumMips;
-    TextureDescriptor.sampleCount        = NewMetalTexture->GetNumSamples();
-    TextureDescriptor.resourceOptions    = MTLResourceCPUCacheModeWriteCombined;
-    TextureDescriptor.cpuCacheMode       = MTLCPUCacheModeWriteCombined;
-    TextureDescriptor.storageMode        = MTLStorageModePrivate;
-    TextureDescriptor.hazardTrackingMode = MTLHazardTrackingModeDefault;
-    
-    id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
-    CHECK(Device != nil);
-
-    id<MTLTexture> NewTexture = [Device newTextureWithDescriptor:TextureDescriptor];
-    if (!NewTexture)
+    FMetalTextureRef NewTexture = new FMetalTexture(GetDeviceContext(), InDesc);
+    if (!NewTexture->Initialize(InInitialState, InInitialData))
     {
         return nullptr;
     }
-    
-    NewMetalTexture->SetDrawableTexture(NewTexture);
-    
-    // TODO: Fix upload for other resources than Texture2D
-    if (Initializer.IsTexture2D())
-    {
-        FRHITextureDataInitializer* InitialData = Initializer.InitialData;
-        if (InitialData)
-        {
-            MTLRegion Region;
-            Region.origin = { 0, 0, 0 };
-            Region.size   = { NSUInteger(Extent.x), NSUInteger(Extent.y), 1 };
-            
-            @autoreleasepool
-            {
-                id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:InitialData->Size options:MTLResourceOptionCPUCacheModeDefault];
-                FMemory::Memcpy(StagingBuffer.contents, InitialData->TextureData, InitialData->Size);
-                
-                id<MTLCommandQueue>       CommandQueue  = GetDeviceContext()->GetMTLCommandQueue();
-                id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
-                id<MTLBlitCommandEncoder> CopyEncoder   = [CommandBuffer blitCommandEncoder];
-                
-                const NSUInteger BytesPerRow = NSUInteger(Extent.x) * GetByteStrideFromFormat(Initializer.Format);
-                
-                [CopyEncoder copyFromBuffer:StagingBuffer
-                               sourceOffset:0
-                          sourceBytesPerRow:BytesPerRow
-                        sourceBytesPerImage:0
-                                 sourceSize:Region.size
-                                  toTexture:NewTexture
-                           destinationSlice:0
-                           destinationLevel:0
-                          destinationOrigin:Region.origin];
-                
-                [CopyEncoder endEncoding];
 
-                // TODO: we do not want to wait here
-                [CommandBuffer commit];
-                [CommandBuffer waitUntilCompleted];
-            
-                [StagingBuffer release];
-            }
-        }
-    }
-    
-    return NewMetalTexture.ReleaseOwnership();
+    return NewTexture.ReleaseOwnership();
 }
 
-FRHISamplerState* FMetalInterface::RHICreateSamplerState(const FRHISamplerStateInitializer& Initializer)
+FRHISamplerState* FMetalInterface::RHICreateSamplerState(const FRHISamplerStateDesc& Desc)
 {
-    return new FMetalSamplerState();
+    return new FMetalSamplerState(Desc);
 }
 
 FRHIBuffer* FMetalInterface::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData)

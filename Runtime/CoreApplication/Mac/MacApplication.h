@@ -1,6 +1,7 @@
 #pragma once
 #include "MacCursor.h"
 #include "Core/Mac/Mac.h"
+#include "Core/Input/InputCodes.h"
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
 #include "CoreApplication/Generic/GenericApplication.h"
@@ -82,15 +83,17 @@ public:
 
 private:
     void ProcessDeferredEvent(const FDeferredMacEvent& Notification);
-
+    
     TArray<TSharedRef<FMacWindow>> Windows;
     mutable FCriticalSection WindowsCS;
     
     TArray<TSharedRef<FMacWindow>> ClosedWindows;
     FCriticalSection ClosedWindowsCS;
 
-    TArray<FDeferredMacEvent>      DeferredEvents;
+    TArray<FDeferredMacEvent> DeferredEvents;
     FCriticalSection DeferredEventsCS;
+    
+    EMouseButtonName::Type LastPressedButton;
 };
 
 extern FMacApplication* MacApplication;

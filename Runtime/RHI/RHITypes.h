@@ -699,7 +699,8 @@ struct FClearValue
         : Type(EType::Color)
         , Format(EFormat::Unknown)
         , ColorValue(0.0f, 0.0f, 0.0f, 1.0f)
-    { }
+    {
+    }
 
     /**
      * @brief           - Constructor that creates a DepthStencil-ClearValue
@@ -711,7 +712,8 @@ struct FClearValue
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencilValue(InDepth, InStencil)
-    { }
+    {
+    }
 
     /**
      * @brief          - Constructor that creates Color-ClearValue
@@ -725,7 +727,8 @@ struct FClearValue
         : Type(EType::Color)
         , Format(InFormat)
         , ColorValue(InR, InG, InB, InA)
-    { }
+    {
+    }
 
     /**
      * @brief       - Copy-constructor
@@ -874,10 +877,11 @@ struct FBufferRegion
 {
     FBufferRegion() = default;
 
-    FORCEINLINE FBufferRegion(uint64 InOffset, uint64 InSize)
+    FBufferRegion(uint64 InOffset, uint64 InSize)
         : Offset(InOffset)
         , Size(InSize)
-    { }
+    {
+    }
 
     uint64 Offset;
     uint64 Size;
@@ -888,12 +892,13 @@ struct FTextureRegion2D
 {
     FTextureRegion2D() = default;
 
-    FORCEINLINE FTextureRegion2D(uint32 InWidth, uint32 InHeight, uint32 InPositionX = 0, uint32 InPositionY = 0)
+    FTextureRegion2D(uint32 InWidth, uint32 InHeight, uint32 InPositionX = 0, uint32 InPositionY = 0)
         : PositionX(InPositionX)
         , PositionY(InPositionY)
         , Width(InWidth)
         , Height(InHeight)
-    { }
+    {
+    }
 
     uint32 Width;
     uint32 Height;
@@ -907,11 +912,12 @@ struct FRHIBufferCopyDesc
 {
     FRHIBufferCopyDesc() = default;
 
-    FORCEINLINE FRHIBufferCopyDesc(uint64 InSrcOffset, uint32 InDstOffset, uint32 InSize)
+    FRHIBufferCopyDesc(uint64 InSrcOffset, uint32 InDstOffset, uint32 InSize)
         : SrcOffset(InSrcOffset)
         , DstOffset(InDstOffset)
         , Size(InSize)
-    { }
+    {
+    }
 
     uint64 SrcOffset = 0;
     uint64 DstOffset = 0;
@@ -939,14 +945,15 @@ struct FRHIViewportRegion
 {
     FRHIViewportRegion() = default;
 
-    FORCEINLINE FRHIViewportRegion(float InWidth, float InHeight, float InPositionX, float InPositionY, float InMinDepth, float InMaxDepth)
+    FRHIViewportRegion(float InWidth, float InHeight, float InPositionX, float InPositionY, float InMinDepth, float InMaxDepth)
         : Width(InWidth)
         , Height(InHeight)
         , PositionX(InPositionX)
         , PositionY(InPositionY)
         , MinDepth(InMinDepth)
         , MaxDepth(InMaxDepth)
-    { }
+    {
+    }
 
     float Width     = 0.0f;
     float Height    = 0.0f;
@@ -961,12 +968,13 @@ struct FRHIScissorRegion
 {
     FRHIScissorRegion() = default;
 
-    FORCEINLINE FRHIScissorRegion(float InWidth, float InHeight, float InPositionX, float InPositionY)
+    FRHIScissorRegion(float InWidth, float InHeight, float InPositionX, float InPositionY)
         : Width(InWidth)
         , Height(InHeight)
         , PositionX(InPositionX)
         , PositionY(InPositionY)
-    { }
+    {
+    }
 
     float Width     = 0.0f;
     float Height    = 0.0f;
