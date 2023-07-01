@@ -623,3 +623,13 @@ void FMetalCommandContext::InsertMarker(const FStringView& Message)
 
     [Encoder insertDebugSignpost:FString(Message).GetNSString()];
 }
+
+void FMetalCommandContext::BeginExternalCapture()
+{
+    // Empty for now
+}
+
+void FMetalCommandContext::EndExternalCapture() 
+{
+    // Empty for now
+}

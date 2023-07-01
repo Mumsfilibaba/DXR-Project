@@ -1,10 +1,8 @@
 #pragma once
 #include "MetalDeviceContext.h"
 #include "MetalShader.h"
-
-#include "RHI/RHIResources.h"
-
 #include "Core/Utilities/StringUtilities.h"
+#include "RHI/RHIResources.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -12,7 +10,8 @@ class FMetalInputLayoutState : public FRHIVertexInputLayout, public FMetalObject
 {
 public:
     FMetalInputLayoutState(FMetalDeviceContext* DeviceContext, const FRHIVertexInputLayoutDesc& Initializer)
-        : FMetalObject(DeviceContext)
+        : FRHIVertexInputLayout()
+        , FMetalObject(DeviceContext)
         , VertexDescriptor(nil)
     {
         VertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
@@ -31,43 +30,47 @@ public:
     
     ~FMetalInputLayoutState() = default;
 
-    MTLVertexDescriptor* GetMTLVertexDescriptor() const { return VertexDescriptor; }
+    MTLVertexDescriptor* GetMTLVertexDescriptor() const 
+    { 
+        return VertexDescriptor;
+    }
     
 private:
-
     MTLVertexDescriptor* VertexDescriptor;
 };
 
 class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalObject
 {
 public:
-    FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateDesc& Initializer)
-        : FMetalObject(DeviceContext)
-        , DepthStencilState()
+    FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateDesc& InDesc)
+        : FRHIDepthStencilState()
+        , FMetalObject(DeviceContext)
+        , DepthStencilState(nil)
+        , Desc(InDesc)
     {
         SCOPED_AUTORELEASE_POOL();
         
-        MTLDepthStencilDescriptor* Descriptor = [MTLDepthStencilDescriptor new];
-        Descriptor.depthWriteEnabled    = Initializer.bDepthEnable;
-        Descriptor.depthCompareFunction = ConvertCompareFunction(Initializer.DepthFunc);
+        MTLDepthStencilDescriptor* Descriptor = [[MTLDepthStencilDescriptor new] autorelease];
+        Descriptor.depthWriteEnabled    = InDesc.bDepthEnable;
+        Descriptor.depthCompareFunction = ConvertCompareFunction(InDesc.DepthFunc);
         
-        if (Initializer.bStencilEnable)
+        if (InDesc.bStencilEnable)
         {
             Descriptor.backFaceStencil                            = [[MTLStencilDescriptor new] autorelease];
-            Descriptor.backFaceStencil.stencilCompareFunction     = ConvertCompareFunction(Initializer.BackFace.StencilFunc);
-            Descriptor.backFaceStencil.stencilFailureOperation    = ConvertStencilOp(Initializer.BackFace.StencilFailOp);
-            Descriptor.backFaceStencil.depthFailureOperation      = ConvertStencilOp(Initializer.BackFace.StencilDepthFailOp);
-            Descriptor.backFaceStencil.depthStencilPassOperation  = ConvertStencilOp(Initializer.BackFace.StencilDepthPassOp);
-            Descriptor.backFaceStencil.readMask                   = Initializer.StencilReadMask;
-            Descriptor.backFaceStencil.writeMask                  = Initializer.StencilWriteMask;
+            Descriptor.backFaceStencil.stencilCompareFunction     = ConvertCompareFunction(InDesc.BackFace.StencilFunc);
+            Descriptor.backFaceStencil.stencilFailureOperation    = ConvertStencilOp(InDesc.BackFace.StencilFailOp);
+            Descriptor.backFaceStencil.depthFailureOperation      = ConvertStencilOp(InDesc.BackFace.StencilDepthFailOp);
+            Descriptor.backFaceStencil.depthStencilPassOperation  = ConvertStencilOp(InDesc.BackFace.StencilDepthPassOp);
+            Descriptor.backFaceStencil.readMask                   = InDesc.StencilReadMask;
+            Descriptor.backFaceStencil.writeMask                  = InDesc.StencilWriteMask;
             
             Descriptor.frontFaceStencil                           = [[MTLStencilDescriptor new] autorelease];
-            Descriptor.frontFaceStencil.stencilCompareFunction    = ConvertCompareFunction(Initializer.FrontFace.StencilFunc);
-            Descriptor.frontFaceStencil.stencilFailureOperation   = ConvertStencilOp(Initializer.FrontFace.StencilFailOp);
-            Descriptor.frontFaceStencil.depthFailureOperation     = ConvertStencilOp(Initializer.FrontFace.StencilDepthFailOp);
-            Descriptor.frontFaceStencil.depthStencilPassOperation = ConvertStencilOp(Initializer.FrontFace.StencilDepthPassOp);
-            Descriptor.frontFaceStencil.readMask                  = Initializer.StencilReadMask;
-            Descriptor.frontFaceStencil.writeMask                 = Initializer.StencilWriteMask;
+            Descriptor.frontFaceStencil.stencilCompareFunction    = ConvertCompareFunction(InDesc.FrontFace.StencilFunc);
+            Descriptor.frontFaceStencil.stencilFailureOperation   = ConvertStencilOp(InDesc.FrontFace.StencilFailOp);
+            Descriptor.frontFaceStencil.depthFailureOperation     = ConvertStencilOp(InDesc.FrontFace.StencilDepthFailOp);
+            Descriptor.frontFaceStencil.depthStencilPassOperation = ConvertStencilOp(InDesc.FrontFace.StencilDepthPassOp);
+            Descriptor.frontFaceStencil.readMask                  = InDesc.StencilReadMask;
+            Descriptor.frontFaceStencil.writeMask                 = InDesc.StencilWriteMask;
         }
         else
         {
@@ -75,54 +78,89 @@ public:
             Descriptor.frontFaceStencil = nil;
         }
 
-        DepthStencilState = [DeviceContext->GetMTLDevice() newDepthStencilStateWithDescriptor:Descriptor];
+        id<MTLDevice> Device = DeviceContext->GetMTLDevice();
+        CHECK(Device != nil);
+
+        DepthStencilState = [Device newDepthStencilStateWithDescriptor:Descriptor];
         CHECK(DepthStencilState != nil);
-        
-        NSRelease(Descriptor);
     }
     
     ~FMetalDepthStencilState()
     {
         NSSafeRelease(DepthStencilState);
     }
+
+    virtual FRHIDepthStencilStateDesc GetDesc() const override final
+    {
+        return Desc;
+    }
     
-public:
-    id<MTLDepthStencilState> GetMTLDepthStencilState() const { return DepthStencilState; }
+    id<MTLDepthStencilState> GetMTLDepthStencilState() const 
+    { 
+        return DepthStencilState; 
+    }
     
 private:
-    id<MTLDepthStencilState> DepthStencilState;
+    FRHIDepthStencilStateDesc Desc;
+    id<MTLDepthStencilState>  DepthStencilState;
 };
 
 
 class FMetalRasterizerState : public FRHIRasterizerState, public FMetalObject
 {
 public:
-    FMetalRasterizerState(FMetalDeviceContext* DeviceContext, const FRHIRasterizerStateDesc& Initializer)
-        : FMetalObject(DeviceContext)
-        , FillMode(ConvertFillMode(Initializer.FillMode))
-        , FrontFaceWinding(Initializer.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
+    FMetalRasterizerState(FMetalDeviceContext* DeviceContext, const FRHIRasterizerStateDesc& InDesc)
+        : FRHIRasterizerState()
+        , FMetalObject(DeviceContext)
+        , Desc(InDesc)
+        , FillMode(ConvertFillMode(InDesc.FillMode))
+        , FrontFaceWinding(InDesc.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
     {
     }
 
     ~FMetalRasterizerState() = default;
 
-public:
+    virtual FRHIRasterizerStateDesc GetDesc() const override final
+    {
+        return Desc;
+    }
 
-    MTLTriangleFillMode GetMTLFillMode() const { return FillMode; }
+    MTLTriangleFillMode GetMTLFillMode() const 
+    {
+        return FillMode;
+    }
     
-    MTLWinding GetMTLFrontFaceWinding() const { return FrontFaceWinding; }
+    MTLWinding GetMTLFrontFaceWinding() const
+    {
+        return FrontFaceWinding;
+    }
 
 private:
-    MTLTriangleFillMode FillMode;
-    MTLWinding          FrontFaceWinding;
+    FRHIRasterizerStateDesc Desc;
+    MTLTriangleFillMode     FillMode;
+    MTLWinding              FrontFaceWinding;
 };
 
 
-class FMetalBlendState : public FRHIBlendState
+class FMetalBlendState : public FRHIBlendState, public FMetalObject
 {
 public:
-    FMetalBlendState()  = default;
+    FMetalBlendState(FMetalDeviceContext* DeviceContext, const FRHIBlendStateDesc& InDesc)
+        : FRHIBlendState()
+        , FMetalObject(DeviceContext)
+        , Desc(InDesc)
+    {
+    }
+
     ~FMetalBlendState() = default;
+
+    virtual FRHIBlendStateDesc GetDesc() const
+    {
+        return Desc;
+    }
+
+private:
+    FRHIBlendStateDesc Desc;
 };
 
 

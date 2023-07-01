@@ -37,6 +37,7 @@ inline const CHAR* ToString(ERHIInstanceType RenderLayerApi)
     }
 }
 
+
 /** @brief - Global pointer for the RHIInterface */
 extern RHI_API FRHIInterface* GRHIInterface;
 

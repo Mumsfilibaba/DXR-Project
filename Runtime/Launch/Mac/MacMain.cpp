@@ -7,8 +7,6 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 extern int32 GenericMain(const CHAR* Args[], int32 NumArgs);
 
-class FMacApplication;
-
 static int32 GEngineMainResult = 0;
 
 @interface FCocoaAppDelegate : NSObject<NSApplicationDelegate>

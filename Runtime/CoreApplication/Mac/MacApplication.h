@@ -8,8 +8,8 @@
 
 #include <AppKit/AppKit.h>
 
-@class FCocoaAppDelegate;
 @class FCocoaWindow;
+@class FMacApplicationObserver;
 
 class FMacWindow;
 
@@ -93,6 +93,7 @@ private:
     TArray<FDeferredMacEvent> DeferredEvents;
     FCriticalSection DeferredEventsCS;
     
+    FMacApplicationObserver* Observer;
     EMouseButtonName::Type LastPressedButton;
 };
 

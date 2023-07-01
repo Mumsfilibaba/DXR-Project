@@ -1361,27 +1361,27 @@ public:
 
     virtual FRHITexture* GetBackBuffer() const { return nullptr; };
 
-    FORCEINLINE EFormat GetColorFormat() const
+    EFormat GetColorFormat() const
     {
         return Desc.ColorFormat;
     }
 
-    FORCEINLINE EFormat GetDepthFormat() const
+    EFormat GetDepthFormat() const
     {
         return Desc.DepthFormat;
     }
 
-    FORCEINLINE uint32 GetWidth() const
+    uint32 GetWidth() const
     {
         return Desc.Width;
     }
 
-    FORCEINLINE uint32 GetHeight() const
+    uint32 GetHeight() const
     {
         return Desc.Height;
     }
 
-    FORCEINLINE const FRHIViewportDesc& GetDesc() const
+    const FRHIViewportDesc& GetDesc() const
     {
         return Desc;
     }

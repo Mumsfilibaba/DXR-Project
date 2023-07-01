@@ -63,15 +63,15 @@ public:
 
     virtual void* GetPlatformHandle() const override final
     {
-        return reinterpret_cast<void*>(WindowHandle);
+        return reinterpret_cast<void*>(Window);
     }
 
     virtual void SetStyle(FWindowStyle InStyle) override final;
 
 public:
-    FCocoaWindow* GetWindowHandle() const 
+    FCocoaWindow* GetWindow() const 
     { 
-        return WindowHandle; 
+        return Window; 
     }
 
     FMacApplication* GetApplication() const 
@@ -81,5 +81,5 @@ public:
     
 private:
     FMacApplication* Application;
-    FCocoaWindow*    WindowHandle;
+    FCocoaWindow*    Window;
 };

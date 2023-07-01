@@ -81,34 +81,34 @@ FRHIBuffer* FMetalInterface::RHICreateBuffer(const FRHIBufferDesc& InDesc, EReso
     return NewBuffer.ReleaseOwnership();
 }
 
-FRHIRayTracingScene* FMetalInterface::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& Initializer)
+FRHIRayTracingScene* FMetalInterface::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& Desc)
 {
-    return new FMetalRayTracingScene(GetDeviceContext(), Initializer);
+    return new FMetalRayTracingScene(GetDeviceContext(), Desc);
 }
 
-FRHIRayTracingGeometry* FMetalInterface::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& Initializer)
+FRHIRayTracingGeometry* FMetalInterface::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& Desc)
 {
-    return new FMetalRayTracingGeometry(Initializer);
+    return new FMetalRayTracingGeometry(Desc);
 }
 
-FRHIShaderResourceView* FMetalInterface::RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer)
+FRHIShaderResourceView* FMetalInterface::RHICreateShaderResourceView(const FRHITextureSRVDesc& Desc)
 {
-    return new FMetalShaderResourceView(GetDeviceContext(), Initializer.Texture);
+    return new FMetalShaderResourceView(GetDeviceContext(), Desc.Texture);
 }
 
-FRHIShaderResourceView* FMetalInterface::RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer)
+FRHIShaderResourceView* FMetalInterface::RHICreateShaderResourceView(const FRHIBufferSRVDesc& Desc)
 {
-    return new FMetalShaderResourceView(GetDeviceContext(), Initializer.Buffer);
+    return new FMetalShaderResourceView(GetDeviceContext(), Desc.Buffer);
 }
 
-FRHIUnorderedAccessView* FMetalInterface::RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer)
+FRHIUnorderedAccessView* FMetalInterface::RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Desc)
 {
-    return new FMetalUnorderedAccessView(GetDeviceContext(), Initializer.Texture);
+    return new FMetalUnorderedAccessView(GetDeviceContext(), Desc.Texture);
 }
 
-FRHIUnorderedAccessView* FMetalInterface::RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer)
+FRHIUnorderedAccessView* FMetalInterface::RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Desc)
 {
-    return new FMetalUnorderedAccessView(GetDeviceContext(), Initializer.Buffer);
+    return new FMetalUnorderedAccessView(GetDeviceContext(), Desc.Buffer);
 }
 
 FRHIComputeShader* FMetalInterface::RHICreateComputeShader(const TArray<uint8>& ShaderCode)
@@ -171,37 +171,37 @@ FRHIRayMissShader* FMetalInterface::RHICreateRayMissShader(const TArray<uint8>& 
     return new FMetalRayMissShader(GetDeviceContext(), ShaderCode);
 }
 
-FRHIDepthStencilState* FMetalInterface::RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& Initializer)
+FRHIDepthStencilState* FMetalInterface::RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& Desc)
 {
-    return new FMetalDepthStencilState(GetDeviceContext(), Initializer);
+    return new FMetalDepthStencilState(GetDeviceContext(), Desc);
 }
 
-FRHIRasterizerState* FMetalInterface::RHICreateRasterizerState(const FRHIRasterizerStateDesc& Initializer)
+FRHIRasterizerState* FMetalInterface::RHICreateRasterizerState(const FRHIRasterizerStateDesc& Desc)
 {
-    return new FMetalRasterizerState(GetDeviceContext(), Initializer);
+    return new FMetalRasterizerState(GetDeviceContext(), Desc);
 }
 
-FRHIBlendState* FMetalInterface::RHICreateBlendState(const FRHIBlendStateDesc& Initializer)
+FRHIBlendState* FMetalInterface::RHICreateBlendState(const FRHIBlendStateDesc& Desc)
 {
-    return new FMetalBlendState();
+    return new FMetalBlendState(GetDeviceContext(), Desc);
 }
 
-FRHIVertexInputLayout* FMetalInterface::RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& Initializer)
+FRHIVertexInputLayout* FMetalInterface::RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& Desc)
 {
-    return new FMetalInputLayoutState(GetDeviceContext(), Initializer);
+    return new FMetalInputLayoutState(GetDeviceContext(), Desc);
 }
 
-FRHIGraphicsPipelineState* FMetalInterface::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& Initializer)
+FRHIGraphicsPipelineState* FMetalInterface::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& Desc)
 {
-    return new FMetalGraphicsPipelineState(GetDeviceContext(), Initializer);
+    return new FMetalGraphicsPipelineState(GetDeviceContext(), Desc);
 }
 
-FRHIComputePipelineState* FMetalInterface::RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& Initializer)
+FRHIComputePipelineState* FMetalInterface::RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& Desc)
 {
     return new FMetalComputePipelineState();
 }
 
-FRHIRayTracingPipelineState* FMetalInterface::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Initializer)
+FRHIRayTracingPipelineState* FMetalInterface::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Desc)
 {
     return new FMetalRayTracingPipelineState();
 }
@@ -211,9 +211,9 @@ FRHITimestampQuery* FMetalInterface::RHICreateTimestampQuery()
     return new FMetalTimestampQuery();
 }
 
-FRHIViewport* FMetalInterface::RHICreateViewport(const FRHIViewportInitializer& Initializer)
+FRHIViewport* FMetalInterface::RHICreateViewport(const FRHIViewportDesc& Desc)
 {
-    FCocoaWindow* Window = (FCocoaWindow*)Initializer.WindowHandle;
+    FCocoaWindow* Window = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
     
     __block NSRect Frame;
     __block NSRect ContentRect;
@@ -223,31 +223,21 @@ FRHIViewport* FMetalInterface::RHICreateViewport(const FRHIViewportInitializer& 
         ContentRect = [Window contentRectForFrameRect:Window.frame];
     }, NSDefaultRunLoopMode, true);
     
-    FRHIViewportInitializer NewInitializer(Initializer);
-    NewInitializer.Width  = ContentRect.size.width;
-    NewInitializer.Height = ContentRect.size.height;
+    FRHIViewportDesc NewDesc(Desc);
+    NewDesc.Width  = ContentRect.size.width;
+    NewDesc.Height = ContentRect.size.height;
     
-    return new FMetalViewport(GetDeviceContext(), NewInitializer);
+    return new FMetalViewport(GetDeviceContext(), NewDesc);
 }
 
-IRHICommandContext* FMetalInterface::RHIGetDefaultCommandContext()
+void FMetalInterface::RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const
 {
-    return CommandContext;
+    OutSupport = FRHIRayTracingSupport();
 }
 
-FString FMetalInterface::GetAdapterDescription() const
+void FMetalInterface::RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const
 {
-    return FString();
-}
-
-void FMetalInterface::RHIQueryRayTracingSupport(FRayTracingSupport& OutSupport) const
-{
-    OutSupport = FRayTracingSupport();
-}
-
-void FMetalInterface::RHIQueryShadingRateSupport(FShadingRateSupport& OutSupport) const
-{
-    OutSupport = FShadingRateSupport();
+    OutSupport = FRHIShadingRateSupport();
 }
 
 bool FMetalInterface::RHIQueryUAVFormatSupport(EFormat Format) const

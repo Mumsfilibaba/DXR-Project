@@ -94,7 +94,7 @@ public:
     
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final;
 
-    virtual IRHICommandContext* RHIObtainCommandContext() override final { return DirectContext; }
+    virtual IRHICommandContext* RHIObtainCommandContext() override final { return CommandContext; }
 
     virtual void RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const override final;
     

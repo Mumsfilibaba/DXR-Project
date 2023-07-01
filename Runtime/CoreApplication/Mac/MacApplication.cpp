@@ -10,6 +10,37 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
+@interface FMacApplicationObserver : NSObject
+
+- (void) onApplicationBecomeActive:(NSNotification*)InNotification;
+- (void) onApplicationBecomeInactive:(NSNotification*)InNotification;
+- (void) displaysDidChange:(NSNotification*)InNotification;
+
+@end
+
+@implementation FMacApplicationObserver
+
+- (void)onApplicationBecomeActive:(NSNotification*)InNotification
+{
+    CHECK(MacApplication != nullptr);
+    MacApplication->DeferEvent(InNotification);
+}
+
+- (void)onApplicationBecomeInactive:(NSNotification*)InNotification
+{
+    CHECK(MacApplication != nullptr);
+    MacApplication->DeferEvent(InNotification);
+}
+
+- (void)displaysDidChange:(NSNotification*)InNotification
+{
+    CHECK(MacApplication != nullptr);
+    MacApplication->DeferEvent(InNotification);
+}
+
+@end
+
+
 FMacApplication* MacApplication = nullptr;
 
 FMacApplication* FMacApplication::CreateMacApplication()
@@ -20,7 +51,7 @@ FMacApplication* FMacApplication::CreateMacApplication()
 }
 
 FMacApplication::FMacApplication()
-    : FGenericApplication(TSharedPtr<ICursor>(new FMacCursor()))
+    : FGenericApplication(MakeShared<FMacCursor>())
     , Windows()
     , WindowsCS()
     , ClosedWindows()
@@ -28,6 +59,7 @@ FMacApplication::FMacApplication()
     , DeferredEvents()
     , DeferredEventsCS()
     , LastPressedButton(EMouseButtonName::Unknown)
+    , Observer()
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -77,12 +109,42 @@ FMacApplication::FMacApplication()
     NSApp.mainMenu     = MenuBar;
     NSApp.windowsMenu  = WindowMenu;
     NSApp.servicesMenu = ServiceMenu;
+
+    Observer = [FMacApplicationObserver new];    
+    [[NSNotificationCenter defaultCenter] addObserver:Observer
+                                             selector:@selector(onApplicationBecomeActive:)
+                                                 name:NSApplicationDidBecomeActiveNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:Observer
+                                             selector:@selector(onApplicationBecomeInactive:)
+                                                 name:NSApplicationDidResignActiveNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:Observer
+                                             selector:@selector(displaysDidChange:)
+                                                 name:NSApplicationDidChangeScreenParametersNotification
+                                               object:nil];
 }
 
 FMacApplication::~FMacApplication()
 {
     @autoreleasepool
     {
+        [[NSNotificationCenter defaultCenter] removeObserver:Observer
+                                                        name:NSApplicationDidBecomeActiveNotification
+                                                      object:nil];
+
+        [[NSNotificationCenter defaultCenter] removeObserver:Observer
+                                                        name:NSApplicationDidResignActiveNotification
+                                                      object:nil];
+
+        [[NSNotificationCenter defaultCenter] removeObserver:Observer
+                                                        name:NSApplicationDidChangeScreenParametersNotification
+                                                      object:nil];
+
+        NSSafeRelease(Observer);
+
         Windows.Clear();
 
         if (this == MacApplication)
@@ -142,7 +204,7 @@ void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
     __block TSharedRef<FMacWindow> MacWindow = StaticCastSharedRef<FMacWindow>(Window);
     ExecuteOnMainThread(^
     {
-        FCocoaWindow* CocoaWindow = MacWindow->GetWindowHandle();
+        FCocoaWindow* CocoaWindow = MacWindow->GetWindow();
         [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
     }, NSDefaultRunLoopMode, false);
 }
@@ -289,6 +351,10 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
         {
             MessageHandler->OnWindowFocusLost(Window);
         }
+        else if (NotificationName == NSApplicationDidChangeScreenParametersNotification)
+        {
+            MessageHandler->OnMonitorChange();
+        }
     }
     else if (Event.Event)
     {
@@ -351,17 +417,21 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
                
             case NSEventTypeScrollWheel:
             {
-                CGFloat ScrollDeltaX = CurrentEvent.scrollingDeltaX;
-                CGFloat ScrollDeltaY = CurrentEvent.scrollingDeltaY;
-                
-                if (CurrentEvent.hasPreciseScrollingDeltas)
+                if (CurrentEvent.phase != NSEventPhaseCancelled)
                 {
-                    ScrollDeltaX *= 0.1;
-                    ScrollDeltaY *= 0.1;
+                    CGFloat ScrollDeltaX = CurrentEvent.scrollingDeltaX;
+                    CGFloat ScrollDeltaY = CurrentEvent.scrollingDeltaY;
+                    
+                    if (CurrentEvent.hasPreciseScrollingDeltas)
+                    {
+                        ScrollDeltaX *= 0.1;
+                        ScrollDeltaY *= 0.1;
+                    }
+                    
+                    const NSPoint CursorPosition = [NSEvent mouseLocation];
+                    MessageHandler->OnMouseScrolled(int32(ScrollDeltaX), int32(ScrollDeltaY), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
                 }
-                 
-                const NSPoint CursorPosition = [NSEvent mouseLocation];
-                MessageHandler->OnMouseScrolled(int32(ScrollDeltaX), int32(ScrollDeltaY), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+
                 break;
             }
                 

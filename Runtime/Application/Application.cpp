@@ -1,9 +1,11 @@
 #include "Application.h"
+#include "ApplicationEventHandler.h"
 #include "ImGuiModule.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Generic/InputDevice.h"
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
 
