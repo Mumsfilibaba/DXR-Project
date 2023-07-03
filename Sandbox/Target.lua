@@ -1,14 +1,15 @@
-include "../BuildScripts/Scripts/Build_Workspace.lua"
+include "../BuildScripts/Scripts/build_workspace.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- Sandbox Project
 
-local SandboxProject = FTargetBuildRules("Sandbox")
-SandboxProject.AddModuleDependencies(
+local Workspace = FWorkspaceRules("DXR-Engine Sandbox")
+
+local Sandbox = FTargetBuildRules("Sandbox", Workspace)
+Sandbox.AddModuleDependencies(
 {
     "Core",
     "CoreApplication",
-    -- TODO: Look into injecting this into the executable
     "Launch",
     "Application",
     "RHI",
@@ -20,15 +21,16 @@ SandboxProject.AddModuleDependencies(
 })
 
 if IsPlatformMac() then
-    SandboxProject.AddModuleDependencies(
+    Sandbox.AddModuleDependencies(
     { 
         "MetalRHI"
     })
 elseif IsPlatformWindows() then
-    SandboxProject.AddModuleDependencies(
+    Sandbox.AddModuleDependencies(
     { 
         "D3D12RHI"
     })
 end
 
-FGenerateWorkspace("DXR-Engine Sandbox", { SandboxProject })
+Workspace.AddTarget(Sandbox)
+Workspace.Generate()

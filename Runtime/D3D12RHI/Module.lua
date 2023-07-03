@@ -13,6 +13,4 @@ if IsPlatformWindows() then
         "CoreApplication",
         "RHI",
     })
-
-    D3D12RHI.Generate()
 end

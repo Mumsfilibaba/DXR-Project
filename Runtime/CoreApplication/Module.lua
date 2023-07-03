@@ -9,7 +9,6 @@ CoreApplicationModule.AddModuleDependencies(
     "Core"
 })
 
--- TODO: Ensure that frameworks gets propagated up with dependencies
 if IsPlatformMac() then
     CoreApplicationModule.AddFrameWorks( 
     {
@@ -22,5 +21,3 @@ elseif IsPlatformWindows() then
         "Shcore.lib"
     })
 end
-
-CoreApplicationModule.Generate()

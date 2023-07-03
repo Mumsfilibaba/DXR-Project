@@ -6,7 +6,6 @@ include "../../BuildScripts/Scripts/Build_Module.lua"
 local CoreModule = FModuleBuildRules("Core")
 CoreModule.bUsePrecompiledHeaders = true
 
--- TODO: Ensure that frameworks gets propagated up with dependencies
 if IsPlatformMac() then
     CoreModule.AddFrameWorks( 
     {
@@ -18,5 +17,3 @@ elseif IsPlatformWindows() then
         "Dbghelp.lib"
     })
 end
-
-CoreModule.Generate()

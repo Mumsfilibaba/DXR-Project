@@ -11,5 +11,3 @@ NullRHIModule.AddModuleDependencies(
     "Core",
     "RHI",
 })
-
-NullRHIModule.Generate()

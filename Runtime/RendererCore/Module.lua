@@ -10,5 +10,3 @@ RendererCoreModule.AddModuleDependencies(
     "Core",
     "RHI",
 })
-
-RendererCoreModule.Generate()

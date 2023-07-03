@@ -11,7 +11,8 @@ FProjectManager::FProjectManager(const FString& InProjectName, const FString& In
     : ProjectName(InProjectName)
     , ProjectPath(InProjectPath)
     , AssetPath(InAssetPath)
-{ }
+{
+}
 
 bool FProjectManager::Initialize()
 {

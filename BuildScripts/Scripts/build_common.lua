@@ -1,3 +1,5 @@
+include "build_log.lua"
+
 -- Custom options 
 newoption 
 {
@@ -72,18 +74,15 @@ function VerifyLanguageVersion(LanguageVersion)
 end
 
 -- Helper for printing all strings in a table and ending with endline
-function PrintTableWithEndLine(Format, Table)
+function PrintTable(Format, Table)
     if Table == nil then
         return
     end
 
     if #Table >= 1 then
         for Index = 1, #Table do
-            printf(Format, Table[Index])
+            LogInfo(Format, Table[Index])
         end
-
-        -- Empty line
-        printf("")
     end
 end
 
@@ -134,7 +133,7 @@ function GetModule(ModuleName)
     if GModules ~= nil then
         return GModules[ModuleName]
     else
-        printf("ERROR: Global Module-List has not been initialized")
+        LogError("Global Module-List has not been initialized")
         return nil
     end
 end
@@ -147,37 +146,13 @@ function AddModule(ModuleName, Module)
     if GModules ~= nil then
         GModules[ModuleName] = Module
     else
-        printf("ERROR: Global Module-List has not been initialized")
-    end
-end
-
--- Global variable that stores all created targets
-GTargets = { }
-
-function GetTarget(TargetName)
-    if GTargets ~= nil then
-        return GTargets[TargetName]
-    else
-        printf("ERROR: Global Target-List has not been initialized")
-        return nil
-    end
-end
-
-function IsTarget(TargetName)
-    return GetTarget(TargetName) ~= nil  
-end
-
-function AddTarget(TargetName, Target)
-    if GTargets ~= nil then
-        GTargets[TargetName] = Target
-    else
-        printf("ERROR: Global Target-List has not been initialized")
+        LogError("Global Module-List has not been initialized")
     end
 end
 
 -- Output path for dependencies (ImGui etc.)
 GOutputPath = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
-printf("\nINFO:\nBuildPath = \'%s\'", GOutputPath)
+LogInfo("\nBuildPath = \'%s\'", GOutputPath)
 
 function GetOutputPath()
     return GOutputPath
@@ -185,14 +160,8 @@ end
 
 -- Mainpath ../BuildScripts
 GEnginePath = path.getabsolute( "../", _PREMAKE_DIR)  
-printf("EnginePath = \'%s\'\n", GEnginePath)
 
 function GetEnginePath()
-    return GEnginePath
-end
-
--- Retrieve the workspace directory
-function FindWorkspaceDir()
     return GEnginePath
 end
 

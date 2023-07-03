@@ -29,13 +29,3 @@ EngineModule.AddLinkLibraries(
     "tinyobjloader",
     "OpenFBX",
 })
-
--- TODO: Ensure that frameworks gets propagated up with dependencies
-if IsPlatformMac() then
-    EngineModule.AddFrameWorks( 
-    {
-        "AppKit",
-    })
-end
-
-EngineModule.Generate()

@@ -17,14 +17,3 @@ LaunchModule.AddModuleDependencies(
     "Engine",
     "Project",
 })
-
--- TODO: Ensure that frameworks gets propagated up with dependencies
-if IsPlatformMac() then
-    LaunchModule.AddFrameWorks( 
-    {
-        "Cocoa",
-        "AppKit",
-    })
-end
-
-LaunchModule.Generate()

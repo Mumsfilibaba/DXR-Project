@@ -14,13 +14,9 @@ if IsPlatformMac() then
         "RHI",
     })
 
-    -- TODO: Ensure that frameworks gets propagated up with dependencies
     MetalRHI.AddFrameWorks(
     {
         "Metal",
-        "Cocoa",
         "QuartzCore"
     })
-
-    MetalRHI.Generate()
 end

@@ -21,5 +21,3 @@ RHIModule.AddLinkLibraries(
 {
     "SPIRV-Cross",
 })
-
-RHIModule.Generate()

@@ -236,8 +236,10 @@ protected:
     FModuleLoadedDelegate     ModuleLoadedDelegate;
 
     typedef TPair<FString, FInitializeStaticModuleDelegate> FStaticModulePair;
+    
     TArray<FStaticModulePair> StaticModuleDelegates;
     FCriticalSection          StaticModuleDelegatesCS;
+
     TArray<FModuleData>       Modules;
     FCriticalSection          ModulesCS;
 };
@@ -272,8 +274,7 @@ public:
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class CORE_API FGameModule
-    : public FModuleInterface
+class CORE_API FGameModule : public FModuleInterface
 {
 public:
     virtual ~FGameModule() = default;

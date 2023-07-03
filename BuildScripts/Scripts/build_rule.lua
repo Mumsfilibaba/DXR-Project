@@ -1,15 +1,15 @@
-include "Build_Common.lua"
+include "build_common.lua"
 
 -- Build rules for a project
 function FBuildRules(InName)
 
     -- Needs to have a valid modulename
     if InName == nil then
-        printf("ERROR: BuildRule failed due to invalid name")
+        LogError("BuildRule failed due to invalid name")
         return nil
     end
 
-    printf("Creating BuildRule \'%s\'\n", InName)
+    LogHighlight("Creating BuildRule \'%s\'", InName)
 
     -- Folder path for engine-modules
     local RuntimeFolderPath = GetRuntimeFolderPath()
@@ -27,7 +27,10 @@ function FBuildRules(InName)
         BuildFolderPath = GetEnginePath() .. "/Build",
         
         -- @brief - Location for the build (Inside the build folder specified inside the build-folder )
-        OutputPath = "/%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}",
+        OutputPath = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}",
+
+        -- @brief - The workspace that this rule is currently a part of
+        Workspace = { },
 
         -- @brief - Should use precompiled headers. Should be named Precompiled.h and Precompiled.cpp
         bUsePrecompiledHeaders = false,
@@ -61,6 +64,8 @@ function FBuildRules(InName)
         
         -- @brief - Language to compile
         Language   = "C++",
+
+        -- @brief - Language Version to compile
         CppVersion = "C++20",
         
         -- @brief - Version of system SDK
@@ -113,6 +118,12 @@ function FBuildRules(InName)
         -- @brief - FrameWorks, only on macOS for now, should only list the names not .framework
         FrameWorks = { },
 
+        -- @brief - Should the libraries be embedded into the executable (This only applies to macOS at the moment)
+        bEmbedDependencies = false,
+
+        -- @brief - Extra names to embed (This only applies to macOS at the moment)
+        ExtraEmbedNames = { },
+
         -- @brief - Engine Modules that this module depends on. There are 3 types, dynamic, which are loaded as DLL without automatic importing Modules using DLLs 
         -- but are linked at link time (__declspec(dllimport)), and static modules. Modules should be specified by the name their folder has in the Runtime folder
         ModuleDependencies = { },
@@ -158,13 +169,18 @@ function FBuildRules(InName)
     end
 
     -- @brief - Helper function for adding defines
-    function self.AddDefines(InDefines)
-        TableAppendUniqueElementMultiple(InDefines, self.Defines)
+    function self.AddDefine(InDefine)
+        table.insert(self.Defines, InDefine)
     end
 
     -- @brief - Helper function for adding a module dependency
     function self.AddModuleDependencies(InModuleDependencies)
         TableAppendUniqueElementMultiple(InModuleDependencies, self.ModuleDependencies)
+    end
+
+    -- @brief - Helper function for adding a extra embed names (This only applies to macOS at the moment)
+    function self.AddExtraEmbedNames(InExtraEmbedNames)
+        TableAppendUniqueElementMultiple(InExtraEmbedNames, self.ExtraEmbedNames)
     end
 
     -- @brief - Helper function for adding libraries
@@ -206,7 +222,7 @@ function FBuildRules(InName)
     -- @brief - Project generation
     function self.GenerateProject()
         project(self.Name)
-            printf("    Generating Project \'%s\'", self.Name) 
+            LogHighlight("\n--- Generating project files for Project \'%s\' ---", self.Name) 
 
             architecture(self.Architecture)
             warnings(self.Warnings)
@@ -242,7 +258,7 @@ function FBuildRules(InName)
             -- Setup Language
             local TmpLanguage = self.Language:upper()
             if TmpLanguage ~= "C++" then
-                printf("ERROR: Invalid language \'%s\'", self.Language) 
+                LogError("Invalid language \'%s\'", self.Language) 
                 return nil
             end
 
@@ -251,7 +267,7 @@ function FBuildRules(InName)
             -- Setup Version
             local TmpVersion = self.CppVersion:lower()
             if VerifyLanguageVersion(TmpVersion) == false then
-                printf("ERROR: Invalid language version \'%s\'", self.Language) 
+                LogError("Invalid language version \'%s\'", self.Language) 
                 return nil
             end
 
@@ -261,26 +277,26 @@ function FBuildRules(InName)
             systemversion(self.SystemVersion)
 
             -- Setup CharacterSet
-            local TmpCharacterset = self.Characterset:lower()
-            if (TmpCharacterset == "ascii" or TmpCharacterset == "unicode") == false then
-                printf("ERROR: Invalid Characterset \'%s\'", self.Characterset) 
+            local CurrentCharacterset = self.Characterset:lower()
+            if (CurrentCharacterset == "ascii" or CurrentCharacterset == "unicode") == false then
+                LogError("Invalid Characterset \'%s\'", self.Characterset) 
                 return nil
             end
 
             characterset(self.Characterset)
 
             -- Setup Location
-            printf("    Generated project location \'%s\'\n", self.Location)
+            LogInfo("    Project location \'%s\'", self.Location)
             location(self.Location)
 
             -- Setup all targets except the dependencies
-            local TmpBuildTargetPath = self.BuildFolderPath .. "/bin/" .. self.OutputPath
-            printf("    Generated target location \'%s\'\n", TmpBuildTargetPath)
-            targetdir(TmpBuildTargetPath)
+            local FullObjectFolderPath = self.BuildFolderPath .. "/bin/" .. self.OutputPath
+            LogInfo("    Target location \'%s\'", FullObjectFolderPath)
+            targetdir(FullObjectFolderPath)
 
-            local TmpBuildObjPath = self.BuildFolderPath .. "/bin-int/" .. self.OutputPath
-            printf("    Generated obj location \'%s\'\n", TmpBuildObjPath)
-            objdir(TmpBuildObjPath)
+            local FullIntermediateFolderPath = self.BuildFolderPath .. "/bin-int/" .. self.OutputPath
+            LogInfo("    Object files location \'%s\'", FullIntermediateFolderPath)
+            objdir(FullIntermediateFolderPath)
 
             -- Setup Pre-Compiled Headers
             if self.bUsePrecompiledHeaders then
@@ -291,72 +307,104 @@ function FBuildRules(InName)
                     pchheader(self.GetPath() .. "/PreCompiled.h")
                 filter{}
 
-                printf("    Project is using PreCompiled Headers\n")
+                LogInfo("    Project is using PreCompiled Headers")
 
                 self.AddForceIncludes(
                 {
                     "PreCompiled.h"
                 })
             else
-                printf("    Project does NOT use PreCompiled Headers\n")
+                LogInfo("    Project does NOT use PreCompiled Headers")
             end
 
-            -- Debug print
-            printf("    Num ForceIncludes=%d", #self.ForceIncludes)
+            -- Debug Logging
+            LogInfo("\n--- ForceIncludes for module \'%s\' (Num ForceIncludes=%d) ---", self.Name, #self.ForceIncludes)
             if #self.ForceIncludes > 0 then
-                PrintTableWithEndLine("    Using ForceInclude \'%s\'", self.ForceIncludes)
-            else
-                printf("")
+                PrintTable("    Using ForceInclude \'%s\'", self.ForceIncludes)
+            end
+
+            LogInfo("\n--- Defines for module \'%s\' (Num Defines=%d) ---", self.Name, #self.Defines)
+            if #self.Defines > 0 then
+                PrintTable("    Using define \'%s\'", self.Defines)
+            end
+
+            LogInfo("\n--- SystemIncludes for module \'%s\' (Num SystemIncludes=%d) ---", self.Name, #self.SystemIncludes)
+            if #self.SystemIncludes > 0 then
+                PrintTable("    Using SystemInclude \'%s\'", self.SystemIncludes)
+            end
+
+            LogInfo("\n--- LibraryPaths for module \'%s\' (Num LibraryPaths=%d) ---", self.Name, #self.LibraryPaths)
+            if #self.LibraryPaths > 0 then
+                PrintTable("    Using LibraryPath \'%s\'", self.LibraryPaths)
+            end
+
+            LogInfo("\n--- Files for module \'%s\' (Num Files=%d) ---", self.Name, #self.Files)
+            if #self.Files > 0 then
+                PrintTable("    Including file  \'%s\'", self.Files)
+            end
+            
+            LogInfo("\n--- Exclude files for module \'%s\' (Num ExcludeFiles=%d) ---", self.Name, #self.ExcludeFiles)
+            if #self.ExcludeFiles > 0 then
+                PrintTable("    Excluding file  \'%s\'", self.ExcludeFiles)
+            end
+            
+            LogInfo("\n--- Frameworks for module \'%s\' (Num FrameWorks=%d) ---", self.Name, #self.FrameWorks)
+            if #self.FrameWorks > 0 then
+                PrintTable("    Using framework dependency \'%s\'", self.FrameWorks)
+            end
+            
+            LogInfo("\n--- LinkLibraries for module \'%s\' (Num LinkLibraries=%d) ---", self.Name, #self.LinkLibraries)
+            if #self.LinkLibraries > 0 then
+                PrintTable("    Linking library \'%s\'", self.LinkLibraries)
+            end
+            
+            LogInfo("\n--- Link modules for module \'%s\' (Num LinkModules=%d) ---", self.Name, #LinkModules)
+            if #LinkModules > 0 then
+                PrintTable("    Linking module \'%s\'", LinkModules)
+            end
+            
+            LogInfo("\n--- Link options for module \'%s\' (Num LinkOptions=%d) ---", self.Name, #LinkOptions)
+            if #LinkOptions > 0 then
+                PrintTable("    Link options \'%s\'", LinkOptions)
+            end
+            
+            LogInfo("\n--- Module dependencies for module \'%s\' (Num ModuleDependencies=%d) ---", self.Name, #self.ModuleDependencies)
+            if #self.ModuleDependencies > 0 then
+                PrintTable("    Using module dependency \'%s\'", self.ModuleDependencies)
+            end
+            
+            LogInfo("\n--- Embedded modules for module \'%s\' (Num Embedded Modules=%d) ---", self.Name, #self.ModuleDependencies)
+            if #self.ModuleDependencies > 0 then
+                PrintTable("    Embed Module \'%s\'", self.ModuleDependencies)
             end
 
             -- Setup ForceIncludes
             forceincludes(self.ForceIncludes)
 
-            -- Setup Module Defines
-            printf("    Num Defines=%d", #self.Defines)
-            if #self.Defines > 0 then
-                PrintTableWithEndLine("    Using define \'%s\'", self.Defines)
-            else
-                printf("")
-            end
-            
             defines(self.Defines)
 
-            -- Setup System Includes
-            printf("    Num SystemIncludes=%d", #self.SystemIncludes)
-            if #self.SystemIncludes > 0 then
-                PrintTableWithEndLine("    Using SystemInclude \'%s\'", self.SystemIncludes)
-            else
-                printf("")
-            end
-
             externalincludedirs(self.SystemIncludes)
-
-            -- Setup Library Paths
-            printf("    Num LibraryPaths=%d", #self.LibraryPaths)
-            if #self.LibraryPaths > 0 then
-                PrintTableWithEndLine("    Using LibraryPaths \'%s\'", self.LibraryPaths)
-            else
-                printf("")
-            end
-
+            
             libdirs(self.LibraryPaths)
-
-            -- Setup Module Files
+            
             files(self.Files)
 
             -- Setup Exclude OS-files
-            filter { "system:macosx", "files:Windows/**.cpp" }
-                flags { "ExcludeFromBuild" }
-            filter { "system:windows", "files:Mac/**.cpp" }
-                flags { "ExcludeFromBuild" }
-            filter {}
-
-            -- On macOS compile all cpp files to objective-C++ to avoid pre-processor check
-            if self.bCompileCppAsObjectiveCpp then
-                filter { "system:macosx", "files:**.cpp" }
-                    compileas("Objective-C++")
+            if IsPlatformWindows() then
+                filter { "files:**/Mac/**.cpp" }
+                    flags { "ExcludeFromBuild" }
                 filter {}
+            elseif IsPlatformMac() then
+                filter { "files:**/Windows/**.cpp" }
+                    flags { "ExcludeFromBuild" }
+                filter {}
+
+                -- On macOS compile all cpp files to objective-C++ to avoid pre-processor check
+                if self.bCompileCppAsObjectiveCpp then
+                    filter { "files:**.cpp" }
+                        compileas("Objective-C++")
+                    filter {}
+                end
             end
 
             -- In visual studio show natvis files
@@ -373,77 +421,113 @@ function FBuildRules(InName)
             removefiles(self.ExcludeFiles)
 
             -- Setup Linking
-            filter { "system:macosx" }
+            if IsPlatformMac() then
                 links(self.FrameWorks)
-            filter{}
+            end
 
+            -- Link libraries (External libraries etc.)
             links(self.LinkLibraries)
+
             links(LinkModules)
 
             linkoptions(LinkOptions)
 
             -- Setup Dependencies
             dependson(self.ModuleDependencies)
+            
+            -- Setup embeded Frameworks etc.
+            filter { "action:xcode4" }
+                if self.bEmbedDependencies then
+                    -- TODO: Embedding the frameworks seems to still sign them, even if it clearly states "Embed without signing", someone at Apple, probably f-ed up, or something is very, very unclear here
+                    -- embed(self.FrameWorks)
+                    embed(self.ModuleDependencies)
+                    embed(self.ExtraEmbedNames)
+                end
+            filter {}
+
+            -- TODO: If the app actually needs to get signed, this needs to be revisited
+            filter { "action:xcode4" }
+                xcodebuildsettings 
+                {
+                    ["PRODUCT_BUNDLE_IDENTIFIER"] = "dxrproject." .. self.Name,
+                    ["CODE_SIGN_STYLE"]           = "Automatic",
+                    ["ENABLE_HARDENED_RUNTIME"]   = "NO",                                          -- hardened runtime is required for notarization
+                    ["GENERATE_INFOPLIST_FILE"]   = "YES",                                         -- generate the .plist file for now
+                    -- ["CODE_SIGN_IDENTITY"]        = "Apple Development",                        -- sets 'Signing Certificate' to 'Development'. Defaults to 'Sign to Run Locally'. not doing this will crash your app if you upgrade the project when prompted by Xcode
+                    ["LD_RUNPATH_SEARCH_PATHS"]   = "$(inherited) @executable_path/../Frameworks", -- tell the executable where to find the frameworks. Path is relative to executable location inside .app bundle
+                }
+            filter {}
         project "*"
+
+        LogHighlight("\n--- Finished generating project files for Project \'%s\' ---", self.Name) 
     end
 
     -- Base generate (generates project files)
     function self.Generate()
+        if self.Workspace == nil then
+            LogError("Workspace cannot be nil when generating Rule")
+            return
+        end
 
         -- Ensure dependencies are included
         for Index = 1, #self.ModuleDependencies do
-            printf("\n----Including dependency for project \'%s\'---", self.Name)            
+            LogHighlight("\n--- Including dependency for project \'%s\' ---", self.Name)
             
-            if IsModule(self.ModuleDependencies[Index]) then
-                printf("-Dependency \'%s\' is already included", self.ModuleDependencies[Index])
+            local CurrentModuleName = self.ModuleDependencies[Index]
+            if IsModule(CurrentModuleName) then
+                LogHighlightWarning("-Dependency \'%s\' is already included", CurrentModuleName)
             else
-                local DependecyPath = RuntimeFolderPath .. "/" .. self.ModuleDependencies[Index] .. "/Module.lua"
-                printf("-Including Dependency \'%s\' Path=\'%s\'\n", self.ModuleDependencies[Index], DependecyPath)
+                local DependecyPath = RuntimeFolderPath .. "/" .. CurrentModuleName .. "/Module.lua"
+                LogInfo("-Including Dependency \'%s\' Path=\'%s\'", CurrentModuleName, DependecyPath)
                 include(DependecyPath)
-            end
 
-            printf("----Dependency for project \'%s\'---\n", self.Name)  
+                -- Generate module, but check so that it exists since some platforms does not create certain modules (D3D12RHI, MetalRHI etc.)
+                if IsModule(CurrentModuleName) then
+                    local CurrentModule = GetModule(CurrentModuleName)
+                    CurrentModule.Workspace = self.Workspace
+                    CurrentModule.Generate()
+                else
+                    LogWarning("Failed to properly create module \'%s\'", CurrentModuleName)
+                end
+            end
         end
 
         -- Ensure that the runtime folder is added to the include folders
-        self.AddSystemIncludes(
-        {
-            RuntimeFolderPath
-        })
+        self.AddSystemIncludes({ RuntimeFolderPath })
 
         -- Add framework extension
         self.AddFrameWorkExtension()
 
         -- Solve dependencies
         for Index = 1, #self.ModuleDependencies do
-            local TempModule = GetModule(self.ModuleDependencies[Index])
-            if TempModule then
-                if TempModule.bRuntimeLinking == false then
-                    LinkModules[#LinkModules + 1] = self.ModuleDependencies[Index];
+            local CurrentModuleName = self.ModuleDependencies[Index]
+            local CurrentModule     = GetModule(CurrentModuleName)
+            if CurrentModule then
+                if CurrentModule.bRuntimeLinking == false then
+                    LinkModules[#LinkModules + 1] = CurrentModuleName
                 end
 
-                if TempModule.bIsDynamic then                
-                    local ModuleApiName = TempModule.Name:upper() .. "_API"
+                if CurrentModule.bIsDynamic then
+                    local ModuleApiName = CurrentModule.Name:upper() .. "_API"
                     
                     -- This should be linked at compile time
-                    if TempModule.bRuntimeLinking == false then
+                    if CurrentModule.bRuntimeLinking == false then
                         ModuleApiName = ModuleApiName .. "=MODULE_IMPORT"
                     end
 
-                    self.AddDefines(
-                    {
-                        ModuleApiName
-                    })
-                else
-                    -- If we are not building a DLL linking libraries need to be pushed up
-                    self.AddLinkLibraries(TempModule.LinkLibraries)
-                    self.AddModuleDependencies(TempModule.ModuleDependencies)
+                    self.AddDefine(ModuleApiName)
                 end
+                
+                -- TODO: This should probably bes seperated into public/private dependencies since public should always be pushed up
+                -- We always want to add the frameworks and modules as a dependency 
+                self.AddLinkLibraries(CurrentModule.LinkLibraries)
+                self.AddFrameWorks(CurrentModule.FrameWorks)
+                self.AddModuleDependencies(CurrentModule.ModuleDependencies)
 
                 -- System includes can be included in a dependency header and therefore necessary in this module aswell
-                self.AddSystemIncludes(TempModule.SystemIncludes)
+                self.AddSystemIncludes(CurrentModule.SystemIncludes)
             else
-                printf("BuildRule Error: Module \'%s\' has not been included", self.ModuleDependencies[Index])
+                LogError("Module \'%s\' has not been included", CurrentModuleName)
             end
         end
 
@@ -458,58 +542,8 @@ function FBuildRules(InName)
         self.MakeFileNamesRelativeToPath(self.Files)
         self.MakeFileNamesRelativeToPath(self.ExcludeFiles)
 
-        -- Debug print
-        printf("    Num FrameWorks=%d", #self.FrameWorks)
-        if #self.FrameWorks > 0 then
-            PrintTableWithEndLine("    Using framework dependency \'%s\'", self.FrameWorks)
-        else
-            printf("")
-        end
-
-        printf("    Num ModuleDependencies=%d", #self.ModuleDependencies)
-        if #self.ModuleDependencies > 0 then
-            PrintTableWithEndLine("    Using module dependency \'%s\'", self.ModuleDependencies)
-        else
-            printf("")
-        end
-
-        printf("    Num LinkLibraries=%d", #self.LinkLibraries)
-        if #self.LinkLibraries > 0 then
-            PrintTableWithEndLine("    Linking library \'%s\'", self.LinkLibraries)
-        else
-            printf("")
-        end
-
-        printf("    Num Files=%d", #self.Files)
-        if #self.Files > 0 then
-            PrintTableWithEndLine("    Including file  \'%s\'", self.Files)
-        else
-            printf("")
-        end
-
-        printf("    Num ExcludeFiles=%d", #self.ExcludeFiles)
-        if #self.ExcludeFiles > 0 then
-            PrintTableWithEndLine("    Excluding file  \'%s\'", self.ExcludeFiles)
-        else
-            printf("")
-        end
-
-        printf("    Num LinkModules=%d", #LinkModules)
-        if #LinkModules > 0 then
-            PrintTableWithEndLine("    Linking module \'%s\'", LinkModules)
-        else
-            printf("")
-        end
-
-        printf("    Num LinkOptions=%d", #LinkOptions)
-        if #LinkOptions > 0 then
-            PrintTableWithEndLine("    Link options \'%s\'", LinkOptions)
-        else
-            printf("")
-        end
-
-        -- Project
-        self.GenerateProject()
+        -- Add this rule to the workspace
+        self.Workspace.AddRule(self)
     end
     
     return self

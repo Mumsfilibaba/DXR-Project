@@ -1,4 +1,4 @@
-include "Build_Module.lua"
+include "build_module.lua"
 
 -- Target types
 ETargetType = 
@@ -8,36 +8,37 @@ ETargetType =
     ["ConsoleApp"]  = 3,
 }
 
-GTargetName = {}
+-- Target build rules
+function FTargetBuildRules(InName, InWorkspace)
 
-function GetCurrentTargetName()
-    if GTargetName == nil then
-        printf("ERROR: GTargetName is nil")
+    -- Needs to have a valid modulename
+    if InName == nil then
+        LogError("BuildRule failed due to invalid name")
+        return nil
+    end
+    
+    -- Needs to have a valid workspace
+    if InWorkspace == nil then
+        LogError("Workspace cannot be nil")
         return nil
     end
 
-    return GTargetName
-end
+    LogHighlight("Creating Target \'%s\'", InName)
 
--- Target build rules
-function FTargetBuildRules(InName)
-    printf("Creating Target \'%s\'", InName)
-    
     -- Init parent class
     local self = FBuildRules(InName)
     if self == nil then
-        printf("ERROR: Failed to create BuildRule")
+        LogError("Failed to create BuildRule")
         return nil
     end
 
+    self.Workspace = InWorkspace
+
     -- Ensure that target does not already exist
-    if IsTarget(InName) then
-        printf("ERROR: Target is already created")
-        return GetTarget(InName)
+    if self.Workspace.IsTarget(InName) then
+        LogError("Target is already created")
+        return nil
     end
-       
-    -- Setup global target name 
-    GTargetName = InName 
 
     -- Folder path for engine-modules
     local RuntimeFolderPath = GetRuntimeFolderPath()
@@ -51,32 +52,31 @@ function FTargetBuildRules(InName)
     -- @brief - Helper function for retrieving path
     self.GetPath = nil
     function self.GetPath()
-        return GetEnginePath() .. "/" ..  self.Name
+        return self.Workspace.GetEnginePath() .. "/" ..  self.Name
     end
 
     -- Generate target
-    local BaseGenerate = self.Generate
+    local BuildRulesGenerate = self.Generate
     function self.Generate()
-        printf("    Generating Target \'%s\'\n", self.Name)
+        if self.Workspace == nil then
+            LogError("Workspace cannot be nil when generating Target")
+            return
+        end
+
+        LogInfo("\n--- Generating Target \'%s\' ---", self.Name)
   
-        -- Setup monolithic builds
         if self.bIsMonolithic then
-            printf("    Build is monolithic\n")
-            SetIsMonlithic(true)
+            LogInfo("    Target \'%s\' is monolithic", self.Name)
         else
-            printf("    Build is NOT monolithic\n")
-            SetIsMonlithic(false)
+            LogInfo("    Target \'%s\' is NOT monolithic", self.Name)
         end
         
         -- Generate the project based on type
         if self.TargetType == ETargetType.Client then
-            printf("    TargetType=Client\n")
+            LogInfo("    TargetType=Client")
 
             -- Always add module name as a define
-            self.AddDefines(
-            {
-                ("MODULE_NAME=" .. "\"" .. self.Name .. "\"")
-            })
+            self.AddDefine("MODULE_NAME=" .. "\"" .. self.Name .. "\"")
 
             local UpperCaseName = self.Name:upper()
             local ModuleApiName = UpperCaseName .. "_API"
@@ -84,50 +84,56 @@ function FTargetBuildRules(InName)
             -- TODO: Should this be created as a module instead? 
             -- In a monolithic build then the client should be linked statically 
             if self.bIsMonolithic then                
-                self.Kind            = "WindowedApp"
-                self.bRuntimeLinking = false
-                self.bIsDynamic      = false
+                self.Kind               = "WindowedApp"
+                self.bRuntimeLinking    = false
+                self.bIsDynamic         = false
+                self.bEmbedDependencies = true
 
+                -- TODO: These should be handled via file and loaded into the Project-Module
                 -- Defines
-                self.AddDefines(
-                { 
-                    ("PROJECT_NAME=" .. "\"" .. self.Name .. "\""),
-                    ("PROJECT_LOCATION=" .. "\"" .. FindWorkspaceDir() .. "/" .. self.Name .. "\""),
-                    ModuleApiName,
-                })
+                self.AddDefine("PROJECT_NAME=" .. "\"" .. self.Name .. "\"")
+                self.AddDefine("PROJECT_LOCATION=" .. "\"" .. self.GetPath() .. "\"")
+                self.AddDefine(ModuleApiName)
 
                 -- Generate the project
-                printf("    ---Generating target project")
-                BaseGenerate()
-                printf("    ---Finished generating target project")
+                LogInfo("\n--- Generating project for target \'%s\' ---", self.Name)
+                BuildRulesGenerate()
+                LogInfo("\n--- Finished generating project for target \'%s\' ---", self.Name)
             else
                 self.Kind            = "SharedLib"
                 self.bRuntimeLinking = true
                 self.bIsDynamic      = true
-
-                self.AddDefines(
-                {
-                    ModuleApiName .. "=MODULE_EXPORT"
-                })
-   
+                
+                self.AddDefine(ModuleApiName .. "=MODULE_EXPORT")
+                
                 -- Generate the project
-                printf("    ---Generating target project")
-                BaseGenerate()
-                printf("    ---Finished generating target project")
+                LogInfo("\n--- Generating project for target \'%s\' ---", self.Name)
+                BuildRulesGenerate()
+                LogInfo("\n--- Finished generating project for target \'%s\' ---", self.Name)
                 
                 -- Standalone-executable
-                printf("    ---Generating Standablone client executable\n")
+                LogInfo("\n--- Generating Standablone client executable project for target \'%s\' ---", self.Name)
                 
                 local Executeble = FBuildRules(self.Name .. "Standalone")
-                Executeble.Kind = "WindowedApp"
+                Executeble.Kind               = "WindowedApp"
+                Executeble.bEmbedDependencies = true
 
+                -- Setup the workspace
+                Executeble.Workspace = self.Workspace
+
+                -- Link the module
                 Executeble.AddLinkLibraries(
                 {
                     self.Name
                 })
 
-                Executeble.AddModuleDependencies(self.ModuleDependencies)
+                Executeble.AddExtraEmbedNames(
+                {
+                    self.Name
+                })
 
+                Executeble.AddModuleDependencies(self.ModuleDependencies)
+                
                 if IsPlatformMac() then
                     Executeble.AddFrameWorks(
                     {
@@ -136,11 +142,8 @@ function FTargetBuildRules(InName)
                 end
 
                 -- Setup Defines
-                Executeble.AddDefines(
-                { 
-                    ModuleApiName,
-                })
-    
+                Executeble.AddDefine(ModuleApiName)
+
                 -- Overwrite all exclude-files
                 Executeble.ExcludeFiles = {}
         
@@ -150,12 +153,14 @@ function FTargetBuildRules(InName)
                 -- Generate Standalone executable
                 Executeble.Generate()
 
-                printf("    ---Finished generating client executable\n")
+                LogInfo("\n--- Finished generating standablone client executable project for target \'%s\' ---", self.Name)
             end
         elseif self.TargetType == ETargetType.WindowedApp then
-            printf("    TargetType=WindowedApp\n")
+            LogError("    TargetType=WindowedApp is not implemented yet")
+            -- TODO: Handle this case properly
         elseif self.TargetType == ETargetType.ConsoleApp then
-            printf("    TargetType=ConsoleApp\n")
+            LogError("    TargetType=ConsoleApp is not implemented yet")
+            -- TODO: Handle this case properly
         end
     end
 

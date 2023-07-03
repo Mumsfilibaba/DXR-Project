@@ -23,5 +23,3 @@ RendererModule.AddLinkLibraries(
 {
     "ImGui",
 })
-
-RendererModule.Generate()

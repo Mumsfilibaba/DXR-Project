@@ -1,19 +1,19 @@
-include "Build_Rule.lua"
+include "build_rule.lua"
 
 -- Module build rules
 function FModuleBuildRules(InName)
-    printf("Creating Module \'%s\'", InName)
+    LogHighlight("Creating Module \'%s\'", InName)
 
     -- Init parent class
     local self = FBuildRules(InName)
     if self == nil then
-        printf("ERROR: Failed to create BuildRule")
+        LogError("Failed to create BuildRule")
         return nil
     end
 
     -- Ensure that module does not already exist
     if IsModule(NewModuleName) then
-        printf("ERROR: Module is already created")
+        LogWarning("Module is already created")
         return GetModule(NewModuleName)
     end
        
@@ -27,21 +27,26 @@ function FModuleBuildRules(InName)
     self.bRuntimeLinking = false
     
     -- Generate the module
-    local BaseGenerate = self.Generate 
+    local BuildRulesGenerate = self.Generate 
     function self.Generate()
-        printf("    Generating Module \'%s\'\n", self.Name)
+        if self.Workspace == nil then
+            LogError("Workspace cannot be nil when generating Module")
+            return
+        end
+
+        LogInfo("\n--- Generating Module \'%s\' ---", self.Name)
   
         -- Handle Monolithic build
         local bIsMonolithic = IsMonolithic()
         if bIsMonolithic then
-            printf("    Build is monolithic\n")
+            LogInfo("    Build is monolithic")
             
             self.bIsDynamic      = false
             self.bRuntimeLinking = false
         else
-            printf("    Build is NOT monolithic\n")
+            LogInfo("    Build is NOT monolithic")
         end
-                
+
         -- Dynamic or static
         local ModuleApiName = self.Name:upper() .. "_API"
         if self.bIsDynamic then           
@@ -53,21 +58,15 @@ function FModuleBuildRules(InName)
             self.Kind = "StaticLib"
 
             -- When a module is not dynamic we treat is as monolithic
-            self.AddDefines(
-            {
-                "MONOLITHIC_BUILD=(1)"
-            })
+            self.AddDefine("MONOLITHIC_BUILD=(1)")
         end
         
         -- Always add module name as a define
-        self.AddDefines(
-        {
-            ("MODULE_NAME=" .. "\"" .. self.Name .. "\""),
-            ModuleApiName
-        })
+        self.AddDefine("MODULE_NAME=" .. "\"" .. self.Name .. "\"")
+        self.AddDefine(ModuleApiName)
 
         -- Generate the project
-        BaseGenerate()
+        BuildRulesGenerate()
     end
 
     -- Add module among global list

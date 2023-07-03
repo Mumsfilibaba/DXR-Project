@@ -23,13 +23,3 @@ ApplicationModule.AddLinkLibraries(
 {
     "ImGui",
 })
-
--- TODO: Ensure that frameworks gets propagated up with dependencies
-if IsPlatformMac() then
-    ApplicationModule.AddFrameWorks( 
-    {
-        "AppKit",
-    })
-end
-
-ApplicationModule.Generate()
