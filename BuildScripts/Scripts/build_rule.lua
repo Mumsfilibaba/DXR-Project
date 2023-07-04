@@ -21,13 +21,13 @@ function FBuildRules(InName)
         Name = InName,
 
         -- @brief - Location for IDE project files
-        Location = GetSolutionsFolderPath(),
+        ProjectFilePath = "",
         
         -- @brief - Location for generated files from the build
-        BuildFolderPath = GetEnginePath() .. "/Build",
+        BuildFolderPath = "",
         
         -- @brief - Location for the build (Inside the build folder specified inside the build-folder )
-        OutputPath = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}",
+        OutputPath = "",
 
         -- @brief - The workspace that this rule is currently a part of
         Workspace = { },
@@ -145,62 +145,62 @@ function FBuildRules(InName)
 
     -- @brief - Helper function for adding flags
     function self.AddFlags(InFlags)
-        TableAppendUniqueElementMultiple(InFlags, self.Flags)
+        AddUniqueElements(InFlags, self.Flags)
     end
 
     -- @brief - Helper function for adding system include directories
-    function self.AddSystemIncludes(InSystemInclude)
-        TableAppendUniqueElementMultiple(InSystemInclude, self.SystemIncludes)
+    function self.AddSystemIncludes(InSystemIncludes)
+        AddUniqueElements(InSystemIncludes, self.SystemIncludes)
     end
 
     -- @brief - Helper function for adding includes
     function self.AddIncludes(InIncludes)
-        TableAppendUniqueElementMultiple(InIncludes, self.Includes)
+        AddUniqueElements(InIncludes, self.Includes)
     end
 
     -- @brief - Helper function for adding files
     function self.AddFiles(InFiles)
-        TableAppendUniqueElementMultiple(InFiles, self.Files)
+        AddUniqueElements(InFiles, self.Files)
     end
 
     -- @brief - Helper function for adding exclude files
     function self.AddExcludeFiles(InExcludeFiles)
-        TableAppendUniqueElementMultiple(InExcludeFiles, self.ExcludeFiles)
+        AddUniqueElements(InExcludeFiles, self.ExcludeFiles)
     end
 
     -- @brief - Helper function for adding defines
-    function self.AddDefine(InDefine)
-        table.insert(self.Defines, InDefine)
+    function self.AddDefines(InDefines)
+        AddUniqueElements(InDefines, self.Defines)
     end
 
     -- @brief - Helper function for adding a module dependency
     function self.AddModuleDependencies(InModuleDependencies)
-        TableAppendUniqueElementMultiple(InModuleDependencies, self.ModuleDependencies)
+        AddUniqueElements(InModuleDependencies, self.ModuleDependencies)
     end
 
     -- @brief - Helper function for adding a extra embed names (This only applies to macOS at the moment)
     function self.AddExtraEmbedNames(InExtraEmbedNames)
-        TableAppendUniqueElementMultiple(InExtraEmbedNames, self.ExtraEmbedNames)
+        AddUniqueElements(InExtraEmbedNames, self.ExtraEmbedNames)
     end
 
     -- @brief - Helper function for adding libraries
     function self.AddLinkLibraries(InLibraries)
-        TableAppendUniqueElementMultiple(InLibraries, self.LinkLibraries)
+        AddUniqueElements(InLibraries, self.LinkLibraries)
     end
 
     -- @brief - Helper function for adding frameworks
     function self.AddFrameWorks(InFrameWorks)
-        TableAppendUniqueElementMultiple(InFrameWorks, self.FrameWorks)
+        AddUniqueElements(InFrameWorks, self.FrameWorks)
     end
 
     -- @brief - Helper function for adding forceincludes
     function self.AddForceIncludes(InForceIncludes)
-        TableAppendUniqueElementMultiple(InForceIncludes, self.ForceIncludes)
+        AddUniqueElements(InForceIncludes, self.ForceIncludes)
     end
 
     -- @brief - Helper function for adding LibraryPaths
     function self.AddLibraryPaths(InLibraryPaths)
-        TableAppendUniqueElementMultiple(InLibraryPaths, self.LibraryPaths)
+        AddUniqueElements(InLibraryPaths, self.LibraryPaths)
     end
 
     -- @brief - Helper for adding the .framework extention to a table
@@ -256,8 +256,8 @@ function FBuildRules(InName)
             end
 
             -- Setup Language
-            local TmpLanguage = self.Language:upper()
-            if TmpLanguage ~= "C++" then
+            local CurrentLanguage = self.Language:upper()
+            if CurrentLanguage ~= "C++" then
                 LogError("Invalid language \'%s\'", self.Language) 
                 return nil
             end
@@ -265,8 +265,8 @@ function FBuildRules(InName)
             language(self.Language)
 
             -- Setup Version
-            local TmpVersion = self.CppVersion:lower()
-            if VerifyLanguageVersion(TmpVersion) == false then
+            local CurrentLanguageVersion = self.CppVersion:lower()
+            if VerifyLanguageVersion(CurrentLanguageVersion) == false then
                 LogError("Invalid language version \'%s\'", self.Language) 
                 return nil
             end
@@ -286,8 +286,8 @@ function FBuildRules(InName)
             characterset(self.Characterset)
 
             -- Setup Location
-            LogInfo("    Project location \'%s\'", self.Location)
-            location(self.Location)
+            LogInfo("    Project location \'%s\'", self.ProjectFilePath)
+            location(self.ProjectFilePath)
 
             -- Setup all targets except the dependencies
             local FullObjectFolderPath = self.BuildFolderPath .. "/bin/" .. self.OutputPath
@@ -308,11 +308,6 @@ function FBuildRules(InName)
                 filter{}
 
                 LogInfo("    Project is using PreCompiled Headers")
-
-                self.AddForceIncludes(
-                {
-                    "PreCompiled.h"
-                })
             else
                 LogInfo("    Project does NOT use PreCompiled Headers")
             end
@@ -382,7 +377,7 @@ function FBuildRules(InName)
             forceincludes(self.ForceIncludes)
 
             defines(self.Defines)
-
+            
             externalincludedirs(self.SystemIncludes)
             
             libdirs(self.LibraryPaths)
@@ -422,18 +417,28 @@ function FBuildRules(InName)
 
             -- Setup Linking
             if IsPlatformMac() then
-                links(self.FrameWorks)
+                -- Ignore linking when kind is set to none
+                if self.Kind == "None" then
+                    LogWarning("Ignoring Frameworks due to the kind being set to \'None\'")
+                else
+                    links(self.FrameWorks)
+                end
             end
 
-            -- Link libraries (External libraries etc.)
-            links(self.LinkLibraries)
-
-            links(LinkModules)
-
-            linkoptions(LinkOptions)
-
-            -- Setup Dependencies
-            dependson(self.ModuleDependencies)
+            -- Ignore linking and dependencies when kind is set to none
+            if self.Kind == "None" then
+                LogWarning("Ignoring LinkLibraries due to the kind being set to \'None\'")
+                LogWarning("Ignoring LinkModules due to the kind being set to \'None\'")
+                LogWarning("Ignoring LinkOptions due to the kind being set to \'None\'")
+                LogWarning("Ignoring Dependencies due to the kind being set to \'None\'")
+            else
+                -- Link libraries (External libraries etc.)
+                links(self.LinkLibraries)
+                links(LinkModules)
+                linkoptions(LinkOptions)
+                -- Setup Dependencies
+                dependson(self.ModuleDependencies)
+            end
             
             -- Setup embeded Frameworks etc.
             filter { "action:xcode4" }
@@ -492,6 +497,11 @@ function FBuildRules(InName)
             end
         end
 
+        -- Setup folder paths
+        self.BuildFolderPath = self.Workspace.GetBuildFolderPath()
+        self.OutputPath      = self.Workspace.GetOutputPath()
+        self.ProjectFilePath = self.Workspace.GetSolutionsFolderPath()
+
         -- Ensure that the runtime folder is added to the include folders
         self.AddSystemIncludes({ RuntimeFolderPath })
 
@@ -515,7 +525,7 @@ function FBuildRules(InName)
                         ModuleApiName = ModuleApiName .. "=MODULE_IMPORT"
                     end
 
-                    self.AddDefine(ModuleApiName)
+                    self.AddDefines({ ModuleApiName })
                 end
                 
                 -- TODO: This should probably bes seperated into public/private dependencies since public should always be pushed up
@@ -536,6 +546,11 @@ function FBuildRules(InName)
             for Index = 1, #LinkModules do
                 LinkOptions[#LinkOptions + 1] = "/INCLUDE:LinkModule_" .. LinkModules[Index]
             end
+        end
+
+        -- Setup Pre-Compiled Headers
+        if self.bUsePrecompiledHeaders then
+            self.AddForceIncludes({ "PreCompiled.h" })
         end
 
         -- Make files relative before printing

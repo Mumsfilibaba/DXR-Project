@@ -55,7 +55,27 @@ function FTargetBuildRules(InName, InWorkspace)
         return self.Workspace.GetEnginePath() .. "/" ..  self.Name
     end
 
-    -- Generate target
+    -- @brief - Inject module into the current module (I.e put the files into the executable)
+    function InjectLaunchModule(Rule)
+        for Index = 1, #Rule.ModuleDependencies do
+            local CurrentModuleName = Rule.ModuleDependencies[Index]
+            if CurrentModuleName == "Launch" then
+                if IsModule("Launch") then
+                    local LaunchModule = GetModule("Launch");
+                    LaunchModule.Kind = "None"
+
+                    Rule.AddFiles(LaunchModule.Files)
+                    Rule.AddExcludeFiles(LaunchModule.ExcludeFiles)
+                else
+                    LogError("Found the Launch Module among dependencies, however, the Launch module has not been initialized")
+                end
+
+                break
+            end
+        end
+    end
+
+    -- @brief - Generate target
     local BuildRulesGenerate = self.Generate
     function self.Generate()
         if self.Workspace == nil then
@@ -76,7 +96,7 @@ function FTargetBuildRules(InName, InWorkspace)
             LogInfo("    TargetType=Client")
 
             -- Always add module name as a define
-            self.AddDefine("MODULE_NAME=" .. "\"" .. self.Name .. "\"")
+            self.AddDefines({ "MODULE_NAME=" .. "\"" .. self.Name .. "\"" })
 
             local UpperCaseName = self.Name:upper()
             local ModuleApiName = UpperCaseName .. "_API"
@@ -91,20 +111,21 @@ function FTargetBuildRules(InName, InWorkspace)
 
                 -- TODO: These should be handled via file and loaded into the Project-Module
                 -- Defines
-                self.AddDefine("PROJECT_NAME=" .. "\"" .. self.Name .. "\"")
-                self.AddDefine("PROJECT_LOCATION=" .. "\"" .. self.GetPath() .. "\"")
-                self.AddDefine(ModuleApiName)
+                self.AddDefines({ "PROJECT_NAME=" .. "\"" .. self.Name .. "\"" })
+                self.AddDefines({ "PROJECT_LOCATION=" .. "\"" .. self.GetPath() .. "\"" })
+                self.AddDefines({ ModuleApiName })
 
                 -- Generate the project
                 LogInfo("\n--- Generating project for target \'%s\' ---", self.Name)
                 BuildRulesGenerate()
+                InjectLaunchModule(self)
                 LogInfo("\n--- Finished generating project for target \'%s\' ---", self.Name)
             else
                 self.Kind            = "SharedLib"
                 self.bRuntimeLinking = true
                 self.bIsDynamic      = true
                 
-                self.AddDefine(ModuleApiName .. "=MODULE_EXPORT")
+                self.AddDefines({ ModuleApiName .. "=MODULE_EXPORT" })
                 
                 -- Generate the project
                 LogInfo("\n--- Generating project for target \'%s\' ---", self.Name)
@@ -122,36 +143,26 @@ function FTargetBuildRules(InName, InWorkspace)
                 Executeble.Workspace = self.Workspace
 
                 -- Link the module
-                Executeble.AddLinkLibraries(
-                {
-                    self.Name
-                })
-
-                Executeble.AddExtraEmbedNames(
-                {
-                    self.Name
-                })
-
+                Executeble.AddLinkLibraries({ self.Name })
+                Executeble.AddExtraEmbedNames({ self.Name })
                 Executeble.AddModuleDependencies(self.ModuleDependencies)
                 
                 if IsPlatformMac() then
-                    Executeble.AddFrameWorks(
-                    {
-                        "AppKit",
-                    })
+                    Executeble.AddFrameWorks({ "AppKit" })
                 end
 
                 -- Setup Defines
-                Executeble.AddDefine(ModuleApiName)
+                Executeble.AddDefines({ ModuleApiName })
 
                 -- Overwrite all exclude-files
-                Executeble.ExcludeFiles = {}
+                Executeble.ExcludeFiles = { }
         
                 -- System includes can be included in a dependency header and therefore necessary in this module aswell
                 Executeble.AddSystemIncludes(self.SystemIncludes)
 
                 -- Generate Standalone executable
                 Executeble.Generate()
+                InjectLaunchModule(Executeble)
 
                 LogInfo("\n--- Finished generating standablone client executable project for target \'%s\' ---", self.Name)
             end

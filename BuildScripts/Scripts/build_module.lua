@@ -16,9 +16,6 @@ function FModuleBuildRules(InName)
         LogWarning("Module is already created")
         return GetModule(NewModuleName)
     end
-       
-    -- @brief - Folder path for engine-modules
-    local RuntimeFolderPath = GetRuntimeFolderPath()
     
     -- @brief - Determines of the module should be dynamic otherwise static, this is overridden by monolithic build, which forces all modules to be linked statically
     self.bIsDynamic = true
@@ -37,8 +34,8 @@ function FModuleBuildRules(InName)
         LogInfo("\n--- Generating Module \'%s\' ---", self.Name)
   
         -- Handle Monolithic build
-        local bIsMonolithic = IsMonolithic()
-        if bIsMonolithic then
+        self.bIsMonolithic = IsMonolithic()
+        if self.bIsMonolithic then
             LogInfo("    Build is monolithic")
             
             self.bIsDynamic      = false
@@ -58,12 +55,12 @@ function FModuleBuildRules(InName)
             self.Kind = "StaticLib"
 
             -- When a module is not dynamic we treat is as monolithic
-            self.AddDefine("MONOLITHIC_BUILD=(1)")
+            self.AddDefines({ "MONOLITHIC_BUILD=(1)" })
         end
         
         -- Always add module name as a define
-        self.AddDefine("MODULE_NAME=" .. "\"" .. self.Name .. "\"")
-        self.AddDefine(ModuleApiName)
+        self.AddDefines({ "MODULE_NAME=" .. "\"" .. self.Name .. "\"" })
+        self.AddDefines({ ModuleApiName })
 
         -- Generate the project
         BuildRulesGenerate()

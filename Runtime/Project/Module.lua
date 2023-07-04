@@ -12,9 +12,9 @@ ProjectModule.AddModuleDependencies(
 -- TODO: A better way would probably be to use a config file for this
 if GetCurrentTargetName ~= nil then
     local TargetName = GetCurrentTargetName()
-    ProjectModule.AddDefine("PROJECT_NAME=\"" .. TargetName .. "\"")
-    ProjectModule.AddDefine("PROJECT_LOCATION=\"" .. GetEnginePath() .. "/" .. TargetName .. "\"")
+    ProjectModule.AddDefines({ "PROJECT_NAME=\"" .. TargetName .. "\"" })
+    ProjectModule.AddDefines({ "PROJECT_LOCATION=\"" .. GetEnginePath() .. "/" .. TargetName .. "\"" })
 else
-    ProjectModule.AddDefine("PROJECT_NAME=\"\"")
-    ProjectModule.AddDefine("PROJECT_LOCATION=\"" .. GetEnginePath() .. "\"")
+    ProjectModule.AddDefines({ "PROJECT_NAME=\"\"" })
+    ProjectModule.AddDefines({ "PROJECT_LOCATION=\"" .. GetEnginePath() .. "\"" })
 end

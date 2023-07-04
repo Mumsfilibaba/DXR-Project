@@ -25,15 +25,6 @@ function IsMonolithic()
     return GbIsMonolithic
 end
 
--- Sets the global state IsMonolithic, the project creation overrides this variable
-function SetIsMonlithic(bIsMonolithic)
-    -- Ensures that global variable is created
-    local bCurrent = IsMonolithic()
-    if bCurrent ~= bIsMonolithic then
-        GbIsMonolithic = bIsMonolithic
-    end
-end
-
 -- Check if the current platform to build for is Win32
 function IsPlatformWindows()
     return _OPTIONS["platform"] == "Win32" 
@@ -86,25 +77,8 @@ function PrintTable(Format, Table)
     end
 end
 
--- Helper appending an element to a table
-function TableAppendUniqueElement(Element, Table)
-    if Table == nil then
-        return
-    end
-
-    if Element ~= nil then
-        for i = 1, #Table do
-            if Table[i] == Element then
-                return
-            end
-        end
-        
-        Table[#Table + 1] = Element
-    end
-end
-
 -- Helper to appending multiple elements to a table
-function TableAppendUniqueElementMultiple(Elements, Table)
+function AddUniqueElements(Elements, Table)
     if Table == nil then
         return
     end
@@ -115,6 +89,7 @@ function TableAppendUniqueElementMultiple(Elements, Table)
             for j = 1, #Table do
                 if Table[j] == Elements[i] then
                     bIsUnique = false
+                    break
                 end
             end
             
@@ -148,14 +123,6 @@ function AddModule(ModuleName, Module)
     else
         LogError("Global Module-List has not been initialized")
     end
-end
-
--- Output path for dependencies (ImGui etc.)
-GOutputPath = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
-LogInfo("\nBuildPath = \'%s\'", GOutputPath)
-
-function GetOutputPath()
-    return GOutputPath
 end
 
 -- Mainpath ../BuildScripts

@@ -31,6 +31,11 @@ function FWorkspaceRules(WorkspaceName)
         StartProjectName = "",
     }
 
+    -- @brief - Output path for dependencies (ImGui etc.)
+    function self.GetOutputPath()
+        return "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
+    end
+
     -- @brief - Retreive the path of the engine
     function self.GetEnginePath()
         return self.EnginePath
@@ -39,6 +44,11 @@ function FWorkspaceRules(WorkspaceName)
     -- @brief - Retreive the path of the engine 'Runtime' folder
     function self.GetRuntimeFolderPath()
         return self.GetEnginePath() .. "/Runtime"
+    end
+
+    -- @brief - Retreive the path of the engine 'Runtime' folder
+    function self.GetBuildFolderPath()
+        return self.GetEnginePath() .. "/Build"
     end
 
     -- @brief - Retreive the path of the engine 'Solutions' folder
@@ -72,8 +82,8 @@ function FWorkspaceRules(WorkspaceName)
     end
 
     -- @brief - Helper function for adding defines
-    function self.AddDefine(InDefine)
-        table.insert(self.Defines, InDefine)
+    function self.AddDefines(InDefine)
+        AddUniqueElements(InDefine, self.Defines)
     end
 
     -- @brief - Helper function for adding a rule
@@ -115,8 +125,8 @@ function FWorkspaceRules(WorkspaceName)
                 location(SolutionLocation .. "/Dependencies/ImGui")
 
                 -- Locations
-                targetdir(ExternalDependecyPath .. "/Build/bin/ImGui/" .. GetOutputPath())
-                objdir(ExternalDependecyPath .. "/Build/bin-int/ImGui/" .. GetOutputPath())
+                targetdir(ExternalDependecyPath .. "/Build/bin/ImGui/" .. self.GetOutputPath())
+                objdir(ExternalDependecyPath .. "/Build/bin-int/ImGui/" .. self.GetOutputPath())
 
                 -- Files
                 files
@@ -173,8 +183,8 @@ function FWorkspaceRules(WorkspaceName)
                 location(SolutionLocation .. "/Dependencies/tinyobjloader")
 
                 -- Locations
-                targetdir(ExternalDependecyPath .. "/Build/bin/tinyobjloader/" .. GetOutputPath())
-                objdir(ExternalDependecyPath .. "/Build/bin-int/tinyobjloader/" .. GetOutputPath())
+                targetdir(ExternalDependecyPath .. "/Build/bin/tinyobjloader/" .. self.GetOutputPath())
+                objdir(ExternalDependecyPath .. "/Build/bin-int/tinyobjloader/" .. self.GetOutputPath())
 
                 -- Files
                 files 
@@ -222,8 +232,8 @@ function FWorkspaceRules(WorkspaceName)
                 location(SolutionLocation .. "/Dependencies/OpenFBX")
             
                 -- Locations
-                targetdir(ExternalDependecyPath .. "/Build/bin/OpenFBX/" .. GetOutputPath())
-                objdir(ExternalDependecyPath .. "/Build/bin-int/OpenFBX/" .. GetOutputPath())
+                targetdir(ExternalDependecyPath .. "/Build/bin/OpenFBX/" .. self.GetOutputPath())
+                objdir(ExternalDependecyPath .. "/Build/bin-int/OpenFBX/" .. self.GetOutputPath())
 
                 -- Files
                 files 
@@ -273,8 +283,8 @@ function FWorkspaceRules(WorkspaceName)
                 location(SolutionLocation .. "/Dependencies/SPIRV-Cross")
             
                 -- Locations
-                targetdir(ExternalDependecyPath .. "/Build/bin/SPIRV-Cross/" .. GetOutputPath())
-                objdir(ExternalDependecyPath .. "/Build/bin-int/SPIRV-Cross/" .. GetOutputPath())
+                targetdir(ExternalDependecyPath .. "/Build/bin/SPIRV-Cross/" .. self.GetOutputPath())
+                objdir(ExternalDependecyPath .. "/Build/bin-int/SPIRV-Cross/" .. self.GetOutputPath())
 
                 -- Files
                 files 
@@ -455,6 +465,7 @@ function FWorkspaceRules(WorkspaceName)
     -- Generate workspace
     function self.Generate()
         LogInfo("\n--- Generating Workspace \'%s\' ---", self.Name)
+        LogInfo("OutputPath = \'%s\'", self.GetOutputPath())
 
         if self.TargetRules == nil then
             LogError("TargetRules cannot be nil")
@@ -468,29 +479,29 @@ function FWorkspaceRules(WorkspaceName)
 
         -- Define the workspace location
         local EngineLocation = "ENGINE_LOCATION=" .. "\"" .. self.GetEnginePath() .. "\""
-        self.AddDefine(EngineLocation)
+        self.AddDefines({ EngineLocation })
         
         LogInfo("    Engine Path =\'%s\'", self.GetEnginePath())
         LogInfo("    RuntimeFolderPath = \'%s\'", self.GetRuntimeFolderPath())
         
         -- Check if the commandline overrides monolithic builds
         if IsMonolithic() then
-            self.AddDefine("MONOLITHIC_BUILD=(1)")
+            self.AddDefines({ "MONOLITHIC_BUILD=(1)" })
         end
 
         -- IDE Defines
         if BuildWithVisualStudio() then 
-            self.AddDefine("IDE_VISUAL_STUDIO")
-            self.AddDefine("_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING")
-            self.AddDefine("_CRT_SECURE_NO_WARNINGS")
+            self.AddDefines({ "IDE_VISUAL_STUDIO" })
+            self.AddDefines({ "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING" })
+            self.AddDefines({ "_CRT_SECURE_NO_WARNINGS" })
         end
 
         -- OS Defines
         if IsPlatformWindows() then
-            self.AddDefine("PLATFORM_WINDOWS=(1)")
+            self.AddDefines({ "PLATFORM_WINDOWS=(1)" })
         end
         if IsPlatformMac() then
-            self.AddDefine("PLATFORM_MACOS=(1)")
+            self.AddDefines({ "PLATFORM_MACOS=(1)" })
         end
 
         -- Setup startup project
