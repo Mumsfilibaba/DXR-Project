@@ -129,14 +129,15 @@ function FBuildRules(InName)
         ModuleDependencies = { },
         
         -- @brief - Extra libraries to link
-        LinkLibraries = { }
+        LinkLibraries = { },
+
+        -- @brief - A list of dependencies that a module depends on. Ensures that the IDE builds all the projects
+        LinkModules = { },
+        
+        -- @brief - A list of linkoptions (Ignored on other platforms than Windows)
+        LinkOptions = { }
     }
 
-    -- @brief - A list of dependencies that a module depends on. Ensures that the IDE builds all the projects
-    local LinkModules = { }
-    
-    -- @brief - A list of linkoptions (Ignored on other platforms than Windows)
-    local LinkOptions = { }
 
     -- @brief - Helper function for retrieving path
     function self.GetPath()
@@ -201,6 +202,11 @@ function FBuildRules(InName)
     -- @brief - Helper function for adding LibraryPaths
     function self.AddLibraryPaths(InLibraryPaths)
         AddUniqueElements(InLibraryPaths, self.LibraryPaths)
+    end
+
+    -- @brief - Helper function for adding LinkOptions
+    function self.AddLinkOption(InOptions)
+        AddUniqueElements(InOptions, self.LinkOptions)
     end
 
     -- @brief - Helper for adding the .framework extention to a table
@@ -353,14 +359,14 @@ function FBuildRules(InName)
                 PrintTable("    Linking library \'%s\'", self.LinkLibraries)
             end
             
-            LogInfo("\n--- Link modules for module \'%s\' (Num LinkModules=%d) ---", self.Name, #LinkModules)
-            if #LinkModules > 0 then
-                PrintTable("    Linking module \'%s\'", LinkModules)
+            LogInfo("\n--- Link modules for module \'%s\' (Num LinkModules=%d) ---", self.Name, #self.LinkModules)
+            if #self.LinkModules > 0 then
+                PrintTable("    Linking module \'%s\'", self.LinkModules)
             end
             
-            LogInfo("\n--- Link options for module \'%s\' (Num LinkOptions=%d) ---", self.Name, #LinkOptions)
-            if #LinkOptions > 0 then
-                PrintTable("    Link options \'%s\'", LinkOptions)
+            LogInfo("\n--- Link options for module \'%s\' (Num LinkOptions=%d) ---", self.Name, #self.LinkOptions)
+            if #self.LinkOptions > 0 then
+                PrintTable("    Link options \'%s\'", self.LinkOptions)
             end
             
             LogInfo("\n--- Module dependencies for module \'%s\' (Num ModuleDependencies=%d) ---", self.Name, #self.ModuleDependencies)
@@ -434,8 +440,8 @@ function FBuildRules(InName)
             else
                 -- Link libraries (External libraries etc.)
                 links(self.LinkLibraries)
-                links(LinkModules)
-                linkoptions(LinkOptions)
+                links(self.LinkModules)
+                linkoptions(self.LinkOptions)
                 -- Setup Dependencies
                 dependson(self.ModuleDependencies)
             end
@@ -454,7 +460,7 @@ function FBuildRules(InName)
             filter { "action:xcode4" }
                 xcodebuildsettings 
                 {
-                    ["PRODUCT_BUNDLE_IDENTIFIER"] = "dxrproject." .. self.Name,
+                    ["PRODUCT_BUNDLE_IDENTIFIER"] = "com.Dxrproject." .. self.Name,
                     ["CODE_SIGN_STYLE"]           = "Automatic",
                     ["ENABLE_HARDENED_RUNTIME"]   = "NO",                                          -- hardened runtime is required for notarization
                     ["GENERATE_INFOPLIST_FILE"]   = "YES",                                         -- generate the .plist file for now
@@ -514,7 +520,7 @@ function FBuildRules(InName)
             local CurrentModule     = GetModule(CurrentModuleName)
             if CurrentModule then
                 if CurrentModule.bRuntimeLinking == false then
-                    LinkModules[#LinkModules + 1] = CurrentModuleName
+                    self.LinkModules[#self.LinkModules + 1] = CurrentModuleName
                 end
 
                 if CurrentModule.bIsDynamic then
@@ -543,8 +549,8 @@ function FBuildRules(InName)
 
         -- Add link options
         if BuildWithVisualStudio() then
-            for Index = 1, #LinkModules do
-                LinkOptions[#LinkOptions + 1] = "/INCLUDE:LinkModule_" .. LinkModules[Index]
+            for Index = 1, #self.LinkModules do
+                self.AddLinkOptions({ "/INCLUDE:LinkModule_" .. self.LinkModules[Index] })
             end
         end
 
