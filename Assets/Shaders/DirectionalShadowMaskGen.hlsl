@@ -27,8 +27,13 @@
 #define CASCADE_FADE_FACTOR            (0.1f)
 
 // Camera and Light
+#if SHADER_LANG == SHADER_LANG_MSL
+ConstantBuffer<FCamera>           CameraBuffer : register(b2);
+ConstantBuffer<FDirectionalLight> LightBuffer  : register(b3);
+#else
 ConstantBuffer<FCamera>           CameraBuffer : register(b0);
 ConstantBuffer<FDirectionalLight> LightBuffer  : register(b1);
+#endif
 
 // Shadow information
 StructuredBuffer<FCascadeMatrices> ShadowMatricesBuffer : register(t0);

@@ -8,7 +8,7 @@ struct FWindowsPlatformMisc final : public FGenericPlatformMisc
 {
     static FORCEINLINE void OutputDebugString(const CHAR* Message)
     {
-        OutputDebugStringA(Message);
+        ::OutputDebugStringA(Message);
     }
 
     static FORCEINLINE bool IsDebuggerPresent()

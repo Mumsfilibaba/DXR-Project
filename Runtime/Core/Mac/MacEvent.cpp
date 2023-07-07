@@ -1,6 +1,8 @@
 #include "MacEvent.h"
 #include "Core/Templates/NumericLimits.h"
 
+#include <sys/time.h>
+
 FMacEvent::FMacEvent()
     : bInitialized(false)
     , bManualReset(false)
@@ -91,7 +93,7 @@ void FMacEvent::Wait(uint64 Milliseconds)
     struct timeval StartTime;
     if ((Milliseconds > 0) && (Milliseconds != TNumericLimits<uint64>::Max()))
     {
-        gettimeofday(&StartTime, nullptr);
+        ::gettimeofday(&StartTime, nullptr);
     }
 
     LockMutex();

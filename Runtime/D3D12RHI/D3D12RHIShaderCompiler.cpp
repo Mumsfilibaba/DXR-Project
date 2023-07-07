@@ -272,7 +272,7 @@ bool FD3D12ShaderCompiler::Init()
         return false;
     }
 
-    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DxCompilerDLL);
+    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbol<DxcCreateInstanceProc>("DxcCreateInstance", DxCompilerDLL);
     if (!DxcCreateInstanceFunc)
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to load DxcCreateInstance");

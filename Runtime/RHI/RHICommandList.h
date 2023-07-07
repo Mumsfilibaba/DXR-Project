@@ -649,7 +649,7 @@ public:
 private:
     bool Create();
     
-    FGenericThreadRef      Thread;
+    TSharedRef<FGenericThread>      Thread;
 
     FCriticalSection       WaitCS;
     FConditionVariable     WaitCondition;

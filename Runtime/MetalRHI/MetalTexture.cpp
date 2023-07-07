@@ -39,7 +39,7 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     else
     {
         TextureDescriptor.depth       = 1;
-        TextureDescriptor.arrayLength = Desc.Extent.z;
+        TextureDescriptor.arrayLength = FMath::Max(Desc.Extent.z, 1);
     }
     
     TextureDescriptor.mipmapLevelCount   = Desc.NumMipLevels;

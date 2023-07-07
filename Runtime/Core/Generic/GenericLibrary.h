@@ -31,7 +31,7 @@ struct FGenericLibrary
      * @param LibraryHandle - Handle to the library to load from
      * @return              - Returns a pointer to the symbol in the dynamic library
      */
-    static FORCEINLINE void* LoadSymbolAddress(const CHAR* SymbolName, void* LibraryHandle) { return nullptr; }
+    static FORCEINLINE void* LoadSymbol(const CHAR* SymbolName, void* LibraryHandle) { return nullptr; }
 
     /**
      * @brief  - Retrieve the extension that dynamic libraries use on the platform 
@@ -59,9 +59,9 @@ struct FGenericLibrary
      * @return              - Returns a pointer to the symbol in the dynamic library
      */
     template<typename SymbolType>
-    static FORCEINLINE SymbolType LoadSymbolAddress(const CHAR* SymbolName, void* LibraryHandle)
+    static FORCEINLINE SymbolType LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
     {
-        return reinterpret_cast<SymbolType>(LoadSymbolAddress(SymbolName, LibraryHandle));
+        return reinterpret_cast<SymbolType>(LoadSymbol(SymbolName, LibraryHandle));
     }
 };
 

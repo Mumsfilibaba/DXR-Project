@@ -2,9 +2,6 @@
 #include "Windows.h"
 #include "Core/Generic/GenericFile.h"
 
-// TODO: Add to the build system
-#pragma comment(lib, "shlwapi.lib")
-
 class CORE_API FWindowsFileHandle : public IFileHandle
 {
 public:
@@ -12,7 +9,9 @@ public:
     virtual ~FWindowsFileHandle() = default;
 
     virtual bool SeekFromStart(int64 InOffset) override final;
+
     virtual bool SeekFromCurrent(int64 InOffset) override final;
+    
     virtual bool SeekFromEnd(int64 InOffset) override final;;
 
     virtual int64 Size() const override final;
@@ -20,6 +19,7 @@ public:
     virtual int64 Tell() const override final;
 
     virtual int32 Read(uint8* Dst, uint32 BytesToRead) override final;
+    
     virtual int32 Write(const uint8* Src, uint32 BytesToWrite) override final;
 
     virtual bool Truncate(int64 NewSize) override final;
@@ -52,7 +52,8 @@ private:
     int64  FileSize;
 };
 
-struct CORE_API FWindowsFile : public FGenericFile
+
+struct CORE_API FWindowsPlatformFile : public FGenericPlatformFile
 {
     static IFileHandle* OpenForRead(const FString& Filename);
 
@@ -60,21 +61,21 @@ struct CORE_API FWindowsFile : public FGenericFile
 
     static FString GetCurrentDirectory();
 
-    static FORCEINLINE bool DoesDirectoryExist(const CHAR* Path)
+    static FORCEINLINE bool IsDirectory(const CHAR* Path)
     {
-        const auto Result = ::PathIsDirectoryA(Path);
-        return Result == (BOOL)FILE_ATTRIBUTE_DIRECTORY;
+        const BOOL Result = ::PathIsDirectoryA(Path);
+        return Result == static_cast<BOOL>(FILE_ATTRIBUTE_DIRECTORY);
     }
 
-    static FORCEINLINE bool DoesFileExist(const CHAR* Path)
+    static FORCEINLINE bool IsFile(const CHAR* Path)
     {
-        const auto Result = ::PathFileExistsA(Path);
+        const BOOL Result = ::PathFileExistsA(Path);
         return Result == TRUE;
     }
 
     static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
     {
-        const auto Result = ::PathIsRelativeA(Filepath);
+        const BOOL Result = ::PathIsRelativeA(Filepath);
         return Result == TRUE;
     }
 };

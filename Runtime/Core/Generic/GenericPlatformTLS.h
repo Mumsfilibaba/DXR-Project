@@ -9,18 +9,12 @@ struct FGenericPlatformTLS
     /**
      * @return - Returns the current thread ID
      */
-    static FORCEINLINE uint32 GetCurrentThreadID()
-    {
-        return TNumericLimits<uint32>::Min();
-    }
+    static FORCEINLINE uint32 GetCurrentThreadID() { return TNumericLimits<uint32>::Min(); }
 
     /**
      * @return - Allocates and returns a new TLS slot
      */
-    static FORCEINLINE uint32 AllocTLSSlot()
-    {
-        return TNumericLimits<uint32>::Min();
-    }
+    static FORCEINLINE uint32 AllocTLSSlot() { return TNumericLimits<uint32>::Min(); }
 
     /**
      * @brief           - Set an allocated TLS value

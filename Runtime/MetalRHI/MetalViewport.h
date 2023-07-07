@@ -43,10 +43,10 @@ public:
     }
     
 private:
-    FMetalTextureRef    BackBuffer;
-    FMetalWindowView*   MetalView;
-    id<CAMetalDrawable> Drawable;
-    FMacEventRef        MainThreadEvent;
+    FMetalTextureRef      BackBuffer;
+    FMetalWindowView*     MetalView;
+    id<CAMetalDrawable>   Drawable;
+    TSharedRef<FMacEvent> MainThreadEvent;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

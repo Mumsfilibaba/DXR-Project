@@ -2,8 +2,6 @@
 #include "Mac.h"
 #include "Core/Generic/GenericEvent.h"
 
-typedef TSharedRef<class FMacEvent> FMacEventRef;
-
 class FMacEvent final : public FGenericEvent
 {
     enum class ETriggerType : uint8

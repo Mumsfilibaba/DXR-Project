@@ -404,7 +404,7 @@ bool FMeshImporter::LoadCustom(const FString& InFilename, FSceneData& OutScene)
     for (int32 Index = 0; Index < SceneHeader->NumTextures; ++Index)
     {
         const FString Filename = Textures[Index].Filepath;
-        if (!FPlatformFile::DoesFileExist(Filename.GetCString()))
+        if (!FPlatformFile::IsFile(Filename.GetCString()))
         {
             LOG_ERROR("Stored file contains a invalid file reference, file will be reloaded from source");
             return false;

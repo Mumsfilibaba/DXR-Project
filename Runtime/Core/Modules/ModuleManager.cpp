@@ -67,7 +67,7 @@ FModuleInterface* FModuleManager::LoadModule(const CHAR* ModuleName)
             return nullptr;
         }
 
-        PFNLoadEngineModule LoadEngineModule = FPlatformLibrary::LoadSymbolAddress<PFNLoadEngineModule>("LoadEngineModule", Module);
+        PFNLoadEngineModule LoadEngineModule = FPlatformLibrary::LoadSymbol<PFNLoadEngineModule>("LoadEngineModule", Module);
         if (!LoadEngineModule)
         {
             FPlatformLibrary::FreeDynamicLib(Module);

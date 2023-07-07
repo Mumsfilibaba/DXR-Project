@@ -7,8 +7,6 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-typedef TSharedRef<class FGenericThread> FGenericThreadRef;
-
 class CORE_API FGenericThread : public FRefCounted
 {
 public:

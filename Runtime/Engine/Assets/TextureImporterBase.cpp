@@ -126,15 +126,19 @@ FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
     }
     else if (bIsFloat)
     {
+        // We do not support 3 channel formats, force RGBA (NOTE: Due to macOS for now, we might want to revisit this in the future,
+        // but since we use these mostly for textures that we later convert into some other format, it should be fine)
+        const auto NumChannels = (ChannelCount == 3) ? 4 : ChannelCount;
+        
         Pixels = TUniquePtr<uint8[]>(reinterpret_cast<uint8*>(stbi_loadf_from_memory(
             FileData.Data(),
             FileData.Size(),
             &Width,
             &Height,
             &ChannelCount,
-            0)));
+            NumChannels)));
 
-        Format = GetFloatFormat(ChannelCount);
+        Format = GetFloatFormat(NumChannels);
     }
     else
     {
@@ -154,7 +158,6 @@ FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
 
     CHECK(Format != EFormat::Unknown);
 
-    // CHECK if succeeded
     if (!Pixels)
     {
         LOG_ERROR("[FTextureImporterBase]: Failed to load image '%s'", FileName.GetCString());

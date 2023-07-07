@@ -79,7 +79,8 @@ struct FRHIShaderCompileInfo
         , bOptimize(true)
         , Defines(InDefines)
         , EntryPoint(InEntryPoint)
-    { }
+    {
+    }
     
     EShaderModel              ShaderModel;
     EShaderStage              ShaderStage;

@@ -61,9 +61,9 @@ FThreadManager& FThreadManager::Get()
     return ThreadManager.GetValue();
 }
 
-FGenericThreadRef FThreadManager::CreateThread(FThreadInterface* InRunnable)
+TSharedRef<FGenericThread> FThreadManager::CreateThread(FThreadInterface* InRunnable)
 {
-    FGenericThreadRef Thread = FPlatformThreadMisc::CreateThread(InRunnable);
+    TSharedRef<FGenericThread> Thread = FPlatformThreadMisc::CreateThread(InRunnable);
     if (Thread)
     {
         Threads.Add(Thread);
@@ -76,7 +76,7 @@ FGenericThreadRef FThreadManager::CreateThread(FThreadInterface* InRunnable)
     }
 }
 
-FGenericThreadRef FThreadManager::GetThreadFromHandle(void* ThreadHandle)
+TSharedRef<FGenericThread> FThreadManager::GetThreadFromHandle(void* ThreadHandle)
 {
     for (const auto& Thread : Threads)
     {

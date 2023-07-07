@@ -55,7 +55,8 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalShader*>(this)); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FMetalShader*>(this)); }
 };
 
 
@@ -69,7 +70,8 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalShader*>(this)); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FMetalShader*>(this)); }
 };
 
 
@@ -100,7 +102,8 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
 };
 
 
@@ -114,7 +117,8 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
 };
 
 
@@ -129,7 +133,8 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
 };
 
 
@@ -143,7 +148,8 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FMetalRayTracingShader*>(this)); }
 };
 
 
@@ -158,7 +164,8 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FMetalShader*>(this)); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FMetalShader*>(this)); }
 
     virtual FIntVector3 GetThreadGroupXYZ() const override final { return ThreadGroupXYZ; }
 

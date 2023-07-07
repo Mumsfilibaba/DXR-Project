@@ -91,7 +91,7 @@ private:
         TaskCompleteEvent.Reset();
     }
 
-    FGenericEventRef TaskCompleteEvent;
+    TSharedRef<FGenericEvent> TaskCompleteEvent;
     FAtomicInt32     NumInvokations;
 };
 

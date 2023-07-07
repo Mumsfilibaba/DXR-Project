@@ -63,6 +63,7 @@ enum class EFormat : uint16
     R32_Sint              = 49,
     
     R24G8_Typeless        = 50,
+    
     D24_Unorm_S8_Uint     = 51,
     R24_Unorm_X8_Typeless = 52,
     X24_Typeless_G8_Uint  = 53,
@@ -572,7 +573,8 @@ public:
      */
     constexpr FRHIDescriptorHandle()
         : Data(0)
-    { }
+    {
+    }
 
     /**
      * @brief         - Constructor that creates a descriptor-handle
@@ -634,7 +636,8 @@ struct FDepthStencilValue
     constexpr FDepthStencilValue()
         : Depth(1.0f)
         , Stencil(0)
-    { }
+    {
+    }
 
     /**
      * @brief           - Constructor taking depth and stencil value
@@ -644,7 +647,8 @@ struct FDepthStencilValue
     constexpr FDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
-    { }
+    {
+    }
 
     /** 
      * @return - Returns and calculates the hash for this type

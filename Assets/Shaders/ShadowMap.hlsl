@@ -1,7 +1,7 @@
 #include "Constants.hlsli"
 #include "Structs.hlsli"
 
-struct SPerCascade
+struct FPerCascade
 {
     int CascadeIndex;
     int Padding0;
@@ -9,15 +9,19 @@ struct SPerCascade
     int Padding2;
 };
 
-struct SPerObject
+struct FPerObject
 {
     float4x4 ModelMatrix;
 };
 
 // PerObject
-ConstantBuffer<SPerObject> PerObjectBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
+ConstantBuffer<FPerObject> PerObjectBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
 
-ConstantBuffer<SPerCascade> PerCascadeBuffer : register(b0);
+#if SHADER_LANG == SHADER_LANG_MSL
+ConstantBuffer<FPerCascade> PerCascadeBuffer : register(b1);
+#else
+ConstantBuffer<FPerCascade> PerCascadeBuffer : register(b0);
+#endif
 
 StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 
@@ -33,8 +37,8 @@ struct FVSInput
 struct GSOutput
 {
     float3 Position : POSITION0;
-    float3 Normal : NORMAL0;
-    float3 Tangent : TANGENT0;
+    float3 Normal   : NORMAL0;
+    float3 Tangent  : TANGENT0;
     float2 TexCoord : TEXCOORD0;
 };
 
@@ -44,7 +48,8 @@ struct GSOutput
 
 float4 Cascade_VSMain(FVSInput Input) : SV_POSITION
 {
-    float4x4 LightViewProjection = CascadeMatrixBuffer[PerCascadeBuffer.CascadeIndex].ViewProj;
+    const int CascadeIndex = PerCascadeBuffer.CascadeIndex;
+    float4x4 LightViewProjection = CascadeMatrixBuffer[CascadeIndex].ViewProj;
     
     float4 WorldPosition = mul(float4(Input.Position, 1.0f), PerObjectBuffer.ModelMatrix);
     return mul(WorldPosition, LightViewProjection);

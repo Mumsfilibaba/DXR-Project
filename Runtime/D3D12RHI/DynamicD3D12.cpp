@@ -23,7 +23,7 @@ PFN_SetMarkerOnCommandList                             FDynamicD3D12::SetMarkerO
 #define D3D12_LOAD_FUNCTION(Function, LibraryHandle)                                                  \
     do                                                                                                \
     {                                                                                                 \
-        Function = FPlatformLibrary::LoadSymbolAddress<decltype(Function)>(#Function, LibraryHandle); \
+        Function = FPlatformLibrary::LoadSymbol<decltype(Function)>(#Function, LibraryHandle); \
         if (!Function)                                                                                \
         {                                                                                             \
             D3D12_ERROR("Failed to load '%s'", #Function);                                            \
@@ -62,7 +62,7 @@ bool FDynamicD3D12::Initialize(bool bEnablePIX)
         if (PIXLib)
         {
             D3D12_INFO("Loaded WinPixEventRuntime.dll");
-            SetMarkerOnCommandList = FPlatformLibrary::LoadSymbolAddress<PFN_SetMarkerOnCommandList>("PIXSetMarkerOnCommandList", PIXLib);
+            SetMarkerOnCommandList = FPlatformLibrary::LoadSymbol<PFN_SetMarkerOnCommandList>("PIXSetMarkerOnCommandList", PIXLib);
         }
         else
         {

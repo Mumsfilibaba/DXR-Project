@@ -19,14 +19,14 @@ bool FProjectManager::Initialize()
     const FString TmpProjectName = PROJECT_NAME;
 
     const FString TmpProjectPath = FString(ENGINE_LOCATION) + FString("/") + FString(TmpProjectName);
-    if (!FPlatformFile::DoesDirectoryExist(TmpProjectPath.GetCString()))
+    if (!FPlatformFile::IsDirectory(TmpProjectPath.GetCString()))
     {
         DEBUG_BREAK();
         return false;
     }
 
     const FString TmpAssetFolderPath = FString(ENGINE_LOCATION) + FString("/Assets");
-    if (!FPlatformFile::DoesDirectoryExist(TmpAssetFolderPath.GetCString()))
+    if (!FPlatformFile::IsDirectory(TmpAssetFolderPath.GetCString()))
     {
         DEBUG_BREAK();
         return false;

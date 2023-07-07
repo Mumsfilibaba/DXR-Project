@@ -2,8 +2,6 @@
 #include "Windows.h"
 #include "Core/Generic/GenericEvent.h"
 
-typedef TSharedRef<class FWindowsEvent> FWindowsEventRef;
-
 class CORE_API FWindowsEvent final : public FGenericEvent
 {
 public:

@@ -27,8 +27,8 @@ private:
     IAsyncTask* volatile CurrentTask;
     FAtomicInt32         Triggered;
 
-    FGenericThreadRef Thread;
-    FGenericEventRef  WorkEvent;
+    TSharedRef<FGenericThread> Thread;
+    TSharedRef<FGenericEvent>  WorkEvent;
     bool              bIsRunning;
 };
 

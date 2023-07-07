@@ -8,23 +8,23 @@ struct FWindowsLibrary final : public FGenericLibrary
     static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
     {
         const FString RealName = GetRealName(LibraryName);
-        return reinterpret_cast<void*>(LoadLibraryA(RealName.GetCString()));
+        return reinterpret_cast<void*>(::LoadLibraryA(RealName.GetCString()));
     }
 
     static FORCEINLINE void* GetLoadedHandle(const CHAR* LibraryName)
     {
         const FString RealName = GetRealName(LibraryName);
-        return reinterpret_cast<void*>(GetModuleHandleA(RealName.GetCString()));
+        return reinterpret_cast<void*>(::GetModuleHandleA(RealName.GetCString()));
     }
 
     static FORCEINLINE void FreeDynamicLib(void* LibraryHandle)
     {
-        FreeLibrary(reinterpret_cast<HMODULE>(LibraryHandle));
+        ::FreeLibrary(reinterpret_cast<HMODULE>(LibraryHandle));
     }
 
-    static FORCEINLINE void* LoadSymbolAddress(const CHAR* SymbolName, void* LibraryHandle)
+    static FORCEINLINE void* LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
     {
-        return GetProcAddress(reinterpret_cast<HMODULE>(LibraryHandle), SymbolName);
+        return ::GetProcAddress(reinterpret_cast<HMODULE>(LibraryHandle), SymbolName);
     }
 
     static FORCEINLINE const CHAR* GetDynamicLibExtension()
@@ -39,12 +39,12 @@ struct FWindowsLibrary final : public FGenericLibrary
 
     static FORCEINLINE bool IsLibraryLoaded(const CHAR* LibraryName)
     {
-        return (GetLoadedHandle(LibraryName) != nullptr);
+        return GetLoadedHandle(LibraryName) != nullptr;
     }
 
     template<typename SymbolType>
-    static FORCEINLINE SymbolType LoadSymbolAddress(const CHAR* SymbolName, void* LibraryHandle)
+    static FORCEINLINE SymbolType LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
     {
-        return reinterpret_cast<SymbolType>(LoadSymbolAddress(SymbolName, LibraryHandle));
+        return reinterpret_cast<SymbolType>(LoadSymbol(SymbolName, LibraryHandle));
     }
 };

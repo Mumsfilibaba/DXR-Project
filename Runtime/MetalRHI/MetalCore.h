@@ -150,7 +150,7 @@ constexpr MTLPixelFormat ConvertFormat(EFormat Format)
         case EFormat::R32G32B32A32_Float:    return MTLPixelFormatRGBA32Float;
         case EFormat::R32G32B32A32_Uint:     return MTLPixelFormatRGBA32Uint;
         case EFormat::R32G32B32A32_Sint:     return MTLPixelFormatRGBA32Sint;
-    
+            
         case EFormat::R16G16B16A16_Typeless: return MTLPixelFormatRGBA16Unorm;
         case EFormat::R16G16B16A16_Float:    return MTLPixelFormatRGBA16Float;
         case EFormat::R16G16B16A16_Unorm:    return MTLPixelFormatRGBA16Unorm;
@@ -175,6 +175,10 @@ constexpr MTLPixelFormat ConvertFormat(EFormat Format)
         case EFormat::R8G8B8A8_Uint:         return MTLPixelFormatRGBA8Uint;
         case EFormat::R8G8B8A8_Snorm:        return MTLPixelFormatRGBA8Snorm;
         case EFormat::R8G8B8A8_Sint:         return MTLPixelFormatRGBA8Sint;
+            
+        case EFormat::B8G8R8A8_Typeless:     return MTLPixelFormatBGRA8Unorm;
+        case EFormat::B8G8R8A8_Unorm:        return MTLPixelFormatBGRA8Unorm;
+        case EFormat::B8G8R8A8_Unorm_SRGB:   return MTLPixelFormatBGRA8Unorm_sRGB;
     
         case EFormat::R16G16_Typeless:       return MTLPixelFormatRG16Unorm;
         case EFormat::R16G16_Float:          return MTLPixelFormatRG16Float;
@@ -214,6 +218,28 @@ constexpr MTLPixelFormat ConvertFormat(EFormat Format)
         case EFormat::R8_Uint:               return MTLPixelFormatR8Uint;
         case EFormat::R8_Snorm:              return MTLPixelFormatR8Snorm;
         case EFormat::R8_Sint:               return MTLPixelFormatR8Sint;
+            
+        case EFormat::BC1_Typeless:          return MTLPixelFormatBC1_RGBA;
+        case EFormat::BC1_UNorm:             return MTLPixelFormatBC1_RGBA;
+        case EFormat::BC1_UNorm_SRGB:        return MTLPixelFormatBC1_RGBA_sRGB;
+        case EFormat::BC2_Typeless:          return MTLPixelFormatBC2_RGBA;
+        case EFormat::BC2_UNorm:             return MTLPixelFormatBC2_RGBA;
+        case EFormat::BC2_UNorm_SRGB:        return MTLPixelFormatBC2_RGBA_sRGB;
+        case EFormat::BC3_Typeless:          return MTLPixelFormatBC3_RGBA;
+        case EFormat::BC3_UNorm:             return MTLPixelFormatBC3_RGBA;
+        case EFormat::BC3_UNorm_SRGB:        return MTLPixelFormatBC3_RGBA_sRGB;
+        case EFormat::BC4_Typeless:          return MTLPixelFormatBC4_RUnorm;
+        case EFormat::BC4_UNorm:             return MTLPixelFormatBC4_RUnorm;
+        case EFormat::BC4_SNorm:             return MTLPixelFormatBC4_RSnorm;
+        case EFormat::BC5_Typeless:          return MTLPixelFormatBC5_RGUnorm;
+        case EFormat::BC5_UNorm:             return MTLPixelFormatBC5_RGUnorm;
+        case EFormat::BC5_SNorm:             return MTLPixelFormatBC5_RGSnorm;
+        case EFormat::BC6H_Typeless:         return MTLPixelFormatBC6H_RGBFloat;
+        case EFormat::BC6H_UF16:             return MTLPixelFormatBC6H_RGBUfloat;
+        case EFormat::BC6H_SF16:             return MTLPixelFormatBC6H_RGBFloat;
+        case EFormat::BC7_Typeless:          return MTLPixelFormatBC7_RGBAUnorm;
+        case EFormat::BC7_UNorm:             return MTLPixelFormatBC7_RGBAUnorm;
+        case EFormat::BC7_UNorm_SRGB:        return MTLPixelFormatBC7_RGBAUnorm_sRGB;
             
         default:                             return MTLPixelFormatInvalid;
     }

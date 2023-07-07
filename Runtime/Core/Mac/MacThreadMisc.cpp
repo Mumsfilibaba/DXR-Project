@@ -6,7 +6,7 @@
 
 FGenericEvent* FMacThreadMisc::CreateEvent(bool bManualReset)
 {
-    FMacEventRef NewEvent = new FMacEvent();
+    TSharedRef<FMacEvent> NewEvent = new FMacEvent();
     if (!NewEvent->Create(bManualReset))
     {
         return nullptr;

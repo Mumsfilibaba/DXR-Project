@@ -1,5 +1,4 @@
 #include "RHIShaderCompiler.h"
-
 #include "Core/Containers/ComPtr.h"
 #include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformLibrary.h"
@@ -204,7 +203,7 @@ bool FRHIShaderCompiler::Initialize()
         return false;
     }
 
-    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
+    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbol<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
     if (!DxcCreateInstanceFunc)
     {
         LOG_ERROR("Failed to load 'DxcCreateInstance'");
@@ -225,7 +224,7 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShad
     OutByteCode.Clear();
 
     // Use the asset-folder as base for the shader-files
-    const FStringWide WideFilePath   = CharToWide(AssetPath + '/' + Filename);
+    const FStringWide WideFilePath = CharToWide(AssetPath + '/' + Filename);
 
     TComPtr<IDxcCompiler> Compiler;
     HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
@@ -271,8 +270,12 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShad
     {
         CompileArgs.Emplace(L"-O3");
         CompileArgs.Emplace(DXC_ARG_ALL_RESOURCES_BOUND);
-        CompileArgs.Emplace(DXC_ARG_IEEE_STRICTNESS);
         CompileArgs.Emplace(DXC_ARG_AVOID_FLOW_CONTROL);
+        
+        if (CompileInfo.OutputLanguage == EShaderOutputLanguage::HLSL)
+        {
+            CompileArgs.Emplace(DXC_ARG_IEEE_STRICTNESS);
+        }
     }
 
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
@@ -292,6 +295,17 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShad
     // Convert defines
     TArray<FStringWide> StrBuff;
     TArray<DxcDefine>   DxcDefines;
+
+    DxcDefines.Add({ L"SHADER_LANG_HLSL", L"(1)" });
+    DxcDefines.Add({ L"SHADER_LANG_SPIRV", L"(2)" });
+    DxcDefines.Add({ L"SHADER_LANG_MSL", L"(3)" });
+
+    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::HLSL)
+        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_HLSL" });
+    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_MSL" });
+    else
+        DxcDefines.Add({ L"SHADER_LANG", L"(0)" });
     
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
     if (!Defines.IsEmpty())
@@ -397,8 +411,18 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShad
         {
             return false;
         }
-
-        return DumpContentToFile(OutByteCode, AssetPath + '/' + Filename + "_" + ToString(CompileInfo.ShaderStage) + ".metal");
+        
+        const bool bResult = DumpContentToFile(OutByteCode, AssetPath + '/' + Filename + "_" + ToString(CompileInfo.ShaderStage) + ".metal");
+        if (!bResult)
+        {
+            return false;
+        }
+    }
+    
+    if (OutByteCode.IsEmpty())
+    {
+        LOG_WARNING("Resulting bytecode is empty");
+        DEBUG_BREAK();
     }
 
     return true;
@@ -443,8 +467,12 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FR
     {
         CompileArgs.Emplace(L"-O3");
         CompileArgs.Emplace(DXC_ARG_ALL_RESOURCES_BOUND);
-        CompileArgs.Emplace(DXC_ARG_IEEE_STRICTNESS);
         CompileArgs.Emplace(DXC_ARG_AVOID_FLOW_CONTROL);
+        
+        if (CompileInfo.OutputLanguage == EShaderOutputLanguage::HLSL)
+        {
+            CompileArgs.Emplace(DXC_ARG_IEEE_STRICTNESS);
+        }
     }
 
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
@@ -462,8 +490,20 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FR
     const FString ArgumentsString = CreateArgString(MakeArrayView(CompileArgs));
 
     // Convert defines
-    TArray<FStringWide>   StrBuff;
-    TArray<DxcDefine> DxcDefines;
+    TArray<FStringWide> StrBuff;
+    TArray<DxcDefine>   DxcDefines;
+    
+    DxcDefines.Add({ L"SHADER_LANG_HLSL", L"(1)" });
+    DxcDefines.Add({ L"SHADER_LANG_SPIRV", L"(2)" });
+    DxcDefines.Add({ L"SHADER_LANG_MSL", L"(3)" });
+
+    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::HLSL)
+        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_HLSL" });
+    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_MSL" });
+    else
+        DxcDefines.Add({ L"SHADER_LANG", L"(0)" });
+
 
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
     if (!Defines.IsEmpty())
@@ -572,14 +612,18 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FR
             return false;
         }
     }
+    
+    if (OutByteCode.IsEmpty())
+    {
+        LOG_WARNING("Resulting bytecode is empty");
+        DEBUG_BREAK();
+    }
 
     return true;
 }
 
-void FRHIShaderCompiler::ErrorCallback(void* Userdata, const CHAR* Error)
+void FRHIShaderCompiler::ErrorCallback(void*, const CHAR* Error)
 {
-    UNREFERENCED_VARIABLE(Userdata);
-
     LOG_ERROR("[SPIRV-Cross Error] %s", Error);
 }
 
@@ -624,7 +668,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
     }
 
     const CHAR* MSLSource = nullptr;
-    Result =  spvc_compiler_compile(CompilerMSL, &MSLSource);
+    Result = spvc_compiler_compile(CompilerMSL, &MSLSource);
     if (Result != SPVC_SUCCESS)
     {
         LOG_ERROR("Failed to create MSL");

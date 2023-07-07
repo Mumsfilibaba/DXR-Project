@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Generic/GenericInterlocked.h"
 
-struct FMacInterlocked final : public FGenericInterlocked
+struct CORE_API FMacInterlocked final : public FGenericInterlocked
 {
     static FORCEINLINE int8 InterlockedAdd(volatile int8* Dest, int8 Value)
     {

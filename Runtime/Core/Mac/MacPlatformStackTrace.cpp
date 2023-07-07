@@ -9,7 +9,7 @@
 #define LOAD_FUNCTION(Function, LibraryHandle)                                                        \
     do                                                                                                \
     {                                                                                                 \
-        Function = FPlatformLibrary::LoadSymbolAddress<decltype(Function)>(#Function, LibraryHandle); \
+        Function = FPlatformLibrary::LoadSymbol<decltype(Function)>(#Function, LibraryHandle); \
         if (!Function)                                                                                \
         {                                                                                             \
             LOG_ERROR("Failed to load '%s'", #Function);                                              \

@@ -1,4 +1,4 @@
-#include "WindowsFile.h"
+#include "WindowsPlatformFile.h"
 #include "WindowsPlatformMisc.h"
 #include "Core/Templates/NumericLimits.h"
 
@@ -147,7 +147,7 @@ void FWindowsFileHandle::Close()
 }
 
 
-FORCEINLINE IFileHandle* FWindowsFile::OpenForRead(const FString& Filename)
+IFileHandle* FWindowsPlatformFile::OpenForRead(const FString& Filename)
 {
     ::SetLastError(S_OK);
 
@@ -171,14 +171,14 @@ FORCEINLINE IFileHandle* FWindowsFile::OpenForRead(const FString& Filename)
             ErrorString.Remove(Position, 2);
         }
 
-        LOG_ERROR("[FWindowsFile] Failed to open file. Error '%s'", ErrorString.GetCString());
+        LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", ErrorString.GetCString());
         return nullptr;
     }
 
     return new FWindowsFileHandle(NewHandle);
 }
 
-FORCEINLINE IFileHandle* FWindowsFile::OpenForWrite(const FString& Filename)
+IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename)
 {
     ::SetLastError(S_OK);
 
@@ -202,14 +202,14 @@ FORCEINLINE IFileHandle* FWindowsFile::OpenForWrite(const FString& Filename)
             ErrorString.Remove(Position, 2);
         }
 
-        LOG_ERROR("[FWindowsFile] Failed to open file. Error '%s'", ErrorString.GetCString());
+        LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", ErrorString.GetCString());
         return nullptr;
     }
 
     return new FWindowsFileHandle(NewHandle);
 }
 
-FString FWindowsFile::GetCurrentDirectory()
+FString FWindowsPlatformFile::GetCurrentDirectory()
 {
     int32 Length = ::GetCurrentDirectoryA(0, nullptr);
     if (!Length)

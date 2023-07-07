@@ -20,10 +20,10 @@ public:
 
     static bool IsMainThread();
 
-    FGenericThreadRef CreateThread(FThreadInterface* InRunnable);
-    FGenericThreadRef GetThreadFromHandle(void* ThreadHandle);
+    TSharedRef<FGenericThread> CreateThread(FThreadInterface* InRunnable);
+    TSharedRef<FGenericThread> GetThreadFromHandle(void* ThreadHandle);
 
 private:
-    TArray<FGenericThreadRef> Threads;
+    TArray<TSharedRef<FGenericThread>> Threads;
     void*                     MainThread;
 };

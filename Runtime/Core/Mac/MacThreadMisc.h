@@ -4,11 +4,13 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include <sched.h>
 #include <Foundation/Foundation.h>
 
 struct FMacThreadMisc final : public FGenericThreadMisc
 {
-    static FGenericEvent*  CreateEvent(bool bManualReset);
+    static FGenericEvent* CreateEvent(bool bManualReset);
+
     static FGenericThread* CreateThread(FThreadInterface* InRunnable, bool bSuspended = true);
     
     static FORCEINLINE bool Initialize() 
@@ -25,14 +27,19 @@ struct FMacThreadMisc final : public FGenericThreadMisc
 
     static FORCEINLINE void* GetThreadHandle()
     {
-        pthread_t CurrentThread = pthread_self();
+        pthread_t CurrentThread = ::pthread_self();
         return reinterpret_cast<void*>(CurrentThread);
     }
 
     static FORCEINLINE void Sleep(FTimespan Time)
     {    
         float Microseconds = Time.AsMicroseconds();
-        usleep(static_cast<useconds_t>(Microseconds));
+        ::usleep(static_cast<useconds_t>(Microseconds));
+    }
+
+    static FORCEINLINE void Yeild()
+    {
+        ::sched_yield();
     }
 
     static FORCEINLINE bool IsMainThread() 

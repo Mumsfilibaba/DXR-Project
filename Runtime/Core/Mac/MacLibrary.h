@@ -20,7 +20,7 @@ struct FMacLibrary final : public FGenericLibrary
 #endif
         
         const CHAR* LibraryNameWithExtension = RealName.GetCString();
-        return dlopen(LibraryNameWithExtension, Mode);
+        return ::dlopen(LibraryNameWithExtension, Mode);
     }
 
     static FORCEINLINE void* GetLoadedHandle(const CHAR* LibraryName)
@@ -33,12 +33,12 @@ struct FMacLibrary final : public FGenericLibrary
         const int32 Mode = RTLD_NOW | RTLD_NOLOAD;
 #endif
         const CHAR* LibraryNameWithExtension = RealName.GetCString();
-        void* Handle = dlopen(LibraryNameWithExtension, Mode);
+        void* Handle = ::dlopen(LibraryNameWithExtension, Mode);
         
         // Handle is ref-counted so release the new ref-count in order to have parity with windows
         if (Handle)
         {
-            dlclose(Handle);
+            ::dlclose(Handle);
         } 
         
         return Handle;
@@ -46,12 +46,12 @@ struct FMacLibrary final : public FGenericLibrary
 
     static FORCEINLINE void FreeDynamicLib(void* LibraryHandle)
     {
-        dlclose(LibraryHandle);
+        ::dlclose(LibraryHandle);
     }
 
-    static FORCEINLINE void* LoadSymbolAddress(const CHAR* SymbolName, void* LibraryHandle)
+    static FORCEINLINE void* LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
     { 
-        return dlsym(LibraryHandle, SymbolName);
+        return ::dlsym(LibraryHandle, SymbolName);
     }
 
     static FORCEINLINE const CHAR* GetDynamicLibExtension()
@@ -67,12 +67,12 @@ struct FMacLibrary final : public FGenericLibrary
 
     static FORCEINLINE bool IsLibraryLoaded(const CHAR* LibraryName)
     { 
-        return (GetLoadedHandle(LibraryName) != nullptr);
+        return GetLoadedHandle(LibraryName) != nullptr;
     }
 
     template<typename T>
-    static FORCEINLINE T LoadSymbolAddress(const CHAR* SymbolName, void* LibraryHandle)
+    static FORCEINLINE T LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
     { 
-        return reinterpret_cast<T>(LoadSymbolAddress(SymbolName, LibraryHandle));
+        return reinterpret_cast<T>(LoadSymbol(SymbolName, LibraryHandle));
     }
 };

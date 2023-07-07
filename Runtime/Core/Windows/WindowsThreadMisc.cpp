@@ -4,7 +4,7 @@
 
 FGenericEvent* FWindowsThreadMisc::CreateEvent(bool bManualReset)
 {
-    FWindowsEventRef NewEvent = new FWindowsEvent();
+    TSharedRef<FWindowsEvent> NewEvent = new FWindowsEvent();
     if (!NewEvent->Create(bManualReset))
     {
         return nullptr;

@@ -187,6 +187,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         }
 
         FRHIBlendStateDesc BlendStateInitializer;
+        
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {

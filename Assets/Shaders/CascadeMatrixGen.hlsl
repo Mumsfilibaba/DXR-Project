@@ -8,8 +8,13 @@
 ConstantBuffer<FCamera>                CameraBuffer   : register(b0);
 ConstantBuffer<FCascadeGenerationInfo> GenerationInfo : register(b1);
 
+#if SHADER_LANG == SHADER_LANG_MSL
+RWStructuredBuffer<FCascadeMatrices> MatrixBuffer : register(u2);
+RWStructuredBuffer<FCascadeSplit>    SplitBuffer  : register(u3);
+#else
 RWStructuredBuffer<FCascadeMatrices> MatrixBuffer : register(u0);
 RWStructuredBuffer<FCascadeSplit>    SplitBuffer  : register(u1);
+#endif
 
 Texture2D<float2> MinMaxDepthTex : register(t0);
 
