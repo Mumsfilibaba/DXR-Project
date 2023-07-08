@@ -126,7 +126,7 @@ constexpr MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
     {
         Result |= MTLTextureUsageShaderWrite;
     }
-    if (IsEnumFlagSet(Flag, ETextureUsageFlags::UnorderedAccess))
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::RenderTarget))
     {
         Result |= MTLTextureUsageRenderTarget;
     }

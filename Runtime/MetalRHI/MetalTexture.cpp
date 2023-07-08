@@ -27,9 +27,14 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     TextureDescriptor.usage                     = ConvertTextureFlags(Desc.UsageFlags);
     TextureDescriptor.allowGPUOptimizedContents = NO;
     TextureDescriptor.swizzle                   = MTLTextureSwizzleChannelsMake(MTLTextureSwizzleRed, MTLTextureSwizzleGreen, MTLTextureSwizzleBlue, MTLTextureSwizzleAlpha);
-    
-    TextureDescriptor.width  = Desc.Extent.x;
-    TextureDescriptor.height = Desc.Extent.y;
+    TextureDescriptor.mipmapLevelCount          = Desc.NumMipLevels;
+    TextureDescriptor.sampleCount               = Desc.NumSamples;
+    TextureDescriptor.resourceOptions           = MTLResourceCPUCacheModeWriteCombined;
+    TextureDescriptor.cpuCacheMode              = MTLCPUCacheModeWriteCombined;
+    TextureDescriptor.storageMode               = MTLStorageModePrivate;
+    TextureDescriptor.hazardTrackingMode        = MTLHazardTrackingModeDefault;
+    TextureDescriptor.width                     = Desc.Extent.x;
+    TextureDescriptor.height                    = Desc.Extent.y;
     
     if (Desc.IsTexture3D())
     {
@@ -41,13 +46,6 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         TextureDescriptor.depth       = 1;
         TextureDescriptor.arrayLength = FMath::Max(Desc.Extent.z, 1);
     }
-    
-    TextureDescriptor.mipmapLevelCount   = Desc.NumMipLevels;
-    TextureDescriptor.sampleCount        = Desc.NumSamples;
-    TextureDescriptor.resourceOptions    = MTLResourceCPUCacheModeWriteCombined;
-    TextureDescriptor.cpuCacheMode       = MTLCPUCacheModeWriteCombined;
-    TextureDescriptor.storageMode        = MTLStorageModePrivate;
-    TextureDescriptor.hazardTrackingMode = MTLHazardTrackingModeDefault;
     
     id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
     CHECK(Device != nil);
