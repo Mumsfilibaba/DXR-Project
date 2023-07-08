@@ -157,7 +157,7 @@ public:
             CastString = reinterpret_cast<const CHARTYPE*>([InString cStringUsingEncoding:NSUTF32LittleEndianStringEncoding]);
         }
         
-        InitializeByCopy(CastString, InString.length);
+        InitializeByCopy(CastString, static_cast<int32>(InString.length));
     }
 #endif
 

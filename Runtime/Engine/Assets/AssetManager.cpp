@@ -9,10 +9,10 @@
 FAssetManager* FAssetManager::GInstance = nullptr;
 
 FAssetManager::FAssetManager()
-    : Textures()
-    , TextureMap()
-    , TexturesCS()
+    : TextureMap()
     , TextureImporters()
+    , Textures()
+    , TexturesCS()
 {
     TextureImporters.Emplace(new FTextureImporterBase());
     TextureImporters.Emplace(new FTextureImporterDDS());

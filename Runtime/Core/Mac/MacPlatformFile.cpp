@@ -61,7 +61,7 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
             // File was smaller so we are already finished
             if (Read != Size)
             {
-                return BytesRead;
+                return static_cast<int32>(BytesRead);
             }
 
             // Update vars and read again to satisfy the BytesToRead
@@ -72,7 +72,7 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
         }
         else if (Read == -1)
         {
-            if ((MaxReadSize > 1024LLU) && (errno == EINVAL))
+            if ((MaxReadSize > 1024) && (errno == EINVAL))
             {
                 // We try to read again but with a smaller buffer
                 MaxReadSize /= 2;
@@ -80,12 +80,12 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
             else
             {
                 // The file descriptor was invalid
-                return BytesRead;
+                return static_cast<int32>(BytesRead);
             }
         }
     }
 
-    return BytesRead;
+    return static_cast<int32>(BytesRead);
 }
 
 int32 FMacFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
@@ -110,7 +110,7 @@ int32 FMacFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
         CHECK(BytesToWrite >= 0);
     }
 
-    return BytesWritten;
+    return static_cast<int32>(BytesWritten);
 }
 
 bool FMacFileHandle::Truncate(int64 NewSize)

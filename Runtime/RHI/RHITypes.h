@@ -897,10 +897,10 @@ struct FTextureRegion2D
     FTextureRegion2D() = default;
 
     FTextureRegion2D(uint32 InWidth, uint32 InHeight, uint32 InPositionX = 0, uint32 InPositionY = 0)
-        : PositionX(InPositionX)
-        , PositionY(InPositionY)
-        , Width(InWidth)
+        : Width(InWidth)
         , Height(InHeight)
+        , PositionX(InPositionX)
+        , PositionY(InPositionY)
     {
     }
 

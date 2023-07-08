@@ -348,18 +348,6 @@ public:
         return View[Index];
     }
 
-    /**
-     * @brief     - Copy-assignment operator
-     * @param RHS - View to copy
-     * @return    - A reference to this container
-     */
-    FORCEINLINE TArrayView& operator=(const TArrayView& RHS) noexcept
-    {
-        View     = RHS.View;
-        ViewSize = RHS.ViewSize;
-        return *this;
-    }
-
 public: // Iterators
 
     /**

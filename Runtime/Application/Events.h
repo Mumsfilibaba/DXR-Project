@@ -139,16 +139,17 @@ class FKeyEvent : public FInputEvent
 public:
     FKeyEvent()
         : FInputEvent()
-        , Key(EKeyName::Unknown)
         , Character(0)
+        , Key(EKeyName::Unknown)
         , bIsRepeat(false)
+        , bIsDown(false)
     {
     }
 
     FKeyEvent(const FModifierKeyState& ModifierKeys, EKeyName::Type InKey, bool bInIsRepeat, bool bInIsDown)
         : FInputEvent(ModifierKeys)
-        , Key(InKey)
         , Character(0)
+        , Key(InKey)
         , bIsRepeat(bInIsRepeat)
         , bIsDown(bInIsDown)
     {
@@ -156,8 +157,8 @@ public:
 
     FKeyEvent(const FModifierKeyState& ModifierKeys, EKeyName::Type InKey, uint32 InCharacter, bool bInIsRepeat, bool bInIsDown)
         : FInputEvent(ModifierKeys)
-        , Key(InKey)
         , Character(InCharacter)
+        , Key(InKey)
         , bIsRepeat(bInIsRepeat)
         , bIsDown(bInIsDown)
     {
@@ -185,7 +186,7 @@ public:
 
 private:
     uint32 Character;
-    EKeyName::Type   Key;
+    EKeyName::Type Key;
 
     bool bIsRepeat : 1;
     bool bIsDown   : 1;
@@ -200,9 +201,9 @@ public:
         , Button(EGamepadButtonName::Unknown)
         , bIsButtonDown(false)
         , bIsRepeat(false)
-        , ControllerIndex(0)
         , AnalogSource(EAnalogSourceName::Unknown)
         , AnalogValue(0.0f)
+        , ControllerIndex(0)
     {
     }
 
@@ -211,9 +212,9 @@ public:
         , Button(InButton)
         , bIsButtonDown(bInIsButtonDown)
         , bIsRepeat(bInIsRepeat)
-        , ControllerIndex(ControllerIndex)
         , AnalogSource(EAnalogSourceName::Unknown)
         , AnalogValue(0.0f)
+        , ControllerIndex(InControllerIndex)
     {
     }
 
@@ -222,9 +223,9 @@ public:
         , Button(EGamepadButtonName::Unknown)
         , bIsButtonDown(false)
         , bIsRepeat(false)
-        , ControllerIndex(InControllerIndex)
         , AnalogSource(InAnalogSource)
         , AnalogValue(InAnalogValue)
+        , ControllerIndex(InControllerIndex)
     {
     }
 
@@ -265,11 +266,11 @@ public:
 
 private:
     EGamepadButtonName Button;
-    bool              bIsButtonDown;
-    bool              bIsRepeat;
-    EAnalogSourceName AnalogSource;
-    float             AnalogValue;
-    uint32            ControllerIndex;
+    bool               bIsButtonDown;
+    bool               bIsRepeat;
+    EAnalogSourceName  AnalogSource;
+    float              AnalogValue;
+    uint32             ControllerIndex;
 };
 
 class FWindowEvent
@@ -277,33 +278,33 @@ class FWindowEvent
 public:
     FWindowEvent()
         : Window(nullptr)
+        , Position()
         , Width(0)
         , Height(0)
-        , Position()
     {
     }
 
     FWindowEvent(const TSharedRef<FGenericWindow>& InWindow)
         : Window(InWindow)
+        , Position()
         , Width(0)
         , Height(0)
-        , Position()
     {
     }
 
     FWindowEvent(const TSharedRef<FGenericWindow>& InWindow, const FIntVector2& InPosition)
         : Window(InWindow)
+        , Position(InPosition)
         , Width(0)
         , Height(0)
-        , Position(InPosition)
     {
     }
 
     FWindowEvent(const TSharedRef<FGenericWindow>& InWindow, int32 InWidth, int32 InHeight)
         : Window(InWindow)
+        , Position()
         , Width(InWidth)
         , Height(InHeight)
-        , Position()
     {
     }
 

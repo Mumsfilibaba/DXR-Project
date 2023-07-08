@@ -164,7 +164,7 @@ public:
     FORCEINLINE void Resize(SizeType NewLength) noexcept
     {
         const SizeType MinLength = FMath::Min<SizeType>(NUM_CHARS - 1, NewLength);
-        StringLength = NewLength;
+        StringLength = MinLength;
         CharData[StringLength] = 0;
     }
 

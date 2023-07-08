@@ -3,14 +3,8 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "RHI/RHITypes.h"
 
-// Temporarily disable 4456: variable hides a already existing variable
-#pragma warning(push)
-#pragma warning(disable : 4456)
-
 #define TINYDDSLOADER_IMPLEMENTATION
 #include <tinyddsloader.h>
-
-#pragma warning(pop)
 
 constexpr EFormat ConvertFormat(tinyddsloader::DDSFile::DXGIFormat Format)
 {

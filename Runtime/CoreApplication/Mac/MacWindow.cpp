@@ -388,7 +388,6 @@ uint32 FMacWindow::GetHeight() const
 void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
 {
     __block NSRect Frame;
-    __block NSRect ContentRect;
     ExecuteOnMainThread(^
     {
         NSScreen* Screen = Window.screen;

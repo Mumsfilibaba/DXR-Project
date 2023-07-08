@@ -558,7 +558,7 @@ bool FConsoleManager::IsConsoleObject(const CHAR* InName) const
 
 FString FConsoleManager::FindConsoleObjectName(IConsoleObject* ConsoleObject)
 {
-    for (const auto CurrentObject : ConsoleObjects)
+    for (const auto& CurrentObject : ConsoleObjects)
     {
         if (ConsoleObject == CurrentObject.second)
         {

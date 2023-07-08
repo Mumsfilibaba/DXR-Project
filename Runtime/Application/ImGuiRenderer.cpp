@@ -480,7 +480,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
             {
                 // User callback, registered via ImDrawList::AddCallback()
                 // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
-                if (pDrawCommand->UserCallback == ImDrawCallback_ResetRenderState)
+                if (bResetRenderState || pDrawCommand->UserCallback == ImDrawCallback_ResetRenderState)
                 {
                     SetupRenderState(CmdList, DrawData, *ViewportData);
                 }

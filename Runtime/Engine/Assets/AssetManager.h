@@ -6,7 +6,6 @@
 
 class ENGINE_API FAssetManager
 {
-private:
     FAssetManager();
     ~FAssetManager();
 
@@ -32,14 +31,12 @@ public:
     void UnloadTexture(const FTextureResourceRef& Texture);
 
 private:
-
     // Textures
     TMap<FString, uint32, FStringHasher> TextureMap;
 
+    TArray<ITextureImporter*>   TextureImporters;
     TArray<FTextureResourceRef> Textures;
     FCriticalSection            TexturesCS;
-
-    TArray<ITextureImporter*>   TextureImporters;
 
     static FAssetManager* GInstance;
 };

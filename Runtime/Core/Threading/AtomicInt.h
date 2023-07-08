@@ -134,9 +134,9 @@ public:
      * @param InValue - Value to exchange
      * @return        - Returns true if the exchange was successful
      */
-    FORCEINLINE T CompareExchange(T InValue, T Comparand) noexcept
+    FORCEINLINE bool CompareExchange(T InValue, T Comparand) noexcept
     {
-        T Result = FPlatformInterlocked::InterlockedCompareExchange(&Value, InValue, Comparand);
+        FPlatformInterlocked::InterlockedCompareExchange(&Value, InValue, Comparand);
         return Value == InValue;
     }
 
