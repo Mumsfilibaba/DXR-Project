@@ -17,6 +17,9 @@ function FWorkspaceRules(WorkspaceName)
         
         -- @brief - List  of targets for this workspace
         TargetRules = { },
+
+        -- @brief - Name of the target of the workspace
+        TargetName = "",
         
         -- @brief - Engine folder path
         EnginePath = path.getabsolute( "../", _PREMAKE_DIR),
@@ -39,6 +42,11 @@ function FWorkspaceRules(WorkspaceName)
     -- @brief - Retreive the path of the engine
     function self.GetEnginePath()
         return self.EnginePath
+    end
+
+    -- @brief - Retreive the current Target Name
+    function self.GetCurrentTargetName()
+        return self.TargetName
     end
 
     -- @brief - Retreive the path of the engine 'Runtime' folder
@@ -516,6 +524,7 @@ function FWorkspaceRules(WorkspaceName)
         LogInfo("\n--- Generating Targets (NumTargets=%d) ---", #self.TargetRules)
         for Index = 1, #self.TargetRules do
             local CurrentTarget = self.TargetRules[Index]
+            self.TargetName = CurrentTarget.Name
             CurrentTarget.Workspace = self
             CurrentTarget.Generate()
         end

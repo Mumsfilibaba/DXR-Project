@@ -9,12 +9,17 @@ ProjectModule.AddModuleDependencies(
     "Core"
 })
 
--- TODO: A better way would probably be to use a config file for this
-if GetCurrentTargetName ~= nil then
-    local TargetName = GetCurrentTargetName()
+-- Base generate (generates project files)
+local BuildRulesGenerate = ProjectModule.Generate 
+function ProjectModule.Generate()
+    if ProjectModule.Workspace == nil then
+        LogError("Workspace cannot be nil when generating Rule")
+        return
+    end
+
+    local TargetName = ProjectModule.Workspace.GetCurrentTargetName()
     ProjectModule.AddDefines({ "PROJECT_NAME=\"" .. TargetName .. "\"" })
-    ProjectModule.AddDefines({ "PROJECT_LOCATION=\"" .. GetEnginePath() .. "/" .. TargetName .. "\"" })
-else
-    ProjectModule.AddDefines({ "PROJECT_NAME=\"\"" })
-    ProjectModule.AddDefines({ "PROJECT_LOCATION=\"" .. GetEnginePath() .. "\"" })
+    ProjectModule.AddDefines({ "PROJECT_LOCATION=\"" .. ProjectModule.Workspace.GetEnginePath() .. "/" .. TargetName .. "\"" })
+
+    BuildRulesGenerate()
 end

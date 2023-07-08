@@ -16,17 +16,16 @@ FProjectManager::FProjectManager(const FString& InProjectName, const FString& In
 
 bool FProjectManager::Initialize()
 {
-    const FString TmpProjectName = PROJECT_NAME;
-
-    const FString TmpProjectPath = FString(ENGINE_LOCATION) + FString("/") + FString(TmpProjectName);
-    if (!FPlatformFile::IsDirectory(TmpProjectPath.GetCString()))
+    const FString ProjectName = PROJECT_NAME;
+    const FString ProjectPath = FString(ENGINE_LOCATION) + "/" + ProjectName;
+    if (!FPlatformFile::IsDirectory(ProjectPath.GetCString()))
     {
         DEBUG_BREAK();
         return false;
     }
 
-    const FString TmpAssetFolderPath = FString(ENGINE_LOCATION) + FString("/Assets");
-    if (!FPlatformFile::IsDirectory(TmpAssetFolderPath.GetCString()))
+    const FString AssetFolderPath = FString(ENGINE_LOCATION) + FString("/Assets");
+    if (!FPlatformFile::IsDirectory(AssetFolderPath.GetCString()))
     {
         DEBUG_BREAK();
         return false;
@@ -34,7 +33,7 @@ bool FProjectManager::Initialize()
 
     if (!GInstance)
     {
-        GInstance = new FProjectManager(TmpProjectName, TmpProjectPath, TmpAssetFolderPath);
+        GInstance = new FProjectManager(ProjectName, ProjectPath, AssetFolderPath);
     }
 
     return true;
