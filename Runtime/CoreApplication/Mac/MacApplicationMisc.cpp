@@ -8,7 +8,7 @@
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
 
-FGenericApplication* FMacApplicationMisc::CreateApplication()
+TSharedPtr<FGenericApplication> FMacApplicationMisc::CreateApplication()
 {
     return FMacApplication::CreateMacApplication();
 }

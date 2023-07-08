@@ -1,6 +1,7 @@
 #pragma once 
 #include "Core/Input/ModifierKeyState.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/SharedPtr.h"
 
 #ifdef MessageBox
     #undef MessageBox
@@ -13,7 +14,7 @@ struct FOutputDeviceConsole;
 
 struct COREAPPLICATION_API FGenericApplicationMisc
 {
-    static FGenericApplication* CreateApplication();
+    static TSharedPtr<FGenericApplication> CreateApplication();
 
     static FOutputDeviceConsole* CreateOutputDeviceConsole() { return nullptr; }
 

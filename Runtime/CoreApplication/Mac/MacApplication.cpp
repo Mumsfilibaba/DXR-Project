@@ -10,6 +10,115 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
+#include <AppKit/AppKit.h>
+#include <IOKit/graphics/IOGraphicsLib.h>
+
+static FString GetMonitorNameFromNSScreen(NSScreen* Screen)
+{
+    if (!Screen)
+    {
+        return "Unknown Display";
+    }
+    
+    // If the localizedName is available (macOS 10.15 and above) then call that
+    if ([Screen respondsToSelector:@selector(localizedName)])
+    {
+        NSString* MonitorName = [Screen valueForKey:@"localizedName"];
+        if (MonitorName)
+        {
+            return MonitorName;
+        }
+    }
+
+    // Retrieve the displayID from the NSScreen
+    CGDirectDisplayID DisplayID = static_cast<CGDirectDisplayID>([[[Screen deviceDescription] objectForKey:@"NSScreenNumber"] unsignedIntValue]);
+    
+    io_iterator_t Iterator;
+    if (IOServiceGetMatchingServices(MACH_PORT_NULL, IOServiceMatching("IODisplayConnect"), &Iterator) != 0)
+    {
+        return "Unknown Display";
+    }
+    
+    io_service_t    Service;
+    CFDictionaryRef DisplayInfo;
+    while ((Service = IOIteratorNext(Iterator)) != 0)
+    {
+        DisplayInfo = IODisplayCreateInfoDictionary(Service, kIODisplayOnlyPreferredName);
+        
+        CFNumberRef VendorIDRef  = (CFNumberRef)CFDictionaryGetValue(DisplayInfo, CFSTR(kDisplayVendorID));
+        CFNumberRef ProductIDRef = (CFNumberRef)CFDictionaryGetValue(DisplayInfo, CFSTR(kDisplayProductID));
+        if (!VendorIDRef || !ProductIDRef)
+        {
+            CFRelease(DisplayInfo);
+            continue;
+        }
+        
+        uint32 VendorID;
+        uint32 ProductID;
+        CFNumberGetValue(VendorIDRef, kCFNumberIntType, &VendorID);
+        CFNumberGetValue(ProductIDRef, kCFNumberIntType, &ProductID);
+        
+        if (CGDisplayVendorNumber(DisplayID) == VendorID && CGDisplayModelNumber(DisplayID) == ProductID)
+        {
+            break;
+        }
+        
+        CFRelease(DisplayInfo);
+    }
+    
+    IOObjectRelease(Iterator);
+    if (!Service)
+    {
+        return "Unknown Display";
+    }
+
+    CFDictionaryRef Names = (CFDictionaryRef)CFDictionaryGetValue(DisplayInfo, CFSTR(kDisplayProductName));
+    
+    CFStringRef NameRef;
+    if (!Names || !CFDictionaryGetValueIfPresent(Names, CFSTR("en_US"), reinterpret_cast<const void**>(&NameRef)))
+    {
+        CFRelease(DisplayInfo);
+        return "Unknown Display";
+    }
+    
+    NSString* MonitorName = (__bridge NSString*)NameRef;
+    
+    // Store the string name, since we need to release the original string (via the DisplayInfo) before we return
+    FString Result(MonitorName);
+    
+    // Release DisplayInfo
+    CFRelease(DisplayInfo);
+
+    // Finally return the result
+    return Result;
+}
+
+uint32 GetDPIFromNSScreen(NSScreen* Screen)
+{
+    const NSRect Frame = [Screen frame];
+    const float  BackingScaleFactor = [Screen backingScaleFactor];
+    
+    // Retrieve the pixel dimensions of the screen
+    CGFloat PixelWidth  = CGRectGetWidth(Frame) * BackingScaleFactor;
+    CGFloat PixelHeight = CGRectGetHeight(Frame) * BackingScaleFactor;
+
+    // Retrieve the physical dimensions of the screen in millimeters
+    const CGFloat InchToMillimeterFactor = 25.4;
+    CGFloat PhysicalWidth  = CGRectGetWidth(Frame) * InchToMillimeterFactor / Frame.size.width;
+    CGFloat PhysicalHeight = CGRectGetHeight(Frame) * InchToMillimeterFactor / Frame.size.height;
+
+    // Calculate the DPI
+    CGFloat DpiWidth  = PixelWidth / PhysicalWidth;
+    CGFloat DpiHeight = PixelHeight / PhysicalHeight;
+
+    // Use the average of width and height DPI values
+    CGFloat Dpi = (DpiWidth + DpiHeight) / 2.0;
+
+    // Round and convert to uint32_t
+    uint32 RoundedDPI = static_cast<uint32>(FMath::Round(Dpi));
+    return RoundedDPI;
+}
+
 @interface FMacApplicationObserver : NSObject
 
 - (void) onApplicationBecomeActive:(NSNotification*)InNotification;
@@ -43,23 +152,26 @@
 
 FMacApplication* MacApplication = nullptr;
 
-FMacApplication* FMacApplication::CreateMacApplication()
+TSharedPtr<FMacApplication> FMacApplication::CreateMacApplication()
 {
-    // Set the global instance
-    MacApplication = new FMacApplication();
-    return MacApplication;
+    // Create a new instance and set the the global instance
+    TSharedPtr<FMacApplication> NewMacApplication = MakeShared<FMacApplication>();
+    MacApplication = NewMacApplication.Get();
+    return NewMacApplication;
 }
 
 FMacApplication::FMacApplication()
     : FGenericApplication(MakeShared<FMacCursor>())
+    , DisplayInfo()
+    , Observer(nullptr)
+    , LastPressedButton(EMouseButtonName::Unknown)
+    , bHasDisplayInfoChanged(true)
     , Windows()
     , WindowsCS()
     , ClosedWindows()
     , ClosedWindowsCS()
     , DeferredEvents()
     , DeferredEventsCS()
-    , LastPressedButton(EMouseButtonName::Unknown)
-    , Observer()
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -143,10 +255,13 @@ FMacApplication::~FMacApplication()
                                                         name:NSApplicationDidChangeScreenParametersNotification
                                                       object:nil];
 
+        // Release the observer
         NSSafeRelease(Observer);
 
+        // Release all windows
         Windows.Clear();
 
+        // Reset the global instance
         if (this == MacApplication)
         {
             MacApplication = nullptr;
@@ -199,6 +314,29 @@ void FMacApplication::Tick(float)
     }
 }
 
+void FMacApplication::PollInputDevices()
+{
+    // TODO: Implement gamepad support
+}
+
+FInputDevice* FMacApplication::GetInputDeviceInterface()
+{
+    // TODO: Implement gamepad support
+    return nullptr;
+}
+
+bool FMacApplication::SupportsHighPrecisionMouse() const
+{
+    // TODO: Implement high precision mouse
+    return false;
+}
+
+bool FMacApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>&)
+{
+    // TODO: Implement high precision mouse
+    return false;
+}
+
 void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
 {
     __block TSharedRef<FMacWindow> MacWindow = StaticCastSharedRef<FMacWindow>(Window);
@@ -225,6 +363,56 @@ TSharedRef<FGenericWindow> FMacApplication::GetWindowUnderCursor() const
         const NSInteger WindowNumber = [NSWindow windowNumberAtPoint:[NSEvent mouseLocation] belowWindowWithWindowNumber:0];
         return GetWindowFromNSWindow([NSApp windowWithWindowNumber:WindowNumber]);
     }
+}
+
+void FMacApplication::GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const
+{
+    if (!bHasDisplayInfoChanged)
+    {
+        OutDisplayInfo = DisplayInfo;
+        return;
+    }
+    
+    for (NSScreen* Screen in NSScreen.screens)
+    {
+        const NSRect ScreenFrame        = Screen.frame;
+        const NSRect ScreenVisibleFrame = Screen.visibleFrame;
+        
+        FMonitorInfo NewMonitorInfo;
+        NewMonitorInfo.DeviceName         = GetMonitorNameFromNSScreen(Screen);
+        NewMonitorInfo.MainPosition       = FIntVector2(ScreenFrame.origin.x, ScreenFrame.origin.y);
+        NewMonitorInfo.MainSize           = FIntVector2(ScreenFrame.size.width, ScreenFrame.size.height);
+        NewMonitorInfo.WorkPosition       = FIntVector2(ScreenVisibleFrame.origin.x, ScreenVisibleFrame.origin.y);
+        NewMonitorInfo.WorkSize           = FIntVector2(ScreenVisibleFrame.size.width, ScreenVisibleFrame.size.height);
+        NewMonitorInfo.bIsPrimary         = [NSScreen mainScreen] == Screen;
+        NewMonitorInfo.DisplayDPI         = GetDPIFromNSScreen(Screen);
+        NewMonitorInfo.DisplayScaling     = Screen.backingScaleFactor;
+        // Convert the backingScaleFactor to a value similar to the one in windows that can be retreived via the 'GetScaleFactorForMonitor' function
+        NewMonitorInfo.DisplayScaleFactor = static_cast<uint32>(FMath::Round(NewMonitorInfo.DisplayScaling * 100.0f));
+
+        if (NewMonitorInfo.bIsPrimary)
+        {
+            DisplayInfo.PrimaryDisplayWidth  = NewMonitorInfo.MainSize.x;
+            DisplayInfo.PrimaryDisplayHeight = NewMonitorInfo.MainSize.y;
+        }
+
+        DisplayInfo.MonitorInfos.Add(NewMonitorInfo);
+    }
+    
+    // Ensure that we don't waste any space
+    DisplayInfo.MonitorInfos.Shrink();
+    
+    // Ensure that we don't do the same calculations when calling GetMonitorInfo multiple times
+    bHasDisplayInfoChanged = false;
+    
+    //Return the DisplayInfo
+    OutDisplayInfo = DisplayInfo;
+}
+
+void FMacApplication::SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
+{
+    FGenericApplication::SetMessageHandler(InMessageHandler);
+    // TODO: Set the message handler to the input device
 }
 
 TSharedRef<FMacWindow> FMacApplication::GetWindowFromNSWindow(NSWindow* Window) const
@@ -353,6 +541,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
         }
         else if (NotificationName == NSApplicationDidChangeScreenParametersNotification)
         {
+            bHasDisplayInfoChanged = true;
             MessageHandler->OnMonitorChange();
         }
     }

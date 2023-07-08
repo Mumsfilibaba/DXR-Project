@@ -46,19 +46,19 @@ class FWindowsWindow;
 
 class COREAPPLICATION_API FWindowsApplication final : public FGenericApplication
 {
+public:
     FWindowsApplication(HINSTANCE InInstance, HICON InIcon);
     virtual ~FWindowsApplication();
 
-public:
-    static FWindowsApplication* CreateWindowsApplication();
+    static TSharedPtr<FWindowsApplication> CreateWindowsApplication();
 
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
     
-    virtual void PollInputDevices();
+    virtual void PollInputDevices() override final;
 
-    virtual FInputDevice* GetInputDeviceInterface();
+    virtual FInputDevice* GetInputDeviceInterface() override final;
 
     virtual bool SupportsHighPrecisionMouse() const override final { return false; }
 

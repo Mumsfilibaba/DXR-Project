@@ -15,7 +15,6 @@ struct FDebuggerOutputDevice : public IOutputDevice
     virtual void Log(const FString& Message) 
     {
         FPlatformMisc::OutputDebugString(Message.GetCString());
-        FPlatformMisc::OutputDebugString("\n");
     }
 
     virtual void Log(ELogSeverity Severity, const FString& Message)

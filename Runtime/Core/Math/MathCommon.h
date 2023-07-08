@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/NumericLimits.h"
 
 #include <algorithm>
 #include <cmath>
@@ -40,53 +41,68 @@ struct FMath
     }
 
     template<typename T>
-    static constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type DivideByMultiple(T Value, uint32 Alignment)
+    static constexpr T DivideByMultiple(T Value, uint32 Alignment) requires(TIsInteger<T>::Value)
     {
         return static_cast<T>((Value + Alignment - 1) / Alignment);
     }
 
     template<typename T>
-    static constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignUp(T Value, T Alignment)
+    static constexpr T AlignUp(T Value, T Alignment) requires(TIsInteger<T>::Value)
     {
         const T Mask = Alignment - 1;
         return ((Value + Mask) & (~Mask));
     }
 
     template<typename T>
-    static constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignDown(T Value, T Alignment)
+    static constexpr T AlignDown(T Value, T Alignment) requires(TIsInteger<T>::Value)
     {
         const T Mask = Alignment - 1;
         return ((Value) & (~Mask));
     }
 
     template<typename T>
-    static constexpr typename TEnableIf<TIsFloatingPoint<T>::Value, T>::Type Lerp(T First, T Second, T Factor)
+    static constexpr T Lerp(T First, T Second, T Factor) requires(TIsFloatingPoint<T>::Value)
     {
         return (-Factor * Second) + ((First * Factor) + Second);
     }
 
     template<typename T>
-    static constexpr T Min(T a, T b)
+    static constexpr T Min(T First, T Second) requires(TIsArithmetic<T>::Value)
     {
-        return (a <= b) ? a : b;
+        return (First <= Second) ? First : Second;
     }
 
     template<typename T>
-    static constexpr T Max(T a, T b)
+    static constexpr T Max(T First, T Second) requires(TIsArithmetic<T>::Value)
     {
-        return (a >= b) ? a : b;
+        return (First >= Second) ? First : Second;
     }
 
     template<typename T>
-    static constexpr T Clamp(T InMin, T InMax, T x)
+    static constexpr T Clamp(T ValueMin, T ValueMax, T Value) requires(TIsArithmetic<T>::Value)
     {
-        return Min(InMax, Max(InMin, x));
+        return Min(ValueMax, Max(ValueMin, Value));
     }
 
     template<typename T>
-    static FORCEINLINE T Abs(T a)
+    static constexpr T Abs(T Value) requires(TIsArithmetic<T>::Value)
     {
-        return std::abs(a);
+        if constexpr (TIsInteger<T>::Value)
+        {
+            if constexpr (TIsSigned<T>::Value)
+            {
+                T Mask = Value >> (TNumericLimits<T>::Digits() - 1);
+                return (Value + Mask) ^ Mask;
+            }
+            else
+            {
+                return Value;
+            }
+        }
+        else
+        {
+            return (Value >= 0) ? Value : -Value;
+        }
     }
 
     template<typename T>

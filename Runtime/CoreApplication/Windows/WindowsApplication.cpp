@@ -20,14 +20,16 @@ TAutoConsoleVariable<bool> CVarIsProcessDPIAware(
 
 FWindowsApplication* WindowsApplication = nullptr;
 
-FWindowsApplication* FWindowsApplication::CreateWindowsApplication()
+TSharedPtr<FWindowsApplication> FWindowsApplication::CreateWindowsApplication()
 {
-    HINSTANCE TempInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0));
-
+    // Get the application instance
+    HINSTANCE AppInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0)); 
     // TODO: Load icon resource here
     HICON Icon = ::LoadIcon(NULL, IDI_APPLICATION);
-    WindowsApplication = new FWindowsApplication(TempInstanceHandle, Icon);
-    return WindowsApplication;
+
+    TSharedPtr<FWindowsApplication> NewWindowsApplication = MakeShared<FWindowsApplication>(AppInstanceHandle, Icon);
+    WindowsApplication = NewWindowsApplication.Get();
+    return NewWindowsApplication.Get();
 }
 
 FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIcon)

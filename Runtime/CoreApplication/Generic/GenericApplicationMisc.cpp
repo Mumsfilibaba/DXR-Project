@@ -1,7 +1,7 @@
 #include "GenericApplicationMisc.h"
 #include "GenericApplication.h"
 
-class FGenericApplication* FGenericApplicationMisc::CreateApplication()
+TSharedPtr<class FGenericApplication> FGenericApplicationMisc::CreateApplication()
 {
-    return new FGenericApplication(TSharedPtr<ICursor>(nullptr));
+    return MakeShared<FGenericApplication>(TSharedPtr<ICursor>(nullptr));
 }

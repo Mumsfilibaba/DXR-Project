@@ -7,9 +7,9 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct COREAPPLICATION_API FMacApplicationMisc final : public FGenericApplicationMisc
 {
-    static class FGenericApplication* CreateApplication();
+    static TSharedPtr<FGenericApplication> CreateApplication();
 
-    static struct FOutputDeviceConsole* CreateOutputDeviceConsole();
+    static FOutputDeviceConsole* CreateOutputDeviceConsole();
  
     static void MessageBox(const FString& Title, const FString& Message);
 

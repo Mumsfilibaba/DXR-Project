@@ -9,6 +9,8 @@ struct FWindowsPlatformMisc final : public FGenericPlatformMisc
     static FORCEINLINE void OutputDebugString(const CHAR* Message)
     {
         ::OutputDebugStringA(Message);
+        // Add a new line here since that makes this function consistent with OutputDebugString on other platforms
+        ::OutputDebugStringA("\n");
     }
 
     static FORCEINLINE bool IsDebuggerPresent()

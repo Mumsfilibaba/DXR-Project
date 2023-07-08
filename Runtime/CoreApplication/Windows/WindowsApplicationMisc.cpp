@@ -3,7 +3,7 @@
 #include "WindowsOutputDeviceConsole.h"
 #include "Core/Input/ModifierKeyState.h"
 
-FGenericApplication* FWindowsApplicationMisc::CreateApplication()
+TSharedPtr<FGenericApplication> FWindowsApplicationMisc::CreateApplication()
 {
     return FWindowsApplication::CreateWindowsApplication();
 }

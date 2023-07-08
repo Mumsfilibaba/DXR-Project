@@ -11,8 +11,6 @@
 @class FCocoaWindow;
 @class FMacApplicationObserver;
 
-class FMacWindow;
-
 struct FDeferredMacEvent
 {
     FORCEINLINE FDeferredMacEvent()
@@ -55,24 +53,38 @@ struct FDeferredMacEvent
     uint32             Character;
 };
 
+class FGenericWindow;
+class FMacWindow;
 
 class COREAPPLICATION_API FMacApplication final : public FGenericApplication
 {
-    FMacApplication();
-    ~FMacApplication();
-
 public:
-    static FMacApplication* CreateMacApplication();
+    FMacApplication();
+    virtual ~FMacApplication();
+
+    static TSharedPtr<FMacApplication> CreateMacApplication();
 
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
+
+    virtual void PollInputDevices() override final;
+
+    virtual FInputDevice* GetInputDeviceInterface() override final;
+
+    virtual bool SupportsHighPrecisionMouse() const override final;
+
+    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
 
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
+
+    virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
+
+    virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
 
 public:
     TSharedRef<FMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
@@ -81,8 +93,20 @@ public:
     
     void DeferEvent(NSObject* EventOrNotificationObject);
 
+    FMacApplicationObserver* GetApplicationObserver() const
+    {
+        return Observer;
+    }
+
 private:
     void ProcessDeferredEvent(const FDeferredMacEvent& Notification);
+    
+    mutable FDisplayInfo DisplayInfo;
+    
+    FMacApplicationObserver* Observer;
+    
+    EMouseButtonName::Type LastPressedButton;
+    mutable bool           bHasDisplayInfoChanged;
     
     TArray<TSharedRef<FMacWindow>> Windows;
     mutable FCriticalSection WindowsCS;
@@ -92,9 +116,6 @@ private:
 
     TArray<FDeferredMacEvent> DeferredEvents;
     FCriticalSection DeferredEventsCS;
-    
-    FMacApplicationObserver* Observer;
-    EMouseButtonName::Type LastPressedButton;
 };
 
 extern FMacApplication* MacApplication;

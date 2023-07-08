@@ -1,25 +1,24 @@
 #pragma once
 #include "OutputDevice.h"
-
 #include "Core/Core.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/CriticalSection.h"
 
-#define LOG_ERROR(...)                                                                              \
-    do                                                                                              \
-    {                                                                                               \
+#define LOG_ERROR(...)                                                                               \
+    do                                                                                               \
+    {                                                                                                \
         FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, FString::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
-#define LOG_WARNING(...)                                                                              \
-    do                                                                                                \
-    {                                                                                                 \
+#define LOG_WARNING(...)                                                                               \
+    do                                                                                                 \
+    {                                                                                                  \
         FOutputDeviceLogger::Get()->Log(ELogSeverity::Warning, FString::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
-#define LOG_INFO(...)                                                                              \
-    do                                                                                             \
-    {                                                                                              \
+#define LOG_INFO(...)                                                                               \
+    do                                                                                              \
+    {                                                                                               \
         FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, FString::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 

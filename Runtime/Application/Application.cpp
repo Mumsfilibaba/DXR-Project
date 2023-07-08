@@ -186,7 +186,7 @@ TSharedPtr<FGenericApplication> FApplication::PlatformApplication = nullptr;
 
 bool FApplication::Create()
 {
-    PlatformApplication = TSharedPtr<FGenericApplication>(FPlatformApplicationMisc::CreateApplication());
+    PlatformApplication = FPlatformApplicationMisc::CreateApplication();
     if (!PlatformApplication)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create FPlatformApplication");
@@ -277,14 +277,11 @@ void FApplication::Tick(FTimespan DeltaTime)
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.DeltaTime = static_cast<float>(DeltaTime.AsSeconds());
-    
     // Setup the display size of the Main-Window
     UIState.DisplaySize = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
-    
     // Setup the display scale from the Main-Window
-    const float WindowDpiScale = MainWindow->GetWindowDpiScale();
-    UIState.FontGlobalScale    = WindowDpiScale;
-    UIState.DisplayFramebufferScale = ImVec2(WindowDpiScale, WindowDpiScale);
+    UIState.FontGlobalScale         = MainWindow->GetWindowDpiScale();
+    UIState.DisplayFramebufferScale = ImVec2(UIState.FontGlobalScale, UIState.FontGlobalScale);
 
     // Retrieve the current active window
     TSharedRef<FGenericWindow> ForegroundWindow = GetForegroundWindow();

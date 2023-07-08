@@ -819,7 +819,7 @@ private:
     template<typename U, bool = TIsArithmetic<U>::Value>
     struct TIsSignedImpl
     {
-        inline static constexpr bool Value = (U(-1) < U(0));
+        inline static constexpr bool Value = static_cast<U>(-1) < static_cast<U>(0);
     };
 
     template<typename U>
@@ -839,7 +839,7 @@ private:
     template<typename U, bool = TIsArithmetic<U>::Value>
     struct TIsUnsignedImpl
     {
-        inline static constexpr bool Value = (U(0) < U(-1));
+        inline static constexpr bool Value = static_cast<U>(0) < static_cast<U>(-1);
     };
 
     template<typename U>

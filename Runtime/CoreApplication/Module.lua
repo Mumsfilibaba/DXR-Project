@@ -14,6 +14,7 @@ if IsPlatformMac() then
     {
         "Cocoa",
         "AppKit",
+        "IOKit",
     })
 elseif IsPlatformWindows() then
     CoreApplicationModule.AddLinkLibraries(

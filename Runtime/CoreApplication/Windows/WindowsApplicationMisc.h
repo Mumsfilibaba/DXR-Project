@@ -5,9 +5,9 @@
 
 struct COREAPPLICATION_API FWindowsApplicationMisc final : public FGenericApplicationMisc
 {
-    static class FGenericApplication* CreateApplication();
+    static TSharedPtr<FGenericApplication> CreateApplication();
 
-    static struct FOutputDeviceConsole* CreateOutputDeviceConsole();
+    static FOutputDeviceConsole* CreateOutputDeviceConsole();
 
     static FORCEINLINE void MessageBox(const FString& Title, const FString& Message)
     {
