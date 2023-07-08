@@ -55,7 +55,7 @@ FORCEINLINE bool EngineRelease()
 }
 
 
-int32 GenericMain(const CHAR* Args[], int32 NumArgs)
+int32 EngineMain(const CHAR* Args[], int32 NumArgs)
 {
     struct FGenericMainGuard
     {

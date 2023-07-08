@@ -1,7 +1,7 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Windows/Windows.h"
 
-extern int32 GenericMain(const CHAR* Args[], int32 NumArgs);
+extern int32 EngineMain(const CHAR* Args[], int32 NumArgs);
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -19,7 +19,7 @@ int WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CommandLine
     InitCRunTime();
 
     const CHAR* TempCommandLine = CommandLine;
-    return GenericMain(&TempCommandLine, 1);
+    return EngineMain(&TempCommandLine, 1);
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

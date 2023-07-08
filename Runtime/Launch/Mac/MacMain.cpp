@@ -5,7 +5,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-extern int32 GenericMain(const CHAR* Args[], int32 NumArgs);
+extern int32 EngineMain(const CHAR* Args[], int32 NumArgs);
 
 static int32 GEngineMainResult = 0;
 
@@ -36,7 +36,7 @@ static int32 GEngineMainResult = 0;
     
     // Run the main loop
     // TODO: Check how we can send the commanline here
-    GEngineMainResult = GenericMain(nullptr, 0);
+    GEngineMainResult = EngineMain(nullptr, 0);
 }
 
 @end
