@@ -1,8 +1,8 @@
 #pragma once
 #include "Actor.h"
+#include "InputStates.h"
 #include "Application/Events.h"
 #include "Core/Math/IntVector2.h"
-#include "Core/Input/InputStates.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Set.h"
 #include "CoreApplication/Generic/ICursor.h"

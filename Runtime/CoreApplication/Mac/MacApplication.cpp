@@ -4,9 +4,9 @@
 #include "CocoaWindow.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Mac/MacRunLoop.h"
-#include "Core/Platform/PlatformKeyMapping.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Threading/ScopedLock.h"
+#include "CoreApplication/Platform/PlatformKeyMapping.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 

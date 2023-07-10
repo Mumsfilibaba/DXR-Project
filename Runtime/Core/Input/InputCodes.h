@@ -1,18 +1,6 @@
 #pragma once
 #include "Core/Core.h"
 
-enum EModifierFlag : uint8
-{
-    ModifierFlag_None     = 0,
-    ModifierFlag_Ctrl     = FLAG(1),
-    ModifierFlag_Alt      = FLAG(2),
-    ModifierFlag_Shift    = FLAG(3),
-    ModifierFlag_CapsLock = FLAG(4),
-    ModifierFlag_Super    = FLAG(5),
-    ModifierFlag_NumLock  = FLAG(6),
-};
-
-
 namespace EKeyName
 {
     enum Type : uint8

@@ -1,7 +1,5 @@
 #pragma once
-#include "InputCodes.h"
-
-// TODO: Move this file to the engine module
+#include "Core/Input/InputCodes.h"
 
 struct FKeyState
 {

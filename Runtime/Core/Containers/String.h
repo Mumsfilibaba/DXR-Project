@@ -588,7 +588,7 @@ public:
      * @return         - Returns true if the strings are equal
      */
     template<typename StringType>
-    NODISCARD FORCEINLINE SizeType Equals(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept requires(TIsTStringType<StringType>::Value)
+    NODISCARD FORCEINLINE bool Equals(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept requires(TIsTStringType<StringType>::Value)
     {
         return Equals(InString.Data(), InString.Length(), CaseType);
     }
@@ -599,7 +599,7 @@ public:
      * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
      * @return         - Returns true if the strings are equal
      */
-    NODISCARD FORCEINLINE SizeType Equals(const CHARTYPE* InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
+    NODISCARD FORCEINLINE bool Equals(const CHARTYPE* InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const noexcept
     {
         return Equals(InString, FCStringType::Strlen(InString), CaseType);
     }

@@ -180,6 +180,8 @@ void FPlayerInput::Tick(FTimespan Delta)
     {
         FAnalogAxisState& AxisState = AnalogAxisStates[Index];
         AxisState.NumTicksSinceUpdate++;
+        
+        
     }
 
     KeyEvents.Clear();

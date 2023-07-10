@@ -27,7 +27,7 @@ static FRHIInterfaceModule* LoadNullRHI()
 static ERHIInstanceType GetRHITypeFromConfig()
 {
     const FString RHITypeString = CVarType->GetString();
-    if (RHITypeString == "D3D12")
+    if (RHITypeString.Equals("D3D12", EStringCaseType::NoCase))
     {
 #if PLATFORM_WINDOWS
         return ERHIInstanceType::D3D12;
@@ -35,7 +35,7 @@ static ERHIInstanceType GetRHITypeFromConfig()
         LOG_ERROR("D3D12RHI Is not supported on this platform");
 #endif
     }
-    else if (RHITypeString == "Metal")
+    else if (RHITypeString.Equals("Metal", EStringCaseType::NoCase))
     {
 #if PLATFORM_MACOS
         return ERHIInstanceType::Metal;
@@ -43,7 +43,7 @@ static ERHIInstanceType GetRHITypeFromConfig()
         LOG_ERROR("MetalRHI Is not supported on this platform");
 #endif
     }
-    else if (RHITypeString == "Null")
+    else if (RHITypeString.Equals("Null", EStringCaseType::NoCase))
     {
         return ERHIInstanceType::Null;
     }

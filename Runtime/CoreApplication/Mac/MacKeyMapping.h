@@ -1,9 +1,9 @@
 #pragma once
-#include "Core/Containers/StaticArray.h"
 #include "Core/Input/InputCodes.h"
-#include "Core/Generic/GenericKeyMapping.h"
+#include "Core/Containers/StaticArray.h"
+#include "CoreApplication/Generic/GenericKeyMapping.h"
 
-class CORE_API FMacKeyMapping final : public FGenericKeyMapping
+class COREAPPLICATION_API FMacKeyMapping final : public FGenericKeyMapping
 {
     inline static constexpr uint32 NumKeys = 256;
 
