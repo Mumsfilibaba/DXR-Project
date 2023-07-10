@@ -2,9 +2,9 @@
 #include "MacCursor.h"
 #include "GCInputDevice.h"
 #include "Core/Mac/Mac.h"
-#include "Core/Input/InputCodes.h"
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
+#include "CoreApplication/Generic/InputCodes.h"
 #include "CoreApplication/Generic/GenericApplication.h"
 
 #include <AppKit/AppKit.h>

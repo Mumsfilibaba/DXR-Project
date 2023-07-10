@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Input/InputCodes.h"
+#include "InputCodes.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

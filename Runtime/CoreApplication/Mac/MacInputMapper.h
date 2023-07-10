@@ -1,6 +1,6 @@
 #pragma once
-#include "Core/Input/InputCodes.h"
 #include "Core/Containers/StaticArray.h"
+#include "CoreApplication/Generic/InputCodes.h"
 #include "CoreApplication/Generic/GenericInputMapper.h"
 
 class COREAPPLICATION_API FMacInputMapper final : public EGenericInputMapper

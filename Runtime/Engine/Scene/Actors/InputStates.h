@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Input/InputCodes.h"
+#include "CoreApplication/Generic/InputCodes.h"
 
 struct FKeyState
 {

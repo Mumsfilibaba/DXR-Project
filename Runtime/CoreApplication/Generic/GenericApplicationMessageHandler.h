@@ -1,6 +1,6 @@
 #pragma once
 #include "GenericApplicationMisc.h"
-#include "Core/Input/InputCodes.h"
+#include "InputCodes.h"
 #include "Core/Containers/SharedRef.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING

@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Mac/Mac.h"
-#include "Core/Input/InputCodes.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
+#include "CoreApplication/Generic/InputCodes.h"
 #include "CoreApplication/Generic/InputDevice.h"
 
 #include <GameController/GameController.h>

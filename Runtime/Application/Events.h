@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Input/InputCodes.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
+#include "CoreApplication/Generic/InputCodes.h"
 #include "CoreApplication/Generic/GenericWindow.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
