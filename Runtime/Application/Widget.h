@@ -3,5 +3,7 @@
 
 struct FWidget : public TSharedFromThis<FWidget>
 {
+    virtual ~FWidget() = default;
+
     virtual void Paint() = 0;
 };

@@ -192,9 +192,7 @@ void FMetalCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> 
         CurrentVertexOffsets[Index] = 0;
     }
     
-    CurrentVertexBufferRange = NSMakeRange(
-        FMath::Min<uint32>(BufferSlot, CurrentVertexBufferRange.location), 
-        FMath::Max<uint32>(InVertexBuffers.Size(), CurrentVertexBufferRange.length));
+    CurrentVertexBufferRange = NSMakeRange(FMath::Min<uint64>(BufferSlot, CurrentVertexBufferRange.location), FMath::Max<uint64>(InVertexBuffers.Size(), CurrentVertexBufferRange.length));
 }
 
 void FMetalCommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
@@ -629,7 +627,7 @@ void FMetalCommandContext::BeginExternalCapture()
     // Empty for now
 }
 
-void FMetalCommandContext::EndExternalCapture() 
+void FMetalCommandContext::EndExternalCapture()
 {
     // Empty for now
 }

@@ -12,8 +12,7 @@ class FTexture2D;
 typedef TSharedRef<FTexture>   FTextureResourceRef;
 typedef TSharedRef<FTexture2D> FTextureResource2DRef;
 
-class ENGINE_API FTexture
-    : public FRefCounted
+class ENGINE_API FTexture : public FRefCounted
 {
 public:
     FTexture()          = default;
@@ -45,19 +44,19 @@ protected:
 };
 
 
-class ENGINE_API FTexture2D
-    : public FTexture
+class ENGINE_API FTexture2D : public FTexture
 {
 public:
     FTexture2D();
     FTexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips);
     ~FTexture2D();
 
-    virtual FTexture2D* GetTexture2D() { return this; }
+    virtual FTexture2D* GetTexture2D() override final { return this; }
 
     virtual bool CreateRHITexture(bool bGenerateMips) override final;
     
-    virtual void CreateData()  override final;
+    virtual void CreateData() override final;
+    
     virtual void ReleaseData() override final;
 
     virtual void SetName(const FString& InName) override final;
@@ -68,8 +67,15 @@ public:
 
     FTextureResourceData* GetTextureResourceData() const { return TextureData; }
 
-    uint32 GetWidth() const { return Width; }
-    uint32 GetHeight() const { return Height; }
+    uint32 GetWidth() const
+    {
+        return Width;
+    }
+    
+    uint32 GetHeight() const
+    {
+        return Height;
+    }
 
 private:
     FRHITextureRef        TextureRHI;

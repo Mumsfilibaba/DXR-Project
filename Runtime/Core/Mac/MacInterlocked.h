@@ -105,49 +105,49 @@ struct CORE_API FMacInterlocked final : public FGenericInterlocked
 
     static FORCEINLINE int8 InterlockedIncrement(volatile int8* Dest)
     {
-        // No built in increment, add one and then add one to the return value sin the original value is returned
+        // No built in increment, add one and then add one to the return value since the original value is returned
         return static_cast<int8>(__sync_fetch_and_add(Dest, 1)) + 1;
     }
 
     static FORCEINLINE int16 InterlockedIncrement(volatile int16* Dest)
     {
-        // No built in increment, add one and then add one to the return value sin the original value is returned
+        // No built in increment, add one and then add one to the return value since the original value is returned
         return static_cast<int16>(__sync_fetch_and_add(Dest, 1)) + 1;
     }
 
     static FORCEINLINE int32 InterlockedIncrement(volatile int32* Dest)
     {
-        // No built in increment, add one and then add one to the return value sin the original value is returned
+        // No built in increment, add one and then add one to the return value since the original value is returned
         return static_cast<int32>(__sync_fetch_and_add(Dest, 1)) + 1;
     }
 
     static FORCEINLINE int64 InterlockedIncrement(volatile int64* Dest)
     {
-        // No built in increment, add one and then add one to the return value sin the original value is returned
+        // No built in increment, add one and then add one to the return value since the original value is returned
         return static_cast<int64>(__sync_fetch_and_add(Dest, 1)) + 1;
     }
 
     static FORCEINLINE int8 InterlockedDecrement(volatile int8* Dest)
     {
-        // No built in decrement, subtract one and then subtract one to the return value sin the original value is returned
+        // No built in decrement, subtract one and then subtract one to the return value since the original value is returned
         return static_cast<int8>(__sync_fetch_and_sub(Dest, 1)) - 1;
     }
 
     static FORCEINLINE int16 InterlockedDecrement(volatile int16* Dest)
     {
-        // No built in decrement, subtract one and then subtract one to the return value sin the original value is returned
+        // No built in decrement, subtract one and then subtract one to the return value since the original value is returned
         return static_cast<int16>(__sync_fetch_and_sub(Dest, 1)) - 1;
     }
 
     static FORCEINLINE int32 InterlockedDecrement(volatile int32* Dest)
     {
-        // No built in decrement, subtract one and then subtract one to the return value sin the original value is returned
+        // No built in decrement, subtract one and then subtract one to the return value since the original value is returned
         return static_cast<int32>(__sync_fetch_and_sub(Dest, 1)) - 1;
     }
 
     static FORCEINLINE int64 InterlockedDecrement(volatile int64* Dest)
     {
-        // No built in decrement, subtract one and then subtract one to the return value sin the original value is returned
+        // No built in decrement, subtract one and then subtract one to the return value since the original value is returned
         return static_cast<int64>(__sync_fetch_and_sub(Dest, 1)) - 1;
     }
 

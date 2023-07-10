@@ -1,4 +1,5 @@
 #include "MacEvent.h"
+#include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Templates/NumericLimits.h"
 
 #include <sys/time.h>
@@ -112,8 +113,8 @@ void FMacEvent::Wait(uint64 Milliseconds)
         }
         else if (Milliseconds != 0)
         {
-            NumWaitingThreads++;
-
+            FMacInterlocked::InterlockedIncrement(&NumWaitingThreads);
+            
             if (Milliseconds == uint64(-1))
             {
                 const auto Result = pthread_cond_wait(&Condition, &Mutex);
@@ -141,7 +142,7 @@ void FMacEvent::Wait(uint64 Milliseconds)
                 StartTime    = Now;
             }
             
-            NumWaitingThreads--;
+            FMacInterlocked::InterlockedDecrement(&NumWaitingThreads);
             CHECK(NumWaitingThreads >= 0);
         }
 

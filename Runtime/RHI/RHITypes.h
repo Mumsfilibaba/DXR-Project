@@ -317,9 +317,9 @@ constexpr uint32 GetByteStrideFromFormat(EFormat Format)
     }
 }
 
-constexpr bool IsCompressed(EFormat Format)
+constexpr bool IsBlockCompressed(EFormat Format)
 {
-    return (ToUnderlying(Format) >= ToUnderlying(EFormat::BC1_Typeless));
+    return ToUnderlying(Format) >= ToUnderlying(EFormat::BC1_Typeless);
 }
 
 

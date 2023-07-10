@@ -16,7 +16,7 @@ public:
     
 private:
     id<MTLTexture> TextureView;
-    id<MTLBuffer>  Buffer;
+    // id<MTLBuffer>  Buffer;
 };
 
 

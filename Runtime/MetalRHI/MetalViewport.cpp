@@ -27,8 +27,8 @@
 
 
 FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportDesc& Desc)
-    : FMetalObject(InDeviceContext)
-    , FRHIViewport(Desc)
+    : FRHIViewport(Desc)
+    , FMetalObject(InDeviceContext)
     , BackBuffer(nullptr)
     , MetalView(nullptr)
     , Drawable(nil)

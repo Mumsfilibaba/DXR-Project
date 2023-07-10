@@ -70,6 +70,7 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
                 id<MTLBlitCommandEncoder> CopyEncoder   = [CommandBuffer blitCommandEncoder];
 
                 // TODO: Handle uploadbuffers differently
+                
                 // Calculate total size of upload buffer
                 uint64 TotalTextureSize = 0;
                 for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
@@ -77,14 +78,22 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
                     TotalTextureSize += InInitialData->GetMipSlicePitch(Index);
                 }
                 
+                // Create a staginbuffer and get the data-pointer for it
                 id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:TotalTextureSize options:MTLResourceCPUCacheModeDefaultCache];
-
+                uint8* StagingBufferContents = reinterpret_cast<uint8*>(StagingBuffer.contents);
+                
                 // Transfer all the mip-levels
                 uint32 Width        = Desc.Extent.x;
                 uint32 Height       = Desc.Extent.y;
                 uint64 SourceOffset = 0;
                 for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
                 {
+                    // TODO: This does not feel optimal
+                    if (IsBlockCompressed(Desc.Format) && ((Width % 4 != 0) || (Height % 4 != 0)))
+                    {
+                        break;
+                    }
+
                     MTLRegion Region;
                     Region.origin = { 0, 0, 0 };
                     Region.size   = { NSUInteger(Width), NSUInteger(Height), 1 };
@@ -92,6 +101,10 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
                     const NSUInteger BytesPerRow = NSUInteger(InInitialData->GetMipRowPitch(Index));
                     const NSUInteger SlicePitch  = NSUInteger(InInitialData->GetMipSlicePitch(Index));
                     
+                    // Set the data in the stagingbuffer
+                    FMemory::Memcpy(StagingBufferContents + SourceOffset, InInitialData->GetMipData(Index), SlicePitch);
+                    
+                    // Perform copy of the staginbuffer into the GPU memory
                     [CopyEncoder copyFromBuffer:StagingBuffer
                                 sourceOffset:SourceOffset
                             sourceBytesPerRow:BytesPerRow
@@ -104,7 +117,7 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
                     
                     Width        = Width / 2;
                     Height       = Height / 2;
-                    SourceOffset = SourceOffset + InInitialData->GetMipSlicePitch(Index);
+                    SourceOffset = SourceOffset + SlicePitch;
                 }
 
                 [CopyEncoder endEncoding];

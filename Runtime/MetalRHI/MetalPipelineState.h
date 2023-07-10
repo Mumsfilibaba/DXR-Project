@@ -101,8 +101,8 @@ public:
     }
     
 private:
-    FRHIDepthStencilStateDesc Desc;
     id<MTLDepthStencilState>  DepthStencilState;
+    FRHIDepthStencilStateDesc Desc;
 };
 
 

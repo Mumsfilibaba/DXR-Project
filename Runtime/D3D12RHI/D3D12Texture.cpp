@@ -197,18 +197,13 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
             for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
             {
                 // TODO: This does not feel optimal
-                if (IsCompressed(Desc.Format) && ((Width % 4 != 0) || (Height % 4 != 0)))
+                if (IsBlockCompressed(Desc.Format) && ((Width % 4 != 0) || (Height % 4 != 0)))
                 {
                     break;
                 }
 
                 FTextureRegion2D TextureRegion(Width, Height);
-                Context->UpdateTexture2D(
-                    this,
-                    TextureRegion,
-                    Index,
-                    InitialData->GetMipData(Index), 
-                    (uint32)InitialData->GetMipRowPitch(Index));
+                Context->UpdateTexture2D(this, TextureRegion, Index, InitialData->GetMipData(Index), static_cast<uint32>(InitialData->GetMipRowPitch(Index)));
 
                 Width  = Width / 2;
                 Height = Height / 2;

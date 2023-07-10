@@ -85,7 +85,7 @@ FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGe
         return nullptr;
     }
 
-    if (IsCompressed(NewTexture->GetFormat()))
+    if (IsBlockCompressed(NewTexture->GetFormat()))
     {
         bGenerateMips = false;
     }
