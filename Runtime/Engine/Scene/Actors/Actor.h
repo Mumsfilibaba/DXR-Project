@@ -5,7 +5,6 @@
 #include "Core/Math/Matrix3x4.h"
 #include "Core/Math/Matrix4.h"
 #include "Core/Time/Timespan.h"
-
 #include "Engine/Core/Object.h"
 
 class ENGINE_API FActorTransform
@@ -56,9 +55,10 @@ public:
 
     FORCEINLINE FMatrix3x4 GetTinyMatrix() const
     {
-        return FMatrix3x4( Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03
-                         , Matrix.m10, Matrix.m11, Matrix.m12, Matrix.m13
-                         , Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23);
+        return FMatrix3x4(
+            Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03,
+            Matrix.m10, Matrix.m11, Matrix.m12, Matrix.m13,
+            Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23);
     }
 
 private:
@@ -74,8 +74,7 @@ private:
 class FScene;
 class FComponent;
 
-class ENGINE_API FActor 
-    : public FObject
+class ENGINE_API FActor : public FObject
 {
     FOBJECT_BODY(FActor, FObject);
 
@@ -207,9 +206,9 @@ private:
     FString Name;
     FScene* SceneOwner = nullptr;
 
-    FActorTransform     Transform;
-    TArray<FComponent*> Components;
-
     bool bIsStartable : 1;
     bool bIsTickable  : 1;
+
+    FActorTransform     Transform;
+    TArray<FComponent*> Components;
 };
