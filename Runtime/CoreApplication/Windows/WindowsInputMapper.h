@@ -2,9 +2,9 @@
 #include "Core/Core.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Input/InputCodes.h"
-#include "CoreApplication/Generic/GenericKeyMapping.h"
+#include "CoreApplication/Generic/GenericInputMapper.h"
 
-class COREAPPLICATION_API FWindowsKeyMapping final : public FGenericKeyMapping
+class COREAPPLICATION_API FWindowsInputMapper final : public EGenericInputMapper
 {
     inline static constexpr uint32 NumKeys = 512;
 

@@ -4,7 +4,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Windows/WindowsKeyMapping.h"
+#include "Core/Windows/WindowsInputMapper.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
@@ -56,7 +56,7 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     CHECK(bResult == true);
 
     // Init the key mapping Win32 KeyCodes -> EKeyName
-    FWindowsKeyMapping::Initialize();
+    FWindowsInputMapper::Initialize();
 
     // Run a check for connected devices
     XInputDevice.UpdateConnectionState();
@@ -459,7 +459,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_KEYUP:
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WINDOWS_SCAN_CODE_MASK);
-            const EKeyName::Type Key = FWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
+            const EKeyName::Type Key = FWindowsInputMapper::GetKeyCodeFromScanCode(ScanCode);
             MessageHandler->OnKeyUp(Key, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
@@ -468,7 +468,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_KEYDOWN:
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WINDOWS_SCAN_CODE_MASK);
-            const EKeyName::Type Key = FWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
+            const EKeyName::Type Key = FWindowsInputMapper::GetKeyCodeFromScanCode(ScanCode);
             const bool bIsRepeat = (lParam & WINDOWS_KEY_REPEAT_MASK) != 0;
             MessageHandler->OnKeyDown(Key, bIsRepeat, FPlatformApplicationMisc::GetModifierKeyState());
             break;

@@ -1,12 +1,12 @@
 #if PLATFORM_MACOS
-#include "MacKeyMapping.h"
+#include "MacInputMapper.h"
 
-TStaticArray<EKeyName::Type, FMacKeyMapping::NumKeys>         FMacKeyMapping::KeyCodeFromScanCodeTable;
-TStaticArray<uint16, FMacKeyMapping::NumKeys>                 FMacKeyMapping::ScanCodeFromKeyCodeTable;
-TStaticArray<EMouseButtonName::Type, EMouseButtonName::Count> FMacKeyMapping::ButtonFromButtonIndex;
-TStaticArray<uint8, EMouseButtonName::Count>                  FMacKeyMapping::ButtonIndexFromButton;
+TStaticArray<EKeyName::Type, FMacInputMapper::NumKeys>         FMacInputMapper::KeyCodeFromScanCodeTable;
+TStaticArray<uint16, FMacInputMapper::NumKeys>                 FMacInputMapper::ScanCodeFromKeyCodeTable;
+TStaticArray<EMouseButtonName::Type, EMouseButtonName::Count> FMacInputMapper::ButtonFromButtonIndex;
+TStaticArray<uint8, EMouseButtonName::Count>                  FMacInputMapper::ButtonIndexFromButton;
 
-void FMacKeyMapping::Initialize()
+void FMacInputMapper::Initialize()
 {
     KeyCodeFromScanCodeTable.Memzero();
     ScanCodeFromKeyCodeTable.Memzero();

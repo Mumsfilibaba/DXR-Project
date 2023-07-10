@@ -10,11 +10,6 @@ FMacThread::FMacThread(FThreadInterface* InRunnable)
 { 
 }
 
-FMacThread::~FMacThread()
-{
-    LOG_INFO("Destroying thread %s", Name.GetCString());
-}
-
 bool FMacThread::Start()
 {
     const int32 Result = ::pthread_create(&Thread, nullptr, FMacThread::ThreadRoutine, reinterpret_cast<void*>(this));

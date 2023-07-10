@@ -7,7 +7,7 @@ class FMacThread final : public FGenericThread
 {
 public:
     FMacThread(FThreadInterface* InRunnable);
-    virtual ~FMacThread();
+    virtual ~FMacThread() = default;
 
     virtual bool Start() override final;
 

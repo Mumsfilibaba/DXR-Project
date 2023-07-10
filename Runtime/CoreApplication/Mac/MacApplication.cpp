@@ -6,7 +6,7 @@
 #include "Core/Mac/MacRunLoop.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Threading/ScopedLock.h"
-#include "CoreApplication/Platform/PlatformKeyMapping.h"
+#include "CoreApplication/Platform/PlatformInputMapper.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
@@ -179,7 +179,7 @@ FMacApplication::FMacApplication()
     // This should only be initialized from the main thread, but assert just to be sure.
     CHECK(FPlatformThreadMisc::IsMainThread());
 
-    FPlatformKeyMapping::Initialize();
+    FPlatformInputMapper::Initialize();
     
     // Init the default macOS menu
     NSMenu* MenuBar = [NSMenu new];
@@ -561,13 +561,13 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
         {
             case NSEventTypeKeyUp:
             {
-                MessageHandler->OnKeyUp(FPlatformKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode), FPlatformApplicationMisc::GetModifierKeyState());
+                MessageHandler->OnKeyUp(FPlatformInputMapper::GetKeyCodeFromScanCode(CurrentEvent.keyCode), FPlatformApplicationMisc::GetModifierKeyState());
                 break;
             }
                
             case NSEventTypeKeyDown:
             {
-                MessageHandler->OnKeyDown(FPlatformKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode), CurrentEvent.ARepeat, FPlatformApplicationMisc::GetModifierKeyState());
+                MessageHandler->OnKeyDown(FPlatformInputMapper::GetKeyCodeFromScanCode(CurrentEvent.keyCode), CurrentEvent.ARepeat, FPlatformApplicationMisc::GetModifierKeyState());
                 break;
             }
 
@@ -576,7 +576,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
             case NSEventTypeOtherMouseUp:
             {
                 const NSPoint CursorPosition = [NSEvent mouseLocation];
-                MessageHandler->OnMouseButtonUp(FPlatformKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber)), FPlatformApplicationMisc::GetModifierKeyState(), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+                MessageHandler->OnMouseButtonUp(FPlatformInputMapper::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber)), FPlatformApplicationMisc::GetModifierKeyState(), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
                 break;
             }
 
@@ -584,7 +584,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
             case NSEventTypeRightMouseDown:
             case NSEventTypeOtherMouseDown:
             {
-                const EMouseButtonName::Type CurrentMouseButton = FPlatformKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber));
+                const EMouseButtonName::Type CurrentMouseButton = FPlatformInputMapper::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber));
                 
                 const NSPoint CursorPosition = [NSEvent mouseLocation];
                 if (LastPressedButton == CurrentMouseButton && CurrentEvent.clickCount % 2 == 0)
