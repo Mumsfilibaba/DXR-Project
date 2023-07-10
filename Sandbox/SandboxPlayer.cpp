@@ -22,6 +22,7 @@ void FSandboxPlayerController::Tick(FTimespan DeltaTime)
     const float Deadzone      = 0.01f;
 
     FPlayerInput* InputState = GetPlayerInput();
+    CHECK(InputState != nullptr);
     
     const FAnalogAxisState RightThumbX = InputState->GetAnalogState(EAnalogSourceName::RightThumbX);
     const FAnalogAxisState RightThumbY = InputState->GetAnalogState(EAnalogSourceName::RightThumbY);

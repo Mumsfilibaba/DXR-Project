@@ -266,11 +266,14 @@ public:
 
 private:
     EGamepadButtonName::Type Button;
-    bool               bIsButtonDown;
-    bool               bIsRepeat;
+    
+    bool                     bIsButtonDown;
+    bool                     bIsRepeat;
+
     EAnalogSourceName::Type  AnalogSource;
-    float              AnalogValue;
-    uint32             GamepadIndex;
+    
+    float                    AnalogValue;
+    uint32                   GamepadIndex;
 };
 
 class FWindowEvent
