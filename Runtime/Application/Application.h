@@ -71,16 +71,16 @@ public:
 
     void Tick(FTimespan DeltaTime);
     
-    void PollInputDevices();
+    void UpdateGamepadDevices();
 
     void UpdateMonitorInfo();
   
 public: // FGenericApplicationMessageHandler Interface
-    virtual bool OnControllerButtonUp(EGamepadButtonName Button, uint32 ControllerIndex) override final;
+    virtual bool OnControllerButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex) override final;
     
-    virtual bool OnControllerButtonDown(EGamepadButtonName Button, uint32 ControllerIndex, bool bIsRepeat) override final;
+    virtual bool OnControllerButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat) override final;
     
-    virtual bool OnControllerAnalog(EAnalogSourceName AnalogSource, uint32 ControllerIndex, float AnalogValue) override final;
+    virtual bool OnControllerAnalog(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue) override final;
 
     virtual bool OnKeyUp(EKeyName::Type KeyCode, FModifierKeyState ModierKeyState) override final;
     

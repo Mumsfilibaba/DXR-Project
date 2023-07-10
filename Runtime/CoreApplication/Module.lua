@@ -15,6 +15,7 @@ if IsPlatformMac() then
         "Cocoa",
         "AppKit",
         "IOKit",
+        "GameController",
     })
 elseif IsPlatformWindows() then
     CoreApplicationModule.AddLinkLibraries(

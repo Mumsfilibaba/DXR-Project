@@ -142,6 +142,13 @@ public:
         {
             bDone = true;
             
+            // No more tasks to execute
+            if (!Tasks.Peek())
+            {
+                break;
+            }
+            
+            // Execute the task
             FRunLoopTask* Task = *Tasks.Peek();
             if (Task && [Task->RunLoopModes containsObject:(NSString*)InRunLoopMode])
             {

@@ -314,32 +314,37 @@ constexpr const CHAR* ToString(EMouseButtonName::Type Button)
     }
 }
 
-
-enum class EGamepadButtonName : uint8
+namespace EGamepadButtonName
 {
-    Unknown = 0,
+    enum Type : uint8
+    {
+        Unknown = 0,
 
-    DPadUp,
-    DPadDown,
-    DPadLeft,
-    DPadRight,
+        DPadUp,
+        DPadDown,
+        DPadLeft,
+        DPadRight,
 
-    FaceUp,
-    FaceDown,
-    FaceLeft,
-    FaceRight,
+        FaceUp,
+        FaceDown,
+        FaceLeft,
+        FaceRight,
 
-    RightTrigger,
-    LeftTrigger,
+        RightTrigger,
+        LeftTrigger,
 
-    RightShoulder,
-    LeftShoulder,
+        RightShoulder,
+        LeftShoulder,
 
-    Start,
-    Back,
-};
+        Start,
+        Back,
 
-constexpr const CHAR* ToString(EGamepadButtonName Button)
+        Last  = Back,
+        Count = Last + 1
+    };
+}
+
+constexpr const CHAR* ToString(EGamepadButtonName::Type Button)
 {
     switch (Button)
     {
@@ -365,21 +370,26 @@ constexpr const CHAR* ToString(EGamepadButtonName Button)
     }
 }
 
-
-enum class EAnalogSourceName : uint8
+namespace EAnalogSourceName
 {
-    Unknown = 0,
-    
-    RightThumbX,
-    RightThumbY,
-    LeftThumbX,
-    LeftThumbY,
+    enum Type : uint8
+    {
+        Unknown = 0,
+        
+        RightThumbX,
+        RightThumbY,
+        LeftThumbX,
+        LeftThumbY,
 
-    RightTrigger,
-    LeftTrigger,
-};
+        RightTrigger,
+        LeftTrigger,
 
-constexpr const CHAR* ToString(EAnalogSourceName AnalogSourceName)
+        Last  = LeftTrigger,
+        Count = Last + 1
+    };
+}
+
+constexpr const CHAR* ToString(EAnalogSourceName::Type AnalogSourceName)
 {
     switch (AnalogSourceName)
     {

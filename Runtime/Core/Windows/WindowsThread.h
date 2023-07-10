@@ -6,7 +6,7 @@ class CORE_API FWindowsThread final : public FGenericThread
 {
 public:
     FWindowsThread(FThreadInterface* InRunnable, bool bSuspended);
-    ~FWindowsThread();
+    virtual ~FWindowsThread();
 
     bool Initialize();
 

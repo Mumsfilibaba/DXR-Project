@@ -59,7 +59,7 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     FWindowsKeyMapping::Initialize();
 
     // Run a check for connected devices
-    XInputDevice.CheckForNewDevices();
+    XInputDevice.UpdateConnectionState();
  }
 
 FWindowsApplication::~FWindowsApplication()
@@ -193,7 +193,7 @@ void FWindowsApplication::Tick(float)
     }
 }
 
-void FWindowsApplication::PollInputDevices()
+void FWindowsApplication::UpdateGamepadDevices()
 {
     XInputDevice.UpdateDeviceState();
 }
@@ -637,7 +637,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             if (static_cast<UINT>(wParam) == DBT_DEVNODES_CHANGED)
             {
-                XInputDevice.CheckForNewDevices();
+                XInputDevice.UpdateConnectionState();
             }
 
             break;

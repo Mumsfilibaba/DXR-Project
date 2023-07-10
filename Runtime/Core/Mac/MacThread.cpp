@@ -10,9 +10,14 @@ FMacThread::FMacThread(FThreadInterface* InRunnable)
 { 
 }
 
+FMacThread::~FMacThread()
+{
+    LOG_INFO("Destroying thread %s", Name.GetCString());
+}
+
 bool FMacThread::Start()
 {
-    const auto Result = pthread_create(&Thread, nullptr, FMacThread::ThreadRoutine, reinterpret_cast<void*>(this));
+    const int32 Result = ::pthread_create(&Thread, nullptr, FMacThread::ThreadRoutine, reinterpret_cast<void*>(this));
     if (Result)
     {
         LOG_ERROR("[FMacThread] Failed to create thread");
@@ -26,7 +31,7 @@ bool FMacThread::Start()
 
 void FMacThread::WaitForCompletion()
 {
-    pthread_join(Thread, nullptr);
+    ::pthread_join(Thread, nullptr);
 }
 
 void FMacThread::SetName(const FString& InName)
@@ -36,7 +41,7 @@ void FMacThread::SetName(const FString& InName)
     if (bCurrentThreadIsMyself)
     {
         Name = InName;
-        pthread_setname_np(Name.GetCString());
+        ::pthread_setname_np(Name.GetCString());
     }
     else if (!bIsRunning)
     {
@@ -59,7 +64,7 @@ void* FMacThread::ThreadRoutine(void* ThreadParameter)
         // Can only set the current thread's name
         if (!CurrentThread->Name.IsEmpty())
         {
-            pthread_setname_np(CurrentThread->Name.GetCString());
+            ::pthread_setname_np(CurrentThread->Name.GetCString());
         }
 
         if (FThreadInterface* Runnable = CurrentThread->GetRunnable())
@@ -73,6 +78,6 @@ void* FMacThread::ThreadRoutine(void* ThreadParameter)
         }
     }
 
-    pthread_exit(nullptr);
+    ::pthread_exit(nullptr);
     return reinterpret_cast<void*>(Result);
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "MacCursor.h"
+#include "GCInputDevice.h"
 #include "Core/Mac/Mac.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/Array.h"
@@ -68,7 +69,7 @@ public:
 
     virtual void Tick(float Delta) override final;
 
-    virtual void PollInputDevices() override final;
+    virtual void UpdateGamepadDevices() override final;
 
     virtual FInputDevice* GetInputDeviceInterface() override final;
 
@@ -103,7 +104,11 @@ private:
     
     mutable FDisplayInfo DisplayInfo;
     
+    // Observer that checks for monitor changes
     FMacApplicationObserver* Observer;
+    
+    // InputDevice handling gamepads
+    TSharedPtr<FGCInputDevice> InputDevice;
     
     EMouseButtonName::Type LastPressedButton;
     mutable bool           bHasDisplayInfoChanged;

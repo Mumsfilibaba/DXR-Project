@@ -128,7 +128,7 @@ static ImGuiKey ImGui_KeyToImGuiKey(EKeyName::Type Key)
     }
 }
 
-static ImGuiKey ImGui_GetGamepadButton(EGamepadButtonName Button)
+static ImGuiKey ImGui_GetGamepadButton(EGamepadButtonName::Type Button)
 {
     switch (Button)
     {
@@ -150,7 +150,7 @@ static ImGuiKey ImGui_GetGamepadButton(EGamepadButtonName Button)
     }
 }
 
-static ImGuiKey ImGui_GetGamepadAnalog(EAnalogSourceName Analog, bool bIsNegative)
+static ImGuiKey ImGui_GetGamepadAnalog(EAnalogSourceName::Type Analog, bool bIsNegative)
 {
     switch (Analog)
     {
@@ -593,7 +593,7 @@ void FImGui::SetupMainViewport(FViewport* InViewport)
     }
 }
 
-FResponse FImGui::OnGamepadButtonEvent(EGamepadButtonName Button, bool bIsDown)
+FResponse FImGui::OnGamepadButtonEvent(EGamepadButtonName::Type Button, bool bIsDown)
 {
     const ImGuiKey GamepadButton = ImGui_GetGamepadButton(Button);
     if (GamepadButton != ImGuiKey_None)
@@ -604,7 +604,7 @@ FResponse FImGui::OnGamepadButtonEvent(EGamepadButtonName Button, bool bIsDown)
     return FResponse::Unhandled();
 }
 
-FResponse FImGui::OnGamepadAnalogEvent(EAnalogSourceName AnalogSource, float Analog)
+FResponse FImGui::OnGamepadAnalogEvent(EAnalogSourceName::Type AnalogSource, float Analog)
 {
     const bool bIsNegative = Analog < 0.0f;
 

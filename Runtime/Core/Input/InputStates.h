@@ -57,7 +57,7 @@ struct FMouseButtonState
 
 struct FAnalogAxisState
 {
-    FAnalogAxisState(EAnalogSourceName InSource)
+    FAnalogAxisState(EAnalogSourceName::Type InSource)
         : Source(InSource)
         , Value(0.0f)
         , NumTicksSinceUpdate(0)
@@ -65,7 +65,7 @@ struct FAnalogAxisState
     }
 
     /** @brief - The analog source that this came from */
-    const EAnalogSourceName Source;
+    const EAnalogSourceName::Type Source;
 
     /** @brief - The current analog value */
     float Value;
@@ -76,7 +76,7 @@ struct FAnalogAxisState
 
 struct FControllerButtonState
 {
-    FControllerButtonState(EGamepadButtonName InButton)
+    FControllerButtonState(EGamepadButtonName::Type InButton)
         : Button(InButton)
         , bIsDown(0)
         , bPreviousState(0)
@@ -86,7 +86,7 @@ struct FControllerButtonState
     }
 
     /** @brief - The key for this key-state */
-    const EGamepadButtonName Button;
+    const EGamepadButtonName::Type Button;
 
     /** @brief - Indicates if the current state of the key is down */
     uint32 bIsDown : 1;

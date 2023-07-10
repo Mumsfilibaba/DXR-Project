@@ -19,7 +19,7 @@ struct FXInputButtonState
     uint8 RepeatCount : 7;
 };
 
-struct FXInputControllerState
+struct FXInputGamepadState
 {
     int16 LeftThumbX;
     int16 LeftThumbY;
@@ -47,17 +47,11 @@ public:
         return bIsDeviceConnected;
     }
 
-    void CheckForNewDevices();
+    void UpdateConnectionState();
 
 private:
-    void ProcessInputState(const XINPUT_STATE& State, uint32 ControllerIndex);
-    
-    void ProcessButtonDown(FGenericApplicationMessageHandler* MessageHandler, uint32 ControllerIndex, uint16 CurrentButtonState, uint16 NewButtonState);
-    
-    void ProcessButtonUp(FGenericApplicationMessageHandler* MessageHandler, uint32 ControllerIndex, uint16 CurrentButtonState, uint16 NewButtonState);
-    
-    void ProcessThumbstick(FGenericApplicationMessageHandler* MessageHandler, uint32 ControllerIndex, EAnalogSourceName AnalogSource, uint16 ThumbStickValue);
+    void ProcessInputState(const XINPUT_STATE& State, uint32 GamepadIndex);
 
-    FXInputControllerState ControllerState[XUSER_MAX_COUNT];
+    FXInputGamepadState GamepadStates[XUSER_MAX_COUNT];
     bool bIsDeviceConnected;
 };

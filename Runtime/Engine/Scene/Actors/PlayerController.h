@@ -30,9 +30,9 @@ public:
 
     FMouseButtonState      GetMouseButtonState(EMouseButtonName::Type Button) const;
     
-    FControllerButtonState GetControllerButtonState(EGamepadButtonName Button) const;
+    FControllerButtonState GetControllerButtonState(EGamepadButtonName::Type Button) const;
     
-    FAnalogAxisState       GetAnalogState(EAnalogSourceName AnalogSource) const;
+    FAnalogAxisState       GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
 
     void ResetStates();
 
@@ -75,19 +75,19 @@ public:
     }
 
 
-    bool IsButtonDown(EGamepadButtonName Button) const
+    bool IsButtonDown(EGamepadButtonName::Type Button) const
     {
         const FControllerButtonState ButtonState = GetControllerButtonState(Button);
         return !!ButtonState.bIsDown;
     }
 
-    bool IsButtonUp(EGamepadButtonName Button) const
+    bool IsButtonUp(EGamepadButtonName::Type Button) const
     {
         const FControllerButtonState ButtonState = GetControllerButtonState(Button);
         return !ButtonState.bIsDown;
     }
 
-    bool IsButtonPressed(EGamepadButtonName Button) const
+    bool IsButtonPressed(EGamepadButtonName::Type Button) const
     {
         const FControllerButtonState ButtonState = GetControllerButtonState(Button);
         return !!ButtonState.bIsDown && !ButtonState.bPreviousState;

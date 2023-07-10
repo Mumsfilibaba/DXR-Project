@@ -348,7 +348,7 @@ void FApplication::Tick(FTimespan DeltaTime)
     }
 
     // Poll input devices
-    PollInputDevices();
+    UpdateGamepadDevices();
 
     UIState.BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
     if (IsGamePadConnected())
@@ -367,9 +367,9 @@ void FApplication::Tick(FTimespan DeltaTime)
     ImGui::EndFrame();
 }
 
-void FApplication::PollInputDevices()
+void FApplication::UpdateGamepadDevices()
 {
-    PlatformApplication->PollInputDevices();
+    PlatformApplication->UpdateGamepadDevices();
 }
 
 void FApplication::UpdateMonitorInfo()
@@ -397,10 +397,10 @@ void FApplication::UpdateMonitorInfo()
     }
 }
 
-bool FApplication::OnControllerButtonUp(EGamepadButtonName Button, uint32 ControllerIndex)
+bool FApplication::OnControllerButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex)
 {
     // Create the event
-    const FControllerEvent ControllerEvent(Button, ControllerIndex, false, false);
+    const FControllerEvent ControllerEvent(Button, GamepadIndex, false, false);
 
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,
@@ -431,10 +431,10 @@ bool FApplication::OnControllerButtonUp(EGamepadButtonName Button, uint32 Contro
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnControllerButtonDown(EGamepadButtonName Button, uint32 ControllerIndex, bool bIsRepeat)
+bool FApplication::OnControllerButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat)
 {
     // Create the event
-    const FControllerEvent ControllerEvent(Button, ControllerIndex, true, bIsRepeat);
+    const FControllerEvent ControllerEvent(Button, GamepadIndex, true, bIsRepeat);
 
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,
@@ -465,10 +465,10 @@ bool FApplication::OnControllerButtonDown(EGamepadButtonName Button, uint32 Cont
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnControllerAnalog(EAnalogSourceName AnalogSource, uint32 ControllerIndex, float AnalogValue)
+bool FApplication::OnControllerAnalog(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue)
 {
     // Create the event
-    const FControllerEvent ControllerEvent(AnalogSource, ControllerIndex, AnalogValue);
+    const FControllerEvent ControllerEvent(AnalogSource, GamepadIndex, AnalogValue);
 
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,

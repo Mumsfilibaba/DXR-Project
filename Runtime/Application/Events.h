@@ -203,29 +203,29 @@ public:
         , bIsRepeat(false)
         , AnalogSource(EAnalogSourceName::Unknown)
         , AnalogValue(0.0f)
-        , ControllerIndex(0)
+        , GamepadIndex(0)
     {
     }
 
-    FControllerEvent(EGamepadButtonName InButton, uint32 InControllerIndex, bool bInIsButtonDown, bool bInIsRepeat)
+    FControllerEvent(EGamepadButtonName::Type InButton, uint32 InControllerIndex, bool bInIsButtonDown, bool bInIsRepeat)
         : FInputEvent()
         , Button(InButton)
         , bIsButtonDown(bInIsButtonDown)
         , bIsRepeat(bInIsRepeat)
         , AnalogSource(EAnalogSourceName::Unknown)
         , AnalogValue(0.0f)
-        , ControllerIndex(InControllerIndex)
+        , GamepadIndex(InControllerIndex)
     {
     }
 
-    FControllerEvent(EAnalogSourceName InAnalogSource, uint32 InControllerIndex, float InAnalogValue)
+    FControllerEvent(EAnalogSourceName::Type InAnalogSource, uint32 InControllerIndex, float InAnalogValue)
         : FInputEvent()
         , Button(EGamepadButtonName::Unknown)
         , bIsButtonDown(false)
         , bIsRepeat(false)
         , AnalogSource(InAnalogSource)
         , AnalogValue(InAnalogValue)
-        , ControllerIndex(InControllerIndex)
+        , GamepadIndex(InControllerIndex)
     {
     }
 
@@ -244,19 +244,19 @@ public:
         return AnalogSource != EAnalogSourceName::Unknown;
     }
 
-    EGamepadButtonName GetButton() const
+    EGamepadButtonName::Type GetButton() const
     {
         return Button;
     }
 
-    EAnalogSourceName GetAnalogSource() const
+    EAnalogSourceName::Type GetAnalogSource() const
     {
         return AnalogSource;
     }
 
     uint32 GetControllerIndex() const
     {
-        return ControllerIndex;
+        return GamepadIndex;
     }
 
     float GetAnalogValue() const
@@ -265,12 +265,12 @@ public:
     }
 
 private:
-    EGamepadButtonName Button;
+    EGamepadButtonName::Type Button;
     bool               bIsButtonDown;
     bool               bIsRepeat;
-    EAnalogSourceName  AnalogSource;
+    EAnalogSourceName::Type  AnalogSource;
     float              AnalogValue;
-    uint32             ControllerIndex;
+    uint32             GamepadIndex;
 };
 
 class FWindowEvent

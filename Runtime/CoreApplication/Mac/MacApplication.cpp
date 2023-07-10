@@ -93,7 +93,7 @@ static FString GetMonitorNameFromNSScreen(NSScreen* Screen)
     return Result;
 }
 
-uint32 GetDPIFromNSScreen(NSScreen* Screen)
+static uint32 GetDPIFromNSScreen(NSScreen* Screen)
 {
     const NSRect Frame = [Screen frame];
     const float  BackingScaleFactor = [Screen backingScaleFactor];
@@ -121,9 +121,9 @@ uint32 GetDPIFromNSScreen(NSScreen* Screen)
 
 @interface FMacApplicationObserver : NSObject
 
-- (void) onApplicationBecomeActive:(NSNotification*)InNotification;
-- (void) onApplicationBecomeInactive:(NSNotification*)InNotification;
-- (void) displaysDidChange:(NSNotification*)InNotification;
+- (void)onApplicationBecomeActive:(NSNotification*)InNotification;
+- (void)onApplicationBecomeInactive:(NSNotification*)InNotification;
+- (void)displaysDidChange:(NSNotification*)InNotification;
 
 @end
 
@@ -164,6 +164,7 @@ FMacApplication::FMacApplication()
     : FGenericApplication(MakeShared<FMacCursor>())
     , DisplayInfo()
     , Observer(nullptr)
+    , InputDevice(FGCInputDevice::CreateGCInputDevice())
     , LastPressedButton(EMouseButtonName::Unknown)
     , bHasDisplayInfoChanged(true)
     , Windows()
@@ -314,15 +315,17 @@ void FMacApplication::Tick(float)
     }
 }
 
-void FMacApplication::PollInputDevices()
+void FMacApplication::UpdateGamepadDevices()
 {
-    // TODO: Implement gamepad support
+    if (InputDevice)
+    {
+        InputDevice->UpdateDeviceState();
+    }
 }
 
 FInputDevice* FMacApplication::GetInputDeviceInterface()
 {
-    // TODO: Implement gamepad support
-    return nullptr;
+    return InputDevice.Get();
 }
 
 bool FMacApplication::SupportsHighPrecisionMouse() const
@@ -412,7 +415,11 @@ void FMacApplication::GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const
 void FMacApplication::SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
 {
     FGenericApplication::SetMessageHandler(InMessageHandler);
-    // TODO: Set the message handler to the input device
+    
+    if (InputDevice)
+    {
+        InputDevice->SetMessageHandler(InMessageHandler);
+    }
 }
 
 TSharedRef<FMacWindow> FMacApplication::GetWindowFromNSWindow(NSWindow* Window) const

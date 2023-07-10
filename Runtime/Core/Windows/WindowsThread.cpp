@@ -15,7 +15,7 @@ FWindowsThread::FWindowsThread(FThreadInterface* InRunnable, bool bSuspended)
         Flags = CREATE_SUSPENDED;
     }
 
-    Thread = CreateThread(nullptr, 0, FWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), Flags, &hThreadID);
+    Thread = ::CreateThread(nullptr, 0, FWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), Flags, &hThreadID);
     if (!Thread)
     {
         LOG_ERROR("[FWindowsThread] Failed to create thread");
@@ -27,16 +27,16 @@ FWindowsThread::~FWindowsThread()
 {
     if (Thread)
     {
-        CloseHandle(Thread);
+        ::CloseHandle(Thread);
     }
 }
 
 bool FWindowsThread::Start()
 {
     CHECK(bIsSuspended);
-    CHECK((hThreadID != 0) && (Thread != 0));
+    CHECK(hThreadID != 0 && Thread != 0);
 
-    DWORD Result = ResumeThread(Thread);
+    DWORD Result = ::ResumeThread(Thread);
     if (Result == DWORD(-1))
     {
         LOG_ERROR("[FWindowsThread] Failed to Start thread");
@@ -48,13 +48,13 @@ bool FWindowsThread::Start()
 
 void FWindowsThread::WaitForCompletion()
 {
-    WaitForSingleObject(Thread, INFINITE);
+    ::WaitForSingleObject(Thread, INFINITE);
 }
 
 void FWindowsThread::SetName(const FString& InName)
 {
     FStringWide WideName = CharToWide(InName);
-    SetThreadDescription(Thread, WideName.GetCString());
+    ::SetThreadDescription(Thread, WideName.GetCString());
     Name = InName;
 }
 
@@ -71,7 +71,7 @@ DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
         if (!CurrentThread->Name.IsEmpty())
         {
             FStringWide WideName = CharToWide(CurrentThread->Name);
-            SetThreadDescription(CurrentThread->Thread, WideName.GetCString());
+            ::SetThreadDescription(CurrentThread->Thread, WideName.GetCString());
         }
 
         DWORD Result = DWORD(-1);

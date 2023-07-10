@@ -56,7 +56,7 @@ public:
 
     virtual void Tick(float Delta) override final;
     
-    virtual void PollInputDevices() override final;
+    virtual void UpdateGamepadDevices() override final;
 
     virtual FInputDevice* GetInputDeviceInterface() override final;
 

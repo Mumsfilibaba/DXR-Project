@@ -94,7 +94,7 @@ public:
 
     virtual void Tick(float Delta) { }
 
-    virtual void PollInputDevices() { }
+    virtual void UpdateGamepadDevices() { }
 
     virtual FInputDevice* GetInputDeviceInterface() { return nullptr; }
 

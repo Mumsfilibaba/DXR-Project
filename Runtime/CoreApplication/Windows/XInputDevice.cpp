@@ -28,7 +28,7 @@ FXInputDevice::FXInputDevice()
     : FInputDevice()
     , bIsDeviceConnected(false)
 {
-    FMemory::Memzero(ControllerState, sizeof(FXInputControllerState) * XUSER_MAX_COUNT);
+    FMemory::Memzero(GamepadStates, sizeof(FXInputGamepadState) * XUSER_MAX_COUNT);
 }
 
 void FXInputDevice::UpdateDeviceState()
@@ -37,9 +37,9 @@ void FXInputDevice::UpdateDeviceState()
 
     // Update the state for all the controllers that are connected
     DWORD Result = ERROR_DEVICE_NOT_CONNECTED;
-    for (DWORD ControllerIndex = 0; ControllerIndex < XUSER_MAX_COUNT; ControllerIndex++)
+    for (DWORD GamepadIndex = 0; GamepadIndex < XUSER_MAX_COUNT; GamepadIndex++)
     {
-        FXInputControllerState& CurrentState = ControllerState[ControllerIndex];
+        FXInputGamepadState& CurrentState = GamepadStates[GamepadIndex];
         if (!CurrentState.bConnected)
         {
             continue;
@@ -48,15 +48,15 @@ void FXInputDevice::UpdateDeviceState()
         XINPUT_STATE State;
         FMemory::Memzero(&State, sizeof(XINPUT_STATE));
 
-        Result = XInputGetState(ControllerIndex, &State);
+        Result = XInputGetState(GamepadIndex, &State);
         if (Result == ERROR_SUCCESS)
         {
-            ProcessInputState(State, ControllerIndex);
+            ProcessInputState(State, GamepadIndex);
             bFoundDevice = true;
         }
         else
         {
-            ControllerState[ControllerIndex].bConnected = false;
+            GamepadStates[GamepadIndex].bConnected = false;
         }
     }
 
@@ -64,7 +64,7 @@ void FXInputDevice::UpdateDeviceState()
     bIsDeviceConnected = bFoundDevice;
 }
 
-void FXInputDevice::CheckForNewDevices()
+void FXInputDevice::UpdateConnectionState()
 {
     bool bFoundDevice = false;
 
@@ -78,12 +78,12 @@ void FXInputDevice::CheckForNewDevices()
         Result = XInputGetState(UserIndex, &State);
         if (Result == ERROR_SUCCESS)
         {
-            ControllerState[UserIndex].bConnected = true;
+            GamepadStates[UserIndex].bConnected = true;
             bFoundDevice = true;
         }
         else
         {
-            ControllerState[UserIndex].bConnected = false;
+            GamepadStates[UserIndex].bConnected = false;
         }
     }
 
@@ -91,11 +91,11 @@ void FXInputDevice::CheckForNewDevices()
     bIsDeviceConnected = bFoundDevice;
 }
 
-void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 ControllerIndex)
+void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadIndex)
 {
     const XINPUT_GAMEPAD& Gamepad = State.Gamepad;
 
-    FXInputControllerState& CurrentState = ControllerState[ControllerIndex];
+    FXInputGamepadState& CurrentState = GamepadStates[GamepadIndex];
     if (TSharedPtr<FGenericApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler())
     {
         // MaxButtonRepeatDelay is based on the number of bits available to the RepeatCount
@@ -114,24 +114,24 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 Controll
         bool bCurrentStates[NUM_BUTTONS];
         FMemory::Memzero(bCurrentStates, sizeof(bCurrentStates));
 
-        bCurrentStates[ToUnderlying(EGamepadButtonName::DPadUp)]        = IsButtonDown(XINPUT_GAMEPAD_DPAD_UP);
-        bCurrentStates[ToUnderlying(EGamepadButtonName::DPadDown)]      = IsButtonDown(XINPUT_GAMEPAD_DPAD_DOWN);
-        bCurrentStates[ToUnderlying(EGamepadButtonName::DPadLeft)]      = IsButtonDown(XINPUT_GAMEPAD_DPAD_LEFT);
-        bCurrentStates[ToUnderlying(EGamepadButtonName::DPadRight)]     = IsButtonDown(XINPUT_GAMEPAD_DPAD_RIGHT);
+        bCurrentStates[EGamepadButtonName::DPadUp]        = IsButtonDown(XINPUT_GAMEPAD_DPAD_UP);
+        bCurrentStates[EGamepadButtonName::DPadDown]      = IsButtonDown(XINPUT_GAMEPAD_DPAD_DOWN);
+        bCurrentStates[EGamepadButtonName::DPadLeft]      = IsButtonDown(XINPUT_GAMEPAD_DPAD_LEFT);
+        bCurrentStates[EGamepadButtonName::DPadRight]     = IsButtonDown(XINPUT_GAMEPAD_DPAD_RIGHT);
 
-        bCurrentStates[ToUnderlying(EGamepadButtonName::FaceUp)]        = IsButtonDown(XINPUT_GAMEPAD_Y);
-        bCurrentStates[ToUnderlying(EGamepadButtonName::FaceDown)]      = IsButtonDown(XINPUT_GAMEPAD_A);
-        bCurrentStates[ToUnderlying(EGamepadButtonName::FaceLeft)]      = IsButtonDown(XINPUT_GAMEPAD_X);
-        bCurrentStates[ToUnderlying(EGamepadButtonName::FaceRight)]     = IsButtonDown(XINPUT_GAMEPAD_B);
+        bCurrentStates[EGamepadButtonName::FaceUp]        = IsButtonDown(XINPUT_GAMEPAD_Y);
+        bCurrentStates[EGamepadButtonName::FaceDown]      = IsButtonDown(XINPUT_GAMEPAD_A);
+        bCurrentStates[EGamepadButtonName::FaceLeft]      = IsButtonDown(XINPUT_GAMEPAD_X);
+        bCurrentStates[EGamepadButtonName::FaceRight]     = IsButtonDown(XINPUT_GAMEPAD_B);
 
-        bCurrentStates[ToUnderlying(EGamepadButtonName::RightTrigger)]  = IsButtonDown(XINPUT_GAMEPAD_RIGHT_THUMB);
-        bCurrentStates[ToUnderlying(EGamepadButtonName::LeftTrigger)]   = IsButtonDown(XINPUT_GAMEPAD_LEFT_THUMB);
+        bCurrentStates[EGamepadButtonName::RightTrigger]  = IsButtonDown(XINPUT_GAMEPAD_RIGHT_THUMB);
+        bCurrentStates[EGamepadButtonName::LeftTrigger]   = IsButtonDown(XINPUT_GAMEPAD_LEFT_THUMB);
 
-        bCurrentStates[ToUnderlying(EGamepadButtonName::RightShoulder)] = IsButtonDown(XINPUT_GAMEPAD_RIGHT_SHOULDER);
-        bCurrentStates[ToUnderlying(EGamepadButtonName::LeftShoulder)]  = IsButtonDown(XINPUT_GAMEPAD_LEFT_SHOULDER);
+        bCurrentStates[EGamepadButtonName::RightShoulder] = IsButtonDown(XINPUT_GAMEPAD_RIGHT_SHOULDER);
+        bCurrentStates[EGamepadButtonName::LeftShoulder]  = IsButtonDown(XINPUT_GAMEPAD_LEFT_SHOULDER);
 
-        bCurrentStates[ToUnderlying(EGamepadButtonName::Start)]         = IsButtonDown(XINPUT_GAMEPAD_START);
-        bCurrentStates[ToUnderlying(EGamepadButtonName::Back)]          = IsButtonDown(XINPUT_GAMEPAD_BACK);
+        bCurrentStates[EGamepadButtonName::Start]         = IsButtonDown(XINPUT_GAMEPAD_START);
+        bCurrentStates[EGamepadButtonName::Back]          = IsButtonDown(XINPUT_GAMEPAD_BACK);
 
         for (int32 ButtonIndex = 1; ButtonIndex < NUM_BUTTONS; ButtonIndex++)
         {
@@ -146,19 +146,19 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 Controll
                     // Only send repeat events after some time
                     if (ButtonState.RepeatCount >= RepeatDelay)
                     {
-                        CurrentMessageHandler->OnControllerButtonDown(static_cast<EGamepadButtonName>(ButtonIndex), ControllerIndex, true);
+                        CurrentMessageHandler->OnControllerButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, true);
                         ButtonState.RepeatCount = RepeatDelay;
                     }
                 }
                 else
                 {
-                    CurrentMessageHandler->OnControllerButtonDown(static_cast<EGamepadButtonName>(ButtonIndex), ControllerIndex, false);
+                    CurrentMessageHandler->OnControllerButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, false);
                     ButtonState.RepeatCount = 1;
                 }
             }
             else if (ButtonState.bState)
             {
-                CurrentMessageHandler->OnControllerButtonUp(static_cast<EGamepadButtonName>(ButtonIndex), ControllerIndex);
+                CurrentMessageHandler->OnControllerButtonUp(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex);
                 ButtonState.RepeatCount = 0;
             }
 
@@ -166,27 +166,27 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 Controll
         }
 
         // Handle Analog States
-        const auto DispatchAnalogMessage = [CurrentMessageHandler](EAnalogSourceName AnalogSource, uint32 ControllerIndex, int16 CurrentValue, int16 NewValue, float NormalizedValue, int16 DeadZone)
+        const auto DispatchAnalogMessage = [CurrentMessageHandler](EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, int16 CurrentValue, int16 NewValue, float NormalizedValue, int16 DeadZone)
         {
             if (CurrentValue != NewValue || FMath::Abs(NewValue) > DeadZone)
             {
-                CurrentMessageHandler->OnControllerAnalog(AnalogSource, ControllerIndex, NormalizedValue);
+                CurrentMessageHandler->OnControllerAnalog(AnalogSource, GamepadIndex, NormalizedValue);
             }
         };
 
         // Right Trigger
-        DispatchAnalogMessage(EAnalogSourceName::RightTrigger, ControllerIndex, CurrentState.RightTrigger, Gamepad.bRightTrigger, NormalizeTrigger(Gamepad.bRightTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+        DispatchAnalogMessage(EAnalogSourceName::RightTrigger, GamepadIndex, CurrentState.RightTrigger, Gamepad.bRightTrigger, NormalizeTrigger(Gamepad.bRightTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
 
         // Left Trigger
-        DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, ControllerIndex, CurrentState.LeftTrigger, Gamepad.bLeftTrigger, NormalizeTrigger(Gamepad.bLeftTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+        DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, GamepadIndex, CurrentState.LeftTrigger, Gamepad.bLeftTrigger, NormalizeTrigger(Gamepad.bLeftTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
 
         // Right Thumb
-        DispatchAnalogMessage(EAnalogSourceName::RightThumbX, ControllerIndex, CurrentState.RightThumbX, Gamepad.sThumbRX, NormalizeThumbStick(Gamepad.sThumbRX), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
-        DispatchAnalogMessage(EAnalogSourceName::RightThumbY, ControllerIndex, CurrentState.RightThumbY, Gamepad.sThumbRY, NormalizeThumbStick(Gamepad.sThumbRY), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+        DispatchAnalogMessage(EAnalogSourceName::RightThumbX, GamepadIndex, CurrentState.RightThumbX, Gamepad.sThumbRX, NormalizeThumbStick(Gamepad.sThumbRX), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+        DispatchAnalogMessage(EAnalogSourceName::RightThumbY, GamepadIndex, CurrentState.RightThumbY, Gamepad.sThumbRY, NormalizeThumbStick(Gamepad.sThumbRY), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
 
         // Left Thumb
-        DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, ControllerIndex, CurrentState.LeftThumbX, Gamepad.sThumbLX, NormalizeThumbStick(Gamepad.sThumbLX), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
-        DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, ControllerIndex, CurrentState.LeftThumbY, Gamepad.sThumbLY, NormalizeThumbStick(Gamepad.sThumbLY), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+        DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, GamepadIndex, CurrentState.LeftThumbX, Gamepad.sThumbLX, NormalizeThumbStick(Gamepad.sThumbLX), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+        DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, GamepadIndex, CurrentState.LeftThumbY, Gamepad.sThumbLY, NormalizeThumbStick(Gamepad.sThumbLY), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
     }
 
     CurrentState.RightThumbX  = Gamepad.sThumbRX;

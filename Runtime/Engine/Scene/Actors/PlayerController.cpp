@@ -2,7 +2,8 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Application/Application.h"
 
-static float GetAnalogDeadzone(EAnalogSourceName Source)
+// TODO: Controll this in some better way than a hardcoded function
+static float GetAnalogDeadzone(EAnalogSourceName::Type Source)
 {
     switch (Source)
     {
@@ -258,7 +259,7 @@ FMouseButtonState FPlayerInput::GetMouseButtonState(EMouseButtonName::Type Butto
     return FMouseButtonState(Button);
 }
 
-FControllerButtonState FPlayerInput::GetControllerButtonState(EGamepadButtonName Button) const
+FControllerButtonState FPlayerInput::GetControllerButtonState(EGamepadButtonName::Type Button) const
 {
     const int32 Index = ControllerButtonStates.FindWithPredicate([=](const FControllerButtonState& ControllerButtonState)
     {
@@ -273,7 +274,7 @@ FControllerButtonState FPlayerInput::GetControllerButtonState(EGamepadButtonName
     return FControllerButtonState(Button);
 }
 
-FAnalogAxisState FPlayerInput::GetAnalogState(EAnalogSourceName Source) const
+FAnalogAxisState FPlayerInput::GetAnalogState(EAnalogSourceName::Type Source) const
 {
     const int32 Index = AnalogAxisStates.FindWithPredicate([=](const FAnalogAxisState& AxisState)
     {

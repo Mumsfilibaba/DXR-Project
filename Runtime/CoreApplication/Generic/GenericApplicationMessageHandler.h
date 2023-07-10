@@ -11,17 +11,17 @@ struct FGenericApplicationMessageHandler
 {
     virtual ~FGenericApplicationMessageHandler() = default;
 
-    virtual bool OnControllerButtonUp(EGamepadButtonName Button, uint32 ControllerIndex)
+    virtual bool OnControllerButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex)
     {
         return false;
     }
 
-    virtual bool OnControllerButtonDown(EGamepadButtonName Button, uint32 ControllerIndex, bool bIsRepeat)
+    virtual bool OnControllerButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat)
     {
         return false;
     }
 
-    virtual bool OnControllerAnalog(EAnalogSourceName AnalogSource, uint32 ControllerIndex, float AnalogValue)
+    virtual bool OnControllerAnalog(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue)
     {
         return false;
     }

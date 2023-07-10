@@ -25,9 +25,9 @@ public:
 
     static void SetupMainViewport(FViewport* InViewport);
 
-    static FResponse OnGamepadButtonEvent(EGamepadButtonName Button, bool bIsDown);
+    static FResponse OnGamepadButtonEvent(EGamepadButtonName::Type Button, bool bIsDown);
 
-    static FResponse OnGamepadAnalogEvent(EAnalogSourceName AnalogSource, float Analog);
+    static FResponse OnGamepadAnalogEvent(EAnalogSourceName::Type AnalogSource, float Analog);
 
     static FResponse OnKeyEvent(EKeyName::Type Key, bool bIsDown);
 
