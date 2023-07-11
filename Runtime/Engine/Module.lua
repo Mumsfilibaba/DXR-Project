@@ -4,6 +4,8 @@ include "../../BuildScripts/Scripts/Build_Module.lua"
 -- Engine Module
 
 local EngineModule = FModuleBuildRules("Engine")
+EngineModule.bUsePrecompiledHeaders = true
+
 EngineModule.AddSystemIncludes( 
 {
     CreateExternalDependencyPath("imgui"),

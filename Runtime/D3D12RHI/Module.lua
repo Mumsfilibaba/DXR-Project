@@ -5,7 +5,8 @@ include "../../BuildScripts/Scripts/Build_Module.lua"
 
 if IsPlatformWindows() then
     local D3D12RHI = FModuleBuildRules("D3D12RHI")
-    D3D12RHI.bRuntimeLinking = true
+    D3D12RHI.bRuntimeLinking        = true
+    D3D12RHI.bUsePrecompiledHeaders = true
     
     D3D12RHI.AddModuleDependencies( 
     {
