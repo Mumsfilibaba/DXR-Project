@@ -15,8 +15,11 @@ public:
     virtual void SetupInputComponent() override;
 
     void MoveForward();
+
     void MoveBackward();
+
     void MoveRight();
+
     void MoveLeft();
 
 private:
