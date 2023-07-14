@@ -12,7 +12,7 @@ if IsPlatformMac() then
         "AppKit",
     })
 elseif IsPlatformWindows() then
-    CoreApplicationModule.AddLinkLibraries(
+    CoreModule.AddLinkLibraries(
     {
         "Dbghelp.lib",
         "shlwapi.lib"
