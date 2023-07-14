@@ -55,7 +55,7 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     const bool bResult = RegisterWindowClass();
     CHECK(bResult == true);
 
-    // Init the key mapping Win32 KeyCodes -> EKeyName
+    // Init the key mapping Win32 KeyCodes -> EKeyboardKeyName
     FWindowsInputMapper::Initialize();
 
     // Run a check for connected devices
@@ -459,7 +459,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_KEYUP:
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WINDOWS_SCAN_CODE_MASK);
-            const EKeyName::Type Key = FWindowsInputMapper::GetKeyCodeFromScanCode(ScanCode);
+            const EKeyboardKeyName::Type Key = FWindowsInputMapper::GetKeyCodeFromScanCode(ScanCode);
             MessageHandler->OnKeyUp(Key, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
@@ -468,7 +468,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_KEYDOWN:
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WINDOWS_SCAN_CODE_MASK);
-            const EKeyName::Type Key = FWindowsInputMapper::GetKeyCodeFromScanCode(ScanCode);
+            const EKeyboardKeyName::Type Key = FWindowsInputMapper::GetKeyCodeFromScanCode(ScanCode);
             const bool bIsRepeat = (lParam & WINDOWS_KEY_REPEAT_MASK) != 0;
             MessageHandler->OnKeyDown(Key, bIsRepeat, FPlatformApplicationMisc::GetModifierKeyState());
             break;

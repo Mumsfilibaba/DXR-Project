@@ -1,6 +1,8 @@
 #include "Application.h"
 #include "ApplicationEventHandler.h"
 #include "ImGuiModule.h"
+#include "Input/Keys.h"
+#include "Input/InputMapper.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
@@ -397,84 +399,52 @@ void FApplication::UpdateMonitorInfo()
     }
 }
 
-bool FApplication::OnControllerButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex)
+bool FApplication::OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue)
 {
     // Create the event
-    const FControllerEvent ControllerEvent(Button, GamepadIndex, false, false);
-
+    const FAnalogGamepadEvent AnalogGamepadEvent(AnalogSource, GamepadIndex, FPlatformApplicationMisc::GetModifierKeyState(), AnalogValue);
+    
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,
-        [](const FInputPreProcessorAndPriority& PreProcessor, const FControllerEvent& ControllerEvent)
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), AnalogGamepadEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FAnalogGamepadEvent& AnalogGamepadEvent)
         {
-            return PreProcessor.InputHandler->OnControllerButtonUp(ControllerEvent);
+            return PreProcessor.InputHandler->OnAnalogGamepadChange(AnalogGamepadEvent);
         });
-
-    if (Response.IsEventHandled())
-    {
-        return true;
-    }
-
-    Response = FImGui::OnGamepadButtonEvent(ControllerEvent.GetButton(), ControllerEvent.IsButtonDown());
-
-    if (Response.IsEventHandled())
-    {
-        return true;
-    }
-
-    // Dispatch the events to the widgets in-focus
-    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), ControllerEvent,
-        [](const FApplicationEventHandlerRef& EventHandler, const FControllerEvent& ControllerEvent)
-        {
-            return EventHandler->OnControllerButtonUp(ControllerEvent);
-        });
-
-    return Response.IsEventHandled();
-}
-
-bool FApplication::OnControllerButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat)
-{
-    // Create the event
-    const FControllerEvent ControllerEvent(Button, GamepadIndex, true, bIsRepeat);
-
-    // Let the InputPreProcessors handle the event first
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,
-        [](const FInputPreProcessorAndPriority& PreProcessor, const FControllerEvent& ControllerEvent)
-        {
-            return PreProcessor.InputHandler->OnControllerButtonDown(ControllerEvent);
-        });
-
-    if (Response.IsEventHandled())
-    {
-        return true;
-    }
-
-    Response = FImGui::OnGamepadButtonEvent(ControllerEvent.GetButton(), ControllerEvent.IsButtonDown());
     
     if (Response.IsEventHandled())
     {
         return true;
     }
-
+    
+    Response = FImGui::OnGamepadAnalogEvent(AnalogGamepadEvent.GetAnalogSource(), AnalogGamepadEvent.GetAnalogValue());
+    if (Response.IsEventHandled())
+    {
+        return true;
+    }
+    
     // Dispatch the events to the widgets in-focus
-    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), ControllerEvent,
-        [](const FApplicationEventHandlerRef& EventHandler, const FControllerEvent& ControllerEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), AnalogGamepadEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FAnalogGamepadEvent& AnalogGamepadEvent)
         {
-            return EventHandler->OnControllerButtonDown(ControllerEvent);
+            return EventHandler->OnAnalogGamepadChange(AnalogGamepadEvent);
         });
-
+    
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnControllerAnalog(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue)
+bool FApplication::OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex)
 {
+    // Map the button to a key
+    const FKey Key = FInputMapper::Get().GetGamepadKey(Button);
+    
     // Create the event
-    const FControllerEvent ControllerEvent(AnalogSource, GamepadIndex, AnalogValue);
+    const FKeyEvent KeyEvent(Key, FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, false, false);
 
     // Let the InputPreProcessors handle the event first
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), ControllerEvent,
-        [](const FInputPreProcessorAndPriority& PreProcessor, const FControllerEvent& ControllerEvent)
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), KeyEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FKeyEvent& KeyEvent)
         {
-            return PreProcessor.InputHandler->OnControllerAnalog(ControllerEvent);
+            return PreProcessor.InputHandler->OnKeyUp(KeyEvent);
         });
 
     if (Response.IsEventHandled())
@@ -482,27 +452,66 @@ bool FApplication::OnControllerAnalog(EAnalogSourceName::Type AnalogSource, uint
         return true;
     }
 
-    Response = FImGui::OnGamepadAnalogEvent(ControllerEvent.GetAnalogSource(), ControllerEvent.GetAnalogValue());
-    
+    Response = FImGui::OnGamepadButtonEvent(KeyEvent.GetKey(), KeyEvent.IsDown());
     if (Response.IsEventHandled())
     {
         return true;
     }
 
     // Dispatch the events to the widgets in-focus
-    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), ControllerEvent,
-        [](const FApplicationEventHandlerRef& EventHandler, const FControllerEvent& ControllerEvent)
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), KeyEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FKeyEvent& KeyEvent)
         {
-            return EventHandler->OnControllerAnalog(ControllerEvent);
+            return EventHandler->OnKeyUp(KeyEvent);
         });
 
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnKeyUp(EKeyName::Type KeyCode, FModifierKeyState ModierKeyState)
+bool FApplication::OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat)
 {
+    // Map the button to a key
+    const FKey Key = FInputMapper::Get().GetGamepadKey(Button);
+    
     // Create the event
-    const FKeyEvent KeyEvent(ModierKeyState, KeyCode, false, false);
+    const FKeyEvent KeyEvent(Key, FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, bIsRepeat, false);
+
+    // Let the InputPreProcessors handle the event first
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), KeyEvent,
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FKeyEvent& KeyEvent)
+        {
+            return PreProcessor.InputHandler->OnKeyDown(KeyEvent);
+        });
+
+    if (Response.IsEventHandled())
+    {
+        return true;
+    }
+
+    Response = FImGui::OnGamepadButtonEvent(KeyEvent.GetKey(), KeyEvent.IsDown());
+    if (Response.IsEventHandled())
+    {
+        return true;
+    }
+
+    // Dispatch the events to the widgets in-focus
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), KeyEvent,
+        [](const FApplicationEventHandlerRef& EventHandler, const FKeyEvent& KeyEvent)
+        {
+            return EventHandler->OnKeyDown(KeyEvent);
+        });
+
+    return Response.IsEventHandled();
+}
+
+
+bool FApplication::OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState ModierKeyState)
+{
+    // Map the key
+    const FKey Key = FInputMapper::Get().GetKeyboardKey(KeyCode);
+    
+    // Create the event
+    const FKeyEvent KeyEvent(Key, ModierKeyState, false, false);
 
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), KeyEvent,
@@ -514,7 +523,7 @@ bool FApplication::OnKeyUp(EKeyName::Type KeyCode, FModifierKeyState ModierKeySt
     // Remove the Key
     PressedKeys.erase(KeyCode);
 
-    Response = FImGui::OnKeyEvent(KeyEvent.GetKey(), KeyEvent.IsDown());
+    Response = FImGui::OnKeyEvent(KeyEvent.GetKey(), ModierKeyState, KeyEvent.IsDown());
     if (Response.IsEventHandled())
     {
         return true;
@@ -530,10 +539,13 @@ bool FApplication::OnKeyUp(EKeyName::Type KeyCode, FModifierKeyState ModierKeySt
     return Response.IsEventHandled();
 }
 
-bool FApplication::OnKeyDown(EKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
+bool FApplication::OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
 {
+    // Map the key
+    const FKey Key = FInputMapper::Get().GetKeyboardKey(KeyCode);
+    
     // Create the event
-    const FKeyEvent KeyEvent(ModierKeyState, KeyCode, bIsRepeat, true);
+    const FKeyEvent KeyEvent(Key, ModierKeyState, bIsRepeat, true);
     
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), KeyEvent,
@@ -542,17 +554,16 @@ bool FApplication::OnKeyDown(EKeyName::Type KeyCode, bool bIsRepeat, FModifierKe
             return PreProcessor.InputHandler->OnKeyDown(KeyEvent);
         });
 
-    // Add the Key among the pressed keys
-    PressedKeys.insert(KeyCode);
-
     // If the event is handled, abort the process
     if (Response.IsEventHandled())
     {
         return true;
     }
 
-    Response = FImGui::OnKeyEvent(KeyEvent.GetKey(), KeyEvent.IsDown());
+    // Add the Key among the pressed keys
+    PressedKeys.insert(KeyCode);
 
+    Response = FImGui::OnKeyEvent(KeyEvent.GetKey(), ModierKeyState, KeyEvent.IsDown());
     if (Response.IsEventHandled())
     {
         return true;
@@ -571,7 +582,7 @@ bool FApplication::OnKeyDown(EKeyName::Type KeyCode, bool bIsRepeat, FModifierKe
 bool FApplication::OnKeyChar(uint32 Character)
 {
     // Create the event
-    const FKeyEvent KeyEvent(FPlatformApplicationMisc::GetModifierKeyState(), EKeyName::Unknown, Character, false, true);
+    const FKeyEvent KeyEvent(EKeys::Unknown, FPlatformApplicationMisc::GetModifierKeyState(), Character, false, true);
     
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), KeyEvent,
@@ -587,7 +598,6 @@ bool FApplication::OnKeyChar(uint32 Character)
     }
 
     Response = FImGui::OnKeyCharEvent(KeyEvent.GetAnsiChar());
-
     if (Response.IsEventHandled())
     {
         return true;
@@ -606,11 +616,11 @@ bool FApplication::OnKeyChar(uint32 Character)
 bool FApplication::OnMouseMove(int32 x, int32 y)
 {
     // Create the event
-    const FMouseEvent MouseEvent(FIntVector2(x, y), FPlatformApplicationMisc::GetModifierKeyState());
+    const FCursorEvent MouseEvent(FIntVector2(x, y), FPlatformApplicationMisc::GetModifierKeyState());
     
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), MouseEvent,
-        [](const FInputPreProcessorAndPriority& PreProcessor, const FMouseEvent& MouseEvent)
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FCursorEvent& MouseEvent)
         {
             return PreProcessor.InputHandler->OnMouseMove(MouseEvent);
         });
@@ -622,7 +632,6 @@ bool FApplication::OnMouseMove(int32 x, int32 y)
     }
 
     Response = FImGui::OnMouseMoveEvent(x, y);
-
     if (Response.IsEventHandled())
     {
         return true;
@@ -630,7 +639,7 @@ bool FApplication::OnMouseMove(int32 x, int32 y)
 
     // Dispatch the MouseEvent to the widgets under the cursor
     Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), MouseEvent,
-        [](const FApplicationEventHandlerRef& EventHandler, const FMouseEvent& KeyEvent)
+        [](const FApplicationEventHandlerRef& EventHandler, const FCursorEvent& KeyEvent)
         {
             return EventHandler->OnMouseMove(KeyEvent);
         });
@@ -643,12 +652,15 @@ bool FApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeySt
     // Remove the mouse capture if there is a capture
     SetCapture(nullptr);
 
+    // Map the button to a key
+    const FKey Key = FInputMapper::Get().GetMouseKey(Button);
+
     // Create the event
-    const FMouseEvent MouseEvent(FIntVector2(x, y), ModiferKeyState, Button, false);
+    const FCursorEvent MouseEvent(Key, FIntVector2(x, y), ModiferKeyState, false);
     
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), MouseEvent,
-        [](const FInputPreProcessorAndPriority& PreProcessor, const FMouseEvent& MouseEvent)
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FCursorEvent& MouseEvent)
         {
             return PreProcessor.InputHandler->OnMouseButtonUp(MouseEvent);
         });
@@ -657,7 +669,7 @@ bool FApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeySt
     PressedMouseButtons.erase(Button);
 
     // If the event is handled, abort the process
-    Response = FImGui::OnMouseButtonEvent(MouseEvent.GetButton(), MouseEvent.IsDown());
+    Response = FImGui::OnMouseButtonEvent(MouseEvent.GetKey(), MouseEvent.IsDown());
     if (Response.IsEventHandled())
     {
         return true;
@@ -665,7 +677,7 @@ bool FApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeySt
 
     // Dispatch the MouseEvent to the widgets under the cursor
     Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), MouseEvent,
-        [](const FApplicationEventHandlerRef& EventHandler, const FMouseEvent& MouseEvent)
+        [](const FApplicationEventHandlerRef& EventHandler, const FCursorEvent& MouseEvent)
         {
             return EventHandler->OnMouseButtonUp(MouseEvent);
         });
@@ -678,12 +690,15 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, E
     // Set the mouse capture when the mouse is pressed
     SetCapture(Window);
 
+    // Map the button to a key
+    const FKey Key = FInputMapper::Get().GetMouseKey(Button);
+
     // Create the event
-    const FMouseEvent MouseEvent(FIntVector2(x, y), ModierKeyState, Button, true);
+    const FCursorEvent MouseEvent(Key, FIntVector2(x, y), ModierKeyState, true);
 
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), MouseEvent,
-        [](const FInputPreProcessorAndPriority& PreProcessor, const FMouseEvent& MouseEvent)
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FCursorEvent& MouseEvent)
         {
             return PreProcessor.InputHandler->OnMouseButtonDown(MouseEvent);
         });
@@ -693,12 +708,11 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, E
         return true;
     }
 
-    Response = FImGui::OnMouseButtonEvent(MouseEvent.GetButton(), MouseEvent.IsDown());
-
-    // Remove the Key
+    // Add the button to the pressed buttons
     PressedMouseButtons.insert(Button);
 
     // If the event is handled, abort the process
+    Response = FImGui::OnMouseButtonEvent(MouseEvent.GetKey(), MouseEvent.IsDown());
     if (Response.IsEventHandled())
     {
         return true;
@@ -706,7 +720,7 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, E
 
     // Dispatch the MouseEvent to the widgets under the cursor
     Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), MouseEvent,
-        [](const FApplicationEventHandlerRef& EventHandler, const FMouseEvent& MouseEvent)
+        [](const FApplicationEventHandlerRef& EventHandler, const FCursorEvent& MouseEvent)
         {
             return EventHandler->OnMouseButtonDown(MouseEvent);
         });
@@ -717,11 +731,11 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, E
 bool FApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, int32 y)
 {
     // Create the event
-    const FMouseEvent MouseEvent(FIntVector2(x, y), FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
+    const FCursorEvent MouseEvent(FIntVector2(x, y), FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
 
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), MouseEvent,
-        [](const FInputPreProcessorAndPriority& PreProcessor, const FMouseEvent& MouseEvent)
+        [](const FInputPreProcessorAndPriority& PreProcessor, const FCursorEvent& MouseEvent)
         {
             return PreProcessor.InputHandler->OnMouseScrolled(MouseEvent);
         });
@@ -740,7 +754,7 @@ bool FApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, in
 
     // Dispatch the MouseEvent to the widgets under the cursor
     Response = FEventDispatcher::Dispatch(FEventDispatcher::FHighPriorityFirstPolicy(EventHandlers), MouseEvent,
-        [](const FApplicationEventHandlerRef& EventHandler, const FMouseEvent& MouseEvent)
+        [](const FApplicationEventHandlerRef& EventHandler, const FCursorEvent& MouseEvent)
         {
             return EventHandler->OnMouseScroll(MouseEvent);
         });

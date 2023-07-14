@@ -146,19 +146,19 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
                     // Only send repeat events after some time
                     if (ButtonState.RepeatCount >= RepeatDelay)
                     {
-                        CurrentMessageHandler->OnControllerButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, true);
+                        CurrentMessageHandler->OnGamepadButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, true);
                         ButtonState.RepeatCount = RepeatDelay;
                     }
                 }
                 else
                 {
-                    CurrentMessageHandler->OnControllerButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, false);
+                    CurrentMessageHandler->OnGamepadButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, false);
                     ButtonState.RepeatCount = 1;
                 }
             }
             else if (ButtonState.bState)
             {
-                CurrentMessageHandler->OnControllerButtonUp(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex);
+                CurrentMessageHandler->OnGamepadButtonUp(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex);
                 ButtonState.RepeatCount = 0;
             }
 
@@ -170,7 +170,7 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
         {
             if (CurrentValue != NewValue || FMath::Abs(NewValue) > DeadZone)
             {
-                CurrentMessageHandler->OnControllerAnalog(AnalogSource, GamepadIndex, NormalizedValue);
+                CurrentMessageHandler->OnAnalogGamepadChange(AnalogSource, GamepadIndex, NormalizedValue);
             }
         };
 

@@ -11,27 +11,27 @@ struct FGenericApplicationMessageHandler
 {
     virtual ~FGenericApplicationMessageHandler() = default;
 
-    virtual bool OnControllerButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex)
+    virtual bool OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex)
     {
         return false;
     }
 
-    virtual bool OnControllerButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat)
+    virtual bool OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat)
     {
         return false;
     }
 
-    virtual bool OnControllerAnalog(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue)
+    virtual bool OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue)
     {
         return false;
     }
 
-    virtual bool OnKeyUp(EKeyName::Type KeyCode, FModifierKeyState ModierKeyState)
+    virtual bool OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState ModierKeyState)
     {
         return false;
     }
 
-    virtual bool OnKeyDown(EKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
+    virtual bool OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
     {
         return false;
     }

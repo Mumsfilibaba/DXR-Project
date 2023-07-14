@@ -12,14 +12,6 @@
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Threading/AtomicInt.h"
 
-#define RHI_INITIALIZER_ATTRIBUTE(Type, Name) \
-    Type Name;                                \
-    auto& Set##Name(Type In##Name)            \
-    {                                         \
-        Name = In##Name;                      \
-        return *this;                         \
-    }
-
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FRHIShader;
@@ -1308,40 +1300,33 @@ struct FRHIViewportDesc
     FRHIViewportDesc()
         : WindowHandle(nullptr)
         , ColorFormat(EFormat::Unknown)
-        , DepthFormat(EFormat::Unknown)
         , Width(0)
         , Height(0)
     {
     }
 
-    FRHIViewportDesc(void* InWindowHandle, EFormat InColorFormat, EFormat InDepthFormat, uint16 InWidth, uint16 InHeight)
+    FRHIViewportDesc(void* InWindowHandle, EFormat InColorFormat, uint16 InWidth, uint16 InHeight)
         : WindowHandle(InWindowHandle)
         , ColorFormat(InColorFormat)
-        , DepthFormat(InDepthFormat)
         , Width(InWidth)
         , Height(InHeight)
     {
     }
 
-    RHI_INITIALIZER_ATTRIBUTE(void*, WindowHandle);
-    RHI_INITIALIZER_ATTRIBUTE(EFormat, ColorFormat);
-    RHI_INITIALIZER_ATTRIBUTE(EFormat, DepthFormat);
-    RHI_INITIALIZER_ATTRIBUTE(uint16, Width);
-    RHI_INITIALIZER_ATTRIBUTE(uint16, Height);
-
     bool operator==(const FRHIViewportDesc& Other) const
     {
-        return WindowHandle == Other.WindowHandle
-            && ColorFormat  == Other.ColorFormat
-            && DepthFormat  == Other.DepthFormat
-            && Width        == Other.Width
-            && Height       == Other.Height;
+        return WindowHandle == Other.WindowHandle && ColorFormat == Other.ColorFormat && Width == Other.Width && Height == Other.Height;
     }
 
     bool operator!=(const FRHIViewportDesc& Other) const
     {
         return !(*this == Other);
     }
+
+    void*   WindowHandle;
+    EFormat ColorFormat;
+    uint16  Width;
+    uint16  Height;
 };
 
 
@@ -1365,12 +1350,7 @@ public:
     {
         return Desc.ColorFormat;
     }
-
-    EFormat GetDepthFormat() const
-    {
-        return Desc.DepthFormat;
-    }
-
+    
     uint32 GetWidth() const
     {
         return Desc.Width;

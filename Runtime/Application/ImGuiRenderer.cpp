@@ -21,13 +21,13 @@ static void ImGuiCreateWindow(ImGuiViewport* InViewport)
 {
     if (TSharedRef<FGenericWindow> Window = MakeSharedRef<FGenericWindow>(reinterpret_cast<FGenericWindow*>(InViewport->PlatformUserData)))
     {
-        FRHIViewportRef NewViewport = RHICreateViewport(
-            FRHIViewportDesc()
-            .SetWindowHandle(Window->GetPlatformHandle())
-            .SetWidth(static_cast<uint16>(InViewport->Size.x))
-            .SetHeight(static_cast<uint16>(InViewport->Size.y))
-            .SetColorFormat(EFormat::R8G8B8A8_Unorm));
-
+        FRHIViewportDesc ViewportDesc;
+        ViewportDesc.WindowHandle = Window->GetPlatformHandle();
+        ViewportDesc.ColorFormat  = EFormat::R8G8B8A8_Unorm;
+        ViewportDesc.Width        = static_cast<uint16>(InViewport->Size.x);
+        ViewportDesc.Height       = static_cast<uint16>(InViewport->Size.y);
+        
+        FRHIViewportRef NewViewport = RHICreateViewport(ViewportDesc);
         if (NewViewport)
         {
             FViewportData* ViewportData = new FViewportData;

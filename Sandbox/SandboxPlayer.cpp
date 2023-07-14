@@ -31,11 +31,11 @@ void FSandboxPlayerController::Tick(FTimespan DeltaTime)
     {
         Camera->Rotate(0.0f, FMath::ToRadians(RightThumbX.Value * RotationSpeed * Delta), 0.0f);
     }
-    else if (InputState->IsKeyDown(EKeyName::Right))
+    else if (InputState->IsKeyDown(EKeys::Right))
     {
         Camera->Rotate(0.0f, FMath::ToRadians(RotationSpeed * Delta), 0.0f);
     }
-    else if (InputState->IsKeyDown(EKeyName::Left))
+    else if (InputState->IsKeyDown(EKeys::Left))
     {
         Camera->Rotate(0.0f, FMath::ToRadians(-RotationSpeed * Delta), 0.0f);
     }
@@ -44,17 +44,17 @@ void FSandboxPlayerController::Tick(FTimespan DeltaTime)
     {
         Camera->Rotate(FMath::ToRadians(-RightThumbY.Value * RotationSpeed * Delta), 0.0f, 0.0f);
     }
-    else if (InputState->IsKeyDown(EKeyName::Up))
+    else if (InputState->IsKeyDown(EKeys::Up))
     {
         Camera->Rotate(FMath::ToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
     }
-    else if (InputState->IsKeyDown(EKeyName::Down))
+    else if (InputState->IsKeyDown(EKeys::Down))
     {
         Camera->Rotate(FMath::ToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
     }
 
     float Acceleration = 15.0f;
-    if (InputState->IsKeyDown(EKeyName::LeftShift) || InputState->IsButtonDown(EGamepadButtonName::LeftTrigger))
+    if (InputState->IsKeyDown(EKeys::LeftShift) || InputState->IsKeyDown(EKeys::GamepadLeftTrigger))
     {
         Acceleration = Acceleration * 3;
     }
@@ -67,11 +67,11 @@ void FSandboxPlayerController::Tick(FTimespan DeltaTime)
     {
         CameraAcceleration.z = Acceleration * LeftThumbY.Value;
     }
-    else if (InputState->IsKeyDown(EKeyName::W))
+    else if (InputState->IsKeyDown(EKeys::W))
     {
         CameraAcceleration.z = Acceleration;
     }
-    else if (InputState->IsKeyDown(EKeyName::S))
+    else if (InputState->IsKeyDown(EKeys::S))
     {
         CameraAcceleration.z = -Acceleration;
     }
@@ -80,20 +80,20 @@ void FSandboxPlayerController::Tick(FTimespan DeltaTime)
     {
         CameraAcceleration.x = Acceleration * -LeftThumbX.Value;
     }
-    else if (InputState->IsKeyDown(EKeyName::A))
+    else if (InputState->IsKeyDown(EKeys::A))
     {
         CameraAcceleration.x = Acceleration;
     }
-    else if (InputState->IsKeyDown(EKeyName::D))
+    else if (InputState->IsKeyDown(EKeys::D))
     {
         CameraAcceleration.x = -Acceleration;
     }
 
-    if (InputState->IsKeyDown(EKeyName::Q))
+    if (InputState->IsKeyDown(EKeys::Q))
     {
         CameraAcceleration.y = Acceleration;
     }
-    else if (InputState->IsKeyDown(EKeyName::E))
+    else if (InputState->IsKeyDown(EKeys::E))
     {
         CameraAcceleration.y = -Acceleration;
     }

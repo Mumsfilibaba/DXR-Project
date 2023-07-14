@@ -20,79 +20,35 @@ public:
 
     virtual FIntVector2 GetCursorPosition() const;
 
-    virtual void OnControllerEvent(const FControllerEvent& ControllerEvent);
+    virtual void OnAnalogGamepadEvent(const FAnalogGamepadEvent& AnalogGamepadEvent);
     
     virtual void OnKeyEvent(const FKeyEvent& KeyEvent);
     
-    virtual void OnMouseEvent(const FMouseEvent& MouseEvent);
+    virtual void OnCursorEvent(const FCursorEvent& MouseEvent);
 
-    FKeyState              GetKeyState(EKeyName::Type Key) const;
-
-    FMouseButtonState      GetMouseButtonState(EMouseButtonName::Type Button) const;
+    FKeyState GetKeyState(FKey Key) const;
     
-    FControllerButtonState GetControllerButtonState(EGamepadButtonName::Type Button) const;
-    
-    FAnalogAxisState       GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
+    FAnalogAxisState GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
 
-    void ResetStates();
+    void ClearInputStates();
 
-
-    bool IsKeyDown(EKeyName::Type Key) const
+    bool IsKeyDown(FKey Key) const
     {
         const FKeyState KeyState = GetKeyState(Key);
-        return !!KeyState.bIsDown;
+        return KeyState.bIsDown;
     }
 
-    bool IsKeyUp(EKeyName::Type Key) const
+    bool IsKeyUp(FKey Key) const
     {
         const FKeyState KeyState = GetKeyState(Key);
         return !KeyState.bIsDown;
     }
 
-    bool IsKeyPressed(EKeyName::Type Key) const
+    bool WasKeyPressed(FKey Key) const
     {
         const FKeyState KeyState = GetKeyState(Key);
-        return !!KeyState.bIsDown && !KeyState.bPreviousState;
+        return KeyState.bIsDown && !KeyState.bPreviousState;
     }
-
-
-    bool IsButtonDown(EMouseButtonName::Type Button) const
-    {
-        const FMouseButtonState ButtonState = GetMouseButtonState(Button);
-        return !!ButtonState.bIsDown;
-    }
-
-    bool IsButtonUp(EMouseButtonName::Type Button) const
-    {
-        const FMouseButtonState ButtonState = GetMouseButtonState(Button);
-        return !ButtonState.bIsDown;
-    }
-
-    bool IsButtonPressed(EMouseButtonName::Type Button) const
-    {
-        const FMouseButtonState ButtonState = GetMouseButtonState(Button);
-        return !!ButtonState.bIsDown && !ButtonState.bPreviousState;
-    }
-
-
-    bool IsButtonDown(EGamepadButtonName::Type Button) const
-    {
-        const FControllerButtonState ButtonState = GetControllerButtonState(Button);
-        return !!ButtonState.bIsDown;
-    }
-
-    bool IsButtonUp(EGamepadButtonName::Type Button) const
-    {
-        const FControllerButtonState ButtonState = GetControllerButtonState(Button);
-        return !ButtonState.bIsDown;
-    }
-
-    bool IsButtonPressed(EGamepadButtonName::Type Button) const
-    {
-        const FControllerButtonState ButtonState = GetControllerButtonState(Button);
-        return !!ButtonState.bIsDown && !ButtonState.bPreviousState;
-    }
-
 
     TSharedPtr<ICursor> GetCursorInterface() const 
     { 
@@ -102,16 +58,14 @@ public:
 private:
     void ClearEvents();
 
-    TArray<FKeyState>              KeyStates;
-    TArray<FMouseButtonState>      MouseButtonStates;
-    TArray<FControllerButtonState> ControllerButtonStates;
-    TArray<FAnalogAxisState>       AnalogAxisStates;
+    TSharedPtr<ICursor>         CursorInterface;
 
-    TArray<FKeyEvent>         KeyEvents;
-    TArray<FMouseEvent>       MouseEvents;
-    TArray<FControllerEvent>  ControllerEvents;
+    TArray<FKeyState>           KeyStates;
+    TArray<FAnalogAxisState>    AnalogAxisStates;
 
-    TSharedPtr<ICursor>       CursorInterface;
+    TArray<FCursorEvent>        MouseEvents;
+    TArray<FKeyEvent>           KeyEvents;
+    TArray<FAnalogGamepadEvent> ControllerEvents;
 };
 
 

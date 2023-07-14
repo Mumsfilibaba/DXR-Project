@@ -16,24 +16,6 @@ struct FViewportInitializer
     {
     }
 
-    FViewportInitializer& SetWindow(FGenericWindow* InWindow)
-    {
-        Window = InWindow;
-        return *this;
-    }
-
-    FViewportInitializer& SetWidth(int32 InWidth)
-    {
-        Width = InWidth;
-        return *this;
-    }
-
-    FViewportInitializer& SetHeight(int32 InHeight)
-    {
-        Height = InHeight;
-        return *this;
-    }
-
     bool operator==(const FViewportInitializer& Other) const
     {
         return Window == Other.Window && Width == Other.Width && Height == Other.Height;
@@ -56,28 +38,38 @@ public:
     ~FViewport();
 
     bool InitializeRHI(const FViewportInitializer& Initializer);
+    
     void ReleaseRHI();
 
-    virtual FResponse OnControllerAnalog    (const FControllerEvent& ControllerEvent) override final;
-    virtual FResponse OnControllerButtonDown(const FControllerEvent& ControllerEvent) override final;
-    virtual FResponse OnControllerButtonUp  (const FControllerEvent& ControllerEvent) override final;
+    virtual FResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override final;
 
     virtual FResponse OnKeyDown(const FKeyEvent& KeyEvent) override final;
-    virtual FResponse OnKeyUp  (const FKeyEvent& KeyEvent) override final;
+    
+    virtual FResponse OnKeyUp(const FKeyEvent& KeyEvent) override final;
+    
     virtual FResponse OnKeyChar(const FKeyEvent& KeyEvent) override final;
 
-    virtual FResponse OnMouseMove       (const FMouseEvent& MouseEvent) override final;
-    virtual FResponse OnMouseButtonDown (const FMouseEvent& MouseEvent) override final;
-    virtual FResponse OnMouseButtonUp   (const FMouseEvent& MouseEvent) override final;
-    virtual FResponse OnMouseScroll     (const FMouseEvent& MouseEvent) override final;
-    virtual FResponse OnMouseDoubleClick(const FMouseEvent& MouseEvent) override final;
+    virtual FResponse OnMouseMove(const FCursorEvent& MouseEvent) override final;
+    
+    virtual FResponse OnMouseButtonDown(const FCursorEvent& MouseEvent) override final;
+    
+    virtual FResponse OnMouseButtonUp(const FCursorEvent& MouseEvent) override final;
+    
+    virtual FResponse OnMouseScroll(const FCursorEvent& MouseEvent) override final;
+    
+    virtual FResponse OnMouseDoubleClick(const FCursorEvent& MouseEvent) override final;
 
-	virtual FResponse OnWindowResized    (const FWindowEvent& WindowEvent) override final;
-    virtual FResponse OnWindowFocusLost  (const FWindowEvent& WindowEvent) override final;
+	virtual FResponse OnWindowResized(const FWindowEvent& WindowEvent) override final;
+    
+    virtual FResponse OnWindowFocusLost(const FWindowEvent& WindowEvent) override final;
+    
     virtual FResponse OnWindowFocusGained(const FWindowEvent& WindowEvent) override final;
-    virtual FResponse OnMouseLeft        (const FWindowEvent& WindowEvent) override final;
-    virtual FResponse OnMouseEntered     (const FWindowEvent& WindowEvent) override final;
-	virtual FResponse OnWindowClosed     (const FWindowEvent& WindowEvent) override final;
+    
+    virtual FResponse OnMouseLeft(const FWindowEvent& WindowEvent) override final;
+    
+    virtual FResponse OnMouseEntered(const FWindowEvent& WindowEvent) override final;
+	
+    virtual FResponse OnWindowClosed(const FWindowEvent& WindowEvent) override final;
 
     FRHIViewportRef GetRHIViewport() const
     {

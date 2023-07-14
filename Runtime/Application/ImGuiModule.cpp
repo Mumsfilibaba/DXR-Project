@@ -1,5 +1,6 @@
 #include "ImGuiModule.h"
 #include "Application.h"
+#include "Input/InputMapper.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 // TODO: Turn this into lookup tables
@@ -16,114 +17,114 @@ static uint32 ImGui_GetMouseButtonIndex(EMouseButtonName::Type Button)
     }
 }
 
-static ImGuiKey ImGui_KeyToImGuiKey(EKeyName::Type Key)
+static ImGuiKey ImGui_KeyToImGuiKey(EKeyboardKeyName::Type Key)
 {
     switch (Key)
     {
-    case EKeyName::Tab:            return ImGuiKey_Tab;
-    case EKeyName::Left:           return ImGuiKey_LeftArrow;
-    case EKeyName::Right:          return ImGuiKey_RightArrow;
-    case EKeyName::Up:             return ImGuiKey_UpArrow;
-    case EKeyName::Down:           return ImGuiKey_DownArrow;
-    case EKeyName::PageUp:         return ImGuiKey_PageUp;
-    case EKeyName::PageDown:       return ImGuiKey_PageDown;
-    case EKeyName::Home:           return ImGuiKey_Home;
-    case EKeyName::End:            return ImGuiKey_End;
-    case EKeyName::Insert:         return ImGuiKey_Insert;
-    case EKeyName::Delete:         return ImGuiKey_Delete;
-    case EKeyName::Backspace:      return ImGuiKey_Backspace;
-    case EKeyName::Space:          return ImGuiKey_Space;
-    case EKeyName::Enter:          return ImGuiKey_Enter;
-    case EKeyName::Escape:         return ImGuiKey_Escape;
-    case EKeyName::Apostrophe:     return ImGuiKey_Apostrophe;
-    case EKeyName::Comma:          return ImGuiKey_Comma;
-    case EKeyName::Minus:          return ImGuiKey_Minus;
-    case EKeyName::Period:         return ImGuiKey_Period;
-    case EKeyName::Slash:          return ImGuiKey_Slash;
-    case EKeyName::Semicolon:      return ImGuiKey_Semicolon;
-    case EKeyName::Equal:          return ImGuiKey_Equal;
-    case EKeyName::LeftBracket:    return ImGuiKey_LeftBracket;
-    case EKeyName::Backslash:      return ImGuiKey_Backslash;
-    case EKeyName::RightBracket:   return ImGuiKey_RightBracket;
-    case EKeyName::GraveAccent:    return ImGuiKey_GraveAccent;
-    case EKeyName::CapsLock:       return ImGuiKey_CapsLock;
-    case EKeyName::ScrollLock:     return ImGuiKey_ScrollLock;
-    case EKeyName::NumLock:        return ImGuiKey_NumLock;
-    case EKeyName::PrintScreen:    return ImGuiKey_PrintScreen;
-    case EKeyName::Pause:          return ImGuiKey_Pause;
-    case EKeyName::KeypadZero:     return ImGuiKey_Keypad0;
-    case EKeyName::KeypadOne:      return ImGuiKey_Keypad1;
-    case EKeyName::KeypadTwo:      return ImGuiKey_Keypad2;
-    case EKeyName::KeypadThree:    return ImGuiKey_Keypad3;
-    case EKeyName::KeypadFour:     return ImGuiKey_Keypad4;
-    case EKeyName::KeypadFive:     return ImGuiKey_Keypad5;
-    case EKeyName::KeypadSix:      return ImGuiKey_Keypad6;
-    case EKeyName::KeypadSeven:    return ImGuiKey_Keypad7;
-    case EKeyName::KeypadEight:    return ImGuiKey_Keypad8;
-    case EKeyName::KeypadNine:     return ImGuiKey_Keypad9;
-    case EKeyName::KeypadDecimal:  return ImGuiKey_KeypadDecimal;
-    case EKeyName::KeypadDivide:   return ImGuiKey_KeypadDivide;
-    case EKeyName::KeypadMultiply: return ImGuiKey_KeypadMultiply;
-    case EKeyName::KeypadSubtract: return ImGuiKey_KeypadSubtract;
-    case EKeyName::KeypadAdd:      return ImGuiKey_KeypadAdd;
-    case EKeyName::KeypadEnter:    return ImGuiKey_KeypadEnter;
-    case EKeyName::LeftShift:      return ImGuiKey_LeftShift;
-    case EKeyName::LeftControl:    return ImGuiKey_LeftCtrl;
-    case EKeyName::LeftAlt:        return ImGuiKey_LeftAlt;
-    case EKeyName::LeftSuper:      return ImGuiKey_LeftSuper;
-    case EKeyName::RightShift:     return ImGuiKey_RightShift;
-    case EKeyName::RightControl:   return ImGuiKey_RightCtrl;
-    case EKeyName::RightAlt:       return ImGuiKey_RightAlt;
-    case EKeyName::RightSuper:     return ImGuiKey_RightSuper;
-    case EKeyName::Menu:           return ImGuiKey_Menu;
-    case EKeyName::Zero:           return ImGuiKey_0;
-    case EKeyName::One:            return ImGuiKey_1;
-    case EKeyName::Two:            return ImGuiKey_2;
-    case EKeyName::Three:          return ImGuiKey_3;
-    case EKeyName::Four:           return ImGuiKey_4;
-    case EKeyName::Five:           return ImGuiKey_5;
-    case EKeyName::Six:            return ImGuiKey_6;
-    case EKeyName::Seven:          return ImGuiKey_7;
-    case EKeyName::Eight:          return ImGuiKey_8;
-    case EKeyName::Nine:           return ImGuiKey_9;
-    case EKeyName::A:              return ImGuiKey_A;
-    case EKeyName::B:              return ImGuiKey_B;
-    case EKeyName::C:              return ImGuiKey_C;
-    case EKeyName::D:              return ImGuiKey_D;
-    case EKeyName::E:              return ImGuiKey_E;
-    case EKeyName::F:              return ImGuiKey_F;
-    case EKeyName::G:              return ImGuiKey_G;
-    case EKeyName::H:              return ImGuiKey_H;
-    case EKeyName::I:              return ImGuiKey_I;
-    case EKeyName::J:              return ImGuiKey_J;
-    case EKeyName::K:              return ImGuiKey_K;
-    case EKeyName::L:              return ImGuiKey_L;
-    case EKeyName::M:              return ImGuiKey_M;
-    case EKeyName::N:              return ImGuiKey_N;
-    case EKeyName::O:              return ImGuiKey_O;
-    case EKeyName::P:              return ImGuiKey_P;
-    case EKeyName::Q:              return ImGuiKey_Q;
-    case EKeyName::R:              return ImGuiKey_R;
-    case EKeyName::S:              return ImGuiKey_S;
-    case EKeyName::T:              return ImGuiKey_T;
-    case EKeyName::U:              return ImGuiKey_U;
-    case EKeyName::V:              return ImGuiKey_V;
-    case EKeyName::W:              return ImGuiKey_W;
-    case EKeyName::X:              return ImGuiKey_X;
-    case EKeyName::Y:              return ImGuiKey_Y;
-    case EKeyName::Z:              return ImGuiKey_Z;
-    case EKeyName::F1:             return ImGuiKey_F1;
-    case EKeyName::F2:             return ImGuiKey_F2;
-    case EKeyName::F3:             return ImGuiKey_F3;
-    case EKeyName::F4:             return ImGuiKey_F4;
-    case EKeyName::F5:             return ImGuiKey_F5;
-    case EKeyName::F6:             return ImGuiKey_F6;
-    case EKeyName::F7:             return ImGuiKey_F7;
-    case EKeyName::F8:             return ImGuiKey_F8;
-    case EKeyName::F9:             return ImGuiKey_F9;
-    case EKeyName::F10:            return ImGuiKey_F10;
-    case EKeyName::F11:            return ImGuiKey_F11;
-    case EKeyName::F12:            return ImGuiKey_F12;
+    case EKeyboardKeyName::Tab:            return ImGuiKey_Tab;
+    case EKeyboardKeyName::Left:           return ImGuiKey_LeftArrow;
+    case EKeyboardKeyName::Right:          return ImGuiKey_RightArrow;
+    case EKeyboardKeyName::Up:             return ImGuiKey_UpArrow;
+    case EKeyboardKeyName::Down:           return ImGuiKey_DownArrow;
+    case EKeyboardKeyName::PageUp:         return ImGuiKey_PageUp;
+    case EKeyboardKeyName::PageDown:       return ImGuiKey_PageDown;
+    case EKeyboardKeyName::Home:           return ImGuiKey_Home;
+    case EKeyboardKeyName::End:            return ImGuiKey_End;
+    case EKeyboardKeyName::Insert:         return ImGuiKey_Insert;
+    case EKeyboardKeyName::Delete:         return ImGuiKey_Delete;
+    case EKeyboardKeyName::Backspace:      return ImGuiKey_Backspace;
+    case EKeyboardKeyName::Space:          return ImGuiKey_Space;
+    case EKeyboardKeyName::Enter:          return ImGuiKey_Enter;
+    case EKeyboardKeyName::Escape:         return ImGuiKey_Escape;
+    case EKeyboardKeyName::Apostrophe:     return ImGuiKey_Apostrophe;
+    case EKeyboardKeyName::Comma:          return ImGuiKey_Comma;
+    case EKeyboardKeyName::Minus:          return ImGuiKey_Minus;
+    case EKeyboardKeyName::Period:         return ImGuiKey_Period;
+    case EKeyboardKeyName::Slash:          return ImGuiKey_Slash;
+    case EKeyboardKeyName::Semicolon:      return ImGuiKey_Semicolon;
+    case EKeyboardKeyName::Equal:          return ImGuiKey_Equal;
+    case EKeyboardKeyName::LeftBracket:    return ImGuiKey_LeftBracket;
+    case EKeyboardKeyName::Backslash:      return ImGuiKey_Backslash;
+    case EKeyboardKeyName::RightBracket:   return ImGuiKey_RightBracket;
+    case EKeyboardKeyName::GraveAccent:    return ImGuiKey_GraveAccent;
+    case EKeyboardKeyName::CapsLock:       return ImGuiKey_CapsLock;
+    case EKeyboardKeyName::ScrollLock:     return ImGuiKey_ScrollLock;
+    case EKeyboardKeyName::NumLock:        return ImGuiKey_NumLock;
+    case EKeyboardKeyName::PrintScreen:    return ImGuiKey_PrintScreen;
+    case EKeyboardKeyName::Pause:          return ImGuiKey_Pause;
+    case EKeyboardKeyName::KeypadZero:     return ImGuiKey_Keypad0;
+    case EKeyboardKeyName::KeypadOne:      return ImGuiKey_Keypad1;
+    case EKeyboardKeyName::KeypadTwo:      return ImGuiKey_Keypad2;
+    case EKeyboardKeyName::KeypadThree:    return ImGuiKey_Keypad3;
+    case EKeyboardKeyName::KeypadFour:     return ImGuiKey_Keypad4;
+    case EKeyboardKeyName::KeypadFive:     return ImGuiKey_Keypad5;
+    case EKeyboardKeyName::KeypadSix:      return ImGuiKey_Keypad6;
+    case EKeyboardKeyName::KeypadSeven:    return ImGuiKey_Keypad7;
+    case EKeyboardKeyName::KeypadEight:    return ImGuiKey_Keypad8;
+    case EKeyboardKeyName::KeypadNine:     return ImGuiKey_Keypad9;
+    case EKeyboardKeyName::KeypadDecimal:  return ImGuiKey_KeypadDecimal;
+    case EKeyboardKeyName::KeypadDivide:   return ImGuiKey_KeypadDivide;
+    case EKeyboardKeyName::KeypadMultiply: return ImGuiKey_KeypadMultiply;
+    case EKeyboardKeyName::KeypadSubtract: return ImGuiKey_KeypadSubtract;
+    case EKeyboardKeyName::KeypadAdd:      return ImGuiKey_KeypadAdd;
+    case EKeyboardKeyName::KeypadEnter:    return ImGuiKey_KeypadEnter;
+    case EKeyboardKeyName::LeftShift:      return ImGuiKey_LeftShift;
+    case EKeyboardKeyName::LeftControl:    return ImGuiKey_LeftCtrl;
+    case EKeyboardKeyName::LeftAlt:        return ImGuiKey_LeftAlt;
+    case EKeyboardKeyName::LeftSuper:      return ImGuiKey_LeftSuper;
+    case EKeyboardKeyName::RightShift:     return ImGuiKey_RightShift;
+    case EKeyboardKeyName::RightControl:   return ImGuiKey_RightCtrl;
+    case EKeyboardKeyName::RightAlt:       return ImGuiKey_RightAlt;
+    case EKeyboardKeyName::RightSuper:     return ImGuiKey_RightSuper;
+    case EKeyboardKeyName::Menu:           return ImGuiKey_Menu;
+    case EKeyboardKeyName::Zero:           return ImGuiKey_0;
+    case EKeyboardKeyName::One:            return ImGuiKey_1;
+    case EKeyboardKeyName::Two:            return ImGuiKey_2;
+    case EKeyboardKeyName::Three:          return ImGuiKey_3;
+    case EKeyboardKeyName::Four:           return ImGuiKey_4;
+    case EKeyboardKeyName::Five:           return ImGuiKey_5;
+    case EKeyboardKeyName::Six:            return ImGuiKey_6;
+    case EKeyboardKeyName::Seven:          return ImGuiKey_7;
+    case EKeyboardKeyName::Eight:          return ImGuiKey_8;
+    case EKeyboardKeyName::Nine:           return ImGuiKey_9;
+    case EKeyboardKeyName::A:              return ImGuiKey_A;
+    case EKeyboardKeyName::B:              return ImGuiKey_B;
+    case EKeyboardKeyName::C:              return ImGuiKey_C;
+    case EKeyboardKeyName::D:              return ImGuiKey_D;
+    case EKeyboardKeyName::E:              return ImGuiKey_E;
+    case EKeyboardKeyName::F:              return ImGuiKey_F;
+    case EKeyboardKeyName::G:              return ImGuiKey_G;
+    case EKeyboardKeyName::H:              return ImGuiKey_H;
+    case EKeyboardKeyName::I:              return ImGuiKey_I;
+    case EKeyboardKeyName::J:              return ImGuiKey_J;
+    case EKeyboardKeyName::K:              return ImGuiKey_K;
+    case EKeyboardKeyName::L:              return ImGuiKey_L;
+    case EKeyboardKeyName::M:              return ImGuiKey_M;
+    case EKeyboardKeyName::N:              return ImGuiKey_N;
+    case EKeyboardKeyName::O:              return ImGuiKey_O;
+    case EKeyboardKeyName::P:              return ImGuiKey_P;
+    case EKeyboardKeyName::Q:              return ImGuiKey_Q;
+    case EKeyboardKeyName::R:              return ImGuiKey_R;
+    case EKeyboardKeyName::S:              return ImGuiKey_S;
+    case EKeyboardKeyName::T:              return ImGuiKey_T;
+    case EKeyboardKeyName::U:              return ImGuiKey_U;
+    case EKeyboardKeyName::V:              return ImGuiKey_V;
+    case EKeyboardKeyName::W:              return ImGuiKey_W;
+    case EKeyboardKeyName::X:              return ImGuiKey_X;
+    case EKeyboardKeyName::Y:              return ImGuiKey_Y;
+    case EKeyboardKeyName::Z:              return ImGuiKey_Z;
+    case EKeyboardKeyName::F1:             return ImGuiKey_F1;
+    case EKeyboardKeyName::F2:             return ImGuiKey_F2;
+    case EKeyboardKeyName::F3:             return ImGuiKey_F3;
+    case EKeyboardKeyName::F4:             return ImGuiKey_F4;
+    case EKeyboardKeyName::F5:             return ImGuiKey_F5;
+    case EKeyboardKeyName::F6:             return ImGuiKey_F6;
+    case EKeyboardKeyName::F7:             return ImGuiKey_F7;
+    case EKeyboardKeyName::F8:             return ImGuiKey_F8;
+    case EKeyboardKeyName::F9:             return ImGuiKey_F9;
+    case EKeyboardKeyName::F10:            return ImGuiKey_F10;
+    case EKeyboardKeyName::F11:            return ImGuiKey_F11;
+    case EKeyboardKeyName::F12:            return ImGuiKey_F12;
     default:                       return ImGuiKey_None;
     }
 }
@@ -593,8 +594,10 @@ void FImGui::SetupMainViewport(FViewport* InViewport)
     }
 }
 
-FResponse FImGui::OnGamepadButtonEvent(EGamepadButtonName::Type Button, bool bIsDown)
+FResponse FImGui::OnGamepadButtonEvent(FKey Key, bool bIsDown)
 {
+    const EGamepadButtonName::Type Button = FInputMapper::Get().GetGamepadButtonNameFromKey(Key);
+
     const ImGuiKey GamepadButton = ImGui_GetGamepadButton(Button);
     if (GamepadButton != ImGuiKey_None)
     {
@@ -618,18 +621,18 @@ FResponse FImGui::OnGamepadAnalogEvent(EAnalogSourceName::Type AnalogSource, flo
     return FResponse::Unhandled();
 }
 
-FResponse FImGui::OnKeyEvent(EKeyName::Type InKey, bool bIsDown)
+FResponse FImGui::OnKeyEvent(FKey InKey, FModifierKeyState ModifierKeyState, bool bIsDown)
 {
+    const EKeyboardKeyName::Type KeyName = FInputMapper::Get().GetKeyboardKeyNameFromKey(InKey);
+
     // Update the UI-State
     ImGuiIO& UIState = ImGui::GetIO();
-
-    const FModifierKeyState ModifierKeyState = FPlatformApplicationMisc::GetModifierKeyState();
     UIState.AddKeyEvent(ImGuiMod_Ctrl , ModifierKeyState.bIsCtrlDown  == 1);
     UIState.AddKeyEvent(ImGuiMod_Shift, ModifierKeyState.bIsShiftDown == 1);
     UIState.AddKeyEvent(ImGuiMod_Alt  , ModifierKeyState.bIsAltDown   == 1);
     UIState.AddKeyEvent(ImGuiMod_Super, ModifierKeyState.bIsSuperDown == 1);
 
-    const ImGuiKey Key = ImGui_KeyToImGuiKey(InKey);
+    const ImGuiKey Key = ImGui_KeyToImGuiKey(KeyName);
     if (Key != ImGuiKey_None)
     {
         UIState.AddKeyEvent(Key, bIsDown);
@@ -655,11 +658,13 @@ FResponse FImGui::OnMouseMoveEvent(int32 x, int32 y)
     return FResponse::Unhandled();
 }
 
-FResponse FImGui::OnMouseButtonEvent(EMouseButtonName::Type Button, bool bIsDown)
+FResponse FImGui::OnMouseButtonEvent(FKey InKey, bool bIsDown)
 {
+    const EMouseButtonName::Type ButtonName = FInputMapper::Get().GetMouseButtonNameFromKey(InKey);
+
     ImGuiIO& UIState = ImGui::GetIO();
 
-    const uint32 ButtonIndex = ImGui_GetMouseButtonIndex(Button);
+    const uint32 ButtonIndex = ImGui_GetMouseButtonIndex(ButtonName);
     UIState.AddMouseButtonEvent(ButtonIndex, bIsDown);
 
     if (UIState.WantCaptureMouse)

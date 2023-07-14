@@ -25,17 +25,17 @@ public:
 
     static void SetupMainViewport(FViewport* InViewport);
 
-    static FResponse OnGamepadButtonEvent(EGamepadButtonName::Type Button, bool bIsDown);
+    static FResponse OnGamepadButtonEvent(FKey Key, bool bIsDown);
 
     static FResponse OnGamepadAnalogEvent(EAnalogSourceName::Type AnalogSource, float Analog);
 
-    static FResponse OnKeyEvent(EKeyName::Type Key, bool bIsDown);
+    static FResponse OnKeyEvent(FKey Key, FModifierKeyState ModifierKeyState, bool bIsDown);
 
     static FResponse OnKeyCharEvent(uint32 Character);
 
     static FResponse OnMouseMoveEvent(int32 x, int32 y);
 
-    static FResponse OnMouseButtonEvent(EMouseButtonName::Type ButtonIndex, bool bIsDown);
+    static FResponse OnMouseButtonEvent(FKey Key, bool bIsDown);
 
     static FResponse OnMouseScrollEvent(float ScrollDelta, bool bVertical);
 

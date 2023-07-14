@@ -1,4 +1,7 @@
 #pragma once
+#include "Application/Input/KeyNames.h"
+#include "Application/Input/Keys.h"
+
 #include "Application/Application.h"
 #include "Application/ApplicationEventHandler.h"
 #include "Application/DrawableTexture.h"

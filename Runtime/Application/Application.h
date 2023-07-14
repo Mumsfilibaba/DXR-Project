@@ -75,16 +75,16 @@ public:
 
     void UpdateMonitorInfo();
   
-public: // FGenericApplicationMessageHandler Interface
-    virtual bool OnControllerButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex) override final;
-    
-    virtual bool OnControllerButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat) override final;
-    
-    virtual bool OnControllerAnalog(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue) override final;
+public:
+    virtual bool OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue) override final;
 
-    virtual bool OnKeyUp(EKeyName::Type KeyCode, FModifierKeyState ModierKeyState) override final;
+    virtual bool OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex) override final;
     
-    virtual bool OnKeyDown(EKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState) override final;
+    virtual bool OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat) override final;    
+
+    virtual bool OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState ModierKeyState) override final;
+    
+    virtual bool OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState) override final;
     
     virtual bool OnKeyChar(uint32 Character) override final;
 
@@ -208,7 +208,7 @@ protected:
     FDisplayInfo DisplayInfo;
     bool         bIsTrackingMouse;
 
-    TSet<EKeyName::Type>         PressedKeys;
+    TSet<EKeyboardKeyName::Type>         PressedKeys;
     TSet<EMouseButtonName::Type> PressedMouseButtons;
 
 private:

@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Core.h"
+#include "Input/Keys.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
 #include "CoreApplication/Generic/InputCodes.h"
@@ -57,57 +57,57 @@ private:
 };
 
 
-class FMouseEvent : public FInputEvent
+class FCursorEvent : public FInputEvent
 {
 public:
-    FMouseEvent()
+    FCursorEvent()
         : FInputEvent()
+        , Key(EKeys::Unknown)
         , CursorPosition()
         , ScrollDelta(0.0f)
-        , Button(EMouseButtonName::Unknown)
         , bIsVerticalScrollDelta(false)
         , bIsDown(false)
     {
     }
 
-    FMouseEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& ModifierKeys)
-        : FInputEvent(ModifierKeys)
+    FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
+        : FInputEvent(InModifierKeys)
+        , Key(EKeys::Unknown)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
-        , Button(EMouseButtonName::Unknown)
         , bIsVerticalScrollDelta(false)
         , bIsDown(false)
     {
     }
 
-    FMouseEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& ModifierKeys, EMouseButtonName::Type InButton, bool bInIsDown)
-        : FInputEvent(ModifierKeys)
+    FCursorEvent(FKey InKey, const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, bool bInIsDown)
+        : FInputEvent(InModifierKeys)
+        , Key(InKey)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
-        , Button(InButton)
         , bIsVerticalScrollDelta(false)
         , bIsDown(bInIsDown)
     {
     }
 
-    FMouseEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& ModifierKeys, float InScrollDelta, bool bInIsVerticalScrollDelta)
-        : FInputEvent(ModifierKeys)
+    FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsVerticalScrollDelta)
+        : FInputEvent(InModifierKeys)
+        , Key(EKeys::Unknown)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(InScrollDelta)
-        , Button(EMouseButtonName::Unknown)
         , bIsVerticalScrollDelta(bInIsVerticalScrollDelta)
         , bIsDown(false)
     {
     }
 
+    FKey GetKey() const
+    {
+        return Key;
+    }
+
     FIntVector2 GetCursorPos() const
     {
         return CursorPosition;
-    }
-
-    EMouseButtonName::Type GetButton() const
-    {
-        return Button;
     }
 
     float GetScrollDelta() const
@@ -126,11 +126,11 @@ public:
     }
 
 private:
-    FIntVector2  CursorPosition;
-    float        ScrollDelta;
-    EMouseButtonName::Type Button;
-    bool         bIsVerticalScrollDelta : 1;
-    bool         bIsDown : 1;
+    FKey        Key;
+    FIntVector2 CursorPosition;
+    float       ScrollDelta;
+    bool        bIsVerticalScrollDelta : 1;
+    bool        bIsDown                : 1;
 };
 
 
@@ -139,32 +139,45 @@ class FKeyEvent : public FInputEvent
 public:
     FKeyEvent()
         : FInputEvent()
+        , Key(EKeys::Unknown)
         , Character(0)
-        , Key(EKeyName::Unknown)
+        , GamepadIndex(static_cast<uint32>(-1))
         , bIsRepeat(false)
         , bIsDown(false)
     {
     }
 
-    FKeyEvent(const FModifierKeyState& ModifierKeys, EKeyName::Type InKey, bool bInIsRepeat, bool bInIsDown)
-        : FInputEvent(ModifierKeys)
+    FKeyEvent(FKey InKey, const FModifierKeyState& InModifierKeys, bool bInIsRepeat, bool bInIsDown)
+        : FInputEvent(InModifierKeys)
+        , Key(InKey)
         , Character(0)
-        , Key(InKey)
+        , GamepadIndex(static_cast<uint32>(-1))
         , bIsRepeat(bInIsRepeat)
         , bIsDown(bInIsDown)
     {
     }
 
-    FKeyEvent(const FModifierKeyState& ModifierKeys, EKeyName::Type InKey, uint32 InCharacter, bool bInIsRepeat, bool bInIsDown)
-        : FInputEvent(ModifierKeys)
+    FKeyEvent(FKey InKey, const FModifierKeyState& InModifierKeys, uint32 InCharacter, bool bInIsRepeat, bool bInIsDown)
+        : FInputEvent(InModifierKeys)
+        , Key(InKey)
         , Character(InCharacter)
-        , Key(InKey)
+        , GamepadIndex(static_cast<uint32>(-1))
         , bIsRepeat(bInIsRepeat)
         , bIsDown(bInIsDown)
     {
     }
 
-    EKeyName::Type GetKey() const
+    FKeyEvent(FKey InKey, const FModifierKeyState& InModifierKeys, uint32 InCharacter, uint32 InGamepadIndex, bool bInIsRepeat, bool bInIsDown)
+        : FInputEvent(InModifierKeys)
+        , Key(InKey)
+        , Character(InCharacter)
+        , GamepadIndex(InGamepadIndex)
+        , bIsRepeat(bInIsRepeat)
+        , bIsDown(bInIsDown)
+    {
+    }
+
+    FKey GetKey() const
     {
         return Key;
     }
@@ -172,6 +185,11 @@ public:
     char GetAnsiChar() const
     {
         return static_cast<char>(Character);
+    }
+
+    uint32 GetGamepadIndex() const
+    {
+        return GamepadIndex;
     }
 
     bool IsRepeat() const
@@ -185,68 +203,31 @@ public:
     }
 
 private:
+    FKey   Key;
     uint32 Character;
-    EKeyName::Type Key;
-
-    bool bIsRepeat : 1;
-    bool bIsDown   : 1;
+    uint32 GamepadIndex : 30;
+    uint32 bIsRepeat    : 1;
+    uint32 bIsDown      : 1;
 };
 
 
-class FControllerEvent : public FInputEvent
+class FAnalogGamepadEvent : public FInputEvent
 {
 public:
-    FControllerEvent()
+    FAnalogGamepadEvent()
         : FInputEvent()
-        , Button(EGamepadButtonName::Unknown)
-        , bIsButtonDown(false)
-        , bIsRepeat(false)
         , AnalogSource(EAnalogSourceName::Unknown)
         , AnalogValue(0.0f)
         , GamepadIndex(0)
     {
     }
 
-    FControllerEvent(EGamepadButtonName::Type InButton, uint32 InControllerIndex, bool bInIsButtonDown, bool bInIsRepeat)
-        : FInputEvent()
-        , Button(InButton)
-        , bIsButtonDown(bInIsButtonDown)
-        , bIsRepeat(bInIsRepeat)
-        , AnalogSource(EAnalogSourceName::Unknown)
-        , AnalogValue(0.0f)
-        , GamepadIndex(InControllerIndex)
-    {
-    }
-
-    FControllerEvent(EAnalogSourceName::Type InAnalogSource, uint32 InControllerIndex, float InAnalogValue)
-        : FInputEvent()
-        , Button(EGamepadButtonName::Unknown)
-        , bIsButtonDown(false)
-        , bIsRepeat(false)
+    FAnalogGamepadEvent(EAnalogSourceName::Type InAnalogSource, uint32 InGamepadIndex, const FModifierKeyState& InModifierKeys, float InAnalogValue)
+        : FInputEvent(InModifierKeys)
         , AnalogSource(InAnalogSource)
         , AnalogValue(InAnalogValue)
-        , GamepadIndex(InControllerIndex)
+        , GamepadIndex(InGamepadIndex)
     {
-    }
-
-    bool IsButtonDown() const
-    {
-        return bIsButtonDown;
-    }
-
-    bool IsRepeat() const
-    {
-        return bIsRepeat;
-    }
-
-    bool HasAnalogValue() const
-    {
-        return AnalogSource != EAnalogSourceName::Unknown;
-    }
-
-    EGamepadButtonName::Type GetButton() const
-    {
-        return Button;
     }
 
     EAnalogSourceName::Type GetAnalogSource() const
@@ -265,16 +246,11 @@ public:
     }
 
 private:
-    EGamepadButtonName::Type Button;
-    
-    bool                     bIsButtonDown;
-    bool                     bIsRepeat;
-
-    EAnalogSourceName::Type  AnalogSource;
-    
-    float                    AnalogValue;
-    uint32                   GamepadIndex;
+    EAnalogSourceName::Type AnalogSource;
+    float                   AnalogValue;
+    uint32                  GamepadIndex;
 };
+
 
 class FWindowEvent
 {
@@ -333,7 +309,7 @@ public:
 
 private:
     TSharedRef<FGenericWindow> Window;
-    FIntVector2 Position;
-    int32       Width;
-    int32       Height;
+    FIntVector2                Position;
+    int32                      Width;
+    int32                      Height;
 };

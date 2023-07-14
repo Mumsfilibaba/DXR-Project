@@ -8,31 +8,11 @@ struct FInputPreProcessor
     virtual ~FInputPreProcessor() = default;
 
     /**
-     * @brief                 - Handle ControllerEvent event, if the event-handler consumes the event, return true
-     * @param ControllerEvent - Data for the controller event
-     * @return                - Returns true if the event was handled and should not be sent to other input-handlers
+     * @brief             - Handle AnalogEvent event, if the event-handler consumes the event, return true
+     * @param AnalogEvent - Data for the controller event
+     * @return            - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnControllerButtonDown(const FControllerEvent& ControllerEvent)
-    {
-        return false;
-    }
-
-    /**
-     * @brief                 - Handle ControllerEvent event, if the event-handler consumes the event, return true
-     * @param ControllerEvent - Data for the controller event
-     * @return                - Returns true if the event was handled and should not be sent to other input-handlers
-     */
-    virtual bool OnControllerButtonUp(const FControllerEvent& ControllerEvent)
-    {
-        return false;
-    }
-    
-    /**
-     * @brief                 - Handle ControllerEvent event, if the event-handler consumes the event, return true
-     * @param ControllerEvent - Data for the controller event
-     * @return                - Returns true if the event was handled and should not be sent to other input-handlers
-     */
-    virtual bool OnControllerAnalog(const FControllerEvent& ControllerEvent)
+    virtual bool OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogEvent)
     {
         return false;
     }
@@ -68,86 +48,67 @@ struct FInputPreProcessor
     }
 
     /**
-     * @brief            - Handle mouse move event, if the event-handler consumes the event, return true
-     * @param MouseEvent - Data for the mouse event
-     * @return           - Returns true if the event was handled and should not be sent to other input-handlers
+     * @brief             - Handle mouse move event, if the event-handler consumes the event, return true
+     * @param CursorEvent - Data for the mouse event
+     * @return            - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnMouseMove(const FMouseEvent& MouseEvent)
+    virtual bool OnMouseMove(const FCursorEvent& CursorEvent)
     {
         return false;
     }
 
     /**
-     * @brief            - Handle mouse button event, if the event-handler consumes the event, return true
-     * @param MouseEvent - Data for the mouse event
-     * @return           - Returns true if the event was handled and should not be sent to other input-handlers
+     * @brief             - Handle mouse button event, if the event-handler consumes the event, return true
+     * @param CursorEvent - Data for the mouse event
+     * @return            - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnMouseButtonDown(const FMouseEvent& MouseEvent)
+    virtual bool OnMouseButtonDown(const FCursorEvent& CursorEvent)
     {
         return false;
     }
 
     /**
-     * @brief            - Handle mouse button event, if the event-handler consumes the event, return true
-     * @param MouseEvent - Data for the mouse event
-     * @return           - Returns true if the event was handled and should not be sent to other input-handlers
+     * @brief             - Handle mouse button event, if the event-handler consumes the event, return true
+     * @param CursorEvent - Data for the mouse event
+     * @return            - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnMouseButtonUp(const FMouseEvent& MouseEvent)
+    virtual bool OnMouseButtonUp(const FCursorEvent& CursorEvent)
     {
         return false;
     }
 
     /**
-     * @brief            - Handle mouse scrolled event, if the event-handler consumes the event, return true 
-     * @param MouseEvent - Data for the mouse event
-     * @return           - Returns true if the event was handled and should not be sent to other input-handlers
+     * @brief             - Handle mouse scrolled event, if the event-handler consumes the event, return true 
+     * @param CursorEvent - Data for the mouse event
+     * @return            - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnMouseScrolled(const FMouseEvent& MouseEvent)
+    virtual bool OnMouseScrolled(const FCursorEvent& CursorEvent)
     {
         return false;
     }
 
     /**
-     * @brief            - Handle a high-precision mouse event, if the event-handler consumes the event, return true
-     * @param MouseEvent - Data for the mouse event
-     * @return           - Returns true if the event was handled and should not be sent to other input-handlers
+     * @brief             - Handle a high-precision mouse event, if the event-handler consumes the event, return true
+     * @param CursorEvent - Data for the mouse event
+     * @return            - Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnHighPrecisionMouseInput(const FMouseEvent& MouseEvent)
+    virtual bool OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
     {
         return false;
     }
 };
+
 
 struct FApplicationEventHandler
 {
     virtual ~FApplicationEventHandler() = default;
 
     /**
-     * @brief                 - Handle ControllerEvent event
-     * @param ControllerEvent - Data for the controller event
+     * @brief                 - Handle AnalogGamepadEvent event
+     * @param AnalogGamepadEvent - Data for the controller event
      * @return                - Returns a structure with response information from the event
      */
-    virtual FResponse OnControllerAnalog(const FControllerEvent& ControllerEvent)
-    {
-        return FResponse::Unhandled();
-    }
-
-    /**
-     * @brief                 - Handle ControllerEvent event
-     * @param ControllerEvent - Data for the controller event
-     * @return                - Returns a structure with response information from the event
-     */
-    virtual FResponse OnControllerButtonDown(const FControllerEvent& ControllerEvent)
-    {
-        return FResponse::Unhandled();
-    }
-
-    /**
-     * @brief                 - Handle ControllerEvent event
-     * @param ControllerEvent - Data for the controller event
-     * @return                - Returns a structure with response information from the event
-     */
-    virtual FResponse OnControllerButtonUp(const FControllerEvent& ControllerEvent)
+    virtual FResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent)
     {
         return FResponse::Unhandled();
     }
@@ -184,50 +145,50 @@ struct FApplicationEventHandler
 
     /**
      * @brief            - Handle mouse move event
-     * @param MouseEvent - Data for the mouse event
+     * @param CursorEvent - Data for the mouse event
      * @return           - Returns a structure with response information from the event
      */
-    virtual FResponse OnMouseMove(const FMouseEvent& MouseEvent)
+    virtual FResponse OnMouseMove(const FCursorEvent& CursorEvent)
     {
         return FResponse::Unhandled();
     }
 
     /**
      * @brief            - Handle mouse button event
-     * @param MouseEvent - Data for the mouse event
+     * @param CursorEvent - Data for the mouse event
      * @return           - Returns a structure with response information from the event
      */
-    virtual FResponse OnMouseButtonDown(const FMouseEvent& MouseEvent)
+    virtual FResponse OnMouseButtonDown(const FCursorEvent& CursorEvent)
     {
         return FResponse::Unhandled();
     }
 
     /**
      * @brief            - Handle mouse button event
-     * @param MouseEvent - Data for the mouse event
+     * @param CursorEvent - Data for the mouse event
      * @return           - Returns a structure with response information from the event
      */
-    virtual FResponse OnMouseButtonUp(const FMouseEvent& MouseEvent)
+    virtual FResponse OnMouseButtonUp(const FCursorEvent& CursorEvent)
     {
         return FResponse::Unhandled();
     }
 
     /**
      * @brief            - Handle mouse scrolled event
-     * @param MouseEvent - Data for the mouse event
+     * @param CursorEvent - Data for the mouse event
      * @return           - Returns a structure with response information from the event
      */
-    virtual FResponse OnMouseScroll(const FMouseEvent& MouseEvent)
+    virtual FResponse OnMouseScroll(const FCursorEvent& CursorEvent)
     {
         return FResponse::Unhandled();
     }
     
     /**
      * @brief            - Handle mouse double-clicked event
-     * @param MouseEvent - Data for the mouse event
+     * @param CursorEvent - Data for the mouse event
      * @return           - Returns a structure with response information from the event
      */
-    virtual FResponse OnMouseDoubleClick(const FMouseEvent& MouseEvent)
+    virtual FResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent)
     {
         return FResponse::Unhandled();
     }
