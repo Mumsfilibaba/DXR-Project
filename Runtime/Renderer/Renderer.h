@@ -10,6 +10,7 @@
 #include "TemporalAA.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Threading/AsyncTask.h"
+#include "Application/Events.h"
 #include "Engine/Scene/Actors/Actor.h"
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Camera.h"

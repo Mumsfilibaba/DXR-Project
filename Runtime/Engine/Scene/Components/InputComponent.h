@@ -3,28 +3,35 @@
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/String.h"
 
-DECLARE_DELEGATE(FInputActionDelegate);
-
 enum class EActionState
 {
     Pressed  = 1,
     Released = 2
 };
 
-struct ENGINE_API FActionInputBinding
+
+DECLARE_DELEGATE(FInputActionDelegate);
+
+struct FActionInputBinding
 {
     FActionInputBinding() = default;
 
-    FActionInputBinding(const FStringView& InName)
+    FActionInputBinding(const FStringView& InName, EActionState InActionState, const FInputActionDelegate& InActionDelegate)
         : Name(InName)
-    { }
+        , ActionState(InActionState)
+        , ActionDelegate(InActionDelegate)
+    {
+    }
 
     FString              Name;
+    EActionState         ActionState;
     FInputActionDelegate ActionDelegate;
 };
 
-class ENGINE_API FInputComponent
-    : public FComponent
+
+typedef int32 FActionBindingIdentifier;
+
+class ENGINE_API FInputComponent : public FComponent
 {
     FOBJECT_BODY(FInputComponent, FComponent);
 
@@ -32,9 +39,17 @@ public:
     FInputComponent(FActor* InActorOwner);
     ~FInputComponent() = default;
 
-    FActionInputBinding BindAction(const FStringView& InName, EActionState ActionState, FActor* Actor);
-    FActionInputBinding AddActionBinding(const FStringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate);
+    template<typename ClassType>
+    using ActionFunction = typename TMemberFunctionType<false, ClassType, void(void)>::Type;
 
-private:
+    template<typename ClassType>
+    FORCEINLINE FActionBindingIdentifier BindAction(const FStringView& InName, EActionState ActionState, ClassType* Actor, ActionFunction<ClassType> ActorFunction)
+    {
+        const FInputActionDelegate NewDelegate = FInputActionDelegate::CreateRaw(Actor, ActorFunction);
+        return BindAction(InName, ActionState, NewDelegate);
+    }
+
+    FActionBindingIdentifier BindAction(const FStringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate);
+
     TArray<FActionInputBinding> ActionBindings;
 };

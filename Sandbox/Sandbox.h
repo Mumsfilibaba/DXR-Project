@@ -3,8 +3,7 @@
 #include <Core/Modules/ModuleManager.h>
 #include <Engine/Scene/Camera.h>
 
-class SANDBOX_API FSandbox 
-    : public FGameModule
+class SANDBOX_API FSandbox : public FGameModule
 {
 public:
     FSandbox()  = default;

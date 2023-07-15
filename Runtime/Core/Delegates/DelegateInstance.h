@@ -150,9 +150,8 @@ public:
      * @param Args - Arguments to the function-call
      * @return     - The result of the function-call
      */
-    virtual ReturnType Execute(ArgTypes... Args) = 0;
+    virtual ReturnType Execute(ArgTypes... Args) const = 0;
 
-public:
     virtual const void* GetBoundObject() const override
     {
         return nullptr;
@@ -192,7 +191,7 @@ public:
     {
     }
 
-    virtual ReturnType Execute(ArgTypes... Args) override final
+    virtual ReturnType Execute(ArgTypes... Args) const override final
     {
         return Payload.ApplyAfter(Function, Forward<ArgTypes>(Args)...);
     }
@@ -223,7 +222,7 @@ public:
     {
     }
 
-    virtual ReturnType Execute(ArgTypes... Args) override final
+    virtual ReturnType Execute(ArgTypes... Args) const override final
     {
         return Function(Forward<ArgTypes>(Args)...);
     }
@@ -259,7 +258,7 @@ public:
         CHECK(This != nullptr);
     }
 
-    virtual ReturnType Execute(ArgTypes... Args) override final
+    virtual ReturnType Execute(ArgTypes... Args) const override final
     {
         return Payload.ApplyAfter(Function, This, Forward<ArgTypes>(Args)...);
     }
@@ -303,7 +302,7 @@ public:
         CHECK(This != nullptr);
     }
 
-    virtual ReturnType Execute(ArgTypes... Args) override final
+    virtual ReturnType Execute(ArgTypes... Args) const override final
     {
         return ((*This).*Function)(Forward<ArgTypes>(Args)...);
     }
@@ -347,12 +346,12 @@ public:
     {
     }
 
-    virtual ReturnType Execute(ArgTypes... Args) override
+    virtual ReturnType Execute(ArgTypes... Args) const override final
     {
         return Payload.ApplyAfter(Functor, Forward<ArgTypes>(Args)...);
     }
 
-    virtual Super* Clone(void* Memory) const override
+    virtual Super* Clone(void* Memory) const override final
     {
         return new(Memory) TLambdaDelegateInstance(*this);
     }
@@ -377,12 +376,12 @@ public:
     {
     }
 
-    virtual ReturnType Execute(ArgTypes... Args) override
+    virtual ReturnType Execute(ArgTypes... Args) const override final
     {
         return Functor(Forward<ArgTypes>(Args)...);
     }
 
-    virtual Super* Clone(void* Memory) const override
+    virtual Super* Clone(void* Memory) const override final
     {
         return new(Memory) TLambdaDelegateInstance(*this);
     }

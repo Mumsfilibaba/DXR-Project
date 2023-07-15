@@ -20,7 +20,7 @@
 #include "Engine/Resources/Mesh.h"
 
 #include "Engine/Scene/Actors/Actor.h"
-#include "Engine/Scene/Actors/InputStates.h"
+#include "Engine/Scene/Actors/PlayerInput.h"
 #include "Engine/Scene/Actors/PlayerController.h"
 
 #include "Engine/Scene/Components/Component.h"

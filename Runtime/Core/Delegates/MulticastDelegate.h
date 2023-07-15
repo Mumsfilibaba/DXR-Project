@@ -139,13 +139,13 @@ public:
      * @brief      - Execute all bound delegates
      * @param Args - Arguments for the function-calls
      */
-    FORCEINLINE void Broadcast(ArgTypes... Args)
+    FORCEINLINE void Broadcast(ArgTypes... Args) const
     {
         Super::Lock();
 
         for (int32 Index = 0; Index < Delegates.Size(); Index++)
         {
-            DelegateType& Delegate = static_cast<DelegateType&>(Delegates[Index]);
+            const DelegateType& Delegate = static_cast<const DelegateType&>(Delegates[Index]);
 
             FDelegateHandle Handle = Delegate.GetHandle();
             if (Handle.IsValid())

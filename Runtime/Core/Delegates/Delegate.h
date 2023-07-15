@@ -222,7 +222,7 @@ public:
      * @param Args - Arguments to pass to the call
      * @return     - The return value for the call
      */ 
-    FORCEINLINE ReturnType Execute(ArgTypes... Args)
+    FORCEINLINE ReturnType Execute(ArgTypes... Args) const
     {
         CHECK(IsBound());
         return GetDelegateInstance()->Execute(Forward<ArgTypes>(Args)...);
@@ -233,7 +233,7 @@ public:
      * @param Args - Arguments to pass to the call
      * @return     - Returns true if the call was perform, otherwise false
      */
-    FORCEINLINE bool ExecuteIfBound(ArgTypes... Args)
+    FORCEINLINE bool ExecuteIfBound(ArgTypes... Args) const
     {
         if (IsBound())
         {

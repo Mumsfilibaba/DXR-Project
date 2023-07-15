@@ -16,11 +16,19 @@ public:
 
     void MoveForward();
 
-    void MoveBackward();
+    void MoveBackwards();
 
     void MoveRight();
 
     void MoveLeft();
+
+    void RotateUp();
+
+    void RotateDown();
+
+    void RotateRight();
+
+    void RotateLeft();
 
 private:
     FCamera* Camera;
