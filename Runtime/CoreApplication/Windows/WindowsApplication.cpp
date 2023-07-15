@@ -1,10 +1,10 @@
 #include "WindowsApplication.h"
+#include "WindowsInputMapper.h"
 #include "WindowsCursor.h"
 #include "WindowsWindow.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Windows/WindowsInputMapper.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
@@ -29,7 +29,7 @@ TSharedPtr<FWindowsApplication> FWindowsApplication::CreateWindowsApplication()
 
     TSharedPtr<FWindowsApplication> NewWindowsApplication = MakeShared<FWindowsApplication>(AppInstanceHandle, Icon);
     WindowsApplication = NewWindowsApplication.Get();
-    return NewWindowsApplication.Get();
+    return NewWindowsApplication;
 }
 
 FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIcon)

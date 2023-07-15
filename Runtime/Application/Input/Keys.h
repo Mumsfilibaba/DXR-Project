@@ -10,7 +10,7 @@ public:
     {
     }
 
-    FKey(EKeyName::Type InKey) 
+    explicit FKey(EKeyName::Type InKey) 
         : Key(InKey)
         , KeyString(::ToString(InKey))
     {
@@ -52,8 +52,8 @@ public:
     }
 
 private:
-    const EKeyName::Type Key;
-    const CHAR*          KeyString;
+    EKeyName::Type Key;
+    const CHAR*    KeyString;
 };
 
 struct EKeys

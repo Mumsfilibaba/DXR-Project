@@ -419,19 +419,19 @@ bool FMeshImporter::LoadCustom(const FString& InFilename, FSceneData& OutScene)
     {
         FModelData& CurrentModel = OutScene.Models[Index];
         
-        const auto Length = FCString::Strlen(ModelHeaders[Index].Name);
+        const int32 Length = FCString::Strlen(ModelHeaders[Index].Name);
         CHECK(Length < FCustomModel::MaxNameLength);
         CurrentModel.Name          = ModelHeaders[Index].Name;
         CurrentModel.MaterialIndex = ModelHeaders[Index].MaterialIndex;
 
         LOG_INFO("Loaded Mesh '%s'", ModelHeaders[Index].Name);
 
-        const auto NumVertices = ModelHeaders[Index].NumVertices;
+        const int32 NumVertices = ModelHeaders[Index].NumVertices;
         CurrentModel.Mesh.Vertices.Resize(NumVertices);
         FMemory::Memcpy(CurrentModel.Mesh.Vertices.Data(), Vertices, NumVertices * sizeof(FVertex));
         Vertices += NumVertices;
 
-        const auto NumIndices = ModelHeaders[Index].NumIndices;
+        const int32 NumIndices = ModelHeaders[Index].NumIndices;
         CurrentModel.Mesh.Indices.Resize(NumIndices);
         FMemory::Memcpy(CurrentModel.Mesh.Indices.Data(), Indices, NumIndices * sizeof(uint32));
         Indices += NumIndices;

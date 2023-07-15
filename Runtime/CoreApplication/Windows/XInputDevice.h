@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Input/InputCodes.h"
+#include "CoreApplication/Generic/InputCodes.h"
 #include "CoreApplication/Generic/InputDevice.h"
 
 #if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/)

@@ -3,8 +3,13 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "RHI/RHITypes.h"
 
+// NOTE: Since this warning comes from a ThirdParty library, we disable this warning for now
+DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING
+
 #define TINYDDSLOADER_IMPLEMENTATION
 #include <tinyddsloader.h>
+
+ENABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING
 
 constexpr EFormat ConvertFormat(tinyddsloader::DDSFile::DXGIFormat Format)
 {

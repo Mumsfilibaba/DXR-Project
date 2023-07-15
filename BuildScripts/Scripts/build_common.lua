@@ -125,8 +125,8 @@ function AddModule(ModuleName, Module)
     end
 end
 
--- Mainpath ../BuildScripts
-GEnginePath = path.getabsolute( "../", _PREMAKE_DIR)  
+-- Mainpath ../BuildScripts/Premake
+GEnginePath = path.getabsolute( "../../", _PREMAKE_DIR)
 
 function GetEnginePath()
     return GEnginePath

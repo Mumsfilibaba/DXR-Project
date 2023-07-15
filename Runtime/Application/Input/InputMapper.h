@@ -2,10 +2,12 @@
 #include "Keys.h"
 #include "CoreApplication/Generic/InputCodes.h"
 
-class FInputMapper
+class APPLICATION_API FInputMapper
 {
 public:
     static FInputMapper& Get() { return Instance; }
+
+    void Initialize();
 
     FKey GetKeyboardKey(EKeyboardKeyName::Type Key);
 
@@ -20,5 +22,9 @@ public:
     EGamepadButtonName::Type GetGamepadButtonNameFromKey(FKey Key);
 
 private:
+    FKey KeyboardMap[EKeyboardKeyName::Count];
+    FKey MouseMap[EMouseButtonName::Count];
+    FKey GamepadMap[EGamepadButtonName::Count];
+
     static FInputMapper Instance;
 };

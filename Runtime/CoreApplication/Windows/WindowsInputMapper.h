@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Containers/StaticArray.h"
-#include "Core/Input/InputCodes.h"
+#include "CoreApplication/Generic/InputCodes.h"
 #include "CoreApplication/Generic/GenericInputMapper.h"
 
 class COREAPPLICATION_API FWindowsInputMapper final : public EGenericInputMapper
@@ -22,6 +22,6 @@ public:
     }
 
 private:
-    static TStaticArray<EKeyboardKeyName::Type  , NumKeys> KeyCodeFromScanCodeTable;
+    static TStaticArray<EKeyboardKeyName::Type, NumKeys> KeyCodeFromScanCodeTable;
     static TStaticArray<uint16, NumKeys> ScanCodeFromKeyCodeTable;
 };

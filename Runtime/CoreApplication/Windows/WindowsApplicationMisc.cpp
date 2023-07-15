@@ -1,7 +1,7 @@
 #include "WindowsApplication.h"
 #include "WindowsApplicationMisc.h"
 #include "WindowsOutputDeviceConsole.h"
-#include "Core/Input/ModifierKeyState.h"
+#include "CoreApplication/Generic/GenericApplicationMisc.h"
 
 TSharedPtr<FGenericApplication> FWindowsApplicationMisc::CreateApplication()
 {

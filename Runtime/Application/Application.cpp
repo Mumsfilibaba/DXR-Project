@@ -188,6 +188,9 @@ TSharedPtr<FGenericApplication> FApplication::PlatformApplication = nullptr;
 
 bool FApplication::Create()
 {
+    // Initialize the Input mappings
+    FInputMapper::Get().Initialize();
+
     PlatformApplication = FPlatformApplicationMisc::CreateApplication();
     if (!PlatformApplication)
     {
@@ -474,7 +477,7 @@ bool FApplication::OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 G
     const FKey Key = FInputMapper::Get().GetGamepadKey(Button);
     
     // Create the event
-    const FKeyEvent KeyEvent(Key, FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, bIsRepeat, false);
+    const FKeyEvent KeyEvent(Key, FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, bIsRepeat, true);
 
     // Let the InputPreProcessors handle the event first
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputPreProcessors), KeyEvent,
@@ -503,7 +506,6 @@ bool FApplication::OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 G
 
     return Response.IsEventHandled();
 }
-
 
 bool FApplication::OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState ModierKeyState)
 {

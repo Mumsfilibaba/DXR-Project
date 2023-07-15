@@ -22,7 +22,7 @@ function FWorkspaceRules(WorkspaceName)
         TargetName = "",
         
         -- @brief - Engine folder path
-        EnginePath = path.getabsolute( "../", _PREMAKE_DIR),
+        EnginePath = GetEnginePath(),
 
         -- @brief - Defines
         Defines = { },

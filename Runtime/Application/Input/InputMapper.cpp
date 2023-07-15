@@ -2,22 +2,51 @@
 
 FInputMapper FInputMapper::Instance;
 
+void FInputMapper::Initialize()
+{
+    // Init the KeyboardKey map
+    static_assert(EKeyboardKeyName::Unknown == EKeyName::Unknown && EKeyboardKeyName::Last == EKeyName::Menu, "EKeyboardKeyName::Type has changed values, update mapping");
+
+    for (int32 Index = EKeyboardKeyName::Unknown; Index <= EKeyboardKeyName::Last; Index++)
+    {
+        const EKeyName::Type KeyName = static_cast<EKeyName::Type>(Index);
+        KeyboardMap[Index] = FKey(KeyName);
+    }
+
+    // Init the MouseButton map
+    static_assert(EMouseButtonName::Left == 1 && EMouseButtonName::Last == 5, "EMouseButtonName::Type has changed values, update mapping");
+
+    MouseMap[0] = EKeys::Unknown;
+    for (int32 Index = EMouseButtonName::Left; Index <= EMouseButtonName::Last; Index++)
+    {
+        const EKeyName::Type MouseButtonName = static_cast<EKeyName::Type>(EKeyName::MouseButtonLeft + Index - 1);
+        MouseMap[Index] = FKey(MouseButtonName);
+    }
+
+    // Init the MouseButton map
+    static_assert(EGamepadButtonName::DPadUp == 1 && EGamepadButtonName::Last == 14, "EGamepadButtonName::Type has changed values, update mapping");
+
+    GamepadMap[0] = EKeys::Unknown;
+    for (int32 Index = EGamepadButtonName::DPadUp; Index <= EGamepadButtonName::Last; Index++)
+    {
+        const EKeyName::Type GamepadButtonName = static_cast<EKeyName::Type>(EKeyName::GamepadDPadUp + Index - 1);
+        GamepadMap[Index] = FKey(GamepadButtonName);
+    }
+}
+
 FKey FInputMapper::GetKeyboardKey(EKeyboardKeyName::Type Key)
 {
-    const EKeyName::Type KeyName = static_cast<EKeyName::Type>(Key + EKeyName::Unknown);
-    return FKey(KeyName);
+    return KeyboardMap[Key];
 }
 
 FKey FInputMapper::GetMouseKey(EMouseButtonName::Type MouseButton)
 {
-    const EKeyName::Type KeyName = static_cast<EKeyName::Type>(MouseButton + EKeyName::MouseButtonLeft);
-    return FKey(KeyName);
+    return MouseMap[MouseButton];
 }
 
 FKey FInputMapper::GetGamepadKey(EGamepadButtonName::Type GamepadButton)
 {
-    const EKeyName::Type KeyName = static_cast<EKeyName::Type>(GamepadButton + EKeyName::GamepadDPadUp);
-    return FKey(KeyName);
+    return GamepadMap[GamepadButton];
 }
 
 EKeyboardKeyName::Type FInputMapper::GetKeyboardKeyNameFromKey(FKey Key)

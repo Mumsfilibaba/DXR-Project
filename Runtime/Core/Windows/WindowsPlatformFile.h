@@ -1,6 +1,6 @@
 #pragma once
 #include "Windows.h"
-#include "Core/Generic/GenericFile.h"
+#include "Core/Generic/GenericPlatformFile.h"
 
 class CORE_API FWindowsFileHandle : public IFileHandle
 {

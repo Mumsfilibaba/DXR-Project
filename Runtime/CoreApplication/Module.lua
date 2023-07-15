@@ -6,22 +6,10 @@ include "../../BuildScripts/Scripts/Build_Module.lua"
 local CoreApplicationModule = FModuleBuildRules("CoreApplication")
 CoreApplicationModule.bUsePrecompiledHeaders = true
 
-CoreApplicationModule.AddModuleDependencies( 
-{
-    "Core"
-})
+CoreApplicationModule.AddModuleDependencies({ "Core" })
 
 if IsPlatformMac() then
-    CoreApplicationModule.AddFrameWorks( 
-    {
-        "Cocoa",
-        "AppKit",
-        "IOKit",
-        "GameController",
-    })
+    CoreApplicationModule.AddFrameWorks({ "Cocoa", "AppKit", "IOKit", "GameController" })
 elseif IsPlatformWindows() then
-    CoreApplicationModule.AddLinkLibraries(
-    {
-        "Shcore.lib"
-    })
+    CoreApplicationModule.AddLinkLibraries({ "Shcore.lib" })
 end

@@ -73,6 +73,27 @@
     #endif
 #endif
 
+// TODO: Finish up
+// Disable unreferenced variable warning
+#if !defined(DISABLE_UNREFERENCED_VARIABLE_WARNING)
+    #define DISABLE_UNREFERENCED_VARIABLE_WARNING
+    #define ENABLE_UNREFERENCED_VARIABLE_WARNING
+#endif
+
+// TODO: Finish up
+// Disable unreachable code warning
+#if !defined(DISABLE_UNREACHABLE_CODE_WARNING)
+    #define DISABLE_UNREACHABLE_CODE_WARNING
+    #define ENABLE_UNREACHABLE_CODE_WARNING
+#endif
+
+// TODO: Finish up
+// Disable hides previous local declaration
+#if !defined(DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING)
+    #define DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING
+    #define ENABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING
+#endif
+
 // Define the rest of the defines to a default value
 #include "CoreDefinesDefault.h"
 

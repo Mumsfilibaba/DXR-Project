@@ -2,7 +2,6 @@ include "build_common.lua"
 
 -- Build rules for a project
 function FBuildRules(InName)
-
     -- Needs to have a valid modulename
     if InName == nil then
         LogError("BuildRule failed due to invalid name")
@@ -205,7 +204,7 @@ function FBuildRules(InName)
     end
 
     -- @brief - Helper function for adding LinkOptions
-    function self.AddLinkOption(InOptions)
+    function self.AddLinkOptions(InOptions)
         AddUniqueElements(InOptions, self.LinkOptions)
     end
 
@@ -308,7 +307,10 @@ function FBuildRules(InName)
             if self.bUsePrecompiledHeaders then
                 filter "action:vs*"
                     pchheader("PreCompiled.h")
-                    pchsource("PreCompiled.cpp")
+                    -- NOTE: We need to specify the full path for everything to work properly on windows
+                    local PrecompiledSourcePath = self.GetPath() .. "/PreCompiled.cpp"
+                    pchsource(PrecompiledSourcePath)
+                    LogHighlight("    PreCompiled sourcepath \'" .. PrecompiledSourcePath .. "\'")
                 filter "action:not vs*"
                     pchheader(self.GetPath() .. "/PreCompiled.h")
                 filter{}
@@ -549,8 +551,12 @@ function FBuildRules(InName)
 
         -- Add link options
         if BuildWithVisualStudio() then
+            -- TODO: We only want this for monolithic builds
             for Index = 1, #self.LinkModules do
-                self.AddLinkOptions({ "/INCLUDE:LinkModule_" .. self.LinkModules[Index] })
+                local CurrentModuleName = self.LinkModules[Index]
+                if CurrentModuleName ~= "Launch" then
+                    self.AddLinkOptions({ "/INCLUDE:LinkModule_" .. CurrentModuleName })
+                end
             end
         end
 

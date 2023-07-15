@@ -100,10 +100,19 @@
         _Pragma("warning(pop)")
 #endif
 
+// Disable hides previous local declaration
+#if !defined(DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING)
+#define DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING \
+        _Pragma("warning(push)")                        \
+        _Pragma("warning(disable : 4456)") 
+#define ENABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING \
+        _Pragma("warning(pop)")
+#endif
 
 // Disable some warnings
 #pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
 #pragma warning(disable : 4324) // structure was padded due to alignment specifier
+#pragma warning(disable : 5054) // operator '==': deprecated between enumerations of different types
 
 // TODO: Investigate if this can be removed (4275, 4251)
 #pragma warning(disable : 4275) // Non DLL-interface class used '...' as base for DLL-interface class '...'

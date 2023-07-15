@@ -53,6 +53,7 @@ void FPlayerInput::Tick(FTimespan Delta)
 
         if (!KeyState.bIsDown && !KeyState.bPreviousState)
         {
+            LOG_INFO("Removed KeyState=%s Index=%d", KeyState.Key.ToString(), Index);
             KeyStates.RemoveAt(Index);
             continue;
         }
@@ -84,10 +85,13 @@ void FPlayerInput::Tick(FTimespan Delta)
             Index = KeyStates.Size();
             KeyStates.Emplace(KeyEvent.GetKey());
         }
+        
 
         FKeyState& KeyState = KeyStates[Index];
         KeyState.bPreviousState = KeyState.bIsDown;
         KeyState.bIsDown        = KeyEvent.IsDown();
+        
+        LOG_INFO("KeyState=%s Index=%d IsDown=%s", KeyEvent.GetKey().ToString(), Index, KeyEvent.IsDown() ? "true" : "false");
 
         if (KeyEvent.IsRepeat())
         {
