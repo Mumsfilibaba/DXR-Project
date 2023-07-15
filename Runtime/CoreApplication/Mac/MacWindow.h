@@ -67,8 +67,7 @@ public:
     }
 
     virtual void SetStyle(FWindowStyle InStyle) override final;
-
-public:
+    
     FCocoaWindow* GetWindow() const 
     { 
         return Window; 
@@ -80,6 +79,7 @@ public:
     }
     
 private:
-    FMacApplication* Application;
-    FCocoaWindow*    Window;
+    FMacApplication*  Application;
+    FCocoaWindow*     Window;
+    FCocoaWindowView* WindowView;
 };

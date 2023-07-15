@@ -1,5 +1,6 @@
 #include "MacWindow.h"
 #include "CocoaWindow.h"
+#include "CocoaWindowView.h"
 #include "Core/Mac/Mac.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Mac/MacRunLoop.h"
@@ -15,6 +16,7 @@ FMacWindow::FMacWindow(FMacApplication* InApplication)
     : FGenericWindow()
     , Application(InApplication)
     , Window(nullptr)
+    , WindowView(nullptr)
 {
 }
 
@@ -23,7 +25,9 @@ FMacWindow::~FMacWindow()
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
+        
         NSSafeRelease(Window);
+        NSSafeRelease(WindowView);
     }, NSDefaultRunLoopMode, true);
 }
 
@@ -103,6 +107,10 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         }
         
         Window.collectionBehavior = Behavior;
+        
+        // Create a window-view
+        WindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
+        [Window setContentView:WindowView];
         
         [NSApp addWindowsItem:Window title:InInitializer.Title.GetNSString() filename:NO];
         
