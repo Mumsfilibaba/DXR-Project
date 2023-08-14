@@ -18,7 +18,7 @@ FResponse FSceneViewport::OnAnalogGamepadChange(const FAnalogGamepadEvent& Analo
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first playercontroller for now
-        PlayerController->GetPlayerInput()->OnAnalogGamepadEvent(AnalogGamepadEvent);
+        PlayerController->GetPlayerInput()->OnAxisEvent(AnalogGamepadEvent.GetAnalogSource(), AnalogGamepadEvent.GetAnalogValue());
         return FResponse::Handled();
     }
 
@@ -30,7 +30,7 @@ FResponse FSceneViewport::OnKeyDown(const FKeyEvent& KeyEvent)
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first playercontroller for now
-        PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent);
+        PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent.GetKey(), KeyEvent.IsDown(), KeyEvent.IsRepeat());
         return FResponse::Handled();
     }
 
@@ -42,7 +42,7 @@ FResponse FSceneViewport::OnKeyUp(const FKeyEvent& KeyEvent)
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first playercontroller for now
-        PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent);
+        PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent.GetKey(), KeyEvent.IsDown(), KeyEvent.IsRepeat());
         return FResponse::Handled();
     }
 
@@ -54,7 +54,7 @@ FResponse FSceneViewport::OnMouseMove(const FCursorEvent& CursorEvent)
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first playercontroller for now
-        PlayerController->GetPlayerInput()->OnCursorEvent(CursorEvent);
+        // PlayerController->GetPlayerInput()->OnCursorEvent(CursorEvent);
         return FResponse::Handled();
     }
 
@@ -65,9 +65,8 @@ FResponse FSceneViewport::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
-        // NOTE: Just make a keyevent for now
-        const FKeyEvent KeyEvent(CursorEvent.GetKey(), CursorEvent.GetModifierKeys(), false, CursorEvent.IsDown());
-        PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent);
+        // NOTE: Just send to the first playercontroller for now
+        PlayerController->GetPlayerInput()->OnKeyEvent(CursorEvent.GetKey(), CursorEvent.IsDown(), false);
         return FResponse::Handled();
     }
 
@@ -78,9 +77,8 @@ FResponse FSceneViewport::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
-        // NOTE: Just make a keyevent for now
-        const FKeyEvent KeyEvent(CursorEvent.GetKey(), CursorEvent.GetModifierKeys(), false, CursorEvent.IsDown());
-        PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent);
+        // NOTE: Just send to the first playercontroller for now
+        PlayerController->GetPlayerInput()->OnKeyEvent(CursorEvent.GetKey(), CursorEvent.IsDown(), false);
         return FResponse::Handled();
     }
 
@@ -92,7 +90,7 @@ FResponse FSceneViewport::OnMouseScroll(const FCursorEvent& CursorEvent)
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first playercontroller for now
-        PlayerController->GetPlayerInput()->OnCursorEvent(CursorEvent);
+        // PlayerController->GetPlayerInput()->OnCursorEvent(CursorEvent);
         return FResponse::Handled();
     }
 
@@ -104,7 +102,7 @@ FResponse FSceneViewport::OnMouseDoubleClick(const FCursorEvent& CursorEvent)
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first playercontroller for now
-        PlayerController->GetPlayerInput()->OnCursorEvent(CursorEvent);
+        PlayerController->GetPlayerInput()->OnKeyEvent(CursorEvent.GetKey(), true, false);
         return FResponse::Handled();
     }
 

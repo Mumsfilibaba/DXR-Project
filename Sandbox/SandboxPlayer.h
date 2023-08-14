@@ -15,6 +15,8 @@ public:
     virtual void SetupInputComponent() override;
 
     void MoveForward();
+    
+    void MoveForwardAxis(float Value);
 
     void MoveBackwards();
 
@@ -29,6 +31,8 @@ public:
     void RotateRight();
 
     void RotateLeft();
+
+    void Jump();
 
 private:
     FCamera* Camera;

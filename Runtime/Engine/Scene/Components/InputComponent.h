@@ -3,14 +3,23 @@
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/String.h"
 
+DECLARE_DELEGATE(FInputActionDelegate);
+DECLARE_DELEGATE(FInputAxisDelegate, float);
+
+template<typename ClassType>
+using ActionFunction = typename TMemberFunctionType<false, ClassType, void(void)>::Type;
+
+template<typename ClassType>
+using AxisFunction = typename TMemberFunctionType<false, ClassType, void(float)>::Type;
+
 enum class EActionState
 {
-    Pressed  = 1,
-    Released = 2
+    Unknown = 0,
+    Pressed,
+    Repeat,
+    Released,
+    DoubleClick,
 };
-
-
-DECLARE_DELEGATE(FInputActionDelegate);
 
 struct FActionInputBinding
 {
@@ -28,8 +37,19 @@ struct FActionInputBinding
     FInputActionDelegate ActionDelegate;
 };
 
+struct FAxisInputBinding
+{
+    FAxisInputBinding() = default;
 
-typedef int32 FActionBindingIdentifier;
+    FAxisInputBinding(const FStringView& InName, const FInputAxisDelegate& InActionDelegate)
+        : Name(InName)
+        , ActionDelegate(InActionDelegate)
+    {
+    }
+
+    FString            Name;
+    FInputAxisDelegate ActionDelegate;
+};
 
 class ENGINE_API FInputComponent : public FComponent
 {
@@ -39,17 +59,24 @@ public:
     FInputComponent(FActor* InActorOwner);
     ~FInputComponent() = default;
 
-    template<typename ClassType>
-    using ActionFunction = typename TMemberFunctionType<false, ClassType, void(void)>::Type;
+    int32 BindAction(const FStringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate);
+
+    int32 BindAxis(const FStringView& InName, const FInputAxisDelegate& Delegate);
 
     template<typename ClassType>
-    FORCEINLINE FActionBindingIdentifier BindAction(const FStringView& InName, EActionState ActionState, ClassType* Actor, ActionFunction<ClassType> ActorFunction)
+    FORCEINLINE int32 BindAction(const FStringView& InName, EActionState ActionState, ClassType* Actor, ActionFunction<ClassType> ActorFunction)
     {
         const FInputActionDelegate NewDelegate = FInputActionDelegate::CreateRaw(Actor, ActorFunction);
         return BindAction(InName, ActionState, NewDelegate);
     }
 
-    FActionBindingIdentifier BindAction(const FStringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate);
+    template<typename ClassType>
+    FORCEINLINE int32 BindAxis(const FStringView& InName, ClassType* Actor, AxisFunction<ClassType> ActorFunction)
+    {
+        const FInputAxisDelegate NewDelegate = FInputAxisDelegate::CreateRaw(Actor, ActorFunction);
+        return BindAxis(InName, NewDelegate);
+    }
 
+    TArray<FAxisInputBinding>   AxisBindings;
     TArray<FActionInputBinding> ActionBindings;
 };

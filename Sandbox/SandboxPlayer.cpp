@@ -40,6 +40,12 @@ FSandboxPlayerController::FSandboxPlayerController(FScene* InScene)
 
         FActionKeyMapping RotateRightKeyMapping("RotateRight", EKeys::Right);
         Input->AddActionKeyMapping(RotateRightKeyMapping);
+
+        FActionKeyMapping JumpKeyMapping("Jump", EKeys::Space);
+        Input->AddActionKeyMapping(JumpKeyMapping);
+        
+        FAxisKeyMapping MoveForwardAxisKeyMapping("MoveForwardAxis", EKeys::W, 1.0f);
+        Input->AddAxisKeyMapping(MoveForwardAxisKeyMapping);
     }
 }
 
@@ -54,8 +60,8 @@ void FSandboxPlayerController::Tick(FTimespan DeltaTime)
     const float RotationSpeed = 45.0f;
     const float Deadzone      = 0.01f;
 
-    const FAnalogAxisState RightThumbX = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbX);
-    const FAnalogAxisState RightThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbY);
+    const FAxisState RightThumbX = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbX);
+    const FAxisState RightThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbY);
     
     if (FMath::Abs(RightThumbX.Value) > Deadzone)
     {
@@ -89,8 +95,8 @@ void FSandboxPlayerController::Tick(FTimespan DeltaTime)
         Acceleration = Acceleration * 3;
     }
 
-    const FAnalogAxisState LeftThumbX = GetPlayerInput()->GetAnalogState(EAnalogSourceName::LeftThumbX);
-    const FAnalogAxisState LeftThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::LeftThumbY);
+    const FAxisState LeftThumbX = GetPlayerInput()->GetAnalogState(EAnalogSourceName::LeftThumbX);
+    const FAxisState LeftThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::LeftThumbY);
 
     FVector3 CameraAcceleration;
     if (FMath::Abs(LeftThumbY.Value) > Deadzone)
@@ -150,6 +156,15 @@ void FSandboxPlayerController::SetupInputComponent()
     InputComponent->BindAction("RotateDown" , EActionState::Pressed, this, &FSandboxPlayerController::RotateDown);
     InputComponent->BindAction("RotateRight", EActionState::Pressed, this, &FSandboxPlayerController::RotateRight);
     InputComponent->BindAction("RotateLeft" , EActionState::Pressed, this, &FSandboxPlayerController::RotateLeft);
+
+    InputComponent->BindAction("Jump", EActionState::Released, this, &FSandboxPlayerController::Jump);
+
+    InputComponent->BindAxis("MoveForwardAxis", this, &FSandboxPlayerController::MoveForwardAxis);
+}
+
+void FSandboxPlayerController::MoveForwardAxis(float Value)
+{
+    LOG_INFO("MoveForwardAxis %.4f", Value);
 }
 
 void FSandboxPlayerController::MoveForward()
@@ -190,4 +205,9 @@ void FSandboxPlayerController::RotateRight()
 void FSandboxPlayerController::RotateLeft()
 {
     LOG_INFO("RotateLeft");
+}
+
+void FSandboxPlayerController::Jump()
+{
+    LOG_INFO("Jump");
 }

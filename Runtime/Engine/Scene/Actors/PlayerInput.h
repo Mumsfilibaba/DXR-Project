@@ -33,9 +33,9 @@ struct FKeyState
     float TimePressed = 0.0f;
 };
 
-struct FAnalogAxisState
+struct FAxisState
 {
-    FAnalogAxisState(EAnalogSourceName::Type InSource)
+    FAxisState(EAnalogSourceName::Type InSource)
         : Source(InSource)
         , Value(0.0f)
         , NumTicksSinceUpdate(0)
@@ -66,6 +66,35 @@ struct FActionKeyMapping
     FKey    Key;
 };
 
+struct FAxisMapping
+{
+    FAxisMapping() = default;
+
+    FAxisMapping(const FStringView& InName, EAnalogSourceName::Type InAxis)
+        : Name(InName)
+        , Axis(InAxis)
+    {
+    }
+
+    FString                 Name;
+    EAnalogSourceName::Type Axis;
+};
+
+struct FAxisKeyMapping
+{
+    FAxisKeyMapping() = default;
+
+    FAxisKeyMapping(const FStringView& InName, FKey InKey, float InScale)
+        : Name(InName)
+        , Key(InKey)
+        , Scale(InScale)
+    {
+    }
+
+    FString Name;
+    FKey    Key;
+    float   Scale;
+};
 
 class FInputComponent;
 
@@ -81,15 +110,17 @@ public:
 
     void ClearInputStates();
 
-    void AddActionKeyMapping(const FActionKeyMapping& ActionKeyMapping);
+    int32 AddActionKeyMapping(const FActionKeyMapping& ActionKeyMapping);
+
+    int32 AddAxisMapping(const FAxisMapping& AxisMapping);
+    
+    int32 AddAxisKeyMapping(const FAxisKeyMapping& AxisKeyMapping);
 
     void SetCursorPosition(const FIntVector2& Postion);
 
-    void OnAnalogGamepadEvent(const FAnalogGamepadEvent& AnalogGamepadEvent);
+    void OnAxisEvent(EAnalogSourceName::Type AxisSource, float AxisValue);
     
-    void OnKeyEvent(const FKeyEvent& KeyEvent);
-    
-    void OnCursorEvent(const FCursorEvent& MouseEvent);
+    void OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat);
 
     bool IsKeyDown(FKey Key) const
     {
@@ -113,7 +144,7 @@ public:
 
     FKeyState GetKeyState(FKey Key) const;
     
-    FAnalogAxisState GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
+    FAxisState GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
 
     TSharedPtr<ICursor> GetCursorInterface() const 
     { 
@@ -126,7 +157,11 @@ private:
     TSharedPtr<ICursor>       CursorInterface;
 
     TArray<FKeyState>         KeyStates;
-    TArray<FAnalogAxisState>  AnalogAxisStates;
+    TArray<FAxisState>        AxisStates;
+    
     TArray<FActionKeyMapping> ActionKeyMappings;
+    TArray<FAxisMapping>      AxisMappings;
+    TArray<FAxisKeyMapping>   AxisKeyMappings;
+    
     TArray<FInputComponent*>  ActiveInputComponents;
 };

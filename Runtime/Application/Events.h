@@ -57,6 +57,14 @@ private:
 };
 
 
+enum class EButtomEventType
+{
+    Unknown = 0,
+    Pressed,
+    Released,
+    DoubleClick
+};
+
 class FCursorEvent : public FInputEvent
 {
 public:

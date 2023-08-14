@@ -60,7 +60,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsEnd() const noexcept
     {
-        return (Index == Array.Get().Size());
+        return Index == Array.Get().Size();
     }
 
     /**

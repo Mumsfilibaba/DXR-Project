@@ -51,8 +51,6 @@ void FPlayerInput::Tick(FTimespan Delta)
     for (int32 Index = 0; Index < KeyStates.Size();)
     {
         FKeyState& KeyState = KeyStates[Index];
-        KeyState.bPreviousState = KeyState.bIsDown;
-
         if (!KeyState.bIsDown && !KeyState.bPreviousState)
         {
             KeyStates.RemoveAt(Index);
@@ -97,13 +95,15 @@ void FPlayerInput::Tick(FTimespan Delta)
             }
         }
 
+        // Update the previous state last, otherwise we don't catch cases where we just released the buttona
+        KeyState.bPreviousState = KeyState.bIsDown;
         Index++;
     }
 
     // Update all axis
-    for (int32 Index = 0; Index < AnalogAxisStates.Size(); Index++)
+    for (int32 Index = 0; Index < AxisStates.Size(); Index++)
     {
-        FAnalogAxisState& AxisState = AnalogAxisStates[Index];
+        FAxisState& AxisState = AxisStates[Index];
         AxisState.NumTicksSinceUpdate++;
     }
 
@@ -129,9 +129,25 @@ void FPlayerInput::ClearInputStates()
     KeyStates.Clear();
 }
 
-void FPlayerInput::AddActionKeyMapping(const FActionKeyMapping& ActionKeyMapping)
+int32 FPlayerInput::AddActionKeyMapping(const FActionKeyMapping& ActionKeyMapping)
 {
+    const int32 MappingIndex = ActionKeyMappings.Size();
     ActionKeyMappings.Add(ActionKeyMapping);
+    return MappingIndex;
+}
+
+int32 FPlayerInput::AddAxisMapping(const FAxisMapping& AxisMapping)
+{
+    const int32 MappingIndex = AxisMappings.Size();
+    AxisMappings.Add(AxisMapping);
+    return MappingIndex;
+}
+
+int32 FPlayerInput::AddAxisKeyMapping(const FAxisKeyMapping& AxisKeyMapping)
+{
+    const int32 MappingIndex = AxisKeyMappings.Size();
+    AxisKeyMappings.Add(AxisKeyMapping);
+    return MappingIndex;
 }
 
 void FPlayerInput::SetCursorPosition(const FIntVector2& Position)
@@ -142,47 +158,46 @@ void FPlayerInput::SetCursorPosition(const FIntVector2& Position)
     }
 }
 
-void FPlayerInput::OnAnalogGamepadEvent(const FAnalogGamepadEvent& AnalogGamepadEvent)
+void FPlayerInput::OnAxisEvent(EAnalogSourceName::Type AxisSource, float AxisValue)
 {
-    int32 Index = AnalogAxisStates.FindWithPredicate([&](const FAnalogAxisState& AxisState)
+    int32 Index = AxisStates.FindWithPredicate([=](const FAxisState& AxisState)
     {
-        return AxisState.Source == AnalogGamepadEvent.GetAnalogSource();
+        return AxisState.Source == AxisSource;
     });
 
     if (Index < 0)
     {
-        Index = AnalogAxisStates.Size();
-        AnalogAxisStates.Emplace(AnalogGamepadEvent.GetAnalogSource());
+        Index = AxisStates.Size();
+        AxisStates.Emplace(AxisSource);
     }
 
-    const float DeadZone    = GetAnalogDeadzone(AnalogGamepadEvent.GetAnalogSource());
-    const float SourceValue = AnalogGamepadEvent.GetAnalogValue();
+    const float DeadZone = GetAnalogDeadzone(AxisSource);
 
-    FAnalogAxisState& AxisState = AnalogAxisStates[Index];
-    AxisState.Value = FMath::Abs(SourceValue) > DeadZone ? SourceValue : 0.0f;
+    FAxisState& AxisState = AxisStates[Index];
+    AxisState.Value = FMath::Abs(AxisValue) > DeadZone ? AxisValue : 0.0f;
     AxisState.NumTicksSinceUpdate = 0;
 }
 
-void FPlayerInput::OnKeyEvent(const FKeyEvent& KeyEvent)
+void FPlayerInput::OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat)
 {
-    int32 Index = KeyStates.FindWithPredicate([&](const FKeyState& KeyState)
+    int32 Index = KeyStates.FindWithPredicate([=](const FKeyState& KeyState)
     {
-        return KeyState.Key == KeyEvent.GetKey();
+        return KeyState.Key == Key;
     });
 
     if (Index < 0)
     {
         Index = KeyStates.Size();
-        KeyStates.Emplace(KeyEvent.GetKey());
+        KeyStates.Emplace(Key);
     }
 
     FKeyState& KeyState = KeyStates[Index];
     KeyState.bPreviousState = KeyState.bIsDown;
-    KeyState.bIsDown = KeyEvent.IsDown();
+    KeyState.bIsDown        = bIsDown;
 
-    LOG_INFO("KeyState=%s Index=%d IsDown=%s", KeyEvent.GetKey().ToString(), Index, KeyEvent.IsDown() ? "true" : "false");
+    LOG_INFO("KeyState=%s Index=%d IsDown=%s", Key.ToString(), Index, bIsDown ? "true" : "false");
 
-    if (KeyEvent.IsRepeat())
+    if (bIsRepeat)
     {
         KeyState.RepeatCount++;
     }
@@ -190,11 +205,6 @@ void FPlayerInput::OnKeyEvent(const FKeyEvent& KeyEvent)
     {
         KeyState.RepeatCount = 0;
     }
-}
-
-void FPlayerInput::OnCursorEvent(const FCursorEvent& CursorEvent)
-{
-    // TODO: Handle mouse movement
 }
 
 FIntVector2 FPlayerInput::GetCursorPosition() const
@@ -222,17 +232,17 @@ FKeyState FPlayerInput::GetKeyState(FKey Key) const
     return FKeyState(Key);
 }
 
-FAnalogAxisState FPlayerInput::GetAnalogState(EAnalogSourceName::Type Source) const
+FAxisState FPlayerInput::GetAnalogState(EAnalogSourceName::Type Source) const
 {
-    const int32 Index = AnalogAxisStates.FindWithPredicate([=](const FAnalogAxisState& AxisState)
+    const int32 Index = AxisStates.FindWithPredicate([=](const FAxisState& AxisState)
     {
         return AxisState.Source == Source;
     });
 
     if (Index >= 0)
     {
-        return AnalogAxisStates[Index];
+        return AxisStates[Index];
     }
 
-    return FAnalogAxisState(Source);
+    return FAxisState(Source);
 }
