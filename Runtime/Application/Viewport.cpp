@@ -1,6 +1,6 @@
 #include "Viewport.h"
 #include "CoreApplication/Generic/GenericWindow.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIResources.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING

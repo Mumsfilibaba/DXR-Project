@@ -1,5 +1,5 @@
 #include "Mesh.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 
 bool FMesh::Init(const FMeshData& Data)

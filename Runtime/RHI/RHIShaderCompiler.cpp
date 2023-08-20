@@ -1,3 +1,4 @@
+#include "RHI.h"
 #include "RHIShaderCompiler.h"
 #include "Core/Containers/ComPtr.h"
 #include "Core/Platform/PlatformInterlocked.h"
@@ -157,7 +158,8 @@ FRHIShaderCompiler::FRHIShaderCompiler(FStringView InAssetPath)
     : DXCLib(nullptr)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
-{ }
+{
+}
 
 FRHIShaderCompiler::~FRHIShaderCompiler()
 {
@@ -192,6 +194,24 @@ void FRHIShaderCompiler::Destroy()
         delete GInstance;
         GInstance = nullptr;
     }
+}
+
+EShaderOutputLanguage FRHIShaderCompiler::GetOutputLanguageBasedOnRHI()
+{
+    if (FRHI* CurrentRHI = GetRHI())
+    {
+        const ERHIType RHIType = CurrentRHI->GetType();
+        if (RHIType == ERHIType::Metal)
+        {
+            return EShaderOutputLanguage::MSL;
+        }
+        else if (RHIType == ERHIType::Vulkan)
+        {
+            return EShaderOutputLanguage::SPIRV;
+        }
+    }
+
+    return EShaderOutputLanguage::HLSL;
 }
 
 bool FRHIShaderCompiler::Initialize()

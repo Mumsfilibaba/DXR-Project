@@ -361,7 +361,7 @@ constexpr uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
 }
 
 
-enum class ECubeFace
+enum class ECubeFace : uint8
 {
     PosX = 0,
     NegX = 1,
@@ -373,12 +373,12 @@ enum class ECubeFace
 
 constexpr uint32 GetCubeFaceIndex(ECubeFace CubeFace)
 {
-    return static_cast<uint32>(CubeFace);
+    return ToUnderlying(CubeFace);
 }
 
 constexpr ECubeFace GetCubeFaceFromIndex(uint32 Index)
 {
-    return (Index > GetCubeFaceIndex(ECubeFace::NegZ)) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
+    return Index > ToUnderlying(ECubeFace::NegZ) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
 }
 
 
@@ -436,25 +436,27 @@ constexpr const CHAR* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 
 
 // TODO: These should be flags
-enum class EResourceAccess : uint8
+enum class EResourceAccess : uint32
 {
     Common                          = 0,
-    VertexAndConstantBuffer         = 1,
-    IndexBuffer                     = 2,
-    RenderTarget                    = 3,
-    UnorderedAccess                 = 4,
-    DepthWrite                      = 5,
-    DepthRead                       = 6,
-    NonPixelShaderResource          = 7,
-    PixelShaderResource             = 8,
-    CopyDest                        = 9,
-    CopySource                      = 10,
-    ResolveDest                     = 11,
-    ResolveSource                   = 12,
-    RayTracingAccelerationStructure = 13,
-    ShadingRateSource               = 14,
-    Present                         = 15,
-    GenericRead                     = 16,
+    VertexAndConstantBuffer         = FLAG(0),
+    IndexBuffer                     = FLAG(1),
+    RenderTarget                    = FLAG(2),
+    RenderTargetClear               = FLAG(3),
+    UnorderedAccess                 = FLAG(4),
+    DepthClear                      = FLAG(5),
+    DepthWrite                      = FLAG(6),
+    DepthRead                       = FLAG(7),
+    NonPixelShaderResource          = FLAG(8),
+    PixelShaderResource             = FLAG(9),
+    CopyDest                        = FLAG(10),
+    CopySource                      = FLAG(11),
+    ResolveDest                     = FLAG(12),
+    ResolveSource                   = FLAG(13),
+    RayTracingAccelerationStructure = FLAG(14),
+    ShadingRateSource               = FLAG(15),
+    Present                         = FLAG(16),
+    GenericRead                     = FLAG(17),
 };
 
 ENUM_CLASS_OPERATORS(EResourceAccess);
@@ -467,7 +469,9 @@ constexpr const CHAR* ToString(EResourceAccess ResourceState)
     case EResourceAccess::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
     case EResourceAccess::IndexBuffer:                     return "IndexBuffer";
     case EResourceAccess::RenderTarget:                    return "RenderTarget";
+    case EResourceAccess::RenderTargetClear:               return "RenderTargetClear";
     case EResourceAccess::UnorderedAccess:                 return "UnorderedAccess";
+    case EResourceAccess::DepthClear:                      return "DepthClear";
     case EResourceAccess::DepthWrite:                      return "DepthWrite";
     case EResourceAccess::DepthRead:                       return "DepthRead";
     case EResourceAccess::NonPixelShaderResource:          return "NonPixelShaderResource";
@@ -479,6 +483,7 @@ constexpr const CHAR* ToString(EResourceAccess ResourceState)
     case EResourceAccess::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
     case EResourceAccess::ShadingRateSource:               return "ShadingRateSource";
     case EResourceAccess::Present:                         return "Present";
+    case EResourceAccess::GenericRead:                     return "GenericRead";
     default:                                               return "Unknown";
     }
 }
@@ -584,7 +589,8 @@ public:
     constexpr FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
         : Index(InIndex)
         , Type(InType)
-    { }
+    {
+    }
 
     /** 
      * @return - Returns true if the handle is valid

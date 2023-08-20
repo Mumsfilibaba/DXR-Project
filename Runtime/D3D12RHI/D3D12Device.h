@@ -15,7 +15,7 @@
 
 class FD3D12Device;
 class FD3D12Adapter;
-class FD3D12Interface;
+class FD3D12RHI;
 class FD3D12RootSignature;
 class FD3D12ComputePipelineState;
 class FD3D12OnlineDescriptorHeap;
@@ -97,35 +97,34 @@ struct FD3D12SamplerFeedbackDesc
 };
 
 
-class FD3D12Adapter 
-    : public FD3D12RefCounted
+class FD3D12Adapter : public FD3D12RefCounted
 {
 public:
     FD3D12Adapter();
     ~FD3D12Adapter() = default;
 
-    bool           Initialize();
+    bool Initialize();
 
-    inline FString GetDescription()  const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
+    FString GetDescription()  const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
 
-    inline bool    IsDebugLayerEnabled() const { return bEnableDebugLayer; }
-    inline bool    SupportsTearing()     const { return bAllowTearing; }
+    bool IsDebugLayerEnabled() const { return bEnableDebugLayer; }
+    bool SupportsTearing()     const { return bAllowTearing; }
 
     FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysis() const { return DXGraphicsAnalysis.Get(); }
 
-    FORCEINLINE IDXGIAdapter1*       GetDXGIAdapter()  const { return Adapter.Get(); }
-    FORCEINLINE uint32               GetAdapterIndex() const { return AdapterIndex; }
+    FORCEINLINE IDXGIAdapter1* GetDXGIAdapter()  const { return Adapter.Get(); }
 
-    FORCEINLINE IDXGIFactory2*       GetDXGIFactory()  const { return Factory.Get(); }
-    FORCEINLINE IDXGIFactory5*       GetDXGIFactory5() const { return Factory5.Get(); }
+    FORCEINLINE uint32  GetAdapterIndex() const { return AdapterIndex; }
+
+    FORCEINLINE IDXGIFactory2* GetDXGIFactory()  const { return Factory.Get(); }
+    FORCEINLINE IDXGIFactory5* GetDXGIFactory5() const { return Factory5.Get(); }
 
 #if WIN10_BUILD_17134
-    FORCEINLINE IDXGIFactory6*       GetDXGIFactory6() const { return Factory6.Get(); }
+    FORCEINLINE IDXGIFactory6* GetDXGIFactory6() const { return Factory6.Get(); }
 #endif
 
 private:
     uint32 AdapterIndex;
-
     bool   bAllowTearing;
     bool   bEnableDebugLayer;
 
@@ -142,8 +141,7 @@ private:
 };
 
 
-class FD3D12Device 
-    : public FD3D12RefCounted
+class FD3D12Device : public FD3D12RefCounted
 {
 public:
     FD3D12Device(FD3D12Adapter* InAdapter);
@@ -151,7 +149,7 @@ public:
 
     bool Initialize();
 
-    inline ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
+    ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
     {
         FD3D12CommandListManager* CommandListManager = GetCommandListManager(QueueType);
         CHECK(CommandListManager != nullptr);
@@ -160,29 +158,34 @@ public:
 
     FD3D12CommandListManager* GetCommandListManager(ED3D12CommandQueueType QueueType);
 
-    inline FD3D12CommandListManager&      GetDirectCommandListManager()  { return DirectCommandListManager; }
-    inline FD3D12CommandListManager&      GetCopyCommandListManager()    { return CopyCommandListManager; }
-    inline FD3D12CommandListManager&      GetComputeCommandListManager() { return ComputeCommandListManager; }
+    FD3D12CommandListManager& GetDirectCommandListManager()  { return DirectCommandListManager; }
+    FD3D12CommandListManager& GetCopyCommandListManager()    { return CopyCommandListManager; }
+    FD3D12CommandListManager& GetComputeCommandListManager() { return ComputeCommandListManager; }
 
-    inline FD3D12CommandAllocatorManager& GetCopyCommandAllocatorManager() { return CopyCommandAllocatorManager; }
+    FD3D12CommandAllocatorManager& GetCopyCommandAllocatorManager() { return CopyCommandAllocatorManager; }
+
+    FD3D12RootSignatureCache& GetRootSignatureCache() { return RootSignatureCache; }
+
+    FD3D12DeferredDeletionQueue& GetDeferredDeletionQueue() { return DeferredDeletionQueue; }
     
-    inline FD3D12DeferredDeletionQueue&   GetDeferredDeletionQueue() { return DeferredDeletionQueue; }
-    inline FD3D12RootSignatureCache&      GetRootSignatureCache()    { return RootSignatureCache; }
+    FD3D12DescriptorHeap* GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
+    FD3D12DescriptorHeap* GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
     
-    inline FD3D12DescriptorHeap*          GetGlobalResourceHeap() const { return GlobalResourceHeap.Get(); }
-    inline FD3D12DescriptorHeap*          GetGlobalSamplerHeap()  const { return GlobalSamplerHeap.Get(); }
+    const FD3D12RayTracingDesc& GetRayTracingDesc() const { return RayTracingDesc; }
     
-    inline const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc; }
-    inline const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
-    inline const FD3D12MeshShadingDesc&         GetMeshShadingDesc()         const { return MeshShadingDesc; }
-    inline const FD3D12SamplerFeedbackDesc&     GetSamplerFeedbackDesc()     const { return SamplerFeedbackDesc; }
+    const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
     
-    inline uint32 GetNodeCount() const { return NodeCount; }
-    inline uint32 GetNodeMask()  const { return NodeMask; }
+    const FD3D12MeshShadingDesc& GetMeshShadingDesc() const { return MeshShadingDesc; }
+    
+    const FD3D12SamplerFeedbackDesc& GetSamplerFeedbackDesc() const { return SamplerFeedbackDesc; }
+    
+    uint32 GetNodeCount() const { return NodeCount; }
+
+    uint32 GetNodeMask() const { return NodeMask; }
 
     int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
-    FORCEINLINE FD3D12Adapter* GetAdapter()      const { return Adapter; }
+    FORCEINLINE FD3D12Adapter* GetAdapter() const { return Adapter; }
     
     FORCEINLINE ID3D12Device*  GetD3D12Device()  const { return Device.Get(); }
 
@@ -216,6 +219,7 @@ public:
 
 private:
     bool CreateDevice();
+    
     bool CreateQueues();
 
     FD3D12DescriptorHeapRef       GlobalResourceHeap;

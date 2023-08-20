@@ -1,5 +1,5 @@
 #pragma once
-#include "RHIInterface.h"
+#include "RHI.h"
 #include "RHIResources.h"
 #include "RHICommands.h"
 #include "RHIRayTracing.h"
@@ -116,11 +116,11 @@ public:
     FORCEINLINE void Execute() noexcept
     {
         IRHICommandContext& CommandContextRef = GetCommandContext();
-        CommandContextRef.StartContext();
+        CommandContextRef.RHIStartContext();
         
         ExecuteWithContext(GetCommandContext());
 
-        CommandContextRef.FinishContext();
+        CommandContextRef.RHIFinishContext();
     }
 
     FORCEINLINE void ExecuteWithContext(IRHICommandContext& InCommandContext) noexcept

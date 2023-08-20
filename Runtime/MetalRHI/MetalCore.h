@@ -45,25 +45,14 @@
             LOG_INFO("[MetalRHI] " __VA_ARGS__); \
         } while (false)
 #else
-    #define METAL_ERROR_COND(bCondition, ...) \
-        do                                    \
-        {                                     \
-            (void)(bCondition);               \
-        } while(false)
+    #define METAL_ERROR_COND(bCondition, ...) do { (void)(bCondition); } while(false)
+    #define METAL_ERROR(...) do { (void)(0); } while(false)
 
-    #define METAL_ERROR(...)   do { (void)(0); } while(false)
-
-    #define METAL_WARNING_COND(bCondition, ...) \
-        do                                      \
-        {                                       \
-            (void)(bCondition);                 \
-        } while(false)
-
+    #define METAL_WARNING_COND(bCondition, ...) do { (void)(bCondition); } while(false)
     #define METAL_WARNING(...) do { (void)(0); } while(false)
 
-    #define METAL_INFO(...)    do { (void)(0); } while(false)
+    #define METAL_INFO(...) do { (void)(0); } while(false)
 #endif
-
 
 enum : uint32
 {
@@ -78,7 +67,6 @@ enum : uint32
     kBufferAlignment         = 16,
     kConstantBufferAlignment = 256,
 };
-
 
 constexpr MTLLoadAction ConvertAttachmentLoadAction(EAttachmentLoadAction LoadAction)
 {

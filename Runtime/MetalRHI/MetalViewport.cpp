@@ -1,8 +1,6 @@
 #include "MetalViewport.h"
-
 #include "Core/Mac/MacRunLoop.h"
 #include "Core/Mac/MacThreadMisc.h"
-
 
 @implementation FMetalWindowView
 
@@ -36,8 +34,8 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
-        
-        FCocoaWindow* WindowHandle = (FCocoaWindow*)(Desc.WindowHandle);
+
+        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
         
         NSRect Frame;
         Frame.size.width  = Desc.Width;
@@ -69,8 +67,8 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
         [MetalView setLayer:MetalLayer];
         [MetalView retain];
         
-        WindowHandle.contentView = MetalView;
-        [WindowHandle makeFirstResponder:MetalView];
+        [CocoaWindow setContentView:MetalView];
+        [CocoaWindow makeFirstResponder:MetalView];
     }, NSDefaultRunLoopMode, true);
     
     // Create Event

@@ -10,7 +10,7 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/Widgets/ConsoleWidget.h"
 #include "Engine/Widgets/FrameProfilerWidget.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
 
 ENGINE_API FEngine* GEngine = nullptr;

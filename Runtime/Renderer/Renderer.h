@@ -17,7 +17,7 @@
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 #include "Debug/TextureDebugger.h"
 #include "Debug/RendererInfoWindow.h"

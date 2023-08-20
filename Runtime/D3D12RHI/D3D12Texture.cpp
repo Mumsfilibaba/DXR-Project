@@ -1,6 +1,6 @@
 #include "D3D12Texture.h"
 #include "D3D12Viewport.h"
-#include "D3D12Interface.h"
+#include "D3D12RHI.h"
 
 FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureDesc& InDesc)
     : FRHITexture(InDesc)
@@ -136,7 +136,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
             return false;
         }
 
-        FD3D12ShaderResourceViewRef DefaultSRV = new FD3D12ShaderResourceView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap(), this);
+        FD3D12ShaderResourceViewRef DefaultSRV = new FD3D12ShaderResourceView(GetDevice(), FD3D12RHI::GetRHI()->GetResourceOfflineDescriptorHeap(), this);
         if (!DefaultSRV->AllocateHandle())
         {
             return false;
@@ -165,7 +165,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
             ViewDesc.Texture2D.MipSlice   = 0;
             ViewDesc.Texture2D.PlaneSlice = 0;
 
-            FD3D12UnorderedAccessViewRef DefaultUAV = new FD3D12UnorderedAccessView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap(), this);
+            FD3D12UnorderedAccessViewRef DefaultUAV = new FD3D12UnorderedAccessView(GetDevice(), FD3D12RHI::GetRHI()->GetResourceOfflineDescriptorHeap(), this);
             if (!DefaultUAV->AllocateHandle())
             {
                 return false;
@@ -187,8 +187,8 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         {
             // TODO: Support other types than texture 2D
 
-            FD3D12CommandContext* Context = FD3D12Interface::GetRHI()->ObtainCommandContext();
-            Context->StartContext();
+            FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
+            Context->RHIStartContext();
             Context->TransitionTexture(this, EResourceAccess::Common, EResourceAccess::CopyDest);
 
             // Transfer all the mip-levels
@@ -203,7 +203,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
                 }
 
                 FTextureRegion2D TextureRegion(Width, Height);
-                Context->UpdateTexture2D(this, TextureRegion, Index, InitialData->GetMipData(Index), static_cast<uint32>(InitialData->GetMipRowPitch(Index)));
+                Context->RHIUpdateTexture2D(this, TextureRegion, Index, InitialData->GetMipData(Index), static_cast<uint32>(InitialData->GetMipRowPitch(Index)));
 
                 Width  = Width / 2;
                 Height = Height / 2;
@@ -211,17 +211,17 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
 
             // NOTE: Transition into InitialAccess
             Context->TransitionTexture(this, EResourceAccess::CopyDest, InInitialAccess);
-            Context->FinishContext();
+            Context->RHIFinishContext();
             return true;
         }
     }
 
     if (InInitialAccess != EResourceAccess::Common)
     {
-        FD3D12CommandContext* Context = FD3D12Interface::GetRHI()->ObtainCommandContext();
-        Context->StartContext();
+        FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
+        Context->RHIStartContext();
         Context->TransitionTexture(this, EResourceAccess::Common, InInitialAccess);
-        Context->FinishContext();
+        Context->RHIFinishContext();
     }
 
     return true;
@@ -313,7 +313,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRTV(const FRHIRenderTargetView
         D3D12_ERROR("ResourceDimension (=%s) does not support RenderTargetViews", ToString(ResourceDesc.Dimension));
     }
 
-    FD3D12RenderTargetViewRef D3D12View = new FD3D12RenderTargetView(GetDevice(), FD3D12Interface::GetRHI()->GetRenderTargetOfflineDescriptorHeap());
+    FD3D12RenderTargetViewRef D3D12View = new FD3D12RenderTargetView(GetDevice(), FD3D12RHI::GetRHI()->GetRenderTargetOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -407,7 +407,7 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDSV(const FRHIDepthStencilView
         D3D12_ERROR("ResourceDimension (=%s) does not support DepthStencilViews", ToString(ResourceDesc.Dimension));
     }
 
-    FD3D12DepthStencilViewRef D3D12View = new FD3D12DepthStencilView(GetDevice(), FD3D12Interface::GetRHI()->GetDepthStencilOfflineDescriptorHeap());
+    FD3D12DepthStencilViewRef D3D12View = new FD3D12DepthStencilView(GetDevice(), FD3D12RHI::GetRHI()->GetDepthStencilOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;

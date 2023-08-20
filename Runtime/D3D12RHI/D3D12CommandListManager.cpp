@@ -16,7 +16,8 @@ FD3D12CommandListManager::FD3D12CommandListManager(FD3D12Device* InDevice, ED3D1
     , FenceManager(InDevice)
     , CommandQueue(nullptr)
     , CommandLists()
-{ }
+{
+}
 
 bool FD3D12CommandListManager::Initialize()
 {

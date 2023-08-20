@@ -1,21 +1,23 @@
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
 #include "D3D12Descriptors.h"
-#include "D3D12Interface.h"
+#include "D3D12RHI.h"
 #include "D3D12RayTracing.h"
 
 FD3D12AccelerationStructure::FD3D12AccelerationStructure(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , ResultBuffer(nullptr)
     , ScratchBuffer(nullptr)
-{ }
+{
+}
 
 FD3D12RayTracingGeometry::FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryDesc& Initializer)
     : FRHIRayTracingGeometry(Initializer)
     , FD3D12AccelerationStructure(InDevice)
     , VertexBuffer(nullptr)
     , IndexBuffer(nullptr)
-{ }
+{
+}
 
 bool FD3D12RayTracingGeometry::Build(
     FD3D12CommandContext& CmdContext,
@@ -159,7 +161,8 @@ FD3D12RayTracingScene::FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIR
     , View(nullptr)
     , Instances()
     , ShaderBindingTableBuilder(InDevice)
-{ }
+{
+}
 
 bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances, bool bUpdate)
 {
@@ -218,7 +221,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         SrvDesc.Shader4ComponentMapping                  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
 
-        View = new FD3D12ShaderResourceView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap(), this);
+        View = new FD3D12ShaderResourceView(GetDevice(), FD3D12RHI::GetRHI()->GetResourceOfflineDescriptorHeap(), this);
         if (!View->AllocateHandle())
         {
             return false;

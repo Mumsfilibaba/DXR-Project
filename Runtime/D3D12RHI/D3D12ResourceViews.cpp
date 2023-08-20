@@ -33,7 +33,8 @@ void FD3D12View::InvalidateAndFreeHandle()
 FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
     : FD3D12View(InDevice, InHeap)
     , Desc()
-{ }
+{
+}
 
 bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
@@ -50,7 +51,8 @@ FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D1
     : FRHIShaderResourceView(InResource)
     , FD3D12View(InDevice, InHeap)
     , Desc()
-{ }
+{
+}
 
 bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
@@ -76,7 +78,8 @@ FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3
     , FD3D12View(InDevice, InHeap)
     , Desc()
     , CounterResource(nullptr)
-{ }
+{
+}
 
 bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
@@ -107,7 +110,8 @@ bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD
 FD3D12RenderTargetView::FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
     : FD3D12View(InDevice, InHeap)
     , Desc()
-{ }
+{
+}
 
 bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
@@ -131,7 +135,8 @@ bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_
 FD3D12DepthStencilView::FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
     : FD3D12View(InDevice, InHeap)
     , Desc()
-{ }
+{
+}
 
 bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {

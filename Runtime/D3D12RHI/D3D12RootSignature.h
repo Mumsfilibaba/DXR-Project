@@ -39,7 +39,6 @@ public:
     const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const { return Desc; }
 
 private:
-
     static void InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace);
 
     void InsertDescriptorTable(D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges);
@@ -59,9 +58,7 @@ private:
 };
 
 
-class FD3D12RootSignature 
-    : public FD3D12DeviceChild
-    , public FD3D12RefCounted
+class FD3D12RootSignature : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
     FD3D12RootSignature(FD3D12Device* InDevice);
@@ -113,8 +110,7 @@ private:
 };
 
 
-class FD3D12RootSignatureCache
-    : public FD3D12DeviceChild
+class FD3D12RootSignatureCache : public FD3D12DeviceChild
 {
 public:
     FD3D12RootSignatureCache(FD3D12Device* Device);
@@ -123,6 +119,7 @@ public:
     FD3D12RootSignature* GetOrCreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount);
     
     bool Initialize();
+    
     void ReleaseAll();
 
 private:

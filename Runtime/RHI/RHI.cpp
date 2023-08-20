@@ -1,11 +1,10 @@
-#include "RHIInterface.h"
+#include "RHI.h"
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
-
 #include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/ConsoleManager.h"
 
-IMPLEMENT_ENGINE_MODULE(FRHIInterfaceModule, RHI);
+IMPLEMENT_ENGINE_MODULE(FRHIModule, RHI);
 
 TAutoConsoleVariable<bool> CVarEnableDebugLayer(
     "RHI.EnableDebugLayer", 
@@ -17,51 +16,55 @@ TAutoConsoleVariable<FString> CVarType(
     "Selects the RHI Layer to use",
     "Unknown");
 
-RHI_API FRHIInterface* GRHIInterface = nullptr;
+RHI_API FRHI* GRHI = nullptr;
 
-static FRHIInterfaceModule* LoadNullRHI()
+static FRHIModule* LoadNullRHI()
 {
-    return FModuleManager::Get().LoadModule<FRHIInterfaceModule>("NullRHI");
+    return FModuleManager::Get().LoadModule<FRHIModule>("NullRHI");
 }
 
-static ERHIInstanceType GetRHITypeFromConfig()
+static ERHIType GetRHITypeFromConfig()
 {
     const FString RHITypeString = CVarType->GetString();
     if (RHITypeString.Equals("D3D12", EStringCaseType::NoCase))
     {
 #if PLATFORM_WINDOWS
-        return ERHIInstanceType::D3D12;
+        return ERHIType::D3D12;
 #else
         LOG_ERROR("D3D12RHI Is not supported on this platform");
 #endif
     }
+    else if (RHITypeString.Equals("Vulkan", EStringCaseType::NoCase))
+    {
+        return ERHIType::Vulkan;
+    }
     else if (RHITypeString.Equals("Metal", EStringCaseType::NoCase))
     {
 #if PLATFORM_MACOS
-        return ERHIInstanceType::Metal;
+        return ERHIType::Metal;
 #else
         LOG_ERROR("MetalRHI Is not supported on this platform");
 #endif
     }
     else if (RHITypeString.Equals("Null", EStringCaseType::NoCase))
     {
-        return ERHIInstanceType::Null;
+        return ERHIType::Null;
     }
 
-    return ERHIInstanceType::Unknown;
+    return ERHIType::Unknown;
 }
 
-static ERHIInstanceType GetRHIType()
+static ERHIType GetRHIType()
 {
-    ERHIInstanceType InstanceType = GetRHITypeFromConfig();
-    if (InstanceType == ERHIInstanceType::Unknown)
+    ERHIType InstanceType = GetRHITypeFromConfig();
+    if (InstanceType == ERHIType::Unknown)
     {
 #if PLATFORM_WINDOWS
-        return ERHIInstanceType::D3D12;
+        return ERHIType::D3D12;
 #elif PLATFORM_MACOS
-        return ERHIInstanceType::Metal;
+        return ERHIType::Metal;
 #else
-        return ERHIInstanceType::Null;
+        return ERHIType::Null;
 #endif
     }
 
@@ -72,19 +75,23 @@ static ERHIInstanceType GetRHIType()
 bool RHIInitialize()
 {
     // Select RHI
-    ERHIInstanceType InstanceType = GetRHIType();
+    ERHIType InstanceType = GetRHIType();
 
     // Load Selected RHI
-    FRHIInterfaceModule* RHIModule = nullptr;
-    if (InstanceType == ERHIInstanceType::D3D12)
+    FRHIModule* RHIModule = nullptr;
+    if (InstanceType == ERHIType::D3D12)
     {
-        RHIModule = FModuleManager::Get().LoadModule<FRHIInterfaceModule>("D3D12RHI");
+        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("D3D12RHI");
     }
-    else if (InstanceType == ERHIInstanceType::Metal)
+    else if (InstanceType == ERHIType::Vulkan)
     {
-        RHIModule = FModuleManager::Get().LoadModule<FRHIInterfaceModule>("MetalRHI");
+        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("VulkanRHI");
     }
-    else if (InstanceType == ERHIInstanceType::Null)
+    else if (InstanceType == ERHIType::Metal)
+    {
+        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("MetalRHI");
+    }
+    else if (InstanceType == ERHIType::Null)
     {
         RHIModule = LoadNullRHI();
     }
@@ -101,7 +108,7 @@ bool RHIInitialize()
         }
     }
 
-    FRHIInterface* RHIInterface = RHIModule->CreateInterface();
+    FRHI* RHIInterface = RHIModule->CreateRHI();
     if (!RHIInterface)
     {
         LOG_ERROR("[RHIInitialize] Failed to create RHIInterface, the application has to terminate");
@@ -114,7 +121,7 @@ bool RHIInitialize()
         return false;
     }
 
-    GRHIInterface = RHIInterface;
+    GRHI = RHIInterface;
 
     // Initialize the CommandListExecutor
     if (!GRHICommandExecutor.Initialize())
@@ -132,9 +139,9 @@ void RHIRelease()
 {
     GRHICommandExecutor.Release();
 
-    if (GRHIInterface)
+    if (GRHI)
     {
-        delete GRHIInterface;
-        GRHIInterface = nullptr;
+        delete GRHI;
+        GRHI = nullptr;
     }
 }

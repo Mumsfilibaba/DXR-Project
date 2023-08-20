@@ -220,6 +220,6 @@ void FRHICommandListExecutor::WaitForGPU()
 
     if (CommandContext)
     {
-        CommandContext->Flush();
+        CommandContext->RHIFlush();
     }
 }

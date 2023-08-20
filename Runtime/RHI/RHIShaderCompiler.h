@@ -27,6 +27,7 @@ enum class EShaderOutputLanguage : uint8
     Unknown = 0,
     HLSL    = 1, // DXIL for D3D12RHI
     MSL     = 2, // Metal Shading Language for MetalRHI
+    SPIRV   = 3, // SPIR-V for VulkanRHI
 };
 
 
@@ -49,6 +50,46 @@ struct FShaderDefine
 };
 
 
+struct FRHIShaderCompileInfo;
+
+class RHI_API FRHIShaderCompiler
+{
+    FRHIShaderCompiler(FStringView InAssetPath);
+    ~FRHIShaderCompiler();
+
+public:
+    static bool Create(FStringView AssetFolderPath);
+    
+    static void Destroy();
+    
+    static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
+
+    static FRHIShaderCompiler& Get();
+
+    bool CompileFromFile(const FString& Filename, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+
+    bool CompileFromSource(const FString& ShaderSource, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+
+private:
+    static void ErrorCallback(void* Userdata, const CHAR* Error);
+
+    bool Initialize();
+
+    bool ConvertSpirvToMetalShader(const FString& Entrypoint, TArray<uint8>& OutByteCode);
+
+    bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);
+
+    FString CreateArgString(const TArrayView<LPCWSTR> Args);
+
+private:
+    void*                 DXCLib;
+    DxcCreateInstanceProc DxcCreateInstanceFunc;
+    FString               AssetPath;
+
+    static FRHIShaderCompiler* GInstance;
+};
+
+
 struct FRHIShaderCompileInfo
 {
     FRHIShaderCompileInfo()
@@ -62,17 +103,11 @@ struct FRHIShaderCompileInfo
     }
     
     FRHIShaderCompileInfo(
-        const FString&  InEntryPoint,
-        EShaderModel    InShaderModel,
-        EShaderStage    InShaderStage,
-        const TArrayView<FShaderDefine>& InDefines = TArrayView<FShaderDefine>(),
-#if PLATFORM_WINDOWS
-        EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::HLSL)
-#elif PLATFORM_MACOS
-        EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::MSL)
-#else
-        EShaderOutputLanguage InOutputLanguage = EShaderOutputLanguage::Unknown)
-#endif
+        const FString&                   InEntryPoint,
+        EShaderModel                     InShaderModel,
+        EShaderStage                     InShaderStage,
+        const TArrayView<FShaderDefine>& InDefines        = TArrayView<FShaderDefine>(),
+        EShaderOutputLanguage            InOutputLanguage = FRHIShaderCompiler::GetOutputLanguageBasedOnRHI())
         : ShaderModel(InShaderModel)
         , ShaderStage(InShaderStage)
         , OutputLanguage(InOutputLanguage)
@@ -88,40 +123,4 @@ struct FRHIShaderCompileInfo
     bool                      bOptimize;
     TArrayView<FShaderDefine> Defines;
     FString                   EntryPoint;
-};
-
-
-class RHI_API FRHIShaderCompiler
-{
-private:
-    friend class TOptional<FRHIShaderCompiler>;
-
-    FRHIShaderCompiler(FStringView InAssetPath);
-    ~FRHIShaderCompiler();
-
-public:
-    static bool Create(FStringView AssetFolderPath);
-    static void Destroy();
-    
-    static FRHIShaderCompiler& Get();
-
-    bool CompileFromFile(const FString& Filename, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-    bool CompileFromSource(const FString& ShaderSource, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-
-private:
-    static void ErrorCallback(void* Userdata, const CHAR* Error);
-
-    bool Initialize();
-
-    bool ConvertSpirvToMetalShader(const FString& Entrypoint, TArray<uint8>& OutByteCode);
-    bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);
-
-    FString CreateArgString(const TArrayView<LPCWSTR> Args);
-
-private:
-    void*                 DXCLib;
-    DxcCreateInstanceProc DxcCreateInstanceFunc;
-    FString               AssetPath;
-
-    static FRHIShaderCompiler* GInstance;
 };

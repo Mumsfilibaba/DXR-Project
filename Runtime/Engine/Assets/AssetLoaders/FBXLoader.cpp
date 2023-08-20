@@ -88,7 +88,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
     ofbx::IScene* FBXScene = ofbx::load(Bytes, FileSize, (ofbx::u64)ofbx::LoadFlags::TRIANGULATE);
     if (!FBXScene)
     {
-        const char* ErrorString = ofbx::getError();
+        const CHAR* ErrorString = ofbx::getError();
         LOG_ERROR("[FMeshFactory]: Failed to load content '%s', error '%s'", Filename.GetCString(), ErrorString);
         return false;
     }

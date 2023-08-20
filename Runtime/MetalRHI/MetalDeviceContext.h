@@ -1,12 +1,12 @@
 #pragma once
 #include "MetalCore.h"
 
-class FMetalInterface;
+class FMetalRHI;
 
 class FMetalDeviceContext 
 {
 private:
-    friend class FMetalInterface;
+    friend class FMetalRHI;
     
     FMetalDeviceContext(id<MTLDevice> InDevice);
     ~FMetalDeviceContext();

@@ -6,7 +6,7 @@
 #include "Engine/Scene/Actors/Actor.h"
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Resources/Mesh.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
 
 bool FDebugRenderer::Init(FFrameResources& Resources)

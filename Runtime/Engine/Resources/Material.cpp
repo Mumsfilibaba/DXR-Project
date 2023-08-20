@@ -1,5 +1,5 @@
 #include "Material.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 #include "Engine/Engine.h"
 

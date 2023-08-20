@@ -167,7 +167,7 @@
 #include "Core/Time/Stopwatch.h"
 #include "Core/Time/Time.h"
 #include "Core/Time/Timespan.h"
-#include "Core/Time/Timeutilities.h"
+#include "Core/Time/TimeUtilities.h"
 
 #include "Core/Utilities/HashUtilities.h"
 #include "Core/Utilities/StringUtilities.h"

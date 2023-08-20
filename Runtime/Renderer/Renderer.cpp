@@ -5,7 +5,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Application/Application.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Engine.h"

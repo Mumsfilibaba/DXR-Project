@@ -5,7 +5,8 @@ FD3D12Fence::FD3D12Fence(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , Fence(nullptr)
     , Event(0)
-{ }
+{
+}
 
 FD3D12Fence::~FD3D12Fence()
 {
@@ -61,7 +62,8 @@ FD3D12FenceManager::FD3D12FenceManager(FD3D12Device* InDevice)
     , Fence(nullptr)
     , CurrentValue(0)
     , LastSignaledValue(0)
-{ }
+{
+}
 
 bool FD3D12FenceManager::Initialize()
 {

@@ -10,26 +10,26 @@
 #include "MetalPipelineState.h"
 #include "MetalRayTracing.h"
 #include "MetalDeviceContext.h"
-
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FMetalInterfaceModule final : public FRHIInterfaceModule
+struct FMetalRHIModule final : public FRHIModule
 {
-    virtual class FRHIInterface* CreateInterface() override final;
+    virtual class FRHI* CreateRHI() override final;
 };
 
-class FMetalInterface final : public FRHIInterface
+
+class FMetalRHI final : public FRHI
 {
 public:
-    FMetalInterface();
-    ~FMetalInterface();
+    FMetalRHI();
+    ~FMetalRHI();
 
-    static FMetalInterface* GetRHI() 
+    static FMetalRHI* GetRHI() 
     {
-        CHECK(GMetalInterface != nullptr);
-        return GMetalInterface; 
+        CHECK(GMetalRHI != nullptr);
+        return GMetalRHI; 
     }
 
     virtual bool Initialize() override final;
@@ -102,7 +102,7 @@ public:
     
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
 
-    virtual FString RHIGetAdapterDescription() const override final 
+    virtual FString RHIGetAdapterName() const override final 
     {
         // TODO: Finish
         return FString(); 
@@ -148,7 +148,7 @@ private:
     FMetalDeviceContext*  DeviceContext;
     FMetalCommandContext* CommandContext;
 
-    static FMetalInterface* GMetalInterface;
+    static FMetalRHI* GMetalRHI;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

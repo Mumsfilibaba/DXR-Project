@@ -5,7 +5,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShaderCompiler.h"
 #include "RendererCore/TextureFactory.h"

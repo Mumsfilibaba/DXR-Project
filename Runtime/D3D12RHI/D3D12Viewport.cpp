@@ -1,4 +1,4 @@
-#include "D3D12Interface.h"
+#include "D3D12RHI.h"
 #include "D3D12Viewport.h"
 #include "Core/Misc/FrameProfiler.h"
 
@@ -14,7 +14,8 @@ FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InC
     , Flags(0)
     , NumBackBuffers(0)
     , BackBufferIndex(0)
-{ }
+{
+}
 
 FD3D12Viewport::~FD3D12Viewport()
 {
@@ -139,7 +140,7 @@ bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
     {
         GRHICommandExecutor.WaitForOutstandingTasks();
 
-        CommandContext->ClearState();
+        CommandContext->RHIClearState();
 
         for (FD3D12TextureRef& Texture : BackBuffers)
         {
@@ -211,14 +212,7 @@ bool FD3D12Viewport::Present(bool VerticalSync)
 
 bool FD3D12Viewport::RetriveBackBuffers()
 {
-    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(
-        GetColorFormat(),
-        Desc.Width,
-        Desc.Height,
-        1, 
-        1,
-        ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
-
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
     if (BackBuffers.Size() < static_cast<int32>(NumBackBuffers))
     {
         BackBuffers.Resize(NumBackBuffers);

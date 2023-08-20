@@ -1,6 +1,6 @@
 #include "TemporalAA.h"
 #include "Renderer.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
 #include "Core/Misc/FrameProfiler.h"
 

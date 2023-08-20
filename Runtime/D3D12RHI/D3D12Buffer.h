@@ -4,8 +4,6 @@
 #include "D3D12RefCounted.h"
 #include "RHI/RHIResources.h"
 
-typedef TSharedRef<class FD3D12Buffer> FD3D12BufferRef;
-
 class FD3D12Buffer : public FRHIBuffer, public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
@@ -49,13 +47,12 @@ private:
     FD3D12ConstantBufferViewRef View;
 };
 
-
 inline FD3D12Buffer* GetD3D12Buffer(FRHIBuffer* Buffer)
 {
-    return Buffer ? reinterpret_cast<FD3D12Buffer*>(Buffer->GetRHIBaseBuffer()) : nullptr;
+    return static_cast<FD3D12Buffer*>(Buffer);
 }
 
 inline FD3D12Resource* GetD3D12Resource(FRHIBuffer* Buffer)
 {
-    return Buffer ? reinterpret_cast<FD3D12Resource*>(Buffer->GetRHIBaseResource()) : nullptr;
+    return Buffer ? static_cast<FD3D12Buffer*>(Buffer)->GetD3D12Resource() : nullptr;
 }

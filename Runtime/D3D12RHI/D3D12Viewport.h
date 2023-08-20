@@ -9,22 +9,21 @@
 
 typedef TSharedRef<class FD3D12Viewport> FD3D12ViewportRef;
 
-class FD3D12Viewport 
-    : public FRHIViewport
-    , public FD3D12DeviceChild
+class FD3D12Viewport : public FRHIViewport, public FD3D12DeviceChild
 {
 public:
     FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportDesc& InDesc);
     ~FD3D12Viewport();
 
     bool Initialize();
-    bool Present(bool VerticalSync);
 
-    FD3D12Texture* GetCurrentBackBuffer() const { return BackBuffers[BackBufferIndex].Get(); }
+    bool Present(bool VerticalSync);
 
     virtual bool Resize(uint32 Width, uint32 Height) override final;
 
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
+
+    FD3D12Texture* GetCurrentBackBuffer() const { return BackBuffers[BackBufferIndex].Get(); }
 
 private:
     bool RetriveBackBuffers();

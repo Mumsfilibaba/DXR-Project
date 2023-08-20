@@ -4,7 +4,7 @@ FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVi
     : FMetalObject(InDevice)
     , Library(nil)
     , FunctionName(nil)
-    , Visbility(InVisibility)
+    , Visibility(InVisibility)
     , Function(nil)
 {
     @autoreleasepool

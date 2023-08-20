@@ -6,27 +6,27 @@
 #include "D3D12SamplerState.h"
 #include "D3D12Shader.h"
 #include "D3D12RayTracing.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
 
 class FD3D12CommandContext;
 
-struct D3D12RHI_API FD3D12InterfaceModule final : public FRHIInterfaceModule
+struct D3D12RHI_API FD3D12RHIModule final : public FRHIModule
 {
-    virtual class FRHIInterface* CreateInterface() override final;
+    virtual class FRHI* CreateRHI() override final;
 };
 
 
-class D3D12RHI_API FD3D12Interface : public FRHIInterface
+class D3D12RHI_API FD3D12RHI : public FRHI
 {
 public:
-    FD3D12Interface();
-    ~FD3D12Interface();
+    FD3D12RHI();
+    ~FD3D12RHI();
     
-    static FD3D12Interface* GetRHI() 
+    static FD3D12RHI* GetRHI() 
     {
-        CHECK(GD3D12Interface != nullptr);
-        return GD3D12Interface; 
+        CHECK(GD3D12RHI != nullptr);
+        return GD3D12RHI; 
     }
 
     virtual bool Initialize() override final;
@@ -99,7 +99,7 @@ public:
     
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
 
-    virtual FString RHIGetAdapterDescription() const override final 
+    virtual FString RHIGetAdapterName() const override final 
     { 
         CHECK(Adapter != nullptr);
         return Adapter->GetDescription(); 
@@ -136,12 +136,16 @@ public:
     }
 
 public:
-    FD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap()     const { return ResourceOfflineDescriptorHeap; }
+    FD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap() const { return ResourceOfflineDescriptorHeap; }
+    
     FD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap() const { return RenderTargetOfflineDescriptorHeap; }
+    
     FD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap() const { return DepthStencilOfflineDescriptorHeap; }
-    FD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap()      const { return SamplerOfflineDescriptorHeap; }
+    
+    FD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap() const { return SamplerOfflineDescriptorHeap; }
 
-    FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexure2D()   const { return GenerateMipsTex2D_PSO; }
+    FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexure2D() const { return GenerateMipsTex2D_PSO; }
+
     FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexureCube() const { return GenerateMipsTexCube_PSO; }
     
     FD3D12Adapter* GetAdapter() const
@@ -173,5 +177,5 @@ private:
     FD3D12ComputePipelineStateRef GenerateMipsTex2D_PSO;
     FD3D12ComputePipelineStateRef GenerateMipsTexCube_PSO;
 
-    static FD3D12Interface* GD3D12Interface;
+    static FD3D12RHI* GD3D12RHI;
 };

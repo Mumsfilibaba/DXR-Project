@@ -1,11 +1,12 @@
 #include "D3D12Buffer.h"
-#include "D3D12Interface.h"
+#include "D3D12RHI.h"
 
 FD3D12Buffer::FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferDesc& InDesc)
     : FRHIBuffer(InDesc)
     , FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
-{ }
+{
+}
 
 FD3D12Buffer::~FD3D12Buffer()
 {
@@ -49,7 +50,7 @@ bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
 
             if (Desc.IsConstantBuffer())
             {
-                View = new FD3D12ConstantBufferView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap());
+                View = new FD3D12ConstantBufferView(GetDevice(), FD3D12RHI::GetRHI()->GetResourceOfflineDescriptorHeap());
                 if (!CreateCBV())
                 {
                     return false;
@@ -81,11 +82,11 @@ bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
         }
         else
         {
-            FD3D12CommandContext* Context = FD3D12Interface::GetRHI()->ObtainCommandContext();
-            Context->StartContext();
+            FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
+            Context->RHIStartContext();
 
             Context->TransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
-            Context->UpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
+            Context->RHIUpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
 
             // NOTE: Transfer to the initial state
             if (InInitialAccess != EResourceAccess::CopyDest)
@@ -93,17 +94,17 @@ bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
                 Context->TransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
             }
 
-            Context->FinishContext();
+            Context->RHIFinishContext();
         }
     }
     else
     {
         if (InInitialAccess != EResourceAccess::Common && Desc.IsDynamic())
         {
-            FD3D12CommandContext* Context = FD3D12Interface::GetRHI()->ObtainCommandContext();
-            Context->StartContext();
+            FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
+            Context->RHIStartContext();
             Context->TransitionBuffer(this, EResourceAccess::Common, InInitialAccess);
-            Context->FinishContext();
+            Context->RHIFinishContext();
         }
     }
 

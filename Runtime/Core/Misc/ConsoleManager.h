@@ -85,6 +85,7 @@ constexpr const CHAR* SetByFlagToString(EConsoleVariableFlags Flag)
     }
 }
 
+
 template<typename T>
 class TConsoleVariableData;
 
@@ -208,7 +209,6 @@ struct IConsoleVariable : public IConsoleObject
 
 class CORE_API FConsoleManager
 {
-    FConsoleManager() = default;
     ~FConsoleManager();
 
 public:
@@ -442,8 +442,7 @@ private:
 
 
 template<typename T>
-class TAutoConsoleVariable
-    : public FAutoConsoleObject
+class TAutoConsoleVariable : public FAutoConsoleObject
 {
     typedef TConsoleVariableData<T> FConsoleVariableData;
 

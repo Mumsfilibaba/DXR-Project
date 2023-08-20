@@ -41,9 +41,11 @@ public:
     virtual FString GetName() const override final;
 
     FD3D12RenderTargetView* GetOrCreateRTV(const FRHIRenderTargetView& RenderTargetView);
+
     FD3D12DepthStencilView* GetOrCreateDSV(const FRHIDepthStencilView& DepthStencilView);
 
     void DestroyRTVs() { RenderTargetViews.Clear(); }
+
     void DestroyDSVs() { DepthStencilViews.Clear(); }
 
     FD3D12Resource* GetD3D12Resource() const 
@@ -74,9 +76,9 @@ public:
     }
 
 protected:
-    FD3D12ResourceRef            Resource;
-    FD3D12ShaderResourceViewRef  ShaderResourceView;
-    FD3D12UnorderedAccessViewRef UnorderedAccessView;
+    FD3D12ResourceRef                 Resource;
+    FD3D12ShaderResourceViewRef       ShaderResourceView;
+    FD3D12UnorderedAccessViewRef      UnorderedAccessView;
 
     TArray<FD3D12RenderTargetViewRef> RenderTargetViews;
     TArray<FD3D12DepthStencilViewRef> DepthStencilViews;
@@ -91,6 +93,10 @@ public:
         , Viewport(InViewport)
     {
     }
+
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<GetCurrentBackBufferTexture*>(this)); }
+    
+    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
     FD3D12Texture* GetCurrentBackBufferTexture();
 
@@ -132,7 +138,8 @@ FORCEINLINE FD3D12Texture* GetD3D12Texture(FRHITexture* Texture)
 
 FORCEINLINE FD3D12Resource* GetD3D12Resource(FRHITexture* Texture)
 {
-    return Texture ? reinterpret_cast<FD3D12Resource*>(Texture->GetRHIBaseResource()) : nullptr;
+    FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture)
+    return D3D12Texture ? D3D12Texture->GetD3D12Resource() : nullptr;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

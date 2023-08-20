@@ -9,7 +9,8 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resou
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
     , Desc(InNativeResource ? InNativeResource->GetDesc() : D3D12_RESOURCE_DESC())
     , Address(0)
-{ }
+{
+}
 
 FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
     : FD3D12RefCounted()
@@ -19,7 +20,8 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
     , Desc(InDesc)
     , Address(0)
-{ }
+{
+}
 
 bool FD3D12Resource::Initialize(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue)
 {

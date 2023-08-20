@@ -31,15 +31,15 @@ public:
         return Function;
     }
 
-    EShaderVisibility GetVisbility() const
+    EShaderVisibility GetVisibility() const
     {
-        return Visbility;
+        return Visibility;
     }
 
 protected:
     id<MTLLibrary>    Library;
     NSString*         FunctionName;
-    EShaderVisibility Visbility;
+    EShaderVisibility Visibility;
     // TODO: Release after use, high memory usage to keep this
     id<MTLFunction>   Function;
 };

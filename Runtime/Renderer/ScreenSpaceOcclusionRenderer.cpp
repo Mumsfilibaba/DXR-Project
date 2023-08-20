@@ -5,7 +5,7 @@
 #include "Core/Math/IntVector2.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
 
 // TODO: Remove and replace. There are better and easier implementations to do yourself

@@ -2,7 +2,6 @@
 #include "RHITypes.h"
 #include "IRHICommandContext.h"
 #include "RHIResources.h"
-
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/Debug.h"
@@ -73,7 +72,7 @@ DECLARE_RHICOMMAND(FRHICommandBeginTimeStamp)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BeginTimeStamp(Query, Index);
+        CommandContext.RHIBeginTimeStamp(Query, Index);
     }
 
     FRHITimestampQuery* Query;
@@ -90,7 +89,7 @@ DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.EndTimeStamp(Query, Index);
+        CommandContext.RHIEndTimeStamp(Query, Index);
     }
 
     FRHITimestampQuery* Query;
@@ -108,7 +107,7 @@ DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.ClearRenderTargetView(RenderTargetView, ClearColor);
+        CommandContext.RHIClearRenderTargetView(RenderTargetView, ClearColor);
     }
 
     FRHIRenderTargetView RenderTargetView;
@@ -127,7 +126,7 @@ DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.ClearDepthStencilView(DepthStencilView, Depth, Stencil);
+        CommandContext.RHIClearDepthStencilView(DepthStencilView, Depth, Stencil);
     }
 
     FRHIDepthStencilView DepthStencilView;
@@ -146,7 +145,7 @@ DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.ClearUnorderedAccessViewFloat(UnorderedAccessView, ClearColor);
+        CommandContext.RHIClearUnorderedAccessViewFloat(UnorderedAccessView, ClearColor);
     }
 
     FRHIUnorderedAccessView* UnorderedAccessView;
@@ -162,7 +161,7 @@ DECLARE_RHICOMMAND(FRHICommandBeginRenderPass)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BeginRenderPass(RenderPassDesc);
+        CommandContext.RHIBeginRenderPass(RenderPassDesc);
     }
 
     FRHIRenderPassDesc RenderPassDesc;
@@ -174,7 +173,7 @@ DECLARE_RHICOMMAND(FRHICommandEndRenderPass)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.EndRenderPass();
+        CommandContext.RHIEndRenderPass();
     }
 };
 
@@ -187,7 +186,7 @@ DECLARE_RHICOMMAND(FRHICommandSetViewport)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetViewport(ViewportRegion);
+        CommandContext.RHISetViewport(ViewportRegion);
     }
 
     FRHIViewportRegion ViewportRegion;
@@ -202,7 +201,7 @@ DECLARE_RHICOMMAND(FRHICommandSetScissorRect)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetScissorRect(ScissorRegion);
+        CommandContext.RHISetScissorRect(ScissorRegion);
     }
 
     FRHIScissorRegion ScissorRegion;
@@ -217,7 +216,7 @@ DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetBlendFactor(Color);
+        CommandContext.RHISetBlendFactor(Color);
     }
 
     FVector4 Color;
@@ -240,7 +239,7 @@ DECLARE_RHICOMMAND(FRHICommandSetVertexBuffers)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetVertexBuffers(VertexBuffers, StartSlot);
+        CommandContext.RHISetVertexBuffers(VertexBuffers, StartSlot);
     }
 
     TArrayView<FRHIBuffer* const> VertexBuffers;
@@ -261,7 +260,7 @@ DECLARE_RHICOMMAND(FRHICommandSetIndexBuffer)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetIndexBuffer(IndexBuffer, IndexFormat);
+        CommandContext.RHISetIndexBuffer(IndexBuffer, IndexFormat);
     }
 
     FRHIBuffer*  IndexBuffer;
@@ -277,7 +276,7 @@ DECLARE_RHICOMMAND(FRHICommandSetPrimitiveTopology)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetPrimitiveTopology(PrimitiveTopologyType);
+        CommandContext.RHISetPrimitiveTopology(PrimitiveTopologyType);
     }
 
     EPrimitiveTopology PrimitiveTopologyType;
@@ -292,7 +291,7 @@ DECLARE_RHICOMMAND(FRHICommandSetGraphicsPipelineState)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetGraphicsPipelineState(PipelineState);
+        CommandContext.RHISetGraphicsPipelineState(PipelineState);
     }
 
     FRHIGraphicsPipelineState* PipelineState;
@@ -307,7 +306,7 @@ DECLARE_RHICOMMAND(FRHICommandSetComputePipelineState)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetComputePipelineState(PipelineState);
+        CommandContext.RHISetComputePipelineState(PipelineState);
     }
 
     FRHIComputePipelineState* PipelineState;
@@ -325,7 +324,7 @@ DECLARE_RHICOMMAND(FRHICommandSet32BitShaderConstants)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.Set32BitShaderConstants(Shader, Shader32BitConstants, Num32BitConstants);
+        CommandContext.RHISet32BitShaderConstants(Shader, Shader32BitConstants, Num32BitConstants);
     }
 
     FRHIShader* Shader;
@@ -344,7 +343,7 @@ DECLARE_RHICOMMAND(FRHICommandSetShaderResourceView)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetShaderResourceView(Shader, ShaderResourceView, ParameterIndex);
+        CommandContext.RHISetShaderResourceView(Shader, ShaderResourceView, ParameterIndex);
     }
 
     FRHIShader*             Shader;
@@ -363,7 +362,7 @@ DECLARE_RHICOMMAND(FRHICommandSetShaderResourceViews)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetShaderResourceViews(Shader, ShaderResourceViews, StartParameterIndex);
+        CommandContext.RHISetShaderResourceViews(Shader, ShaderResourceViews, StartParameterIndex);
     }
 
     FRHIShader*                               Shader;
@@ -382,7 +381,7 @@ DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessView)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetUnorderedAccessView(Shader, UnorderedAccessView, ParameterIndex);
+        CommandContext.RHISetUnorderedAccessView(Shader, UnorderedAccessView, ParameterIndex);
     }
 
     FRHIShader*              Shader;
@@ -401,7 +400,7 @@ DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessViews)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetUnorderedAccessViews(Shader, UnorderedAccessViews, StartParameterIndex);
+        CommandContext.RHISetUnorderedAccessViews(Shader, UnorderedAccessViews, StartParameterIndex);
     }
 
     FRHIShader*                                Shader;
@@ -424,7 +423,7 @@ DECLARE_RHICOMMAND(FRHICommandSetConstantBuffer)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetConstantBuffer(Shader, ConstantBuffer, ParameterIndex);
+        CommandContext.RHISetConstantBuffer(Shader, ConstantBuffer, ParameterIndex);
     }
 
     FRHIShader* Shader;
@@ -450,7 +449,7 @@ DECLARE_RHICOMMAND(FRHICommandSetConstantBuffers)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetConstantBuffers(Shader, ConstantBuffers, StartParameterIndex);
+        CommandContext.RHISetConstantBuffers(Shader, ConstantBuffers, StartParameterIndex);
     }
 
     FRHIShader*                   Shader;
@@ -469,7 +468,7 @@ DECLARE_RHICOMMAND(FRHICommandSetSamplerState)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetSamplerState(Shader, SamplerState, ParameterIndex);
+        CommandContext.RHISetSamplerState(Shader, SamplerState, ParameterIndex);
     }
 
     FRHIShader*       Shader;
@@ -488,7 +487,7 @@ DECLARE_RHICOMMAND(FRHICommandSetSamplerStates)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetSamplerStates(Shader, SamplerStates, StartParameterIndex);
+        CommandContext.RHISetSamplerStates(Shader, SamplerStates, StartParameterIndex);
     }
 
     FRHIShader*                         Shader;
@@ -507,7 +506,7 @@ DECLARE_RHICOMMAND(FRHICommandUpdateBuffer)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.UpdateBuffer(Dst, BufferRegion, SrcData);
+        CommandContext.RHIUpdateBuffer(Dst, BufferRegion, SrcData);
     }
 
     FRHIBuffer*   Dst;
@@ -533,7 +532,7 @@ DECLARE_RHICOMMAND(FRHICommandUpdateTexture2D)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.UpdateTexture2D(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch);
+        CommandContext.RHIUpdateTexture2D(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch);
     }
 
     FRHITexture*     Dst;
@@ -553,7 +552,7 @@ DECLARE_RHICOMMAND(FRHICommandResolveTexture)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.ResolveTexture(Dst, Src);
+        CommandContext.RHIResolveTexture(Dst, Src);
     }
 
     FRHITexture* Dst;
@@ -571,7 +570,7 @@ DECLARE_RHICOMMAND(FRHICommandCopyBuffer)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.CopyBuffer(Dst, Src, CopyBufferInfo);
+        CommandContext.RHICopyBuffer(Dst, Src, CopyBufferInfo);
     }
 
     FRHIBuffer*        Dst;
@@ -589,7 +588,7 @@ DECLARE_RHICOMMAND(FRHICommandCopyTexture)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.CopyTexture(Destination, Source);
+        CommandContext.RHICopyTexture(Destination, Source);
     }
 
     FRHITexture* Destination;
@@ -607,7 +606,7 @@ DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.CopyTextureRegion(Dst, Src, CopyInfo);
+        CommandContext.RHICopyTextureRegion(Dst, Src, CopyInfo);
     }
 
     FRHITexture*        Dst;
@@ -624,7 +623,7 @@ DECLARE_RHICOMMAND(FRHICommandDestroyResource)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.DestroyResource(Resource.Get());
+        CommandContext.RHIDestroyResource(Resource.Get());
     }
 
     TSharedRef<IRefCounted> Resource;
@@ -639,7 +638,7 @@ DECLARE_RHICOMMAND(FRHICommandDiscardContents)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.DiscardContents(Texture);
+        CommandContext.RHIDiscardContents(Texture);
     }
 
     FRHITexture* Texture;
@@ -669,14 +668,7 @@ DECLARE_RHICOMMAND(FRHICommandBuildRayTracingGeometry)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BuildRayTracingGeometry(
-            RayTracingGeometry,
-            VertexBuffer,
-            NumVertices,
-            IndexBuffer,
-            NumIndices,
-            IndexFormat,
-            bUpdate);
+        CommandContext.RHIBuildRayTracingGeometry(RayTracingGeometry, VertexBuffer, NumVertices, IndexBuffer, NumIndices, IndexFormat, bUpdate);
     }
 
     FRHIRayTracingGeometry* RayTracingGeometry;
@@ -702,7 +694,7 @@ DECLARE_RHICOMMAND(FRHICommandBuildRayTracingScene)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BuildRayTracingScene(Scene, Instances, bUpdate);
+        CommandContext.RHIBuildRayTracingScene(Scene, Instances, bUpdate);
     }
 
     FRHIRayTracingScene*                             Scene;
@@ -732,14 +724,7 @@ DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetRayTracingBindings(
-            RayTracingScene,
-            PipelineState,
-            GlobalResource,
-            RayGenLocalResources,
-            MissLocalResources,
-            HitGroupResources,
-            NumHitGroupResources);
+        CommandContext.RHISetRayTracingBindings(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
 
     FRHIRayTracingScene*              RayTracingScene;
@@ -760,7 +745,7 @@ DECLARE_RHICOMMAND(FRHICommandGenerateMips)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.GenerateMips(Texture);
+        CommandContext.RHIGenerateMips(Texture);
     }
 
     FRHITexture* Texture;
@@ -777,7 +762,7 @@ DECLARE_RHICOMMAND(FRHICommandTransitionTexture)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.TransitionTexture(Texture, BeforeState, AfterState);
+        CommandContext.RHITransitionTexture(Texture, BeforeState, AfterState);
     }
 
     FRHITexture*    Texture;
@@ -796,7 +781,7 @@ DECLARE_RHICOMMAND(FRHICommandTransitionBuffer)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.TransitionBuffer(Buffer, BeforeState, AfterState);
+        CommandContext.RHITransitionBuffer(Buffer, BeforeState, AfterState);
     }
 
     FRHIBuffer*     Buffer;
@@ -813,7 +798,7 @@ DECLARE_RHICOMMAND(FRHICommandUnorderedAccessTextureBarrier)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.UnorderedAccessTextureBarrier(Texture);
+        CommandContext.RHIUnorderedAccessTextureBarrier(Texture);
     }
 
     FRHITexture* Texture;
@@ -828,7 +813,7 @@ DECLARE_RHICOMMAND(FRHICommandUnorderedAccessBufferBarrier)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.UnorderedAccessBufferBarrier(Buffer);
+        CommandContext.RHIUnorderedAccessBufferBarrier(Buffer);
     }
 
     FRHIBuffer* Buffer;
@@ -844,7 +829,7 @@ DECLARE_RHICOMMAND(FRHICommandDraw)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.Draw(VertexCount, StartVertexLocation);
+        CommandContext.RHIDraw(VertexCount, StartVertexLocation);
     }
 
     uint32 VertexCount;
@@ -862,7 +847,7 @@ DECLARE_RHICOMMAND(FRHICommandDrawIndexed)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
+        CommandContext.RHIDrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
     }
 
     uint32 IndexCount;
@@ -882,7 +867,7 @@ DECLARE_RHICOMMAND(FRHICommandDrawInstanced)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+        CommandContext.RHIDrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
     }
 
     uint32 VertexCountPerInstance;
@@ -909,7 +894,7 @@ DECLARE_RHICOMMAND(FRHICommandDrawIndexedInstanced)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+        CommandContext.RHIDrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
     }
 
     uint32 IndexCountPerInstance;
@@ -930,7 +915,7 @@ DECLARE_RHICOMMAND(FRHICommandDispatch)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+        CommandContext.RHIDispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
     }
 
     uint32 ThreadGroupCountX;
@@ -956,7 +941,7 @@ DECLARE_RHICOMMAND(FRHICommandDispatchRays)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.DispatchRays(Scene, PipelineState, Width, Height, Depth);
+        CommandContext.RHIDispatchRays(Scene, PipelineState, Width, Height, Depth);
     }
 
     FRHIRayTracingScene*         Scene;
@@ -981,8 +966,7 @@ DECLARE_RHICOMMAND(FRHICommandInsertMarker)
         }
 
         LOG_INFO("%s", Marker.GetCString());
-
-        CommandContext.InsertMarker(Marker);
+        CommandContext.RHIInsertMarker(Marker);
     }
 
     FStringView Marker;
@@ -1007,7 +991,7 @@ DECLARE_RHICOMMAND(FRHICommandBeginExternalCapture)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BeginExternalCapture();
+        CommandContext.RHIBeginExternalCapture();
     }
 };
 
@@ -1017,7 +1001,7 @@ DECLARE_RHICOMMAND(FRHICommandEndExternalCapture)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.EndExternalCapture();
+        CommandContext.RHIEndExternalCapture();
     }
 };
 
@@ -1031,7 +1015,7 @@ DECLARE_RHICOMMAND(FRHICommandPresentViewport)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.PresentViewport(Viewport, bVerticalSync);
+        CommandContext.RHIPresentViewport(Viewport, bVerticalSync);
     }
 
     FRHIViewport* Viewport;

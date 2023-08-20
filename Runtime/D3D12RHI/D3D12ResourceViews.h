@@ -13,15 +13,14 @@ typedef TSharedRef<class FD3D12RenderTargetView>    FD3D12RenderTargetViewRef;
 typedef TSharedRef<class FD3D12DepthStencilView>    FD3D12DepthStencilViewRef;
 
 
-class FD3D12View 
-    : public FD3D12DeviceChild
-    , public FD3D12RefCounted
+class FD3D12View : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
     FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);
     virtual ~FD3D12View();
 
     bool AllocateHandle();
+
     void InvalidateAndFreeHandle();
 
     FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
@@ -38,8 +37,7 @@ protected:
 };
 
 
-class FD3D12ConstantBufferView 
-    : public FD3D12View
+class FD3D12ConstantBufferView : public FD3D12View
 {
 public:
     FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);
@@ -47,51 +45,67 @@ public:
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 
-    FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const { return Desc; }
+    FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const 
+    {
+        return Desc;
+    }
 
 private:
     D3D12_CONSTANT_BUFFER_VIEW_DESC Desc;
 };
 
 
-class FD3D12ShaderResourceView 
-    : public FRHIShaderResourceView
-    , public FD3D12View
+class FD3D12ShaderResourceView : public FRHIShaderResourceView, public FD3D12View
 {
 public:
     FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource);
-    ~FD3D12ShaderResourceView() = default;
+    virtual ~FD3D12ShaderResourceView() = default;
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
-    virtual int32 AddRef()      override final       { return FD3D12RefCounted::AddRef(); }
-    virtual int32 Release()     override final       { return FD3D12RefCounted::Release(); }
+    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
+
+    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
+    
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
-    FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const { return Desc; }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+
+    FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
+    {
+        return Desc;
+    }
 
 private:
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
 };
 
 
-class FD3D12UnorderedAccessView 
-    : public FRHIUnorderedAccessView
-    , public FD3D12View
+class FD3D12UnorderedAccessView : public FRHIUnorderedAccessView, public FD3D12View
 {
 public:
     FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource);
-    ~FD3D12UnorderedAccessView() = default;
+    virtual ~FD3D12UnorderedAccessView() = default;
 
     bool CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
-    virtual int32 AddRef()      override final       { return FD3D12RefCounted::AddRef(); }
-    virtual int32 Release()     override final       { return FD3D12RefCounted::Release(); }
+    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
+
+    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
+    
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
-    FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const { return Desc; }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-    FORCEINLINE const FD3D12Resource* GetD3D12CounterResource() const { return CounterResource.Get(); }
+    FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
+    { 
+        return Desc;
+    }
+
+    FORCEINLINE const FD3D12Resource* GetD3D12CounterResource() const
+    { 
+        return CounterResource.Get(); 
+    }
 
 private:
     FD3D12ResourceRef                CounterResource;
@@ -99,32 +113,36 @@ private:
 };
 
 
-class FD3D12RenderTargetView 
-    : public FD3D12View
+class FD3D12RenderTargetView : public FD3D12View
 {
 public:
     FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);
-    ~FD3D12RenderTargetView() = default;
+    virtual ~FD3D12RenderTargetView() = default;
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
-    FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const { return Desc; }
+    FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const 
+    {
+        return Desc;
+    }
 
 private:
     D3D12_RENDER_TARGET_VIEW_DESC Desc;
 };
 
 
-class FD3D12DepthStencilView 
-    : public FD3D12View
+class FD3D12DepthStencilView : public FD3D12View
 {
 public:
     FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);
-    ~FD3D12DepthStencilView() = default;
+    virtual ~FD3D12DepthStencilView() = default;
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 
-    FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const { return Desc; }
+    FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const 
+    { 
+        return Desc;
+    }
 
 private:
     D3D12_DEPTH_STENCIL_VIEW_DESC Desc;

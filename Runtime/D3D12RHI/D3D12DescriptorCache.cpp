@@ -1,6 +1,6 @@
 #include "D3D12DescriptorCache.h"
 #include "D3D12Descriptors.h"
-#include "D3D12Interface.h"
+#include "D3D12RHI.h"
 #include "D3D12CommandContext.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Templates/TypeTraits.h"
@@ -14,7 +14,8 @@ FD3D12DescriptorCache::FD3D12DescriptorCache(FD3D12Device* InDevice)
     , NullRTV(nullptr)
     , NullSampler(nullptr)
     , RangeSizes()
-{ }
+{
+}
 
 bool FD3D12DescriptorCache::Initialize()
 {
@@ -24,7 +25,7 @@ bool FD3D12DescriptorCache::Initialize()
     CBVDesc.BufferLocation = 0;
     CBVDesc.SizeInBytes    = 0;
 
-    NullCBV = new FD3D12ConstantBufferView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap());
+    NullCBV = new FD3D12ConstantBufferView(GetDevice(), FD3D12RHI::GetRHI()->GetResourceOfflineDescriptorHeap());
     if (!NullCBV->AllocateHandle())
     {
         return false;
@@ -43,7 +44,7 @@ bool FD3D12DescriptorCache::Initialize()
     UAVDesc.Texture2D.MipSlice   = 0;
     UAVDesc.Texture2D.PlaneSlice = 0;
 
-    NullUAV = new FD3D12UnorderedAccessView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap(), nullptr);
+    NullUAV = new FD3D12UnorderedAccessView(GetDevice(), FD3D12RHI::GetRHI()->GetResourceOfflineDescriptorHeap(), nullptr);
     if (!NullUAV->AllocateHandle())
     {
         return false;
@@ -65,7 +66,7 @@ bool FD3D12DescriptorCache::Initialize()
     SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     SRVDesc.Texture2D.PlaneSlice          = 0;
 
-    NullSRV = new FD3D12ShaderResourceView(GetDevice(), FD3D12Interface::GetRHI()->GetResourceOfflineDescriptorHeap(), nullptr);
+    NullSRV = new FD3D12ShaderResourceView(GetDevice(), FD3D12RHI::GetRHI()->GetResourceOfflineDescriptorHeap(), nullptr);
     if (!NullSRV->AllocateHandle())
     {
         return false;
@@ -84,7 +85,7 @@ bool FD3D12DescriptorCache::Initialize()
     RTVDesc.Texture2D.MipSlice   = 0;
     RTVDesc.Texture2D.PlaneSlice = 0;
 
-    NullRTV = new FD3D12RenderTargetView(GetDevice(), FD3D12Interface::GetRHI()->GetRenderTargetOfflineDescriptorHeap());
+    NullRTV = new FD3D12RenderTargetView(GetDevice(), FD3D12RHI::GetRHI()->GetRenderTargetOfflineDescriptorHeap());
     if (!NullRTV->AllocateHandle())
     {
         return false;
@@ -112,7 +113,7 @@ bool FD3D12DescriptorCache::Initialize()
     SamplerDesc.MinLOD         = TNumericLimits<float>::Lowest();
     SamplerDesc.MipLODBias     = 0.0f;
 
-    NullSampler = new FD3D12SamplerState(GetDevice(), FD3D12Interface::GetRHI()->GetSamplerOfflineDescriptorHeap(), FRHISamplerStateDesc());
+    NullSampler = new FD3D12SamplerState(GetDevice(), FD3D12RHI::GetRHI()->GetSamplerOfflineDescriptorHeap(), FRHISamplerStateDesc());
     if (!NullSampler->CreateSampler(SamplerDesc))
     {
         return false;

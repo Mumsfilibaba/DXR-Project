@@ -2,26 +2,26 @@
 #include "NullRHIResources.h"
 #include "NullRHIShader.h"
 #include "NullRHICommandContext.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct NULLRHI_API FNullRHIInterfaceModule final
-    : public FRHIInterfaceModule
+struct NULLRHI_API FNullRHIModule final : public FRHIModule
 {
-    virtual FRHIInterface* CreateInterface() override final;
+    virtual FRHI* CreateRHI() override final;
 };
 
-class NULLRHI_API FNullRHIInterface final 
-    : public FRHIInterface
+
+class NULLRHI_API FNullRHI final : public FRHI
 {
 public:
-    FNullRHIInterface()
-        : FRHIInterface(ERHIInstanceType::Null)
+    FNullRHI()
+        : FRHI(ERHIType::Null)
         , CommandContext(new FNullRHICommandContext())
-    { }
+    {
+    }
 
-    ~FNullRHIInterface()
+    ~FNullRHI()
     {
         SAFE_DELETE(CommandContext);
     }
@@ -186,7 +186,7 @@ public:
         return CommandContext;
     }
 
-    virtual FString RHIGetAdapterDescription() const override final
+    virtual FString RHIGetAdapterName() const override final
     {
         return FString();
     }

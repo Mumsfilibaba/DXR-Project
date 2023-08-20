@@ -1,5 +1,5 @@
 #include "LightProbeRenderer.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
 
 bool FLightProbeRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameResources)

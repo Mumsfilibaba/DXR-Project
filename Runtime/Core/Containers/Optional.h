@@ -31,7 +31,7 @@ public:
     {
         if (Other)
         {
-            Construct(*reinterpret_cast<ElementType*>(Other.Value.Data));
+            Construct(*reinterpret_cast<const ElementType*>(Other.Value.Data));
         }
     }
 
@@ -46,7 +46,7 @@ public:
     {
         if (Other)
         {
-            Construct(*reinterpret_cast<OtherType*>(Other.Value.Data));
+            Construct(*reinterpret_cast<const OtherType*>(Other.Value.Data));
         }
     }
 
@@ -302,7 +302,7 @@ public:
     NODISCARD FORCEINLINE const ElementType* operator->() const noexcept
     {
         CHECK(HasValue());
-        return reinterpret_cast<ElementType*>(Value.Data);
+        return reinterpret_cast<const ElementType*>(Value.Data);
     }
 
     /**
@@ -322,7 +322,7 @@ public:
     NODISCARD FORCEINLINE const ElementType& operator*() const noexcept
     {
         CHECK(HasValue());
-        return *reinterpret_cast<ElementType*>(Value.Data);
+        return *reinterpret_cast<const ElementType*>(Value.Data);
     }
 
 public:

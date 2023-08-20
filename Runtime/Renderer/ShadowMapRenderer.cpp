@@ -3,7 +3,7 @@
 #include "Core/Math/Frustum.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Scene/Lights/PointLight.h"

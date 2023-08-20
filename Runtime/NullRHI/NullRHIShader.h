@@ -24,23 +24,23 @@ typedef TNullRHIShader<class FRHIRayAnyHitShader>        FNullRHIRayAnyHitShader
 typedef TNullRHIShader<class FRHIRayIntersectionShader>  FNullRHIRayIntersectionShader;
 typedef TNullRHIShader<class FRHIRayCallableShader>      FNullRHIRayCallableShader;
 
-struct FNullRHIComputeShaderBase 
-    : public FRHIComputeShader
+struct FNullRHIComputeShaderBase : public FRHIComputeShader
 {
     FNullRHIComputeShaderBase()
         : FRHIComputeShader()
-    { }
+    {
+    }
 
     virtual FIntVector3 GetThreadGroupXYZ() const override final { return FIntVector3(1, 1, 1); }
 };
 
 template<typename BaseShaderType>
-struct TNullRHIShader final 
-    : public BaseShaderType
+struct TNullRHIShader final : public BaseShaderType
 {
     TNullRHIShader()
         : BaseShaderType()
-    { }
+    {
+    }
 
     virtual void* GetRHIBaseShader() override final { return this; }
 };

@@ -5,7 +5,8 @@
 FD3D12GraphicsPipelineState::FD3D12GraphicsPipelineState(FD3D12Device* InDevice)
     : FRHIGraphicsPipelineState()
     , FD3D12PipelineState(InDevice)
-{ }
+{
+}
 
 bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateDesc& Initializer)
 {
@@ -236,7 +237,8 @@ FD3D12ComputePipelineState::FD3D12ComputePipelineState(FD3D12Device* InDevice, c
     : FRHIComputePipelineState()
     , FD3D12PipelineState(InDevice)
     , Shader(InShader)
-{ }
+{
+}
 
 bool FD3D12ComputePipelineState::Initialize()
 {
@@ -251,7 +253,8 @@ bool FD3D12ComputePipelineState::Initialize()
         struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
         {
             D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS;
-            D3D12_SHADER_BYTECODE ComputeShader = { };
+            D3D12_SHADER_BYTECODE ComputeShader = {
+};
         };
     } PipelineStream;
 
@@ -485,7 +488,8 @@ struct FD3D12RayTracingPipelineStateStream
 FD3D12RayTracingPipelineState::FD3D12RayTracingPipelineState(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , StateObject(nullptr)
-{ }
+{
+}
 
 bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineStateDesc& Initializer)
 {

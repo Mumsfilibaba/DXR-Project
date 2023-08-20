@@ -3,7 +3,7 @@
 #include "D3D12Device.h"
 #include "D3D12Shader.h"
 #include "DynamicD3D12.h"
-#include "D3D12Interface.h"
+#include "D3D12RHI.h"
 
 static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[ShaderVisibility_Count] =
 {
@@ -383,7 +383,8 @@ FD3D12RootSignatureCache::FD3D12RootSignatureCache(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , RootSignatures()
     , ResourceCounts()
-{ }
+{
+}
 
 FD3D12RootSignatureCache::~FD3D12RootSignatureCache()
 {

@@ -5,7 +5,8 @@ FD3D12CommandList::FD3D12CommandList(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , CmdList(nullptr)
     , CmdList5(nullptr)
-{ }
+{
+}
 
 bool FD3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline)
 {

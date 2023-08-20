@@ -1,6 +1,6 @@
 #include "ForwardRenderer.h"
 #include "MeshDrawCommand.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"

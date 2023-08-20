@@ -57,7 +57,6 @@
     #define WIN11_BUILD_22621 (1)
 #endif
 
-
 #if !PRODUCTION_BUILD
     #define D3D12_ERROR(...)                     \
         do                                       \
@@ -96,23 +95,13 @@
             LOG_INFO("[D3D12RHI] "__VA_ARGS__); \
         } while (false)
 #else
-    #define D3D12_ERROR_COND(bCondition, ...) \
-        do                                    \
-        {                                     \
-            (void)(bCondition);               \
-        } while(false)
+    #define D3D12_ERROR_COND(bCondition, ...) do { (void)(bCondition); } while(false)
+    #define D3D12_ERROR(...)  do { (void)(0); } while(false)
 
-    #define D3D12_ERROR(...)   do { (void)(0); } while(false)
-
-    #define D3D12_WARNING_COND(bCondition, ...) \
-        do                                      \
-        {                                       \
-            (void)(bCondition);                 \
-        } while(false)
-
+    #define D3D12_WARNING_COND(bCondition, ...) do { (void)(bCondition); } while(false)
     #define D3D12_WARNING(...) do { (void)(0); } while(false)
 
-    #define D3D12_INFO(...)    do { (void)(0); } while(false)
+    #define D3D12_INFO(...) do { (void)(0); } while(false)
 #endif
 
 

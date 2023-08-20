@@ -1,9 +1,7 @@
 #include "GPUProfiler.h"
-
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Time/Timespan.h"
-
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 
 FGPUProfiler FGPUProfiler::Instance;
 
@@ -12,7 +10,8 @@ FGPUProfiler::FGPUProfiler()
     , FrameTime()
     , Samples()
     , bEnabled(false)
-{ }
+{
+}
 
 bool FGPUProfiler::Init()
 {

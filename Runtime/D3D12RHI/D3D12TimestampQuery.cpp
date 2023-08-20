@@ -10,7 +10,66 @@ FD3D12TimestampQuery::FD3D12TimestampQuery(FD3D12Device* InDevice)
     , ReadResources()
     , TimeQueries()
     , Frequency(0)
-{ }
+{
+}
+
+bool FD3D12TimestampQuery::Initialize()
+{
+    ID3D12Device* D3D12Device = GetDevice()->GetD3D12Device();
+
+    D3D12_QUERY_HEAP_DESC QueryHeap;
+    FMemory::Memzero(&QueryHeap);
+
+    QueryHeap.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+    QueryHeap.Count    = D3D12_DEFAULT_QUERY_COUNT * 2;
+    QueryHeap.NodeMask = 0;
+
+    TComPtr<ID3D12QueryHeap> Heap;
+    HRESULT Result = D3D12Device->CreateQueryHeap(&QueryHeap, IID_PPV_ARGS(&Heap));
+    if (FAILED(Result))
+    {
+        D3D12_ERROR("[FD3D12TimestampQuery]: FAILED to create Query Heap");
+        return false;
+    }
+
+    D3D12_RESOURCE_DESC Desc;
+    FMemory::Memzero(&Desc);
+
+    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+    Desc.Format             = DXGI_FORMAT_UNKNOWN;
+    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FRHITimestamp);
+    Desc.Height             = 1;
+    Desc.DepthOrArraySize   = 1;
+    Desc.MipLevels          = 1;
+    Desc.Alignment          = 0;
+    Desc.SampleDesc.Count   = 1;
+    Desc.SampleDesc.Quality = 0;
+
+    FD3D12ResourceRef NewWriteResource = new FD3D12Resource(InDevice, Desc, D3D12_HEAP_TYPE_DEFAULT);
+    if (!NewWriteResource->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
+    {
+        return false;
+    }
+    else
+    {
+        NewWriteResource->SetName("Query Write Resource");
+    }
+
+    // Start with three
+    for (uint32 Index = 0; Index < D3D12_NUM_BACK_BUFFERS; ++Index)
+    {
+        if (!AllocateReadResource())
+        {
+            return false;
+        }
+    }
+
+    QueryHeap     = Heap;
+    WriteResource = NewWriteResource;
+    return true;
+}
 
 void FD3D12TimestampQuery::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const
 {
@@ -88,66 +147,6 @@ void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CommandCon
     {
         D3D12_ERROR("[FD3D12TimestampQuery] FAILED to query ClockCalibration");
     }
-}
-
-FD3D12TimestampQuery* FD3D12TimestampQuery::Create(FD3D12Device* InDevice)
-{
-    TSharedRef<FD3D12TimestampQuery> NewProfiler = new FD3D12TimestampQuery(InDevice);
-
-    ID3D12Device* DxDevice = InDevice->GetD3D12Device();
-
-    D3D12_QUERY_HEAP_DESC QueryHeap;
-    FMemory::Memzero(&QueryHeap);
-
-    QueryHeap.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
-    QueryHeap.Count    = D3D12_DEFAULT_QUERY_COUNT * 2;
-    QueryHeap.NodeMask = 0;
-
-    TComPtr<ID3D12QueryHeap> Heap;
-    HRESULT Result = DxDevice->CreateQueryHeap(&QueryHeap, IID_PPV_ARGS(&Heap));
-    if (FAILED(Result))
-    {
-        D3D12_ERROR("[D3D12GPUProfiler]: FAILED to create Query Heap");
-        return nullptr;
-    }
-
-    D3D12_RESOURCE_DESC Desc;
-    FMemory::Memzero(&Desc);
-
-    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
-    Desc.Format             = DXGI_FORMAT_UNKNOWN;
-    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FRHITimestamp);
-    Desc.Height             = 1;
-    Desc.DepthOrArraySize   = 1;
-    Desc.MipLevels          = 1;
-    Desc.Alignment          = 0;
-    Desc.SampleDesc.Count   = 1;
-    Desc.SampleDesc.Quality = 0;
-
-    FD3D12ResourceRef WriteResource = new FD3D12Resource(InDevice, Desc, D3D12_HEAP_TYPE_DEFAULT);
-    if (!WriteResource->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
-    {
-        return nullptr;
-    }
-    else
-    {
-        WriteResource->SetName("Query Write Resource");
-    }
-
-    // Start with three
-    for (uint32 Index = 0; Index < D3D12_NUM_BACK_BUFFERS; ++Index)
-    {
-        if (!NewProfiler->AllocateReadResource())
-        {
-            return nullptr;
-        }
-    }
-
-    NewProfiler->QueryHeap     = Heap;
-    NewProfiler->WriteResource = WriteResource;
-    return NewProfiler.ReleaseOwnership();
 }
 
 bool FD3D12TimestampQuery::AllocateReadResource()

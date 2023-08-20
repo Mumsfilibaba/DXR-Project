@@ -2,5 +2,6 @@
 
 FD3D12DeferredDeletionQueue::FD3D12DeferredDeletionQueue(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
-{ }
+{
+}
 

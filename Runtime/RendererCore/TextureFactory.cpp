@@ -1,6 +1,6 @@
 #include "TextureFactory.h"
 #include "TextureResourceData.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShaderCompiler.h"
 

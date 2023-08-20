@@ -4,15 +4,13 @@
 
 typedef TSharedRef<class FD3D12TimestampQuery> FD3D12TimestampQueryRef;
 
-class FD3D12TimestampQuery 
-    : public FRHITimestampQuery
-    , public FD3D12DeviceChild
+class FD3D12TimestampQuery : public FRHITimestampQuery, public FD3D12DeviceChild
 {
 public:
     FD3D12TimestampQuery(FD3D12Device* InDevice);
     ~FD3D12TimestampQuery() = default;
 
-    static FD3D12TimestampQuery* Create(FD3D12Device* InDevice);
+    bool Initialize();
 
     virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final;
 
@@ -22,6 +20,7 @@ public:
     }
 
     void BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
+
     void EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
 
     void ResolveQueries(class FD3D12CommandContext& CmdContext);
@@ -35,11 +34,11 @@ private:
     // TODO: The download resource should be allocated in the context
     bool AllocateReadResource();
 
-    TComPtr<ID3D12QueryHeap> QueryHeap;
-    FD3D12ResourceRef      WriteResource;
+    TComPtr<ID3D12QueryHeap>  QueryHeap;
+    FD3D12ResourceRef         WriteResource;
 
     TArray<FD3D12ResourceRef> ReadResources;
-    TArray<FRHITimestamp> TimeQueries;
+    TArray<FRHITimestamp>     TimeQueries;
 
     UINT64 Frequency;
 };

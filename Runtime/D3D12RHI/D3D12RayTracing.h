@@ -108,8 +108,8 @@ public:
     FD3D12Buffer* GetIndexBuffer()  const { return IndexBuffer.Get(); }
 
 private:
-    FD3D12BufferRef VertexBuffer;
-    FD3D12BufferRef IndexBuffer;
+    TSharedRef<FD3D12Buffer>  VertexBuffer;
+    TSharedRef<FD3D12Buffer>  IndexBuffer;
 };
 
 

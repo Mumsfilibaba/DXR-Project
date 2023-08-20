@@ -342,7 +342,7 @@ static bool ImGuiGetWindowMinimized(ImGuiViewport* Viewport)
     return false;
 }
 
-static void ImGuiSetWindowTitle(ImGuiViewport* Viewport, const char* Title)
+static void ImGuiSetWindowTitle(ImGuiViewport* Viewport, const CHAR* Title)
 {
     if (FGenericWindow* Window = reinterpret_cast<FGenericWindow*>(Viewport->PlatformUserData))
     {

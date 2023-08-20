@@ -10,7 +10,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FRHIInterface;
+class FRHI;
 class FRHIRayTracingGeometry;
 class FRHIRayTracingScene;
 struct IRHICommandContext;
@@ -18,28 +18,30 @@ struct FRHIRayTracingSceneDesc;
 struct FRHIRayTracingGeometryDesc;
 
 
-enum class ERHIInstanceType : uint32
+enum class ERHIType : uint32
 {
     Unknown = 0,
     Null    = 1,
     D3D12   = 2,
-    Metal   = 3,
+    Vulkan  = 3,
+    Metal   = 4,
 };
 
-inline const CHAR* ToString(ERHIInstanceType RenderLayerApi)
+inline const CHAR* ToString(ERHIType RenderLayerApi)
 {
     switch (RenderLayerApi)
     {
-        case ERHIInstanceType::D3D12: return "D3D12";
-        case ERHIInstanceType::Metal: return "Metal";
-        case ERHIInstanceType::Null:  return "Null";
-        default:                      return "Unknown";
+        case ERHIType::Null:   return "Null";
+        case ERHIType::D3D12:  return "D3D12";
+        case ERHIType::Vulkan: return "Vulkan";
+        case ERHIType::Metal:  return "Metal";
+        default:               return "Unknown";
     }
 }
 
 
 /** @brief - Global pointer for the RHIInterface */
-extern RHI_API FRHIInterface* GRHIInterface;
+extern RHI_API FRHI* GRHI;
 
 /**
  * @brief - Initializes the RHI Interface and sets the global pointer
@@ -138,30 +140,29 @@ struct FRHIRayTracingSupport
 };
 
 
-struct RHI_API FRHIInterfaceModule
-    : public FModuleInterface
+struct RHI_API FRHIModule : public FModuleInterface
 {
-    virtual ~FRHIInterfaceModule() = default;
+    virtual ~FRHIModule() = default;
 
     /**
      * @brief  - Creates the RHI Instance
      * @return - Returns the newly created RHIInstance
      */
-    virtual FRHIInterface* CreateInterface() { return nullptr; }
+    virtual FRHI* CreateRHI() { return nullptr; }
 };
 
 
-class RHI_API FRHIInterface
+class RHI_API FRHI
 {
 protected:
-    FRHIInterface(ERHIInstanceType InRHIType)
+    FRHI(ERHIType InRHIType)
         : RHIType(InRHIType)
     {
     }
 
 public:
 
-    virtual ~FRHIInterface() = default;
+    virtual ~FRHI() = default;
 
     /**
      * @brief  - Initialize the RHI
@@ -435,204 +436,198 @@ public:
      * @brief  - Retrieve the name of the Adapter
      * @return - Returns a string with the Adapter name
      */
-    virtual FString RHIGetAdapterDescription() const { return ""; }
+    virtual FString RHIGetAdapterName() const { return ""; }
 
     /**
      * @brief  - retrieve the current API that is used
      * @return - Returns the current RHI's API
      */
-    ERHIInstanceType GetInstanceType() const { return RHIType; }
+    ERHIType GetType() const { return RHIType; }
 
 private:
-    ERHIInstanceType RHIType;
+    ERHIType RHIType;
 };
 
 
-FORCEINLINE FRHIInterface* GetRHIInterface() 
+FORCEINLINE FRHI* GetRHI() 
 {
-    CHECK(GRHIInterface != nullptr);
-    return GRHIInterface;
+    CHECK(GRHI != nullptr);
+    return GRHI;
 }
 
-FORCEINLINE FRHITexture* RHICreateTexture(
-    const FRHITextureDesc& InDesc, 
-    EResourceAccess        InInitialState = EResourceAccess::Common,
-    const IRHITextureData* InInitialData = nullptr)
+FORCEINLINE FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState = EResourceAccess::Common, const IRHITextureData* InInitialData = nullptr)
 {
-    return GetRHIInterface()->RHICreateTexture(InDesc, InInitialState, InInitialData);
+    return GetRHI()->RHICreateTexture(InDesc, InInitialState, InInitialData);
 }
 
-FORCEINLINE FRHIBuffer* RHICreateBuffer(
-    const FRHIBufferDesc& Desc,
-    EResourceAccess       InitialAccess = EResourceAccess::Common,
-    const void*           InitialData = nullptr)
+FORCEINLINE FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& Desc, EResourceAccess InitialAccess = EResourceAccess::Common, const void* InitialData = nullptr)
 {
-    return GetRHIInterface()->RHICreateBuffer(Desc, InitialAccess, InitialData);
+    return GetRHI()->RHICreateBuffer(Desc, InitialAccess, InitialData);
 }
 
 FORCEINLINE FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateSamplerState(Initializer);
+    return GetRHI()->RHICreateSamplerState(Initializer);
 }
 
 FORCEINLINE FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateRayTracingScene(Initializer);
+    return GetRHI()->RHICreateRayTracingScene(Initializer);
 }
 
 FORCEINLINE FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateRayTracingGeometry(Initializer);
+    return GetRHI()->RHICreateRayTracingGeometry(Initializer);
 }
 
 FORCEINLINE FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateShaderResourceView(Initializer);
+    return GetRHI()->RHICreateShaderResourceView(Initializer);
 }
 
 FORCEINLINE FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateShaderResourceView(Initializer);
+    return GetRHI()->RHICreateShaderResourceView(Initializer);
 }
 
 FORCEINLINE FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateUnorderedAccessView(Initializer);
+    return GetRHI()->RHICreateUnorderedAccessView(Initializer);
 }
 
 FORCEINLINE FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateUnorderedAccessView(Initializer);
+    return GetRHI()->RHICreateUnorderedAccessView(Initializer);
 }
 
 FORCEINLINE FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreateComputeShader(ShaderCode);
+    return GetRHI()->RHICreateComputeShader(ShaderCode);
 }
 
 FORCEINLINE FRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreateVertexShader(ShaderCode);
+    return GetRHI()->RHICreateVertexShader(ShaderCode);
 }
 
 FORCEINLINE FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreateHullShader(ShaderCode);
+    return GetRHI()->RHICreateHullShader(ShaderCode);
 }
 
 FORCEINLINE FRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreateDomainShader(ShaderCode);
+    return GetRHI()->RHICreateDomainShader(ShaderCode);
 }
 
 FORCEINLINE FRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreateGeometryShader(ShaderCode);
+    return GetRHI()->RHICreateGeometryShader(ShaderCode);
 }
 
 FORCEINLINE FRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreateMeshShader(ShaderCode);
+    return GetRHI()->RHICreateMeshShader(ShaderCode);
 }
 
 FORCEINLINE FRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreateAmplificationShader(ShaderCode);
+    return GetRHI()->RHICreateAmplificationShader(ShaderCode);
 }
 
 FORCEINLINE FRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreatePixelShader(ShaderCode);
+    return GetRHI()->RHICreatePixelShader(ShaderCode);
 }
 
 FORCEINLINE FRHIRayGenShader* RHICreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreateRayGenShader(ShaderCode);
+    return GetRHI()->RHICreateRayGenShader(ShaderCode);
 }
 
 FORCEINLINE FRHIRayAnyHitShader* RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreateRayAnyHitShader(ShaderCode);
+    return GetRHI()->RHICreateRayAnyHitShader(ShaderCode);
 }
 
 FORCEINLINE FRHIRayClosestHitShader* RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreateRayClosestHitShader(ShaderCode);
+    return GetRHI()->RHICreateRayClosestHitShader(ShaderCode);
 }
 
 FORCEINLINE FRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    return GetRHIInterface()->RHICreateRayMissShader(ShaderCode);
+    return GetRHI()->RHICreateRayMissShader(ShaderCode);
 }
 
 FORCEINLINE FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateVertexInputLayout(Initializer);
+    return GetRHI()->RHICreateVertexInputLayout(Initializer);
 }
 
 FORCEINLINE FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateDepthStencilState(Initializer);
+    return GetRHI()->RHICreateDepthStencilState(Initializer);
 }
 
 FORCEINLINE FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateRasterizerState(Initializer);
+    return GetRHI()->RHICreateRasterizerState(Initializer);
 }
 
 FORCEINLINE FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateBlendState(Initializer);
+    return GetRHI()->RHICreateBlendState(Initializer);
 }
 
 FORCEINLINE FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateGraphicsPipelineState(Initializer);
+    return GetRHI()->RHICreateGraphicsPipelineState(Initializer);
 }
 
 FORCEINLINE FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateComputePipelineState(Initializer);
+    return GetRHI()->RHICreateComputePipelineState(Initializer);
 }
 
 FORCEINLINE FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateRayTracingPipelineState(Initializer);
+    return GetRHI()->RHICreateRayTracingPipelineState(Initializer);
 }
 
 FORCEINLINE class FRHITimestampQuery* RHICreateTimestampQuery()
 {
-    return GetRHIInterface()->RHICreateTimestampQuery();
+    return GetRHI()->RHICreateTimestampQuery();
 }
 
 FORCEINLINE class FRHIViewport* RHICreateViewport(const FRHIViewportDesc& Initializer)
 {
-    return GetRHIInterface()->RHICreateViewport(Initializer);
+    return GetRHI()->RHICreateViewport(Initializer);
 }
 
 FORCEINLINE bool RHIQueryUAVFormatSupport(EFormat Format)
 {
-    return GetRHIInterface()->RHIQueryUAVFormatSupport(Format);
+    return GetRHI()->RHIQueryUAVFormatSupport(Format);
 }
 
 FORCEINLINE IRHICommandContext* RHIGetDefaultCommandContext()
 {
-    return GetRHIInterface()->RHIObtainCommandContext();
+    return GetRHI()->RHIObtainCommandContext();
 }
 
 FORCEINLINE FString RHIGetAdapterName()
 {
-    return GetRHIInterface()->RHIGetAdapterDescription();
+    return GetRHI()->RHIGetAdapterName();
 }
 
 FORCEINLINE void RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport)
 {
-    GetRHIInterface()->RHIQueryShadingRateSupport(OutSupport);
+    GetRHI()->RHIQueryShadingRateSupport(OutSupport);
 }
 
 FORCEINLINE void RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport)
 {
-    GetRHIInterface()->RHIQueryRayTracingSupport(OutSupport);
+    GetRHI()->RHIQueryRayTracingSupport(OutSupport);
 }
 
 FORCEINLINE bool RHISupportsRayTracing()

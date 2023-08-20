@@ -16,6 +16,7 @@ Sandbox.AddModuleDependencies(
     "Engine",
     "Renderer",
     "NullRHI",
+    "VulkanRHI",
     "RendererCore",
     "Project",
 })

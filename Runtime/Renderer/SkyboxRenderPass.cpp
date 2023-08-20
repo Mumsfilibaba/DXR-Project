@@ -2,7 +2,7 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Renderer/Debug/GPUProfiler.h"
-#include "RHI/RHIInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
 #include "Engine/Assets/AssetManager.h"
 #include "RendererCore/TextureFactory.h"

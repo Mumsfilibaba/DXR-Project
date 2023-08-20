@@ -190,9 +190,9 @@ public:
         return Key;
     }
 
-    char GetAnsiChar() const
+    CHAR GetAnsiChar() const
     {
-        return static_cast<char>(Character);
+        return static_cast<CHAR>(Character);
     }
 
     uint32 GetGamepadIndex() const

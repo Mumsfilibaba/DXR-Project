@@ -507,7 +507,6 @@ public:
         return Desc;
     }
 
-
 protected:
     FRHITextureDesc Desc;
 };
@@ -1377,11 +1376,12 @@ struct FRHITimestamp
     uint64 End   = 0;
 };
 
+
 class FRHITimestampQuery : public FRHIResource
 {
 protected:
-	FRHITimestampQuery()          = default;
-	virtual ~FRHITimestampQuery() = default;
+    FRHITimestampQuery()          = default;
+    virtual ~FRHITimestampQuery() = default;
 
 public:
     virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const = 0;
