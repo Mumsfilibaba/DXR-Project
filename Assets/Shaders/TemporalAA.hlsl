@@ -58,7 +58,7 @@ void Main(FComputeShaderInput Input)
             const float SubSampleWeight   = BlackmanHarrisFilter(SubSampleDistance);
 
             // Sample and ensure its a valid sample
-            float3 SubSample = FinalTarget[CurrentPosition];
+            float3 SubSample = FinalTarget[CurrentPosition].rgb;
             SubSample = max(Float3(0.0f), SubSample);
 
             SampleTotal  += SubSample * SubSampleWeight;
