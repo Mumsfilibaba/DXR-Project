@@ -324,6 +324,8 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShad
         DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_HLSL" });
     else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
         DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_MSL" });
+    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
+        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_SPIRV" });
     else
         DxcDefines.Add({ L"SHADER_LANG", L"(0)" });
     
@@ -521,9 +523,10 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FR
         DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_HLSL" });
     else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
         DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_MSL" });
+    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
+        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_SPIRV" });
     else
         DxcDefines.Add({ L"SHADER_LANG", L"(0)" });
-
 
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
     if (!Defines.IsEmpty())

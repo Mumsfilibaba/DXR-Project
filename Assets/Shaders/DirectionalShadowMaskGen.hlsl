@@ -128,12 +128,7 @@ float SampleCascade(uint CascadeIndex, float2 TexCoords)
     }
 }
 
-float PCFDirectionalLight(
-    uint CascadeIndex,
-    float2 TexCoords,
-    float BiasedDepth,
-    float PenumbraRadius,
-    inout uint RandomSeed)
+float PCFDirectionalLight(uint CascadeIndex, float2 TexCoords, float BiasedDepth, float PenumbraRadius, inout uint RandomSeed)
 {
 
     float Shadow = 0;
@@ -160,11 +155,7 @@ float PCFDirectionalLight(
     return 1.0f - saturate(Shadow / float(NUM_PCF_SAMPLES));
 }
 
-float CalculateDirectionalLightShadow(
-    uint CascadeIndex,
-    float3 WorldPosition,
-    float3 Normal,
-    inout uint RandomSeed)
+float CalculateDirectionalLightShadow(uint CascadeIndex, float3 WorldPosition, float3 Normal, inout uint RandomSeed)
 {
     const float3 ShadowCoords = GetShadowCoords(CascadeIndex, WorldPosition);   
     const float  RadiusScale  = ShadowSplitsBuffer[CascadeIndex].Scale.x;
@@ -259,9 +250,8 @@ void Main(FComputeShaderInput Input)
     [branch]
     if(FadeFactor <= CASCADE_FADE_FACTOR && CascadeIndex != (NUM_SHADOW_CASCADES - 1))
     {
-        float3 NextSplitVisibility = CalculateDirectionalLightShadow(CascadeIndex + 1, WorldPosition, Normal, RandomSeed);
-
-        float LerpAmount = smoothstep(0.0f, CASCADE_FADE_FACTOR, FadeFactor);
+        const float NextSplitVisibility = CalculateDirectionalLightShadow(CascadeIndex + 1, WorldPosition, Normal, RandomSeed);
+        const float LerpAmount = smoothstep(0.0f, CASCADE_FADE_FACTOR, FadeFactor);
         ShadowAmount = lerp(NextSplitVisibility, ShadowAmount, LerpAmount);
     }
 #endif
