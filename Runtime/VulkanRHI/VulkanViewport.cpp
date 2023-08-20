@@ -301,8 +301,13 @@ bool FVulkanViewport::AquireNextImage()
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
     
+    // NOTE: For now we let suboptimal swapchains pass
     VkResult Result = SwapChain->AquireNextImage(ImageSemaphore.Get());
-    VULKAN_CHECK_RESULT(Result, "Failed to aquire image");
+    if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
+    {
+        VULKAN_ERROR("Failed to aquire SwapChain image");
+        return false;
+    }
     
     // TOOD: Maybe change this, if maybe is not always desirable to always have a wait/signal
     Queue->AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);

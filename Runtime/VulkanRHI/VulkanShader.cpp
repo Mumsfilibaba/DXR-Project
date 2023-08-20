@@ -20,12 +20,18 @@ FVulkanShader::~FVulkanShader()
 
 bool FVulkanShader::Initialize(const TArray<uint8>& InCode)
 {
+    if (InCode.Size() % 4 != 0)
+    {
+        VULKAN_ERROR("Size of code must be a multiple of 4, ensure that the code is valid SPIR-V");
+        return false;
+    }
+    
     VkShaderModuleCreateInfo ShaderModuleCreateInfo;
     FMemory::Memzero(&ShaderModuleCreateInfo);
 
     ShaderModuleCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    ShaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t*>(InCode.Data());;
-    ShaderModuleCreateInfo.codeSize = InCode.Size() / 4;
+    ShaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t*>(InCode.Data());
+    ShaderModuleCreateInfo.codeSize = InCode.Size();
 
     VkResult Result = vkCreateShaderModule(GetDevice()->GetVkDevice(), &ShaderModuleCreateInfo, nullptr, &ShaderModule);
     VULKAN_CHECK_RESULT(Result, "Failed to create ShaderModule");
