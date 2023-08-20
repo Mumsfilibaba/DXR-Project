@@ -159,6 +159,9 @@ VULKAN_FUNCTION_DEFINITION(DestroyImage);
     VULKAN_FUNCTION_DEFINITION(GetImageSparseMemoryRequirements2KHR);
 #endif
 
+VULKAN_FUNCTION_DEFINITION(CreateShaderModule);
+VULKAN_FUNCTION_DEFINITION(DestroyShaderModule);
+
 VULKAN_FUNCTION_DEFINITION(AllocateCommandBuffers);
 VULKAN_FUNCTION_DEFINITION(FreeCommandBuffers);
 
@@ -233,6 +236,9 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     }
 #endif
     
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateShaderModule);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyShaderModule);
+
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateImageView);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyImageView);
 
