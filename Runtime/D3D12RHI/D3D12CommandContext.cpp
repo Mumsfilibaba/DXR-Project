@@ -128,14 +128,7 @@ bool FD3D12GPUResourceUploader::Reserve(uint64 InSizeInBytes)
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource(
-        &HeapProperties,
-        D3D12_HEAP_FLAG_NONE,
-        &Desc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&Resource));
-    
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&Resource));
     if (SUCCEEDED(Result))
     {
         Resource->SetName(L"[D3D12GPUResourceUploader] Buffer");
@@ -494,12 +487,7 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
         FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(BufferRegion.Size, 1);
         FMemory::Memcpy(Allocation.Memory, SrcData, BufferRegion.Size);
 
-        CommandList->CopyBufferRegion(
-            Resource->GetD3D12Resource(),
-            BufferRegion.Offset,
-            Allocation.Resource,
-            Allocation.ResourceOffset,
-            BufferRegion.Size);
+        CommandList->CopyBufferRegion(Resource->GetD3D12Resource(), BufferRegion.Offset, Allocation.Resource, Allocation.ResourceOffset, BufferRegion.Size);
 
         // TODO: Deferred Release Queue
         CmdBatch->AddInUseResource(Resource);
@@ -508,6 +496,7 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
 
 void FD3D12CommandContext::RHIStartContext()
 {
+    // TODO: Remove lock, the command context itself should only be used from a single thread
     // Lock to the thread that started the context
     CommandContextCS.Lock();
 
@@ -518,6 +507,7 @@ void FD3D12CommandContext::RHIFinishContext()
 {
     FinishCommandList();
 
+    // TODO: Remove lock, the command context itself should only be used from a single thread
     // Unlock from the thread that started the context
     CommandContextCS.Unlock();
 }
@@ -601,9 +591,7 @@ void FD3D12CommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPa
     for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
     {
         const FRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[Index];
-
-        FD3D12Texture* D3D12Texture = GetD3D12Texture(RenderTargetView.Texture);
-        if (D3D12Texture)
+        if (FD3D12Texture* D3D12Texture = GetD3D12Texture(RenderTargetView.Texture))
         {
             FD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRTV(RenderTargetView);
             CHECK(D3D12RenderTargetView != nullptr);
@@ -625,9 +613,8 @@ void FD3D12CommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPa
 
     // DepthStencil
     const FRHIDepthStencilView& DepthStencilView = RenderPassInitializer.DepthStencilView;
-    if (DepthStencilView.Texture)
+    if (FD3D12Texture* D3D12Texture = GetD3D12Texture(DepthStencilView.Texture))
     {
-        FD3D12Texture*          D3D12Texture = GetD3D12Texture(DepthStencilView.Texture);
         FD3D12DepthStencilView* D3D12DepthStencilView = D3D12Texture->GetOrCreateDSV(DepthStencilView);
         CHECK(D3D12DepthStencilView != nullptr);
 
@@ -899,12 +886,7 @@ void FD3D12CommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion&
     }
 }
 
-void FD3D12CommandContext::RHIUpdateTexture2D(
-    FRHITexture*          Dst,
-    const FTextureRegion2D& TextureRegion,
-    uint32                  MipLevel,
-    const void*             SrcData,
-    uint32                  SrcRowPitch)
+void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch)
 {
     D3D12_ERROR_COND(SrcData != nullptr, "SrcData cannot be nullptr");
 
@@ -923,22 +905,11 @@ void FD3D12CommandContext::RHIUpdateTexture2D(
     UINT32 NumRows      = 0;
 
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT PlacedSubresourceFootprint;
-    GetDevice()->GetD3D12Device()->GetCopyableFootprints(
-        &Desc,
-        MipLevel,
-        1,
-        0,
-        &PlacedSubresourceFootprint,
-        &NumRows,
-        &RowPitch,
-        &RequiredSize);
+    GetDevice()->GetD3D12Device()->GetCopyableFootprints(&Desc, MipLevel, 1, 0, &PlacedSubresourceFootprint, &NumRows, &RowPitch, &RequiredSize);
 
     const uint64 AlignedSize = FMath::AlignUp<uint64>(RequiredSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 
-    FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(
-        AlignedSize,
-        D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-
+    FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(AlignedSize, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
     CHECK(Allocation.Memory   != nullptr);
     CHECK(Allocation.Resource != nullptr);
 
@@ -991,12 +962,7 @@ void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const
     FD3D12Buffer* D3D12Source = GetD3D12Buffer(Src);
     CHECK(D3D12Source != nullptr);
 
-    CommandList->CopyBufferRegion(
-        D3D12Destination->GetD3D12Resource(),
-        CopyInfo.DstOffset,
-        D3D12Source->GetD3D12Resource(),
-        CopyInfo.SrcOffset,
-        CopyInfo.Size);
+    CommandList->CopyBufferRegion(D3D12Destination->GetD3D12Resource(), CopyInfo.DstOffset, D3D12Source->GetD3D12Resource(), CopyInfo.SrcOffset, CopyInfo.Size);
 
     CmdBatch->AddInUseResource(Dst);
     CmdBatch->AddInUseResource(Src);
@@ -1034,13 +1000,7 @@ void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
     D3D12_TEXTURE_COPY_LOCATION SrcLocation;
     FMemory::Memzero(&SrcLocation);
 
-    const uint32 SrcSubresourceIndex = D3D12CalcSubresource(
-        InCopyDesc.SrcMipSlice,
-        InCopyDesc.SrcArraySlice, 
-        0, 
-        Src->GetNumMipLevels(), 
-        Src->GetNumArraySlices());
-
+    const uint32 SrcSubresourceIndex = D3D12CalcSubresource(InCopyDesc.SrcMipSlice, InCopyDesc.SrcArraySlice, 0, Src->GetNumMipLevels(), Src->GetNumArraySlices());
     SrcLocation.pResource        = D3D12Source->GetD3D12Resource()->GetD3D12Resource();
     SrcLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     SrcLocation.SubresourceIndex = SrcSubresourceIndex;
@@ -1057,26 +1017,14 @@ void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
     D3D12_TEXTURE_COPY_LOCATION DstLocation;
     FMemory::Memzero(&DstLocation);
 
-    const uint32 DstSubresourceIndex = D3D12CalcSubresource(
-        InCopyDesc.DstMipSlice, 
-        InCopyDesc.DstArraySlice, 
-        0, 
-        Dst->GetNumMipLevels(), 
-        Dst->GetNumArraySlices());
-
+    const uint32 DstSubresourceIndex = D3D12CalcSubresource(InCopyDesc.DstMipSlice, InCopyDesc.DstArraySlice, 0, Dst->GetNumMipLevels(), Dst->GetNumArraySlices());
     DstLocation.pResource        = D3D12Destination->GetD3D12Resource()->GetD3D12Resource();
     DstLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     DstLocation.SubresourceIndex = DstSubresourceIndex;
 
     FlushResourceBarriers();
 
-    CommandList->CopyTextureRegion(
-        &DstLocation,
-        InCopyDesc.DstPosition.x,
-        InCopyDesc.DstPosition.y,
-        InCopyDesc.DstPosition.z,
-        &SrcLocation, 
-        &SrcBox);
+    CommandList->CopyTextureRegion(&DstLocation, InCopyDesc.DstPosition.x, InCopyDesc.DstPosition.y, InCopyDesc.DstPosition.z, &SrcLocation, &SrcBox);
 
     CmdBatch->AddInUseResource(Dst);
     CmdBatch->AddInUseResource(Src);
@@ -1101,12 +1049,12 @@ void FD3D12CommandContext::RHIDiscardContents(FRHITexture* Texture)
 
 void FD3D12CommandContext::RHIBuildRayTracingGeometry(
     FRHIRayTracingGeometry* RayTracingGeometry,
-    FRHIBuffer* VertexBuffer,
-    uint32 NumVertices,
-    FRHIBuffer* IndexBuffer,
-    uint32 NumIndices,
-    EIndexFormat IndexFormat,
-    bool bUpdate)
+    FRHIBuffer*             VertexBuffer,
+    uint32                  NumVertices,
+    FRHIBuffer*             IndexBuffer,
+    uint32                  NumIndices,
+    EIndexFormat            IndexFormat,
+    bool                    bUpdate)
 {
     D3D12_ERROR_COND(RayTracingGeometry != nullptr, "RayTracingGeometry cannot be nullptr");
 
@@ -1117,14 +1065,7 @@ void FD3D12CommandContext::RHIBuildRayTracingGeometry(
     D3D12_ERROR_COND(D3D12VertexBuffer != nullptr, "VertexBuffer cannot be nullptr");
 
     FD3D12RayTracingGeometry* D3D12Geometry = static_cast<FD3D12RayTracingGeometry*>(RayTracingGeometry);
-    D3D12Geometry->Build(
-        *this,
-        D3D12VertexBuffer,
-        NumVertices,
-        D3D12IndexBuffer,
-        NumIndices,
-        IndexFormat,
-        bUpdate);
+    D3D12Geometry->Build(*this, D3D12VertexBuffer, NumVertices, D3D12IndexBuffer, NumIndices, IndexFormat, bUpdate);
 
     CmdBatch->AddInUseResource(RayTracingGeometry);
     CmdBatch->AddInUseResource(VertexBuffer);
@@ -1181,11 +1122,7 @@ void FD3D12CommandContext::RHISetRayTracingBindings(
         NumSamplersNeeded    += HitGroupResources[i].NumSamplers();
     }
 
-    D3D12_ERROR_COND(
-        NumDescriptorsNeeded < D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT,
-        "NumDescriptorsNeeded=%u, but the maximum is '%u'",
-        NumDescriptorsNeeded,
-        D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
+    D3D12_ERROR_COND(NumDescriptorsNeeded < D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, "NumDescriptorsNeeded=%u, but the maximum is '%u'", NumDescriptorsNeeded, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
 
     FD3D12OnlineDescriptorManager* ResourceHeap = CmdBatch->GetResourceDescriptorManager();
     if (!ResourceHeap->HasSpace(NumDescriptorsNeeded))
@@ -1195,11 +1132,7 @@ void FD3D12CommandContext::RHISetRayTracingBindings(
         // ResourceHeap->AllocateFreshHeap();
     }
 
-    D3D12_ERROR_COND(
-        NumSamplersNeeded < D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT,
-        "NumDescriptorsNeeded=%u, but the maximum is '%u'",
-        NumSamplersNeeded,
-        D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
+    D3D12_ERROR_COND(NumSamplersNeeded < D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, "NumDescriptorsNeeded=%u, but the maximum is '%u'", NumSamplersNeeded, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
 
     FD3D12OnlineDescriptorManager* SamplerHeap = CmdBatch->GetSamplerDescriptorManager();
     if (!SamplerHeap->HasSpace(NumSamplersNeeded))

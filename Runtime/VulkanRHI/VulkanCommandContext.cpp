@@ -7,7 +7,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQueue* InCommandQueue)
     : FVulkanDeviceObject(InDevice)
-    , CommandQueue(MakeSharedRef<FVulkanQueue>(InCommandQueue))
+    , Queue(MakeSharedRef<FVulkanQueue>(InCommandQueue))
     , CommandBuffer(InDevice, InCommandQueue->GetType())
 {
 }
@@ -26,6 +26,11 @@ bool FVulkanCommandContext::Initialize()
     return true;
 }
 
+void FVulkanCommandContext::ImageLayoutTransitionBarrier(const FVulkanImageTransitionBarrier& TransitionBarrier)
+{
+    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+}
+
 void FVulkanCommandContext::FlushCommands()
 {
     if (CommandBuffer.IsRecording())
@@ -33,18 +38,26 @@ void FVulkanCommandContext::FlushCommands()
         VULKAN_ERROR_COND(CommandBuffer.End(), "Failed to End CommandBuffer");
 
         FVulkanCommandBuffer* SubmitCommandBuffer = GetCommandBuffer();
-        CommandQueue->ExecuteCommandBuffer(&SubmitCommandBuffer, 1, CommandBuffer.GetFence());
+        Queue->ExecuteCommandBuffer(&SubmitCommandBuffer, 1, CommandBuffer.GetFence());
     }
 }
 
 void FVulkanCommandContext::RHIStartContext()
 {
+    // TODO: Remove lock, the command context itself should only be used from a single thread
+    // Lock to the thread that started the context
+    CommandContextCS.Lock();
+
     VULKAN_ERROR_COND(CommandBuffer.Begin(), "Failed to Begin CommandBuffer");
 }
 
 void FVulkanCommandContext::RHIFinishContext()
 {
     FlushCommands();
+    
+    // TODO: Remove lock, the command context itself should only be used from a single thread
+    // Unlock from the thread that started the context
+    CommandContextCS.Unlock();
 }
 
 void FVulkanCommandContext::RHIBeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
@@ -84,6 +97,12 @@ void FVulkanCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccess
 
 void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer)
 {
+    for (int32 Index = 0; Index < RenderPassInitializer.NumRenderTargets; Index++)
+    {
+        const FRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[Index];
+        // RenderTargetView.
+    }
+
     //CommandBuffer.BeginRenderPass();
 }
 
@@ -184,11 +203,15 @@ void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* 
 {
 }
 
-void FVulkanCommandContext::RHIDestroyResource(class IRefCounted* Resource)  
+void FVulkanCommandContext::RHIDestroyResource(IRefCounted* Resource)  
 {
+    if (Resource)
+    {
+        DiscardList.Add(MakeSharedRef<IRefCounted>(Resource));
+    }
 }
 
-void FVulkanCommandContext::RHIDiscardContents(class FRHITexture* Resource)
+void FVulkanCommandContext::RHIDiscardContents(FRHITexture* Resource)
 {
 }
 
@@ -225,27 +248,33 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
 void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     FVulkanTexture* VulkanTexture = GetVulkanTexture(Texture);
-    if (VulkanTexture->GetVkImage() == VK_NULL_HANDLE)
+    if (!VulkanTexture)
     {
+        VULKAN_WARNING("Texture is nullptr");
         return;
     }
+
+    const VkImageLayout NewLayout      = ConvertResourceStateToImageLayout(AfterState);
+    const VkImageLayout PreviousLayout = ConvertResourceStateToImageLayout(BeforeState);
+    if (NewLayout != PreviousLayout)
+    {
+        FVulkanImageTransitionBarrier TransitionBarrier;
+        TransitionBarrier.PreviousLayout                  = PreviousLayout;
+        TransitionBarrier.NewLayout                       = NewLayout;
+        TransitionBarrier.Image                           = VulkanTexture->GetVkImage();
+        TransitionBarrier.DependencyFlags                 = 0;
+        TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
+        TransitionBarrier.DstAccessMask                   = VK_ACCESS_NONE;
+        TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VulkanTexture->GetVkFormat());
+        TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+        TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
+        TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+        TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
     
-    FVulkanImageTransitionBarrier TransitionBarrier;
-    TransitionBarrier.Image                           = VulkanTexture->GetVkImage();
-    TransitionBarrier.PreviousLayout                  = ConvertResourceStateToImageLayout(BeforeState);
-    TransitionBarrier.NewLayout                       = ConvertResourceStateToImageLayout(AfterState);
-    TransitionBarrier.DependencyFlags                 = 0;
-    TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
-    TransitionBarrier.DstAccessMask                   = VK_ACCESS_NONE;
-    TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-    TransitionBarrier.SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-    TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
-    TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
-    TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-    TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-    
-    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+        ImageLayoutTransitionBarrier(TransitionBarrier);
+    }
 }
 
 void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)   
@@ -301,7 +330,10 @@ void FVulkanCommandContext::RHIFlush()
 {
     FlushCommands();
 
-    CommandQueue->WaitForCompletion();
+    Queue->WaitForCompletion();
+
+    // Clear the list of resources that are scheduled to be destroyed
+    DiscardList.Clear();
 }
 
 void FVulkanCommandContext::RHIInsertMarker(const FStringView& Message)

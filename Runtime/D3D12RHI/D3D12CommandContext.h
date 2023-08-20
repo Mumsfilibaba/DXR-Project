@@ -431,7 +431,7 @@ private:
     FD3D12CommandAllocatorManager   CommandAllocatorManager;
     FD3D12CommandContextState       State;
 
-    // TODO: Look into if this is the best way
+    // TODO: The whole commandcontext should only be used from one thread at a time
     FCriticalSection                CommandContextCS;
 
     TArray<FD3D12TimestampQueryRef> ResolveQueries;

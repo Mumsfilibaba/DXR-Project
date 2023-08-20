@@ -54,15 +54,21 @@ public:
         return Image;
     }
 
+    FORCEINLINE VkFormat GetVkFormat() const
+    {
+        return Format;
+    }
+
 protected:
     VkImage        Image;
     bool           bIsImageOwner;
     VkDeviceMemory DeviceMemory;
+    VkFormat       Format;
 
     FVulkanShaderResourceViewRef       ShaderResourceView;
     FVulkanUnorderedAccessViewRef      UnorderedAccessView;
 
-    TArray<FVulkanRenderTargetViewRef> RenderTargetViews;
+    TArray<FVulkanRenderTargetViewRef> RenderTargetViews; 
     TArray<FVulkanDepthStencilViewRef> DepthStencilViews;
 };
 

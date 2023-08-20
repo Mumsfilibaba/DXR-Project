@@ -809,7 +809,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     // Albedo
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage);
 
-    FrameResources.GBuffer[GBufferIndex_Albedo] = RHICreateTexture(TextureDesc);
+    FrameResources.GBuffer[GBufferIndex_Albedo] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Albedo])
     {
         FrameResources.GBuffer[GBufferIndex_Albedo]->SetName("GBuffer Albedo");
@@ -822,7 +822,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     // Normal
     TextureDesc.Format = FrameResources.NormalFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Normal] = RHICreateTexture(TextureDesc);
+    FrameResources.GBuffer[GBufferIndex_Normal] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Normal])
     {
         FrameResources.GBuffer[GBufferIndex_Normal]->SetName("GBuffer Normal");
@@ -835,7 +835,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     // Material Properties
     TextureDesc.Format = FrameResources.MaterialFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Material] = RHICreateTexture(TextureDesc);
+    FrameResources.GBuffer[GBufferIndex_Material] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Material])
     {
         FrameResources.GBuffer[GBufferIndex_Material]->SetName("GBuffer Material");
@@ -848,7 +848,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     // View Normal
     TextureDesc.Format = FrameResources.ViewNormalFormat;
 
-    FrameResources.GBuffer[GBufferIndex_ViewNormal] = RHICreateTexture(TextureDesc);
+    FrameResources.GBuffer[GBufferIndex_ViewNormal] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_ViewNormal])
     {
         FrameResources.GBuffer[GBufferIndex_ViewNormal]->SetName("GBuffer ViewNormal");
@@ -861,7 +861,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     // Velocity
     TextureDesc.Format = FrameResources.VelocityFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Velocity] = RHICreateTexture(TextureDesc);
+    FrameResources.GBuffer[GBufferIndex_Velocity] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Velocity])
     {
         FrameResources.GBuffer[GBufferIndex_Velocity]->SetName("GBuffer Velocity");
@@ -875,7 +875,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     TextureDesc.Format     = FrameResources.FinalTargetFormat;
     TextureDesc.UsageFlags = Usage | ETextureUsageFlags::UnorderedAccess;
 
-    FrameResources.FinalTarget = RHICreateTexture(TextureDesc);
+    FrameResources.FinalTarget = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.FinalTarget)
     {
         FrameResources.FinalTarget->SetName("Final Target");
@@ -891,7 +891,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     TextureDesc.UsageFlags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
     TextureDesc.ClearValue = DepthClearValue;
 
-    FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture(TextureDesc);
+    FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Depth])
     {
         FrameResources.GBuffer[GBufferIndex_Depth]->SetName("GBuffer DepthStencil");

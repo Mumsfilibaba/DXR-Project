@@ -70,10 +70,10 @@ private:
     
     void* WindowHandle;
 
-    FVulkanSurfaceRef        Surface;
-    FVulkanSwapChainRef      SwapChain;
-    FVulkanBackBufferRef     BackBuffer;
-    TSharedRef<FVulkanQueue> Queue;
+    FVulkanSurfaceRef    Surface;
+    FVulkanSwapChainRef  SwapChain;
+    FVulkanBackBufferRef BackBuffer;
+    FVulkanQueueRef      Queue;
 
     TArray<VkImage,             TInlineArrayAllocator<VkImage, NUM_BACK_BUFFERS>>             Images;
     TArray<FVulkanImageViewRef, TInlineArrayAllocator<FVulkanImageViewRef, NUM_BACK_BUFFERS>> ImageViews;

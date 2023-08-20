@@ -102,16 +102,16 @@ bool FVulkanRHI::Initialize()
         return false;
     }
 
-    GraphicsCommandQueue = new FVulkanQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
-    if (!GraphicsCommandQueue->Initialize())
+    GraphicsQueue = new FVulkanQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
+    if (!GraphicsQueue->Initialize())
     {
         VULKAN_ERROR("Failed to initialize VulkanCommandQueue");
         return false;
     }
 
-    GraphicsCommandQueue->SetName("Graphics Queue");
+    GraphicsQueue->SetName("Graphics Queue");
 
-    GraphicsCommandContext = new FVulkanCommandContext(Device.Get(), GraphicsCommandQueue.Get());
+    GraphicsCommandContext = new FVulkanCommandContext(Device.Get(), GraphicsQueue.Get());
     if (!GraphicsCommandContext->Initialize())
     {
         VULKAN_ERROR("Failed to initialize VulkanCommandContext");
@@ -157,7 +157,7 @@ FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateDesc& 
 
 FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
 {
-    FVulkanViewportRef NewViewport = new FVulkanViewport(Device.Get(), GraphicsCommandQueue.Get(), InDesc);
+    FVulkanViewportRef NewViewport = new FVulkanViewport(Device.Get(), GraphicsQueue.Get(), InDesc);
     if (!NewViewport->Initialize())
     {
         return nullptr;

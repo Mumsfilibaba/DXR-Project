@@ -3,6 +3,8 @@
 #include "VulkanDeviceObject.h"
 #include "Core/Containers/SharedRef.h"
 
+typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
+
 class FVulkanQueue : public FVulkanDeviceObject, public FVulkanRefCounted
 {
 public:

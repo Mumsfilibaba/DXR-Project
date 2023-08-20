@@ -114,14 +114,19 @@ bool FVulkanViewport::CreateSwapChain()
     SwapChainCreateInfo.Format            = GetColorFormat();
     SwapChainCreateInfo.bVerticalSync     = false;
 
-    VULKAN_ERROR_COND(Desc.Width  != 0, "Viewport-width of zero is not supported");
-    VULKAN_ERROR_COND(Desc.Height != 0, "Viewport-height of zero is not supported");
+    VULKAN_ERROR_COND(Desc.Width  != 0, "Viewport Width of zero is not supported");
+    VULKAN_ERROR_COND(Desc.Height != 0, "Viewport Height of zero is not supported");
 
-    SwapChain = new FVulkanSwapChain(GetDevice());
-    if (!SwapChain->Initialize(SwapChainCreateInfo))
+    // NOTE: Create a temporary SwapChain, this is done in order to keep the old swapchain alive in case we recreate the swapchain
+    FVulkanSwapChainRef NewSwapChain = new FVulkanSwapChain(GetDevice());
+    if (!NewSwapChain->Initialize(SwapChainCreateInfo))
     {
         VULKAN_ERROR("Failed to create SwapChain");
         return false;
+    }
+    else
+    {
+        SwapChain = NewSwapChain;
     }
     
     // Retrieve the images
@@ -158,7 +163,6 @@ bool FVulkanViewport::CreateSwapChain()
         TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
         CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
-        
         Images.Add(Image);
     }
 
@@ -274,9 +278,12 @@ bool FVulkanViewport::Present(bool bVerticalSync)
 
 void FVulkanViewport::SetName(const FString& InName)
 {
-    FString ImageName;
-    
+    // Name the swapchain object
+    FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), SwapChain->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
+
+    // Name all the images
     uint32 Index = 0;
+    FString ImageName;
     for (VkImage Image : Images)
     {
         ImageName = InName + "BackBuffer Image[" + TTypeToString<int32>::ToString(Index) + "]";

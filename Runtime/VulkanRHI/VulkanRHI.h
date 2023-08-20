@@ -111,8 +111,8 @@ public:
 
     virtual void* RHIGetDirectCommandQueue() override final
     {
-        CHECK(GraphicsCommandQueue != nullptr);
-        return reinterpret_cast<void*>(GraphicsCommandQueue->GetVkQueue());
+        CHECK(GraphicsQueue != nullptr);
+        return reinterpret_cast<void*>(GraphicsQueue->GetVkQueue());
     }
 
     virtual void* RHIGetComputeCommandQueue() override final
@@ -128,19 +128,24 @@ public:
     }
 
 public:
-    FORCEINLINE FVulkanInstance* GetInstance() const
+    FVulkanInstance* GetInstance() const
     {
         return Instance.Get();
     }
 
-    FORCEINLINE FVulkanPhysicalDevice* GetAdapter() const
+    FVulkanPhysicalDevice* GetAdapter() const
     {
         return PhysicalDevice.Get();
     }
 
-    FORCEINLINE FVulkanDevice* GetDevice() const
+    FVulkanDevice* GetDevice() const
     {
         return Device.Get();
+    }
+
+    FVulkanCommandContext* ObtainCommandContext()
+    {
+        return GraphicsCommandContext.Get();
     }
 
 private:
@@ -148,7 +153,7 @@ private:
     TSharedRef<FVulkanPhysicalDevice> PhysicalDevice;
     TSharedRef<FVulkanDevice>         Device;
 
-    TSharedRef<FVulkanQueue>          GraphicsCommandQueue;
+    FVulkanQueueRef                   GraphicsQueue;
     TSharedRef<FVulkanCommandContext> GraphicsCommandContext;
 
     static FVulkanRHI* GVulkanRHI;

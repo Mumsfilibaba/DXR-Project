@@ -1,5 +1,7 @@
+#include "VulkanRHI.h"
 #include "VulkanTexture.h"
 #include "VulkanViewport.h"
+#include "VulkanCommandContext.h"
 
 FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureDesc& InDesc)
     : FRHITexture(InDesc)
@@ -45,7 +47,6 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     ImageCreateInfo.imageType             = ConvertTextureDimension(Desc.Dimension);;
     ImageCreateInfo.extent.width          = Desc.Extent.x;
     ImageCreateInfo.extent.height         = Desc.Extent.y;
-    ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageCreateInfo.mipLevels             = Desc.NumMipLevels;
     ImageCreateInfo.pQueueFamilyIndices   = nullptr;
     ImageCreateInfo.queueFamilyIndexCount = 0;
@@ -53,7 +54,10 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     ImageCreateInfo.samples               = SampleCount;
     ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
     ImageCreateInfo.usage                 = 0;
-    ImageCreateInfo.format                = ConvertFormat(Desc.Format);
+    ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
+    
+    // NOTE: We store the format so that we have easy access to it later
+    ImageCreateInfo.format = Format = ConvertFormat(Desc.Format);
 
     if (ImageCreateInfo.imageType == VK_IMAGE_TYPE_3D)
     {
@@ -69,7 +73,8 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     // Enable Texture-Cube views
     if (Desc.IsTextureCube() || Desc.IsTextureCubeArray())
     {
-        ImageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+        ImageCreateInfo.flags       |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+        ImageCreateInfo.arrayLayers  = Desc.NumArraySlices * kRHINumCubeFaces;
     }
     
     // TODO: Look into abstracting these flags
@@ -94,11 +99,10 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
 
     VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &ImageCreateInfo, nullptr, &Image);
     VULKAN_CHECK_RESULT(Result, "Failed to create image");
-
     bIsImageOwner = true;
     
+    // Check if the image should be allocated using a dedicated allocation
     bool bUseDedicatedAllocation = false;
-
     VkMemoryRequirements MemoryRequirements;
 #if VK_KHR_get_memory_requirements2 && VK_KHR_dedicated_allocation
     if (FVulkanDedicatedAllocationKHR::IsEnabled())
@@ -160,6 +164,34 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
 
     Result = vkBindImageMemory(GetDevice()->GetVkDevice(), Image, DeviceMemory, 0);
     VULKAN_CHECK_RESULT(Result, "Failed to bind Image-DeviceMemory");
+
+
+    if (InInitialData)
+    {
+        // TODO: Upload initial data
+    }
+
+    // NOTE: Transition the texture into the expected ImageLayout
+    FVulkanCommandContext* Context = FVulkanRHI::GetRHI()->ObtainCommandContext();
+    Context->RHIStartContext();
+
+    FVulkanImageTransitionBarrier TransitionBarrier;
+    TransitionBarrier.Image                           = Image;
+    TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_UNDEFINED;
+    TransitionBarrier.NewLayout                       = ConvertResourceStateToImageLayout(InInitialAccess);
+    TransitionBarrier.DependencyFlags                 = 0;
+    TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
+    TransitionBarrier.DstAccessMask                   = VK_ACCESS_NONE;
+    TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
+    TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+    TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
+    TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+    TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+    Context->ImageLayoutTransitionBarrier(TransitionBarrier);
+    Context->RHIFinishContext();
     return true;
 }
 
@@ -178,17 +210,21 @@ FVulkanBackBuffer::FVulkanBackBuffer(FVulkanDevice* InDevice, FVulkanViewport* I
     : FVulkanTexture(InDevice, InDesc)
     , Viewport(MakeSharedRef<FVulkanViewport>(InViewport))
 {
-    // There will always be atleast one rendertargetview with the backbuffer
+    // There will always be atleast one RenderTargetView with the BackBuffer
     RenderTargetViews.Emplace(new FVulkanRenderTargetView());
 }
 
 void FVulkanBackBuffer::AquireNextImage()
 {
+    // NOTE: The format has to be updated here, in-case the format has changed when the Swapchain is recreated
     FVulkanSwapChain* SwapChain = Viewport->GetSwapChain();
-    
+    Format = SwapChain->GetVkSurfaceFormat().format;
+
+    // Update the image
     Image = Viewport->GetImage(SwapChain->GetBufferIndex());
     CHECK(Image != VK_NULL_HANDLE);
     
+    // Update the ImageView
     FVulkanImageView* ImageView = Viewport->GetImageView(SwapChain->GetBufferIndex());
     CHECK(ImageView != nullptr);
     

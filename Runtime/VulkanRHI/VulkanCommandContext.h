@@ -4,6 +4,7 @@
 #include "VulkanRefCounted.h"
 #include "RHI/IRHICommandContext.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Platform/CriticalSection.h"
 
 class FVulkanDevice;
 
@@ -143,11 +144,13 @@ public:
 public:
     bool Initialize();
 
+    void ImageLayoutTransitionBarrier(const FVulkanImageTransitionBarrier& TransitionBarrier);
+
     void FlushCommands();
 
     FORCEINLINE FVulkanQueue* GetCommandQueue() const
     {
-        return CommandQueue.Get();
+        return Queue.Get();
     }
 
     FORCEINLINE FVulkanCommandBuffer* GetCommandBuffer()
@@ -161,6 +164,12 @@ public:
     }
 
 private:
-    TSharedRef<FVulkanQueue> CommandQueue;
-    FVulkanCommandBuffer     CommandBuffer;
+    FVulkanQueueRef      Queue;
+    FVulkanCommandBuffer CommandBuffer;
+    
+    // TODO: The whole commandcontext should only be used from one thread at a time
+    FCriticalSection     CommandContextCS;
+
+    // These resources should be destroyed, most likely there is no reference left in the higher level
+    TArray<TSharedRef<IRefCounted>> DiscardList;
 };

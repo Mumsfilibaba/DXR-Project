@@ -233,7 +233,7 @@ bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameRes
     const uint32 Height = FrameResources.MainViewport->GetHeight() / 2;
 
     FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags);
-    FrameResources.SSAOBuffer = RHICreateTexture(SSAOBufferDesc);
+    FrameResources.SSAOBuffer = RHICreateTexture(SSAOBufferDesc, EResourceAccess::NonPixelShaderResource);
     if (!FrameResources.SSAOBuffer)
     {
         DEBUG_BREAK();

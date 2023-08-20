@@ -616,7 +616,6 @@ struct FRHIThreadTask : FNonCopyable
 
 class RHI_API FRHIThread : public FThreadInterface, FNonCopyable
 {
-private:
     FRHIThread();
     ~FRHIThread() = default;
 
